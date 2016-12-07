@@ -1,0 +1,15 @@
+
+Python code to generate a delta field from eBOSS pixel data (as produced by Vazquez Gonzalez & Slosar)
+
+requirements:
+* python 2.7
+* iminuit 1.2 or later
+* fitsio
+* healpy
+
+example run over 1000 spectra (the DLA catalog is not required):
+
+python bin/do_deltas.py --in-dir data/ --drq ../DR14Q_v1_1.fits --dla-vac ../dlas/DLA_DR14_v1b.dat --out-dir deltas/ --nspec 1000
+
+
+where data/ is the directory containing the pixel files and deltas/ the output directory
