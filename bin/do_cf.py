@@ -86,6 +86,7 @@ if __name__ == '__main__':
 
     fi = glob.glob(args.in_dir+"/*.fits.gz")
     data = {}
+    pix_dic = {}
     ndata = 0
     for i,f in enumerate(fi):
         if i%10==0:
@@ -97,25 +98,24 @@ if __name__ == '__main__':
         th = [sp.pi/2-d.dec for d in dels]
         pix = healpy.ang2pix(args.nside,th,phi)
         for d,p in zip(dels,pix):
-            if not p in data:
-                data[p]=[]
+            data[d.thid]=d
+            if not p in pix_dic:
+                pix_dic[p]=[]
+            pix_dic[p].append(d.thid)
+
             z = 10**d.ll/args.lambda_abs-1
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
             if not args.no_project:
                 d.project
-            data[p].append(d)
         if not args.nspec is None:
             if ndata>args.nspec:break
 
     sys.stderr.write("\n")
 
-    cf.npix = len(data)
+    cf.npix = len(pix_dic)
 
-    m = Manager()
-
-    cf.neigh_dic = m.dict(cf.neigh_dic)
-    cf.data = m.dict(data)
+    cf.pix_dic = pix_dic
     cf.data = data
     print "done"
 
@@ -123,10 +123,8 @@ if __name__ == '__main__':
 
     cf.lock = Lock()
     pool = Pool(processes=args.nproc)
-    pix = data.keys()
-    random.shuffle(pix)
 
-    cfs = pool.map(corr_func,pix)
+    cfs = pool.map(corr_func,pix_dic.keys())
     pool.close()
 
     cfs=sp.array(cfs)

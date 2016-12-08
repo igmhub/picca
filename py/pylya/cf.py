@@ -19,24 +19,28 @@ alpha= None
 
 neigh_dic={}
 data = None
+pix_dic = None
 
 def fill_neighs(pix):
-    for d1 in data[pix]:
+    d1s = [data[thid] for thid in pix_dic[pix]]
+    for d1 in d1s:
         pix = query_disc(nside,[d1.x,d1.y,d1.z],angmax,inclusive = True)
-        pix = [p for p in pix if p in data]
-        neighs = [d for p in pix for d in data[p]]
+        pix = [p for p in pix if p in pix_dic]
+        neighs = [data[thid] for p in pix for thid in pix_dic[p]]
         ang = d1^neighs
         w = ang<angmax
         neighs = sp.array(neighs)[w]
-        neigh_dic[d1.thid] = [d for d in neighs if d1.ra > d.ra]
+        d1.neighs = [d.thid for d in neighs if d1.ra > d.ra]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
     we = sp.zeros(np*nt)
 
-    for i,d1 in enumerate(data[pix]):
+    d1s = [data[thid] for thid in pix_dic[pix]]
+    for i,d1 in enumerate(d1s):
         wd1 = d1.de*d1.we
-        for d2 in neigh_dic[d1.thid]:
+        neighs = [data[thid] for thid in d1.neighs]
+        for d2 in neighs:
 
             wd2= d2.de*d2.we
             ang = d1^d2
