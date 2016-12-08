@@ -11,6 +11,7 @@ from pylya import cf
 from pylya.data import delta
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
+from multiprocessing.pool import ThreadPool
 
 
 def corr_func(p):
@@ -64,7 +65,7 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
-    parser.add_argument('--nspec', type=int,default=None required=False,
+    parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
     args = parser.parse_args()
@@ -105,8 +106,8 @@ if __name__ == '__main__':
             if not args.no_project:
                 d.project
             data[p].append(d)
-        if not args.ndata is None:
-            if ndata>args.ndata:break
+        if not args.nspec is None:
+            if ndata>args.nspec:break
 
     sys.stderr.write("\n")
 
@@ -122,7 +123,8 @@ if __name__ == '__main__':
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
-    pool = Pool(processes=args.nproc)
+#    pool = Pool(processes=args.nproc)
+    pool = ThreadPool(processes=args.nproc)
     pix = data.keys()
     random.shuffle(pix)
 
