@@ -4,6 +4,7 @@ import argparse
 import glob
 import healpy
 import sys
+from scipy import random 
 
 from pylya import constants
 from pylya import cf
@@ -12,10 +13,11 @@ from pylya.data import delta
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 
-def corr_func(pix):
-    tmp = cf.cf(data[pix])
+def corr_func(p):
+    cf.fill_neighs(p)
+    tmp = cf.cf(p)
     with cf.lock:
-       cf.counter.value += 1
+        cf.counter.value += 1
     sys.stderr.write("\rcomputing xi: {}%".format(round(cf.counter.value*100./cf.npix,2)))
     return tmp
 
@@ -28,7 +30,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--in-dir', type = str, default = None, required=True,
                         help = 'data directory')
-
 
     parser.add_argument('--rp-max', type = float, default = 200, required=False,
                         help = 'max rp')
@@ -63,6 +64,9 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
+    parser.add_argument('--nspec', type=int,default=None required=False,
+                    help = 'maximum spectra to read')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -85,7 +89,7 @@ if __name__ == '__main__':
     ndata = 0
     for i,f in enumerate(fi):
         if i%10==0:
-            sys.stderr.write("\rread {} of {}".format(i,len(fi)))
+            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
         dels = [delta.from_fitsio(h) for h in hdus[1:]]
         ndata+=len(dels)
@@ -98,25 +102,31 @@ if __name__ == '__main__':
             z = 10**d.ll/args.lambda_abs-1
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
-            d.pix = p
             if not args.no_project:
                 d.project
             data[p].append(d)
-        if ndata>50000:break
+        if not args.ndata is None:
+            if ndata>args.ndata:break
 
     sys.stderr.write("\n")
 
     cf.npix = len(data)
 
-    cf.fill_neighs(data)
+    m = Manager()
+
+    cf.neigh_dic = m.dict(cf.neigh_dic)
+    cf.data = m.dict(data)
+    cf.data = data
     print "done"
 
     cf.counter = Value('i',0)
+
     cf.lock = Lock()
-
     pool = Pool(processes=args.nproc)
+    pix = data.keys()
+    random.shuffle(pix)
 
-    cfs = pool.map(corr_func,data.keys())
+    cfs = pool.map(corr_func,pix)
     pool.close()
 
     cfs=sp.array(cfs)
