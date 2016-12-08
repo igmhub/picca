@@ -11,7 +11,6 @@ from pylya import cf
 from pylya.data import delta
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
-from multiprocessing.pool import ThreadPool
 
 
 def corr_func(p):
@@ -123,8 +122,7 @@ if __name__ == '__main__':
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
-#    pool = Pool(processes=args.nproc)
-    pool = ThreadPool(processes=args.nproc)
+    pool = Pool(processes=args.nproc)
     pix = data.keys()
     random.shuffle(pix)
 
