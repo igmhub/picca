@@ -2,6 +2,7 @@ import scipy as sp
 import sys
 from healpy import query_disc
 from multiprocessing import Pool
+from numba import jit
 
 np = None
 nt = None 
@@ -34,31 +35,35 @@ def cf(pix):
     we = sp.zeros(np*nt)
 
     for i,d1 in enumerate(data[pix]):
-        wd1 = d1.de*d1.we
         for d2 in d1.neighs:
-
-            wd2= d2.de*d2.we
             ang = d1^d2
+            cw,cd = fast_cf(d1.r_comov,d1.we,d1.de,d2.r_comov,d2.we,d2.de,ang)
             
-            rp = abs(d1.r_comov-d2.r_comov[:,None])*sp.cos(ang/2)
-            rt = (d1.r_comov+d2.r_comov[:,None])*sp.sin(ang/2)
-            wd12 = wd1*wd2[:,None]
-            w12 = d1.we*d2.we[:,None]
-            
-            w = (rp<rp_max) & (rt<rt_max)
-            rp = rp[w]
-            rt = rt[w]
-            wd12 = wd12[w]
-            w12 = w12[w]
-            bp = (rp/rp_max*np).astype(int)
-            bt = (rt/rt_max*nt).astype(int)
-            bins = bt + nt*bp
-            c = sp.bincount(bins,weights=wd12)
-            xi[:len(c)]+=c
-            c = sp.bincount(bins,weights=w12)
-            we[:len(c)]+=c
+            xi[:len(cd)]+=cd
+            we[:len(cw)]+=cw
 
     w = we>0
     xi[w]/=we[w]
     return we,xi
-    
+@jit 
+def fast_cf(r1,w1,d1,r2,w2,d2,ang):
+    wd1 = d1*w1
+    wd2 = d2*w2
+    rp = abs(r1-r2[:,None])*sp.cos(ang/2)
+    rt = (r1+r2[:,None])*sp.sin(ang/2)
+    wd12 = wd1*wd2[:,None]
+    w12 = w1*w2[:,None]
+    w = (rp<rp_max) & (rt<rt_max)
+    rp = rp[w]
+    rt = rt[w]
+    wd12 = wd12[w]
+    w12 = w12[w]
+    bp = (rp/rp_max*np).astype(int)
+    bt = (rt/rt_max*nt).astype(int)
+    bins = bt + nt*bp
+    cd = sp.bincount(bins,weights=wd12)
+    cw = sp.bincount(bins,weights=w12)
+
+    return cw,cd
+
+
