@@ -55,7 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('--nproc', type = int, default = None, required=False,
                     help = 'number of processors')
 
-    parser.add_argument('--z-ref', type = float, default = 2.5, required=False,
+    parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
     parser.add_argument('--z-evol', type = int, default = 2.9, required=False,
