@@ -105,7 +105,7 @@ if __name__ == '__main__':
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
             if not args.no_project:
-                d.project
+                d.project()
         if not args.nspec is None:
             if ndata>args.nspec:break
     sys.stderr.write("\n")

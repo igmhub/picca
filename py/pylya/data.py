@@ -144,7 +144,6 @@ class delta(qso):
         de = f.fl/f.co/st(f.ll)-1
         ll = f.ll
         iv = f.iv/eta(f.ll)
-        z = 10**f.ll/constants.lya+1
         we = iv*f.co**2/(iv*f.co**2*var_lss(f.ll)+1)
         co = f.co
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de)
@@ -168,7 +167,7 @@ class delta(qso):
 
     def project(self):
 	mde = sp.average(self.de,weights=self.we)
-	mll = sp.average(self.ll,weights=self.ll)
+	mll = sp.average(self.ll,weights=self.we)
 	mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
 
 	self.de -= mde + mld * (self.ll-mll)
