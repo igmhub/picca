@@ -40,3 +40,7 @@ python bin/do_cf1d.py --in-dir deltas/ --out cf1d.fits.gz
 # then use it for wick
 python bin/do_wick.py --in-dir deltas/ --out t123.fits.gz --rej 0.999 --cf1d cf1d.fits.gz
 
+
+## use the export script to export to pyLyA fitter format
+
+python bin/export --data cf.fits.gz --dmat dmat.fits.gz --out cf-exp.out.gz

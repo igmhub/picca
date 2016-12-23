@@ -49,12 +49,8 @@ def cf(pix):
         for i,d1 in enumerate(data[ipix]):
             for d2 in d1.neighs:
                 ang = d1^d2
-                same_half_plate = False
-                if d1.plate == d2.plate:
-                    if d1.fid<=500 and d2.fid<=500:
-                        same_half_plate = True
-                    elif d1.fid>500 and d2.fid>500:
-                        same_half_plate = True
+                same_half_plate = (d1.plate == d2.plate) and\
+                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 cw,cd,crp,crt,cz = fast_cf(d1.z,d1.r_comov,d1.we,d1.de,d2.z,d2.r_comov,d2.we,d2.de,ang,same_half_plate)
             
                 xi[:len(cd)]+=cd
@@ -122,12 +118,8 @@ def dmat(pix):
             npairs += len(d1.neighs)
             npairs_used += w.sum()
             for d2 in sp.array(d1.neighs)[w]:
-                same_half_plate = False
-                if d1.plate == d2.plate:
-                    if d1.fid<=500 and d2.fid<=500:
-                        same_half_plate = True
-                    elif d1.fid>500 and d2.fid>500:
-                        same_half_plate = True
+                same_half_plate = (d1.plate == d2.plate) and\
+                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 ang = d1^d2
                 r2 = d2.r_comov
                 w2 = d2.we

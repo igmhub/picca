@@ -58,7 +58,7 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
-    parser.add_argument('--z-evol', type = int, default = 2.9, required=False,
+    parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
     parser.add_argument('--no-project', action="store_true", required=False,
@@ -88,8 +88,7 @@ if __name__ == '__main__':
     data = {}
     ndata = 0
     for i,f in enumerate(fi):
-        if i%10==0:
-            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
         dels = [delta.from_fitsio(h) for h in hdus[1:]]
         ndata+=len(dels)

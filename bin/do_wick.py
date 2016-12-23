@@ -62,7 +62,7 @@ if __name__ == '__main__':
     parser.add_argument('--rej', type = float, default = 1., required=False,
                     help = 'reference redshift')
 
-    parser.add_argument('--z-evol', type = int, default = 2.9, required=False,
+    parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
     parser.add_argument('--cf1d', type=str, required=True,
