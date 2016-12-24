@@ -24,9 +24,7 @@ def read_dlas(fdla):
 
     return dlas
 
-target_mobj = 500
-nside_min = 8
-def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False):
+def read_drq(drq,zmin,zmax,keep_bal):
     vac = fitsio.FITS(drq)
     zqso = vac[1]["Z_VI"][:] 
     thid = vac[1]["THING_ID"][:]
@@ -38,14 +36,12 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     plate = vac[1]["PLATE"][:]
     mjd = vac[1]["MJD"][:]
     fid = vac[1]["FIBERID"][:]
-
     ## sanity
     w = thid>0
-
-    w = w &  (zqso > zmin) & (zqso < zmax) 
+    w = w &  (zqso > zmin) & (zqso < zmax)
     if not keep_bal:
         w = w & (bal_flag == 0)
-    
+
     ra = ra[w] * sp.pi / 180
     dec = dec[w] * sp.pi / 180
     zqso = zqso[w]
@@ -54,6 +50,12 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     mjd = mjd[w]
     fid = fid[w]
     vac.close()
+    return ra,dec,zqso,thid,plate,mjd,fid
+
+target_mobj = 500
+nside_min = 8
+def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False):
+    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal)
 
     if mode == "pix":
         ## hardcoded for now, need to coordinate with Jose how to get this info

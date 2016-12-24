@@ -22,11 +22,11 @@ class qso:
 	self.thid = thid
 
     def __xor__(self,data):
-	if isinstance(data,list):
+	try:
 		x = sp.array([d.xcart for d in data])
 		y = sp.array([d.ycart for d in data])
 		z = sp.array([d.zcart for d in data])
-	else:
+        except:
 	    x = data.xcart
 	    y = data.ycart
 	    z = data.zcart

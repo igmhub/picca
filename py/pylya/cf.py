@@ -15,7 +15,6 @@ angmax = None
 nside = None
 
 counter = None
-lock = None
 ndata = None
 
 zref = None
