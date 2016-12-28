@@ -148,8 +148,6 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
     slw2 = (w2*dl2**2).sum()
 
     w = (rp<rp_max) & (rt<rt_max)
-    if same_half_plate:
-       w = w & (rp>0)
     bins = bins[w]
 
     n1 = len(l1)
@@ -158,7 +156,12 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
     ij = ij[w]
 
     we = w1[:,None]*w2
+    wsame = w
     we = we[w]
+    if same_half_plate:
+       wsame = rp[w]==0
+       we[wsame]=0
+
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
     eta1 = sp.zeros(np*nt*n1)

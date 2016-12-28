@@ -32,8 +32,8 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     for i in xrange(nda):
         sys.stderr.write("\rsmoothing {}".format(i))
         for j in range(i+1,nda):
-            idrp = int((rp[j]-rp[i])/drp)
-            idrt = int(abs(rt[i]-rt[j])/drt)
+            idrp = round(abs(rp[j]-rp[i])/drp)
+            idrt = round(abs(rt[i]-rt[j])/drt)
             if not (idrp,idrt) in dcor:
                 dcor[(idrp,idrt)]=0.
                 dncor[(idrp,idrt)]=0
@@ -44,8 +44,8 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     for i in xrange(nda):
         cor_smooth[i,i]=1.
         for j in range(i+1,nda):
-            idrp = int((rp[j]-rp[i])/drp)
-            idrt = int(abs(rt[i]-rt[j])/drt)
+            idrp = round(abs(rp[j]-rp[i])/drp)
+            idrt = round(abs(rt[i]-rt[j])/drt)
             cor_smooth[i,j]=dcor[(idrp,idrt)]/dncor[(idrp,idrt)]
             cor_smooth[j,i]=cor_smooth[i,j]
 
