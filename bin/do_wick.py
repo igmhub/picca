@@ -16,10 +16,7 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 def calc_t123(p):
     cf.fill_neighs(p)
-    sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./cf.npix,3)))
     tmp = cf.t123(p)
-    with lock:
-        counter.value += 1
     return tmp
 
 if __name__ == '__main__':
@@ -141,11 +138,12 @@ if __name__ == '__main__':
 
     cf.npix = len(data)
     cf.data = data
+    cf.ndata = ndata
     print "done"
 
-    counter = Value('i',0)
+    cf.counter = Value('i',0)
 
-    lock = Lock()
+    cf.lock = Lock()
     
     cpu_data = {}
     for i,p in enumerate(data.keys()):

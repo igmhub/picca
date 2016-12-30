@@ -38,7 +38,7 @@ if __name__ == '__main__':
     parser.add_argument('--nproc', type = int, default = None, required=False,
                     help = 'number of processors')
 
-    parser.add_argument('--no-project', action="store_true", required=False,
+    parser.add_argument('--no-project', action="store_true", required=True,
                     help = 'do not project out continuum fitting modes')
 
     parser.add_argument('--nspec', type=int,default=None, required=False,

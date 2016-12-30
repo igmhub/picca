@@ -227,6 +227,9 @@ def t123(pix):
     npairs_used = 0L
     for i,ipix in enumerate(pix):
         for d1 in data[ipix]:
+            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
+            with lock:
+                counter.value += 1
             v1 = v1d(d1.ll)
             w1 = d1.we
             c1d_1 = (w1*w1[:,None])*c1d(abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
@@ -245,9 +248,7 @@ def t123(pix):
                 r2 = d2.r_comov
                 z2 = 10**d2.ll/lambda_abs-1
 
-                print("calculating pair",d1.thid,d2.thid)
                 fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc)
-                print("done")
 
     return w123,t123_loc,npairs,npairs_used
             
