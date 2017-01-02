@@ -46,6 +46,9 @@ def cf(pix):
 
     for ipix in pix:
         for i,d1 in enumerate(data[ipix]):
+            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)))
+            with lock:
+                counter.value += 1
             for d2 in d1.neighs:
                 ang = d1^d2
                 same_half_plate = (d1.plate == d2.plate) and\
@@ -148,6 +151,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
     slw2 = (w2*dl2**2).sum()
 
     w = (rp<rp_max) & (rt<rt_max)
+
     bins = bins[w]
 
     n1 = len(l1)
@@ -156,11 +160,10 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
     ij = ij[w]
 
     we = w1[:,None]*w2
-    wsame = w
     we = we[w]
     if same_half_plate:
-       wsame = rp[w]==0
-       we[wsame]=0
+        w = bp[w]==0
+        we[w]=0
 
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
@@ -242,19 +245,21 @@ def t123(pix):
             for d2 in sp.array(d1.neighs)[w]:
                 ang = d1^d2
 
+                same_half_plate = (d1.plate == d2.plate) and\
+                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 v2 = v1d(d2.ll)
                 w2 = d2.we
                 c1d_2 = (w2*w2[:,None])*c1d(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
                 r2 = d2.r_comov
                 z2 = 10**d2.ll/lambda_abs-1
 
-                fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc)
+                fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate)
 
     return w123,t123_loc,npairs,npairs_used
             
 
 @jit
-def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc):
+def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
 
     n1 = len(r1)
     n2 = len(r2)
@@ -271,9 +276,11 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc):
     bt = (rt/rt_max*nt).astype(int)
     ba = bt + nt*bp
     we = w1[:,None]*w2
-    zw = zw1[:,None]*z2
+    zw = zw1[:,None]*zw2
 
     w = (rp<rp_max) & (rt<rt_max)
+    if same_half_plate:
+        w = w & (bp>0)
 
     bins = bins[w]
     ba = ba[w]

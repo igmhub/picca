@@ -16,9 +16,6 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 def corr_func(p):
     cf.fill_neighs(p)
     tmp = cf.cf(p)
-    with cf.lock:
-        cf.counter.value += 1
-    sys.stderr.write("\rcomputing xi: {}%".format(round(cf.counter.value*100./cf.npix,2)))
     return tmp
 
 if __name__ == '__main__':
@@ -112,6 +109,7 @@ if __name__ == '__main__':
 
     cf.npix = len(data)
     cf.data = data
+    cf.ndata=ndata
     print "done, npix = {}".format(cf.npix)
 
     cf.counter = Value('i',0)
