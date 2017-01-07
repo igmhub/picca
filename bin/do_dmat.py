@@ -93,8 +93,7 @@ if __name__ == '__main__':
     data = {}
     ndata = 0
     for i,f in enumerate(fi):
-        if i%10==0:
-            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
         dels = [delta.from_fitsio(h) for h in hdus[1:]]
         ndata+=len(dels)
@@ -142,7 +141,7 @@ if __name__ == '__main__':
     npairs_used=dm[:,3].sum(axis=0)
     dm=dm[:,1].sum(axis=0)
 
-    dm/=wdm[:,None]
+    dm/=wdm
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
