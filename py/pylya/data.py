@@ -23,15 +23,20 @@ class qso:
 
     def __xor__(self,data):
 	try:
-		x = sp.array([d.xcart for d in data])
-		y = sp.array([d.ycart for d in data])
-		z = sp.array([d.zcart for d in data])
+	    x = sp.array([d.xcart for d in data])
+	    y = sp.array([d.ycart for d in data])
+	    z = sp.array([d.zcart for d in data])
+
+            cos = x*self.xcart+y*self.ycart+z*self.zcart
+            w = cos>=1.
+            cos[w]=1.
         except:
 	    x = data.xcart
 	    y = data.ycart
 	    z = data.zcart
-
-	return sp.arccos(x*self.xcart+y*self.ycart+z*self.zcart)
+            cos = x*self.xcart+y*self.ycart+z*self.zcart
+        
+	return sp.arccos(cos)
 
 class forest(qso):
 

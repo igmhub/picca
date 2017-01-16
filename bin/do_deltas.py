@@ -115,7 +115,7 @@ if __name__ == '__main__':
                         d.add_dla(dla[0],dla[1])
 
     ## cuts
-    for p in data:
+    for p in data.keys():
         l = []
         for d in data[p]:
             if not hasattr(d,'ll') or len(d.ll) < args.npix_min:

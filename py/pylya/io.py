@@ -30,7 +30,11 @@ def read_drq(drq,zmin,zmax,keep_bal):
     thid = vac[1]["THING_ID"][:]
     ra = vac[1]["RA"][:]
     dec = vac[1]["DEC"][:]
-    bal_flag = vac[1]["BAL_FLAG_VI"][:]
+    try:
+        bal_flag = vac[1]["BAL_FLAG_VI"][:]
+    except:
+        print("BAL_FLAG_VI not found, ignoring BAL")
+        bal_flag = sp.zeros(len(dec))
 
     ## info of the primary observation
     plate = vac[1]["PLATE"][:]
@@ -129,7 +133,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,log=None):
             fin = in_dir + "/pix_{}.fits.gz".format(pix)
 	    h = fitsio.FITS(fin)
         except IOError:
-            print "error reading {}".format(p)
+            print "error reading {}".format(pix)
             return None
 
         pix_data=[]
