@@ -26,7 +26,11 @@ def read_dlas(fdla):
 
 def read_drq(drq,zmin,zmax,keep_bal):
     vac = fitsio.FITS(drq)
-    zqso = vac[1]["Z_VI"][:] 
+    try:
+        zqso = vac[1]["Z"][:] 
+    except:
+        print("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
+        zqso = vac[1]["Z_VI"][:] 
     thid = vac[1]["THING_ID"][:]
     ra = vac[1]["RA"][:]
     dec = vac[1]["DEC"][:]
