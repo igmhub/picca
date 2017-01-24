@@ -6,8 +6,8 @@ from dla import dla
 
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
-	self.ra = ra
-	self.dec = dec
+        self.ra = ra
+        self.dec = dec
         
         self.plate=plate
         self.mjd=mjd
@@ -18,25 +18,25 @@ class qso:
         self.ycart = sp.sin(ra)*sp.cos(dec)
         self.zcart = sp.sin(dec)
 
-	self.zqso = zqso
-	self.thid = thid
+        self.zqso = zqso
+        self.thid = thid
 
     def __xor__(self,data):
-	try:
-	    x = sp.array([d.xcart for d in data])
-	    y = sp.array([d.ycart for d in data])
-	    z = sp.array([d.zcart for d in data])
+        try:
+            x = sp.array([d.xcart for d in data])
+            y = sp.array([d.ycart for d in data])
+            z = sp.array([d.zcart for d in data])
 
             cos = x*self.xcart+y*self.ycart+z*self.zcart
             w = cos>=1.
             cos[w]=1.
         except:
-	    x = data.xcart
-	    y = data.ycart
-	    z = data.zcart
+            x = data.xcart
+            y = data.ycart
+            z = data.zcart
             cos = x*self.xcart+y*self.ycart+z*self.zcart
         
-	return sp.arccos(cos)
+        return sp.arccos(cos)
 
 class forest(qso):
 
@@ -55,11 +55,11 @@ class forest(qso):
 
 
     def __init__(self,h,thid,ra,dec,zqso,plate,mjd,fid,mode="pix"):
-	qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
+        qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
 
-	ll = sp.array(h["loglam"][:])
+        ll = sp.array(h["loglam"][:])
         if mode=="pix":
-    	    fl = sp.array(h["coadd"][:])
+            fl = sp.array(h["coadd"][:])
         elif mode=="spec":
             fl = sp.array(h["flux"][:])
         else:
@@ -185,9 +185,9 @@ class delta(qso):
         return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de)
 
     def project(self):
-	mde = sp.average(self.de,weights=self.we)
-	mll = sp.average(self.ll,weights=self.we)
-	mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
+        mde = sp.average(self.de,weights=self.we)
+        mll = sp.average(self.ll,weights=self.we)
+        mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
 
-	self.de -= mde + mld * (self.ll-mll)
+        self.de -= mde + mld * (self.ll-mll)
 

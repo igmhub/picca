@@ -140,19 +140,19 @@ if __name__ == '__main__':
         pool = Pool()
         print "iteration: ", it
         nfit = 0
-	data_fit_cont = pool.map(cont_fit, data.values())
-	for i, p in enumerate(data):
+        data_fit_cont = pool.map(cont_fit, data.values())
+        for i, p in enumerate(data):
             data[p] = data_fit_cont[i]
 
-	print "done"
+        print "done"
         pool.close()
 
         if it < nit-1:
-       	    ll_rest, mc = prep_del.mc(data)
-	    forest.mean_cont = interp1d(ll_rest, forest.mean_cont(ll_rest) * mc, fill_value = "extrapolate")
+            ll_rest, mc = prep_del.mc(data)
+            forest.mean_cont = interp1d(ll_rest, forest.mean_cont(ll_rest) * mc, fill_value = "extrapolate")
             ll,eta,vlss = prep_del.var_lss(data)
-	    forest.eta = interp1d(ll, eta, fill_value = "extrapolate")
-	    forest.var_lss = interp1d(ll,vlss, fill_value = "extrapolate")
+            forest.eta = interp1d(ll, eta, fill_value = "extrapolate")
+            forest.var_lss = interp1d(ll,vlss, fill_value = "extrapolate")
 
     res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
     ll_st,st = prep_del.stack(data)
