@@ -9,6 +9,8 @@ requirements:
 * numba
 * multiprocessing
 
+add pyLyA/py/ to your PYTHONPATH
+
 example run over 1000 spectra (the DLA catalog is not required):
 
 ### delta field
