@@ -26,6 +26,7 @@ class cosmo:
 
         self.r_comoving = interpolate.interp1d(z,chi)
         self.hubble = interpolate.interp1d(z,hubble)
+        self.r_2_z = interpolate.interp1d(chi,z)
 
 ### Absorber names and wavelengths
 absorber_IGM = {

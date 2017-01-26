@@ -60,10 +60,10 @@ if __name__ == '__main__':
     parser.add_argument('--nproc', type = int, default = None, required=False,
                     help = 'number of processors')
 
-    parser.add_argument('--z-min-obj', type = float, default = 1.8, required=False,
+    parser.add_argument('--z-min-obj', type = float, default = None, required=False,
                     help = 'min redshift for object field')
 
-    parser.add_argument('--z-max-obj', type = float, default = 5., required=False,
+    parser.add_argument('--z-max-obj', type = float, default = None, required=False,
                     help = 'max redshift for object field')
 
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
@@ -97,6 +97,8 @@ if __name__ == '__main__':
 
     xcf.angmax = sp.arcsin(xcf.rt_max/(cosmo.r_comoving(constants.boss_lambda_min/args.lambda_abs-1)+xcf.rp_min))
 
+    z_min_pix = 1.e6
+    z_max_pix = 0.
     fi = glob.glob(args.in_dir+"/*.fits.gz")
     dels = {}
     ndels = 0
@@ -115,6 +117,8 @@ if __name__ == '__main__':
             dels[p].append(d)
 
             z = 10**d.ll/args.lambda_abs-1
+            z_min_pix = sp.amin( sp.append([z_min_pix],z) )
+            z_max_pix = sp.amax( sp.append([z_max_pix],z) )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1+z)/(1+args.z_ref))**(args.z_evol_del-1)
@@ -128,6 +132,18 @@ if __name__ == '__main__':
     xcf.dels = dels
     xcf.ndels = ndels
 
+
+    ### Find the redshift range
+    if (args.z_min_obj is None):
+        d_min_pix = cosmo.r_comoving(z_min_pix)
+        d_min_obj = d_min_pix+xcf.rp_min
+        args.z_min_obj = cosmo.r_2_z(d_min_obj)
+        sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
+    if (args.z_max_obj is None):
+        d_max_pix = cosmo.r_comoving(z_max_pix)
+        d_max_obj = d_max_pix+xcf.rp_max
+        args.z_max_obj = cosmo.r_2_z(d_max_obj)
+        sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
 
     objs = {}
     ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,args.z_min_obj,args.z_max_obj,keep_bal=True)
