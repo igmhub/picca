@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
-    xcf.angmax = sp.arcsin(xcf.rt_max/cosmo.r_comoving(constants.boss_lambda_min/args.lambda_abs-1))
+    xcf.angmax = sp.arcsin(xcf.rt_max/(cosmo.r_comoving(constants.boss_lambda_min/args.lambda_abs-1)+xcf.rp_min))
 
     fi = glob.glob(args.in_dir+"/*.fits.gz")
     dels = {}
