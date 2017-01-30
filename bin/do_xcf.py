@@ -182,11 +182,13 @@ if __name__ == '__main__':
     rps=cfs[:,2,:]
     rts=cfs[:,3,:]
     zs=cfs[:,4,:]
+    nbs=cfs[:,5,:]
     cfs=cfs[:,1,:]
 
     rp = (rps*wes).sum(axis=0)/wes.sum(axis=0)
     rt = (rts*wes).sum(axis=0)/wes.sum(axis=0)
     z = (zs*wes).sum(axis=0)/wes.sum(axis=0)
+    nb = (nbs*wes).sum(axis=0)/wes.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
@@ -195,7 +197,7 @@ if __name__ == '__main__':
     head['NT']=xcf.nt
     head['NP']=xcf.np
 
-    out.write([rp,rt,z],names=['RP','RT','Z'],header=head)
+    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
     out.write([wes,cfs],names=['WE','DA'])
     out.close()
 
