@@ -182,7 +182,7 @@ if __name__ == '__main__':
     rps=cfs[:,2,:]
     rts=cfs[:,3,:]
     zs=cfs[:,4,:]
-    nbs=cfs[:,5,:]
+    nbs=cfs[:,5,:].astype(sp.int64)
     cfs=cfs[:,1,:]
 
     rp = (rps*wes).sum(axis=0)/wes.sum(axis=0)
