@@ -46,6 +46,7 @@ def xcf(pix):
     rp = sp.zeros(np*nt)
     rt = sp.zeros(np*nt)
     z = sp.zeros(np*nt)
+    nb = sp.zeros(np*nt,dtype=sp.int64)
 
     for ipix in pix:
         for i,d in enumerate(dels[ipix]):
@@ -57,20 +58,21 @@ def xcf(pix):
             zqso = [q.zqso for q in d.neighs]
             we_qso = [q.we for q in d.neighs]
 
-            cw,cd,crp,crt,cz = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
+            cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
             
             xi[:len(cd)]+=cd
             we[:len(cw)]+=cw
             rp[:len(crp)]+=crp
-            rt[:len(crp)]+=crt
-            z[:len(crp)]+=cz
+            rt[:len(crt)]+=crt
+            z[:len(cz)]+=cz
+            nb[:len(cnb)]+=cnb
 
     w = we>0
     xi[w]/=we[w]
     rp[w]/=we[w]
     rt[w]/=we[w]
     z[w]/=we[w]
-    return we,xi,rp,rt,z
+    return we,xi,rp,rt,z,nb
 @jit 
 def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     rp = (r1[:,None]-r2)*sp.cos(ang/2)
@@ -96,8 +98,9 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     crp = sp.bincount(bins,weights=rp*we)
     crt = sp.bincount(bins,weights=rt*we)
     cz = sp.bincount(bins,weights=z*we)
+    cnb = sp.bincount(bins)
 
-    return cw,cd,crp,crt,cz
+    return cw,cd,crp,crt,cz,cnb
 
 
 def dmat(pix):
