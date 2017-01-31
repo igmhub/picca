@@ -63,9 +63,9 @@ def xcf(pix):
             xi[:len(cd)]+=cd
             we[:len(cw)]+=cw
             rp[:len(crp)]+=crp
-            rt[:len(crp)]+=crt
-            z[:len(crp)]+=cz
-            nb[:len(crp)]+=cnb
+            rt[:len(crt)]+=crt
+            z[:len(cz)]+=cz
+            nb[:len(cnb)]+=cnb
 
     w = we>0
     xi[w]/=we[w]
@@ -98,7 +98,7 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     crp = sp.bincount(bins,weights=rp*we)
     crt = sp.bincount(bins,weights=rt*we)
     cz = sp.bincount(bins,weights=z*we)
-    cnb = sp.bincount(bins,weights=sp.ones(z.size))
+    cnb = sp.bincount(bins)
 
     return cw,cd,crp,crt,cz,cnb
 

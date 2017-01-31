@@ -188,7 +188,7 @@ if __name__ == '__main__':
     rp = (rps*wes).sum(axis=0)/wes.sum(axis=0)
     rt = (rts*wes).sum(axis=0)/wes.sum(axis=0)
     z = (zs*wes).sum(axis=0)/wes.sum(axis=0)
-    nb = (nbs*wes).sum(axis=0)/wes.sum(axis=0)
+    nb = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
