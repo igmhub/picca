@@ -185,9 +185,13 @@ if __name__ == '__main__':
     nbs=cfs[:,5,:].astype(sp.int64)
     cfs=cfs[:,1,:]
 
-    rp = (rps*wes).sum(axis=0)/wes.sum(axis=0)
-    rt = (rts*wes).sum(axis=0)/wes.sum(axis=0)
-    z = (zs*wes).sum(axis=0)/wes.sum(axis=0)
+    cut      = (wes.sum(axis=0)>0.)
+    rp       = (rps*wes).sum(axis=0)
+    rp[cut] /= wes.sum(axis=0)[cut]
+    rt       = (rts*wes).sum(axis=0)
+    rt[cut] /= wes.sum(axis=0)[cut]
+    z        = (zs*wes).sum(axis=0)
+    z[cut]  /= wes.sum(axis=0)[cut]
     nb = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
