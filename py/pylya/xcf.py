@@ -58,14 +58,15 @@ def xcf(pix):
             zqso = [q.zqso for q in d.neighs]
             we_qso = [q.we for q in d.neighs]
 
-            cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
+            if (d.neighs.size != 0):
+                cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
             
-            xi[:len(cd)]+=cd
-            we[:len(cw)]+=cw
-            rp[:len(crp)]+=crp
-            rt[:len(crt)]+=crt
-            z[:len(cz)]+=cz
-            nb[:len(cnb)]+=cnb
+                xi[:len(cd)]+=cd
+                we[:len(cw)]+=cw
+                rp[:len(crp)]+=crp
+                rt[:len(crt)]+=crt
+                z[:len(cz)]+=cz
+                nb[:len(cnb)]+=cnb
 
     w = we>0
     xi[w]/=we[w]
