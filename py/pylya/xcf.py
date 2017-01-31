@@ -34,6 +34,9 @@ def fill_neighs(pix):
             neighs = [q for p in npix for q in objs[p] if q.thid != d.thid]
             ang = d^neighs
             w = ang<angmax
+            low_dist = ( d.r_comov[0]  - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) <rp_max
+            hig_dist = ( d.r_comov[-1] - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) >rp_min
+            w = w & low_dist & hig_dist
             neighs = sp.array(neighs)[w]
             d.neighs = neighs
 
