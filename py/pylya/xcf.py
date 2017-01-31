@@ -46,7 +46,7 @@ def xcf(pix):
     rp = sp.zeros(np*nt)
     rt = sp.zeros(np*nt)
     z = sp.zeros(np*nt)
-    nb = sp.zeros(np*nt)
+    nb = sp.zeros(np*nt,dtype=sp.int64)
 
     for ipix in pix:
         for i,d in enumerate(dels[ipix]):
