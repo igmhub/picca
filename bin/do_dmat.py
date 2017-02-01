@@ -5,6 +5,7 @@ import glob
 import healpy
 import sys
 from scipy import random 
+from scipy.interpolate import interp1d
 
 from pylya import constants
 from pylya import cf
@@ -13,9 +14,9 @@ from pylya.data import delta
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 
-def corr_func(p):
+def calc_dmat(p):
     cf.fill_neighs(p)
-    tmp = cf.cf(p)
+    tmp = cf.dmat(p)
     return tmp
 
 if __name__ == '__main__':
@@ -46,7 +47,7 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
 
-    parser.add_argument('--nside', type = int, default = 16, required=False,
+    parser.add_argument('--nside', type = int, default = 8, required=False,
                     help = 'healpix nside')
 
     parser.add_argument('--nproc', type = int, default = None, required=False,
@@ -55,19 +56,24 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
+    parser.add_argument('--rej', type = float, default = 1., required=False,
+                    help = 'reference redshift')
+
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
-    parser.add_argument('--no-project', action="store_true", required=False,
-                    help = 'do not project out continuum fitting modes')
-
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
+
+    parser.add_argument('--no-project', action="store_true", required=False,
+                    help = 'do not project out continuum fitting modes')
 
     args = parser.parse_args()
 
     if args.nproc is None:
         args.nproc = cpu_count()/2
+
+    print "nproc",args.nproc
 
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
@@ -76,6 +82,8 @@ if __name__ == '__main__':
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
+    cf.lambda_abs = args.lambda_abs
+    cf.rej = args.rej
 
     cosmo = constants.cosmo(args.fid_Om)
 
@@ -98,7 +106,6 @@ if __name__ == '__main__':
             data[p].append(d)
 
             z = 10**d.ll/args.lambda_abs-1
-            d.z = z
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
             if not args.no_project:
@@ -109,41 +116,45 @@ if __name__ == '__main__':
 
     cf.npix = len(data)
     cf.data = data
-    cf.ndata=ndata
-    print "done, npix = {}".format(cf.npix)
+    cf.ndata = ndata
+    print "done"
 
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
+    
     cpu_data = {}
-    for p in data.keys():
-        cpu_data[p] = [p]
+    for i,p in enumerate(data.keys()):
+        ip = i%args.nproc
+        if not ip in cpu_data:
+            cpu_data[ip] = []
+        cpu_data[ip].append(p)
 
+    random.seed(0)
     pool = Pool(processes=args.nproc)
-
-    cfs = pool.map(corr_func,cpu_data.values())
+    dm = pool.map(calc_dmat,cpu_data.values())
     pool.close()
 
-    cfs=sp.array(cfs)
-    wes=cfs[:,0,:]
-    rps=cfs[:,2,:]
-    rts=cfs[:,3,:]
-    zs=cfs[:,4,:]
-    cfs=cfs[:,1,:]
+    dm = sp.array(dm)
+    wdm =dm[:,0].sum(axis=0)
+    npairs=dm[:,2].sum(axis=0)
+    npairs_used=dm[:,3].sum(axis=0)
+    dm=dm[:,1].sum(axis=0)
 
-    rp = (rps*wes).sum(axis=0)/wes.sum(axis=0)
-    rt = (rts*wes).sum(axis=0)/wes.sum(axis=0)
-    z = (zs*wes).sum(axis=0)/wes.sum(axis=0)
+    dm/=wdm
+
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
+    head['REJ']=args.rej
     head['RPMAX']=cf.rp_max
     head['RTMAX']=cf.rt_max
     head['NT']=cf.nt
     head['NP']=cf.np
+    head['NPROR']=npairs
+    head['NPUSED']=npairs_used
 
-    out.write([rp,rt,z],names=['RP','RT','Z'],header=head)
-    out.write([wes,cfs],names=['WE','DA'])
+    out.write([wdm,dm],names=['WDM','DM'],header=head)
     out.close()
 
     

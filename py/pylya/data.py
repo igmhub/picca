@@ -2,37 +2,41 @@ import scipy as sp
 from astropy.io import fits
 from pylya import constants
 import iminuit
-from scipy.interpolate import interp1d
 from dla import dla
 
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
-	self.ra = ra
-	self.dec = dec
+        self.ra = ra
+        self.dec = dec
         
         self.plate=plate
         self.mjd=mjd
         self.fid=fiberid
 
+        ## cartesian coordinates
+        self.xcart = sp.cos(ra)*sp.cos(dec)
+        self.ycart = sp.sin(ra)*sp.cos(dec)
+        self.zcart = sp.sin(dec)
 
-        self.x = sp.cos(ra)*sp.cos(dec)
-        self.y = sp.sin(ra)*sp.cos(dec)
-        self.z = sp.sin(dec)
-
-	self.zqso = zqso
-	self.thid = thid
+        self.zqso = zqso
+        self.thid = thid
 
     def __xor__(self,data):
-	if isinstance(data,list):
-		x = sp.array([d.x for d in data])
-		y = sp.array([d.y for d in data])
-		z = sp.array([d.z for d in data])
-	else:
-	    x = data.x
-	    y = data.y
-	    z = data.z
+        try:
+            x = sp.array([d.xcart for d in data])
+            y = sp.array([d.ycart for d in data])
+            z = sp.array([d.zcart for d in data])
 
-	return sp.arccos(x*self.x+y*self.y+z*self.z)
+            cos = x*self.xcart+y*self.ycart+z*self.zcart
+            w = cos>=1.
+            cos[w]=1.
+        except:
+            x = data.xcart
+            y = data.ycart
+            z = data.zcart
+            cos = x*self.xcart+y*self.ycart+z*self.zcart
+        
+        return sp.arccos(cos)
 
 class forest(qso):
 
@@ -50,34 +54,46 @@ class forest(qso):
     mean_cont = None
 
 
-    def __init__(self,h,thid,ra,dec,zqso,plate,mjd,fid):
-	qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
+    def __init__(self,h,thid,ra,dec,zqso,plate,mjd,fid,mode="pix"):
+        qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
 
-	ll = sp.array(h["loglam"][:])
-	fl = sp.array(h["coadd"][:])
+        ll = sp.array(h["loglam"][:])
+        if mode=="pix":
+            fl = sp.array(h["coadd"][:])
+        elif mode=="spec":
+            fl = sp.array(h["flux"][:])
+        else:
+            raise Exception('open mode unknown '+mode)
         iv = sp.array(h["ivar"][:])*(sp.array(h["and_mask"][:])==0)
 
-        w=(ll>forest.lmin) & (ll<forest.lmax) & (ll-sp.log10(1+self.zqso)>forest.lmin_rest) & (ll-sp.log10(1+self.zqso)<forest.lmax_rest)
+        ## rebin
+
+        bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)
+        w = bins>=0
+        fl=fl[w]
+        iv =iv[w]
+        bins=bins[w]
+
+        ll = forest.lmin + sp.unique(bins)*forest.dll
+        civ = sp.bincount(bins,weights=iv)
+        w=civ>0
+        civ=civ[bins.min():]
+        cfl = sp.bincount(bins,weights=iv*fl)
+        cfl = cfl[bins.min():]
+        w=civ>0
+        cfl[w]/=civ[w]
+        iv = civ
+        fl = cfl
+
+
+        ## cut to specified range
+        w= (ll<forest.lmax) & (ll-sp.log10(1+self.zqso)>forest.lmin_rest) & (ll-sp.log10(1+self.zqso)<forest.lmax_rest)
         w = w & (iv>0)
         if w.sum()==0:return
         
         ll=ll[w]
         fl=fl[w]
         iv=iv[w]
-
-        ## rebin
-        bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        civ=sp.bincount(bins,weights=iv)
-        w=civ>0
-        civ=civ[w]
-
-        c=sp.bincount(bins,weights=ll*iv)
-        c=c[w]
-        ll = c/civ
-        c=sp.bincount(bins,weights=fl*iv)
-        c=c[w]
-        fl=c/civ
-        iv = civ
 
         self.T_dla = None
         self.ll = ll
@@ -101,7 +117,10 @@ class forest(qso):
     def cont_fit(self):
         lmax = forest.lmax_rest+sp.log10(1+self.zqso)
         lmin = forest.lmin_rest+sp.log10(1+self.zqso)
-        mc = forest.mean_cont(self.ll-sp.log10(1+self.zqso))
+        try:
+            mc = forest.mean_cont(self.ll-sp.log10(1+self.zqso))
+        except ValueError:
+            raise Exception
 
         if not self.T_dla is None:
             mc*=self.T_dla
@@ -144,7 +163,6 @@ class delta(qso):
         de = f.fl/f.co/st(f.ll)-1
         ll = f.ll
         iv = f.iv/eta(f.ll)
-        z = 10**f.ll/constants.lya+1
         we = iv*f.co**2/(iv*f.co**2*var_lss(f.ll)+1)
         co = f.co
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de)
@@ -167,9 +185,9 @@ class delta(qso):
         return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de)
 
     def project(self):
-	mde = sp.average(self.de,weights=self.we)
-	mll = sp.average(self.ll,weights=self.ll)
-	mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
+        mde = sp.average(self.de,weights=self.we)
+        mll = sp.average(self.ll,weights=self.we)
+        mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
 
-	self.de -= mde + mld * (self.ll-mll)
+        self.de -= mde + mld * (self.ll-mll)
 
