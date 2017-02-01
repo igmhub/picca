@@ -29,7 +29,6 @@ if __name__ == '__main__':
     parser.add_argument('--in-dir', type = str, default = None, required=True,
                         help = 'data directory')
 
-
     parser.add_argument('--rp-max', type = float, default = 200, required=False,
                         help = 'max rp')
 
