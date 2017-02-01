@@ -81,6 +81,8 @@ if __name__ == '__main__':
     parser.add_argument('--keep-bal',action='store_true',required=False,
             help='do not reject BALs')
 
+    parser.add_argument('--nproc', type = int, default = None, required=False,
+                    help = 'number of processors')
 
     args = parser.parse_args()
 
@@ -145,7 +147,7 @@ if __name__ == '__main__':
 
     log.close()
     for it in range(nit):
-        pool = Pool()
+        pool = Pool(processes=args.nproc)
         print "iteration: ", it
         nfit = 0
         data_fit_cont = pool.map(cont_fit, data.values())
