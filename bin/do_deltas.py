@@ -39,10 +39,10 @@ if __name__ == '__main__':
     parser.add_argument('--nspec',type = int,default=None,required=False,
             help='number of spectra to fit')
 
-    parser.add_argument('--zqso-min',type = float,default=2.1,required=False,
+    parser.add_argument('--zqso-min',type = float,default=None,required=False,
             help='lower limit on quasar redshift')
 
-    parser.add_argument('--zqso-max',type = float,default=3.5,required=False,
+    parser.add_argument('--zqso-max',type = float,default=None,required=False,
             help='upper limit on quasar redshift')
 
     parser.add_argument('--log',type = str,default='input.log',required=False,
@@ -94,6 +94,14 @@ if __name__ == '__main__':
     forest.dll = args.rebin*1e-4
     ## minumum dla transmission
     forest.dla_mask = args.dla_mask
+
+    ### Find the redshift range
+    if (args.zqso_min is None):
+        args.zqso_min = args.lambda_min/args.lambda_rest_max -1.
+        print(" zqso_min = {}".format(args.zqso_min) )
+    if (args.zqso_max is None):
+        args.zqso_max = args.lambda_max/args.lambda_rest_min -1.
+        print(" zqso_max = {}".format(args.zqso_max) )
 
     forest.var_lss = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin),0.2 + sp.zeros(2),fill_value="extrapolate")
     forest.eta = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin), sp.ones(2),fill_value="extrapolate")
