@@ -120,10 +120,9 @@ if __name__ == '__main__':
     
 
     ### Veto sky lines
-    veto_line = None
     if (args.veto_line_file is not None):
-        veto_line = []
-        if True:
+        try:
+            veto_line = []
             with open(args.veto_line_file, 'r') as f:
                 loop = True
                 for l in f:
@@ -136,9 +135,8 @@ if __name__ == '__main__':
             for p in data:
                 for d in data[p]:
                     d.veto_lines(veto_line)
-        #except:
-        #    print(" Error while reading veto_line file {}".format(args.veto_line_file))
-        #    veto_line = None
+        except:
+            print(" Error while reading veto_line file {}".format(args.veto_line_file))
 
 
     if not args.dla_vac is None:
