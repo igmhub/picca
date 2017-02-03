@@ -100,6 +100,18 @@ class forest(qso):
         self.fl = fl
         self.iv = iv
 
+    def veto_lines(self,line):
+        if not hasattr(self,'ll'):
+            return
+
+        w = (self.ll<line[0,0]) | (self.ll>line[0,1])
+        for l in line[1:]:
+            w = w & ( (self.ll<l[0]) | (self.ll>l[1]) )
+
+        self.ll = self.ll[w]
+        self.fl = self.fl[w]
+        self.iv = self.iv[w]
+
     def add_dla(self,zabs,nhi):
         if not hasattr(self,'ll'):
             return

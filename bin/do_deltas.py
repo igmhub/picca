@@ -84,6 +84,9 @@ if __name__ == '__main__':
     parser.add_argument('--nproc', type = int, default = None, required=False,
                     help = 'number of processors')
 
+    parser.add_argument('--veto-line-file',type = str,default=None,required=False,
+            help='Path to file to veto lines')
+
     args = parser.parse_args()
 
     ## init forest class
@@ -115,6 +118,29 @@ if __name__ == '__main__':
     data,ndata = io.read_data(args.in_dir,args.drq,args.mode,\
             zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal)
     
+
+    ### Veto sky lines
+    veto_line = None
+    if (args.veto_line_file is not None):
+        veto_line = []
+        if True:
+            with open(args.veto_line_file, 'r') as f:
+                loop = True
+                for l in f:
+                    l = l.split()
+                    veto_line += [ [float(l[1]),float(l[2])] ]
+            f.closed
+            veto_line = sp.log10(sp.asarray(veto_line))
+            if (veto_line.size==0): raise
+
+            for p in data:
+                for d in data[p]:
+                    d.veto_lines(veto_line)
+        #except:
+        #    print(" Error while reading veto_line file {}".format(args.veto_line_file))
+        #    veto_line = None
+
+
     if not args.dla_vac is None:
         print("adding dlas")
         dlas = io.read_dlas(args.dla_vac)
