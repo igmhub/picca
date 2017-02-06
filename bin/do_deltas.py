@@ -87,6 +87,9 @@ if __name__ == '__main__':
     parser.add_argument('--mask-file',type = str,default=None,required=False,
             help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max  (OBS or RF)')
 
+    parser.add_argument('--multiplicative-flux-calibration',type = str,default=None,required=False,
+            help='Path to file to previously produced do_delta.py file to correct for multiplicative errors in the flux calibration')
+
     args = parser.parse_args()
 
     ## init forest class
@@ -111,6 +114,21 @@ if __name__ == '__main__':
     forest.var_lss = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin),0.2 + sp.zeros(2),fill_value="extrapolate")
     forest.eta = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin), sp.ones(2),fill_value="extrapolate")
     forest.mean_cont = interp1d(forest.lmin_rest+sp.arange(2)*(forest.lmax_rest-forest.lmin_rest),1+sp.zeros(2))
+
+    ### Correct multiplicative flux calibration
+    if (args.multiplicative_flux_calibration is not None):
+        try:
+            vac = fitsio.FITS(args.multiplicative_flux_calibration)
+            head = vac[1].read_header()
+
+            ll_st = vac[1]['loglam'][:]
+            st    = vac[1]['stack'][:]
+            w     = (st!=0.)
+            forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate")
+
+        except:
+            print(" Error while reading multiplicative_flux_calibration file {}".format(args.multiplicative_flux_calibration))
+            sys.exit(1)
 
     nit = args.nit
 

@@ -46,6 +46,10 @@ class forest(qso):
     lmax_rest = None
     rebin = None
     dll = None
+
+    ### Correction function for multiplicative errors in calibration
+    correc_flux = None
+
     ## minumum dla transmission
     dla_mask = None
 
@@ -94,6 +98,11 @@ class forest(qso):
         ll=ll[w]
         fl=fl[w]
         iv=iv[w]
+
+        if not self.correc_flux is None:
+            correction = self.correc_flux(ll)
+            fl /= correction
+            iv *= correction**2
 
         self.T_dla = None
         self.ll = ll
