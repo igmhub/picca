@@ -124,6 +124,8 @@ if __name__ == '__main__':
     w = wes>0
     cfs[w]/=wes[w]
     v1d = sp.diag(cfs).copy()
+    wv1d = sp.diag(wes).copy()
+    nv1d = sp.diag(nbs).copy()
     cor = cfs
     norm = sp.sqrt(v1d*v1d[:,None])
     w = norm>0
@@ -158,7 +160,7 @@ if __name__ == '__main__':
     head['LLMIN']=forest.lmin
     head['DLL']=forest.dll
 
-    out.write([v1d,c1d,nc1d,nb1d],names=['v1d','c1d','nc1d','nb1d'],header=head)
+    out.write([v1d,wv1d,nv1d,c1d,nc1d,nb1d],names=['v1d','wv1d','nv1d','c1d','nc1d','nb1d'],header=head)
     out.close()
 
     print "all done"
