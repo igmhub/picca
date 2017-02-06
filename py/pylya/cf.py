@@ -207,6 +207,8 @@ n1d = None
 def cf1d(pix):
     xi1d = sp.zeros(n1d**2)
     we1d = sp.zeros(n1d**2)
+    nb1d = sp.zeros(n1d**2,dtype=sp.int64)
+
     for d in data[pix]:
         bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
         bins = bins + n1d*bins[:,None]
@@ -214,10 +216,11 @@ def cf1d(pix):
         we = d.we
         xi1d[bins] += wde * wde[:,None]
         we1d[bins] += we*we[:,None]
+        nb1d[bins] += 1
 
     w = we1d>0
     xi1d[w]/=we1d[w]
-    return we1d,xi1d
+    return we1d,xi1d,nb1d
 
 v1d = None
 c1d = None
