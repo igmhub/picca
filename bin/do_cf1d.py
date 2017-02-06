@@ -101,8 +101,8 @@ if __name__ == '__main__':
 
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]
-    cfs=cfs[:,1,:]
     nbs=cfs[:,2,:]
+    cfs=cfs[:,1,:]
     wes = sp.array(wes)
     cfs = sp.array(cfs)
     nbs = sp.array(nbs).astype(sp.int64)
