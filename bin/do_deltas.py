@@ -145,6 +145,7 @@ if __name__ == '__main__':
                     d.mask(mask_obs=usr_mask_obs , mask_RF=usr_mask_RF)
         except:
             print(" Error while reading mask_file file {}".format(args.mask_file))
+            sys.exit(1)
 
 
     if not args.dla_vac is None:
