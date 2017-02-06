@@ -29,6 +29,7 @@ def var_lss(data):
     nlss = 10
     eta = sp.zeros(nlss)
     vlss = sp.zeros(nlss)
+    nb_pixels = sp.zeros(nlss)
     ll = forest.lmin + (sp.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
     nwe = 100
@@ -90,10 +91,11 @@ def var_lss(data):
 
         eta[i] = mig.values["eta"]
         vlss[i] = mig.values["vlss"]
-        print eta[i],vlss[i],mig.fval
+        nb_pixels[i] = var_del[i*nwe:(i+1)*nwe].size
+        print eta[i],vlss[i],mig.fval, nb_pixels[i]
 
 
-    return ll,eta,vlss
+    return ll,eta,vlss,nb_pixels
 
     
 def stack(data,delta=False):
@@ -122,5 +124,5 @@ def stack(data,delta=False):
 
     w=wst>0
     st[w]/=wst[w]
-    return ll,st
+    return ll,st, wst
 

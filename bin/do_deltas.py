@@ -193,16 +193,16 @@ if __name__ == '__main__':
         if it < nit-1:
             ll_rest, mc, wmc = prep_del.mc(data)
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
-            ll,eta,vlss = prep_del.var_lss(data)
-            forest.eta = interp1d(ll, eta, fill_value = "extrapolate")
-            forest.var_lss = interp1d(ll,vlss, fill_value = "extrapolate")
+            ll,eta,vlss,nb_pixels = prep_del.var_lss(data)
+            forest.eta = interp1d(ll[nb_pixels>0.], eta[nb_pixels>0.], fill_value = "extrapolate")
+            forest.var_lss = interp1d(ll[nb_pixels>0.],vlss[nb_pixels>0.], fill_value = "extrapolate")
 
     res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
-    ll_st,st = prep_del.stack(data)
+    ll_st,st,wst = prep_del.stack(data)
     res.write([ll_st,st],names=['loglam','stack'])
     res.write([ll,eta,vlss],names=['loglam','eta','var_lss'])
     res.write([ll_rest,forest.mean_cont(ll_rest)],names=['loglam_rest','mean_cont'])
-    st = interp1d(ll_st,st,kind="nearest",fill_value="extrapolate")
+    st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     res.close()
     deltas = {}
     for p in data:
