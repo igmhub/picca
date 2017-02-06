@@ -100,13 +100,15 @@ class forest(qso):
         self.fl = fl
         self.iv = iv
 
-    def veto_lines(self,line):
+    def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):
             return
 
-        w = (self.ll<line[0,0]) | (self.ll>line[0,1])
-        for l in line[1:]:
+        w = sp.ones(self.ll.size).astype(bool)
+        for l in mask_obs:
             w = w & ( (self.ll<l[0]) | (self.ll>l[1]) )
+        for l in mask_RF:
+            w = w & ( (self.ll-sp.log10(1.+self.zqso)<l[0]) | (self.ll-sp.log10(1.+self.zqso)>l[1]) )
 
         self.ll = self.ll[w]
         self.fl = self.fl[w]
