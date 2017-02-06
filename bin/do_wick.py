@@ -99,12 +99,13 @@ if __name__ == '__main__':
     llmin = head['LLMIN']
     llmax = head['LLMAX']
     dll = head['DLL']
+    nb1d = h[1]['nb1d'][:]
     cf.v1d = h[1]['v1d'][:]
     ll = llmin + dll*sp.arange(len(cf.v1d))
-    cf.v1d = interp1d(ll,cf.v1d,kind='nearest')
+    cf.v1d = interp1d(ll[nb1d>0.],cf.v1d[nb1d>0.],kind='nearest')
     cf.c1d = h[1]['c1d'][:]
 
-    cf.c1d = interp1d(ll-llmin,cf.c1d,kind='nearest')
+    cf.c1d = interp1d((ll-llmin)[nb1d>0.],cf.c1d[nb1d>0.],kind='nearest')
     h.close()
 
     cf.angmax = sp.arcsin(cf.rt_max/cosmo.r_comoving(constants.boss_lambda_min/args.lambda_abs-1))

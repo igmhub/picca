@@ -102,18 +102,22 @@ if __name__ == '__main__':
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]
     cfs=cfs[:,1,:]
+    nbs=cfs[:,2,:]
     wes = sp.array(wes)
     cfs = sp.array(cfs)
+    nbs = sp.array(nbs).astype(sp.int64)
 
     print "multiplying"
     cfs *= wes
     cfs = cfs.sum(axis=0)
     wes = wes.sum(axis=0)
+    nbs = nbs.sum(axis=0)
 
     print "done",cfs.shape,wes.shape
 
     cfs = cfs.reshape(n1d,n1d)
     wes = wes.reshape(n1d,n1d)
+    nbs = nbs.reshape(n1d,n1d)
 
     print "rebinning"
  
@@ -127,6 +131,7 @@ if __name__ == '__main__':
 
     c1d = sp.zeros(n1d)
     nc1d = sp.zeros(n1d)
+    nb1d = sp.zeros(n1d,dtype=sp.int64)
     bins = sp.arange(n1d)
 
     dbin = bins-bins[:,None]
@@ -134,10 +139,14 @@ if __name__ == '__main__':
     dbin = dbin[w]
     cor = cor[w]
     wes = wes[w]
+    nbs = nbs[w]
     c = sp.bincount(dbin,weights = cor*wes)
     c1d[:len(c)] = c
     c = sp.bincount(dbin,weights=wes)
     nc1d[:len(c)] = c
+    c = sp.bincount(dbin,weights=nbs)
+    nb1d[:len(c)] = c
+
     w=nc1d>0
     c1d[w]/=nc1d[w]
 
@@ -149,7 +158,7 @@ if __name__ == '__main__':
     head['LLMIN']=forest.lmin
     head['DLL']=forest.dll
 
-    out.write([v1d,c1d],names=['v1d','c1d'],header=head)
+    out.write([v1d,c1d,nc1d,nb1d],names=['v1d','c1d','nc1d','nb1d'],header=head)
     out.close()
 
     print "all done"

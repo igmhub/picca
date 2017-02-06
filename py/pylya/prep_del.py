@@ -91,7 +91,7 @@ def var_lss(data):
 
         eta[i] = mig.values["eta"]
         vlss[i] = mig.values["vlss"]
-        nb_pixels[i] = var_del[i*nwe:(i+1)*nwe].size
+        nb_pixels[i] = count[i*nwe:(i+1)*nwe].sum()
         print eta[i],vlss[i],mig.fval, nb_pixels[i]
 
 
