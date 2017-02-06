@@ -23,7 +23,7 @@ def mc(data):
     w=wcont>0
     mcont[w]/=wcont[w]
     mcont/=mcont.mean()
-    return ll,mcont
+    return ll,mcont,wcont
 
 def var_lss(data):
     nlss = 10

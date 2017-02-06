@@ -84,6 +84,9 @@ if __name__ == '__main__':
     parser.add_argument('--nproc', type = int, default = None, required=False,
                     help = 'number of processors')
 
+    parser.add_argument('--mask-file',type = str,default=None,required=False,
+            help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max  (OBS or RF)')
+
     args = parser.parse_args()
 
     ## init forest class
@@ -115,6 +118,36 @@ if __name__ == '__main__':
     data,ndata = io.read_data(args.in_dir,args.drq,args.mode,\
             zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal)
     
+
+    ### Veto sky lines
+    if (args.mask_file is not None):
+        try:
+            usr_mask_obs = []
+            usr_mask_RF  = []
+            with open(args.mask_file, 'r') as f:
+                loop = True
+                for l in f:
+                    if (l[0]=='#'): continue
+                    l = l.split()
+                    if (l[3]=='OBS'):
+                        usr_mask_obs += [ [float(l[1]),float(l[2])] ]
+                    elif (l[3]=='RF'):
+                        usr_mask_RF  += [ [float(l[1]),float(l[2])] ]
+                    else:
+                        raise
+            f.closed
+            usr_mask_obs = sp.log10(sp.asarray(usr_mask_obs))
+            usr_mask_RF  = sp.log10(sp.asarray(usr_mask_RF))
+            if ( usr_mask_obs.size+usr_mask_RF.size==0): raise
+
+            for p in data:
+                for d in data[p]:
+                    d.mask(mask_obs=usr_mask_obs , mask_RF=usr_mask_RF)
+        except:
+            print(" Error while reading mask_file file {}".format(args.mask_file))
+            sys.exit(1)
+
+
     if not args.dla_vac is None:
         print("adding dlas")
         dlas = io.read_dlas(args.dla_vac)
@@ -158,8 +191,8 @@ if __name__ == '__main__':
         pool.close()
 
         if it < nit-1:
-            ll_rest, mc = prep_del.mc(data)
-            forest.mean_cont = interp1d(ll_rest, forest.mean_cont(ll_rest) * mc, fill_value = "extrapolate")
+            ll_rest, mc, wmc = prep_del.mc(data)
+            forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
             ll,eta,vlss = prep_del.var_lss(data)
             forest.eta = interp1d(ll, eta, fill_value = "extrapolate")
             forest.var_lss = interp1d(ll,vlss, fill_value = "extrapolate")
