@@ -207,6 +207,38 @@ class delta(qso):
         fid = head['FIBERID']
         return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de)
 
+    @staticmethod
+    def from_image(f):
+        h=fitsio.FITS(f)
+        de = h[0].read()
+        iv = h[1].read()
+        ll = h[2].read()
+        ra = h[3]["RA"][:]*sp.pi/180.
+        dec = h[3]["DEC"][:]*sp/180.
+        z = h[3]["Z"][:]
+        plate = h[3]["PLATE"][:]
+        mjd = h[3]["MJD"][:]
+        fid = h[3]["FIBER"]
+        thid = h[3]["THING_ID"][:]
+
+        nspec = h[0].read().shape[1]
+        deltas=[]
+        for i in range(nspec):
+            if i%100==0:
+                sys.stderr.write("\rreading deltas {} of {}".format(i,nspec))
+            delt = de[:,i]
+            ivar = iv[:,i]
+            w = iv>0
+            delt=delt[w]
+            ivar=ivar[w]
+            lam = ll[w]
+            
+            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt))
+
+        h.close()
+        return deltas
+
+
     def project(self):
         mde = sp.average(self.de,weights=self.we)
         mll = sp.average(self.ll,weights=self.we)

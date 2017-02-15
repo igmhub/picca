@@ -61,6 +61,9 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
+    parser.add_argument('--from-image', action="store_true", required=False,
+                    help = 'use image format to read deltas')
+
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
@@ -81,30 +84,36 @@ if __name__ == '__main__':
 
     cf.angmax = sp.arcsin(cf.rt_max/cosmo.r_comoving(constants.boss_lambda_min/args.lambda_abs-1))
 
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
     data = {}
     ndata = 0
-    for i,f in enumerate(fi):
+    dels = []
+    if not args.from_image:
+        fi = glob.glob(args.in_dir+"/*.fits.gz")
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
         dels = [delta.from_fitsio(h) for h in hdus[1:]]
         ndata+=len(dels)
-        phi = [d.ra for d in dels]
-        th = [sp.pi/2-d.dec for d in dels]
-        pix = healpy.ang2pix(cf.nside,th,phi)
-        for d,p in zip(dels,pix):
-            if not p in data:
-                data[p]=[]
-            data[p].append(d)
-
-            z = 10**d.ll/args.lambda_abs-1
-            d.z = z
-            d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
-            if not args.no_project:
-                d.project()
+        hdus.close()
         if not args.nspec is None:
             if ndata>args.nspec:break
+    else:
+        dels = delta.from_image(args.in_dir)
+
+    phi = [d.ra for d in dels]
+    th = [sp.pi/2-d.dec for d in dels]
+    pix = healpy.ang2pix(cf.nside,th,phi)
+    for d,p in zip(dels,pix):
+        if not p in data:
+            data[p]=[]
+        data[p].append(d)
+
+        z = 10**d.ll/args.lambda_abs-1
+        d.z = z
+        d.r_comov = cosmo.r_comoving(z)
+        d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+        if not args.no_project:
+            d.project()
+
     sys.stderr.write("\n")
 
     cf.npix = len(data)
