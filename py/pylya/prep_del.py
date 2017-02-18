@@ -81,7 +81,7 @@ def var_lss(data):
 
     for i in range(nlss):
         def chi2(eta,vlss):
-            v = var_del[i*nwe:(i+1)*nwe]-eta*var-vlss
+            v = var_del[i*nwe:(i+1)*nwe]-var/eta-vlss
             dv2 = var2_del[i*nwe:(i+1)*nwe]
             n = count[i*nwe:(i+1)*nwe]
             w=(dv2>0) & (n>100)
@@ -111,7 +111,7 @@ def stack(data,delta=False):
             if delta:
                 we = d.we
             else:
-                iv = d.iv/eta
+                iv = d.iv*eta
                 we = iv*d.co**2/(iv*d.co**2*var_lss + 1)
             if delta:
                 de = d.de

@@ -157,7 +157,7 @@ class forest(qso):
 
         def chi2(p0,p1):
             m = model(p0,p1)
-            iv = self.iv/eta
+            iv = self.iv*eta
             we = iv/(iv*var_lss*m**2+1)
             v = (self.fl-m)**2*we
             return v.sum()-sp.log(we).sum()
@@ -185,7 +185,7 @@ class delta(qso):
 
         de = f.fl/f.co/st(f.ll)-1
         ll = f.ll
-        iv = f.iv/eta(f.ll)
+        iv = f.iv*eta(f.ll)
         we = iv*f.co**2/(iv*f.co**2*var_lss(f.ll)+1)
         co = f.co
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de)
