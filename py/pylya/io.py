@@ -137,8 +137,12 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,log=None):
             fin = in_dir + "/pix_{}.fits.gz".format(pix)
 	    h = fitsio.FITS(fin)
         except IOError:
-            print "error reading {}".format(pix)
-            return None
+            try:
+                fin = in_dir + "/pix_{}.fits".format(pix)
+                h = fitsio.FITS(fin)
+            except IOError:
+                print "error reading {}".format(pix)
+                return None
 
         pix_data=[]
         for (t, r, d, z, p, m, f) in zip(thid, ra, dec, zqso, plate, mjd, fid):
