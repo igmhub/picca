@@ -18,7 +18,7 @@ class cosmo:
         dz = zmax/nbins
         z=sp.array(range(nbins))*dz
         hubble = H0*sp.sqrt(Om*(1+z)**3+Ok*(1+z)**2+1-Ok-Om)
-        c = 299792.4583
+        c = 299792.458
 
         chi=sp.zeros(nbins)
         for i in range(1,nbins):
