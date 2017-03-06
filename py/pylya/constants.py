@@ -27,11 +27,12 @@ class cosmo:
         self.r_comoving = interpolate.interp1d(z,chi)
 
         ## da here is the comoving angular diameter distance
-        self.da = interpolate.interp1d(z,chi)
+        da = chi
         if Ok<0:
-            self.da = sp.sin(H0*sp.sqrt(-Ok)/c*chi)/(H0*sp.sqrt(-Ok)/c)
+            da = sp.sin(H0*sp.sqrt(-Ok)/c*chi)/(H0*sp.sqrt(-Ok)/c)
         if Ok>0:
-            self.da = sp.sinh(H0*sp.sqrt(Ok)/c*chi)/(H0*sp.sqrt(Ok)/c)
+            da = sp.sinh(H0*sp.sqrt(Ok)/c*chi)/(H0*sp.sqrt(Ok)/c)
+        self.da = interpolate.interp1d(z,da)
         self.hubble = interpolate.interp1d(z,hubble)
         self.r_2_z = interpolate.interp1d(chi,z)
 
