@@ -1,0 +1,16 @@
+#
+# File to veto lines either in observed or rest frame
+#
+# lambda_obs lines are in
+# http://classic.sdss.org/dr6/algorithms/linestable.html
+#
+# lambda is given in Angstrom
+#
+# name  lambda_min  lambda_max  ('OBS' or 'RF')
+#
+absorption_K   3931.0 3937.0 OBS
+absorption_H   3966.0 3972.0 OBS
+sky_lines_OI   5573.0 5585.0 OBS
+absorption_NaD 5885.0 5902.0 OBS
+sky_lines_O    6296.0 6311.0 OBS
+sky_lines_O    6320.0 6334.0 OBS
