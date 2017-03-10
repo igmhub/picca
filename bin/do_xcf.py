@@ -95,8 +95,6 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
-    xcf.angmax = sp.arcsin(xcf.rt_max/(cosmo.r_comoving(constants.boss_lambda_min/args.lambda_abs-1)+xcf.rp_min))
-
     z_min_pix = 1.e6
     z_max_pix = 0.
     fi = glob.glob(args.in_dir+"/*.fits.gz")
@@ -151,6 +149,8 @@ if __name__ == '__main__':
     th = sp.pi/2-dec
     pix = healpy.ang2pix(xcf.nside,th,phi)
     print("reading qsos")
+
+    xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
 
     upix = sp.unique(pix)
     for i,ipix in enumerate(upix):

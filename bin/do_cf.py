@@ -82,8 +82,6 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
-    cf.angmax = sp.arcsin(cf.rt_max/cosmo.r_comoving(constants.boss_lambda_min/args.lambda_abs-1))
-
     data = {}
     ndata = 0
     dels = []
@@ -100,6 +98,7 @@ if __name__ == '__main__':
     else:
         dels = delta.from_image(args.in_dir)
 
+    z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1
     phi = [d.ra for d in dels]
     th = [sp.pi/2-d.dec for d in dels]
     pix = healpy.ang2pix(cf.nside,th,phi)
@@ -109,11 +108,14 @@ if __name__ == '__main__':
         data[p].append(d)
 
         z = 10**d.ll/args.lambda_abs-1
+        z_min_pix = sp.amin( sp.append([z_min_pix],z) )
         d.z = z
         d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
         if not args.no_project:
             d.project()
+
+    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
     sys.stderr.write("\n")
 
