@@ -87,8 +87,9 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
-    cf.angmax = sp.arcsin(cf.rt_max/cosmo.r_comoving(constants.boss_lambda_min/args.lambda_abs-1))
 
+
+    z_min_pix = 1.e6
     fi = glob.glob(args.in_dir+"/*.fits.gz")
     data = {}
     ndata = 0
@@ -106,6 +107,7 @@ if __name__ == '__main__':
             data[p].append(d)
 
             z = 10**d.ll/args.lambda_abs-1
+            z_min_pix = sp.amin( sp.append([z_min_pix],z) )
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
             if not args.no_project:
@@ -113,6 +115,8 @@ if __name__ == '__main__':
         if not args.nspec is None:
             if ndata>args.nspec:break
     sys.stderr.write("\n")
+
+    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
     cf.npix = len(data)
     cf.data = data
