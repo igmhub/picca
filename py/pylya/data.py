@@ -123,14 +123,18 @@ class forest(qso):
         self.fl = self.fl[w]
         self.iv = self.iv[w]
 
-    def add_dla(self,zabs,nhi):
+    def add_dla(self,zabs,nhi,mask=None):
         if not hasattr(self,'ll'):
             return
         if self.T_dla is None:
             self.T_dla = sp.ones(len(self.ll))
 
         self.T_dla *= dla(self,zabs,nhi).t
-        w=self.T_dla > forest.dla_mask
+
+        w = (self.T_dla>forest.dla_mask)
+        if not mask is None:
+            for l in mask:
+                w = w & ( (self.ll-sp.log10(1.+zabs)<l[0]) | (self.ll-sp.log10(1.+zabs)>l[1]) )
 
         self.iv = self.iv[w]
         self.ll = self.ll[w]

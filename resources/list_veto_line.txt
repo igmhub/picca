@@ -1,12 +1,13 @@
 #
 # File to veto lines either in observed or rest frame
+#	or even rest frame of DLA
 #
 # lambda_obs lines are in
 # http://classic.sdss.org/dr6/algorithms/linestable.html
 #
 # lambda is given in Angstrom
 #
-# name  lambda_min  lambda_max  ('OBS' or 'RF')
+# name  lambda_min  lambda_max  ('OBS' or 'RF' or 'RF_DLA')
 #
 absorption_K   3931.0 3937.0 OBS
 absorption_H   3966.0 3972.0 OBS

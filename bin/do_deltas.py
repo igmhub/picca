@@ -137,33 +137,45 @@ if __name__ == '__main__':
             zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal)
     
 
-    ### Veto sky lines
+    ### Get the lines to veto
+    usr_mask_obs    = None
+    usr_mask_RF     = None
+    usr_mask_RF_DLA = None
     if (args.mask_file is not None):
         try:
-            usr_mask_obs = []
-            usr_mask_RF  = []
+            usr_mask_obs    = []
+            usr_mask_RF     = []
+            usr_mask_RF_DLA = []
             with open(args.mask_file, 'r') as f:
                 loop = True
                 for l in f:
                     if (l[0]=='#'): continue
                     l = l.split()
                     if (l[3]=='OBS'):
-                        usr_mask_obs += [ [float(l[1]),float(l[2])] ]
+                        usr_mask_obs    += [ [float(l[1]),float(l[2])] ]
                     elif (l[3]=='RF'):
-                        usr_mask_RF  += [ [float(l[1]),float(l[2])] ]
+                        usr_mask_RF     += [ [float(l[1]),float(l[2])] ]
+                    elif (l[3]=='RF_DLA'):
+                        usr_mask_RF_DLA += [ [float(l[1]),float(l[2])] ]
                     else:
                         raise
             f.closed
-            usr_mask_obs = sp.log10(sp.asarray(usr_mask_obs))
-            usr_mask_RF  = sp.log10(sp.asarray(usr_mask_RF))
-            if ( usr_mask_obs.size+usr_mask_RF.size==0): raise
+            usr_mask_obs    = sp.log10(sp.asarray(usr_mask_obs))
+            usr_mask_RF     = sp.log10(sp.asarray(usr_mask_RF))
+            usr_mask_RF_DLA = sp.log10(sp.asarray(usr_mask_RF_DLA))
+            if usr_mask_RF_DLA.size==0:
+                usr_mask_RF_DLA = None
 
-            for p in data:
-                for d in data[p]:
-                    d.mask(mask_obs=usr_mask_obs , mask_RF=usr_mask_RF)
         except:
             print(" Error while reading mask_file file {}".format(args.mask_file))
             sys.exit(1)
+
+    ### Veto lines
+    if not usr_mask_obs is None:
+        if ( usr_mask_obs.size+usr_mask_RF.size!=0):
+            for p in data:
+                for d in data[p]:
+                    d.mask(mask_obs=usr_mask_obs , mask_RF=usr_mask_RF)
 
 
     if not args.dla_vac is None:
@@ -173,7 +185,7 @@ if __name__ == '__main__':
             for d in data[p]:
                 if dlas.has_key(d.thid):
                     for dla in dlas[d.thid]:
-                        d.add_dla(dla[0],dla[1])
+                        d.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
 
     ## cuts
     for p in data.keys():
