@@ -6,7 +6,7 @@ from scipy import linalg
 
 ## mean continuum
 def mc(data):
-    nmc=100
+    nmc = int((forest.lmax_rest-forest.lmin_rest)/forest.dll)+1
     mcont = sp.zeros(nmc)
     wcont = sp.zeros(nmc)
     ll = forest.lmin_rest + (sp.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
