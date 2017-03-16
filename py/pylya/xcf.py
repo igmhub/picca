@@ -104,6 +104,73 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     return cw,cd,crp,crt,cz,cnb
 
 
+
+def metal_grid(pix):
+
+    we = sp.zeros(np*nt)
+    rp = sp.zeros(np*nt)
+    rt = sp.zeros(np*nt)
+    z  = sp.zeros(np*nt)
+    nb = sp.zeros(np*nt,dtype=sp.int64)
+
+    for ipix in pix:
+        for i,d in enumerate(dels[ipix]):
+            with lock:
+                counter.value +=1
+            sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
+            ang = d^d.neighs
+            rc_qso = [q.r_comov for q in d.neighs]
+            zqso   = [q.zqso for q in d.neighs]
+            we_qso = [q.we for q in d.neighs]
+
+            if (d.neighs.size != 0):
+                cw,crp,crt,cz,cnb = fast_metal_grid(d.r_comov,d.we,zqso,rc_qso,we_qso,ang,d.z_metal,d.r_comov_metal)
+            
+                we[:len(cw)]  += cw
+                rp[:len(crp)] += crp
+                rt[:len(crt)] += crt
+                z[:len(cz)]   += cz
+                nb[:len(cnb)] += cnb
+
+    w = we>0
+    rp[w] /= we[w]
+    rt[w] /= we[w]
+    z[w]  /= we[w]
+
+    return we,rp,rt,z,nb
+@jit 
+def fast_metal_grid(r1,w1,z2,r2,w2,ang,z1_metal,r1_metal):
+
+    rp = (r1[:,None]-r2)*sp.cos(ang/2.)
+    rt = (r1[:,None]+r2)*sp.sin(ang/2.)
+
+    w   = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
+    rp  = rp[w]
+    rt  = rt[w]
+
+    bp   = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
+    bt   = (rt/rt_max*nt).astype(int)
+    bins = bt + nt*bp
+
+    rp_metal = (r1_metal[:,None]-r2)*sp.cos(ang/2.)
+    rt_metal = (r1_metal[:,None]+r2)*sp.sin(ang/2.)
+    z_metal  = (z1_metal[:,None]+z2)/2.
+    we       = w1[:,None]*w2
+
+    rp_metal = rp_metal[w]
+    rt_metal = rt_metal[w]
+    z_metal  = z_metal[w]
+    we       = we[w]
+
+    cw  = sp.bincount(bins,weights=we)
+    crp = sp.bincount(bins,weights=rp_metal*we)
+    crt = sp.bincount(bins,weights=rt_metal*we)
+    cz  = sp.bincount(bins,weights=z_metal*we)
+    cnb = sp.bincount(bins)
+
+    return cw,crp,crt,cz,cnb
+
+
 def dmat(pix):
 
     dm = sp.zeros(np*nt*nt*np)
