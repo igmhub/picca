@@ -164,6 +164,31 @@ if __name__ == '__main__':
     sys.stderr.write("\n")
     xcf.objs = objs
 
+    ### Remove pixels if too far from objects
+    if ( (z_min_pix<sp.amin(zqso)) or (sp.amax(zqso)<z_max_pix) ):
+
+        d_min_pix_cut = cosmo.r_comoving(sp.amin(zqso))+xcf.rp_min
+        z_min_pix_cut = cosmo.r_2_z(d_min_pix_cut)
+
+        d_max_pix_cut = cosmo.r_comoving(sp.amax(zqso))+xcf.rp_max
+        z_max_pix_cut = cosmo.r_2_z(d_max_pix_cut)
+
+        if ( (z_min_pix<z_min_pix_cut) or (z_max_pix_cut<z_max_pix) ):
+            for pix in xcf.dels:
+                for i in xrange(len(xcf.dels[pix])-1,-1,-1):
+                    d = xcf.dels[pix][i]
+                    z = 10**d.ll/args.lambda_abs-1.
+                    w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)
+                    if (z[w].size==0):
+                        del xcf.dels[pix][i]
+                        xcf.ndels -= 1
+                    else:
+                        d.de = d.de[w]
+                        d.we = d.we[w]
+                        d.ll = d.ll[w]
+                        d.co = d.co[w]
+                        d.z  = d.z[w]
+                        d.r_comov = d.r_comov[w]
 
     xcf.counter = Value('i',0)
 
