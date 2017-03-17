@@ -25,7 +25,7 @@ def mc(data):
     mcont/=mcont.mean()
     return ll,mcont,wcont
 
-def var_lss(data):
+def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     nlss = 10
     eta = sp.zeros(nlss)
     vlss = sp.zeros(nlss)
@@ -86,7 +86,7 @@ def var_lss(data):
             n = count[i*nwe:(i+1)*nwe]
             w=(dv2>0) & (n>100)
             return sp.sum(v[w]**2/dv2[w])
-        mig = iminuit.Minuit(chi2,forced_parameters=("eta","vlss"),eta=1.,vlss=0.1,error_eta=0.05,error_vlss=0.05,errordef=1.,print_level=0,limit_eta=(0.5,1.5),limit_vlss=(0.0,0.6))
+        mig = iminuit.Minuit(chi2,forced_parameters=("eta","vlss"),eta=1.,vlss=0.1,error_eta=0.05,error_vlss=0.05,errordef=1.,print_level=0,limit_eta=eta_lim,limit_vlss=vlss_lim)
         mig.migrad()
 
         eta[i] = mig.values["eta"]
