@@ -193,6 +193,7 @@ if __name__ == '__main__':
     dm=dm[:,1].sum(axis=0)
 
     dm/=wdm
+    dm[sp.isnan(dm)] = 0.
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
