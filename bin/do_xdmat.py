@@ -64,8 +64,8 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
-    parser.add_argument('--rej', type = float, default = 1., required=False,
-                    help = 'reference redshift')
+    parser.add_argument('--rej', type = float, default = 0., required=False,
+                    help = 'fraction rejected: 0=no rejection, 1=all rejection')
 
     parser.add_argument('--z-evol-del', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
