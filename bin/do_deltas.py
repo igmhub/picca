@@ -87,7 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('--mask-file',type = str,default=None,required=False,
             help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max  (OBS or RF)')
 
-    parser.add_argument('--multiplicative-flux-calibration',type = str,default=None,required=False,
+    parser.add_argument('--flux-calib',type = str,default=None,required=False,
             help='Path to file to previously produced do_delta.py file to correct for multiplicative errors in the flux calibration')
 
     parser.add_argument('--eta-min',type = float,default=0.5,required=False,
