@@ -192,8 +192,8 @@ if __name__ == '__main__':
     npairs_used=dm[:,3].sum(axis=0)
     dm=dm[:,1].sum(axis=0)
 
-    dm/=wdm
-    dm[sp.isnan(dm)] = 0.
+    w = wdm>0.
+    dm[:,w] /= wdm[w]
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
