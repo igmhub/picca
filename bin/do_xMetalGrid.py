@@ -78,9 +78,6 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol-obj', type = float, default = 1., required=False,
                     help = 'exponent of the redshift evolution of the object field')
 
-    parser.add_argument('--no-project', action="store_true", required=False,
-                    help = 'do not project out continuum fitting modes')
-
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
@@ -125,8 +122,6 @@ if __name__ == '__main__':
             d.we *= ((1+z)/(1+args.z_ref))**(args.z_evol_del-1)
             d.z_metal = 10**d.ll/args.lambda_abs_metal-1.
             d.r_comov_metal = cosmo.r_comoving(d.z_metal)
-            if not args.no_project:
-                d.project()
         if not args.nspec is None:
             if ndels>args.nspec:break
 
