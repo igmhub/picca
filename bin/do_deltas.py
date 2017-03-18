@@ -87,8 +87,18 @@ if __name__ == '__main__':
     parser.add_argument('--mask-file',type = str,default=None,required=False,
             help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max  (OBS or RF)')
 
-    parser.add_argument('--multiplicative-flux-calibration',type = str,default=None,required=False,
+    parser.add_argument('--flux-calib',type = str,default=None,required=False,
             help='Path to file to previously produced do_delta.py file to correct for multiplicative errors in the flux calibration')
+
+    parser.add_argument('--eta-min',type = float,default=0.5,required=False,
+            help='lower limit for eta')
+    parser.add_argument('--eta-max',type = float,default=1.5,required=False,
+            help='upper limit for eta')
+
+    parser.add_argument('--vlss-min',type = float,default=0.,required=False,
+            help='lower limit for variance LSS')
+    parser.add_argument('--vlss-max',type = float,default=0.3,required=False,
+            help='upper limit for variance LSS')
 
     args = parser.parse_args()
 
@@ -223,7 +233,7 @@ if __name__ == '__main__':
         if it < nit-1:
             ll_rest, mc, wmc = prep_del.mc(data)
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
-            ll,eta,vlss,nb_pixels = prep_del.var_lss(data)
+            ll,eta,vlss,nb_pixels = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
             forest.eta = interp1d(ll[nb_pixels>0.], eta[nb_pixels>0.], fill_value = "extrapolate")
             forest.var_lss = interp1d(ll[nb_pixels>0.],vlss[nb_pixels>0.], fill_value = "extrapolate")
 
