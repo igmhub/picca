@@ -67,7 +67,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
     if mode == "pix":
         ## hardcoded for now, need to coordinate with Jose how to get this info
-        nside = 64
+        nside = 8
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
     elif mode == "spec" or mode =="corrected-spec":
         nside = 256
@@ -146,11 +146,17 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,log=None):
 
         pix_data=[]
         for (t, r, d, z, p, m, f) in zip(thid, ra, dec, zqso, plate, mjd, fid):
-            if not str(t) in h:
+            if not t in h[0][:]:
                 log.write("{} not found in file {}\n".format(t,fin))
                 continue
-        
-            d = forest(h[str(t)], t, r, d, z, p, m, f)
+
+            idx = sp.where(h[0][:]==t)[0][0]
+            loglam  = h[1][:]
+            flux    = h[2][:,idx]
+            ivar    = h[3][:,idx]
+            andmask = h[4][:,idx]
+            spec_data = sp.array(zip(loglam,flux,ivar,andmask))
+            d = forest(spec_data, t, r, d, z, p, m, f)
 
             log.write("{} read\n".format(t))
             pix_data.append(d)
