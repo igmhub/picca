@@ -65,7 +65,7 @@ if __name__ == '__main__':
                     help = 'reference redshift')
 
     parser.add_argument('--rej', type = float, default = 1., required=False,
-                    help = 'reference redshift')
+                    help = 'fraction rejected: 0=no rejection, 1=all rejection')
 
     parser.add_argument('--z-evol-del', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
@@ -217,7 +217,8 @@ if __name__ == '__main__':
     npairs_used=dm[:,3].sum(axis=0)
     dm=dm[:,1].sum(axis=0)
 
-    dm/=wdm
+    w = wdm>0.
+    dm[:,w] /= wdm[w]
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
