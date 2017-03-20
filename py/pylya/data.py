@@ -58,18 +58,8 @@ class forest(qso):
     mean_cont = None
 
 
-    def __init__(self,h,thid,ra,dec,zqso,plate,mjd,fid,mode="pix"):
+    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
-
-        ll = sp.array(h["loglam"][:])
-        if mode=="pix":
-            fl = sp.array(h["coadd"][:])
-        elif mode=="spec":
-            fl = sp.array(h["flux"][:])
-        else:
-            raise Exception('open mode unknown '+mode)
-        iv = sp.array(h["ivar"][:])*(sp.array(h["and_mask"][:])==0)
-
         ## rebin
 
         bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)

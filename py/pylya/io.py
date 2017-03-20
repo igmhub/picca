@@ -3,6 +3,7 @@ import scipy as sp
 import healpy
 import glob
 import sys
+import time 
 
 from pylya.data import forest
 
@@ -29,7 +30,7 @@ def read_drq(drq,zmin,zmax,keep_bal):
     try:
         zqso = vac[1]["Z"][:] 
     except:
-        print("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
+        sys.stderr.write("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)\n")
         zqso = vac[1]["Z_VI"][:] 
     thid = vac[1]["THING_ID"][:]
     ra = vac[1]["RA"][:]
@@ -37,7 +38,7 @@ def read_drq(drq,zmin,zmax,keep_bal):
     try:
         bal_flag = vac[1]["BAL_FLAG_VI"][:]
     except:
-        print("BAL_FLAG_VI not found, ignoring BAL")
+        sys.stderr.write("BAL_FLAG_VI not found, ignoring BAL\n")
         bal_flag = sp.zeros(len(dec))
 
     ## info of the primary observation
@@ -66,8 +67,18 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal)
 
     if mode == "pix":
-        ## hardcoded for now, need to coordinate with Jose how to get this info
-        nside = 64
+        try:
+            fin = in_dir + "/master.fits.gz"
+	    h = fitsio.FITS(fin)
+        except IOError:
+            try:
+                fin = in_dir + "/master.fits"
+                h = fitsio.FITS(fin)
+            except IOError:
+                print "error reading master"
+                sys.exit(1)
+        nside = h[1].read_header()['NSIDE']
+        h.close()
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
     elif mode == "spec" or mode =="corrected-spec":
         nside = 256
@@ -75,12 +86,14 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         mobj = sp.bincount(pixs).sum()/len(sp.unique(pixs))
 
         ## determine nside such that there are 1000 objs per pixel on average
-        print("determining nside")
+        sys.stderr.write("determining nside\n")
         while mobj<target_mobj and nside >= nside_min:
             nside /= 2
             pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
             mobj = sp.bincount(pixs).sum()/len(sp.unique(pixs))
-        print("nside = {} -- mean #obj per pixel = {}".format(nside,mobj))
+        sys.stderr.write("nside = {} -- mean #obj per pixel = {}\n".format(nside,mobj))
+        if log is not None:
+            log.write("nside = {} -- mean #obj per pixel = {}\n".format(nside,mobj))
 
     data ={}
     ndata = 0
@@ -92,11 +105,15 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         w = pixs == pix
         ## read all hiz qsos
         if mode == "pix":
+            t0 = time.time()
             pix_data = read_from_pix(in_dir,pix,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w],log=log)
+            read_time=time.time()-t0
         elif mode == "spec" or mode =="corrected-spec":
+            t0 = time.time()
             pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w],mode=mode,log=log)
+            read_time=time.time()-t0
         if not pix_data is None:
-            sys.stderr.write("\r{} read from pix {}, {} {}".format(len(pix_data),pix,i,len(upix)))
+            sys.stderr.write("{} read from pix {}, {} {} in {} secs per spectrum\n".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
         if not pix_data is None and len(pix_data)>0:
             data[pix] = pix_data
             ndata += len(pix_data)
@@ -104,9 +121,6 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         if not nspec is None:
             if ndata > nspec:break
 	
- #       sys.stderr.write("\rread {} pixels of {}".format(i,len(sp.unique(pixs[s]))))
-    print ""
-
     return data,ndata
 
 def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,mode,log=None):
@@ -127,7 +141,10 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,mode,log=None):
             continue
 
         log.write("{} read\n".format(fin))
-        d = forest(h[1], t, r, d, z, p, m, f,mode="spec")
+        ll = h[1]["loglam"][:]
+        fl = h[1]["flux"][:]
+        iv = h[1]["ivar"][:]*(h[1]["and_mask"]==0)
+        d = forest(ll,fl,iv, t, r, d, z, p, m, f)
         pix_data.append(d)
         h.close()
     return pix_data
@@ -144,13 +161,23 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,log=None):
                 print "error reading {}".format(pix)
                 return None
 
+        ## fill log
+        if log is not None:
+            for t in thid:
+                if t not in h[0][:]:
+                    log.write("{} missing from pixel {}\n".format(t,pix))
+                    sys.stderr.write("{} missing from pixel {}\n".format(t,pix))
+
         pix_data=[]
+        thid_list=list(h[0][:])
+        thid2idx = {t:thid_list.index(t) for t in thid if t in thid_list}
+        loglam  = h[1][:]
+        flux = h[2].read()
+        ivar = h[3].read()
+        andmask = h[4].read()
         for (t, r, d, z, p, m, f) in zip(thid, ra, dec, zqso, plate, mjd, fid):
-            if not str(t) in h:
-                log.write("{} not found in file {}\n".format(t,fin))
-                continue
-        
-            d = forest(h[str(t)], t, r, d, z, p, m, f)
+            idx = thid2idx[t]
+            d = forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f)
 
             log.write("{} read\n".format(t))
             pix_data.append(d)

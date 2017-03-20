@@ -126,9 +126,9 @@ if __name__ == '__main__':
     forest.mean_cont = interp1d(forest.lmin_rest+sp.arange(2)*(forest.lmax_rest-forest.lmin_rest),1+sp.zeros(2))
 
     ### Correct multiplicative flux calibration
-    if (args.multiplicative_flux_calibration is not None):
+    if (args.flux_calib is not None):
         try:
-            vac = fitsio.FITS(args.multiplicative_flux_calibration)
+            vac = fitsio.FITS(args.flux_calib)
             head = vac[1].read_header()
 
             ll_st = vac[1]['loglam'][:]
@@ -137,7 +137,7 @@ if __name__ == '__main__':
             forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate")
 
         except:
-            print(" Error while reading multiplicative_flux_calibration file {}".format(args.multiplicative_flux_calibration))
+            print(" Error while reading flux_calib file {}".format(args.flux_calib))
             sys.exit(1)
 
     nit = args.nit
