@@ -67,8 +67,17 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal)
 
     if mode == "pix":
-        ## hardcoded for now, need to coordinate with Jose how to get this info
-        nside = 8
+        try:
+            fin = in_dir + "/master.fits.gz"
+	    h = fitsio.FITS(fin)
+        except IOError:
+            try:
+                fin = in_dir + "/master.fits"
+                h = fitsio.FITS(fin)
+            except IOError:
+                print "error reading master"
+        nside = h[1].read_header()['NSIDE']
+        h.close()
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
     elif mode == "spec" or mode =="corrected-spec":
         nside = 256
