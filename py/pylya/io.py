@@ -76,6 +76,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
                 h = fitsio.FITS(fin)
             except IOError:
                 print "error reading master"
+                sys.exit(1)
         nside = h[1].read_header()['NSIDE']
         h.close()
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
