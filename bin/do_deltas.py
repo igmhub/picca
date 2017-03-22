@@ -81,6 +81,9 @@ if __name__ == '__main__':
     parser.add_argument('--keep-bal',action='store_true',required=False,
             help='do not reject BALs')
 
+    parser.add_argument('--bi-max',type=float,required=False,default=None,
+            help="maximum CIV balnicity index (overrides --keep-bal")
+
     parser.add_argument('--nproc', type = int, default = None, required=False,
                     help = 'number of processors')
 
@@ -144,7 +147,7 @@ if __name__ == '__main__':
 
     log = open(args.log,'w')
     data,ndata = io.read_data(args.in_dir,args.drq,args.mode,\
-            zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal)
+            zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max)
     
 
     ### Get the lines to veto
