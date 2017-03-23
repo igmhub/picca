@@ -184,7 +184,14 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,log=None):
         ivar = h[3].read()
         andmask = h[4].read()
         for (t, r, d, z, p, m, f) in zip(thid, ra, dec, zqso, plate, mjd, fid):
-            idx = thid2idx[t]
+            try:
+                idx = thid2idx[t]
+            except:
+                ## fill log
+                if log is not None:
+                    log.write("{} missing from pixel {}\n".format(t,pix))
+                sys.stderr.write("{} missing from pixel {}\n".format(t,pix))
+                continue
             d = forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f)
 
             log.write("{} read\n".format(t))
