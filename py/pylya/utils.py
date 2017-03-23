@@ -13,10 +13,12 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     wda = we*(da-mda)
 
     print("Computing cov...")
+    '''
     for ipix in xrange(npix):
         sys.stderr.write("\r {} {}".format(ipix,npix))
         co += sp.outer(wda[ipix,:],wda[ipix,:])
-
+    '''
+    co = wda.T.dot(wda)
     swe = we.sum(axis=0)
 
     co/=swe*swe[:,None]

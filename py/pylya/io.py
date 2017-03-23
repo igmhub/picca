@@ -25,7 +25,7 @@ def read_dlas(fdla):
 
     return dlas
 
-def read_drq(drq,zmin,zmax,keep_bal):
+def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     vac = fitsio.FITS(drq)
     try:
         zqso = vac[1]["Z"][:] 
@@ -38,7 +38,7 @@ def read_drq(drq,zmin,zmax,keep_bal):
     try:
         bal_flag = vac[1]["BAL_FLAG_VI"][:]
     except:
-        sys.stderr.write("BAL_FLAG_VI not found, ignoring BAL\n")
+        sys.stderr.write("BAL_FLAG_VI not found\n")
         bal_flag = sp.zeros(len(dec))
 
     ## info of the primary observation
@@ -46,10 +46,17 @@ def read_drq(drq,zmin,zmax,keep_bal):
     mjd = vac[1]["MJD"][:]
     fid = vac[1]["FIBERID"][:]
     ## sanity
-    w = thid>0
+    w = (thid>0) & ((ra!=dec) | (ra!=0))
     w = w &  (zqso > zmin) & (zqso < zmax)
-    if not keep_bal:
+    if not keep_bal and bi_max==None:
         w = w & (bal_flag == 0)
+    if bi_max is not None:
+        try:
+            bi = vac[1]["BI_CIV"][:]
+            w = w & (bi<=bi_max)
+        except:
+            sys.stderr.write("--bi-max set but no BI_CIV field in vac")
+            sys.exit(1)
 
     ra = ra[w] * sp.pi / 180
     dec = dec[w] * sp.pi / 180
@@ -63,8 +70,9 @@ def read_drq(drq,zmin,zmax,keep_bal):
 
 target_mobj = 500
 nside_min = 8
-def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False):
-    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal)
+def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None):
+
+    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
 
     if mode == "pix":
         try:
