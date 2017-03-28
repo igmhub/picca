@@ -118,10 +118,10 @@ if __name__ == '__main__':
 
     ### Find the redshift range
     if (args.zqso_min is None):
-        args.zqso_min = args.lambda_min/args.lambda_rest_max -1.
+        args.zqso_min = max(0.,args.lambda_min/args.lambda_rest_max -1.)
         print(" zqso_min = {}".format(args.zqso_min) )
     if (args.zqso_max is None):
-        args.zqso_max = args.lambda_max/args.lambda_rest_min -1.
+        args.zqso_max = max(0.,args.lambda_max/args.lambda_rest_min -1.)
         print(" zqso_max = {}".format(args.zqso_max) )
 
     forest.var_lss = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin),0.2 + sp.zeros(2),fill_value="extrapolate")
