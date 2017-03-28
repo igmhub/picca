@@ -242,9 +242,9 @@ if __name__ == '__main__':
 
     res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
     ll_st,st,wst = prep_del.stack(data)
-    res.write([ll_st,st],names=['loglam','stack'])
-    res.write([ll,eta,vlss],names=['loglam','eta','var_lss'])
-    res.write([ll_rest,forest.mean_cont(ll_rest)],names=['loglam_rest','mean_cont'])
+    res.write([ll_st,st,wst],names=['loglam','stack','weight'])
+    res.write([ll,eta,vlss,nb_pixels],names=['loglam','eta','var_lss','nb_pixels'])
+    res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'])
     st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     res.close()
     deltas = {}
