@@ -125,6 +125,28 @@ if __name__ == '__main__':
         if not args.nspec is None:
             if ndels>args.nspec:break
 
+    ### Remove <delta> vs. lambda_obs
+    import matplotlib.pyplot as plt
+    from pylya.data import forest
+    from pylya import prep_del
+    forest.lmin = sp.log10(3600.)
+    forest.lmax = sp.log10(7235.)
+    forest.rebin = 1
+    forest.dll = forest.rebin*1e-4
+    ll,st, wst = prep_del.stack(dels,delta=True)
+    plt.plot(10.**ll[(wst>0.)],st[(wst>0.)])
+    plt.grid()
+    plt.show()
+    for p in dels:
+        for d in dels[p]:
+            bins=((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+            d.de -= st[bins]
+
+    ll,st, wst = prep_del.stack(dels,delta=True)
+    plt.plot(10.**ll[(wst>0.)],st[(wst>0.)])
+    plt.grid()
+    plt.show()
+
     sys.stderr.write("\n")
 
     xcf.dels = dels
