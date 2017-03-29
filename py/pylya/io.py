@@ -27,45 +27,70 @@ def read_dlas(fdla):
 
 def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     vac = fitsio.FITS(drq)
+
+    ## Redshift
     try:
         zqso = vac[1]["Z"][:] 
     except:
         sys.stderr.write("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)\n")
         zqso = vac[1]["Z_VI"][:] 
-    thid = vac[1]["THING_ID"][:]
-    ra = vac[1]["RA"][:]
-    dec = vac[1]["DEC"][:]
-    try:
-        bal_flag = vac[1]["BAL_FLAG_VI"][:]
-    except:
-        sys.stderr.write("BAL_FLAG_VI not found\n")
-        bal_flag = sp.zeros(len(dec))
 
-    ## info of the primary observation
+    ## Info of the primary observation
+    thid  = vac[1]["THING_ID"][:]
+    ra    = vac[1]["RA"][:]
+    dec   = vac[1]["DEC"][:]
     plate = vac[1]["PLATE"][:]
-    mjd = vac[1]["MJD"][:]
-    fid = vac[1]["FIBERID"][:]
-    ## sanity
-    w = (thid>0) & ((ra!=dec) | (ra!=0))
-    w = w &  (zqso > zmin) & (zqso < zmax)
+    mjd   = vac[1]["MJD"][:]
+    fid   = vac[1]["FIBERID"][:]
+
+    print
+    ## Sanity
+    print(" start               : nb object in cat = {}".format(ra.size) )
+    w = (thid>0)
+    print(" and thid>0          : nb object in cat = {}".format(ra[w].size) )
+    w = w & (ra!=dec)
+    print(" and ra!=dec         : nb object in cat = {}".format(ra[w].size) )
+    w = w & (ra!=0.)
+    print(" and ra!=0.          : nb object in cat = {}".format(ra[w].size) )
+    w = w & (dec!=0.)
+    print(" and dec!=0.         : nb object in cat = {}".format(ra[w].size) )
+    w = w & (zqso>0.)
+    print(" and z>0.            : nb object in cat = {}".format(ra[w].size) )
+
+    ## Redshift range
+    w = w & (zqso>zmin)
+    print(" and z>zmin          : nb object in cat = {}".format(ra[w].size) )
+    w = w & (zqso<zmax)
+    print(" and z<zmax          : nb object in cat = {}".format(ra[w].size) )
+
+    ## BAL visual
     if not keep_bal and bi_max==None:
-        w = w & (bal_flag == 0)
+        try:
+            bal_flag = vac[1]["BAL_FLAG_VI"][:]
+            w = w & (bal_flag==0)
+            print(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
+        except:
+            sys.stderr.write("BAL_FLAG_VI not found\n")
+    ## BAL CIV
     if bi_max is not None:
         try:
             bi = vac[1]["BI_CIV"][:]
             w = w & (bi<=bi_max)
+            print(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
         except:
             sys.stderr.write("--bi-max set but no BI_CIV field in vac")
             sys.exit(1)
+    print
 
-    ra = ra[w] * sp.pi / 180
-    dec = dec[w] * sp.pi / 180
-    zqso = zqso[w]
-    thid = thid[w]
+    ra    = ra[w]*sp.pi/180.
+    dec   = dec[w]*sp.pi/180.
+    zqso  = zqso[w]
+    thid  = thid[w]
     plate = plate[w]
-    mjd = mjd[w]
-    fid = fid[w]
+    mjd   = mjd[w]
+    fid   = fid[w]
     vac.close()
+
     return ra,dec,zqso,thid,plate,mjd,fid
 
 target_mobj = 500
