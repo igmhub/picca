@@ -138,7 +138,6 @@ if __name__ == '__main__':
     xcf.dels = dels
     xcf.ndels = ndels
 
-    print bin_size_ll
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
         forest.lmin  = sp.log10( (z_min_pix+1.)*args.lambda_abs )
