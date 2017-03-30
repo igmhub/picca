@@ -83,14 +83,13 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
-    parser.add_argument('--lambda-min',type = float,default=3600,required=False,
-            help='lower limit on observed wavelength (angstrom)')
-
-    parser.add_argument('--lambda-max',type = float,default=5500,required=False,
-            help='upper limit on observed wavelength (angstrom)')
+    parser.add_argument('--no-remove-mean-lambda-obs', action="store_true", required=False,
+                    help = 'Do not remove mean delta versus lambda_obs')
 
     parser.add_argument('--rebin',type = int,default=3,required=False,
             help='rebin wavelength grid by combining this number of adjacent pixels (ivar weight)')
+
+
 
     args = parser.parse_args()
 
@@ -141,17 +140,17 @@ if __name__ == '__main__':
     xcf.dels = dels
     xcf.ndels = ndels
 
-
     ### Remove <delta> vs. lambda_obs
-    forest.lmin  = sp.log10(args.lambda_min)
-    forest.lmax  = sp.log10(args.lambda_max)
-    forest.rebin = args.rebin
-    forest.dll   = forest.rebin*1e-4
-    ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
-    for p in xcf.dels:
-        for d in xcf.dels[p]:
-            bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
-            d.de -= st[bins]
+    if not args.no_remove_mean_lambda_obs:
+        forest.lmin  = sp.log10( (z_min_pix+1.)*args.lambda_abs )
+        forest.lmax  = sp.log10( (z_max_pix+1.)*args.lambda_abs )
+        forest.rebin = args.rebin
+        forest.dll   = forest.rebin*1e-4
+        ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
+        for p in xcf.dels:
+            for d in xcf.dels[p]:
+                bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+                d.de -= st[bins]
 
 
     ### Find the redshift range
