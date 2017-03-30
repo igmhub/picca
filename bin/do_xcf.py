@@ -11,6 +11,8 @@ from pylya import xcf
 from pylya.data import delta
 from pylya.data import qso
 from pylya import io
+from pylya.data import forest
+from pylya import prep_del
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
@@ -81,6 +83,15 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
+    parser.add_argument('--lambda-min',type = float,default=3600,required=False,
+            help='lower limit on observed wavelength (angstrom)')
+
+    parser.add_argument('--lambda-max',type = float,default=5500,required=False,
+            help='upper limit on observed wavelength (angstrom)')
+
+    parser.add_argument('--rebin',type = int,default=3,required=False,
+            help='rebin wavelength grid by combining this number of adjacent pixels (ivar weight)')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -125,32 +136,22 @@ if __name__ == '__main__':
         if not args.nspec is None:
             if ndels>args.nspec:break
 
-    ### Remove <delta> vs. lambda_obs
-    import matplotlib.pyplot as plt
-    from pylya.data import forest
-    from pylya import prep_del
-    forest.lmin = sp.log10(3600.)
-    forest.lmax = sp.log10(7235.)
-    forest.rebin = 1
-    forest.dll = forest.rebin*1e-4
-    ll,st, wst = prep_del.stack(dels,delta=True)
-    plt.plot(10.**ll[(wst>0.)],st[(wst>0.)])
-    plt.grid()
-    plt.show()
-    for p in dels:
-        for d in dels[p]:
-            bins=((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
-            d.de -= st[bins]
-
-    ll,st, wst = prep_del.stack(dels,delta=True)
-    plt.plot(10.**ll[(wst>0.)],st[(wst>0.)])
-    plt.grid()
-    plt.show()
-
     sys.stderr.write("\n")
 
     xcf.dels = dels
     xcf.ndels = ndels
+
+
+    ### Remove <delta> vs. lambda_obs
+    forest.lmin  = sp.log10(args.lambda_min)
+    forest.lmax  = sp.log10(args.lambda_max)
+    forest.rebin = args.rebin
+    forest.dll   = forest.rebin*1e-4
+    ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
+    for p in xcf.dels:
+        for d in xcf.dels[p]:
+            bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+            d.de -= st[bins]
 
 
     ### Find the redshift range
