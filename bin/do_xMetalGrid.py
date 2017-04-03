@@ -150,6 +150,10 @@ if __name__ == '__main__':
     pix = healpy.ang2pix(xcf.nside,th,phi)
     print("reading qsos")
 
+    if (ra.size==0):
+        print(" No object to correlate with pixels")
+        sys.exit(1)
+
     xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
 
     upix = sp.unique(pix)
