@@ -167,10 +167,10 @@ if __name__ == '__main__':
     ### Remove pixels if too far from objects
     if ( (z_min_pix<sp.amin(zqso)) or (sp.amax(zqso)<z_max_pix) ):
 
-        d_min_pix_cut = cosmo.r_comoving(sp.amin(zqso))+xcf.rp_min
+        d_min_pix_cut = max(0.,cosmo.r_comoving(sp.amin(zqso))+xcf.rp_min)
         z_min_pix_cut = cosmo.r_2_z(d_min_pix_cut)
 
-        d_max_pix_cut = cosmo.r_comoving(sp.amax(zqso))+xcf.rp_max
+        d_max_pix_cut = max(0.,cosmo.r_comoving(sp.amax(zqso))+xcf.rp_max)
         z_max_pix_cut = cosmo.r_2_z(d_max_pix_cut)
 
         if ( (z_min_pix<z_min_pix_cut) or (z_max_pix_cut<z_max_pix) ):
