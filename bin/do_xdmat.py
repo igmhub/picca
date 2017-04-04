@@ -158,7 +158,20 @@ if __name__ == '__main__':
     print("reading qsos")
 
     if (ra.size==0):
-        print(" No object to correlate with pixels")
+        out = fitsio.FITS(args.out,'rw',clobber=True)
+        head = {}
+        head['REJ']    = args.rej
+        head['RPMAX']  = xcf.rp_max
+        head['RPMIN']  = xcf.rp_min
+        head['RTMAX']  = xcf.rt_max
+        head['NT']     = xcf.nt
+        head['NP']     = xcf.np
+        head['NPROR']  = 0.0
+        head['NPUSED'] = 0.0
+        wdm = sp.zeros( xcf.np*xcf.nt )
+        dm  = sp.zeros( (xcf.np*xcf.nt,xcf.np*xcf.nt) )
+        out.write([wdm,dm],names=['WDM','DM'],header=head)
+        out.close()
         sys.exit(1)
 
     xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
