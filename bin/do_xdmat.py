@@ -157,6 +157,8 @@ if __name__ == '__main__':
     pix = healpy.ang2pix(xcf.nside,th,phi)
     print("reading qsos")
 
+
+    ### If no pairs in the given r_paral range
     if (ra.size==0):
         out = fitsio.FITS(args.out,'rw',clobber=True)
         head = {}
