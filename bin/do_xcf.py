@@ -150,24 +150,10 @@ if __name__ == '__main__':
     pix = healpy.ang2pix(xcf.nside,th,phi)
     print("reading qsos")
 
-
-    ### If no pairs in the given r_paral range
-    if (ra.size==0):
-        out  = fitsio.FITS(args.out,'rw',clobber=True)
-        head = {}
-        head['RPMAX'] = xcf.rp_max
-        head['RTMAX'] = xcf.rt_max
-        head['NT']    = xcf.nt
-        head['NP']    = xcf.np
-        coord = sp.zeros( xcf.np*xcf.nt )
-        nb    = sp.zeros( xcf.np*xcf.nt,dtype=sp.int64 )
-        data  = sp.zeros( (0,xcf.np*xcf.nt) )
-        out.write([coord,coord,coord,nb],names=['RP','RT','Z','NB'],header=head)
-        out.write([data,data],names=['WE','DA'])
-        out.close()
-        sys.exit(1)
-
-    xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
+    if (ra.size!=0):
+        xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
+    else:
+        xcf.angmax = 0.
 
     upix = sp.unique(pix)
     for i,ipix in enumerate(upix):
@@ -182,7 +168,7 @@ if __name__ == '__main__':
     xcf.objs = objs
 
     ### Remove pixels if too far from objects
-    if ( (z_min_pix<sp.amin(zqso)) or (sp.amax(zqso)<z_max_pix) ):
+    if ( ra.size!=0 and ( (z_min_pix<sp.amin(zqso)) or (sp.amax(zqso)<z_max_pix)) ):
 
         d_min_pix_cut = cosmo.r_comoving(sp.amin(zqso))+xcf.rp_min
         z_min_pix_cut = cosmo.r_2_z(d_min_pix_cut)
