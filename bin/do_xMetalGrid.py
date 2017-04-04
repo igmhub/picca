@@ -150,7 +150,10 @@ if __name__ == '__main__':
     pix = healpy.ang2pix(xcf.nside,th,phi)
     print("reading qsos")
 
-    xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
+    if (ra.size!=0):
+        xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
+    else:
+        xcf.angmax = 0.
 
     upix = sp.unique(pix)
     for i,ipix in enumerate(upix):
@@ -165,7 +168,7 @@ if __name__ == '__main__':
     xcf.objs = objs
 
     ### Remove pixels if too far from objects
-    if ( (z_min_pix<sp.amin(zqso)) or (sp.amax(zqso)<z_max_pix) ):
+    if ( ra.size!=0 and ( (z_min_pix<sp.amin(zqso)) or (sp.amax(zqso)<z_max_pix)) ):
 
         d_min_pix_cut = cosmo.r_comoving(sp.amin(zqso))+xcf.rp_min
         z_min_pix_cut = cosmo.r_2_z(d_min_pix_cut)
