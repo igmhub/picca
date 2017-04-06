@@ -2,7 +2,8 @@ import scipy as sp
 from astropy.io import fits
 from pylya import constants
 import iminuit
-from dla import dla
+import dla
+from scipy import random
 
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
@@ -119,7 +120,7 @@ class forest(qso):
         if self.T_dla is None:
             self.T_dla = sp.ones(len(self.ll))
 
-        self.T_dla *= dla(self,zabs,nhi).t
+        self.T_dla *= dla.p_voigt(10**self.ll,zabs,nhi).t
 
         w = (self.T_dla>forest.dla_mask)
         if not mask is None:
@@ -131,7 +132,7 @@ class forest(qso):
         self.fl = self.fl[w]
         self.T_dla = self.T_dla[w]
 
-    def cont_fit(self):
+    def cont_fit(self, fit_dlas=False):
         lmax = forest.lmax_rest+sp.log10(1+self.zqso)
         lmin = forest.lmin_rest+sp.log10(1+self.zqso)
         try:
@@ -156,13 +157,73 @@ class forest(qso):
             v = (self.fl-m)**2*we
             return v.sum()-sp.log(we).sum()
 
+        def chi2_dlas(p0,p1,zabs,nhi):
+            m = model(p0,p1)
+            for z,n in zip(self.zabs,self.nhi):
+                m*=dla.p_voigt(10**self.ll,z,n)
+            m*=dla.p_voigt(10**self.ll,zabs,nhi)
+            iv = self.iv/eta
+            we = iv/(iv*var_lss*m**2+1)
+            v = (self.fl-m)**2*we
+            return v.sum()-sp.log(we).sum()
+
         p0 = p1 = (self.fl*self.iv).sum()/self.iv.sum()
 
-        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p1/2.,errordef=1.,print_level=0)
+        if not fit_dlas:
+            mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p1/2.,errordef=1.,print_level=0)
+        else:
+            if not hasattr(self,"zabs"):
+                self.cos=[]
+                self.zabs=[]
+                self.nhi=[]
+                self.dla_abs=[]
+                self.chi2s=[]
+            zmin = 10**self.ll.min()/constants.absorber_IGM["LYA"]-1
+            zmax = 10**self.ll.max()/constants.absorber_IGM["LYA"]-1
+            zabs = (zmin+zmax)/2.
+
+            nhi_min = 19.
+            nhi_max = 22.
+            nhi = (nhi_max+nhi_min)/2
+
+            chi2 = []
+            zabss= []
+            nhis = []
+            dz = 0.05
+            z0 = zmin
+            while z0 < zmax:
+                mig = iminuit.Minuit(chi2_dlas,p0=p0,p1=p1,zabs=z0,nhi=nhi_min+0.5,
+                            error_p0=p0/2.,error_p1=p1/2.,
+                            error_zabs=dz,error_nhi=(nhi_max-nhi_min)/2,
+                            limit_nhi=(nhi_min,nhi_max),limit_zabs=(z0-dz,z0+dz),
+                            errordef=1.,print_level=3)
+                mig.migrad()
+                chi2.append(mig.fval)
+                zabss.append(mig.values["zabs"])
+                nhis.append(mig.values["nhi"])
+                z0 += dz
+            
+            imin = sp.argmin(chi2)
+            zabs = zabss[imin]
+            nhi = nhis[imin]
+            mig = iminuit.Minuit(chi2_dlas,p0=p0,p1=p1,zabs=zabs,nhi=nhi,
+                                 error_p0=p0/2.,error_p1=p1/2.,error_zabs=zabs/2.,error_nhi=3.,
+                                 limit_nhi=(nhi_min,nhi_max),limit_zabs=(zabs-2*dz,zabs+2*dz),
+                                 errordef=1.,print_level=0)
+            
         mig.migrad()
         self.co=model(mig.values["p0"],mig.values["p1"])
         self.p0 = mig.values["p0"]
         self.p1 = mig.values["p1"]
+        if fit_dlas:
+            self.cos.append(self.co)
+            self.zabs.append(mig.values["zabs"])
+            self.nhi.append(mig.values["nhi"])
+            self.dla_abs.append(dla.p_voigt(10**self.ll,mig.values["zabs"],mig.values["nhi"]))
+            self.chi2s.append(mig.fval)
+        else:
+            self.chi2_no_dla = mig.fval
+        self.chi2 = mig.fval
 
 
 class delta(qso):
