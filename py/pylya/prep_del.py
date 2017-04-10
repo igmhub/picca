@@ -105,18 +105,17 @@ def stack(data,delta=False):
     wst = sp.zeros(nstack)
     for p in data:
         for d in data[p]:
-            bins=((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
-            var_lss = forest.var_lss(d.ll)
-            eta = forest.eta(d.ll)
-            if delta:
-                we = d.we
-            else:
-                iv = d.iv/eta
-                we = iv*d.co**2/(iv*d.co**2*var_lss + 1)
             if delta:
                 de = d.de
+                we = d.we
             else:
                 de = d.fl/d.co
+                var_lss = forest.var_lss(d.ll)
+                eta = forest.eta(d.ll)
+                iv = d.iv/eta
+                we = iv*d.co**2/(iv*d.co**2*var_lss + 1)
+
+            bins=((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
             c = sp.bincount(bins,weights=de*we)
             st[:len(c)]+=c
             c = sp.bincount(bins,weights=we)
