@@ -51,16 +51,16 @@ if __name__ == '__main__':
     parser.add_argument('--npix-min',type = int,default=50,required=False,
             help='log input data')
 
-    parser.add_argument('--lambda-min',type = float,default=3600,required=False,
+    parser.add_argument('--lambda-min',type = float,default=3600.,required=False,
             help='lower limit on observed wavelength (angstrom)')
 
-    parser.add_argument('--lambda-max',type = float,default=5500,required=False,
+    parser.add_argument('--lambda-max',type = float,default=5500.,required=False,
             help='upper limit on observed wavelength (angstrom)')
 
-    parser.add_argument('--lambda-rest-min',type = float,default=1040,required=False,
+    parser.add_argument('--lambda-rest-min',type = float,default=1040.,required=False,
             help='lower limit on rest frame wavelength (angstrom')
 
-    parser.add_argument('--lambda-rest-max',type = float,default=1200,required=False,
+    parser.add_argument('--lambda-rest-max',type = float,default=1200.,required=False,
             help='upper limit on rest frame wavelength (anstrom)')
 
     parser.add_argument('--rebin',type = int,default=3,required=False,
