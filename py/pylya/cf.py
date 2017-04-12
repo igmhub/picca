@@ -48,6 +48,7 @@ def cf(pix):
     rp = sp.zeros(np*nt)
     rt = sp.zeros(np*nt)
     z = sp.zeros(np*nt)
+    nb = sp.zeros(np*nt,dtype=sp.int64)
 
     for ipix in pix:
         for i,d1 in enumerate(data[ipix]):
@@ -58,20 +59,21 @@ def cf(pix):
                 ang = d1^d2
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
-                cw,cd,crp,crt,cz = fast_cf(d1.z,d1.r_comov,d1.we,d1.de,d2.z,d2.r_comov,d2.we,d2.de,ang,same_half_plate)
+                cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.we,d1.de,d2.z,d2.r_comov,d2.we,d2.de,ang,same_half_plate)
             
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
                 rp[:len(crp)]+=crp
                 rt[:len(crp)]+=crt
                 z[:len(crp)]+=cz
+                nb[:len(cnb)]+=cnb
 
     w = we>0
     xi[w]/=we[w]
     rp[w]/=we[w]
     rt[w]/=we[w]
     z[w]/=we[w]
-    return we,xi,rp,rt,z
+    return we,xi,rp,rt,z,nb
 @jit 
 def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     wd1 = d1*w1
@@ -101,8 +103,9 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     crp = sp.bincount(bins,weights=rp*w12)
     crt = sp.bincount(bins,weights=rt*w12)
     cz = sp.bincount(bins,weights=z*w12)
+    cnb = sp.bincount(bins)
 
-    return cw,cd,crp,crt,cz
+    return cw,cd,crp,crt,cz,cnb
 
 def dmat(pix):
 
