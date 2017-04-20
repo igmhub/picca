@@ -10,15 +10,15 @@ from scipy import random
 from scipy.interpolate import interp1d
 
 from pylya import constants
-from pylya import cf
+from pylya import xcf_forest
 from pylya.data import delta
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 
-def calc_dmat(p):
-    cf.fill_neighs(p)
-    tmp = cf.dmat(p)
+def calc_t123(p):
+    xcf_forest.fill_neighs(p)
+    tmp = xcf_forest.t123(p)
     return tmp
 
 if __name__ == '__main__':
@@ -64,11 +64,17 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
+    parser.add_argument('--cf1d', type=str, required=True,
+                    help = 'cf1d file')
+
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
+
+    parser.add_argument('--old-deltas', action="store_true", required=False,
+                    help = 'do not correct weights for redshift evolution')
 
     args = parser.parse_args()
 
@@ -77,18 +83,33 @@ if __name__ == '__main__':
 
     print "nproc",args.nproc
 
-    cf.rp_max = args.rp_max
-    cf.rt_max = args.rt_max
-    cf.np = args.np
-    cf.nt = args.nt
-    cf.nside = args.nside
-    cf.zref = args.z_ref
-    cf.alpha = args.z_evol
-    cf.lambda_abs = args.lambda_abs
-    cf.rej = args.rej
+    xcf_forest.rp_max = args.rp_max
+    xcf_forest.rt_max = args.rt_max
+    xcf_forest.np = args.np
+    xcf_forest.nt = args.nt
+    xcf_forest.nside = args.nside
+    xcf_forest.zref = args.z_ref
+    xcf_forest.alpha = args.z_evol
+    xcf_forest.lambda_abs = args.lambda_abs
+    xcf_forest.rej = args.rej
 
     cosmo = constants.cosmo(args.fid_Om)
 
+
+    h = fitsio.FITS(args.cf1d)
+    head = h[1].read_header()
+    llmin = head['LLMIN']
+    llmax = head['LLMAX']
+    dll = head['DLL']
+    nv1d   = h[1]['nv1d'][:]
+    xcf_forest.v1d = h[1]['v1d'][:]
+    ll = llmin + dll*sp.arange(len(xcf_forest.v1d))
+    xcf_forest.v1d = interp1d(ll[nv1d>0],xcf_forest.v1d[nv1d>0],kind='nearest')
+
+    nb1d   = h[1]['nb1d'][:]
+    xcf_forest.c1d = h[1]['c1d'][:]
+    xcf_forest.c1d = interp1d((ll-llmin)[nb1d>0],xcf_forest.c1d[nb1d>0],kind='nearest')
+    h.close()
 
 
     z_min_pix = 1.e6
@@ -96,13 +117,14 @@ if __name__ == '__main__':
     data = {}
     ndata = 0
     for i,f in enumerate(fi):
-        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+        if i%10==0:
+            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
         dels = [delta.from_fitsio(h) for h in hdus[1:]]
         ndata+=len(dels)
         phi = [d.ra for d in dels]
         th = [sp.pi/2-d.dec for d in dels]
-        pix = healpy.ang2pix(cf.nside,th,phi)
+        pix = healpy.ang2pix(xcf_forest.nside,th,phi)
         for d,p in zip(dels,pix):
             if not p in data:
                 data[p]=[]
@@ -111,23 +133,24 @@ if __name__ == '__main__':
             z = 10**d.ll/args.lambda_abs-1
             z_min_pix = sp.amin( sp.append([z_min_pix],z) )
             d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+            if not args.old_deltas:
+                d.we *= ((1+z)/(1+args.z_ref))**(xcf_forest.alpha-1)
             if not args.no_project:
                 d.project()
         if not args.nspec is None:
             if ndata>args.nspec:break
     sys.stderr.write("\n")
 
-    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
+    xcf_forest.angmax = 2.*sp.arcsin(xcf_forest.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
-    cf.npix = len(data)
-    cf.data = data
-    cf.ndata = ndata
+    xcf_forest.npix = len(data)
+    xcf_forest.data = data
+    xcf_forest.ndata = ndata
     print "done"
 
-    cf.counter = Value('i',0)
+    xcf_forest.counter = Value('i',0)
 
-    cf.lock = Lock()
+    xcf_forest.lock = Lock()
     
     cpu_data = {}
     for i,p in enumerate(data.keys()):
@@ -138,29 +161,30 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,cpu_data.values())
+    t123 = pool.map(calc_t123,cpu_data.values())
     pool.close()
 
-    dm = sp.array(dm)
-    wdm =dm[:,0].sum(axis=0)
-    npairs=dm[:,2].sum(axis=0)
-    npairs_used=dm[:,3].sum(axis=0)
-    dm=dm[:,1].sum(axis=0)
-
-    dm*=(wdm !=0)/(wdm+(wdm ==0))
-
+    t123 = sp.array(t123)
+    w123=t123[:,0].sum(axis=0)
+    npairs=t123[:,2].sum(axis=0)
+    npairs_used=t123[:,3].sum(axis=0)
+    t123=t123[:,1].sum(axis=0)
+    we = w123*w123[:,None]
+    w=we>0
+    t123[w]/=we[w]
+    t123 = npairs_used*t123/npairs
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
-    head['REJ']=args.rej
-    head['RPMAX']=cf.rp_max
-    head['RTMAX']=cf.rt_max
-    head['NT']=cf.nt
-    head['NP']=cf.np
-    head['NPROR']=npairs
+    head['RPMAX']=xcf_forest.rp_max
+    head['RTMAX']=xcf_forest.rt_max
+    head['NT']=xcf_forest.nt
+    head['NP']=xcf_forest.np
+    head['NPTOT']=npairs
     head['NPUSED']=npairs_used
+    head['REJ']=args.rej
 
-    out.write([wdm,dm],names=['WDM','DM'],header=head)
+    out.write([w123,t123],names=['WE','T123'],header=head)
     out.close()
 
     

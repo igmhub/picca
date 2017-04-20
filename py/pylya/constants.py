@@ -2,6 +2,7 @@ import scipy as sp
 from scipy import interpolate
 
 lya=1215.67 ## angstrom
+lyb=1025.72 ## angstrom
 
 deg = sp.pi/180.
 

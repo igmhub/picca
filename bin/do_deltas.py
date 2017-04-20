@@ -101,17 +101,29 @@ if __name__ == '__main__':
 
     parser.add_argument('--vlss-min',type = float,default=0.,required=False,
             help='lower limit for variance LSS')
+
     parser.add_argument('--vlss-max',type = float,default=0.3,required=False,
             help='upper limit for variance LSS')
+
+    parser.add_argument('--lyb-forest', action="store_true", required=False,
+                    help = 'compute deltas for lyb forest')
 
     args = parser.parse_args()
 
     ## init forest class
+    
+    lambda_rest_min=args.lambda_rest_min
+    lambda_rest_max=args.lambda_rest_max
+    if (args.lyb_forest):
+        lambda_rest_min=973.
+        lambda_rest_max=1016.
+    print("lambda_rest_min = {}".format(lambda_rest_min) )
+    print("lambda_rest_max = {}".format(lambda_rest_max) )
 
     forest.lmin = sp.log10(args.lambda_min)
     forest.lmax = sp.log10(args.lambda_max)
-    forest.lmin_rest = sp.log10(args.lambda_rest_min)
-    forest.lmax_rest = sp.log10(args.lambda_rest_max)
+    forest.lmin_rest = sp.log10(lambda_rest_min)
+    forest.lmax_rest = sp.log10(lambda_rest_max)
     forest.rebin = args.rebin
     forest.dll = args.rebin*1e-4
     ## minumum dla transmission
