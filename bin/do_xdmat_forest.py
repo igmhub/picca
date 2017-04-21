@@ -34,10 +34,10 @@ if __name__ == '__main__':
     parser.add_argument('--in-dir2', type = str, default = None, required=False,
                         help = 'second delta directory')
 
-    parser.add_argument('--line1', type = str, default = 'lya', required=False,
+    parser.add_argument('--line1', type = float, default = constants.lya, required=False,
                         help = 'type of absorption in forest 1')
 
-    parser.add_argument('--line2', type = str, default = 'lya', required=False,
+    parser.add_argument('--line2', type = float, default = constants.lya, required=False,
                         help = 'type of absorption in forest 2')
 
     parser.add_argument('--rp-max', type = float, default = 200, required=False,
@@ -94,25 +94,18 @@ if __name__ == '__main__':
 
     if args.line1 is None:
         lambda_abs1=constants.lya
-    elif args.line1 == 'lya': 
-        lambda_abs1=constants.lya
-    elif args.line1 == 'lyb':
-        lambda_abs1=constants.lyb
-    else: 
-        print 'ERROR : args.line1 = ',args.line1,
-        sys.exit(12)
+    else :  
+        lambda_abs1=args.line1
+
     print 'lambda_abs1 = ', lambda_abs1
 
     if args.line2 is None:
         lambda_abs2=constants.lya
-    elif args.line2 == 'lya': 
-        lambda_abs2=constants.lya
-    elif args.line2 == 'lyb':
-        lambda_abs2=constants.lyb
-    else: 
-        print 'ERROR : args.line2 = ',args.line2,
-        sys.exit(12)
+    else :  
+        lambda_abs2=args.line2
+
     print 'lambda_abs2 = ', lambda_abs2
+
 
     cosmo = constants.cosmo(args.fid_Om)
 

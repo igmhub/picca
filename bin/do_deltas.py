@@ -96,6 +96,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--eta-min',type = float,default=0.5,required=False,
             help='lower limit for eta')
+
     parser.add_argument('--eta-max',type = float,default=1.5,required=False,
             help='upper limit for eta')
 
@@ -105,18 +106,13 @@ if __name__ == '__main__':
     parser.add_argument('--vlss-max',type = float,default=0.3,required=False,
             help='upper limit for variance LSS')
 
-    parser.add_argument('--lyb-forest', action="store_true", required=False,
-                    help = 'compute deltas for lyb forest')
-
     args = parser.parse_args()
 
     ## init forest class
     
     lambda_rest_min=args.lambda_rest_min
     lambda_rest_max=args.lambda_rest_max
-    if (args.lyb_forest):
-        lambda_rest_min=973.
-        lambda_rest_max=1016.
+
     print("lambda_rest_min = {}".format(lambda_rest_min) )
     print("lambda_rest_max = {}".format(lambda_rest_max) )
 
