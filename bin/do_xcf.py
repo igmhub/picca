@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import scipy as sp
 import fitsio
 import argparse
@@ -11,6 +13,8 @@ from pylya import xcf
 from pylya.data import delta
 from pylya.data import qso
 from pylya import io
+from pylya.data import forest
+from pylya import prep_del
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
@@ -81,6 +85,10 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
+    parser.add_argument('--no-remove-mean-lambda-obs', action="store_true", required=False,
+                    help = 'Do not remove mean delta versus lambda_obs')
+
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -97,6 +105,7 @@ if __name__ == '__main__':
 
     z_min_pix = 1.e6
     z_max_pix = 0.
+    bin_size_ll = 1.e6
     fi = glob.glob(args.in_dir+"/*.fits.gz")
     dels = {}
     ndels = 0
@@ -117,6 +126,7 @@ if __name__ == '__main__':
             z = 10**d.ll/args.lambda_abs-1
             z_min_pix = sp.amin( sp.append([z_min_pix],z) )
             z_max_pix = sp.amax( sp.append([z_max_pix],z) )
+            bin_size_ll = sp.amin( sp.append([bin_size_ll],[d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)])  )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1+z)/(1+args.z_ref))**(args.z_evol_del-1)
@@ -129,6 +139,17 @@ if __name__ == '__main__':
 
     xcf.dels = dels
     xcf.ndels = ndels
+
+    ### Remove <delta> vs. lambda_obs
+    if not args.no_remove_mean_lambda_obs:
+        forest.lmin  = sp.log10( (z_min_pix+1.)*args.lambda_abs )
+        forest.lmax  = sp.log10( (z_max_pix+1.)*args.lambda_abs )
+        forest.dll   = bin_size_ll
+        ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
+        for p in xcf.dels:
+            for d in xcf.dels[p]:
+                bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+                d.de -= st[bins]
 
 
     ### Find the redshift range
