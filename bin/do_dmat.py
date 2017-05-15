@@ -21,6 +21,11 @@ def calc_dmat(p):
     tmp = cf.dmat(p)
     return tmp
 
+def calc_dmat_order0(p):
+    cf.fill_neighs(p)
+    tmp = cf.dmat_order0(p)
+    return tmp
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -58,7 +63,7 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
-    parser.add_argument('--rej', type = float, default = 1., required=False,
+    parser.add_argument('--rej', type = float, default = .95, required=False,
                     help = 'reference redshift')
 
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
@@ -69,6 +74,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
+
+    parser.add_argument('--order_0', action="store_true", required=False,
+                    help = 'if the delta continuum have been computed with a zero order polynomial in log lambda')  
 
     args = parser.parse_args()
 
@@ -89,6 +97,8 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
+    if args.order_0:
+        print("compute dmat for delta computed with a zero-order polynomial in log(lambda) for the continuum fit.")
 
 
     z_min_pix = 1.e6
@@ -112,10 +122,16 @@ if __name__ == '__main__':
             z_min_pix = sp.amin( sp.append([z_min_pix],z) )
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+                
             if not args.no_project:
-                d.project()
+                if args.order_0:
+                    d.project_0()
+                else: 
+                    d.project()
+
         if not args.nspec is None:
             if ndata>args.nspec:break
+
     sys.stderr.write("\n")
 
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
@@ -138,7 +154,10 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,cpu_data.values())
+    if args.order_0:
+        dm = pool.map(calc_dmat_order0,cpu_data.values())
+    else: 
+        dm = pool.map(calc_dmat,cpu_data.values())
     pool.close()
 
     dm = sp.array(dm)

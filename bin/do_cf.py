@@ -63,6 +63,9 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
+    parser.add_argument('--project-0', action="store_true", required=False,
+                    help = 'put the mean delta to zero')
+
     parser.add_argument('--from-image', action="store_true", required=False,
                     help = 'use image format to read deltas')
 
@@ -116,6 +119,9 @@ if __name__ == '__main__':
         d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
         if not args.no_project:
             d.project()
+        elif args.project_0: 
+            d.project_0()
+            
 
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 

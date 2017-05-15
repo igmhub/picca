@@ -164,6 +164,36 @@ class forest(qso):
         self.p0 = mig.values["p0"]
         self.p1 = mig.values["p1"]
 
+    def cont_fit_order_0(self):
+        lmax = forest.lmax_rest+sp.log10(1+self.zqso)
+        lmin = forest.lmin_rest+sp.log10(1+self.zqso)
+        try:
+            mc = forest.mean_cont(self.ll-sp.log10(1+self.zqso))
+        except ValueError:
+            raise Exception
+
+        if not self.T_dla is None:
+            mc*=self.T_dla
+
+        var_lss = forest.var_lss(self.ll)
+        eta = forest.eta(self.ll)
+
+        def model_order_0(p0):
+            return p0*mc
+
+        def chi2_order_0(p0):
+            m = model_order_0(p0)
+            iv = self.iv/eta
+            we = iv/(iv*var_lss*m**2+1)
+            v = (self.fl-m)**2*we
+            return v.sum()-sp.log(we).sum()
+
+        p0 = (self.fl*self.iv).sum()/self.iv.sum()
+
+        mig = iminuit.Minuit(chi2_order_0,p0=p0,error_p0=p0/2.,errordef=1.,print_level=0)
+        mig.migrad()
+        self.co=model_order_0(mig.values["p0"])
+        self.p0 = mig.values["p0"]
 
 class delta(qso):
     
@@ -240,3 +270,6 @@ class delta(qso):
 
         self.de -= mde + mld * (self.ll-mll)
 
+    def project_0(self): 
+        mde = sp.average(self.de,weights=self.we)
+        self.de -= mde 

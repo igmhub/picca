@@ -21,6 +21,10 @@ def cont_fit(data):
         d.cont_fit()
     return data
 
+def cont_fit_order_0(data):
+    for d in data:
+        d.cont_fit_order_0()
+    return data
 
 if __name__ == '__main__':
 
@@ -81,6 +85,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--keep-bal',action='store_true',required=False,
             help='do not reject BALs')
+
+    parser.add_argument('--cont-order-0',action='store_true',required=False,
+            help='Use a zero order polynomial to compute the continuum')
 
     parser.add_argument('--bi-max',type=float,required=False,default=None,
             help="maximum CIV balnicity index (overrides --keep-bal")
@@ -235,7 +242,11 @@ if __name__ == '__main__':
         pool = Pool(processes=args.nproc)
         print "iteration: ", it
         nfit = 0
-        data_fit_cont = pool.map(cont_fit, data.values())
+        if args.cont_order_0: 
+            print("Compute the continuum with a zero order model")
+            data_fit_cont = pool.map(cont_fit_order_0, data.values())
+        else: 
+            data_fit_cont = pool.map(cont_fit, data.values())
         for i, p in enumerate(data):
             data[p] = data_fit_cont[i]
 

@@ -69,6 +69,9 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
+    parser.add_argument('--order_0', action="store_true", required=False,
+                    help = 'For lyA/lyB cross-correlation, lyB deltas have been comptued with a continuum with zero-order polynomial in log(lambda)')
+
     parser.add_argument('--from-image', action="store_true", required=False,
                     help = 'use image format to read deltas')
 
@@ -174,7 +177,6 @@ if __name__ == '__main__':
         if not args.no_project:
             d.project()
 
-
     z_min_pix2 = 10**dels2[0].ll[0]/lambda_abs2-1
     phi2 = [d.ra for d in dels2]
     th2 = [sp.pi/2-d.dec for d in dels2]
@@ -191,7 +193,10 @@ if __name__ == '__main__':
         d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1+z)/(1+args.z_ref))**(xcf_forest.alpha-1)
         if not args.no_project:
-            d.project()
+            if args.order_0: 
+                d.project_0()
+            else:
+                d.project()
     
     
     z_min_pix=sp.amin(sp.append(z_min_pix1,z_min_pix2))
@@ -217,8 +222,6 @@ if __name__ == '__main__':
     for p in data1.keys():
         cpu_data1[p] = [p]
 
-    print 
-    print 'cpu_data1.values() = ',cpu_data1.values()
     pool = Pool(processes=args.nproc)
     cfs = pool.map(corr_func,cpu_data1.values())
     pool.close()
