@@ -69,8 +69,11 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
-    parser.add_argument('--order_0', action="store_true", required=False,
-                    help = 'For lyA/lyB cross-correlation, lyB deltas have been comptued with a continuum with zero-order polynomial in log(lambda)')
+    parser.add_argument('--order_0_1', action="store_true", required=False,
+                    help = 'For lyA/lyB cross-correlation, deltas #1 have been comptued with a continuum with zero-order polynomial in log(lambda)')
+
+    parser.add_argument('--order_0_2', action="store_true", required=False,
+                    help = 'For lyA/lyB cross-correlation, deltas #2 have been comptued with a continuum with zero-order polynomial in log(lambda)')
 
     parser.add_argument('--from-image', action="store_true", required=False,
                     help = 'use image format to read deltas')
@@ -175,7 +178,10 @@ if __name__ == '__main__':
         d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1+z)/(1+args.z_ref))**(xcf_forest.alpha-1)
         if not args.no_project:
-            d.project()
+            if args.order_0_1: 
+                d.project_0()
+            else:
+                d.project()
 
     z_min_pix2 = 10**dels2[0].ll[0]/lambda_abs2-1
     phi2 = [d.ra for d in dels2]
@@ -193,7 +199,7 @@ if __name__ == '__main__':
         d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1+z)/(1+args.z_ref))**(xcf_forest.alpha-1)
         if not args.no_project:
-            if args.order_0: 
+            if args.order_0_2: 
                 d.project_0()
             else:
                 d.project()

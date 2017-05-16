@@ -21,9 +21,14 @@ def calc_dmat(p):
     tmp = xcf_forest.dmat(p)
     return tmp
 
-def calc_dmat_order0(p):
+def calc_dmat_order0_1(p):
     xcf_forest.fill_neighs(p)
-    tmp = xcf_forest.dmat_order0(p)
+    tmp = xcf_forest.dmat_order0_1(p)
+    return tmp
+
+def calc_dmat_order0_2(p):
+    xcf_forest.fill_neighs(p)
+    tmp = xcf_forest.dmat_order0_2(p)
     return tmp
 
 if __name__ == '__main__':
@@ -34,7 +39,7 @@ if __name__ == '__main__':
                         help = 'output file name')
 
     parser.add_argument('--in-dir1', type = str, default = None, required=True,
-                        help = 'first delta directory')
+                        help = 'first delta directory, if there is lya directory, always put it first')
 
     parser.add_argument('--in-dir2', type = str, default = None, required=False,
                         help = 'second delta directory')
@@ -81,8 +86,12 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
-    parser.add_argument('--order_0', action="store_true", required=False,
-                    help = 'For lyA/lyB cross-correlation, lyB deltas have been comptued with a continuum with zero-order polynomial in log(lambda)')
+    parser.add_argument('--order_0_1', action="store_true", required=False,
+                    help = 'For lyA/lyB cross-correlation, deltas #1 have been comptued with a continuum with zero-order polynomial in log(lambda)')
+
+    parser.add_argument('--order_0_2', action="store_true", required=False,
+                    help = 'For lyA/lyB cross-correlation, deltas #2 have been comptued with a continuum with zero-order polynomial in log(lambda)')
+
 
     args = parser.parse_args()
 
@@ -126,8 +135,6 @@ if __name__ == '__main__':
     print "dir_name1 = {}".format(dir_name1)
     print "dir_name2 = {}".format(dir_name2)
     print 
-    if args.order_0: 
-        print ("For lyb, the deltas are computed with a zero-order log(lambda) polynomial continuum")
     z_min_pix = 1.e6
 
     print 'opening dir1 = {}'.format(args.in_dir1)
@@ -151,10 +158,12 @@ if __name__ == '__main__':
             z_min_pix1 = sp.amin( sp.append([z_min_pix],z) )
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1+z)/(1+args.z_ref))**(xcf_forest.alpha-1)
-
+  
             if not args.no_project:
-                d.project()      
-
+                if args.order_0_1: 
+                    d.project_0()
+                else:
+                    d.project()
         if not args.nspec is None:
             if ndata1>args.nspec:break
     sys.stderr.write("\n")
@@ -186,7 +195,7 @@ if __name__ == '__main__':
                 d.r_comov = cosmo.r_comoving(z)
                 d.we *= ((1+z)/(1+args.z_ref))**(xcf_forest.alpha-1)
                 if not args.no_project:
-                    if args.order_0: 
+                    if args.order_0_2: 
                         d.project_0()
                     else:
                         d.project()
@@ -223,8 +232,10 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    if args.order_0: 
-        dm = pool.map(calc_dmat_order0,cpu_data1.values())
+    if args.order_0_1 and args.order_0_2:
+        dm = pool.map(calc_dmat_order0_2,cpu_data1.values())
+    elif args.order_0_1:
+        dm = pool.map(calc_dmat_order0_1,cpu_data1.values())
     else: 
         dm = pool.map(calc_dmat,cpu_data1.values())
     pool.close()
