@@ -58,7 +58,7 @@ class forest(qso):
     mean_cont = None
 
 
-    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid):
+    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
         ## rebin
 
@@ -98,6 +98,7 @@ class forest(qso):
         self.ll = ll
         self.fl = fl
         self.iv = iv
+        self.order=order
 
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):
@@ -146,7 +147,8 @@ class forest(qso):
         eta = forest.eta(self.ll)
 
         def model(p0,p1):
-            line = p1*(self.ll-lmin)/(lmax-lmin)+p0*(lmax-self.ll)/(lmax-lmin)
+            #line = p1*(self.ll-lmin)/(lmax-lmin)+p0*(lmax-self.ll)/(lmax-lmin)
+            line = p1*(self.ll-lmin)/(lmax-lmin)+p0
             return line*mc
 
         def chi2(p0,p1):
@@ -156,53 +158,26 @@ class forest(qso):
             v = (self.fl-m)**2*we
             return v.sum()-sp.log(we).sum()
 
-        p0 = p1 = (self.fl*self.iv).sum()/self.iv.sum()
+        #p0 = p1 = (self.fl*self.iv).sum()/self.iv.sum()
+        p0 = (self.fl*self.iv).sum()/self.iv.sum()
+        p1 = 0
 
-        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p1/2.,errordef=1.,print_level=0)
+        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p1/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
         mig.migrad()
         self.co=model(mig.values["p0"],mig.values["p1"])
         self.p0 = mig.values["p0"]
         self.p1 = mig.values["p1"]
 
-    def cont_fit_order_0(self):
-        lmax = forest.lmax_rest+sp.log10(1+self.zqso)
-        lmin = forest.lmin_rest+sp.log10(1+self.zqso)
-        try:
-            mc = forest.mean_cont(self.ll-sp.log10(1+self.zqso))
-        except ValueError:
-            raise Exception
-
-        if not self.T_dla is None:
-            mc*=self.T_dla
-
-        var_lss = forest.var_lss(self.ll)
-        eta = forest.eta(self.ll)
-
-        def model_order_0(p0):
-            return p0*mc
-
-        def chi2_order_0(p0):
-            m = model_order_0(p0)
-            iv = self.iv/eta
-            we = iv/(iv*var_lss*m**2+1)
-            v = (self.fl-m)**2*we
-            return v.sum()-sp.log(we).sum()
-
-        p0 = (self.fl*self.iv).sum()/self.iv.sum()
-
-        mig = iminuit.Minuit(chi2_order_0,p0=p0,error_p0=p0/2.,errordef=1.,print_level=0)
-        mig.migrad()
-        self.co=model_order_0(mig.values["p0"])
-        self.p0 = mig.values["p0"]
 
 class delta(qso):
     
-    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de):
+    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,order,ll,we,co,de):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
         self.ll = ll
         self.we = we
         self.co = co
         self.de = de
+        self.order=order
 
     @classmethod
     def from_forest(cls,f,st,var_lss,eta):
@@ -212,7 +187,7 @@ class delta(qso):
         iv = f.iv/eta(f.ll)
         we = iv*f.co**2/(iv*f.co**2*var_lss(f.ll)+1)
         co = f.co
-        return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de)
+        return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,f.order,ll,we,co,de)
 
     @classmethod
     def from_fitsio(cls,h):
@@ -229,7 +204,11 @@ class delta(qso):
         plate = head['PLATE']
         mjd = head['MJD']
         fid = head['FIBERID']
-        return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de)
+        try: 
+            order = head['ORDER']
+        except ValueError:
+            order = 1
+        return cls(thid,ra,dec,zqso,plate,mjd,fid,order,ll,we,co,de)
 
     @staticmethod
     def from_image(f):
@@ -265,11 +244,10 @@ class delta(qso):
 
     def project(self):
         mde = sp.average(self.de,weights=self.we)
-        mll = sp.average(self.ll,weights=self.we)
-        mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
+        res = 0
+        if (self.order==1): 
+            mll = sp.average(self.ll,weights=self.we)
+            mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
+            res = mld * (self.ll-mll) 
+        self.de -= mde + res
 
-        self.de -= mde + mld * (self.ll-mll)
-
-    def project_0(self): 
-        mde = sp.average(self.de,weights=self.we)
-        self.de -= mde 

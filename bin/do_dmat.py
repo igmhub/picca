@@ -6,6 +6,7 @@ import argparse
 import glob
 import healpy
 import sys
+import copy
 from scipy import random 
 from scipy.interpolate import interp1d
 
@@ -17,13 +18,11 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 
 def calc_dmat(p):
-    cf.fill_neighs(p)
+    if x_correlation: 
+        cf.fill_neighs_x_correlation(p)
+    else: 
+        cf.fill_neighs(p)
     tmp = cf.dmat(p)
-    return tmp
-
-def calc_dmat_order0(p):
-    cf.fill_neighs(p)
-    tmp = cf.dmat_order0(p)
     return tmp
 
 if __name__ == '__main__':
@@ -35,6 +34,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--in-dir', type = str, default = None, required=True,
                         help = 'data directory')
+
+    parser.add_argument('--in-dir2', type = str, default = None, required=False,
+                        help = 'second delta directory')
 
     parser.add_argument('--rp-max', type = float, default = 200, required=False,
                         help = 'max rp')
@@ -50,6 +52,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--lambda-abs', type = float, default = constants.lya, required=False,
                         help = 'wavelength of absorption')
+
+    parser.add_argument('--lambda-abs2', type = float, default = constants.lya, required=False,
+                        help = 'wavelength of absorption in forest 2')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -75,9 +80,6 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
-    parser.add_argument('--order_0', action="store_true", required=False,
-                    help = 'if the delta continuum have been computed with a zero order polynomial in log lambda')  
-
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -97,49 +99,92 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
-    if args.order_0:
-        print("compute dmat for delta computed with a zero-order polynomial in log(lambda) for the continuum fit.")
-
-
     z_min_pix = 1.e6
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
+
     data = {}
     ndata = 0
+    dels = []
+    fi = glob.glob(args.in_dir+"/*.fits.gz")
     for i,f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
-        dels = [delta.from_fitsio(h) for h in hdus[1:]]
-        ndata+=len(dels)
-        phi = [d.ra for d in dels]
-        th = [sp.pi/2-d.dec for d in dels]
-        pix = healpy.ang2pix(cf.nside,th,phi)
-        for d,p in zip(dels,pix):
-            if not p in data:
-                data[p]=[]
-            data[p].append(d)
-
-            z = 10**d.ll/args.lambda_abs-1
-            z_min_pix = sp.amin( sp.append([z_min_pix],z) )
-            d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
-                
-            if not args.no_project:
-                if args.order_0:
-                    d.project_0()
-                else: 
-                    d.project()
-
+        dels += [delta.from_fitsio(h) for h in hdus[1:]]
+        ndata+=len(hdus[1:])
+        hdus.close()
         if not args.nspec is None:
             if ndata>args.nspec:break
 
-    sys.stderr.write("\n")
+    x_correlation=False
+    if args.in_dir2: 
+        x_correlation=True
+        data2 = {}
+        ndata2 = 0
+        dels2 = []
+        fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        for i,f in enumerate(fi):
+            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+            hdus = fitsio.FITS(f)
+            dels2 += [delta.from_fitsio(h) for h in hdus[1:]]
+            ndata2+=len(hdus[1:])
+            hdus.close()
+            if not args.nspec is None:
+                if ndata2>args.nspec:break
+    elif args.lambda_abs != args.lambda_abs2:   
+        x_correlation=True
+        data2  = copy.deepcopy(data)
+        ndata2 = copy.deepcopy(ndata)
+        dels2  = copy.deepcopy(dels)
+
+
+    z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1
+    phi = [d.ra for d in dels]
+    th = [sp.pi/2-d.dec for d in dels]
+    pix = healpy.ang2pix(cf.nside,th,phi)
+    for d,p in zip(dels,pix):
+        if not p in data:
+            data[p]=[]
+        data[p].append(d)
+
+        z = 10**d.ll/args.lambda_abs-1
+        z_min_pix = sp.amin( sp.append([z_min_pix],z) )
+        d.z = z
+        d.r_comov = cosmo.r_comoving(z)
+        d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+        if not args.no_project:
+            d.project()
+    
+    if x_correlation: 
+        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1
+        z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
+        phi2 = [d.ra for d in dels2]
+        th2 = [sp.pi/2-d.dec for d in dels2]
+        pix2 = healpy.ang2pix(cf.nside,th2,phi2)
+
+        for d,p in zip(dels2,pix2):
+            if not p in data2:
+                data2[p]=[]
+            data2[p].append(d)
+
+            z = 10**d.ll/args.lambda_abs2-1
+            z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
+            d.z = z
+            d.r_comov = cosmo.r_comoving(z)
+            d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+            if not args.no_project:
+                d.project()
+            
 
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
     cf.npix = len(data)
+    print "done, npix = {}".format(cf.npix)
+
     cf.data = data
-    cf.ndata = ndata
-    print "done"
+    cf.ndata=ndata
+
+    if x_correlation:
+        cf.data2 = data2
+        cf.ndata2=ndata2
 
     cf.counter = Value('i',0)
 
@@ -154,10 +199,7 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    if args.order_0:
-        dm = pool.map(calc_dmat_order0,cpu_data.values())
-    else: 
-        dm = pool.map(calc_dmat,cpu_data.values())
+    dm = pool.map(calc_dmat,cpu_data.values())
     pool.close()
 
     dm = sp.array(dm)

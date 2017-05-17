@@ -12,16 +12,20 @@ nt = None
 rp_max = None
 rt_max = None
 angmax = None
-nside = None
 
 counter = None
+nside = None
+
 ndata = None
+data = None
+lambda_abs = None
+
+ndata2 = None
+data2 = None
+lambda_abs2 = None
 
 zref = None
 alpha= None
-lambda_abs = None
-
-data = None
 
 rej = None
 lock = None
@@ -36,6 +40,17 @@ def fill_neighs(pix):
             w = ang<angmax
             neighs = sp.array(neighs)[w]
             d1.neighs = [d for d in neighs if d1.ra > d.ra]
+
+def fill_neighs_x_correlation(pix):
+    for ipix in pix:
+        for d1 in data[ipix]:
+            npix = query_disc(nside,[d1.xcart,d1.ycart,d1.zcart],angmax,inclusive = True)
+            npix = [p for p in npix if p in data2]
+            neighs = [d for p in npix for d in data2[p]]
+            ang = d1^neighs
+            w = (ang<angmax)*(ang>=sp.arccos(1.-1.1e-11))
+            neighs = sp.array(neighs)[w]
+            d1.neighs = [d for d in neighs if d1.ra != d.ra]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
@@ -112,6 +127,7 @@ def dmat(pix):
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
             with lock:
                 counter.value += 1
+            order1 = d1.order
             r1 = d1.r_comov
             w1 = d1.we
             l1 = d1.ll
@@ -123,15 +139,16 @@ def dmat(pix):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 ang = d1^d2
+                order2 = d2.order
                 r2 = d2.r_comov
                 w2 = d2.we
                 l2 = d2.ll
-                fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate)
+                fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2)
 
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
     
 @jit
-def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
+def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = (rp/rp_max*np).astype(int)
@@ -180,19 +197,24 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
     eta1[:len(c)]+=c
     c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
-    eta3[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
-    eta4[:len(c)]+=c
-
     c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
-    c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
-    eta6[:len(c)]+=c
-    c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
-    eta7[:len(c)]+=c
-    c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
+
+    if order2==1: 
+        c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
+        eta3[:len(c)]+=c
+        c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
+        eta6[:len(c)]+=c
+    if order1==1: 
+        c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        eta4[:len(c)]+=c
+        c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
+        eta7[:len(c)]+=c
+        if order2==1:
+            c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
     eta8[:len(c)]+=c
+
+
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):
@@ -202,81 +224,6 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
         for bb in ubb:
             dm[ba+np*nt*bb] += we[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
              - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
-
-def dmat_order0(pix):
-
-    dm = sp.zeros(np*nt*nt*np)
-    wdm = sp.zeros(np*nt)
-
-    npairs = 0L
-    npairs_used = 0L
-    for p in pix:
-        for d1 in data[p]:
-            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
-            with lock:
-                counter.value += 1
-            r1 = d1.r_comov
-            w1 = d1.we
-            r = random.rand(len(d1.neighs))
-            w=r>rej
-            npairs += len(d1.neighs)
-            npairs_used += w.sum()
-            for d2 in sp.array(d1.neighs)[w]:
-                same_half_plate = (d1.plate == d2.plate) and\
-                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
-                ang = d1^d2
-                r2 = d2.r_comov
-                w2 = d2.we
-                fill_dmat_order0(r1,r2,w1,w2,ang,wdm,dm,same_half_plate)
-
-    return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
-    
-@jit
-def fill_dmat_order0(r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
-    rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2)
-    bp = (rp/rp_max*np).astype(int)
-    bt = (rt/rt_max*nt).astype(int)
-    bins = bt + nt*bp
-    
-    sw1 = w1.sum()
-    sw2 = w2.sum()
-    w = (rp<rp_max) & (rt<rt_max)
-
-    bins = bins[w]
-
-    n1 = len(w1)
-    n2 = len(w2)
-    ij = sp.arange(n1)[:,None]+n1*sp.arange(n2)
-    ij = ij[w]
-
-    we = w1[:,None]*w2
-    we = we[w]
-    if same_half_plate:
-        wsame = bp[w]==0
-        we[wsame]=0
-
-    c = sp.bincount(bins,weights=we)
-    wdm[:len(c)] += c
-    eta1 = sp.zeros(np*nt*n1)
-    eta2 = sp.zeros(np*nt*n2)
-    eta5 = sp.zeros(np*nt*n1)
-
-
-    c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
-    eta1[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
-    eta2[:len(c)]+=c
-    c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
-    eta5[:len(c)]+=c
-
-    ubb = sp.unique(bins)
-    for k,ba in enumerate(bins):
-        dm[ba+np*nt*ba]+=we[k]
-        i = ij[k]%n1
-        j = (ij[k]-i)/n1
-        for bb in ubb:
-            dm[ba+np*nt*bb] += we[k]*eta5[bb] - we[k]*(eta1[i+n1*bb]+eta2[j+n2*bb])
 
 n1d = None
 def cf1d(pix):

@@ -21,11 +21,6 @@ def cont_fit(data):
         d.cont_fit()
     return data
 
-def cont_fit_order_0(data):
-    for d in data:
-        d.cont_fit_order_0()
-    return data
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -86,8 +81,8 @@ if __name__ == '__main__':
     parser.add_argument('--keep-bal',action='store_true',required=False,
             help='do not reject BALs')
 
-    parser.add_argument('--cont-order-0',action='store_true',required=False,
-            help='Use a zero order polynomial to compute the continuum')
+    parser.add_argument('--order',type=int,default=1,required=False,
+            help='order of the log(lambda) polynomial for the continuum fit, by default 1.')
 
     parser.add_argument('--bi-max',type=float,required=False,default=None,
             help="maximum CIV balnicity index (overrides --keep-bal")
@@ -115,6 +110,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    if (args.order != 0) and (args.order != 1): 
+        print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(order))
+        sys.exit(12)
     ## init forest class
     
     lambda_rest_min=args.lambda_rest_min
@@ -161,9 +159,10 @@ if __name__ == '__main__':
 
     nit = args.nit
 
+    print("order of the log(lambda) polynomial for the continuum fit is %i"%(args.order))
     log = open(args.log,'w')
     data,ndata = io.read_data(args.in_dir,args.drq,args.mode,\
-            zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max)
+                              zmin=args.zqso_min,zmax=args.zqso_max,order=args.order,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max)
     
 
     ### Get the lines to veto
@@ -242,11 +241,7 @@ if __name__ == '__main__':
         pool = Pool(processes=args.nproc)
         print "iteration: ", it
         nfit = 0
-        if args.cont_order_0: 
-            print("Compute the continuum with a zero order model")
-            data_fit_cont = pool.map(cont_fit_order_0, data.values())
-        else: 
-            data_fit_cont = pool.map(cont_fit, data.values())
+        data_fit_cont = pool.map(cont_fit, data.values())
         for i, p in enumerate(data):
             data[p] = data_fit_cont[i]
 
@@ -283,6 +278,7 @@ if __name__ == '__main__':
             hd["PLATE"]=d.plate
             hd["MJD"]=d.mjd
             hd["FIBERID"]=d.fid
+            hd["ORDER"]=d.order
 
             cols=[d.ll,d.de,d.we,d.co]
             names=['LOGLAM','DELTA','WEIGHT','CONT']
