@@ -207,7 +207,10 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
-    dm = sp.zeros(np*nt*nt*np)
+
+    ntm=nt
+    npm=np
+    dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
 
     npairs = 0L
@@ -218,8 +221,10 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 sys.stderr.write("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)))
                 counter.value += 1
             r1 = d1.r_comov
-            r1_abs1 = cosmo.r_comoving(10**d1.ll/constants.absorber_IGM[abs_igm1]-1)
-            r1_abs2 = cosmo.r_comoving(10**d1.ll/constants.absorber_IGM[abs_igm2]-1)
+            z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
+            r1_abs1 = cosmo.r_comoving(z1_abs1)
+            z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
+            r1_abs2 = cosmo.r_comoving(z1_abs2)
             w1 = d1.we
             l1 = d1.ll
             r = random.rand(len(d1.neighs))
@@ -232,8 +237,10 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 ang = d1^d2
 
                 r2 = d2.r_comov
-                r2_abs1 = cosmo.r_comoving(10**d2.ll/constants.absorber_IGM[abs_igm1]-1)
-                r2_abs2 = cosmo.r_comoving(10**d2.ll/constants.absorber_IGM[abs_igm2]-1)
+                z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
+                r2_abs1 = cosmo.r_comoving(z2_abs1)
+                z2_abs2 = 10**d2.ll/constants.absorber_IGM[abs_igm2]-1
+                r2_abs2 = cosmo.r_comoving(z2_abs2)
 
                 w2 = d2.we
                 l2 = d2.ll
@@ -242,32 +249,35 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 w12 = w1[:,None]*w2
 
                 bp = (rp/rp_max*np).astype(int)
-                bt = (rt/rt_max*np).astype(int)
+                bt = (rt/rt_max*nt).astype(int)
                 bA = bt + nt*bp
                 wA = (bp<np) & (bt<nt)
-                wdm[bA[wA]]+=w12[wA]
+                c = sp.bincount(bA[wA],weights=w12[wA])
+                wdm[:len(c)]+=c
 
                 rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
 
-                bp_abs1_abs2 = (rp_abs1_abs2/rp_max*np).astype(int)
-                bt_abs1_abs2 = (rt_abs1_abs2/rt_max*np).astype(int)
-                bBma = bt_abs1_abs2 + nt*bp_abs1_abs2
-                wBma = (bp_abs1_abs2<np) & (bt_abs1_abs2<nt)
+                bp_abs1_abs2 = (rp_abs1_abs2/rp_max*npm).astype(int)
+                bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
+                bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
+                wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm)
                 wAB = wA&wBma
-                dm[bBma[wAB]+np*nt*bA[wAB]]+=w12[wAB]
+                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB])
+                dm[:len(c)]+=c
                 if abs_igm1 != abs_igm2:
                     rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
 
-                    bp_abs2_abs1 = (rp_abs2_abs1/rp_max*np).astype(int)
-                    bt_abs2_abs1 = (rt_abs2_abs1/rt_max*np).astype(int)
-                    bBam = bt_abs2_abs1 + nt*bp_abs2_abs1
-                    wBam = (bp_abs2_abs1<np) & (bt_abs2_abs1<nt)
+                    bp_abs2_abs1 = (rp_abs2_abs1/rp_max*npm).astype(int)
+                    bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
+                    bBam = bt_abs2_abs1 + ntm*bp_abs2_abs1
+                    wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm)
                     wAB = wA&wBam
 
-                    dm[bBam[wAB]+np*nt*bA[wAB]]+=w12[wAB]
-    return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
+                    c = sp.bincount(bBam[wAB]+npm*ntm*bA[wAB],weights=w12[wAB])
+                    dm[:len(c)]+=c
+    return wdm,dm.reshape(np*nt,npm*ntm),npairs,npairs_used
 
 n1d = None
 def cf1d(pix):
