@@ -6,6 +6,7 @@ from multiprocessing import Pool
 from numba import jit
 from data import forest
 from scipy import random
+from pylya import constants
 
 np = None
 nt = None 
@@ -22,6 +23,8 @@ alpha= None
 lambda_abs = None
 
 data = None
+
+cosmo=None
 
 rej = None
 lock = None
@@ -98,7 +101,6 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     cz = sp.bincount(bins,weights=z*w12)
 
     return cw,cd,crp,crt,cz
-
 
 def dmat(pix):
 
@@ -202,6 +204,70 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
         for bb in ubb:
             dm[ba+np*nt*bb] += we[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
              - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+
+def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
+
+    dm = sp.zeros(np*nt*nt*np)
+    wdm = sp.zeros(np*nt)
+
+    npairs = 0L
+    npairs_used = 0L
+    for p in pix:
+        for d1 in data[p]:
+            with lock:
+                sys.stderr.write("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)))
+                counter.value += 1
+            r1 = d1.r_comov
+            r1_abs1 = cosmo.r_comoving(10**d1.ll/constants.absorber_IGM[abs_igm1]-1)
+            r1_abs2 = cosmo.r_comoving(10**d1.ll/constants.absorber_IGM[abs_igm2]-1)
+            w1 = d1.we
+            l1 = d1.ll
+            r = random.rand(len(d1.neighs))
+            w=r>rej
+            npairs += len(d1.neighs)
+            npairs_used += w.sum()
+            for d2 in sp.array(d1.neighs)[w]:
+                same_half_plate = (d1.plate == d2.plate) and\
+                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
+                ang = d1^d2
+
+                r2 = d2.r_comov
+                r2_abs1 = cosmo.r_comoving(10**d2.ll/constants.absorber_IGM[abs_igm1]-1)
+                r2_abs2 = cosmo.r_comoving(10**d2.ll/constants.absorber_IGM[abs_igm2]-1)
+
+                w2 = d2.we
+                l2 = d2.ll
+                rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+                rt = (r1[:,None]+r2)*sp.sin(ang/2)
+                w12 = w1[:,None]*w2
+
+                bp = (rp/rp_max*np).astype(int)
+                bt = (rt/rt_max*np).astype(int)
+                bA = bt + nt*bp
+                wA = (bp<np) & (bt<nt)
+                wdm[bA[wA]]+=w12[wA]
+
+                rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
+                rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
+
+                bp_abs1_abs2 = (rp_abs1_abs2/rp_max*np).astype(int)
+                bt_abs1_abs2 = (rt_abs1_abs2/rt_max*np).astype(int)
+                bBma = bt_abs1_abs2 + nt*bp_abs1_abs2
+                wBma = (bp_abs1_abs2<np) & (bt_abs1_abs2<nt)
+                wAB = wA&wBma
+                dm[bBma[wAB]+np*nt*bA[wAB]]+=w12[wAB]
+                if abs_igm1 != abs_igm2:
+                    rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                    rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
+
+                    bp_abs2_abs1 = (rp_abs2_abs1/rp_max*np).astype(int)
+                    bt_abs2_abs1 = (rt_abs2_abs1/rt_max*np).astype(int)
+                    bBam = bt_abs2_abs1 + nt*bp_abs2_abs1
+                    wBam = (bp_abs2_abs1<np) & (bt_abs2_abs1<nt)
+                    wAB = wA&wBam
+
+                    dm[bBam[wAB]+np*nt*bA[wAB]]+=w12[wAB]
+    return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
 
 n1d = None
 def cf1d(pix):
