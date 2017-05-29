@@ -10,6 +10,8 @@ from pylya import constants
 
 np = None
 nt = None 
+ntm= None
+npm= None
 rp_max = None
 rt_max = None
 angmax = None
@@ -208,10 +210,10 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
 
-    ntm=nt
-    npm=np
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
+
+    alpha=-2.
 
     npairs = 0L
     npairs_used = 0L
@@ -250,6 +252,9 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 bp = (rp/rp_max*np).astype(int)
                 bt = (rt/rt_max*nt).astype(int)
+                if same_half_plate:
+                    wp = bp==0
+                    w12[wp]=0
                 bA = bt + nt*bp
                 wA = (bp<np) & (bt<nt)
                 c = sp.bincount(bA[wA],weights=w12[wA])
@@ -257,17 +262,19 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
+                zwe12 = (1+z1_abs1[:,None])**(alpha/2)*(1+z2_abs2)**(alpha/2)/(3.25)**alpha
 
                 bp_abs1_abs2 = (rp_abs1_abs2/rp_max*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
                 bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
                 wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm)
                 wAB = wA&wBma
-                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB])
+                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe12[wAB])
                 dm[:len(c)]+=c
                 if abs_igm1 != abs_igm2:
                     rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
+                    zwe21 = (1+z1_abs2[:,None])**(alpha/2)*(1+z2_abs1)**(alpha/2)/(3.25)**alpha
 
                     bp_abs2_abs1 = (rp_abs2_abs1/rp_max*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
@@ -275,7 +282,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm)
                     wAB = wA&wBam
 
-                    c = sp.bincount(bBam[wAB]+npm*ntm*bA[wAB],weights=w12[wAB])
+                    c = sp.bincount(bBam[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe21[wAB])
                     dm[:len(c)]+=c
     return wdm,dm.reshape(np*nt,npm*ntm),npairs,npairs_used
 

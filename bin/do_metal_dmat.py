@@ -17,9 +17,7 @@ from pylya.data import delta
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
-
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
-    cf.fill_neighs(p)
     tmp = cf.metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
     return tmp
 
@@ -83,6 +81,11 @@ if __name__ == '__main__':
     cf.rt_max = args.rt_max
     cf.np = args.np
     cf.nt = args.nt
+
+    ## use a metal grid equal to the lya grid
+    cf.npm = args.np
+    cf.ntm = args.nt
+
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
@@ -138,7 +141,11 @@ if __name__ == '__main__':
         cpu_data[ip].append(p)
 
     random.seed(0)
-    pool = Pool(processes=args.nproc)
+
+    for i,p in enumerate(cpu_data.values()):
+        print "filling neighs ",i,len(cpu_data.values())
+        cf.fill_neighs(p)
+
     dm_all=[]
     wdm_all=[]
     names=[]
@@ -153,7 +160,9 @@ if __name__ == '__main__':
             cf.counter.value=0
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
             sys.stderr.write("\n")
+            pool = Pool(processes=args.nproc)
             dm = pool.map(f,cpu_data.values())
+            pool.close()
             dm = sp.array(dm)
             wdm =dm[:,0].sum(axis=0)
             npairs=dm[:,2].sum(axis=0)
@@ -169,8 +178,6 @@ if __name__ == '__main__':
             npairs_all[abs_igm1+"_"+abs_igm2]=npairs
             npairs_used_all[abs_igm1+"_"+abs_igm2]=npairs_used
 
-    pool.close()
-
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
     head['REJ']=args.rej
@@ -184,14 +191,19 @@ if __name__ == '__main__':
 
     out.write([sp.array(names)],names=["ABS_IGM"],header=head)
 
-    out_list = []
-    out_names=[]
+    irt = sp.arange(cf.ntm*cf.npm)%cf.ntm
+    irp = (sp.arange(cf.ntm*cf.npm)-irt)/cf.ntm
+
+    rt = (irt+0.5)*cf.rt_max/cf.ntm
+    rp = (irp+0.5)*cf.rp_max/cf.npm
+    out_list = [rt,rp]
+    out_names = ["RT","RP"]
     for i,ai in enumerate(names):
         out_names = out_names + ["DM_"+ai]
         out_list = out_list + [dm_all[i]]
 
-#        out_names=out_names+["WDM_"]
-#        out_list = out_list+[wdm_all[i]]
+        out_names=out_names+["WDM_"+ai]
+        out_list = out_list+[wdm_all[i]]
 
     out.write(out_list,names=out_names)
     out.close()
