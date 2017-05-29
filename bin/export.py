@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser.add_argument('--out', type = str, default = None, required=True,
                         help = 'output file')
 
-    parser.add_argument('--dmat', type = str, default = None, required=True,
+    parser.add_argument('--dmat', type = str, default = None, required=False,
                         help = 'distorsion matrix file')
 
     parser.add_argument('--cov', type = str, default = None, required=False,
@@ -37,9 +37,11 @@ if __name__ == '__main__':
 
     h.close()
 
-    h = fitsio.FITS(args.dmat)
-
-    dm = h[1]['DM'][:]
+    if args.dmat is not None:
+        h = fitsio.FITS(args.dmat)
+        dm = h[1]['DM'][:]
+    else:
+        dm = sp.eye(len(da))
 
     h.close()
 

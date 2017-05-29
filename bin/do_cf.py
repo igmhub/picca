@@ -203,6 +203,7 @@ if __name__ == '__main__':
     rps=cfs[:,2,:]
     rts=cfs[:,3,:]
     zs=cfs[:,4,:]
+    nbs=cfs[:,5,:].astype(sp.int64)
     cfs=cfs[:,1,:]
 
     cut      = (wes.sum(axis=0)>0.)
@@ -212,6 +213,7 @@ if __name__ == '__main__':
     rt[cut] /= wes.sum(axis=0)[cut]
     z        = (zs*wes).sum(axis=0)
     z[cut]  /= wes.sum(axis=0)[cut]
+    nb       = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
@@ -220,7 +222,7 @@ if __name__ == '__main__':
     head['NT']=cf.nt
     head['NP']=cf.np
 
-    out.write([rp,rt,z],names=['RP','RT','Z'],header=head)
+    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
     out.write([wes,cfs],names=['WE','DA'])
     out.close()
 

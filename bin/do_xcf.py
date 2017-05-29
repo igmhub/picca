@@ -142,8 +142,8 @@ if __name__ == '__main__':
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
-        forest.lmin  = sp.log10( (z_min_pix+1.)*args.lambda_abs )
-        forest.lmax  = sp.log10( (z_max_pix+1.)*args.lambda_abs )
+        forest.lmin  = sp.log10( (z_min_pix+1.)*args.lambda_abs )-bin_size_ll/2.
+        forest.lmax  = sp.log10( (z_max_pix+1.)*args.lambda_abs )+bin_size_ll/2.
         forest.dll   = bin_size_ll
         ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
