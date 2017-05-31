@@ -9,7 +9,17 @@ requirements:
 * numba
 * multiprocessing
 
-add pyLyA/py/ to your PYTHONPATH
+## Installation
+
+run
+```
+python setup.py install --user
+```
+(assuming you run as user, ommit `--user` for system-wide install).
+
+Alternatively, you can just add pyLyA/py/ to your PYTHONPATH 
+
+## Examples
 
 example run over 1000 spectra (the DLA catalog is not required):
 
