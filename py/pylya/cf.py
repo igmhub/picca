@@ -234,7 +234,6 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
-
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
 
