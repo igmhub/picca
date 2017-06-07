@@ -70,7 +70,7 @@ if __name__ == '__main__':
     data = {}
     ndata = 0
     for i,f in enumerate(fi):
-        if i%10==0:
+        if i%1==0:
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
         dels = [delta.from_fitsio(h) for h in hdus[1:]]

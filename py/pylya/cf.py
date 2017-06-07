@@ -213,7 +213,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
 
-    alpha=-2.
+    #alpha=-2.
+    alpha=3.8
 
     npairs = 0L
     npairs_used = 0L
