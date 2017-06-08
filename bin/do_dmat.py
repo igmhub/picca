@@ -147,7 +147,8 @@ if __name__ == '__main__':
     npairs_used=dm[:,3].sum(axis=0)
     dm=dm[:,1].sum(axis=0)
 
-    dm/=wdm
+    w = wdm>0
+    dm[w]/=wdm[w,None]
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
