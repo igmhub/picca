@@ -241,4 +241,4 @@ def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
         i = ij[k]%n1
         j = (ij[k]-i)/n1
         for bb in ubb:
-            dm[ba+np*nt*bb] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+            dm[bb+np*nt*ba] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
