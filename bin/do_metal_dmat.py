@@ -149,8 +149,8 @@ if __name__ == '__main__':
     dm_all=[]
     wdm_all=[]
     names=[]
-    npairs_all={}
-    npairs_used_all={}
+    npairs_all=[]
+    npairs_used_all=[]
     abs_igm = ["LYA"]+args.abs_igm
     for i,abs_igm1 in enumerate(abs_igm):
         for j in range(i,len(abs_igm)):
@@ -165,8 +165,16 @@ if __name__ == '__main__':
             pool.close()
             dm = sp.array(dm)
             wdm =dm[:,0].sum(axis=0)
-            npairs=dm[:,2].sum(axis=0)
-            npairs_used=dm[:,3].sum(axis=0)
+            rp = dm[:,2].sum(axis=0)
+            rt = dm[:,3].sum(axis=0)
+            z = dm[:,4].sum(axis=0)
+            we = dm[:,5].sum(axis=0)
+            w=we>0
+            rp[w]/=we[w]
+            rt[w]/=we[w]
+            z[w]/=we[w]
+            npairs=dm[:,6].sum(axis=0)
+            npairs_used=dm[:,7].sum(axis=0)
             dm=dm[:,1].sum(axis=0)
             w=wdm>0
             dm[w,:]/=wdm[w,None]
@@ -175,8 +183,8 @@ if __name__ == '__main__':
             wdm_all.append(wdm)
             names.append(abs_igm1+"_"+abs_igm2)
 
-            npairs_all[abs_igm1+"_"+abs_igm2]=npairs
-            npairs_used_all[abs_igm1+"_"+abs_igm2]=npairs_used
+            npairs_all.append(npairs)
+            npairs_used_all.append(npairs_used)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
@@ -185,19 +193,11 @@ if __name__ == '__main__':
     head['RTMAX']=cf.rt_max
     head['NT']=cf.nt
     head['NP']=cf.np
-    for i in names:
-        head['NPROR_'+i]=npairs_all[i]
-        head['NPUSED_'+i]=npairs_used_all[i]
 
-    out.write([sp.array(names)],names=["ABS_IGM"],header=head)
+    out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=["NPALL","NPUSED","ABS_IGM"],header=head)
 
-    irt = sp.arange(cf.ntm*cf.npm)%cf.ntm
-    irp = (sp.arange(cf.ntm*cf.npm)-irt)/cf.ntm
-
-    rt = (irt+0.5)*cf.rt_max/cf.ntm
-    rp = (irp+0.5)*cf.rp_max/cf.npm
-    out_list = [rt,rp]
-    out_names = ["RT","RP"]
+    out_list = [rt,rp,z]
+    out_names = ["RT","RP","Z"]
     for i,ai in enumerate(names):
         out_names = out_names + ["DM_"+ai]
         out_list = out_list + [dm_all[i]]
