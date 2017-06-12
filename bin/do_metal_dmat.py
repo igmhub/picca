@@ -64,6 +64,9 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
+    parser.add_argument('--metal-alpha', type = float, default = 1., required=False,
+                    help = 'exponent of the redshift evolution of the metal delta field')
+
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
@@ -127,6 +130,7 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
+    cf.alpha_met = args.metal_alpha
     print "done"
 
     cf.counter = Value('i',0)
@@ -188,6 +192,7 @@ if __name__ == '__main__':
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
+    head["ALPHA_MET"]=cf.alpha_met
     head['REJ']=args.rej
     head['RPMAX']=cf.rp_max
     head['RTMAX']=cf.rt_max
