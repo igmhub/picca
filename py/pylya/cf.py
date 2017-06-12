@@ -22,6 +22,7 @@ ndata = None
 
 zref = None
 alpha= None
+alpha_met= None
 lambda_abs = None
 
 data = None
@@ -220,8 +221,6 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
     zeff = sp.zeros(ntm*npm)
     weff = sp.zeros(ntm*npm)
 
-    alpha=0.
-
     npairs = 0
     npairs_used = 0
     for p in pix:
@@ -269,7 +268,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
-                zwe12 = (1+z1_abs1[:,None])**(alpha/2)*(1+z2_abs2)**(alpha/2)/(3.25)**alpha
+                zwe12 = (1+z1_abs1[:,None])**(alpha_met-1)*(1+z2_abs2)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
 
                 bp_abs1_abs2 = (rp_abs1_abs2/rp_max*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
@@ -291,7 +290,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 if abs_igm1 != abs_igm2:
                     rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
-                    zwe21 = (1+z1_abs2[:,None])**(alpha/2)*(1+z2_abs1)**(alpha/2)/(3.25)**alpha
+                    zwe21 = (1+z1_abs2[:,None])**(alpha_met-1)*(1+z2_abs1)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
 
                     bp_abs2_abs1 = (rp_abs2_abs1/rp_max*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
