@@ -152,6 +152,9 @@ if __name__ == '__main__':
 
     dm_all=[]
     wdm_all=[]
+    rp_all=[]
+    rt_all=[]
+    z_all=[]
     names=[]
     npairs_all=[]
     npairs_used_all=[]
@@ -185,6 +188,9 @@ if __name__ == '__main__':
 
             dm_all.append(dm)
             wdm_all.append(wdm)
+            rp_all.append(rp)
+            rt_all.append(rt)
+            z_all.append(z)
             names.append(abs_igm1+"_"+abs_igm2)
 
             npairs_all.append(npairs)
@@ -201,9 +207,18 @@ if __name__ == '__main__':
 
     out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=["NPALL","NPUSED","ABS_IGM"],header=head)
 
-    out_list = [rt,rp,z]
-    out_names = ["RT","RP","Z"]
+    out_list = []
+    out_names=[]
     for i,ai in enumerate(names):
+        out_names=out_names + ["RP_"+ai]
+        out_list = out_list + [rp_all[i]]
+
+        out_names=out_names + ["RT_"+ai]
+        out_list = out_list + [rt_all[i]]
+
+        out_names=out_names + ["Z_"+ai]
+        out_list = out_list + [z_all[i]]
+
         out_names = out_names + ["DM_"+ai]
         out_list = out_list + [dm_all[i]]
 
