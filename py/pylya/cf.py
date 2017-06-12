@@ -215,11 +215,15 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
+    rpeff = sp.zeros(ntm*npm)
+    rteff = sp.zeros(ntm*npm)
+    zeff = sp.zeros(ntm*npm)
+    weff = sp.zeros(ntm*npm)
 
-    alpha=-2.
+    alpha=0.
 
-    npairs = 0L
-    npairs_used = 0L
+    npairs = 0
+    npairs_used = 0
     for p in pix:
         for d1 in data[p]:
             with lock:
@@ -274,6 +278,16 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 wAB = wA&wBma
                 c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe12[wAB])
                 dm[:len(c)]+=c
+
+                c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
+                rpeff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
+                rteff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe12[wAB])
+                zeff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
+                weff[:len(c)]+=c
+
                 if abs_igm1 != abs_igm2:
                     rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
@@ -285,9 +299,18 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm)
                     wAB = wA&wBam
 
+                    c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
+                    rpeff[:len(c)]+=c
+                    c = sp.bincount(bBam[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe21[wAB])
+                    rteff[:len(c)]+=c
+                    c = sp.bincount(bBam[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe21[wAB])
+                    zeff[:len(c)]+=c
+                    c = sp.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
+                    weff[:len(c)]+=c
+
                     c = sp.bincount(bBam[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe21[wAB])
                     dm[:len(c)]+=c
-    return wdm,dm.reshape(np*nt,npm*ntm),npairs,npairs_used
+    return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 n1d = None
 def cf1d(pix):

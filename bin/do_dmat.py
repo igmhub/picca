@@ -99,7 +99,6 @@ if __name__ == '__main__':
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
         dels = [delta.from_fitsio(h) for h in hdus[1:]]
-        ndata+=len(dels)
         phi = [d.ra for d in dels]
         th = [sp.pi/2-d.dec for d in dels]
         pix = healpy.ang2pix(cf.nside,th,phi)
@@ -107,6 +106,7 @@ if __name__ == '__main__':
             if not p in data:
                 data[p]=[]
             data[p].append(d)
+            ndata+=1
 
             z = 10**d.ll/args.lambda_abs-1
             z_min_pix = sp.amin( sp.append([z_min_pix],z) )
@@ -114,9 +114,11 @@ if __name__ == '__main__':
             d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
             if not args.no_project:
                 d.project()
+            if not args.nspec is None:
+                if ndata>args.nspec:break
         if not args.nspec is None:
             if ndata>args.nspec:break
-    sys.stderr.write("\n")
+    sys.stderr.write("read {}\n".format(ndata))
 
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
