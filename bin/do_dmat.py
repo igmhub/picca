@@ -172,7 +172,10 @@ if __name__ == '__main__':
             d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
             if not args.no_project:
                 d.project()
-            
+            if not args.nspec is None:
+                if ndata2>args.nspec:break
+
+    sys.stderr.write("read {}\n".format(ndata))
 
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 

@@ -229,18 +229,20 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
         i = ij[k]%n1
         j = (ij[k]-i)/n1
         for bb in ubb:
-            dm[ba+np*nt*bb] += we[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
+            dm[bb+np*nt*ba] += we[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
              - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
+    rpeff = sp.zeros(ntm*npm)
+    rteff = sp.zeros(ntm*npm)
+    zeff = sp.zeros(ntm*npm)
+    weff = sp.zeros(ntm*npm)
 
-    alpha=-2.
-
-    npairs = 0L
-    npairs_used = 0L
+    npairs = 0
+    npairs_used = 0
     for p in pix:
         for d1 in data[p]:
             with lock:
@@ -286,7 +288,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
-                zwe12 = (1+z1_abs1[:,None])**(alpha/2)*(1+z2_abs2)**(alpha/2)/(3.25)**alpha
+                zwe12 = (1+z1_abs1[:,None])**(alpha_met-1)*(1+z2_abs2)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
 
                 bp_abs1_abs2 = (rp_abs1_abs2/rp_max*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
@@ -295,10 +297,20 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 wAB = wA&wBma
                 c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe12[wAB])
                 dm[:len(c)]+=c
+
+                c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
+                rpeff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
+                rteff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe12[wAB])
+                zeff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
+                weff[:len(c)]+=c
+
                 if abs_igm1 != abs_igm2:
                     rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
-                    zwe21 = (1+z1_abs2[:,None])**(alpha/2)*(1+z2_abs1)**(alpha/2)/(3.25)**alpha
+                    zwe21 = (1+z1_abs2[:,None])**(alpha_met-1)*(1+z2_abs1)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
 
                     bp_abs2_abs1 = (rp_abs2_abs1/rp_max*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
@@ -306,9 +318,18 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm)
                     wAB = wA&wBam
 
+                    c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
+                    rpeff[:len(c)]+=c
+                    c = sp.bincount(bBam[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe21[wAB])
+                    rteff[:len(c)]+=c
+                    c = sp.bincount(bBam[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe21[wAB])
+                    zeff[:len(c)]+=c
+                    c = sp.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
+                    weff[:len(c)]+=c
+
                     c = sp.bincount(bBam[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe21[wAB])
                     dm[:len(c)]+=c
-    return wdm,dm.reshape(np*nt,npm*ntm),npairs,npairs_used
+    return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 n1d = None
 def cf1d(pix):

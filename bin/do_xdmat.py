@@ -223,7 +223,7 @@ if __name__ == '__main__':
     dm=dm[:,1].sum(axis=0)
 
     w = wdm>0.
-    dm[:,w] /= wdm[w]
+    dm[w,:] /= wdm[w,None]
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)

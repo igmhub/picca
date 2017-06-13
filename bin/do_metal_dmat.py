@@ -70,6 +70,9 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
+    parser.add_argument('--metal-alpha', type = float, default = 1., required=False,
+                    help = 'exponent of the redshift evolution of the metal delta field')
+
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
@@ -181,6 +184,7 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
+    cf.alpha_met = args.metal_alpha
     print "done"
 
     if x_correlation:
@@ -209,6 +213,9 @@ if __name__ == '__main__':
 
     dm_all=[]
     wdm_all=[]
+    rp_all=[]
+    rt_all=[]
+    z_all=[]
     names=[]
     npairs_all={}
     npairs_used_all={}
@@ -242,40 +249,53 @@ if __name__ == '__main__':
             pool.close()
             dm = sp.array(dm)
             wdm =dm[:,0].sum(axis=0)
-            npairs=dm[:,2].sum(axis=0)
-            npairs_used=dm[:,3].sum(axis=0)
+            rp = dm[:,2].sum(axis=0)
+            rt = dm[:,3].sum(axis=0)
+            z = dm[:,4].sum(axis=0)
+            we = dm[:,5].sum(axis=0)
+            w=we>0
+            rp[w]/=we[w]
+            rt[w]/=we[w]
+            z[w]/=we[w]
+            npairs=dm[:,6].sum(axis=0)
+            npairs_used=dm[:,7].sum(axis=0)
             dm=dm[:,1].sum(axis=0)
             w=wdm>0
             dm[w,:]/=wdm[w,None]
 
             dm_all.append(dm)
             wdm_all.append(wdm)
+            rp_all.append(rp)
+            rt_all.append(rt)
+            z_all.append(z)
             names.append(abs_igm1+"_"+abs_igm2)
 
-            npairs_all[abs_igm1+"_"+abs_igm2]=npairs
-            npairs_used_all[abs_igm1+"_"+abs_igm2]=npairs_used
+            npairs_all.append(npairs)
+            npairs_used_all.append(npairs_used)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
+    head["ALPHA_MET"]=cf.alpha_met
     head['REJ']=args.rej
     head['RPMAX']=cf.rp_max
     head['RTMAX']=cf.rt_max
     head['NT']=cf.nt
     head['NP']=cf.np
-    for i in names:
-        head['NPROR_'+i]=npairs_all[i]
-        head['NPUSED_'+i]=npairs_used_all[i]
 
-    out.write([sp.array(names)],names=["ABS_IGM"],header=head)
+    out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=["NPALL","NPUSED","ABS_IGM"],header=head)
 
-    irt = sp.arange(cf.ntm*cf.npm)%cf.ntm
-    irp = (sp.arange(cf.ntm*cf.npm)-irt)/cf.ntm
-
-    rt = (irt+0.5)*cf.rt_max/cf.ntm
-    rp = (irp+0.5)*cf.rp_max/cf.npm
-    out_list = [rt,rp]
-    out_names = ["RT","RP"]
+    out_list = []
+    out_names=[]
     for i,ai in enumerate(names):
+        out_names=out_names + ["RP_"+ai]
+        out_list = out_list + [rp_all[i]]
+
+        out_names=out_names + ["RT_"+ai]
+        out_list = out_list + [rt_all[i]]
+
+        out_names=out_names + ["Z_"+ai]
+        out_list = out_list + [z_all[i]]
+
         out_names = out_names + ["DM_"+ai]
         out_list = out_list + [dm_all[i]]
 
