@@ -8,10 +8,7 @@ import healpy
 import sys
 from scipy import random 
 import traceback
-import pylab 
 import numpy as np 
-import math
-
 
 from pylya import constants
 from pylya import cf
@@ -61,7 +58,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--dll', type=float,default=3e-4, required=False,
                     help = 'loglam bin size')
-
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -151,8 +147,6 @@ if __name__ == '__main__':
     cf_i = sp.array(cf_i)
     nb_i = sp.array(nb_i).astype(sp.int64)      
 
-    print 'cf_i.shape = ',cf_i.shape
-
     print "multiplying"
     cfs = cf_i*we_i
     cfs = cfs.sum(axis=0)
@@ -170,10 +164,10 @@ if __name__ == '__main__':
     nv1d = sp.diag(nbs).copy()
     cor = cfs
 
-    if 0: 
-        norm = sp.sqrt(v1d*v1d[:,None])
-        w = norm>0
-        cor[w]/=norm[w]
+     
+    norm = sp.sqrt(v1d*v1d[:,None])
+    w = norm>0
+    cor[w]/=norm[w]
 
     print "rebinning"
     c1d = sp.zeros(n1d)
@@ -199,16 +193,13 @@ if __name__ == '__main__':
     w1=nc1d>0
     c1d[w1]/=nc1d[w1]
     print "computing cov mat ..."
-    we_i = sp.array(we_i)
-    cf_i = sp.array(cf_i)
-    print 
     c1d_i = sp.zeros((cf_i.shape[0],n1d))
     nc1d_i = sp.zeros((cf_i.shape[0],n1d))
 
-
-    print 'cf_i.shape[0] = ',cf_i.shape[0]
-
     for p in range(cf_i.shape[0]): 
+        norm = sp.sqrt(v1d*v1d[:,None]).ravel()
+        wn = norm>0
+        cf_i[p][wn]/=norm[wn]
         tmp_cf_i=cf_i[p].reshape((n1d,n1d))
         tmp_we_i=we_i[p].reshape((n1d,n1d))
         tmp_cf_i=tmp_cf_i[w]
@@ -220,29 +211,10 @@ if __name__ == '__main__':
         w1=nc1d_i[p]>0
         c1d_i[p][w1]/=nc1d_i[p][w1]
 
-
-    if 0: 
-        new_c1d=np.sum(c1d_i*nc1d_i,axis=0)
-        w=np.sum(nc1d_i,axis=0)>0
-        new_c1d[w]/=np.sum(nc1d_i,axis=0)[w]
-        print 'new_c1d.shape = ', new_c1d.shape
-        print 'nc1d_i.shape = ',nc1d_i.shape 
-        pylab.plot(10**(forest.dll*np.arange(614)),new_c1d,label='sum(total)')
-
-        #for p in range(cf_i.shape[0]): 
-        #    pylab.plot(10**(forest.dll*np.arange(614)),c1d_i[p],label=p)
-
-        pylab.plot(10**(forest.dll*np.arange(614)),c1d,label='total')
-        pylab.legend()
-        pylab.show()
-        sys.exit(12)
-
-
     cov=np.zeros((n1d,n1d))
-    for p in range(cf_i.shape[0]): 
+    for p in range(cf_i.shape[0]):             
         wres=nc1d_i[p]*(c1d_i[p]-c1d)
         cov+= np.outer(wres,wres)
-    #swmat_v=np.outer(nb1d,nb1d).ravel()
     swmat_v=np.outer(nc1d,nc1d).ravel()
     covmat_v = cov.ravel()/(swmat_v+(swmat_v==0))
     cov      = covmat_v.reshape(n1d,n1d)
