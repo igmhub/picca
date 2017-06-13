@@ -119,7 +119,7 @@ if __name__ == '__main__':
         if not args.from_image:
             fi = glob.glob(args.in_dir2+"/*.fits.gz")
             for i,f in enumerate(fi):
-                sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+                sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata2))
                 hdus = fitsio.FITS(f)
                 dels2 += [delta.from_fitsio(h) for h in hdus[1:]]
                 ndata2+=len(hdus[1:])

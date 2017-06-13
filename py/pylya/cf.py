@@ -324,10 +324,36 @@ def cf1d(pix):
         xi1d[bins] += wde * wde[:,None]
         we1d[bins] += we*we[:,None]
         nb1d[bins] += 1
+    w = we1d>0
+    xi1d[w]/=we1d[w]
+    return we1d,xi1d,nb1d
+v1d = None
+c1d = None
+
+def x_forest_cf1d(pix):
+    xi1d = sp.zeros(n1d**2)
+    we1d = sp.zeros(n1d**2)
+    nb1d = sp.zeros(n1d**2,dtype=sp.int64)
+
+    for d1 in data[pix]:
+        for d2 in data2[pix]:
+            if (d1.thid != d2.thid): continue 
+            #print("fot pix %i , (d1.thid,d2.thid) = (%i , %i)"%(pix,d1.thid,d2.thid))
+            bins1 = ((d1.ll-forest.lmin)/forest.dll+0.5).astype(int)
+            bins2 = ((d2.ll-forest.lmin)/forest.dll+0.5).astype(int)
+            bins = bins1 + n1d*bins2[:,None]
+            wde1 = d1.we*d1.de
+            wde2 = d2.we*d2.de
+            we1 = d1.we
+            we2 = d2.we
+            xi1d[bins] += wde1 * wde2[:,None]
+            we1d[bins] += we1*we2[:,None]
+            nb1d[bins] += 1
 
     w = we1d>0
     xi1d[w]/=we1d[w]
     return we1d,xi1d,nb1d
+
 v1d = None
 c1d = None
 
