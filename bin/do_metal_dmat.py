@@ -166,7 +166,6 @@ if __name__ == '__main__':
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
-
         for d,p in zip(dels2,pix2):
             if not p in data2:
                 data2[p]=[]
@@ -177,7 +176,9 @@ if __name__ == '__main__':
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
-
+        print 'ndata2 = ',ndata2
+        cf.data2 = data2
+        cf.ndata2 = ndata2
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
     cf.npix = len(data)
