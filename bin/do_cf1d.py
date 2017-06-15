@@ -19,7 +19,10 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 def cf1d(p):
     try:
-        tmp = cf.cf1d(p)
+        if x_correlation: 
+            tmp = cf.x_forest_cf1d(p)
+        else :
+            tmp = cf.cf1d(p)
     except:
         traceback.print_exc()
     with cf.lock:
@@ -36,6 +39,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--in-dir', type = str, default = None, required=True,
                         help = 'data directory')
+
+    parser.add_argument('--in-dir2', type = str, default = None, required=False,
+                        help = 'second delta directory')
 
     parser.add_argument('--nproc', type = int, default = None, required=False,
                     help = 'number of processors')
@@ -65,6 +71,7 @@ if __name__ == '__main__':
     forest.dll = args.dll
     n1d = int((forest.lmax-forest.lmin)/forest.dll+1)
     cf.n1d = n1d
+    cf.nside = 16
 
     fi = glob.glob(args.in_dir+"/*.fits.gz")
     data = {}
@@ -91,11 +98,42 @@ if __name__ == '__main__':
 
     cf.npix = len(data)
     cf.data = data
+
+    x_correlation=False
+    if args.in_dir2: 
+        x_correlation=True
+        fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        data2 = {}
+        ndata2 = 0
+        for i,f in enumerate(fi):
+            if i%1==0:
+                sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata2))
+            hdus = fitsio.FITS(f)
+            dels = [delta.from_fitsio(h) for h in hdus[1:]]
+            ndata2+=len(dels)
+            for d in dels:
+                p = ndata2%args.nproc
+                if not p in data2:
+                    data2[p]=[]
+                data2[p].append(d)
+                if not args.no_project:
+                    d.project() 
+            if args.nspec:
+                if ndata2>args.nspec:break
     print "done"
 
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
+
+    if x_correlation: 
+        keys = []
+        for i in data.keys(): 
+            if i in data2.keys(): 
+                keys.append(i)
+        cfs = map(cf1d,keys)
+    else: cfs = map(cf1d,data.keys())
+
     #pool = Pool(processes=args.nproc)
 
     cfs = map(cf1d,data.keys())
