@@ -6,6 +6,7 @@ import argparse
 import glob
 import healpy
 import sys
+import copy
 from scipy import random 
 
 from pylya import constants
@@ -16,7 +17,10 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 
 def corr_func(p):
-    cf.fill_neighs(p)
+    if x_correlation: 
+        cf.fill_neighs(p)
+    else: 
+        cf.fill_neighs(p)
     tmp = cf.cf(p)
     return tmp
 
@@ -29,6 +33,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--in-dir', type = str, default = None, required=True,
                         help = 'data directory')
+
+    parser.add_argument('--in-dir2', type = str, default = None, required=False,
+                        help = 'data directory #2, for forest x-correlation')
 
     parser.add_argument('--rp-max', type = float, default = 200, required=False,
                         help = 'max rp')
@@ -44,6 +51,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--lambda-abs', type = float, default = constants.lya, required=False,
                         help = 'wavelength of absorption')
+
+    parser.add_argument('--lambda-abs2', type = float, default = constants.lya, required=False,
+                        help = 'wavelength of absorption in forest 2')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -100,6 +110,30 @@ if __name__ == '__main__':
     else:
         dels = delta.from_image(args.in_dir)
 
+    x_correlation=False
+    if args.in_dir2: 
+        x_correlation=True
+        data2 = {}
+        ndata2 = 0
+        dels2 = []
+        if not args.from_image:
+            fi = glob.glob(args.in_dir2+"/*.fits.gz")
+            for i,f in enumerate(fi):
+                sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata2))
+                hdus = fitsio.FITS(f)
+                dels2 += [delta.from_fitsio(h) for h in hdus[1:]]
+                ndata2+=len(hdus[1:])
+                hdus.close()
+                if not args.nspec is None:
+                    if ndata2>args.nspec:break
+        else:
+            dels2 = delta.from_image(args.in_dir2)
+    elif args.lambda_abs != args.lambda_abs2:   
+        x_correlation=True
+        data2  = copy.deepcopy(data)
+        ndata2 = copy.deepcopy(ndata)
+        dels2  = copy.deepcopy(dels)
+
     z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1
     phi = [d.ra for d in dels]
     th = [sp.pi/2-d.dec for d in dels]
@@ -117,6 +151,26 @@ if __name__ == '__main__':
         if not args.no_project:
             d.project()
 
+    if x_correlation: 
+        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1
+        z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
+        phi2 = [d.ra for d in dels2]
+        th2 = [sp.pi/2-d.dec for d in dels2]
+        pix2 = healpy.ang2pix(cf.nside,th2,phi2)
+
+        for d,p in zip(dels2,pix2):
+            if not p in data2:
+                data2[p]=[]
+            data2[p].append(d)
+
+            z = 10**d.ll/args.lambda_abs2-1
+            z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
+            d.z = z
+            d.r_comov = cosmo.r_comoving(z)
+            d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+            if not args.no_project:
+                d.project()
+
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
     sys.stderr.write("\n")
@@ -125,6 +179,10 @@ if __name__ == '__main__':
     cf.data = data
     cf.ndata=ndata
     print "done, npix = {}".format(cf.npix)
+
+    if x_correlation:
+        cf.data2 = data2
+        cf.ndata2=ndata2
 
     cf.counter = Value('i',0)
 
