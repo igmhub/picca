@@ -18,7 +18,10 @@ from pylya.data import delta
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
-    tmp = cf.metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
+    if args.neg_rp: 
+        tmp = cf.neg_rp_metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
+    else: 
+        tmp = cf.metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
     return tmp
 
 if __name__ == '__main__':
@@ -82,6 +85,12 @@ if __name__ == '__main__':
     parser.add_argument('--abs-igm_2', type=str,default=None, required=False,nargs="*",
                     help = 'list #2 of metals')
 
+    parser.add_argument('--no-project', action="store_true", required=False,
+                    help = 'do not project out continuum fitting modes')
+
+    parser.add_argument('--neg-rp', action="store_true", required=False,
+                         help = 'Compute the cf for rp in [-rp_max,rp_rmax]')
+    
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -217,23 +226,19 @@ if __name__ == '__main__':
     rt_all=[]
     z_all=[]
     names=[]
-    npairs_all={}
-    npairs_used_all={}
+    npairs_all=[]
+    npairs_used_all=[]
 
     if args.lambda_abs == constants.lya: 
         abs_igm = ["LYA"]+args.abs_igm
     elif args.lambda_abs == constants.lyb:
         abs_igm = ["LYB"]+args.abs_igm
 
-    if  args.lambda_abs != args.lambda_abs2: 
-        if args.lambda_abs2 == constants.lya: 
-            abs_igm_2 = ["LYA"]+args.abs_igm_2
-        elif args.lambda_abs2 == constants.lyb:
-            abs_igm_2 = ["LYB"]+args.abs_igm_2      
-    else: 
-         abs_igm_2 = abs_igm
-    print "abs_igm = ",abs_igm
-    print "abs_igm_2 = ",abs_igm_2
+    if args.lambda_abs2 == constants.lya: 
+        abs_igm_2 = ["LYA"]+args.abs_igm_2
+    elif args.lambda_abs2 == constants.lyb:
+        abs_igm_2 = ["LYB"]+args.abs_igm_2      
+
 
     for i,abs_igm1 in enumerate(abs_igm):
         for j in range(0,len(abs_igm_2)):

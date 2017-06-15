@@ -22,7 +22,11 @@ def calc_dmat(p):
         cf.fill_neighs_x_correlation(p)
     else: 
         cf.fill_neighs(p)
-    tmp = cf.dmat(p)
+    if args.neg_rp: 
+        tmp = cf.neg_rp_dmat(p)
+    else: 
+        tmp = cf.dmat(p)
+
     return tmp
 
 if __name__ == '__main__':
@@ -80,6 +84,8 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
+    parser.add_argument('--neg-rp', action="store_true", required=False,
+                         help = 'Compute the cf for rp in [-rp_max,rp_rmax]')
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -89,6 +95,7 @@ if __name__ == '__main__':
 
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
+    
     cf.np = args.np
     cf.nt = args.nt
     cf.nside = args.nside

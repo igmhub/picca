@@ -21,7 +21,10 @@ def corr_func(p):
         cf.fill_neighs_x_correlation(p)
     else: 
         cf.fill_neighs(p)
-    tmp = cf.cf(p)
+    if args.neg_rp: 
+        tmp = cf.neg_rp_cf(p)
+    else: 
+        tmp = cf.cf(p)
     return tmp
 
 if __name__ == '__main__':
@@ -78,6 +81,10 @@ if __name__ == '__main__':
 
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
+
+    parser.add_argument('--neg-rp', action="store_true", required=False,
+                         help = 'Compute the cf for rp in [-rp_max,rp_rmax]')
+
 
     args = parser.parse_args()
 
