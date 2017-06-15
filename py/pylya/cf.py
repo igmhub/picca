@@ -149,7 +149,6 @@ def dmat(pix):
                 w2 = d2.we
                 l2 = d2.ll
                 fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate)
-
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
     
 @jit

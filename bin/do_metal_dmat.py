@@ -7,6 +7,7 @@ import glob
 import healpy
 import sys
 from functools import partial
+import copy 
 
 from scipy import random 
 from scipy.interpolate import interp1d
@@ -31,6 +32,9 @@ if __name__ == '__main__':
     parser.add_argument('--in-dir', type = str, default = None, required=True,
                         help = 'data directory')
 
+    parser.add_argument('--in-dir2', type = str, default = None, required=False,
+                        help = 'data directory #2')
+
     parser.add_argument('--rp-max', type = float, default = 200, required=False,
                         help = 'max rp')
 
@@ -45,6 +49,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--lambda-abs', type = float, default = constants.lya, required=False,
                         help = 'wavelength of absorption')
+
+    parser.add_argument('--lambda-abs2', type = float, default = constants.lya, required=False,
+                        help = 'wavelength of absorption #2')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -73,6 +80,8 @@ if __name__ == '__main__':
     parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs="*",
                     help = 'list of metals')
 
+    parser.add_argument('--abs-igm_2', type=str,default=None, required=False,nargs="*",
+                        help = 'list #2 of metals')
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -101,29 +110,73 @@ if __name__ == '__main__':
 
 
     z_min_pix = 1.e6
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
     data = {}
     ndata = 0
+    dels = []
+    fi = glob.glob(args.in_dir+"/*.fits.gz")
     for i,f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
-        dels = [delta.from_fitsio(h) for h in hdus[1:]]
-        ndata+=len(dels)
-        phi = [d.ra for d in dels]
-        th = [sp.pi/2-d.dec for d in dels]
-        pix = healpy.ang2pix(cf.nside,th,phi)
-        for d,p in zip(dels,pix):
-            if not p in data:
-                data[p]=[]
-            data[p].append(d)
-
-            z = 10**d.ll/args.lambda_abs-1
-            z_min_pix = sp.amin( sp.append([z_min_pix],z) )
-            d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+        dels += [delta.from_fitsio(h) for h in hdus[1:]]
+        ndata+=len(hdus[1:])
+        hdus.close()
         if not args.nspec is None:
             if ndata>args.nspec:break
-    sys.stderr.write("\n")
+
+    x_correlation = False
+    if args.in_dir2: 
+        x_correlation=True
+        data2 = {}
+        ndata2 = 0
+        dels2 = []
+        fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        for i,f in enumerate(fi):
+            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+            hdus = fitsio.FITS(f)
+            dels2 += [delta.from_fitsio(h) for h in hdus[1:]]
+            ndata2+=len(hdus[1:])
+            hdus.close()
+            if not args.nspec is None:
+                if ndata2>args.nspec:break
+    elif args.lambda_abs != args.lambda_abs2:   
+        x_correlation=True  
+        data2  = copy.deepcopy(data)
+        ndata2 = copy.deepcopy(ndata)
+        dels2  = copy.deepcopy(dels)
+
+
+    z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1
+    phi = [d.ra for d in dels]
+    th = [sp.pi/2-d.dec for d in dels]
+    pix = healpy.ang2pix(cf.nside,th,phi)
+    for d,p in zip(dels,pix):
+        if not p in data:
+            data[p]=[]
+        data[p].append(d)
+
+        z = 10**d.ll/args.lambda_abs-1
+        z_min_pix = sp.amin( sp.append([z_min_pix],z) )
+        d.z = z
+        d.r_comov = cosmo.r_comoving(z)
+        d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+     
+    if x_correlation: 
+        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1
+        z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
+        phi2 = [d.ra for d in dels2]
+        th2 = [sp.pi/2-d.dec for d in dels2]
+        pix2 = healpy.ang2pix(cf.nside,th2,phi2)
+
+        for d,p in zip(dels2,pix2):
+            if not p in data2:
+                data2[p]=[]
+            data2[p].append(d)
+
+            z = 10**d.ll/args.lambda_abs2-1
+            z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
+            d.z = z
+            d.r_comov = cosmo.r_comoving(z)
+            d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
 
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
@@ -147,8 +200,11 @@ if __name__ == '__main__':
     random.seed(0)
 
     for i,p in enumerate(cpu_data.values()):
-        print "filling neighs ",i,len(cpu_data.values())
-        cf.fill_neighs(p)
+       print "filling neighs ",i,len(cpu_data.values())
+       if x_correlation: 
+           cf.fill_neighs_x_correlation(p)
+       else: 
+           cf.fill_neighs(p)
 
     dm_all=[]
     wdm_all=[]
@@ -158,12 +214,26 @@ if __name__ == '__main__':
     names=[]
     npairs_all=[]
     npairs_used_all=[]
-    abs_igm = ["LYA"]+args.abs_igm
+
+    if args.lambda_abs == constants.lya: 
+        abs_igm = ["LYA"]+args.abs_igm
+    elif args.lambda_abs == constants.lyb:
+        abs_igm = ["LYB"]+args.abs_igm
+
+    if args.abs_igm_2: 
+        if args.lambda_abs2 == constants.lya: 
+            abs_igm_2 = ["LYA"]+args.abs_igm_2
+        elif args.lambda_abs2 == constants.lyb:
+            abs_igm_2 = ["LYB"]+args.abs_igm_2 
+    else: 
+        abs_igm_2=copy.deepcopy(abs_igm)
+
     for i,abs_igm1 in enumerate(abs_igm):
-        for j in range(i,len(abs_igm)):
+        for j in range(0,len(abs_igm_2)):
+            if not x_correlation and j<i: continue 
             if i==0 and j==0:
                 continue
-            abs_igm2 = abs_igm[j]
+            abs_igm2 = abs_igm_2[j]
             cf.counter.value=0
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
             sys.stderr.write("\n")

@@ -105,13 +105,14 @@ if __name__ == '__main__':
         fi = glob.glob(args.in_dir2+"/*.fits.gz")
         data2 = {}
         ndata2 = 0
+        dels2=[]
         for i,f in enumerate(fi):
             if i%1==0:
                 sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata2))
             hdus = fitsio.FITS(f)
-            dels = [delta.from_fitsio(h) for h in hdus[1:]]
-            ndata2+=len(dels)
-            for d in dels:
+            dels2 = [delta.from_fitsio(h) for h in hdus[1:]]
+            ndata2+=len(dels2)
+            for d in dels2:
                 p = ndata2%args.nproc
                 if not p in data2:
                     data2[p]=[]
