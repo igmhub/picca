@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
 
     z_min_pix = 1.e6
-ndata=0
+    ndata=0
     data={}
     dels = []
     fi = glob.glob(args.in_dir+"/*.fits.gz")
@@ -184,6 +184,8 @@ ndata=0
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
+    cf.data2 = data
+    cf.ndata2 = ndata
     print "done"
 
     cf.counter = Value('i',0)
