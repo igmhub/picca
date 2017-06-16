@@ -2,6 +2,7 @@ import scipy as sp
 from scipy import interpolate
 
 lya=1215.67 ## angstrom
+lyb=1025.72 ## angstrom
 
 deg = sp.pi/180.
 
@@ -67,7 +68,10 @@ absorber_IGM = {
     'NI(1200)'    : 1200.,
     'SiII(1193)'  : 1193.2897,
     'SiII(1190)'  : 1190.4158,
-    'LYB'         : 1025.7223,
+    'OI(1039)'    : 1039.230,
+    'OVI(1038)'   : 1037.613,
+    'OVI(1031)'   : 1031.912, 
+    'LYB'         : 1025.7223
 }
 
 
