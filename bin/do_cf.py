@@ -7,6 +7,7 @@ import glob
 import healpy
 import sys
 from scipy import random 
+import copy 
 
 from pylya import constants
 from pylya import cf
