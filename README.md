@@ -1,4 +1,6 @@
 
+TEST
+
 Python code for BAO analysis
 
 requirements:
