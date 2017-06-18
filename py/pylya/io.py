@@ -260,7 +260,7 @@ def read_from_desi(nside,ztable,in_dir):
         w = sp.in1d(h[1]["TARGETID"][:],ztable.keys())
         tid_qsos = h[1]["TARGETID"][:][w]
         b_ll = sp.log10(h["B_WAVELENGTH"].read())
-        b_iv  = h["B_WAVELENGTH"].read()*(h["B_MASK"].read()==0)
+        b_iv  = h["B_IVAR"].read()*(h["B_MASK"].read()==0)
         b_fl  = h["B_FLUX"].read()
         ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
         de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
