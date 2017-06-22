@@ -1,0 +1,511 @@
+import astropy.io.fits as pyfits
+import scipy as sp
+from scipy import linalg
+import scipy.interpolate
+import sys
+from scipy import special
+import numpy as np
+from scipy import stats
+
+from pylya.fitter import myGamma
+from pylya.fitter import utils
+import fftlog
+
+from pylya.fitter.utils import L
+
+class model:
+
+	'''
+	parameters for FFT
+	'''
+	nmuk = 1000
+	muk=(sp.arange(nmuk)+0.5)/nmuk
+	dmuk = 1./nmuk
+	muk=muk[:,None]
+
+	def __init__(self,dic_init):
+		self.ell_max=dic_init['ell_max']
+		self.lls=dic_init['hcds']
+		self.uv_fluct = dic_init['uv']
+		h=pyfits.open(dic_init['model'])
+		self.zref = h[1].header['ZREF']
+		self.k = h[1].data.K
+		self.pk = h[1].data.PK
+		self.pkSB = h[1].data.PKSB
+                
+                
+                if dic_init['fit_aiso']:
+                    self.pglob = ['bias_lya*(1+beta_lya)','beta_lya','aiso','alpha_lya','SigmaNL_perp','1+f','bao_amp']
+                    self.fit_aiso=True
+                else:
+        	    self.pglob = ['bias_lya*(1+beta_lya)','beta_lya','ap','at','alpha_lya','SigmaNL_perp','1+f','bao_amp']
+                    self.fit_aiso=False
+
+		self.pinit = [ dic_init[el] for el in self.pglob ]
+		if self.lls:
+			self.pglob.extend(['bias_lls','beta_lls','L0_lls'])
+			self.pinit.extend([dic_init[el] for el in ['bias_lls','beta_lls','L0_lls'] ])
+
+		if self.uv_fluct:
+			self.pglob.extend(['bias_gamma','bias_prim','kappa0'])
+			self.pinit.extend([dic_init[el] for el in ['bias_gamma','bias_prim','kappa0'] ])
+
+		self.fix_bias_beta_peak = dic_init['fix_bias_beta_peak']
+		if self.fix_bias_beta_peak:
+			self.bias_lya_peak=dic_init['bias_lya_peak']
+			self.beta_lya_peak=dic_init['beta_lya_peak']
+			print "Fixing for BAO peak bias=",self.bias_lya_peak
+			print "Fixing for BAO peak beta=",self.beta_lya_peak
+
+		self.pall = self.pglob[:]
+
+		self.fix=['alpha_lya','SigmaNL_perp','1+f','bao_amp']
+
+		self.xi_auto_prev = None
+		self.xi_cross_prev = None
+		self.xi_autoQSO_prev = None
+
+		self.evolution_growth_factor    = utils.evolution_growth_factor_by_hand
+		self.evolution_Lya_bias         = utils.evolution_Lya_bias_0
+		if dic_init['QSO_evolution'] is None:
+			self.evolution_QSO_bias = utils.evolution_QSO_bias_none
+		if dic_init['QSO_evolution']=='croom':
+			self.evolution_QSO_bias = utils.evolution_QSO_bias_croom
+                
+                self.dnl  = (not  dic_init['no_dnl'])
+                if self.dnl :
+                        print "with DNL"
+                else :
+                        print "without DNL"
+                
+                self.twod = dic_init['2d']
+                if self.twod :
+                        print "initalize pk2D array for 2D transfo ..."
+                        kmin=1.e-7
+                        kmax=100.
+                        nk  = 1024
+                        self.k1d  = np.exp(np.linspace(np.log(kmin),np.log(kmax),nk))
+                        # compute Pk
+                        self.kp=np.tile(self.k1d,(nk,1)).T
+                        self.kt=np.tile(self.k1d,(nk,1))
+                        kk=np.sqrt(self.kp**2+self.kt**2)
+                        self.muk=self.kp/kk
+                        self.pk_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pk).reshape(kk.shape)
+                        self.pkSB_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pkSB).reshape(kk.shape)
+                        self.k=kk
+                        print "done"
+
+	def add_cross(self,dic_init):
+
+		self.pcross = ['bias_qso','growth_factor_qso','drp','Lpar_cross','Lper_cross','qso_evol_0','qso_evol_1']
+		self.p0_cross = [ dic_init[el] for el in self.pcross ]
+		self.fix.extend(['qso_evol_0','qso_evol_1'])
+
+		### Velocity dispersion
+		self.velo_gauss = dic_init['velo_gauss']
+		if (self.velo_gauss):
+			self.pcross.extend(['sigma_velo_gauss'])
+			self.p0_cross.extend([dic_init['sigma_velo_gauss']])
+		self.velo_lorentz = dic_init['velo_lorentz']
+		if (self.velo_lorentz):
+			self.pcross.extend(['sigma_velo_lorentz'])
+			self.p0_cross.extend([dic_init['sigma_velo_lorentz']])
+
+		### Radiation model
+		self.fit_qso_rad_model = dic_init['fit_qso_radiation_model']
+		if self.fit_qso_rad_model:
+			listParam = ['qso_rad_strength','qso_rad_asymmetry','qso_rad_lifetime','qso_rad_decrease']
+			self.pcross.extend(listParam)
+			self.p0_cross.extend([dic_init[el] for el in listParam ])
+
+		self.pall.extend(self.pcross)
+		self.pinit.extend(self.p0_cross)
+		self.pars_cross_prev=None
+
+	def add_auto(self,dic_init):
+		self.pauto = ['Lpar_auto','Lper_auto']
+		self.p0_auto = [ dic_init[el] for el in self.pauto ]
+		self.fix.extend(['Lpar_auto'])
+
+		self.pall.extend(self.pauto)
+		self.pinit.extend(self.p0_auto)
+		self.pars_auto_prev=None
+
+	def add_autoQSO(self,dic_init):
+
+		self.pautoQSO = ['bias_qso','growth_factor_qso','Lpar_autoQSO','Lper_autoQSO','qso_evol_0','qso_evol_1']
+		self.p0_autoQSO = [ dic_init[el] for el in self.pautoQSO ]
+		self.fix.extend(['qso_evol_0','qso_evol_1'])
+
+		### Velocity dispersion
+		self.velo_gauss = dic_init['velo_gauss']
+		if (self.velo_gauss):
+			self.pautoQSO.extend(['sigma_velo_gauss'])
+			self.p0_autoQSO.extend([dic_init['sigma_velo_gauss']])
+		self.velo_lorentz = dic_init['velo_lorentz']
+		if (self.velo_lorentz):
+			self.pautoQSO.extend(['sigma_velo_lorentz'])
+			self.p0_autoQSO.extend([dic_init['sigma_velo_lorentz']])
+
+		tmp_pautoQSO   = [ i for i in self.pautoQSO if not any(i in el for el in self.pall) ]
+		tmp_p0_autoQSO = [ dic_init[i] for i in tmp_pautoQSO ]
+
+		self.pall.extend(tmp_pautoQSO)
+		self.pinit.extend(tmp_p0_autoQSO)
+		self.pars_autoQSO_prev = None
+
+        @staticmethod
+	def DNL(k,muk):
+		kv = 1.22*(1+k/0.923)**0.451
+		return sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kv)**1.5)
+
+
+	def valueAuto(self,rp,rt,z,pars):
+		if self.xi_auto_prev is None or not sp.allclose(pars.values(),self.pars_auto_prev):
+			parsSB = pars.copy()
+                        if not self.fit_aiso:
+			    parsSB["at"]=1.
+			    parsSB["ap"]=1.
+                        else:
+                            parsSB["aiso"]=1.
+			parsSB["SigmaNL_perp"]=0.
+                        if self.fix_bias_beta_peak :
+                                pars["bias_lya*(1+beta_lya)"]=self.bias_lya_peak*(1+self.beta_lya_peak)
+                                pars["beta_lya"]=self.beta_lya_peak
+                                                        
+                        if self.twod :
+                                xiSB = self.getXiAuto2D(rp,rt,z,self.pkSB_2d,parsSB)
+                                xi = self.getXiAuto2D(rp,rt,z,self.pk_2d-self.pkSB_2d,pars)
+                        else :
+                                xiSB = self.getXiAuto(rp,rt,z,self.pkSB,parsSB)
+                                xi = self.getXiAuto(rp,rt,z,self.pk-self.pkSB,pars)
+                                
+			self.pars_auto_prev = pars.values()
+			self.xi_auto_prev = xiSB + pars["bao_amp"]*xi
+
+		return self.xi_auto_prev.copy()
+
+	def getXiAuto(self,rp,rt,z,pk_lin,pars):
+		k = self.k
+                if not self.fit_aiso:
+    		    ap=pars["ap"]
+		    at=pars["at"]
+                else:
+                    ap=pars["aiso"]
+                    at=pars["aiso"]
+
+		ar=sp.sqrt(rt**2*at**2+rp**2*ap**2)
+		mur=rp*ap/ar
+
+		muk = model.muk
+		kp = k * muk
+		kt = k * sp.sqrt(1-muk**2)
+                
+		bias_lya = pars["bias_lya*(1+beta_lya)"]/(1.+pars["beta_lya"])
+		beta_lya = pars["beta_lya"]
+
+		if self.uv_fluct:
+			bias_gamma = pars["bias_gamma"]
+			bias_prim = pars["bias_prim"]
+			kappa0 = pars["kappa0"]
+			W = sp.arctan(k*kappa0)/(k*kappa0)
+			bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
+			beta_lya = bias_lya*beta_lya/bias_lya_prim
+			bias_lya = bias_lya_prim
+
+		if self.lls:
+			bias_lls = pars["bias_lls"]
+			beta_lls = pars["beta_lls"]
+			L0_lls = pars["L0_lls"]
+			F_lls = sp.sinc(kp*L0_lls/sp.pi)
+			beta_lya = (bias_lya*beta_lya + bias_lls*beta_lls*F_lls)/(bias_lya+bias_lls*F_lls)
+			bias_lya = bias_lya + bias_lls*F_lls
+
+		pk_full =pk_lin * (1+beta_lya*muk**2)**2*bias_lya**2
+
+		Lpar=pars["Lpar_auto"]
+		Lper=pars["Lper_auto"]
+                Gpar = sp.sinc(kp*Lpar/2/sp.pi)
+                Gper = sp.sinc(kt*Lper/2/sp.pi)
+		pk_full*=Gpar**2
+		pk_full*=Gper**2
+
+		sigmaNLper = pars["SigmaNL_perp"]
+		sigmaNLpar = sigmaNLper*pars["1+f"]
+                pk_nl = sp.exp(-(kp*sigmaNLpar)**2/2-(kt*sigmaNLper)**2/2)
+                pk_full*=pk_nl
+		if self.dnl :
+                        pk_full*=self.DNL(k,muk)
+
+		evol  = self.evolution_Lya_bias(z,[pars["alpha_lya"]])*self.evolution_growth_factor(z)
+		evol /= self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])*self.evolution_growth_factor(self.zref)
+		evol  = evol**2.
+
+		return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
+	
+        def getXiAuto2D(self,rp,rt,z,pk2d,pars):
+
+                if not self.fit_aiso:
+    		    ap=pars["ap"]
+		    at=pars["at"]
+                else:
+                    ap=pars["aiso"]
+                    at=pars["aiso"]
+                
+		art=at*rt
+                arp=ap*rp
+
+		bias_lya = pars["bias_lya*(1+beta_lya)"]/(1.+pars["beta_lya"])
+		beta_lya = pars["beta_lya"]
+
+		if self.uv_fluct:
+			bias_gamma = pars["bias_gamma"]
+			bias_prim = pars["bias_prim"]
+			kappa0 = pars["kappa0"]
+			W = sp.arctan(self.k*kappa0)/(self.k*kappa0)
+			bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
+			beta_lya = bias_lya*beta_lya/bias_lya_prim
+			bias_lya = bias_lya_prim
+
+		if self.lls:
+			bias_lls = pars["bias_lls"]
+			beta_lls = pars["beta_lls"]
+			L0_lls = pars["L0_lls"]
+			F_lls = sp.sinc(self.kp*L0_lls/sp.pi)
+			beta_lya = (bias_lya*beta_lya + bias_lls*beta_lls*F_lls)/(bias_lya+bias_lls*F_lls)
+			bias_lya = bias_lya + bias_lls*F_lls
+
+		sigmaNLper = pars["SigmaNL_perp"]
+		sigmaNLpar = sigmaNLper*pars["1+f"]
+
+		pk_full = pk2d * sp.exp(-(sigmaNLper**2*self.kt**2 + sigmaNLpar**2*self.kp**2)/2)
+		pk_full =pk_full * (1+beta_lya*self.muk**2)**2*bias_lya**2
+
+		Lpar=pars["Lpar_auto"]
+		Lper=pars["Lper_auto"]
+                pk_full*=sp.sinc(self.kp*Lpar/2/sp.pi)**2
+                pk_full*=sp.sinc(self.kt*Lper/2/sp.pi)**2
+                if self.dnl :
+                        pk_full*=self.DNL(self.k,self.muk)
+                
+		evol  = self.evolution_Lya_bias(z,[pars["alpha_lya"]])*self.evolution_growth_factor(z)
+		evol /= self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])*self.evolution_growth_factor(self.zref)
+		evol  = evol**2.
+                
+		return fftlog.Pk2XiA(self.k1d,pk_full,arp,art)*evol
+
+	def valueCross(self,rp,rt,z,pars):
+		if self.xi_cross_prev is None or not sp.allclose(pars.values(),self.pars_cross_prev):
+			parsSB = pars.copy()
+			if not self.fit_aiso:
+			    parsSB["at"]=1.
+			    parsSB["ap"]=1.
+                        else:
+                            parsSB['aiso']=1.
+			parsSB["SigmaNL_perp"]=0.
+			parsSB["1+f"]=0.
+			xiSB = self.getXiCross(rp,rt,z,self.pkSB,parsSB)
+
+			if self.fix_bias_beta_peak:
+				pars["bias_lya*(1+beta_lya)"] = self.bias_lya_peak*(1+self.beta_lya_peak)
+				pars["beta_lya"]              = self.beta_lya_peak
+			xi = self.getXiCross(rp,rt,z,self.pk-self.pkSB,pars)
+
+			self.pars_cross_prev = pars.values()
+			self.xi_cross_prev = xiSB + pars["bao_amp"]*xi
+
+			if self.fit_qso_rad_model:
+				self.xi_cross_prev += utils.qso_radiation_model(rp,rt,pars)
+
+		return self.xi_cross_prev.copy()
+
+	def getXiCross(self,rp,rt,z,pk_lin,pars):
+		k = self.k
+                if not self.fit_aiso:
+    		    ap=pars["ap"]
+		    at=pars["at"]
+                else:
+                    ap=pars["aiso"]
+                    at=pars["aiso"]
+
+		drp=pars["drp"]
+		Lpar=pars["Lpar_cross"]
+		Lper=pars["Lper_cross"]
+		qso_evol = [pars['qso_evol_0'],pars['qso_evol_1']]
+		rp_shift=rp+drp
+		ar=sp.sqrt(rt**2*at**2+rp_shift**2*ap**2)
+		mur=rp_shift*ap/ar
+
+		muk = model.muk
+		kp = k * muk
+		kt = k * sp.sqrt(1-muk**2)
+
+		bias_lya = pars["bias_lya*(1+beta_lya)"]/(1.+pars["beta_lya"])
+		beta_lya = pars["beta_lya"]
+
+		### UV fluctuation
+		if self.uv_fluct:
+			bias_gamma    = pars["bias_gamma"]
+			bias_prim     = pars["bias_prim"]
+			kappa0        = pars["kappa0"]
+			W             = sp.arctan(k*kappa0)/(k*kappa0)
+			bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
+			beta_lya      = bias_lya*beta_lya/bias_lya_prim
+			bias_lya      = bias_lya_prim
+
+		### LYA-QSO cross correlation
+		bias_qso = pars["bias_qso"]
+		beta_qso = pars["growth_factor_qso"]/bias_qso
+		pk_full  = bias_lya*bias_qso*(1+beta_lya*muk**2)*(1+beta_qso*muk**2)*pk_lin
+
+		### HCDS-QSO cross correlation
+		if self.lls:
+			bias_lls = pars["bias_lls"]
+			beta_lls = pars["beta_lls"]
+			L0_lls = pars["L0_lls"]
+			F_lls = sp.sinc(kp*L0_lls/sp.pi)
+			pk_full+=bias_lls*F_lls*bias_qso*(1+beta_lls*muk**2)*(1+beta_qso*muk**2)*pk_lin
+
+		### Velocity dispersion
+		if (self.velo_gauss):
+			pk_full *= sp.exp( -0.25*(kp*pars['sigma_velo_gauss'])**2 )
+		if (self.velo_lorentz):
+			pk_full /= sp.sqrt(1.+(kp*pars['sigma_velo_lorentz'])**2)
+
+		### Peak broadening
+		sigmaNLper = pars["SigmaNL_perp"]
+		sigmaNLpar = sigmaNLper*pars["1+f"]
+		pk_full   *= sp.exp( -0.5*( (sigmaNLper*kt)**2 + (sigmaNLpar*kp)**2 ) )
+
+		### Pixel size
+		pk_full *= sp.sinc(kp*Lpar/2./sp.pi)**2
+		pk_full *= sp.sinc(kt*Lper/2./sp.pi)**2
+		if self.dnl:
+			pk_full *= sp.sqrt(self.DNL(self.k,self.muk))
+
+		### Redshift evolution
+		evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+		evol *= self.evolution_Lya_bias(z,[pars["alpha_lya"]])/self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])
+		evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
+
+		return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
+
+	def valueAutoQSO(self,rp,rt,z,pars):
+		if self.xi_autoQSO_prev is None or not sp.allclose(pars.values(),self.pars_autoQSO_prev):
+			parsSB = pars.copy()
+                        if not self.fit_aiso:
+			    parsSB["at"]=1.
+			    parsSB["ap"]=1.
+                        else:
+                            parsSB['aiso']=1.
+			parsSB["SigmaNL_perp"]=0.
+			parsSB["1+f"]=0.
+			xiSB = self.getXiAutoQSO(rp,rt,z,self.pkSB,parsSB)
+
+			xi = self.getXiAutoQSO(rp,rt,z,self.pk-self.pkSB,pars)
+			self.pars_autoQSO_prev = pars.values()
+			self.xi_autoQSO_prev = xiSB + pars["bao_amp"]*xi
+
+		return self.xi_autoQSO_prev.copy()
+
+	def getXiAutoQSO(self,rp,rt,z,pk_lin,pars):
+		k = self.k
+
+                if not self.fit_aiso:
+    		    ap = pars["ap"]
+		    at = pars["at"]
+                else:
+                    ap = pars["aiso"]
+                    at = pars["aiso"]
+		ar  = sp.sqrt(rt**2*at**2+rp**2*ap**2)
+		mur = rp*ap/ar
+
+		muk = model.muk
+		kp = k * muk
+		kt = k * sp.sqrt(1-muk**2)
+
+		### QSO-QSO auto correlation
+		bias_qso = pars["bias_qso"]
+		beta_qso = pars["growth_factor_qso"]/bias_qso
+		pk_full  = pk_lin*(bias_qso*(1.+beta_qso*muk**2))**2
+
+		### Velocity dispersion
+		if (self.velo_gauss):
+			pk_full *= sp.exp( -0.5*(kp*pars['sigma_velo_gauss'])**2 )
+		if (self.velo_lorentz):
+			pk_full /= 1.+(kp*pars['sigma_velo_lorentz'])**2
+
+		### Peak broadening
+		sigmaNLper = pars["SigmaNL_perp"]
+		sigmaNLpar = sigmaNLper*pars["1+f"]
+		pk_full   *= sp.exp( -0.5*( (sigmaNLper*kt)**2 + (sigmaNLpar*kp)**2 ) )
+
+		### Pixel size
+		Lpar     = pars["Lpar_autoQSO"]
+		Lper     = pars["Lper_autoQSO"]
+		pk_full *= sp.sinc(kp*Lpar/2./sp.pi)**2
+		pk_full *= sp.sinc(kt*Lper/2./sp.pi)**2
+
+		### Redshift evolution
+		qso_evol = [pars['qso_evol_0'],pars['qso_evol_1']]
+		evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+		evol *= sp.power( self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol),2. )
+
+		return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
+	
+        
+	@staticmethod
+	def Pk2Mp(ar,k,pk,ell_max=None):
+		"""
+		Implementation of FFTLog from A.J.S. Hamilton (2000)
+		assumes log(k) are equally spaced
+		"""
+
+		muk = model.muk
+		dmuk = model.dmuk
+	
+		k0 = k[0]
+		l=sp.log(k.max()/k0)
+		r0=1.
+		
+		N=len(k)
+		emm=N*np.fft.fftfreq(N)
+		r=r0*sp.exp(-emm*l/N)
+		dr=abs(sp.log(r[1]/r[0]))
+		s=sp.argsort(r)
+		r=r[s]
+
+		xi=sp.zeros([ell_max/2+1,len(ar)])
+
+		for ell in range(0,ell_max+1,2):
+			pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell/2)
+			mu=ell+0.5
+			n=2.
+			q=2-n-0.5
+			x=q+2*sp.pi*1j*emm/l
+			lg1=myGamma.LogGammaLanczos((mu+1+x)/2)
+			lg2=myGamma.LogGammaLanczos((mu+1-x)/2)
+
+			um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
+			um[0]=sp.real(um[0])
+			an=np.fft.fft(pk_ell*k**n/2/sp.pi**2*sp.sqrt(sp.pi/2))
+			an*=um
+			xi_loc=np.fft.ifft(an)
+			xi_loc=xi_loc[s]
+			xi_loc/=r**(3-n)
+			xi_loc[-1]=0
+                        spline=sp.interpolate.splrep(sp.log(r)-dr/2,sp.real(xi_loc),k=3,s=0)
+                        xi[ell/2,:]=sp.interpolate.splev(sp.log(ar),spline)
+		
+		return xi
+		
+	@staticmethod
+	def Pk2Xi(ar,mur,k,pk,ell_max=None):
+		xi=model.Pk2Mp(ar,k,pk,ell_max)
+		for ell in range(0,ell_max+1,2):
+			xi[ell/2,:]*=L(mur,ell)
+		return sp.sum(xi,axis=0)
+
+
+       
+
