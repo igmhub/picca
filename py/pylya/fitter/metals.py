@@ -178,7 +178,7 @@ class model:
             bias_met2 = bias_met*bias_met[None,:]
 
             amp[:,:,0] = bias_met2*(1+(beta_met+beta_met[None,:])/3+beta_met*beta_met[None,:]/5)
-            amp[:,:,1] = bias_met2*(2*(beta_met+beta_met[None,:]/3+4*beta_met*beta_met[None,:]/7))
+            amp[:,:,1] = bias_met2*(2*(beta_met+beta_met[None,:])/3+4*beta_met*beta_met[None,:]/7)
             amp[:,:,2] = bias_met2*8*beta_met*beta_met[None,:]/35
     
             xi_met_met=amp*self.temp_met_met
