@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+
+from astropy.io import fits
+import scipy as sp
+import sys
+import argparse
+
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--prefix-pk', type = str, default = None, required=True,
+                        help = 'prefix to pk file')
+
+parser.add_argument('--out', type = str, default = None, required=True,
+                        help = 'output file')
+
+parser.add_argument('--zref', type = float, default = None, required=True,
+                        help = 'reference redshift')
+
+args=parser.parse_args()
+zref=args.zref
+pk=sp.loadtxt(args.prefix_pk+"_matterpower.dat")
+pkSB=sp.loadtxt(args.prefix_pk+"SB_matterpower.dat")
+col1=fits.Column(name="K",format='D',array=sp.array(pk[:,0]))
+col2=fits.Column(name="PK",format='D',array=sp.array(pk[:,1]))
+col3=fits.Column(name="PKSB",format='D',array=sp.array(pkSB[:,1]))
+cols=fits.ColDefs([col1,col2,col3])
+head=fits.Header()
+head["ZREF"]=zref
+tbhdu=fits.BinTableHDU.from_columns(cols,header=head)
+tbhdu.writeto(args.out,clobber=True)
+
