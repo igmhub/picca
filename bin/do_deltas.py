@@ -21,7 +21,6 @@ def cont_fit(data):
         d.cont_fit()
     return data
 
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -82,6 +81,9 @@ if __name__ == '__main__':
     parser.add_argument('--keep-bal',action='store_true',required=False,
             help='do not reject BALs')
 
+    parser.add_argument('--order',type=int,default=1,required=False,
+            help='order of the log(lambda) polynomial for the continuum fit, by default 1.')
+
     parser.add_argument('--bi-max',type=float,required=False,default=None,
             help="maximum CIV balnicity index (overrides --keep-bal")
 
@@ -96,22 +98,33 @@ if __name__ == '__main__':
 
     parser.add_argument('--eta-min',type = float,default=0.5,required=False,
             help='lower limit for eta')
+
     parser.add_argument('--eta-max',type = float,default=1.5,required=False,
             help='upper limit for eta')
 
     parser.add_argument('--vlss-min',type = float,default=0.,required=False,
             help='lower limit for variance LSS')
+
     parser.add_argument('--vlss-max',type = float,default=0.3,required=False,
             help='upper limit for variance LSS')
 
     args = parser.parse_args()
 
+    if (args.order != 0) and (args.order != 1): 
+        print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(order))
+        sys.exit(12)
     ## init forest class
+    
+    lambda_rest_min=args.lambda_rest_min
+    lambda_rest_max=args.lambda_rest_max
+
+    print("lambda_rest_min = {}".format(lambda_rest_min) )
+    print("lambda_rest_max = {}".format(lambda_rest_max) )
 
     forest.lmin = sp.log10(args.lambda_min)
     forest.lmax = sp.log10(args.lambda_max)
-    forest.lmin_rest = sp.log10(args.lambda_rest_min)
-    forest.lmax_rest = sp.log10(args.lambda_rest_max)
+    forest.lmin_rest = sp.log10(lambda_rest_min)
+    forest.lmax_rest = sp.log10(lambda_rest_max)
     forest.rebin = args.rebin
     forest.dll = args.rebin*1e-4
     ## minumum dla transmission
@@ -146,9 +159,10 @@ if __name__ == '__main__':
 
     nit = args.nit
 
+    print("order of the log(lambda) polynomial for the continuum fit is %i"%(args.order))
     log = open(args.log,'w')
     data,ndata = io.read_data(args.in_dir,args.drq,args.mode,\
-            zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max)
+                              zmin=args.zqso_min,zmax=args.zqso_max,order=args.order,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max)
     
 
     ### Get the lines to veto
@@ -264,6 +278,7 @@ if __name__ == '__main__':
             hd["PLATE"]=d.plate
             hd["MJD"]=d.mjd
             hd["FIBERID"]=d.fid
+            hd["ORDER"]=d.order
 
             cols=[d.ll,d.de,d.we,d.co]
             names=['LOGLAM','DELTA','WEIGHT','CONT']

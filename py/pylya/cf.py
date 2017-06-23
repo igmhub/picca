@@ -15,17 +15,20 @@ npm= None
 rp_max = None
 rt_max = None
 angmax = None
-nside = None
 
 counter = None
+nside = None
+
 ndata = None
+data = None
+lambda_abs = None
+
+ndata2 = None
+data2 = None
+lambda_abs2 = None
 
 zref = None
 alpha= None
-alpha_met= None
-lambda_abs = None
-
-data = None
 
 cosmo=None
 
@@ -42,6 +45,17 @@ def fill_neighs(pix):
             w = ang<angmax
             neighs = sp.array(neighs)[w]
             d1.neighs = [d for d in neighs if d1.ra > d.ra]
+
+def fill_neighs_x_correlation(pix):
+    for ipix in pix:
+        for d1 in data[ipix]:
+            npix = query_disc(nside,[d1.xcart,d1.ycart,d1.zcart],angmax,inclusive = True)
+            npix = [p for p in npix if p in data2]
+            neighs = [d for p in npix for d in data2[p]]
+            ang = d1^neighs
+            w = (ang<angmax)*(ang>=sp.arccos(1.-1.1e-11))
+            neighs = sp.array(neighs)[w]
+            d1.neighs = [d for d in neighs if d1.ra != d.ra]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
@@ -108,6 +122,71 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
 
     return cw,cd,crp,crt,cz,cnb
 
+def x_cf(pix):
+    xi = sp.zeros(2*np*nt)
+    we = sp.zeros(2*np*nt)
+    rp = sp.zeros(2*np*nt)
+    rt = sp.zeros(2*np*nt)
+    z = sp.zeros(2*np*nt)
+    nb = sp.zeros(2*np*nt,dtype=sp.int64)
+
+    for ipix in pix:
+        for i,d1 in enumerate(data[ipix]):
+            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)))
+            with lock:
+                counter.value += 1
+            for d2 in d1.neighs:
+                ang = d1^d2
+                same_half_plate = (d1.plate == d2.plate) and\
+                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
+                cw,cd,crp,crt,cz,cnb = fast_x_cf(d1.z,d1.r_comov,d1.we,d1.de,d2.z,d2.r_comov,d2.we,d2.de,ang,same_half_plate)
+            
+                xi[:len(cd)]+=cd
+                we[:len(cw)]+=cw
+                rp[:len(crp)]+=crp
+                rt[:len(crp)]+=crt
+                z[:len(crp)]+=cz
+                nb[:len(cnb)]+=cnb
+
+    w = we>0
+    xi[w]/=we[w]
+    rp[w]/=we[w]
+    rt[w]/=we[w]
+    z[w]/=we[w]
+    return we,xi,rp,rt,z,nb
+@jit 
+def fast_x_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
+    wd1 = d1*w1
+    wd2 = d2*w2
+    rp = (r1-r2[:,None])*sp.cos(ang/2)
+    rt = (r1+r2[:,None])*sp.sin(ang/2)
+    wd12 = wd1*wd2[:,None]
+    w12 = w1*w2[:,None]
+    z = (z1+z2[:,None])/2
+
+    w = (abs(rp)<rp_max) & (rt<rt_max)
+    rp = rp[w]
+    rt = rt[w]
+    z  = z[w]
+    wd12 = wd12[w]
+    w12 = w12[w]
+    bp = ((rp+rp_max)/rp_max*np).astype(int)
+    bt = (rt/rt_max*nt).astype(int)
+    bins = bt + nt*bp
+    if same_half_plate:
+        w = bp == 0
+        wd12[w] = 0
+        w12[w]=0
+
+    cd = sp.bincount(bins,weights=wd12)
+    cw = sp.bincount(bins,weights=w12)
+    crp = sp.bincount(bins,weights=rp*w12)
+    crt = sp.bincount(bins,weights=rt*w12)
+    cz = sp.bincount(bins,weights=z*w12)
+    cnb = sp.bincount(bins)
+
+    return cw,cd,crp,crt,cz,cnb
+
 def dmat(pix):
 
     dm = sp.zeros(np*nt*nt*np)
@@ -120,6 +199,7 @@ def dmat(pix):
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
             with lock:
                 counter.value += 1
+            order1 = d1.order
             r1 = d1.r_comov
             w1 = d1.we
             l1 = d1.ll
@@ -131,15 +211,16 @@ def dmat(pix):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 ang = d1^d2
+                order2 = d2.order
                 r2 = d2.r_comov
                 w2 = d2.we
                 l2 = d2.ll
-                fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate)
+                fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2)
 
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
     
 @jit
-def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
+def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = (rp/rp_max*np).astype(int)
@@ -188,19 +269,24 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
     eta1[:len(c)]+=c
     c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
-    eta3[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
-    eta4[:len(c)]+=c
-
     c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
-    c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
-    eta6[:len(c)]+=c
-    c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
-    eta7[:len(c)]+=c
-    c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
+
+    if order2==1: 
+        c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
+        eta3[:len(c)]+=c
+        c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
+        eta6[:len(c)]+=c
+    if order1==1: 
+        c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        eta4[:len(c)]+=c
+        c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
+        eta7[:len(c)]+=c
+        if order2==1:
+            c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
     eta8[:len(c)]+=c
+
+
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):
@@ -211,8 +297,115 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
             dm[bb+np*nt*ba] += we[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
              - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
-def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
+def x_dmat(pix):
 
+    dm = sp.zeros(2*np*nt*nt*2*np)
+    wdm = sp.zeros(2*np*nt)
+
+    npairs = 0L
+    npairs_used = 0L
+    for p in pix:
+        for d1 in data[p]:
+            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
+            with lock:
+                counter.value += 1
+            order1 = d1.order
+            r1 = d1.r_comov
+            w1 = d1.we
+            l1 = d1.ll
+            r = random.rand(len(d1.neighs))
+            w=r>rej
+            npairs += len(d1.neighs)
+            npairs_used += w.sum()
+            for d2 in sp.array(d1.neighs)[w]:
+                same_half_plate = (d1.plate == d2.plate) and\
+                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
+                ang = d1^d2
+                order2 = d2.order
+                r2 = d2.r_comov
+                w2 = d2.we
+                l2 = d2.ll
+                fill_x_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2)
+
+    return wdm,dm.reshape(2*np*nt,2*np*nt),npairs,npairs_used
+    
+@jit
+def fill_x_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
+    rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+    bp = ((rp+rp_max)/rp_max*np).astype(int)
+    bt = (rt/rt_max*nt).astype(int)
+    bins = bt + nt*bp
+    
+    sw1 = w1.sum()
+    sw2 = w2.sum()
+
+    ml1 = sp.average(l1,weights=w1)
+    ml2 = sp.average(l2,weights=w2)
+
+    dl1 = l1-ml1
+    dl2 = l2-ml2
+
+    slw1 = (w1*dl1**2).sum()
+    slw2 = (w2*dl2**2).sum()
+
+    w = (abs(rp)<rp_max) & (rt<rt_max)
+
+    bins = bins[w]
+
+    n1 = len(l1)
+    n2 = len(l2)
+    ij = sp.arange(n1)[:,None]+n1*sp.arange(n2)
+    ij = ij[w]
+
+    we = w1[:,None]*w2
+    we = we[w]
+    if same_half_plate:
+        wsame = bp[w]==0
+        we[wsame]=0
+    c = sp.bincount(bins,weights=we)
+    wdm[:len(c)] += c
+    eta1 = sp.zeros(2*np*nt*n1)
+    eta2 = sp.zeros(2*np*nt*n2)
+    eta3 = sp.zeros(2*np*nt*n1)
+    eta4 = sp.zeros(2*np*nt*n2)
+    eta5 = sp.zeros(2*np*nt)
+    eta6 = sp.zeros(2*np*nt)
+    eta7 = sp.zeros(2*np*nt)
+    eta8 = sp.zeros(2*np*nt)
+
+    c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
+    eta1[:len(c)]+=c
+    c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    eta2[:len(c)]+=c
+    c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
+    eta5[:len(c)]+=c
+
+    if order2==1: 
+        c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
+        eta3[:len(c)]+=c
+        c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
+        eta6[:len(c)]+=c
+    if order1==1: 
+        c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        eta4[:len(c)]+=c
+        c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
+        eta7[:len(c)]+=c
+        if order2==1:
+            c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
+    eta8[:len(c)]+=c
+
+
+    ubb = sp.unique(bins)
+    for k,ba in enumerate(bins):
+        dm[ba+2*np*nt*ba]+=we[k]
+        i = ij[k]%n1
+        j = (ij[k]-i)/n1
+        for bb in ubb:
+            dm[bb+2*np*nt*ba] += we[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
+             - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+
+def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
@@ -311,6 +504,106 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     dm[:len(c)]+=c
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
+def neg_rp_metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
+
+    dm = sp.zeros(2*np*nt*ntm*2*npm)
+    wdm = sp.zeros(2*np*nt)
+    rpeff = sp.zeros(ntm*2*npm)
+    rteff = sp.zeros(ntm*2*npm)
+    zeff = sp.zeros(ntm*2*npm)
+    weff = sp.zeros(ntm*2*npm)
+
+    npairs = 0
+    npairs_used = 0
+    for p in pix:
+        for d1 in data[p]:
+            with lock:
+                sys.stderr.write("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)))
+                counter.value += 1
+            r1 = d1.r_comov
+            z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
+            r1_abs1 = cosmo.r_comoving(z1_abs1)
+            z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
+            r1_abs2 = cosmo.r_comoving(z1_abs2)
+            w1 = d1.we
+            l1 = d1.ll
+            r = random.rand(len(d1.neighs))
+            w=r>rej
+            npairs += len(d1.neighs)
+            npairs_used += w.sum()
+            for d2 in sp.array(d1.neighs)[w]:
+                same_half_plate = (d1.plate == d2.plate) and\
+                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
+                ang = d1^d2
+
+                r2 = d2.r_comov
+                z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
+                r2_abs1 = cosmo.r_comoving(z2_abs1)
+                z2_abs2 = 10**d2.ll/constants.absorber_IGM[abs_igm2]-1
+                r2_abs2 = cosmo.r_comoving(z2_abs2)
+
+                w2 = d2.we
+                l2 = d2.ll
+                rp = (r1[:,None]-r2)*sp.cos(ang/2)
+                rt = (r1[:,None]+r2)*sp.sin(ang/2)
+                w12 = w1[:,None]*w2
+
+                bp = ((rp+rp_max)/rp_max*np).astype(int)
+                bt = (rt/rt_max*nt).astype(int)
+                if same_half_plate:
+                    wp = bp==0
+                    w12[wp]=0
+                bA = bt + nt*bp
+                wA = (bp<2*np) & (bt<nt) & (bp>=0)
+                c = sp.bincount(bA[wA],weights=w12[wA])
+                wdm[:len(c)]+=c
+
+                rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
+                rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
+                zwe12 = (1+z1_abs1[:,None])**(alpha_met-1)*(1+z2_abs2)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
+
+                bp_abs1_abs2 = ((rp_abs1_abs2+rp_max)/rp_max*npm).astype(int)
+                bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
+                bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
+                wBma = (bp_abs1_abs2<2*npm) & (bt_abs1_abs2<ntm) & (bp_abs1_abs2>=0)
+                wAB = wA&wBma
+
+                c = sp.bincount(bBma[wAB]+2*npm*ntm*bA[wAB],weights=w12[wAB]*zwe12[wAB])
+                dm[:len(c)]+=c
+
+                c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
+                rpeff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
+                rteff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe12[wAB])
+                zeff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
+                weff[:len(c)]+=c
+
+                if abs_igm1 != abs_igm2:
+                    rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                    rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
+                    zwe21 = (1+z1_abs2[:,None])**(alpha_met-1)*(1+z2_abs1)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
+
+                    bp_abs2_abs1 = ((rp_abs2_abs1+rp_max)/rp_max*npm).astype(int)
+                    bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
+                    bBam = bt_abs2_abs1 + ntm*bp_abs2_abs1
+                    wBam = (bp_abs2_abs1<2*npm) & (bt_abs2_abs1<ntm) & (bp_abs2_abs1>=0) 
+                    wAB = wA&wBam
+
+                    c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
+                    rpeff[:len(c)]+=c
+                    c = sp.bincount(bBam[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe21[wAB])
+                    rteff[:len(c)]+=c
+                    c = sp.bincount(bBam[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe21[wAB])
+                    zeff[:len(c)]+=c
+                    c = sp.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
+                    weff[:len(c)]+=c
+                    
+                    c = sp.bincount(bBam[wAB]+2*npm*ntm*bA[wAB],weights=w12[wAB]*zwe21[wAB])
+                    dm[:len(c)]+=c
+    return wdm,dm.reshape(2*np*nt,2*npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
+
 n1d = None
 def cf1d(pix):
     xi1d = sp.zeros(n1d**2)
@@ -325,6 +618,31 @@ def cf1d(pix):
         xi1d[bins] += wde * wde[:,None]
         we1d[bins] += we*we[:,None]
         nb1d[bins] += 1
+    w = we1d>0
+    xi1d[w]/=we1d[w]
+    return we1d,xi1d,nb1d
+v1d = None
+c1d = None
+
+def x_forest_cf1d(pix):
+    xi1d = sp.zeros(n1d**2)
+    we1d = sp.zeros(n1d**2)
+    nb1d = sp.zeros(n1d**2,dtype=sp.int64)
+
+    for d1 in data[pix]:
+        for d2 in data2[pix]:
+            if (d1.thid != d2.thid): continue 
+            #print("fot pix %i , (d1.thid,d2.thid) = (%i , %i)"%(pix,d1.thid,d2.thid))
+            bins1 = ((d1.ll-forest.lmin)/forest.dll+0.5).astype(int)
+            bins2 = ((d2.ll-forest.lmin)/forest.dll+0.5).astype(int)
+            bins = bins1 + n1d*bins2[:,None]
+            wde1 = d1.we*d1.de
+            wde2 = d2.we*d2.de
+            we1 = d1.we
+            we2 = d2.we
+            xi1d[bins] += wde1 * wde2[:,None]
+            we1d[bins] += we1*we2[:,None]
+            nb1d[bins] += 1
 
     w = we1d>0
     xi1d[w]/=we1d[w]
