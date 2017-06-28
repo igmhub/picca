@@ -131,7 +131,6 @@ class Chi2:
 			print "Chi2: ",chi2
                         sys.stdout.flush() # force dump of stdout
 
-
 		return chi2
 
 	def fastMonteCarlo(self,mig,kw):
