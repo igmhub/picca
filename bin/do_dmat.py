@@ -103,25 +103,26 @@ if __name__ == '__main__':
 
     z_min_pix = 1.e6
     ndata=0
-    data={}
-    dels = []
     fi = glob.glob(args.in_dir+"/*.fits.gz")
+    data = {}
+    dels = []
     for i,f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
-        dels += [delta.from_fitsio(h) for h in hdus[1:]]
+        dels = [delta.from_fitsio(h) for h in hdus[1:]]
         ndata+=len(hdus[1:])
         hdus.close()
         if not args.nspec is None:
             if ndata>args.nspec:break
+    sys.stderr.write("read {}\n".format(ndata))
 
     x_correlation=False
     if args.in_dir2: 
         x_correlation=True
-        data2 = {}
         ndata2 = 0
-        dels2 = []
         fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        data2 = {}
+        dels2 = []
         for i,f in enumerate(fi):
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
             hdus = fitsio.FITS(f)
@@ -130,14 +131,13 @@ if __name__ == '__main__':
             hdus.close()
             if not args.nspec is None:
                 if ndata2>args.nspec:break
+        sys.stderr.write("read {}\n".format(ndata2))
+
     elif args.lambda_abs != args.lambda_abs2:   
         x_correlation=True
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
-    print 
-    print 'ndata = ', ndata 
-    if x_correlation : print 'ndata2 = ', ndata2
  
     z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1
     phi = [d.ra for d in dels]
@@ -175,9 +175,6 @@ if __name__ == '__main__':
             d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
             if not args.no_project:
                 d.project()
-            if not args.nspec is None:
-                if ndata2>args.nspec:break
-            sys.stderr.write("read {}\n".format(ndata))
 
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
