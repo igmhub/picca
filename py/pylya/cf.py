@@ -19,13 +19,16 @@ nside = None
 
 counter = None
 ndata = None
+ndata2 = None 
 
 zref = None
 alpha= None
 alpha_met= None
 lambda_abs = None
+lambda_abs2 = None 
 
 data = None
+data2 = None 
 
 cosmo=None
 
@@ -42,6 +45,17 @@ def fill_neighs(pix):
             w = ang<angmax
             neighs = sp.array(neighs)[w]
             d1.neighs = [d for d in neighs if d1.ra > d.ra]
+
+def fill_neighs_x_correlation(pix):
+    for ipix in pix:
+        for d1 in data[ipix]:
+            npix = query_disc(nside,[d1.xcart,d1.ycart,d1.zcart],angmax,inclusive = True)
+            npix = [p for p in npix if p in data2]
+            neighs = [d for p in npix for d in data2[p]]
+            ang = d1^neighs
+            w = (ang<angmax)*(ang>=sp.arccos(1.-1.1e-11))
+            neighs = sp.array(neighs)[w]
+            d1.neighs = [d for d in neighs if d1.ra != d.ra]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
