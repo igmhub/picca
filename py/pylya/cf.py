@@ -19,13 +19,16 @@ nside = None
 
 counter = None
 ndata = None
+ndata2 = None 
 
 zref = None
 alpha= None
 alpha_met= None
 lambda_abs = None
+lambda_abs2 = None 
 
 data = None
+data2 = None 
 
 cosmo=None
 
@@ -42,6 +45,17 @@ def fill_neighs(pix):
             w = ang<angmax
             neighs = sp.array(neighs)[w]
             d1.neighs = [d for d in neighs if d1.ra > d.ra]
+
+def fill_neighs_x_correlation(pix):
+    for ipix in pix:
+        for d1 in data[ipix]:
+            npix = query_disc(nside,[d1.xcart,d1.ycart,d1.zcart],angmax,inclusive = True)
+            npix = [p for p in npix if p in data2]
+            neighs = [d for p in npix for d in data2[p]]
+            ang = d1^neighs
+            w = (ang<angmax)*(ang>=sp.arccos(1.-1.1e-11))
+            neighs = sp.array(neighs)[w]
+            d1.neighs = [d for d in neighs if d1.ra != d.ra]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
@@ -332,6 +346,31 @@ def cf1d(pix):
 
 v1d = None
 c1d = None
+def x_forest_cf1d(pix):
+    xi1d = sp.zeros(n1d**2)
+    we1d = sp.zeros(n1d**2)
+    nb1d = sp.zeros(n1d**2,dtype=sp.int64)
+
+    for d1 in data[pix]:
+        bins1 = ((d1.ll-forest.lmin)/forest.dll+0.5).astype(int)
+        wde1 = d1.we*d1.de
+        we1 = d1.we
+        for d2 in data[pix]:
+            if (d1.thid != d2.thid): continue 
+            bins2 = ((d2.ll-forest.lmin)/forest.dll+0.5).astype(int)
+            bins = bins1 + n1d*bins2[:,None]
+            wde2 = d2.we*d2.de
+            we2 = d2.we
+            xi1d[bins] += wde1 * wde2[:,None]
+            we1d[bins] += we1*we2[:,None]
+            nb1d[bins] += 1
+
+    w = we1d>0
+    xi1d[w]/=we1d[w]
+    return we1d,xi1d,nb1d
+
+v1d = None
+c1d = None
 
 ## auto
 def t123(pix):
@@ -368,7 +407,6 @@ def t123(pix):
 
     return w123,t123_loc,npairs,npairs_used
             
-
 @jit
 def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
 
