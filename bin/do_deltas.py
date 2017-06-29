@@ -17,6 +17,7 @@ from math import isnan
 import argparse
 
 def cont_fit(data):
+    
     for d in data:
         d.cont_fit()
     return data
@@ -104,7 +105,14 @@ if __name__ == '__main__':
     parser.add_argument('--vlss-max',type = float,default=0.3,required=False,
             help='upper limit for variance LSS')
 
+    parser.add_argument('--order',type=int,default=1,required=False,
+                        help='order of the log(lambda) polynomial for the continuum fit, by default 1.')
     args = parser.parse_args()
+    
+    if args.order:
+        if (args.order != 0) and (args.order != 1): 
+            print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(order))
+            sys.exit(12)
 
     ## init forest class
 
@@ -148,7 +156,7 @@ if __name__ == '__main__':
 
     log = open(args.log,'w')
     data,ndata = io.read_data(args.in_dir,args.drq,args.mode,\
-            zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max)
+                              zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max,order=args.order)
     
 
     ### Get the lines to veto
@@ -255,6 +263,7 @@ if __name__ == '__main__':
     for p in deltas:
         out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)
         for d in deltas[p]:
+
             hd={}
             hd["RA"]=d.ra
             hd["DEC"]=d.dec
@@ -264,6 +273,8 @@ if __name__ == '__main__':
             hd["PLATE"]=d.plate
             hd["MJD"]=d.mjd
             hd["FIBERID"]=d.fid
+            hd["ORDER"]=d.order
+
 
             cols=[d.ll,d.de,d.we,d.co]
             names=['LOGLAM','DELTA','WEIGHT','CONT']
