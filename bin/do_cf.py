@@ -49,10 +49,10 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.lya, required=False,
+    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
                         help = 'wavelength of absorption')
 
-    parser.add_argument('--lambda-abs2', type = float, default = constants.lya, required=False,
+    parser.add_argument('--lambda-abs2', type = float, default = constants.absorber_IGM['LYA'], required=False,
                         help = 'wavelength of absorption in forest 2')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
