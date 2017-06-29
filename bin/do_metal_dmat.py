@@ -233,8 +233,9 @@ if __name__ == '__main__':
         abs_igm_2=copy.deepcopy(abs_igm)
 
     for i,abs_igm1 in enumerate(abs_igm):
-        for j in range(0,len(abs_igm_2)):
-            if not x_correlation and j<i : continue
+        i0=0 
+        if not x_correlation: i0=i 
+        for j in range(i0,len(abs_igm_2)):
             if ((i==0)and(j==0)): continue 
             abs_igm2 = abs_igm_2[j]
             cf.counter.value=0
