@@ -197,7 +197,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,mode,log=None):
         log.write("{} read\n".format(fin))
         ll = h[1]["loglam"][:]
         fl = h[1]["flux"][:]
-        iv = h[1]["ivar"][:]*(h[1]["and_mask"]==0)
+        iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
         d = forest(ll,fl,iv, t, r, d, z, p, m, f)
         pix_data.append(d)
         h.close()
