@@ -46,10 +46,10 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.lya, required=False,
+    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
                         help = 'wavelength of absorption')
 
-    parser.add_argument('--lambda-abs2', type = float, default = constants.lya, required=False,
+    parser.add_argument('--lambda-abs2', type = float, default = constants.absorber_IGM['LYA'], required=False,
                         help = 'wavelength of absorption #2')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
@@ -219,16 +219,24 @@ if __name__ == '__main__':
     npairs_all=[]
     npairs_used_all=[]
 
-    if args.lambda_abs == constants.lya: 
+    if args.lambda_abs == constants.absorber_IGM['LYA']: 
         abs_igm = ["LYA"]+args.abs_igm
-    elif args.lambda_abs == constants.lyb:
+    elif args.lambda_abs == constants.absorber_IGM['LYB']:
         abs_igm = ["LYB"]+args.abs_igm
+    else:
+        print("ERROR: abs_igm is not known")
+        sys.exit(12)
 
     if args.abs_igm2: 
-        if args.lambda_abs2 == constants.lya: 
+        print "args.lambda_abs2 = ", args.lambda_abs2
+        print "constants.absorber_IGM['LYB'] = ", constants.absorber_IGM['LYB']
+        if args.lambda_abs2 == constants.absorber_IGM['LYA']: 
             abs_igm_2 = ["LYA"]+args.abs_igm2
-        elif args.lambda_abs2 == constants.lyb:
+        elif args.lambda_abs2 == constants.absorber_IGM['LYB']:
             abs_igm_2 = ["LYB"]+args.abs_igm2 
+        else: 
+            print("ERROR: abs_igm_2 is not known")
+            sys.exit(12)
     else: 
         abs_igm_2=copy.deepcopy(abs_igm)
 
