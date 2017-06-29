@@ -223,7 +223,7 @@ if __name__ == '__main__':
 
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
     ## use the default scheme in healpy => RING
-    head2 = [{'name':'HLPSCHM','value':'RING','comment':'healpix scheme'}]
+    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
     out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
     out.close()
 
