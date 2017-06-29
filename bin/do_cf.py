@@ -203,6 +203,7 @@ if __name__ == '__main__':
     zs=cfs[:,4,:]
     nbs=cfs[:,5,:].astype(sp.int64)
     cfs=cfs[:,1,:]
+    hep=sp.array(cpu_data.keys())
 
     cut      = (wes.sum(axis=0)>0.)
     rp       = (rps*wes).sum(axis=0)
@@ -221,7 +222,9 @@ if __name__ == '__main__':
     head['NP']=cf.np
 
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
-    out.write([wes,cfs],names=['WE','DA'])
+    ## use the default scheme in healpy => RING
+    head2 = [{'name':'HLPSCHM','value':'RING','comment':'healpix scheme'}]
+    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
     out.close()
 
     
