@@ -9,14 +9,15 @@ class dla:
         self.zabs=zabs
         self.nhi=nhi
 
-        self.t = self.p_voigt(10**data.ll,zabs,nhi)
+        self.t = self.p_voigt_a(10**data.ll,zabs,nhi)
+        self.t*= self.p_voigt_b(10**data.ll,zabs,nhi)
 
     @staticmethod
-    def p_voigt(la,zabs,nhi):
-        return sp.exp(-dla.tau(la,zabs,nhi))
+    def p_voigt_a(la,zabs,nhi):
+        return sp.exp(-dla.tau_a(la,zabs,nhi))
     
     @staticmethod
-    def tau(la,zabs,nhi):
+    def tau_a(la,zabs,nhi):
         lam_lya = 1215.67
         gamma = 6.625e8
         f = 0.4164
@@ -27,6 +28,27 @@ class dla:
 
         u = (c/b)*(lam_lya/lrf-1)
         a = lam_lya*1e-10*gamma/(4*sp.pi*b)
+        h = dla.voigt(a,u)
+        b/=1000.
+        tau = 1.497e-15*nn*f*lrf*h/b
+        return tau
+
+    @staticmethod
+    def p_voigt_b(la,zabs,nhi):
+        return sp.exp(-dla.tau_b(la,zabs,nhi))
+    
+    @staticmethod
+    def tau_b(la,zabs,nhi):
+        lam_lyb = 1025.7223
+        gamma = 0.079120
+        f = 1.897e8
+        c = 3e8 ## speed of light m/s
+        b = 30000.
+        nn = 10**nhi
+        lrf = la/(1+zabs)
+
+        u = (c/b)*(lam_lyb/lrf-1)
+        a = lam_lyb*1e-10*gamma/(4*sp.pi*b)
         h = dla.voigt(a,u)
         b/=1000.
         tau = 1.497e-15*nn*f*lrf*h/b
