@@ -134,6 +134,7 @@ def dmat(pix):
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
             with lock:
                 counter.value += 1
+            order1 = d1.order
             r1 = d1.r_comov
             w1 = d1.we
             l1 = d1.ll
@@ -144,16 +145,17 @@ def dmat(pix):
             for d2 in sp.array(d1.neighs)[w]:
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
+                order2 = d2.order
                 ang = d1^d2
                 r2 = d2.r_comov
                 w2 = d2.we
                 l2 = d2.ll
-                fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate)
+                fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2)
 
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
     
 @jit
-def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
+def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = (rp/rp_max*np).astype(int)
@@ -202,19 +204,24 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate):
     eta1[:len(c)]+=c
     c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
-    eta3[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
-    eta4[:len(c)]+=c
 
     c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
-    c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
-    eta6[:len(c)]+=c
-    c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
-    eta7[:len(c)]+=c
     c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
     eta8[:len(c)]+=c
+
+    if order2==1: 
+        c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
+        eta3[:len(c)]+=c
+        c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
+        eta6[:len(c)]+=c
+    if order1==1: 
+        c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        eta4[:len(c)]+=c
+        c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
+        eta7[:len(c)]+=c
+        if order2==1:
+            c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):
