@@ -104,6 +104,9 @@ if __name__ == '__main__':
     parser.add_argument('--vlss-max',type = float,default=0.3,required=False,
             help='upper limit for variance LSS')
 
+    parser.add_argument('--order',type=int,default=1,required=False,
+            help='order of the log(lambda) polynomial for the continuum fit, by default 1.')
+
     args = parser.parse_args()
 
     ## init forest class
@@ -128,6 +131,12 @@ if __name__ == '__main__':
     forest.var_lss = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin),0.2 + sp.zeros(2),fill_value="extrapolate")
     forest.eta = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin), sp.ones(2),fill_value="extrapolate")
     forest.mean_cont = interp1d(forest.lmin_rest+sp.arange(2)*(forest.lmax_rest-forest.lmin_rest),1+sp.zeros(2))
+
+    ### Fix the order of the continuum fit, 0 or 1. 
+    if args.order:
+        if (args.order != 0) and (args.order != 1): 
+            print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(order))
+            sys.exit(12)
 
     ### Correct multiplicative flux calibration
     if (args.flux_calib is not None):
@@ -264,6 +273,7 @@ if __name__ == '__main__':
             hd["PLATE"]=d.plate
             hd["MJD"]=d.mjd
             hd["FIBERID"]=d.fid
+            hd["ORDER"]=d.order
 
             cols=[d.ll,d.de,d.we,d.co]
             names=['LOGLAM','DELTA','WEIGHT','CONT']
