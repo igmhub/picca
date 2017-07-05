@@ -13,6 +13,7 @@ nt = None
 ntm= None
 npm= None
 rp_max = None
+rp_min = None 
 rt_max = None
 angmax = None
 nside = None
@@ -93,19 +94,20 @@ def cf(pix):
 def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     wd1 = d1*w1
     wd2 = d2*w2
-    rp = abs(r1-r2[:,None])*sp.cos(ang/2)
+    if rp_min<0 : rp = (r1-r2[:,None])*sp.cos(ang/2)
+    else : rp = abs(r1-r2[:,None])*sp.cos(ang/2)
     rt = (r1+r2[:,None])*sp.sin(ang/2)
     wd12 = wd1*wd2[:,None]
     w12 = w1*w2[:,None]
     z = (z1+z2[:,None])/2
 
-    w = (rp<rp_max) & (rt<rt_max)
+    w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
     rp = rp[w]
     rt = rt[w]
     z  = z[w]
     wd12 = wd12[w]
     w12 = w12[w]
-    bp = (rp/rp_max*np).astype(int)
+    bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
     if same_half_plate:
