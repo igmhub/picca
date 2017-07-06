@@ -94,7 +94,7 @@ def cf(pix):
 def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     wd1 = d1*w1
     wd2 = d2*w2
-    if rp_min<0 : rp = (r1-r2[:,None])*sp.cos(ang/2)
+    if x_correlation : rp = (r1-r2[:,None])*sp.cos(ang/2)
     else : rp = abs(r1-r2[:,None])*sp.cos(ang/2)
     rt = (r1+r2[:,None])*sp.sin(ang/2)
     wd12 = wd1*wd2[:,None]
