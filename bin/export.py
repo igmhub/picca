@@ -30,6 +30,7 @@ if __name__ == '__main__':
     rp = sp.array(h[1]['RP'][:])
     rt = sp.array(h[1]['RT'][:])
     z  = sp.array(h[1]['Z'][:])
+    nb  = sp.array(h[1]['NB'][:])
     da = sp.array(h[2]['DA'][:])
     we = sp.array(h[2]['WE'][:])
     co = smooth_cov(da,we,rp,rt)
@@ -47,7 +48,7 @@ if __name__ == '__main__':
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
 
-    h.write([rp,rt,z,da,co,dm],names=['RP','RT','Z','DA','CO','DM'])
+    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'])
     h.close()
     
 

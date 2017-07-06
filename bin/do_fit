@@ -11,8 +11,6 @@ import sys
 import types
 import configargparse
 
-print '\n\n'
-
 ### Get the parser
 param = parameters.parameters()
 parser = configargparse.ArgParser()
