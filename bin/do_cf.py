@@ -40,6 +40,9 @@ if __name__ == '__main__':
     parser.add_argument('--rp-max', type = float, default = 200, required=False,
                         help = 'max rp')
 
+    parser.add_argument('--rp-min', type = float, default = 0, required=False,
+                        help = 'min rp. rp can be <0')
+
     parser.add_argument('--rt-max', type = float, default = 200, required=False,
                         help = 'max rt')
 
@@ -86,6 +89,7 @@ if __name__ == '__main__':
 
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
+    cf.rp_min = args.rp_min 
     cf.np = args.np
     cf.nt = args.nt
     cf.nside = args.nside
@@ -133,6 +137,7 @@ if __name__ == '__main__':
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
+    cf.x_correlation = x_correlation 
 
     z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1
     phi = [d.ra for d in dels]
