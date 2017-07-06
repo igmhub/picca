@@ -35,6 +35,7 @@ cosmo=None
 
 rej = None
 lock = None
+x_correlation = None 
 
 def fill_neighs(pix):
     for ipix in pix:
