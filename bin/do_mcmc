@@ -125,8 +125,23 @@ mig.migrad()
 p0 = [mig.values[p] for p in chi2.pname]
 dp0 = [mig.errors[p] for p in chi2.pname]
 def lnprob(p):
-	return -0.5*chi2(*p)
+	return -0.5*chi2(*p)+flat_priors(p)
 
+def flat_priors(p):
+    if dic_init['limit'] is not None:
+        for i in range(0,len(dic_init['limit']),3):
+            pname = dic_init['limit'][i]
+            val=p[chi2.pname.index(pname)]
+            p_min = dic_init['limit'][i+1]
+            if p_min=="None":p_min=-sp.inf
+            p_max = dic_init['limit'][i+2]
+            if p_max=="None":p_max=sp.inf
+            if val<p_min or val>p_max:
+                return -sp.inf
+    return 0.
+        
+    
+    
 nwalkers = args.nwalkers
 p=p0+1e-3*np.array(dp0*random.rand(nwalkers*len(dp0)).reshape(nwalkers,len(dp0)))
 sampler = emcee.EnsembleSampler(nwalkers, len(chi2.pname), lnprob,threads=args.nthreads)
