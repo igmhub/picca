@@ -277,8 +277,8 @@ class model:
         qso_boost         = pars["qso_metal_boost"]
         qso_evol          = [pars['qso_evol_0'],pars['qso_evol_1']]
         bias_qso          = pars["bias_qso"]
-        growth_factor_qso = pars["growth_factor_qso"]
-        beta_qso          = growth_factor_qso/bias_qso
+        growth_rate = pars["growth_rate"]
+        beta_qso          = growth_rate/bias_qso
         bias_met = sp.array([pars['bias_'+met] for met in self.met_names])
         beta_met = sp.array([pars['beta_'+met] for met in self.met_names])
         Lpar = pars["Lpar_cross"]

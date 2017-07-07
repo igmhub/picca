@@ -47,8 +47,8 @@ class model:
 			self.pinit.extend([dic_init[el] for el in ['bias_lls','beta_lls','L0_lls'] ])
 
 		if self.uv_fluct:
-			self.pglob.extend(['bias_gamma','bias_prim','kappa0'])
-			self.pinit.extend([dic_init[el] for el in ['bias_gamma','bias_prim','kappa0'] ])
+			self.pglob.extend(['bias_gamma','bias_prim','lambda_uv'])
+			self.pinit.extend([dic_init[el] for el in ['bias_gamma','bias_prim','lambda_uv'] ])
 
 		self.fix_bias_beta_peak = dic_init['fix_bias_beta_peak']
 		if self.fix_bias_beta_peak:
@@ -97,7 +97,7 @@ class model:
 
 	def add_cross(self,dic_init):
 
-		self.pcross = ['bias_qso','growth_factor_qso','drp','Lpar_cross','Lper_cross','qso_evol_0','qso_evol_1']
+		self.pcross = ['bias_qso','growth_rate','drp','Lpar_cross','Lper_cross','qso_evol_0','qso_evol_1']
 		self.p0_cross = [ dic_init[el] for el in self.pcross ]
 		self.fix.extend(['qso_evol_0','qso_evol_1'])
 
@@ -133,7 +133,7 @@ class model:
 
 	def add_autoQSO(self,dic_init):
 
-		self.pautoQSO = ['bias_qso','growth_factor_qso','Lpar_autoQSO','Lper_autoQSO','qso_evol_0','qso_evol_1']
+		self.pautoQSO = ['bias_qso','growth_rate','Lpar_autoQSO','Lper_autoQSO','qso_evol_0','qso_evol_1']
 		self.p0_autoQSO = [ dic_init[el] for el in self.pautoQSO ]
 		self.fix.extend(['qso_evol_0','qso_evol_1'])
 
@@ -207,8 +207,8 @@ class model:
 		if self.uv_fluct:
 			bias_gamma = pars["bias_gamma"]
 			bias_prim = pars["bias_prim"]
-			kappa0 = pars["kappa0"]
-			W = sp.arctan(k*kappa0)/(k*kappa0)
+			lambda_uv = pars["lambda_uv"]
+			W = sp.arctan(k*lambda_uv)/(k*lambda_uv)
 			bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
 			beta_lya = bias_lya*beta_lya/bias_lya_prim
 			bias_lya = bias_lya_prim
@@ -261,8 +261,8 @@ class model:
 		if self.uv_fluct:
 			bias_gamma = pars["bias_gamma"]
 			bias_prim = pars["bias_prim"]
-			kappa0 = pars["kappa0"]
-			W = sp.arctan(self.k*kappa0)/(self.k*kappa0)
+			lambda_uv = pars["lambda_uv"]
+			W = sp.arctan(self.k*lambda_uv)/(self.k*lambda_uv)
 			bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
 			beta_lya = bias_lya*beta_lya/bias_lya_prim
 			bias_lya = bias_lya_prim
@@ -347,15 +347,15 @@ class model:
 		if self.uv_fluct:
 			bias_gamma    = pars["bias_gamma"]
 			bias_prim     = pars["bias_prim"]
-			kappa0        = pars["kappa0"]
-			W             = sp.arctan(k*kappa0)/(k*kappa0)
+			lambda_uv     = pars["lambda_uv"]
+			W             = sp.arctan(k*lambda_uv)/(k*lambda_uv)
 			bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
 			beta_lya      = bias_lya*beta_lya/bias_lya_prim
 			bias_lya      = bias_lya_prim
 
 		### LYA-QSO cross correlation
 		bias_qso = pars["bias_qso"]
-		beta_qso = pars["growth_factor_qso"]/bias_qso
+		beta_qso = pars["growth_rate"]/bias_qso
 		pk_full  = bias_lya*bias_qso*(1+beta_lya*muk**2)*(1+beta_qso*muk**2)*pk_lin
 
 		### HCDS-QSO cross correlation
@@ -426,7 +426,7 @@ class model:
 
 		### QSO-QSO auto correlation
 		bias_qso = pars["bias_qso"]
-		beta_qso = pars["growth_factor_qso"]/bias_qso
+		beta_qso = pars["growth_rate"]/bias_qso
 		pk_full  = pk_lin*(bias_qso*(1.+beta_qso*muk**2))**2
 
 		### Velocity dispersion

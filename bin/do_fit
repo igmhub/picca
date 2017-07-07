@@ -11,8 +11,6 @@ import sys
 import types
 import configargparse
 
-print '\n\n'
-
 ### Get the parser
 param = parameters.parameters()
 parser = configargparse.ArgParser()
@@ -78,13 +76,23 @@ for i in fix:
 
 if not dic_init['fix'] is None:
 	for i in dic_init['fix']:
-		if any(i in el for el in chi2.pname):
+		if any(i==el for el in chi2.pname):
 			kw['fix_'+i]=True
+		else:
+			print
+			print '  fit/bin/fit:: Unknown parameter = ', i
+			print '  Exit'
+			sys.exit(0)
 
 if not dic_init['free'] is None:
 	for i in dic_init['free']:
-		if any(i in el for el in chi2.pname):
+		if any(i==el for el in chi2.pname):
 			kw['fix_'+i]=False
+		else:
+			print
+			print '  fit/bin/fit:: Unknown parameter = ', i
+			print '  Exit'
+			sys.exit(0)
 
 if not dic_init['limit'] is None:
 	for i in range(0,len(dic_init['limit']),3):
@@ -126,11 +134,11 @@ if not dic_init['debug']:
 		print '  Exit'
 		sys.exit(0)
 if not dic_init['minos'] is None and mig.migrad_ok():
-	if any('_all_' in el for el in dic_init['minos']):
+	if any('_all_'==el for el in dic_init['minos']):
 		mig.minos(var=None,sigma=dic_init['sigma_minos'])
 	else:
 		for i in dic_init['minos']:
-			if any(i in el for el in mig.list_of_vary_param()):
+			if any(i==el for el in mig.list_of_vary_param()):
 				mig.minos(var=i,sigma=dic_init['sigma_minos'])
 
 chi2.export(mig,param)

@@ -2,6 +2,7 @@
 import scipy as sp
 from scipy import random
 from scipy import interpolate
+from pylya import constants
 
 class dla:
     def __init__(self,data,zabs,nhi):
@@ -18,7 +19,7 @@ class dla:
     
     @staticmethod
     def tau_a(la,zabs,nhi):
-        lam_lya = 1215.67
+        lam_lya = constants.absorber_IGM["LYA"]
         gamma = 6.625e8
         f = 0.4164
         c = 3e8 ## speed of light m/s
@@ -39,7 +40,7 @@ class dla:
     
     @staticmethod
     def tau_b(la,zabs,nhi):
-        lam_lyb = 1025.7223
+        lam_lyb = constants.absorber_IGM["LYB"]
         gamma = 0.079120
         f = 1.897e8
         c = 3e8 ## speed of light m/s

@@ -95,7 +95,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
 target_mobj = 500
 nside_min = 8
-def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None):
+def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1):
 
     if mode != "desi":
         sys.stderr.write("mode: "+mode)
@@ -160,11 +160,11 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         ## read all hiz qsos
         if mode == "pix":
             t0 = time.time()
-            pix_data = read_from_pix(in_dir,pix,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w],log=log)
+            pix_data = read_from_pix(in_dir,pix,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, log=log)
             read_time=time.time()-t0
         elif mode == "spec" or mode =="corrected-spec":
             t0 = time.time()
-            pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w],mode=mode,log=log)
+            pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
             read_time=time.time()-t0
         if not pix_data is None:
             sys.stderr.write("{} read from pix {}, {} {} in {} secs per spectrum\n".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
@@ -177,7 +177,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 	
     return data,ndata
 
-def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,mode,log=None):
+def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
     pix_data = []
     for t,r,d,z,p,m,f in zip(thid,ra,dec,zqso,plate,mjd,fid):
         try:
@@ -197,13 +197,13 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,mode,log=None):
         log.write("{} read\n".format(fin))
         ll = h[1]["loglam"][:]
         fl = h[1]["flux"][:]
-        iv = h[1]["ivar"][:]*(h[1]["and_mask"]==0)
-        d = forest(ll,fl,iv, t, r, d, z, p, m, f)
+        iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
+        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order)
         pix_data.append(d)
         h.close()
     return pix_data
 
-def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,log=None):
+def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         try:
             fin = in_dir + "/pix_{}.fits.gz".format(pix)
 	    h = fitsio.FITS(fin)
@@ -238,14 +238,14 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,log=None):
                     log.write("{} missing from pixel {}\n".format(t,pix))
                 sys.stderr.write("{} missing from pixel {}\n".format(t,pix))
                 continue
-            d = forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f)
+            d = forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f,order)
 
             log.write("{} read\n".format(t))
             pix_data.append(d)
         h.close()
         return pix_data
 
-def read_from_desi(nside,ztable,in_dir):
+def read_from_desi(nside,ztable,in_dir,order):
     fi = glob.glob(in_dir+"/spectra-*.fits")
     data = {}
     ndata=0
@@ -276,7 +276,7 @@ def read_from_desi(nside,ztable,in_dir):
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            d = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0])
+            d = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
             pix = pixs[wt][0]
             if pix not in data:
                 data[pix]=[]
