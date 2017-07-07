@@ -31,7 +31,7 @@ class parameters:
 			'L0_lls'            : 20.,
 			'bias_gamma'        : 0.13,
 			'bias_prim'         : -2./3,
-			'kappa0'            : 300.,
+			'lambda_uv'            : 300.,
 			'qso_metal_boost'   : 1.,
 			'sigma_minos'       : 1.,
 			'Lpar_autoQSO'      : 4.,
