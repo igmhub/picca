@@ -47,8 +47,8 @@ class model:
 			self.pinit.extend([dic_init[el] for el in ['bias_lls','beta_lls','L0_lls'] ])
 
 		if self.uv_fluct:
-			self.pglob.extend(['bias_gamma','bias_prim','kappa0'])
-			self.pinit.extend([dic_init[el] for el in ['bias_gamma','bias_prim','kappa0'] ])
+			self.pglob.extend(['bias_gamma','bias_prim','lambda_uv'])
+			self.pinit.extend([dic_init[el] for el in ['bias_gamma','bias_prim','lambda_uv'] ])
 
 		self.fix_bias_beta_peak = dic_init['fix_bias_beta_peak']
 		if self.fix_bias_beta_peak:
@@ -207,8 +207,8 @@ class model:
 		if self.uv_fluct:
 			bias_gamma = pars["bias_gamma"]
 			bias_prim = pars["bias_prim"]
-			kappa0 = pars["kappa0"]
-			W = sp.arctan(k*kappa0)/(k*kappa0)
+			lambda_uv = pars["lambda_uv"]
+			W = sp.arctan(k*lambda_uv)/(k*lambda_uv)
 			bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
 			beta_lya = bias_lya*beta_lya/bias_lya_prim
 			bias_lya = bias_lya_prim
@@ -261,8 +261,8 @@ class model:
 		if self.uv_fluct:
 			bias_gamma = pars["bias_gamma"]
 			bias_prim = pars["bias_prim"]
-			kappa0 = pars["kappa0"]
-			W = sp.arctan(self.k*kappa0)/(self.k*kappa0)
+			lambda_uv = pars["lambda_uv"]
+			W = sp.arctan(self.k*lambda_uv)/(self.k*lambda_uv)
 			bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
 			beta_lya = bias_lya*beta_lya/bias_lya_prim
 			bias_lya = bias_lya_prim
@@ -347,8 +347,8 @@ class model:
 		if self.uv_fluct:
 			bias_gamma    = pars["bias_gamma"]
 			bias_prim     = pars["bias_prim"]
-			kappa0        = pars["kappa0"]
-			W             = sp.arctan(k*kappa0)/(k*kappa0)
+			lambda_uv     = pars["lambda_uv"]
+			W             = sp.arctan(k*lambda_uv)/(k*lambda_uv)
 			bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
 			beta_lya      = bias_lya*beta_lya/bias_lya_prim
 			bias_lya      = bias_lya_prim
