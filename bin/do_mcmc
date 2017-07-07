@@ -145,7 +145,7 @@ def lnpriors(p):
     
     
 nwalkers = args.nwalkers
-p=p0+1e-2*np.array(dp0*random.rand(nwalkers*len(dp0)).reshape(nwalkers,len(dp0)))
+p=p0+1e-3*np.array(dp0*random.rand(nwalkers*len(dp0)).reshape(nwalkers,len(dp0)))
 sampler = emcee.EnsembleSampler(nwalkers, len(chi2.pname), lnprob,threads=args.nthreads)
 pos, prob, state = sampler.run_mcmc(p, args.nburn)
 
