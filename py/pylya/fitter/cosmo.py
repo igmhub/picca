@@ -97,7 +97,7 @@ class model:
 
 	def add_cross(self,dic_init):
 
-		self.pcross = ['bias_qso','growth_factor_qso','drp','Lpar_cross','Lper_cross','qso_evol_0','qso_evol_1']
+		self.pcross = ['bias_qso','growth_rate','drp','Lpar_cross','Lper_cross','qso_evol_0','qso_evol_1']
 		self.p0_cross = [ dic_init[el] for el in self.pcross ]
 		self.fix.extend(['qso_evol_0','qso_evol_1'])
 
@@ -133,7 +133,7 @@ class model:
 
 	def add_autoQSO(self,dic_init):
 
-		self.pautoQSO = ['bias_qso','growth_factor_qso','Lpar_autoQSO','Lper_autoQSO','qso_evol_0','qso_evol_1']
+		self.pautoQSO = ['bias_qso','growth_rate','Lpar_autoQSO','Lper_autoQSO','qso_evol_0','qso_evol_1']
 		self.p0_autoQSO = [ dic_init[el] for el in self.pautoQSO ]
 		self.fix.extend(['qso_evol_0','qso_evol_1'])
 
@@ -355,7 +355,7 @@ class model:
 
 		### LYA-QSO cross correlation
 		bias_qso = pars["bias_qso"]
-		beta_qso = pars["growth_factor_qso"]/bias_qso
+		beta_qso = pars["growth_rate"]/bias_qso
 		pk_full  = bias_lya*bias_qso*(1+beta_lya*muk**2)*(1+beta_qso*muk**2)*pk_lin
 
 		### HCDS-QSO cross correlation
@@ -426,7 +426,7 @@ class model:
 
 		### QSO-QSO auto correlation
 		bias_qso = pars["bias_qso"]
-		beta_qso = pars["growth_factor_qso"]/bias_qso
+		beta_qso = pars["growth_rate"]/bias_qso
 		pk_full  = pk_lin*(bias_qso*(1.+beta_qso*muk**2))**2
 
 		### Velocity dispersion

@@ -20,7 +20,7 @@ class parameters:
 			'SigmaNL_perp'      : 0.,
 			'1+f'               : 1.,
 			'bias_qso'          : 3.,
-			'growth_factor_qso' : 0.962524,
+			'growth_rate'       : 0.962524,
 			'drp'               : 0.,
 			'Lpar_cross'        : 4.,
 			'Lper_cross'        : 4.,
