@@ -118,16 +118,16 @@ for i in kw:
     if not kw[i]: continue
     kw[ 'error_'+i[4:] ] = 0.
 
-
 mig = iminuit.Minuit(chi2, throw_nan=True ,forced_parameters=chi2.pname,print_level=dic_init['verbose'],errordef=1,**kw)
 mig.migrad()
 
 p0 = [mig.values[p] for p in chi2.pname]
 dp0 = [mig.errors[p] for p in chi2.pname]
 def lnprob(p):
-    return -0.5*chi2(*p)+flat_priors(p)
+    lnp = -0.5*chi2(*p)+lnpriors(p)
+    return lnp
 
-def flat_priors(p):
+def lnpriors(p):
     if dic_init['limit'] is not None:
         for i in range(0,len(dic_init['limit']),3):
             pname = dic_init['limit'][i]
@@ -136,14 +136,16 @@ def flat_priors(p):
             if p_min=="None":p_min=-np.inf
             p_max = dic_init['limit'][i+2]
             if p_max=="None":p_max=np.inf
+            p_min=float(p_min)
+            p_max=float(p_max)
             if val<p_min or val>p_max:
-                return np.inf
+                return -np.inf
     return 0.
         
     
     
 nwalkers = args.nwalkers
-p=p0+1e-3*np.array(dp0*random.rand(nwalkers*len(dp0)).reshape(nwalkers,len(dp0)))
+p=p0+1e-2*np.array(dp0*random.rand(nwalkers*len(dp0)).reshape(nwalkers,len(dp0)))
 sampler = emcee.EnsembleSampler(nwalkers, len(chi2.pname), lnprob,threads=args.nthreads)
 pos, prob, state = sampler.run_mcmc(p, args.nburn)
 
