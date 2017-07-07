@@ -532,7 +532,7 @@ class Chi2:
 			if not any(i in el for el in list_parameters_minos):
 				list_parameters_minos += [i]
 
-		f=open(param.dic_init['output_prefix']+'minos_save.pars','w')
+		f=open(param.dic_init['output_prefix']+'minos_save.pars_sigma_'+str(param.dic_init['sigma_minos']),'w')
 		for key in minos_keys:
 			f.write(' '+key)
 		f.write('\n')
