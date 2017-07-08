@@ -277,11 +277,12 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 w2 = d2.we
                 l2 = d2.ll
-                rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+                if x_correlation :rp = (r1[:,None]-r2)*sp.cos(ang/2)
+                else : rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
                 rt = (r1[:,None]+r2)*sp.sin(ang/2)
                 w12 = w1[:,None]*w2
 
-                bp = (rp/rp_max*np).astype(int)
+                bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
                 bt = (rt/rt_max*nt).astype(int)
                 if same_half_plate:
                     wp = bp==0
@@ -291,11 +292,12 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 c = sp.bincount(bA[wA],weights=w12[wA])
                 wdm[:len(c)]+=c
 
-                rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
+                if x_correlation : rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
+                else : rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
                 zwe12 = (1+z1_abs1[:,None])**(alpha_met-1)*(1+z2_abs2)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
 
-                bp_abs1_abs2 = (rp_abs1_abs2/rp_max*npm).astype(int)
+                bp_abs1_abs2 = ((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
                 bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
                 wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm)
@@ -313,11 +315,12 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 weff[:len(c)]+=c
 
                 if abs_igm1 != abs_igm2:
-                    rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                    if x_correlation : rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                    else : rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
                     zwe21 = (1+z1_abs2[:,None])**(alpha_met-1)*(1+z2_abs1)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
 
-                    bp_abs2_abs1 = (rp_abs2_abs1/rp_max*npm).astype(int)
+                    bp_abs2_abs1 = ((rp_abs2_abs1-rp_min)/(rp_max-rp_min)*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
                     bBam = bt_abs2_abs1 + ntm*bp_abs2_abs1
                     wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm)
