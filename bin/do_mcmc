@@ -30,7 +30,7 @@ for i in param.dic_init_string:
 for i in param.dic_init_list_string:
     parser.add('--'+i,type=types.StringType,required=False,help=param.help[i],default=param.dic_init_list_string[i],nargs="*")
 
-parser.add_argument('--nwalkers',type=int,required=False,help='number of mcmc walkers', default=50)
+parser.add_argument('--nwalkers',type=int,required=False,help='number of mcmc walkers', default=100)
 parser.add_argument('--nburn',type=int,required=False,help='number of samples to burn', default=10)
 parser.add_argument('--nsamples',type=int,required=False,help='number of samples', default=10)
 parser.add_argument('--nthreads',type=int,required=False,help='number of threads', default=1)
@@ -120,6 +120,7 @@ for i in kw:
 
 mig = iminuit.Minuit(chi2, throw_nan=True ,forced_parameters=chi2.pname,print_level=dic_init['verbose'],errordef=1,**kw)
 mig.migrad()
+chi2.export(mig,param)
 
 p0 = [mig.values[p] for p in chi2.pname]
 dp0 = [mig.errors[p] for p in chi2.pname]
