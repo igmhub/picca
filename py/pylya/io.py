@@ -198,7 +198,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
         ll = h[1]["loglam"][:]
         fl = h[1]["flux"][:]
         iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
-        d = forest(ll,fl,iv, t, r, d, z, p, m, f)
+        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order)
         pix_data.append(d)
         h.close()
     return pix_data
@@ -245,7 +245,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         h.close()
         return pix_data
 
-def read_from_desi(nside,ztable,in_dir):
+def read_from_desi(nside,ztable,in_dir,order):
     fi = glob.glob(in_dir+"/spectra-*.fits")
     data = {}
     ndata=0
@@ -276,7 +276,7 @@ def read_from_desi(nside,ztable,in_dir):
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            d = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0])
+            d = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
             pix = pixs[wt][0]
             if pix not in data:
                 data[pix]=[]
