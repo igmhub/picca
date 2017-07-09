@@ -129,6 +129,7 @@ class Chi2:
 				print pname,pars[pname]
 
 			print "Chi2: ",chi2
+                        sys.stdout.flush() # force dump of stdout
 
 		return chi2
 
