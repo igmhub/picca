@@ -288,8 +288,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     wp = bp==0
                     w12[wp]=0
                 bA = bt + nt*bp
-                wA = (bp<np) & (bt<nt)
-                c = sp.bincount(bA[wA],weights=w12[wA])
+                wA = (bp<np) & (bt<nt) & (bp>0)
+		c = sp.bincount(bA[wA],weights=w12[wA])
                 wdm[:len(c)]+=c
 
                 if x_correlation : rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
@@ -300,7 +300,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 bp_abs1_abs2 = ((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
                 bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
-                wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm)
+                wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm) & (bp_abs1_abs2>0)
                 wAB = wA&wBma
                 c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe12[wAB])
                 dm[:len(c)]+=c
@@ -323,7 +323,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     bp_abs2_abs1 = ((rp_abs2_abs1-rp_min)/(rp_max-rp_min)*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
                     bBam = bt_abs2_abs1 + ntm*bp_abs2_abs1
-                    wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm)
+                    wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm) & (bp_abs2_abs1>0)
                     wAB = wA&wBam
 
                     c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
