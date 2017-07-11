@@ -1,12 +1,12 @@
 import astropy.io.fits as pyfits
 import scipy as sp
-from pylya.fitter.data import data
+from picca.fitter.data import data
 from scipy import stats
 import iminuit
 import types
 import copy
-from pylya.fitter import broadband
-from pylya.fitter import broadband_cross
+from picca.fitter import broadband
+from picca.fitter import broadband_cross
 import sys
 
 

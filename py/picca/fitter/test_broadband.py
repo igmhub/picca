@@ -1,9 +1,9 @@
 
 
-from pylya.fitter import broadband
+from picca.fitter import broadband
 import scipy as sp
 from scipy import random
-from pylya.fitter.utils import L
+from picca.fitter.utils import L
 
 index=sp.arange(2500)
 

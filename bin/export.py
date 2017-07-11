@@ -4,7 +4,7 @@ import fitsio
 import scipy as sp
 
 import argparse
-from pylya.utils import smooth_cov
+from picca.utils import smooth_cov
 
 
 if __name__ == '__main__':

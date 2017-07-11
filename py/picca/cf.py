@@ -6,7 +6,7 @@ from multiprocessing import Pool
 from numba import jit
 from data import forest
 from scipy import random
-from pylya import constants
+from picca import constants
 
 np = None
 nt = None 

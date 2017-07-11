@@ -2,7 +2,7 @@
 import scipy as sp
 from scipy import random
 from scipy import interpolate
-from pylya import constants
+from picca import constants
 
 class dla:
     def __init__(self,data,zabs,nhi):

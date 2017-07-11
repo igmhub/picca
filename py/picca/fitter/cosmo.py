@@ -7,11 +7,11 @@ from scipy import special
 import numpy as np
 from scipy import stats
 
-from pylya.fitter import myGamma
-from pylya.fitter import utils
+from picca.fitter import myGamma
+from picca.fitter import utils
 import fftlog
 
-from pylya.fitter.utils import L
+from picca.fitter.utils import L
 
 class model:
 

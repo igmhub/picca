@@ -8,13 +8,13 @@ import healpy
 import sys
 from scipy import random 
 
-from pylya import constants
-from pylya import xcf
-from pylya.data import delta
-from pylya.data import qso
-from pylya import io
-from pylya.data import forest
-from pylya import prep_del
+from picca import constants
+from picca import xcf
+from picca.data import delta
+from picca.data import qso
+from picca import io
+from picca.data import forest
+from picca import prep_del
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 

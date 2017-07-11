@@ -5,7 +5,7 @@ import glob
 import sys
 import time 
 
-from pylya.data import forest
+from picca.data import forest
 
 def read_dlas(fdla):
     f=open(fdla)

@@ -2,8 +2,8 @@ import scipy as sp
 import fitsio
 import sys
 
-from pylya.fitter import utils
-from pylya.fitter.cosmo import model as cosmo_model
+from picca.fitter import utils
+from picca.fitter.cosmo import model as cosmo_model
 
 
 class model:

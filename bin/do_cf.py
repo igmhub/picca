@@ -9,9 +9,9 @@ import sys
 from scipy import random 
 import copy 
 
-from pylya import constants
-from pylya import cf
-from pylya.data import delta
+from picca import constants
+from picca import cf
+from picca.data import delta
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 

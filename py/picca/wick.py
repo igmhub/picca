@@ -1,5 +1,5 @@
 import scipy as sp
-from pylya import cf
+from picca import cf
 
 v1d = None
 c1d = None

@@ -7,10 +7,10 @@ import scipy as sp
 
 from scipy.interpolate import interp1d
 from multiprocessing import Pool
-from pylya.data import forest
-from pylya.data import delta
-from pylya import prep_del
-from pylya import io
+from picca.data import forest
+from picca.data import delta
+from picca import prep_del
+from picca import io
 
 from math import isnan
 

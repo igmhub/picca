@@ -1,5 +1,5 @@
 
-from pylya.fitter.utils import L
+from picca.fitter.utils import L
 import scipy as sp
 from scipy import linalg
 import sys

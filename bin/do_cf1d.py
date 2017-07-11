@@ -9,10 +9,10 @@ import sys
 from scipy import random 
 import traceback
 
-from pylya import constants
-from pylya import cf
-from pylya.data import delta
-from pylya.data import forest
+from picca import constants
+from picca import cf
+from picca.data import delta
+from picca.data import forest
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 

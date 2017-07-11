@@ -1,6 +1,6 @@
 import scipy as sp
 from astropy.io import fits
-from pylya import constants
+from picca import constants
 import iminuit
 from dla import dla
 
