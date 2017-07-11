@@ -14,6 +14,11 @@ requirements:
 
 ## Installation
 
+download
+```
+git clone https://github.com/igmhub/picca.git
+```
+
 run
 ```
 python setup.py install --user
