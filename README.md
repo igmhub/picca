@@ -1,5 +1,8 @@
 
-Python code for BAO analysis
+#picca
+
+Package for Igm Cosmological-Correlations Analyses
+
 
 requirements:
 * python 2.7
