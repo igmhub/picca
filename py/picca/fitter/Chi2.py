@@ -119,7 +119,8 @@ class Chi2:
 				par_mean = float(dic_init['gaussian_prior'][i*3+1])
 				par_sigma = float(dic_init['gaussian_prior'][i*3+2])
 
-				print "adding prior ",par_name,par_mean,par_sigma
+				if (self.verbose):
+					print "adding prior ",par_name,par_mean,par_sigma
 
 				chi2+=(pars[par_name]-par_mean)**2/par_sigma**2
 
@@ -211,7 +212,7 @@ class Chi2:
 		### File to save into
 		output_name = dic_init['output_prefix']
 		output_name += "save.pars.fastMonteCarlo"
-		f = open(output_name,"w")
+		f = open(output_name,"w",0)
 		f.write("#\n#seed = {}\n#\n".format(seed_fMC))
 		for p in mig.parameters:
 		    f.write("{} ".format(p))
@@ -288,7 +289,7 @@ class Chi2:
 		for i in range(nb_param):
 			output_name += "."+dic_init['chi2Scan'][i*4]
 		output_name += ".scan.dat"
-		f = open(output_name,"w")
+		f = open(output_name,"w",0)
 		for p in mig.parameters:
 		    f.write("{} ".format(p))
 		f.write("chi2\n")

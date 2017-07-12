@@ -1,5 +1,8 @@
 
-Python code for BAO analysis
+# picca
+
+Package for Igm Cosmological-Correlations Analyses
+
 
 requirements:
 * python 2.7
@@ -10,6 +13,11 @@ requirements:
 * multiprocessing
 
 ## Installation
+
+download
+```
+git clone https://github.com/igmhub/picca.git
+```
 
 run
 ```
