@@ -34,7 +34,7 @@ class cosmo:
         self.hubble = interpolate.interp1d(z,hubble)
         self.r_2_z = interpolate.interp1d(chi,z)
 
-### Absorber names and wavelengths
+### Absorber names and wavelengths [Angstrom]
 absorber_IGM = {
     'MgI(2853)'   : 2852.96,
     'MgII(2804)'  : 2803.5324,
