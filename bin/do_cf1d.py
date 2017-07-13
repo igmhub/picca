@@ -58,7 +58,7 @@ if __name__ == '__main__':
     parser.add_argument('--ll-max', type=float,default=5500., required=False,
                     help = 'maximum loglam')
 
-    parser.add_argument('--dll', type=float,default=3e-4, required=False,
+    parser.add_argument('--dll', type=float,default=3.e-4, required=False,
                     help = 'loglam bin size')
 
     args = parser.parse_args()
