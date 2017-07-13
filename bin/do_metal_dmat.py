@@ -35,10 +35,10 @@ if __name__ == '__main__':
                         help = 'data directory #2')
 
     parser.add_argument('--rp-max', type = float, default = 200., required=False,
-                        help = 'max rp')
+                        help = 'max rp [h^-1 Mpc]')
 
     parser.add_argument('--rt-max', type = float, default = 200., required=False,
-                        help = 'max rt')
+                        help = 'max rt [h^-1 Mpc]')
 
     parser.add_argument('--np', type = int, default = 50, required=False,
                         help = 'number of r-parallel bins')
@@ -47,10 +47,10 @@ if __name__ == '__main__':
                         help = 'number of r-transverse bins')
 
     parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption')
+                        help = 'wavelength of absorption [Angstrom]')
 
     parser.add_argument('--lambda-abs2', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption #2')
+                        help = 'wavelength of absorption #2 [Angstrom]')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')

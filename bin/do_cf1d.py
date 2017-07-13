@@ -52,11 +52,11 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
-    parser.add_argument('--ll-min', type=float,default=3600., required=False,
-                    help = 'minumin loglam')
+    parser.add_argument('--lambda-min',type = float,default=3600.,required=False,
+            help='lower limit on observed wavelength [Angstrom]')
 
-    parser.add_argument('--ll-max', type=float,default=5500., required=False,
-                    help = 'maximum loglam')
+    parser.add_argument('--lambda-max',type = float,default=5500.,required=False,
+            help='upper limit on observed wavelength [Angstrom]')
 
     parser.add_argument('--dll', type=float,default=3.e-4, required=False,
                     help = 'loglam bin size')
@@ -66,8 +66,8 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()/2
 
-    forest.lmax = sp.log10(args.ll_max)
-    forest.lmin = sp.log10(args.ll_min)
+    forest.lmax = sp.log10(args.lambda_min)
+    forest.lmin = sp.log10(args.lambda_max)
     forest.dll = args.dll
     n1d = int((forest.lmax-forest.lmin)/forest.dll+1)
     cf.n1d = n1d
