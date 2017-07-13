@@ -31,10 +31,10 @@ if __name__ == '__main__':
     parser.add_argument('--in-dir', type = str, default = None, required=True,
                         help = 'data directory')
 
-    parser.add_argument('--rp-max', type = float, default = 200, required=False,
+    parser.add_argument('--rp-max', type = float, default = 200., required=False,
                         help = 'max rp')
 
-    parser.add_argument('--rt-max', type = float, default = 200, required=False,
+    parser.add_argument('--rt-max', type = float, default = 200., required=False,
                         help = 'max rt')
 
     parser.add_argument('--np', type = int, default = 50, required=False,
@@ -130,11 +130,11 @@ if __name__ == '__main__':
                 data[p]=[]
             data[p].append(d)
 
-            z = 10**d.ll/args.lambda_abs-1
+            z = 10**d.ll/args.lambda_abs-1.
             z_min_pix = sp.amin( sp.append([z_min_pix],z) )
             d.r_comov = cosmo.r_comoving(z)
             if not args.old_deltas:
-                d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+                d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
             if not args.no_project:
                 d.project()
         if not args.nspec is None:

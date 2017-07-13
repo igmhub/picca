@@ -34,10 +34,10 @@ if __name__ == '__main__':
     parser.add_argument('--in-dir2', type = str, default = None, required=False,
                         help = 'data directory #2')
 
-    parser.add_argument('--rp-max', type = float, default = 200, required=False,
+    parser.add_argument('--rp-max', type = float, default = 200., required=False,
                         help = 'max rp')
 
-    parser.add_argument('--rt-max', type = float, default = 200, required=False,
+    parser.add_argument('--rt-max', type = float, default = 200., required=False,
                         help = 'max rt')
 
     parser.add_argument('--np', type = int, default = 50, required=False,
@@ -145,37 +145,37 @@ if __name__ == '__main__':
         dels2  = copy.deepcopy(dels)
 
 
-    z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1
+    z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1.
     phi = [d.ra for d in dels]
-    th = [sp.pi/2-d.dec for d in dels]
+    th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(cf.nside,th,phi)
     for d,p in zip(dels,pix):
         if not p in data:
             data[p]=[]
         data[p].append(d)
 
-        z = 10**d.ll/args.lambda_abs-1
+        z = 10**d.ll/args.lambda_abs-1.
         z_min_pix = sp.amin( sp.append([z_min_pix],z) )
         d.z = z
         d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
      
     if x_correlation: 
-        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1
+        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
         z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
         phi2 = [d.ra for d in dels2]
-        th2 = [sp.pi/2-d.dec for d in dels2]
+        th2 = [sp.pi/2.-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
         for d,p in zip(dels2,pix2):
             if not p in data2:
                 data2[p]=[]
             data2[p].append(d)
 
-            z = 10**d.ll/args.lambda_abs2-1
+            z = 10**d.ll/args.lambda_abs2-1.
             z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
         print 'ndata2 = ',ndata2
         cf.data2 = data2
         cf.ndata2 = ndata2
