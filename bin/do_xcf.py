@@ -129,7 +129,7 @@ if __name__ == '__main__':
             bin_size_ll = sp.amin( sp.append([bin_size_ll],[d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)])  )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1.+z)/(1.+args.z_ref))**(args.z_evol_del-1)
+            d.we *= ((1.+z)/(1.+args.z_ref))**(args.z_evol_del-1.)
             if not args.no_project:
                 d.project()
         if not args.nspec is None:
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     pix = healpy.ang2pix(xcf.nside,th,phi)
     print("reading qsos")
 
-    if (ra.size!=0.):
+    if (ra.size!=0):
         xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
     else:
         xcf.angmax = 0.
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     xcf.objs = objs
 
     ### Remove pixels if too far from objects
-    if ( ra.size!=0. and ( (z_min_pix<sp.amin(zqso)) or (sp.amax(zqso)<z_max_pix)) ):
+    if ( ra.size!=0 and ( (z_min_pix<sp.amin(zqso)) or (sp.amax(zqso)<z_max_pix)) ):
 
         d_min_pix_cut = max(0.,cosmo.r_comoving(sp.amin(zqso))+xcf.rp_min)
         z_min_pix_cut = cosmo.r_2_z(d_min_pix_cut)
