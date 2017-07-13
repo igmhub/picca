@@ -159,7 +159,7 @@ class Chi2:
 					mig.values[key] = val
 					kw[key] = val
 		except Exception,error:
-			print '  ERROR::pyLyA/fit/py/Chi2.py:: error in fast Monte-Carlo = ', error
+			print '  ERROR::picca/py/picca/fitter/Chi2.py:: error in fast Monte-Carlo = ', error
 			print '  Exit'
 			sys.exit(0)
 
