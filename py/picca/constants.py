@@ -3,33 +3,40 @@ from scipy import interpolate
 
 deg = sp.pi/180.
 
-boss_lambda_min = 3600.
+boss_lambda_min = 3600. ## Angstrom
 
+speed_light = 299792458. ## m/s
 
 class cosmo:
 
     def __init__(self,Om,Ok=0):
+
+        ### ignore Orad and neutrinos
+        c = speed_light/1000. ## km/s
         H0 = 100. ## km/s/Mpc
-        ## ignore Orad and neutrinos
-        nbins=10000
-        zmax=10.
-        dz = zmax/nbins
+        Or = 0.
+        Ol = 1.-Ok-Om-Or
+
+        nbins = 10000
+        zmax  = 10.
+        dz    = zmax/nbins
         z=sp.array(range(nbins))*dz
-        hubble = H0*sp.sqrt(Om*(1+z)**3+Ok*(1+z)**2+1-Ok-Om)
-        c = 299792.458
+        hubble = H0*sp.sqrt( Ol + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
 
         chi=sp.zeros(nbins)
         for i in range(1,nbins):
-            chi[i]=chi[i-1]+c*(1./hubble[i-1]+1/hubble[i])/2.*dz
+            chi[i]=chi[i-1]+c*(1./hubble[i-1]+1./hubble[i])/2.*dz
 
         self.r_comoving = interpolate.interp1d(z,chi)
 
         ## da here is the comoving angular diameter distance
-        da = chi
-        if Ok<0:
+        if Ok==0.:
+            da = chi
+        elif Ok<0.:
             da = sp.sin(H0*sp.sqrt(-Ok)/c*chi)/(H0*sp.sqrt(-Ok)/c)
-        if Ok>0:
+        elif Ok>0.:
             da = sp.sinh(H0*sp.sqrt(Ok)/c*chi)/(H0*sp.sqrt(Ok)/c)
+
         self.da = interpolate.interp1d(z,da)
         self.hubble = interpolate.interp1d(z,hubble)
         self.r_2_z = interpolate.interp1d(chi,z)
