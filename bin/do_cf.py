@@ -138,6 +138,7 @@ if __name__ == '__main__':
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
     cf.x_correlation = x_correlation 
+    if x_correlation: print "doing cross-correlation"
 
     z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1
     phi = [d.ra for d in dels]

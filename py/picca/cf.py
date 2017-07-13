@@ -178,7 +178,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     slw1 = (w1*dl1**2).sum()
     slw2 = (w2*dl2**2).sum()
 
-    w = (rp<rp_max) & (rt<rt_max) & (rp>0)
+    w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
 
     bins = bins[w]
 
