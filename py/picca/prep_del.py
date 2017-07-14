@@ -14,7 +14,7 @@ def mc(data):
         for d in data[p]:
             bins=((d.ll-forest.lmin_rest-sp.log10(1+d.zqso))/(forest.lmax_rest-forest.lmin_rest)*nmc).astype(int)
             var_lss = forest.var_lss(d.ll)
-            we = d.iv/var_lss*d.co**2/(d.iv + d.co**2/var_lss)
+            we = d.iv*d.co**2/(var_lss*d.iv*d.co**2 + 1)
             c = sp.bincount(bins,weights=d.fl/d.co*we)
             mcont[:len(c)]+=c
             c = sp.bincount(bins,weights=we)
