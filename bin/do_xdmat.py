@@ -84,9 +84,6 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
-    parser.add_argument('--no-project', action="store_true", required=False,
-                    help = 'do not project out continuum fitting modes')
-
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -130,8 +127,6 @@ if __name__ == '__main__':
             z_max_pix = sp.amax( sp.append([z_max_pix],z) )
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1.+z)/(1.+args.z_ref))**(xcf.alpha-1.)
-            if not args.no_project:
-                d.project()
         if not args.nspec is None:
             if ndels>args.nspec:break
     sys.stderr.write("\n")
