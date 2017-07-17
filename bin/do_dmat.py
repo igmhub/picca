@@ -41,10 +41,10 @@ if __name__ == '__main__':
     parser.add_argument('--rp-max', type = float, default = 200., required=False,
                         help = 'max rp [h^-1 Mpc]')
 
-    parser.add_argument('--rp-min', type = float, default = 0, required=False,
-                        help = 'min rp, can be negative')
+    parser.add_argument('--rp-min', type = float, default = 0., required=False,
+                        help = 'min rp [h^-1 Mpc], can be negative')
 
-    parser.add_argument('--rt-max', type = float, default = 200, required=False,
+    parser.add_argument('--rt-max', type = float, default = 200., required=False,
                         help = 'max rt')
 
     parser.add_argument('--np', type = int, default = 50, required=False,
