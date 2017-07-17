@@ -37,14 +37,14 @@ if __name__ == '__main__':
     parser.add_argument('--drq', type = str, default = None, required=True,
                         help = 'drq')
 
-    parser.add_argument('--rp-max', type = float, default = 200, required=False,
-                        help = 'max rp')
+    parser.add_argument('--rp-max', type = float, default = 200., required=False,
+                        help = 'max rp [h^-1 Mpc]')
 
-    parser.add_argument('--rp-min', type = float, default = -200, required=False,
-                        help = 'max rp')
+    parser.add_argument('--rp-min', type = float, default = -200., required=False,
+                        help = 'min rp [h^-1 Mpc]')
 
-    parser.add_argument('--rt-max', type = float, default = 200, required=False,
-                        help = 'max rt')
+    parser.add_argument('--rt-max', type = float, default = 200., required=False,
+                        help = 'max rt [h^-1 Mpc]')
 
     parser.add_argument('--np', type = int, default = 100, required=False,
                         help = 'number of r-parallel bins')
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                         help = 'number of r-transverse bins')
 
     parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM["LYA"], required=False,
-                        help = 'wavelength of absorption')
+                        help = 'wavelength of absorption [Angstrom]')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -123,13 +123,13 @@ if __name__ == '__main__':
                 dels[p]=[]
             dels[p].append(d)
 
-            z = 10**d.ll/args.lambda_abs-1
+            z = 10**d.ll/args.lambda_abs-1.
             z_min_pix = sp.amin( sp.append([z_min_pix],z) )
             z_max_pix = sp.amax( sp.append([z_max_pix],z) )
             bin_size_ll = sp.amin( sp.append([bin_size_ll],[d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)])  )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1+z)/(1+args.z_ref))**(args.z_evol_del-1)
+            d.we *= ((1.+z)/(1.+args.z_ref))**(args.z_evol_del-1.)
             if not args.no_project:
                 d.project()
         if not args.nspec is None:
@@ -167,7 +167,7 @@ if __name__ == '__main__':
     objs = {}
     ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,args.z_min_obj,args.z_max_obj,keep_bal=True)
     phi = ra
-    th = sp.pi/2-dec
+    th = sp.pi/2.-dec
     pix = healpy.ang2pix(xcf.nside,th,phi)
     print("reading qsos")
 
@@ -182,7 +182,7 @@ if __name__ == '__main__':
         w=pix==ipix
         objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
         for q in objs[ipix]:
-            q.we = ((1+q.zqso)/(1+args.z_ref))**(args.z_evol_obj-1)
+            q.we = ((1.+q.zqso)/(1.+args.z_ref))**(args.z_evol_obj-1.)
             q.r_comov = cosmo.r_comoving(q.zqso)
 
     sys.stderr.write("\n")

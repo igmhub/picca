@@ -4,14 +4,14 @@ try:
 except ImportError:
     from distutils.core import setup
 
-description = "Python code for LyA BAO analysis"
+description = "Package for Igm Cosmological-Correlations Analyses"
 
-setup(name="pyLyA", 
+setup(name="picca",
       version="0.9",
       description=description,
-      url="https://github.com/igmhub/pyLyA",
+      url="https://github.com/igmhub/picca",
       author="Nicolas Busca et al",
       author_email="ngbusca@apc.in2p3.fr",
-      packages=['pylya'],
+      packages=['picca'],
       package_dir = {'': 'py'},
       install_requires=['iminuit','fitsio','healpy','numba'])

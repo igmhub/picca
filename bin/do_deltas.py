@@ -53,16 +53,16 @@ if __name__ == '__main__':
             help='log input data')
 
     parser.add_argument('--lambda-min',type = float,default=3600.,required=False,
-            help='lower limit on observed wavelength (angstrom)')
+            help='lower limit on observed wavelength [Angstrom]')
 
     parser.add_argument('--lambda-max',type = float,default=5500.,required=False,
-            help='upper limit on observed wavelength (angstrom)')
+            help='upper limit on observed wavelength [Angstrom]')
 
     parser.add_argument('--lambda-rest-min',type = float,default=1040.,required=False,
-            help='lower limit on rest frame wavelength (angstrom')
+            help='lower limit on rest frame wavelength [Angstrom]')
 
     parser.add_argument('--lambda-rest-max',type = float,default=1200.,required=False,
-            help='upper limit on rest frame wavelength (anstrom)')
+            help='upper limit on rest frame wavelength [Angstrom]')
 
     parser.add_argument('--rebin',type = int,default=3,required=False,
             help='rebin wavelength grid by combining this number of adjacent pixels (ivar weight)')
@@ -89,7 +89,7 @@ if __name__ == '__main__':
                     help = 'number of processors')
 
     parser.add_argument('--mask-file',type = str,default=None,required=False,
-            help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max  (OBS or RF)')
+            help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
     parser.add_argument('--flux-calib',type = str,default=None,required=False,
             help='Path to file to previously produced do_delta.py file to correct for multiplicative errors in the flux calibration')

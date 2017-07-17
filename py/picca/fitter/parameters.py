@@ -188,12 +188,12 @@ class parameters:
 					dic_unknown[unknown[i][2:]] = float(unknown[i+1])
 					i += 2
 				else:
-					print '  pyLyA::py::parameters.py:: unknown entry = ', unknown[i]
+					print '  picca/py/picca/fitter/parameters.py:: unknown entry = ', unknown[i]
 					print '  Exit'
 					sys.exit(0)
 					i += 1
 			except:
-				print '  pyLyA::py::parameters.py:: unknown entry = ', unknown[i]
+				print '  picca/py/picca/fitter/parameters.py:: unknown entry = ', unknown[i]
 				print '  Exit'
 				sys.exit(0)
 				i += 1
@@ -209,7 +209,7 @@ class parameters:
 
 		if self.dic_init['metals'] is None:
 			if (len(dic_unknown)!=0):
-				print '  pyLyA::py::parameters.py:: entries not metal = ', dic_unknown
+				print '  picca/py/picca/fitter/parameters.py:: entries not metal = ', dic_unknown
 				print '  Exit'
 				sys.exit(0)
 			return
@@ -222,7 +222,7 @@ class parameters:
 					if (par+'_'+met == i):
 						is_a_metal = True
 			if not is_a_metal:
-				print '  pyLyA::py::parameters.py:: entry not metal = ', i
+				print '  picca/py/picca/fitter/parameters.py:: entry not metal = ', i
 				print '  Exit'
 				sys.exit(0)
 
@@ -243,12 +243,12 @@ class parameters:
 	def test_init_is_valid(self):
 
 		if self.dic_init['model'] is None:
-			print '  pyLyA::py::parameters.py::  No model file.'
+			print '  picca/py/picca/fitter/parameters.py::  No model file.'
 			print '  Exit'
 			sys.exit(0)
 
 		if self.dic_init['data_auto'] is None and self.dic_init['data_cross'] is None and self.dic_init['data_autoQSO'] is None:
-			print '  pyLyA::py::parameters.py::  No data file.'
+			print '  picca/py/picca/fitter/parameters.py::  No data file.'
 			print '  Exit'
 			sys.exit(0)
 
@@ -258,7 +258,7 @@ class parameters:
 			command = 'rm '+path_to_save
 			subprocess.call(command, shell=True)
 		except:
-			print '  pyLyA::py::parameters.py::  Impossible to save in : ', self.dic_init['output_prefix']
+			print '  picca/py/picca/fitter/parameters.py::  Impossible to save in : ', self.dic_init['output_prefix']
 			print '  Exit'
 			sys.exit(0)
 

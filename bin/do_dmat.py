@@ -38,8 +38,8 @@ if __name__ == '__main__':
     parser.add_argument('--in-dir2', type = str, default = None, required=False,
                         help = 'second delta directory')
 
-    parser.add_argument('--rp-max', type = float, default = 200, required=False,
-                        help = 'max rp')
+    parser.add_argument('--rp-max', type = float, default = 200., required=False,
+                        help = 'max rp [h^-1 Mpc]')
 
     parser.add_argument('--rp-min', type = float, default = 0, required=False,
                         help = 'min rp, can be negative')
@@ -54,10 +54,10 @@ if __name__ == '__main__':
                         help = 'number of r-transverse bins')
 
     parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption')
+                        help = 'wavelength of absorption [Angstrom]')
 
     parser.add_argument('--lambda-abs2', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                       help = 'wavelength of absorption in forest 2')
+                       help = 'wavelength of absorption in forest 2 [Angstrom]')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -146,26 +146,26 @@ if __name__ == '__main__':
     cf.x_correlation = x_correlation 
     z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1
     phi = [d.ra for d in dels]
-    th = [sp.pi/2-d.dec for d in dels]
+    th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(cf.nside,th,phi)
     for d,p in zip(dels,pix):
         if not p in data:
             data[p]=[]
         data[p].append(d)
 
-        z = 10**d.ll/args.lambda_abs-1
+        z = 10**d.ll/args.lambda_abs-1.
         z_min_pix = sp.amin( sp.append([z_min_pix],z) )
         d.z = z
         d.r_comov = cosmo.r_comoving(z)
-        d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+        d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
         if not args.no_project:
             d.project()
     
     if x_correlation: 
-        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1
+        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
         z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
         phi2 = [d.ra for d in dels2]
-        th2 = [sp.pi/2-d.dec for d in dels2]
+        th2 = [sp.pi/2.-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
 
         for d,p in zip(dels2,pix2):
@@ -173,11 +173,11 @@ if __name__ == '__main__':
                 data2[p]=[]
             data2[p].append(d)
 
-            z = 10**d.ll/args.lambda_abs2-1
+            z = 10**d.ll/args.lambda_abs2-1.
             z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
+            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
             if not args.no_project:
                 d.project()
 

@@ -25,7 +25,7 @@ python setup.py install --user
 ```
 (assuming you run as user; for a system-wide install omit `--user` option).
 
-Alternatively, you can just add `pyLyA/py/` to your `PYTHONPATH`. 
+Alternatively, you can just add `picca/py/` to your `PYTHONPATH`.
 
 ## Examples
 
@@ -68,6 +68,6 @@ python bin/do_cf1d.py --in-dir deltas/ --out cf1d.fits.gz
 python bin/do_wick.py --in-dir deltas/ --out t123.fits.gz --rej 0.999 --cf1d cf1d.fits.gz
 
 
-## use the export script to export to pyLyA fitter format
+## use the export script to export to picca fitter format
 python bin/export --data cf.fits.gz --dmat dmat.fits.gz --out cf-exp.out.gz
 ```
