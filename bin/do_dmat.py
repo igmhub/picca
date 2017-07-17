@@ -45,7 +45,7 @@ if __name__ == '__main__':
                         help = 'min rp [h^-1 Mpc], can be negative')
 
     parser.add_argument('--rt-max', type = float, default = 200., required=False,
-                        help = 'max rt')
+                        help = 'max rt [h^-1 Mpc]')
 
     parser.add_argument('--np', type = int, default = 50, required=False,
                         help = 'number of r-parallel bins')
