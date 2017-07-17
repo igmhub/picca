@@ -112,7 +112,8 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
     if same_half_plate:
-        w = bp == 0
+        if x_correlation : w = bp == np/2
+        else : w = bp == 0
         wd12[w] = 0
         w12[w]=0
 
@@ -190,7 +191,8 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     we = w1[:,None]*w2
     we = we[w]
     if same_half_plate:
-        wsame = bp[w]==0
+	if x_correlation : wsame = bp[w]==np/2
+	else : wsame = bp[w]==0
         we[wsame]=0
 
     c = sp.bincount(bins,weights=we)
