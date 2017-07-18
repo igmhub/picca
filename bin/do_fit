@@ -38,6 +38,7 @@ met=None
 if not dic_init['metals'] is None:
 	met=metals.model(dic_init)
         met.templates = not dic_init['metal_dmat']
+        met.grid = not dic_init['metal_xdmat']
 	if not dic_init['data_auto'] is None:met.add_auto()
 	if not dic_init['data_cross'] is None:met.add_cross(dic_init)
 
@@ -124,11 +125,13 @@ for i in kw:
 mig = iminuit.Minuit(chi2, throw_nan=True ,forced_parameters=chi2.pname,print_level=dic_init['verbose'],errordef=1,**kw)
 mig.tol = dic_init['migrad_tol']
 if not dic_init['debug']:
-        try:
+        #try:
+        if True:
 		mig.migrad()
                 if not dic_init['no_hesse']:
 		    mig.hesse()
-	except Exception,error:
+	#except Exception,error:
+        else:
 		print
 		print '  fit/bin/fit:: error in minimization = ', error
 		print '  Exit'
