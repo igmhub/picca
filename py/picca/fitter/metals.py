@@ -277,6 +277,8 @@ class model:
                     if recalc:
                         print "recalculating ",met1,met2
                         r = sp.sqrt(rt**2+rp**2)
+                        w=r==0
+                        r[w]=1e-6
                         mur = rp/r
                         pk  = (1+beta_met1*muk**2)*(1+beta_met2*muk**2)*self.pk
                         pk *= Gpar*Gper
