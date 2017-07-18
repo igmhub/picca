@@ -200,15 +200,18 @@ if __name__ == '__main__':
                 for d in data[p]:
                     d.mask(mask_obs=usr_mask_obs , mask_RF=usr_mask_RF)
 
-
+    ### Correct for DLAs
     if not args.dla_vac is None:
         print("adding dlas")
         dlas = io.read_dlas(args.dla_vac)
+        nb_dla_in_forest = 0
         for p in data:
             for d in data[p]:
                 if dlas.has_key(d.thid):
                     for dla in dlas[d.thid]:
                         d.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
+                        nb_dla_in_forest += 1
+        log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## cuts
     for p in data.keys():

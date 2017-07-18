@@ -23,6 +23,8 @@ def read_dlas(fdla):
         nhi = float(l[10])
         dlas[thid].append((zabs,nhi))
 
+    print(" found {} DLAs in catalog".format(len(dlas)) )
+
     return dlas
 
 def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
