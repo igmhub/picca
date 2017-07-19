@@ -16,8 +16,9 @@ requirements:
 
 download
 ```
-git clone https://github.com/igmhub/picca.git
+git clone https://<username>@github.com/igmhub/picca
 ```
+
 
 run
 ```
