@@ -111,7 +111,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     if mode == "pix":
         try:
             fin = in_dir + "/master.fits.gz"
-	    h = fitsio.FITS(fin)
+            h = fitsio.FITS(fin)
         except IOError:
             try:
                 fin = in_dir + "/master.fits"
@@ -181,7 +181,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
         if not nspec is None:
             if ndata > nspec:break
-	
+
     return data,ndata
 
 def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
@@ -213,7 +213,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
 def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         try:
             fin = in_dir + "/pix_{}.fits.gz".format(pix)
-	    h = fitsio.FITS(fin)
+            h = fitsio.FITS(fin)
         except IOError:
             try:
                 fin = in_dir + "/pix_{}.fits".format(pix)
