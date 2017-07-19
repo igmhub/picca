@@ -10,6 +10,7 @@ from picca.data import forest
 def read_dlas(fdla):
     f=open(fdla)
     dlas={}
+    nb_dla = 0
     for l in f:
         l = l.split()
         if len(l)==0:continue
@@ -18,10 +19,16 @@ def read_dlas(fdla):
         if l[0][0]=="-":continue
         thid = int(l[0])
         if not dlas.has_key(thid):
-            dlas[int(l[0])]=[]
+            dlas[thid]=[]
         zabs = float(l[9])
         nhi = float(l[10])
         dlas[thid].append((zabs,nhi))
+        nb_dla += 1
+
+    print("")
+    print(" In catalog: {} DLAs".format(nb_dla) )
+    print(" In catalog: {} forests have a DLA".format(len(dlas)) )
+    print("")
 
     return dlas
 
