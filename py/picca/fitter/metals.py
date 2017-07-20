@@ -191,6 +191,12 @@ class model:
             kt = k*sp.sqrt(1-muk**2)
             nbins = self.dmat["LYA_"+self.met_names[0]].shape[0]
 
+            irt = sp.arange(nbins,dtype=int)%50
+            irp = (sp.arange(nbins,dtype=int)-irt)/50
+            rti = 2+4.*irt
+	    if nbins==2500: rpi = 2+4.*irp
+	    elif nbins == 5000 : rpi = 2+4.*irp - 198.
+
             if self.hcds_mets:
                 bias_lls = pars["bias_lls"]
                 beta_lls = pars["beta_lls"]
@@ -219,6 +225,8 @@ class model:
                 rp = self.auto_rp["LYA_"+met]
                 zeff  = self.auto_zeff["LYA_"+met]
                 r = sp.sqrt(rt**2+rp**2)
+	        w= r==0
+		r[w] = sp.sqrt(rti[w]**2+rpi[w]**2)
                 mur = rp/r
                 
                 if recalc:
@@ -251,6 +259,11 @@ class model:
                 for met2 in self.met_names[i:]:
                     rt = self.auto_rt[met1+"_"+met2]
                     rp = self.auto_rp[met1+"_"+met2]
+		    r = sp.sqrt(rp**2+rt**2)
+                    w= r==0
+                    r[w] = sp.sqrt(rti[w]**2+rpi[w]**2)
+
+		    mur = rp/r
                     zeff  = self.auto_zeff[met1+"_"+met2]
                     bias_met2 = pars['bias_'+met2]
                     beta_met2 = pars['beta_'+met2]
