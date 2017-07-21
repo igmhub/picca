@@ -24,14 +24,14 @@ data = r*0
 
 for i in ir:
     for l in ell:
-	data += (r0/r)**i*L(mu,l)
+        data += (r0/r)**i*L(mu,l)
 
 noise = random.normal(size=len(data))*0.01
 data += noise
 
 class d:
-	def __init__(self):
-		return
+    def __init__(self):
+        return
 
 da = d()
 cuts = (r>10) & (r<180)

@@ -12,6 +12,7 @@ from picca.data import qso
 def read_dlas(fdla):
     f=open(fdla)
     dlas={}
+    nb_dla = 0
     for l in f:
         l = l.split()
         if len(l)==0:continue
@@ -20,10 +21,16 @@ def read_dlas(fdla):
         if l[0][0]=="-":continue
         thid = int(l[0])
         if not dlas.has_key(thid):
-            dlas[int(l[0])]=[]
+            dlas[thid]=[]
         zabs = float(l[9])
         nhi = float(l[10])
         dlas[thid].append((zabs,nhi))
+        nb_dla += 1
+
+    print("")
+    print(" In catalog: {} DLAs".format(nb_dla) )
+    print(" In catalog: {} forests have a DLA".format(len(dlas)) )
+    print("")
 
     return dlas
 
@@ -106,7 +113,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     if mode == "pix":
         try:
             fin = in_dir + "/master.fits.gz"
-	    h = fitsio.FITS(fin)
+            h = fitsio.FITS(fin)
         except IOError:
             try:
                 fin = in_dir + "/master.fits"
@@ -176,7 +183,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
         if not nspec is None:
             if ndata > nspec:break
-	
+
     return data,ndata
 
 def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
@@ -208,7 +215,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
 def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         try:
             fin = in_dir + "/pix_{}.fits.gz".format(pix)
-	    h = fitsio.FITS(fin)
+            h = fitsio.FITS(fin)
         except IOError:
             try:
                 fin = in_dir + "/pix_{}.fits".format(pix)

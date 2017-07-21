@@ -17,6 +17,7 @@ class model:
         self.pinit = []
         self.fix = []
         self.hcds_mets = dic_init['hcds_mets']
+        self.verbose = dic_init['verbose']
 
         self.templates = True
 
@@ -128,6 +129,9 @@ class model:
 
         self.different_drp = dic_init['different_drp']
         if (self.different_drp):
+            if not self.grid:
+                print "different drp and metal matrix not implemented"
+                sys.exit(1)
             for name in self.met_names:
                 self.pname.append("drp_"+name)
                 self.pinit.append(dic_init["drp_"+name])
@@ -161,11 +165,17 @@ class model:
             self.xrp = {}
             self.xrt = {}
             self.xzeff = {}
+            self.prev_pmet = {'growth_rate':0.,'drp':0.,'qso_evol':[0.,0.]}
+            self.prev_xi_qso_met = {}
             for i in self.abs_igm_cross:
                 self.xdmat[i] = h[2]["DM_"+i][:]
                 self.xrp[i] = h[2]["RP_"+i][:] 
                 self.xrt[i] = h[2]["RT_"+i][:] 
                 self.xzeff[i] = h[2]["Z_"+i][:] 
+
+                self.prev_pmet['beta_'+i]=0.
+                self.prev_pmet['alpha_'+i]=0.
+                self.prev_xi_qso_met[i] = sp.zeros(self.xdmat[i].shape[0])
 
     def valueAuto(self,pars):
 
@@ -237,7 +247,8 @@ class model:
                 mur = rp/r
                 
                 if recalc:
-                    print "recalculating ",met
+                    if self.verbose:
+                        print "recalculating ",met
                     pk  = (1+beta_lya*muk**2)*(1+beta_met*muk**2)*self.pk
                     pk *= Gpar*Gper
                     xi = cosmo_model.Pk2Xi(r,mur,self.k,pk,ell_max=self.ell_max)
@@ -275,7 +286,8 @@ class model:
                             or beta_met2 != self.prev_pmet["beta_"+met2]
                     
                     if recalc:
-                        print "recalculating ",met1,met2
+                        if self.verbose:
+                            print "recalculating ",met1,met2
                         r = sp.sqrt(rt**2+rp**2)
                         w=r==0
                         r[w]=1e-6
@@ -346,21 +358,37 @@ class model:
             nbins = self.xdmat.values()[0].shape[0]
             xi_qso_met = sp.zeros(nbins)
             for i in self.met_names:
-                z = self.xzeff[i]
-                evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
-                evol *= self.evolution_Lya_bias(z,[pars["alpha_"+i]])/self.evolution_Lya_bias(self.zref,[pars["alpha_"+i]])
-                evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
-                rp = self.xrp[i] + drp
-                rt = self.xrt[i]
-                r = sp.sqrt(rp**2+rt**2)
-                w=r==0
-                r[w]=1e-6
-                mur = rp/r
                 bias_met = pars["bias_"+i]
                 beta_met = pars["beta_"+i]
-                pk_full  = bias_qso*bias_met*(1. + beta_met*muk**2)*(1. + beta_qso*muk**2)*pk_corr
-                xi  = cosmo_model.Pk2Xi(r,mur,self.k,pk_full,ell_max=self.ell_max)*evol
-                xi_qso_met += self.xdmat[i].dot(xi)
+
+                recalc = beta_met != self.prev_pmet['beta_'+i] or\
+                    growth_rate != self.prev_pmet['growth_rate'] or\
+                    not sp.allclose(qso_evol,self.prev_pmet['qso_evol']) or\
+                    self.prev_pmet['drp'] != drp
+                if recalc:
+                    if self.verbose:
+                        print "recalculating metal {}".format(i)
+                    self.prev_pmet['beta_'+i] = beta_met
+                    self.prev_pmet['growth_rate'] = growth_rate
+                    self.prev_pmet['qso_evol'] = qso_evol
+                    self.prev_pmet['drp'] = drp
+
+                    z = self.xzeff[i]
+                    evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+                    evol *= self.evolution_Lya_bias(z,[pars["alpha_"+i]])/self.evolution_Lya_bias(self.zref,[pars["alpha_"+i]])
+                    evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
+
+                    rp = self.xrp[i] + drp
+                    rt = self.xrt[i]
+                    r = sp.sqrt(rp**2+rt**2)
+                    w=r==0
+                    r[w]=1e-6
+                    mur = rp/r
+                    pk_full  = (1. + beta_met*muk**2)*(1. + beta_qso*muk**2)*pk_corr
+                    self.prev_xi_qso_met[i]  = cosmo_model.Pk2Xi(r,mur,self.k,pk_full,ell_max=self.ell_max)
+                    self.prev_xi_qso_met[i] = self.xdmat[i].dot(self.prev_xi_qso_met[i]*evol)
+
+                xi_qso_met += qso_boost*bias_qso*bias_met*self.prev_xi_qso_met[i]
 
         return xi_qso_met
 
