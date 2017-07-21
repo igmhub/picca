@@ -87,6 +87,7 @@ class parameters:
             'fit_aiso'          : False,
             'fit_qso_radiation_model' : False,
             'metal_dmat'        : False,
+            'metal_xdmat'        : False,
             'no_hesse'          : False,
             'hcds_mets'          : False,
         }
@@ -263,7 +264,6 @@ class parameters:
             sys.exit(0)
 
         return
->>>>>>> master
 
 
 
