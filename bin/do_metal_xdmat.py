@@ -6,21 +6,20 @@ import argparse
 import glob
 import healpy
 import sys
+from functools import partial
+import copy 
+
 from scipy import random 
 from scipy.interpolate import interp1d
 
 from picca import constants
 from picca import xcf
-from picca.data import delta
-from picca.data import qso
 from picca import io
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
-
-def calc_dmat(p):
-    xcf.fill_neighs(p)
-    tmp = xcf.dmat(p)
+def calc_metal_xdmat(abs_igm,p):
+    tmp = xcf.metal_dmat(p,abs_igm=abs_igm)
     return tmp
 
 if __name__ == '__main__':
@@ -51,8 +50,11 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM["LYA"], required=False,
+    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
                         help = 'wavelength of absorption [Angstrom]')
+
+    parser.add_argument('--lambda-abs-name', type = str, default = 'LYA', required=False,
+                        help = 'name of the absorption transistion')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -67,7 +69,7 @@ if __name__ == '__main__':
                     help = 'reference redshift')
 
     parser.add_argument('--rej', type = float, default = 1., required=False,
-                    help = 'fraction rejected: 0=no rejection, 1=all rejection')
+                    help = 'reference redshift')
 
     parser.add_argument('--z-evol-del', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
@@ -79,17 +81,18 @@ if __name__ == '__main__':
                     help = 'min redshift for object field')
 
     parser.add_argument('--z-max-obj', type = float, default = None, required=False,
-                    help = 'max redshift for object field')
+                        help = 'max redshift for object field')
 
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
+
+    parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs="*",
+                    help = 'list of metals')
 
     args = parser.parse_args()
 
     if args.nproc is None:
         args.nproc = cpu_count()/2
-
-    print "nproc",args.nproc
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
@@ -98,106 +101,43 @@ if __name__ == '__main__':
     xcf.nt = args.nt
     xcf.nside = args.nside
     xcf.zref = args.z_ref
-    xcf.alpha = args.z_evol_del
     xcf.lambda_abs = args.lambda_abs
     xcf.rej = args.rej
 
+    ## use a metal grid equal to the lya grid
+    xcf.npm = args.np
+    xcf.ntm = args.nt
+
     cosmo = constants.cosmo(args.fid_Om)
+    xcf.cosmo=cosmo
 
-    z_min_pix = 1.e6
-    z_max_pix = 0.
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
-    dels = {}
-    ndels = 0
-    for i,f in enumerate(fi):
-        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndels))
-        hdus = fitsio.FITS(f)
-        ds = [delta.from_fitsio(h) for h in hdus[1:]]
-        ndels+=len(ds)
-        phi = [d.ra for d in ds]
-        th = [sp.pi/2-d.dec for d in ds]
-        pix = healpy.ang2pix(xcf.nside,th,phi)
-        for d,p in zip(ds,pix):
-            if not p in dels:
-                dels[p]=[]
-            dels[p].append(d)
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, args.lambda_abs,\
+                            args.z_evol_del, args.z_ref, cosmo,nspec=args.nspec)
 
-            z = 10**d.ll/args.lambda_abs-1.
-            z_min_pix = sp.amin( sp.append([z_min_pix],z) )
-            z_max_pix = sp.amax( sp.append([z_max_pix],z) )
-            d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1.+z)/(1.+args.z_ref))**(xcf.alpha-1.)
-        if not args.nspec is None:
-            if ndels>args.nspec:break
-    sys.stderr.write("\n")
-
+    xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
-    print "done"
 
+    
     ### Find the redshift range
     if (args.z_min_obj is None):
-        d_min_pix = cosmo.r_comoving(z_min_pix)
-        d_min_obj = d_min_pix+xcf.rp_min
-        args.z_min_obj = cosmo.r_2_z(d_min_obj)
+        dmin_pix = cosmo.r_comoving(zmin_pix)
+        dmin_obj = max(0.,dmin_pix+xcf.rp_min)
+        args.z_min_obj = cosmo.r_2_z(dmin_obj)
         sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
     if (args.z_max_obj is None):
-        d_max_pix = cosmo.r_comoving(z_max_pix)
-        d_max_obj = d_max_pix+xcf.rp_max
-        args.z_max_obj = cosmo.r_2_z(d_max_obj)
+        dmax_pix = cosmo.r_comoving(zmax_pix)
+        dmax_obj = max(0.,dmax_pix+xcf.rp_max)
+        args.z_max_obj = cosmo.r_2_z(dmax_obj)
         sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
 
-    objs = {}
-    ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,args.z_min_obj,args.z_max_obj,keep_bal=True)
-    phi = ra
-    th = sp.pi/2.-dec
-    pix = healpy.ang2pix(xcf.nside,th,phi)
-    print("reading qsos")
-
-    if (ra.size!=0):
-        xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
-    else:
-        xcf.angmax = 0.
-
-    upix = sp.unique(pix)
-    for i,ipix in enumerate(upix):
-        sys.stderr.write("\r{} of {}".format(i,len(upix)))
-        w=pix==ipix
-        objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
-        for q in objs[ipix]:
-            q.we = ((1.+q.zqso)/(1.+args.z_ref))**(args.z_evol_obj-1.)
-            q.r_comov = cosmo.r_comoving(q.zqso)
-
-    sys.stderr.write("\n")
+    objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
+                                args.z_evol_obj, args.z_ref,cosmo)
     xcf.objs = objs
 
-    ### Remove pixels if too far from objects
-    if ( ra.size!=0 and ( (z_min_pix<sp.amin(zqso)) or (sp.amax(zqso)<z_max_pix)) ):
-
-        d_min_pix_cut = cosmo.r_comoving(sp.amin(zqso))+xcf.rp_min
-        z_min_pix_cut = cosmo.r_2_z(d_min_pix_cut)
-
-        d_max_pix_cut = cosmo.r_comoving(sp.amax(zqso))+xcf.rp_max
-        z_max_pix_cut = cosmo.r_2_z(d_max_pix_cut)
-
-        if ( (z_min_pix<z_min_pix_cut) or (z_max_pix_cut<z_max_pix) ):
-            for pix in xcf.dels:
-                for i in xrange(len(xcf.dels[pix])-1,-1,-1):
-                    d = xcf.dels[pix][i]
-                    z = 10**d.ll/args.lambda_abs-1.
-                    w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)
-                    if (z[w].size==0):
-                        del xcf.dels[pix][i]
-                        xcf.ndels -= 1
-                    else:
-                        d.de = d.de[w]
-                        d.we = d.we[w]
-                        d.ll = d.ll[w]
-                        d.co = d.co[w]
-                        d.r_comov = d.r_comov[w]
+    xcf.angmax = 2*sp.arcsin(xcf.rt_max/(cosmo.r_comoving(zmin_pix)+cosmo.r_comoving(zmin_obj)))
 
     xcf.counter = Value('i',0)
-
     xcf.lock = Lock()
     
     cpu_data = {}
@@ -208,18 +148,54 @@ if __name__ == '__main__':
         cpu_data[ip].append(p)
 
     random.seed(0)
-    pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,cpu_data.values())
-    pool.close()
-    dm = sp.array(dm)
-    wdm =dm[:,0].sum(axis=0)
-    npairs=dm[:,2].sum(axis=0)
-    npairs_used=dm[:,3].sum(axis=0)
-    dm=dm[:,1].sum(axis=0)
 
-    w = wdm>0.
-    dm[w,:] /= wdm[w,None]
+    for i,p in enumerate(cpu_data.values()):
+        print "filling neighs ",i,len(cpu_data.values())
+        xcf.fill_neighs(p)
 
+    dm_all=[]
+    wdm_all=[]
+    rp_all=[]
+    rt_all=[]
+    z_all=[]
+    names=[]
+    npairs_all=[]
+    npairs_used_all=[]
+ 
+
+    for i,abs_igm in enumerate(args.abs_igm):
+        xcf.counter.value=0
+        f=partial(calc_metal_xdmat,abs_igm)
+        sys.stderr.write("\n")
+        pool = Pool(processes=args.nproc)
+        #dm = pool.map(f,cpu_data.values())
+        dm = map(f,cpu_data.values())
+        pool.close()
+        dm = sp.array(dm)
+        wdm =dm[:,0].sum(axis=0)
+        rp = dm[:,2].sum(axis=0)
+        rt = dm[:,3].sum(axis=0)
+        z = dm[:,4].sum(axis=0)
+        we = dm[:,5].sum(axis=0)
+        w=we>0
+        rp[w]/=we[w]
+        rt[w]/=we[w]
+        z[w]/=we[w]
+        npairs=dm[:,6].sum(axis=0)
+        npairs_used=dm[:,7].sum(axis=0)
+        dm=dm[:,1].sum(axis=0)
+        w=wdm>0
+        dm[w,:]/=wdm[w,None]
+
+        dm_all.append(dm)
+        wdm_all.append(wdm)
+        rp_all.append(rp)
+        rt_all.append(rt)
+        z_all.append(z)
+        names.append(abs_igm)
+
+        npairs_all.append(npairs)
+        npairs_used_all.append(npairs_used)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
@@ -229,10 +205,28 @@ if __name__ == '__main__':
     head['RTMAX']=xcf.rt_max
     head['NT']=xcf.nt
     head['NP']=xcf.np
-    head['NPROR']=npairs
-    head['NPUSED']=npairs_used
 
-    out.write([wdm,dm],names=['WDM','DM'],header=head)
+    out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=["NPALL","NPUSED","ABS_IGM"],header=head)
+
+    out_list = []
+    out_names=[]
+    for i,ai in enumerate(names):
+        out_names=out_names + ["RP_"+ai]
+        out_list = out_list + [rp_all[i]]
+
+        out_names=out_names + ["RT_"+ai]
+        out_list = out_list + [rt_all[i]]
+
+        out_names=out_names + ["Z_"+ai]
+        out_list = out_list + [z_all[i]]
+
+        out_names = out_names + ["DM_"+ai]
+        out_list = out_list + [dm_all[i]]
+
+        out_names=out_names+["WDM_"+ai]
+        out_list = out_list+[wdm_all[i]]
+
+    out.write(out_list,names=out_names)
     out.close()
 
     

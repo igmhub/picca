@@ -6,6 +6,8 @@ import sys
 import time 
 
 from picca.data import forest
+from picca.data import delta
+from picca.data import qso
 
 def read_dlas(fdla):
     f=open(fdla)
@@ -111,7 +113,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     if mode == "pix":
         try:
             fin = in_dir + "/master.fits.gz"
-	    h = fitsio.FITS(fin)
+            h = fitsio.FITS(fin)
         except IOError:
             try:
                 fin = in_dir + "/master.fits"
@@ -181,7 +183,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
         if not nspec is None:
             if ndata > nspec:break
-	
+
     return data,ndata
 
 def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
@@ -213,7 +215,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
 def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         try:
             fin = in_dir + "/pix_{}.fits.gz".format(pix)
-	    h = fitsio.FITS(fin)
+            h = fitsio.FITS(fin)
         except IOError:
             try:
                 fin = in_dir + "/pix_{}.fits".format(pix)
@@ -292,3 +294,71 @@ def read_from_desi(nside,ztable,in_dir,order):
 
     sys.stderr.write("found {} quasars in input files\n".format(ndata))
     return data,ndata
+
+
+def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None):
+    '''
+    reads deltas from indir
+    fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
+    returns data,zmin_pix
+    '''
+    dels = []
+    fi = glob.glob(indir+"/*.fits.gz")
+    ndata=0
+    for i,f in enumerate(fi):
+        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+        hdus = fitsio.FITS(f)
+        dels += [delta.from_fitsio(h) for h in hdus[1:]]
+        ndata+=len(hdus[1:])
+        hdus.close()
+        if not nspec is None:
+            if ndata>nspec:break
+
+    sys.stderr.write("\n")
+
+    phi = [d.ra for d in dels]
+    th = [sp.pi/2.-d.dec for d in dels]
+    pix = healpy.ang2pix(nside,th,phi)
+
+    data = {}
+    zmin = 10**dels[0].ll[0]/lambda_abs-1.
+    zmax = 0.
+    for d,p in zip(dels,pix):
+        if not p in data:
+            data[p]=[]
+        data[p].append(d)
+
+        z = 10**d.ll/lambda_abs-1.
+        min_z = z.min()
+        max_z = z.max()
+        if zmin>min_z:
+            zmin = min_z
+        if zmax < max_z:
+            zmax = max_z
+        d.z = z
+        d.r_comov = cosmo.r_comoving(z)
+        d.we *= ((1+z)/(1+zref))**(alpha-1)
+
+    return data,ndata,zmin,zmax
+
+
+def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
+    objs = {}
+    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal=True)
+    phi = ra
+    th = sp.pi/2.-dec
+    pix = healpy.ang2pix(nside,th,phi)
+    print("reading qsos")
+
+    upix = sp.unique(pix)
+    for i,ipix in enumerate(upix):
+        sys.stderr.write("\r{} of {}".format(i,len(upix)))
+        w=pix==ipix
+        objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
+        for q in objs[ipix]:
+            q.we = ((1.+q.zqso)/(1.+zref))**(alpha-1.)
+            q.r_comov = cosmo.r_comoving(q.zqso)
+
+    sys.stderr.write("\n")
+
+    return objs,zqso.min()

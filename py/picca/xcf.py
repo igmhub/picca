@@ -7,6 +7,8 @@ from numba import jit
 from data import forest
 from scipy import random
 
+from picca import constants
+
 np = None
 nt = None 
 rp_max = None
@@ -25,6 +27,8 @@ objs = None
 
 rej = None
 lock = None
+
+cosmo=None
 
 def fill_neighs(pix):
     for ipix in pix:
@@ -242,3 +246,67 @@ def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
         j = (ij[k]-i)/n1
         for bb in ubb:
             dm[bb+np*nt*ba] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+
+
+def metal_dmat(pix,abs_igm="SiII(1526)"):
+
+    dm = sp.zeros(np*nt*ntm*npm)
+    wdm = sp.zeros(np*nt)
+    rpeff = sp.zeros(ntm*npm)
+    rteff = sp.zeros(ntm*npm)
+    zeff = sp.zeros(ntm*npm)
+    weff = sp.zeros(ntm*npm)
+
+    npairs = 0
+    npairs_used = 0
+    for p in pix:
+        for d in dels[p]:
+            with lock:
+                sys.stderr.write("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)))
+                counter.value += 1
+            rd = d.r_comov
+            zd_abs = 10**d.ll/constants.absorber_IGM[abs_igm]-1
+            rd_abs = cosmo.r_comoving(zd_abs)
+            wd = d.we
+            r = random.rand(len(d.neighs))
+            w=r>rej
+            npairs += len(d.neighs)
+            npairs_used += w.sum()
+            for q in sp.array(d.neighs)[w]:
+                ang = d^q
+
+                rq = q.r_comov
+                wq = q.we
+                zq = q.zqso
+                rp = (rd-rq)*sp.cos(ang/2)
+                rt = (rd+rq)*sp.sin(ang/2)
+                wdq = wd*wq
+
+                wA = (rp>rp_min) & (rp<rp_max) & (rt<rt_max) 
+                bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
+                bt = (rt/rt_max*nt).astype(int)
+                bA = bt + nt*bp
+                c = sp.bincount(bA[wA],weights=wdq[wA])
+                wdm[:len(c)]+=c
+
+                rp_abs = (rd_abs-rq)*sp.cos(ang/2)
+                rt_abs = (rd_abs+rq)*sp.sin(ang/2)
+
+                bp_abs = ((rp_abs-rp_min)/(rp_max-rp_min)*npm).astype(int)
+                bt_abs = (rt_abs/rt_max*ntm).astype(int)
+                bBma = bt_abs + ntm*bp_abs
+                wBma = (rp_abs>rp_min) & (rp_abs<rp_max) & (rt_abs<rt_max)
+                wAB = wA&wBma
+                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=wdq[wAB])
+                dm[:len(c)]+=c
+
+                c = sp.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB])
+                rpeff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB])
+                rteff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB])
+                zeff[:len(c)]+=c
+                c = sp.bincount(bBma[wAB],weights=wdq[wAB])
+                weff[:len(c)]+=c
+
+    return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
