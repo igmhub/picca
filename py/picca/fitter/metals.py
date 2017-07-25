@@ -77,11 +77,6 @@ class model:
             self.auto_rt = {}
             self.auto_rp = {}
             self.auto_zeff = {}
-            irt = sp.arange(2500,dtype=int)%50
-            irp = (sp.arange(2500,dtype=int)-irt)/50
-            rt = 2+4.*irt
-            rp = 2+4.*irp
-            z = rp + self.zref
 
             self.prev_pmet = {"beta_lya":0.,"alpha_lya":0}
             if self.hcds_mets:
@@ -98,29 +93,19 @@ class model:
                 self.prev_pmet["alpha_"+m1]=0.
                 self.prev_xi_lya_met["LYA_"+m1] = sp.zeros(self.dmat["LYA_"+m1].shape[0])
                 self.prev_xi_dla_met[m1] = sp.zeros(self.dmat["LYA_"+m1].shape[0])
-                try:
-                    self.auto_rt["LYA_"+m1] = h[2]["RT_LYA_"+m1][:]
-                    self.auto_rp["LYA_"+m1] = h[2]["RP_LYA_"+m1][:]
-                    self.auto_zeff["LYA_"+m1] = h[2]["Z_LYA_"+m1][:]
-                except:
-                    sys.stderr.write("WARNING: using default separations for lya-"+m1)
-                    self.auto_rt["LYA_"+m1] = rt
-                    self.auto_rp["LYA_"+m1] = rp
-                    self.auto_zeff["LYA_"+m1] = z
+
+                self.auto_rt["LYA_"+m1] = h[2]["RT_LYA_"+m1][:]
+                self.auto_rp["LYA_"+m1] = h[2]["RP_LYA_"+m1][:]
+                self.auto_zeff["LYA_"+m1] = h[2]["Z_LYA_"+m1][:]
 
                 for m2 in met_names[i:]:
                     sys.stdout.write("reading {} {}\n".format(m1,m2))
                     self.dmat[m1+"_"+m2] = h[2]["DM_"+m1+"_"+m2][:]
                     self.prev_xi_met_met[m1+"_"+m2] = sp.zeros(self.dmat[m1+"_"+m2].shape[0])
-                    try:
-                        self.auto_rt[m1+"_"+m2] = h[2]["RT_"+m1+"_"+m2][:]
-                        self.auto_rp[m1+"_"+m2] = h[2]["RP_"+m1+"_"+m2][:]
-                        self.auto_zeff[m1+"_"+m2] = h[2]["Z_"+m1+"_"+m2][:]
-                    except:
-                        sys.stderr.write("WARNING: using default separations for {}-{}".format(m1,m2))
-                        self.auto_rt[m1+"_"+m2] = rt
-                        self.auto_rp[m1+"_"+m2] = rp
-                    self.auto_zeff[m1+"_"+m2] = z
+
+                    self.auto_rt[m1+"_"+m2] = h[2]["RT_"+m1+"_"+m2][:]
+                    self.auto_rp[m1+"_"+m2] = h[2]["RP_"+m1+"_"+m2][:]
+                    self.auto_zeff[m1+"_"+m2] = h[2]["Z_"+m1+"_"+m2][:]
 
     def add_cross(self,dic_init):
 
