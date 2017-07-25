@@ -132,7 +132,7 @@ if __name__ == '__main__':
         sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
 
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
-                                args.z_evol_obj, args.z_ref,cosmo)
+                                args.z_evol_obj, args.z_ref,cosmo,keep_bal=True,keep_zero_thid=True)
     xcf.objs = objs
 
     xcf.angmax = 2*sp.arcsin(xcf.rt_max/(cosmo.r_comoving(zmin_pix)+cosmo.r_comoving(zmin_obj)))

@@ -157,15 +157,15 @@ if __name__ == '__main__':
         d_min_pix = cosmo.r_comoving(z_min_pix)
         d_min_obj = max(0.,d_min_pix+xcf.rp_min)
         args.z_min_obj = cosmo.r_2_z(d_min_obj)
-        sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
+        sys.stderr.write("\r z_min_obj = {}\n".format(args.z_min_obj))
     if (args.z_max_obj is None):
         d_max_pix = cosmo.r_comoving(z_max_pix)
         d_max_obj = max(0.,d_max_pix+xcf.rp_max)
         args.z_max_obj = cosmo.r_2_z(d_max_obj)
-        sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
+        sys.stderr.write("\r z_max_obj = {}\n".format(args.z_max_obj))
 
     objs = {}
-    ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,args.z_min_obj,args.z_max_obj,keep_bal=True)
+    ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,args.z_min_obj,args.z_max_obj,keep_bal=True,keep_zero_thid=True)
     phi = ra
     th = sp.pi/2.-dec
     pix = healpy.ang2pix(xcf.nside,th,phi)

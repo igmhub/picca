@@ -148,7 +148,7 @@ if __name__ == '__main__':
         sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
 
     objs = {}
-    ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,args.z_min_obj,args.z_max_obj,keep_bal=True)
+    ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,args.z_min_obj,args.z_max_obj,keep_bal=True,keep_zero_thid=True)
     phi = ra
     th = sp.pi/2.-dec
     pix = healpy.ang2pix(xcf.nside,th,phi)

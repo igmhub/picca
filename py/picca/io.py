@@ -34,7 +34,7 @@ def read_dlas(fdla):
 
     return dlas
 
-def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
+def read_drq(drq,zmin,zmax,keep_bal,bi_max=None,keep_zero_thid=False):
     vac = fitsio.FITS(drq)
 
     ## Redshift
@@ -55,7 +55,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     print
     ## Sanity
     print(" start               : nb object in cat = {}".format(ra.size) )
-    w = (thid>0)
+    w = (thid>0) | keep_zero_thid
     print(" and thid>0          : nb object in cat = {}".format(ra[w].size) )
     w = w & (ra!=dec)
     print(" and ra!=dec         : nb object in cat = {}".format(ra[w].size) )
@@ -342,9 +342,9 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None):
     return data,ndata,zmin,zmax
 
 
-def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
+def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True,keep_zero_thid=True):
     objs = {}
-    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal=True)
+    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal=keep_bal,keep_zero_thid=keep_zero_thid)
     phi = ra
     th = sp.pi/2.-dec
     pix = healpy.ang2pix(nside,th,phi)
