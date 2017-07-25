@@ -81,7 +81,7 @@ class model:
             irp = (sp.arange(2500,dtype=int)-irt)/50
             rt = 2+4.*irt
             rp = 2+4.*irp
-            z = rp + self.zref
+            z = rp*0 + self.zref
 
             self.prev_pmet = {"beta_lya":0.,"alpha_lya":0}
             if self.hcds_mets:
