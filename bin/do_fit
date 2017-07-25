@@ -38,6 +38,7 @@ met=None
 if not dic_init['metals'] is None:
     met=metals.model(dic_init)
     met.templates = not dic_init['metal_dmat']
+    met.grid = not dic_init['metal_xdmat']
     if not dic_init['data_auto'] is None:met.add_auto()
     if not dic_init['data_cross'] is None:met.add_cross(dic_init)
 
@@ -133,6 +134,7 @@ if not dic_init['debug']:
         print '  fit/bin/fit:: error in minimization = ', error
         print '  Exit'
         sys.exit(0)
+
 if not dic_init['minos'] is None and mig.migrad_ok():
     if any('_all_'==el for el in dic_init['minos']):
         mig.minos(var=None,sigma=dic_init['sigma_minos'])
