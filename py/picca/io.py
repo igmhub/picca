@@ -27,7 +27,6 @@ def read_dlas(fdla):
             dlas[thid]=[]
         zabs = float(l[col_names.index("z_abs")])
         nhi = float(l[col_names.index("NHI")])
-        print zabs, nhi
         dlas[thid].append((zabs,nhi))
         nb_dla += 1
 
