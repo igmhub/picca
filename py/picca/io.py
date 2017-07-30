@@ -22,8 +22,8 @@ def read_dlas(fdla):
         thid = int(l[0])
         if not dlas.has_key(thid):
             dlas[thid]=[]
-        zabs = float(l[9])
-        nhi = float(l[10])
+        zabs = float(l[5])
+        nhi = float(l[6])
         dlas[thid].append((zabs,nhi))
         nb_dla += 1
 
