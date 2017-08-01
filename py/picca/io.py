@@ -13,17 +13,20 @@ def read_dlas(fdla):
     f=open(fdla)
     dlas={}
     nb_dla = 0
+    col_names=None
     for l in f:
         l = l.split()
         if len(l)==0:continue
         if l[0][0]=="#":continue
-        if l[0]=="ThingID":continue
+        if l[0]=="ThingID":
+            col_names = l
+            continue
         if l[0][0]=="-":continue
-        thid = int(l[0])
+        thid = int(l[col_names.index("ThingID")])
         if not dlas.has_key(thid):
             dlas[thid]=[]
-        zabs = float(l[9])
-        nhi = float(l[10])
+        zabs = float(l[col_names.index("z_abs")])
+        nhi = float(l[col_names.index("NHI")])
         dlas[thid].append((zabs,nhi))
         nb_dla += 1
 
