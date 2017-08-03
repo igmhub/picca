@@ -2,16 +2,16 @@
 Gathering of results of H. du Mas des Bourboux et al. 2017
 https://arxiv.org/abs/
 
-BOSS_DR12/correlations/
+duMasdesBourbouxetal2017/correlations/
 	The calculated auto and cross correlation for
 	r_paral \in [-200,200] h^{-1}~Mpc and for r_perp \in [0,200] h^{-1}~Mpc
 	with bin size 4 h^{-1}~Mpc
 
-BOSS_DR12/model/
+duMasdesBourbouxetal2017/model/
 	CAMB power spectrum at z = 2.40
 	generated with Planck 2015
 
-fits/
+duMasdesBourbouxetal2017/fits/
 	standard fit to the auto, cross and combined of the two
 	In each folder:
 		- *.ini gives the config file to use in the fitter
