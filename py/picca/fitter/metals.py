@@ -92,20 +92,9 @@ class model:
 	    print("igm_absorbers = {}".format(igm_absorbers))
 
             for i,m1 in enumerate(igm_absorbers):
-		"""
-                sys.stdout.write("reading LYA {}\n".format(m1))
-                self.dmat["LYA_"+m1] = h[2]["DM_LYA_"+m1][:]
-                self.prev_pmet["beta_"+m1]=0.
-                self.prev_pmet["alpha_"+m1]=0.
-                self.prev_xi_lya_met["LYA_"+m1] = sp.zeros(self.dmat["LYA_"+m1].shape[0])
-                self.prev_xi_dla_met[m1] = sp.zeros(self.dmat["LYA_"+m1].shape[0])
-
-                self.auto_rt["LYA_"+m1] = h[2]["RT_LYA_"+m1][:]
-                self.auto_rp["LYA_"+m1] = h[2]["RP_LYA_"+m1][:]
-                self.auto_zeff["LYA_"+m1] = h[2]["Z_LYA_"+m1][:]
-		"""
-		i0 = i 
-                for m2 in met_names[i0:]:
+		i0=i
+                for m2 in igm_absorbers[i0:]:
+		    if m1 == "LYA" and m2 == "LYA": continue
                     sys.stdout.write("reading {} {}\n".format(m1,m2))
 
                     self.dmat[m1+"_"+m2] = h[2]["DM_"+m1+"_"+m2][:]
@@ -179,6 +168,7 @@ class model:
 
     def valueAuto(self,pars):
 
+	met_names = self.met_names 
 
         bias_lya=pars["bias_lya*(1+beta_lya)"]
         beta_lya=pars["beta_lya"]
@@ -234,7 +224,8 @@ class model:
 
             Gpar = sp.sinc(kp*Lpar_auto/2/sp.pi)**2
             Gper = sp.sinc(kt*Lper_auto/2/sp.pi)**2
-        
+
+	    """        
             xi_lya_met = sp.zeros(nbins)
             for met in self.met_names:
                 bias_met = pars['bias_'+met]
@@ -276,13 +267,28 @@ class model:
                 xi_lya_met += bias_lya*bias_met*self.prev_xi_lya_met["LYA_"+met]
                 if self.hcds_mets:
                     xi_lya_met += bias_lls*bias_met*self.prev_xi_dla_met[met]
+	    """
 
+	    igm_absorbers = ['LYA']
+	    igm_absorbers.extend(met_names)
+
+	    xi_lya_met = sp.zeros(nbins)
             xi_met_met = sp.zeros(nbins)
-            for i,met1 in enumerate(self.met_names):
-                bias_met1 = pars['bias_'+met1]
-                beta_met1 = pars['beta_'+met1]
-                alpha_met1 = pars["alpha_"+met1]
-                for met2 in self.met_names[i:]:
+            for i,met1 in enumerate(igm_absorbers):
+		if met1 != 'LYA': 
+                    bias_met1 = pars['bias_'+met1]
+                    beta_met1 = pars['beta_'+met1]
+                    alpha_met1 = pars["alpha_"+met1]
+		i0 = i 
+                for met2 in igm_absorbers[i0:]:
+		    if met1 == 'LYA' and met2 == 'LYA': continue 
+			
+                    if met2 != 'LYA':
+                        bias_met2 = pars['bias_'+met2]
+                        beta_met2 = pars['beta_'+met2]
+                        alpha_met2 = pars["alpha_"+met2]
+
+                    dm = self.dmat[met1+"_"+met2]
                     rt = self.auto_rt[met1+"_"+met2]
                     rp = self.auto_rp[met1+"_"+met2]
 		    r = sp.sqrt(rp**2+rt**2)
@@ -291,27 +297,50 @@ class model:
 
 		    mur = rp/r
                     zeff  = self.auto_zeff[met1+"_"+met2]
-                    bias_met2 = pars['bias_'+met2]
-                    beta_met2 = pars['beta_'+met2]
-                    alpha_met2 = pars["alpha_"+met2]
-                    dm = self.dmat[met1+"_"+met2]
-                    recalc = beta_met1 != self.prev_pmet["beta_"+met1]\
+
+		    if met1 == 'LYA': 
+			recalc = beta_met2 != self.prev_pmet["beta_"+met2]\
+                            or beta_lya != self.prev_pmet["beta_lya"]\
+                            or alpha_lya != self.prev_pmet["alpha_lya"]\
+			    or alpha_met2 != self.prev_pmet["alpha_"+met2]
+
+			if recalc:
+                    	    if self.verbose:
+                        	print "recalculating ",met1, met2
+                    	    pk  = (1+beta_lya*muk**2)*(1+beta_met2*muk**2)*self.pk
+                            pk *= Gpar*Gper
+                    	    xi = cosmo_model.Pk2Xi(r,mur,self.k,pk,ell_max=self.ell_max)
+                    	    xi *= ((1+zeff)/(1+self.zref))**((alpha_lya-1)*(alpha_met2-1))
+                    	    self.prev_xi_lya_met["LYA_"+met2] = self.dmat["LYA_"+met2].dot(xi)
+
+                	if self.hcds_mets:
+                    	    recalc = self.prev_pmet["beta_lls"] != beta_lls\
+                        	or self.prev_pmet["L0_lls"] != L0_lls
+                    	    if recalc:
+                        	pk = (1+beta_lls*muk**2)*(1+beta_met2*muk**2)*self.pk*Flls
+                        	pk *= Gpar*Gper
+                        	xi = cosmo_model.Pk2Xi(r,mur,self.k,pk,ell_max=self.ell_max)
+                        	xi *= ((1+zeff)/(1+self.zref))**((alpha_lya-1)*(alpha_met2-1))
+                        	self.prev_xi_dla_met[met2] = xi
+                
+                	xi_lya_met += bias_lya*bias_met2*self.prev_xi_lya_met["LYA_"+met2]
+                	if self.hcds_mets:
+			    xi_lya_met += bias_lls*bias_met2*self.prev_xi_dla_met[met2]
+
+                    else: 
+                        recalc = beta_met1 != self.prev_pmet["beta_"+met1]\
                             or beta_met2 != self.prev_pmet["beta_"+met2]
                     
-                    if recalc:
-                        if self.verbose:
-                            print "recalculating ",met1,met2
-                        r = sp.sqrt(rt**2+rp**2)
-                        w=r==0
-                        r[w]=1e-6
-                        mur = rp/r
-                        pk  = (1+beta_met1*muk**2)*(1+beta_met2*muk**2)*self.pk
-                        pk *= Gpar*Gper
-                        xi = cosmo_model.Pk2Xi(r,mur,self.k,pk,ell_max=self.ell_max)
-                        xi *= ((1+zeff)/(1+self.zref))**((alpha_met1-1)*(alpha_met2-1))
-                        self.prev_xi_met_met[met1+"_"+met2] = self.dmat[met1+"_"+met2].dot(xi)
+                        if recalc:
+                            if self.verbose:
+                                print "recalculating ",met1,met2
+                            pk  = (1+beta_met1*muk**2)*(1+beta_met2*muk**2)*self.pk
+                            pk *= Gpar*Gper
+                            xi = cosmo_model.Pk2Xi(r,mur,self.k,pk,ell_max=self.ell_max)
+                            xi *= ((1+zeff)/(1+self.zref))**((alpha_met1-1)*(alpha_met2-1))
+                            self.prev_xi_met_met[met1+"_"+met2] = self.dmat[met1+"_"+met2].dot(xi)
                     
-                    xi_met_met += bias_met1*bias_met2*self.prev_xi_met_met[met1+"_"+met2]
+                        xi_met_met += bias_met1*bias_met2*self.prev_xi_met_met[met1+"_"+met2]
             for i in self.prev_pmet:
                 self.prev_pmet[i] = pars[i]
         return xi_lya_met + xi_met_met
