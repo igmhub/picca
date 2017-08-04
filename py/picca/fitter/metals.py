@@ -86,7 +86,13 @@ class model:
             self.prev_xi_lya_met = {}
             self.prev_xi_dla_met = {}
             self.prev_xi_met_met = {}
-            for i,m1 in enumerate(met_names):
+	
+	    igm_absorbers = ['LYA']
+	    igm_absorbers.extend(met_names)
+	    print("igm_absorbers = {}".format(igm_absorbers))
+
+            for i,m1 in enumerate(igm_absorbers):
+		"""
                 sys.stdout.write("reading LYA {}\n".format(m1))
                 self.dmat["LYA_"+m1] = h[2]["DM_LYA_"+m1][:]
                 self.prev_pmet["beta_"+m1]=0.
@@ -97,15 +103,24 @@ class model:
                 self.auto_rt["LYA_"+m1] = h[2]["RT_LYA_"+m1][:]
                 self.auto_rp["LYA_"+m1] = h[2]["RP_LYA_"+m1][:]
                 self.auto_zeff["LYA_"+m1] = h[2]["Z_LYA_"+m1][:]
-
-                for m2 in met_names[i:]:
+		"""
+		i0 = i 
+                for m2 in met_names[i0:]:
                     sys.stdout.write("reading {} {}\n".format(m1,m2))
-                    self.dmat[m1+"_"+m2] = h[2]["DM_"+m1+"_"+m2][:]
-                    self.prev_xi_met_met[m1+"_"+m2] = sp.zeros(self.dmat[m1+"_"+m2].shape[0])
 
+                    self.dmat[m1+"_"+m2] = h[2]["DM_"+m1+"_"+m2][:]
                     self.auto_rt[m1+"_"+m2] = h[2]["RT_"+m1+"_"+m2][:]
                     self.auto_rp[m1+"_"+m2] = h[2]["RP_"+m1+"_"+m2][:]
                     self.auto_zeff[m1+"_"+m2] = h[2]["Z_"+m1+"_"+m2][:]
+
+		    if m1 == "LYA": 
+			self.prev_pmet["beta_"+m2]=0.
+                        self.prev_pmet["alpha_"+m2]=0.
+			self.prev_xi_lya_met["LYA_"+m2] = sp.zeros(self.dmat["LYA_"+m2].shape[0])
+                        self.prev_xi_dla_met[m2] = sp.zeros(self.dmat["LYA_"+m2].shape[0])
+		    else: 
+                        self.prev_xi_met_met[m1+"_"+m2] = sp.zeros(self.dmat[m1+"_"+m2].shape[0])
+
 
     def add_cross(self,dic_init):
 
