@@ -35,7 +35,7 @@ class model:
 
 
         if dic_init['fit_aiso']:
-            self.pglob = ['bias_lya*(1+beta_lya)','beta_lya','aiso','alpha_lya','SigmaNL_perp','1+f','bao_amp']
+            self.pglob = ['bias_lya*(1+beta_lya)','beta_lya','aiso','1+epsilon','alpha_lya','SigmaNL_perp','1+f','bao_amp']
             self.fit_aiso=True
         else:
             self.pglob = ['bias_lya*(1+beta_lya)','beta_lya','ap','at','alpha_lya','SigmaNL_perp','1+f','bao_amp']
@@ -168,6 +168,7 @@ class model:
                 parsSB["ap"]=1.
             else:
                 parsSB["aiso"]=1.
+                parsSB["1+epsilon"]=1.
             parsSB["SigmaNL_perp"]=0.
             if self.fix_bias_beta_peak :
                 pars["bias_lya*(1+beta_lya)"]=self.bias_lya_peak*(1+self.beta_lya_peak)
@@ -191,8 +192,8 @@ class model:
             ap=pars["ap"]
             at=pars["at"]
         else:
-            ap=pars["aiso"]
-            at=pars["aiso"]
+            ap=pars["aiso"]*pars["1+epsilon"]*pars["1+epsilon"]
+            at=pars["aiso"]/pars["1+epsilon"]
 
         ar=sp.sqrt(rt**2*at**2+rp**2*ap**2)
         mur=rp*ap/ar
@@ -249,8 +250,8 @@ class model:
             ap=pars["ap"]
             at=pars["at"]
         else:
-            ap=pars["aiso"]
-            at=pars["aiso"]
+            ap=pars["aiso"]*pars["1+epsilon"]*pars["1+epsilon"]
+            at=pars["aiso"]/pars["1+epsilon"]
 
         art=at*rt
         arp=ap*rp
@@ -302,6 +303,7 @@ class model:
                 parsSB["ap"]=1.
             else:
                 parsSB['aiso']=1.
+                parsSB['1+epsilon']=1.
             parsSB["SigmaNL_perp"]=0.
             parsSB["1+f"]=0.
             xiSB = self.getXiCross(rp,rt,z,self.pkSB,parsSB)
@@ -325,8 +327,8 @@ class model:
             ap=pars["ap"]
             at=pars["at"]
         else:
-            ap=pars["aiso"]
-            at=pars["aiso"]
+            ap=pars["aiso"]*pars["1+epsilon"]*pars["1+epsilon"]
+            at=pars["aiso"]/pars["1+epsilon"]
 
         drp=pars["drp"]
         Lpar=pars["Lpar_cross"]
@@ -398,6 +400,7 @@ class model:
                 parsSB["ap"]=1.
             else:
                 parsSB['aiso']=1.
+                parsSB['1+epsilon']=1.
             parsSB["SigmaNL_perp"]=0.
             parsSB["1+f"]=0.
             xiSB = self.getXiAutoQSO(rp,rt,z,self.pkSB,parsSB)
@@ -415,8 +418,8 @@ class model:
             ap = pars["ap"]
             at = pars["at"]
         else:
-            ap = pars["aiso"]
-            at = pars["aiso"]
+            ap = pars["aiso"]*pars["1+epsilon"]*pars["1+epsilon"]
+            at = pars["aiso"]/pars["1+epsilon"]
         ar  = sp.sqrt(rt**2*at**2+rp**2*ap**2)
         mur = rp*ap/ar
 

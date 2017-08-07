@@ -13,6 +13,7 @@ class parameters:
             'ap'                : 1.,
             'at'                : 1.,
             'aiso'                : 1.,
+            '1+epsilon'         : 1.,
             'bin_size'          : 4.,
             'alpha_lya'             : 2.9,
             'Lpar_auto'         : 4.,
