@@ -103,6 +103,7 @@ class parameters:
         }
         self.dic_init_list_string = {
             'metals'            : None,
+            'metals2'           : None,
             'fix'               : None,
             'free'              : None,
             'minos'             : None,
@@ -141,6 +142,7 @@ class parameters:
         }
         help_list_string = {
             'metals'            : "prefix to the metal template files",
+            'metals2'           : "prefix to the 2nd metal template files",
             'fix'               : "list of variables to fix to their initial values",
             'free'              : "list of variables to free, overwrites fix",
             'minos'             : "list of variables to get minos error from. Setting to '_all_' gets minos errors for all free parameters.",
