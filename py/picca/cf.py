@@ -189,7 +189,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     we = w1[:,None]*w2
     we = we[w]
     if same_half_plate:
-        wsame = bp[w]==0
+        wsame = bp[w]==np*rp_min/(rp_min-rp_max)
         we[wsame]=0
 
     c = sp.bincount(bins,weights=we)
