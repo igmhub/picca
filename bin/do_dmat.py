@@ -186,8 +186,9 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
-    cf.data2 = data
-    cf.ndata2 = ndata
+    if x_correlation: 
+       cf.data2 = data2 
+       cf.ndata2 = ndata2 
     print "done"
 
     cf.counter = Value('i',0)
