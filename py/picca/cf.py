@@ -159,9 +159,12 @@ def dmat(pix):
     
 @jit
 def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
-    rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+    if x_correlation : 
+       rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    else :  
+       rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
-    bp = (rp/rp_max*np).astype(int)
+    bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
     
@@ -177,7 +180,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     slw1 = (w1*dl1**2).sum()
     slw2 = (w2*dl2**2).sum()
 
-    w = (rp<rp_max) & (rt<rt_max)
+    w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
 
     bins = bins[w]
 
