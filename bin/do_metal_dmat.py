@@ -233,7 +233,6 @@ if __name__ == '__main__':
 
     if args.abs_igm2: 
         print "args.lambda_abs2 = ", args.lambda_abs2
-        print "constants.absorber_IGM['LYB'] = ", constants.absorber_IGM['LYB']
         if args.lambda_abs2 == constants.absorber_IGM['LYA']: 
             abs_igm_2 = ["LYA"]+args.abs_igm2
         elif args.lambda_abs2 == constants.absorber_IGM['LYB']:
