@@ -229,6 +229,8 @@ class model:
                 rp = self.auto_rp["LYA_"+met]
                 zeff  = self.auto_zeff["LYA_"+met]
                 r = sp.sqrt(rt**2+rp**2)
+                w=r==0
+		r[w}=1e-6
                 mur = rp/r
                 
                 if recalc:
