@@ -246,12 +246,6 @@ class model:
             kt = k*sp.sqrt(1-muk**2)
             nbins = self.dmat[lambda_abs+"_"+self.met_names2[0]].shape[0]
 
-            #irt = sp.arange(nbins,dtype=int)%50
-            #irp = (sp.arange(nbins,dtype=int)-irt)/50
-            #rti = 2+4.*irt
-	    #if nbins==2500: rpi = 2+4.*irp
-	    #elif nbins == 5000 : rpi = 2+4.*irp - 198.
-
             if self.hcds_mets:
                 bias_lls = pars["bias_lls"]
                 beta_lls = pars["beta_lls"]
@@ -301,7 +295,6 @@ class model:
                     rp = self.auto_rp[m1+"_"+m2]
 		    r = sp.sqrt(rp**2+rt**2)
                     w= r==0
-                    #r[w] = sp.sqrt(rti[w]**2+rpi[w]**2)
 		    r[w] = 1e-6 
 
 		    mur = rp/r
