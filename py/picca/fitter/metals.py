@@ -126,7 +126,7 @@ class model:
                 for m2 in igm_absorbers2[i0:]:
 		    if m1 == lambda_abs and m2 == lambda_abs2: continue
                     sys.stdout.write("reading {} {}\n".format(m1,m2))
-
+                    
                     self.dmat[m1+"_"+m2] = h[2]["DM_"+m1+"_"+m2][:]
                     self.auto_rt[m1+"_"+m2] = h[2]["RT_"+m1+"_"+m2][:]
                     self.auto_rp[m1+"_"+m2] = h[2]["RP_"+m1+"_"+m2][:]
@@ -275,12 +275,10 @@ class model:
                     bias_met1 = pars['bias_'+m1]
                     beta_met1 = pars['beta_'+m1]
                     alpha_met1 = pars["alpha_"+m1]
-
                 if self.met_names2 is not None:
                     i0=0
                 else:
                     i0=i
-
                 for m2 in igm_absorbers2[i0:]:
                     if m1 == lambda_abs and m2 == lambda_abs2: continue
                     sys.stdout.write("reading {} {}\n".format(m1,m2))
@@ -296,7 +294,6 @@ class model:
 		    r = sp.sqrt(rp**2+rt**2)
                     w= r==0
 		    r[w] = 1e-6 
-
 		    mur = rp/r
                     zeff  = self.auto_zeff[m1+"_"+m2]
 
