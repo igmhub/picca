@@ -11,10 +11,12 @@ class model:
     def __init__(self,dic_init):
         self.met_prefix  = dic_init['metal_prefix']
         self.met_names   = dic_init['metals']
-        self.met_names2  = dic_init['metals2']
 	self.lambda_abs  = dic_init['lambda_abs']
+
+        self.met_names2  = dic_init['metals2']
         self.lambda_abs2 = dic_init['lambda_abs2']
 
+        print("lambda_abs = {}".format('lambda_abs2'))
 
         nmet = len(self.met_names)
         self.nmet = nmet
@@ -34,7 +36,7 @@ class model:
             self.pinit.append(dic_init["bias_"+name])
             self.pinit.append(dic_init["beta_"+name])
             self.pinit.append(dic_init["alpha_"+name])
-
+        
 	if self.met_names2 is not None: 
             for name in self.met_names2:
 		if name not in self.met_names:
@@ -67,8 +69,9 @@ class model:
         met_prefix=self.met_prefix
         nmet = self.nmet
         met_names   = self.met_names
-        met_names2  = self.met_names2
         lambda_abs  = self.lambda_abs
+
+        met_names2  = self.met_names2
         lambda_abs2 = self.lambda_abs2
 
         if self.templates:
@@ -102,6 +105,7 @@ class model:
                 self.prev_pmet["beta_lls"]=0
                 self.prev_pmet["bias_lls"]=0
                 self.prev_pmet["L0_lls"]=1e-3
+
             self.prev_xi_lya_met  = {}
             self.prev_xi_dla_met  = {}
             self.prev_xi_dla_met2 = {}
@@ -117,6 +121,9 @@ class model:
 	    else: 
 		igm_absorbers2 = igm_absorbers 
 	    print("igm_absorbers2 = {}".format(igm_absorbers2))
+
+            self.igm_absorbers  = igm_absorbers
+            self.igm_absorbers2 = igm_absorbers2
 
             for i,m1 in enumerate(igm_absorbers):
 		if self.met_names2 is not None: 
@@ -145,7 +152,6 @@ class model:
                         self.prev_xi_dla_met2[m1] = sp.zeros(self.dmat[m1+"_"+lambda_abs2].shape[0])
 		    else: 
                         self.prev_xi_met_met[m1+"_"+m2] = sp.zeros(self.dmat[m1+"_"+m2].shape[0])
-
 
     def add_cross(self,dic_init):
 
@@ -205,10 +211,10 @@ class model:
     def valueAuto(self,pars):
 
 	met_names  = self.met_names 
-        met_names2 = self.met_names2
+        lambda_abs2 = self.lambda_abs2
 
 	lambda_abs  = self.lambda_abs
-        lambda_abs2 = self.lambda_abs2
+        met_names2 = self.met_names2
 
         bias_lya=pars["bias_lya*(1+beta_lya)"]
         beta_lya=pars["beta_lya"]
@@ -244,7 +250,8 @@ class model:
             k = self.k
             kp = k*muk
             kt = k*sp.sqrt(1-muk**2)
-            nbins = self.dmat[lambda_abs+"_"+self.met_names2[0]].shape[0]
+
+            nbins = self.dmat[self.igm_absorbers[0]+"_"+self.igm_absorbers2[1]].shape[0]
 
             if self.hcds_mets:
                 bias_lls = pars["bias_lls"]
@@ -259,18 +266,10 @@ class model:
             Gpar = sp.sinc(kp*Lpar_auto/2/sp.pi)**2
             Gper = sp.sinc(kt*Lper_auto/2/sp.pi)**2
 
-	    igm_absorbers = [lambda_abs]
-	    igm_absorbers.extend(met_names)
-
-	    if met_names2 is not None: 
-		igm_absorbers2 = [lambda_abs2]
-                igm_absorbers2.extend(met_names2)
-	    else: 
-		igm_absorbers2 = igm_absorbers
-
 	    xi_lya_met = sp.zeros(nbins)
             xi_met_met = sp.zeros(nbins)
-            for i,m1 in enumerate(igm_absorbers):
+
+            for i,m1 in enumerate(self.igm_absorbers):
                 if m1 != lambda_abs: 
                     bias_met1 = pars['bias_'+m1]
                     beta_met1 = pars['beta_'+m1]
@@ -279,7 +278,7 @@ class model:
                     i0=0
                 else:
                     i0=i
-                for m2 in igm_absorbers2[i0:]:
+                for m2 in self.igm_absorbers2[i0:]:
                     if m1 == lambda_abs and m2 == lambda_abs2: continue
                     sys.stdout.write("reading {} {}\n".format(m1,m2))
 			
@@ -367,8 +366,11 @@ class model:
                             self.prev_xi_met_met[m1+"_"+m2] = self.dmat[m1+"_"+m2].dot(xi)
                     
                         xi_met_met += bias_met1*bias_met2*self.prev_xi_met_met[m1+"_"+m2]
+
             for i in self.prev_pmet:
                 self.prev_pmet[i] = pars[i]
+
+  
         return xi_lya_met + xi_met_met
 
     def valueCross(self,pars):

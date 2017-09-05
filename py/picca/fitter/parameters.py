@@ -231,7 +231,7 @@ class parameters:
                 print '  picca/py/picca/fitter/parameters.py:: entry not metal = ', i
                 print '  Exit'
                 sys.exit(0)
-
+            
             if self.dic_init['metals2'] is not None: 
                 for met in self.dic_init['metals2']:
                     for par in metals_default:
@@ -241,7 +241,7 @@ class parameters:
                     print '  picca/py/picca/fitter/parameters.py:: entry not metal = ', i
                     print '  Exit'
                     sys.exit(0)
-
+            
         ### Set values
         for i in self.dic_init['metals']:
             if not any(i in el for el in self.dic_init):
@@ -254,7 +254,7 @@ class parameters:
                     else:
                         self.dic_init_float[par+'_'+i] = metals_default[par]
                         self.dic_init[par+'_'+i] = metals_default[par]
-
+        
 	if self.dic_init['metals2'] is not None: 
             for i in self.dic_init['metals2']:
                 if not any(i in el for el in self.dic_init):
@@ -267,7 +267,7 @@ class parameters:
                         else:
                             self.dic_init_float[par+'_'+i] = metals_default[par]
                             self.dic_init[par+'_'+i] = metals_default[par]
-
+        
 
         return
     def test_init_is_valid(self):
