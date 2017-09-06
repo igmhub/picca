@@ -16,8 +16,6 @@ class model:
         self.met_names2  = dic_init['metals2']
         self.lambda_abs2 = dic_init['lambda_abs2']
 
-        print("lambda_abs = {}".format('lambda_abs2'))
-
         nmet = len(self.met_names)
         self.nmet = nmet
         self.pname = []
