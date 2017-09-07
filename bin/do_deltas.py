@@ -107,6 +107,9 @@ if __name__ == '__main__':
     parser.add_argument('--order',type=int,default=1,required=False,
             help='order of the log(lambda) polynomial for the continuum fit, by default 1.')
 
+    parser.add_argument('--delta-format',type = str,default=None,required=False,
+            help='format for Pk 1D: Pk1D')
+
     args = parser.parse_args()
 
     ## init forest class
@@ -278,8 +281,13 @@ if __name__ == '__main__':
             hd["FIBERID"]=d.fid
             hd["ORDER"]=d.order
 
-            cols=[d.ll,d.de,d.we,d.co]
-            names=['LOGLAM','DELTA','WEIGHT','CONT']
+            if (args.delta_format=='Pk1D') :
+                cols=[d.ll,d.de]
+                names=['LOGLAM','DELTA']
+            else :
+                cols=[d.ll,d.de,d.we,d.co]
+                names=['LOGLAM','DELTA','WEIGHT','CONT']
+                
             out.write(cols,names=names,header=hd)
         out.close()
 
