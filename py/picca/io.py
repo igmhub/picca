@@ -210,7 +210,9 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
         ll = h[1]["loglam"][:]
         fl = h[1]["flux"][:]
         iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
-        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order)
+        diff =  h[1]["flux"][:] # Nathalie fill with the true diff!
+        wdisp =  h[1]["wdisp"][:] # Nathalie you have to change this with the resolution in km/s
+        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,wdisp)
         pix_data.append(d)
         h.close()
     return pix_data

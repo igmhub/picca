@@ -57,8 +57,13 @@ class forest(qso):
     eta = None
     mean_cont = None
 
+    ## quality variables
+    mean_SNR = None
+    mean_reso = None
+    mean_z = None
 
-    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order):
+
+    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order,diff,reso):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
         ## rebin
 
@@ -67,17 +72,28 @@ class forest(qso):
         fl=fl[w]
         iv =iv[w]
         bins=bins[w]
-
+        diff=diff[w]
+        reso=reso[w]
+        
         ll = forest.lmin + sp.unique(bins)*forest.dll
         civ = sp.bincount(bins,weights=iv)
         w=civ>0
         civ=civ[bins.min():]
         cfl = sp.bincount(bins,weights=iv*fl)
         cfl = cfl[bins.min():]
+        cdiff = sp.bincount(bins,weights=iv*diff)
+        cdiff = cdiff[bins.min():]
+        creso = sp.bincount(bins,weights=iv*reso)
+        creso = creso[bins.min():]
+        
         w=civ>0
         cfl[w]/=civ[w]
+        cdiff[w]/=civ[w]
+        creso[w]/=civ[w]
         iv = civ
         fl = cfl
+        diff=cdiff
+        reso=creso
 
 
         ## cut to specified range
@@ -88,7 +104,9 @@ class forest(qso):
         ll=ll[w]
         fl=fl[w]
         iv=iv[w]
-
+        diff=diff[w]
+        reso=reso[w]
+        
         if not self.correc_flux is None:
             correction = self.correc_flux(ll)
             fl /= correction
@@ -99,6 +117,8 @@ class forest(qso):
         self.fl = fl
         self.iv = iv
         self.order=order
+        self.diff=diff
+        self.reso=reso
 
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):
@@ -168,14 +188,19 @@ class forest(qso):
 
 
 class delta(qso):
-    
-    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order):
+ 
+    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
         self.ll = ll
         self.we = we
         self.co = co
         self.de = de
         self.order=order
+        self.iv = iv
+        self.diff = diff
+        self.mean_SNR = m_SNR
+        self.mean_reso = m_reso
+        self.mean_z = m_z
 
     @classmethod
     def from_forest(cls,f,st,var_lss,eta):
@@ -185,7 +210,9 @@ class delta(qso):
         iv = f.iv/eta(f.ll)
         we = iv*f.co**2/(iv*f.co**2*var_lss(f.ll)+1)
         co = f.co
-        return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order)
+        
+        return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
+                   iv,f.diff,f.mean_SNR,f.mean_SNR,f.mean_z)
 
     @classmethod
     def from_fitsio(cls,h):

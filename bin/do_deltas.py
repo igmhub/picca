@@ -282,11 +282,17 @@ if __name__ == '__main__':
             hd["ORDER"]=d.order
 
             if (args.delta_format=='Pk1D') :
-                cols=[d.ll,d.de]
-                names=['LOGLAM','DELTA']
+                hd["MEANZ"]=d.mean_z
+                hd["MEANRESO"]=d.mean_reso
+                hd["MEANSNR"]=d.mean_SNR
+
+            if (args.delta_format=='Pk1D') :
+                cols=[d.ll,d.de,d.iv,d.diff]
+                names=['LOGLAM','DELTA','IVAR','DIFF']
             else :
                 cols=[d.ll,d.de,d.we,d.co]
                 names=['LOGLAM','DELTA','WEIGHT','CONT']
+
                 
             out.write(cols,names=names,header=hd)
         out.close()
