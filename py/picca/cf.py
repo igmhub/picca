@@ -292,7 +292,6 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 if x_correlation : rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2) 
 		else : rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
-		print("alpha_met = {}".format(alpha_met))
                 zwe12 = (1+z1_abs1[:,None])**(alpha_met-1)*(1+z2_abs2)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
                 bp_abs1_abs2 = ((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)

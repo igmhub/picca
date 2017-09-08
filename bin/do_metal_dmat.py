@@ -190,7 +190,9 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
-    if x_correlation: 
+    cf.alpha_met = args.metal_alpha
+    if x_correlation:
+       print "doing cross-correlation ... "
        cf.data2 = data2 
        cf.ndata2 = ndata2 
     print "done"
