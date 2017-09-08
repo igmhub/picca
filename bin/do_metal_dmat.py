@@ -166,8 +166,6 @@ if __name__ == '__main__':
         d.z = z
         d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
-        if not args.no_project:
-            d.project()
     
     if x_correlation: 
         z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
@@ -186,8 +184,6 @@ if __name__ == '__main__':
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
-            if not args.no_project:
-                d.project()
 
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
