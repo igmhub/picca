@@ -266,7 +266,6 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 ang = d1^d2
-
                 r2 = d2.r_comov
                 z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
                 r2_abs1 = cosmo.r_comoving(z2_abs1)
@@ -293,8 +292,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 if x_correlation : rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2) 
 		else : rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
+		print("alpha_met = {}".format(alpha_met))
                 zwe12 = (1+z1_abs1[:,None])**(alpha_met-1)*(1+z2_abs2)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
-
                 bp_abs1_abs2 = ((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
                 bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
@@ -311,7 +310,6 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 zeff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
                 weff[:len(c)]+=c
-
                 if abs_igm1 != abs_igm2:
                     if x_correlation : rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
 		    else : rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
