@@ -212,16 +212,35 @@ class delta(qso):
         co = f.co
         
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
-                   iv,f.diff,f.mean_SNR,f.mean_SNR,f.mean_z)
+                   iv,f.diff,f.mean_SNR,f.mean_reso,f.mean_z)
 
     @classmethod
-    def from_fitsio(cls,h):
-        de = h['DELTA'][:]
-        we = h['WEIGHT'][:]
-        ll = h['LOGLAM'][:]
-        co = h['CONT'][:]
+    def from_fitsio(cls,h,Pk1D_type=False):
 
         head = h.read_header()
+        
+        de = h['DELTA'][:]
+        ll = h['LOGLAM'][:]
+
+
+        if  Pk1D_type :
+            iv = h['IVAR'][:]
+            diff = h['DIFF'][:]
+            m_SNR = head['MEANSNR']
+            m_reso = head['MEANRESO']
+            m_z = head['MEANZ']
+            we = None
+            co = None
+        else :                
+            iv = None
+            diff = None
+            m_SNR = None
+            m_reso = None
+            m_z = None
+            we = h['WEIGHT'][:]
+            co = h['CONT'][:]
+
+      
         thid = head['THING_ID']
         ra = head['RA']
         dec = head['DEC']
@@ -233,7 +252,8 @@ class delta(qso):
             order = head['ORDER']
         except ValueError:
             order = 1
-        return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order)
+        return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,
+                   iv,diff,m_SNR,m_reso,m_z)
 
     @staticmethod
     def from_image(f):
