@@ -3,6 +3,8 @@ from astropy.io import fits
 from picca import constants
 import iminuit
 from dla import dla
+import numpy as np
+
 
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
@@ -116,9 +118,17 @@ class forest(qso):
         self.ll = ll
         self.fl = fl
         self.iv = iv
-        self.order=order
-        self.diff=diff
-        self.reso=reso
+        self.order = order
+        self.diff = diff
+        self.reso = reso
+
+        # compute means
+        self.mean_reso = sum(reso)/float(len(reso))
+        err = 1.0/np.sqrt(iv)
+        SNR = fl/err
+        self.mean_SNR = sum(SNR)/float(len(SNR))           
+        lam_lya = constants.absorber_IGM["LYA"]
+        self.mean_z = (np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))/2./lam_lya -1.0
 
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):
