@@ -235,6 +235,8 @@ if __name__ == '__main__':
         print("ERROR: abs_igm is not known")
         sys.exit(12)
 
+    print("abs_igm = {}".format(abs_igm))
+
     if args.abs_igm2: 
         print "args.lambda_abs2 = ", args.lambda_abs2
         if args.lambda_abs2 == constants.absorber_IGM['LYA']: 
@@ -246,7 +248,9 @@ if __name__ == '__main__':
             sys.exit(12)
     else: 
         abs_igm_2=copy.deepcopy(abs_igm)
+    print("abs_igm_2 = {}".format(abs_igm_2))
 
+    
     for i,abs_igm1 in enumerate(abs_igm):
         i0=0 
         if not x_correlation: i0=i 

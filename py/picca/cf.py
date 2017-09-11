@@ -254,7 +254,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             r1 = d1.r_comov
             z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
             r1_abs1 = cosmo.r_comoving(z1_abs1)
-            z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
+            z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1 
             r1_abs2 = cosmo.r_comoving(z1_abs2)
             w1 = d1.we
             l1 = d1.ll
@@ -279,7 +279,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 rt = (r1[:,None]+r2)*sp.sin(ang/2)
                 w12 = w1[:,None]*w2
 
-                bp = (rp/rp_max*np).astype(int)
+                bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
                 bt = (rt/rt_max*nt).astype(int)
                 if same_half_plate:
                     wp = bp==np*rp_min/(rp_min-rp_max)
