@@ -123,7 +123,7 @@ class forest(qso):
         self.reso = reso
 
         # compute means
-        self.mean_reso = sum(reso)/float(len(reso))
+        self.mean_reso = sum(reso)/float(len(reso))*constants.speed_light/1000.*1.0e-4*np.log(10.)
         err = 1.0/np.sqrt(iv)
         SNR = fl/err
         self.mean_SNR = sum(SNR)/float(len(SNR))           
@@ -199,30 +199,33 @@ class forest(qso):
 
 class delta(qso):
  
-    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z):
+    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
         self.ll = ll
         self.we = we
         self.co = co
         self.de = de
-        self.order=order
+        self.order = order
         self.iv = iv
         self.diff = diff
         self.mean_SNR = m_SNR
         self.mean_reso = m_reso
         self.mean_z = m_z
+        self.dll = dll
 
     @classmethod
     def from_forest(cls,f,st,var_lss,eta):
 
         de = f.fl/f.co/st(f.ll)-1
         ll = f.ll
-        iv = f.iv/eta(f.ll)
+#        iv = f.iv/eta(f.ll)
+        iv = f.iv/eta(f.ll)*(f.co**2)*(st(f.ll)**2)
+        diff = f.diff//f.co/st(f.ll)
         we = iv*f.co**2/(iv*f.co**2*var_lss(f.ll)+1)
         co = f.co
-        
+         
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
-                   iv,f.diff,f.mean_SNR,f.mean_reso,f.mean_z)
+                   iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
 
     @classmethod
     def from_fitsio(cls,h,Pk1D_type=False):
@@ -231,7 +234,7 @@ class delta(qso):
         
         de = h['DELTA'][:]
         ll = h['LOGLAM'][:]
-
+ 
 
         if  Pk1D_type :
             iv = h['IVAR'][:]
@@ -258,12 +261,13 @@ class delta(qso):
         plate = head['PLATE']
         mjd = head['MJD']
         fid = head['FIBERID']
+        dll =  head['DLL']
         try: 
             order = head['ORDER']
         except ValueError:
             order = 1
         return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,
-                   iv,diff,m_SNR,m_reso,m_z)
+                   iv,diff,m_SNR,m_reso,m_z,dll)
 
     @staticmethod
     def from_image(f):

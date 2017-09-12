@@ -280,6 +280,7 @@ if __name__ == '__main__':
             hd["MJD"]=d.mjd
             hd["FIBERID"]=d.fid
             hd["ORDER"]=d.order
+            hd["DLL"]=d.dll
 
             if (args.delta_format=='Pk1D') :
                 hd["MEANZ"]=d.mean_z

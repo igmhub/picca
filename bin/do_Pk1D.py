@@ -5,6 +5,7 @@ import fitsio
 import argparse
 import glob
 import sys
+import numpy as np
 
 from picca import constants
 from picca.Pk1D import Pk1D, compute_Pk_raw, compute_Pk_noise, compute_cor_reso
@@ -22,7 +23,9 @@ def make_tree(tree,nb_bin_max):
     nb_r = array( 'i', [ 0 ] )
     k_r = array( 'f', nb_bin_max*[ 0. ] )
     Pk_r = array( 'f', nb_bin_max*[ 0. ] )
+    Pk_raw_r = array( 'f', nb_bin_max*[ 0. ] )
     Pk_noise_r = array( 'f', nb_bin_max*[ 0. ] )
+    cor_reso_r = array( 'f', nb_bin_max*[ 0. ] )
 
     tree.Branch("zqso",zqso,"zqso/F")
     tree.Branch("mean_z",mean_z,"mean_z/F")
@@ -31,10 +34,12 @@ def make_tree(tree,nb_bin_max):
 
     tree.Branch( 'NbBin', nb_r, 'NbBin/I' )
     tree.Branch( 'k', k_r, 'k[NbBin]/F' )
+    tree.Branch( 'Pk_raw', Pk_raw_r, 'Pk_raw[NbBin]/F' )
     tree.Branch( 'Pk_noise', Pk_noise_r, 'Pk_noise[NbBin]/F' )
+    tree.Branch( 'cor_reso', cor_reso_r, 'cor_reso[NbBin]/F' )
     tree.Branch( 'Pk', Pk_r, 'Pk[NbBin]/F' )
     
-    return zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_noise_r
+    return zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r
 
 
 if __name__ == '__main__':
@@ -60,7 +65,7 @@ if __name__ == '__main__':
         storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
-        zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_noise_r = make_tree(tree,nb_bin_max)
+        zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r = make_tree(tree,nb_bin_max)
     
 
 # Read Deltas
@@ -82,10 +87,11 @@ if __name__ == '__main__':
             k,Pk_raw = compute_Pk_raw(d.de,d.ll)
 
 # Compute Pk_noise
-            Pk_noise = compute_Pk_noise(d.iv,d.diff)               
+            Pk_noise,Pk_diff = compute_Pk_noise(d.iv,d.diff,d.ll)               
 
 # Compute resolution correction
-            cor_reso = compute_cor_reso(k)
+            delta_pixel = d.dll*np.log(10.)*constants.speed_light/1000.
+            cor_reso = compute_cor_reso(delta_pixel,d.mean_reso,k)
 
 # Compute 1D Pk
             Pk = (Pk_raw - Pk_noise)/cor_reso
@@ -103,8 +109,10 @@ if __name__ == '__main__':
                 nb_r[0] = min(len(k),nb_bin_max)
                 for i in range(nb_r[0]) :
                     k_r[i] = k[i]
+                    Pk_raw_r[i] = Pk_raw[i]
                     Pk_noise_r[i] = Pk_noise[i]
                     Pk_r[i] = Pk[i]
+                    cor_reso_r[i] = cor_reso[i]
                                
                 tree.Fill()
 

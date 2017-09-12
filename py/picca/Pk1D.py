@@ -1,39 +1,63 @@
 import numpy as np
 from picca import constants
-
+import pyfftw
 
 def compute_Pk_raw(delta,ll):
 
-    nb_pixels = len(delta)
-    nb_bin_FFT = nb_pixels/2 + 1
 #   Length in km/s     
     length_lambda = (np.power(10.,ll[len(ll)-1])-np.power(10.,ll[0]))/(np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))*constants.speed_light/1000.
 
-    Pk = np.zeros(nb_bin_FFT)
-    k =  np.zeros(nb_bin_FFT)
+# make 1D FFT        
+    nb_pixels = len(delta)
+    nb_bin_FFT = nb_pixels/2 + 1
+    a = pyfftw.empty_aligned(nb_pixels, dtype='complex128')
+    fft = pyfftw.builders.fft(a)
+    for i in range(nb_pixels): a[i]=delta[i]
+    fft_a = fft() 
     
+# compute power spectrum        
+    Pk = np.zeros(nb_bin_FFT)
+    k =  np.zeros(nb_bin_FFT)        
     for i in range(nb_bin_FFT):
-        Pk = 2.412
+        Pk[i] = float(fft_a[i].real**2 + fft_a[i].imag**2)*length_lambda/float(nb_pixels**2)
         k[i] = float(i)*2.0*np.pi/length_lambda
     
     return k,Pk
 
 
-def compute_Pk_noise(iv,diff):
+def compute_Pk_noise(iv,diff,ll):
 
     nb_pixels = len(iv)
     nb_bin_FFT = nb_pixels/2 + 1
 
+    nb_noise_exp = 10
     Pk = np.zeros(nb_bin_FFT)
+    err = 1.0/np.sqrt(iv)
     
-    return Pk
+    for iexp in range(nb_noise_exp):
+        delta_exp= np.zeros(nb_pixels)
+        for i in range(nb_pixels):
+            delta_exp[i] = np.random.normal(0.,err[i])
+        k_exp,Pk_exp = compute_Pk_raw(delta_exp,ll)
+        Pk += Pk_exp 
+        
+    Pk /= float(nb_noise_exp)
 
-def compute_cor_reso(k):
+    k_diff,Pk_diff = compute_Pk_raw(diff,ll)
+    
+    return Pk,Pk_diff
+
+def compute_cor_reso(delta_pixel,mean_reso,k):
 
     nb_bin_FFT = len(k)
-
     cor = np.ones(nb_bin_FFT)
+    sinc = np.ones(nb_bin_FFT)
     
+    for i in range(1,nb_bin_FFT) :
+        sinc[i] = (np.sin(k[i]*delta_pixel/2.0)/(k[i]*delta_pixel/2.0))**2
+    
+    cor *= np.exp(-(k*mean_reso)**2)
+    cor *= sinc
     return cor
 
 
