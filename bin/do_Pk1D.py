@@ -59,18 +59,17 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-#   Debug with root
+#   Create root file
     if (args.mode=='root') :
         from ROOT import TCanvas, TH1F, TFile, TTree
         storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
         zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r = make_tree(tree,nb_bin_max)
-    
 
+        
 # Read Deltas
     fi = glob.glob(args.in_dir+"/*.fits.gz")
-    print fi
     data = {}
     ndata = 0
 
@@ -80,6 +79,8 @@ if __name__ == '__main__':
         hdus = fitsio.FITS(f)
         dels = [delta.from_fitsio(h,Pk1D_type=True) for h in hdus[1:]]
         ndata+=len(dels)
+        if (args.mode=='fits') :
+            out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
         print ' ndata = ',ndata
         for d in dels:
 
@@ -99,7 +100,7 @@ if __name__ == '__main__':
 # Build   Pk1D
             Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,k,Pk_raw,Pk_noise,cor_reso,Pk)
 
-# save with root format
+# save in root format
             if (args.mode=='root'):
                 zqso[0] = d.zqso
                 mean_z[0] = d.mean_z
@@ -116,8 +117,25 @@ if __name__ == '__main__':
                                
                 tree.Fill()
 
+# save in fits format
+
+            if (args.mode=='fits'):
+                hd={}
+                hd["RA"]=d.ra
+                hd["DEC"]=d.dec
+                hd["Z"]=d.zqso
+                hd["MEANZ"]=d.mean_z
+                hd["MEANRESO"]=d.mean_reso
+                hd["MEANSNR"]=d.mean_SNR
+
+                cols=[k,Pk]
+                names=['k','Pk']
                 
-# Store results           
+                out.write(cols,names=names,header=hd)
+        if (args.mode=='fits'):
+            out.close()
+        
+# Store root file results           
     if (args.mode=='root'):
          storeFile.Write()
 
