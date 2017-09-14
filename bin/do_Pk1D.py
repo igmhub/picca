@@ -25,6 +25,7 @@ def make_tree(tree,nb_bin_max):
     Pk_r = array( 'f', nb_bin_max*[ 0. ] )
     Pk_raw_r = array( 'f', nb_bin_max*[ 0. ] )
     Pk_noise_r = array( 'f', nb_bin_max*[ 0. ] )
+    Pk_diff_r = array( 'f', nb_bin_max*[ 0. ] )
     cor_reso_r = array( 'f', nb_bin_max*[ 0. ] )
 
     tree.Branch("zqso",zqso,"zqso/F")
@@ -36,10 +37,11 @@ def make_tree(tree,nb_bin_max):
     tree.Branch( 'k', k_r, 'k[NbBin]/F' )
     tree.Branch( 'Pk_raw', Pk_raw_r, 'Pk_raw[NbBin]/F' )
     tree.Branch( 'Pk_noise', Pk_noise_r, 'Pk_noise[NbBin]/F' )
+    tree.Branch( 'Pk_diff', Pk_diff_r, 'Pk_diff[NbBin]/F' )
     tree.Branch( 'cor_reso', cor_reso_r, 'cor_reso[NbBin]/F' )
     tree.Branch( 'Pk', Pk_r, 'Pk[NbBin]/F' )
     
-    return zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r
+    return zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
 
 
 if __name__ == '__main__':
@@ -65,7 +67,7 @@ if __name__ == '__main__':
         storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
-        zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r = make_tree(tree,nb_bin_max)
+        zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
 
         
 # Read Deltas
@@ -112,6 +114,7 @@ if __name__ == '__main__':
                     k_r[i] = k[i]
                     Pk_raw_r[i] = Pk_raw[i]
                     Pk_noise_r[i] = Pk_noise[i]
+                    Pk_diff_r[i] = Pk_diff[i]
                     Pk_r[i] = Pk[i]
                     cor_reso_r[i] = cor_reso[i]
                                

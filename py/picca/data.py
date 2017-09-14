@@ -220,10 +220,10 @@ class delta(qso):
         ll = f.ll
 #        iv = f.iv/eta(f.ll)
         iv = f.iv/eta(f.ll)*(f.co**2)*(st(f.ll)**2)
-        diff = f.diff//f.co/st(f.ll)
+        diff = f.diff/f.co/st(f.ll)
         we = iv*f.co**2/(iv*f.co**2*var_lss(f.ll)+1)
         co = f.co
-         
+        
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
                    iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
 
@@ -242,6 +242,7 @@ class delta(qso):
             m_SNR = head['MEANSNR']
             m_reso = head['MEANRESO']
             m_z = head['MEANZ']
+            dll =  head['DLL']
             we = None
             co = None
         else :                
@@ -249,6 +250,7 @@ class delta(qso):
             diff = None
             m_SNR = None
             m_reso = None
+            dll = None
             m_z = None
             we = h['WEIGHT'][:]
             co = h['CONT'][:]
@@ -261,7 +263,7 @@ class delta(qso):
         plate = head['PLATE']
         mjd = head['MJD']
         fid = head['FIBERID']
-        dll =  head['DLL']
+
         try: 
             order = head['ORDER']
         except ValueError:

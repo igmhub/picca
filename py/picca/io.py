@@ -9,6 +9,8 @@ from picca.data import forest
 from picca.data import delta
 from picca.data import qso
 
+from picca.prep_Pk1D import exp_diff
+
 def read_dlas(fdla):
     f=open(fdla)
     dlas={}
@@ -185,9 +187,12 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             ndata += len(pix_data)
 
         if not nspec is None:
-            if ndata > nspec:break
+            if ndata >= nspec:break
 
     return data,ndata
+
+
+
 
 def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
     pix_data = []
@@ -207,11 +212,16 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
             continue
 
         log.write("{} read\n".format(fin))
+
         ll = h[1]["loglam"][:]
         fl = h[1]["flux"][:]
         iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
-        diff =  h[1]["flux"][:] # Nathalie fill with the true diff!
+
+        # 
+        diff = exp_diff(h,ll)
+              
         wdisp =  h[1]["wdisp"][:] # Nathalie you have to change this with the resolution in km/s
+
         d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,wdisp)
         pix_data.append(d)
         h.close()
