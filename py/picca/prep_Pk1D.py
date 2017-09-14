@@ -1,6 +1,6 @@
 import fitsio
 import scipy as sp
-
+from picca import constants
 
 
 def exp_diff(file,ll) :
@@ -41,3 +41,11 @@ def exp_diff(file,ll) :
     diff = 0.5 * (fltoteven-fltotodd) * alpha ### CHECK THE * alpha (Nathalie)
     
     return diff
+
+
+
+def spectral_resolution(wdisp) :
+
+    reso = wdisp*constants.speed_light/1000.*1.0e-4*sp.log(10.)
+    
+    return reso

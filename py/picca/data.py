@@ -3,7 +3,6 @@ from astropy.io import fits
 from picca import constants
 import iminuit
 from dla import dla
-import numpy as np
 
 
 class qso:
@@ -123,12 +122,12 @@ class forest(qso):
         self.reso = reso
 
         # compute means
-        self.mean_reso = sum(reso)/float(len(reso))*constants.speed_light/1000.*1.0e-4*np.log(10.)
-        err = 1.0/np.sqrt(iv)
+        self.mean_reso = sum(reso)/float(len(reso))
+        err = 1.0/sp.sqrt(iv)
         SNR = fl/err
         self.mean_SNR = sum(SNR)/float(len(SNR))           
         lam_lya = constants.absorber_IGM["LYA"]
-        self.mean_z = (np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))/2./lam_lya -1.0
+        self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
 
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):

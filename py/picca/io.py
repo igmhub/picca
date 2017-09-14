@@ -10,6 +10,7 @@ from picca.data import delta
 from picca.data import qso
 
 from picca.prep_Pk1D import exp_diff
+from picca.prep_Pk1D import spectral_resolution
 
 def read_dlas(fdla):
     f=open(fdla)
@@ -217,12 +218,13 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
         fl = h[1]["flux"][:]
         iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
 
-        # 
+        # compute difference between exposure
         diff = exp_diff(h,ll)
-              
-        wdisp =  h[1]["wdisp"][:] # Nathalie you have to change this with the resolution in km/s
+        # compute spectral resolution      
+        wdisp =  h[1]["wdisp"][:]
+        reso = spectral_resolution(wdisp)
 
-        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,wdisp)
+        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
         pix_data.append(d)
         h.close()
     return pix_data
