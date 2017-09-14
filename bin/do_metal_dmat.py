@@ -106,6 +106,7 @@ if __name__ == '__main__':
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
     cf.lambda_abs = args.lambda_abs
+    cf.lambda_abs2 = args.lambda_abs2
     cf.rej = args.rej
 
     cosmo = constants.cosmo(args.fid_Om)
@@ -252,8 +253,8 @@ if __name__ == '__main__':
 
     
     for i,abs_igm1 in enumerate(abs_igm):
-        i0=0 
-        if not x_correlation: i0=i 
+        i0=i
+        if cf.lambda_abs != cf.lambda_abs2: i0=0
         for j in range(i0,len(abs_igm_2)):
             if ((i==0)and(j==0)): continue 
             abs_igm2 = abs_igm_2[j]
