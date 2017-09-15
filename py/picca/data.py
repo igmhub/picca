@@ -3,6 +3,7 @@ from astropy.io import fits
 from picca import constants
 import iminuit
 from dla import dla
+import sys
 
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
