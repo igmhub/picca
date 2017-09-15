@@ -165,6 +165,7 @@ class forest(qso):
         self.co=model(mig.values["p0"],mig.values["p1"])
         self.p0 = mig.values["p0"]
         self.p1 = mig.values["p1"]
+        sys.stderr.write("CONT FIT {} {} {}\n".format(self.thid,p0,p1))
 
 
 class delta(qso):
