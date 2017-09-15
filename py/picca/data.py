@@ -3,6 +3,7 @@ from astropy.io import fits
 from picca import constants
 import iminuit
 from dla import dla
+import sys
 
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
@@ -160,7 +161,7 @@ class forest(qso):
         p0 = (self.fl*self.iv).sum()/self.iv.sum()
         p1 = 0
 
-        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p1/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
+        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p0/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
         mig.migrad()
         self.co=model(mig.values["p0"],mig.values["p1"])
         self.p0 = mig.values["p0"]
