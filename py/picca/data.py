@@ -161,12 +161,12 @@ class forest(qso):
         p0 = (self.fl*self.iv).sum()/self.iv.sum()
         p1 = 0
 
-        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p1/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
+        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p0/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
         mig.migrad()
         self.co=model(mig.values["p0"],mig.values["p1"])
         self.p0 = mig.values["p0"]
         self.p1 = mig.values["p1"]
-        sys.stderr.write("CONT FIT {} {} {}\n".format(self.thid,p0,p1))
+        sys.stderr.write("CONT FIT {} {} {} {} \n".format(self.thid,self.p0,self.p1,self.order))
 
 
 class delta(qso):
