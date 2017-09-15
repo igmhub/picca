@@ -211,10 +211,6 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
         fl = h[1]["flux"][:]
         iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
         d = forest(ll,fl,iv, t, r, d, z, p, m, f,order)
-        try:
-            sys.stderr.write("{} {} {} {}\n".format(d.thid,d.fl.mean(),d.ll.mean(),d.iv.mean()))
-        except:
-            pass
 
         pix_data.append(d)
         h.close()
