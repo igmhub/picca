@@ -51,10 +51,9 @@ def compute_cor_reso(delta_pixel,mean_reso,k):
 
     nb_bin_FFT = len(k)
     cor = np.ones(nb_bin_FFT)
+
     sinc = np.ones(nb_bin_FFT)
-    
-    for i in range(1,nb_bin_FFT) :
-        sinc[i] = (np.sin(k[i]*delta_pixel/2.0)/(k[i]*delta_pixel/2.0))**2
+    sinc[k>0.] =  (np.sin(k[k>0.]*delta_pixel/2.0)/(k[k>0.]*delta_pixel/2.0))**2
     
     cor *= np.exp(-(k*mean_reso)**2)
     cor *= sinc

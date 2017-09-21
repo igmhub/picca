@@ -55,9 +55,14 @@ if __name__ == '__main__':
                         help = 'data directory')
 
     parser.add_argument('--mode', type = str, default = None, required=False,
-                        help = ' if root call PyRoot')
+                        help = ' root or fits, if root call PyRoot')
 
-
+    parser.add_argument('--SNR-min',type = float,default=2.,required=False,
+                        help = 'minimal mean SNR per pixel ')
+    
+    parser.add_argument('--reso-max',type = float,default=85.,required=False,
+                        help = 'maximal resolution in km/s ')
+    
 
     args = parser.parse_args()
 
@@ -86,23 +91,26 @@ if __name__ == '__main__':
         print ' ndata = ',ndata
         for d in dels:
 
-# Compute Pk_raw
+            # Selection over the SNR and the resolution
+            if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
+            
+            # Compute Pk_raw
             k,Pk_raw = compute_Pk_raw(d.de,d.ll)
 
-# Compute Pk_noise
+            # Compute Pk_noise
             Pk_noise,Pk_diff = compute_Pk_noise(d.iv,d.diff,d.ll)               
 
-# Compute resolution correction
+            # Compute resolution correction
             delta_pixel = d.dll*np.log(10.)*constants.speed_light/1000.
             cor_reso = compute_cor_reso(delta_pixel,d.mean_reso,k)
 
-# Compute 1D Pk
+            # Compute 1D Pk
             Pk = (Pk_raw - Pk_noise)/cor_reso
 
-# Build   Pk1D
+            # Build   Pk1D
             Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,k,Pk_raw,Pk_noise,cor_reso,Pk)
 
-# save in root format
+            # save in root format
             if (args.mode=='root'):
                 zqso[0] = d.zqso
                 mean_z[0] = d.mean_z
@@ -120,7 +128,7 @@ if __name__ == '__main__':
                                
                 tree.Fill()
 
-# save in fits format
+            # save in fits format
 
             if (args.mode=='fits'):
                 hd={}
