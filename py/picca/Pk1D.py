@@ -5,8 +5,8 @@ import pyfftw
 def compute_Pk_raw(delta,ll):
 
 #   Length in km/s     
-    length_lambda = (np.power(10.,ll[len(ll)-1])-np.power(10.,ll[0]))/(np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))*constants.speed_light/1000.
-
+    length_lambda = (np.power(10.,ll[len(ll)-1])-np.power(10.,ll[0]))/(np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))*2.0*constants.speed_light/1000.
+    
 # make 1D FFT        
     nb_pixels = len(delta)
     nb_bin_FFT = nb_pixels/2 + 1
