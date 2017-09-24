@@ -142,7 +142,8 @@ class forest(qso):
         self.ll = self.ll[w]
         self.fl = self.fl[w]
         self.iv = self.iv[w]
-
+        self.diff = self.diff[w]
+ 
     def add_dla(self,zabs,nhi,mask=None):
         if not hasattr(self,'ll'):
             return
@@ -159,6 +160,7 @@ class forest(qso):
         self.iv = self.iv[w]
         self.ll = self.ll[w]
         self.fl = self.fl[w]
+        self.diff = self.diff[w]
         self.T_dla = self.T_dla[w]
 
     def cont_fit(self):
