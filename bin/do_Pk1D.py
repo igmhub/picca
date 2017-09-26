@@ -8,7 +8,7 @@ import sys
 import numpy as np
 
 from picca import constants
-from picca.Pk1D import Pk1D, compute_Pk_raw, compute_Pk_noise, compute_cor_reso
+from picca.Pk1D import Pk1D, compute_Pk_raw, compute_Pk_noise, compute_cor_reso, fill_masked_pixels
 from picca.data import delta
 
 from array import array
@@ -43,6 +43,14 @@ def make_tree(tree,nb_bin_max):
     
     return zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
 
+def compute_mean_delta(ll,delta,zqso):
+
+    for i in range (len(ll)):
+        ll_obs= np.power(10.,ll[i])
+        ll_rf = ll_obs/(1.+zqso)
+        hdelta.Fill(ll_obs,ll_rf,delta[i])
+
+    return
 
 if __name__ == '__main__':
 
@@ -68,11 +76,12 @@ if __name__ == '__main__':
 
 #   Create root file
     if (args.mode=='root') :
-        from ROOT import TCanvas, TH1F, TFile, TTree
+        from ROOT import TCanvas, TH1F, TFile, TTree, TProfile2D
         storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
         zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
+        hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 34, 3600., 7000., 16, 1040., 1200., -5.0, 5.0)
 
         
 # Read Deltas
@@ -93,12 +102,16 @@ if __name__ == '__main__':
 
             # Selection over the SNR and the resolution
             if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
+
+            # Fill masked pixels with 0.
+            ll_new,delta_new,diff_new,iv_new = fill_masked_pixels(d.dll,d.ll,d.de,d.diff,d.iv)
+            if (args.mode=='root'): compute_mean_delta(ll_new,delta_new,d.zqso)
             
             # Compute Pk_raw
-            k,Pk_raw = compute_Pk_raw(d.de,d.ll)
+            k,Pk_raw = compute_Pk_raw(delta_new,ll_new)
 
             # Compute Pk_noise
-            Pk_noise,Pk_diff = compute_Pk_noise(d.iv,d.diff,d.ll)               
+            Pk_noise,Pk_diff = compute_Pk_noise(iv_new,diff_new,ll_new)               
 
             # Compute resolution correction
             delta_pixel = d.dll*np.log(10.)*constants.speed_light/1000.

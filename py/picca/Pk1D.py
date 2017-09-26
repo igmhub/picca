@@ -2,6 +2,32 @@ import numpy as np
 from picca import constants
 import pyfftw
 
+def fill_masked_pixels(dll,ll,delta,diff,iv):
+
+    ll_idx = ll.copy()
+    ll_idx -= ll[0]
+    ll_idx /= dll
+    ll_idx += 0.5
+    index =np.array(ll_idx,dtype=int)
+    index_all = range(index[-1]+1)
+    index_ok = np.in1d(index_all, index)
+
+    delta_new = np.zeros(len(index_all))
+    delta_new[index_ok]=delta
+
+    ll_new = np.array(index_all,dtype=float)
+    ll_new *= dll
+    ll_new += ll[0]
+
+    diff_new = np.zeros(len(index_all))
+    diff_new[index_ok]=diff
+
+    iv_new = np.ones(len(index_all))
+    iv_new *= 1.0e10
+    iv_new[index_ok]=iv
+
+    return ll_new,delta_new,diff_new,iv_new
+
 def compute_Pk_raw(delta,ll):
 
 #   Length in km/s     
