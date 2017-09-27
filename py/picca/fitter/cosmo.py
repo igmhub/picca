@@ -72,9 +72,12 @@ class model:
         if dic_init['QSO_evolution']=='croom':
             self.evolution_QSO_bias = utils.evolution_QSO_bias_croom
 
-        self.dnl  = (not  dic_init['no_dnl'])
+        self.dnl  = (not  dic_init['no_dnl']) & (not dic_init['dnl_alt'])
+        self.dnl_alt  = dic_init['dnl_alt']
         if self.dnl :
             print "with DNL"
+        elif self.dnl_alt :
+            print "with DNL_ALT"
         else :
             print "without DNL"
 
@@ -158,7 +161,13 @@ class model:
     def DNL(k,muk):
         kv = 1.22*(1+k/0.923)**0.451
         return sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kv)**1.5)
-
+    
+    @staticmethod
+    def DNL_ALT(k,muk,pk):
+        growth = 0.859*k*k*k*pk/(2*sp.pi*sp.pi);
+        pecvelocity = sp.power(k/1.1161,0.531)*sp.power(sp.fabs(muk),1.605);
+        pressure = (k/19.45)*(k/19.45);
+        return sp.exp(growth*(1-pecvelocity)-pressure);
 
     def valueAuto(self,rp,rt,z,pars):
         if self.xi_auto_prev is None or not sp.allclose(pars.values(),self.pars_auto_prev):
@@ -222,7 +231,7 @@ class model:
             beta_lya = (bias_lya*beta_lya + bias_lls*beta_lls*F_lls)/(bias_lya+bias_lls*F_lls)
             bias_lya = bias_lya + bias_lls*F_lls
 
-        pk_full =pk_lin * (1+beta_lya*muk**2)**2*bias_lya**2
+        pk_full = pk_lin * (1+beta_lya*muk**2)**2*bias_lya**2
 
         Lpar=pars["Lpar_auto"]
         Lper=pars["Lper_auto"]
@@ -234,9 +243,11 @@ class model:
         sigmaNLper = pars["SigmaNL_perp"]
         sigmaNLpar = sigmaNLper*pars["1+f"]
         pk_nl = sp.exp(-(kp*sigmaNLpar)**2/2-(kt*sigmaNLper)**2/2)
-        pk_full*=pk_nl
+        pk_full *= pk_nl
         if self.dnl :
-            pk_full*=self.DNL(k,muk)
+            pk_full *= self.DNL(k,muk)
+        elif self.dnl_alt :
+            pk_full *= self.DNL_ALT(k,muk,self.pk)
 
         evol  = self.evolution_Lya_bias(z,[pars["alpha_lya"]])*self.evolution_growth_factor(z)
         evol /= self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])*self.evolution_growth_factor(self.zref)
@@ -284,10 +295,12 @@ class model:
 
         Lpar=pars["Lpar_auto"]
         Lper=pars["Lper_auto"]
-        pk_full*=sp.sinc(self.kp*Lpar/2/sp.pi)**2
-        pk_full*=sp.sinc(self.kt*Lper/2/sp.pi)**2
+        pk_full *= sp.sinc(self.kp*Lpar/2/sp.pi)**2
+        pk_full *= sp.sinc(self.kt*Lper/2/sp.pi)**2
         if self.dnl :
-            pk_full*=self.DNL(self.k,self.muk)
+            pk_full *= self.DNL(self.k,self.muk)
+        elif self.dnl_alt :
+            pk_full *= self.DNL_ALT(self.k,self.muk,self.pk_2d)
 
         evol  = self.evolution_Lya_bias(z,[pars["alpha_lya"]])*self.evolution_growth_factor(z)
         evol /= self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])*self.evolution_growth_factor(self.zref)
@@ -382,8 +395,12 @@ class model:
         ### Pixel size
         pk_full *= sp.sinc(kp*Lpar/2./sp.pi)**2
         pk_full *= sp.sinc(kt*Lper/2./sp.pi)**2
+        
+        ### Non-linear correction
         if self.dnl:
             pk_full *= sp.sqrt(self.DNL(self.k,self.muk))
+        elif self.dnl_alt:
+            pk_full *= sp.sqrt(self.DNL_ALT(self.k,self.muk,self.pk))
 
         ### Redshift evolution
         evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
