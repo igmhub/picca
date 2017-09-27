@@ -281,7 +281,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 w2 = d2.we
                 l2 = d2.ll
                 if x_correlation: 
-                    rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+                    rp = (r1[:,None]-r2)*sp.cos(ang/2)
                 else: 
                     rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
                 rt = (r1[:,None]+r2)*sp.sin(ang/2)
