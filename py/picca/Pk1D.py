@@ -2,6 +2,49 @@ import numpy as np
 from picca import constants
 import pyfftw
 
+
+def split_forest(nb_part,dll,ll,de,diff,iv):
+
+    ll_limit=[ll[0]]
+    nb_bin= len(ll)/nb_part
+
+    m_z_arr = []
+    ll_arr = []
+    de_arr = []
+    diff_arr = []
+    iv_arr = []
+
+    ll_c = ll.copy()
+    de_c = de.copy()
+    diff_c = diff.copy()
+    iv_c = iv.copy()
+
+    for p in range(1,nb_part) :
+        ll_limit.append(ll[nb_bin*p])
+        
+    ll_limit.append(ll[len(ll)-1]+0.1*dll)
+
+    for p in range(nb_part) : 
+
+        selection = (ll_c>= ll_limit[p]) & (ll_c<ll_limit[p+1])
+
+        ll_part = ll_c[selection]
+        de_part = de_c[selection]
+        diff_part = diff_c[selection]
+        iv_part = iv_c[selection]
+             
+        lam_lya = constants.absorber_IGM["LYA"]
+        m_z = (np.power(10.,ll_part[len(ll_part)-1])+np.power(10.,ll_part[0]))/2./lam_lya -1.0
+
+        m_z_arr.append(m_z)
+        ll_arr.append(ll_part)
+        de_arr.append(de_part)
+        diff_arr.append(diff_part)
+        iv_arr.append(iv_part)
+  
+    return m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
+
+
 def fill_masked_pixels(dll,ll,delta,diff,iv):
 
     ll_idx = ll.copy()
@@ -30,10 +73,10 @@ def fill_masked_pixels(dll,ll,delta,diff,iv):
 
 def compute_Pk_raw(delta,ll):
 
-#   Length in km/s     
+    #   Length in km/s     
     length_lambda = (np.power(10.,ll[len(ll)-1])-np.power(10.,ll[0]))/(np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))*2.0*constants.speed_light/1000.
     
-# make 1D FFT        
+    # make 1D FFT        
     nb_pixels = len(delta)
     nb_bin_FFT = nb_pixels/2 + 1
     a = pyfftw.empty_aligned(nb_pixels, dtype='complex128')
@@ -41,7 +84,7 @@ def compute_Pk_raw(delta,ll):
     for i in range(nb_pixels): a[i]=delta[i]
     fft_a = fft() 
     
-# compute power spectrum        
+    # compute power spectrum        
     Pk = np.zeros(nb_bin_FFT)
     k =  np.zeros(nb_bin_FFT)        
     for i in range(nb_bin_FFT):

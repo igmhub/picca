@@ -8,7 +8,7 @@ import sys
 import numpy as np
 
 from picca import constants
-from picca.Pk1D import Pk1D, compute_Pk_raw, compute_Pk_noise, compute_cor_reso, fill_masked_pixels
+from picca.Pk1D import Pk1D, compute_Pk_raw, compute_Pk_noise, compute_cor_reso, fill_masked_pixels, split_forest
 from picca.data import delta
 
 from array import array
@@ -103,59 +103,64 @@ if __name__ == '__main__':
             # Selection over the SNR and the resolution
             if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
 
-            # Fill masked pixels with 0.
-            ll_new,delta_new,diff_new,iv_new = fill_masked_pixels(d.dll,d.ll,d.de,d.diff,d.iv)
-            if (args.mode=='root'): compute_mean_delta(ll_new,delta_new,d.zqso)
+            # Split in three parts the forest
+            nb_part = 3
+            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv)
+            for f in range(nb_part): 
             
-            # Compute Pk_raw
-            k,Pk_raw = compute_Pk_raw(delta_new,ll_new)
+                # Fill masked pixels with 0.
+                ll_new,delta_new,diff_new,iv_new = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f])
+                if (args.mode=='root'): compute_mean_delta(ll_new,delta_new,d.zqso)
+            
+                # Compute Pk_raw
+                k,Pk_raw = compute_Pk_raw(delta_new,ll_new)
 
-            # Compute Pk_noise
-            Pk_noise,Pk_diff = compute_Pk_noise(iv_new,diff_new,ll_new)               
+                # Compute Pk_noise
+                Pk_noise,Pk_diff = compute_Pk_noise(iv_new,diff_new,ll_new)               
 
-            # Compute resolution correction
-            delta_pixel = d.dll*np.log(10.)*constants.speed_light/1000.
-            cor_reso = compute_cor_reso(delta_pixel,d.mean_reso,k)
+                # Compute resolution correction
+                delta_pixel = d.dll*np.log(10.)*constants.speed_light/1000.
+                cor_reso = compute_cor_reso(delta_pixel,d.mean_reso,k)
 
-            # Compute 1D Pk
-            Pk = (Pk_raw - Pk_noise)/cor_reso
+                # Compute 1D Pk
+                Pk = (Pk_raw - Pk_noise)/cor_reso
 
-            # Build   Pk1D
-            Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,k,Pk_raw,Pk_noise,cor_reso,Pk)
+                # Build   Pk1D
+                Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,k,Pk_raw,Pk_noise,cor_reso,Pk)
 
-            # save in root format
-            if (args.mode=='root'):
-                zqso[0] = d.zqso
-                mean_z[0] = d.mean_z
-                mean_reso[0] = d.mean_reso
-                mean_SNR[0] = d.mean_SNR
+                # save in root format
+                if (args.mode=='root'):
+                    zqso[0] = d.zqso
+                    mean_z[0] = m_z_arr[f]
+                    mean_reso[0] = d.mean_reso
+                    mean_SNR[0] = d.mean_SNR
 
-                nb_r[0] = min(len(k),nb_bin_max)
-                for i in range(nb_r[0]) :
-                    k_r[i] = k[i]
-                    Pk_raw_r[i] = Pk_raw[i]
-                    Pk_noise_r[i] = Pk_noise[i]
-                    Pk_diff_r[i] = Pk_diff[i]
-                    Pk_r[i] = Pk[i]
-                    cor_reso_r[i] = cor_reso[i]
+                    nb_r[0] = min(len(k),nb_bin_max)
+                    for i in range(nb_r[0]) :
+                        k_r[i] = k[i]
+                        Pk_raw_r[i] = Pk_raw[i]
+                        Pk_noise_r[i] = Pk_noise[i]
+                        Pk_diff_r[i] = Pk_diff[i]
+                        Pk_r[i] = Pk[i]
+                        cor_reso_r[i] = cor_reso[i]
                                
-                tree.Fill()
+                    tree.Fill()
 
-            # save in fits format
+                # save in fits format
 
-            if (args.mode=='fits'):
-                hd={}
-                hd["RA"]=d.ra
-                hd["DEC"]=d.dec
-                hd["Z"]=d.zqso
-                hd["MEANZ"]=d.mean_z
-                hd["MEANRESO"]=d.mean_reso
-                hd["MEANSNR"]=d.mean_SNR
+                if (args.mode=='fits'):
+                    hd={}
+                    hd["RA"]=d.ra
+                    hd["DEC"]=d.dec
+                    hd["Z"]=d.zqso
+                    hd["MEANZ"]=d.mean_z
+                    hd["MEANRESO"]=d.mean_reso
+                    hd["MEANSNR"]=d.mean_SNR
 
-                cols=[k,Pk]
-                names=['k','Pk']
+                    cols=[k,Pk]
+                    names=['k','Pk']
                 
-                out.write(cols,names=names,header=hd)
+                    out.write(cols,names=names,header=hd)
         if (args.mode=='fits'):
             out.close()
         
