@@ -93,6 +93,8 @@ class parameters:
             'hcds_mets'          : False,
         }
         self.dic_init_string = {
+            'lambda_abs'        : 'LYA', 
+            'lambda_abs2'       : 'LYA',
             'model'             : None,
             'metal_prefix'      : None,
             'output_prefix'     : "./",
@@ -103,6 +105,7 @@ class parameters:
         }
         self.dic_init_list_string = {
             'metals'            : None,
+            'metals2'           : None,
             'fix'               : None,
             'free'              : None,
             'minos'             : None,
@@ -141,6 +144,7 @@ class parameters:
         }
         help_list_string = {
             'metals'            : "prefix to the metal template files",
+            'metals2'           : "prefix to the 2nd metal template files",
             'fix'               : "list of variables to fix to their initial values",
             'free'              : "list of variables to free, overwrites fix",
             'minos'             : "list of variables to get minos error from. Setting to '_all_' gets minos errors for all free parameters.",
@@ -227,7 +231,17 @@ class parameters:
                 print '  picca/py/picca/fitter/parameters.py:: entry not metal = ', i
                 print '  Exit'
                 sys.exit(0)
-
+            
+            if self.dic_init['metals2'] is not None: 
+                for met in self.dic_init['metals2']:
+                    for par in metals_default:
+                        if (par+'_'+met == i):
+                            is_a_metal = True
+                if not is_a_metal:
+                    print '  picca/py/picca/fitter/parameters.py:: entry not metal = ', i
+                    print '  Exit'
+                    sys.exit(0)
+            
         ### Set values
         for i in self.dic_init['metals']:
             if not any(i in el for el in self.dic_init):
@@ -240,6 +254,20 @@ class parameters:
                     else:
                         self.dic_init_float[par+'_'+i] = metals_default[par]
                         self.dic_init[par+'_'+i] = metals_default[par]
+        
+	if self.dic_init['metals2'] is not None: 
+            for i in self.dic_init['metals2']:
+                if not any(i in el for el in self.dic_init):
+
+                    for par in metals_default:
+
+                        if any(par+'_'+i in el for el in dic_unknown):
+                            self.dic_init_float[par+'_'+i] = dic_unknown[par+'_'+i]
+                            self.dic_init[par+'_'+i] = dic_unknown[par+'_'+i]
+                        else:
+                            self.dic_init_float[par+'_'+i] = metals_default[par]
+                            self.dic_init[par+'_'+i] = metals_default[par]
+        
 
         return
     def test_init_is_valid(self):
