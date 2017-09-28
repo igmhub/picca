@@ -7,7 +7,7 @@ def split_forest(nb_part,dll,ll,de,diff,iv):
 
     ll_limit=[ll[0]]
     nb_bin= len(ll)/nb_part
-
+    
     m_z_arr = []
     ll_arr = []
     de_arr = []
@@ -23,6 +23,7 @@ def split_forest(nb_part,dll,ll,de,diff,iv):
         ll_limit.append(ll[nb_bin*p])
         
     ll_limit.append(ll[len(ll)-1]+0.1*dll)
+
 
     for p in range(nb_part) : 
 
@@ -79,6 +80,7 @@ def compute_Pk_raw(delta,ll):
     # make 1D FFT        
     nb_pixels = len(delta)
     nb_bin_FFT = nb_pixels/2 + 1
+
     a = pyfftw.empty_aligned(nb_pixels, dtype='complex128')
     fft = pyfftw.builders.fft(a)
     for i in range(nb_pixels): a[i]=delta[i]

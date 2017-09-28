@@ -106,8 +106,13 @@ if __name__ == '__main__':
             # Selection over the SNR and the resolution
             if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
 
+            # minimum number of pixel in forest
+            nb_pixel_min=75
+            if (len(d.ll)<nb_pixel_min) : continue
+
             # Split in n parts the forest
-            nb_part = args.nb_part
+            nb_part_max = len(d.ll)/nb_pixel_min
+            nb_part = min(args.nb_part,nb_part_max)
             m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv)
             for f in range(nb_part): 
             
