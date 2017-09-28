@@ -102,7 +102,11 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     w12 = w1*w2[:,None]
     z = (z1+z2[:,None])/2
 
-    w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
+    if rp_min !=0:
+        w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
+    else: 
+        w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
+
     rp = rp[w]
     rt = rt[w]
     z  = z[w]
@@ -160,7 +164,7 @@ def dmat(pix):
 @jit
 def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     if x_correlation : 
-       rp = (r1[:,None]-r2)*sp.cos(ang/2)
+        rp = (r1[:,None]-r2)*sp.cos(ang/2)
     else :  
        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
@@ -180,7 +184,10 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     slw1 = (w1*dl1**2).sum()
     slw2 = (w2*dl2**2).sum()
 
-    w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
+    if rp_min!=0: 
+        w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
+    else:
+        w = (rp<rp_max) & (rt<rt_max)& (rp>=rp_min)
 
     bins = bins[w]
 
@@ -450,7 +457,11 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
     we = w1[:,None]*w2
     zw = zw1[:,None]*zw2
 
-    w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
+    if rp_min != 0: 
+        w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
+    else: 
+        w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
+
     if same_half_plate:
         w = w & (abs(rp)<(rp_max-rp_min)/np)
 
