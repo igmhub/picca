@@ -212,11 +212,8 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     eta1[:len(c)]+=c
     c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-
     c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
-    c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
-    eta8[:len(c)]+=c
 
     if order2==1: 
         c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
@@ -230,6 +227,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
         eta7[:len(c)]+=c
         if order2==1:
             c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
+            eta8[:len(c)]+=c
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):
@@ -241,8 +239,6 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
              - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
-
-
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
     rpeff = sp.zeros(ntm*npm)
@@ -281,34 +277,28 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 w2 = d2.we
                 l2 = d2.ll
-                if x_correlation: 
-                    rp = (r1[:,None]-r2)*sp.cos(ang/2)
-                else: 
-                    rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+                rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
                 rt = (r1[:,None]+r2)*sp.sin(ang/2)
                 w12 = w1[:,None]*w2
 
-                bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
+                bp = (rp/rp_max*np).astype(int)
                 bt = (rt/rt_max*nt).astype(int)
                 if same_half_plate:
-                    wp = abs(rp) < (rp_max-rp_min)/np
+                    wp = bp==0
                     w12[wp]=0
                 bA = bt + nt*bp
-                wA = (bp<np) & (bt<nt) & (bp >=0)
+                wA = (bp<np) & (bt<nt)
                 c = sp.bincount(bA[wA],weights=w12[wA])
                 wdm[:len(c)]+=c
 
-                if x_correlation: 
-                    rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
-                else: 
-                    rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
+                rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
                 zwe12 = (1+z1_abs1[:,None])**(alpha_met-1)*(1+z2_abs2)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
 
-                bp_abs1_abs2 = sp.floor((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
+                bp_abs1_abs2 = (rp_abs1_abs2/rp_max*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
                 bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
-                wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm) & (bp_abs1_abs2>=0)
+                wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm)
                 wAB = wA&wBma
                 c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe12[wAB])
                 dm[:len(c)]+=c
@@ -323,17 +313,14 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 weff[:len(c)]+=c
 
                 if abs_igm1 != abs_igm2:
-                    if x_correlation: 
-                        rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
-                    else: 
-                        rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                    rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
                     zwe21 = (1+z1_abs2[:,None])**(alpha_met-1)*(1+z2_abs1)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
 
-                    bp_abs2_abs1 = sp.floor((rp_abs2_abs1-rp_min)/(rp_max-rp_min)*npm).astype(int)
+                    bp_abs2_abs1 = (rp_abs2_abs1/rp_max*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
                     bBam = bt_abs2_abs1 + ntm*bp_abs2_abs1
-                    wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm) & (bp_abs2_abs1>=0)
+                    wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm)
                     wAB = wA&wBam
 
                     c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
