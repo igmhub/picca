@@ -81,6 +81,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--nb-pixel-masked-max',type = int,default=30,required=False,
                         help = 'Maximal number of masked pixels in a part of forest')
+
+    parser.add_argument('--noise-estimate', type = str, default = 'mean_diff', required=False,
+                        help = ' Estimate of Pk_noise  pipeline/diff/mean_diff')
     
 
     args = parser.parse_args()
@@ -133,14 +136,23 @@ if __name__ == '__main__':
                 k,Pk_raw = compute_Pk_raw(delta_new,ll_new)
 
                 # Compute Pk_noise
-                Pk_noise,Pk_diff = compute_Pk_noise(iv_new,diff_new,ll_new)               
+                run_noise = False
+                if (args.noise_estimate=='pipeline'): run_noise=True
+                Pk_noise,Pk_diff = compute_Pk_noise(iv_new,diff_new,ll_new,run_noise)               
 
                 # Compute resolution correction
                 delta_pixel = d.dll*np.log(10.)*constants.speed_light/1000.
                 cor_reso = compute_cor_reso(delta_pixel,d.mean_reso,k)
 
                 # Compute 1D Pk
-                Pk = (Pk_raw - Pk_noise)/cor_reso
+                if (args.noise_estimate=='pipeline'):
+                    Pk = (Pk_raw - Pk_noise)/cor_reso
+                elif (args.noise_estimate=='diff'):
+                    Pk = (Pk_raw - Pk_diff)/cor_reso
+                elif (args.noise_estimate=='mean_diff'):
+                    selection = (k>0) & (k<0.02)
+                    Pk_mean_diff = sum(Pk_diff[selection])/float(len(Pk_diff[selection]))
+                    Pk = (Pk_raw - Pk_mean_diff)/cor_reso
 
                 # Build   Pk1D
                 Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,k,Pk_raw,Pk_noise,cor_reso,Pk)

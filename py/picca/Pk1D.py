@@ -98,7 +98,7 @@ def compute_Pk_raw(delta,ll):
     return k,Pk
 
 
-def compute_Pk_noise(iv,diff,ll):
+def compute_Pk_noise(iv,diff,ll,run_noise):
 
     nb_pixels = len(iv)
     nb_bin_FFT = nb_pixels/2 + 1
@@ -106,15 +106,16 @@ def compute_Pk_noise(iv,diff,ll):
     nb_noise_exp = 10
     Pk = np.zeros(nb_bin_FFT)
     err = 1.0/np.sqrt(iv)
-    
-    for iexp in range(nb_noise_exp):
-        delta_exp= np.zeros(nb_pixels)
-        for i in range(nb_pixels):
-            delta_exp[i] = np.random.normal(0.,err[i])
-        k_exp,Pk_exp = compute_Pk_raw(delta_exp,ll)
-        Pk += Pk_exp 
+
+    if (run_noise) :
+        for iexp in range(nb_noise_exp):
+            delta_exp= np.zeros(nb_pixels)
+            for i in range(nb_pixels):
+                delta_exp[i] = np.random.normal(0.,err[i])
+            k_exp,Pk_exp = compute_Pk_raw(delta_exp,ll)
+            Pk += Pk_exp 
         
-    Pk /= float(nb_noise_exp)
+        Pk /= float(nb_noise_exp)
 
     k_diff,Pk_diff = compute_Pk_raw(diff,ll)
     
