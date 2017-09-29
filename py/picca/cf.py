@@ -102,17 +102,18 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     w12 = w1*w2[:,None]
     z = (z1+z2[:,None])/2
 
-    w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
+    w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
+
     rp = rp[w]
     rt = rt[w]
     z  = z[w]
     wd12 = wd12[w]
     w12 = w12[w]
-    bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
+    bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
     if same_half_plate:
-        w = bp == 0
+        w = abs(rp)<(rp_max-rp_min)/np
         wd12[w] = 0
         w12[w]=0
 
@@ -159,10 +160,13 @@ def dmat(pix):
     
 @jit
 def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
-    if x_correlation : rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    else : rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+
+    if x_correlation : 
+        rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    else :  
+       rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
-    bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
+    bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
     
@@ -178,7 +182,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     slw1 = (w1*dl1**2).sum()
     slw2 = (w2*dl2**2).sum()
 
-    w = (rp<rp_max) & (rt<rt_max) & (rp>rp_min)
+    w = (rp<rp_max) & (rt<rt_max)& (rp>=rp_min)
 
     bins = bins[w]
 
@@ -190,9 +194,10 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     we = w1[:,None]*w2
     we = we[w]
     if same_half_plate:
-        wsame = bp[w]==np*rp_min/(rp_min-rp_max)
+        wsame = abs(rp[w])<(rp_max-rp_min)/np
         we[wsame]=0
-
+        
+            
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
     eta1 = sp.zeros(np*nt*n1)
@@ -274,26 +279,32 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 w2 = d2.we
                 l2 = d2.ll
-                if x_correlation : rp = (r1[:,None]-r2)*sp.cos(ang/2)
-		else : rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+
+                if x_correlation: 
+                    rp = (r1[:,None]-r2)*sp.cos(ang/2)
+                else: 
+                    rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
                 rt = (r1[:,None]+r2)*sp.sin(ang/2)
                 w12 = w1[:,None]*w2
 
-                bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
+                bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
                 bt = (rt/rt_max*nt).astype(int)
                 if same_half_plate:
-                    wp = bp==np*rp_min/(rp_min-rp_max)
+                    wp = abs(rp) < (rp_max-rp_min)/np
                     w12[wp]=0
                 bA = bt + nt*bp
-                wA = (bp<np) & (bt<nt) & (bp>=0)
+                wA = (bp<np) & (bt<nt) & (bp >=0)
                 c = sp.bincount(bA[wA],weights=w12[wA])
                 wdm[:len(c)]+=c
 
-                if x_correlation : rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2) 
-		else : rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
+                if x_correlation: 
+                    rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
+                else: 
+                    rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
                 zwe12 = (1+z1_abs1[:,None])**(alpha_met-1)*(1+z2_abs2)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
-                bp_abs1_abs2 = ((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
+
+                bp_abs1_abs2 = sp.floor((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
                 bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
                 wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm) & (bp_abs1_abs2>=0)
@@ -309,14 +320,17 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 zeff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
                 weff[:len(c)]+=c
-                
+
+
                 if (not(x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
-                    if x_correlation : rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
-		    else : rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                    if x_correlation: 
+                        rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                    else: 
+                        rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
                     zwe21 = (1+z1_abs2[:,None])**(alpha_met-1)*(1+z2_abs1)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
 
-                    bp_abs2_abs1 = ((rp_abs2_abs1-rp_min)/(rp_max-rp_min)*npm).astype(int)
+                    bp_abs2_abs1 = sp.floor((rp_abs2_abs1-rp_min)/(rp_max-rp_min)*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
                     bBam = bt_abs2_abs1 + ntm*bp_abs2_abs1
                     wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm) & (bp_abs2_abs1>=0)
@@ -426,18 +440,21 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
     zw2 = ((1+z2)/(1+zref))**(alpha-1)
 
     bins = i1[:,None]+n1*i2
-
-    rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+    if x_correlation: 
+        rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    else : 
+        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
-    bp = (rp/rp_max*np).astype(int)
+    bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     ba = bt + nt*bp
     we = w1[:,None]*w2
     zw = zw1[:,None]*zw2
 
-    w = (rp<rp_max) & (rt<rt_max)
+    w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
+
     if same_half_plate:
-        w = w & (bp>0)
+        w = w & (abs(rp)>(rp_max-rp_min)/np)
 
     bins = bins[w]
     ba = ba[w]
