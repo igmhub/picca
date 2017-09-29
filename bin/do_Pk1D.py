@@ -19,7 +19,8 @@ def make_tree(tree,nb_bin_max):
     mean_z = array( 'f', [ 0. ] )
     mean_reso = array( 'f', [ 0. ] )
     mean_SNR = array( 'f', [ 0. ] )
-
+    nb_mask_pix = array( 'f', [ 0. ] )
+    
     nb_r = array( 'i', [ 0 ] )
     k_r = array( 'f', nb_bin_max*[ 0. ] )
     Pk_r = array( 'f', nb_bin_max*[ 0. ] )
@@ -32,6 +33,7 @@ def make_tree(tree,nb_bin_max):
     tree.Branch("mean_z",mean_z,"mean_z/F")
     tree.Branch("mean_reso",mean_reso,"mean_reso/F")
     tree.Branch("mean_SNR",mean_SNR,"mean_SNR/F")
+    tree.Branch("nb_masked_pixel",nb_mask_pix,"nb_mask_pixel/F")
 
     tree.Branch( 'NbBin', nb_r, 'NbBin/I' )
     tree.Branch( 'k', k_r, 'k[NbBin]/F' )
@@ -41,7 +43,7 @@ def make_tree(tree,nb_bin_max):
     tree.Branch( 'cor_reso', cor_reso_r, 'cor_reso[NbBin]/F' )
     tree.Branch( 'Pk', Pk_r, 'Pk[NbBin]/F' )
     
-    return zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
+    return zqso,mean_z,mean_reso,mean_SNR,nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
 
 def compute_mean_delta(ll,delta,zqso):
 
@@ -71,8 +73,14 @@ if __name__ == '__main__':
     parser.add_argument('--reso-max',type = float,default=85.,required=False,
                         help = 'maximal resolution in km/s ')
 
-    parser.add_argument('--nb_part',type = int,default=3,required=False,
+    parser.add_argument('--nb-part',type = int,default=3,required=False,
                         help = 'Number of parts in forest')
+
+    parser.add_argument('--nb-pixel-min',type = int,default=75,required=False,
+                        help = 'Minimal number of pixels in a part of forest')
+
+    parser.add_argument('--nb-pixel-masked-max',type = int,default=30,required=False,
+                        help = 'Maximal number of masked pixels in a part of forest')
     
 
     args = parser.parse_args()
@@ -83,7 +91,7 @@ if __name__ == '__main__':
         storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
-        zqso,mean_z,mean_reso,mean_SNR,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
+        zqso,mean_z,mean_reso,mean_SNR,nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
         hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 34, 3600., 7000., 16, 1040., 1200., -5.0, 5.0)
 
         
@@ -107,7 +115,7 @@ if __name__ == '__main__':
             if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
 
             # minimum number of pixel in forest
-            nb_pixel_min=75
+            nb_pixel_min = args.nb_pixel_min
             if (len(d.ll)<nb_pixel_min) : continue
 
             # Split in n parts the forest
@@ -117,7 +125,8 @@ if __name__ == '__main__':
             for f in range(nb_part): 
             
                 # Fill masked pixels with 0.
-                ll_new,delta_new,diff_new,iv_new = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f])
+                ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f])
+                if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
                 if (args.mode=='root'): compute_mean_delta(ll_new,delta_new,d.zqso)
             
                 # Compute Pk_raw
@@ -142,6 +151,7 @@ if __name__ == '__main__':
                     mean_z[0] = m_z_arr[f]
                     mean_reso[0] = d.mean_reso
                     mean_SNR[0] = d.mean_SNR
+                    nb_mask_pix[0] = nb_masked_pixel
 
                     nb_r[0] = min(len(k),nb_bin_max)
                     for i in range(nb_r[0]) :

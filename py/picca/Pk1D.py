@@ -70,7 +70,9 @@ def fill_masked_pixels(dll,ll,delta,diff,iv):
     iv_new *= 1.0e10
     iv_new[index_ok]=iv
 
-    return ll_new,delta_new,diff_new,iv_new
+    nb_masked_pixel=len(index_all)-len(index)
+
+    return ll_new,delta_new,diff_new,iv_new,nb_masked_pixel
 
 def compute_Pk_raw(delta,ll):
 
