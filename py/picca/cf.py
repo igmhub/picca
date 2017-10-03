@@ -57,7 +57,8 @@ def fill_neighs_x_correlation(pix):
             ang = d1^neighs
             w = (ang<angmax)*(ang>=sp.arccos(1.-1.1e-11))
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.ra != d.ra]
+            d1.neighs = [d for d in neighs if d1.ra > d.ra]
+            #d1.neighs = [d for d in neighs if d1.ra != d.ra]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
@@ -240,15 +241,14 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
              - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
-
-
+    
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
     rpeff = sp.zeros(ntm*npm)
     rteff = sp.zeros(ntm*npm)
     zeff = sp.zeros(ntm*npm)
     weff = sp.zeros(ntm*npm)
-
+    
     npairs = 0
     npairs_used = 0
     for p in pix:
@@ -280,6 +280,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 w2 = d2.we
                 l2 = d2.ll
 
+                
                 if x_correlation: 
                     rp = (r1[:,None]-r2)*sp.cos(ang/2)
                 else: 
@@ -323,6 +324,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
 
                 if (not(x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
+                    
                     if x_correlation: 
                         rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     else: 

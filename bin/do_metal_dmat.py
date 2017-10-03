@@ -152,7 +152,7 @@ if __name__ == '__main__':
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
     cf.x_correlation=x_correlation 
- 
+    
     z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1.
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
@@ -167,7 +167,8 @@ if __name__ == '__main__':
         d.z = z
         d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
-    
+
+
     if x_correlation: 
         z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
         z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
@@ -192,6 +193,7 @@ if __name__ == '__main__':
     cf.data = data
     cf.ndata = ndata
     cf.alpha_met = args.metal_alpha
+
     if x_correlation:
        print "doing cross-correlation ... "
        cf.data2 = data2 
@@ -250,8 +252,7 @@ if __name__ == '__main__':
     else: 
         abs_igm_2=copy.deepcopy(abs_igm)
     print("abs_igm_2 = {}".format(abs_igm_2))
-
-    
+   
     for i,abs_igm1 in enumerate(abs_igm):
         i0=i
         if cf.lambda_abs != cf.lambda_abs2: i0=0
