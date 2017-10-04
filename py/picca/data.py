@@ -166,6 +166,12 @@ class forest(qso):
         self.p0 = mig.values["p0"]
         self.p1 = mig.values["p1"]
 
+        ## if the continuum is negative, then set it to a very small number 
+        ## so that this forest is ignored
+        if sp.any(self.co <= 0):
+            self.co = self.co*0+1e-10
+            self.p0 = 0.
+            self.p1 = 0.
 
 class delta(qso):
     
