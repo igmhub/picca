@@ -160,6 +160,7 @@ def dmat(pix):
     
 @jit
 def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
+
     if x_correlation : 
         rp = (r1[:,None]-r2)*sp.cos(ang/2)
     else :  
@@ -212,11 +213,8 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     eta1[:len(c)]+=c
     c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-
     c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
-    c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
-    eta8[:len(c)]+=c
 
     if order2==1: 
         c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
@@ -230,6 +228,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
         eta7[:len(c)]+=c
         if order2==1:
             c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
+	    eta8[:len(c)]+=c
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):
@@ -241,15 +240,14 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
              - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
-
-
+    
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
     rpeff = sp.zeros(ntm*npm)
     rteff = sp.zeros(ntm*npm)
     zeff = sp.zeros(ntm*npm)
     weff = sp.zeros(ntm*npm)
-
+    
     npairs = 0
     npairs_used = 0
     for p in pix:
@@ -260,7 +258,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             r1 = d1.r_comov
             z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
             r1_abs1 = cosmo.r_comoving(z1_abs1)
-            z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
+            z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1 
             r1_abs2 = cosmo.r_comoving(z1_abs2)
             w1 = d1.we
             l1 = d1.ll
@@ -272,7 +270,6 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 ang = d1^d2
-
                 r2 = d2.r_comov
                 z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
                 r2_abs1 = cosmo.r_comoving(z2_abs1)
@@ -281,6 +278,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 w2 = d2.we
                 l2 = d2.ll
+
+                
                 if x_correlation: 
                     rp = (r1[:,None]-r2)*sp.cos(ang/2)
                 else: 
@@ -322,7 +321,9 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
                 weff[:len(c)]+=c
 
-                if abs_igm1 != abs_igm2:
+
+                if (not(x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
+                    
                     if x_correlation: 
                         rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     else: 
