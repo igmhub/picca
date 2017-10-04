@@ -11,6 +11,7 @@ requirements:
 * healpy
 * numba
 * multiprocessing
+* configargparse
 
 ## Installation
 
