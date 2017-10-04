@@ -37,6 +37,9 @@ if __name__ == '__main__':
     parser.add_argument('--rp-max', type = float, default = 200., required=False,
                         help = 'max rp [h^-1 Mpc]')
 
+    parser.add_argument('--rp-min', type = float, default = 0., required=False,
+                        help = 'min rp [h^-1 Mpc]')
+
     parser.add_argument('--rt-max', type = float, default = 200., required=False,
                         help = 'max rt [h^-1 Mpc]')
 
@@ -90,6 +93,7 @@ if __name__ == '__main__':
     print "nproc",args.nproc
 
     cf.rp_max = args.rp_max
+    cf.rp_min = args.rp_min
     cf.rt_max = args.rt_max
     cf.np = args.np
     cf.nt = args.nt
@@ -102,6 +106,7 @@ if __name__ == '__main__':
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
     cf.lambda_abs = args.lambda_abs
+    cf.lambda_abs2 = args.lambda_abs2
     cf.rej = args.rej
 
     cosmo = constants.cosmo(args.fid_Om)
@@ -110,10 +115,10 @@ if __name__ == '__main__':
 
 
     z_min_pix = 1.e6
-    data = {}
-    ndata = 0
-    dels = []
+    ndata=0
     fi = glob.glob(args.in_dir+"/*.fits.gz")
+    data = {}
+    dels = []
     for i,f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         hdus = fitsio.FITS(f)
@@ -122,14 +127,15 @@ if __name__ == '__main__':
         hdus.close()
         if not args.nspec is None:
             if ndata>args.nspec:break
+    sys.stderr.write("read {}\n".format(ndata))
 
-    x_correlation = False
+    x_correlation=False
     if args.in_dir2: 
         x_correlation=True
-        data2 = {}
         ndata2 = 0
-        dels2 = []
         fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        data2 = {}
+        dels2 = []
         for i,f in enumerate(fi):
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
             hdus = fitsio.FITS(f)
@@ -138,13 +144,15 @@ if __name__ == '__main__':
             hdus.close()
             if not args.nspec is None:
                 if ndata2>args.nspec:break
+        sys.stderr.write("read {}\n".format(ndata2))
+
     elif args.lambda_abs != args.lambda_abs2:   
-        x_correlation=True  
+        x_correlation=True
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
-
-
+    cf.x_correlation=x_correlation 
+    
     z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1.
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
@@ -158,14 +166,16 @@ if __name__ == '__main__':
         z_min_pix = sp.amin( sp.append([z_min_pix],z) )
         d.z = z
         d.r_comov = cosmo.r_comoving(z)
-        d.we *= ((1+z)/(1+args.z_ref))**(cf.alpha-1)
-     
+        d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
+
+
     if x_correlation: 
         z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
         z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
+
         for d,p in zip(dels2,pix2):
             if not p in data2:
                 data2[p]=[]
@@ -176,11 +186,6 @@ if __name__ == '__main__':
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
-        print 'ndata2 = ',ndata2
-        cf.data2 = data2
-        cf.ndata2 = ndata2
-
-    sys.stderr.write("\n")
 
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
@@ -188,7 +193,13 @@ if __name__ == '__main__':
     cf.data = data
     cf.ndata = ndata
     cf.alpha_met = args.metal_alpha
+
+    if x_correlation:
+       print "doing cross-correlation ... "
+       cf.data2 = data2 
+       cf.ndata2 = ndata2 
     print "done"
+
 
     cf.counter = Value('i',0)
 
@@ -227,9 +238,10 @@ if __name__ == '__main__':
         print("ERROR: abs_igm is not known")
         sys.exit(12)
 
+    print("abs_igm = {}".format(abs_igm))
+
     if args.abs_igm2: 
         print "args.lambda_abs2 = ", args.lambda_abs2
-        print "constants.absorber_IGM['LYB'] = ", constants.absorber_IGM['LYB']
         if args.lambda_abs2 == constants.absorber_IGM['LYA']: 
             abs_igm_2 = ["LYA"]+args.abs_igm2
         elif args.lambda_abs2 == constants.absorber_IGM['LYB']:
@@ -239,10 +251,11 @@ if __name__ == '__main__':
             sys.exit(12)
     else: 
         abs_igm_2=copy.deepcopy(abs_igm)
-
+    print("abs_igm_2 = {}".format(abs_igm_2))
+   
     for i,abs_igm1 in enumerate(abs_igm):
-        i0=0 
-        if not x_correlation: i0=i 
+        i0=i
+        if cf.lambda_abs != cf.lambda_abs2: i0=0
         for j in range(i0,len(abs_igm_2)):
             if ((i==0)and(j==0)): continue 
             abs_igm2 = abs_igm_2[j]
