@@ -78,8 +78,6 @@ class parameters:
             'bb_rmu'            : False,
             'bb_rPerp_rParal'   : False,
             '2d'                : False,
-            'dnl_mcdonald'      : False,
-            'dnl_arinyo'        : False,
             'different_drp'     : False,
             'velo_gauss'        : False,
             'velo_lorentz'      : False,
@@ -95,6 +93,7 @@ class parameters:
         }
         self.dic_init_string = {
             'model'             : None,
+            'dnl_model'         : None,
             'metal_prefix'      : None,
             'output_prefix'     : "./",
             'data_auto'         : None,
@@ -125,8 +124,6 @@ class parameters:
             'uv'                : "use uv in the fit",
             'debug'             : "debug",
             'verbose'           : "verbose",
-            'dnl_mcdonald'      : "Use the non-linear correction model of McDonald 2003",
-            'dnl_arinyo'        : "Use the non-linear correction model of Arinyo et al 2015",
             'different_drp'     : "All metals-QSO correlation have different 'drp'",
             'velo_gauss'        : "Use a Gaussian model for the QSO velocity dispersion",
             'velo_lorentz'      : "Use a Lorentzian model for the QSO velocity dispersion",
@@ -135,6 +132,7 @@ class parameters:
         }
         help_string = {
             'model'             : "prefix to the fiducial P(k) file",
+            'dnl_model'         : "Type of non-linear correction model ('mcdonald' or 'arinyo')",
             'metal_prefix'      : "prefix to the metal template files",
             'output_prefix'     : "prefix for the output",
             'data_auto'         : "prefix to the data file (auto Lya)",

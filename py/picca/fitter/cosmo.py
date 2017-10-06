@@ -78,11 +78,11 @@ class model:
         self.av_dnl = None
         self.bv_dnl = None
         self.kp_dnl = None
-        if dic_init['dnl_mcdonald']:
-            print "with DNL (McDonald)"
+        if dic_init['dnl_model'] == "mcdonald":
+            print "with DNL (McDonald 2003)"
             self.dnl_model = "mcdonald"
-        elif dic_init['dnl_arinyo'] & (not dic_init['dnl_mcdonald']):
-            print "with DNL (Arinyo)"
+        elif dic_init['dnl_model'] == "arinyo":
+            print "with DNL (Arinyo et al. 2015)"
             self.dnl_model = "arinyo"
             z_dnl = [2.2000, 2.4000, 2.6000, 2.8000, 3.0000]
             q1_dnl = [0.8670, 0.8510, 0.7810, 0.7730, 0.7920]
@@ -105,6 +105,10 @@ class model:
             print "av =", self.av_dnl
             print "bv =", self.bv_dnl
             print "kp =", self.kp_dnl
+        elif (not dic_init['dnl_model'] is None) & (not dic_init['dnl_model'] == "mcdonald") & (not dic_init['dnl_model'] == "arinyo"):
+            print '  Unknown dnl model: ', dic_init['dnl_model']
+            print '  Exit'
+            sys.exit(0)
         else :
             print "without DNL"
 
