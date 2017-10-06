@@ -72,9 +72,43 @@ class model:
         if dic_init['QSO_evolution']=='croom':
             self.evolution_QSO_bias = utils.evolution_QSO_bias_croom
 
-        self.dnl  = (not  dic_init['no_dnl'])
-        if self.dnl :
-            print "with DNL"
+        self.dnl_model = None
+        self.q1_dnl = None
+        self.kv_dnl = None
+        self.av_dnl = None
+        self.bv_dnl = None
+        self.kp_dnl = None
+        if dic_init['dnl_model'] == "mcdonald":
+            print "with DNL (McDonald 2003)"
+            self.dnl_model = "mcdonald"
+        elif dic_init['dnl_model'] == "arinyo":
+            print "with DNL (Arinyo et al. 2015)"
+            self.dnl_model = "arinyo"
+            z_dnl = [2.2000, 2.4000, 2.6000, 2.8000, 3.0000]
+            q1_dnl = [0.8670, 0.8510, 0.7810, 0.7730, 0.7920]
+            kv_dnl = [1.1200, 1.1122, 1.2570, 1.2765, 1.2928]
+            av_dnl = [0.5140, 0.5480, 0.6110, 0.6080, 0.5780]
+            bv_dnl = [1.6000, 1.6100, 1.6400, 1.6500, 1.6300]
+            kp_dnl = [19.400, 19.500, 21.100, 19.200, 17.100]
+            q1_dnl_interp = sp.interpolate.interp1d(z_dnl, q1_dnl, kind='linear', fill_value=(q1_dnl[0],q1_dnl[-1]), bounds_error=False)
+            kv_dnl_interp = sp.interpolate.interp1d(z_dnl, kv_dnl, kind='linear', fill_value=(kv_dnl[0],kv_dnl[-1]), bounds_error=False)
+            av_dnl_interp = sp.interpolate.interp1d(z_dnl, av_dnl, kind='linear', fill_value=(av_dnl[0],av_dnl[-1]), bounds_error=False)
+            bv_dnl_interp = sp.interpolate.interp1d(z_dnl, bv_dnl, kind='linear', fill_value=(bv_dnl[0],bv_dnl[-1]), bounds_error=False)
+            kp_dnl_interp = sp.interpolate.interp1d(z_dnl, kp_dnl, kind='linear', fill_value=(kp_dnl[0],kp_dnl[-1]), bounds_error=False)
+            self.q1_dnl = q1_dnl_interp(self.zref)
+            self.kv_dnl = kv_dnl_interp(self.zref)
+            self.av_dnl = av_dnl_interp(self.zref)
+            self.bv_dnl = bv_dnl_interp(self.zref)
+            self.kp_dnl = kp_dnl_interp(self.zref)
+            print "q1 =", self.q1_dnl
+            print "kv =", self.kv_dnl
+            print "av =", self.av_dnl
+            print "bv =", self.bv_dnl
+            print "kp =", self.kp_dnl
+        elif (not dic_init['dnl_model'] is None) & (not dic_init['dnl_model'] == "mcdonald") & (not dic_init['dnl_model'] == "arinyo"):
+            print '  Unknown dnl model: ', dic_init['dnl_model']
+            print '  Exit'
+            sys.exit(0)
         else :
             print "without DNL"
 
@@ -153,12 +187,19 @@ class model:
         self.pall.extend(tmp_pautoQSO)
         self.pinit.extend(tmp_p0_autoQSO)
         self.pars_autoQSO_prev = None
-
+    
     @staticmethod
-    def DNL(k,muk):
-        kv = 1.22*(1+k/0.923)**0.451
-        return sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kv)**1.5)
-
+    def DNL(k,muk,pk,q1,kv,av,bv,kp,model):
+        dnl = 1
+        if model == "mcdonald":
+            kvel = 1.22*(1+k/0.923)**0.451
+            dnl = sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kvel)**1.5)
+        elif model == "arinyo":
+            growth = q1*k*k*k*pk/(2*sp.pi*sp.pi)
+            pecvelocity = sp.power(k/kv,av)*sp.power(sp.fabs(muk),bv)
+            pressure = (k/kp)*(k/kp)
+            dnl = sp.exp(growth*(1-pecvelocity)-pressure)
+        return dnl
 
     def valueAuto(self,rp,rt,z,pars):
         if self.xi_auto_prev is None or not sp.allclose(pars.values(),self.pars_auto_prev):
@@ -222,7 +263,7 @@ class model:
             beta_lya = (bias_lya*beta_lya + bias_lls*beta_lls*F_lls)/(bias_lya+bias_lls*F_lls)
             bias_lya = bias_lya + bias_lls*F_lls
 
-        pk_full =pk_lin * (1+beta_lya*muk**2)**2*bias_lya**2
+        pk_full = pk_lin * (1+beta_lya*muk**2)**2*bias_lya**2
 
         Lpar=pars["Lpar_auto"]
         Lper=pars["Lper_auto"]
@@ -234,9 +275,8 @@ class model:
         sigmaNLper = pars["SigmaNL_perp"]
         sigmaNLpar = sigmaNLper*pars["1+f"]
         pk_nl = sp.exp(-(kp*sigmaNLpar)**2/2-(kt*sigmaNLper)**2/2)
-        pk_full*=pk_nl
-        if self.dnl :
-            pk_full*=self.DNL(k,muk)
+        pk_full *= pk_nl
+        pk_full *= self.DNL(k,muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model)
 
         evol  = self.evolution_Lya_bias(z,[pars["alpha_lya"]])*self.evolution_growth_factor(z)
         evol /= self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])*self.evolution_growth_factor(self.zref)
@@ -284,10 +324,9 @@ class model:
 
         Lpar=pars["Lpar_auto"]
         Lper=pars["Lper_auto"]
-        pk_full*=sp.sinc(self.kp*Lpar/2/sp.pi)**2
-        pk_full*=sp.sinc(self.kt*Lper/2/sp.pi)**2
-        if self.dnl :
-            pk_full*=self.DNL(self.k,self.muk)
+        pk_full *= sp.sinc(self.kp*Lpar/2/sp.pi)**2
+        pk_full *= sp.sinc(self.kt*Lper/2/sp.pi)**2
+        pk_full *= self.DNL(self.k,self.muk,self.pk_2d,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model)
 
         evol  = self.evolution_Lya_bias(z,[pars["alpha_lya"]])*self.evolution_growth_factor(z)
         evol /= self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])*self.evolution_growth_factor(self.zref)
@@ -382,8 +421,9 @@ class model:
         ### Pixel size
         pk_full *= sp.sinc(kp*Lpar/2./sp.pi)**2
         pk_full *= sp.sinc(kt*Lper/2./sp.pi)**2
-        if self.dnl:
-            pk_full *= sp.sqrt(self.DNL(self.k,self.muk))
+        
+        ### Non-linear correction
+        pk_full *= sp.sqrt(self.DNL(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model))
 
         ### Redshift evolution
         evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )

@@ -78,7 +78,6 @@ class parameters:
             'bb_rmu'            : False,
             'bb_rPerp_rParal'   : False,
             '2d'                : False,
-            'no_dnl'            : False,
             'different_drp'     : False,
             'velo_gauss'        : False,
             'velo_lorentz'      : False,
@@ -94,6 +93,7 @@ class parameters:
         }
         self.dic_init_string = {
             'model'             : None,
+            'dnl_model'         : None,
             'metal_prefix'      : None,
             'output_prefix'     : "./",
             'data_auto'         : None,
@@ -132,6 +132,7 @@ class parameters:
         }
         help_string = {
             'model'             : "prefix to the fiducial P(k) file",
+            'dnl_model'         : "Type of non-linear correction model ('mcdonald' or 'arinyo')",
             'metal_prefix'      : "prefix to the metal template files",
             'output_prefix'     : "prefix for the output",
             'data_auto'         : "prefix to the data file (auto Lya)",
