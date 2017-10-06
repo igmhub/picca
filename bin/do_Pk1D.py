@@ -21,6 +21,10 @@ def make_tree(tree,nb_bin_max):
     mean_SNR = array( 'f', [ 0. ] )
     nb_mask_pix = array( 'f', [ 0. ] )
     
+    plate = array( 'i', [ 0 ] )
+    mjd = array( 'i', [ 0 ] )
+    fiber = array( 'i', [ 0 ] )
+    
     nb_r = array( 'i', [ 0 ] )
     k_r = array( 'f', nb_bin_max*[ 0. ] )
     Pk_r = array( 'f', nb_bin_max*[ 0. ] )
@@ -35,6 +39,10 @@ def make_tree(tree,nb_bin_max):
     tree.Branch("mean_SNR",mean_SNR,"mean_SNR/F")
     tree.Branch("nb_masked_pixel",nb_mask_pix,"nb_mask_pixel/F")
 
+    tree.Branch("plate",plate,"plate/I")
+    tree.Branch("mjd",mjd,"mjd/I")
+    tree.Branch("fiber",fiber,"fiber/I")
+
     tree.Branch( 'NbBin', nb_r, 'NbBin/I' )
     tree.Branch( 'k', k_r, 'k[NbBin]/F' )
     tree.Branch( 'Pk_raw', Pk_raw_r, 'Pk_raw[NbBin]/F' )
@@ -43,7 +51,8 @@ def make_tree(tree,nb_bin_max):
     tree.Branch( 'cor_reso', cor_reso_r, 'cor_reso[NbBin]/F' )
     tree.Branch( 'Pk', Pk_r, 'Pk[NbBin]/F' )
     
-    return zqso,mean_z,mean_reso,mean_SNR,nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
+    return zqso,mean_z,mean_reso,mean_SNR,plate,mjd,fiber,\
+    nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
 
 def compute_mean_delta(ll,delta,zqso):
 
@@ -94,7 +103,8 @@ if __name__ == '__main__':
         storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
-        zqso,mean_z,mean_reso,mean_SNR,nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
+        zqso,mean_z,mean_reso,mean_SNR,plate,mjd,fiber,\
+        nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
         hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 34, 3600., 7000., 16, 1040., 1200., -5.0, 5.0)
 
         
@@ -164,6 +174,10 @@ if __name__ == '__main__':
                     mean_reso[0] = d.mean_reso
                     mean_SNR[0] = d.mean_SNR
                     nb_mask_pix[0] = nb_masked_pixel
+
+                    plate[0] = d.plate
+                    mjd[0] = d.mjd
+                    fiber[0] = d.fid
 
                     nb_r[0] = min(len(k),nb_bin_max)
                     for i in range(nb_r[0]) :
