@@ -72,12 +72,17 @@ class model:
         if dic_init['QSO_evolution']=='croom':
             self.evolution_QSO_bias = utils.evolution_QSO_bias_croom
 
-        self.dnl  = (not  dic_init['no_dnl']) & (not dic_init['dnl_alt'])
-        self.dnl_alt  = dic_init['dnl_alt']
-        if self.dnl :
-            print "with DNL"
-        elif self.dnl_alt :
-            print "with DNL_ALT"
+        self.dnl_mcdonald  = dic_init['dnl_mcdonald']
+        self.dnl_arinyo  = dic_init['dnl_arinyo'] & (not dic_init['dnl_mcdonald'])
+        if self.dnl_mcdonald :
+            print "with DNL (McDonald)"
+            self.q1_dnl = 0
+            self.kv_dnl = 0
+            self.av_dnl = 0
+            self.bv_dnl = 0
+            self.kp_dnl = 0
+        elif self.dnl_arinyo :
+            print "with DNL (Arinyo)"
             z_dnl = [2.2000, 2.4000, 2.6000, 2.8000, 3.0000]
             q1_dnl = [0.8670, 0.8510, 0.7810, 0.7730, 0.7920]
             kv_dnl = [1.1200, 1.1122, 1.2570, 1.2765, 1.2928]
@@ -177,18 +182,19 @@ class model:
         self.pall.extend(tmp_pautoQSO)
         self.pinit.extend(tmp_p0_autoQSO)
         self.pars_autoQSO_prev = None
-
-    @staticmethod
-    def DNL(k,muk):
-        kv = 1.22*(1+k/0.923)**0.451
-        return sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kv)**1.5)
     
     @staticmethod
-    def DNL_ALT(k,muk,pk,q1,kv,av,bv,kp):
-        growth = q1*k*k*k*pk/(2*sp.pi*sp.pi);
-        pecvelocity = sp.power(k/kv,av)*sp.power(sp.fabs(muk),bv);
-        pressure = (k/kp)*(k/kp);
-        return sp.exp(growth*(1-pecvelocity)-pressure);
+    def DNL(k,muk,pk,q1,kv,av,bv,kp,model):
+        dnl = 1
+        if model == "mcdonald":
+            kvel = 1.22*(1+k/0.923)**0.451
+            dnl = sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kvel)**1.5)
+        elif model == "arinyo":
+            growth = q1*k*k*k*pk/(2*sp.pi*sp.pi)
+            pecvelocity = sp.power(k/kv,av)*sp.power(sp.fabs(muk),bv)
+            pressure = (k/kp)*(k/kp)
+            dnl = sp.exp(growth*(1-pecvelocity)-pressure)
+        return dnl
 
     def valueAuto(self,rp,rt,z,pars):
         if self.xi_auto_prev is None or not sp.allclose(pars.values(),self.pars_auto_prev):
@@ -265,10 +271,10 @@ class model:
         sigmaNLpar = sigmaNLper*pars["1+f"]
         pk_nl = sp.exp(-(kp*sigmaNLpar)**2/2-(kt*sigmaNLper)**2/2)
         pk_full *= pk_nl
-        if self.dnl :
-            pk_full *= self.DNL(k,muk)
-        elif self.dnl_alt :
-            pk_full *= self.DNL_ALT(k,muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl)
+        if self.dnl_mcdonald :
+            pk_full *= self.DNL(k,muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,"mcdonald")
+        elif self.dnl_arinyo :
+            pk_full *= self.DNL(k,muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,"arinyo")
 
         evol  = self.evolution_Lya_bias(z,[pars["alpha_lya"]])*self.evolution_growth_factor(z)
         evol /= self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])*self.evolution_growth_factor(self.zref)
@@ -318,10 +324,10 @@ class model:
         Lper=pars["Lper_auto"]
         pk_full *= sp.sinc(self.kp*Lpar/2/sp.pi)**2
         pk_full *= sp.sinc(self.kt*Lper/2/sp.pi)**2
-        if self.dnl :
-            pk_full *= self.DNL(self.k,self.muk)
-        elif self.dnl_alt :
-            pk_full *= self.DNL_ALT(self.k,self.muk,self.pk_2d,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl)
+        if self.dnl_mcdonald :
+            pk_full *= self.DNL(self.k,self.muk,self.pk_2d,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,"mcdonald")
+        elif self.dnl_arinyo :
+            pk_full *= self.DNL(self.k,self.muk,self.pk_2d,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,"arinyo")
 
         evol  = self.evolution_Lya_bias(z,[pars["alpha_lya"]])*self.evolution_growth_factor(z)
         evol /= self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])*self.evolution_growth_factor(self.zref)
@@ -418,10 +424,10 @@ class model:
         pk_full *= sp.sinc(kt*Lper/2./sp.pi)**2
         
         ### Non-linear correction
-        if self.dnl:
-            pk_full *= sp.sqrt(self.DNL(self.k,self.muk))
-        elif self.dnl_alt:
-            pk_full *= sp.sqrt(self.DNL_ALT(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl))
+        if self.dnl_mcdonald:
+            pk_full *= sp.sqrt(self.DNL(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,"mcdonald"))
+        elif self.dnl_arinyo:
+            pk_full *= sp.sqrt(self.DNL(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,"arinyo"))
 
         ### Redshift evolution
         evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
