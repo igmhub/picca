@@ -60,6 +60,8 @@ def compute_mean_delta(ll,delta,zqso):
         ll_obs= np.power(10.,ll[i])
         ll_rf = ll_obs/(1.+zqso)
         hdelta.Fill(ll_obs,ll_rf,delta[i])
+        hdelta_RF.Fill(ll_rf,delta[i])
+        hdelta_OBS.Fill(ll_obs,delta[i])
 
     return
 
@@ -99,13 +101,15 @@ if __name__ == '__main__':
 
 #   Create root file
     if (args.mode=='root') :
-        from ROOT import TCanvas, TH1F, TFile, TTree, TProfile2D
+        from ROOT import TCanvas, TH1F, TFile, TTree, TProfile2D, TProfile
         storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
         zqso,mean_z,mean_reso,mean_SNR,plate,mjd,fiber,\
         nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
         hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 34, 3600., 7000., 16, 1040., 1200., -5.0, 5.0)
+        hdelta_RF  = TProfile( 'hdelta_RF', 'delta mean as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
+        hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
 
         
 # Read Deltas
