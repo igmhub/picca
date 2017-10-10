@@ -270,6 +270,8 @@ if __name__ == '__main__':
 
     log.close()
     for p in deltas:
+        if len(deltas[p])==0:
+            continue
         out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)
         for d in deltas[p]:
             hd={}
