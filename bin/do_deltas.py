@@ -248,14 +248,14 @@ if __name__ == '__main__':
         if it < nit-1:
             ll_rest, mc, wmc = prep_del.mc(data)
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
-            ll,eta,vlss,nb_pixels = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
+            ll,eta,eta_err,vlss,vlss_err,nb_pixels = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
             forest.eta = interp1d(ll[nb_pixels>0.], eta[nb_pixels>0.], fill_value = "extrapolate")
             forest.var_lss = interp1d(ll[nb_pixels>0.],vlss[nb_pixels>0.], fill_value = "extrapolate")
 
     res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
     ll_st,st,wst = prep_del.stack(data)
     res.write([ll_st,st,wst],names=['loglam','stack','weight'])
-    res.write([ll,eta,vlss,nb_pixels],names=['loglam','eta','var_lss','nb_pixels'])
+    res.write([ll,eta,eta_err,vlss,vlss_err,nb_pixels],names=['loglam','eta','eta_err','var_lss','var_lss_err','nb_pixels'])
     res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'])
     st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     res.close()

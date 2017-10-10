@@ -28,7 +28,9 @@ def mc(data):
 def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     nlss = 10
     eta = sp.zeros(nlss)
+    eta_err = sp.zeros(nlss)
     vlss = sp.zeros(nlss)
+    vlss_err = sp.zeros(nlss)
     nb_pixels = sp.zeros(nlss)
     ll = forest.lmin + (sp.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
@@ -90,12 +92,14 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
         mig.migrad()
 
         eta[i] = mig.values["eta"]
+        eta_err[i] = mig.errors["eta"]
         vlss[i] = mig.values["vlss"]
+        vlss_err[i] = mig.errors["vlss"]
         nb_pixels[i] = count[i*nwe:(i+1)*nwe].sum()
-        print eta[i],vlss[i],mig.fval, nb_pixels[i]
+        print eta[i],eta_err[i],vlss[i],vlss_err[i],mig.fval,nb_pixels[i]
 
 
-    return ll,eta,vlss,nb_pixels
+    return ll,eta,eta_err,vlss,vlss_err,nb_pixels
 
     
 def stack(data,delta=False):
