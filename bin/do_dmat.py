@@ -41,6 +41,9 @@ if __name__ == '__main__':
     parser.add_argument('--rp-max', type = float, default = 200., required=False,
                         help = 'max rp [h^-1 Mpc]')
 
+    parser.add_argument('--rp-min', type = float, default = 0., required=False,
+                        help = 'min rp [h^-1 Mpc]')
+
     parser.add_argument('--rt-max', type = float, default = 200., required=False,
                         help = 'max rt [h^-1 Mpc]')
 
@@ -88,6 +91,7 @@ if __name__ == '__main__':
     print "nproc",args.nproc
 
     cf.rp_max = args.rp_max
+    cf.rp_min = args.rp_min
     cf.rt_max = args.rt_max
     cf.np = args.np
     cf.nt = args.nt
@@ -138,6 +142,7 @@ if __name__ == '__main__':
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
+    cf.x_correlation=x_correlation 
  
     z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1.
     phi = [d.ra for d in dels]
@@ -181,8 +186,9 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
-    cf.data2 = data
-    cf.ndata2 = ndata
+    if x_correlation: 
+       cf.data2 = data2 
+       cf.ndata2 = ndata2 
     print "done"
 
     cf.counter = Value('i',0)
