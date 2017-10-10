@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
     log = open(args.log,'w')
     data,ndata = io.read_data(args.in_dir,args.drq,args.mode,\
-            zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max)
+                              zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max,order=args.order)
     
 
     ### Get the lines to veto
