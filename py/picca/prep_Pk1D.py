@@ -39,7 +39,15 @@ def exp_diff(file,ll) :
         n_even = (nexp_per_col-1)/2
         alpha = sp.sqrt(4.*n_even*(n_even+1))/nexp_per_col
     diff = 0.5 * (fltoteven-fltotodd) * alpha ### CHECK THE * alpha (Nathalie)
-    
+
+    diff_plus  = sp.zeros(ll.size)
+    diff_moins = sp.zeros(ll.size)
+    diff_plus[1:ll.size] = diff[0:ll.size-1]
+    diff_moins[0:ll.size-1] = diff[1:ll.size]
+    diff_fill = .5 * (diff_plus + diff_moins)
+
+    diff = sp.where(diff!=0,diff,diff_fill)
+
     return diff
 
 
