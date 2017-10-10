@@ -161,14 +161,20 @@ class forest(qso):
         p1 = 0
 
         mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p1/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
-        mig.migrad()
+        fmin,_ = mig.migrad()
         self.co=model(mig.values["p0"],mig.values["p1"])
         self.p0 = mig.values["p0"]
         self.p1 = mig.values["p1"]
 
+        self.bad_cont = None
+        if not fmin.is_valid:
+            self.bad_cont = "minuit didn't converge"
+        if sp.any(self.co <= 0):
+            self.bad_cont = "negative continuum"
+
         ## if the continuum is negative, then set it to a very small number 
         ## so that this forest is ignored
-        if sp.any(self.co <= 0):
+        if self.bad_cont is not None:
             self.co = self.co*0+1e-10
             self.p0 = 0.
             self.p1 = 0.
