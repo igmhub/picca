@@ -33,10 +33,10 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     ll = forest.lmin + (sp.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
     nwe = 100
-    vpmin = 0
-    vpmax = 2
+    vpmin = sp.log10(1e-5)
+    vpmax = sp.log10(2.)
 
-    var = vpmin + (sp.arange(nwe)+.5)*(vpmax-vpmin)/nwe
+    var = 10**(vpmin + (sp.arange(nwe)+.5)*(vpmax-vpmin)/nwe)
     var_del =sp.zeros(nlss*nwe)
     mdel =sp.zeros(nlss*nwe)
     var2_del =sp.zeros(nlss*nwe)
@@ -46,10 +46,10 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
         for d in data[p]:
 
             var_pipe = 1/d.iv/d.co**2
-            w = var_pipe < vpmax
+            w = (var_pipe > vpmin) & (var_pipe < vpmax)
 
             bll = ((d.ll-forest.lmin)/(forest.lmax-forest.lmin)*nlss).astype(int)
-            bwe = ((1/d.iv/d.co**2-vpmin)/(vpmax-vpmin)*nwe).astype(int)
+            bwe = sp.floor((sp.log10(var_pipe)-vpmin)/(vpmax-vpmin)*nwe).astype(int)
 
             bll = bll[w]
             bwe = bwe[w]
