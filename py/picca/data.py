@@ -126,6 +126,7 @@ class forest(qso):
         if not mask is None:
             for l in mask:
                 w = w & ( (self.ll-sp.log10(1.+zabs)<l[0]) | (self.ll-sp.log10(1.+zabs)>l[1]) )
+                
 
         self.iv = self.iv[w]
         self.ll = self.ll[w]

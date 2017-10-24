@@ -230,28 +230,24 @@ if __name__ == '__main__':
     npairs_all=[]
     npairs_used_all=[]
 
-    if args.lambda_abs == constants.absorber_IGM['LYA']: 
-        abs_igm = ["LYA"]+args.abs_igm
-    elif args.lambda_abs == constants.absorber_IGM['LYB']:
-        abs_igm = ["LYB"]+args.abs_igm
-    else:
+    for p in constants.absorber_IGM: 
+        if args.lambda_abs == constants.absorber_IGM[p]: 
+            abs_igm = [p]+args.abs_igm
+            break 
+    if abs_igm is None :
         print("ERROR: abs_igm is not known")
         sys.exit(12)
-
     print("abs_igm = {}".format(abs_igm))
 
     if args.abs_igm2: 
-        print "args.lambda_abs2 = ", args.lambda_abs2
-        if args.lambda_abs2 == constants.absorber_IGM['LYA']: 
-            abs_igm_2 = ["LYA"]+args.abs_igm2
-        elif args.lambda_abs2 == constants.absorber_IGM['LYB']:
-            abs_igm_2 = ["LYB"]+args.abs_igm2 
-        else: 
+        for p in constants.absorber_IGM: 
+            if args.lambda_abs2 == constants.absorber_IGM[p]: 
+                abs_igm_2 = [p]+args.abs_igm2
+                break 
+        if abs_igm_2 is None :
             print("ERROR: abs_igm_2 is not known")
             sys.exit(12)
-    else: 
-        abs_igm_2=copy.deepcopy(abs_igm)
-    print("abs_igm_2 = {}".format(abs_igm_2))
+        print("abs_igm_2 = {}".format(abs_igm_2))
    
     for i,abs_igm1 in enumerate(abs_igm):
         i0=i

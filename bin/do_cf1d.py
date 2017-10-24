@@ -18,13 +18,10 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 
 def cf1d(p):
-    try:
-        if x_correlation: 
-            tmp = cf.x_forest_cf1d(p)
-        else :
-            tmp = cf.cf1d(p)
-    except:
-        traceback.print_exc()
+    if x_correlation: 
+        tmp = cf.x_forest_cf1d(p)
+    else :
+        tmp = cf.cf1d(p)
     with cf.lock:
         cf.counter.value += 1
     sys.stderr.write("\rcomputing xi: {}%".format(round(cf.counter.value*100./cf.npix/2.,2)))
@@ -66,8 +63,9 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()/2
 
-    forest.lmax = sp.log10(args.lambda_min)
-    forest.lmin = sp.log10(args.lambda_max)
+
+    forest.lmin = sp.log10(args.lambda_min)
+    forest.lmax = sp.log10(args.lambda_max)
     forest.dll = args.dll
     n1d = int((forest.lmax-forest.lmin)/forest.dll+1)
     cf.n1d = n1d
@@ -102,7 +100,7 @@ if __name__ == '__main__':
     if args.in_dir2: 
         x_correlation=True
         fi = glob.glob(args.in_dir2+"/*.fits.gz")
-        data2 = {}
+        data2 = []
         ndata2 = 0
         dels2=[]
         for i,f in enumerate(fi):
@@ -112,31 +110,22 @@ if __name__ == '__main__':
             dels2 = [delta.from_fitsio(h) for h in hdus[1:]]
             ndata2+=len(dels2)
             for d in dels2:
-                p = ndata2%args.nproc
-                if not p in data2:
-                    data2[p]=[]
-                data2[p].append(d)
+                data2.append(d)
                 if not args.no_project:
                     d.project() 
             if args.nspec:
                 if ndata2>args.nspec:break
+        cf.data2 = data2
     print "done"
 
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
-
-    if x_correlation: 
-        keys = []
-        for i in data.keys(): 
-            if i in data2.keys(): 
-                keys.append(i)
-        cfs = map(cf1d,keys)
-    else: cfs = map(cf1d,data.keys())
-
-    #pool = Pool(processes=args.nproc)
+    
+    pool = Pool(processes=args.nproc)
     cfs = map(cf1d,data.keys())
-    #pool.close()
+    pool.close()
+
 
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]
@@ -151,24 +140,25 @@ if __name__ == '__main__':
     cfs = cfs.sum(axis=0)
     wes = wes.sum(axis=0)
     nbs = nbs.sum(axis=0)
-
     print "done"
 
+    print("n1d = {}".format(n1d))
     cfs = cfs.reshape(n1d,n1d)
     wes = wes.reshape(n1d,n1d)
     nbs = nbs.reshape(n1d,n1d)
-
     print "rebinning"
- 
     w = wes>0
     cfs[w]/=wes[w]
+   
     v1d = sp.diag(cfs).copy()
     wv1d = sp.diag(wes).copy()
     nv1d = sp.diag(nbs).copy()
+
     cor = cfs
     norm = sp.sqrt(v1d*v1d[:,None])
-    w = norm>0
-    cor[w]/=norm[w]
+    if not x_correlation: 
+        w = norm>0
+        cor[w]/=norm[w]
 
     c1d = sp.zeros(n1d)
     nc1d = sp.zeros(n1d)
@@ -187,10 +177,9 @@ if __name__ == '__main__':
     nc1d[:len(c)] = c
     c = sp.bincount(dbin,weights=nbs)
     nb1d[:len(c)] = c
-
+    
     w=nc1d>0
     c1d[w]/=nc1d[w]
-
     print "writing"
 
     out = fitsio.FITS(args.out,'rw',clobber=True)

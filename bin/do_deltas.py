@@ -13,7 +13,6 @@ from picca import prep_del
 from picca import io
 
 from math import isnan
-
 import argparse
 
 def cont_fit(data):
