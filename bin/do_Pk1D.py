@@ -145,7 +145,12 @@ if __name__ == '__main__':
                 ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f])
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
                 if (args.mode=='root'): compute_mean_delta(ll_new,delta_new,d.zqso)
-            
+
+                lam_lya = constants.absorber_IGM["LYA"]
+                z_abs =  np.power(10.,ll_new)/lam_lya - 1.0
+                mean_z_new = sum(z_abs)/float(len(z_abs))
+                          
+             
                 # Compute Pk_raw
                 k,Pk_raw = compute_Pk_raw(delta_new,ll_new)
 
@@ -201,12 +206,16 @@ if __name__ == '__main__':
                     hd["RA"]=d.ra
                     hd["DEC"]=d.dec
                     hd["Z"]=d.zqso
-                    hd["MEANZ"]=d.mean_z
+                    hd["MEANZ"]=m_z_arr[f]
                     hd["MEANRESO"]=d.mean_reso
                     hd["MEANSNR"]=d.mean_SNR
 
-                    cols=[k,Pk]
-                    names=['k','Pk']
+                    hd["PLATE"]=d.plate
+                    hd["MJD"]=d.mjd
+                    hd["FIBER"]=d.fid
+
+                    cols=[k,Pk_raw,Pk_noise,Pk_diff,cor_reso,Pk]
+                    names=['k','Pk_raw','Pk_noise','Pk_diff','cor_reso','Pk']
                 
                     out.write(cols,names=names,header=hd)
         if (args.mode=='fits'):
