@@ -248,6 +248,8 @@ if __name__ == '__main__':
             print("ERROR: abs_igm_2 is not known")
             sys.exit(12)
         print("abs_igm_2 = {}".format(abs_igm_2))
+    else: 
+        abs_igm_2 = abs_igm
    
     for i,abs_igm1 in enumerate(abs_igm):
         i0=i
