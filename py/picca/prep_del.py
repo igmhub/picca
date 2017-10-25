@@ -1,7 +1,7 @@
 import scipy as sp
-from data import forest
 import iminuit
 from scipy import linalg
+from picca.data import forest,variance
 
 
 ## mean continuum
@@ -14,7 +14,10 @@ def mc(data):
         for d in data[p]:
             bins=((d.ll-forest.lmin_rest-sp.log10(1+d.zqso))/(forest.lmax_rest-forest.lmin_rest)*nmc).astype(int)
             var_lss = forest.var_lss(d.ll)
-            we = d.iv*d.co**2/(var_lss*d.iv*d.co**2 + 1)
+            eta = forest.eta(d.ll)
+            fudge = forest.fudge(d.ll)
+            var = 1./d.iv/d.co**2
+            we = 1/variance(var,eta,var_lss,fudge)
             c = sp.bincount(bins,weights=d.fl/d.co*we)
             mcont[:len(c)]+=c
             c = sp.bincount(bins,weights=we)
@@ -86,7 +89,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     bin_chi2 = sp.zeros(nlss)
     for i in range(nlss):
         def chi2(eta,vlss,fudge):
-            v = var_del[i*nwe:(i+1)*nwe]-eta*var-vlss-fudge/var
+            v = var_del[i*nwe:(i+1)*nwe]-variance(var,eta,vlss,fudge)
             dv2 = var2_del[i*nwe:(i+1)*nwe]
             n = count[i*nwe:(i+1)*nwe]
             w=nqso[i*nwe:(i+1)*nwe]>100
@@ -119,8 +122,9 @@ def stack(data,delta=False):
                 de = d.fl/d.co
                 var_lss = forest.var_lss(d.ll)
                 eta = forest.eta(d.ll)
-                iv = d.iv/eta
-                we = iv*d.co**2/(iv*d.co**2*var_lss + 1)
+                fudge = forest.fudge(d.ll)
+                var = 1./d.iv/d.co**2
+                we = 1./variance(var,eta,var_lss,fudge)
 
             bins=((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
             c = sp.bincount(bins,weights=de*we)

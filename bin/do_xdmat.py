@@ -123,8 +123,10 @@ if __name__ == '__main__':
             dels[p].append(d)
 
             z = 10**d.ll/args.lambda_abs-1.
-            z_min_pix = sp.amin( sp.append([z_min_pix],z) )
-            z_max_pix = sp.amax( sp.append([z_max_pix],z) )
+            if z_min_pix > z.min():
+                z_min_pix = z.min()
+            if z_max_pix < z.max():
+                z_max_pix = z.max()
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1.+z)/(1.+args.z_ref))**(xcf.alpha-1.)
         if not args.nspec is None:
