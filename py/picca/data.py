@@ -4,6 +4,9 @@ from picca import constants
 import iminuit
 from dla import dla
 
+def variance(var,eta,var_lss,fudge):
+    return eta*var + var_lss + fudge/var
+
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
         self.ra = ra
@@ -145,6 +148,7 @@ class forest(qso):
 
         var_lss = forest.var_lss(self.ll)
         eta = forest.eta(self.ll)
+        fudge = forest.fudge(self.ll)
 
         def model(p0,p1):
             line = p1*(self.ll-lmin)/(lmax-lmin)+p0
@@ -152,8 +156,11 @@ class forest(qso):
 
         def chi2(p0,p1):
             m = model(p0,p1)
-            iv = self.iv/eta
-            we = iv/(iv*var_lss*m**2+1)
+            var = 1./self.iv/m**2
+            ## prep_del.variance is the variance of delta
+            ## we want here the we = ivar(flux)
+
+            we = 1/m**2/variance(var,eta,var_lss,fudge)
             v = (self.fl-m)**2*we
             return v.sum()-sp.log(we).sum()
 

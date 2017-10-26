@@ -130,6 +130,7 @@ if __name__ == '__main__':
 
     forest.var_lss = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin),0.2 + sp.zeros(2),fill_value="extrapolate")
     forest.eta = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin), sp.ones(2),fill_value="extrapolate")
+    forest.fudge = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin), sp.zeros(2),fill_value="extrapolate")
     forest.mean_cont = interp1d(forest.lmin_rest+sp.arange(2)*(forest.lmax_rest-forest.lmin_rest),1+sp.zeros(2))
 
     ### Fix the order of the continuum fit, 0 or 1. 
@@ -248,15 +249,18 @@ if __name__ == '__main__':
         if it < nit-1:
             ll_rest, mc, wmc = prep_del.mc(data)
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
-            ll,eta,vlss,nb_pixels = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
-            forest.eta = interp1d(ll[nb_pixels>0.], eta[nb_pixels>0.], fill_value = "extrapolate")
-            forest.var_lss = interp1d(ll[nb_pixels>0.],vlss[nb_pixels>0.], fill_value = "extrapolate")
+            ll,eta,vlss,fudge,nb_pixels,var,var_del,var2_del,count,nqsos,chi2 = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
+            forest.eta = interp1d(ll[nb_pixels>0], eta[nb_pixels>0], fill_value = "extrapolate")
+            forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.], fill_value = "extrapolate")
+            forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0], fill_value = "extrapolate")
 
     res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
     ll_st,st,wst = prep_del.stack(data)
     res.write([ll_st,st,wst],names=['loglam','stack','weight'])
-    res.write([ll,eta,vlss,nb_pixels],names=['loglam','eta','var_lss','nb_pixels'])
+    res.write([ll,eta,vlss,fudge,nb_pixels],names=['loglam','eta','var_lss','fudge','nb_pixels'])
     res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'])
+    var = sp.broadcast_to(var.reshape(1,-1),var_del.shape)
+    res.write([var,var_del,var2_del,count,nqsos,chi2],names=['var_pipe','var_del','var2_del','count','nqsos','chi2'])
     st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     res.close()
     deltas = {}

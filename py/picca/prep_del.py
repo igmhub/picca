@@ -1,7 +1,7 @@
 import scipy as sp
-from data import forest
 import iminuit
 from scipy import linalg
+from picca.data import forest,variance
 
 
 ## mean continuum
@@ -14,7 +14,10 @@ def mc(data):
         for d in data[p]:
             bins=((d.ll-forest.lmin_rest-sp.log10(1+d.zqso))/(forest.lmax_rest-forest.lmin_rest)*nmc).astype(int)
             var_lss = forest.var_lss(d.ll)
-            we = d.iv*d.co**2/(var_lss*d.iv*d.co**2 + 1)
+            eta = forest.eta(d.ll)
+            fudge = forest.fudge(d.ll)
+            var = 1./d.iv/d.co**2
+            we = 1/variance(var,eta,var_lss,fudge)
             c = sp.bincount(bins,weights=d.fl/d.co*we)
             mcont[:len(c)]+=c
             c = sp.bincount(bins,weights=we)
@@ -26,30 +29,32 @@ def mc(data):
     return ll,mcont,wcont
 
 def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
-    nlss = 10
+    nlss = 20
     eta = sp.zeros(nlss)
     vlss = sp.zeros(nlss)
+    fudge = sp.zeros(nlss)
     nb_pixels = sp.zeros(nlss)
     ll = forest.lmin + (sp.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
     nwe = 100
-    vpmin = 0
-    vpmax = 2
+    vpmin = sp.log10(1e-5)
+    vpmax = sp.log10(2.)
+    var = 10**(vpmin + (sp.arange(nwe)+.5)*(vpmax-vpmin)/nwe)
 
-    var = vpmin + (sp.arange(nwe)+.5)*(vpmax-vpmin)/nwe
     var_del =sp.zeros(nlss*nwe)
     mdel =sp.zeros(nlss*nwe)
     var2_del =sp.zeros(nlss*nwe)
     count =sp.zeros(nlss*nwe)
+    nqso = sp.zeros(nlss*nwe)
 
     for p in data:
         for d in data[p]:
 
             var_pipe = 1/d.iv/d.co**2
-            w = var_pipe < vpmax
+            w = (var_pipe > vpmin) & (var_pipe < vpmax)
 
             bll = ((d.ll-forest.lmin)/(forest.lmax-forest.lmin)*nlss).astype(int)
-            bwe = ((1/d.iv/d.co**2-vpmin)/(vpmax-vpmin)*nwe).astype(int)
+            bwe = sp.floor((sp.log10(var_pipe)-vpmin)/(vpmax-vpmin)*nwe).astype(int)
 
             bll = bll[w]
             bwe = bwe[w]
@@ -70,6 +75,8 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 
             c = sp.bincount(bins)
             count[:len(c)] += c
+            nqso[sp.unique(bins)]+=1
+
     
     w = count>0
     var_del[w]/=count[w]
@@ -79,23 +86,26 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     var2_del -= var_del**2
     var2_del[w]/=count[w]
 
+    bin_chi2 = sp.zeros(nlss)
     for i in range(nlss):
-        def chi2(eta,vlss):
-            v = var_del[i*nwe:(i+1)*nwe]-eta*var-vlss
+        def chi2(eta,vlss,fudge):
+            v = var_del[i*nwe:(i+1)*nwe]-variance(var,eta,vlss,fudge)
             dv2 = var2_del[i*nwe:(i+1)*nwe]
             n = count[i*nwe:(i+1)*nwe]
-            w=(dv2>0) & (n>100)
+            w=nqso[i*nwe:(i+1)*nwe]>100
             return sp.sum(v[w]**2/dv2[w])
-        mig = iminuit.Minuit(chi2,forced_parameters=("eta","vlss"),eta=1.,vlss=0.1,error_eta=0.05,error_vlss=0.05,errordef=1.,print_level=0,limit_eta=eta_lim,limit_vlss=vlss_lim)
+        mig = iminuit.Minuit(chi2,forced_parameters=("eta","vlss","fudge"),eta=1.,vlss=0.1,fudge=0.05,error_eta=0.05,error_vlss=0.05,error_fudge=0.05,errordef=1.,print_level=0,limit_eta=eta_lim,limit_vlss=vlss_lim, limit_fudge=(0,None))
         mig.migrad()
 
         eta[i] = mig.values["eta"]
         vlss[i] = mig.values["vlss"]
+        fudge[i] = mig.values["fudge"]
         nb_pixels[i] = count[i*nwe:(i+1)*nwe].sum()
-        print eta[i],vlss[i],mig.fval, nb_pixels[i]
+        bin_chi2[i] = mig.fval
+        print eta[i],vlss[i],fudge[i],mig.fval, nb_pixels[i]
 
 
-    return ll,eta,vlss,nb_pixels
+    return ll,eta,vlss,fudge,nb_pixels,var,var_del.reshape(nlss,-1),var2_del.reshape(nlss,-1),count.reshape(nlss,-1),nqso.reshape(nlss,-1),bin_chi2
 
     
 def stack(data,delta=False):
@@ -112,8 +122,9 @@ def stack(data,delta=False):
                 de = d.fl/d.co
                 var_lss = forest.var_lss(d.ll)
                 eta = forest.eta(d.ll)
-                iv = d.iv/eta
-                we = iv*d.co**2/(iv*d.co**2*var_lss + 1)
+                fudge = forest.fudge(d.ll)
+                var = 1./d.iv/d.co**2
+                we = 1./variance(var,eta,var_lss,fudge)
 
             bins=((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
             c = sp.bincount(bins,weights=de*we)
