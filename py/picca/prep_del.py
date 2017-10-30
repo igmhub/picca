@@ -51,7 +51,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
         for d in data[p]:
 
             var_pipe = 1/d.iv/d.co**2
-            w = (var_pipe > vpmin) & (var_pipe < vpmax)
+            w = (sp.log10(var_pipe) > vpmin) & (var_pipe < vpmax)
 
             bll = ((d.ll-forest.lmin)/(forest.lmax-forest.lmin)*nlss).astype(int)
             bwe = sp.floor((sp.log10(var_pipe)-vpmin)/(vpmax-vpmin)*nwe).astype(int)
@@ -63,7 +63,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
             de = de[w]
 
             bins = bwe + nwe*bll
-
+            
             c = sp.bincount(bins,weights=de)
             mdel[:len(c)] += c
 
@@ -87,23 +87,23 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     var2_del[w]/=count[w]
 
     bin_chi2 = sp.zeros(nlss)
+    fudge_ref = 1e-7
     for i in range(nlss):
         def chi2(eta,vlss,fudge):
-            v = var_del[i*nwe:(i+1)*nwe]-variance(var,eta,vlss,fudge)
+            v = var_del[i*nwe:(i+1)*nwe]-variance(var,eta,vlss,fudge*fudge_ref)
             dv2 = var2_del[i*nwe:(i+1)*nwe]
             n = count[i*nwe:(i+1)*nwe]
             w=nqso[i*nwe:(i+1)*nwe]>100
             return sp.sum(v[w]**2/dv2[w])
-        mig = iminuit.Minuit(chi2,forced_parameters=("eta","vlss","fudge"),eta=1.,vlss=0.1,fudge=0.05,error_eta=0.05,error_vlss=0.05,error_fudge=0.05,errordef=1.,print_level=0,limit_eta=eta_lim,limit_vlss=vlss_lim, limit_fudge=(0,None))
+        mig = iminuit.Minuit(chi2,forced_parameters=("eta","vlss","fudge"),eta=1.,vlss=0.1,fudge=1.,error_eta=0.05,error_vlss=0.05,error_fudge=0.05,errordef=1.,print_level=0,limit_eta=eta_lim,limit_vlss=vlss_lim, limit_fudge=(0.,None))
         mig.migrad()
 
         eta[i] = mig.values["eta"]
         vlss[i] = mig.values["vlss"]
-        fudge[i] = mig.values["fudge"]
+        fudge[i] = mig.values["fudge"]*fudge_ref
         nb_pixels[i] = count[i*nwe:(i+1)*nwe].sum()
         bin_chi2[i] = mig.fval
         print eta[i],vlss[i],fudge[i],mig.fval, nb_pixels[i]
-
 
     return ll,eta,vlss,fudge,nb_pixels,var,var_del.reshape(nlss,-1),var2_del.reshape(nlss,-1),count.reshape(nlss,-1),nqso.reshape(nlss,-1),bin_chi2
 
