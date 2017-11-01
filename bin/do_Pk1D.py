@@ -75,8 +75,11 @@ if __name__ == '__main__':
     parser.add_argument('--in-dir', type = str, default = None, required=True,
                         help = 'data directory')
 
-    parser.add_argument('--mode', type = str, default = None, required=False,
+    parser.add_argument('--out-format', type = str, default = 'fits', required=False,
                         help = ' root or fits, if root call PyRoot')
+    
+    parser.add_argument('--in-format', type = str, default = 'fits', required=False,
+                        help = ' format used for input files, ascii or fits')
 
     parser.add_argument('--SNR-min',type = float,default=2.,required=False,
                         help = 'minimal mean SNR per pixel ')
@@ -100,7 +103,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 #   Create root file
-    if (args.mode=='root') :
+    if (args.out_format=='root') :
         from ROOT import TCanvas, TH1F, TFile, TTree, TProfile2D, TProfile
         storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
@@ -112,20 +115,34 @@ if __name__ == '__main__':
         hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
 
         
-# Read Deltas
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
+    # Read deltas
+    if (args.in_format=='fits') :
+        fi = glob.glob(args.in_dir+"/*.fits.gz")
+    elif (args.in_format=='ascii') :
+        fi = glob.glob(args.in_dir+"/*.txt")
+        
     data = {}
     ndata = 0
 
+    # loop over input files
     for i,f in enumerate(fi):
         if i%1==0:
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
-        hdus = fitsio.FITS(f)
-        dels = [delta.from_fitsio(h,Pk1D_type=True) for h in hdus[1:]]
+            
+        # read fits or ascii file 
+        if (args.in_format=='fits') :
+            hdus = fitsio.FITS(f)
+            dels = [delta.from_fitsio(h,Pk1D_type=True) for h in hdus[1:]]
+        elif (args.in_format=='ascii') :
+            ascii_file = open(f,'r')
+            dels = [delta.from_ascii(line) for line in ascii_file]
+            
         ndata+=len(dels)
-        if (args.mode=='fits') :
+        if (args.out_format=='fits') :
             out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
         print ' ndata = ',ndata
+
+        # loop over deltas
         for d in dels:
 
             # Selection over the SNR and the resolution
@@ -144,7 +161,7 @@ if __name__ == '__main__':
                 # Fill masked pixels with 0.
                 ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f])
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
-                if (args.mode=='root'): compute_mean_delta(ll_new,delta_new,d.zqso)
+                if (args.out_format=='root'): compute_mean_delta(ll_new,delta_new,d.zqso)
 
                 lam_lya = constants.absorber_IGM["LYA"]
                 z_abs =  np.power(10.,ll_new)/lam_lya - 1.0
@@ -177,7 +194,7 @@ if __name__ == '__main__':
                 Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,k,Pk_raw,Pk_noise,cor_reso,Pk)
 
                 # save in root format
-                if (args.mode=='root'):
+                if (args.out_format=='root'):
                     zqso[0] = d.zqso
                     mean_z[0] = m_z_arr[f]
                     mean_reso[0] = d.mean_reso
@@ -201,7 +218,7 @@ if __name__ == '__main__':
 
                 # save in fits format
 
-                if (args.mode=='fits'):
+                if (args.out_format=='fits'):
                     hd={}
                     hd["RA"]=d.ra
                     hd["DEC"]=d.dec
@@ -218,11 +235,11 @@ if __name__ == '__main__':
                     names=['k','Pk_raw','Pk_noise','Pk_diff','cor_reso','Pk']
                 
                     out.write(cols,names=names,header=hd)
-        if (args.mode=='fits'):
+        if (args.out_format=='fits'):
             out.close()
         
 # Store root file results           
-    if (args.mode=='root'):
+    if (args.out_format=='root'):
          storeFile.Write()
 
    

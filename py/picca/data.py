@@ -231,6 +231,7 @@ class delta(qso):
     @classmethod
     def from_fitsio(cls,h,Pk1D_type=False):
 
+        
         head = h.read_header()
         
         de = h['DELTA'][:]
@@ -269,6 +270,37 @@ class delta(qso):
             order = head['ORDER']
         except ValueError:
             order = 1
+        return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,
+                   iv,diff,m_SNR,m_reso,m_z,dll)
+
+
+    @classmethod
+    def from_ascii(cls,line):
+
+        a = line.split()
+        zqso = float(a[0])
+        m_z = float(a[1])
+        fid = int(a[2])
+        m_SNR = float(a[3])
+        m_reso = float(a[4])
+        
+        nbpixel = int(a[5])
+        de = sp.array([float(a[6+i]) for i in range(nbpixel)])
+        ll = sp.array([float(a[6+nbpixel+i]) for i in range(nbpixel)])
+        iv = sp.array([float(a[6+2*nbpixel+i]) for i in range(nbpixel)])
+        diff = sp.array([float(a[6+3*nbpixel+i]) for i in range(nbpixel)])
+
+        dll = 1.0e-4
+        thid = 0
+        ra = 0.0
+        dec = 0.0
+        plate = 0
+        mjd = 0
+        fid = 0
+        order = 0
+        we = None
+        co = None
+
         return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,
                    iv,diff,m_SNR,m_reso,m_z,dll)
 
