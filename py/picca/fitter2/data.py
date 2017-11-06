@@ -137,14 +137,14 @@ class data:
 
     def xi_model(self, k, pk_lin, pksb_lin, pars):
         xi_peak = self.xi(self.r, self.mu, k, pk_lin-pksb_lin, self.pk, \
-                    self.tracer1, self.tracer2, pars, ell_max = self.ell_max)
+                    tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
 
         ap = pars["ap"]
         at = pars["at"]
         pars["ap"]=1.
         pars["at"]=1.
         xi_sb = self.xi(self.r, self.mu, k, pksb_lin, self.pk, \
-                    self.tracer1, self.tracer2, pars, ell_max = self.ell_max)
+                    tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
 
         pars["ap"] = ap
         pars["at"] = at
@@ -163,13 +163,13 @@ class data:
             r[w] = 1e-6
             mu = rp/r
             xi_met_peak = self.xi_met(r, mu, k, pk_lin - pksb_lin, self.pk_met, \
-                tracer1, tracer2, pars, ell_max = self.ell_max)
+                tracer1 = tracer1, tracer2 = tracer2, ell_max = self.ell_max, **pars)
             ap = pars["ap"]
             at = pars["at"]
             pars["ap"]=1.
             pars["at"]=1.
             xi_met_sb = self.xi_met(r, mu, k, pksb_lin, self.pk_met, \
-                tracer1, tracer2, pars, ell_max = self.ell_max)
+                tracer1 = tracer1, tracer2 = tracer2, ell_max = self.ell_max, **pars)
 
             pars["ap"] = ap
             pars["at"] = at

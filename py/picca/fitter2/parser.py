@@ -11,7 +11,7 @@ def parse_chi2(filename):
 
     dic_init = {}
 
-    dic_init['data sets'] = cp.get('data sets','ini files')
+    dic_init['data sets'] = [data.data(parse_data(d)) for d in cp.get('data sets','ini files').split()]
 
     dic_init['fiducial'] = {}
     h = fitsio.FITS(cp.get('fiducial','filename'))

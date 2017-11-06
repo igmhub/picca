@@ -134,3 +134,13 @@ def G2(k, pk_lin, tracer1, tracer2, dataset_name = None, **kwargs):
     kp = k*muk
     kt = k*np.sqrt(1-muk**2)
     return utils.sinc(kp*Lpar/2)**2*utils.sinc(kt*Lper/2)**2
+
+def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs): 
+    assert (tracer1 == "QSO" and tracer2 == "LYA") or (tracer1 == "LYA" and tracer2 == "QSO")
+    kp = k*muk
+    return pk_lin*sp.exp( -0.25*(kp*pars['sigma_velo_gauss'])**2)
+
+def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
+    assert (tracer1 == "QSO" and tracer2 == "LYA") or (tracer1 == "LYA" and tracer2 == "QSO")
+    kp = k*muk
+    return pk_lin/sp.sqrt(1.+(kp*pars['sigma_velo_lorentz'])**2)

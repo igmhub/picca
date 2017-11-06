@@ -2,6 +2,7 @@ from __future__ import print_function
 import numpy as np
 import iminuit
 import time
+import h5py
 
 class chi2:
     def __init__(self,dic_init):
@@ -12,7 +13,7 @@ class chi2:
         self.pk_lin = dic_init['fiducial']['pk']
         self.pksb_lin = dic_init['fiducial']['pksb']
 
-    def __call__(self,*pars):
+    def __call__(self, *pars):
         dic = {p:pars[i] for i,p in enumerate(self.par_names)}
         chi2 = 0
         for d in self.data:
@@ -34,5 +35,30 @@ class chi2:
         mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs)
         fmin = mig.migrad()
         print("INFO: minimized in {}".format(time.time()-t0))
-        return mig
+        self.mig = mig
+    
+    def export(self, filename):
+        f = h5py.File(filename,"w")
+        g=f.create_group("best_fit")
 
+        for i, p in enumerate(self.mig.values):
+            g.attrs[p] = (self.mig.values[p], self.mig.errors[p])
+
+        g.attrs['fval'] = self.mig.fval
+        ndata = [d.mask.sum() for d in self.data]
+        ndata = sum(ndata)
+        g.attrs['ndata'] = ndata
+        g.attrs['npar'] = len(self.mig.values)
+
+        for d in self.data:
+            g = f.create_group(d.name)
+            g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.mig.values)
+            data = g.create_dataset("data", d.da.shape, dtype = "f")
+            data[...] = d.da
+            err = g.create_dataset("error", d.da.shape, dtype = "f")
+            err[...] = np.sqrt(d.co.diagonal())
+            fit = g.create_dataset("fit", d.da.shape, dtype = "f")
+            fit[...] = d.xi_model(self.k, self.pk_lin, self.pksb_lin, self.mig.values)
+            
+
+        f.close()
