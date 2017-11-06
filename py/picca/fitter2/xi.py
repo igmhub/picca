@@ -90,4 +90,4 @@ def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
     assert tracer=="QSO"
     p0 = kwargs["croom_par0"]
     p1 = kwargs["croom_par1"]
-    return p0 + p1*(1.+z)**2/(p0 + p1*(1+zref)**2)
+    return (p0 + p1*(1.+z)**2)/(p0 + p1*(1+zref)**2)

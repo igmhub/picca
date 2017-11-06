@@ -18,16 +18,6 @@ class pk:
     __rmul__ = __mul__
 
 
-def cached(function):
-  memo = {}
-  def wrapper(*args, **kwargs):
-    if 1 in memo:
-      return memo[1]
-    else:
-      rv = function(*args, **kwargs)
-      memo[1] = rv
-      return rv
-  return wrapper
 
 def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
@@ -126,7 +116,19 @@ def dnl_arinyo(k, pk_lin, tracer1, tracer2, **kwargs):
     dnl = np.exp(growth*(1-pecvelocity)-pressure)
     return dnl
 
-@cached
+def cached_g2(function):
+  memo = {}
+  def wrapper(*args, **kwargs):
+    dataset_name = kwargs['dataset_name']
+    if dataset_name in memo:
+      return memo[dataset_name]
+    else:
+      rv = function(*args, **kwargs)
+      memo[dataset_name] = rv
+      return rv
+  return wrapper
+
+@cached_g2
 def G2(k, pk_lin, tracer1, tracer2, dataset_name = None, **kwargs):
     Lpar = kwargs["par binsize {}".format(dataset_name)]
     Lper = kwargs["per binsize {}".format(dataset_name)]
@@ -138,9 +140,10 @@ def G2(k, pk_lin, tracer1, tracer2, dataset_name = None, **kwargs):
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs): 
     assert (tracer1 == "QSO" and tracer2 == "LYA") or (tracer1 == "LYA" and tracer2 == "QSO")
     kp = k*muk
-    return pk_lin*sp.exp( -0.25*(kp*pars['sigma_velo_gauss'])**2)
+    return pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs)*np.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
 
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     assert (tracer1 == "QSO" and tracer2 == "LYA") or (tracer1 == "LYA" and tracer2 == "QSO")
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
     kp = k*muk
-    return pk_lin/sp.sqrt(1.+(kp*pars['sigma_velo_lorentz'])**2)
+    return pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs)/np.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)

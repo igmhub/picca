@@ -211,19 +211,19 @@ if __name__ == '__main__':
     out_list = []
     out_names=[]
     for i,ai in enumerate(names):
-        out_names=out_names + ["RP_"+ai]
+        out_names=out_names + ["RP_QSO_"+ai]
         out_list = out_list + [rp_all[i]]
 
-        out_names=out_names + ["RT_"+ai]
+        out_names=out_names + ["RT_QSO_"+ai]
         out_list = out_list + [rt_all[i]]
 
-        out_names=out_names + ["Z_"+ai]
+        out_names=out_names + ["Z_QSO_"+ai]
         out_list = out_list + [z_all[i]]
 
-        out_names = out_names + ["DM_"+ai]
+        out_names = out_names + ["DM_QSO_"+ai]
         out_list = out_list + [dm_all[i]]
 
-        out_names=out_names+["WDM_"+ai]
+        out_names=out_names+["WDM_QSO_"+ai]
         out_list = out_list+[wdm_all[i]]
 
     out.write(out_list,names=out_names)
