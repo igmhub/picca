@@ -11,7 +11,7 @@ def parse_chi2(filename):
 
     dic_init = {}
 
-    dic_init['data sets'] = [data.data(parse_data(value)) for item, value in cp.items('data sets')]
+    dic_init['data sets'] = cp.get('data sets','ini files')
 
     dic_init['fiducial'] = {}
     h = fitsio.FITS(cp.get('fiducial','filename'))
@@ -34,6 +34,8 @@ def parse_data(filename):
             value = float(value)
         if item == "ell-max":
             value = int(value)
+        if item == 'zref':
+            value = float(value)
         dic_init['data'][item] = value
 
     dic_init['cuts'] = {}

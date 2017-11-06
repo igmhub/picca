@@ -11,6 +11,9 @@ muk=(sp.arange(nmuk)+0.5)/nmuk
 dmuk = 1./nmuk
 muk=muk[:,None]
 
+def sinc(x):
+    return sp.sin(x)/x
+
 def Pk2Mp(ar,k,pk,ell_max=None):
     """
     Implementation of FFTLog from A.J.S. Hamilton (2000)
@@ -77,34 +80,7 @@ def bias_beta(kwargs, tracer1, tracer2):
     return bias1, beta1, bias2, beta2
 
     
-### Growth factor evolution
-def evolution_growth_factor_by_hand(z):
-    return 1./(1.+z)
 
-### Lya bias evolution
-def evolution_Lya_bias_0(z,param):
-    return (1.+z)**param[0]
-
-### QSO bias evolution
-def evolution_QSO_bias_none(z,param):
-    return 1.+0.*z
-def evolution_QSO_bias_croom(z,param):
-    return param[0] + param[1]*(1.+z)**2
-
-### QSO radiation model
-def qso_radiation_model(rp,rt,pars):
-
-    ###
-    rp_shift = rp+pars['drp']
-    r        = sp.sqrt( rp_shift**2. + rt**2.)
-    mur      = rp_shift/r
-
-    ###
-    xi_rad  = pars['qso_rad_strength']/(r**2.)
-    xi_rad *= 1.-pars['qso_rad_asymmetry']*(1.-mur**2.)
-    xi_rad *= sp.exp(-r*( (1.+mur)/pars['qso_rad_lifetime'] + 1./pars['qso_rad_decrease']) )
-
-    return xi_rad
 
 ### Absorber names and wavelengths
 absorber_IGM = {

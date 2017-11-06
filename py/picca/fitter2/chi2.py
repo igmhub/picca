@@ -1,6 +1,7 @@
 from __future__ import print_function
 import numpy as np
 import iminuit
+import time
 
 class chi2:
     def __init__(self,dic_init):
@@ -24,6 +25,7 @@ class chi2:
         return chi2
 
     def minimize(self):
+        t0 = time.time()
         kwargs = {name:val for d in self.data for name, val in d.pars_init.items()}
         kwargs.update({name:err for d in self.data for name, err in d.par_error.items()})
         kwargs.update({name:lim for d in self.data for name, lim in d.par_limit.items()})
@@ -31,5 +33,6 @@ class chi2:
 
         mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs)
         fmin = mig.migrad()
+        print("INFO: minimized in {}".format(time.time()-t0))
         return mig
 

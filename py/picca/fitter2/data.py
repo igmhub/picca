@@ -1,13 +1,16 @@
 import fitsio
+from functools import partial
 import numpy as np
 from numpy import linalg
 from . import utils
 from . import pk
 from . import xi
+from scipy.sparse import csr_matrix
 
 class data:
     def __init__(self,dic_init):
 
+        self.name = dic_init['data']['name']
         self.tracer1 = dic_init['data']['tracer1']
         if 'tracer2' in dic_init['data']:
             self.tracer2 = dic_init['data']['tracer2']
@@ -15,14 +18,16 @@ class data:
             self.tracer2 = self.tracer1
 
         self.ell_max = dic_init['data']['ell-max']
+        self.zref = dic_init['data']['zref']
 
         fdata = dic_init['data']['filename']
         h = fitsio.FITS(fdata)
         da = h[1]['DA'][:]
         co = h[1]['CO'][:]
-        dm = h[1]['DM'][:]
+        dm = csr_matrix(h[1]['DM'][:])
         rp = h[1]['RP'][:]
         rt = h[1]['RT'][:]
+        z = h[1]['Z'][:]
 
         try:
             rp_binsize = h[1].read_header()["RP_SIZE"]
@@ -67,6 +72,8 @@ class data:
 
         self.rp = rp
         self.rt = rt
+        self.z = z
+
         self.r = r
         self.mu = mu
 
@@ -76,8 +83,19 @@ class data:
         self.par_limit = dic_init['parameters']['limits']
         self.par_fixed = dic_init['parameters']['fix']
 
-        self.pk = getattr(pk, dic_init['model']['model-pk'])
+        self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
+        self.pk *= partial(getattr(pk,'G2'),dataset_name=self.name)
+        if 'dnl' in dic_init['model']:
+            self.pk *= getattr(pk, dic_init['model']['dnl'])
+
+        if 'velocity dispersion' in dic_init['model']:
+            self.pk *= getattr(pk, dic_init['model']['velocity dispersion'])
+
         self.xi = getattr(xi, dic_init['model']['model-xi'])
+
+        self.z_evol_tracer1 = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer1)]), zref=self.zref)
+        self.z_evol_tracer2 = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer2)]), zref = self.zref)
+        self.growth_function = partial(getattr(xi, dic_init['model']['growth function']), zref = self.zref)
 
         self.dm_met = {}
         self.rp_met = {}
@@ -85,8 +103,10 @@ class data:
         self.z_met = {}
 
         if 'metals' in dic_init:
-            self.pk_met = getattr(pk, dic_init['metals']['model-pk-met'])
+            self.pk_met = pk.pk(getattr(pk, dic_init['metals']['model-pk-met']))
+            self.pk_met *= partial(getattr(pk,'G2'),dataset_name=self.name)
             self.xi_met = getattr(xi, dic_init['metals']['model-xi-met'])
+            self.z_evol_met = partial(getattr(xi, dic_init['metals']['z evol function']), zref = self.zref)
 
             hmet = fitsio.FITS(dic_init['metals']['filename'])
 
@@ -95,13 +115,13 @@ class data:
                     self.rp_met[(self.tracer1, m)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                     self.rt_met[(self.tracer1, m)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
                     self.z_met[(self.tracer1, m)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
-                    self.dm_met[(self.tracer1, m)] = hmet[2]["DM_{}_{}".format(self.tracer1,m)][:]
+                    self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
             if 'in tracer1' in dic_init['metals']:
                 for m in dic_init['metals']['in tracer1']:
                     self.rp_met[(m, self.tracer2)] = hmet[2]["RP_{}_{}".format(self.tracer2,m)][:]
                     self.rt_met[(m, self.tracer2)] = hmet[2]["RT_{}_{}".format(self.tracer2,m)][:]
                     self.z_met[(m, self.tracer2)] = hmet[2]["Z_{}_{}".format(self.tracer2,m)][:]
-                    self.dm_met[(m, self.tracer2)] = hmet[2]["DM_{}_{}".format(self.tracer2,m)][:]
+                    self.dm_met[(m, self.tracer2)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer2,m)][:])
 
             ## add metal-metal cross correlations
             if 'in tracer1' in dic_init['metals'] and 'in tracer2' in dic_init['metals']:
@@ -113,7 +133,7 @@ class data:
                         self.rp_met[(m1, m2)] = hmet[2]["RP_{}_{}".format(m1,m2)][:]
                         self.rt_met[(m1, m2)] = hmet[2]["RT_{}_{}".format(m1,m2)][:]
                         self.z_met[(m1, m2)] = hmet[2]["Z_{}_{}".format(m1,m2)][:]
-                        self.dm_met[(m1, m2)] = hmet[2]["DM_{}_{}".format(m1,m2)][:]
+                        self.dm_met[(m1, m2)] = csr_matrix(hmet[2]["DM_{}_{}".format(m1,m2)][:])
 
     def xi_model(self, k, pk_lin, pksb_lin, pars):
         xi_peak = self.xi(self.r, self.mu, k, pk_lin-pksb_lin, self.pk, \
@@ -129,6 +149,9 @@ class data:
         pars["ap"] = ap
         pars["at"] = at
         xi_full = xi_peak + xi_sb
+
+        xi_full *= self.z_evol_tracer1(self.z, self.tracer1, **pars)*self.z_evol_tracer2(self.z, self.tracer2, **pars)
+        xi_full *= self.growth_function(self.z, **pars)**2
 
         for tracer1, tracer2 in self.dm_met:
             rp = self.rp_met[(tracer1, tracer2)]
@@ -150,7 +173,10 @@ class data:
 
             pars["ap"] = ap
             pars["at"] = at
-            xi_met_full = dm_met.dot(xi_met_peak + xi_met_sb)
+            xi_met_full = xi_met_peak + xi_met_sb
+            xi_met_full *= self.z_evol_met(z, tracer1, **pars)*self.z_evol_met(z, tracer2, **pars)
+            xi_met_full *= self.growth_function(z, **pars)**2
+            xi_met_full = dm_met.dot(xi_met_full)
             xi_full += xi_met_full
 
         xi_full = self.dm.dot(xi_full)

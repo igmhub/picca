@@ -1,6 +1,5 @@
 import scipy as sp
 
-
 def gamma(z):             # great function from Wiki, but maybe could use memorization?
     epsilon = 0.0000001
     def withinepsilon(x):
