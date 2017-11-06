@@ -278,25 +278,24 @@ class delta(qso):
     def from_ascii(cls,line):
 
         a = line.split()
-        zqso = float(a[0])
-        m_z = float(a[1])
+        plate = int(a[0])
+        mjd = int(a[1])
         fid = int(a[2])
-        m_SNR = float(a[3])
-        m_reso = float(a[4])
+        ra = float(a[3])
+        dec = float(a[4])
+        zqso = float(a[5])
+        m_z = float(a[6])
+        m_SNR = float(a[7])
+        m_reso = float(a[8])
         
-        nbpixel = int(a[5])
-        de = sp.array([float(a[6+i]) for i in range(nbpixel)])
-        ll = sp.array([float(a[6+nbpixel+i]) for i in range(nbpixel)])
-        iv = sp.array([float(a[6+2*nbpixel+i]) for i in range(nbpixel)])
-        diff = sp.array([float(a[6+3*nbpixel+i]) for i in range(nbpixel)])
+        nbpixel = int(a[9])
+        de = sp.array([float(a[10+i]) for i in range(nbpixel)])
+        ll = sp.array([float(a[10+nbpixel+i]) for i in range(nbpixel)])
+        iv = sp.array([float(a[10+2*nbpixel+i]) for i in range(nbpixel)])
+        diff = sp.array([float(a[10+3*nbpixel+i]) for i in range(nbpixel)])
 
         dll = 1.0e-4
         thid = 0
-        ra = 0.0
-        dec = 0.0
-        plate = 0
-        mjd = 0
-        fid = 0
         order = 0
         we = None
         co = None
