@@ -58,7 +58,14 @@ class chi2:
             err = g.create_dataset("error", d.da.shape, dtype = "f")
             err[...] = np.sqrt(d.co.diagonal())
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
-            fit[...] = d.xi_model(self.k, self.pk_lin, self.pksb_lin, self.mig.values)
+            fit[...] = d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.mig.values)
+            ap = self.mig.values['ap']
+            at = self.mig.values['at']
+            self.mig.values['ap'] = 1
+            self.mig.values['at'] = 1
+            fit[...] += d.xi_model(self.k, self.pksb_lin, self.mig.values)
+            self.mig.values['ap'] = ap
+            self.mig.values['at'] = at
             
 
         f.close()

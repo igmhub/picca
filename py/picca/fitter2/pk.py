@@ -119,12 +119,16 @@ def dnl_arinyo(k, pk_lin, tracer1, tracer2, **kwargs):
 def cached_g2(function):
   memo = {}
   def wrapper(*args, **kwargs):
+
     dataset_name = kwargs['dataset_name']
-    if dataset_name in memo:
-      return memo[dataset_name]
+    Lpar = kwargs["par binsize {}".format(dataset_name)]
+    Lper = kwargs["per binsize {}".format(dataset_name)]
+
+    if dataset_name in memo and np.allclose(memo[dataset_name][0], [Lpar, Lper]):
+      return memo[dataset_name][1]
     else:
       rv = function(*args, **kwargs)
-      memo[dataset_name] = rv
+      memo[dataset_name] = [[Lpar, Lper], rv]
       return rv
   return wrapper
 
@@ -138,12 +142,12 @@ def G2(k, pk_lin, tracer1, tracer2, dataset_name = None, **kwargs):
     return utils.sinc(kp*Lpar/2)**2*utils.sinc(kt*Lper/2)**2
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs): 
-    assert (tracer1 == "QSO" and tracer2 == "LYA") or (tracer1 == "LYA" and tracer2 == "QSO")
+    assert tracer1 == "QSO" or tracer2 == "QSO"
     kp = k*muk
     return pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs)*np.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
 
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
-    assert (tracer1 == "QSO" and tracer2 == "LYA") or (tracer1 == "LYA" and tracer2 == "QSO")
+    assert tracer1 == "QSO" or tracer2 == "QSO"
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
     kp = k*muk
     return pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs)/np.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)

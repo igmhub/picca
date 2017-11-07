@@ -131,23 +131,12 @@ class data:
                         self.z_met[(m1, m2)] = hmet[2]["Z_{}_{}".format(m1,m2)][:]
                         self.dm_met[(m1, m2)] = csr_matrix(hmet[2]["DM_{}_{}".format(m1,m2)][:])
 
-    def xi_model(self, k, pk_lin, pksb_lin, pars):
-        xi_peak = self.xi(self.r, self.mu, k, pk_lin-pksb_lin, self.pk, \
+    def xi_model(self, k, pk_lin, pars):
+        xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, \
                     tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
 
-        ap = pars["ap"]
-        at = pars["at"]
-        pars["ap"]=1.
-        pars["at"]=1.
-        xi_sb = self.xi(self.r, self.mu, k, pksb_lin, self.pk, \
-                    tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
-
-        pars["ap"] = ap
-        pars["at"] = at
-        xi_full = xi_peak + xi_sb
-
-        xi_full *= self.z_evol[self.tracer1](self.z, self.tracer1, **pars)*self.z_evol[self.tracer2](self.z, self.tracer2, **pars)
-        xi_full *= self.growth_function(self.z, **pars)**2
+        xi *= self.z_evol[self.tracer1](self.z, self.tracer1, **pars)*self.z_evol[self.tracer2](self.z, self.tracer2, **pars)
+        xi *= self.growth_function(self.z, **pars)**2
 
         for tracer1, tracer2 in self.dm_met:
             rp = self.rp_met[(tracer1, tracer2)]
@@ -158,29 +147,30 @@ class data:
             w = r == 0
             r[w] = 1e-6
             mu = rp/r
-            xi_met_peak = self.xi_met(r, mu, k, pk_lin - pksb_lin, self.pk_met, \
-                tracer1 = tracer1, tracer2 = tracer2, ell_max = self.ell_max, **pars)
-            ap = pars["ap"]
-            at = pars["at"]
-            pars["ap"]=1.
-            pars["at"]=1.
-            xi_met_sb = self.xi_met(r, mu, k, pksb_lin, self.pk_met, \
+            xi_met = self.xi_met(r, mu, k, pk_lin, self.pk_met, \
                 tracer1 = tracer1, tracer2 = tracer2, ell_max = self.ell_max, **pars)
 
-            pars["ap"] = ap
-            pars["at"] = at
-            xi_met_full = xi_met_peak + xi_met_sb
-            xi_met_full *= self.z_evol[tracer1](z, tracer1, **pars)*self.z_evol[tracer2](z, tracer2, **pars)
-            xi_met_full *= self.growth_function(z, **pars)**2
-            xi_met_full = dm_met.dot(xi_met_full)
-            xi_full += xi_met_full
+            xi_met *= self.z_evol[tracer1](z, tracer1, **pars)*self.z_evol[tracer2](z, tracer2, **pars)
+            xi_met *= self.growth_function(z, **pars)**2
+            xi_met = dm_met.dot(xi_met)
+            xi += xi_met
 
-        xi_full = self.dm.dot(xi_full)
+        xi = self.dm.dot(xi)
 
-        return xi_full
+        return xi
 
     def chi2(self, k, pk_lin, pksb_lin, pars):
-        xi_full = self.xi_model(k, pk_lin, pksb_lin, pars)
+        xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
+
+        ap = pars['ap']
+        at = pars['at']
+        pars['ap']=1.
+        pars['at']=1.
+        xi_sb = self.xi_model(k, pksb_lin, pars)
+        pars['ap'] = ap
+        pars['at'] = at
+
+        xi_full = xi_peak + xi_sb
         dxi = self.da_cut-xi_full[self.mask]
 
         return dxi.T.dot(self.ico.dot(dxi))
