@@ -162,6 +162,12 @@ if __name__ == '__main__':
  
     w = wes>0
     cfs[w]/=wes[w]
+
+    ### To store the all 2d
+    cfs_2d = cfs.copy()
+    wes_2d = wes.copy()
+    nbs_2d = nbs.copy()
+
     v1d = sp.diag(cfs).copy()
     wv1d = sp.diag(wes).copy()
     nv1d = sp.diag(nbs).copy()
@@ -200,6 +206,7 @@ if __name__ == '__main__':
     head['DLL']=forest.dll
 
     out.write([v1d,wv1d,nv1d,c1d,nc1d,nb1d],names=['v1d','wv1d','nv1d','c1d','nc1d','nb1d'],header=head)
+    out.write([cfs_2d,wes_2d,nbs_2d],names=['DA','WE','NB'])
     out.close()
 
     print "all done"
