@@ -66,8 +66,8 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()/2
 
-    forest.lmax = sp.log10(args.lambda_min)
-    forest.lmin = sp.log10(args.lambda_max)
+    forest.lmin = sp.log10(args.lambda_min)
+    forest.lmax = sp.log10(args.lambda_max)
     forest.dll = args.dll
     n1d = int((forest.lmax-forest.lmin)/forest.dll+1)
     cf.n1d = n1d
