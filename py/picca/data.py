@@ -201,10 +201,12 @@ class delta(qso):
     @classmethod
     def from_forest(cls,f,st,var_lss,eta):
 
-        de = f.fl/f.co/st(f.ll)-1
+        de = f.fl/f.co/st(f.ll)-1.
+        mst = st(f.ll)
+        co = f.co
         ll = f.ll
         iv = f.iv/eta(f.ll)
-        we = iv*f.co**2/(iv*f.co**2*var_lss(f.ll)+1)
+        we = iv*(co*mst)**2/(iv*(co*mst)**2*var_lss(f.ll)+1)
         co = f.co
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order)
 
