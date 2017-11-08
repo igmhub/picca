@@ -97,6 +97,7 @@ if __name__ == '__main__':
 
     cf.npix = len(data)
     cf.data = data
+    cf.ndata = ndata
 
     x_correlation=False
     if args.in_dir2: 
@@ -122,6 +123,10 @@ if __name__ == '__main__':
                 if ndata2>args.nspec:break
     print "done"
 
+    if x_correlation:
+        cf.data2  = data2
+        cf.ndata2 = ndata2
+
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
@@ -133,10 +138,6 @@ if __name__ == '__main__':
                 keys.append(i)
         cfs = map(cf1d,keys)
     else: cfs = map(cf1d,data.keys())
-
-    #pool = Pool(processes=args.nproc)
-    cfs = map(cf1d,data.keys())
-    #pool.close()
 
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]
