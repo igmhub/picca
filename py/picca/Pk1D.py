@@ -74,10 +74,10 @@ def fill_masked_pixels(dll,ll,delta,diff,iv):
 
     return ll_new,delta_new,diff_new,iv_new,nb_masked_pixel
 
-def compute_Pk_raw(delta,ll):
+def compute_Pk_raw(dll,delta,ll):
 
     #   Length in km/s     
-    length_lambda = (np.power(10.,ll[len(ll)-1])-np.power(10.,ll[0]))/(np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))*2.0*constants.speed_light/1000.
+    length_lambda = dll*constants.speed_light/1000.*np.log(10.)*len(delta)
     
     # make 1D FFT        
     nb_pixels = len(delta)
@@ -90,7 +90,7 @@ def compute_Pk_raw(delta,ll):
     
     # compute power spectrum        
     Pk = np.zeros(nb_bin_FFT)
-    k =  np.zeros(nb_bin_FFT)        
+    k =  np.zeros(nb_bin_FFT)
     for i in range(nb_bin_FFT):
         Pk[i] = float(fft_a[i].real**2 + fft_a[i].imag**2)*length_lambda/float(nb_pixels**2)
         k[i] = float(i)*2.0*np.pi/length_lambda
@@ -98,7 +98,7 @@ def compute_Pk_raw(delta,ll):
     return k,Pk
 
 
-def compute_Pk_noise(iv,diff,ll,run_noise):
+def compute_Pk_noise(dll,iv,diff,ll,run_noise):
 
     nb_pixels = len(iv)
     nb_bin_FFT = nb_pixels/2 + 1
@@ -112,12 +112,12 @@ def compute_Pk_noise(iv,diff,ll,run_noise):
             delta_exp= np.zeros(nb_pixels)
             for i in range(nb_pixels):
                 delta_exp[i] = np.random.normal(0.,err[i])
-            k_exp,Pk_exp = compute_Pk_raw(delta_exp,ll)
+            k_exp,Pk_exp = compute_Pk_raw(dll,delta_exp,ll)
             Pk += Pk_exp 
         
         Pk /= float(nb_noise_exp)
 
-    k_diff,Pk_diff = compute_Pk_raw(diff,ll)
+    k_diff,Pk_diff = compute_Pk_raw(dll,diff,ll)
     
     return Pk,Pk_diff
 

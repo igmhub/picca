@@ -169,12 +169,12 @@ if __name__ == '__main__':
                           
              
                 # Compute Pk_raw
-                k,Pk_raw = compute_Pk_raw(delta_new,ll_new)
+                k,Pk_raw = compute_Pk_raw(d.dll,delta_new,ll_new)
 
                 # Compute Pk_noise
                 run_noise = False
                 if (args.noise_estimate=='pipeline'): run_noise=True
-                Pk_noise,Pk_diff = compute_Pk_noise(iv_new,diff_new,ll_new,run_noise)               
+                Pk_noise,Pk_diff = compute_Pk_noise(d.dll,iv_new,diff_new,ll_new,run_noise)               
 
                 # Compute resolution correction
                 delta_pixel = d.dll*np.log(10.)*constants.speed_light/1000.
