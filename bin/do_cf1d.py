@@ -137,8 +137,8 @@ if __name__ == '__main__':
         for i in data.keys(): 
             if i in data2.keys(): 
                 keys.append(i)
-        cfs = map(cf1d,keys)
-    else: cfs = map(cf1d,data.keys())
+        cfs = pool.map(cf1d,keys)
+    else: cfs = pool.map(cf1d,data.keys())
 
     pool.close()
 
