@@ -113,7 +113,10 @@ if __name__ == '__main__':
 
 
     z_min_pix = 1.e6
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
+    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+        fi = glob.glob(args.in_dir)
+    else:
+        fi = glob.glob(args.in_dir+"/*.fits.gz")
     data = {}
     ndata = 0
     for i,f in enumerate(fi):

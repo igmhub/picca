@@ -72,7 +72,10 @@ if __name__ == '__main__':
     n1d = int((forest.lmax-forest.lmin)/forest.dll+1)
     cf.n1d = n1d
 
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
+    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+        fi = glob.glob(args.in_dir)
+    else:
+        fi = glob.glob(args.in_dir+"/*.fits.gz")
     data = {}
     ndata = 0
     for i,f in enumerate(fi):
@@ -101,7 +104,10 @@ if __name__ == '__main__':
     x_correlation=False
     if args.in_dir2: 
         x_correlation=True
-        fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
+            fi = glob.glob(args.in_dir2)
+        else:
+            fi = glob.glob(args.in_dir2+"/*.fits.gz")
         data2 = {}
         ndata2 = 0
         dels2=[]
