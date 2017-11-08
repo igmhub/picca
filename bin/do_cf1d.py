@@ -130,6 +130,7 @@ if __name__ == '__main__':
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
+    pool = Pool(processes=args.nproc)
 
     if x_correlation: 
         keys = []
@@ -138,6 +139,8 @@ if __name__ == '__main__':
                 keys.append(i)
         cfs = map(cf1d,keys)
     else: cfs = map(cf1d,data.keys())
+
+    pool.close()
 
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]
