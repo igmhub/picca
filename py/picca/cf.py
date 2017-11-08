@@ -378,8 +378,8 @@ def x_forest_cf1d(pix):
         bins1 = ((d1.ll-forest.lmin)/forest.dll+0.5).astype(int)
         wde1 = d1.we*d1.de
         we1 = d1.we
-        for d2 in data[pix]:
-            if (d1.thid != d2.thid): continue 
+        for d2 in data2[pix]:
+            if (d1.thid != d2.thid): continue
             bins2 = ((d2.ll-forest.lmin)/forest.dll+0.5).astype(int)
             bins = bins1 + n1d*bins2[:,None]
             wde2 = d2.we*d2.de
