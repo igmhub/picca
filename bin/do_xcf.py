@@ -246,6 +246,7 @@ if __name__ == '__main__':
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
+    head['RPMIN']=xcf.rp_min
     head['RPMAX']=xcf.rp_max
     head['RTMAX']=xcf.rt_max
     head['NT']=xcf.nt

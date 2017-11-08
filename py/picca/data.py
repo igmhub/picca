@@ -156,11 +156,12 @@ class forest(qso):
 
         def chi2(p0,p1):
             m = model(p0,p1)
-            var = 1./self.iv/m**2
+            var_pipe = 1./self.iv/m**2
             ## prep_del.variance is the variance of delta
             ## we want here the we = ivar(flux)
 
-            we = 1/m**2/variance(var,eta,var_lss,fudge)
+            var_tot = variance(var_pipe,eta,var_lss,fudge)
+            we = 1/m**2/var_tot
             v = (self.fl-m)**2*we
             return v.sum()-sp.log(we).sum()
 
@@ -200,10 +201,12 @@ class delta(qso):
     @classmethod
     def from_forest(cls,f,st,var_lss,eta):
 
-        de = f.fl/f.co/st(f.ll)-1
+        de = f.fl/f.co/st(f.ll)-1.
+        mst = st(f.ll)
+        co = f.co
         ll = f.ll
         iv = f.iv/eta(f.ll)
-        we = iv*f.co**2/(iv*f.co**2*var_lss(f.ll)+1)
+        we = iv*(co*mst)**2/(iv*(co*mst)**2*var_lss(f.ll)+1)
         co = f.co
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order)
 
