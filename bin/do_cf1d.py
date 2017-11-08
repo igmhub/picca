@@ -163,7 +163,7 @@ if __name__ == '__main__':
     w = wes>0
     cfs[w]/=wes[w]
 
-    ### To store the all 2d
+    ### To store the full 2D array
     cfs_2d = cfs.copy()
     wes_2d = wes.copy()
     nbs_2d = nbs.copy()
