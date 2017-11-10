@@ -105,7 +105,6 @@ class data:
 
             if 'in tracer2' in dic_init['metals']:
                 for m in dic_init['metals']['in tracer2']:
-                    print("{}_{}".format(self.tracer1,m))
                     self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol met']), zref = self.zref)
                     self.rp_met[(self.tracer1, m)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                     self.rt_met[(self.tracer1, m)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
@@ -115,7 +114,6 @@ class data:
             if 'in tracer1' in dic_init['metals']:
                 if self.tracer1==self.tracer2:
                     for m in dic_init['metals']['in tracer1']:
-                        print("{}_{}".format(self.tracer2,m))
                         self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol met']), zref = self.zref)
                         self.rp_met[(m, self.tracer2)] = hmet[2]["RP_{}_{}".format(self.tracer2,m)][:]
                         self.rt_met[(m, self.tracer2)] = hmet[2]["RT_{}_{}".format(self.tracer2,m)][:]
@@ -123,7 +121,6 @@ class data:
                         self.dm_met[(m, self.tracer2)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer2,m)][:])
                 else:
                     for m in dic_init['metals']['in tracer1']:
-                        print("{}_{}".format(m,self.tracer2))
                         self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol met']), zref = self.zref)
                         self.rp_met[(m, self.tracer2)] = hmet[2]["RP_{}_{}".format(m,self.tracer2)][:]
                         self.rt_met[(m, self.tracer2)] = hmet[2]["RT_{}_{}".format(m,self.tracer2)][:]
