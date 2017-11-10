@@ -94,7 +94,7 @@ if __name__ == '__main__':
     parser.add_argument('--flux-calib',type = str,default=None,required=False,
             help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
 
-    parser.add_argument('--ivar-pipeline-calib',type = str,default=None,required=False,
+    parser.add_argument('--ivar-calib',type = str,default=None,required=False,
             help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration')
 
     parser.add_argument('--eta-min',type = float,default=0.5,required=False,
@@ -156,15 +156,15 @@ if __name__ == '__main__':
             sys.exit(1)
 
     ### Correct multiplicative pipeline inverse variance calibration
-    if (args.ivar_pipeline_calib is not None):
+    if (args.ivar_calib is not None):
         try:
-            vac = fitsio.FITS(args.ivar_pipeline_calib)
+            vac = fitsio.FITS(args.ivar_calib)
             ll  = vac[2]['LOGLAM'][:]
             eta = vac[2]['ETA'][:]
             forest.correc_ivar = interp1d(ll,eta,fill_value="extrapolate")
 
         except:
-            print(" Error while reading flux_calib file {}".format(args.ivar_pipeline_calib))
+            print(" Error while reading flux_calib file {}".format(args.ivar_calib))
             sys.exit(1)
 
     nit = args.nit
