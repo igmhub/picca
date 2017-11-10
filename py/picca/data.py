@@ -50,8 +50,10 @@ class forest(qso):
     rebin = None
     dll = None
 
-    ### Correction function for multiplicative errors in calibration
+    ### Correction function for multiplicative errors in pipeline flux calibration
     correc_flux = None
+    ### Correction function for multiplicative errors in inverse pipeline variance calibration
+    correc_ivar = None
 
     ## minumum dla transmission
     dla_mask = None
@@ -96,6 +98,9 @@ class forest(qso):
             correction = self.correc_flux(ll)
             fl /= correction
             iv *= correction**2
+        if not self.correc_ivar is None:
+            correction = self.correc_ivar(ll)
+            iv /= correction
 
         self.T_dla = None
         self.ll = ll
