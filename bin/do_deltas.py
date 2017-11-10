@@ -164,7 +164,7 @@ if __name__ == '__main__':
             forest.correc_ivar = interp1d(ll,eta,fill_value="extrapolate")
 
         except:
-            print(" Error while reading flux_calib file {}".format(args.ivar_calib))
+            print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
             sys.exit(1)
 
     nit = args.nit
