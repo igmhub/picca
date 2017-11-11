@@ -208,7 +208,7 @@ class delta(qso):
         fudge = fudge(ll)
         co = f.co
         de = f.fl/(co*mst)-1.
-        var = 1./d.iv/(co*mst)**2
+        var = 1./f.iv/(co*mst)**2
         we = 1./variance(var,eta,var_lss,fudge)
 
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order)
