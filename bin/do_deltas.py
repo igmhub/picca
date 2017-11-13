@@ -257,7 +257,7 @@ if __name__ == '__main__':
     res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
     ll_st,st,wst = prep_del.stack(data)
     res.write([ll_st,st,wst],names=['loglam','stack','weight'])
-    res.write([ll,eta,vlss,fudge,nb_pixels,err_eta,err_vlss,err_fudge],names=['loglam','eta','var_lss','fudge','nb_pixels'])
+    res.write([ll,eta,vlss,fudge,nb_pixels],names=['loglam','eta','var_lss','fudge','nb_pixels'])
     res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'])
     var = sp.broadcast_to(var.reshape(1,-1),var_del.shape)
     res.write([var,var_del,var2_del,count,nqsos,chi2],names=['var_pipe','var_del','var2_del','count','nqsos','chi2'])
