@@ -149,7 +149,7 @@ if __name__ == '__main__':
             ll_st = vac[1]['loglam'][:]
             st    = vac[1]['stack'][:]
             w     = (st!=0.)
-            forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate")
+            forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate",kind="nearest")
 
         except:
             print(" Error while reading flux_calib file {}".format(args.flux_calib))
@@ -161,7 +161,7 @@ if __name__ == '__main__':
             vac = fitsio.FITS(args.ivar_calib)
             ll  = vac[2]['LOGLAM'][:]
             eta = vac[2]['ETA'][:]
-            forest.correc_ivar = interp1d(ll,eta,fill_value="extrapolate")
+            forest.correc_ivar = interp1d(ll,eta,fill_value="extrapolate",kind="nearest")
 
         except:
             print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
