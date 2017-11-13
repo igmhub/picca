@@ -266,7 +266,7 @@ if __name__ == '__main__':
     deltas = {}
     data_bad_cont = []
     for p in data:
-        deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta) for d in data[p] if d.bad_cont is None]
+        deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:

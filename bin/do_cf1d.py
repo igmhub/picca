@@ -66,8 +66,8 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()/2
 
-    forest.lmax = sp.log10(args.lambda_min)
-    forest.lmin = sp.log10(args.lambda_max)
+    forest.lmin = sp.log10(args.lambda_min)
+    forest.lmax = sp.log10(args.lambda_max)
     forest.dll = args.dll
     n1d = int((forest.lmax-forest.lmin)/forest.dll+1)
     cf.n1d = n1d
@@ -97,6 +97,7 @@ if __name__ == '__main__':
 
     cf.npix = len(data)
     cf.data = data
+    cf.ndata = ndata
 
     x_correlation=False
     if args.in_dir2: 
@@ -122,21 +123,24 @@ if __name__ == '__main__':
                 if ndata2>args.nspec:break
     print "done"
 
+    if x_correlation:
+        cf.data2  = data2
+        cf.ndata2 = ndata2
+
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
+    pool = Pool(processes=args.nproc)
 
     if x_correlation: 
         keys = []
         for i in data.keys(): 
             if i in data2.keys(): 
                 keys.append(i)
-        cfs = map(cf1d,keys)
-    else: cfs = map(cf1d,data.keys())
+        cfs = pool.map(cf1d,keys)
+    else: cfs = pool.map(cf1d,data.keys())
 
-    #pool = Pool(processes=args.nproc)
-    cfs = map(cf1d,data.keys())
-    #pool.close()
+    pool.close()
 
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]
@@ -162,6 +166,12 @@ if __name__ == '__main__':
  
     w = wes>0
     cfs[w]/=wes[w]
+
+    ### Make copies of the 2D arrays that will be saved in the output file
+    cfs_2d = cfs.copy()
+    wes_2d = wes.copy()
+    nbs_2d = nbs.copy()
+
     v1d = sp.diag(cfs).copy()
     wv1d = sp.diag(wes).copy()
     nv1d = sp.diag(nbs).copy()
@@ -200,6 +210,7 @@ if __name__ == '__main__':
     head['DLL']=forest.dll
 
     out.write([v1d,wv1d,nv1d,c1d,nc1d,nb1d],names=['v1d','wv1d','nv1d','c1d','nc1d','nb1d'],header=head)
+    out.write([cfs_2d,wes_2d,nbs_2d],names=['DA','WE','NB'])
     out.close()
 
     print "all done"

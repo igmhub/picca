@@ -1,3 +1,12 @@
+#
+# File to veto lines in observed frame.
+#
+# Masks 3 spectral pixels on either side of the Ca II H&K lines and
+# 1.5 spectral pixels on either side of strong sky lines from the
+# DR12 sky mask (https://trac.sdss3.org/wiki/BOSS/LyaForestsurvey/SkyMask).
+#
+# name  lambda_min (Å)  lambda_max (Å)  frame
+#
 CaII 3931.87701727 3937.3128602 OBS
 CaII 3966.43213919 3971.91575478 OBS
 sky 4046.22724125 4049.0232416 OBS
