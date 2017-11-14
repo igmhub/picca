@@ -57,7 +57,8 @@ def cache_kaiser(function):
         else:
             cache[pair] = [[bias1, bias2, beta1, beta2, ap, at], xi(*args, **kwargs)]
             ret = cache[pair][1]
-        return ret
+
+        return ret*1.
 
     return wrapper
 

@@ -98,26 +98,44 @@ class data:
 
         if 'metals' in dic_init:
             self.pk_met = pk.pk(getattr(pk, dic_init['metals']['model-pk-met']))
-            self.pk_met *= partial(getattr(pk,'G2'),dataset_name=self.name)
+            self.pk_met *= partial(getattr(pk,'G2'), dataset_name=self.name)
             self.xi_met = getattr(xi, dic_init['metals']['model-xi-met'])
 
             hmet = fitsio.FITS(dic_init['metals']['filename'])
 
-            if 'in tracer2' in dic_init['metals']:
-                for m in dic_init['metals']['in tracer2']:
-                    self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol met']), zref = self.zref)
+            assert 'in tracer1' in dic_init['metals'] or 'in tracer2' in dic_init['metals']
+
+            if self.tracer1 == self.tracer2:
+                assert dic_init['metals']['in tracer1'] == dic_init['metals']['in tracer2']
+
+                for m in dic_init['metals']['in tracer1']:
+                    self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']), zref = self.zref)
                     self.rp_met[(self.tracer1, m)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                     self.rt_met[(self.tracer1, m)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
                     self.z_met[(self.tracer1, m)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
                     self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
+                    
+                    self.rp_met[(m, self.tracer1)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
+                    self.rt_met[(m, self.tracer1)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
+                    self.z_met[(m, self.tracer1)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
+                    self.dm_met[(m, self.tracer1)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
 
-            if 'in tracer1' in dic_init['metals']:
-                for m in dic_init['metals']['in tracer1']:
-                    self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol met']), zref = self.zref)
-                    self.rp_met[(m, self.tracer2)] = hmet[2]["RP_{}_{}".format(self.tracer2,m)][:]
-                    self.rt_met[(m, self.tracer2)] = hmet[2]["RT_{}_{}".format(self.tracer2,m)][:]
-                    self.z_met[(m, self.tracer2)] = hmet[2]["Z_{}_{}".format(self.tracer2,m)][:]
-                    self.dm_met[(m, self.tracer2)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer2,m)][:])
+            else:
+                if 'in tracer2' in dic_init['metals']:
+                    for m in dic_init['metals']['in tracer2']:
+                        self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']), zref = self.zref)
+                        self.rp_met[(self.tracer1, m)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
+                        self.rt_met[(self.tracer1, m)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
+                        self.z_met[(self.tracer1, m)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
+                        self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
+
+                if 'in tracer1' in dic_init['metals']:
+                    for m in dic_init['metals']['in tracer1']:
+                        self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']), zref = self.zref)
+                        self.rp_met[(m, self.tracer2)] = hmet[2]["RP_{}_{}".format(m, self.tracer2)][:]
+                        self.rt_met[(m, self.tracer2)] = hmet[2]["RT_{}_{}".format(m, self.tracer2)][:]
+                        self.z_met[(m, self.tracer2)] = hmet[2]["Z_{}_{}".format(m, self.tracer2)][:]
+                        self.dm_met[(m, self.tracer2)] = csr_matrix(hmet[2]["DM_{}_{}".format(m, self.tracer2)][:])
 
             ## add metal-metal cross correlations
             if 'in tracer1' in dic_init['metals'] and 'in tracer2' in dic_init['metals']:
