@@ -35,6 +35,7 @@ def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, 
 def cache_kaiser(function):
     cache = {}
     def wrapper(*args, **kwargs):
+        name = kwargs['name']
         tracer1 = kwargs['tracer1']
         tracer2 = kwargs['tracer2']
 
@@ -46,7 +47,7 @@ def cache_kaiser(function):
         ## args[3] is the pk_lin, we need to make sure we recalculate
         ## when it changes (e.g. when we pass the pksb_lin)
         t = tuple(x for x in args[3])
-        pair = (tracer1, tracer2, hash(t))
+        pair = (name, tracer1, tracer2, hash(t))
 
         recalc = True
         if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):

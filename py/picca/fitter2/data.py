@@ -84,7 +84,7 @@ class data:
         if 'velocity dispersion' in dic_init['model']:
             self.pk *= getattr(pk, dic_init['model']['velocity dispersion'])
 
-        self.xi = getattr(xi, dic_init['model']['model-xi'])
+        self.xi = partial(getattr(xi, dic_init['model']['model-xi']), name=self.name)
 
         self.z_evol = {}
         self.z_evol[self.tracer1] = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer1)]), zref=self.zref)
@@ -99,7 +99,7 @@ class data:
         if 'metals' in dic_init:
             self.pk_met = pk.pk(getattr(pk, dic_init['metals']['model-pk-met']))
             self.pk_met *= partial(getattr(pk,'G2'), dataset_name=self.name)
-            self.xi_met = getattr(xi, dic_init['metals']['model-xi-met'])
+            self.xi_met = partial(getattr(xi, dic_init['metals']['model-xi-met']), name=self.name)
 
             hmet = fitsio.FITS(dic_init['metals']['filename'])
 
