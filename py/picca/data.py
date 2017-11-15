@@ -103,6 +103,25 @@ class forest(qso):
         self.iv = iv
         self.order=order
 
+    def __add__(self,d):
+
+        ll = sp.append(self.ll,d.ll)
+        fl = sp.append(self.fl,d.fl)
+        iv = sp.append(self.iv,d.iv)
+
+        bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)
+        cll = forest.lmin + sp.unique(bins)*forest.dll
+        civ = sp.bincount(bins,weights=iv)
+        civ = civ[bins.min():]
+        cfl = sp.bincount(bins,weights=iv*fl)
+        cfl = cfl[bins.min():]
+        w = (civ>0.)
+        cfl[w] /= civ[w]
+
+        self.ll = cll
+        self.fl = cfl
+        self.iv = civ
+
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):
             return
@@ -200,7 +219,7 @@ class delta(qso):
 
     @classmethod
     def from_forest(cls,f,st,var_lss,eta,fudge):
-	
+
         ll = f.ll
         mst = st(ll)
         var_lss = var_lss(ll)

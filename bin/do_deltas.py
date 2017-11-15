@@ -199,6 +199,7 @@ if __name__ == '__main__':
         if ( usr_mask_obs.size+usr_mask_RF.size!=0):
             for p in data:
                 for d in data[p]:
+		    print d
                     d.mask(mask_obs=usr_mask_obs , mask_RF=usr_mask_RF)
 
     ### Correct for DLAs
