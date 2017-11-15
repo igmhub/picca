@@ -77,7 +77,7 @@ if __name__ == '__main__':
             help='prefix of the iteration file')
 
     parser.add_argument('--mode',type = str,default='pix',required=False,
-            help='open mode: pix or spec')
+            help='open mode: pix, spec, spframe, spcframe')
 
     parser.add_argument('--keep-bal',action='store_true',required=False,
             help='do not reject BALs')
@@ -199,7 +199,6 @@ if __name__ == '__main__':
         if ( usr_mask_obs.size+usr_mask_RF.size!=0):
             for p in data:
                 for d in data[p]:
-		    print d
                     d.mask(mask_obs=usr_mask_obs , mask_RF=usr_mask_RF)
 
     ### Correct for DLAs

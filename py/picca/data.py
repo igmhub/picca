@@ -63,25 +63,25 @@ class forest(qso):
 
     def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
-        ## rebin
 
+        ## rebin
         bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)
         w = bins>=0
         fl=fl[w]
         iv =iv[w]
         bins=bins[w]
 
-        ll = forest.lmin + sp.unique(bins)*forest.dll
-        civ = sp.bincount(bins,weights=iv)
-        w=civ>0
-        civ=civ[bins.min():]
-        cfl = sp.bincount(bins,weights=iv*fl)
-        cfl = cfl[bins.min():]
-        w=civ>0
-        cfl[w]/=civ[w]
-        iv = civ
+        ll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
+        cfl = sp.zeros(bins.max()+1)
+        civ = sp.zeros(bins.max()+1)
+        ccfl = sp.bincount(bins,weights=iv*fl)
+        cciv = sp.bincount(bins,weights=iv)
+        cfl[:len(ccfl)] += ccfl
+        civ[:len(cciv)] += cciv
+        w = (civ>0.)
+        cfl[w] /= civ[w]
         fl = cfl
-
+        iv = civ
 
         ## cut to specified range
         w= (ll<forest.lmax) & (ll-sp.log10(1+self.zqso)>forest.lmin_rest) & (ll-sp.log10(1+self.zqso)<forest.lmax_rest)
@@ -104,23 +104,29 @@ class forest(qso):
         self.order=order
 
     def __add__(self,d):
+        
+        if not hasattr(self,'ll') or not hasattr(d,'ll'):
+            return self
 
         ll = sp.append(self.ll,d.ll)
         fl = sp.append(self.fl,d.fl)
         iv = sp.append(self.iv,d.iv)
 
         bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        cll = forest.lmin + sp.unique(bins)*forest.dll
-        civ = sp.bincount(bins,weights=iv)
-        civ = civ[bins.min():]
-        cfl = sp.bincount(bins,weights=iv*fl)
-        cfl = cfl[bins.min():]
+        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
+        cfl = sp.zeros(bins.max()+1)
+        civ = sp.zeros(bins.max()+1)
+        ccfl = sp.bincount(bins,weights=iv*fl)
+        cciv = sp.bincount(bins,weights=iv)
+        cfl[:len(ccfl)] += ccfl
+        civ[:len(cciv)] += cciv
         w = (civ>0.)
-        cfl[w] /= civ[w]
 
-        self.ll = cll
-        self.fl = cfl
-        self.iv = civ
+        self.ll = cll[w]
+        self.fl = cfl[w]
+        self.iv = civ[w]/civ[w]
+        
+        return self
 
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):

@@ -3,7 +3,7 @@ import scipy as sp
 import healpy
 import glob
 import sys
-import time 
+import time
 
 from picca.data import forest
 from picca.data import delta
@@ -274,7 +274,7 @@ def read_from_spframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log=
 
     for p in plates:
 
-        name = in_dir+"/{}/{}-*-*.fits*".format(p,prefix)
+        name = in_dir+"/{}/{}-*-*.fits{}".format(p,prefix,sufix)
         fi = glob.glob(name)
         w = (plate==p)
 
@@ -300,12 +300,13 @@ def read_from_spframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log=
             if "-r1-" in the_file or "-b1-" in the_file:
                 ww = w & (fid<=500)
             elif "-r2-" in the_file or "-b2-" in the_file:
-                ww = w & (fid>500)
+                ww = w & (fid>=501)
 
             for (t, r, d, z, p, m, f) in zip(thid[ww], ra[ww], dec[ww], zqso[ww], plate[ww], mjd[ww], fid[ww]):
+
                 index = fib_list.index(f)
                 d = forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
-                if t in pix_data and hasattr(pix_data[t],'ll') and hasattr(d,'ll'):
+                if t in pix_data:
                     pix_data[t] += d
                 else:
                     pix_data[t] = d
@@ -314,7 +315,8 @@ def read_from_spframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log=
             h.close()
             if mode=='spframe':
                 h2.close()
-        return pix_data.values()
+
+    return pix_data.values()
 
 def read_from_desi(nside,ztable,in_dir,order):
     fi = glob.glob(in_dir+"/spectra-*.fits")
