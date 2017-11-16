@@ -52,7 +52,7 @@ def cache_kaiser(function):
         recalc = True
         if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
             recalc = False
-
+        
         if not recalc:
             ret = cache[pair][1]*bias1*bias2/cache[pair][0][0]/cache[pair][0][1]
         else:

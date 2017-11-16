@@ -4,6 +4,9 @@ import iminuit
 import time
 import h5py
 
+def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
+    return d.chi2(k, pk, pksb, dic)
+
 class chi2:
     def __init__(self,dic_init):
         self.data = dic_init['data sets']
@@ -19,7 +22,7 @@ class chi2:
         for d in self.data:
             chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,dic)
 
-        for p in dic:
+        for p in np.sort(dic.keys()):
             print(p+" "+str(dic[p]))
         
         print("Chi2: "+str(chi2))
@@ -27,10 +30,24 @@ class chi2:
 
     def minimize(self):
         t0 = time.time()
+        par_names = [name for d in self.data for name in d.pars_init]
         kwargs = {name:val for d in self.data for name, val in d.pars_init.items()}
         kwargs.update({name:err for d in self.data for name, err in d.par_error.items()})
         kwargs.update({name:lim for d in self.data for name, lim in d.par_limit.items()})
         kwargs.update({name:fix for d in self.data for name, fix in d.par_fixed.items()})
+
+        ## do an initial "fast" minimization fixing everything except the biases 
+        kwargs_init = {}
+        for k,v in kwargs.items():
+            kwargs_init[k] = v
+        for name in par_names:
+            if name[:4] != "bias":
+                kwargs_init["fix_"+name] = True
+        mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs_init)
+    
+        ## now get the best fit values for the biases and start a full minimization
+        for name,v in mig.values.items():
+            kwargs[name]=v
 
         mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs)
         fmin = mig.migrad()
