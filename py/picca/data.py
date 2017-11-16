@@ -64,13 +64,20 @@ class forest(qso):
     def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
 
+        ## cut to specified range
+        w = (ll>forest.lmin)
+        w = w & (ll<forest.lmax)
+        w = w & (ll-sp.log10(1.+self.zqso)>forest.lmin_rest)
+        w = w & (ll-sp.log10(1.+self.zqso)<forest.lmax_rest)
+        w = w & (iv>0.)
+        if w.sum()==0:
+            return
+        ll=ll[w]
+        fl=fl[w]
+        iv=iv[w]
+
         ## rebin
         bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        w = bins>=0
-        fl=fl[w]
-        iv =iv[w]
-        bins=bins[w]
-
         ll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
         cfl = sp.zeros(bins.max()+1)
         civ = sp.zeros(bins.max()+1)
@@ -84,10 +91,13 @@ class forest(qso):
         iv = civ
 
         ## cut to specified range
-        w= (ll<forest.lmax) & (ll-sp.log10(1+self.zqso)>forest.lmin_rest) & (ll-sp.log10(1+self.zqso)<forest.lmax_rest)
-        w = w & (iv>0)
-        if w.sum()==0:return
-        
+        w = (ll>forest.lmin)
+        w = w & (ll<forest.lmax)
+        w = w & (ll-sp.log10(1.+self.zqso)>forest.lmin_rest)
+        w = w & (ll-sp.log10(1.+self.zqso)<forest.lmax_rest)
+        w = w & (iv>0.)
+        if w.sum()==0:
+            return
         ll=ll[w]
         fl=fl[w]
         iv=iv[w]
