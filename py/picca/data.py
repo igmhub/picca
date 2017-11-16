@@ -123,8 +123,8 @@ class forest(qso):
         w = (civ>0.)
 
         self.ll = cll[w]
-        self.fl = cfl[w]
-        self.iv = civ[w]/civ[w]
+        self.fl = cfl[w]/civ[w]
+        self.iv = civ[w]
         
         return self
 
