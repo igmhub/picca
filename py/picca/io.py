@@ -131,7 +131,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         nside = h[1].read_header()['NSIDE']
         h.close()
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
-    elif mode in ["spec","corrected-spec","spframe","spcframe"]:
+    elif mode in ["spec","corrected-spec","spcframe"]:
         nside = 256
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
         mobj = sp.bincount(pixs).sum()/len(sp.unique(pixs))
@@ -178,9 +178,9 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             t0 = time.time()
             pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
             read_time=time.time()-t0
-        elif mode in ["spframe","spcframe"]:
+        elif mode =="spcframe":
             t0 = time.time()
-            pix_data = read_from_spframe(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode, log=log)
+            pix_data = read_from_spcframe(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode, log=log)
             read_time=time.time()-t0
         if not pix_data is None:
             sys.stderr.write("{} read from pix {}, {} {} in {} secs per spectrum\n".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
@@ -261,16 +261,12 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         h.close()
         return pix_data
 
-def read_from_spframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log=None):
+def read_from_spcframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log=None):
     pix_data={}
     plates = sp.unique(plate)
 
-    if mode=='spframe':
-        prefix='spFrame'
-        sufix='.gz'
-    elif mode=='spcframe':
-        prefix='spCFrame'
-        sufix=''
+    prefix='spCFrame'
+    sufix=''
 
     for p in plates:
 
@@ -286,16 +282,10 @@ def read_from_spframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log=
 
             sys.stderr.write("reading {}\n".format(the_file))
             h = fitsio.FITS(the_file)
-            h2=h
-            if mode=='spframe':
-                try:
-                    h2 = fitsio.FITS(the_file.replace('spFrame','spCFrame').replace('.gz',''))
-                except IOError:
-                    continue
             fib_list=list(h[5]["FIBERID"][:])
             flux = h[0].read()
             ivar = h[1].read()*(h[2].read()==0)
-            llam = h2[3].read()[:,:flux.shape[1]]
+            llam = h[3].read()
 
             if "-r1-" in the_file or "-b1-" in the_file:
                 ww = w & (fid<=500)
@@ -313,8 +303,6 @@ def read_from_spframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log=
                 log.write("{} read\n".format(t))
 
             h.close()
-            if mode=='spframe':
-                h2.close()
 
     return pix_data.values()
 
