@@ -65,20 +65,22 @@ class forest(qso):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
 
         ## cut to specified range
-        w = (ll>forest.lmin)
+        bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
+        ll = forest.lmin + bins*forest.dll
+        w = (ll>=forest.lmin)
         w = w & (ll<forest.lmax)
         w = w & (ll-sp.log10(1.+self.zqso)>forest.lmin_rest)
         w = w & (ll-sp.log10(1.+self.zqso)<forest.lmax_rest)
         w = w & (iv>0.)
         if w.sum()==0:
             return
-        ll=ll[w]
-        fl=fl[w]
-        iv=iv[w]
+        bins = bins[w]
+        ll = ll[w]
+        fl = fl[w]
+        iv = iv[w]
 
         ## rebin
-        bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        ll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
+        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
         cfl = sp.zeros(bins.max()+1)
         civ = sp.zeros(bins.max()+1)
         ccfl = sp.bincount(bins,weights=iv*fl)
@@ -86,22 +88,13 @@ class forest(qso):
         cfl[:len(ccfl)] += ccfl
         civ[:len(cciv)] += cciv
         w = (civ>0.)
-        cfl[w] /= civ[w]
-        fl = cfl
-        iv = civ
-
-        ## cut to specified range
-        w = (ll>forest.lmin)
-        w = w & (ll<forest.lmax)
-        w = w & (ll-sp.log10(1.+self.zqso)>forest.lmin_rest)
-        w = w & (ll-sp.log10(1.+self.zqso)<forest.lmax_rest)
-        w = w & (iv>0.)
         if w.sum()==0:
             return
-        ll=ll[w]
-        fl=fl[w]
-        iv=iv[w]
+        ll = cll[w]
+        fl = cfl[w]/civ[w]
+        iv = civ[w]
 
+        ## Flux calibration correction
         if not self.correc_flux is None:
             correction = self.correc_flux(ll)
             fl /= correction
@@ -122,7 +115,7 @@ class forest(qso):
         fl = sp.append(self.fl,d.fl)
         iv = sp.append(self.iv,d.iv)
 
-        bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)
+        bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
         cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
         cfl = sp.zeros(bins.max()+1)
         civ = sp.zeros(bins.max()+1)
