@@ -63,35 +63,38 @@ class forest(qso):
 
     def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
-        ## rebin
-
-        bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        w = bins>=0
-        fl=fl[w]
-        iv =iv[w]
-        bins=bins[w]
-
-        ll = forest.lmin + sp.unique(bins)*forest.dll
-        civ = sp.bincount(bins,weights=iv)
-        w=civ>0
-        civ=civ[bins.min():]
-        cfl = sp.bincount(bins,weights=iv*fl)
-        cfl = cfl[bins.min():]
-        w=civ>0
-        cfl[w]/=civ[w]
-        iv = civ
-        fl = cfl
-
 
         ## cut to specified range
-        w= (ll<forest.lmax) & (ll-sp.log10(1+self.zqso)>forest.lmin_rest) & (ll-sp.log10(1+self.zqso)<forest.lmax_rest)
-        w = w & (iv>0)
-        if w.sum()==0:return
-        
-        ll=ll[w]
-        fl=fl[w]
-        iv=iv[w]
+        bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
+        ll = forest.lmin + bins*forest.dll
+        w = (ll>=forest.lmin)
+        w = w & (ll<forest.lmax)
+        w = w & (ll-sp.log10(1.+self.zqso)>forest.lmin_rest)
+        w = w & (ll-sp.log10(1.+self.zqso)<forest.lmax_rest)
+        w = w & (iv>0.)
+        if w.sum()==0:
+            return
+        bins = bins[w]
+        ll = ll[w]
+        fl = fl[w]
+        iv = iv[w]
 
+        ## rebin
+        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
+        cfl = sp.zeros(bins.max()+1)
+        civ = sp.zeros(bins.max()+1)
+        ccfl = sp.bincount(bins,weights=iv*fl)
+        cciv = sp.bincount(bins,weights=iv)
+        cfl[:len(ccfl)] += ccfl
+        civ[:len(cciv)] += cciv
+        w = (civ>0.)
+        if w.sum()==0:
+            return
+        ll = cll[w]
+        fl = cfl[w]/civ[w]
+        iv = civ[w]
+
+        ## Flux calibration correction
         if not self.correc_flux is None:
             correction = self.correc_flux(ll)
             fl /= correction
@@ -102,6 +105,31 @@ class forest(qso):
         self.fl = fl
         self.iv = iv
         self.order=order
+
+    def __add__(self,d):
+        
+        if not hasattr(self,'ll') or not hasattr(d,'ll'):
+            return self
+
+        ll = sp.append(self.ll,d.ll)
+        fl = sp.append(self.fl,d.fl)
+        iv = sp.append(self.iv,d.iv)
+
+        bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
+        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
+        cfl = sp.zeros(bins.max()+1)
+        civ = sp.zeros(bins.max()+1)
+        ccfl = sp.bincount(bins,weights=iv*fl)
+        cciv = sp.bincount(bins,weights=iv)
+        cfl[:len(ccfl)] += ccfl
+        civ[:len(cciv)] += cciv
+        w = (civ>0.)
+
+        self.ll = cll[w]
+        self.fl = cfl[w]/civ[w]
+        self.iv = civ[w]
+        
+        return self
 
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):
@@ -200,7 +228,7 @@ class delta(qso):
 
     @classmethod
     def from_forest(cls,f,st,var_lss,eta,fudge):
-	
+
         ll = f.ll
         mst = st(ll)
         var_lss = var_lss(ll)

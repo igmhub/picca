@@ -77,7 +77,7 @@ if __name__ == '__main__':
             help='prefix of the iteration file')
 
     parser.add_argument('--mode',type = str,default='pix',required=False,
-            help='open mode: pix or spec')
+            help='open mode: pix, spec, spcframe')
 
     parser.add_argument('--keep-bal',action='store_true',required=False,
             help='do not reject BALs')
