@@ -3,7 +3,6 @@
 import sys
 import fitsio
 import healpy
-import glob
 import scipy as sp
 import argparse
 import matplotlib.pyplot as plt
