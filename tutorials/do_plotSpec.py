@@ -195,7 +195,7 @@ if __name__ == '__main__':
 
 
     ### Observed l
-    plt.errorbar(10**data.ll,data.fl,linewidth=4,color='black')
+    plt.errorbar(10**data.ll,data.fl,linewidth=2,color='black')
     plt.errorbar(10**done_delta.ll,done_delta.co,linewidth=4,color='red')
     plt.xlabel(r'$\lambda_{\mathrm{Obs.}} \, [\mathrm{\AA}]$',fontsize=30)
     plt.ylabel(r'$f \, [10^{-19} \mathrm{W \, m^{-2} \, nm^{-1}}]$',fontsize=30)
