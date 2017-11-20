@@ -187,7 +187,7 @@ if __name__ == '__main__':
             done_delta = d
             hdus.close()
             break
-    if data is None:
+    if done_delta is None:
         hdus.close()
         print "Object not in spectrum"
         sys.exit()
