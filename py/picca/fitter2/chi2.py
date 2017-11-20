@@ -11,6 +11,7 @@ class chi2:
     def __init__(self,dic_init):
         self.data = dic_init['data sets']
         self.par_names = np.unique([name for d in self.data for name in d.par_names])
+        self.outfile = dic_init['outfile']
 
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
@@ -26,6 +27,7 @@ class chi2:
             print(p+" "+str(dic[p]))
         
         print("Chi2: "+str(chi2))
+        print("---\n")
         return chi2
 
     def minimize(self):
@@ -43,19 +45,21 @@ class chi2:
         for name in par_names:
             if name[:4] != "bias":
                 kwargs_init["fix_"+name] = True
-        mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs_init)
+                
+        mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs_init)
+        mig_init.migrad()
     
         ## now get the best fit values for the biases and start a full minimization
-        for name,v in mig.values.items():
-            kwargs[name]=v
+        for name, value in mig_init.values.items():
+            kwargs[name] = value
 
         mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs)
         fmin = mig.migrad()
         print("INFO: minimized in {}".format(time.time()-t0))
         self.mig = mig
     
-    def export(self, filename):
-        f = h5py.File(filename,"w")
+    def export(self):
+        f = h5py.File(self.outfile,"w")
         g=f.create_group("best_fit")
 
         for i, p in enumerate(self.mig.values):

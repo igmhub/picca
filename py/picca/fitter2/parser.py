@@ -19,6 +19,8 @@ def parse_chi2(filename):
     dic_init['fiducial']['pk'] = h[1]['PK'][:]
     dic_init['fiducial']['pksb'] = h[1]['PKSB'][:]
 
+    dic_init['outfile'] = cp.get('output','filename')
+
     return dic_init
 
 def parse_data(filename):

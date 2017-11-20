@@ -72,10 +72,10 @@ def pk_lls_uv(k, pk_lin, tracer1, tracer2, **kwargs):
     lambda_uv = kwargs["lambda_uv"]
 
     W = np.arctan(k*lambda_uv)/(k*lambda_uv)
-    beta1 = beta1/(1 + bias_gamma*W/bias1/(1 + bias1*W))
+    beta1 = beta1/(1 + bias_gamma/bias1*W/(1 + bias_prim*W))
     bias1 = bias1 + bias_gamma*W/(1+bias_prim*W)
 
-    beta2 = beta2/(1 + bias_gamma*W/bias2/(1 + bias1*W))
+    beta2 = beta2/(1 + bias_gamma/bias2*W/(1 + bias_prim*W))
     bias2 = bias2 + bias_gamma*W/(1+bias_prim*W)
 
     bias_lls = kwargs["bias_lls"]
