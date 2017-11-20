@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     ### Get Healpy pixel of the given QSO
     objs = {}
-    ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,2.,5.,keep_bal=True)
+    ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,0.,1000.,keep_bal=True)
     cut = (plate==args.plate) & (mjd==args.mjd) & (fid==args.fiberid)
     if cut.sum()==0:
         print "Object not in drq"
