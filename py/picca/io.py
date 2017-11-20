@@ -256,7 +256,8 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
                 continue
             d = forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f,order)
 
-            log.write("{} read\n".format(t))
+            if log is not None:
+                log.write("{} read\n".format(t))
             pix_data.append(d)
         h.close()
         return pix_data
@@ -300,7 +301,8 @@ def read_from_spcframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log
                     pix_data[t] += d
                 else:
                     pix_data[t] = d
-                log.write("{} read\n".format(t))
+                if log is not None:
+                    log.write("{} read\n".format(t))
 
             h.close()
 
