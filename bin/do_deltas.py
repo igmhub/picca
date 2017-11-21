@@ -258,11 +258,11 @@ if __name__ == '__main__':
     ll_st,st,wst = prep_del.stack(data)
 
     ### Save iter_out_prefix
+    res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
     hd = {}
     hd["NSIDE"] = healpy_nside
     hd["PIXORDER"] = healpy_pix_ordering
     hd["FITORDER"] = args.order
-    res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
     res.write([ll_st,st,wst],names=['loglam','stack','weight'])
     res.write([ll,eta,vlss,fudge,nb_pixels],names=['loglam','eta','var_lss','fudge','nb_pixels'])
     res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'])
