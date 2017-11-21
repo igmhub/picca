@@ -3,6 +3,8 @@ import numpy as np
 import iminuit
 import time
 import h5py
+from numpy.linalg import cholesky
+from numpy import random
 
 def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
     return d.chi2(k, pk, pksb, dic)
@@ -30,7 +32,7 @@ class chi2:
         print("---\n")
         return chi2
 
-    def minimize(self):
+    def _minimize(self):
         t0 = time.time()
         par_names = [name for d in self.data for name in d.pars_init]
         kwargs = {name:val for d in self.data for name, val in d.pars_init.items()}
@@ -56,37 +58,74 @@ class chi2:
         mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs)
         fmin = mig.migrad()
         print("INFO: minimized in {}".format(time.time()-t0))
-        self.mig = mig
+        return mig
     
+    def minimize(self):
+        self.best_fit = self._minimize()
+
+        for d in self.data:
+            d.best_fit_model = d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
+            ap = self.best_fit.values['ap']
+            at = self.best_fit.values['at']
+            self.best_fit.values['ap'] = 1
+            self.best_fit.values['at'] = 1
+            d.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
+            self.best_fit.values['ap'] = ap
+            self.best_fit.values['at'] = at
+
+    def fastMC(self, nfast_mc):
+        for d in self.data:
+            d.cho = cholesky(d.co)
+        
+        self.fast_mc = {}
+        for it in range(nfast_mc):
+            for d in self.data:
+                g = random.randn(len(d.da))
+                d.da = d.cho.dot(g) + d.best_fit_model
+                d.da_cut = d.da[d.mask]
+
+            best_fit = self._minimize()
+            for p,v in best_fit.values.items():
+                if not p in self.fast_mc:
+                    self.fast_mc[p] = []
+                self.fast_mc[p].append([v, best_fit.errors[p]])
+            
+            
+
     def export(self):
         f = h5py.File(self.outfile,"w")
-        g=f.create_group("best_fit")
 
-        for i, p in enumerate(self.mig.values):
-            g.attrs[p] = (self.mig.values[p], self.mig.errors[p])
+        g=f.create_group("best fit")
 
-        g.attrs['fval'] = self.mig.fval
+        for i, p in enumerate(self.best_fit.values):
+            g.attrs[p] = (self.best_fit.values[p], self.best_fit.errors[p])
+
+        g.attrs['fval'] = self.best_fit.fval
         ndata = [d.mask.sum() for d in self.data]
         ndata = sum(ndata)
         g.attrs['ndata'] = ndata
-        g.attrs['npar'] = len(self.mig.values)
+        g.attrs['npar'] = len(self.best_fit.values)
 
         for d in self.data:
             g = f.create_group(d.name)
-            g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.mig.values)
+            g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.best_fit.values)
             data = g.create_dataset("data", d.da.shape, dtype = "f")
             data[...] = d.da
             err = g.create_dataset("error", d.da.shape, dtype = "f")
             err[...] = np.sqrt(d.co.diagonal())
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
-            fit[...] = d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.mig.values)
-            ap = self.mig.values['ap']
-            at = self.mig.values['at']
-            self.mig.values['ap'] = 1
-            self.mig.values['at'] = 1
-            fit[...] += d.xi_model(self.k, self.pksb_lin, self.mig.values)
-            self.mig.values['ap'] = ap
-            self.mig.values['at'] = at
-            
+            fit[...] = d.best_fit_model
+    
+        if hasattr(self, "fast_mc"):
+            g = f.create_group("fast mc")
+            for p in self.fast_mc:
+                vals = np.array(self.fast_mc[p])
+                print(vals)
+                print(vals.shape)
+                d = g.create_dataset("{}/values".format(p), vals[:,0].shape, dtype="f")
+                d[...] = vals[:,0]
+                d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
+                d[...] = vals[:,1]
+
 
         f.close()
