@@ -97,14 +97,24 @@ class chi2:
 
         g=f.create_group("best fit")
 
+        ## write down all parameters
         for i, p in enumerate(self.best_fit.values):
-            g.attrs[p] = (self.best_fit.values[p], self.best_fit.errors[p])
+            v = self.best_fit.values[p]
+            e = self.best_fit.errors[p]
+            if p in self.best_fit.list_of_fixed_param():
+                e = 0
+            g.attrs[p] = (v, e)
+
+        for (p1, p2), cov in self.best_fit.covariance.items():
+            g.attrs["cov[{}, {}]".format(p1,p2)] = cov
 
         g.attrs['fval'] = self.best_fit.fval
         ndata = [d.mask.sum() for d in self.data]
         ndata = sum(ndata)
         g.attrs['ndata'] = ndata
-        g.attrs['npar'] = len(self.best_fit.values)
+        g.attrs['npar'] = len(self.best_fit.list_of_vary_param())
+        g.attrs['list of free pars'] = self.best_fit.list_of_vary_param()
+        g.attrs['list of fixed pars'] = self.best_fit.list_of_fixed_param()
 
         for d in self.data:
             g = f.create_group(d.name)
@@ -120,8 +130,6 @@ class chi2:
             g = f.create_group("fast mc")
             for p in self.fast_mc:
                 vals = np.array(self.fast_mc[p])
-                print(vals)
-                print(vals.shape)
                 d = g.create_dataset("{}/values".format(p), vals[:,0].shape, dtype="f")
                 d[...] = vals[:,0]
                 d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
