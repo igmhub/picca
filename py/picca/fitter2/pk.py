@@ -25,23 +25,23 @@ def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
-def pk_lls(k, pk_lin, tracer1, tracer2, **kwargs):
+def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
 
-    bias_lls = kwargs["bias_lls"]
-    beta_lls = kwargs["beta_lls"]
-    L0 = kwargs["L0_lls"]
+    bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
 
     kp = k*muk
     kt = k*(1-muk**2)
 
-    F_lls = utils.sinc(kp*L0)
+    F_hcd = utils.sinc(kp*L0)
 
-    bias_eff1 = (bias1 + bias_lls*F_lls)
-    bias_eff2 = (bias2 + bias_lls*F_lls)
-    beta_eff1 = (bias1 * beta1 + bias_lls*beta_lls*F_lls)/(bias1 + bias_lls*F_lls)
-    beta_eff2 = (bias2 * beta2 + bias_lls*beta_lls*F_lls)/(bias2 + bias_lls*F_lls)
+    bias_eff1 = (bias1 + bias_hcd*F_hcd)
+    bias_eff2 = (bias2 + bias_hcd*F_hcd)
+    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
 
     pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
 

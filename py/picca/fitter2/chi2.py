@@ -18,6 +18,9 @@ class chi2:
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
         self.pksb_lin = dic_init['fiducial']['pksb']
+        self.nfast_mc = 0
+        if 'fast mc' in dic_init:
+            self.nfast_mc = dic_init['fast mc']['niterations']
 
     def __call__(self, *pars):
         dic = {p:pars[i] for i,p in enumerate(self.par_names)}
@@ -64,16 +67,17 @@ class chi2:
         self.best_fit = self._minimize()
 
         for d in self.data:
-            d.best_fit_model = d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
+            self.best_fit_model = d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
             ap = self.best_fit.values['ap']
             at = self.best_fit.values['at']
             self.best_fit.values['ap'] = 1
             self.best_fit.values['at'] = 1
-            d.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
+            self.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
             self.best_fit.values['ap'] = ap
             self.best_fit.values['at'] = at
 
-    def fastMC(self, nfast_mc):
+    def fastMC(self):
+        nfast_mc = self.nfast_mc
         for d in self.data:
             d.cho = cholesky(d.co)
         
@@ -89,8 +93,6 @@ class chi2:
                 if not p in self.fast_mc:
                     self.fast_mc[p] = []
                 self.fast_mc[p].append([v, best_fit.errors[p]])
-            
-            
 
     def export(self):
         f = h5py.File(self.outfile,"w")
@@ -124,7 +126,7 @@ class chi2:
             err = g.create_dataset("error", d.da.shape, dtype = "f")
             err[...] = np.sqrt(d.co.diagonal())
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
-            fit[...] = d.best_fit_model
+            fit[...] = self.best_fit_model
     
         if hasattr(self, "fast_mc"):
             g = f.create_group("fast mc")
