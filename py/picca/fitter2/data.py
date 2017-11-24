@@ -77,12 +77,15 @@ class data:
         self.par_fixed = dic_init['parameters']['fix']
 
         self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
-        self.pk *= partial(getattr(pk,'G2'),dataset_name=self.name)
-        if 'dnl' in dic_init['model']:
-            self.pk *= getattr(pk, dic_init['model']['dnl'])
+        self.pk *= partial(getattr(pk,'G2'), dataset_name=self.name)
+        if 'small scale nl' in dic_init['model']:
+            self.pk *= getattr(pk, dic_init['model']['small scale nl'])
 
         if 'velocity dispersion' in dic_init['model']:
             self.pk *= getattr(pk, dic_init['model']['velocity dispersion'])
+
+        ## add non linear large scales
+        self.pk *= pk.pk_NL
 
         self.xi = partial(getattr(xi, dic_init['model']['model-xi']), name=self.name)
 
@@ -184,9 +187,13 @@ class data:
         at = pars['at']
         pars['ap']=1.
         pars['at']=1.
+
+        sigmaNL_per = pars['sigmaNL_per']
+        pars['sigmaNL_per'] = 0
         xi_sb = self.xi_model(k, pksb_lin, pars)
         pars['ap'] = ap
         pars['at'] = at
+        pars['sigmaNL_per'] = sigmaNL_per
 
         xi_full = xi_peak + xi_sb
         dxi = self.da_cut-xi_full[self.mask]

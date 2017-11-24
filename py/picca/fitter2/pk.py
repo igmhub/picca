@@ -12,12 +12,18 @@ class pk:
         return self.func(k, pk_lin, tracer1, tracer2, **kwargs)
 
     def __mul__(self,func2):
-        return lambda k, pk_lin, tracer1, tracer2, **kwargs: self(k, pk_lin, tracer1, tracer2, **kwargs)*func2(k, pk_lin, tracer1, tracer2, **kwargs)
+        func = lambda k, pk_lin, tracer1, tracer2, **kwargs: self(k, pk_lin, tracer1, tracer2, **kwargs)*func2(k, pk_lin, tracer1, tracer2, **kwargs)
+        return pk(func)
 
     __imul__ = __mul__
     __rmul__ = __mul__
 
-
+def pk_NL(k, pk_lin, tracer1, tracer2, **kwargs):
+    kp = k*muk
+    kt = k*np.sqrt(1-muk**2)
+    st2 = kwargs["sigmaNL_per"]**2
+    sp2 = st2*kwargs['1+f']**2
+    return np.exp(-(kp**2*sp2+kt**2*st2)/2)
 
 def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
@@ -148,6 +154,5 @@ def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
 
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     assert tracer1 == "QSO" or tracer2 == "QSO"
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
     kp = k*muk
     return pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs)/np.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
