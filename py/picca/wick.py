@@ -84,6 +84,7 @@ def t123(pix):
 
             c_w1d = sp.bincount(bins,weights = we)
             w123[len(c_w1d)]+=c_w1d
+        setattr(d1,"neighs",None)
 
 
     w = w123>0
