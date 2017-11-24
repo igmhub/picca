@@ -67,12 +67,12 @@ class chi2:
         self.best_fit = self._minimize()
 
         for d in self.data:
-            self.best_fit_model = d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
+            d.best_fit_model = d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
             ap = self.best_fit.values['ap']
             at = self.best_fit.values['at']
             self.best_fit.values['ap'] = 1
             self.best_fit.values['at'] = 1
-            self.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
+            d.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
             self.best_fit.values['ap'] = ap
             self.best_fit.values['at'] = at
 
