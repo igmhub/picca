@@ -249,7 +249,7 @@ if __name__ == '__main__':
         if it < nit-1:
             ll_rest, mc, wmc = prep_del.mc(data)
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
-            ll,eta,vlss,fudge,nb_pixels,var,var_del,var2_del,count,nqsos,chi2 = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
+            ll,eta,vlss,fudge,nb_pixels,var,var_del,var2_del,count,nqsos,chi2,err_eta,err_vlss,err_fudge = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
             forest.eta = interp1d(ll[nb_pixels>0], eta[nb_pixels>0], fill_value = "extrapolate",kind="nearest")
             forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.], fill_value = "extrapolate",kind="nearest")
             forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0], fill_value = "extrapolate",kind="nearest")

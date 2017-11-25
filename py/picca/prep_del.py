@@ -33,6 +33,9 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     eta = sp.zeros(nlss)
     vlss = sp.zeros(nlss)
     fudge = sp.zeros(nlss)
+    err_eta = sp.zeros(nlss)
+    err_vlss = sp.zeros(nlss)
+    err_fudge = sp.zeros(nlss)
     nb_pixels = sp.zeros(nlss)
     ll = forest.lmin + (sp.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
@@ -98,14 +101,26 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
         mig = iminuit.Minuit(chi2,forced_parameters=("eta","vlss","fudge"),eta=1.,vlss=0.1,fudge=1.,error_eta=0.05,error_vlss=0.05,error_fudge=0.05,errordef=1.,print_level=0,limit_eta=eta_lim,limit_vlss=vlss_lim, limit_fudge=(0,None))
         mig.migrad()
 
-        eta[i] = mig.values["eta"]
-        vlss[i] = mig.values["vlss"]
-        fudge[i] = mig.values["fudge"]*fudge_ref
+        if mig.migrad_ok():
+            mig.hesse()
+            eta[i] = mig.values["eta"]
+            vlss[i] = mig.values["vlss"]
+            fudge[i] = mig.values["fudge"]*fudge_ref
+            err_eta[i] = mig.errors["eta"]
+            err_vlss[i] = mig.errors["vlss"]
+            err_fudge[i] = mig.errors["fudge"]*fudge_ref
+        else:
+            eta[i] = 1.
+            vlss[i] = 0.1
+            fudge[i] = 1.*fudge_ref
+            err_eta[i] = 0.
+            err_vlss[i] = 0.
+            err_fudge[i] = 0.
         nb_pixels[i] = count[i*nwe:(i+1)*nwe].sum()
         bin_chi2[i] = mig.fval
-        print eta[i],vlss[i],fudge[i],mig.fval, nb_pixels[i]
+        print eta[i],vlss[i],fudge[i],mig.fval, nb_pixels[i],err_eta[i],err_vlss[i],err_fudge[i]
 
-    return ll,eta,vlss,fudge,nb_pixels,var,var_del.reshape(nlss,-1),var2_del.reshape(nlss,-1),count.reshape(nlss,-1),nqso.reshape(nlss,-1),bin_chi2
+    return ll,eta,vlss,fudge,nb_pixels,var,var_del.reshape(nlss,-1),var2_del.reshape(nlss,-1),count.reshape(nlss,-1),nqso.reshape(nlss,-1),bin_chi2,err_eta,err_vlss,err_fudge
 
     
 def stack(data,delta=False):
