@@ -102,7 +102,10 @@ if __name__ == '__main__':
     ndata = 0
     dels = []
     if not args.from_image:
-        fi = glob.glob(args.in_dir+"/*.fits.gz")
+        if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+            fi = glob.glob(args.in_dir)
+        else:
+            fi = glob.glob(args.in_dir+"/*.fits.gz")
         for i,f in enumerate(fi):
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
             hdus = fitsio.FITS(f)
@@ -121,7 +124,10 @@ if __name__ == '__main__':
         ndata2 = 0
         dels2 = []
         if not args.from_image:
-            fi = glob.glob(args.in_dir2+"/*.fits.gz")
+            if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
+                fi = glob.glob(args.in_dir2)
+            else:
+                fi = glob.glob(args.in_dir2+"/*.fits.gz")
             for i,f in enumerate(fi):
                 sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata2))
                 hdus = fitsio.FITS(f)

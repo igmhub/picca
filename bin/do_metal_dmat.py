@@ -116,7 +116,10 @@ if __name__ == '__main__':
 
     z_min_pix = 1.e6
     ndata=0
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
+    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+        fi = glob.glob(args.in_dir)
+    else:
+        fi = glob.glob(args.in_dir+"/*.fits.gz")
     data = {}
     dels = []
     for i,f in enumerate(fi):
@@ -133,7 +136,10 @@ if __name__ == '__main__':
     if args.in_dir2: 
         x_correlation=True
         ndata2 = 0
-        fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
+            fi = glob.glob(args.in_dir2)
+        else:
+            fi = glob.glob(args.in_dir2+"/*.fits.gz")
         data2 = {}
         dels2 = []
         for i,f in enumerate(fi):
