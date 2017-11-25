@@ -89,7 +89,7 @@ class chi2:
                 d.da_cut = d.da[d.mask]
 
             best_fit = self._minimize()
-            for p,v in best_fit.values.items():
+            for p, v in best_fit.values.items():
                 if not p in self.fast_mc:
                     self.fast_mc[p] = []
                 self.fast_mc[p].append([v, best_fit.errors[p]])
@@ -121,12 +121,8 @@ class chi2:
         for d in self.data:
             g = f.create_group(d.name)
             g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.best_fit.values)
-            data = g.create_dataset("data", d.da.shape, dtype = "f")
-            data[...] = d.da
-            err = g.create_dataset("error", d.da.shape, dtype = "f")
-            err[...] = np.sqrt(d.co.diagonal())
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
-            fit[...] = self.best_fit_model
+            fit[...] = d.best_fit_model
     
         if hasattr(self, "fast_mc"):
             g = f.create_group("fast mc")
