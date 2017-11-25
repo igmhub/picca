@@ -71,6 +71,8 @@ def xcf(pix):
                 rt[:len(crt)]+=crt
                 z[:len(cz)]+=cz
                 nb[:len(cnb)]+=cnb
+            for el in d.__dict__.keys():
+                setattr(d,el,None)
 
     w = we>0
     xi[w]/=we[w]
@@ -135,6 +137,8 @@ def metal_grid(pix):
                 rt[:len(crt)] += crt
                 z[:len(cz)]   += cz
                 nb[:len(cnb)] += cnb
+            for el in d.__dict__.keys():
+                setattr(d,el,None)
 
     w = we>0
     rp[w] /= we[w]
@@ -200,6 +204,8 @@ def dmat(pix):
             r2 = [q.r_comov for q in neighs]
             w2 = [q.we for q in neighs]
             fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm)
+            for el in d1.__dict__.keys():
+                setattr(d1,el,None)
 
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
     
@@ -308,5 +314,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 zeff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=wdq[wAB])
                 weff[:len(c)]+=c
+            for el in d.__dict__.keys():
+                setattr(d,el,None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used

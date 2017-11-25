@@ -3,7 +3,7 @@ import scipy as sp
 import healpy
 import glob
 import sys
-import time 
+import time
 
 from picca.data import forest
 from picca.data import delta
@@ -131,7 +131,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         nside = h[1].read_header()['NSIDE']
         h.close()
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
-    elif mode == "spec" or mode =="corrected-spec":
+    elif mode in ["spec","corrected-spec","spcframe"]:
         nside = 256
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
         mobj = sp.bincount(pixs).sum()/len(sp.unique(pixs))
@@ -158,7 +158,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         ztable = {t:z for t,z in zip(tid[w],zs[w]) if z > zmin and z<zmax}
         sys.stderr.write("Found {} qsos\n".format(len(ztable)))
         return read_from_desi(nside,ztable,in_dir)
-    
+
     else:
         sys.stderr.write("I don't know mode: {}".format(mode))
         sys.exit(1)
@@ -177,6 +177,10 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         elif mode == "spec" or mode =="corrected-spec":
             t0 = time.time()
             pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
+            read_time=time.time()-t0
+        elif mode =="spcframe":
+            t0 = time.time()
+            pix_data = read_from_spcframe(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode, log=log)
             read_time=time.time()-t0
         if not pix_data is None:
             sys.stderr.write("{} read from pix {}, {} {} in {} secs per spectrum\n".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
@@ -252,10 +256,57 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
                 continue
             d = forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f,order)
 
-            log.write("{} read\n".format(t))
+            if log is not None:
+                log.write("{} read\n".format(t))
             pix_data.append(d)
         h.close()
         return pix_data
+
+def read_from_spcframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log=None):
+    pix_data={}
+    plates = sp.unique(plate)
+
+    prefix='spCFrame'
+    sufix=''
+
+    for p in plates:
+
+        name = in_dir+"/{}/{}-*-*.fits{}".format(p,prefix,sufix)
+        fi = glob.glob(name)
+        w = (plate==p)
+
+        if len(fi)==0:
+            sys.stderr.write("No files found in {}".format(name))
+            continue
+
+        for the_file in fi:
+
+            sys.stderr.write("reading {}\n".format(the_file))
+            h = fitsio.FITS(the_file)
+            fib_list=list(h[5]["FIBERID"][:])
+            flux = h[0].read()
+            ivar = h[1].read()*(h[2].read()==0)
+            llam = h[3].read()
+
+            if "-r1-" in the_file or "-b1-" in the_file:
+                ww = w & (fid<=500)
+            elif "-r2-" in the_file or "-b2-" in the_file:
+                ww = w & (fid>=501)
+
+            for (t, r, d, z, p, m, f) in zip(thid[ww], ra[ww], dec[ww], zqso[ww], plate[ww], mjd[ww], fid[ww]):
+
+                index = fib_list.index(f)
+                d = forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
+                if t in pix_data:
+                    pix_data[t] += d
+                else:
+                    pix_data[t] = d
+                if log is not None:
+                    log.write("{} read\n".format(t))
+
+            h.close()
+
+    return pix_data.values()
 
 def read_from_desi(nside,ztable,in_dir,order):
     fi = glob.glob(in_dir+"/spectra-*.fits")
