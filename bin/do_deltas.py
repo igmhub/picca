@@ -92,7 +92,10 @@ if __name__ == '__main__':
             help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
     parser.add_argument('--flux-calib',type = str,default=None,required=False,
-            help='Path to file to previously produced do_delta.py file to correct for multiplicative errors in the flux calibration')
+            help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
+
+    parser.add_argument('--ivar-calib',type = str,default=None,required=False,
+            help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration')
 
     parser.add_argument('--eta-min',type = float,default=0.5,required=False,
             help='lower limit for eta')
@@ -139,19 +142,29 @@ if __name__ == '__main__':
             print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(order))
             sys.exit(12)
 
-    ### Correct multiplicative flux calibration
+    ### Correct multiplicative pipeline flux calibration
     if (args.flux_calib is not None):
         try:
             vac = fitsio.FITS(args.flux_calib)
-            head = vac[1].read_header()
-
             ll_st = vac[1]['loglam'][:]
             st    = vac[1]['stack'][:]
             w     = (st!=0.)
-            forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate")
+            forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate",kind="nearest")
 
         except:
             print(" Error while reading flux_calib file {}".format(args.flux_calib))
+            sys.exit(1)
+
+    ### Correct multiplicative pipeline inverse variance calibration
+    if (args.ivar_calib is not None):
+        try:
+            vac = fitsio.FITS(args.ivar_calib)
+            ll  = vac[2]['LOGLAM'][:]
+            eta = vac[2]['ETA'][:]
+            forest.correc_ivar = interp1d(ll,eta,fill_value="extrapolate",kind="nearest")
+
+        except:
+            print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
             sys.exit(1)
 
     nit = args.nit
