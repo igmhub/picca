@@ -38,6 +38,8 @@ class qso:
             y = data.ycart
             z = data.zcart
             cos = x*self.xcart+y*self.ycart+z*self.zcart
+            if cos>=1.:
+                cos = 1.
         
         return sp.arccos(cos)
 
