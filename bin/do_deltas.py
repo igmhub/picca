@@ -252,7 +252,8 @@ if __name__ == '__main__':
         pool = Pool(processes=args.nproc)
         print "iteration: ", it
         nfit = 0
-        data_fit_cont = pool.map(cont_fit, data.values())
+        #data_fit_cont = pool.map(cont_fit, data.values())
+        data_fit_cont = map(cont_fit, data.values())
         for i, p in enumerate(data):
             data[p] = data_fit_cont[i]
 

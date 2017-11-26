@@ -265,6 +265,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
 def read_from_spcframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log=None):
     pix_data={}
     plates = sp.unique(plate)
+    print "reading {} plates".format(len(plates))
 
     prefix='spCFrame'
     sufix=''
@@ -284,18 +285,25 @@ def read_from_spcframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log
             sys.stderr.write("reading {}\n".format(the_file))
             h = fitsio.FITS(the_file)
             fib_list=list(h[5]["FIBERID"][:])
-            flux = h[0].read()
-            ivar = h[1].read()*(h[2].read()==0)
-            llam = h[3].read()
 
             if "-r1-" in the_file or "-b1-" in the_file:
                 ww = w & (fid<=500)
             elif "-r2-" in the_file or "-b2-" in the_file:
                 ww = w & (fid>=501)
 
+            if ww.sum()==0:continue
+
+            min_fid = (fid[ww]-1).min()%500
+            max_fid = (fid[ww]-1).max()%500+1
+
+            flux = h[0][min_fid:max_fid,:]#[min_fid:max_fid,:]#.read()
+            ivar = h[1][min_fid:max_fid,:]#.read()
+            mask = h[2][min_fid:max_fid,:]#.read()
+            ivar*=mask==0
+            llam = h[3][min_fid:max_fid,:]#.read()
             for (t, r, d, z, p, m, f) in zip(thid[ww], ra[ww], dec[ww], zqso[ww], plate[ww], mjd[ww], fid[ww]):
 
-                index = fib_list.index(f)
+                index = (f-1)%500-min_fid
                 d = forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
                 if t in pix_data:
                     pix_data[t] += d
@@ -305,7 +313,6 @@ def read_from_spcframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log
                     log.write("{} read\n".format(t))
 
             h.close()
-
     return pix_data.values()
 
 def read_from_desi(nside,ztable,in_dir,order):
