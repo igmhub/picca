@@ -19,9 +19,9 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
     if x_correlation: 
-            cf.fill_neighs_x_correlation(p)
-        else: 
-            cf.fill_neighs(p)
+        cf.fill_neighs_x_correlation(p)
+    else: 
+        cf.fill_neighs(p)
     tmp = cf.metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
     return tmp
 
