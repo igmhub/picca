@@ -19,6 +19,7 @@ from picca import io
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 def calc_metal_xdmat(abs_igm,p):
+    xcf.fill_neighs(p)
     tmp = xcf.metal_dmat(p,abs_igm=abs_igm)
     return tmp
 
@@ -148,10 +149,6 @@ if __name__ == '__main__':
         cpu_data[ip].append(p)
 
     random.seed(0)
-
-    for i,p in enumerate(cpu_data.values()):
-        print "filling neighs ",i,len(cpu_data.values())
-        xcf.fill_neighs(p)
 
     dm_all=[]
     wdm_all=[]

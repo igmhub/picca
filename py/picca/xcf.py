@@ -314,7 +314,6 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 zeff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=wdq[wAB])
                 weff[:len(c)]+=c
-            for el in d.__dict__.keys():
-                setattr(d,el,None)
+            setattr(d,"neighs",None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
