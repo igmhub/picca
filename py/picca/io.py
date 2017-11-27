@@ -113,6 +113,15 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         sys.stderr.write("mode: "+mode)
         ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
 
+    if nspec != None:
+        ra = ra[:nspec]
+        dec = dec[:nspec]
+        zqso = zqso[:nspec]
+        thid = thid[:nspec]
+        plate = plate[:nspec]
+        mjd = mjd[:nspec]
+        fid = fid[:nspec]
+
     if mode == "pix":
         try:
             fin = in_dir + "/master.fits.gz"
@@ -158,13 +167,26 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         ztable = {t:z for t,z in zip(tid[w],zs[w]) if z > zmin and z<zmax}
         sys.stderr.write("Found {} qsos\n".format(len(ztable)))
         return read_from_desi(nside,ztable,in_dir)
-
     else:
         sys.stderr.write("I don't know mode: {}".format(mode))
         sys.exit(1)
 
     data ={}
     ndata = 0
+
+    if mode=="spcframe":
+        pix_data = read_from_spcframe(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, mode=mode, log=log)
+        ra = [d.ra for d in pix_data]
+        ra = sp.array(ra)
+        dec = [d.dec for d in pix_data]
+        dec = sp.array(dec)
+        pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
+        for i,p in enumerate(pixs):
+            if p not in data:
+                data[p] = []
+            data[p].append(pix_data[i])
+
+        return data, len(pixs)
 
     upix = sp.unique(pixs)
     for i, pix in enumerate(upix):
@@ -178,18 +200,11 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             t0 = time.time()
             pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
             read_time=time.time()-t0
-        elif mode =="spcframe":
-            t0 = time.time()
-            pix_data = read_from_spcframe(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode, log=log)
-            read_time=time.time()-t0
         if not pix_data is None:
             sys.stderr.write("{} read from pix {}, {} {} in {} secs per spectrum\n".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
         if not pix_data is None and len(pix_data)>0:
             data[pix] = pix_data
             ndata += len(pix_data)
-
-        if not nspec is None:
-            if ndata > nspec:break
 
     return data,ndata
 
@@ -282,7 +297,6 @@ def read_from_spcframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log
 
         for the_file in fi:
 
-            sys.stderr.write("reading {}\n".format(the_file))
             h = fitsio.FITS(the_file)
             fib_list=list(h[5]["FIBERID"][:])
 
@@ -296,14 +310,15 @@ def read_from_spcframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log
             min_fid = (fid[ww]-1).min()%500
             max_fid = (fid[ww]-1).max()%500+1
 
-            flux = h[0][min_fid:max_fid,:]#[min_fid:max_fid,:]#.read()
-            ivar = h[1][min_fid:max_fid,:]#.read()
-            mask = h[2][min_fid:max_fid,:]#.read()
-            ivar*=mask==0
-            llam = h[3][min_fid:max_fid,:]#.read()
-            for (t, r, d, z, p, m, f) in zip(thid[ww], ra[ww], dec[ww], zqso[ww], plate[ww], mjd[ww], fid[ww]):
-
-                index = (f-1)%500-min_fid
+            flux = []
+            ivar = []
+            llam = []
+            for i in (fid[ww]-1)%500:
+                i = int(i)
+                flux.append(h[0][i,:])
+                ivar.append(h[1][i,:]*(h[2][i,:]==0))
+                llam.append(h[3][i,:])
+            for index, (t, r, d, z, p, m, f) in enumerate(zip(thid[ww], ra[ww], dec[ww], zqso[ww], plate[ww], mjd[ww], fid[ww])):
                 d = forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
                 if t in pix_data:
                     pix_data[t] += d
@@ -311,7 +326,7 @@ def read_from_spcframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log
                     pix_data[t] = d
                 if log is not None:
                     log.write("{} read\n".format(t))
-
+            sys.stderr.write("read {} of {} from {}\n".format(len(pix_data), len(thid), the_file))
             h.close()
     return pix_data.values()
 
