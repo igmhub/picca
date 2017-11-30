@@ -136,9 +136,6 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     xcf.objs = objs
 
-    xcf.angmax = 2*sp.arcsin(xcf.rt_max/(cosmo.r_comoving(zmin_pix)+cosmo.r_comoving(zmin_obj)))
-
-
     ### Remove pixels if too far from objects
     zmin_obj = None
     zmax_obj = None
@@ -170,6 +167,14 @@ if __name__ == '__main__':
                         d.ll = d.ll[w]
                         d.co = d.co[w]
                         d.r_comov = d.r_comov[w]
+
+    ### Define angmax
+    zmin_pix = None
+    for pix in xcf.dels:
+        for d in xcf.dels[pix]:
+            if zmin_pix is None: zmin_pix = d.z.min()
+            zmin_pix = sp.append([zmin_pix],d.z).min()
+    xcf.angmax = 2*sp.arcsin(xcf.rt_max/(cosmo.r_comoving(zmin_pix)+cosmo.r_comoving(zmin_obj)))
 
 
     xcf.counter = Value('i',0)
