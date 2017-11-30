@@ -166,10 +166,11 @@ if __name__ == '__main__':
         d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
         if not args.no_project:
             d.project()
+
+    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
     
     if x_correlation: 
         z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
-        z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
@@ -187,7 +188,7 @@ if __name__ == '__main__':
             if not args.no_project:
                 d.project()
 
-    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
+        cf.angmax = 2.*sp.arcsin(cf.rt_max/( cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(z_min_pix2) ))
 
     cf.npix = len(data)
     cf.data = data
