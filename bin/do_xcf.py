@@ -174,11 +174,6 @@ if __name__ == '__main__':
     pix = healpy.ang2pix(xcf.nside,th,phi)
     print("reading qsos")
 
-    if (ra.size!=0):
-        xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
-    else:
-        xcf.angmax = 0.
-
     upix = sp.unique(pix)
     for i,ipix in enumerate(upix):
         sys.stderr.write("\r{} of {}".format(i,len(upix)))
@@ -216,6 +211,17 @@ if __name__ == '__main__':
                         d.co = d.co[w]
                         d.z  = d.z[w]
                         d.r_comov = d.r_comov[w]
+
+    ### Define angmax
+    zmin_pix = None
+    for pix in xcf.dels:
+        for d in xcf.dels[pix]:
+            if zmin_pix is None: zmin_pix = d.z.min()
+            zmin_pix = sp.append([zmin_pix],d.z).min()
+    if (ra.size!=0):
+        xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(zmin_pix)+cosmo.r_comoving(sp.amin(zqso))) )
+    else:
+        xcf.angmax = 0.
 
     xcf.counter = Value('i',0)
 
