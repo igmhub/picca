@@ -3,6 +3,8 @@ from astropy.io import fits
 from picca import constants
 import iminuit
 from dla import dla
+import fitsio
+import sys
 
 def variance(var,eta,var_lss,fudge):
     return eta*var + var_lss + fudge/var

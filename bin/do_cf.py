@@ -115,7 +115,9 @@ if __name__ == '__main__':
             if not args.nspec is None:
                 if ndata>args.nspec:break
     else:
-        dels = delta.from_image(args.in_dir)
+        fi = glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+        for f in fi:
+           dels += delta.from_image(f)
 
     x_correlation=False
     if args.in_dir2: 
