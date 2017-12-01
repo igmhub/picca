@@ -201,8 +201,8 @@ if __name__ == '__main__':
     for pix in xcf.dels:
         for d in xcf.dels[pix]:
             z0 = 10**d.ll[0]/args.lambda_abs-1.
-            if zmin_pix is None: zmin_pix = d.z0
-            zmin_pix = min(zmin_pix,d.z0)
+            if zmin_pix is None: zmin_pix = z0
+            zmin_pix = min(zmin_pix,z0)
     if (ra.size!=0):
         xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(zmin_pix)+cosmo.r_comoving(sp.amin(zqso))) )
     else:
