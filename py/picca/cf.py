@@ -56,7 +56,7 @@ def fill_neighs_x_correlation(pix):
             npix = [p for p in npix if p in data2]
             neighs = [d for p in npix for d in data2[p]]
             ang = d1^neighs
-            w = (ang<angmax)*(ang>=sp.arccos(1.-1.1e-11))
+            w = (ang<angmax)
             neighs = sp.array(neighs)[w]
             d1.neighs = [d for d in neighs if d1.thid != d.thid]
 
