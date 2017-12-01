@@ -199,8 +199,8 @@ if __name__ == '__main__':
     zmin_pix = None
     for pix in xcf.dels:
         for d in xcf.dels[pix]:
-            if zmin_pix is None: zmin_pix = d.z.min()
-            zmin_pix = sp.append([zmin_pix],d.z).min()
+            if zmin_pix is None: zmin_pix = d.z[0]
+            zmin_pix = min(zmin_pix,d.z[0])
     if (ra.size!=0):
         xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(zmin_pix)+cosmo.r_comoving(sp.amin(zqso))) )
     else:
