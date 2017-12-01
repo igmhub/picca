@@ -24,6 +24,7 @@ ndata2 = None
 
 zref = None
 alpha= None
+alpha2= None
 alpha_met= None
 lambda_abs = None
 lambda_abs2 = None 
