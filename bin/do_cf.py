@@ -117,7 +117,9 @@ if __name__ == '__main__':
     else:
         fi = glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
         for f in fi:
-           dels += delta.from_image(f)
+            d = delta.from_image(f)
+            dels += d
+        ndata = len(dels)
 
     x_correlation=False
     if args.in_dir2: 
