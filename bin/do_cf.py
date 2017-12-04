@@ -100,7 +100,6 @@ if __name__ == '__main__':
     cf.alpha = args.z_evol
 
     cosmo = constants.cosmo(args.fid_Om)
-
     data = {}
     ndata = 0
     dels = []
