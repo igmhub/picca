@@ -368,7 +368,6 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
             ## now convert all those fluxes into forest objects
             for index, (t, r, d, z, p, m, f) in enumerate(zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib])):
                 index =(f-1)%500
-                wlam = (10**llam[index]/(1+z) > 1220) & (10**llam[index]/(1+z)<1230)
                 d = forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
                 if t in pix_data:
                     pix_data[t] += d
