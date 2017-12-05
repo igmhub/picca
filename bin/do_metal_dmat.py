@@ -189,12 +189,9 @@ if __name__ == '__main__':
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
     if x_correlation: 
-<<<<<<< HEAD
-        z_min_pix2 = 10**dels2[0].ll[0]/cf.lambda_abs2-1.
-=======
-	cf.alpha2 = args.z_evol2
+	    cf.alpha2 = args.z_evol2
         z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
->>>>>>> master
+
         z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
@@ -311,6 +308,8 @@ if __name__ == '__main__':
 
     out_list = []
     out_names=[]
+
+    ## write RP, RT, Z in hdu2
     for i,ai in enumerate(names):
         out_names=out_names + ["RP_"+ai]
         out_list = out_list + [rp_all[i]]
@@ -321,13 +320,18 @@ if __name__ == '__main__':
         out_names=out_names + ["Z_"+ai]
         out_list = out_list + [z_all[i]]
 
+    out.write(out_list,names=out_names)
+
+    out_list = []
+    out_names=[]
+    ##write DM, WDM in hdu3
+    for i,ai in enumerate(names):
         out_names = out_names + ["DM_"+ai]
         out_list = out_list + [dm_all[i]]
 
         out_names=out_names+["WDM_"+ai]
         out_list = out_list+[wdm_all[i]]
 
-    out.write(out_list,names=out_names)
     out.close()
 
     
