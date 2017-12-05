@@ -18,6 +18,10 @@ from picca.data import delta
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
+    if x_correlation: 
+        cf.fill_neighs_x_correlation(p)
+    else: 
+        cf.fill_neighs(p)
     tmp = cf.metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
     return tmp
 
@@ -72,6 +76,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
+
+    parser.add_argument('--z-evol2', type = float, default = 2.9, required=False,
+                    help = 'exponent of the redshift evolution of the 2nd delta field')
 
     parser.add_argument('--metal-alpha', type = float, default = 1., required=False,
                     help = 'exponent of the redshift evolution of the metal delta field')
@@ -179,9 +186,15 @@ if __name__ == '__main__':
         d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
 
+    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
     if x_correlation: 
+<<<<<<< HEAD
         z_min_pix2 = 10**dels2[0].ll[0]/cf.lambda_abs2-1.
+=======
+	cf.alpha2 = args.z_evol2
+        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
+>>>>>>> master
         z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
@@ -196,9 +209,9 @@ if __name__ == '__main__':
             z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
+            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha2-1.)
 
-    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
+        cf.angmax = 2.*sp.arcsin(cf.rt_max/( cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(z_min_pix2) ))
 
     cf.npix = len(data)
     cf.data = data
@@ -226,13 +239,6 @@ if __name__ == '__main__':
     random.seed(0)
 
     abs_igm = [args.lambda_abs]+args.abs_igm
-
-    for i,p in enumerate(cpu_data.values()):
-        print "filling neighs ",i,len(cpu_data.values())
-        if x_correlation: 
-            cf.fill_neighs_x_correlation(p)
-        else: 
-            cf.fill_neighs(p)
 
     dm_all=[]
     wdm_all=[]

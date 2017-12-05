@@ -79,6 +79,12 @@ if __name__ == '__main__':
     parser.add_argument('--mode',type = str,default='pix',required=False,
             help='open mode: pix, spec, spcframe')
 
+    parser.add_argument('--best-obs',action='store_true', required=False,
+            help='if mode == spcframe, then use only the best observation')
+
+    parser.add_argument('--single-exp',action='store_true', required=False,
+            help='if mode == spcframe, then use only one of the available exposures. If best-obs then choose it among those contributing to the best obs')
+
     parser.add_argument('--keep-bal',action='store_true',required=False,
             help='do not reject BALs')
 
@@ -170,10 +176,11 @@ if __name__ == '__main__':
     nit = args.nit
 
     log = open(args.log,'w')
-    data,ndata = io.read_data(args.in_dir,args.drq,args.mode,\
-                              zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max,order=args.order)
-    
-
+    data, ndata = io.read_data(args.in_dir, args.drq, args.mode,\
+                              zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
+                              keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
+                              best_obs=args.best_obs, single_exp=args.single_exp)
+   
     ### Get the lines to veto
     usr_mask_obs    = None
     usr_mask_RF     = None

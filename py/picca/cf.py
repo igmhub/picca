@@ -24,6 +24,7 @@ ndata2 = None
 
 zref = None
 alpha= None
+alpha2= None
 alpha_met= None
 lambda_abs = None
 lambda_abs2 = None 
@@ -55,9 +56,9 @@ def fill_neighs_x_correlation(pix):
             npix = [p for p in npix if p in data2]
             neighs = [d for p in npix for d in data2[p]]
             ang = d1^neighs
-            w = (ang<angmax)*(ang>=sp.arccos(1.-1.1e-11))
+            w = (ang<angmax)
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.ra != d.ra]
+            d1.neighs = [d for d in neighs if d1.thid != d.thid]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
@@ -230,7 +231,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
         eta7[:len(c)]+=c
         if order2==1:
             c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
-	    eta8[:len(c)]+=c
+            eta8[:len(c)]+=c
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):

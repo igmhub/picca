@@ -107,11 +107,20 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
 target_mobj = 500
 nside_min = 8
-def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1):
+def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False):
 
     if mode != "desi":
         sys.stderr.write("mode: "+mode)
         ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
+
+    if nspec != None:
+        ra = ra[:nspec]
+        dec = dec[:nspec]
+        zqso = zqso[:nspec]
+        thid = thid[:nspec]
+        plate = plate[:nspec]
+        mjd = mjd[:nspec]
+        fid = fid[:nspec]
 
     if mode == "pix":
         try:
@@ -158,13 +167,26 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         ztable = {t:z for t,z in zip(tid[w],zs[w]) if z > zmin and z<zmax}
         sys.stderr.write("Found {} qsos\n".format(len(ztable)))
         return read_from_desi(nside,ztable,in_dir)
-
     else:
         sys.stderr.write("I don't know mode: {}".format(mode))
         sys.exit(1)
 
     data ={}
     ndata = 0
+
+    if mode=="spcframe":
+        pix_data = read_from_spcframe(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, mode=mode, log=log, best_obs=best_obs, single_exp=single_exp)
+        ra = [d.ra for d in pix_data]
+        ra = sp.array(ra)
+        dec = [d.dec for d in pix_data]
+        dec = sp.array(dec)
+        pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
+        for i, p in enumerate(pixs):
+            if p not in data:
+                data[p] = []
+            data[p].append(pix_data[i])
+
+        return data, len(pixs)
 
     upix = sp.unique(pixs)
     for i, pix in enumerate(upix):
@@ -178,18 +200,11 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             t0 = time.time()
             pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
             read_time=time.time()-t0
-        elif mode =="spcframe":
-            t0 = time.time()
-            pix_data = read_from_spcframe(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode, log=log)
-            read_time=time.time()-t0
         if not pix_data is None:
             sys.stderr.write("{} read from pix {}, {} {} in {} secs per spectrum\n".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
         if not pix_data is None and len(pix_data)>0:
             data[pix] = pix_data
             ndata += len(pix_data)
-
-        if not nspec is None:
-            if ndata > nspec:break
 
     return data,ndata
 
@@ -262,51 +277,110 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         h.close()
         return pix_data
 
-def read_from_spcframe(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode=None,log=None):
+def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode=None, log=None, best_obs=False, single_exp = False):
     pix_data={}
     plates = sp.unique(plate)
+    print "reading {} plates".format(len(plates))
 
     prefix='spCFrame'
     sufix=''
 
     for p in plates:
+        wplate = plate==p
+        plate_mjd = "{}-*".format(p)
 
-        name = in_dir+"/{}/{}-*-*.fits{}".format(p,prefix,sufix)
-        fi = glob.glob(name)
-        w = (plate==p)
+        ##if best_obs then select only the given mjd
+        if best_obs:
+            the_mjd = sp.unique(mjd[wplate])
+            print the_mjd
+            #assert len(the_mjd)==1
+            m = the_mjd[0]
+            plate_mjd = "{}-{}".format(p, m)
 
-        if len(fi)==0:
-            sys.stderr.write("No files found in {}".format(name))
+        ## find out exposures from all the spPlates
+        fi = in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd)
+        print fi
+        fi = glob.glob(fi)
+        exps = []
+        for f in fi:
+            print "INFO: reading plate {}".format(f)
+            h=fitsio.FITS(f)
+            head = h[0].read_header()
+            iexp = 1
+            for c in ["B1", "B2", "R1", "R2"]:
+                card = "NEXP_{}".format(c)
+                if card in head:
+                    nexp = head["NEXP_{}".format(c)]
+                else:
+                    continue
+                for i in range(nexp):
+                    str_iexp = str(iexp)
+                    if iexp<10:
+                        str_iexp = '0'+str_iexp
+                    
+                    card = "EXPID"+str_iexp
+                    if not card in head:
+                        continue
+
+                    exps.append(head["EXPID"+str_iexp][:11])
+                    iexp += 1
+
+        print "INFO: found {} exposures in plate {}".format(len(exps), p)
+    
+        if len(exps) == 0:
             continue
 
-        for the_file in fi:
+        exp_num = [e[3:] for e in exps]
+        exp_num = sp.unique(exp_num)
+        sp.random.shuffle(exp_num)
+        exp_num = exp_num[0]
+        for exp in exps:
+            if single_exp:
+                if not exp_num in exp:
+                    continue
+            t0 = time.time()
+            ## find the spectrograph number:
+            spectro = int(exp[1])
+            assert spectro == 1 or spectro == 2
 
-            sys.stderr.write("reading {}\n".format(the_file))
-            h = fitsio.FITS(the_file)
-            fib_list=list(h[5]["FIBERID"][:])
-            flux = h[0].read()
-            ivar = h[1].read()*(h[2].read()==0)
-            llam = h[3].read()
+            ## find out the fibers where the qsos are:
+            if spectro == 1:
+                wfib = wplate & (fid <= 500)
+            if spectro == 2:
+                wfib = wplate & (fid > 500)
 
-            if "-r1-" in the_file or "-b1-" in the_file:
-                ww = w & (fid<=500)
-            elif "-r2-" in the_file or "-b2-" in the_file:
-                ww = w & (fid>=501)
+            if wfib.sum()==0:
+                continue
 
-            for (t, r, d, z, p, m, f) in zip(thid[ww], ra[ww], dec[ww], zqso[ww], plate[ww], mjd[ww], fid[ww]):
+            plate_fibs = fid[wfib]
 
-                index = fib_list.index(f)
+            ## collect the relevant flux, ivar and ll in a list:
+            flux = []
+            ivar = []
+            llam = []
+
+            spcframe = fitsio.FITS(in_dir+"/{}/spCFrame-{}.fits".format(p, exp))
+
+            flux = spcframe[0].read()
+            ivar = spcframe[1].read()*(spcframe[2].read()==0)
+            llam = spcframe[3].read()
+            
+            ## now convert all those fluxes into forest objects
+            for index, (t, r, d, z, p, m, f) in enumerate(zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib])):
+                index =(f-1)%500
                 d = forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
                 if t in pix_data:
                     pix_data[t] += d
                 else:
                     pix_data[t] = d
                 if log is not None:
-                    log.write("{} read\n".format(t))
+                    log.write("{} read from exp {} and mjd {}\n".format(t, exp, m))
 
-            h.close()
+            print "INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), exp, (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid))
+            spcframe.close()
 
-    return pix_data.values()
+    data = pix_data.values()
+    return data
 
 def read_from_desi(nside,ztable,in_dir,order):
     fi = glob.glob(in_dir+"/spectra-*.fits")
