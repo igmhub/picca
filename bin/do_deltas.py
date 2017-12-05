@@ -176,8 +176,10 @@ if __name__ == '__main__':
     nit = args.nit
 
     log = open(args.log,'w')
-    data, ndata = io.read_data(args.in_dir,args.drq,args.mode,\
-                              zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,keep_bal=args.keep_bal,bi_max = args.bi_max,order=args.order, best_obs = args.best_obs, single_exp = args.single_exp)
+    data, ndata = io.read_data(args.in_dir, args.drq, args.mode,\
+                              zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
+                              keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
+                              best_obs=args.best_obs, single_exp=args.single_exp)
    
     ### Get the lines to veto
     usr_mask_obs    = None
