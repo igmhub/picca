@@ -55,9 +55,9 @@ def fill_neighs_x_correlation(pix):
             npix = query_disc(nside,[d1.xcart,d1.ycart,d1.zcart],angmax,inclusive = True)
             npix = [p for p in npix if p in data2]
             neighs = [d for p in npix for d in data2[p]]
-            #dr = sp.array([ sp.amin(abs(sp.tile(d1.r_comov,(len(d.r_comov),1)) - sp.tile(d.r_comov,(len(d1.r_comov),1)).T)) for d in neighs])
+            dr = sp.array([ sp.amin(abs(sp.tile(d1.r_comov,(len(d.r_comov),1)) - sp.tile(d.r_comov,(len(d1.r_comov),1)).T)) for d in neighs])
             ang = d1^neighs
-            w  = (ang<angmax)#*(dr<rp_max)
+            w  = (ang<angmax)*(dr<rp_max)
             neighs = sp.array(neighs)[w]
             d1.neighs = [d for d in neighs if d1.thid != d.thid]
 
