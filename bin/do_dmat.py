@@ -53,11 +53,11 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
+    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
+                        help = 'name of the absorption in picca.constants')
 
-    parser.add_argument('--lambda-abs2', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                       help = 'wavelength of absorption in forest 2 [Angstrom]')
+    parser.add_argument('--lambda-abs2', type = str, default = 'LYA', required=False,
+                        help = 'name of the 2nd absorption in picca.constants')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -106,7 +106,8 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
-
+    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
+    lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
 
     z_min_pix = 1.e6
     ndata=0
@@ -153,7 +154,7 @@ if __name__ == '__main__':
         dels2  = copy.deepcopy(dels)
     cf.x_correlation=x_correlation 
  
-    z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1.
+    z_min_pix = 10**dels[0].ll[0]/lambda_abs-1.
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(cf.nside,th,phi)
@@ -162,7 +163,7 @@ if __name__ == '__main__':
             data[p]=[]
         data[p].append(d)
 
-        z = 10**d.ll/args.lambda_abs-1.
+        z = 10**d.ll/lambda_abs-1.
         z_min_pix = sp.amin( sp.append([z_min_pix],z) )
         d.z = z
         d.r_comov = cosmo.r_comoving(z)
@@ -174,7 +175,7 @@ if __name__ == '__main__':
     
     if x_correlation: 
 	cf.alpha2 = args.z_evol2
-        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
+        z_min_pix2 = 10**dels2[0].ll[0]/lambda_abs2-1.
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
@@ -184,7 +185,7 @@ if __name__ == '__main__':
                 data2[p]=[]
             data2[p].append(d)
 
-            z = 10**d.ll/args.lambda_abs2-1.
+            z = 10**d.ll/lambda_abs2-1.
             z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
