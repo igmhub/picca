@@ -173,7 +173,7 @@ if __name__ == '__main__':
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
     
     if x_correlation: 
-	cf.alpha2 = args.z_evol2
+        cf.alpha2 = args.z_evol2
         z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
