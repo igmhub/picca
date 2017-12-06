@@ -116,12 +116,18 @@ class data:
                     self.rp_met[(self.tracer1, m)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                     self.rt_met[(self.tracer1, m)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
                     self.z_met[(self.tracer1, m)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
-                    self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
+                    try:
+                        self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
+                    except:
+                        self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[3]["DM_{}_{}".format(self.tracer1,m)][:])
                     
                     self.rp_met[(m, self.tracer1)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                     self.rt_met[(m, self.tracer1)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
                     self.z_met[(m, self.tracer1)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
-                    self.dm_met[(m, self.tracer1)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
+                    try:
+                        self.dm_met[(m, self.tracer1)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
+                    except:
+                        self.dm_met[(m, self.tracer1)] = csr_matrix(hmet[3]["DM_{}_{}".format(self.tracer1,m)][:])
 
             else:
                 if 'in tracer2' in dic_init['metals']:
@@ -130,7 +136,10 @@ class data:
                         self.rp_met[(self.tracer1, m)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                         self.rt_met[(self.tracer1, m)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
                         self.z_met[(self.tracer1, m)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
-                        self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
+                        try:
+                            self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
+                        except:
+                            self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[3]["DM_{}_{}".format(self.tracer1,m)][:])
 
                 if 'in tracer1' in dic_init['metals']:
                     for m in dic_init['metals']['in tracer1']:
@@ -138,7 +147,10 @@ class data:
                         self.rp_met[(m, self.tracer2)] = hmet[2]["RP_{}_{}".format(m, self.tracer2)][:]
                         self.rt_met[(m, self.tracer2)] = hmet[2]["RT_{}_{}".format(m, self.tracer2)][:]
                         self.z_met[(m, self.tracer2)] = hmet[2]["Z_{}_{}".format(m, self.tracer2)][:]
-                        self.dm_met[(m, self.tracer2)] = csr_matrix(hmet[2]["DM_{}_{}".format(m, self.tracer2)][:])
+                        try:
+                            self.dm_met[(m, self.tracer2)] = csr_matrix(hmet[2]["DM_{}_{}".format(m, self.tracer2)][:])
+                        except:
+                            self.dm_met[(m, self.tracer2)] = csr_matrix(hmet[3]["DM_{}_{}".format(m, self.tracer2)][:])
 
             ## add metal-metal cross correlations
             if 'in tracer1' in dic_init['metals'] and 'in tracer2' in dic_init['metals']:
