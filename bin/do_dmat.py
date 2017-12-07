@@ -174,8 +174,13 @@ if __name__ == '__main__':
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
     
     if x_correlation: 
+<<<<<<< HEAD
 	cf.alpha2 = args.z_evol2
         z_min_pix2 = 10**dels2[0].ll[0]/lambda_abs2-1.
+=======
+        cf.alpha2 = args.z_evol2
+        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
+>>>>>>> ac671b0303a5ce05813fe27548f0178743009ec2
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
