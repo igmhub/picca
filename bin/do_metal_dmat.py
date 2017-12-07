@@ -332,6 +332,8 @@ if __name__ == '__main__':
         out_names=out_names+["WDM_"+ai]
         out_list = out_list+[wdm_all[i]]
 
+    out.write(out_list,names=out_names)
+
     out.close()
 
     
