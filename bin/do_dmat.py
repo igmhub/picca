@@ -56,7 +56,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
                         help = 'name of the absorption in picca.constants')
 
-    parser.add_argument('--lambda-abs2', type = str, default = 'LYA', required=False,
+    parser.add_argument('--lambda-abs2', type = str, default = None, required=False,
                         help = 'name of the 2nd absorption in picca.constants')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
@@ -106,8 +106,9 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
-    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
-    lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
+    lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    if args.lambda_abs2: lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
+    else: lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
 
     z_min_pix = 1.e6
     ndata=0
@@ -147,12 +148,13 @@ if __name__ == '__main__':
                 if ndata2>args.nspec:break
         sys.stderr.write("read {}\n".format(ndata2))
 
-    elif args.lambda_abs != args.lambda_abs2:   
+    elif lambda_abs != lambda_abs2:   
         x_correlation=True
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
     cf.x_correlation=x_correlation 
+    if x_correlation: print("doing xcorrelation")
  
     z_min_pix = 10**dels[0].ll[0]/lambda_abs-1.
     phi = [d.ra for d in dels]
@@ -174,13 +176,8 @@ if __name__ == '__main__':
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
     
     if x_correlation: 
-<<<<<<< HEAD
 	cf.alpha2 = args.z_evol2
         z_min_pix2 = 10**dels2[0].ll[0]/lambda_abs2-1.
-=======
-        cf.alpha2 = args.z_evol2
-        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
->>>>>>> ac671b0303a5ce05813fe27548f0178743009ec2
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
