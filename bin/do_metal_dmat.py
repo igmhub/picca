@@ -163,7 +163,7 @@ if __name__ == '__main__':
                 if ndata2>args.nspec:break
         sys.stderr.write("read {}\n".format(ndata2))
 
-    elif args.lambda_abs != args.lambda_abs2:   
+    elif cf.lambda_abs != cf.lambda_abs2:   
         x_correlation=True
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
