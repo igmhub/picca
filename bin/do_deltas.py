@@ -77,7 +77,7 @@ if __name__ == '__main__':
             help='prefix of the iteration file')
 
     parser.add_argument('--mode',type = str,default='pix',required=False,
-            help='open mode: pix, spec, spcframe')
+            help='open mode: pix, spec, spcframe, desi')
 
     parser.add_argument('--best-obs',action='store_true', required=False,
             help='if mode == spcframe, then use only the best observation')
