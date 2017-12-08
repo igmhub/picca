@@ -123,6 +123,7 @@ def read_truth(drq,zmin,zmax,keep_bal,bi_max=None,spectype="QSO"):
     fid   = 1+sp.arange(thid.size)
 
     ## Sanity
+    print((" start               : nb object in cat = {}".format(ra.size) ))
     w = (vac[1]["TRUESPECTYPE"][:].astype(str)==spectype)
     print((" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) ))
 
@@ -160,6 +161,7 @@ def read_ztarget(drq,zmin,zmax,keep_bal,bi_max=None,spectype="QSO"):
     fid   = 1+sp.arange(thid.size)
 
     ## Sanity
+    print((" start               : nb object in cat = {}".format(ra.size) ))
     w = (vac[1]["ZWARN"][:]==0.)
     print((" and zwarn==0        : nb object in cat = {}".format(ra[w].size) ))
     w = w & (vac[1]["SPECTYPE"][:].astype(str)==spectype)
