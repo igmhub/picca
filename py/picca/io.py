@@ -121,27 +121,26 @@ def read_ztarget(drq,zmin,zmax,keep_bal,bi_max=None,spectype="QSO"):
     mjd   = 1+sp.arange(thid.size)
     fid   = 1+sp.arange(thid.size)
 
-    print
     ## Sanity
     w = (vac[1]["ZWARN"][:]==0.)
-    print(" and zwarn==0        : nb object in cat = {}".format(ra[w].size) )
-    w = (vac[1]["SPECTYPE"][:]==spectype)
-    print(" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) )
-    w = (ra!=dec)
-    print(" and ra!=dec         : nb object in cat = {}".format(ra[w].size) )
+    print((" and zwarn==0        : nb object in cat = {}".format(ra[w].size) ))
+    w = w & (vac[1]["SPECTYPE"][:].astype(str)==spectype)
+    print((" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) ))
+    w = w & (ra!=dec)
+    print((" and ra!=dec         : nb object in cat = {}".format(ra[w].size) ))
     w = w & (ra!=0.)
-    print(" and ra!=0.          : nb object in cat = {}".format(ra[w].size) )
+    print((" and ra!=0.          : nb object in cat = {}".format(ra[w].size) ))
     w = w & (dec!=0.)
-    print(" and dec!=0.         : nb object in cat = {}".format(ra[w].size) )
+    print((" and dec!=0.         : nb object in cat = {}".format(ra[w].size) ))
     w = w & (zqso>0.)
-    print(" and z>0.            : nb object in cat = {}".format(ra[w].size) )
+    print((" and z>0.            : nb object in cat = {}".format(ra[w].size) ))
 
     ## Redshift range
     w = w & (zqso>zmin)
-    print(" and z>zmin          : nb object in cat = {}".format(ra[w].size) )
+    print((" and z>zmin          : nb object in cat = {}".format(ra[w].size) ))
     w = w & (zqso<zmax)
-    print(" and z<zmax          : nb object in cat = {}".format(ra[w].size) )
-    print
+    print((" and z<zmax          : nb object in cat = {}".format(ra[w].size) ))
+    print()
 
     ra    = ra[w]*sp.pi/180.
     dec   = dec[w]*sp.pi/180.
@@ -153,6 +152,7 @@ def read_ztarget(drq,zmin,zmax,keep_bal,bi_max=None,spectype="QSO"):
     vac.close()
 
     return ra,dec,zqso,thid,plate,mjd,fid
+
 target_mobj = 500
 nside_min = 8
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False):
@@ -206,7 +206,6 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     elif mode=="desi":
         if "truth" in drq:
             sys.stderr.write("reading truth table desi style\n")
-            nside = 8
             h = fitsio.FITS(drq)
             zs = h[1]["TRUEZ"][:]
             tid = h[1]["TARGETID"][:]
@@ -214,12 +213,15 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             w = ["QSO" in t for t in typ]
             w = sp.array(w)
             ztable = {t:z for t,z in zip(tid[w],zs[w]) if z > zmin and z<zmax}
-            sys.stderr.write("Found {} qsos\n".format(len(ztable)))
         elif "ztarget" in drq:
             sys.stderr.write("reading ztarget table desi style\n")
             ra,dec,zqso,thid,plate,mjd,fid = read_ztarget(drq,zmin,zmax,keep_bal,bi_max=None,spectype="QSO")
+            ztable = {t:z for t,z in zip(thid,zqso)}
 
-        return read_from_desi(nside,ztable,in_dir)
+        nside = 8
+        sys.stderr.write("Found {} qsos\n".format(len(ztable)))
+
+        return read_from_desi(nside,ztable,in_dir,order)
     else:
         sys.stderr.write("I don't know mode: {}".format(mode))
         sys.exit(1)
