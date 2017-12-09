@@ -159,7 +159,6 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         sys.stderr.write("Found {} qsos\n".format(len(zqso)))
         return read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order)
 
-        return read_from_desi(nside,ztable,in_dir,order)
     else:
         sys.stderr.write("I don't know mode: {}".format(mode))
         sys.exit(1)
