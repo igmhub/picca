@@ -105,94 +105,6 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     return ra,dec,zqso,thid,plate,mjd,fid
 
-def read_truth(drq,zmin,zmax,keep_bal,bi_max=None,spectype="QSO"):
-    '''
-        read desi truth catalog
-
-    '''
-    vac = fitsio.FITS(drq)
-    vacTargets = fitsio.FITS(drq.replace("truth.fits","targets.fits"))
-
-    ## Info of the primary observation
-    thid  = vac[1]["TARGETID"][:]
-    ra    = vacTargets[1]["RA"][:]
-    dec   = vacTargets[1]["DEC"][:]
-    zqso  = vac[1]["TRUEZ"][:]
-    plate = 1+sp.arange(thid.size)
-    mjd   = 1+sp.arange(thid.size)
-    fid   = 1+sp.arange(thid.size)
-
-    ## Sanity
-    print((" start               : nb object in cat = {}".format(ra.size) ))
-    w = (vac[1]["TRUESPECTYPE"][:].astype(str)==spectype)
-    print((" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) ))
-
-    ## Redshift range
-    w = w & (zqso>zmin)
-    print((" and z>zmin          : nb object in cat = {}".format(ra[w].size) ))
-    w = w & (zqso<zmax)
-    print((" and z<zmax          : nb object in cat = {}".format(ra[w].size) ))
-    print()
-
-    ra    = ra[w]*sp.pi/180.
-    dec   = dec[w]*sp.pi/180.
-    zqso  = zqso[w]
-    thid  = thid[w]
-    plate = plate[w]
-    mjd   = mjd[w]
-    fid   = fid[w]
-    vac.close()
-
-    return ra,dec,zqso,thid,plate,mjd,fid
-def read_ztarget(drq,zmin,zmax,keep_bal,bi_max=None,spectype="QSO"):
-    '''
-        read desi ztarget catalog
-
-    '''
-    vac = fitsio.FITS(drq)
-
-    ## Info of the primary observation
-    thid  = vac[1]["TARGETID"][:]
-    ra    = vac[1]["RA"][:]
-    dec   = vac[1]["DEC"][:]
-    zqso  = vac[1]["Z"][:]
-    plate = 1+sp.arange(thid.size)
-    mjd   = 1+sp.arange(thid.size)
-    fid   = 1+sp.arange(thid.size)
-
-    ## Sanity
-    print((" start               : nb object in cat = {}".format(ra.size) ))
-    w = (vac[1]["ZWARN"][:]==0.)
-    print((" and zwarn==0        : nb object in cat = {}".format(ra[w].size) ))
-    w = w & (vac[1]["SPECTYPE"][:].astype(str)==spectype)
-    print((" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) ))
-    w = w & (ra!=dec)
-    print((" and ra!=dec         : nb object in cat = {}".format(ra[w].size) ))
-    w = w & (ra!=0.)
-    print((" and ra!=0.          : nb object in cat = {}".format(ra[w].size) ))
-    w = w & (dec!=0.)
-    print((" and dec!=0.         : nb object in cat = {}".format(ra[w].size) ))
-    w = w & (zqso>0.)
-    print((" and z>0.            : nb object in cat = {}".format(ra[w].size) ))
-
-    ## Redshift range
-    w = w & (zqso>zmin)
-    print((" and z>zmin          : nb object in cat = {}".format(ra[w].size) ))
-    w = w & (zqso<zmax)
-    print((" and z<zmax          : nb object in cat = {}".format(ra[w].size) ))
-    print()
-
-    ra    = ra[w]*sp.pi/180.
-    dec   = dec[w]*sp.pi/180.
-    zqso  = zqso[w]
-    thid  = thid[w]
-    plate = plate[w]
-    mjd   = mjd[w]
-    fid   = fid[w]
-    vac.close()
-
-    return ra,dec,zqso,thid,plate,mjd,fid
-
 target_mobj = 500
 nside_min = 8
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False):
@@ -200,13 +112,6 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     if mode != "desi":
         sys.stderr.write("mode: "+mode)
         ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
-    else:
-        if "truth" in drq:
-            sys.stderr.write("reading truth table desi style\n")
-            ra,dec,zqso,thid,plate,mjd,fid = read_truth(drq,zmin,zmax,keep_bal,bi_max=None,spectype="QSO")
-        elif "ztarget" in drq:
-            sys.stderr.write("reading ztarget table desi style\n")
-            ra,dec,zqso,thid,plate,mjd,fid = read_ztarget(drq,zmin,zmax,keep_bal,bi_max=None,spectype="QSO")
 
     if nspec != None:
         ra = ra[:nspec]
