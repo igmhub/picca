@@ -392,12 +392,11 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         try:
             h = fitsio.FITS(path)
         except IOError:
-            sys.stderr.write("Error reading {}\n".format(f))
+            sys.stderr.write("Error reading pix {}\n".format(f))
             continue
 
         ## get the quasars
-        w = sp.in1d(h[1]["TARGETID"][:],list(ztable.keys()))
-        tid_qsos = h[1]["TARGETID"][:][w]
+        tid_qsos = thid[(in_pixs==f)]
         ra    = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
         de    = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
         pixs  = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
@@ -417,6 +416,9 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
         for t in tid_qsos:
             wt = h[1]["TARGETID"][:] == t
+            if wt.sum()==0:
+                sys.stderr.write("\nError reading thingid {}\n".format(t))
+                continue
             ### B
             iv = b_iv[wt]
             fl = (iv*b_fl[wt]).sum(axis=0)
