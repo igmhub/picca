@@ -397,13 +397,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
         wplate = plate==p
         plate_mjd = "{}-*".format(p)
 
-        ##if best_obs then select only the given mjd
-        if best_obs:
-            the_mjd = sp.unique(mjd[wplate])
-            m = the_mjd[0]
-            plate_mjd = "{}-{}".format(p, m)
-
-        spplates = glob.glob(in_dir+"{}/spPlate-{}.fits".format(p, plate_mjd))
+        spplates = glob.glob(in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd))
         print spplates
         for spplate in spplates:
             h = fitsio.FITS(spplate)
@@ -412,8 +406,11 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
             
             t0 = time.time()
 
-            wmjd = mjd == MJD
-            wfib = wplate & wmjd
+            wfib = wplate
+            if best_obs:
+                ## select only the objects which have specified mjd within this plate
+                wmjd = mjd == MJD
+                wfib = wplate & wmjd
 
             coeff0 = head0["COEFF0"]
             coeff1 = head0["COEFF1"]
