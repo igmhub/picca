@@ -64,7 +64,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = int(cpu_count()/2)
 
     forest.lmin = sp.log10(args.lambda_min)
     forest.lmax = sp.log10(args.lambda_max)

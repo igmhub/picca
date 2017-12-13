@@ -88,7 +88,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = int(cpu_count()/2)
 
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
