@@ -240,16 +240,16 @@ def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
     eta2 = sp.zeros(np*nt*n2)
     eta4 = sp.zeros(np*nt*n2)
 
-    c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
     eta4[:len(c)]+=c
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):
         dm[ba+np*nt*ba]+=we[k]
         i = ij[k]%n1
-        j = (ij[k]-i)/n1
+        j = (ij[k]-i)//n1
         for bb in ubb:
             dm[bb+np*nt*ba] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 

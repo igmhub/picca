@@ -9,7 +9,7 @@ class wedge:
         nss=nrtmc*nrpmc
         index=sp.arange(nss)
         irtmc=index%nrtmc
-        irpmc=(index-irtmc)/nrtmc
+        irpmc=(index-irtmc)//nrtmc
         rtmc = rtmin+(irtmc+0.5)*(rtmax-rtmin)/nrtmc
         rpmc = rpmin+(irpmc+0.5)*(rpmax-rpmin)/nrpmc
         rmc = sp.sqrt(rtmc**2+rpmc**2)
