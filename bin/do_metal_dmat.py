@@ -97,7 +97,7 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()/2
 
-    print "nproc",args.nproc
+    print("nproc",args.nproc)
 
     cf.rp_max = args.rp_max
     cf.rp_min = args.rp_min
@@ -210,10 +210,10 @@ if __name__ == '__main__':
     cf.alpha_met = args.metal_alpha
 
     if x_correlation:
-       print "doing cross-correlation ... "
+       print("doing cross-correlation ... ")
        cf.data2 = data2 
        cf.ndata2 = ndata2 
-    print "done"
+    print("done")
 
 
     cf.counter = Value('i',0)
@@ -249,7 +249,7 @@ if __name__ == '__main__':
     print("abs_igm = {}".format(abs_igm))
 
     if args.abs_igm2: 
-        print "args.lambda_abs2 = ", args.lambda_abs2
+        print("args.lambda_abs2 = ", args.lambda_abs2)
         if args.lambda_abs2 == constants.absorber_IGM['LYA']: 
             abs_igm_2 = ["LYA"]+args.abs_igm2
         elif args.lambda_abs2 == constants.absorber_IGM['LYB']:

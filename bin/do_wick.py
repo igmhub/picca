@@ -81,7 +81,7 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()/2
 
-    print "nproc",args.nproc
+    print("nproc",args.nproc)
 
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
-    print "done"
+    print("done")
 
     cf.counter = Value('i',0)
 
