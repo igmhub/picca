@@ -109,9 +109,8 @@ target_mobj = 500
 nside_min = 8
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False):
 
-    if mode != "desi":
-        sys.stderr.write("mode: "+mode)
-        ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
+    sys.stderr.write("mode: "+mode)
+    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
 
     if nspec != None:
         ra = ra[:nspec]
@@ -156,17 +155,10 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             log.write("nside = {} -- mean #obj per pixel = {}\n".format(nside,mobj))
 
     elif mode=="desi":
-        sys.stderr.write("reading truth table desi style\n")
         nside = 8
-        h = fitsio.FITS(drq)
-        zs = h[1]["TRUEZ"][:]
-        tid = h[1]["TARGETID"][:]
-        typ = h[1]["TRUESPECTYPE"][:]
-        w = ["QSO" in t for t in typ]
-        w = sp.array(w)
-        ztable = {t:z for t,z in zip(tid[w],zs[w]) if z > zmin and z<zmax}
-        sys.stderr.write("Found {} qsos\n".format(len(ztable)))
-        return read_from_desi(nside,ztable,in_dir)
+        sys.stderr.write("Found {} qsos\n".format(len(zqso)))
+        return read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order)
+
     else:
         sys.stderr.write("I don't know mode: {}".format(mode))
         sys.exit(1)
@@ -382,38 +374,73 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
     data = pix_data.values()
     return data
 
-def read_from_desi(nside,ztable,in_dir,order):
-    fi = glob.glob(in_dir+"/spectra-*.fits")
+def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
+
+    in_nside = 64
+    nest     = True
     data = {}
     ndata=0
+
+    ztable = {t:z for t,z in zip(thid,zqso)}
+    in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-dec, ra,nest=nest)
+    fi = sp.unique(in_pixs)
+
     for i,f in enumerate(fi):
+        path = in_dir + "spectra-"+str(in_nside)+"/"+str(int(f/100))+"/"+str(f)+"/spectra-"+str(in_nside)+"-"+str(f)+".fits"
+
         sys.stderr.write("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
         try:
-            h = fitsio.FITS(f)
+            h = fitsio.FITS(path)
         except IOError:
-            sys.stderr.write("Error reading {}\n".format(f))
+            sys.stderr.write("Error reading pix {}\n".format(f))
             continue
+
         ## get the quasars
-        w = sp.in1d(h[1]["TARGETID"][:],ztable.keys())
-        tid_qsos = h[1]["TARGETID"][:][w]
+        tid_qsos = thid[(in_pixs==f)]
+        ra    = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
+        de    = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
+        pixs  = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
+        exp   = h["FIBERMAP"]["EXPID"][:]
+        night = h["FIBERMAP"]["NIGHT"][:]
+        fib   = h["FIBERMAP"]["FIBER"][:]
+
         b_ll = sp.log10(h["B_WAVELENGTH"].read())
         b_iv  = h["B_IVAR"].read()*(h["B_MASK"].read()==0)
         b_fl  = h["B_FLUX"].read()
-        ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
-        de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
-        pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
+        r_ll = sp.log10(h["R_WAVELENGTH"].read())
+        r_iv = h["R_IVAR"].read()*(h["R_MASK"].read()==0)
+        r_fl = h["R_FLUX"].read()
+        z_ll = sp.log10(h["Z_WAVELENGTH"].read())
+        z_iv = h["Z_IVAR"].read()*(h["Z_MASK"].read()==0)
+        z_fl = h["Z_FLUX"].read()
 
-        exp = h["FIBERMAP"]["EXPID"][:]
-        night = h["FIBERMAP"]["NIGHT"][:]
-        fib = h["FIBERMAP"]["FIBER"][:]
         for t in tid_qsos:
             wt = h[1]["TARGETID"][:] == t
+            if wt.sum()==0:
+                sys.stderr.write("\nError reading thingid {}\n".format(t))
+                continue
+            ### B
             iv = b_iv[wt]
             fl = (iv*b_fl[wt]).sum(axis=0)
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            d = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+            d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+            ### R
+            iv = r_iv[wt]
+            fl = (iv*r_fl[wt]).sum(axis=0)
+            iv = iv.sum(axis=0)
+            w = iv>0
+            fl[w]/=iv[w]
+            ### Z
+            d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+            iv = z_iv[wt]
+            fl = (iv*z_fl[wt]).sum(axis=0)
+            iv = iv.sum(axis=0)
+            w = iv>0
+            fl[w]/=iv[w]
+            d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+
             pix = pixs[wt][0]
             if pix not in data:
                 data[pix]=[]
@@ -421,6 +448,7 @@ def read_from_desi(nside,ztable,in_dir,order):
             ndata+=1
 
     sys.stderr.write("found {} quasars in input files\n".format(ndata))
+
     return data,ndata
 
 
