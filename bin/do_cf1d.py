@@ -127,7 +127,7 @@ if __name__ == '__main__':
                     d.project() 
             if args.nspec:
                 if ndata2>args.nspec:break
-    print "done"
+    print("done")
 
     if x_correlation:
         cf.data2  = data2
@@ -156,19 +156,19 @@ if __name__ == '__main__':
     cfs = sp.array(cfs)
     nbs = sp.array(nbs).astype(sp.int64)
 
-    print "multiplying"
+    print("multiplying")
     cfs *= wes
     cfs = cfs.sum(axis=0)
     wes = wes.sum(axis=0)
     nbs = nbs.sum(axis=0)
 
-    print "done"
+    print("done")
 
     cfs = cfs.reshape(n1d,n1d)
     wes = wes.reshape(n1d,n1d)
     nbs = nbs.reshape(n1d,n1d)
 
-    print "rebinning"
+    print("rebinning")
  
     w = wes>0
     cfs[w]/=wes[w]
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     w=nc1d>0
     c1d[w]/=nc1d[w]
 
-    print "writing"
+    print("writing")
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
@@ -219,6 +219,6 @@ if __name__ == '__main__':
     out.write([cfs_2d,wes_2d,nbs_2d],names=['DA','WE','NB'])
     out.close()
 
-    print "all done"
+    print("all done")
 
     

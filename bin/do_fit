@@ -47,7 +47,7 @@ if not dic_init['metals'] is None:
         kw['fix_'+i]=True
 
     for n,v in zip(met.pname,met.pinit):
-        print n,v
+        print(n,v)
         kw[n]=v
         kw['error_'+n]=0.005
     print
@@ -64,7 +64,7 @@ if not dic_init['data_autoQSO'] is None:
 chi2=Chi2.Chi2(dic_init,cosmo=m,met=met)
 
 for n,v in zip(m.pall,m.pinit):
-    #print n,v
+    #print(n,v)
     kw[n]=v
     if abs(v)!=0:
         kw['error_'+n]=abs(v)/10.
@@ -81,8 +81,8 @@ if not dic_init['fix'] is None:
             kw['fix_'+i]=True
         else:
             print
-            print '  fit/bin/fit:: Unknown parameter = ', i
-            print '  Exit'
+            print('  fit/bin/fit:: Unknown parameter = ', i)
+            print('  Exit')
             sys.exit(0)
 
 if not dic_init['free'] is None:
@@ -91,8 +91,8 @@ if not dic_init['free'] is None:
             kw['fix_'+i]=False
         else:
             print
-            print '  fit/bin/fit:: Unknown parameter = ', i
-            print '  Exit'
+            print('  fit/bin/fit:: Unknown parameter = ', i)
+            print('  Exit')
             sys.exit(0)
 
 if not dic_init['limit'] is None:
@@ -131,8 +131,8 @@ if not dic_init['debug']:
             mig.hesse()
     except Exception,error:
         print
-        print '  fit/bin/fit:: error in minimization = ', error
-        print '  Exit'
+        print('  fit/bin/fit:: error in minimization = ', error)
+        print('  Exit')
         sys.exit(0)
 
 if not dic_init['minos'] is None and mig.migrad_ok():

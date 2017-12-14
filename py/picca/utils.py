@@ -78,9 +78,9 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     sptype = sp.chararray.strip(vac[1]["TRUESPECTYPE"][:].astype(str))
 
     ## Sanity
-    print((" start               : nb object in cat = {}".format(ra.size) ))
+    print(" start               : nb object in cat = {}".format(ra.size) )
     w = (sptype==spectype)
-    print((" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) ))
+    print(" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) )
 
     ra    = ra[w]
     dec   = dec[w]
@@ -121,11 +121,11 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
     sptype = sp.chararray.strip(vac[1]["SPECTYPE"][:].astype(str))
 
     ## Sanity
-    print((" start               : nb object in cat = {}".format(ra.size) ))
+    print(" start               : nb object in cat = {}".format(ra.size) )
     w = (vac[1]["ZWARN"][:]==0.)
-    print((" and zwarn==0        : nb object in cat = {}".format(ra[w].size) ))
+    print(" and zwarn==0        : nb object in cat = {}".format(ra[w].size) )
     w = w & (sptype==spectype)
-    print((" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) ))
+    print(" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) )
 
     ra    = ra[w]
     dec   = dec[w]

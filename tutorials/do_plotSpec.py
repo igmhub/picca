@@ -88,7 +88,7 @@ if __name__ == '__main__':
     ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,0.,1000.,keep_bal=True)
     cut = (plate==args.plate) & (mjd==args.mjd) & (fid==args.fiberid)
     if cut.sum()==0:
-        print "Object not in drq"
+        print("Object not in drq")
         sys.exit()
     ra = ra[cut]
     dec = dec[cut]
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     elif args.mode =="spcframe":
         data = io.read_from_spcframe(args.in_dir,thid, ra, dec, zqso, plate, mjd, fid, order=None, mode=args.mode, log=None)
     if data is None:
-        print "Object not in in_dir"
+        print("Object not in in_dir")
         sys.exit()
     else:
         data = data[0]
@@ -189,7 +189,7 @@ if __name__ == '__main__':
             break
     if done_delta is None:
         hdus.close()
-        print "Object not in spectrum"
+        print("Object not in spectrum")
         sys.exit()
 
 

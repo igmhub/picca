@@ -23,7 +23,7 @@ class model:
         self.istep = istep
         self.ni    = 1 + (self.imax-self.imin)/self.istep
         if (self.ni<=0):
-            print '  fit/py/broadband_cross.py:: negative number of parameters.'
+            print('  fit/py/broadband_cross.py:: negative number of parameters.')
             sys.exit(0)
 
         ### Legendre Polynomial
@@ -32,7 +32,7 @@ class model:
         self.ellstep = ellstep
         self.nell    = 1 + (self.ellmax-self.ellmin)/self.ellstep
         if (self.nell<=0):
-            print '  fit/py/broadband_cross.py:: negative number of parameters.'
+            print('  fit/py/broadband_cross.py:: negative number of parameters.')
             sys.exit(0)
 
         ###

@@ -91,7 +91,7 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()/2
 
-    print "nproc",args.nproc
+    print("nproc",args.nproc)
 
     cf.rp_max = args.rp_max
     cf.rp_min = args.rp_min
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     if x_correlation: 
        cf.data2 = data2 
        cf.ndata2 = ndata2 
-    print "done"
+    print("done")
 
     cf.counter = Value('i',0)
 
