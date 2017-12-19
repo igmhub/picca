@@ -235,7 +235,7 @@ if __name__ == '__main__':
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## cuts
-    for p in data.keys():
+    for p in list(data.keys()):
         l = []
         for d in data[p]:
             if not hasattr(d,'ll') or len(d.ll) < args.npix_min:
@@ -259,7 +259,7 @@ if __name__ == '__main__':
         pool = Pool(processes=args.nproc)
         print("iteration: ", it)
         nfit = 0
-        data_fit_cont = pool.map(cont_fit, data.values())
+        data_fit_cont = pool.map(cont_fit, list(data.values()))
         for i, p in enumerate(data):
             data[p] = data_fit_cont[i]
 

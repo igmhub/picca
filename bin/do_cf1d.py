@@ -140,11 +140,11 @@ if __name__ == '__main__':
 
     if x_correlation: 
         keys = []
-        for i in data.keys(): 
-            if i in data2.keys(): 
+        for i in list(data.keys()):
+            if i in list(data2.keys()):
                 keys.append(i)
         cfs = pool.map(cf1d,keys)
-    else: cfs = pool.map(cf1d,data.keys())
+    else: cfs = pool.map(cf1d,list(data.keys()))
 
     pool.close()
 

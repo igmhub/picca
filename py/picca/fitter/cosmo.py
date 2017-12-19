@@ -202,7 +202,7 @@ class model:
         return dnl
 
     def valueAuto(self,rp,rt,z,pars):
-        if self.xi_auto_prev is None or not sp.allclose(pars.values(),self.pars_auto_prev):
+        if self.xi_auto_prev is None or not sp.allclose(list(pars.values()),self.pars_auto_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -222,7 +222,7 @@ class model:
                 xiSB = self.getXiAuto(rp,rt,z,self.pkSB,parsSB)
                 xi = self.getXiAuto(rp,rt,z,self.pk-self.pkSB,pars)
 
-            self.pars_auto_prev = pars.values()
+            self.pars_auto_prev = list(pars.values())
             self.xi_auto_prev = xiSB + pars["bao_amp"]*xi
 
         return self.xi_auto_prev.copy()
@@ -335,7 +335,7 @@ class model:
         return fftlog.Pk2XiA(self.k1d,pk_full,arp,art)*evol
 
     def valueCross(self,rp,rt,z,pars):
-        if self.xi_cross_prev is None or not sp.allclose(pars.values(),self.pars_cross_prev):
+        if self.xi_cross_prev is None or not sp.allclose(list(pars.values()),self.pars_cross_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -352,7 +352,7 @@ class model:
                 pars["beta_lya"]              = self.beta_lya_peak
             xi = self.getXiCross(rp,rt,z,self.pk-self.pkSB,pars)
 
-            self.pars_cross_prev = pars.values()
+            self.pars_cross_prev = list(pars.values())
             self.xi_cross_prev = xiSB + pars["bao_amp"]*xi
 
             if self.fit_qso_rad_model:
@@ -433,7 +433,7 @@ class model:
         return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
 
     def valueAutoQSO(self,rp,rt,z,pars):
-        if self.xi_autoQSO_prev is None or not sp.allclose(pars.values(),self.pars_autoQSO_prev):
+        if self.xi_autoQSO_prev is None or not sp.allclose(list(pars.values()),self.pars_autoQSO_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -446,7 +446,7 @@ class model:
             xiSB = self.getXiAutoQSO(rp,rt,z,self.pkSB,parsSB)
 
             xi = self.getXiAutoQSO(rp,rt,z,self.pk-self.pkSB,pars)
-            self.pars_autoQSO_prev = pars.values()
+            self.pars_autoQSO_prev = list(pars.values())
             self.xi_autoQSO_prev = xiSB + pars["bao_amp"]*xi
 
         return self.xi_autoQSO_prev.copy()

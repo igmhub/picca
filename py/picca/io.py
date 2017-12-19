@@ -371,7 +371,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
             print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), exp, (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid)))
             spcframe.close()
 
-    data = pix_data.values()
+    data = list(pix_data.values())
     return data
 
 def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):

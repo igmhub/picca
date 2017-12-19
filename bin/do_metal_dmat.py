@@ -221,7 +221,7 @@ if __name__ == '__main__':
     cf.lock = Lock()
     
     cpu_data = {}
-    for i,p in enumerate(data.keys()):
+    for i,p in enumerate(list(data.keys())):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
@@ -271,7 +271,7 @@ if __name__ == '__main__':
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
             sys.stderr.write("\n")
             pool = Pool(processes=args.nproc)
-            dm = pool.map(f,cpu_data.values())
+            dm = pool.map(f,list(cpu_data.values()))
             pool.close()
             dm = sp.array(dm)
             wdm =dm[:,0].sum(axis=0)

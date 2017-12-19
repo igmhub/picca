@@ -342,7 +342,7 @@ class model:
                 xi_qso_met += cosmo_model.Pk2Xi(r[:,i],mur[:,i],self.k,pk_full,ell_max=self.ell_max)*evol[:,i]
 
         else:
-            nbins = self.xdmat.values()[0].shape[0]
+            nbins = list(self.xdmat.values())[0].shape[0]
             xi_qso_met = sp.zeros(nbins)
             for i in self.met_names:
                 bias_met = pars["bias_"+i]

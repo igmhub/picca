@@ -204,12 +204,12 @@ if __name__ == '__main__':
 
     xcf.lock = Lock()
     cpu_data = {}
-    for p in dels.keys():
+    for p in list(dels.keys()):
         cpu_data[p] = [p]
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,cpu_data.values())
+    cfs = pool.map(corr_func,list(cpu_data.values()))
     pool.close()
 
     cfs=sp.array(cfs)
