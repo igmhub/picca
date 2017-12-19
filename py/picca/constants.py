@@ -20,7 +20,7 @@ class cosmo:
         nbins = 10000
         zmax  = 10.
         dz    = zmax/nbins
-        z=sp.range(nbins)*dz
+        z=sp.arange(nbins)*dz
         hubble = H0*sp.sqrt( Ol + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
 
         chi=sp.zeros(nbins)
