@@ -113,7 +113,7 @@ class Chi2:
         if not self.dic_init['gaussian_prior'] is None:
             dic_gaussian_prior={}
             dic_init = self.dic_init
-            nb_prior = len(dic_init['gaussian_prior'])/3
+            nb_prior = len(dic_init['gaussian_prior'])//3
             for i in range(nb_prior):
                 par_name = dic_init['gaussian_prior'][i*3]
                 par_mean = float(dic_init['gaussian_prior'][i*3+1])
@@ -263,7 +263,7 @@ class Chi2:
 
         ### Get the parameters of the scan
         dic_chi2Scan = {}
-        nb_param = len(dic_init['chi2Scan'])/4
+        nb_param = len(dic_init['chi2Scan'])//4
         for i in range(nb_param):
             dic_param = {}
             if not any(dic_init['chi2Scan'][i*4+0] in el for el in self.pname):

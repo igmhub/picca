@@ -518,10 +518,10 @@ class model:
         s=sp.argsort(r)
         r=r[s]
 
-        xi=sp.zeros([ell_max/2+1,len(ar)])
+        xi=sp.zeros([ell_max//2+1,len(ar)])
 
         for ell in range(0,ell_max+1,2):
-            pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell/2)
+            pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)
             mu=ell+0.5
             n=2.
             q=2-n-0.5
@@ -538,7 +538,7 @@ class model:
             xi_loc/=r**(3-n)
             xi_loc[-1]=0
             spline=sp.interpolate.splrep(sp.log(r)-dr/2,sp.real(xi_loc),k=3,s=0)
-            xi[ell/2,:]=sp.interpolate.splev(sp.log(ar),spline)
+            xi[ell//2,:]=sp.interpolate.splev(sp.log(ar),spline)
 
         return xi
 
@@ -546,5 +546,5 @@ class model:
     def Pk2Xi(ar,mur,k,pk,ell_max=None):
         xi=model.Pk2Mp(ar,k,pk,ell_max)
         for ell in range(0,ell_max+1,2):
-            xi[ell/2,:]*=L(mur,ell)
+            xi[ell//2,:]*=L(mur,ell)
         return sp.sum(xi,axis=0)

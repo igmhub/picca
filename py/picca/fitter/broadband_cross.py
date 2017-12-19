@@ -21,7 +21,7 @@ class model:
         self.imin  = imin
         self.imax  = imax
         self.istep = istep
-        self.ni    = 1 + (self.imax-self.imin)/self.istep
+        self.ni    = 1 + (self.imax-self.imin)//self.istep
         if (self.ni<=0):
             print('  fit/py/broadband_cross.py:: negative number of parameters.')
             sys.exit(0)
@@ -30,7 +30,7 @@ class model:
         self.ellmin  = ellmin
         self.ellmax  = ellmax
         self.ellstep = ellstep
-        self.nell    = 1 + (self.ellmax-self.ellmin)/self.ellstep
+        self.nell    = 1 + (self.ellmax-self.ellmin)//self.ellstep
         if (self.nell<=0):
             print('  fit/py/broadband_cross.py:: negative number of parameters.')
             sys.exit(0)
@@ -45,7 +45,7 @@ class model:
         self.par_name = []
         for ipar in range(self.npar):
             i   = ipar%self.ni
-            ell = (ipar-i)/self.ni
+            ell = (ipar-i)//self.ni
             i   = self.imin + i*self.istep
             ell = self.ellmin + ell*self.ellstep
             self.par_name += ['a_cross_'+str(i)+'_'+str(ell)]
@@ -63,7 +63,7 @@ class model:
 
         for ipar in range(self.npar):
             i   = ipar%self.ni
-            ell = (ipar-i)/self.ni
+            ell = (ipar-i)//self.ni
             i   = self.imin + i*self.istep
             ell = self.ellmin + ell*self.ellstep
             if self.bb_rPerp_rParal:
@@ -94,7 +94,7 @@ class model:
 
         for ipar in range(self.npar):
             i   = ipar%self.ni
-            ell = (ipar-i)/self.ni
+            ell = (ipar-i)//self.ni
             i   = self.imin + i*self.istep
             ell = self.ellmin + ell*self.ellstep
             if self.bb_rPerp_rParal:
