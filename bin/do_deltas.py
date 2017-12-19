@@ -228,7 +228,7 @@ if __name__ == '__main__':
         nb_dla_in_forest = 0
         for p in data:
             for d in data[p]:
-                if dlas.has_key(d.thid):
+                if d.thid in dlas:
                     for dla in dlas[d.thid]:
                         d.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
                         nb_dla_in_forest += 1

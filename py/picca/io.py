@@ -23,7 +23,7 @@ def read_dlas(fdla):
             continue
         if l[0][0]=="-":continue
         thid = int(l[col_names.index("ThingID")])
-        if not dlas.has_key(thid):
+        if thid not in dlas:
             dlas[thid]=[]
         zabs = float(l[col_names.index("z_abs")])
         nhi = float(l[col_names.index("NHI")])
