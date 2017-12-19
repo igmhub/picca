@@ -202,7 +202,7 @@ if __name__ == '__main__':
 
         if ( (z_min_pix<z_min_pix_cut) or (z_max_pix_cut<z_max_pix) ):
             for pix in xcf.dels:
-                for i in xrange(len(xcf.dels[pix])-1,-1,-1):
+                for i in range(len(xcf.dels[pix])-1,-1,-1):
                     d = xcf.dels[pix][i]
                     z = 10**d.ll/args.lambda_abs-1.
                     w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)

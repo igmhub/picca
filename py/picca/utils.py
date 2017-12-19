@@ -15,7 +15,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
 
     print("Computing cov...")
     '''
-    for ipix in xrange(npix):
+    for ipix in range(npix):
         sys.stderr.write("\r {} {}".format(ipix,npix))
         co += sp.outer(wda[ipix,:],wda[ipix,:])
     '''
@@ -32,7 +32,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     dcor={}
     dncor={}
 
-    for i in xrange(nda):
+    for i in range(nda):
         sys.stderr.write("\rsmoothing {}".format(i))
         for j in range(i+1,nda):
             idrp = round(abs(rp[j]-rp[i])/drp)
@@ -44,7 +44,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
             dcor[(idrp,idrt)] +=cor[i,j]
             dncor[(idrp,idrt)] +=1
 
-    for i in xrange(nda):
+    for i in range(nda):
         cor_smooth[i,i]=1.
         for j in range(i+1,nda):
             idrp = round(abs(rp[j]-rp[i])/drp)

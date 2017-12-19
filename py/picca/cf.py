@@ -468,12 +468,12 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
     we = we[w]
     zw = zw[w]
 
-    for k in xrange(w.sum()):
+    for k in range(w.sum()):
         i1 = bins[k]%n1
         j1 = (bins[k]-i1)//n1
         w123[ba[k]]+=we[k]
         t123_loc[ba[k],ba[k]]+=we[k]/zw[k]
-        for l in xrange(k+1,w.sum()):
+        for l in range(k+1,w.sum()):
             i2 = bins[l]%n1
             j2 = (bins[l]-i2)//n1
             prod = c1d_1[i1,i2]*c1d_2[j1,j2]

@@ -92,20 +92,20 @@ def HankelTransform(k,a,q,mu,r0=10.,transformed_axis=0,output_r=None,output_r_po
         if transformed_axis==0 : 
             if output_r is  None :
                 transformed=np.zeros_like(a)
-                for i in xrange(a.shape[1]) : # I don't know how to do this at once
+                for i in range(a.shape[1]) : # I don't know how to do this at once
                     transformed[:,i]=(fft.ifft(um*fft.fft(a[:,i]*(k**n)))*(r**nout)).real[s]
             else :
                transformed=np.zeros(shape=(output_r.size,a.shape[1]),dtype=a.dtype)
-               for i in xrange(a.shape[1]) :
+               for i in range(a.shape[1]) :
                   transformed[:,i]=extrap(output_r,rs,(fft.ifft(um*fft.fft(a[:,i]*(k**n)))*(r**nout)).real[s])
         else :
             if output_r is  None :
                 transformed=np.zeros_like(a)                
-                for i in xrange(a.shape[0]) :
+                for i in range(a.shape[0]) :
                     transformed[i,:]=(fft.ifft(um*fft.fft(a[i,:]*(k**n)))*(r**nout)).real[s]
             else :
                 transformed=np.zeros(shape=(a.shape[0],output_r.size),dtype=a.dtype)
-                for i in xrange(a.shape[0]) :
+                for i in range(a.shape[0]) :
                     transformed[i,:]=extrap(output_r,rs,(fft.ifft(um*fft.fft(a[i,:]*(k**n)))*(r**nout)).real[s])
 
     if output_r is None :
