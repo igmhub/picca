@@ -184,8 +184,8 @@ def dmat(pix):
     dm = sp.zeros(np*nt*nt*np)
     wdm = sp.zeros(np*nt)
 
-    npairs = 0L
-    npairs_used = 0L
+    npairs = 0
+    npairs_used = 0
     for p in pix:
         for d1 in dels[p]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)))

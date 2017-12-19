@@ -133,8 +133,8 @@ def dmat(pix):
     dm = sp.zeros(np*nt*nt*np)
     wdm = sp.zeros(np*nt)
 
-    npairs = 0L
-    npairs_used = 0L
+    npairs = 0
+    npairs_used = 0
     for p in pix:
         for d1 in data[p]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
@@ -403,8 +403,8 @@ c1d = None
 def t123(pix):
     t123_loc = sp.zeros([np*nt,np*nt])
     w123 = sp.zeros(np*nt)
-    npairs = 0L
-    npairs_used = 0L
+    npairs = 0
+    npairs_used = 0
     for i,ipix in enumerate(pix):
         for d1 in data[ipix]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
