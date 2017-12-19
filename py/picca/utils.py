@@ -1,4 +1,3 @@
-from __future__ import print_function
 import scipy as sp
 import sys
 import fitsio

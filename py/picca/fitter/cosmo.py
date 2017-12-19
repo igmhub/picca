@@ -9,7 +9,7 @@ from scipy import stats
 
 from picca.fitter import myGamma
 from picca.fitter import utils
-import fftlog
+from . import fftlog
 
 from picca.fitter.utils import L
 

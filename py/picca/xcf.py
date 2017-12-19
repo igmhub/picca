@@ -1,10 +1,9 @@
-from __future__ import print_function
 import scipy as sp
 import sys
 from healpy import query_disc
 from multiprocessing import Pool
 from numba import jit
-from data import forest
+from .data import forest
 from scipy import random
 
 from picca import constants
