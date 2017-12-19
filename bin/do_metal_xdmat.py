@@ -166,7 +166,7 @@ if __name__ == '__main__':
         sys.stderr.write("\n")
         pool = Pool(processes=args.nproc)
         #dm = pool.map(f,list(cpu_data.values()))
-        dm = map(f,list(cpu_data.values()))
+        dm = list(map(f,list(cpu_data.values())))
         pool.close()
         dm = sp.array(dm)
         wdm =dm[:,0].sum(axis=0)
