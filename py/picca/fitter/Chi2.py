@@ -120,16 +120,16 @@ class Chi2:
                 par_sigma = float(dic_init['gaussian_prior'][i*3+2])
 
                 if (self.verbose):
-                    print "adding prior ",par_name,par_mean,par_sigma
+                    print("adding prior ",par_name,par_mean,par_sigma)
 
-                chi2+=(pars[par_name]-par_mean)**2/par_sigma**2
+                chi2+=(pars[par_name]-par_mean)**2/par_sigma**2)
 
         if (self.verbose):
-            print "---"
+            print("---")
             for pname in self.pname:
-                print pname,pars[pname]
+                print(pname,pars[pname])
 
-            print "Chi2: ",chi2
+            print("Chi2: ",chi2)
 
         return chi2
 
@@ -159,8 +159,8 @@ class Chi2:
                     mig.values[key] = val
                     kw[key] = val
         except Exception,error:
-            print '  ERROR::picca/py/picca/fitter/Chi2.py:: error in fast Monte-Carlo = ', error
-            print '  Exit'
+            print('  ERROR::picca/py/picca/fitter/Chi2.py:: error in fast Monte-Carlo = ', error)
+            print('  Exit')
             sys.exit(0)
 
         ### Get bes fit
@@ -224,7 +224,7 @@ class Chi2:
         ### Get realisation fastMonteCarlo
         for i in range(nb_fMC):
 
-            print '  fastMonteCarlo: ', i, ' over ', nb_fMC
+            print('  fastMonteCarlo: ', i, ' over ', nb_fMC)
 
             ### Get realisation fastMonteCarlo
             if not dic_init['data_auto'] is None:
@@ -258,7 +258,7 @@ class Chi2:
         dic_init = self.dic_init
 
         if len(dic_init['chi2Scan'])%4 != 0:
-            print 'ERROR::bin/fit:: chi2 scan syntax is incorrect'
+            print('ERROR::bin/fit:: chi2 scan syntax is incorrect')
             return
 
         ### Get the parameters of the scan
@@ -267,7 +267,7 @@ class Chi2:
         for i in range(nb_param):
             dic_param = {}
             if not any(dic_init['chi2Scan'][i*4+0] in el for el in self.pname):
-                print '  ERROR::bin/fit:: Param not fitted: ', dic_init['chi2Scan'][i*4+0]
+                print('  ERROR::bin/fit:: Param not fitted: ', dic_init['chi2Scan'][i*4+0])
                 continue
 
             par_name   = dic_init['chi2Scan'][i*4+0]

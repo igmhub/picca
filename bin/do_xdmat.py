@@ -89,7 +89,7 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()/2
 
-    print "nproc",args.nproc
+    print("nproc",args.nproc)
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
@@ -138,7 +138,7 @@ if __name__ == '__main__':
 
     xcf.dels = dels
     xcf.ndels = ndels
-    print "done"
+    print("done")
 
     ### Find the redshift range
     if (args.z_min_obj is None):

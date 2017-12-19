@@ -49,7 +49,7 @@ def HankelTransform(k,a,q,mu,r0=10.,transformed_axis=0,output_r=None,output_r_po
          a'(r) : numpy array, 1D or 2D, depending on input a
     """
     if len(a.shape)>2 :
-        print "not implemented for a of more than 2D"
+        print("not implemented for a of more than 2D")
         sys.exit(12)
         
     k0 = k[0]
@@ -152,7 +152,7 @@ def Pk2XiR(k,pk2d,rp,rt) :
     xi *= 2*np.sqrt(np.pi/2)/(2*np.pi)**2
     
     stop=time.time()
-    print "fftlog.Pk2XiR done in %f sec"%(stop-start)
+    print("fftlog.Pk2XiR done in %f sec"%(stop-start))
     return xi
 
 def Pk2XiA(k,pk2d,rp,rt) :

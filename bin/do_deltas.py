@@ -257,13 +257,13 @@ if __name__ == '__main__':
 
     for it in range(nit):
         pool = Pool(processes=args.nproc)
-        print "iteration: ", it
+        print("iteration: ", it)
         nfit = 0
         data_fit_cont = pool.map(cont_fit, data.values())
         for i, p in enumerate(data):
             data[p] = data_fit_cont[i]
 
-        print "done"
+        print("done")
         pool.close()
 
         if it < nit-1:

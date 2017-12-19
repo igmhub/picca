@@ -198,7 +198,7 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata=ndata
-    print "done, npix = {}".format(cf.npix)
+    print("done, npix = {}".format(cf.npix))
 
     if x_correlation:
         cf.data2 = data2
