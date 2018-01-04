@@ -166,7 +166,6 @@ if __name__ == '__main__':
                 lam_lya = constants.absorber_IGM["LYA"]
                 z_abs =  np.power(10.,ll_new)/lam_lya - 1.0
                 mean_z_new = sum(z_abs)/float(len(z_abs))
-                          
              
                 # Compute Pk_raw
                 k,Pk_raw = compute_Pk_raw(d.dll,delta_new,ll_new)

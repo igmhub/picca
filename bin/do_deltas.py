@@ -269,36 +269,54 @@ if __name__ == '__main__':
         deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta) for d in data[p]]
 
     for p in deltas:
-        out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)
-        for d in deltas[p]:
-            hd={}
-            hd["RA"]=d.ra
-            hd["DEC"]=d.dec
-            hd["Z"]=d.zqso
-            hd["PMF"]="{}-{}-{}".format(d.plate,d.mjd,d.fid)
-            hd["THING_ID"]=d.thid
-            hd["PLATE"]=d.plate
-            hd["MJD"]=d.mjd
-            hd["FIBERID"]=d.fid
-            hd["ORDER"]=d.order
-
-            if (args.delta_format=='Pk1D') :
-                hd["MEANZ"]=d.mean_z
-                hd["MEANRESO"]=d.mean_reso
-                hd["MEANSNR"]=d.mean_SNR
-                hd["DLL"]=d.dll
-
-
-            if (args.delta_format=='Pk1D') :
-                cols=[d.ll,d.de,d.iv,d.diff]
-                names=['LOGLAM','DELTA','IVAR','DIFF']
-            else :
-                cols=[d.ll,d.de,d.we,d.co]
-                names=['LOGLAM','DELTA','WEIGHT','CONT']
-
+        if (args.delta_format=='Pk1D_ascii') :
+            out_ascii = open(args.out_dir+"/delta-{}".format(p)+".txt",'w')
+            for d in deltas[p]:
+                nbpixel = len(d.de)
+                line = '{} {} {} '.format(d.plate,d.mjd,d.fid)
+                line += '{} {} {} '.format(d.ra,d.dec,d.zqso)
+                line += '{} {} {} {} '.format(d.mean_z,d.mean_reso,d.mean_SNR,nbpixel)
+                for i in range(nbpixel): line += '{} '.format(d.de[i])
+                for i in range(nbpixel): line += '{} '.format(d.ll[i])
+                for i in range(nbpixel): line += '{} '.format(d.iv[i])
+                for i in range(nbpixel): line += '{} '.format(d.diff[i])
+                line +=' \n'    
+                out_ascii.write(line)
                 
-            out.write(cols,names=names,header=hd)
-        out.close()
+            out_ascii.close()
 
+        else :    
+            out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)
+            for d in deltas[p]:
+                hd={}
+                hd["RA"]=d.ra
+                hd["DEC"]=d.dec
+                hd["Z"]=d.zqso
+                hd["PMF"]="{}-{}-{}".format(d.plate,d.mjd,d.fid)
+                hd["THING_ID"]=d.thid
+                hd["PLATE"]=d.plate
+                hd["MJD"]=d.mjd
+                hd["FIBERID"]=d.fid
+                hd["ORDER"]=d.order
+
+                if (args.delta_format=='Pk1D') :
+                    hd["MEANZ"]=d.mean_z
+                    hd["MEANRESO"]=d.mean_reso
+                    hd["MEANSNR"]=d.mean_SNR
+                    hd["DLL"]=d.dll
+
+
+                if (args.delta_format=='Pk1D') :
+                    cols=[d.ll,d.de,d.iv,d.diff]
+                    names=['LOGLAM','DELTA','IVAR','DIFF']
+                else :
+                    cols=[d.ll,d.de,d.we,d.co]
+                    names=['LOGLAM','DELTA','WEIGHT','CONT']
+
+                out.write(cols,names=names,header=hd)
+                
+            out.close()
+
+        
 
     
