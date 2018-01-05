@@ -492,7 +492,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None):
         if zmax < max_z:
             zmax = max_z
         d.z = z
-        d.r_comov = cosmo.r_comoving(z)
+        if not cosmo is None: d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1+z)/(1+zref))**(alpha-1)
 
     return data,ndata,zmin,zmax
