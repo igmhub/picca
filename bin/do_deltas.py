@@ -275,7 +275,7 @@ if __name__ == '__main__':
                 nbpixel = len(d.de)
                 line = '{} {} {} '.format(d.plate,d.mjd,d.fid)
                 line += '{} {} {} '.format(d.ra,d.dec,d.zqso)
-                line += '{} {} {} {} '.format(d.mean_z,d.mean_reso,d.mean_SNR,nbpixel)
+                line += '{} {} {} {} '.format(d.mean_z,d.mean_SNR,d.mean_reso,nbpixel)
                 for i in range(nbpixel): line += '{} '.format(d.de[i])
                 for i in range(nbpixel): line += '{} '.format(d.ll[i])
                 for i in range(nbpixel): line += '{} '.format(d.iv[i])
