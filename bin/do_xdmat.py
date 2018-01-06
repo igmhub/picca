@@ -106,7 +106,10 @@ if __name__ == '__main__':
 
     z_min_pix = 1.e6
     z_max_pix = 0.
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
+    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+        fi = glob.glob(args.in_dir)
+    else:
+        fi = glob.glob(args.in_dir+"/*.fits.gz")
     dels = {}
     ndels = 0
     for i,f in enumerate(fi):
@@ -123,8 +126,10 @@ if __name__ == '__main__':
             dels[p].append(d)
 
             z = 10**d.ll/args.lambda_abs-1.
-            z_min_pix = sp.amin( sp.append([z_min_pix],z) )
-            z_max_pix = sp.amax( sp.append([z_max_pix],z) )
+            if z_min_pix > z.min():
+                z_min_pix = z.min()
+            if z_max_pix < z.max():
+                z_max_pix = z.max()
             d.r_comov = cosmo.r_comoving(z)
             d.we *= ((1.+z)/(1.+args.z_ref))**(xcf.alpha-1.)
         if not args.nspec is None:

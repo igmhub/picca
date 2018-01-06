@@ -6,11 +6,13 @@ Package for Igm Cosmological-Correlations Analyses
 
 requirements:
 * python 2.7
+* scipy 0.17.0 or later
 * iminuit 1.2 or later
 * fitsio
 * healpy
 * numba
 * multiprocessing
+* configargparse
 
 ## Installation
 

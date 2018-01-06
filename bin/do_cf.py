@@ -73,6 +73,9 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
+    parser.add_argument('--z-evol2', type = float, default = 2.9, required=False,
+                    help = 'exponent of the redshift evolution of the 2nd delta field')
+
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
@@ -102,7 +105,10 @@ if __name__ == '__main__':
     ndata = 0
     dels = []
     if not args.from_image:
-        fi = glob.glob(args.in_dir+"/*.fits.gz")
+        if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+            fi = glob.glob(args.in_dir)
+        else:
+            fi = glob.glob(args.in_dir+"/*.fits.gz")
         for i,f in enumerate(fi):
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
             hdus = fitsio.FITS(f)
@@ -112,7 +118,11 @@ if __name__ == '__main__':
             if not args.nspec is None:
                 if ndata>args.nspec:break
     else:
-        dels = delta.from_image(args.in_dir)
+        fi = glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+        for f in fi:
+            d = delta.from_image(f)
+            dels += d
+        ndata = len(dels)
 
     x_correlation=False
     if args.in_dir2: 
@@ -121,7 +131,10 @@ if __name__ == '__main__':
         ndata2 = 0
         dels2 = []
         if not args.from_image:
-            fi = glob.glob(args.in_dir2+"/*.fits.gz")
+            if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
+                fi = glob.glob(args.in_dir2)
+            else:
+                fi = glob.glob(args.in_dir2+"/*.fits.gz")
             for i,f in enumerate(fi):
                 sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata2))
                 hdus = fitsio.FITS(f)
@@ -156,9 +169,11 @@ if __name__ == '__main__':
         if not args.no_project:
             d.project()
 
+    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
+
     if x_correlation: 
+        cf.alpha2 = args.z_evol2
         z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
-        z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
@@ -172,11 +187,11 @@ if __name__ == '__main__':
             z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
+            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha2-1.)
             if not args.no_project:
                 d.project()
 
-    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
+        cf.angmax = 2.*sp.arcsin(cf.rt_max/( cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(z_min_pix2) ))
 
     sys.stderr.write("\n")
 
@@ -221,6 +236,7 @@ if __name__ == '__main__':
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
+    head['RPMIN']=cf.rp_min
     head['RPMAX']=cf.rp_max
     head['RTMAX']=cf.rt_max
     head['NT']=cf.nt

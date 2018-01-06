@@ -3,13 +3,18 @@ from astropy.io import fits
 from picca import constants
 import iminuit
 from dla import dla
+import fitsio
+import sys
+
+def variance(var,eta,var_lss,fudge):
+    return eta*var + var_lss + fudge/var
 
 
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
         self.ra = ra
         self.dec = dec
-        
+
         self.plate=plate
         self.mjd=mjd
         self.fid=fiberid
@@ -36,7 +41,9 @@ class qso:
             y = data.ycart
             z = data.zcart
             cos = x*self.xcart+y*self.ycart+z*self.zcart
-        
+            if cos>=1.:
+                cos = 1.
+
         return sp.arccos(cos)
 
 class forest(qso):
@@ -48,8 +55,10 @@ class forest(qso):
     rebin = None
     dll = None
 
-    ### Correction function for multiplicative errors in calibration
+    ### Correction function for multiplicative errors in pipeline flux calibration
     correc_flux = None
+    ### Correction function for multiplicative errors in inverse pipeline variance calibration
+    correc_ivar = None
 
     ## minumum dla transmission
     dla_mask = None
@@ -66,52 +75,52 @@ class forest(qso):
 
     def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order,diff,reso):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
-        ## rebin
-
-        bins = ((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        w = bins>=0
-        fl=fl[w]
-        iv =iv[w]
-        bins=bins[w]
-        diff=diff[w]
-        reso=reso[w]
-        
-        ll = forest.lmin + sp.unique(bins)*forest.dll
-        civ = sp.bincount(bins,weights=iv)
-        w=civ>0
-        civ=civ[bins.min():]
-        cfl = sp.bincount(bins,weights=iv*fl)
-        cfl = cfl[bins.min():]
-        cdiff = sp.bincount(bins,weights=iv*diff)
-        cdiff = cdiff[bins.min():]
-        creso = sp.bincount(bins,weights=iv*reso)
-        creso = creso[bins.min():]
-        
-        w=civ>0
-        cfl[w]/=civ[w]
-        cdiff[w]/=civ[w]
-        creso[w]/=civ[w]
-        iv = civ
-        fl = cfl
-        diff=cdiff
-        reso=creso
-
 
         ## cut to specified range
-        w= (ll<forest.lmax) & (ll-sp.log10(1+self.zqso)>forest.lmin_rest) & (ll-sp.log10(1+self.zqso)<forest.lmax_rest)
-        w = w & (iv>0)
-        if w.sum()==0:return
-        
-        ll=ll[w]
-        fl=fl[w]
-        iv=iv[w]
+        bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
+        ll = forest.lmin + bins*forest.dll
+        w = (ll>=forest.lmin)
+        w = w & (ll<forest.lmax)
+        w = w & (ll-sp.log10(1.+self.zqso)>forest.lmin_rest)
+        w = w & (ll-sp.log10(1.+self.zqso)<forest.lmax_rest)
+        w = w & (iv>0.)
+        if w.sum()==0:
+            return
+        bins = bins[w]
+        ll = ll[w]
+        fl = fl[w]
+        iv = iv[w]
         diff=diff[w]
         reso=reso[w]
-        
+
+        ## rebin
+        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
+        cfl = sp.zeros(bins.max()+1)
+        civ = sp.zeros(bins.max()+1)
+        ccfl = sp.bincount(bins,weights=iv*fl)
+        cciv = sp.bincount(bins,weights=iv)
+        cdiff = sp.bincount(bins,weights=iv*diff)
+        creso = sp.bincount(bins,weights=iv*reso)
+         
+        cfl[:len(ccfl)] += ccfl
+        civ[:len(cciv)] += cciv
+        w = (civ>0.)
+        if w.sum()==0:
+            return
+        ll = cll[w]
+        fl = cfl[w]/civ[w]
+        iv = civ[w]
+        diff = cdiff[w]/civ[w]
+        reso = creso[w]/civ[w]
+
+        ## Flux calibration correction
         if not self.correc_flux is None:
             correction = self.correc_flux(ll)
             fl /= correction
             iv *= correction**2
+        if not self.correc_ivar is None:
+            correction = self.correc_ivar(ll)
+            iv /= correction
 
         self.T_dla = None
         self.ll = ll
@@ -128,6 +137,31 @@ class forest(qso):
         self.mean_SNR = sum(SNR)/float(len(SNR))           
         lam_lya = constants.absorber_IGM["LYA"]
         self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
+
+    def __add__(self,d):
+
+        if not hasattr(self,'ll') or not hasattr(d,'ll'):
+            return self
+
+        ll = sp.append(self.ll,d.ll)
+        fl = sp.append(self.fl,d.fl)
+        iv = sp.append(self.iv,d.iv)
+
+        bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
+        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
+        cfl = sp.zeros(bins.max()+1)
+        civ = sp.zeros(bins.max()+1)
+        ccfl = sp.bincount(bins,weights=iv*fl)
+        cciv = sp.bincount(bins,weights=iv)
+        cfl[:len(ccfl)] += ccfl
+        civ[:len(cciv)] += cciv
+        w = (civ>0.)
+
+        self.ll = cll[w]
+        self.fl = cfl[w]/civ[w]
+        self.iv = civ[w]
+
+        return self
 
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):
@@ -176,6 +210,7 @@ class forest(qso):
 
         var_lss = forest.var_lss(self.ll)
         eta = forest.eta(self.ll)
+        fudge = forest.fudge(self.ll)
 
         def model(p0,p1):
             line = p1*(self.ll-lmin)/(lmax-lmin)+p0
@@ -183,8 +218,12 @@ class forest(qso):
 
         def chi2(p0,p1):
             m = model(p0,p1)
-            iv = self.iv/eta
-            we = iv/(iv*var_lss*m**2+1)
+            var_pipe = 1./self.iv/m**2
+            ## prep_del.variance is the variance of delta
+            ## we want here the we = ivar(flux)
+
+            var_tot = variance(var_pipe,eta,var_lss,fudge)
+            we = 1/m**2/var_tot
             v = (self.fl-m)**2*we
             return v.sum()-sp.log(we).sum()
 
@@ -192,15 +231,29 @@ class forest(qso):
         p1 = 0
 
         mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p0/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
-        mig.migrad()
+        fmin,_ = mig.migrad()
+
         self.co=model(mig.values["p0"],mig.values["p1"])
         self.p0 = mig.values["p0"]
         self.p1 = mig.values["p1"]
 
+        self.bad_cont = None
+        if not fmin.is_valid:
+            self.bad_cont = "minuit didn't converge"
+        if sp.any(self.co <= 0):
+            self.bad_cont = "negative continuum"
+
+        ## if the continuum is negative, then set it to a very small number
+        ## so that this forest is ignored
+        if self.bad_cont is not None:
+            self.co = self.co*0+1e-10
+            self.p0 = 0.
+            self.p1 = 0.
 
 class delta(qso):
  
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
+
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
         self.ll = ll
         self.we = we
@@ -215,18 +268,23 @@ class delta(qso):
         self.dll = dll
 
     @classmethod
-    def from_forest(cls,f,st,var_lss,eta):
+    def from_forest(cls,f,st,var_lss,eta,fudge):
 
-        de = f.fl/f.co/st(f.ll)-1
         ll = f.ll
-#        iv = f.iv/eta(f.ll)
-        iv = f.iv/eta(f.ll)*(f.co**2)*(st(f.ll)**2)
-        diff = f.diff/f.co/st(f.ll)
-        we = iv*f.co**2/(iv*f.co**2*var_lss(f.ll)+1)
+        mst = st(ll)
+        var_lss = var_lss(ll)
+        eta = eta(ll)
+        fudge = fudge(ll)
         co = f.co
-        
+        de = f.fl/(co*mst)-1.
+        var = 1./f.iv/(co*mst)**2
+        we = 1./variance(var,eta,var_lss,fudge)
+        diff = f.diff/(co*mst)
+        iv = f.iv/eta*(co**2)*(mst**2)
+
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
                    iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
+
 
     @classmethod
     def from_fitsio(cls,h,Pk1D_type=False):
@@ -266,7 +324,7 @@ class delta(qso):
         mjd = head['MJD']
         fid = head['FIBERID']
 
-        try: 
+        try:
             order = head['ORDER']
         except ValueError:
             order = 1
@@ -310,7 +368,7 @@ class delta(qso):
         iv = h[1].read()
         ll = h[2].read()
         ra = h[3]["RA"][:]*sp.pi/180.
-        dec = h[3]["DEC"][:]*sp/180.
+        dec = h[3]["DEC"][:]*sp.pi/180.
         z = h[3]["Z"][:]
         plate = h[3]["PLATE"][:]
         mjd = h[3]["MJD"][:]
@@ -322,14 +380,16 @@ class delta(qso):
         for i in range(nspec):
             if i%100==0:
                 sys.stderr.write("\rreading deltas {} of {}".format(i,nspec))
+
             delt = de[:,i]
             ivar = iv[:,i]
-            w = iv>0
-            delt=delt[w]
-            ivar=ivar[w]
+            w = ivar>0
+            delt = delt[w]
+            ivar = ivar[w]
             lam = ll[w]
-            
-            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt))
+            order = 1
+
+            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt,order))
 
         h.close()
         return deltas
@@ -338,9 +398,9 @@ class delta(qso):
     def project(self):
         mde = sp.average(self.de,weights=self.we)
         res=0
-        if (self.order==1): 
+        if (self.order==1):
             mll = sp.average(self.ll,weights=self.we)
             mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
-            res = mld * (self.ll-mll) 
+            res = mld * (self.ll-mll)
 
         self.de -= mde + res

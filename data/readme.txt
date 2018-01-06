@@ -6,7 +6,7 @@ Bautistaetal2017/fits/
 	"physical" fit results to lyman-alpha forest auto-correlation data
 
 Results of H. du Mas des Bourboux et al. 2017
-https://arxiv.org/abs/
+arXiv:1708.02225
 
 duMasdesBourbouxetal2017/fits/
 	standard fit results to quasar-lyman-alpha forest cross-correlation

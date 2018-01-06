@@ -34,7 +34,10 @@ if __name__ == '__main__':
     da = sp.array(h[2]['DA'][:])
     we = sp.array(h[2]['WE'][:])
     co = smooth_cov(da,we,rp,rt)
-    da = (da*we).sum(axis=0)/we.sum(axis=0)
+    da = (da*we).sum(axis=0)
+    we = we.sum(axis=0)
+    w = we>0
+    da[w]/=we[w]
 
     h.close()
 
