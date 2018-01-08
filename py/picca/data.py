@@ -73,7 +73,7 @@ class forest(qso):
     mean_z = None
 
 
-    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order,diff,reso):
+    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order,diff=None,reso=None):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
 
         ## cut to specified range
@@ -242,6 +242,7 @@ class forest(qso):
             self.bad_cont = "minuit didn't converge"
         if sp.any(self.co <= 0):
             self.bad_cont = "negative continuum"
+
 
         ## if the continuum is negative, then set it to a very small number
         ## so that this forest is ignored
