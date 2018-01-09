@@ -133,6 +133,9 @@ class forest(qso):
         if diff is not None :
             self.diff = diff
             self.reso = reso
+        else :
+            self.diff = sp.zeros(len(ll))
+            self.reso = sp.ones(len(ll))
 
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
@@ -142,6 +145,7 @@ class forest(qso):
         lam_lya = constants.absorber_IGM["LYA"]
         self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
 
+ 
     def __add__(self,d):
 
         if not hasattr(self,'ll') or not hasattr(d,'ll'):
