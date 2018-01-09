@@ -90,8 +90,9 @@ class forest(qso):
         ll = ll[w]
         fl = fl[w]
         iv = iv[w]
-        diff=diff[w]
-        reso=reso[w]
+        if diff is not None :
+            diff=diff[w]
+            reso=reso[w]
 
         ## rebin
         cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
@@ -99,8 +100,9 @@ class forest(qso):
         civ = sp.zeros(bins.max()+1)
         ccfl = sp.bincount(bins,weights=iv*fl)
         cciv = sp.bincount(bins,weights=iv)
-        cdiff = sp.bincount(bins,weights=iv*diff)
-        creso = sp.bincount(bins,weights=iv*reso)
+        if diff is not None :
+            cdiff = sp.bincount(bins,weights=iv*diff)
+            creso = sp.bincount(bins,weights=iv*reso)
          
         cfl[:len(ccfl)] += ccfl
         civ[:len(cciv)] += cciv
@@ -110,8 +112,9 @@ class forest(qso):
         ll = cll[w]
         fl = cfl[w]/civ[w]
         iv = civ[w]
-        diff = cdiff[w]/civ[w]
-        reso = creso[w]/civ[w]
+        if diff is not None :
+            diff = cdiff[w]/civ[w]
+            reso = creso[w]/civ[w]
 
         ## Flux calibration correction
         if not self.correc_flux is None:
@@ -127,11 +130,12 @@ class forest(qso):
         self.fl = fl
         self.iv = iv
         self.order = order
-        self.diff = diff
-        self.reso = reso
+        if diff is not None :
+            self.diff = diff
+            self.reso = reso
 
         # compute means
-        self.mean_reso = sum(reso)/float(len(reso))
+        if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
         err = 1.0/sp.sqrt(iv)
         SNR = fl/err
         self.mean_SNR = sum(SNR)/float(len(SNR))           
@@ -176,7 +180,9 @@ class forest(qso):
         self.ll = self.ll[w]
         self.fl = self.fl[w]
         self.iv = self.iv[w]
-        self.diff = self.diff[w]
+        if self.diff is not None :
+             self.diff = self.diff[w]
+             self.reso = self.reso[w]
  
     def add_dla(self,zabs,nhi,mask=None):
         if not hasattr(self,'ll'):
@@ -194,9 +200,12 @@ class forest(qso):
         self.iv = self.iv[w]
         self.ll = self.ll[w]
         self.fl = self.fl[w]
-        self.diff = self.diff[w]
         self.T_dla = self.T_dla[w]
+        if self.diff is not None :
+            self.diff = self.diff[w]
+            self.reso = self.reso[w]
 
+         
     def cont_fit(self):
         lmax = forest.lmax_rest+sp.log10(1+self.zqso)
         lmin = forest.lmin_rest+sp.log10(1+self.zqso)
