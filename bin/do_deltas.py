@@ -119,6 +119,9 @@ if __name__ == '__main__':
     parser.add_argument('--delta-format',type = str,default=None,required=False,
             help='format for Pk 1D: Pk1D')
 
+    parser.add_argument('--use-ivar-as-weight', action='store_true', default = False,
+            help='use ivar as weights (effectively sets eta = 1, sigma_lss = fudge = 0)')
+
     args = parser.parse_args()
 
     ## init forest class
@@ -273,10 +276,41 @@ if __name__ == '__main__':
         if it < nit-1:
             ll_rest, mc, wmc = prep_del.mc(data)
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
-            ll,eta,vlss,fudge,nb_pixels,var,var_del,var2_del,count,nqsos,chi2,err_eta,err_vlss,err_fudge = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
-            forest.eta = interp1d(ll[nb_pixels>0], eta[nb_pixels>0], fill_value = "extrapolate",kind="nearest")
-            forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.], fill_value = "extrapolate",kind="nearest")
-            forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0], fill_value = "extrapolate",kind="nearest")
+            if not args.use_ivar_as_weight:
+                ll, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
+                    count, nqsos, chi2, err_eta, err_vlss, err_fudge = \
+                        prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
+                forest.eta = interp1d(ll[nb_pixels>0], eta[nb_pixels>0], 
+                    fill_value = "extrapolate",kind="nearest")
+                forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.], 
+                    fill_value = "extrapolate",kind="nearest")
+                forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0], 
+                    fill_value = "extrapolate",kind="nearest")
+            else:
+                print('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
+
+                nlss=10 # this value is arbitrary
+                ll = forest.lmin + (sp.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
+                eta = sp.ones(nlss)
+                vlss = sp.zeros(nlss)
+                fudge = sp.zeros(nlss)
+
+                err_eta = sp.zeros(nlss)
+                err_vlss = sp.zeros(nlss)
+                err_fudge = sp.zeros(nlss)
+                chi2 = sp.zeros(nlss)
+
+                nb_pixels = sp.zeros((nlss, nlss))
+                var = sp.zeros(nlss)
+                var_del = sp.zeros((nlss, nlss))
+                var2_del = sp.zeros((nlss, nlss))
+                count = sp.zeros((nlss, nlss))
+                nqsos=sp.zeros((nlss, nlss))
+
+                forest.eta = interp1d(ll, eta, fill_value='extrapolate', kind='nearest')
+                forest.var_lss = interp1d(ll, vlss, fill_value='extrapolate', kind='nearest')
+                forest.fudge = interp1d(ll, fudge, fill_value='extrapolate', kind='nearest')
+
 
     res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
     ll_st,st,wst = prep_del.stack(data)
