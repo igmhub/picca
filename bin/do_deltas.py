@@ -120,7 +120,10 @@ if __name__ == '__main__':
             help='format for Pk 1D: Pk1D')
 
     parser.add_argument('--use-ivar-as-weight', action='store_true', default = False,
-            help='use ivar as weights (effectively sets eta = 1, sigma_lss = fudge = 0)')
+            help='use ivar as weights (implemented as eta = 1, sigma_lss = fudge = 0)')
+
+    parser.add_argument('--use-constant-weight', action='store_true', default = False,
+            help='set all the delta weights to one (implemented as eta = 0, sigma_lss = 1, fudge = 0)')
 
     args = parser.parse_args()
 
@@ -276,7 +279,7 @@ if __name__ == '__main__':
         if it < nit-1:
             ll_rest, mc, wmc = prep_del.mc(data)
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
-            if not args.use_ivar_as_weight:
+            if not (args.use_ivar_as_weight or args.use_constant_weight):
                 ll, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
                     count, nqsos, chi2, err_eta, err_vlss, err_fudge = \
                         prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
@@ -287,13 +290,20 @@ if __name__ == '__main__':
                 forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0], 
                     fill_value = "extrapolate",kind="nearest")
             else:
-                print('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
 
                 nlss=10 # this value is arbitrary
                 ll = forest.lmin + (sp.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
-                eta = sp.ones(nlss)
-                vlss = sp.zeros(nlss)
-                fudge = sp.zeros(nlss)
+
+                if args.use_ivar_as_weight:
+                    print('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
+                    eta = sp.ones(nlss)
+                    vlss = sp.zeros(nlss)
+                    fudge = sp.zeros(nlss)
+                else :
+                    print('INFO: using constant weights, skipping eta, var_lss, fudge fits')
+                    eta = sp.zeros(nlss)
+                    vlss = sp.ones(nlss)
+                    fudge=sp.zeros(nlss)
 
                 err_eta = sp.zeros(nlss)
                 err_vlss = sp.zeros(nlss)

@@ -294,7 +294,7 @@ class delta(qso):
         var = 1./f.iv/(co*mst)**2
         we = 1./variance(var,eta,var_lss,fudge)
         diff = f.diff/(co*mst)
-        iv = f.iv/eta*(co**2)*(mst**2)
+        iv = f.iv/(eta+eta==0)*(co**2)*(mst**2)
 
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
                    iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
