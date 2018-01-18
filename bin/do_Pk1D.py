@@ -62,8 +62,13 @@ def compute_mean_delta(ll,delta,iv,zqso):
         hdelta.Fill(ll_obs,ll_rf,delta[i])
         hdelta_RF.Fill(ll_rf,delta[i])
         hdelta_OBS.Fill(ll_obs,delta[i])
-        hdelta_RF_we.Fill(ll_rf,delta[i],iv[i])
-        hdelta_OBS_we.Fill(ll_obs,delta[i],iv[i])
+        hivar.Fill(iv[i])
+        snr_pixel = (delta[i]+1)*np.sqrt(iv[i])
+        hsnr.Fill(snr_pixel)
+        hivar.Fill(iv[i])
+        if (iv[i]<1000) :
+            hdelta_RF_we.Fill(ll_rf,delta[i],iv[i])
+            hdelta_OBS_we.Fill(ll_obs,delta[i],iv[i])
 
     return
 
@@ -100,13 +105,16 @@ if __name__ == '__main__':
 
     parser.add_argument('--noise-estimate', type = str, default = 'mean_diff', required=False,
                         help = ' Estimate of Pk_noise  pipeline/diff/mean_diff')
+
+    parser.add_argument('--debug', type = bool, default=False, required=False,
+                        help = ' Fill root histograms for debugging')
     
 
     args = parser.parse_args()
 
 #   Create root file
     if (args.out_format=='root') :
-        from ROOT import TCanvas, TH1F, TFile, TTree, TProfile2D, TProfile
+        from ROOT import TCanvas, TH1D, TFile, TTree, TProfile2D, TProfile
         storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
@@ -117,6 +125,8 @@ if __name__ == '__main__':
         hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
         hdelta_RF_we  = TProfile( 'hdelta_RF_we', 'delta mean weighted as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
         hdelta_OBS_we  = TProfile( 'hdelta_OBS_we', 'delta mean weighted as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
+        hivar = TH1D('hivar','  ivar ',1000,0.0,1000.)
+        hsnr = TH1D('hsnr','  snr per pixel ',100,0.0,100.)
         hdelta_RF_we.Sumw2()
         hdelta_OBS_we.Sumw2()
 
@@ -167,7 +177,7 @@ if __name__ == '__main__':
                 # Fill masked pixels with 0.
                 ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f])
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
-                if (args.out_format=='root'): compute_mean_delta(ll_new,delta_new,iv_new,d.zqso)
+                if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.zqso)
 
                 lam_lya = constants.absorber_IGM["LYA"]
                 z_abs =  np.power(10.,ll_new)/lam_lya - 1.0
