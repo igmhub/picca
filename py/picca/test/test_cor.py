@@ -10,9 +10,9 @@ from pkg_resources import resource_filename
 class TestCor(unittest.TestCase):
 
     def test_cor(self):
-    
+
         numpy.random.seed(seed=42)
-        
+
         self._test = True
         #self._masterFiles = resource_filename('picca', 'test/data/')
         self._masterFiles = "/uufs/astro.utah.edu/common/home/u6011908/Programs/igmhub/dev/picca/py/picca/test/data/"
@@ -20,21 +20,21 @@ class TestCor(unittest.TestCase):
         self.produce_folder()
         self.produce_cat(nObj=1000)
         self.produce_forests()
-        
+
         self.send_delta()
-        
+
         self.send_cf1d()
         self.send_cf1d_cross()
-        
+
         self.send_cf()
         self.send_dmat()
-        
+
         self.send_cf_cross()
         self.send_dmat_cross()
-        
+
         self.send_xcf()
         self.send_xdmat()
-        
+
         if self._test:
             self.remove_folder()
 
@@ -43,37 +43,37 @@ class TestCor(unittest.TestCase):
         """
             Create the necessary folders
         """
-    
+
         print()
         lst_fold = ["/Products/","/Products/Spectra/",
         "/Products/Delta_LYA/","/Products/Delta_LYA/Delta/",
         "/Products/Delta_LYA/Log/","/Products/Correlations/",
         ]
-        
+
         for fold in lst_fold:
             if not os.path.isdir(self._branchFiles+fold):
                 cmd = "mkdir "+self._branchFiles+fold
                 subprocess.call(cmd, shell=True)
-    
+
         return
     def remove_folder(self):
         """
             Remove the produced folders
         """
-        
+
         print()
         cmd = "rm -r "+self._branchFiles+"/Products/"
         subprocess.call(cmd, shell=True)
-    
+
         return
     def produce_cat(self,nObj):
         """
-            
+
         """
-        
+
         print()
         print("Create cat with number of object = ", nObj)
-        
+
         ### Create random catalog
         ra    = 10.*numpy.random.random_sample(nObj)
         dec   = 10.*numpy.random.random_sample(nObj)
@@ -82,23 +82,23 @@ class TestCor(unittest.TestCase):
         fid   = numpy.random.randint(1,     high=1001,  size=nObj )
         thid  = sp.arange(1,nObj+1)
         zqso  = (3.6-2.0)*numpy.random.random_sample(nObj) + 2.0
-    
+
         ### Save
         out = fitsio.FITS(self._branchFiles+"/Products/cat.fits",'rw',clobber=True)
         cols=[ra,dec,thid,plate,mjd,fid,zqso]
         names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
         out.write(cols,names=names)
         out.close()
-    
+
         return
     def produce_forests(self):
         """
-        
+
         """
-            
+
         print()
         nside = 8
-    
+
         ### Load DRQ
         vac = fitsio.FITS(self._branchFiles+"/Products/cat.fits")
         ra    = vac[1]["RA"][:]*sp.pi/180.
@@ -108,10 +108,10 @@ class TestCor(unittest.TestCase):
         mjd   = vac[1]["MJD"][:]
         fid   = vac[1]["FIBERID"][:]
         vac.close()
-    
+
         ### Get Healpy pixels
         pixs  = healpy.ang2pix(nside, sp.pi/2.-dec, ra)
-    
+
         ### Save master file
         path = self._branchFiles+"/Products/Spectra/master.fits"
         head = {}
@@ -121,16 +121,16 @@ class TestCor(unittest.TestCase):
         out = fitsio.FITS(path,'rw',clobber=True)
         out.write(cols,names=names,header=head,extname="MASTER TABLE")
         out.close()
-    
+
         ### Log lambda grid
         logl_min  = 3.550
         logl_max  = 4.025
         logl_step = 1.e-4
         ll = sp.arange(logl_min, logl_max, logl_step)
-    
+
         ###
         for p in sp.unique(pixs):
-    
+
             ###
             p_thid = thid[(pixs==p)]
             p_fl   = numpy.random.normal(loc=1., scale=1., size=(ll.size,p_thid.size))
@@ -138,7 +138,7 @@ class TestCor(unittest.TestCase):
             p_am   = sp.zeros((ll.size,p_thid.size)).astype(int)
             p_am[ numpy.random.random(size=(ll.size,p_thid.size))>0.90 ] = 1
             p_om   = sp.zeros((ll.size,p_thid.size)).astype(int)
-    
+
             ###
             p_path = self._branchFiles+"/Products/Spectra/pix_"+str(p)+".fits"
             out = fitsio.FITS(p_path, 'rw', clobber=True)
@@ -149,18 +149,18 @@ class TestCor(unittest.TestCase):
             out.write(p_am,   header={}, extname="ANDMASK")
             out.write(p_om,   header={}, extname="ORMASK")
             out.close()
-    
+
         return
     def compare_fits(self,path1,path2):
 
         m = fitsio.FITS(path1)
         self.assertTrue(os.path.isfile(path2))
         b = fitsio.FITS(path2)
-            
+
         self.assertEqual(len(m),len(b))
-        
+
         for i in range(len(m)):
-    
+
             ###
             r_m = m[i].read_header().records()
             ld_m = []
@@ -175,19 +175,19 @@ class TestCor(unittest.TestCase):
                 name = r_b[j]['name']
                 if len(name)>5 and name[:5]=="TTYPE":
                     ld_b += [r_b[j]['value'].replace(" ","")]
-            
+
             self.assertListEqual(ld_m,ld_b)
-            
+
             for k in ld_m:
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
                 self.assertFalse( (d_m!=d_b).any() )
-                
+
         return
-        
-        
+
+
     def send_delta(self):
-    
+
         print()
         ### Send
         cmd  = " do_deltas.py"
@@ -197,7 +197,7 @@ class TestCor(unittest.TestCase):
         cmd += " --iter-out-prefix " + self._branchFiles+"/Products/Delta_LYA/Log/delta_attributes"
         cmd += " --log "             + self._branchFiles+"/Products/Delta_LYA/Log/input.log"
         subprocess.call(cmd, shell=True)
-        
+
         ### Test
         if self._test:
             path1 = self._masterFiles + "/delta_attributes.fits.gz"
@@ -206,14 +206,14 @@ class TestCor(unittest.TestCase):
 
         return
     def send_cf1d(self):
-    
+
         print()
         ### Send
         cmd  = " do_cf1d.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
         subprocess.call(cmd, shell=True)
-        
+
         ### Test
         if self._test:
             path1 = self._masterFiles + "/cf1d.fits.gz"
@@ -222,7 +222,7 @@ class TestCor(unittest.TestCase):
 
         return
     def send_cf1d_cross(self):
-        
+
         print()
         ### Send
         cmd  = " do_cf1d.py"
@@ -230,7 +230,7 @@ class TestCor(unittest.TestCase):
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/cf1d_cross.fits.gz"
         subprocess.call(cmd, shell=True)
-        
+
         ### Test
         if self._test:
             path1 = self._masterFiles + "/cf1d_cross.fits.gz"
@@ -239,7 +239,7 @@ class TestCor(unittest.TestCase):
 
         return
     def send_cf(self):
-    
+
         print()
         ### Send
         cmd  = " do_cf.py"
@@ -255,7 +255,7 @@ class TestCor(unittest.TestCase):
 
         return
     def send_dmat(self):
-    
+
         print()
         ### Send
         cmd  = " do_dmat.py"
@@ -272,7 +272,7 @@ class TestCor(unittest.TestCase):
 
         return
     def send_cf_cross(self):
-    
+
         print()
         ### Send
         cmd  = " do_cf.py"
@@ -291,7 +291,7 @@ class TestCor(unittest.TestCase):
 
         return
     def send_dmat_cross(self):
-    
+
         print()
         ### Send
         cmd  = " do_dmat.py"
@@ -311,7 +311,7 @@ class TestCor(unittest.TestCase):
 
         return
     def send_xcf(self):
-    
+
         print()
         ### Send
         cmd  = " do_xcf.py"
@@ -328,7 +328,7 @@ class TestCor(unittest.TestCase):
 
         return
     def send_xdmat(self):
-    
+
         print()
         ### Send
         cmd  = " do_xdmat.py"
@@ -351,21 +351,3 @@ def test_suite():
         python setup.py test -m <modulename>
     """
     return unittest.defaultTestLoader.loadTestsFromName(__name__)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
