@@ -67,7 +67,7 @@ def fill_masked_pixels(dll,ll,delta,diff,iv):
     diff_new[index_ok]=diff
 
     iv_new = np.ones(len(index_all))
-    iv_new *= 1.0e10
+    iv_new *=0.0
     iv_new[index_ok]=iv
 
     nb_masked_pixel=len(index_all)-len(index)
@@ -105,13 +105,14 @@ def compute_Pk_noise(dll,iv,diff,ll,run_noise):
 
     nb_noise_exp = 10
     Pk = np.zeros(nb_bin_FFT)
-    err = 1.0/np.sqrt(iv)
+    err = np.zeros(nb_pixels)
+    w = iv>0
+    err[w] = 1.0/np.sqrt(iv[w])
 
     if (run_noise) :
         for iexp in range(nb_noise_exp):
             delta_exp= np.zeros(nb_pixels)
-            for i in range(nb_pixels):
-                delta_exp[i] = np.random.normal(0.,err[i])
+            delta_exp[w] = np.random.normal(0.,err[w])
             k_exp,Pk_exp = compute_Pk_raw(dll,delta_exp,ll)
             Pk += Pk_exp 
         

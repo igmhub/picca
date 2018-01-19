@@ -125,7 +125,7 @@ if __name__ == '__main__':
         hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
         hdelta_RF_we  = TProfile( 'hdelta_RF_we', 'delta mean weighted as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
         hdelta_OBS_we  = TProfile( 'hdelta_OBS_we', 'delta mean weighted as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
-        hivar = TH1D('hivar','  ivar ',1000,0.0,1000.)
+        hivar = TH1D('hivar','  ivar ',10000,0.0,10000.)
         hsnr = TH1D('hsnr','  snr per pixel ',100,0.0,100.)
         hdelta_RF_we.Sumw2()
         hdelta_OBS_we.Sumw2()
