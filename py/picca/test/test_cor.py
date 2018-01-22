@@ -5,18 +5,30 @@ import fitsio
 import healpy
 import subprocess
 import os
+import tempfile
+import shutil
 from pkg_resources import resource_filename
 
 class TestCor(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls._branchFiles = tempfile.mkdtemp()+"/"
+        
+    @classmethod
+    def tearDownClass(cls):
+        if os.path.isdir(cls._branchFiles):
+            shutil.rmtree(cls._branchFiles, ignore_errors=True)
+
+
     def test_cor(self):
 
-        numpy.random.seed(seed=42)
+        numpy.random.seed(42)
 
+        print("\n")
         self._test = True
         #self._masterFiles = resource_filename('picca', 'test/data/')
         self._masterFiles = "/uufs/astro.utah.edu/common/home/u6011908/Programs/igmhub/dev/picca/py/picca/test/data/"
-        self._branchFiles = "/uufs/astro.utah.edu/common/home/u6011908/Run_programs/igmhub/picca/Create_Std_tests/Tests/"
         self.produce_folder()
         self.produce_cat(nObj=1000)
         self.produce_forests()
@@ -44,7 +56,7 @@ class TestCor(unittest.TestCase):
             Create the necessary folders
         """
 
-        print()
+        print("\n")
         lst_fold = ["/Products/","/Products/Spectra/",
         "/Products/Delta_LYA/","/Products/Delta_LYA/Delta/",
         "/Products/Delta_LYA/Log/","/Products/Correlations/",
@@ -52,8 +64,7 @@ class TestCor(unittest.TestCase):
 
         for fold in lst_fold:
             if not os.path.isdir(self._branchFiles+fold):
-                cmd = "mkdir "+self._branchFiles+fold
-                subprocess.call(cmd, shell=True)
+                os.mkdir(self._branchFiles+fold)
 
         return
     def remove_folder(self):
@@ -61,9 +72,8 @@ class TestCor(unittest.TestCase):
             Remove the produced folders
         """
 
-        print()
-        cmd = "rm -r "+self._branchFiles+"/Products/"
-        subprocess.call(cmd, shell=True)
+        print("\n")
+        shutil.rmtree(self._branchFiles, ignore_errors=True)
 
         return
     def produce_cat(self,nObj):
@@ -71,7 +81,7 @@ class TestCor(unittest.TestCase):
 
         """
 
-        print()
+        print("\n")
         print("Create cat with number of object = ", nObj)
 
         ### Create random catalog
@@ -96,7 +106,7 @@ class TestCor(unittest.TestCase):
 
         """
 
-        print()
+        print("\n")
         nside = 8
 
         ### Load DRQ
@@ -181,14 +191,14 @@ class TestCor(unittest.TestCase):
             for k in ld_m:
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
-                self.assertFalse( (d_m!=d_b).any() )
+                self.assertFalse((d_m!=d_b).any())
 
         return
 
 
     def send_delta(self):
 
-        print()
+        print("\n")
         ### Send
         cmd  = " do_deltas.py"
         cmd += " --in-dir "          + self._branchFiles+"/Products/Spectra/"
@@ -196,6 +206,7 @@ class TestCor(unittest.TestCase):
         cmd += " --out-dir "         + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --iter-out-prefix " + self._branchFiles+"/Products/Delta_LYA/Log/delta_attributes"
         cmd += " --log "             + self._branchFiles+"/Products/Delta_LYA/Log/input.log"
+        cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -207,11 +218,12 @@ class TestCor(unittest.TestCase):
         return
     def send_cf1d(self):
 
-        print()
+        print("\n")
         ### Send
         cmd  = " do_cf1d.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
+        cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -223,12 +235,13 @@ class TestCor(unittest.TestCase):
         return
     def send_cf1d_cross(self):
 
-        print()
+        print("\n")
         ### Send
         cmd  = " do_cf1d.py"
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/cf1d_cross.fits.gz"
+        cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -240,11 +253,12 @@ class TestCor(unittest.TestCase):
         return
     def send_cf(self):
 
-        print()
+        print("\n")
         ### Send
         cmd  = " do_cf.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf.fits.gz"
+        cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -256,12 +270,13 @@ class TestCor(unittest.TestCase):
         return
     def send_dmat(self):
 
-        print()
+        print("\n")
         ### Send
         cmd  = " do_dmat.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/dmat.fits.gz"
         cmd += " --rej 0.99 "
+        cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -273,7 +288,7 @@ class TestCor(unittest.TestCase):
         return
     def send_cf_cross(self):
 
-        print()
+        print("\n")
         ### Send
         cmd  = " do_cf.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -281,6 +296,7 @@ class TestCor(unittest.TestCase):
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/cf_cross.fits.gz"
         cmd += " --np 100 "
         cmd += " --rp-min -200.0 "
+        cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -292,7 +308,7 @@ class TestCor(unittest.TestCase):
         return
     def send_dmat_cross(self):
 
-        print()
+        print("\n")
         ### Send
         cmd  = " do_dmat.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -301,6 +317,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 100 "
         cmd += " --rp-min -200.0 "
         cmd += " --rej 0.99 "
+        cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -312,12 +329,13 @@ class TestCor(unittest.TestCase):
         return
     def send_xcf(self):
 
-        print()
+        print("\n")
         ### Send
         cmd  = " do_xcf.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
+        cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -329,13 +347,14 @@ class TestCor(unittest.TestCase):
         return
     def send_xdmat(self):
 
-        print()
+        print("\n")
         ### Send
         cmd  = " do_xdmat.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/xdmat.fits.gz"
         cmd += " --rej 0.99 "
+        cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -346,8 +365,5 @@ class TestCor(unittest.TestCase):
 
         return
 
-def test_suite():
-    """Allows testing of only this module with the command::
-        python setup.py test -m <modulename>
-    """
-    return unittest.defaultTestLoader.loadTestsFromName(__name__)
+if __name__ == '__main__':
+    unittest.main()
