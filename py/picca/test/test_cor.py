@@ -27,8 +27,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         self._test = True
-        #self._masterFiles = resource_filename('picca', 'test/data/')
-        self._masterFiles = "/uufs/astro.utah.edu/common/home/u6011908/Programs/igmhub/dev/picca/py/picca/test/data/"
+        self._masterFiles = resource_filename('picca', 'test/data/')
         self.produce_folder()
         self.produce_cat(nObj=1000)
         self.produce_forests()
