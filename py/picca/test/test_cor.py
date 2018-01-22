@@ -190,6 +190,7 @@ class TestCor(unittest.TestCase):
             for k in ld_m:
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
+                self.assertEqual(d_m.size,d_b.size)
                 self.assertFalse((d_m!=d_b).any())
 
         return
@@ -257,6 +258,11 @@ class TestCor(unittest.TestCase):
         cmd  = " do_cf.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf.fits.gz"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
         cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
@@ -274,6 +280,11 @@ class TestCor(unittest.TestCase):
         cmd  = " do_dmat.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/dmat.fits.gz"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
@@ -293,8 +304,11 @@ class TestCor(unittest.TestCase):
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/cf_cross.fits.gz"
-        cmd += " --np 100 "
-        cmd += " --rp-min -200.0 "
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
         cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
@@ -313,8 +327,11 @@ class TestCor(unittest.TestCase):
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/dmat_cross.fits.gz"
-        cmd += " --np 100 "
-        cmd += " --rp-min -200.0 "
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
@@ -334,6 +351,11 @@ class TestCor(unittest.TestCase):
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
         cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
 
@@ -352,6 +374,11 @@ class TestCor(unittest.TestCase):
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/xdmat.fits.gz"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
