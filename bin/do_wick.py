@@ -117,6 +117,7 @@ if __name__ == '__main__':
         fi = glob.glob(args.in_dir)
     else:
         fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     data = {}
     ndata = 0
     for i,f in enumerate(fi):
@@ -164,7 +165,7 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    t123 = pool.map(calc_t123,cpu_data.values())
+    t123 = pool.map(calc_t123,sorted(cpu_data.values()))
     pool.close()
 
     t123 = sp.array(t123)
