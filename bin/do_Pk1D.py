@@ -158,12 +158,10 @@ if __name__ == '__main__':
         if (args.out_format=='fits') :
             out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
         print ' ndata = ',ndata
-
+        nrejecttot=0
+        nrejectpart=0
         # loop over deltas
         for d in dels:
-
-            # Selection over the SNR and the resolution
-            if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
 
             # minimum number of pixel in forest
             nb_pixel_min = args.nb_pixel_min
@@ -172,9 +170,13 @@ if __name__ == '__main__':
             # Split in n parts the forest
             nb_part_max = len(d.ll)/nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
-            m_snr_arr,m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv)
+            m_snr_arr,m_reso_arr,m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv,d.reso)
+
             for f in range(nb_part): 
-            
+
+                # Selection over mean SNR and mean resolution in part
+                if (m_snr_arr[f]<=args.SNR_min or m_reso_arr[f]>=args.reso_max) : continue
+                
                 # Fill masked pixels with 0.
                 ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f])
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
@@ -251,6 +253,7 @@ if __name__ == '__main__':
                     names=['k','Pk_raw','Pk_noise','Pk_diff','cor_reso','Pk']
                 
                     out.write(cols,names=names,header=hd)
+
         if (args.out_format=='fits'):
             out.close()
         

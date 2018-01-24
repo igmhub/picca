@@ -144,7 +144,6 @@ class forest(qso):
         self.mean_SNR = sum(SNR)/float(len(SNR))           
         lam_lya = constants.absorber_IGM["LYA"]
         self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
-
  
     def __add__(self,d):
 
@@ -296,7 +295,7 @@ class delta(qso):
         we = 1./variance(var,eta,var_lss,fudge)
         diff = f.diff/(co*mst)
         iv = f.iv/(eta+(eta==0))*(co**2)*(mst**2)
-         
+ 
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
                    iv,diff,f.reso,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
 
@@ -368,7 +367,7 @@ class delta(qso):
         ll = sp.array([float(a[10+nbpixel+i]) for i in range(nbpixel)])
         iv = sp.array([float(a[10+2*nbpixel+i]) for i in range(nbpixel)])
         diff = sp.array([float(a[10+3*nbpixel+i]) for i in range(nbpixel)])
-        reso = sp.array([float(a[10+3*nbpixel+i]) for i in range(nbpixel)])
+        reso = sp.array([float(a[10+4*nbpixel+i]) for i in range(nbpixel)])
 
         dll = 1.0e-4
         thid = 0
