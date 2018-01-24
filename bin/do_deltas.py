@@ -356,6 +356,7 @@ if __name__ == '__main__':
                 for i in range(nbpixel): line += '{} '.format(d.ll[i])
                 for i in range(nbpixel): line += '{} '.format(d.iv[i])
                 for i in range(nbpixel): line += '{} '.format(d.diff[i])
+                for i in range(nbpixel): line += '{} '.format(d.reso[i])
                 line +=' \n'    
                 out_ascii.write(line)
                 
@@ -383,8 +384,8 @@ if __name__ == '__main__':
 
 
                 if (args.delta_format=='Pk1D') :
-                    cols=[d.ll,d.de,d.iv,d.diff]
-                    names=['LOGLAM','DELTA','IVAR','DIFF']
+                    cols=[d.ll,d.de,d.iv,d.diff,d.reso]
+                    names=['LOGLAM','DELTA','IVAR','DIFF','RESO']
                 else :
                     cols=[d.ll,d.de,d.we,d.co]
                     names=['LOGLAM','DELTA','WEIGHT','CONT']
