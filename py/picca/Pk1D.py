@@ -8,6 +8,8 @@ def split_forest(nb_part,dll,ll,de,diff,iv):
     ll_limit=[ll[0]]
     nb_bin= len(ll)/nb_part
     
+    m_snr_arr = []
+    #reso_arr = []
     m_z_arr = []
     ll_arr = []
     de_arr = []
@@ -33,17 +35,23 @@ def split_forest(nb_part,dll,ll,de,diff,iv):
         de_part = de_c[selection]
         diff_part = diff_c[selection]
         iv_part = iv_c[selection]
-             
+          
+        snr = (de_part+1)*np.sqrt(iv_part)
+        mean_snr = sum(snr)/float(len(snr))
+        
         lam_lya = constants.absorber_IGM["LYA"]
         m_z = (np.power(10.,ll_part[len(ll_part)-1])+np.power(10.,ll_part[0]))/2./lam_lya -1.0
+        
 
+        m_snr_arr.append(mean_snr)
+        #reso_arr.append(reso)
         m_z_arr.append(m_z)
         ll_arr.append(ll_part)
         de_arr.append(de_part)
         diff_arr.append(diff_part)
         iv_arr.append(iv_part)
   
-    return m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
+    return m_snr_arr,m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
 
 
 def fill_masked_pixels(dll,ll,delta,diff,iv):

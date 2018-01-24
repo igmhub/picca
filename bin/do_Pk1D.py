@@ -111,6 +111,7 @@ if __name__ == '__main__':
     
 
     args = parser.parse_args()
+    print "Input args: ",vars(args)
 
 #   Create root file
     if (args.out_format=='root') :
@@ -171,7 +172,7 @@ if __name__ == '__main__':
             # Split in n parts the forest
             nb_part_max = len(d.ll)/nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
-            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv)
+            m_snr_arr,m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv)
             for f in range(nb_part): 
             
                 # Fill masked pixels with 0.

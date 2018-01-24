@@ -126,6 +126,7 @@ if __name__ == '__main__':
             help='set all the delta weights to one (implemented as eta = 0, sigma_lss = 1, fudge = 0)')
 
     args = parser.parse_args()
+    print vars(args)
 
     ## init forest class
 
