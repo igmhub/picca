@@ -70,6 +70,12 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
+    parser.add_argument('--zqso-max', type = float, default = 10., required=False,
+                        help = 'max qso redshift')
+
+    parser.add_argument('--zqso-min', type = float, default = 0., required=False,
+                        help = 'min qso redshift ')
+
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
@@ -93,6 +99,8 @@ if __name__ == '__main__':
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
     cf.rp_min = args.rp_min 
+    cf.zqso_max = args.zqso_max
+    cf.zqso_min = args.zqso_min 
     cf.np = args.np
     cf.nt = args.nt
     cf.nside = args.nside
@@ -239,6 +247,8 @@ if __name__ == '__main__':
     head['RPMIN']=cf.rp_min
     head['RPMAX']=cf.rp_max
     head['RTMAX']=cf.rt_max
+    head['ZQSOMIN']=cf.zqso_min
+    head['ZQSOMAX']=cf.zqso_max
     head['NT']=cf.nt
     head['NP']=cf.np
 
