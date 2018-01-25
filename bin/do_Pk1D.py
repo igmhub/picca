@@ -158,8 +158,7 @@ if __name__ == '__main__':
         if (args.out_format=='fits') :
             out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
         print ' ndata = ',ndata
-        nrejecttot=0
-        nrejectpart=0
+
         # loop over deltas
         for d in dels:
 
