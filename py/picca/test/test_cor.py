@@ -36,6 +36,8 @@ class TestCor(unittest.TestCase):
 
         self.send_cf1d()
         self.send_cf1d_cross()
+        
+        self.send_cf_angl()
 
         self.send_cf()
         self.send_dmat()
@@ -248,6 +250,23 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/cf1d_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf1d_cross.fits.gz"
+            self.compare_fits(path1,path2)
+
+        return
+    def send_cf_angl(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_cf_angl.py"
+        cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf_angl.fits.gz"
+        cmd += " --nproc 4"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/cf_angl.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/cf_angl.fits.gz"
             self.compare_fits(path1,path2)
 
         return
