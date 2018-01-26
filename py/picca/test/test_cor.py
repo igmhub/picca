@@ -41,12 +41,15 @@ class TestCor(unittest.TestCase):
 
         self.send_cf()
         self.send_dmat()
+        self.send_metal_dmat()
 
         self.send_cf_cross()
         self.send_dmat_cross()
+        self.send_metal_dmat_cross()
 
         self.send_xcf()
         self.send_xdmat()
+        self.send_metal_xdmat()
 
         if self._test:
             self.remove_folder()
@@ -315,6 +318,30 @@ class TestCor(unittest.TestCase):
             self.compare_fits(path1,path2)
 
         return
+    def send_metal_dmat(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_metal_dmat.py"
+        cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --out "    + self._branchFiles+"/Products/Correlations/metal_dmat.fits.gz"
+        cmd += " --abs-igm SiIII\(1207\)"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --rej 0.99 "
+        cmd += " --nproc 4"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/metal_dmat.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
+            self.compare_fits(path1,path2)
+
+        return
     def send_cf_cross(self):
 
         print("\n")
@@ -362,6 +389,32 @@ class TestCor(unittest.TestCase):
             self.compare_fits(path1,path2)
 
         return
+    def send_metal_dmat_cross(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_metal_dmat.py"
+        cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --out "     + self._branchFiles+"/Products/Correlations/metal_dmat_cross.fits.gz"
+        cmd += " --abs-igm SiIII\(1207\)"
+        cmd += " --abs-igm2 SiIII\(1207\)"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --rej 0.99 "
+        cmd += " --nproc 4"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/metal_dmat_cross.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
+            self.compare_fits(path1,path2)
+
+        return
     def send_xcf(self):
 
         print("\n")
@@ -406,6 +459,31 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/xdmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xdmat.fits.gz"
+            self.compare_fits(path1,path2)
+
+        return
+    def send_metal_xdmat(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_metal_xdmat.py"
+        cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --drq "     + self._branchFiles+"/Products/cat.fits"
+        cmd += " --out "     + self._branchFiles+"/Products/Correlations/metal_xdmat.fits.gz"
+        cmd += " --abs-igm SiIII\(1207\)"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --rej 0.99 "
+        cmd += " --nproc 4"
+        subprocess.call(cmd, shell=True)
+        
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/metal_xdmat.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
             self.compare_fits(path1,path2)
 
         return
