@@ -283,12 +283,11 @@ if __name__ == '__main__':
     hd["NSIDE"] = healpy_nside
     hd["PIXORDER"] = healpy_pix_ordering
     hd["FITORDER"] = args.order
-    res.write([ll_st,st,wst],names=['loglam','stack','weight'])
+    res.write([ll_st,st,wst],names=['loglam','stack','weight'],header=hd)
     res.write([ll,eta,vlss,fudge,nb_pixels],names=['loglam','eta','var_lss','fudge','nb_pixels'])
     res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'])
     var = sp.broadcast_to(var.reshape(1,-1),var_del.shape)
     res.write([var,var_del,var2_del,count,nqsos,chi2],names=['var_pipe','var_del','var2_del','count','nqsos','chi2'])
-    res.write([],names=[],header=hd)
     res.close()
 
     ### Save delta
