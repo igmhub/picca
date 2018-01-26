@@ -126,7 +126,6 @@ if __name__ == '__main__':
             help='set all the delta weights to one (implemented as eta = 0, sigma_lss = 1, fudge = 0)')
 
     args = parser.parse_args()
-    print vars(args)
 
     ## init forest class
 
@@ -356,7 +355,6 @@ if __name__ == '__main__':
                 for i in range(nbpixel): line += '{} '.format(d.ll[i])
                 for i in range(nbpixel): line += '{} '.format(d.iv[i])
                 for i in range(nbpixel): line += '{} '.format(d.diff[i])
-                for i in range(nbpixel): line += '{} '.format(d.reso[i])
                 line +=' \n'    
                 out_ascii.write(line)
                 
@@ -384,8 +382,8 @@ if __name__ == '__main__':
 
 
                 if (args.delta_format=='Pk1D') :
-                    cols=[d.ll,d.de,d.iv,d.diff,d.reso]
-                    names=['LOGLAM','DELTA','IVAR','DIFF','RESO']
+                    cols=[d.ll,d.de,d.iv,d.diff]
+                    names=['LOGLAM','DELTA','IVAR','DIFF']
                 else :
                     cols=[d.ll,d.de,d.we,d.co]
                     names=['LOGLAM','DELTA','WEIGHT','CONT']

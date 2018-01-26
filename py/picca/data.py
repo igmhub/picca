@@ -144,6 +144,7 @@ class forest(qso):
         self.mean_SNR = sum(SNR)/float(len(SNR))           
         lam_lya = constants.absorber_IGM["LYA"]
         self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
+
  
     def __add__(self,d):
 
@@ -265,7 +266,7 @@ class forest(qso):
 
 class delta(qso):
  
-    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,reso,m_SNR,m_reso,m_z,dll):
+    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
 
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
         self.ll = ll
@@ -275,7 +276,6 @@ class delta(qso):
         self.order = order
         self.iv = iv
         self.diff = diff
-        self.reso = reso
         self.mean_SNR = m_SNR
         self.mean_reso = m_reso
         self.mean_z = m_z
@@ -294,10 +294,11 @@ class delta(qso):
         var = 1./f.iv/(co*mst)**2
         we = 1./variance(var,eta,var_lss,fudge)
         diff = f.diff/(co*mst)
+        #iv = f.iv/(eta+eta==0)*(co**2)*(mst**2)
         iv = f.iv/(eta+(eta==0))*(co**2)*(mst**2)
- 
+
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
-                   iv,diff,f.reso,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
+                   iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
 
 
     @classmethod
@@ -313,7 +314,6 @@ class delta(qso):
         if  Pk1D_type :
             iv = h['IVAR'][:]
             diff = h['DIFF'][:]
-            reso = h['RESO'][:]
             m_SNR = head['MEANSNR']
             m_reso = head['MEANRESO']
             m_z = head['MEANZ']
@@ -323,7 +323,6 @@ class delta(qso):
         else :                
             iv = None
             diff = None
-            reso = None
             m_SNR = None
             m_reso = None
             dll = None
@@ -345,7 +344,7 @@ class delta(qso):
         except ValueError:
             order = 1
         return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,
-                   iv,diff,reso,m_SNR,m_reso,m_z,dll)
+                   iv,diff,m_SNR,m_reso,m_z,dll)
 
 
     @classmethod
@@ -367,7 +366,6 @@ class delta(qso):
         ll = sp.array([float(a[10+nbpixel+i]) for i in range(nbpixel)])
         iv = sp.array([float(a[10+2*nbpixel+i]) for i in range(nbpixel)])
         diff = sp.array([float(a[10+3*nbpixel+i]) for i in range(nbpixel)])
-        reso = sp.array([float(a[10+4*nbpixel+i]) for i in range(nbpixel)])
 
         dll = 1.0e-4
         thid = 0
@@ -376,7 +374,7 @@ class delta(qso):
         co = None
 
         return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,
-                   iv,diff,reso,m_SNR,m_reso,m_z,dll)
+                   iv,diff,m_SNR,m_reso,m_z,dll)
 
     @staticmethod
     def from_image(f):

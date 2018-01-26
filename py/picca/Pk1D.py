@@ -3,13 +3,11 @@ from picca import constants
 import pyfftw
 
 
-def split_forest(nb_part,dll,ll,de,diff,iv,reso):
+def split_forest(nb_part,dll,ll,de,diff,iv):
 
     ll_limit=[ll[0]]
     nb_bin= len(ll)/nb_part
     
-    m_snr_arr = []
-    m_reso_arr = []
     m_z_arr = []
     ll_arr = []
     de_arr = []
@@ -20,7 +18,6 @@ def split_forest(nb_part,dll,ll,de,diff,iv,reso):
     de_c = de.copy()
     diff_c = diff.copy()
     iv_c = iv.copy()
-    reso_c = reso.copy()
 
     for p in range(1,nb_part) :
         ll_limit.append(ll[nb_bin*p])
@@ -36,24 +33,17 @@ def split_forest(nb_part,dll,ll,de,diff,iv,reso):
         de_part = de_c[selection]
         diff_part = diff_c[selection]
         iv_part = iv_c[selection]
-        reso_part = reso_c[selection]
-
-        snr = (de_part+1)*np.sqrt(iv_part)
-        mean_snr = sum(snr)/float(len(snr))
-        mean_reso = sum(reso_part)/float(len(reso_part))
+             
         lam_lya = constants.absorber_IGM["LYA"]
         m_z = (np.power(10.,ll_part[len(ll_part)-1])+np.power(10.,ll_part[0]))/2./lam_lya -1.0
-        
 
-        m_snr_arr.append(mean_snr)
-        m_reso_arr.append(mean_reso)
         m_z_arr.append(m_z)
         ll_arr.append(ll_part)
         de_arr.append(de_part)
         diff_arr.append(diff_part)
         iv_arr.append(iv_part)
   
-    return m_snr_arr,m_reso_arr,m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
+    return m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
 
 
 def fill_masked_pixels(dll,ll,delta,diff,iv):
@@ -77,7 +67,7 @@ def fill_masked_pixels(dll,ll,delta,diff,iv):
     diff_new[index_ok]=diff
 
     iv_new = np.ones(len(index_all))
-    iv_new *= 1.0e10
+    iv_new *=0.0
     iv_new[index_ok]=iv
 
     nb_masked_pixel=len(index_all)-len(index)
@@ -115,13 +105,14 @@ def compute_Pk_noise(dll,iv,diff,ll,run_noise):
 
     nb_noise_exp = 10
     Pk = np.zeros(nb_bin_FFT)
-    err = 1.0/np.sqrt(iv)
+    err = np.zeros(nb_pixels)
+    w = iv>0
+    err[w] = 1.0/np.sqrt(iv[w])
 
     if (run_noise) :
         for iexp in range(nb_noise_exp):
             delta_exp= np.zeros(nb_pixels)
-            for i in range(nb_pixels):
-                delta_exp[i] = np.random.normal(0.,err[i])
+            delta_exp[w] = np.random.normal(0.,err[w])
             k_exp,Pk_exp = compute_Pk_raw(dll,delta_exp,ll)
             Pk += Pk_exp 
         

@@ -100,7 +100,7 @@ if __name__ == '__main__':
     parser.add_argument('--nb-pixel-min',type = int,default=75,required=False,
                         help = 'Minimal number of pixels in a part of forest')
 
-    parser.add_argument('--nb-pixel-masked-max',type = int,default=40,required=False,
+    parser.add_argument('--nb-pixel-masked-max',type = int,default=30,required=False,
                         help = 'Maximal number of masked pixels in a part of forest')
 
     parser.add_argument('--noise-estimate', type = str, default = 'mean_diff', required=False,
@@ -111,7 +111,6 @@ if __name__ == '__main__':
     
 
     args = parser.parse_args()
-    print "Input args: ",vars(args)
 
 #   Create root file
     if (args.out_format=='root') :
@@ -126,7 +125,7 @@ if __name__ == '__main__':
         hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
         hdelta_RF_we  = TProfile( 'hdelta_RF_we', 'delta mean weighted as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
         hdelta_OBS_we  = TProfile( 'hdelta_OBS_we', 'delta mean weighted as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
-        hivar = TH1D('hivar','  ivar ',1000,0.0,1000.)
+        hivar = TH1D('hivar','  ivar ',10000,0.0,10000.)
         hsnr = TH1D('hsnr','  snr per pixel ',100,0.0,100.)
         hdelta_RF_we.Sumw2()
         hdelta_OBS_we.Sumw2()
@@ -162,6 +161,9 @@ if __name__ == '__main__':
         # loop over deltas
         for d in dels:
 
+            # Selection over the SNR and the resolution
+            if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
+
             # minimum number of pixel in forest
             nb_pixel_min = args.nb_pixel_min
             if (len(d.ll)<nb_pixel_min) : continue
@@ -169,13 +171,9 @@ if __name__ == '__main__':
             # Split in n parts the forest
             nb_part_max = len(d.ll)/nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
-            m_snr_arr,m_reso_arr,m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv,d.reso)
-
+            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv)
             for f in range(nb_part): 
-
-                # Selection over mean SNR and mean resolution in part
-                if (m_snr_arr[f]<=args.SNR_min or m_reso_arr[f]>=args.reso_max) : continue
-                
+            
                 # Fill masked pixels with 0.
                 ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f])
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
@@ -252,7 +250,6 @@ if __name__ == '__main__':
                     names=['k','Pk_raw','Pk_noise','Pk_diff','cor_reso','Pk']
                 
                     out.write(cols,names=names,header=hd)
-
         if (args.out_format=='fits'):
             out.close()
         
