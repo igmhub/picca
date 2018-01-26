@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,cpu_data.values())
+    cfs = pool.map(corr_func,sorted(cpu_data.values()))
     pool.close()
     
     
