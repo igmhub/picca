@@ -109,6 +109,7 @@ if __name__ == '__main__':
             fi = glob.glob(args.in_dir)
         else:
             fi = glob.glob(args.in_dir+"/*.fits.gz")
+        fi = sorted(fi)
         for i,f in enumerate(fi):
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
             hdus = fitsio.FITS(f)
@@ -119,6 +120,7 @@ if __name__ == '__main__':
                 if ndata>args.nspec:break
     else:
         fi = glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+        fi = sorted(fi)
         for f in fi:
             d = delta.from_image(f)
             dels += d
@@ -135,6 +137,7 @@ if __name__ == '__main__':
                 fi = glob.glob(args.in_dir2)
             else:
                 fi = glob.glob(args.in_dir2+"/*.fits.gz")
+            fi = sorted(fi)
             for i,f in enumerate(fi):
                 sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata2))
                 hdus = fitsio.FITS(f)
@@ -213,7 +216,7 @@ if __name__ == '__main__':
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,list(cpu_data.values()))
+    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
     cfs=sp.array(cfs)

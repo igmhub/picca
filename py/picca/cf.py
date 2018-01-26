@@ -35,7 +35,8 @@ cosmo=None
 
 rej = None
 lock = None
-x_correlation = None 
+x_correlation = None
+ang_correlation = None
 
 def fill_neighs(pix):
     for ipix in pix:
@@ -76,7 +77,10 @@ def cf(pix):
                 ang = d1^d2
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
-                cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.we,d1.de,d2.z,d2.r_comov,d2.we,d2.de,ang,same_half_plate)
+                if ang_correlation:
+                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.ll,d1.we,d1.de,d2.z,10.**d2.ll,d2.we,d2.de,ang,same_half_plate)
+                else:
+                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.we,d1.de,d2.z,d2.r_comov,d2.we,d2.de,ang,same_half_plate)
             
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
@@ -96,9 +100,15 @@ def cf(pix):
 def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     wd1 = d1*w1
     wd2 = d2*w2
-    if x_correlation : rp = (r1-r2[:,None])*sp.cos(ang/2)
-    else : rp = abs(r1-r2[:,None])*sp.cos(ang/2)
-    rt = (r1+r2[:,None])*sp.sin(ang/2)
+    if ang_correlation:
+        rp = r1/r2[:,None]
+        if not x_correlation:
+            rp[(rp<1.)] = 1./rp[(rp<1.)]
+        rt = ang*sp.ones_like(rp)
+    else:
+        if x_correlation : rp = (r1-r2[:,None])*sp.cos(ang/2)
+        else : rp = abs(r1-r2[:,None])*sp.cos(ang/2)
+        rt = (r1+r2[:,None])*sp.sin(ang/2)
     wd12 = wd1*wd2[:,None]
     w12 = w1*w2[:,None]
     z = (z1+z2[:,None])/2

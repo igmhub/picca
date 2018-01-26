@@ -176,10 +176,10 @@ if __name__ == '__main__':
     nit = args.nit
 
     log = open(args.log,'w')
-    data, ndata = io.read_data(args.in_dir, args.drq, args.mode,\
-                              zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
-                              keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
-                              best_obs=args.best_obs, single_exp=args.single_exp)
+    data,ndata,healpy_nside,healpy_pix_ordering = io.read_data(args.in_dir, args.drq, args.mode,\
+        zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
+        keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
+        best_obs=args.best_obs, single_exp=args.single_exp)
    
     ### Get the lines to veto
     usr_mask_obs    = None
@@ -259,7 +259,8 @@ if __name__ == '__main__':
         pool = Pool(processes=args.nproc)
         print("iteration: ", it)
         nfit = 0
-        data_fit_cont = pool.map(cont_fit, list(data.values()))
+        sort = sp.array(data.keys()).argsort()
+        data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort] )
         for i, p in enumerate(data):
             data[p] = data_fit_cont[i]
 
@@ -274,15 +275,23 @@ if __name__ == '__main__':
             forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.], fill_value = "extrapolate",kind="nearest")
             forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0], fill_value = "extrapolate",kind="nearest")
 
-    res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
     ll_st,st,wst = prep_del.stack(data)
-    res.write([ll_st,st,wst],names=['loglam','stack','weight'])
+
+    ### Save iter_out_prefix
+    res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
+    hd = {}
+    hd["NSIDE"] = healpy_nside
+    hd["PIXORDER"] = healpy_pix_ordering
+    hd["FITORDER"] = args.order
+    res.write([ll_st,st,wst],names=['loglam','stack','weight'],header=hd)
     res.write([ll,eta,vlss,fudge,nb_pixels],names=['loglam','eta','var_lss','fudge','nb_pixels'])
     res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'])
     var = sp.broadcast_to(var.reshape(1,-1),var_del.shape)
     res.write([var,var_del,var2_del,count,nqsos,chi2],names=['var_pipe','var_del','var2_del','count','nqsos','chi2'])
-    st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     res.close()
+
+    ### Save delta
+    st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
     for p in data:

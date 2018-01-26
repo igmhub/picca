@@ -127,6 +127,7 @@ if __name__ == '__main__':
         fi = glob.glob(args.in_dir)
     else:
         fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     data = {}
     dels = []
     for i,f in enumerate(fi):
@@ -147,6 +148,7 @@ if __name__ == '__main__':
             fi = glob.glob(args.in_dir2)
         else:
             fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        fi = sorted(fi)
         data2 = {}
         dels2 = []
         for i,f in enumerate(fi):
@@ -271,7 +273,7 @@ if __name__ == '__main__':
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
             sys.stderr.write("\n")
             pool = Pool(processes=args.nproc)
-            dm = pool.map(f,list(cpu_data.values()))
+            dm = pool.map(f,sorted(list(cpu_data.values())))
             pool.close()
             dm = sp.array(dm)
             wdm =dm[:,0].sum(axis=0)

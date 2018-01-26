@@ -198,7 +198,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             data[pix] = pix_data
             ndata += len(pix_data)
 
-    return data,ndata
+    return data,ndata,nside,"RING"
 
 def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
     pix_data = []
@@ -293,6 +293,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
         fi = in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd)
         print(fi)
         fi = glob.glob(fi)
+        fi = sorted(fi)
         exps = []
         for f in fi:
             print("INFO: reading plate {}".format(f))
@@ -460,6 +461,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None):
     '''
     dels = []
     fi = glob.glob(indir+"/*.fits.gz")
+    fi = sorted(fi)
     ndata=0
     for i,f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
@@ -492,7 +494,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None):
         if zmax < max_z:
             zmax = max_z
         d.z = z
-        d.r_comov = cosmo.r_comoving(z)
+        if not cosmo is None: d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1+z)/(1+zref))**(alpha-1)
 
     return data,ndata,zmin,zmax

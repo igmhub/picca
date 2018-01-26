@@ -57,6 +57,9 @@ if __name__ == '__main__':
     parser.add_argument('--lambda-abs-name', type = str, default = 'LYA', required=False,
                         help = 'name of the absorption transistion')
 
+    parser.add_argument('--obj-name', type = str, default = 'QSO', required=False,
+                        help = 'name of the object tracer')
+
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
 
@@ -165,8 +168,7 @@ if __name__ == '__main__':
         f=partial(calc_metal_xdmat,abs_igm)
         sys.stderr.write("\n")
         pool = Pool(processes=args.nproc)
-        #dm = pool.map(f,list(cpu_data.values()))
-        dm = list(map(f,list(cpu_data.values())))
+        dm = pool.map(f,sorted(list(cpu_data.values())))
         pool.close()
         dm = sp.array(dm)
         wdm =dm[:,0].sum(axis=0)
@@ -208,19 +210,19 @@ if __name__ == '__main__':
     out_list = []
     out_names=[]
     for i,ai in enumerate(names):
-        out_names=out_names + ["RP_"+ai]
+        out_names=out_names + ["RP_"+args.obj_name+"_"+ai]
         out_list = out_list + [rp_all[i]]
 
-        out_names=out_names + ["RT_"+ai]
+        out_names=out_names + ["RT_"+args.obj_name+"_"+ai]
         out_list = out_list + [rt_all[i]]
 
-        out_names=out_names + ["Z_"+ai]
+        out_names=out_names + ["Z_"+args.obj_name+"_"+ai]
         out_list = out_list + [z_all[i]]
 
-        out_names = out_names + ["DM_"+ai]
+        out_names = out_names + ["DM_"+args.obj_name+"_"+ai]
         out_list = out_list + [dm_all[i]]
 
-        out_names=out_names+["WDM_"+ai]
+        out_names=out_names+["WDM_"+args.obj_name+"_"+ai]
         out_list = out_list+[wdm_all[i]]
 
     out.write(out_list,names=out_names)

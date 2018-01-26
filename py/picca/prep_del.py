@@ -54,7 +54,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
         for d in data[p]:
 
             var_pipe = 1/d.iv/d.co**2
-            w = (sp.log10(var_pipe) > vpmin) & (var_pipe < vpmax)
+            w = (sp.log10(var_pipe) > vpmin) & (sp.log10(var_pipe) < vpmax)
 
             bll = ((d.ll-forest.lmin)/(forest.lmax-forest.lmin)*nlss).astype(int)
             bwe = sp.floor((sp.log10(var_pipe)-vpmin)/(vpmax-vpmin)*nwe).astype(int)
