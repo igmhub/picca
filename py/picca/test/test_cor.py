@@ -262,13 +262,6 @@ class TestCor(unittest.TestCase):
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf_angl.fits.gz"
         cmd += " --nproc 4"
         subprocess.call(cmd, shell=True)
-        print("\n")
-        ### Send
-        cmd  = " do_cf_angl.py"
-        cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
-        cmd += " --out "    + self._masterFiles + "/cf_angl.fits.gz"
-        cmd += " --nproc 4"
-        subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
