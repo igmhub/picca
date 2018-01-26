@@ -188,9 +188,6 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             data[pix] = pix_data
             ndata += len(pix_data)
 
-        if not nspec is None:
-            if ndata > nspec:break
-
     return data,ndata,nside,"RING"
 
 def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
