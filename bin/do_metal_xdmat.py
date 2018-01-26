@@ -136,7 +136,46 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     xcf.objs = objs
 
+    ### Remove pixels if too far from objects
+    zmin_obj = None
+    zmax_obj = None
+    for pix in xcf.objs:
+        for q in xcf.objs[pix]:
+            if zmin_obj is None: zmin_obj = q.zqso
+            if zmax_obj is None: zmax_obj = q.zqso
+            zmin_obj = min(zmin_obj,q.zqso)
+            zmax_obj = max(zmax_obj,q.zqso)
+    if ( zmin_obj is not None and ( (zmin_pix<zmin_obj) or (zmax_obj<zmax_pix)) ):
+        d_min_pix_cut = cosmo.r_comoving(zmin_obj)+xcf.rp_min
+        z_min_pix_cut = cosmo.r_2_z(d_min_pix_cut)
+
+        d_max_pix_cut = cosmo.r_comoving(zmax_obj)+xcf.rp_max
+        z_max_pix_cut = cosmo.r_2_z(d_max_pix_cut)
+
+        if ( (zmin_pix<z_min_pix_cut) or (z_max_pix_cut<zmax_pix) ):
+            for pix in xcf.dels:
+                for i in xrange(len(xcf.dels[pix])-1,-1,-1):
+                    d = xcf.dels[pix][i]
+                    z = 10**d.ll/args.lambda_abs-1.
+                    w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)
+                    if (z[w].size==0):
+                        del xcf.dels[pix][i]
+                        xcf.ndels -= 1
+                    else:
+                        d.de = d.de[w]
+                        d.we = d.we[w]
+                        d.ll = d.ll[w]
+                        d.co = d.co[w]
+                        d.r_comov = d.r_comov[w]
+
+    ### Define angmax
+    zmin_pix = None
+    for pix in xcf.dels:
+        for d in xcf.dels[pix]:
+            if zmin_pix is None: zmin_pix = d.z[0]
+            zmin_pix = min(zmin_pix,d.z[0])
     xcf.angmax = 2*sp.arcsin(xcf.rt_max/(cosmo.r_comoving(zmin_pix)+cosmo.r_comoving(zmin_obj)))
+
 
     xcf.counter = Value('i',0)
     xcf.lock = Lock()
