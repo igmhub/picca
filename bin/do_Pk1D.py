@@ -100,7 +100,7 @@ if __name__ == '__main__':
     parser.add_argument('--nb-pixel-min',type = int,default=75,required=False,
                         help = 'Minimal number of pixels in a part of forest')
 
-    parser.add_argument('--nb-pixel-masked-max',type = int,default=30,required=False,
+    parser.add_argument('--nb-pixel-masked-max',type = int,default=40,required=False,
                         help = 'Maximal number of masked pixels in a part of forest')
 
     parser.add_argument('--noise-estimate', type = str, default = 'mean_diff', required=False,
