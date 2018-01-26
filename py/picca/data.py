@@ -3,6 +3,8 @@ from astropy.io import fits
 from picca import constants
 import iminuit
 from dla import dla
+import fitsio
+import sys
 
 def variance(var,eta,var_lss,fudge):
     return eta*var + var_lss + fudge/var
@@ -11,7 +13,7 @@ class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
         self.ra = ra
         self.dec = dec
-        
+
         self.plate=plate
         self.mjd=mjd
         self.fid=fiberid
@@ -38,7 +40,9 @@ class qso:
             y = data.ycart
             z = data.zcart
             cos = x*self.xcart+y*self.ycart+z*self.zcart
-        
+            if cos>=1.:
+                cos = 1.
+
         return sp.arccos(cos)
 
 class forest(qso):
@@ -50,8 +54,10 @@ class forest(qso):
     rebin = None
     dll = None
 
-    ### Correction function for multiplicative errors in calibration
+    ### Correction function for multiplicative errors in pipeline flux calibration
     correc_flux = None
+    ### Correction function for multiplicative errors in inverse pipeline variance calibration
+    correc_ivar = None
 
     ## minumum dla transmission
     dla_mask = None
@@ -99,6 +105,9 @@ class forest(qso):
             correction = self.correc_flux(ll)
             fl /= correction
             iv *= correction**2
+        if not self.correc_ivar is None:
+            correction = self.correc_ivar(ll)
+            iv /= correction
 
         self.T_dla = None
         self.ll = ll
@@ -107,7 +116,7 @@ class forest(qso):
         self.order=order
 
     def __add__(self,d):
-        
+
         if not hasattr(self,'ll') or not hasattr(d,'ll'):
             return self
 
@@ -128,7 +137,7 @@ class forest(qso):
         self.ll = cll[w]
         self.fl = cfl[w]/civ[w]
         self.iv = civ[w]
-        
+
         return self
 
     def mask(self,mask_obs,mask_RF):
@@ -209,7 +218,7 @@ class forest(qso):
         if sp.any(self.co <= 0):
             self.bad_cont = "negative continuum"
 
-        ## if the continuum is negative, then set it to a very small number 
+        ## if the continuum is negative, then set it to a very small number
         ## so that this forest is ignored
         if self.bad_cont is not None:
             self.co = self.co*0+1e-10
@@ -217,7 +226,7 @@ class forest(qso):
             self.p1 = 0.
 
 class delta(qso):
-    
+
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
         self.ll = ll
@@ -256,7 +265,7 @@ class delta(qso):
         plate = head['PLATE']
         mjd = head['MJD']
         fid = head['FIBERID']
-        try: 
+        try:
             order = head['ORDER']
         except ValueError:
             order = 1
@@ -269,7 +278,7 @@ class delta(qso):
         iv = h[1].read()
         ll = h[2].read()
         ra = h[3]["RA"][:]*sp.pi/180.
-        dec = h[3]["DEC"][:]*sp/180.
+        dec = h[3]["DEC"][:]*sp.pi/180.
         z = h[3]["Z"][:]
         plate = h[3]["PLATE"][:]
         mjd = h[3]["MJD"][:]
@@ -281,14 +290,16 @@ class delta(qso):
         for i in range(nspec):
             if i%100==0:
                 sys.stderr.write("\rreading deltas {} of {}".format(i,nspec))
+
             delt = de[:,i]
             ivar = iv[:,i]
-            w = iv>0
-            delt=delt[w]
-            ivar=ivar[w]
+            w = ivar>0
+            delt = delt[w]
+            ivar = ivar[w]
             lam = ll[w]
-            
-            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt))
+            order = 1
+
+            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt,order))
 
         h.close()
         return deltas
@@ -297,9 +308,9 @@ class delta(qso):
     def project(self):
         mde = sp.average(self.de,weights=self.we)
         res=0
-        if (self.order==1): 
+        if (self.order==1):
             mll = sp.average(self.ll,weights=self.we)
             mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
-            res = mld * (self.ll-mll) 
+            res = mld * (self.ll-mll)
 
         self.de -= mde + res

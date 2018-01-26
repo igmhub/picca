@@ -24,6 +24,7 @@ ndata2 = None
 
 zref = None
 alpha= None
+alpha2= None
 alpha_met= None
 lambda_abs = None
 lambda_abs2 = None 
@@ -55,9 +56,9 @@ def fill_neighs_x_correlation(pix):
             npix = [p for p in npix if p in data2]
             neighs = [d for p in npix for d in data2[p]]
             ang = d1^neighs
-            w = (ang<angmax)*(ang>=sp.arccos(1.-1.1e-11))
+            w = (ang<angmax)
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.ra != d.ra]
+            d1.neighs = [d for d in neighs if d1.thid != d.thid]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
@@ -84,6 +85,7 @@ def cf(pix):
                 rt[:len(crp)]+=crt
                 z[:len(crp)]+=cz
                 nb[:len(cnb)]+=cnb
+            setattr(d1,"neighs",None)
 
     w = we>0
     xi[w]/=we[w]
@@ -155,6 +157,7 @@ def dmat(pix):
                 w2 = d2.we
                 l2 = d2.ll
                 fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2)
+            setattr(d1,"neighs",None)
 
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
     
@@ -228,7 +231,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
         eta7[:len(c)]+=c
         if order2==1:
             c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
-	    eta8[:len(c)]+=c
+            eta8[:len(c)]+=c
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):
@@ -348,6 +351,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                     c = sp.bincount(bBam[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe21[wAB])
                     dm[:len(c)]+=c
+            setattr(d1,"neighs",None)
+
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 n1d = None
@@ -426,6 +431,7 @@ def t123(pix):
                 z2 = 10**d2.ll/lambda_abs-1
 
                 fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate)
+            setattr(d1,"neighs",None)
 
     return w123,t123_loc,npairs,npairs_used
             

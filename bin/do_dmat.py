@@ -77,6 +77,9 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
+    parser.add_argument('--z-evol2', type = float, default = 2.9, required=False,
+                    help = 'exponent of the redshift evolution of the 2nd delta field')
+
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
@@ -107,7 +110,11 @@ if __name__ == '__main__':
 
     z_min_pix = 1.e6
     ndata=0
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
+    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+        fi = glob.glob(args.in_dir)
+    else:
+        fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     data = {}
     dels = []
     for i,f in enumerate(fi):
@@ -124,7 +131,11 @@ if __name__ == '__main__':
     if args.in_dir2: 
         x_correlation=True
         ndata2 = 0
-        fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
+            fi = glob.glob(args.in_dir2)
+        else:
+            fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        fi = sorted(fi)
         data2 = {}
         dels2 = []
         for i,f in enumerate(fi):
@@ -160,10 +171,12 @@ if __name__ == '__main__':
         d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
         if not args.no_project:
             d.project()
+
+    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
     
     if x_correlation: 
+        cf.alpha2 = args.z_evol2
         z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
-        z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
@@ -177,11 +190,11 @@ if __name__ == '__main__':
             z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
+            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha2-1.)
             if not args.no_project:
                 d.project()
 
-    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
+        cf.angmax = 2.*sp.arcsin(cf.rt_max/( cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(z_min_pix2) ))
 
     cf.npix = len(data)
     cf.data = data
@@ -204,7 +217,7 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,cpu_data.values())
+    dm = pool.map(calc_dmat,sorted(cpu_data.values()))
     pool.close()
 
     dm = sp.array(dm)

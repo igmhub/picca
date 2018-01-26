@@ -106,7 +106,11 @@ if __name__ == '__main__':
 
     z_min_pix = 1.e6
     z_max_pix = 0.
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
+    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+        fi = glob.glob(args.in_dir)
+    else:
+        fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     dels = {}
     ndels = 0
     for i,f in enumerate(fi):
@@ -211,7 +215,7 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,cpu_data.values())
+    dm = pool.map(calc_dmat,sorted(cpu_data.values()))
     pool.close()
     dm = sp.array(dm)
     wdm =dm[:,0].sum(axis=0)

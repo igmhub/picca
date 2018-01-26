@@ -72,7 +72,11 @@ if __name__ == '__main__':
     n1d = int((forest.lmax-forest.lmin)/forest.dll+1)
     cf.n1d = n1d
 
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
+    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+        fi = glob.glob(args.in_dir)
+    else:
+        fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     data = {}
     ndata = 0
     for i,f in enumerate(fi):
@@ -102,7 +106,11 @@ if __name__ == '__main__':
     x_correlation=False
     if args.in_dir2: 
         x_correlation=True
-        fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
+            fi = glob.glob(args.in_dir2)
+        else:
+            fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        fi = sorted(fi)
         data2 = {}
         ndata2 = 0
         dels2=[]
@@ -137,8 +145,8 @@ if __name__ == '__main__':
         for i in data.keys(): 
             if i in data2.keys(): 
                 keys.append(i)
-        cfs = pool.map(cf1d,keys)
-    else: cfs = pool.map(cf1d,data.keys())
+        cfs = pool.map(cf1d,sorted(keys))
+    else: cfs = pool.map(cf1d,sorted(data.keys()))
 
     pool.close()
 

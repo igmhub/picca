@@ -18,6 +18,10 @@ from picca.data import delta
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
+    if x_correlation: 
+        cf.fill_neighs_x_correlation(p)
+    else: 
+        cf.fill_neighs(p)
     tmp = cf.metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
     return tmp
 
@@ -73,6 +77,9 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
+    parser.add_argument('--z-evol2', type = float, default = 2.9, required=False,
+                    help = 'exponent of the redshift evolution of the 2nd delta field')
+
     parser.add_argument('--metal-alpha', type = float, default = 1., required=False,
                     help = 'exponent of the redshift evolution of the metal delta field')
 
@@ -116,7 +123,11 @@ if __name__ == '__main__':
 
     z_min_pix = 1.e6
     ndata=0
-    fi = glob.glob(args.in_dir+"/*.fits.gz")
+    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+        fi = glob.glob(args.in_dir)
+    else:
+        fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     data = {}
     dels = []
     for i,f in enumerate(fi):
@@ -133,7 +144,11 @@ if __name__ == '__main__':
     if args.in_dir2: 
         x_correlation=True
         ndata2 = 0
-        fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
+            fi = glob.glob(args.in_dir2)
+        else:
+            fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        fi = sorted(fi)
         data2 = {}
         dels2 = []
         for i,f in enumerate(fi):
@@ -168,8 +183,10 @@ if __name__ == '__main__':
         d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
 
+    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
     if x_correlation: 
+        cf.alpha2 = args.z_evol2
         z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
         z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
         phi2 = [d.ra for d in dels2]
@@ -185,9 +202,9 @@ if __name__ == '__main__':
             z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
+            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha2-1.)
 
-    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
+        cf.angmax = 2.*sp.arcsin(cf.rt_max/( cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(z_min_pix2) ))
 
     cf.npix = len(data)
     cf.data = data
@@ -213,13 +230,6 @@ if __name__ == '__main__':
         cpu_data[ip].append(p)
 
     random.seed(0)
-
-    for i,p in enumerate(cpu_data.values()):
-        print "filling neighs ",i,len(cpu_data.values())
-        if x_correlation: 
-            cf.fill_neighs_x_correlation(p)
-        else: 
-            cf.fill_neighs(p)
 
     dm_all=[]
     wdm_all=[]
@@ -263,7 +273,7 @@ if __name__ == '__main__':
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
             sys.stderr.write("\n")
             pool = Pool(processes=args.nproc)
-            dm = pool.map(f,cpu_data.values())
+            dm = pool.map(f,sorted(cpu_data.values()))
             pool.close()
             dm = sp.array(dm)
             wdm =dm[:,0].sum(axis=0)

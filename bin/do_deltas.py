@@ -77,7 +77,13 @@ if __name__ == '__main__':
             help='prefix of the iteration file')
 
     parser.add_argument('--mode',type = str,default='pix',required=False,
-            help='open mode: pix, spec, spcframe')
+            help='open mode: pix, spec, spcframe, desi')
+
+    parser.add_argument('--best-obs',action='store_true', required=False,
+            help='if mode == spcframe, then use only the best observation')
+
+    parser.add_argument('--single-exp',action='store_true', required=False,
+            help='if mode == spcframe, then use only one of the available exposures. If best-obs then choose it among those contributing to the best obs')
 
     parser.add_argument('--keep-bal',action='store_true',required=False,
             help='do not reject BALs')
@@ -92,7 +98,10 @@ if __name__ == '__main__':
             help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
     parser.add_argument('--flux-calib',type = str,default=None,required=False,
-            help='Path to file to previously produced do_delta.py file to correct for multiplicative errors in the flux calibration')
+            help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
+
+    parser.add_argument('--ivar-calib',type = str,default=None,required=False,
+            help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration')
 
     parser.add_argument('--eta-min',type = float,default=0.5,required=False,
             help='lower limit for eta')
@@ -139,29 +148,39 @@ if __name__ == '__main__':
             print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(order))
             sys.exit(12)
 
-    ### Correct multiplicative flux calibration
+    ### Correct multiplicative pipeline flux calibration
     if (args.flux_calib is not None):
         try:
             vac = fitsio.FITS(args.flux_calib)
-            head = vac[1].read_header()
-
             ll_st = vac[1]['loglam'][:]
             st    = vac[1]['stack'][:]
             w     = (st!=0.)
-            forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate")
+            forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate",kind="nearest")
 
         except:
             print(" Error while reading flux_calib file {}".format(args.flux_calib))
             sys.exit(1)
 
+    ### Correct multiplicative pipeline inverse variance calibration
+    if (args.ivar_calib is not None):
+        try:
+            vac = fitsio.FITS(args.ivar_calib)
+            ll  = vac[2]['LOGLAM'][:]
+            eta = vac[2]['ETA'][:]
+            forest.correc_ivar = interp1d(ll,eta,fill_value="extrapolate",kind="nearest")
+
+        except:
+            print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
+            sys.exit(1)
+
     nit = args.nit
 
     log = open(args.log,'w')
-    data,ndata,healpy_nside,healpy_pix_ordering = io.read_data(args.in_dir,args.drq,args.mode,\
-        zmin=args.zqso_min,zmax=args.zqso_max,nspec=args.nspec,log=log,\
-        keep_bal=args.keep_bal,bi_max = args.bi_max,order=args.order)
-    
-
+    data,ndata,healpy_nside,healpy_pix_ordering = io.read_data(args.in_dir, args.drq, args.mode,\
+        zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
+        keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
+        best_obs=args.best_obs, single_exp=args.single_exp)
+   
     ### Get the lines to veto
     usr_mask_obs    = None
     usr_mask_RF     = None
@@ -240,7 +259,8 @@ if __name__ == '__main__':
         pool = Pool(processes=args.nproc)
         print "iteration: ", it
         nfit = 0
-        data_fit_cont = pool.map(cont_fit, data.values())
+        sort = sp.array(data.keys()).argsort()
+        data_fit_cont = pool.map(cont_fit, sp.array(data.values())[sort] )
         for i, p in enumerate(data):
             data[p] = data_fit_cont[i]
 
@@ -250,7 +270,7 @@ if __name__ == '__main__':
         if it < nit-1:
             ll_rest, mc, wmc = prep_del.mc(data)
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
-            ll,eta,vlss,fudge,nb_pixels,var,var_del,var2_del,count,nqsos,chi2 = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
+            ll,eta,vlss,fudge,nb_pixels,var,var_del,var2_del,count,nqsos,chi2,err_eta,err_vlss,err_fudge = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
             forest.eta = interp1d(ll[nb_pixels>0], eta[nb_pixels>0], fill_value = "extrapolate",kind="nearest")
             forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.], fill_value = "extrapolate",kind="nearest")
             forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0], fill_value = "extrapolate",kind="nearest")
