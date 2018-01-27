@@ -106,7 +106,7 @@ if __name__ == '__main__':
     cf.data  = data
     cf.ndata = ndata
     sys.stderr.write("\n")
-    print "done, npix = {}".format(cf.npix)
+    print("done, npix = {}".format(cf.npix))
     
     ### Read data 2
     if args.in_dir2:
@@ -115,7 +115,7 @@ if __name__ == '__main__':
         cf.data2  = data2
         cf.ndata2 = ndata2 
         sys.stderr.write("\n") 
-        print "done, npix = {}".format(len(data2))
+        print("done, npix = {}".format(len(data2)))
     elif args.lambda_abs != args.lambda_abs2:
         cf.x_correlation = True
         cf.data2  = copy.deepcopy(data)
