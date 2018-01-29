@@ -195,8 +195,11 @@ class TestCor(unittest.TestCase):
             for k in ld_m:
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
-                self.assertEqual(d_m.size,d_b.size)
-                self.assertFalse((d_m!=d_b).any())
+                self.assertEqual(d_m.size,d_b.size,"Header key is {}".format(k))
+                diff = d_m-d_b
+                w = d_m!=0.
+                diff[w] = sp.absolute( diff[w]/d_m[w] )
+                self.assertFalse((d_m!=d_b).any(),"Header key is {} and maximum relative difference is {}".format(k,diff.max()))
 
         return
 
