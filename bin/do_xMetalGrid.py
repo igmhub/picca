@@ -209,7 +209,7 @@ if __name__ == '__main__':
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,list(cpu_data.values()))
+    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
     cfs=sp.array(cfs)
