@@ -173,10 +173,10 @@ def dmat(pix):
 @jit
 def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
 
-    if x_correlation : 
+    if x_correlation:
         rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    else :  
-       rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+    else:
+        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
