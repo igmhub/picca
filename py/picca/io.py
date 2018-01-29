@@ -157,7 +157,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     elif mode=="desi":
         nside = 8
         sys.stderr.write("Found {} qsos\n".format(len(zqso)))
-        return read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order)
+        return read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order),nside,"RING"
 
     else:
         sys.stderr.write("I don't know mode: {}".format(mode))
@@ -178,7 +178,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
                 data[p] = []
             data[p].append(pix_data[i])
 
-        return data, len(pixs)
+        return data, len(pixs),nside,"RING"
 
     upix = sp.unique(pixs)
     for i, pix in enumerate(upix):
