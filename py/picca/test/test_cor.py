@@ -196,7 +196,7 @@ class TestCor(unittest.TestCase):
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
                 self.assertEqual(d_m.size,d_b.size,"Header key is {}".format(k))
-                if (d_m!=d_b).any():
+                if sp.array_equal(d_m,d_b):
                     diff = d_m-d_b
                     w = d_m!=0.
                     diff[w] = sp.absolute( diff[w]/d_m[w] )
