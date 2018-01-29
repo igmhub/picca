@@ -9,7 +9,7 @@ from scipy import stats
 
 from picca.fitter import myGamma
 from picca.fitter import utils
-import fftlog
+from . import fftlog
 
 from picca.fitter.utils import L
 
@@ -54,8 +54,8 @@ class model:
         if self.fix_bias_beta_peak:
             self.bias_lya_peak=dic_init['bias_lya_peak']
             self.beta_lya_peak=dic_init['beta_lya_peak']
-            print "Fixing for BAO peak bias=",self.bias_lya_peak
-            print "Fixing for BAO peak beta=",self.beta_lya_peak
+            print("Fixing for BAO peak bias=",self.bias_lya_peak)
+            print("Fixing for BAO peak beta=",self.beta_lya_peak)
 
         self.pall = self.pglob[:]
 
@@ -79,10 +79,10 @@ class model:
         self.bv_dnl = None
         self.kp_dnl = None
         if dic_init['dnl_model'] == "mcdonald":
-            print "with DNL (McDonald 2003)"
+            print("with DNL (McDonald 2003)")
             self.dnl_model = "mcdonald"
         elif dic_init['dnl_model'] == "arinyo":
-            print "with DNL (Arinyo et al. 2015)"
+            print("with DNL (Arinyo et al. 2015)")
             self.dnl_model = "arinyo"
             z_dnl = [2.2000, 2.4000, 2.6000, 2.8000, 3.0000]
             q1_dnl = [0.8670, 0.8510, 0.7810, 0.7730, 0.7920]
@@ -100,21 +100,21 @@ class model:
             self.av_dnl = av_dnl_interp(self.zref)
             self.bv_dnl = bv_dnl_interp(self.zref)
             self.kp_dnl = kp_dnl_interp(self.zref)
-            print "q1 =", self.q1_dnl
-            print "kv =", self.kv_dnl
-            print "av =", self.av_dnl
-            print "bv =", self.bv_dnl
-            print "kp =", self.kp_dnl
+            print("q1 =", self.q1_dnl)
+            print("kv =", self.kv_dnl)
+            print("av =", self.av_dnl)
+            print("bv =", self.bv_dnl)
+            print("kp =", self.kp_dnl)
         elif (not dic_init['dnl_model'] is None) & (not dic_init['dnl_model'] == "mcdonald") & (not dic_init['dnl_model'] == "arinyo"):
-            print '  Unknown dnl model: ', dic_init['dnl_model']
-            print '  Exit'
+            print('  Unknown dnl model: ', dic_init['dnl_model'])
+            print('  Exit')
             sys.exit(0)
         else :
-            print "without DNL"
+            print("without DNL")
 
         self.twod = dic_init['2d']
         if self.twod :
-            print "initalize pk2D array for 2D transfo ..."
+            print("initalize pk2D array for 2D transfo ...")
             kmin=1.e-7
             kmax=100.
             nk  = 1024
@@ -127,7 +127,7 @@ class model:
             self.pk_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pk).reshape(kk.shape)
             self.pkSB_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pkSB).reshape(kk.shape)
             self.k=kk
-            print "done"
+            print("done")
 
     def add_cross(self,dic_init):
 
@@ -202,7 +202,7 @@ class model:
         return dnl
 
     def valueAuto(self,rp,rt,z,pars):
-        if self.xi_auto_prev is None or not sp.allclose(pars.values(),self.pars_auto_prev):
+        if self.xi_auto_prev is None or not sp.allclose(list(pars.values()),self.pars_auto_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -222,7 +222,7 @@ class model:
                 xiSB = self.getXiAuto(rp,rt,z,self.pkSB,parsSB)
                 xi = self.getXiAuto(rp,rt,z,self.pk-self.pkSB,pars)
 
-            self.pars_auto_prev = pars.values()
+            self.pars_auto_prev = list(pars.values())
             self.xi_auto_prev = xiSB + pars["bao_amp"]*xi
 
         return self.xi_auto_prev.copy()
@@ -335,7 +335,7 @@ class model:
         return fftlog.Pk2XiA(self.k1d,pk_full,arp,art)*evol
 
     def valueCross(self,rp,rt,z,pars):
-        if self.xi_cross_prev is None or not sp.allclose(pars.values(),self.pars_cross_prev):
+        if self.xi_cross_prev is None or not sp.allclose(list(pars.values()),self.pars_cross_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -352,7 +352,7 @@ class model:
                 pars["beta_lya"]              = self.beta_lya_peak
             xi = self.getXiCross(rp,rt,z,self.pk-self.pkSB,pars)
 
-            self.pars_cross_prev = pars.values()
+            self.pars_cross_prev = list(pars.values())
             self.xi_cross_prev = xiSB + pars["bao_amp"]*xi
 
             if self.fit_qso_rad_model:
@@ -433,7 +433,7 @@ class model:
         return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
 
     def valueAutoQSO(self,rp,rt,z,pars):
-        if self.xi_autoQSO_prev is None or not sp.allclose(pars.values(),self.pars_autoQSO_prev):
+        if self.xi_autoQSO_prev is None or not sp.allclose(list(pars.values()),self.pars_autoQSO_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -446,7 +446,7 @@ class model:
             xiSB = self.getXiAutoQSO(rp,rt,z,self.pkSB,parsSB)
 
             xi = self.getXiAutoQSO(rp,rt,z,self.pk-self.pkSB,pars)
-            self.pars_autoQSO_prev = pars.values()
+            self.pars_autoQSO_prev = list(pars.values())
             self.xi_autoQSO_prev = xiSB + pars["bao_amp"]*xi
 
         return self.xi_autoQSO_prev.copy()
@@ -518,10 +518,10 @@ class model:
         s=sp.argsort(r)
         r=r[s]
 
-        xi=sp.zeros([ell_max/2+1,len(ar)])
+        xi=sp.zeros([ell_max//2+1,len(ar)])
 
         for ell in range(0,ell_max+1,2):
-            pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell/2)
+            pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)
             mu=ell+0.5
             n=2.
             q=2-n-0.5
@@ -538,7 +538,7 @@ class model:
             xi_loc/=r**(3-n)
             xi_loc[-1]=0
             spline=sp.interpolate.splrep(sp.log(r)-dr/2,sp.real(xi_loc),k=3,s=0)
-            xi[ell/2,:]=sp.interpolate.splev(sp.log(ar),spline)
+            xi[ell//2,:]=sp.interpolate.splev(sp.log(ar),spline)
 
         return xi
 
@@ -546,5 +546,5 @@ class model:
     def Pk2Xi(ar,mur,k,pk,ell_max=None):
         xi=model.Pk2Mp(ar,k,pk,ell_max)
         for ell in range(0,ell_max+1,2):
-            xi[ell/2,:]*=L(mur,ell)
+            xi[ell//2,:]*=L(mur,ell)
         return sp.sum(xi,axis=0)

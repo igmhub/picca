@@ -1,10 +1,9 @@
-from __future__ import print_function
 import scipy as sp
 import sys
 from healpy import query_disc
 from multiprocessing import Pool
 from numba import jit
-from data import forest
+from .data import forest
 from scipy import random
 
 from picca import constants
@@ -71,7 +70,7 @@ def xcf(pix):
                 rt[:len(crt)]+=crt
                 z[:len(cz)]+=cz
                 nb[:len(cnb)]+=cnb
-            for el in d.__dict__.keys():
+            for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
 
     w = we>0
@@ -137,7 +136,7 @@ def metal_grid(pix):
                 rt[:len(crt)] += crt
                 z[:len(cz)]   += cz
                 nb[:len(cnb)] += cnb
-            for el in d.__dict__.keys():
+            for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
 
     w = we>0
@@ -184,8 +183,8 @@ def dmat(pix):
     dm = sp.zeros(np*nt*nt*np)
     wdm = sp.zeros(np*nt)
 
-    npairs = 0L
-    npairs_used = 0L
+    npairs = 0
+    npairs_used = 0
     for p in pix:
         for d1 in dels[p]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)))
@@ -204,7 +203,7 @@ def dmat(pix):
             r2 = [q.r_comov for q in neighs]
             w2 = [q.we for q in neighs]
             fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm)
-            for el in d1.__dict__.keys():
+            for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
@@ -240,16 +239,16 @@ def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
     eta2 = sp.zeros(np*nt*n2)
     eta4 = sp.zeros(np*nt*n2)
 
-    c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
     eta4[:len(c)]+=c
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):
         dm[ba+np*nt*ba]+=we[k]
         i = ij[k]%n1
-        j = (ij[k]-i)/n1
+        j = (ij[k]-i)//n1
         for bb in ubb:
             dm[bb+np*nt*ba] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 

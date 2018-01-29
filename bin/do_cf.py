@@ -88,7 +88,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
@@ -201,7 +201,7 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata=ndata
-    print "done, npix = {}".format(cf.npix)
+    print("done, npix = {}".format(cf.npix))
 
     if x_correlation:
         cf.data2 = data2
@@ -211,12 +211,12 @@ if __name__ == '__main__':
 
     cf.lock = Lock()
     cpu_data = {}
-    for p in data.keys():
+    for p in list(data.keys()):
         cpu_data[p] = [p]
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,sorted(cpu_data.values()))
+    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
     cfs=sp.array(cfs)
@@ -226,7 +226,7 @@ if __name__ == '__main__':
     zs=cfs[:,4,:]
     nbs=cfs[:,5,:].astype(sp.int64)
     cfs=cfs[:,1,:]
-    hep=sp.array(cpu_data.keys())
+    hep=sp.array(sorted(list(cpu_data.keys())))
 
     cut      = (wes.sum(axis=0)>0.)
     rp       = (rps*wes).sum(axis=0)

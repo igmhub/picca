@@ -1,4 +1,3 @@
-from __future__ import print_function
 import scipy as sp
 import sys
 import fitsio
@@ -15,7 +14,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
 
     print("Computing cov...")
     '''
-    for ipix in xrange(npix):
+    for ipix in range(npix):
         sys.stderr.write("\r {} {}".format(ipix,npix))
         co += sp.outer(wda[ipix,:],wda[ipix,:])
     '''
@@ -32,7 +31,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     dcor={}
     dncor={}
 
-    for i in xrange(nda):
+    for i in range(nda):
         sys.stderr.write("\rsmoothing {}".format(i))
         for j in range(i+1,nda):
             idrp = round(abs(rp[j]-rp[i])/drp)
@@ -44,7 +43,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
             dcor[(idrp,idrt)] +=cor[i,j]
             dncor[(idrp,idrt)] +=1
 
-    for i in xrange(nda):
+    for i in range(nda):
         cor_smooth[i,i]=1.
         for j in range(i+1,nda):
             idrp = round(abs(rp[j]-rp[i])/drp)
@@ -78,9 +77,9 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     sptype = sp.chararray.strip(vac[1]["TRUESPECTYPE"][:].astype(str))
 
     ## Sanity
-    print((" start               : nb object in cat = {}".format(ra.size) ))
+    print(" start               : nb object in cat = {}".format(ra.size) )
     w = (sptype==spectype)
-    print((" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) ))
+    print(" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) )
 
     ra    = ra[w]
     dec   = dec[w]
@@ -121,11 +120,11 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
     sptype = sp.chararray.strip(vac[1]["SPECTYPE"][:].astype(str))
 
     ## Sanity
-    print((" start               : nb object in cat = {}".format(ra.size) ))
+    print(" start               : nb object in cat = {}".format(ra.size) )
     w = (vac[1]["ZWARN"][:]==0.)
-    print((" and zwarn==0        : nb object in cat = {}".format(ra[w].size) ))
+    print(" and zwarn==0        : nb object in cat = {}".format(ra[w].size) )
     w = w & (sptype==spectype)
-    print((" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) ))
+    print(" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) )
 
     ra    = ra[w]
     dec   = dec[w]

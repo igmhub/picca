@@ -106,7 +106,7 @@ if __name__ == '__main__':
     cf.data  = data
     cf.ndata = ndata
     sys.stderr.write("\n")
-    print "done, npix = {}".format(cf.npix)
+    print("done, npix = {}".format(cf.npix))
     
     ### Read data 2
     if args.in_dir2:
@@ -115,7 +115,7 @@ if __name__ == '__main__':
         cf.data2  = data2
         cf.ndata2 = ndata2 
         sys.stderr.write("\n") 
-        print "done, npix = {}".format(len(data2))
+        print("done, npix = {}".format(len(data2)))
     elif args.lambda_abs != args.lambda_abs2:
         cf.x_correlation = True
         cf.data2  = copy.deepcopy(data)
@@ -129,7 +129,7 @@ if __name__ == '__main__':
 
     cf.lock = Lock()
     cpu_data = {}
-    for p in data.keys():
+    for p in list(data.keys()):
         cpu_data[p] = [p]
 
     pool = Pool(processes=args.nproc)
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     zs=cfs[:,4,:]
     nbs=cfs[:,5,:].astype(sp.int64)
     cfs=cfs[:,1,:]
-    hep=sp.array(cpu_data.keys())
+    hep=sp.array(sorted(list(cpu_data.keys())))
 
     cut      = (wes.sum(axis=0)>0.)
     rp       = (rps*wes).sum(axis=0)

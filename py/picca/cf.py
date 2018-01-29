@@ -1,10 +1,9 @@
-from __future__ import print_function
 import scipy as sp
 import sys
 from healpy import query_disc
 from multiprocessing import Pool
 from numba import jit
-from data import forest
+from .data import forest
 from scipy import random
 from picca import constants
 
@@ -143,8 +142,8 @@ def dmat(pix):
     dm = sp.zeros(np*nt*nt*np)
     wdm = sp.zeros(np*nt)
 
-    npairs = 0L
-    npairs_used = 0L
+    npairs = 0
+    npairs_used = 0
     for p in pix:
         for d1 in data[p]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
@@ -174,10 +173,10 @@ def dmat(pix):
 @jit
 def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
 
-    if x_correlation : 
+    if x_correlation:
         rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    else :  
-       rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+    else:
+        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
@@ -224,7 +223,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
 
     c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
     eta1[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
     c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
@@ -235,7 +234,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
         c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
         eta6[:len(c)]+=c
     if order1==1: 
-        c = sp.bincount((ij-ij%n1)/n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
         eta4[:len(c)]+=c
         c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
         eta7[:len(c)]+=c
@@ -247,7 +246,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     for k,ba in enumerate(bins):
         dm[ba+np*nt*ba]+=we[k]
         i = ij[k]%n1
-        j = (ij[k]-i)/n1
+        j = (ij[k]-i)//n1
         for bb in ubb:
             dm[bb+np*nt*ba] += we[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
              - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
@@ -413,8 +412,8 @@ c1d = None
 def t123(pix):
     t123_loc = sp.zeros([np*nt,np*nt])
     w123 = sp.zeros(np*nt)
-    npairs = 0L
-    npairs_used = 0L
+    npairs = 0
+    npairs_used = 0
     for i,ipix in enumerate(pix):
         for d1 in data[ipix]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
@@ -478,14 +477,14 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
     we = we[w]
     zw = zw[w]
 
-    for k in xrange(w.sum()):
+    for k in range(w.sum()):
         i1 = bins[k]%n1
-        j1 = (bins[k]-i1)/n1
+        j1 = (bins[k]-i1)//n1
         w123[ba[k]]+=we[k]
         t123_loc[ba[k],ba[k]]+=we[k]/zw[k]
-        for l in xrange(k+1,w.sum()):
+        for l in range(k+1,w.sum()):
             i2 = bins[l]%n1
-            j2 = (bins[l]-i2)/n1
+            j2 = (bins[l]-i2)//n1
             prod = c1d_1[i1,i2]*c1d_2[j1,j2]
             t123_loc[ba[k],ba[l]]+=prod
             t123_loc[ba[l],ba[k]]+=prod

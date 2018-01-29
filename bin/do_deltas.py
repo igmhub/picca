@@ -228,14 +228,14 @@ if __name__ == '__main__':
         nb_dla_in_forest = 0
         for p in data:
             for d in data[p]:
-                if dlas.has_key(d.thid):
+                if d.thid in dlas:
                     for dla in dlas[d.thid]:
                         d.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
                         nb_dla_in_forest += 1
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## cuts
-    for p in data.keys():
+    for p in list(data.keys()):
         l = []
         for d in data[p]:
             if not hasattr(d,'ll') or len(d.ll) < args.npix_min:
@@ -257,14 +257,14 @@ if __name__ == '__main__':
 
     for it in range(nit):
         pool = Pool(processes=args.nproc)
-        print "iteration: ", it
+        print("iteration: ", it)
         nfit = 0
-        sort = sp.array(data.keys()).argsort()
-        data_fit_cont = pool.map(cont_fit, sp.array(data.values())[sort] )
-        for i, p in enumerate(data):
+        sort = sp.array(list(data.keys())).argsort()
+        data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort] )
+        for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 
-        print "done"
+        print("done")
         pool.close()
 
         if it < nit-1:
@@ -294,7 +294,7 @@ if __name__ == '__main__':
     st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
-    for p in data:
+    for p in sorted(list(data.keys())):
         deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
@@ -302,7 +302,7 @@ if __name__ == '__main__':
         log.write("rejected {} due to {}\n".format(d.thid,d.bad_cont))
 
     log.close()
-    for p in deltas:
+    for p in sorted(list(deltas.keys())):
         if len(deltas[p])==0:
             continue
         out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)

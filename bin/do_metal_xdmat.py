@@ -96,7 +96,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     xcf.lock = Lock()
     
     cpu_data = {}
-    for i,p in enumerate(dels.keys()):
+    for i,p in enumerate(sorted(list(dels.keys()))):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
@@ -168,7 +168,7 @@ if __name__ == '__main__':
         f=partial(calc_metal_xdmat,abs_igm)
         sys.stderr.write("\n")
         pool = Pool(processes=args.nproc)
-        dm = pool.map(f,sorted(cpu_data.values()))
+        dm = pool.map(f,sorted(list(cpu_data.values())))
         pool.close()
         dm = sp.array(dm)
         wdm =dm[:,0].sum(axis=0)
@@ -205,8 +205,11 @@ if __name__ == '__main__':
     head['NT']=xcf.nt
     head['NP']=xcf.np
 
+    len_names = sp.array([ len(s) for s in names ]).max()
+    names = sp.array(names, dtype='S'+str(len_names))
     out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=["NPALL","NPUSED","ABS_IGM"],header=head)
 
+    names = names.astype(str)
     out_list = []
     out_names=[]
     for i,ai in enumerate(names):
