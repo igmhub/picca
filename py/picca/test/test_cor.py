@@ -167,6 +167,7 @@ class TestCor(unittest.TestCase):
         return
     def compare_fits(self,path1,path2,nameRun=""):
 
+        print("\n")
         m = fitsio.FITS(path1)
         self.assertTrue(os.path.isfile(path2),"{}".format(nameRun))
         b = fitsio.FITS(path2)
@@ -197,7 +198,7 @@ class TestCor(unittest.TestCase):
                 d_b = b[i][k][:]
                 self.assertEqual(d_m.size,d_b.size,"{}: Header key is {}".format(nameRun,k))
                 if not sp.array_equal(d_m,d_b):
-                    print("{}: Header key is {}, arrays are not exactly equal, ussing allclose".format(nameRun,k))
+                    print("WARNING: {}: Header key is {}, arrays are not exactly equal, ussing allclose".format(nameRun,k))
                     diff = d_m-d_b
                     w = d_m!=0.
                     diff[w] = sp.absolute( diff[w]/d_m[w] )
