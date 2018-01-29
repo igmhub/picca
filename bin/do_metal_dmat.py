@@ -310,8 +310,11 @@ if __name__ == '__main__':
     head['NT']=cf.nt
     head['NP']=cf.np
 
+    len_names = sp.array([ len(s) for s in names ]).max()
+    names = sp.array(names, dtype='S'+str(len_names))
     out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=["NPALL","NPUSED","ABS_IGM"],header=head)
 
+    names = names.astype(str)
     out_list = []
     out_names=[]
     for i,ai in enumerate(names):
