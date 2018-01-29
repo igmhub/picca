@@ -261,7 +261,7 @@ if __name__ == '__main__':
         nfit = 0
         sort = sp.array(list(data.keys())).argsort()
         data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort] )
-        for i, p in enumerate(data):
+        for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 
         print("done")
@@ -294,7 +294,7 @@ if __name__ == '__main__':
     st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
-    for p in data:
+    for p in sorted(list(data.keys())):
         deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
@@ -302,7 +302,7 @@ if __name__ == '__main__':
         log.write("rejected {} due to {}\n".format(d.thid,d.bad_cont))
 
     log.close()
-    for p in deltas:
+    for p in sorted(list(deltas.keys())):
         if len(deltas[p])==0:
             continue
         out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)

@@ -10,7 +10,7 @@ def mc(data):
     mcont = sp.zeros(nmc)
     wcont = sp.zeros(nmc)
     ll = forest.lmin_rest + (sp.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
-    for p in data:
+    for p in sorted(list(data.keys())):
         for d in data[p]:
             bins=((d.ll-forest.lmin_rest-sp.log10(1+d.zqso))/(forest.lmax_rest-forest.lmin_rest)*nmc).astype(int)
             var_lss = forest.var_lss(d.ll)
@@ -50,7 +50,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     count =sp.zeros(nlss*nwe)
     nqso = sp.zeros(nlss*nwe)
 
-    for p in data:
+    for p in sorted(list(data.keys())):
         for d in data[p]:
 
             var_pipe = 1/d.iv/d.co**2
@@ -128,7 +128,7 @@ def stack(data,delta=False):
     ll = forest.lmin + sp.arange(nstack)*forest.dll
     st = sp.zeros(nstack)
     wst = sp.zeros(nstack)
-    for p in data:
+    for p in sorted(list(data.keys())):
         for d in data[p]:
             if delta:
                 de = d.de
