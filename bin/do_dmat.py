@@ -89,9 +89,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
-    print "nproc",args.nproc
+    print("nproc",args.nproc)
 
     cf.rp_max = args.rp_max
     cf.rp_min = args.rp_min
@@ -116,6 +116,7 @@ if __name__ == '__main__':
         fi = glob.glob(args.in_dir)
     else:
         fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     data = {}
     dels = []
     for i,f in enumerate(fi):
@@ -136,6 +137,7 @@ if __name__ == '__main__':
             fi = glob.glob(args.in_dir2)
         else:
             fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        fi = sorted(fi)
         data2 = {}
         dels2 = []
         for i,f in enumerate(fi):
@@ -203,14 +205,14 @@ if __name__ == '__main__':
     if x_correlation: 
        cf.data2 = data2 
        cf.ndata2 = ndata2 
-    print "done"
+    print("done")
 
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
     
     cpu_data = {}
-    for i,p in enumerate(data.keys()):
+    for i,p in enumerate(sorted(list(data.keys()))):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
@@ -218,7 +220,7 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,cpu_data.values())
+    dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
     pool.close()
 
     dm = sp.array(dm)

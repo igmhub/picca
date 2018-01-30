@@ -95,9 +95,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
-    print "nproc",args.nproc
+    print("nproc",args.nproc)
 
     cf.rp_max = args.rp_max
     cf.rp_min = args.rp_min
@@ -130,6 +130,7 @@ if __name__ == '__main__':
         fi = glob.glob(args.in_dir)
     else:
         fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     data = {}
     dels = []
     for i,f in enumerate(fi):
@@ -150,6 +151,7 @@ if __name__ == '__main__':
             fi = glob.glob(args.in_dir2)
         else:
             fi = glob.glob(args.in_dir2+"/*.fits.gz")
+        fi = sorted(fi)
         data2 = {}
         dels2 = []
         for i,f in enumerate(fi):
@@ -213,10 +215,10 @@ if __name__ == '__main__':
     cf.alpha_met = args.metal_alpha
 
     if x_correlation:
-       print "doing cross-correlation ... "
+       print("doing cross-correlation ... ")
        cf.data2 = data2 
        cf.ndata2 = ndata2 
-    print "done"
+    print("done")
 
 
     cf.counter = Value('i',0)
@@ -224,7 +226,7 @@ if __name__ == '__main__':
     cf.lock = Lock()
     
     cpu_data = {}
-    for i,p in enumerate(data.keys()):
+    for i,p in enumerate(sorted(list(data.keys()))):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
@@ -268,7 +270,7 @@ if __name__ == '__main__':
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
             sys.stderr.write("\n")
             pool = Pool(processes=args.nproc)
-            dm = pool.map(f,cpu_data.values())
+            dm = pool.map(f,sorted(list(cpu_data.values())))
             pool.close()
             dm = sp.array(dm)
             wdm =dm[:,0].sum(axis=0)
@@ -305,8 +307,11 @@ if __name__ == '__main__':
     head['NT']=cf.nt
     head['NP']=cf.np
 
+    len_names = sp.array([ len(s) for s in names ]).max()
+    names = sp.array(names, dtype='S'+str(len_names))
     out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=["NPALL","NPUSED","ABS_IGM"],header=head)
 
+    names = names.astype(str)
     out_list = []
     out_names=[]
     for i,ai in enumerate(names):

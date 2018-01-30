@@ -88,7 +88,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
@@ -113,6 +113,7 @@ if __name__ == '__main__':
             fi = glob.glob(args.in_dir)
         else:
             fi = glob.glob(args.in_dir+"/*.fits.gz")
+        fi = sorted(fi)
         for i,f in enumerate(fi):
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
             hdus = fitsio.FITS(f)
@@ -123,6 +124,7 @@ if __name__ == '__main__':
                 if ndata>args.nspec:break
     else:
         fi = glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+        fi = sorted(fi)
         for f in fi:
             d = delta.from_image(f)
             dels += d
@@ -139,6 +141,7 @@ if __name__ == '__main__':
                 fi = glob.glob(args.in_dir2)
             else:
                 fi = glob.glob(args.in_dir2+"/*.fits.gz")
+            fi = sorted(fi)
             for i,f in enumerate(fi):
                 sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata2))
                 hdus = fitsio.FITS(f)
@@ -202,7 +205,7 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata=ndata
-    print "done, npix = {}".format(cf.npix)
+    print("done, npix = {}".format(cf.npix))
 
     if x_correlation:
         cf.data2 = data2
@@ -212,12 +215,12 @@ if __name__ == '__main__':
 
     cf.lock = Lock()
     cpu_data = {}
-    for p in data.keys():
+    for p in list(data.keys()):
         cpu_data[p] = [p]
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,cpu_data.values())
+    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
     cfs=sp.array(cfs)
@@ -227,7 +230,7 @@ if __name__ == '__main__':
     zs=cfs[:,4,:]
     nbs=cfs[:,5,:].astype(sp.int64)
     cfs=cfs[:,1,:]
-    hep=sp.array(cpu_data.keys())
+    hep=sp.array(sorted(list(cpu_data.keys())))
 
     cut      = (wes.sum(axis=0)>0.)
     rp       = (rps*wes).sum(axis=0)
