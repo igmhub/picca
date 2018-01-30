@@ -145,7 +145,7 @@ class forest(qso):
         lam_lya = constants.absorber_IGM["LYA"]
         self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
 
- 
+            
     def __add__(self,d):
 
         if not hasattr(self,'ll') or not hasattr(d,'ll'):
@@ -258,7 +258,7 @@ class forest(qso):
             self.bad_cont = "minuit didn't converge"
         if sp.any(self.co <= 0):
             self.bad_cont = "negative continuum"
-
+            
 
         ## if the continuum is negative, then set it to a very small number
         ## so that this forest is ignored
@@ -266,7 +266,8 @@ class forest(qso):
             self.co = self.co*0+1e-10
             self.p0 = 0.
             self.p1 = 0.
-
+            
+            
 class delta(qso):
  
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):

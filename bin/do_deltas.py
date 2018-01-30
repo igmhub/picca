@@ -255,6 +255,11 @@ if __name__ == '__main__':
             if isnan((d.fl*d.iv).sum()):
                 log.write("{} nan found\n".format(d.thid))
                 continue
+
+            if(args.use_constant_weight and d.fl.mean()<=0.0): 
+                log.write("{} negative mean found\n".format(d.thid))
+                continue
+            
             l.append(d)
             log.write("{} accepted\n".format(d.thid))
         data[p][:] = l
