@@ -166,6 +166,10 @@ class TestCor(unittest.TestCase):
         self.assertTrue(os.path.isfile(path2))
         b = fitsio.FITS(path2)
 
+        print "File 1 =",path1
+        print "File 2 =",path2
+        
+
         self.assertEqual(len(m),len(b))
 
         for i in range(len(m)):
