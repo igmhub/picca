@@ -86,7 +86,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
         if ( (z_min_pix<z_min_pix_cut) or (z_max_pix_cut<z_max_pix) ):
             for pix in xcf.dels:
-                for i in xrange(len(xcf.dels[pix])-1,-1,-1):
+                for i in range(len(xcf.dels[pix])-1,-1,-1):
                     d = xcf.dels[pix][i]
                     z = 10**d.ll/args.lambda_abs-1.
                     w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)
@@ -204,12 +204,12 @@ if __name__ == '__main__':
 
     xcf.lock = Lock()
     cpu_data = {}
-    for p in dels.keys():
+    for p in list(dels.keys()):
         cpu_data[p] = [p]
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,cpu_data.values())
+    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
     cfs=sp.array(cfs)
