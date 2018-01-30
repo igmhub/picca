@@ -341,6 +341,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
         fi = in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd)
         print fi
         fi = glob.glob(fi)
+        fi = sorted(fi)
         exps = []
         for f in fi:
             print "INFO: reading plate {}".format(f)
@@ -508,6 +509,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None):
     '''
     dels = []
     fi = glob.glob(indir+"/*.fits.gz")
+    fi = sorted(fi)
     ndata=0
     for i,f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))

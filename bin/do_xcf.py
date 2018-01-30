@@ -110,6 +110,7 @@ if __name__ == '__main__':
         fi = glob.glob(args.in_dir)
     else:
         fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     dels = {}
     ndels = 0
     for i,f in enumerate(fi):
@@ -226,7 +227,7 @@ if __name__ == '__main__':
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,cpu_data.values())
+    cfs = pool.map(corr_func,sorted(cpu_data.values()))
     pool.close()
 
     cfs=sp.array(cfs)
