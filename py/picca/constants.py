@@ -44,6 +44,7 @@ class cosmo:
 ### Absorber names and wavelengths [Angstrom]
 absorber_IGM = {
     'Halpha'      : 6562.8,
+    'Hbeta'       : 4862.68,
     'MgI(2853)'   : 2852.96,
     'MgII(2804)'  : 2803.5324,
     'MgII(2796)'  : 2796.3511,
