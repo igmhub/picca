@@ -237,6 +237,9 @@ class forest(qso):
 
             var_tot = variance(var_pipe,eta,var_lss,fudge)
             we = 1/m**2/var_tot
+            # force we=1 when use-constant-weight
+            if all([ v == 0.0 for v in eta ]) :
+                we=sp.ones(len(we))
             v = (self.fl-m)**2*we
             return v.sum()-sp.log(we).sum()
 
