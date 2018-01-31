@@ -140,7 +140,7 @@ def Pk2XiR(k,pk2d,rp,rt) :
     if 1 :  # to avoid aliasing
         a=np.log(k[1]/k[0])
         nk=k.size
-        k=np.append(k,k[:nk/2]*np.exp(a*k.size))
+        k=np.append(k,k[:nk//2]*np.exp(a*k.size))
         tmp=np.zeros(shape=(k.size,pkxi.shape[1]),dtype=pkxi.dtype)
         tmp[:pkxi.shape[0]]=pkxi
         pkxi=tmp
