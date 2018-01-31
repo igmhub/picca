@@ -9,6 +9,9 @@ from picca.data import forest
 from picca.data import delta
 from picca.data import qso
 
+from picca.prep_Pk1D import exp_diff
+from picca.prep_Pk1D import spectral_resolution
+
 def read_dlas(fdla):
     f=open(fdla)
     dlas={}
@@ -107,6 +110,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
 target_mobj = 500
 nside_min = 8
+
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False):
 
     sys.stderr.write("mode: "+mode)
@@ -139,7 +143,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         nside = h[1].read_header()['NSIDE']
         h.close()
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
-    elif mode in ["spec","corrected-spec","spcframe"]:
+    elif mode in ["spec","corrected-spec","spcframe","spec-mock-1D"]:
         nside = 256
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
         mobj = sp.bincount(pixs).sum()/len(sp.unique(pixs))
@@ -192,6 +196,10 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             t0 = time.time()
             pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
             read_time=time.time()-t0
+        elif mode == "spec-mock-1D":
+            t0 = time.time()
+            pix_data = read_from_mock_1D(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
+            read_time=time.time()-t0    
         if not pix_data is None:
             sys.stderr.write("{} read from pix {}, {} {} in {} secs per spectrum\n".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
         if not pix_data is None and len(pix_data)>0:
@@ -221,10 +229,50 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
         ll = h[1]["loglam"][:]
         fl = h[1]["flux"][:]
         iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
-        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order)
+
+        # compute difference between exposure
+        diff = exp_diff(h,ll)
+        # compute spectral resolution
+        wdisp =  h[1]["wdisp"][:]
+        reso = spectral_resolution(wdisp)
+        
+        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
         pix_data.append(d)
         h.close()
     return pix_data
+
+
+def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
+    pix_data = []
+
+    try:
+        fin = in_dir
+        hdu = fitsio.FITS(fin) 
+    except IOError:
+        log.write("error reading {}\n".format(fin))
+
+    for t,r,d,z,p,m,f in zip(thid,ra,dec,zqso,plate,mjd,fid):
+        h = hdu[t]
+        log.write("file: {} hdu {} read  \n".format(fin,h))
+        lamb = h["wavelength"][:]
+        ll = sp.log10(lamb) 
+        fl = h["flux"][:]
+        error =h["error"][:]
+        iv = 1.0/error**2
+
+        # compute difference between exposure
+        diff = sp.zeros(len(lamb))
+        # compute spectral resolution
+        wdisp =  h["psf"][:]
+        reso = spectral_resolution(wdisp)
+        
+        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
+        pix_data.append(d)
+
+    hdu.close()
+        
+    return pix_data
+
 
 def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         try:
