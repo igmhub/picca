@@ -121,8 +121,9 @@ class Chi2:
 
                 if (self.verbose):
                     print("adding prior ",par_name,par_mean,par_sigma)
-
-                chi2+=(pars[par_name]-par_mean)**2/par_sigma**2)
+                    sys.stdout.flush()
+                    
+                chi2+=(pars[par_name]-par_mean)**2/par_sigma**2
 
         if (self.verbose):
             print("---")
@@ -130,7 +131,8 @@ class Chi2:
                 print(pname,pars[pname])
 
             print("Chi2: ",chi2)
-
+            sys.stdout.flush()
+        
         return chi2
 
     def fastMonteCarlo(self,mig,kw):
@@ -158,7 +160,7 @@ class Chi2:
                     val = float(val)
                     mig.values[key] = val
                     kw[key] = val
-        except Exception,error:
+        except Exception as error :
             print('  ERROR::picca/py/picca/fitter/Chi2.py:: error in fast Monte-Carlo = ', error)
             print('  Exit')
             sys.exit(0)
@@ -225,7 +227,8 @@ class Chi2:
         for i in range(nb_fMC):
 
             print('  fastMonteCarlo: ', i, ' over ', nb_fMC)
-
+            sys.stdout.flush()
+            
             ### Get realisation fastMonteCarlo
             if not dic_init['data_auto'] is None:
                 self.auto.get_realisation_fastMonteCarlo(bestFit=bestFit_auto)
