@@ -29,7 +29,6 @@ def mc(data):
     return ll,mcont,wcont
 
 def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
-    print 'debut '
     nlss = 20
     eta = sp.zeros(nlss)
     vlss = sp.zeros(nlss)
