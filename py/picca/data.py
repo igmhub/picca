@@ -237,8 +237,11 @@ class forest(qso):
 
             var_tot = variance(var_pipe,eta,var_lss,fudge)
             we = 1/m**2/var_tot
+
             # force we=1 when use-constant-weight
-            if all([ v == 0.0 for v in eta ]) :
+            # TODO: make this condition clearer, maybe pass an option
+            # use_constant_weights?
+            if (eta==0).all() :
                 we=sp.ones(len(we))
             v = (self.fl-m)**2*we
             return v.sum()-sp.log(we).sum()
@@ -298,7 +301,6 @@ class delta(qso):
         var = 1./f.iv/(co*mst)**2
         we = 1./variance(var,eta,var_lss,fudge)
         diff = f.diff/(co*mst)
-        #iv = f.iv/(eta+eta==0)*(co**2)*(mst**2)
         iv = f.iv/(eta+(eta==0))*(co**2)*(mst**2)
 
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
@@ -345,7 +347,7 @@ class delta(qso):
 
         try:
             order = head['ORDER']
-        except ValueError:
+        except KeyError:
             order = 1
         return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,
                    iv,diff,m_SNR,m_reso,m_z,dll)
