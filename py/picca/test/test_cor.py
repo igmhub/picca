@@ -202,7 +202,7 @@ class TestCor(unittest.TestCase):
                     diff = d_m-d_b
                     w = d_m!=0.
                     diff[w] = sp.absolute( diff[w]/d_m[w] )
-                    allclose = sp.allclose(d_m,d_b,rtol=1e-10, atol=1e-10)
+                    allclose = sp.allclose(d_m,d_b)
                     self.assertTrue(allclose,"{}: Header key is {}, maximum relative difference is {}".format(nameRun,k,diff.max()))
 
         return
