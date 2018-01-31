@@ -82,9 +82,8 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol-obj', type = float, default = 1., required=False,
                     help = 'exponent of the redshift evolution of the object field')
 
-    ### Don't do anything currently
-    #parser.add_argument('--no-project', action="store_true", required=False,
-    #                help = 'do not project out continuum fitting modes')
+    parser.add_argument('--no-project', action="store_true", required=False,
+                    help = 'do not project out continuum fitting modes')
 
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
