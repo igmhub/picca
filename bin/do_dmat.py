@@ -86,6 +86,9 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
+    parser.add_argument('--no-same-wavelength-pairs', action="store_true", required=False,
+                    help = 'Reject pairs with same wavelength')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -103,6 +106,7 @@ if __name__ == '__main__':
     cf.alpha = args.z_evol
     cf.lambda_abs = args.lambda_abs
     cf.rej = args.rej
+    cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
 
     cosmo = constants.cosmo(args.fid_Om)
 
