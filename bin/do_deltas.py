@@ -256,8 +256,8 @@ if __name__ == '__main__':
                 log.write("{} nan found\n".format(d.thid))
                 continue
 
-            if(args.use_constant_weight and d.fl.mean()<=0.0): 
-                log.write("{} negative mean found\n".format(d.thid))
+            if(args.use_constant_weight and (d.fl.mean()<=0.0 or d.mean_SNR<=1.0 )): 
+                log.write("{} negative mean of too low SNR found\n".format(d.thid))
                 continue
             
             l.append(d)
