@@ -83,10 +83,13 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
+    parser.add_argument('--no-same-wavelength-pairs', action="store_true", required=False,
+                    help = 'Reject pairs with same wavelength')
+
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
     cf.rp_min          = args.wr_min 
     cf.rp_max          = args.wr_max
@@ -99,6 +102,7 @@ if __name__ == '__main__':
     cf.x_correlation   = False
     cf.ang_correlation = True
     cf.angmax          = args.ang_max
+    cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
     
     ### Read data 1
     data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, args.lambda_abs,args.z_evol, args.z_ref, cosmo=None,nspec=args.nspec)

@@ -92,6 +92,9 @@ if __name__ == '__main__':
     parser.add_argument('--abs-igm2', type=str,default=None, required=False,nargs="*",
                         help = 'list #2 of metals')
 
+    parser.add_argument('--no-same-wavelength-pairs', action="store_true", required=False,
+                    help = 'Reject pairs with same wavelength')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -115,6 +118,7 @@ if __name__ == '__main__':
     cf.lambda_abs = args.lambda_abs
     cf.lambda_abs2 = args.lambda_abs2
     cf.rej = args.rej
+    cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
 
     cosmo = constants.cosmo(args.fid_Om)
     cf.cosmo=cosmo

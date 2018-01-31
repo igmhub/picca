@@ -85,6 +85,9 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
+    parser.add_argument('--no-same-wavelength-pairs', action="store_true", required=False,
+                    help = 'Reject pairs with same wavelength')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -98,6 +101,7 @@ if __name__ == '__main__':
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
+    cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
 
     cosmo = constants.cosmo(args.fid_Om)
 
