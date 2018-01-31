@@ -26,7 +26,7 @@ def read_dlas(fdla):
             continue
         if l[0][0]=="-":continue
         thid = int(l[col_names.index("ThingID")])
-        if not dlas.has_key(thid):
+        if thid not in dlas:
             dlas[thid]=[]
         zabs = float(l[col_names.index("z_abs")])
         nhi = float(l[col_names.index("NHI")])
@@ -138,7 +138,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
                     fin = in_dir + "/../master.fits"
                     h = fitsio.FITS(fin)
                 except:
-                    print "error reading master"
+                    print("error reading master")
                     sys.exit(1)
         nside = h[1].read_header()['NSIDE']
         h.close()
@@ -151,7 +151,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         ## determine nside such that there are 1000 objs per pixel on average
         sys.stderr.write("determining nside\n")
         while mobj<target_mobj and nside >= nside_min:
-            nside /= 2
+            nside //= 2
             pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
             mobj = sp.bincount(pixs).sum()/len(sp.unique(pixs))
         sys.stderr.write("nside = {} -- mean #obj per pixel = {}\n".format(nside,mobj))
@@ -161,7 +161,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     elif mode=="desi":
         nside = 8
         sys.stderr.write("Found {} qsos\n".format(len(zqso)))
-        return read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order)
+        return read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order),nside,"RING"
 
     else:
         sys.stderr.write("I don't know mode: {}".format(mode))
@@ -182,7 +182,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
                 data[p] = []
             data[p].append(pix_data[i])
 
-        return data, len(pixs)
+        return data, len(pixs),nside,"RING"
 
     upix = sp.unique(pixs)
     for i, pix in enumerate(upix):
@@ -206,7 +206,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             data[pix] = pix_data
             ndata += len(pix_data)
 
-    return data,ndata
+    return data,ndata,nside,"RING"
 
 def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
     pix_data = []
@@ -283,7 +283,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
                 fin = in_dir + "/pix_{}.fits".format(pix)
                 h = fitsio.FITS(fin)
             except IOError:
-                print "error reading {}".format(pix)
+                print("error reading {}".format(pix))
                 return None
 
         ## fill log
@@ -320,7 +320,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
 def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode=None, log=None, best_obs=False, single_exp = False):
     pix_data={}
     plates = sp.unique(plate)
-    print "reading {} plates".format(len(plates))
+    print("reading {} plates".format(len(plates)))
 
     prefix='spCFrame'
     sufix=''
@@ -332,19 +332,19 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
         ##if best_obs then select only the given mjd
         if best_obs:
             the_mjd = sp.unique(mjd[wplate])
-            print the_mjd
+            print(the_mjd)
             #assert len(the_mjd)==1
             m = the_mjd[0]
             plate_mjd = "{}-{}".format(p, m)
 
         ## find out exposures from all the spPlates
         fi = in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd)
-        print fi
+        print(fi)
         fi = glob.glob(fi)
         fi = sorted(fi)
         exps = []
         for f in fi:
-            print "INFO: reading plate {}".format(f)
+            print("INFO: reading plate {}".format(f))
             h=fitsio.FITS(f)
             head = h[0].read_header()
             iexp = 1
@@ -366,7 +366,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                     exps.append(head["EXPID"+str_iexp][:11])
                     iexp += 1
 
-        print "INFO: found {} exposures in plate {}".format(len(exps), p)
+        print("INFO: found {} exposures in plate {}".format(len(exps), p))
     
         if len(exps) == 0:
             continue
@@ -417,10 +417,10 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                 if log is not None:
                     log.write("{} read from exp {} and mjd {}\n".format(t, exp, m))
 
-            print "INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), exp, (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid))
+            print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), exp, (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid)))
             spcframe.close()
 
-    data = pix_data.values()
+    data = list(pix_data.values())
     return data
 
 def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
@@ -542,7 +542,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None):
         if zmax < max_z:
             zmax = max_z
         d.z = z
-        d.r_comov = cosmo.r_comoving(z)
+        if not cosmo is None: d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1+z)/(1+zref))**(alpha-1)
 
     return data,ndata,zmin,zmax

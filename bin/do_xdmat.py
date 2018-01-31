@@ -87,9 +87,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
-    print "nproc",args.nproc
+    print("nproc",args.nproc)
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     xcf.dels = dels
     xcf.ndels = ndels
-    print "done"
+    print("done")
 
     ### Find the redshift range
     if (args.z_min_obj is None):
@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
         if ( (z_min_pix<z_min_pix_cut) or (z_max_pix_cut<z_max_pix) ):
             for pix in xcf.dels:
-                for i in xrange(len(xcf.dels[pix])-1,-1,-1):
+                for i in range(len(xcf.dels[pix])-1,-1,-1):
                     d = xcf.dels[pix][i]
                     z = 10**d.ll/args.lambda_abs-1.
                     w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     xcf.lock = Lock()
     
     cpu_data = {}
-    for i,p in enumerate(dels.keys()):
+    for i,p in enumerate(sorted(list(dels.keys()))):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
@@ -215,7 +215,7 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,sorted(cpu_data.values()))
+    dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
     pool.close()
     dm = sp.array(dm)
     wdm =dm[:,0].sum(axis=0)
