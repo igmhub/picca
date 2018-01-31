@@ -54,9 +54,6 @@ if __name__ == '__main__':
     parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
                         help = 'name of the absorption in picca.constants')
 
-    parser.add_argument('--lambda-abs-name', type = str, default = 'LYA', required=False,
-                        help = 'name of the absorption transistion')
-
     parser.add_argument('--obj-name', type = str, default = 'QSO', required=False,
                         help = 'name of the object tracer')
 
