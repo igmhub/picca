@@ -121,8 +121,8 @@ if __name__ == '__main__':
     if args.lambda_abs2: lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
     else: lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
 
-    cf.lambda_abs = args.lambda_abs
-    cf.lambda_abs2 = args.lambda_abs2
+    cf.lambda_abs = lambda_abs
+    cf.lambda_abs2 = lambda_abs2
 
     z_min_pix = 1.e6
     ndata=0
