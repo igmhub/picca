@@ -28,6 +28,7 @@ rej = None
 lock = None
 
 cosmo=None
+ang_correlation = None
 
 def fill_neighs(pix):
     for ipix in pix:
@@ -37,9 +38,10 @@ def fill_neighs(pix):
             neighs = [q for p in npix for q in objs[p] if q.thid != d.thid]
             ang = d^neighs
             w = ang<angmax
-            low_dist = ( d.r_comov[0]  - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) <rp_max
-            hig_dist = ( d.r_comov[-1] - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) >rp_min
-            w = w & low_dist & hig_dist
+            if not ang_correlation:
+                low_dist = ( d.r_comov[0]  - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) <rp_max
+                hig_dist = ( d.r_comov[-1] - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) >rp_min
+                w &= low_dist & hig_dist
             neighs = sp.array(neighs)[w]
             d.neighs = neighs
 
@@ -56,13 +58,17 @@ def xcf(pix):
             with lock:
                 counter.value +=1
             sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
-            ang = d^d.neighs
-            rc_qso = [q.r_comov for q in d.neighs]
-            zqso = [q.zqso for q in d.neighs]
-            we_qso = [q.we for q in d.neighs]
-
             if (d.neighs.size != 0):
-                cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
+                ang = d^d.neighs
+                zqso = [q.zqso for q in d.neighs]
+                we_qso = [q.we for q in d.neighs]
+                
+                if ang_correlation:
+                    l_qso = [10.**q.ll for q in d.neighs]
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
+                else:
+                    rc_qso = [q.r_comov for q in d.neighs]
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
             
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
@@ -81,8 +87,12 @@ def xcf(pix):
     return we,xi,rp,rt,z,nb
 @jit 
 def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
-    rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+    if ang_correlation:
+        rp = r1[:,None]/r2
+        rt = ang*sp.ones_like(rp)
+    else:
+        rp = (r1[:,None]-r2)*sp.cos(ang/2)
+        rt = (r1[:,None]+r2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2
 
     we = w1[:,None]*w2
