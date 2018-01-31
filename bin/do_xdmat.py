@@ -51,8 +51,8 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM["LYA"], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
+    parser.add_argument('--lambda-abs', type = str, default = "LYA", required=False,
+                        help = 'name of the absorption in picca.constants')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -99,7 +99,8 @@ if __name__ == '__main__':
     xcf.nside = args.nside
     xcf.zref = args.z_ref
     xcf.alpha = args.z_evol_del
-    xcf.lambda_abs = args.lambda_abs
+    lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    xcf.lambda_abs = lambda_abs
     xcf.rej = args.rej
 
     cosmo = constants.cosmo(args.fid_Om)
@@ -126,7 +127,7 @@ if __name__ == '__main__':
                 dels[p]=[]
             dels[p].append(d)
 
-            z = 10**d.ll/args.lambda_abs-1.
+            z = 10**d.ll/lambda_abs-1.
             if z_min_pix > z.min():
                 z_min_pix = z.min()
             if z_max_pix < z.max():
@@ -190,7 +191,7 @@ if __name__ == '__main__':
             for pix in xcf.dels:
                 for i in range(len(xcf.dels[pix])-1,-1,-1):
                     d = xcf.dels[pix][i]
-                    z = 10**d.ll/args.lambda_abs-1.
+                    z = 10**d.ll/lambda_abs-1.
                     w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)
                     if (z[w].size==0):
                         del xcf.dels[pix][i]
