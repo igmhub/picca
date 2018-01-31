@@ -218,10 +218,10 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
         we[wsame]=0
     if no_same_wavelength_pairs:
         if ang_correlation:
-            w = rp==1.
+            wsame = rp==1.
         else:
-            w = rp==0.
-        we[w] = 0.
+            wsame = rp==0.
+        we[wsame] = 0.
             
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
@@ -319,10 +319,10 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     w12[wp]=0
                 if no_same_wavelength_pairs:
                     if ang_correlation:
-                        w = rp==1.
+                        wp = rp==1.
                     else:
-                        w = rp==0.
-                    w12[w] = 0.
+                        wp = rp==0.
+                    w12[wp] = 0.
                 bA = bt + nt*bp
                 wA = (bp<np) & (bt<nt) & (bp >=0)
                 c = sp.bincount(bA[wA],weights=w12[wA])
