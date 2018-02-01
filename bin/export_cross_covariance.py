@@ -51,7 +51,6 @@ if __name__ == '__main__':
     ### Append the data
     da  = sp.append(data[0]['DA'],data[1]['DA'],axis=1)
     we  = sp.append(data[0]['WE'],data[1]['WE'],axis=1)
-    hep = data[0]['HEALPID'].copy()
     
     ### Compute the covariance
     co = cov(da,we)
