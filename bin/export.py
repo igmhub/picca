@@ -2,8 +2,9 @@
 
 import fitsio
 import scipy as sp
-
+import scipy.linalg
 import argparse
+
 from picca.utils import smooth_cov
 
 
@@ -40,6 +41,11 @@ if __name__ == '__main__':
     da[w]/=we[w]
 
     h.close()
+
+    try:
+        scipy.linalg.cholesky(co)
+    except:
+        print("Matrix is not positive definite")
 
     if args.dmat is not None:
         h = fitsio.FITS(args.dmat)
