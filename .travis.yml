@@ -82,77 +82,12 @@ env:
         #- DESIHUB_PIP_DEPENDENCIES="desiutil=${DESIUTIL_VERSION} specter=${SPECTER_VERSION} desimodel=${DESIMODEL_VERSION} redrock=${REDROCK_VERSION}"
         # Debug the Travis install process.
         - DEBUG=False
-    matrix:
-        - PYTHON_VERSION=2.7 SETUP_CMD='egg_info'
-        - PYTHON_VERSION=2.7 SETUP_CMD='bdist_egg'
-        - PYTHON_VERSION=3.5 SETUP_CMD='egg_info'
-        - PYTHON_VERSION=3.5 SETUP_CMD='bdist_egg'
+    #    matrix:
+    #    - PYTHON_VERSION=2.7 SETUP_CMD='egg_info'
+    #    - PYTHON_VERSION=2.7 SETUP_CMD='bdist_egg'
+    #    - PYTHON_VERSION=3.5 SETUP_CMD='egg_info'
+    #    - PYTHON_VERSION=3.5 SETUP_CMD='bdist_egg'
 
-matrix:
-    # Don't wait for allowed failures.
-    fast_finish: true
-
-    # OS X support is still experimental, so don't penalize failuures.
-    allow_failures:
-        - os: osx
-
-    include:
-
-        # Check for sphinx doc build warnings.
-        - os: linux
-          env: PYTHON_VERSION=3.5 SETUP_CMD='build_sphinx --warning-is-error'
-               CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PIP_DEPENDENCIES=$PIP_ALL_DEPENDENCIES
-
-        # Coverage test.  Note that installing the coverage software can
-        # change the set of packages installed by conda, so we do
-        # separate 'test' and 'test --coverage'.
-        - os: linux
-          env: PYTHON_VERSION=3.5 SETUP_CMD='test --coverage'
-               CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PIP_DEPENDENCIES=$PIP_ALL_DEPENDENCIES
-
-        # Standard tests.
-        - os: linux
-          env: PYTHON_VERSION=2.7 SETUP_CMD='test'
-               CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PIP_DEPENDENCIES=$PIP_ALL_DEPENDENCIES
-
-        - os: linux
-          env: PYTHON_VERSION=3.5 SETUP_CMD='test'
-               CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PIP_DEPENDENCIES=$PIP_ALL_DEPENDENCIES
-
-        # More recent versions
-        # We're already on the "more recent" versions.
-        # - os: linux
-        #   env: PYTHON_VERSION=2.7 ASTROPY_VERSION=1.1.1 NUMPY_VERSION=1.10.4 SCIPY_VERSION=0.17.0 SETUP_CMD='test'
-
-        # - os: osx
-        #   env: PYTHON_VERSION=2.7 SETUP_CMD='test'
-        # - python: 3.3
-        #   env: SETUP_CMD='test --open-files'
-        # - python: 3.4
-        #   env: SETUP_CMD='test --open-files'
-
-        # Now try do scipy on 2.7 and an appropriate 3.x build (with latest numpy)
-        # We also note the code coverage on Python 2.7.
-        # - python: 2.7
-        #   env: SETUP_CMD='test --coverage'  OPTIONAL_DEPS=true LC_CTYPE=C.ascii LC_ALL=C.ascii
-        # - python: 3.4
-        #   env: SETUP_CMD='test'  OPTIONAL_DEPS=true LC_CTYPE=C.ascii LC_ALL=C.ascii
-
-        # Try older numpy versions
-        # - python: 2.7
-        #   env: NUMPY_VERSION=1.8 SETUP_CMD='test'
-        # - python: 2.7
-        #   env: NUMPY_VERSION=1.7 SETUP_CMD='test'
-        # - python: 2.7
-        #   env: NUMPY_VERSION=1.6 SETUP_CMD='test'
-
-        # Do a PEP8 test
-        # - python: 2.7
-        #   env: MAIN_CMD='pep8 astropy --count' SETUP_CMD=''
 
 install:
     - git clone git://github.com/astropy/ci-helpers.git
@@ -161,7 +96,7 @@ install:
     # packages are installed, thus desiutil is not installed in that script.
     #- for p in $DESIHUB_PIP_DEPENDENCIES; do r=$(echo $p | cut -d= -f1); v=$(echo $p | cut -d= -f2); pip install git+https://github.com/desihub/${r}.git@${v}#egg=${r}; done
     - pip install git+https://github.com/igmhub/picca.git
-    - cd picca; python setup.py install
+    - python setup.py install
     # - source etc/travis_install_specex.sh
     #- export DESIMODEL=${HOME}/desimodel/${DESIMODEL_VERSION}
     #- mkdir -p ${DESIMODEL}
