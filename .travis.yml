@@ -21,31 +21,6 @@ sudo: false
 # Use Ubuntu 14.04 LTS "trusty" instead of default 12.04
 dist: trusty
 
-# SPECEX and HARP.  Once we are building specex, we need C++11
-# features that require a newer OS and gcc.  These two lines
-# switch us to non-container, Ubuntu 14.04
-#sudo: required
-#dist: trusty
-
-# The apt packages below are needed for sphinx builds, which can no longer
-# be installed with sudo apt-get.
-addons:
-    apt:
-        packages:
-            - graphviz
-            - texlive-latex-extra
-            - dvipng
-            # SPECEX and HARP.  Once we are building specex, re-enable this.
-            # - libblas-dev
-            # - liblapack-dev
-            # - libboost-all-dev
-            # - libcfitsio3-dev
-# python:
-    # - 2.6
-    # - 2.7
-    # - 3.3
-    # - 3.4
-    # This is just for "egg_info".  All other builds are explicitly given in the matrix
 env:
     global:
         # The following versions are the 'default' for tests, unless
@@ -92,15 +67,8 @@ env:
 install:
     - git clone git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda.sh
-    # egg_info causes the astropy/ci-helpers script to exit before the pip
-    # packages are installed, thus desiutil is not installed in that script.
-    #- for p in $DESIHUB_PIP_DEPENDENCIES; do r=$(echo $p | cut -d= -f1); v=$(echo $p | cut -d= -f2); pip install git+https://github.com/desihub/${r}.git@${v}#egg=${r}; done
     - pip install git+https://github.com/igmhub/picca.git
     - python setup.py install
-    # - source etc/travis_install_specex.sh
-    #- export DESIMODEL=${HOME}/desimodel/${DESIMODEL_VERSION}
-    #- mkdir -p ${DESIMODEL}
-    #- if [[ $SETUP_CMD == test* ]]; then svn export https://desi.lbl.gov/svn/code/desimodel/${DESIMODEL_DATA}/data ${DESIMODEL}/data ; fi
     - conda list
      - if [[ $SETUP_CMD == test* ]]; then python -c 'import numpy; import scipy; print(numpy.__version__); print(numpy.__path__); print(scipy.__version__); print(scipy.__path__)'; fi
 
