@@ -88,7 +88,7 @@ def cf(pix):
                 rp[:len(crp)]+=crp
                 rt[:len(crp)]+=crt
                 z[:len(crp)]+=cz
-                nb[:len(cnb)]+=cnb
+                nb[:len(cnb)]+=cnb.astype(int)
             setattr(d1,"neighs",None)
 
     w = we>0
@@ -141,7 +141,7 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     crp = sp.bincount(bins,weights=rp*w12)
     crt = sp.bincount(bins,weights=rt*w12)
     cz = sp.bincount(bins,weights=z*w12)
-    cnb = sp.bincount(bins)
+    cnb = sp.bincount(bins,weights=(w12>0.))
 
     return cw,cd,crp,crt,cz,cnb
 

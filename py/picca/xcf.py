@@ -75,7 +75,7 @@ def xcf(pix):
                 rp[:len(crp)]+=crp
                 rt[:len(crt)]+=crt
                 z[:len(cz)]+=cz
-                nb[:len(cnb)]+=cnb
+                nb[:len(cnb)]+=cnb.astype(int)
             for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
 
@@ -114,7 +114,7 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     crp = sp.bincount(bins,weights=rp*we)
     crt = sp.bincount(bins,weights=rt*we)
     cz = sp.bincount(bins,weights=z*we)
-    cnb = sp.bincount(bins)
+    cnb = sp.bincount(bins,weights=(we>0.))
 
     return cw,cd,crp,crt,cz,cnb
 
@@ -145,7 +145,7 @@ def metal_grid(pix):
                 rp[:len(crp)] += crp
                 rt[:len(crt)] += crt
                 z[:len(cz)]   += cz
-                nb[:len(cnb)] += cnb
+                nb[:len(cnb)] += cnb.astype(int)
             for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
 
@@ -183,7 +183,7 @@ def fast_metal_grid(r1,w1,z2,r2,w2,ang,z1_metal,r1_metal):
     crp = sp.bincount(bins,weights=rp_metal*we)
     crt = sp.bincount(bins,weights=rt_metal*we)
     cz  = sp.bincount(bins,weights=z_metal*we)
-    cnb = sp.bincount(bins)
+    cnb = sp.bincount(bins,weights=(we>0.))
 
     return cw,crp,crt,cz,cnb
 
