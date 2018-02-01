@@ -15,3 +15,6 @@ setup(name="picca",
       packages=['picca'],
       package_dir = {'': 'py'},
       install_requires=['iminuit','fitsio','healpy','numba'])
+
+setup_keywords['name'] = 'picca'
+setup_keywords['test_suite']='picca.test.test_cor.main'
