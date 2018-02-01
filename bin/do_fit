@@ -7,8 +7,6 @@ from picca.fitter import metals
 import iminuit
 import scipy
 import sys
-
-import types
 import configargparse
 
 ### Get the parser
@@ -17,15 +15,15 @@ parser = configargparse.ArgParser()
 
 parser.add('-c', '--config_file', required=False, is_config_file=True, help='config file path')
 for i in param.dic_init_float:
-    parser.add('--'+i,type=types.FloatType,required=False,help=param.help[i], default=param.dic_init_float[i])
+    parser.add('--'+i,type=float,required=False,help=param.help[i], default=param.dic_init_float[i])
 for i in param.dic_init_int:
-     parser.add('--'+i,type=types.IntType,required=False,help=param.help[i], default=param.dic_init_int[i])
+     parser.add('--'+i,type=int,required=False,help=param.help[i], default=param.dic_init_int[i])
 for i in param.dic_init_bool:
     parser.add('--'+i,action='store_true',required=False,help=param.help[i], default=param.dic_init_bool[i])
 for i in param.dic_init_string:
-    parser.add('--'+i,type=types.StringType,required=False,help=param.help[i], default=param.dic_init_string[i])
+    parser.add('--'+i,type=str,required=False,help=param.help[i], default=param.dic_init_string[i])
 for i in param.dic_init_list_string:
-    parser.add('--'+i,type=types.StringType,required=False,help=param.help[i],default=param.dic_init_list_string[i],nargs="*")
+    parser.add('--'+i,type=str,required=False,help=param.help[i],default=param.dic_init_list_string[i],nargs="*")
 
 args, unknown = parser.parse_known_args()
 param.set_parameters_from_parser(args=args,unknown=unknown)
@@ -52,6 +50,7 @@ if not dic_init['metals'] is None:
         kw['error_'+n]=0.005
     print()
 
+sys.stdout.flush()
 
 m=cosmo.model(dic_init)
 if not dic_init['data_auto'] is None:
@@ -121,6 +120,7 @@ for i in kw:
     if not kw[i]: continue
     kw[ 'error_'+i[4:] ] = 0.
 
+sys.stdout.flush()
 
 mig = iminuit.Minuit(chi2, throw_nan=True ,forced_parameters=chi2.pname,print_level=dic_init['verbose'],errordef=1,**kw)
 mig.tol = dic_init['migrad_tol']
@@ -129,7 +129,7 @@ if not dic_init['debug']:
         mig.migrad()
         if not dic_init['no_hesse']:
             mig.hesse()
-    except Exception,error:
+    except Exception as error :
         print()
         print('  fit/bin/fit:: error in minimization = ', error)
         print('  Exit')

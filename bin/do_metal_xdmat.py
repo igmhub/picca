@@ -51,11 +51,8 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
-
-    parser.add_argument('--lambda-abs-name', type = str, default = 'LYA', required=False,
-                        help = 'name of the absorption transistion')
+    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
+                        help = 'name of the absorption in picca.constants')
 
     parser.add_argument('--obj-name', type = str, default = 'QSO', required=False,
                         help = 'name of the object tracer')
@@ -105,7 +102,8 @@ if __name__ == '__main__':
     xcf.nt = args.nt
     xcf.nside = args.nside
     xcf.zref = args.z_ref
-    xcf.lambda_abs = args.lambda_abs
+    lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    xcf.lambda_abs = lambda_abs
     xcf.rej = args.rej
 
     ## use a metal grid equal to the lya grid
@@ -115,7 +113,7 @@ if __name__ == '__main__':
     cosmo = constants.cosmo(args.fid_Om)
     xcf.cosmo=cosmo
 
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, args.lambda_abs,\
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs,\
                             args.z_evol_del, args.z_ref, cosmo,nspec=args.nspec)
 
     xcf.npix = len(dels)
