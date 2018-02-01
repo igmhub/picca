@@ -50,10 +50,9 @@ if __name__ == '__main__':
     if args.dmat is not None:
         h = fitsio.FITS(args.dmat)
         dm = h[1]['DM'][:]
+        h.close()
     else:
         dm = sp.eye(len(da))
-
-    h.close()
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
 
