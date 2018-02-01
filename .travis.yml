@@ -180,7 +180,8 @@ before_install:
     - echo LC_ALL=${LC_ALL:-undef} LC_CTYPE=${LC_CTYPE:-undef} LANG=${LANG:-undef} LANGUAGE=${LANGUAGE:-undef}
 
 script:
-    - $MAIN_CMD $SETUP_CMD
+    #- $MAIN_CMD $SETUP_CMD
+    - 'python setup.py test'
 
 after_success:
-    - if [[ $SETUP_CMD == 'test --coverage' ]]; then coveralls; fi
+    
