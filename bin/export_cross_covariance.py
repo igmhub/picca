@@ -32,14 +32,18 @@ if __name__ == '__main__':
         data[i] = {'DA':da, 'WE':we, 'HEALPID':hep}
         h.close()
 
-    ### Remove unshared healpix
+    ### Add unshared healpix as empty data
     for i in sorted(list(data.keys())):
-        w = sp.in1d(data[i]['HEALPID'],data[(i+1)%2]['HEALPID'])
-        if w.sum()!=w.size:
-            print("Some healpix are unshared in data {}: {}".format(i,data[i]['HEALPID'][sp.logical_not(w)]))
-            data[i]['DA']      = data[i]['DA'][w,:]
-            data[i]['WE']      = data[i]['WE'][w,:]
-            data[i]['HEALPID'] = data[i]['HEALPID'][w]
+        j = (i+1)%2
+        w = sp.logical_not( sp.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
+        if w.sum()>0:
+            new_healpix = data[j]['HEALPID'][w]
+            nb_new_healpix = new_healpix.size
+            nb_bins = data[i]['DA'].shape[1]
+            print("Some healpix are unshared in data {}: {}".format(i,new_healpix))
+            data[i]['DA']      = sp.append(data[i]['DA'],sp.zeros((nb_new_healpix,nb_bins)),axis=0)
+            data[i]['WE']      = sp.append(data[i]['WE'],sp.zeros((nb_new_healpix,nb_bins)),axis=0)
+            data[i]['HEALPID'] = sp.append(data[i]['HEALPID'],new_healpix)
 
     ### Sort the data by the healpix values
     for i in sorted(list(data.keys())):
