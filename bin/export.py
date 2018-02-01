@@ -34,7 +34,23 @@ if __name__ == '__main__':
     nb  = sp.array(h[1]['NB'][:])
     da = sp.array(h[2]['DA'][:])
     we = sp.array(h[2]['WE'][:])
-    co = smooth_cov(da,we,rp,rt)
+    
+    if args.cov is not None:
+        hh = fitsio.FITS(args.cov)
+        co = hh[1]['CO'][:]
+        hh.close()
+    else:
+        head = h[1].read_header()
+        nt = head['NT']
+        np = head['NP']
+        rt_min = 0.
+        rt_max = head['RTMAX']
+        rp_min = head['RPMIN']
+        rp_max = head['RPMAX']
+        binSizeP = (rp_max-rp_min) / np
+        binSizeT = (rt_max-rt_min) / nt
+        co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
+        
     da = (da*we).sum(axis=0)
     we = we.sum(axis=0)
     w = we>0
