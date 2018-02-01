@@ -36,25 +36,6 @@ if __name__ == '__main__':
     we = sp.array(h[2]['WE'][:])
     hep = sp.array(h[2]['HEALPID'][:])
 
-    ### Remove empty healpix
-    w = sp.sum(we,axis=1)>0.
-    if w.sum()!=w.size:
-        print("Some healpix are empty, removing them: {}".format(hep[sp.logical_not(w)]))
-        da  = da[w,:]
-        we  = we[w,:]
-        hep = hep[w]
-
-    ### Remove healpix with empty pixels
-    w = sp.ones_like(hep).astype(bool)
-    for i,p in enumerate(hep):
-        if (we[i,:]<=0.).sum()!=0:
-            w[i] = False
-    if w.sum()!=w.size:
-        print("Some healpix have empty bins, removing them: {}".format(hep[sp.logical_not(w)]))
-        da  = da[w,:]
-        we  = we[w,:]
-        hep = hep[w]
-
     if args.cov is not None:
         hh = fitsio.FITS(args.cov)
         co = hh[1]['CO'][:]
