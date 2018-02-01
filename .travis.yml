@@ -39,8 +39,7 @@ before_install:
     # See how the locale is set.
     - echo LC_ALL=${LC_ALL:-undef} LC_CTYPE=${LC_CTYPE:-undef} LANG=${LANG:-undef} LANGUAGE=${LANGUAGE:-undef}
 
-script:
-    - python setup.py test
+script: python setup.py test
 
 after_success: true
     
