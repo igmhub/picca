@@ -109,7 +109,7 @@ if __name__ == '__main__':
     else : lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
  
     ### Read data 1
-    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs,args.z_evol, args.z_ref, cosmo=None,nspec=args.nspec)
+    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs,args.z_evol, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
     cf.npix  = len(data)
     cf.data  = data
     cf.ndata = ndata
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     ### Read data 2
     if args.in_dir2:
         cf.x_correlation = True
-        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, args.nside, lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec)
+        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, args.nside, lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
         cf.data2  = data2
         cf.ndata2 = ndata2 
         sys.stderr.write("\n") 

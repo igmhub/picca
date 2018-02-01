@@ -47,6 +47,8 @@ class TestCor(unittest.TestCase):
         self.send_dmat_cross()
         self.send_metal_dmat_cross()
 
+        self.send_xcf_angl()
+
         self.send_xcf()
         self.send_xdmat()
         self.send_metal_xdmat()
@@ -420,6 +422,24 @@ class TestCor(unittest.TestCase):
             path1 = self._masterFiles + "/metal_dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
             self.compare_fits(path1,path2,"do_metal_dmat.py")
+
+        return
+    def send_xcf_angl(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_xcf_angl.py"
+        cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
+        cmd += " --out "    + self._branchFiles+"/Products/Correlations/xcf_angl.fits.gz"
+        cmd += " --nproc 1"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/xcf_angl.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
+            self.compare_fits(path1,path2,"do_xcf_angl.py")
 
         return
     def send_xcf(self):
