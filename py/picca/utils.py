@@ -2,6 +2,28 @@ import scipy as sp
 import sys
 import fitsio
 
+def cov(da,we):
+
+    npix = da.shape[0]
+    nda = da.shape[1]
+    co = sp.zeros([nda,nda])
+
+    mda = (da*we).sum(axis=0)/we.sum(axis=0)
+
+    wda = we*(da-mda)
+
+    print("Computing cov...")
+    '''
+    for ipix in range(npix):
+        sys.stderr.write("\r {} {}".format(ipix,npix))
+        co += sp.outer(wda[ipix,:],wda[ipix,:])
+    '''
+    co = wda.T.dot(wda)
+    swe = we.sum(axis=0)
+
+    co/=swe*swe[:,None]
+
+    return co
 def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     
     npix = da.shape[0]
