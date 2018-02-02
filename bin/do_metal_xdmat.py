@@ -51,11 +51,11 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
+    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
+                        help = 'name of the absorption in picca.constants')
 
-    parser.add_argument('--lambda-abs-name', type = str, default = 'LYA', required=False,
-                        help = 'name of the absorption transistion')
+    parser.add_argument('--obj-name', type = str, default = 'QSO', required=False,
+                        help = 'name of the object tracer')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
@@ -102,7 +102,8 @@ if __name__ == '__main__':
     xcf.nt = args.nt
     xcf.nside = args.nside
     xcf.zref = args.z_ref
-    xcf.lambda_abs = args.lambda_abs
+    lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    xcf.lambda_abs = lambda_abs
     xcf.rej = args.rej
 
     ## use a metal grid equal to the lya grid
@@ -112,7 +113,7 @@ if __name__ == '__main__':
     cosmo = constants.cosmo(args.fid_Om)
     xcf.cosmo=cosmo
 
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, args.lambda_abs,\
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs,\
                             args.z_evol_del, args.z_ref, cosmo,nspec=args.nspec)
 
     xcf.npix = len(dels)
@@ -142,7 +143,7 @@ if __name__ == '__main__':
     xcf.lock = Lock()
     
     cpu_data = {}
-    for i,p in enumerate(dels.keys()):
+    for i,p in enumerate(sorted(list(dels.keys()))):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
@@ -165,8 +166,7 @@ if __name__ == '__main__':
         f=partial(calc_metal_xdmat,abs_igm)
         sys.stderr.write("\n")
         pool = Pool(processes=args.nproc)
-        #dm = pool.map(f,cpu_data.values())
-        dm = map(f,cpu_data.values())
+        dm = pool.map(f,sorted(list(cpu_data.values())))
         pool.close()
         dm = sp.array(dm)
         wdm =dm[:,0].sum(axis=0)
@@ -203,24 +203,27 @@ if __name__ == '__main__':
     head['NT']=xcf.nt
     head['NP']=xcf.np
 
+    len_names = sp.array([ len(s) for s in names ]).max()
+    names = sp.array(names, dtype='S'+str(len_names))
     out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=["NPALL","NPUSED","ABS_IGM"],header=head)
 
+    names = names.astype(str)
     out_list = []
     out_names=[]
     for i,ai in enumerate(names):
-        out_names=out_names + ["RP_"+ai]
+        out_names=out_names + ["RP_"+args.obj_name+"_"+ai]
         out_list = out_list + [rp_all[i]]
 
-        out_names=out_names + ["RT_"+ai]
+        out_names=out_names + ["RT_"+args.obj_name+"_"+ai]
         out_list = out_list + [rt_all[i]]
 
-        out_names=out_names + ["Z_"+ai]
+        out_names=out_names + ["Z_"+args.obj_name+"_"+ai]
         out_list = out_list + [z_all[i]]
 
-        out_names = out_names + ["DM_"+ai]
+        out_names = out_names + ["DM_"+args.obj_name+"_"+ai]
         out_list = out_list + [dm_all[i]]
 
-        out_names=out_names+["WDM_"+ai]
+        out_names=out_names+["WDM_"+args.obj_name+"_"+ai]
         out_list = out_list+[wdm_all[i]]
 
     out.write(out_list,names=out_names)

@@ -116,6 +116,15 @@ if __name__ == '__main__':
     parser.add_argument('--order',type=int,default=1,required=False,
             help='order of the log(lambda) polynomial for the continuum fit, by default 1.')
 
+    parser.add_argument('--delta-format',type = str,default=None,required=False,
+            help='format for Pk 1D: Pk1D')
+
+    parser.add_argument('--use-ivar-as-weight', action='store_true', default = False,
+            help='use ivar as weights (implemented as eta = 1, sigma_lss = fudge = 0)')
+
+    parser.add_argument('--use-constant-weight', action='store_true', default = False,
+            help='set all the delta weights to one (implemented as eta = 0, sigma_lss = 1, fudge = 0)')
+
     args = parser.parse_args()
 
     ## init forest class
@@ -176,10 +185,11 @@ if __name__ == '__main__':
     nit = args.nit
 
     log = open(args.log,'w')
-    data, ndata = io.read_data(args.in_dir, args.drq, args.mode,\
-                              zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
-                              keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
-                              best_obs=args.best_obs, single_exp=args.single_exp)
+
+    data,ndata,healpy_nside,healpy_pix_ordering = io.read_data(args.in_dir, args.drq, args.mode,\
+        zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
+        keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
+        best_obs=args.best_obs, single_exp=args.single_exp)
    
     ### Get the lines to veto
     usr_mask_obs    = None
@@ -228,14 +238,14 @@ if __name__ == '__main__':
         nb_dla_in_forest = 0
         for p in data:
             for d in data[p]:
-                if dlas.has_key(d.thid):
+                if d.thid in dlas:
                     for dla in dlas[d.thid]:
                         d.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
                         nb_dla_in_forest += 1
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## cuts
-    for p in data.keys():
+    for p in list(data.keys()):
         l = []
         for d in data[p]:
             if not hasattr(d,'ll') or len(d.ll) < args.npix_min:
@@ -245,6 +255,11 @@ if __name__ == '__main__':
             if isnan((d.fl*d.iv).sum()):
                 log.write("{} nan found\n".format(d.thid))
                 continue
+
+            if(args.use_constant_weight and (d.fl.mean()<=0.0 or d.mean_SNR<=1.0 )): 
+                log.write("{} negative mean of too low SNR found\n".format(d.thid))
+                continue
+            
             l.append(d)
             log.write("{} accepted\n".format(d.thid))
         data[p][:] = l
@@ -257,35 +272,83 @@ if __name__ == '__main__':
 
     for it in range(nit):
         pool = Pool(processes=args.nproc)
-        print "iteration: ", it
+        print("iteration: ", it)
         nfit = 0
-        data_fit_cont = pool.map(cont_fit, data.values())
-        for i, p in enumerate(data):
+        sort = sp.array(list(data.keys())).argsort()
+        data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort] )
+        for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 
-        print "done"
+        print("done")
+
         pool.close()
 
         if it < nit-1:
             ll_rest, mc, wmc = prep_del.mc(data)
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
-            ll,eta,vlss,fudge,nb_pixels,var,var_del,var2_del,count,nqsos,chi2,err_eta,err_vlss,err_fudge = prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
-            forest.eta = interp1d(ll[nb_pixels>0], eta[nb_pixels>0], fill_value = "extrapolate",kind="nearest")
-            forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.], fill_value = "extrapolate",kind="nearest")
-            forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0], fill_value = "extrapolate",kind="nearest")
+            if not (args.use_ivar_as_weight or args.use_constant_weight):
+                ll, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
+                    count, nqsos, chi2, err_eta, err_vlss, err_fudge = \
+                        prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
+                forest.eta = interp1d(ll[nb_pixels>0], eta[nb_pixels>0], 
+                    fill_value = "extrapolate",kind="nearest")
+                forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.], 
+                    fill_value = "extrapolate",kind="nearest")
+                forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0], 
+                    fill_value = "extrapolate",kind="nearest")
+            else:
 
-    res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
+                nlss=10 # this value is arbitrary
+                ll = forest.lmin + (sp.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
+
+                if args.use_ivar_as_weight:
+                    print('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
+                    eta = sp.ones(nlss)
+                    vlss = sp.zeros(nlss)
+                    fudge = sp.zeros(nlss)
+                else :
+                    print('INFO: using constant weights, skipping eta, var_lss, fudge fits')
+                    eta = sp.zeros(nlss)
+                    vlss = sp.ones(nlss)
+                    fudge=sp.zeros(nlss)
+
+                err_eta = sp.zeros(nlss)
+                err_vlss = sp.zeros(nlss)
+                err_fudge = sp.zeros(nlss)
+                chi2 = sp.zeros(nlss)
+
+                nb_pixels = sp.zeros((nlss, nlss))
+                var = sp.zeros(nlss)
+                var_del = sp.zeros((nlss, nlss))
+                var2_del = sp.zeros((nlss, nlss))
+                count = sp.zeros((nlss, nlss))
+                nqsos=sp.zeros((nlss, nlss))
+
+                forest.eta = interp1d(ll, eta, fill_value='extrapolate', kind='nearest')
+                forest.var_lss = interp1d(ll, vlss, fill_value='extrapolate', kind='nearest')
+                forest.fudge = interp1d(ll, fudge, fill_value='extrapolate', kind='nearest')
+
+
     ll_st,st,wst = prep_del.stack(data)
-    res.write([ll_st,st,wst],names=['loglam','stack','weight'])
+
+    ### Save iter_out_prefix
+    res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
+    hd = {}
+    hd["NSIDE"] = healpy_nside
+    hd["PIXORDER"] = healpy_pix_ordering
+    hd["FITORDER"] = args.order
+    res.write([ll_st,st,wst],names=['loglam','stack','weight'],header=hd)
     res.write([ll,eta,vlss,fudge,nb_pixels],names=['loglam','eta','var_lss','fudge','nb_pixels'])
     res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'])
     var = sp.broadcast_to(var.reshape(1,-1),var_del.shape)
     res.write([var,var_del,var2_del,count,nqsos,chi2],names=['var_pipe','var_del','var2_del','count','nqsos','chi2'])
-    st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     res.close()
+
+    ### Save delta
+    st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
-    for p in data:
+    for p in sorted(list(data.keys())):
         deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
@@ -293,26 +356,60 @@ if __name__ == '__main__':
         log.write("rejected {} due to {}\n".format(d.thid,d.bad_cont))
 
     log.close()
-    for p in deltas:
-        if len(deltas[p])==0:
-            continue
-        out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)
-        for d in deltas[p]:
-            hd={}
-            hd["RA"]=d.ra
-            hd["DEC"]=d.dec
-            hd["Z"]=d.zqso
-            hd["PMF"]="{}-{}-{}".format(d.plate,d.mjd,d.fid)
-            hd["THING_ID"]=d.thid
-            hd["PLATE"]=d.plate
-            hd["MJD"]=d.mjd
-            hd["FIBERID"]=d.fid
-            hd["ORDER"]=d.order
 
-            cols=[d.ll,d.de,d.we,d.co]
-            names=['LOGLAM','DELTA','WEIGHT','CONT']
-            out.write(cols,names=names,header=hd)
-        out.close()
+#    for p in deltas:
+    for p in sorted(list(deltas.keys())):
+
+        if len(deltas[p])==0: continue
+        if (args.delta_format=='Pk1D_ascii') :
+            out_ascii = open(args.out_dir+"/delta-{}".format(p)+".txt",'w')
+            for d in deltas[p]:
+                nbpixel = len(d.de)
+                line = '{} {} {} '.format(d.plate,d.mjd,d.fid)
+                line += '{} {} {} '.format(d.ra,d.dec,d.zqso)
+                line += '{} {} {} {} '.format(d.mean_z,d.mean_SNR,d.mean_reso,nbpixel)
+                for i in range(nbpixel): line += '{} '.format(d.de[i])
+                for i in range(nbpixel): line += '{} '.format(d.ll[i])
+                for i in range(nbpixel): line += '{} '.format(d.iv[i])
+                for i in range(nbpixel): line += '{} '.format(d.diff[i])
+                line +=' \n'    
+                out_ascii.write(line)
+                
+            out_ascii.close()
+
+        else :    
+            out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)
+            for d in deltas[p]:
+                hd={}
+                hd["RA"]=d.ra
+                hd["DEC"]=d.dec
+                hd["Z"]=d.zqso
+                hd["PMF"]="{}-{}-{}".format(d.plate,d.mjd,d.fid)
+                hd["THING_ID"]=d.thid
+                hd["PLATE"]=d.plate
+                hd["MJD"]=d.mjd
+                hd["FIBERID"]=d.fid
+                hd["ORDER"]=d.order
+
+                if (args.delta_format=='Pk1D') :
+                    hd["MEANZ"]=d.mean_z
+                    hd["MEANRESO"]=d.mean_reso
+                    hd["MEANSNR"]=d.mean_SNR
+                    hd["DLL"]=d.dll
+
+
+                if (args.delta_format=='Pk1D') :
+                    cols=[d.ll,d.de,d.iv,d.diff]
+                    names=['LOGLAM','DELTA','IVAR','DIFF']
+                else :
+                    cols=[d.ll,d.de,d.we,d.co]
+                    names=['LOGLAM','DELTA','WEIGHT','CONT']
+
+                out.write(cols,names=names,header=hd)
+                
+            out.close()
+
+
 
 
     

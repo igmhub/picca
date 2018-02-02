@@ -52,8 +52,8 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM["LYA"], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
+    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
+                        help = 'name of the absorption in picca.constants')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
@@ -102,7 +102,8 @@ if __name__ == '__main__':
     xcf.nside = args.nside
 
     cosmo = constants.cosmo(args.fid_Om)
-
+    
+    lambda_abs = constants.absorber_IGM[args.lambda_abs]
     z_min_pix = 1.e6
     z_max_pix = 0.
     bin_size_ll = 1.e6
@@ -110,6 +111,7 @@ if __name__ == '__main__':
         fi = glob.glob(args.in_dir)
     else:
         fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     dels = {}
     ndels = 0
     for i,f in enumerate(fi):
@@ -126,7 +128,7 @@ if __name__ == '__main__':
                 dels[p]=[]
             dels[p].append(d)
 
-            z = 10**d.ll/args.lambda_abs-1.
+            z = 10**d.ll/lambda_abs-1.
             z_min_pix = sp.amin( sp.append([z_min_pix],z) )
             z_max_pix = sp.amax( sp.append([z_max_pix],z) )
             bin_size_ll = sp.amin( sp.append([bin_size_ll],[d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)])  )
@@ -145,8 +147,8 @@ if __name__ == '__main__':
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
-        forest.lmin  = sp.log10( (z_min_pix+1.)*args.lambda_abs )-bin_size_ll/2.
-        forest.lmax  = sp.log10( (z_max_pix+1.)*args.lambda_abs )+bin_size_ll/2.
+        forest.lmin  = sp.log10( (z_min_pix+1.)*lambda_abs )-bin_size_ll/2.
+        forest.lmax  = sp.log10( (z_max_pix+1.)*lambda_abs )+bin_size_ll/2.
         forest.dll   = bin_size_ll
         ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
@@ -202,9 +204,9 @@ if __name__ == '__main__':
 
         if ( (z_min_pix<z_min_pix_cut) or (z_max_pix_cut<z_max_pix) ):
             for pix in xcf.dels:
-                for i in xrange(len(xcf.dels[pix])-1,-1,-1):
+                for i in range(len(xcf.dels[pix])-1,-1,-1):
                     d = xcf.dels[pix][i]
-                    z = 10**d.ll/args.lambda_abs-1.
+                    z = 10**d.ll/lambda_abs-1.
                     w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)
                     if (z[w].size==0):
                         del xcf.dels[pix][i]
@@ -221,12 +223,12 @@ if __name__ == '__main__':
 
     xcf.lock = Lock()
     cpu_data = {}
-    for p in dels.keys():
+    for p in list(dels.keys()):
         cpu_data[p] = [p]
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,cpu_data.values())
+    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
     cfs=sp.array(cfs)
@@ -236,7 +238,7 @@ if __name__ == '__main__':
     zs=cfs[:,4,:]
     nbs=cfs[:,5,:].astype(sp.int64)
     cfs=cfs[:,1,:]
-    hep=sp.array(cpu_data.keys())
+    hep=sp.array(sorted(list(cpu_data.keys())))
 
     cut      = (wes.sum(axis=0)>0.)
     rp       = (rps*wes).sum(axis=0)

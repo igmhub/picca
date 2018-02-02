@@ -51,8 +51,8 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM["LYA"], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
+    parser.add_argument('--lambda-abs', type = str, default = "LYA", required=False,
+                        help = 'name of the absorption in picca.constants')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -87,9 +87,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
-    print "nproc",args.nproc
+    print("nproc",args.nproc)
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
@@ -99,7 +99,8 @@ if __name__ == '__main__':
     xcf.nside = args.nside
     xcf.zref = args.z_ref
     xcf.alpha = args.z_evol_del
-    xcf.lambda_abs = args.lambda_abs
+    lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    xcf.lambda_abs = lambda_abs
     xcf.rej = args.rej
 
     cosmo = constants.cosmo(args.fid_Om)
@@ -110,6 +111,7 @@ if __name__ == '__main__':
         fi = glob.glob(args.in_dir)
     else:
         fi = glob.glob(args.in_dir+"/*.fits.gz")
+    fi = sorted(fi)
     dels = {}
     ndels = 0
     for i,f in enumerate(fi):
@@ -125,7 +127,7 @@ if __name__ == '__main__':
                 dels[p]=[]
             dels[p].append(d)
 
-            z = 10**d.ll/args.lambda_abs-1.
+            z = 10**d.ll/lambda_abs-1.
             if z_min_pix > z.min():
                 z_min_pix = z.min()
             if z_max_pix < z.max():
@@ -138,7 +140,7 @@ if __name__ == '__main__':
 
     xcf.dels = dels
     xcf.ndels = ndels
-    print "done"
+    print("done")
 
     ### Find the redshift range
     if (args.z_min_obj is None):
@@ -187,9 +189,9 @@ if __name__ == '__main__':
 
         if ( (z_min_pix<z_min_pix_cut) or (z_max_pix_cut<z_max_pix) ):
             for pix in xcf.dels:
-                for i in xrange(len(xcf.dels[pix])-1,-1,-1):
+                for i in range(len(xcf.dels[pix])-1,-1,-1):
                     d = xcf.dels[pix][i]
-                    z = 10**d.ll/args.lambda_abs-1.
+                    z = 10**d.ll/lambda_abs-1.
                     w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)
                     if (z[w].size==0):
                         del xcf.dels[pix][i]
@@ -206,7 +208,7 @@ if __name__ == '__main__':
     xcf.lock = Lock()
     
     cpu_data = {}
-    for i,p in enumerate(dels.keys()):
+    for i,p in enumerate(sorted(list(dels.keys()))):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
@@ -214,7 +216,7 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,cpu_data.values())
+    dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
     pool.close()
     dm = sp.array(dm)
     wdm =dm[:,0].sum(axis=0)
