@@ -61,7 +61,7 @@ def fill_neighs_x_correlation(pix):
             ang = d1^neighs
             w = (ang<angmax)
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.thid != d.thid]
+            d1.neighs = [d for d in neighs if d1.thid != d.thid and (d.zqso+d1.zqso)/2. >= zqso_min and (d.zqso+d1.zqso)/2. < zqso_max ]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
