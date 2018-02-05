@@ -74,6 +74,12 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol2', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the 2nd delta field')
 
+    parser.add_argument('--zqso-min', type = float, default = 0., required=False,
+                        help = 'min qso redshift')
+
+    parser.add_argument('--zqso-max', type = float, default = 10., required=False,
+                        help = 'max qso redshift ')
+
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
@@ -94,6 +100,8 @@ if __name__ == '__main__':
     cf.rp_min          = args.wr_min 
     cf.rp_max          = args.wr_max
     cf.rt_max          = args.ang_max
+    cf.zqso_max        = args.zqso_max
+    cf.zqso_min        = args.zqso_min
     cf.np              = args.np
     cf.nt              = args.nt
     cf.nside           = args.nside

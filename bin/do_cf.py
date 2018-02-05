@@ -70,11 +70,11 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
-    parser.add_argument('--zqso-max', type = float, default = 10., required=False,
-                        help = 'max qso redshift')
-
     parser.add_argument('--zqso-min', type = float, default = 0., required=False,
-                        help = 'min qso redshift ')
+                        help = 'min qso redshift')
+
+    parser.add_argument('--zqso-max', type = float, default = 10., required=False,
+                        help = 'max qso redshift ')
 
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
