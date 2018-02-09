@@ -148,7 +148,7 @@ if __name__ == '__main__':
     sys.stderr.write("read {}\n".format(ndata))
 
     x_correlation=False
-    if args.in_dir2 is not None: 
+    if args.in_dir2: 
         x_correlation=True
         ndata2 = 0
         if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
@@ -173,7 +173,6 @@ if __name__ == '__main__':
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
-
     cf.x_correlation=x_correlation 
 
     z_min_pix = 10**dels[0].ll[0]/lambda_abs-1.
@@ -239,8 +238,6 @@ if __name__ == '__main__':
 
     random.seed(0)
 
-    abs_igm = [args.lambda_abs]+args.abs_igm
-
     dm_all=[]
     wdm_all=[]
     rp_all=[]
@@ -259,16 +256,6 @@ if __name__ == '__main__':
         lambda_abs2_type = args.lambda_abs
 
     if args.abs_igm2: 
-        print "args.lambda_abs2 = ", args.lambda_abs2
-        abs_igm_2 = [args.lambda_abs2]+args.abs_igm2
-    else: 
-        abs_igm_2 = abs_igm
-
-    print("abs_igm_2 = {}".format(abs_igm_2))
-   
-    for i,abs_igm1 in enumerate(abs_igm):
-        i0=i
-        if args.lambda_abs != args.lambda_abs2: i0=0
         abs_igm_2 = [lambda_abs2_type]+args.abs_igm2
     elif args.lambda_abs == lambda_abs2_type: 
         abs_igm_2 = copy.deepcopy(abs_igm)
@@ -331,8 +318,6 @@ if __name__ == '__main__':
     names = names.astype(str)
     out_list = []
     out_names=[]
-
-    ## write RP, RT, Z in hdu2
     for i,ai in enumerate(names):
         out_names=out_names + ["RP_"+ai]
         out_list = out_list + [rp_all[i]]
@@ -343,12 +328,6 @@ if __name__ == '__main__':
         out_names=out_names + ["Z_"+ai]
         out_list = out_list + [z_all[i]]
 
-    out.write(out_list,names=out_names)
-
-    out_list = []
-    out_names=[]
-    ##write DM, WDM in hdu3
-    for i,ai in enumerate(names):
         out_names = out_names + ["DM_"+ai]
         out_list = out_list + [dm_all[i]]
 
@@ -356,7 +335,6 @@ if __name__ == '__main__':
         out_list = out_list+[wdm_all[i]]
 
     out.write(out_list,names=out_names)
-
     out.close()
 
     
