@@ -55,10 +55,10 @@ if not dic_init['metals'] is None:
         kw['fix_'+i]=True
 
     for n,v in zip(met.pname,met.pinit):
-        print n,v
+        print(n,v)
         kw[n]=v
         kw['error_'+n]=0.005
-    print
+    print()
 
 
 m=cosmo.model(dic_init)
@@ -72,7 +72,7 @@ if not dic_init['data_autoQSO'] is None:
 chi2=Chi2.Chi2(dic_init,cosmo=m,met=met)
 
 for n,v in zip(m.pall,m.pinit):
-    #print n,v
+    #print(n,v)
     kw[n]=v
     if abs(v)!=0:
         kw['error_'+n]=abs(v)/10.

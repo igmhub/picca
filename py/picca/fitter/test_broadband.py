@@ -8,7 +8,7 @@ from picca.fitter.utils import L
 index=sp.arange(2500)
 
 rt = index%50
-rp = (index-rt)/50
+rp = (index-rt)//50
 
 rt=4*(rt+.5)
 rp=4*(rp+.5)

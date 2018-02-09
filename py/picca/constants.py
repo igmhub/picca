@@ -20,7 +20,7 @@ class cosmo:
         nbins = 10000
         zmax  = 10.
         dz    = zmax/nbins
-        z=sp.array(range(nbins))*dz
+        z=sp.arange(nbins)*dz
         hubble = H0*sp.sqrt( Ol + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
 
         chi=sp.zeros(nbins)
@@ -43,6 +43,8 @@ class cosmo:
 
 ### Absorber names and wavelengths [Angstrom]
 absorber_IGM = {
+    'Halpha'      : 6562.8,
+    'Hbeta'       : 4862.68,
     'MgI(2853)'   : 2852.96,
     'MgII(2804)'  : 2803.5324,
     'MgII(2796)'  : 2796.3511,
@@ -55,8 +57,9 @@ absorber_IGM = {
     'AlIII(1863)' : 1862.79113,
     'AlIII(1855)' : 1854.71829,
     'AlII(1671)'  : 1670.7886,
-    'FeII(1609)'  : 1608.4511,
+    'FeII(1608)'  : 1608.4511,
     'CIV(1551)'   : 1550.77845,
+    'CIV(eff)'    : 1549.06,
     'CIV(1548)'   : 1548.2049,
     'SiII(1527)'  : 1526.70698,
     'SiIV(1403)'  : 1402.77291,
@@ -74,7 +77,7 @@ absorber_IGM = {
     'SiII(1190)'  : 1190.4158,
     'OI(1039)'    : 1039.230, 
     'OVI(1038)'   : 1037.613, 
-    'OVI(1031)'   : 1031.912,
+    'OVI(1032)'   : 1031.912,
     'LYB'         : 1025.72,
 }
 
