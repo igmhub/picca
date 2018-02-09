@@ -81,6 +81,12 @@ if __name__ == '__main__':
     parser.add_argument('--z-max-obj', type = float, default = None, required=False,
                     help = 'max redshift for object field')
 
+    parser.add_argument('--zqso-pair-min', type = float, default = 0., required=False,
+                        help = 'min qso redshift of the pair')
+
+    parser.add_argument('--zqso-pair-max', type = float, default = 10., required=False,
+                        help = 'max qso redshift of the pair')
+
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
@@ -94,6 +100,8 @@ if __name__ == '__main__':
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
     xcf.rt_max = args.rt_max
+    xcf.zqso_pair_max = args.zqso_pair_max
+    xcf.zqso_pair_min = args.zqso_pair_min
     xcf.np = args.np
     xcf.nt = args.nt
     xcf.nside = args.nside
@@ -234,6 +242,8 @@ if __name__ == '__main__':
     head['RPMAX']=xcf.rp_max
     head['RPMIN']=xcf.rp_min
     head['RTMAX']=xcf.rt_max
+    head['ZQSO_PAIR_MAX']=xcf.zqso_pair_max
+    head['ZQSO_PAIR_MIN']=xcf.zqso_pair_min
     head['NT']=xcf.nt
     head['NP']=xcf.np
     head['NPROR']=npairs

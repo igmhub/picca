@@ -82,6 +82,12 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol-obj', type = float, default = 1., required=False,
                     help = 'exponent of the redshift evolution of the object field')
 
+    parser.add_argument('--zqso-pair-min', type = float, default = 0., required=False,
+                        help = 'min qso redshift of the pair')
+
+    parser.add_argument('--zqso-pair-max', type = float, default = 10., required=False,
+                        help = 'max qso redshift of the pair')
+
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
@@ -100,6 +106,8 @@ if __name__ == '__main__':
     xcf.rp_min = args.wr_min 
     xcf.rp_max = args.wr_max
     xcf.rt_max = args.ang_max
+    xcf.zqso_pair_min = args.zqso_pair_min
+    xcf.zqso_pair_max = args.zqso_pair_max
     xcf.np     = args.np
     xcf.nt     = args.nt
     xcf.nside  = args.nside
@@ -174,6 +182,8 @@ if __name__ == '__main__':
     head['RPMIN']=xcf.rp_min
     head['RPMAX']=xcf.rp_max
     head['RTMAX']=xcf.rt_max
+    head['ZQSO_PAIR_MIN']=xcf.zqso_pair_min
+    head['ZQSO_PAIR_MAX']=xcf.zqso_pair_max
     head['NT']=xcf.nt
     head['NP']=xcf.np
 
