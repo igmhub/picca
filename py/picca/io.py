@@ -447,7 +447,8 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
         if wmissing.sum()>0:
             for m in mjd_in_plate[wmissing]:
                 print("INFO: can't find spplate {} {}".format(p,m))
-                log.write("INFO: can't find spplate {} {}\n".format(p,m))
+                if log is not None:
+                    log.write("INFO: can't find spplate {} {}\n".format(p,m))
                 print mjd_in_plate
                 print mjds_found
 
