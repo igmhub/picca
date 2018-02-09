@@ -144,7 +144,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         nside = h[1].read_header()['NSIDE']
         h.close()
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
-    elif mode in ["spec","corrected-spec","spcframe","spec-mock-1D"]:
+    elif mode in ["spec","corrected-spec","spcframe","spplate","spec-mock-1D"]:
         nside = 256
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
         mobj = sp.bincount(pixs).sum()/len(sp.unique(pixs))
@@ -197,7 +197,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
                 data[p] = []
             data[p].append(pix_data[i])
 
-        return data, len(pixs)
+        return data, len(pixs), nside, "RING"
 
     upix = sp.unique(pixs)
     for i, pix in enumerate(upix):
@@ -438,9 +438,19 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
     for p in unique_plates:
         wplate = plate==p
         plate_mjd = "{}-*".format(p)
+        mjd_in_plate = sp.unique(mjd[wplate])
 
         spplates = glob.glob(in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd))
-        print spplates
+
+        mjds_found = sp.array([spfile.split("-")[-1].replace(".fits",'') for spfile in spplates]).astype(int)
+        wmissing = ~sp.in1d(mjd_in_plate, mjds_found)
+        if wmissing.sum()>0:
+            for m in mjd_in_plate[wmissing]:
+                print("INFO: can't find spplate {} {}".format(p,m))
+                log.write("INFO: can't find spplate {} {}\n".format(p,m))
+                print mjd_in_plate
+                print mjds_found
+
         for spplate in spplates:
             h = fitsio.FITS(spplate)
             head0 = h[0].read_header()
@@ -470,12 +480,12 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
                 else:
                     pix_data[t] = d
                 if log is not None:
-                    log.write("{} read from exp {} and mjd {}\n".format(t, spplate, m))
+                    log.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
 
             print "INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), os.path.basename(spplate), (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid))
             h.close()
 
-    data = pix_data.values()
+    data = list(pix_data.values())
     return data
 
 def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
