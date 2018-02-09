@@ -13,8 +13,8 @@ ntm= None
 npm= None
 rp_max = None
 rp_min = None 
-zqso_max = None
-zqso_min = None 
+zqso_pair_max = None
+zqso_pair_min = None 
 rt_max = None
 angmax = None
 nside = None
@@ -50,7 +50,7 @@ def fill_neighs(pix):
             ang = d1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.ra > d.ra and (d.zqso+d1.zqso)/2. >= zqso_min and (d.zqso+d1.zqso)/2. < zqso_max ]
+            d1.neighs = [d for d in neighs if d1.ra > d.ra and (d.zqso+d1.zqso)/2. >= zqso_pair_min and (d.zqso+d1.zqso)/2. < zqso_pair_max ]
 
 def fill_neighs_x_correlation(pix):
     for ipix in pix:
@@ -61,7 +61,7 @@ def fill_neighs_x_correlation(pix):
             ang = d1^neighs
             w = (ang<angmax)
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.thid != d.thid and (d.zqso+d1.zqso)/2. >= zqso_min and (d.zqso+d1.zqso)/2. < zqso_max ]
+            d1.neighs = [d for d in neighs if d1.thid != d.thid and (d.zqso+d1.zqso)/2. >= zqso_pair_min and (d.zqso+d1.zqso)/2. < zqso_pair_max ]
 
 def cf(pix):
     xi = sp.zeros(np*nt)

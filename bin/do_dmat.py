@@ -71,11 +71,11 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
-    parser.add_argument('--zqso-min', type = float, default = 0., required=False,
-                        help = 'min qso redshift')
+    parser.add_argument('--zqso-pair-min', type = float, default = 0., required=False,
+                        help = 'min qso redshift of the pair')
 
-    parser.add_argument('--zqso-max', type = float, default = 10., required=False,
-                        help = 'max qso redshift ')
+    parser.add_argument('--zqso-pair-max', type = float, default = 10., required=False,
+                        help = 'max qso redshift of the pair')
 
     parser.add_argument('--rej', type = float, default = 1., required=False,
                     help = 'reference redshift')
@@ -105,8 +105,8 @@ if __name__ == '__main__':
     cf.rp_max = args.rp_max
     cf.rp_min = args.rp_min
     cf.rt_max = args.rt_max
-    cf.zqso_max = args.zqso_max
-    cf.zqso_min = args.zqso_min
+    cf.zqso_pair_max = args.zqso_pair_max
+    cf.zqso_pair_min = args.zqso_pair_min
     cf.np = args.np
     cf.nt = args.nt
     cf.nside = args.nside
@@ -250,8 +250,8 @@ if __name__ == '__main__':
     head['REJ']=args.rej
     head['RPMAX']=cf.rp_max
     head['RTMAX']=cf.rt_max
-    head['ZQSOMIN']=cf.zqso_min
-    head['ZQSOMAX']=cf.zqso_max
+    head['ZQSO_PAIR_MIN']=cf.zqso_pair_min
+    head['ZQSO_PAIR_MAX']=cf.zqso_pair_max
     head['NT']=cf.nt
     head['NP']=cf.np
     head['NPROR']=npairs
