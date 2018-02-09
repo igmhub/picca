@@ -26,24 +26,9 @@ def cov(da,we):
     return co
 def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     
-    npix = da.shape[0]
+    co = cov(da,we)
+
     nda = da.shape[1]
-    co = sp.zeros([nda,nda])
-
-    mda = (da*we).sum(axis=0)/we.sum(axis=0)
-
-    wda = we*(da-mda)
-
-    print("Computing cov...")
-    '''
-    for ipix in range(npix):
-        sys.stderr.write("\r {} {}".format(ipix,npix))
-        co += sp.outer(wda[ipix,:],wda[ipix,:])
-    '''
-    co = wda.T.dot(wda)
-    swe = we.sum(axis=0)
-
-    co/=swe*swe[:,None]
     var = sp.diagonal(co)
 
     cor = co/sp.sqrt(var*var[:,None])
