@@ -33,7 +33,7 @@ if __name__ == '__main__':
         z  = sp.array(h[1]['Z'][:])
         h.close()
 
-        array_to_save = sp.asarray(zip(sp.arange(rp.size),rp,rt,z))
+        array_to_save = sp.asarray(list(zip(sp.arange(rp.size),rp,rt,z)))
         sp.savetxt(args.out+'/metTemp_'+args.line1_name+'_'+args.line2_name+'.grid',array_to_save,fmt='%u %1.20e %1.20e %1.20e')
 
     ### Needs to be written for auto-correlation

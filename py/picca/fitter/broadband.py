@@ -13,13 +13,13 @@ class model:
         self.imin = imin
         self.imax = imax
         self.istep= istep
-        ni = (imax-imin)/istep+1
+        ni = (imax-imin)//istep+1
         self.ni = ni
 
         self.ellmin = ellmin
         self.ellmax = ellmax
         self.ellstep = ellstep
-        nell = (ellmax-ellmin)/ellstep+1
+        nell = (ellmax-ellmin)//ellstep+1
         self.nell = nell
 
         npar = ni*nell
@@ -36,7 +36,7 @@ class model:
 
         for ipar in range(npar):
             i = ipar%ni
-            ell = (ipar-i)/ni
+            ell = (ipar-i)//ni
 
             i = imin + i * istep
             ell = ellmin+ell * ellstep
@@ -60,7 +60,7 @@ class model:
         self.par_name = []
         for ipar in range(self.npar):
             i   = ipar%self.ni
-            ell = (ipar-i)/self.ni
+            ell = (ipar-i)//self.ni
             i   = self.imin + i*self.istep
             ell = self.ellmin + ell*self.ellstep
             self.par_name += ['a_auto_'+str(i)+'_'+str(ell)]
@@ -80,7 +80,7 @@ class model:
 
         for ipar in range(len(pars)):
             i = ipar%self.ni
-            ell = (ipar-i)/self.ni
+            ell = (ipar-i)//self.ni
             i = self.imin + i * self.istep
             ell = self.ellmin + ell * self.ellstep
 

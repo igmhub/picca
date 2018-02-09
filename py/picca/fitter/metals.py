@@ -62,13 +62,13 @@ class model:
             for i in range(nmet):
                 for mp in range(3):
                     fmet=met_prefix+"_Lya_"+met_names[i]+"."+str(2*mp)+".dat"
-                    print "reading "+fmet
+                    print("reading "+fmet)
                     to=sp.loadtxt(fmet)
                     self.temp_lya_met[to[:,0].astype(int),i,mp]=to[:,1]
 
                     for j in range(i,nmet):
                         fmet=met_prefix+"_"+met_names[i]+"_"+met_names[j]+"."+str(2*mp)+".dat"
-                        print "reading "+fmet
+                        print("reading "+fmet)
                         to=sp.loadtxt(fmet)
                         self.temp_met_met[to[:,0].astype(int),i,j,mp]=to[:,1]
         else:
@@ -115,7 +115,7 @@ class model:
         self.different_drp = dic_init['different_drp']
         if (self.different_drp):
             if not self.grid:
-                print "different drp and metal matrix not implemented"
+                print("different drp and metal matrix not implemented")
                 sys.exit(1)
             for name in self.met_names:
                 self.pname.append("drp_"+name)
@@ -134,14 +134,14 @@ class model:
             self.grid_qso_met=sp.zeros([self.nd_cross,nmet,3])
             for i in range(nmet):
                 fmet = met_prefix + '_QSO_' + met_names[i] + '.grid'
-                print '  Reading cross correlation metal grid : '
-                print '  ', fmet
+                print('  Reading cross correlation metal grid : ')
+                print('  ', fmet)
                 to = sp.loadtxt(fmet)
                 idx = to[:,0].astype(int)
                 self.grid_qso_met[idx,i,0] = to[:,1]
                 self.grid_qso_met[idx,i,1] = to[:,2]
                 self.grid_qso_met[idx,i,2] = to[:,3]
-            print
+            print()
         else:
             h = fitsio.FITS(self.met_prefix)
             self.abs_igm_cross = [i.strip() for i in h[1]["ABS_IGM"][:]]
@@ -229,13 +229,13 @@ class model:
                 rp = self.auto_rp["LYA_"+met]
                 zeff  = self.auto_zeff["LYA_"+met]
                 r = sp.sqrt(rt**2+rp**2)
-		w = (r==0)
-		r[w] = 1e-6
+                w = (r==0)
+                r[w] = 1e-6
                 mur = rp/r
                 
                 if recalc:
                     if self.verbose:
-                        print "recalculating ",met
+                        print("recalculating ",met)
                     pk  = (1+beta_lya*muk**2)*(1+beta_met*muk**2)*self.pk
                     pk *= Gpar*Gper
                     xi = cosmo_model.Pk2Xi(r,mur,self.k,pk,ell_max=self.ell_max)
@@ -274,7 +274,7 @@ class model:
                     
                     if recalc:
                         if self.verbose:
-                            print "recalculating ",met1,met2
+                            print("recalculating ",met1,met2)
                         r = sp.sqrt(rt**2+rp**2)
                         w=r==0
                         r[w]=1e-6
@@ -342,7 +342,7 @@ class model:
                 xi_qso_met += cosmo_model.Pk2Xi(r[:,i],mur[:,i],self.k,pk_full,ell_max=self.ell_max)*evol[:,i]
 
         else:
-            nbins = self.xdmat.values()[0].shape[0]
+            nbins = list(self.xdmat.values())[0].shape[0]
             xi_qso_met = sp.zeros(nbins)
             for i in self.met_names:
                 bias_met = pars["bias_"+i]
@@ -354,7 +354,7 @@ class model:
                     self.prev_pmet['drp'] != drp
                 if recalc:
                     if self.verbose:
-                        print "recalculating metal {}".format(i)
+                        print("recalculating metal {}".format(i))
                     self.prev_pmet['beta_'+i] = beta_met
                     self.prev_pmet['growth_rate'] = growth_rate
                     self.prev_pmet['qso_evol'] = qso_evol
