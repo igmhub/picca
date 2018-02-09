@@ -352,7 +352,6 @@ if __name__ == '__main__':
         deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
-    stop
     for d in data_bad_cont:
         log.write("rejected {} due to {}\n".format(d.thid,d.bad_cont))
 

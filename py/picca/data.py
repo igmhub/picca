@@ -5,7 +5,6 @@ import iminuit
 from .dla import dla
 import fitsio
 import sys
-from scipy.interpolate import interp1d
 
 def variance(var,eta,var_lss,fudge):
     return eta*var + var_lss + fudge/var
@@ -237,8 +236,6 @@ class forest(qso):
             ## we want here the we = ivar(flux)
 
             var_tot = variance(var_pipe,eta,var_lss,fudge)
-
-            ## var_tot is the variance of fl/m, var(fl/m) = var(fl)/m**2 => var(fl) = m**2 * var_tot
             we = 1/m**2/var_tot
 
             # force we=1 when use-constant-weight
