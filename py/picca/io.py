@@ -74,10 +74,12 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     print(" and z>0.            : nb object in cat = {}".format(ra[w].size) )
 
     ## Redshift range
-    w = w & (zqso>zmin)
-    print(" and z>zmin          : nb object in cat = {}".format(ra[w].size) )
-    w = w & (zqso<zmax)
-    print(" and z<zmax          : nb object in cat = {}".format(ra[w].size) )
+    if not zmin is None:
+        w &= zqso>zmin
+        print(" and z>zmin          : nb object in cat = {}".format(ra[w].size) )
+    if not zmax is None:
+        w &= zqso<zmax
+        print(" and z<zmax          : nb object in cat = {}".format(ra[w].size) )
 
     ## BAL visual
     if not keep_bal and bi_max==None:
