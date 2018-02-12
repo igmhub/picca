@@ -54,8 +54,8 @@ def co(pix):
         for o1 in objs[ipix]:
 
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)))
-            #with lock:
-            #    counter.value += 1
+            with lock:
+                counter.value += 1
 
             if (o1.neighs.size == 0): continue
 
