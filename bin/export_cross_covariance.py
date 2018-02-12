@@ -79,6 +79,6 @@ if __name__ == '__main__':
         print("Matrix is not positive definite")
 
     ### Save
-    h = fitsio.FITS(args.out,'rw',overwrite=True)
+    h = fitsio.FITS(args.out,'rw',clobber=True)
     h.write([cross_co,cross_cor],names=['CO','COR'])
     h.close()
