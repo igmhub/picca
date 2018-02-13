@@ -13,8 +13,8 @@ nt = None
 rp_max = None
 rp_min = None
 rt_max = None
-zqso_pair_max = None
-zqso_pair_min = None 
+z_cut_max = None
+z_cut_min = None 
 angmax = None
 nside = None
 
@@ -37,7 +37,7 @@ def fill_neighs(pix):
         for d in dels[ipix]:
             npix = query_disc(nside,[d.xcart,d.ycart,d.zcart],angmax,inclusive = True)
             npix = [p for p in npix if p in objs]
-            neighs = [q for p in npix for q in objs[p] if q.thid != d.thid and (d.zqso+q.zqso)/2. >= zqso_pair_min and (d.zqso+q.zqso)/2. < zqso_pair_max ]
+            neighs = [q for p in npix for q in objs[p] if q.thid != d.thid and (10**(d.ll[-1]- sp.log10(lambda_abs))-1.+q.zqso)/2. >= z_cut_min and ((10**(d.ll[-1]- sp.log10(lambda_abs))-1.+q.zqso)/2. < z_cut_max ]
             ang = d^neighs
             w = ang<angmax
             if not ang_correlation:
