@@ -73,11 +73,11 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
-    parser.add_argument('--zqso-pair-min', type = float, default = 0., required=False,
-                        help = 'min qso redshift of the pair')
+    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
+                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift higher than z-cut-min')
 
-    parser.add_argument('--zqso-pair-max', type = float, default = 10., required=False,
-                        help = 'max qso redshift of the pair')
+    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
+                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift smaller than z-cut-min')
 
     parser.add_argument('--z-evol-del', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
@@ -102,12 +102,15 @@ if __name__ == '__main__':
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
-    xcf.zqso_pair_max = args.zqso_pair_max
-    xcf.zqso_pair_min = args.zqso_pair_min
+    xcf.z_cut_max = args.z_cut_max
+    xcf.z_cut_min = args.z_cut_min
     xcf.rt_max = args.rt_max
     xcf.np = args.np
     xcf.nt = args.nt
     xcf.nside = args.nside
+
+    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
+    xcf.lambda_abs = lambda_abs 
 
     cosmo = constants.cosmo(args.fid_Om)
     
@@ -262,8 +265,8 @@ if __name__ == '__main__':
     head['RPMIN']=xcf.rp_min
     head['RPMAX']=xcf.rp_max
     head['RTMAX']=xcf.rt_max
-    head['ZQSO_PAIR_MIN']=xcf.zqso_pair_min
-    head['ZQSO_PAIR_MAX']=xcf.zqso_pair_max
+    head['Z_CUT_MIN']=xcf.z_cut_min
+    head['Z_CUT_MAX']=xcf.z_cut_max
     head['NT']=xcf.nt
     head['NP']=xcf.np
 
