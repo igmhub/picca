@@ -99,6 +99,9 @@ if __name__ == '__main__':
     parser.add_argument('--reso-max',type = float,default=85.,required=False,
                         help = 'maximal resolution in km/s ')
 
+    parser.add_argument('--lambda-obs-min',type = float,default=3600.,required=False,
+                        help = 'minimal lambda obs.' )
+
     parser.add_argument('--nb-part',type = int,default=3,required=False,
                         help = 'Number of parts in forest')
 
@@ -169,14 +172,18 @@ if __name__ == '__main__':
             # Selection over the SNR and the resolution
             if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
 
+            # first pixel in forest
+            for first_pixel in range(len(d.ll)) :
+                 if (np.power(10.,d.ll[first_pixel])>args.lambda_obs_min) : break
+
             # minimum number of pixel in forest
             nb_pixel_min = args.nb_pixel_min
-            if (len(d.ll)<nb_pixel_min) : continue
+            if ((len(d.ll)-first_pixel)<nb_pixel_min) : continue
 
             # Split in n parts the forest
-            nb_part_max = len(d.ll)/nb_pixel_min
+            nb_part_max = (len(d.ll)-first_pixel)/nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
-            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv)
+            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv,first_pixel)
             for f in range(nb_part): 
             
                 # Fill masked pixels with 0.
