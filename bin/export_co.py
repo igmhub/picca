@@ -77,6 +77,9 @@ if __name__ == '__main__':
 
         h.close()
     for tc in list(rand.keys()):
+        if rand[tc]['nb']==0:
+            print("ERROR: no DR or RR: "+tc)
+            sys.exit()
         rand[tc]['data'] /= rand[tc]['nb']
 
     ###
