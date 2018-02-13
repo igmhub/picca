@@ -176,6 +176,7 @@ if __name__ == '__main__':
     head['RTMAX']=xcf.rt_max
     head['NT']=xcf.nt
     head['NP']=xcf.np
+    head['NSIDE']=xcf.nside
 
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]

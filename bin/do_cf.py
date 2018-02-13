@@ -252,6 +252,7 @@ if __name__ == '__main__':
     head['RTMAX']=cf.rt_max
     head['NT']=cf.nt
     head['NP']=cf.np
+    head['NSIDE']=cf.nside
 
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
     ## use the default scheme in healpy => RING
