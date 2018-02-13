@@ -138,7 +138,7 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     xcf.objs = objs
 
-    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,z_min_pix,zmin_obj)
+    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
 
     xcf.counter = Value('i',0)
     xcf.lock = Lock()
