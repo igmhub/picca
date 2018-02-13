@@ -5,11 +5,6 @@ import pyfftw
 
 def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
 
-    print 'first_pixel =',first_pixel
-    
-#    ll_limit=[ll[0]]
-#    nb_bin= len(ll)/nb_part
-
     ll_limit=[ll[first_pixel]]
     nb_bin= (len(ll)-first_pixel)/nb_part
     
@@ -28,9 +23,6 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
         ll_limit.append(ll[nb_bin*p+first_pixel])
         
     ll_limit.append(ll[len(ll)-1]+0.1*dll)
-    
-    lamb_limit =  np.power(10.,ll_limit)
-    print lamb_limit
 
     for p in range(nb_part) : 
 
