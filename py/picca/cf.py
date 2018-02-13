@@ -50,7 +50,8 @@ def fill_neighs(pix):
             ang = d1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.ra > d.ra and (d.zqso+d1.zqso)/2. >= zqso_pair_min and (d.zqso+d1.zqso)/2. < zqso_pair_max ]
+            #d1.neighs = [d for d in neighs if d1.ra > d.ra and (d.zqso+d1.zqso)/2. >= zqso_pair_min and (d.zqso+d1.zqso)/2. < zqso_pair_max ]
+            d1.neighs = [d for d in neighs if d1.ra > d.ra and (10**(d.ll[-1]- sp.log10(lambda_abs)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. >= zqso_pair_min+1 and (10**(d.ll[-1]- sp.log10(lambda_abs)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. < zqso_pair_max+1 ]
 
 def fill_neighs_x_correlation(pix):
     for ipix in pix:

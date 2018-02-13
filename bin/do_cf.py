@@ -116,6 +116,8 @@ if __name__ == '__main__':
     lambda_abs  = constants.absorber_IGM[args.lambda_abs]
     if (args.lambda_abs2) : lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
     else: lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
+    cf.lambda_abs = lambda_abs 
+    cf.lambda_abs2 = lambda_abs2
 
     data = {}
     ndata = 0
