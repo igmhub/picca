@@ -98,7 +98,3 @@ if __name__ == '__main__':
     h = fitsio.FITS(args.out,'rw',clobber=True)
     h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'])
     h.close()
-    
-
-
-
