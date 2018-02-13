@@ -48,9 +48,9 @@ class data:
 
         ## select data within cuts
         mask = (rp > rp_min) & (rp < rp_max)
-        mask = mask & (rt > rt_min) & (rt < rt_max)
-        mask = mask & (r > r_min) & (r < r_max)
-        mask = mask & (mu > mu_min) & (mu < mu_max)
+        mask &= (rt > rt_min) & (rt < rt_max)
+        mask &= (r > r_min) & (r < r_max)
+        mask &= (mu > mu_min) & (mu < mu_max)
 
         nmask = mask.sum()
         self.mask = mask

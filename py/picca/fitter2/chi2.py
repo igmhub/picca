@@ -1,10 +1,10 @@
 from __future__ import print_function
-import numpy as np
+import scipy as sp
 import iminuit
 import time
 import h5py
-from numpy.linalg import cholesky
-from numpy import random
+from scipy.linalg import cholesky
+from scipy import random
 
 def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
     return d.chi2(k, pk, pksb, dic)
@@ -12,7 +12,7 @@ def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
 class chi2:
     def __init__(self,dic_init):
         self.data = dic_init['data sets']
-        self.par_names = np.unique([name for d in self.data for name in d.par_names])
+        self.par_names = sp.unique([name for d in self.data for name in d.par_names])
         self.outfile = dic_init['outfile']
 
         self.k = dic_init['fiducial']['k']
@@ -28,7 +28,7 @@ class chi2:
         for d in self.data:
             chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,dic)
 
-        for p in np.sort(dic.keys()):
+        for p in sp.sort(dic.keys()):
             print(p+" "+str(dic[p]))
         
         print("Chi2: "+str(chi2))
@@ -131,7 +131,7 @@ class chi2:
         if hasattr(self, "fast_mc"):
             g = f.create_group("fast mc")
             for p in self.fast_mc:
-                vals = np.array(self.fast_mc[p])
+                vals = sp.array(self.fast_mc[p])
                 d = g.create_dataset("{}/values".format(p), vals[:,0].shape, dtype="f")
                 d[...] = vals[:,0]
                 d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
