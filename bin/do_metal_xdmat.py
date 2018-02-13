@@ -15,6 +15,7 @@ from scipy.interpolate import interp1d
 from picca import constants
 from picca import xcf
 from picca import io
+from picca import utils
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
@@ -137,7 +138,7 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     xcf.objs = objs
 
-    xcf.angmax = 2*sp.arcsin(xcf.rt_max/(cosmo.r_comoving(zmin_pix)+cosmo.r_comoving(zmin_obj)))
+    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,z_min_pix,zmin_obj)
 
     xcf.counter = Value('i',0)
     xcf.lock = Lock()

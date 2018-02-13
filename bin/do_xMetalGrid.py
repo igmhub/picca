@@ -13,6 +13,7 @@ from picca import xcf
 from picca.data import delta
 from picca.data import qso
 from picca import io
+from picca import utils
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
@@ -156,7 +157,7 @@ if __name__ == '__main__':
     print("reading qsos")
 
     if (ra.size!=0):
-        xcf.angmax = 2.*sp.arcsin( xcf.rt_max/(cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(sp.amin(zqso))) )
+        xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,z_min_pix,sp.amin(zqso))
     else:
         xcf.angmax = 0.
 
