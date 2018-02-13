@@ -157,5 +157,5 @@ if __name__ == '__main__':
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
     out.write([hep,wes,nbs],names=['HEALPID','WE','NB'],header=head2)
     out.close()
-
     
+    sys.stderr.write("\nFinished\n")

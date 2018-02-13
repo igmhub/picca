@@ -35,7 +35,7 @@ if __name__ == '__main__':
     nb = sp.array(h[1]['NB'][:])
     we = sp.array(h[2]['WE'][:]).sum(axis=0)
     dd = we
-    dd /= nbObj*(nbObj-1)/2.
+    dd /= nbObj*nbObj/2.
     h.close()
     dm = sp.eye(dd.size)
     co = sp.eye(dd.size)
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         we = sp.array(h[2]['WE'][:]).sum(axis=0)
         if tc in ['RR','xRR']:
             nbObj = head['NOBJ']
-            we /= nbObj*(nbObj-1)/2.
+            we /= nbObj*nbObj/2.
         else:
             nbObj  = head['NOBJ']
             nbObj2 = head['NOBJ2']
@@ -83,9 +83,6 @@ if __name__ == '__main__':
     if type_corr=='DD':
         dr = rand['DR']['data']
         rr = rand['RR']['data']
-        print dd[dd!=0.]
-        print dr[dd!=0.]
-        print rr[dd!=0.]
         w = rr>0.
         da = sp.zeros_like(dd)
         da[w] = (dd[w]+rr[w]-2*dr[w])/rr[w]
@@ -96,8 +93,6 @@ if __name__ == '__main__':
         w = rr>0.
         da = sp.zeros_like(dd)
         da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
-
-    print da[da!=0.]
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)
