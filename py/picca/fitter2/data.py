@@ -1,7 +1,7 @@
 import fitsio
 from functools import partial
-import numpy as np
-from numpy import linalg
+import scipy as sp
+from scipy import linalg
 from . import utils
 from . import pk
 from . import xi
@@ -31,7 +31,7 @@ class data:
 
         h.close()
 
-        r = np.sqrt(rp**2+rt**2)
+        r = sp.sqrt(rp**2+rt**2)
         mu = rp/r
 
         rp_min = dic_init['cuts']['rp-min']
@@ -55,7 +55,7 @@ class data:
         nmask = mask.sum()
         self.mask = mask
         self.da = da
-        self.da_cut = np.zeros(mask.sum())
+        self.da_cut = sp.zeros(mask.sum())
         self.da_cut[:] = da[mask]
         self.co = co
         ico = co[:,mask]
@@ -176,7 +176,7 @@ class data:
             rt = self.rt_met[(tracer1, tracer2)]
             z = self.z_met[(tracer1, tracer2)]
             dm_met = self.dm_met[(tracer1, tracer2)]
-            r = np.sqrt(rp**2+rt**2)
+            r = sp.sqrt(rp**2+rt**2)
             w = r == 0
             r[w] = 1e-6
             mu = rp/r
