@@ -28,15 +28,17 @@ if __name__ == '__main__':
         print("ERROR: DD-file is not data-data : "+type_corr)
         h.close()
         sys.exit()
+    nbObj = head['NOBJ']
     rp = sp.array(h[1]['RP'][:])
     rt = sp.array(h[1]['RT'][:])
     z  = sp.array(h[1]['Z'][:])
     nb = sp.array(h[1]['NB'][:])
     we = sp.array(h[2]['WE'][:]).sum(axis=0)
     dd = we
+    dd /= nbObj*(nbObj-1)/2.
     h.close()
-    dm = sp.eye(we.size)
-    co = sp.eye(we.size)
+    dm = sp.eye(dd.size)
+    co = sp.eye(dd.size)
 
     ### DR and RR
     rand = {}
@@ -50,18 +52,29 @@ if __name__ == '__main__':
     fi = sorted(glob.glob(args.RR_DR_dir+"/*.fits.gz"))
     for f in fi:
         h = fitsio.FITS(f)
+
         head = h[1].read_header()
         tc = head['TYPECORR'].replace(' ','')
         if not tc in list(rand.keys()):
             print("WARNING: TYPECORR not data-random or random-random : "+tc+' : '+f)
             h.close()
             continue
+
         we = sp.array(h[2]['WE'][:]).sum(axis=0)
+        if tc in ['RR','xRR']:
+            nbObj = head['NOBJ']
+            we /= nbObj*(nbObj-1)/2.
+        else:
+            nbObj  = head['NOBJ']
+            nbObj2 = head['NOBJ2']
+            we /= nbObj*nbObj2
+
         if rand[tc]['nb']==0:
             rand[tc]['data'] = we.copy()
         else:
             rand[tc]['data'] += we.copy()
         rand[tc]['nb'] += 1
+
         h.close()
     for tc in list(rand.keys()):
         rand[tc]['data'] /= rand[tc]['nb']
@@ -87,9 +100,9 @@ if __name__ == '__main__':
     print da[da!=0.]
 
     ### Save
-    #h = fitsio.FITS(args.out,'rw',clobber=True)
-    #h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'])
-    #h.close()
+    h = fitsio.FITS(args.out,'rw',clobber=True)
+    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'])
+    h.close()
     
 
 
