@@ -1,4 +1,4 @@
-import numpy as np
+import scipy as sp
 from .utils import Pk2Xi, bias_beta
 
 def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
@@ -7,10 +7,10 @@ def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pa
     ap = pars["ap"]
     at = pars["at"]
     rp = r*mu 
-    rt = r*np.sqrt(1-mu**2)
+    rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
-    ar = np.sqrt(arp**2+art**2)
+    ar = sp.sqrt(arp**2+art**2)
     amu = arp/ar
 
     xi_full = Pk2Xi(ar, amu, k, pk_full, ell_max = ell_max)
@@ -36,7 +36,7 @@ def cache_xi_drp(function):
         pair = (name, tracer1, tracer2, hash(t))
 
         recalc = True
-        if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
+        if pair in cache and sp.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
             recalc = False
         
         if not recalc:
@@ -55,10 +55,10 @@ def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, 
     ap = pars["ap"]
     at = pars["at"]
     rp = r*mu + pars["drp"]
-    rt = r*np.sqrt(1-mu**2)
+    rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
-    ar = np.sqrt(arp**2+art**2)
+    ar = sp.sqrt(arp**2+art**2)
     amu = arp/ar
 
     xi_full = Pk2Xi(ar, amu, k, pk_full, ell_max = ell_max)
@@ -86,7 +86,7 @@ def cache_kaiser(function):
         pair = (name, tracer1, tracer2, hash(t))
 
         recalc = True
-        if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
+        if pair in cache and sp.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
             recalc = False
         
         if not recalc:
