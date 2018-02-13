@@ -120,8 +120,8 @@ class chi2:
         ndata = sum(ndata)
         g.attrs['ndata'] = ndata
         g.attrs['npar'] = len(self.best_fit.list_of_vary_param())
-        g.attrs['list of free pars'] = self.best_fit.list_of_vary_param()
-        g.attrs['list of fixed pars'] = self.best_fit.list_of_fixed_param()
+        g.attrs['list of free pars'] = [a.encode('utf8') for a in self.best_fit.list_of_vary_param()]
+        g.attrs['list of fixed pars'] = [a.encode('utf8') for a in self.best_fit.list_of_fixed_param()]
 
         for d in self.data:
             g = f.create_group(d.name)
