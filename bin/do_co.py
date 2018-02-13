@@ -8,6 +8,7 @@ import sys
 from picca import constants
 from picca import co
 from picca import io
+from picca import utils
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
@@ -102,20 +103,14 @@ if __name__ == '__main__':
     sys.stderr.write("\n")
     co.objs = objs
     co.ndata = len([o1 for p in co.objs for o1 in co.objs[p]])
-    if 2.*cosmo.r_comoving(zmin_obj)<co.rt_max:
-        co.angmax = sp.pi
-    else:
-        co.angmax = 2.*sp.arcsin(co.rt_max/(2.*cosmo.r_comoving(zmin_obj)))
+    co.angmax = utils.compute_ang_max(cosmo,co.rt_max,zmin_obj)
     
     ### Read objects 2
     if co.x_correlation:
         objs2,zmin_obj2 = io.read_objects(args.drq2, args.nside, args.z_min_obj, args.z_max_obj, args.z_evol_obj2, args.z_ref,cosmo)
         sys.stderr.write("\n")
         co.objs2 = objs2
-        if cosmo.r_comoving(zmin_obj)+cosmo.r_comoving(zmin_obj2)<co.rt_max:
-            co.angmax = sp.pi
-        else:
-            co.angmax = 2.*sp.arcsin(co.rt_max/( cosmo.r_comoving(zmin_obj)+cosmo.r_comoving(zmin_obj2) ))
+        co.angmax = utils.compute_ang_max(cosmo,co.rt_max,zmin_obj,zmin_obj2)
 
     co.counter = Value('i',0)
 
