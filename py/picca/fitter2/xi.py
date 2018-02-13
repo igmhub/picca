@@ -1,5 +1,5 @@
 import numpy as np
-from utils import Pk2Xi, bias_beta
+from .utils import Pk2Xi, bias_beta
 
 def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)

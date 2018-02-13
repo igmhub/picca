@@ -1,5 +1,5 @@
 import numpy as np
-import utils
+from . import utils
 
 muk = utils.muk
 bias_beta = utils.bias_beta

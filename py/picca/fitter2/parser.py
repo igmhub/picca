@@ -1,6 +1,12 @@
 from __future__ import print_function
 
-import ConfigParser
+import sys
+if (sys.version_info > (3, 0)):
+    # Python 3 code in this block
+    import configparser as ConfigParser
+else:
+    import ConfigParser 
+
 import fitsio
 from . import data
 

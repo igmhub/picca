@@ -28,7 +28,7 @@ class chi2:
         for d in self.data:
             chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,dic)
 
-        for p in sp.sort(dic.keys()):
+        for p in sorted(dic.keys()):
             print(p+" "+str(dic[p]))
         
         print("Chi2: "+str(chi2))
