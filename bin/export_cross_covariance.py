@@ -4,6 +4,7 @@ import scipy as sp
 import scipy.linalg
 import fitsio
 import argparse
+import sys
 
 from picca.utils import cov
 
@@ -26,11 +27,18 @@ if __name__ == '__main__':
     ### Read data
     for i,p in enumerate([args.data1,args.data2]):
         h = fitsio.FITS(p)
+        head = h[1].read_header()
+        nside = head['NSIDE']
         da  = sp.array(h[2]['DA'][:])
         we  = sp.array(h[2]['WE'][:])
         hep = sp.array(h[2]['HEALPID'][:])
-        data[i] = {'DA':da, 'WE':we, 'HEALPID':hep}
+        data[i] = {'DA':da, 'WE':we, 'HEALPID':hep, 'NSIDE':nside}
         h.close()
+
+    ### exit if NSIDE1!=NSIDE2
+    if data[0]['NSIDE']!=data[1]['NSIDE']:
+        print("ERROR: NSIDE are different: {} != {}".format(data[0]['NSIDE'],data[1]['NSIDE']))
+        sys.exit()
 
     ### Add unshared healpix as empty data
     for i in sorted(list(data.keys())):
