@@ -1,3 +1,4 @@
+from __future__ import print_function
 import fitsio
 import scipy as sp
 import healpy
@@ -433,7 +434,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
 def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=None, best_obs=False):
     pix_data={}
     unique_plates = sp.unique(plate)
-    print "reading {} plates".format(len(unique_plates))
+    print("reading {} plates".format(len(unique_plates)))
 
     for p in unique_plates:
         wplate = plate==p
@@ -449,8 +450,6 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
                 print("INFO: can't find spplate {} {}".format(p,m))
                 if log is not None:
                     log.write("INFO: can't find spplate {} {}\n".format(p,m))
-                print mjd_in_plate
-                print mjds_found
 
         for spplate in spplates:
             h = fitsio.FITS(spplate)
@@ -483,7 +482,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
                 if log is not None:
                     log.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
 
-            print "INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), os.path.basename(spplate), (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid))
+            print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), os.path.basename(spplate), (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid)))
             h.close()
 
     data = list(pix_data.values())
