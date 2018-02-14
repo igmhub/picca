@@ -13,6 +13,8 @@ ntm= None
 npm= None
 rp_max = None
 rp_min = None 
+z_cut_max = None
+z_cut_min = None 
 rt_max = None
 angmax = None
 nside = None
@@ -48,7 +50,7 @@ def fill_neighs(pix):
             ang = d1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.ra > d.ra]
+            d1.neighs = [d for d in neighs if d1.ra > d.ra and (10**(d.ll[-1]- sp.log10(lambda_abs)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. >= z_cut_min+1 and (10**(d.ll[-1]- sp.log10(lambda_abs)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. < z_cut_max+1 ]
 
 def fill_neighs_x_correlation(pix):
     for ipix in pix:
@@ -59,7 +61,7 @@ def fill_neighs_x_correlation(pix):
             ang = d1^neighs
             w = (ang<angmax)
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.thid != d.thid]
+            d1.neighs = [d for d in neighs if d1.thid != d.thid and (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. >= z_cut_min+1 and (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. < z_cut_max+1 ]
 
 def cf(pix):
     xi = sp.zeros(np*nt)

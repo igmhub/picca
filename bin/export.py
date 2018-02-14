@@ -2,8 +2,9 @@
 
 import fitsio
 import scipy as sp
-
+import scipy.linalg
 import argparse
+
 from picca.utils import smooth_cov
 
 
@@ -22,7 +23,7 @@ if __name__ == '__main__':
     parser.add_argument('--cov', type = str, default = None, required=False,
                         help = 'covariance matrix file (if not provided it will be calculated by subsampling)')
 
-    
+
     args = parser.parse_args()
 
     h = fitsio.FITS(args.data)
@@ -30,10 +31,27 @@ if __name__ == '__main__':
     rp = sp.array(h[1]['RP'][:])
     rt = sp.array(h[1]['RT'][:])
     z  = sp.array(h[1]['Z'][:])
-    nb  = sp.array(h[1]['NB'][:])
+    nb = sp.array(h[1]['NB'][:])
     da = sp.array(h[2]['DA'][:])
     we = sp.array(h[2]['WE'][:])
-    co = smooth_cov(da,we,rp,rt)
+    hep = sp.array(h[2]['HEALPID'][:])
+
+    if args.cov is not None:
+        hh = fitsio.FITS(args.cov)
+        co = hh[1]['CO'][:]
+        hh.close()
+    else:
+        head = h[1].read_header()
+        nt = head['NT']
+        np = head['NP']
+        rt_min = 0.
+        rt_max = head['RTMAX']
+        rp_min = head['RPMIN']
+        rp_max = head['RPMAX']
+        binSizeP = (rp_max-rp_min) / np
+        binSizeT = (rt_max-rt_min) / nt
+        co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
+
     da = (da*we).sum(axis=0)
     we = we.sum(axis=0)
     w = we>0
@@ -41,19 +59,19 @@ if __name__ == '__main__':
 
     h.close()
 
+    try:
+        scipy.linalg.cholesky(co)
+    except:
+        print("Warning: Matrix is not positive definite")
+
     if args.dmat is not None:
         h = fitsio.FITS(args.dmat)
         dm = h[1]['DM'][:]
+        h.close()
     else:
         dm = sp.eye(len(da))
-
-    h.close()
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
 
     h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'])
     h.close()
-    
-
-
-
