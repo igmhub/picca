@@ -189,7 +189,7 @@ if __name__ == '__main__':
     data,ndata,healpy_nside,healpy_pix_ordering = io.read_data(args.in_dir, args.drq, args.mode,\
         zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
         keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
-        best_obs=args.best_obs, single_exp=args.single_exp)
+        best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format )
    
     ### Get the lines to veto
     usr_mask_obs    = None
