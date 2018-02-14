@@ -70,6 +70,12 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
+    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
+                        help = 'use only pairs of forests with the mean redshift of the last absorbers higher than z-cut-min')
+
+    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
+                        help = 'use only pairs of forests with the mean redshift of the last absorbers smaller than z-cut-max')
+
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
@@ -96,6 +102,8 @@ if __name__ == '__main__':
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
     cf.rp_min = args.rp_min 
+    cf.z_cut_max = args.z_cut_max
+    cf.z_cut_min = args.z_cut_min 
     cf.np = args.np
     cf.nt = args.nt
     cf.nside = args.nside
@@ -108,6 +116,8 @@ if __name__ == '__main__':
     lambda_abs  = constants.absorber_IGM[args.lambda_abs]
     if (args.lambda_abs2) : lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
     else: lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
+    cf.lambda_abs = lambda_abs 
+    cf.lambda_abs2 = lambda_abs2
 
     data = {}
     ndata = 0
@@ -250,8 +260,11 @@ if __name__ == '__main__':
     head['RPMIN']=cf.rp_min
     head['RPMAX']=cf.rp_max
     head['RTMAX']=cf.rt_max
+    head['Z_CUT_MIN']=cf.z_cut_min
+    head['Z_CUT_MAX']=cf.z_cut_max
     head['NT']=cf.nt
     head['NP']=cf.np
+    head['NSIDE']=cf.nside
 
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
     ## use the default scheme in healpy => RING

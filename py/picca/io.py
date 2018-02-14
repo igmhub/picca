@@ -1,9 +1,11 @@
+from __future__ import print_function
 import fitsio
 import scipy as sp
 import healpy
 import glob
 import sys
 import time
+import os.path
 
 from picca.data import forest
 from picca.data import delta
@@ -143,7 +145,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         nside = h[1].read_header()['NSIDE']
         h.close()
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
-    elif mode in ["spec","corrected-spec","spcframe","spec-mock-1D"]:
+    elif mode in ["spec","corrected-spec","spcframe","spplate","spec-mock-1D"]:
         nside = 256
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
         mobj = sp.bincount(pixs).sum()/len(sp.unique(pixs))
@@ -183,6 +185,20 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             data[p].append(pix_data[i])
 
         return data, len(pixs),nside,"RING"
+
+    if mode=="spplate":
+        pix_data = read_from_spplate(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, log=log, best_obs=best_obs)
+        ra = [d.ra for d in pix_data]
+        ra = sp.array(ra)
+        dec = [d.dec for d in pix_data]
+        dec = sp.array(dec)
+        pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
+        for i, p in enumerate(pixs):
+            if p not in data:
+                data[p] = []
+            data[p].append(pix_data[i])
+
+        return data, len(pixs), nside, "RING"
 
     upix = sp.unique(pixs)
     for i, pix in enumerate(upix):
@@ -333,7 +349,6 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
         if best_obs:
             the_mjd = sp.unique(mjd[wplate])
             print(the_mjd)
-            #assert len(the_mjd)==1
             m = the_mjd[0]
             plate_mjd = "{}-{}".format(p, m)
 
@@ -393,13 +408,6 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
             if wfib.sum()==0:
                 continue
 
-            plate_fibs = fid[wfib]
-
-            ## collect the relevant flux, ivar and ll in a list:
-            flux = []
-            ivar = []
-            llam = []
-
             spcframe = fitsio.FITS(in_dir+"/{}/spCFrame-{}.fits".format(p, exp))
 
             flux = spcframe[0].read()
@@ -419,6 +427,63 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
 
             print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), exp, (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid)))
             spcframe.close()
+
+    data = list(pix_data.values())
+    return data
+
+def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=None, best_obs=False):
+    pix_data={}
+    unique_plates = sp.unique(plate)
+    print("reading {} plates".format(len(unique_plates)))
+
+    for p in unique_plates:
+        wplate = plate==p
+        plate_mjd = "{}-*".format(p)
+        mjd_in_plate = sp.unique(mjd[wplate])
+
+        spplates = glob.glob(in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd))
+
+        mjds_found = sp.array([spfile.split("-")[-1].replace(".fits",'') for spfile in spplates]).astype(int)
+        wmissing = ~sp.in1d(mjd_in_plate, mjds_found)
+        if wmissing.sum()>0:
+            for m in mjd_in_plate[wmissing]:
+                print("INFO: can't find spplate {} {}".format(p,m))
+                if log is not None:
+                    log.write("INFO: can't find spplate {} {}\n".format(p,m))
+
+        for spplate in spplates:
+            h = fitsio.FITS(spplate)
+            head0 = h[0].read_header()
+            MJD = head0["MJD"]
+            
+            t0 = time.time()
+
+            wfib = wplate
+            if best_obs:
+                ## select only the objects which have specified mjd within this plate
+                wmjd = mjd == MJD
+                wfib = wplate & wmjd
+
+            coeff0 = head0["COEFF0"]
+            coeff1 = head0["COEFF1"]
+
+            flux = h[0].read()
+            ivar = h[1].read()*(h[2].read()==0)
+            llam = coeff0 + coeff1*sp.arange(flux.shape[1])
+            
+            ## now convert all those fluxes into forest objects
+            for (t, r, d, z, p, m, f) in zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib]):
+                index = f-1
+                d = forest(llam,flux[index],ivar[index], t, r, d, z, p, m, f, order)
+                if t in pix_data:
+                    pix_data[t] += d
+                else:
+                    pix_data[t] = d
+                if log is not None:
+                    log.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
+
+            print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), os.path.basename(spplate), (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid)))
+            h.close()
 
     data = list(pix_data.values())
     return data

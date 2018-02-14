@@ -2,8 +2,8 @@ import scipy as sp
 import sys
 import fitsio
 
-def smooth_cov(da,we,rp,rt,drt=4,drp=4):
-    
+def cov(da,we):
+
     npix = da.shape[0]
     nda = da.shape[1]
     co = sp.zeros([nda,nda])
@@ -22,6 +22,13 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     swe = we.sum(axis=0)
 
     co/=swe*swe[:,None]
+
+    return co
+def smooth_cov(da,we,rp,rt,drt=4,drp=4):
+    
+    co = cov(da,we)
+
+    nda = da.shape[1]
     var = sp.diagonal(co)
 
     cor = co/sp.sqrt(var*var[:,None])
