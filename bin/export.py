@@ -4,6 +4,7 @@ import fitsio
 import scipy as sp
 import scipy.linalg
 import argparse
+import sys
 
 from picca.utils import smooth_cov
 
@@ -50,6 +51,9 @@ if __name__ == '__main__':
         rp_max = head['RPMAX']
         binSizeP = (rp_max-rp_min) / np
         binSizeT = (rt_max-rt_min) / nt
+        if sp.any(we.sum(axis=0)==0.):
+            print('ERROR: data has some empty bins, impossible to smooth')
+            sys.exit()
         co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
 
     da = (da*we).sum(axis=0)
