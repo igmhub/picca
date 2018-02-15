@@ -53,6 +53,9 @@ class TestCor(unittest.TestCase):
         self.send_xdmat()
         self.send_metal_xdmat()
 
+        self.send_delta_Pk1D()
+        self.send_Pk1D()
+
         if self._test:
             self.remove_folder()
 
@@ -64,8 +67,9 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         lst_fold = ["/Products/","/Products/Spectra/",
-        "/Products/Delta_LYA/","/Products/Delta_LYA/Delta/",
-        "/Products/Delta_LYA/Log/","/Products/Correlations/",
+        "/Products/Delta_LYA/","/Products/Delta_LYA/Delta/","/Products/Delta_LYA/Log/",
+        "/Products/Delta_Pk1D/","/Products/Delta_Pk1D/Delta/","/Products/Delta_Pk1D/Log/",
+        "/Products/Pk1D/","/Products/Correlations/",
         ]
 
         for fold in lst_fold:
@@ -230,6 +234,53 @@ class TestCor(unittest.TestCase):
             self.compare_fits(path1,path2,"do_deltas.py")
 
         return
+
+
+    def send_delta_Pk1D(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_deltas.py"
+        cmd += " --in-dir "          + self._branchFiles+"/Products/Spectra/"
+        cmd += " --drq "             + self._branchFiles+"/Products/cat.fits"
+        cmd += " --out-dir "         + self._branchFiles+"/Products/Delta_Pk1D/Delta/"
+        cmd += " --iter-out-prefix " + self._branchFiles+"/Products/Delta_Pk1D/Log/delta_attributes"
+        cmd += " --log "             + self._branchFiles+"/Products/Delta_Pk1D/Log/input.log"
+        cmd += " --delta-format Pk1D --order 0 --use-constant-weight" 
+        cmd += " --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180" 
+        cmd += " --nproc 1"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/delta_attributes_Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
+            self.compare_fits(path1,path2,"do_deltas.py")
+
+            path1 = self._masterFiles + "/delta_Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-337.fits.gz"
+            self.compare_fits(path1,path2,"do_deltas.py")
+
+        return
+
+    def send_Pk1D(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_Pk1D.py"  
+        cmd += " --in-dir "          + self._masterFiles + "/delta_Pk1D/"
+        cmd += " --out-dir "         + self._branchFiles+"/Products/Pk1D/"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Pk1D/Pk1D-0.fits.gz"
+            self.compare_fits(path1,path2,"do_deltas.py")
+
+        return
+
+    
     def send_cf1d(self):
 
         print("\n")

@@ -3,10 +3,10 @@ from picca import constants
 import pyfftw
 
 
-def split_forest(nb_part,dll,ll,de,diff,iv):
+def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
 
-    ll_limit=[ll[0]]
-    nb_bin= len(ll)/nb_part
+    ll_limit=[ll[first_pixel]]
+    nb_bin= (len(ll)-first_pixel)/nb_part
     
     m_z_arr = []
     ll_arr = []
@@ -20,10 +20,9 @@ def split_forest(nb_part,dll,ll,de,diff,iv):
     iv_c = iv.copy()
 
     for p in range(1,nb_part) :
-        ll_limit.append(ll[nb_bin*p])
+        ll_limit.append(ll[nb_bin*p+first_pixel])
         
     ll_limit.append(ll[len(ll)-1]+0.1*dll)
-
 
     for p in range(nb_part) : 
 
