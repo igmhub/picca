@@ -122,6 +122,7 @@ if __name__ == '__main__':
     data = {}
     ndata = 0
     dels = []
+    fi = []
     if len(args.from_image)>0:
         for arg in args.from_image:
             if (len(arg)>8) and (arg[-8:]==".fits.gz"):

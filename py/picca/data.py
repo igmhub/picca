@@ -401,16 +401,22 @@ class delta(qso):
         for i in range(nspec):
             if i%100==0:
                 sys.stderr.write("\rreading deltas {} of {}".format(i,nspec))
-
+                
             delt = de[:,i]
             ivar = iv[:,i]
             w = ivar>0
             delt = delt[w]
             ivar = ivar[w]
             lam = ll[w]
-            order = 1
 
-            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt,order))
+            order = 1
+            diff = None
+            m_SNR = None
+            m_reso = None
+            dll = None
+            m_z = None
+
+            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt,order,iv,diff,m_SNR,m_reso,m_z,dll))
 
         h.close()
         return deltas
