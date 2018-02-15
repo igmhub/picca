@@ -1,4 +1,4 @@
 iminuit==1.2
 healpy==1.11
 fitsio==0.9.11
-numba==0.35.0+10.g143f70e90
+numba==0.35.0
