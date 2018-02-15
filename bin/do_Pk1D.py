@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-
+from __future__ import print_function 
 import fitsio
 import argparse
 import glob
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         ndata+=len(dels)
         if (args.out_format=='fits') :
             out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
-        print ' ndata = ',ndata
+        print ("\n ndata =  ",ndata)
 
         # loop over deltas
         for d in dels:
@@ -272,6 +272,6 @@ if __name__ == '__main__':
          storeFile.Write()
 
    
-    print "all done"
+    print ("all done ")
 
 
