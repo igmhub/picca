@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import sys
+import os.path
 if (sys.version_info > (3, 0)):
     # Python 3 code in this block
     import configparser as ConfigParser
@@ -17,10 +18,20 @@ def parse_chi2(filename):
 
     dic_init = {}
 
-    dic_init['data sets'] = [data.data(parse_data(d)) for d in cp.get('data sets','ini files').split()]
+    dic_init['data sets'] = [data.data(parse_data(os.path.expandvars(d))) for d in cp.get('data sets','ini files').split()]
 
     dic_init['fiducial'] = {}
-    h = fitsio.FITS(cp.get('fiducial','filename'))
+
+    if cp.has_section('fiducial'):
+        p = cp.get('fiducial','filename')
+        p = os.path.expandvars(p)
+        print('INFO: reading input Pk {}'.format(p))
+    else:
+        p = '$PICCA_BASE/py/picca/fitter2/models/PlanckDR12/PlanckDR12.fits'
+        p = os.path.expandvars(p)
+        print('INFO: reading default Pk {}'.format(p))
+
+    h = fitsio.FITS(p)
     dic_init['fiducial']['k'] = h[1]['K'][:]
     dic_init['fiducial']['pk'] = h[1]['PK'][:]
     dic_init['fiducial']['pksb'] = h[1]['PKSB'][:]
@@ -30,6 +41,15 @@ def parse_chi2(filename):
         dic_init['fast mc'] = {}
         for item, value in cp.items('fast mc'):
             dic_init['fast mc'][item] = int(value)
+
+    if cp.has_section('minos'):
+        dic_init['minos'] = {}
+        for item, value in cp.items('minos'):
+            if item=='sigma':
+                value = float(value)
+            elif item=='parameters':
+                value = value.split()
+            dic_init['minos'][item] = value
 
     return dic_init
 

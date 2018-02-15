@@ -79,4 +79,6 @@ def bias_beta(kwargs, tracer1, tracer2):
 
     return bias1, beta1, bias2, beta2
 
-    
+def convert_instance_to_dictionary(inst):
+    dic = dict((name, getattr(inst, name)) for name in dir(inst) if not name.startswith('__'))
+    return dic
