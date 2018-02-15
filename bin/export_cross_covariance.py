@@ -29,15 +29,21 @@ if __name__ == '__main__':
         h = fitsio.FITS(p)
         head = h[1].read_header()
         nside = head['NSIDE']
+        head = h[2].read_header()
+        scheme = head['HLPXSCHM']
         da  = sp.array(h[2]['DA'][:])
         we  = sp.array(h[2]['WE'][:])
         hep = sp.array(h[2]['HEALPID'][:])
-        data[i] = {'DA':da, 'WE':we, 'HEALPID':hep, 'NSIDE':nside}
+        data[i] = {'DA':da, 'WE':we, 'HEALPID':hep, 'NSIDE':nside, 'HLPXSCHM':scheme}
         h.close()
 
     ### exit if NSIDE1!=NSIDE2
     if data[0]['NSIDE']!=data[1]['NSIDE']:
         print("ERROR: NSIDE are different: {} != {}".format(data[0]['NSIDE'],data[1]['NSIDE']))
+        sys.exit()
+    ### exit if HLPXSCHM1!=HLPXSCHM2
+    if data[0]['HLPXSCHM']!=data[1]['HLPXSCHM']:
+        print("ERROR: HLPXSCHM are different: {} != {}".format(data[0]['HLPXSCHM'],data[1]['HLPXSCHM']))
         sys.exit()
 
     ### Add unshared healpix as empty data
