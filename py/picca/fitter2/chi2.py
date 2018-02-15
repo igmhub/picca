@@ -109,7 +109,7 @@ class chi2:
         if not hasattr(self,"minos_para"): return
 
         sigma = self.minos_para['sigma']
-        if '_all_' in self.minos_para['parameters']:
+        if 'all' in self.minos_para['parameters']:
             self.best_fit.minos(var=None,sigma=sigma)
         else:
             for var in self.minos_para['parameters']:
@@ -145,17 +145,16 @@ class chi2:
         g.attrs['list of free pars'] = self.best_fit.list_of_vary_param()
         g.attrs['list of fixed pars'] = self.best_fit.list_of_fixed_param()
 
+        ## write down all attributes of the minimum
+        dic_fmin = utils.convert_instance_to_dictionary(self.best_fit.get_fmin())
+        for item, value in dic_fmin.items():
+            g.attrs[item] = value
+
         for d in self.data:
             g = f.create_group(d.name)
             g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.best_fit.values)
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
             fit[...] = d.best_fit_model
-
-        ## write down all attributes of the minimum
-        g = f.create_group("minimum")
-        dic_fmin = utils.convert_instance_to_dictionary(self.best_fit.get_fmin())
-        for item, value in dic_fmin.items():
-            g.attrs[item] = value
 
         if hasattr(self, "fast_mc"):
             g = f.create_group("fast mc")
@@ -169,6 +168,7 @@ class chi2:
         ## write down all attributes of parameters minos was run over
         if hasattr(self, "minos_para"):
             g = f.create_group("minos")
+            g.attrs['sigma'] = self.minos_para['sigma']
             minos_results = self.best_fit.get_merrors()
             for par in list(minos_results.keys()):
                 subgrp = g.create_group(par)
