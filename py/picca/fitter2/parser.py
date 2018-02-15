@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import sys
+import scipy as sp
 if (sys.version_info > (3, 0)):
     # Python 3 code in this block
     import configparser as ConfigParser
@@ -100,6 +101,7 @@ def parse_chi2scan(items):
         dic['min']    = float(value[0])
         dic['max']    = float(value[1])
         dic['nb_bin'] = int(value[2])
+        dic['grid']   = sp.linspace(dic['min'],dic['max'],num=dic['nb_bin'],endpoint=True)
         dic_init[item] = dic
 
     return dic_init
