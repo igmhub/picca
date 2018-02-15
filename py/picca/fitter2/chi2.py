@@ -137,7 +137,6 @@ class chi2:
         for (p1, p2), cov in self.best_fit.covariance.items():
             g.attrs["cov[{}, {}]".format(p1,p2)] = cov
 
-        g.attrs['fval'] = self.best_fit.fval
         ndata = [d.mask.sum() for d in self.data]
         ndata = sum(ndata)
         g.attrs['ndata'] = ndata
