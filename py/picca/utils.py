@@ -8,7 +8,10 @@ def cov(da,we):
     nda = da.shape[1]
     co = sp.zeros([nda,nda])
 
-    mda = (da*we).sum(axis=0)/we.sum(axis=0)
+    mda = (da*we).sum(axis=0)
+    swe = we.sum(axis=0)
+    w = swe>0.
+    mda[w] /= swe[w]
 
     wda = we*(da-mda)
 
@@ -19,9 +22,9 @@ def cov(da,we):
         co += sp.outer(wda[ipix,:],wda[ipix,:])
     '''
     co = wda.T.dot(wda)
-    swe = we.sum(axis=0)
-
-    co/=swe*swe[:,None]
+    sswe = swe*swe[:,None]
+    w = sswe>0.
+    co[w] /= sswe[w]
 
     return co
 def smooth_cov(da,we,rp,rt,drt=4,drp=4):
