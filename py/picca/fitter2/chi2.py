@@ -105,6 +105,12 @@ class chi2:
             store_data_pars[d] = {'init':store_d_pars_init, 'error':store_d_par_error, 'fixed':store_d_par_fixed}
 
         ###
+        for p in self.dic_chi2scan.keys():
+            for d in self.data:
+                d.par_error['error_'+p] = 0.
+                d.par_fixed['fix_'+p] = True
+
+        ###
         def send_one_fit():
             try:
                 best_fit = self._minimize()
@@ -121,9 +127,6 @@ class chi2:
         ###
         if dim==1:
             par = self.dic_chi2scan.keys()[0]
-            for d in self.data:
-                d.par_error['error_'+par] = 0.
-                d.par_fixed['fix_'+par] = True
             for step in self.dic_chi2scan[par]['grid']:
                 for d in self.data:
                     d.pars_init[par] = step
@@ -131,11 +134,6 @@ class chi2:
         elif dim==2:
             par1  = self.dic_chi2scan.keys()[0]
             par2  = self.dic_chi2scan.keys()[1]
-            for d in self.data:
-                d.par_error['error_'+par1] = 0.
-                d.par_fixed['fix_'+par2] = True
-                d.par_error['error_'+par1] = 0.
-                d.par_fixed['fix_'+par2] = True
             for step1 in self.dic_chi2scan[par1]['grid']:
                 for step2 in self.dic_chi2scan[par2]['grid']:
                     for d in self.data:
