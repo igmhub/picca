@@ -42,6 +42,15 @@ def parse_chi2(filename):
         for item, value in cp.items('fast mc'):
             dic_init['fast mc'][item] = int(value)
 
+    if cp.has_section('minos'):
+        dic_init['minos'] = {}
+        for item, value in cp.items('minos'):
+            if item=='sigma':
+                value = float(value)
+            elif item=='parameters':
+                value = value.split()
+            dic_init['minos'][item] = value
+
     return dic_init
 
 def parse_data(filename):
