@@ -51,11 +51,8 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
-
-    parser.add_argument('--lambda-abs-name', type = str, default = 'LYA', required=False,
-                        help = 'name of the absorption transistion')
+    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
+                        help = 'name of the absorption in picca.constants')
 
     parser.add_argument('--obj-name', type = str, default = 'QSO', required=False,
                         help = 'name of the object tracer')
@@ -87,6 +84,12 @@ if __name__ == '__main__':
     parser.add_argument('--z-max-obj', type = float, default = None, required=False,
                         help = 'max redshift for object field')
 
+    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
+                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift higher than z-cut-min')
+
+    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
+                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift smaller than z-cut-min')
+
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
@@ -101,11 +104,14 @@ if __name__ == '__main__':
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
     xcf.rt_max = args.rt_max
+    xcf.z_cut_max = args.z_cut_max
+    xcf.z_cut_min = args.z_cut_min
     xcf.np = args.np
     xcf.nt = args.nt
     xcf.nside = args.nside
     xcf.zref = args.z_ref
-    xcf.lambda_abs = args.lambda_abs
+    lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    xcf.lambda_abs = lambda_abs
     xcf.rej = args.rej
 
     ## use a metal grid equal to the lya grid
@@ -115,7 +121,7 @@ if __name__ == '__main__':
     cosmo = constants.cosmo(args.fid_Om)
     xcf.cosmo=cosmo
 
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, args.lambda_abs,\
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs,\
                             args.z_evol_del, args.z_ref, cosmo,nspec=args.nspec)
 
     xcf.npix = len(dels)
@@ -202,6 +208,8 @@ if __name__ == '__main__':
     head['RPMAX']=xcf.rp_max
     head['RPMIN']=xcf.rp_min
     head['RTMAX']=xcf.rt_max
+    head['Z_CUT_MAX']=xcf.z_cut_max 
+    head['Z_CUT_MIN']=xcf.z_cut_min
     head['NT']=xcf.nt
     head['NP']=xcf.np
 

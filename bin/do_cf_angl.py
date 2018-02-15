@@ -53,11 +53,11 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
+    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
+                        help = 'name of the absorption in picca.constants')
 
-    parser.add_argument('--lambda-abs2', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption in forest 2 [Angstrom]')
+    parser.add_argument('--lambda-abs2', type = str, default = None, required=False,
+                        help = 'name of the 2nd absorption in picca.constants')
 
     parser.add_argument('--nside', type = int, default = 16, required=False,
                     help = 'healpix nside')
@@ -74,6 +74,12 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol2', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the 2nd delta field')
 
+    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
+                        help = 'use only pairs of forests with the mean redshift of the last absorbers higher than z-cut-min')
+
+    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
+                        help = 'use only pairs of forests with the mean redshift of the last absorbers smaller than z-cut-max')
+
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
@@ -83,14 +89,19 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
+    parser.add_argument('--no-same-wavelength-pairs', action="store_true", required=False,
+                    help = 'Reject pairs with same wavelength')
+
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()/2
+        args.nproc = cpu_count()//2
 
     cf.rp_min          = args.wr_min 
     cf.rp_max          = args.wr_max
     cf.rt_max          = args.ang_max
+    cf.z_cut_max       = args.z_cut_max
+    cf.z_cut_min       = args.z_cut_min
     cf.np              = args.np
     cf.nt              = args.nt
     cf.nside           = args.nside
@@ -99,9 +110,16 @@ if __name__ == '__main__':
     cf.x_correlation   = False
     cf.ang_correlation = True
     cf.angmax          = args.ang_max
+    cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
     
+    lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    if args.lambda_abs2: lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
+    else : lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
+    cf.lambda_abs  = lambda_abs 
+    cf.lambda_abs2 = lambda_abs2 
+
     ### Read data 1
-    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, args.lambda_abs,args.z_evol, args.z_ref, cosmo=None,nspec=args.nspec)
+    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs,args.z_evol, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
     cf.npix  = len(data)
     cf.data  = data
     cf.ndata = ndata
@@ -111,12 +129,12 @@ if __name__ == '__main__':
     ### Read data 2
     if args.in_dir2:
         cf.x_correlation = True
-        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, args.nside, args.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec)
+        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, args.nside, lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
         cf.data2  = data2
         cf.ndata2 = ndata2 
         sys.stderr.write("\n") 
         print("done, npix = {}".format(len(data2)))
-    elif args.lambda_abs != args.lambda_abs2:
+    elif lambda_abs != lambda_abs2:
         cf.x_correlation = True
         cf.data2  = copy.deepcopy(data)
         cf.ndata2 = copy.deepcopy(ndata)
@@ -165,8 +183,12 @@ if __name__ == '__main__':
     head['RPMIN']=cf.rp_min
     head['RPMAX']=cf.rp_max
     head['RTMAX']=cf.rt_max
+    head['Z_CUT_MIN']=cf.z_cut_min
+    head['Z_CUT_MAX']=cf.z_cut_max
+
     head['NT']=cf.nt
     head['NP']=cf.np
+    head['NSIDE']=cf.nside
 
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
     ## use the default scheme in healpy => RING

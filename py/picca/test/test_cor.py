@@ -47,6 +47,8 @@ class TestCor(unittest.TestCase):
         self.send_dmat_cross()
         self.send_metal_dmat_cross()
 
+        self.send_xcf_angl()
+
         self.send_xcf()
         self.send_xdmat()
         self.send_metal_xdmat()
@@ -202,7 +204,7 @@ class TestCor(unittest.TestCase):
                     diff = d_m-d_b
                     w = d_m!=0.
                     diff[w] = sp.absolute( diff[w]/d_m[w] )
-                    allclose = sp.allclose(d_m,d_b,rtol=1e-10, atol=1e-10)
+                    allclose = sp.allclose(d_m,d_b)
                     self.assertTrue(allclose,"{}: Header key is {}, maximum relative difference is {}".format(nameRun,k,diff.max()))
 
         return
@@ -218,7 +220,7 @@ class TestCor(unittest.TestCase):
         cmd += " --out-dir "         + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --iter-out-prefix " + self._branchFiles+"/Products/Delta_LYA/Log/delta_attributes"
         cmd += " --log "             + self._branchFiles+"/Products/Delta_LYA/Log/input.log"
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -235,7 +237,7 @@ class TestCor(unittest.TestCase):
         cmd  = " do_cf1d.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -253,7 +255,7 @@ class TestCor(unittest.TestCase):
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/cf1d_cross.fits.gz"
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -270,7 +272,7 @@ class TestCor(unittest.TestCase):
         cmd  = " do_cf_angl.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf_angl.fits.gz"
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -292,7 +294,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rt-max +60.0"
         cmd += " --np 15"
         cmd += " --nt 15"
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -315,7 +317,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 15"
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -339,7 +341,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 15"
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -362,7 +364,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rt-max +60.0"
         cmd += " --np 30"
         cmd += " --nt 15"
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -386,7 +388,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 30"
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -412,7 +414,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 30"
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -420,6 +422,24 @@ class TestCor(unittest.TestCase):
             path1 = self._masterFiles + "/metal_dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
             self.compare_fits(path1,path2,"do_metal_dmat.py")
+
+        return
+    def send_xcf_angl(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_xcf_angl.py"
+        cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
+        cmd += " --out "    + self._branchFiles+"/Products/Correlations/xcf_angl.fits.gz"
+        cmd += " --nproc 1"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/xcf_angl.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
+            self.compare_fits(path1,path2,"do_xcf_angl.py")
 
         return
     def send_xcf(self):
@@ -435,7 +455,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rt-max +60.0"
         cmd += " --np 30"
         cmd += " --nt 15"
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -459,7 +479,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 30"
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -484,7 +504,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 30"
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
-        cmd += " --nproc 4"
+        cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
         
         ### Test

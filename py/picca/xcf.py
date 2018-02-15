@@ -13,6 +13,8 @@ nt = None
 rp_max = None
 rp_min = None
 rt_max = None
+z_cut_max = None
+z_cut_min = None 
 angmax = None
 nside = None
 
@@ -28,18 +30,20 @@ rej = None
 lock = None
 
 cosmo=None
+ang_correlation = None
 
 def fill_neighs(pix):
     for ipix in pix:
         for d in dels[ipix]:
             npix = query_disc(nside,[d.xcart,d.ycart,d.zcart],angmax,inclusive = True)
             npix = [p for p in npix if p in objs]
-            neighs = [q for p in npix for q in objs[p] if q.thid != d.thid]
+            neighs = [q for p in npix for q in objs[p] if q.thid != d.thid and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. >= z_cut_min and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. < z_cut_max]
             ang = d^neighs
             w = ang<angmax
-            low_dist = ( d.r_comov[0]  - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) <rp_max
-            hig_dist = ( d.r_comov[-1] - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) >rp_min
-            w = w & low_dist & hig_dist
+            if not ang_correlation:
+                low_dist = ( d.r_comov[0]  - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) <rp_max
+                hig_dist = ( d.r_comov[-1] - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) >rp_min
+                w &= low_dist & hig_dist
             neighs = sp.array(neighs)[w]
             d.neighs = neighs
 
@@ -56,20 +60,24 @@ def xcf(pix):
             with lock:
                 counter.value +=1
             sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
-            ang = d^d.neighs
-            rc_qso = [q.r_comov for q in d.neighs]
-            zqso = [q.zqso for q in d.neighs]
-            we_qso = [q.we for q in d.neighs]
-
             if (d.neighs.size != 0):
-                cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
+                ang = d^d.neighs
+                zqso = [q.zqso for q in d.neighs]
+                we_qso = [q.we for q in d.neighs]
+                
+                if ang_correlation:
+                    l_qso = [10.**q.ll for q in d.neighs]
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
+                else:
+                    rc_qso = [q.r_comov for q in d.neighs]
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
             
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
                 rp[:len(crp)]+=crp
                 rt[:len(crt)]+=crt
                 z[:len(cz)]+=cz
-                nb[:len(cnb)]+=cnb
+                nb[:len(cnb)]+=cnb.astype(int)
             for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
 
@@ -81,8 +89,12 @@ def xcf(pix):
     return we,xi,rp,rt,z,nb
 @jit 
 def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
-    rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+    if ang_correlation:
+        rp = r1[:,None]/r2
+        rt = ang*sp.ones_like(rp)
+    else:
+        rp = (r1[:,None]-r2)*sp.cos(ang/2)
+        rt = (r1[:,None]+r2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2
 
     we = w1[:,None]*w2
@@ -104,7 +116,7 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     crp = sp.bincount(bins,weights=rp*we)
     crt = sp.bincount(bins,weights=rt*we)
     cz = sp.bincount(bins,weights=z*we)
-    cnb = sp.bincount(bins)
+    cnb = sp.bincount(bins,weights=(we>0.))
 
     return cw,cd,crp,crt,cz,cnb
 
@@ -135,7 +147,7 @@ def metal_grid(pix):
                 rp[:len(crp)] += crp
                 rt[:len(crt)] += crt
                 z[:len(cz)]   += cz
-                nb[:len(cnb)] += cnb
+                nb[:len(cnb)] += cnb.astype(int)
             for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
 
@@ -173,7 +185,7 @@ def fast_metal_grid(r1,w1,z2,r2,w2,ang,z1_metal,r1_metal):
     crp = sp.bincount(bins,weights=rp_metal*we)
     crt = sp.bincount(bins,weights=rt_metal*we)
     cz  = sp.bincount(bins,weights=z_metal*we)
-    cnb = sp.bincount(bins)
+    cnb = sp.bincount(bins,weights=(we>0.))
 
     return cw,crp,crt,cz,cnb
 

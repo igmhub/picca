@@ -52,8 +52,8 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM["LYA"], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
+    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
+                        help = 'name of the absorption in picca.constants')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -72,6 +72,12 @@ if __name__ == '__main__':
 
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
+
+    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
+                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift higher than z-cut-min')
+
+    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
+                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift smaller than z-cut-min')
 
     parser.add_argument('--z-evol-del', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
@@ -96,13 +102,19 @@ if __name__ == '__main__':
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
+    xcf.z_cut_max = args.z_cut_max
+    xcf.z_cut_min = args.z_cut_min
     xcf.rt_max = args.rt_max
     xcf.np = args.np
     xcf.nt = args.nt
     xcf.nside = args.nside
 
-    cosmo = constants.cosmo(args.fid_Om)
+    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
+    xcf.lambda_abs = lambda_abs 
 
+    cosmo = constants.cosmo(args.fid_Om)
+    
+    lambda_abs = constants.absorber_IGM[args.lambda_abs]
     z_min_pix = 1.e6
     z_max_pix = 0.
     bin_size_ll = 1.e6
@@ -127,7 +139,7 @@ if __name__ == '__main__':
                 dels[p]=[]
             dels[p].append(d)
 
-            z = 10**d.ll/args.lambda_abs-1.
+            z = 10**d.ll/lambda_abs-1.
             z_min_pix = sp.amin( sp.append([z_min_pix],z) )
             z_max_pix = sp.amax( sp.append([z_max_pix],z) )
             bin_size_ll = sp.amin( sp.append([bin_size_ll],[d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)])  )
@@ -146,8 +158,8 @@ if __name__ == '__main__':
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
-        forest.lmin  = sp.log10( (z_min_pix+1.)*args.lambda_abs )-bin_size_ll/2.
-        forest.lmax  = sp.log10( (z_max_pix+1.)*args.lambda_abs )+bin_size_ll/2.
+        forest.lmin  = sp.log10( (z_min_pix+1.)*lambda_abs )-bin_size_ll/2.
+        forest.lmax  = sp.log10( (z_max_pix+1.)*lambda_abs )+bin_size_ll/2.
         forest.dll   = bin_size_ll
         ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
@@ -205,7 +217,7 @@ if __name__ == '__main__':
             for pix in xcf.dels:
                 for i in range(len(xcf.dels[pix])-1,-1,-1):
                     d = xcf.dels[pix][i]
-                    z = 10**d.ll/args.lambda_abs-1.
+                    z = 10**d.ll/lambda_abs-1.
                     w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)
                     if (z[w].size==0):
                         del xcf.dels[pix][i]
@@ -253,8 +265,11 @@ if __name__ == '__main__':
     head['RPMIN']=xcf.rp_min
     head['RPMAX']=xcf.rp_max
     head['RTMAX']=xcf.rt_max
+    head['Z_CUT_MIN']=xcf.z_cut_min
+    head['Z_CUT_MAX']=xcf.z_cut_max
     head['NT']=xcf.nt
     head['NP']=xcf.np
+    head['NSIDE']=xcf.nside
 
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]

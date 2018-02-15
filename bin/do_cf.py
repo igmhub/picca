@@ -52,11 +52,11 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type = int, default = 50, required=False,
                         help = 'number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
+    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
+                        help = 'name of the absorption in picca.constants')
 
-    parser.add_argument('--lambda-abs2', type = float, default = constants.absorber_IGM['LYA'], required=False,
-                        help = 'wavelength of absorption in forest 2 [Angstrom]')
+    parser.add_argument('--lambda-abs2', type = str, default = None, required=False,
+                        help = 'name of the 2nd absorption in picca.constants')
 
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
@@ -69,6 +69,12 @@ if __name__ == '__main__':
 
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
+
+    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
+                        help = 'use only pairs of forests with the mean redshift of the last absorbers higher than z-cut-min')
+
+    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
+                        help = 'use only pairs of forests with the mean redshift of the last absorbers smaller than z-cut-max')
 
     parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
@@ -85,6 +91,9 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
+    parser.add_argument('--no-same-wavelength-pairs', action="store_true", required=False,
+                    help = 'Reject pairs with same wavelength')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -93,13 +102,22 @@ if __name__ == '__main__':
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
     cf.rp_min = args.rp_min 
+    cf.z_cut_max = args.z_cut_max
+    cf.z_cut_min = args.z_cut_min 
     cf.np = args.np
     cf.nt = args.nt
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
+    cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
 
     cosmo = constants.cosmo(args.fid_Om)
+
+    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
+    if (args.lambda_abs2) : lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
+    else: lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
+    cf.lambda_abs = lambda_abs 
+    cf.lambda_abs2 = lambda_abs2
 
     data = {}
     ndata = 0
@@ -148,14 +166,14 @@ if __name__ == '__main__':
                     if ndata2>args.nspec:break
         else:
             dels2 = delta.from_image(args.in_dir2)
-    elif args.lambda_abs != args.lambda_abs2:   
+    elif lambda_abs != lambda_abs2:   
         x_correlation=True
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
     cf.x_correlation = x_correlation 
-
-    z_min_pix = 10**dels[0].ll[0]/args.lambda_abs-1.
+    if x_correlation: print("doing xcorrelation")
+    z_min_pix = 10**dels[0].ll[0]/lambda_abs-1.
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(cf.nside,th,phi)
@@ -164,7 +182,7 @@ if __name__ == '__main__':
             data[p]=[]
         data[p].append(d)
 
-        z = 10**d.ll/args.lambda_abs-1.
+        z = 10**d.ll/lambda_abs-1.
         z_min_pix = sp.amin( sp.append([z_min_pix],z) )
         d.z = z
         d.r_comov = cosmo.r_comoving(z)
@@ -176,7 +194,7 @@ if __name__ == '__main__':
 
     if x_correlation: 
         cf.alpha2 = args.z_evol2
-        z_min_pix2 = 10**dels2[0].ll[0]/args.lambda_abs2-1.
+        z_min_pix2 = 10**dels2[0].ll[0]/lambda_abs2-1.
         phi2 = [d.ra for d in dels2]
         th2 = [sp.pi/2.-d.dec for d in dels2]
         pix2 = healpy.ang2pix(cf.nside,th2,phi2)
@@ -186,7 +204,7 @@ if __name__ == '__main__':
                 data2[p]=[]
             data2[p].append(d)
 
-            z = 10**d.ll/args.lambda_abs2-1.
+            z = 10**d.ll/lambda_abs2-1.
             z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
             d.z = z
             d.r_comov = cosmo.r_comoving(z)
@@ -242,8 +260,11 @@ if __name__ == '__main__':
     head['RPMIN']=cf.rp_min
     head['RPMAX']=cf.rp_max
     head['RTMAX']=cf.rt_max
+    head['Z_CUT_MIN']=cf.z_cut_min
+    head['Z_CUT_MAX']=cf.z_cut_max
     head['NT']=cf.nt
     head['NP']=cf.np
+    head['NSIDE']=cf.nside
 
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
     ## use the default scheme in healpy => RING

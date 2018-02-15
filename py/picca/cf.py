@@ -13,6 +13,8 @@ ntm= None
 npm= None
 rp_max = None
 rp_min = None 
+z_cut_max = None
+z_cut_min = None 
 rt_max = None
 angmax = None
 nside = None
@@ -37,6 +39,7 @@ rej = None
 lock = None
 x_correlation = None
 ang_correlation = None
+no_same_wavelength_pairs = None
 
 def fill_neighs(pix):
     for ipix in pix:
@@ -47,7 +50,7 @@ def fill_neighs(pix):
             ang = d1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.ra > d.ra]
+            d1.neighs = [d for d in neighs if d1.ra > d.ra and (10**(d.ll[-1]- sp.log10(lambda_abs)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. >= z_cut_min+1 and (10**(d.ll[-1]- sp.log10(lambda_abs)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. < z_cut_max+1 ]
 
 def fill_neighs_x_correlation(pix):
     for ipix in pix:
@@ -58,7 +61,7 @@ def fill_neighs_x_correlation(pix):
             ang = d1^neighs
             w = (ang<angmax)
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.thid != d.thid]
+            d1.neighs = [d for d in neighs if d1.thid != d.thid and (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. >= z_cut_min+1 and (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. < z_cut_max+1 ]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
@@ -87,7 +90,7 @@ def cf(pix):
                 rp[:len(crp)]+=crp
                 rt[:len(crp)]+=crt
                 z[:len(crp)]+=cz
-                nb[:len(cnb)]+=cnb
+                nb[:len(cnb)]+=cnb.astype(int)
             setattr(d1,"neighs",None)
 
     w = we>0
@@ -127,13 +130,20 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
         w = abs(rp)<(rp_max-rp_min)/np
         wd12[w] = 0
         w12[w]=0
+    if no_same_wavelength_pairs:
+        if ang_correlation:
+            w = rp==1.
+        else:
+            w = rp==0.
+        wd12[w] = 0.
+        w12[w] = 0.
 
     cd = sp.bincount(bins,weights=wd12)
     cw = sp.bincount(bins,weights=w12)
     crp = sp.bincount(bins,weights=rp*w12)
     crt = sp.bincount(bins,weights=rt*w12)
     cz = sp.bincount(bins,weights=z*w12)
-    cnb = sp.bincount(bins)
+    cnb = sp.bincount(bins,weights=(w12>0.))
 
     return cw,cd,crp,crt,cz,cnb
 
@@ -208,7 +218,12 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     if same_half_plate:
         wsame = abs(rp[w])<(rp_max-rp_min)/np
         we[wsame]=0
-        
+    if no_same_wavelength_pairs:
+        if ang_correlation:
+            wsame = rp==1.
+        else:
+            wsame = rp==0.
+        we[wsame] = 0.
             
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
@@ -304,6 +319,12 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 if same_half_plate:
                     wp = abs(rp) < (rp_max-rp_min)/np
                     w12[wp]=0
+                if no_same_wavelength_pairs:
+                    if ang_correlation:
+                        wp = rp==1.
+                    else:
+                        wp = rp==0.
+                    w12[wp] = 0.
                 bA = bt + nt*bp
                 wA = (bp<np) & (bt<nt) & (bp >=0)
                 c = sp.bincount(bA[wA],weights=w12[wA])
