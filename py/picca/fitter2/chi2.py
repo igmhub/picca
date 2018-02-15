@@ -22,6 +22,9 @@ class chi2:
         if 'fast mc' in dic_init:
             self.nfast_mc = dic_init['fast mc']['niterations']
 
+        if 'chi2 scan' in dic_init:
+            self.dic_chi2scan = dic_init['chi2 scan']
+
     def __call__(self, *pars):
         dic = {p:pars[i] for i,p in enumerate(self.par_names)}
         chi2 = 0
@@ -79,6 +82,68 @@ class chi2:
             self.best_fit.values['ap'] = ap
             self.best_fit.values['at'] = at
             self.best_fit.values['sigmaNL_per'] = snl
+
+    def chi2scan(self):
+        if not hasattr(self, "dic_chi2scan"): return
+
+        dim = len(self.dic_chi2scan)
+        self.dic_chi2scan['param'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
+        result = []
+
+        ### Set all parameters to the minimum
+        for d in self.data:
+            for name in d.pars_init.keys():
+                d.pars_init[name] = self.best_fit.values[name]
+            for name in d.par_error.keys():
+                d.par_error[name] = self.best_fit.errors[name]
+        
+        ### fit for the grid
+        def send_one_fit():
+            tresult = []
+            try:
+                best_fit = self._minimize()
+                chi2_result = best_fit.fval
+            except:
+                chi2_result = sp.nan
+            for p in sorted(best_fit.values):
+                tresult += [best_fit.values[p]]
+            tresult += [chi2_result]
+            return tresult
+
+        if dim==1:
+            par = self.dic_chi2scan.keys()[0]
+            dic = self.dic_chi2scan[par]
+            grid = sp.linspace(dic['min'],dic['max'],num=dic['nb_bin'],endpoint=True)
+            for d in self.data:
+                d.par_error[par] = 0.
+                d.par_fixed[par] = True
+            for step in grid:
+                for d in self.data:
+                    d.pars_init[par] = step
+                result += [send_one_fit()]
+        elif dim==2:
+            par1  = self.dic_chi2scan.keys()[0]
+            dic1  = self.dic_chi2scan[par]
+            grid1 = sp.linspace(dic1['min'],dic1['max'],num=dic1['nb_bin'],endpoint=True)
+            par2  = self.dic_chi2scan.keys()[1]
+            dic2  = self.dic_chi2scan[par]
+            grid2 = sp.linspace(dic2['min'],dic2['max'],num=dic2['nb_bin'],endpoint=True)
+            for d in self.data:
+                d.par_error[par1] = 0.
+                d.par_fixed[par2] = True
+                d.par_error[par1] = 0.
+                d.par_fixed[par2] = True
+            for step1 in grid1:
+                for step2 in grid2:
+                    for d in self.data:
+                        d.pars_init[par1] = step1
+                        d.pars_init[par2] = step2
+                    result += [send_one_fit()]
+
+        self.dic_chi2scan['result'] = sp.asarray(result)
+        
+        print(self.dic_chi2scan['param'])
+        print(self.dic_chi2scan['result'])
 
     def fastMC(self):
         nfast_mc = self.nfast_mc

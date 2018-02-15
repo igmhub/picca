@@ -31,6 +31,9 @@ def parse_chi2(filename):
         for item, value in cp.items('fast mc'):
             dic_init['fast mc'][item] = int(value)
 
+    if cp.has_section('chi2 scan'):
+        dic_init['chi2 scan'] = parse_chi2scan(cp.items('chi2 scan'))
+
     return dic_init
 
 def parse_data(filename):
@@ -83,5 +86,20 @@ def parse_data(filename):
             dic_init['metals']['in tracer1'] = dic_init['metals']['in tracer1'].split()
         if 'in tracer2' in dic_init['metals']:
             dic_init['metals']['in tracer2'] = dic_init['metals']['in tracer2'].split()
+
+    return dic_init
+
+def parse_chi2scan(items):
+
+    assert len(items)==1 or len(items)==2
+
+    dic_init = {}
+    for item, value in items:
+        dic = {}
+        value = value.split()
+        dic['min']    = float(value[0])
+        dic['max']    = float(value[1])
+        dic['nb_bin'] = int(value[2])
+        dic_init[item] = dic
 
     return dic_init

@@ -7,5 +7,6 @@ import sys
 dic_init = parser.parse_chi2(sys.argv[1])
 chi = chi2.chi2(dic_init)
 chi.minimize()
+chi.chi2scan()
 chi.fastMC()
 chi.export()
