@@ -4,6 +4,7 @@ python:
     - "3.6"
 
 install:
-    - pip install iminuit
-    - pip install healpy
-    - pip install fitsio
+    - pip install -r requirements.txt --user
+
+script: python py/picca/tests/test_cor.py
+
