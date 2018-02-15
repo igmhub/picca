@@ -4,7 +4,7 @@ python:
     - "3.6"
 
 install:
-    - pip install -r requirements.txt --user
+    - pip install -r requirements.txt 
 
 script: python py/picca/tests/test_cor.py
 
