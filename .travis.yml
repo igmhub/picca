@@ -5,7 +5,7 @@ python:
 
 install:
     - pip install -r requirements.txt 
-    - python igmhub/picca/setupy.py install
+    - python igmhub/picca/setup.py install
 
 script: python igmhub/picca/py/picca/test/test_cor.py
 
