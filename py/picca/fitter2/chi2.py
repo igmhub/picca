@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os.path
 import scipy as sp
 import iminuit
 import time
@@ -13,7 +14,7 @@ class chi2:
     def __init__(self,dic_init):
         self.data = dic_init['data sets']
         self.par_names = sp.unique([name for d in self.data for name in d.par_names])
-        self.outfile = dic_init['outfile']
+        self.outfile = os.path.expandvars(dic_init['outfile'])
 
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
@@ -119,8 +120,8 @@ class chi2:
         ndata = sum(ndata)
         g.attrs['ndata'] = ndata
         g.attrs['npar'] = len(self.best_fit.list_of_vary_param())
-        g.attrs['list of free pars'] = self.best_fit.list_of_vary_param()
-        g.attrs['list of fixed pars'] = self.best_fit.list_of_fixed_param()
+        g.attrs['list of free pars'] = [a.encode('utf8') for a in self.best_fit.list_of_vary_param()]
+        g.attrs['list of fixed pars'] = [a.encode('utf8') for a in self.best_fit.list_of_fixed_param()]
 
         for d in self.data:
             g = f.create_group(d.name)
