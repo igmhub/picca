@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
+from __future__ import print_funcion
 import fitsio
 import scipy as sp
 import scipy.linalg
 import argparse
 
-from picca.utils import smooth_cov
+from picca.utils import smooth_cov, cov
 
 
 if __name__ == '__main__':
@@ -22,6 +23,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--cov', type = str, default = None, required=False,
                         help = 'covariance matrix file (if not provided it will be calculated by subsampling)')
+
+    parser.add_argument('--do-not-smooth-cov', action='store_true', default = False,
+                        help='do not smooth the covariance matrix')
 
 
     args = parser.parse_args()
@@ -50,7 +54,12 @@ if __name__ == '__main__':
         rp_max = head['RPMAX']
         binSizeP = (rp_max-rp_min) / np
         binSizeT = (rt_max-rt_min) / nt
-        co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
+        if not args.do_not_smooth_cov:
+            print('INFO: The covariance will be smoothed')
+            co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
+        else:
+            print('INFO: The covariance will not be smoothed')
+            co = cov(da,we)
 
     da = (da*we).sum(axis=0)
     we = we.sum(axis=0)

@@ -1,10 +1,13 @@
 from __future__ import print_function
+import os.path
 import scipy as sp
 import iminuit
 import time
 import h5py
 from scipy.linalg import cholesky
 from scipy import random
+
+from . import utils
 
 def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
     return d.chi2(k, pk, pksb, dic)
@@ -13,7 +16,7 @@ class chi2:
     def __init__(self,dic_init):
         self.data = dic_init['data sets']
         self.par_names = sp.unique([name for d in self.data for name in d.par_names])
-        self.outfile = dic_init['outfile']
+        self.outfile = os.path.expandvars(dic_init['outfile'])
 
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
@@ -21,6 +24,9 @@ class chi2:
         self.nfast_mc = 0
         if 'fast mc' in dic_init:
             self.nfast_mc = dic_init['fast mc']['niterations']
+
+        if 'minos' in dic_init:
+            self.minos_para = dic_init['minos']
 
         if 'chi2 scan' in dic_init:
             self.dic_chi2scan = dic_init['chi2 scan']
@@ -158,6 +164,8 @@ class chi2:
                 d.par_fixed[name] = store_d_par_fixed[name]
 
     def fastMC(self):
+        if not hasattr(self,"nfast_mc"): return
+
         nfast_mc = self.nfast_mc
         for d in self.data:
             d.cho = cholesky(d.co)
@@ -175,6 +183,22 @@ class chi2:
                     self.fast_mc[p] = []
                 self.fast_mc[p].append([v, best_fit.errors[p]])
 
+    def minos(self):
+        if not hasattr(self,"minos_para"): return
+
+        sigma = self.minos_para['sigma']
+        if 'all' in self.minos_para['parameters']:
+            self.best_fit.minos(var=None,sigma=sigma)
+        else:
+            for var in self.minos_para['parameters']:
+                if var in self.best_fit.list_of_vary_param():
+                    self.best_fit.minos(var=var,sigma=sigma)
+                else:
+                    if var in self.best_fit.list_of_fixed_param():
+                        print('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
+                    else:
+                        print('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
+
     def export(self):
         f = h5py.File(self.outfile,"w")
 
@@ -191,13 +215,17 @@ class chi2:
         for (p1, p2), cov in self.best_fit.covariance.items():
             g.attrs["cov[{}, {}]".format(p1,p2)] = cov
 
-        g.attrs['fval'] = self.best_fit.fval
         ndata = [d.mask.sum() for d in self.data]
         ndata = sum(ndata)
         g.attrs['ndata'] = ndata
         g.attrs['npar'] = len(self.best_fit.list_of_vary_param())
-        g.attrs['list of free pars'] = self.best_fit.list_of_vary_param()
-        g.attrs['list of fixed pars'] = self.best_fit.list_of_fixed_param()
+        g.attrs['list of free pars'] = [a.encode('utf8') for a in self.best_fit.list_of_vary_param()]
+        g.attrs['list of fixed pars'] = [a.encode('utf8') for a in self.best_fit.list_of_fixed_param()]
+
+        ## write down all attributes of the minimum
+        dic_fmin = utils.convert_instance_to_dictionary(self.best_fit.get_fmin())
+        for item, value in dic_fmin.items():
+            g.attrs[item] = value
 
         for d in self.data:
             g = f.create_group(d.name)
@@ -213,6 +241,17 @@ class chi2:
                 d[...] = vals[:,0]
                 d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
                 d[...] = vals[:,1]
+
+        ## write down all attributes of parameters minos was run over
+        if hasattr(self, "minos_para"):
+            g = f.create_group("minos")
+            g.attrs['sigma'] = self.minos_para['sigma']
+            minos_results = self.best_fit.get_merrors()
+            for par in list(minos_results.keys()):
+                subgrp = g.create_group(par)
+                dic_minos = utils.convert_instance_to_dictionary(minos_results[par])
+                for item, value in dic_minos.items():
+                    subgrp.attrs[item] = value
 
         if hasattr(self, "dic_chi2scan"):
             g = f.create_group("chi2 scan")
