@@ -145,7 +145,7 @@ class chi2:
         self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
         self.dic_chi2scan_result['values'] = sp.asarray(result)
 
-        ### Set all parameters to where it was before
+        ### Set all parameters to where they were before
         for d in self.data:
             store_d_pars_init = store_data_pars[d]['init']
             store_d_par_error = store_data_pars[d]['error']
