@@ -262,6 +262,10 @@ class chi2:
                 subgrp.attrs['nb_bin'] = dic['nb_bin']
             subgrp = g.create_group('result')
             params = self.dic_chi2scan_result['params']
+            for i,p in enumerate(params):
+                subgrp.attrs[p] = i
             values = self.dic_chi2scan_result['values']
+            vals = subgrp.create_dataset("values", values.shape, dtype = "f")
+            vals[...] = values
 
         f.close()
