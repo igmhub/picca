@@ -6,7 +6,7 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random 
+from scipy import random
 
 from picca import constants
 from picca import xcf
@@ -94,6 +94,8 @@ if __name__ == '__main__':
     parser.add_argument('--no-remove-mean-lambda-obs', action="store_true", required=False,
                     help = 'Do not remove mean delta versus lambda_obs')
 
+    parser.add_argument('--from-image', type = str, default = None, required=False,
+                    help = 'use image format to read deltas', nargs='*')
 
     args = parser.parse_args()
 
@@ -110,26 +112,47 @@ if __name__ == '__main__':
     xcf.nside = args.nside
 
     lambda_abs  = constants.absorber_IGM[args.lambda_abs]
-    xcf.lambda_abs = lambda_abs 
+    xcf.lambda_abs = lambda_abs
 
     cosmo = constants.cosmo(args.fid_Om)
-    
+
     lambda_abs = constants.absorber_IGM[args.lambda_abs]
     z_min_pix = 1.e6
     z_max_pix = 0.
     bin_size_ll = 1.e6
-    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
-        fi = glob.glob(args.in_dir)
+
+    if len(args.from_image)>0:
+        for arg in args.from_image:
+            if (len(arg)>8) and (arg[-8:]==".fits.gz"):
+                fi += glob.glob(arg)
+            elif (len(arg)>5) and (arg[-5:]==".fits"):
+                fi += glob.glob(arg)
+            else:
+                fi += glob.glob(arg+"/*.fits") + glob.glob(arg+"/*.fits.gz")
+        fi = sorted(fi)
     else:
-        fi = glob.glob(args.in_dir+"/*.fits.gz")
+        if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+            fi += glob.glob(args.in_dir)
+        elif (len(args.in_dir)>5) and (args.in_dir[-5:]==".fits"):
+            fi += glob.glob(args.in_dir)
+        else:
+            fi += glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+
     fi = sorted(fi)
+    
     dels = {}
     ndels = 0
+
     for i,f in enumerate(fi):
-        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndels))
-        hdus = fitsio.FITS(f)
-        ds = [delta.from_fitsio(h) for h in hdus[1:]]
-        ndels+=len(ds)
+        if not args.from_image:
+            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndels))
+            hdus = fitsio.FITS(f)
+            ds = [delta.from_fitsio(h) for h in hdus[1:]]
+            ndels+=len(ds)
+        else:
+            ds = delta.from_image(f)
+            ndels += len(ds)
+
         phi = [d.ra for d in ds]
         th = [sp.pi/2-d.dec for d in ds]
         pix = healpy.ang2pix(xcf.nside,th,phi)
@@ -275,5 +298,3 @@ if __name__ == '__main__':
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
     out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
     out.close()
-
-    
