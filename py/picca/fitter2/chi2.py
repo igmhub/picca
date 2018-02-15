@@ -106,12 +106,12 @@ class chi2:
 
         ###
         def send_one_fit():
-            tresult = []
             try:
                 best_fit = self._minimize()
                 chi2_result = best_fit.fval
             except:
                 chi2_result = sp.nan
+            tresult = []
             for p in sorted(best_fit.values):
                 tresult += [best_fit.values[p]]
             tresult += [chi2_result]
