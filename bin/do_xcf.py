@@ -121,6 +121,8 @@ if __name__ == '__main__':
     z_max_pix = 0.
     bin_size_ll = 1.e6
 
+    fi = []
+
     if len(args.from_image)>0:
         for arg in args.from_image:
             if (len(arg)>8) and (arg[-8:]==".fits.gz"):
@@ -129,7 +131,6 @@ if __name__ == '__main__':
                 fi += glob.glob(arg)
             else:
                 fi += glob.glob(arg+"/*.fits") + glob.glob(arg+"/*.fits.gz")
-        fi = sorted(fi)
     else:
         if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
             fi += glob.glob(args.in_dir)
@@ -139,7 +140,7 @@ if __name__ == '__main__':
             fi += glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
 
     fi = sorted(fi)
-    
+
     dels = {}
     ndels = 0
 
