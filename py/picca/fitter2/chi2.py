@@ -28,6 +28,9 @@ class chi2:
         if 'minos' in dic_init:
             self.minos_para = dic_init['minos']
 
+        if 'chi2 scan' in dic_init:
+            self.dic_chi2scan = dic_init['chi2 scan']
+
     def __call__(self, *pars):
         dic = {p:pars[i] for i,p in enumerate(self.par_names)}
         chi2 = 0
@@ -86,13 +89,92 @@ class chi2:
             self.best_fit.values['at'] = at
             self.best_fit.values['sigmaNL_per'] = snl
 
+    def chi2scan(self):
+        if not hasattr(self, "dic_chi2scan"): return
+
+        dim = len(self.dic_chi2scan)
+
+        ### Set all parameters to the minimum and store the current state
+        store_data_pars = {}
+        for d in self.data:
+            store_d_pars_init = {}
+            store_d_par_error = {}
+            store_d_par_fixed = {}
+            for name in d.pars_init.keys():
+                store_d_pars_init[name] = d.pars_init[name]
+                d.pars_init[name] = self.best_fit.values[name]
+            for name in d.par_error.keys():
+                store_d_par_error[name] = d.par_error[name]
+                d.par_error[name] = self.best_fit.errors[name.split('error_')[1]]
+            for name in d.par_fixed.keys():
+                store_d_par_fixed[name] = d.par_fixed[name]
+            store_data_pars[d.name] = {'init':store_d_pars_init, 'error':store_d_par_error, 'fixed':store_d_par_fixed}
+
+        ###
+        for p in self.dic_chi2scan.keys():
+            for d in self.data:
+                if 'error_'+p in d.par_error.keys():
+                    d.par_error['error_'+p] = 0.
+                if 'fix_'+p in d.par_fixed.keys():
+                    d.par_fixed['fix_'+p] = True
+
+        ###
+        def send_one_fit():
+            try:
+                best_fit = self._minimize()
+                chi2_result = best_fit.fval
+            except:
+                chi2_result = sp.nan
+            tresult = []
+            for p in sorted(best_fit.values):
+                tresult += [best_fit.values[p]]
+            tresult += [chi2_result]
+            return tresult
+
+        result = []
+        ###
+        if dim==1:
+            par = self.dic_chi2scan.keys()[0]
+            for step in self.dic_chi2scan[par]['grid']:
+                for d in self.data:
+                    if par in d.pars_init.keys():
+                        d.pars_init[par] = step
+                result += [send_one_fit()]
+        elif dim==2:
+            par1  = self.dic_chi2scan.keys()[0]
+            par2  = self.dic_chi2scan.keys()[1]
+            for step1 in self.dic_chi2scan[par1]['grid']:
+                for step2 in self.dic_chi2scan[par2]['grid']:
+                    for d in self.data:
+                        if par1 in d.pars_init.keys():
+                            d.pars_init[par1] = step1
+                        if par2 in d.pars_init.keys():
+                            d.pars_init[par2] = step2
+                    result += [send_one_fit()]
+
+        self.dic_chi2scan_result = {}
+        self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
+        self.dic_chi2scan_result['values'] = sp.asarray(result)
+
+        ### Set all parameters to where they were before
+        for d in self.data:
+            store_d_pars_init = store_data_pars[d.name]['init']
+            store_d_par_error = store_data_pars[d.name]['error']
+            store_d_par_fixed = store_data_pars[d.name]['fixed']
+            for name in d.pars_init.keys():
+                d.pars_init[name] = store_d_pars_init[name]
+            for name in d.par_error.keys():
+                d.par_error[name] = store_d_par_error[name]
+            for name in d.par_fixed.keys():
+                d.par_fixed[name] = store_d_par_fixed[name]
+
     def fastMC(self):
         if not hasattr(self,"nfast_mc"): return
 
         nfast_mc = self.nfast_mc
         for d in self.data:
             d.cho = cholesky(d.co)
-        
+
         self.fast_mc = {}
         for it in range(nfast_mc):
             for d in self.data:
@@ -175,5 +257,20 @@ class chi2:
                 dic_minos = utils.convert_instance_to_dictionary(minos_results[par])
                 for item, value in dic_minos.items():
                     subgrp.attrs[item] = value
+
+        if hasattr(self, "dic_chi2scan"):
+            g = f.create_group("chi2 scan")
+            for p, dic in self.dic_chi2scan.items():
+                subgrp = g.create_group(p)
+                subgrp.attrs['min']    = dic['min']
+                subgrp.attrs['max']    = dic['max']
+                subgrp.attrs['nb_bin'] = dic['nb_bin']
+            subgrp = g.create_group('result')
+            params = self.dic_chi2scan_result['params']
+            for i,p in enumerate(params):
+                subgrp.attrs[p] = i
+            values = self.dic_chi2scan_result['values']
+            vals = subgrp.create_dataset("values", values.shape, dtype = "f")
+            vals[...] = values
 
         f.close()
