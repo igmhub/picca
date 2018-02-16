@@ -108,13 +108,15 @@ class chi2:
                 d.par_error[name] = self.best_fit.errors[name.split('error_')[1]]
             for name in d.par_fixed.keys():
                 store_d_par_fixed[name] = d.par_fixed[name]
-            store_data_pars[d] = {'init':store_d_pars_init, 'error':store_d_par_error, 'fixed':store_d_par_fixed}
+            store_data_pars[d.name] = {'init':store_d_pars_init, 'error':store_d_par_error, 'fixed':store_d_par_fixed}
 
         ###
         for p in self.dic_chi2scan.keys():
             for d in self.data:
-                d.par_error['error_'+p] = 0.
-                d.par_fixed['fix_'+p] = True
+                if 'error_'+p in d.par_error.keys():
+                    d.par_error['error_'+p] = 0.
+                if 'fix_'+p in d.par_fixed.keys():
+                    d.par_fixed['fix_'+p] = True
 
         ###
         def send_one_fit():
@@ -135,7 +137,8 @@ class chi2:
             par = self.dic_chi2scan.keys()[0]
             for step in self.dic_chi2scan[par]['grid']:
                 for d in self.data:
-                    d.pars_init[par] = step
+                    if par in d.pars_init.keys():
+                        d.pars_init[par] = step
                 result += [send_one_fit()]
         elif dim==2:
             par1  = self.dic_chi2scan.keys()[0]
@@ -143,8 +146,10 @@ class chi2:
             for step1 in self.dic_chi2scan[par1]['grid']:
                 for step2 in self.dic_chi2scan[par2]['grid']:
                     for d in self.data:
-                        d.pars_init[par1] = step1
-                        d.pars_init[par2] = step2
+                        if par1 in d.pars_init.keys():
+                            d.pars_init[par1] = step1
+                        if par2 in d.pars_init.keys():
+                            d.pars_init[par2] = step2
                     result += [send_one_fit()]
 
         self.dic_chi2scan_result = {}
@@ -153,9 +158,9 @@ class chi2:
 
         ### Set all parameters to where they were before
         for d in self.data:
-            store_d_pars_init = store_data_pars[d]['init']
-            store_d_par_error = store_data_pars[d]['error']
-            store_d_par_fixed = store_data_pars[d]['fixed']
+            store_d_pars_init = store_data_pars[d.name]['init']
+            store_d_par_error = store_data_pars[d.name]['error']
+            store_d_par_fixed = store_data_pars[d.name]['fixed']
             for name in d.pars_init.keys():
                 d.pars_init[name] = store_d_pars_init[name]
             for name in d.par_error.keys():
