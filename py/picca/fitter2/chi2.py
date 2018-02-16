@@ -234,6 +234,7 @@ class chi2:
 
         for d in self.data:
             g = f.create_group(d.name)
+            g.attrs['ndata'] = d.mask.sum()
             g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.best_fit.values)
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
             fit[...] = d.best_fit_model
