@@ -6,8 +6,8 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random 
-import copy 
+from scipy import random
+import copy
 
 from picca import constants
 from picca import cf
@@ -17,9 +17,9 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 
 def corr_func(p):
-    if x_correlation: 
+    if x_correlation:
         cf.fill_neighs_x_correlation(p)
-    else: 
+    else:
         cf.fill_neighs(p)
     tmp = cf.cf(p)
     return tmp
@@ -85,8 +85,8 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action="store_true", required=False,
                     help = 'do not project out continuum fitting modes')
 
-    parser.add_argument('--from-image', action="store_true", required=False,
-                    help = 'use image format to read deltas')
+    parser.add_argument('--from-image', type = str, default = None, required=False,
+                    help = 'use image format to read deltas', nargs='*')
 
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
@@ -101,9 +101,9 @@ if __name__ == '__main__':
 
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
-    cf.rp_min = args.rp_min 
+    cf.rp_min = args.rp_min
     cf.z_cut_max = args.z_cut_max
-    cf.z_cut_min = args.z_cut_min 
+    cf.z_cut_min = args.z_cut_min
     cf.np = args.np
     cf.nt = args.nt
     cf.nside = args.nside
@@ -116,36 +116,60 @@ if __name__ == '__main__':
     lambda_abs  = constants.absorber_IGM[args.lambda_abs]
     if (args.lambda_abs2) : lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
     else: lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
-    cf.lambda_abs = lambda_abs 
+    cf.lambda_abs = lambda_abs
     cf.lambda_abs2 = lambda_abs2
 
     data = {}
     ndata = 0
     dels = []
-    if not args.from_image:
+    fi = []
+    if args.from_image == None:
         if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
-            fi = glob.glob(args.in_dir)
+            fi += glob.glob(args.in_dir)
+        elif (len(args.in_dir)>5) and (args.in_dir[-5:]==".fits"):
+            fi += glob.glob(args.in_dir)
         else:
-            fi = glob.glob(args.in_dir+"/*.fits.gz")
+            fi += glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
         fi = sorted(fi)
         for i,f in enumerate(fi):
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
             hdus = fitsio.FITS(f)
+            print('\n',hdus[1:],'\n')
             dels += [delta.from_fitsio(h) for h in hdus[1:]]
             ndata+=len(hdus[1:])
             hdus.close()
             if not args.nspec is None:
                 if ndata>args.nspec:break
-    else:
-        fi = glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+    elif len(args.from_image)>0:
+        for arg in args.from_image:
+            if (len(arg)>8) and (arg[-8:]==".fits.gz"):
+                fi += glob.glob(arg)
+            elif (len(arg)>5) and (arg[-5:]==".fits"):
+                fi += glob.glob(arg)
+            else:
+                fi += glob.glob(arg+"/*.fits") + glob.glob(arg+"/*.fits.gz")
         fi = sorted(fi)
         for f in fi:
             d = delta.from_image(f)
             dels += d
         ndata = len(dels)
+        print('\nndata = ',ndata)
+    else:
+        if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+            fi += glob.glob(args.in_dir)
+        elif (len(args.in_dir)>5) and (args.in_dir[-5:]==".fits"):
+            fi += glob.glob(args.in_dir)
+        else:
+            fi += glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+        fi = sorted(fi)
+        for f in fi:
+            d = delta.from_image(f)
+            dels += d
+        ndata = len(dels)
+        print('\nndata = ',ndata)
 
     x_correlation=False
-    if args.in_dir2: 
+    if args.in_dir2:
         x_correlation=True
         data2 = {}
         ndata2 = 0
@@ -166,12 +190,12 @@ if __name__ == '__main__':
                     if ndata2>args.nspec:break
         else:
             dels2 = delta.from_image(args.in_dir2)
-    elif lambda_abs != lambda_abs2:   
+    elif lambda_abs != lambda_abs2:
         x_correlation=True
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
-    cf.x_correlation = x_correlation 
+    cf.x_correlation = x_correlation
     if x_correlation: print("doing xcorrelation")
     z_min_pix = 10**dels[0].ll[0]/lambda_abs-1.
     phi = [d.ra for d in dels]
@@ -192,7 +216,7 @@ if __name__ == '__main__':
 
     cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
 
-    if x_correlation: 
+    if x_correlation:
         cf.alpha2 = args.z_evol2
         z_min_pix2 = 10**dels2[0].ll[0]/lambda_abs2-1.
         phi2 = [d.ra for d in dels2]
@@ -271,5 +295,3 @@ if __name__ == '__main__':
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
     out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
     out.close()
-
-    

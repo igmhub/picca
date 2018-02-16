@@ -103,7 +103,7 @@ class forest(qso):
         if diff is not None :
             cdiff = sp.bincount(bins,weights=iv*diff)
             creso = sp.bincount(bins,weights=iv*reso)
-         
+
         cfl[:len(ccfl)] += ccfl
         civ[:len(cciv)] += cciv
         w = (civ>0.)
@@ -141,11 +141,11 @@ class forest(qso):
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
         err = 1.0/sp.sqrt(iv)
         SNR = fl/err
-        self.mean_SNR = sum(SNR)/float(len(SNR))           
+        self.mean_SNR = sum(SNR)/float(len(SNR))
         lam_lya = constants.absorber_IGM["LYA"]
         self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
 
-            
+
     def __add__(self,d):
 
         if not hasattr(self,'ll') or not hasattr(d,'ll'):
@@ -187,7 +187,7 @@ class forest(qso):
         if self.diff is not None :
              self.diff = self.diff[w]
              self.reso = self.reso[w]
- 
+
     def add_dla(self,zabs,nhi,mask=None):
         if not hasattr(self,'ll'):
             return
@@ -209,7 +209,7 @@ class forest(qso):
             self.diff = self.diff[w]
             self.reso = self.reso[w]
 
-         
+
     def cont_fit(self):
         lmax = forest.lmax_rest+sp.log10(1+self.zqso)
         lmin = forest.lmin_rest+sp.log10(1+self.zqso)
@@ -261,7 +261,7 @@ class forest(qso):
             self.bad_cont = "minuit didn't converge"
         if sp.any(self.co <= 0):
             self.bad_cont = "negative continuum"
-            
+
 
         ## if the continuum is negative, then set it to a very small number
         ## so that this forest is ignored
@@ -269,10 +269,10 @@ class forest(qso):
             self.co = self.co*0+1e-10
             self.p0 = 0.
             self.p1 = 0.
-            
-            
+
+
 class delta(qso):
- 
+
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
 
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
@@ -310,12 +310,12 @@ class delta(qso):
     @classmethod
     def from_fitsio(cls,h,Pk1D_type=False):
 
-        
+
         head = h.read_header()
-        
+
         de = h['DELTA'][:]
         ll = h['LOGLAM'][:]
- 
+
 
         if  Pk1D_type :
             iv = h['IVAR'][:]
@@ -326,7 +326,7 @@ class delta(qso):
             dll =  head['DLL']
             we = None
             co = None
-        else :                
+        else :
             iv = None
             diff = None
             m_SNR = None
@@ -336,7 +336,7 @@ class delta(qso):
             we = h['WEIGHT'][:]
             co = h['CONT'][:]
 
-      
+
         thid = head['THING_ID']
         ra = head['RA']
         dec = head['DEC']
@@ -366,7 +366,7 @@ class delta(qso):
         m_z = float(a[6])
         m_SNR = float(a[7])
         m_reso = float(a[8])
-        
+
         nbpixel = int(a[9])
         de = sp.array([float(a[10+i]) for i in range(nbpixel)])
         ll = sp.array([float(a[10+nbpixel+i]) for i in range(nbpixel)])
@@ -401,16 +401,22 @@ class delta(qso):
         for i in range(nspec):
             if i%100==0:
                 sys.stderr.write("\rreading deltas {} of {}".format(i,nspec))
-
+                
             delt = de[:,i]
             ivar = iv[:,i]
             w = ivar>0
             delt = delt[w]
             ivar = ivar[w]
             lam = ll[w]
-            order = 1
 
-            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt,order))
+            order = 1
+            diff = None
+            m_SNR = None
+            m_reso = None
+            dll = None
+            m_z = None
+
+            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt,order,iv,diff,m_SNR,m_reso,m_z,dll))
 
         h.close()
         return deltas
@@ -419,9 +425,11 @@ class delta(qso):
     def project(self):
         mde = sp.average(self.de,weights=self.we)
         res=0
-        if (self.order==1):
+        if (self.order==1) and self.de.shape[0] > 1:
             mll = sp.average(self.ll,weights=self.we)
             mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
             res = mld * (self.ll-mll)
+        elif self.order==1:
+            res = self.de
 
         self.de -= mde + res
