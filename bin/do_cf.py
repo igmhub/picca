@@ -123,7 +123,24 @@ if __name__ == '__main__':
     ndata = 0
     dels = []
     fi = []
-    if len(args.from_image)>0:
+    if args.from_image == None:
+        if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+            fi += glob.glob(args.in_dir)
+        elif (len(args.in_dir)>5) and (args.in_dir[-5:]==".fits"):
+            fi += glob.glob(args.in_dir)
+        else:
+            fi += glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+        fi = sorted(fi)
+        for i,f in enumerate(fi):
+            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+            hdus = fitsio.FITS(f)
+            print('\n',hdus[1:],'\n')
+            dels += [delta.from_fitsio(h) for h in hdus[1:]]
+            ndata+=len(hdus[1:])
+            hdus.close()
+            if not args.nspec is None:
+                if ndata>args.nspec:break
+    elif len(args.from_image)>0:
         for arg in args.from_image:
             if (len(arg)>8) and (arg[-8:]==".fits.gz"):
                 fi += glob.glob(arg)
@@ -145,14 +162,11 @@ if __name__ == '__main__':
         else:
             fi += glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
         fi = sorted(fi)
-        for i,f in enumerate(fi):
-            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
-            hdus = fitsio.FITS(f)
-            dels += [delta.from_fitsio(h) for h in hdus[1:]]
-            ndata+=len(hdus[1:])
-            hdus.close()
-            if not args.nspec is None:
-                if ndata>args.nspec:break
+        for f in fi:
+            d = delta.from_image(f)
+            dels += d
+        ndata = len(dels)
+        print('\nndata = ',ndata)
 
     x_correlation=False
     if args.in_dir2:

@@ -123,7 +123,14 @@ if __name__ == '__main__':
 
     fi = []
 
-    if len(args.from_image)>0:
+    if args.from_image == None:
+        if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+            fi += glob.glob(args.in_dir)
+        elif (len(args.in_dir)>5) and (args.in_dir[-5:]==".fits"):
+            fi += glob.glob(args.in_dir)
+        else:
+            fi += glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+    elif len(args.from_image)>0:
         for arg in args.from_image:
             if (len(arg)>8) and (arg[-8:]==".fits.gz"):
                 fi += glob.glob(arg)
