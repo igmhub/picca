@@ -4,8 +4,9 @@ python:
     - "3.6"
 
 install:
-    - pip install -r requirements.txt 
-    - python igmhub/picca/setup.py install
+    #   - pip install -r requirements.txt 
+    #- python igmhub/picca/setup.py install
+    - ls
 
 script: pytest
 
