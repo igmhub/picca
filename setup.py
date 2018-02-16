@@ -20,7 +20,7 @@ setup(name="picca",
       author_email="ngbusca@lpnhe.in2p3.fr",
       packages=['picca'],
       package_dir = {'': 'py'},
-      install_requires=['scipy','numpy','iminuit','fitsio','healpy','numba','future'],
+      install_requires=['future','scipy','numpy','iminuit','fitsio','healpy','numba'],
       test_suite='picca.test.test_cor',
       scripts = scripts
       )
