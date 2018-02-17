@@ -21,7 +21,7 @@ class chi2:
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
         self.pksb_lin = dic_init['fiducial']['pksb']
-        self.nfast_mc = 0
+
         if 'fast mc' in dic_init:
             self.nfast_mc = dic_init['fast mc']['niterations']
 

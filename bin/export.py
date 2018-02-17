@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import print_funcion
+from __future__ import print_function
 import fitsio
 import scipy as sp
 import scipy.linalg
