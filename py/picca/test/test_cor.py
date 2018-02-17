@@ -228,7 +228,7 @@ class TestCor(unittest.TestCase):
                 d_b = b[i][k][:]
                 self.assertEqual(d_m.size,d_b.size,"{}: Header key is {}".format(nameRun,k))
                 if not sp.array_equal(d_m,d_b):
-                    print("WARNING: {}: Header key is {}, arrays are not exactly equal, ussing allclose".format(nameRun,k))
+                    print("WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(nameRun,k))
                     diff = d_m-d_b
                     w = d_m!=0.
                     diff[w] = sp.absolute( diff[w]/d_m[w] )
@@ -239,12 +239,24 @@ class TestCor(unittest.TestCase):
     def compare_h5py(self,path1,path2,nameRun=""):
 
         def compare_attributes(atts1,atts2):
-            self.assertListEqual(atts1,atts2,"{}".format(nameRun))
+            self.assertListEqual(atts1.keys(),atts2.keys(),"{}".format(nameRun))
             for item in atts1:
-                if not atts1[item]!=atts2[item]:
-                    print("WARNING: {}: not exactly equal, ussing allclose".format(nameRun,k))
+                nequal = True
+                if type(atts1[item])==type(sp.array([])):
+                    nequal = sp.logical_not(sp.array_equal(atts1[item],atts2[item]))
+                else:
+                    nequal = atts1[item]!=atts2[item]
+                if nequal:
+                    print(atts1[item],atts2[item])
+                    print("WARNING: {}: not exactly equal, using allclose".format(nameRun,k))
                     allclose = sp.allclose(atts1[item],atts2[item])
                     self.assertTrue(allclose,"{}".format(nameRun))
+            return
+        def compare_values(val1,val2):
+            if not sp.array_equal(val1,val2):
+                print("WARNING: {}: not exactly equal, using allclose".format(nameRun,k))
+                allclose = sp.allclose(val1,val2)
+                self.assertTrue(allclose,"{}".format(nameRun))
             return
 
         print("\n")
@@ -253,17 +265,29 @@ class TestCor(unittest.TestCase):
         b = h5py.File(path2,"r")
 
         self.assertListEqual(m.keys(),b.keys(),"{}".format(nameRun))
-        for k in m.keys():
-            self.assertListEqual(m[k].keys(),b[k].keys(),"{}".format(nameRun))
 
         ### best fit
         k = 'best fit'
-        self.assertListEqual(m[k].attrs.keys(),b[k].attrs.keys(),"{}".format(nameRun))
+        compare_attributes(m[k].attrs,b[k].attrs)
+
+        ### minos
+        k = 'minos'
+        compare_attributes(m[k].attrs,b[k].attrs)
+        for p in m[k].keys():
+            compare_attributes(m[k][p].attrs,b[k][p].attrs)
+
+        ### chi2 scan
+        k = 'chi2 scan'
+        for p in m[k].keys():
+            compare_attributes(m[k][p].attrs,b[k][p].attrs)
+            if p == 'result':
+                compare_values(m[k][p]['values'].value,b[k][p]['values'].value)
 
         ### fit data
         for k in m.keys():
             if k in ['best fit','fast mc','minos','chi2 scan']: continue
             compare_attributes(m[k].attrs,b[k].attrs)
+            compare_values(m[k]['fit'].value,b[k]['fit'].value)
 
         return
 
