@@ -7,7 +7,29 @@ import subprocess
 import os
 import tempfile
 import shutil
+import h5py
 from pkg_resources import resource_filename
+import sys
+if (sys.version_info > (3, 0)):
+    # Python 3 code in this block
+    import configparser as ConfigParser
+else:
+    import ConfigParser
+
+def update_system_status_values(path, section, system, value):
+
+    ### Make ConfigParser case sensitive
+    class CaseConfigParser(ConfigParser.SafeConfigParser):
+        def optionxform(self, optionstr):
+            return optionstr
+    cp = CaseConfigParser()
+    cp.read(path)
+    cf = open(path, 'w')
+    cp.set(section, system, value)
+    cp.write(cf)
+    cf.close()
+
+    return
 
 class TestCor(unittest.TestCase):
 
@@ -42,16 +64,21 @@ class TestCor(unittest.TestCase):
         self.send_cf()
         self.send_dmat()
         self.send_metal_dmat()
+        self.send_export_cf()
 
         self.send_cf_cross()
         self.send_dmat_cross()
         self.send_metal_dmat_cross()
+        self.send_export_cf_cross()
 
         self.send_xcf_angl()
 
         self.send_xcf()
         self.send_xdmat()
         self.send_metal_xdmat()
+        self.send_export_xcf()
+
+        self.send_fitter2()
 
         if self._test:
             self.remove_folder()
@@ -66,6 +93,7 @@ class TestCor(unittest.TestCase):
         lst_fold = ["/Products/","/Products/Spectra/",
         "/Products/Delta_LYA/","/Products/Delta_LYA/Delta/",
         "/Products/Delta_LYA/Log/","/Products/Correlations/",
+        "/Products/Correlations/Fit/"
         ]
 
         for fold in lst_fold:
@@ -208,6 +236,41 @@ class TestCor(unittest.TestCase):
                     self.assertTrue(allclose,"{}: Header key is {}, maximum relative difference is {}".format(nameRun,k,diff.max()))
 
         return
+    def compare_h5py(self,path1,path2,nameRun=""):
+
+        def compare_attributes(atts1,atts2):
+            self.assertListEqual(atts1,atts2,"{}".format(nameRun))
+            for item in atts1:
+                if not atts1[item]!=atts2[item]:
+                    print("WARNING: {}: not exactly equal, ussing allclose".format(nameRun,k))
+                    allclose = sp.allclose(atts1[item],atts2[item])
+                    self.assertTrue(allclose,"{}".format(nameRun))
+            return
+
+        print("\n")
+        m = h5py.File(path1,"r")
+        self.assertTrue(os.path.isfile(path2),"{}".format(nameRun))
+        b = h5py.File(path2,"r")
+
+        self.assertListEqual(m.keys(),b.keys(),"{}".format(nameRun))
+        for k in m.keys():
+            self.assertListEqual(m[k].keys(),b[k].keys(),"{}".format(nameRun))
+
+        ### best fit
+        k = 'best fit'
+        self.assertListEqual(m[k].attrs.keys(),b[k].attrs.keys(),"{}".format(nameRun))
+
+        ### fit data
+        for k in m.keys():
+            if k in ['best fit','fast mc','minos','chi2 scan']: continue
+            compare_attributes(m[k].attrs,b[k].attrs)
+
+        return
+
+
+
+
+
 
 
     def send_delta(self):
@@ -351,6 +414,17 @@ class TestCor(unittest.TestCase):
             self.compare_fits(path1,path2,"do_metal_dmat.py")
 
         return
+    def send_export_cf(self):
+
+        print("\n")
+        ### Send
+        cmd  = " export.py"
+        cmd += " --data " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
+        cmd += " --dmat " + self._branchFiles+"/Products/Correlations/dmat.fits.gz"
+        cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_cf.fits.gz"
+        subprocess.call(cmd, shell=True)
+
+        return
     def send_cf_cross(self):
 
         print("\n")
@@ -422,6 +496,17 @@ class TestCor(unittest.TestCase):
             path1 = self._masterFiles + "/metal_dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
             self.compare_fits(path1,path2,"do_metal_dmat.py")
+
+        return
+    def send_export_cf_cross(self):
+
+        print("\n")
+        ### Send
+        cmd  = " export.py"
+        cmd += " --data " + self._branchFiles+"/Products/Correlations/cf_cross.fits.gz"
+        cmd += " --dmat " + self._branchFiles+"/Products/Correlations/dmat_cross.fits.gz"
+        cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_cf_cross.fits.gz"
+        subprocess.call(cmd, shell=True)
 
         return
     def send_xcf_angl(self):
@@ -514,6 +599,64 @@ class TestCor(unittest.TestCase):
             self.compare_fits(path1,path2,"do_metal_xdmat.py")
 
         return
+    def send_export_xcf(self):
+
+        print("\n")
+        ### Send
+        cmd  = " export.py"
+        cmd += " --data " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
+        cmd += " --dmat " + self._branchFiles+"/Products/Correlations/xdmat.fits.gz"
+        cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_xcf.fits.gz"
+        subprocess.call(cmd, shell=True)
+
+        return
+    def send_fitter2(self):
+
+        print("\n")
+
+        ### copy ini files to branch
+        cmd  = 'cp '+self._masterFiles+'/*ini '+self._branchFiles+'/Products/Correlations/Fit/'
+        subprocess.call(cmd, shell=True)
+
+        ### Set path in chi2.ini
+        path   = self._branchFiles+'/Products/Correlations/Fit/chi2.ini'
+        value  = self._branchFiles+'/Products/Correlations/Fit/config_cf.ini '
+        value += self._branchFiles+'/Products/Correlations/Fit/config_xcf.ini '
+        value += self._branchFiles+'/Products/Correlations/Fit/config_cf_cross.ini '
+        update_system_status_values(path, 'data sets', 'ini files', value)
+        value  = self._branchFiles+'/Products/Correlations/Fit/result_fitter2.h5'
+        update_system_status_values(path, 'output', 'filename', value)
+
+        ### Set path in config_cf.ini
+        path  = self._branchFiles+'/Products/Correlations/Fit/config_cf.ini'
+        value = self._branchFiles+'/Products/Correlations/exported_cf.fits.gz'
+        update_system_status_values(path, 'data', 'filename', value)
+        value = self._branchFiles+'/Products/Correlations/metal_dmat.fits.gz'
+        update_system_status_values(path, 'metals', 'filename', value)
+
+        ### Set path in config_cf_cross.ini
+        path  = self._branchFiles+'/Products/Correlations/Fit/config_cf_cross.ini'
+        value = self._branchFiles+'/Products/Correlations/exported_cf_cross.fits.gz'
+        update_system_status_values(path, 'data', 'filename', value)
+        value = self._branchFiles+'/Products/Correlations/metal_dmat_cross.fits.gz'
+        update_system_status_values(path, 'metals', 'filename', value)
+
+        ### Set path in config_xcf.ini
+        path  = self._branchFiles+'/Products/Correlations/Fit/config_xcf.ini'
+        value = self._branchFiles+'/Products/Correlations/exported_xcf.fits.gz'
+        update_system_status_values(path, 'data', 'filename', value)
+        value = self._branchFiles+'/Products/Correlations/metal_xdmat.fits.gz'
+        update_system_status_values(path, 'metals', 'filename', value)
+
+        ### Send
+        cmd  = ' fitter2 '+self._branchFiles+'/Products/Correlations/Fit/chi2.ini'
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles+'/result_fitter2.h5'
+            path2 = self._branchFiles+'/Products/Correlations/Fit/result_fitter2.h5'
+            self.compare_h5py(path1,path2,"fitter2")
 
 if __name__ == '__main__':
     unittest.main()
