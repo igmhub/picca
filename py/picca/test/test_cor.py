@@ -77,6 +77,7 @@ class TestCor(unittest.TestCase):
         self.send_xdmat()
         self.send_metal_xdmat()
         self.send_export_xcf()
+        self.send_export_cross_covariance_cf_xcf()
 
         self.send_fitter2()
 
@@ -631,6 +632,17 @@ class TestCor(unittest.TestCase):
         cmd += " --data " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
         cmd += " --dmat " + self._branchFiles+"/Products/Correlations/xdmat.fits.gz"
         cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_xcf.fits.gz"
+        subprocess.call(cmd, shell=True)
+
+        return
+    def send_export_cross_covariance_cf_xcf(self):
+
+        print("\n")
+        ### Send
+        cmd  = " export_cross_covariance.py"
+        cmd += " --data1 " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
+        cmd += " --data2 " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
+        cmd += " --out "   + self._branchFiles+"/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
         subprocess.call(cmd, shell=True)
 
         return
