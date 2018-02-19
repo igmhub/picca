@@ -47,6 +47,10 @@ class TestCor(unittest.TestCase):
 
         numpy.random.seed(42)
 
+        ### Send
+        cmd  = ' fitter2 '+self._branchFiles+'/Products/Correlations/Fit/chi2.ini'
+        subprocess.call(cmd, shell=True)
+
         print("\n")
         self._test = True
         self._masterFiles = resource_filename('picca', 'test/data/')
