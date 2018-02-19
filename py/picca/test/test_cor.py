@@ -265,7 +265,7 @@ class TestCor(unittest.TestCase):
         self.assertTrue(os.path.isfile(path2),"{}".format(nameRun))
         b = h5py.File(path2,"r")
 
-        self.assertListEqual(m.keys(),b.keys(),"{}".format(nameRun))
+        self.assertListEqual(list(m.keys()),list(b.keys()),"{}".format(nameRun))
 
         ### best fit
         k = 'best fit'
