@@ -3,6 +3,7 @@ from __future__ import print_function
 import sys
 import scipy as sp
 import os.path
+from pkg_resources import resource_filename
 if (sys.version_info > (3, 0)):
     # Python 3 code in this block
     import configparser as ConfigParser
@@ -28,7 +29,7 @@ def parse_chi2(filename):
         p = os.path.expandvars(p)
         print('INFO: reading input Pk {}'.format(p))
     else:
-        p = '$PICCA_BASE/py/picca/fitter2/models/PlanckDR12/PlanckDR12.fits'
+        p = resource_filename('picca', 'fitter2/models/PlanckDR12/PlanckDR12.fits')
         p = os.path.expandvars(p)
         print('INFO: reading default Pk {}'.format(p))
 
