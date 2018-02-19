@@ -240,7 +240,7 @@ class TestCor(unittest.TestCase):
     def compare_h5py(self,path1,path2,nameRun=""):
 
         def compare_attributes(atts1,atts2):
-            self.assertListEqual(list(atts1.keys()),list(atts2.keys()),"{}".format(nameRun))
+            self.assertListEqual(sorted(list(atts1.keys())),sorted(list(atts2.keys())),"{}".format(nameRun))
             for item in atts1:
                 nequal = True
                 if type(atts1[item])==type(sp.array([])):
@@ -248,7 +248,6 @@ class TestCor(unittest.TestCase):
                 else:
                     nequal = atts1[item]!=atts2[item]
                 if nequal:
-                    print(atts1[item],atts2[item])
                     print("WARNING: {}: not exactly equal, using allclose".format(nameRun,k))
                     allclose = sp.allclose(atts1[item],atts2[item])
                     self.assertTrue(allclose,"{}".format(nameRun))
@@ -265,7 +264,7 @@ class TestCor(unittest.TestCase):
         self.assertTrue(os.path.isfile(path2),"{}".format(nameRun))
         b = h5py.File(path2,"r")
 
-        self.assertListEqual(list(m.keys()),list(b.keys()),"{}".format(nameRun))
+        self.assertListEqual(sorted(list(m.keys())),sorted(list(b.keys())),"{}".format(nameRun))
 
         ### best fit
         k = 'best fit'
