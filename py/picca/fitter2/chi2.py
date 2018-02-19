@@ -134,15 +134,15 @@ class chi2:
         result = []
         ###
         if dim==1:
-            par = self.dic_chi2scan.keys()[0]
+            par = list(self.dic_chi2scan.keys())[0]
             for step in self.dic_chi2scan[par]['grid']:
                 for d in self.data:
                     if par in d.pars_init.keys():
                         d.pars_init[par] = step
                 result += [send_one_fit()]
         elif dim==2:
-            par1  = self.dic_chi2scan.keys()[0]
-            par2  = self.dic_chi2scan.keys()[1]
+            par1  = list(self.dic_chi2scan.keys())[0]
+            par2  = list(self.dic_chi2scan.keys())[1]
             for step1 in self.dic_chi2scan[par1]['grid']:
                 for step2 in self.dic_chi2scan[par2]['grid']:
                     for d in self.data:
