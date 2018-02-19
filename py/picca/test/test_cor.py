@@ -249,6 +249,7 @@ class TestCor(unittest.TestCase):
                     nequal = atts1[item]!=atts2[item]
                 if nequal:
                     print("WARNING: {}: not exactly equal, using allclose".format(nameRun,k))
+                    print(atts1[item],atts2[item])
                     allclose = sp.allclose(atts1[item],atts2[item])
                     self.assertTrue(allclose,"{}".format(nameRun))
             return
