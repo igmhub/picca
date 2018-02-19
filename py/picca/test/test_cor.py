@@ -240,7 +240,7 @@ class TestCor(unittest.TestCase):
     def compare_h5py(self,path1,path2,nameRun=""):
 
         def compare_attributes(atts1,atts2):
-            self.assertListEqual(atts1.keys(),atts2.keys(),"{}".format(nameRun))
+            self.assertListEqual(list(atts1.keys()),list(atts2.keys()),"{}".format(nameRun))
             for item in atts1:
                 nequal = True
                 if type(atts1[item])==type(sp.array([])):
