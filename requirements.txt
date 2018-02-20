@@ -6,4 +6,4 @@ fitsio==0.9.11
 numba==0.35.0
 h5py==2.6.0
 future
-setuptools
+setuptools==27.2.0
