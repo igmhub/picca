@@ -150,9 +150,9 @@ def G2(k, pk_lin, tracer1, tracer2, dataset_name = None, **kwargs):
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs): 
     assert tracer1 == "QSO" or tracer2 == "QSO"
     kp = k*muk
-    return pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs)*sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
+    return sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
 
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     assert tracer1 == "QSO" or tracer2 == "QSO"
     kp = k*muk
-    return pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs)/sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
+    return 1/sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
