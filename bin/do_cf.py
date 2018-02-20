@@ -134,7 +134,6 @@ if __name__ == '__main__':
         for i,f in enumerate(fi):
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
             hdus = fitsio.FITS(f)
-            print('\n',hdus[1:],'\n')
             dels += [delta.from_fitsio(h) for h in hdus[1:]]
             ndata+=len(hdus[1:])
             hdus.close()

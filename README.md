@@ -13,6 +13,7 @@ requirements:
 * numba
 * multiprocessing
 * configargparse
+* h5py
 
 ## Installation
 
