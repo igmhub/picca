@@ -97,7 +97,7 @@ class TestCor(unittest.TestCase):
         lst_fold = ["/Products/","/Products/Spectra/",
         "/Products/Delta_LYA/","/Products/Delta_LYA/Delta/",
         "/Products/Delta_LYA/Log/","/Products/Correlations/",
-        "/Products/Correlations/Fit/"
+        "/Products/Correlations/Fit/",
         "/Products/Delta_Pk1D/","/Products/Delta_Pk1D/Delta/",
         "/Products/Delta_Pk1D/Log/",
         "/Products/Pk1D/"
