@@ -130,12 +130,12 @@ class forest(qso):
         self.fl = fl
         self.iv = iv
         self.order = order
-        if diff is not None :
-            self.diff = diff
-            self.reso = reso
-        else :
-            self.diff = sp.zeros(len(ll))
-            self.reso = sp.ones(len(ll))
+        #if diff is not None :
+        self.diff = diff
+        self.reso = reso
+#        else :
+#           self.diff = sp.zeros(len(ll))
+#           self.reso = sp.ones(len(ll))
 
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
@@ -300,7 +300,9 @@ class delta(qso):
         de = f.fl/(co*mst)-1.
         var = 1./f.iv/(co*mst)**2
         we = 1./variance(var,eta,var_lss,fudge)
-        diff = f.diff/(co*mst)
+        diff = f.diff
+        if f.diff is not None:
+            diff /= co*mst
         iv = f.iv/(eta+(eta==0))*(co**2)*(mst**2)
 
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,

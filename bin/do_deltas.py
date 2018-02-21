@@ -396,10 +396,11 @@ if __name__ == '__main__':
                     hd["MEANRESO"]=d.mean_reso
                     hd["MEANSNR"]=d.mean_SNR
                     hd["DLL"]=d.dll
+                    diff = d.diff
+                    if diff is None:
+                        diff = d.ll*0
 
-
-                if (args.delta_format=='Pk1D') :
-                    cols=[d.ll,d.de,d.iv,d.diff]
+                    cols=[d.ll,d.de,d.iv,diff]
                     names=['LOGLAM','DELTA','IVAR','DIFF']
                 else :
                     cols=[d.ll,d.de,d.we,d.co]
