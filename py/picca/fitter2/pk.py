@@ -45,8 +45,9 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     F_hcd = utils.sinc(kp*L0)
 
     bias_eff1 = (bias1 + bias_hcd*F_hcd)
-    bias_eff2 = (bias2 + bias_hcd*F_hcd)
     beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+
+    bias_eff2 = (bias2 + bias_hcd*F_hcd)
     beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
 
     pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
@@ -70,7 +71,7 @@ def pk_uv(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk_lin*bias1*bias2*(1+beta1*muk**2)*(1+beta2*muk**2)
 
-def pk_lls_uv(k, pk_lin, tracer1, tracer2, **kwargs):
+def pk_hcd_uv(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
 
     bias_gamma = kwargs["bias_gamma"]
@@ -84,19 +85,20 @@ def pk_lls_uv(k, pk_lin, tracer1, tracer2, **kwargs):
     beta2 = beta2/(1 + bias_gamma/bias2*W/(1 + bias_prim*W))
     bias2 = bias2 + bias_gamma*W/(1+bias_prim*W)
 
-    bias_lls = kwargs["bias_lls"]
-    beta_lls = kwargs["beta_lls"]
-    L0 = kwargs["L0_lls"]
+    bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
 
     kp = k*muk
     kt = k*(1-muk**2)
 
-    F_lls = utils.sinc(kp*L0)
+    F_hcd = utils.sinc(kp*L0)
 
-    bias_eff1 = (bias1 + bias_lls*F_lls)
-    bias_eff2 = (bias2 + bias_lls*F_lls)
-    beta_eff1 = (bias1 * beta1 + bias_lls*beta_lls*F_lls)/(bias1 + bias_lls*F_lls)
-    beta_eff2 = (bias2 * beta2 + bias_lls*beta_lls*F_lls)/(bias2 + bias_lls*F_lls)
+    bias_eff1 = (bias1 + bias_hcd*F_hcd)
+    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+
+    bias_eff2 = (bias2 + bias_hcd*F_hcd)
+    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
 
     pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
 
@@ -147,12 +149,36 @@ def G2(k, pk_lin, tracer1, tracer2, dataset_name = None, **kwargs):
     kt = k*sp.sqrt(1-muk**2)
     return utils.sinc(kp*Lpar/2)**2*utils.sinc(kt*Lper/2)**2
 
+def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+    assert (tracer1=="LYA" or tracer2=="LYA") and (tracer1!=tracer2)
+
+    bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+    kt = k*(1-muk**2)
+
+    F_hcd = utils.sinc(kp*L0)
+    
+    if tracer1 == "LYA":
+        bias_eff1 = (bias1 + bias_hcd*F_hcd)
+        beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+        pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
+    else:
+        bias_eff2 = (bias2 + bias_hcd*F_hcd)
+        beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+        pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs): 
     assert tracer1 == "QSO" or tracer2 == "QSO"
     kp = k*muk
-    return pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs)*sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
+    return sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
 
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     assert tracer1 == "QSO" or tracer2 == "QSO"
     kp = k*muk
-    return pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs)/sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
+    return 1/sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)

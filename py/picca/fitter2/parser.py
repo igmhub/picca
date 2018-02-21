@@ -1,7 +1,9 @@
 from __future__ import print_function
 
 import sys
+import scipy as sp
 import os.path
+from pkg_resources import resource_filename
 if (sys.version_info > (3, 0)):
     # Python 3 code in this block
     import configparser as ConfigParser
@@ -27,7 +29,7 @@ def parse_chi2(filename):
         p = os.path.expandvars(p)
         print('INFO: reading input Pk {}'.format(p))
     else:
-        p = '$PICCA_BASE/py/picca/fitter2/models/PlanckDR12/PlanckDR12.fits'
+        p = resource_filename('picca', 'fitter2/models/PlanckDR12/PlanckDR12.fits')
         p = os.path.expandvars(p)
         print('INFO: reading default Pk {}'.format(p))
 
@@ -50,6 +52,9 @@ def parse_chi2(filename):
             elif item=='parameters':
                 value = value.split()
             dic_init['minos'][item] = value
+
+    if cp.has_section('chi2 scan'):
+        dic_init['chi2 scan'] = parse_chi2scan(cp.items('chi2 scan'))
 
     return dic_init
 
@@ -103,5 +108,21 @@ def parse_data(filename):
             dic_init['metals']['in tracer1'] = dic_init['metals']['in tracer1'].split()
         if 'in tracer2' in dic_init['metals']:
             dic_init['metals']['in tracer2'] = dic_init['metals']['in tracer2'].split()
+
+    return dic_init
+
+def parse_chi2scan(items):
+
+    assert len(items)==1 or len(items)==2
+
+    dic_init = {}
+    for item, value in items:
+        dic = {}
+        value = value.split()
+        dic['min']    = float(value[0])
+        dic['max']    = float(value[1])
+        dic['nb_bin'] = int(value[2])
+        dic['grid']   = sp.linspace(dic['min'],dic['max'],num=dic['nb_bin'],endpoint=True)
+        dic_init[item] = dic
 
     return dic_init

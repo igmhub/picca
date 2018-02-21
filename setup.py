@@ -2,11 +2,7 @@
 
 import glob
 
-try:
-    from setuptools import setup
-except ImportError:
-    print('cant find setuptools, using distutils instead')
-    from distutils.core import setup
+from setuptools import setup, find_packages
 
 scripts = glob.glob('bin/*')
 
@@ -19,9 +15,9 @@ setup(name="picca",
       url="https://github.com/igmhub/picca",
       author="Nicolas Busca et al",
       author_email="ngbusca@lpnhe.in2p3.fr",
-      packages=['picca'],
+      packages=['picca','picca.fitter2'],
       package_dir = {'': 'py'},
-      install_requires=['future','scipy','numpy','fitsio','numba', 'healpy','iminuit'],
+      install_requires=['future','scipy','numpy','fitsio','numba', 'healpy','iminuit','h5py'],
       test_suite='picca.test.test_cor',
       scripts = scripts
       )
