@@ -1,12 +1,12 @@
 import numpy as np
 from picca import constants
-import pyfftw
+from scipy.fftpack import fft
 
 
-def split_forest(nb_part,dll,ll,de,diff,iv):
+def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
 
-    ll_limit=[ll[0]]
-    nb_bin= len(ll)/nb_part
+    ll_limit=[ll[first_pixel]]
+    nb_bin= (len(ll)-first_pixel)//nb_part
     
     m_z_arr = []
     ll_arr = []
@@ -20,10 +20,9 @@ def split_forest(nb_part,dll,ll,de,diff,iv):
     iv_c = iv.copy()
 
     for p in range(1,nb_part) :
-        ll_limit.append(ll[nb_bin*p])
+        ll_limit.append(ll[nb_bin*p+first_pixel])
         
     ll_limit.append(ll[len(ll)-1]+0.1*dll)
-
 
     for p in range(nb_part) : 
 
@@ -81,27 +80,21 @@ def compute_Pk_raw(dll,delta,ll):
     
     # make 1D FFT        
     nb_pixels = len(delta)
-    nb_bin_FFT = nb_pixels/2 + 1
+    nb_bin_FFT = nb_pixels//2 + 1
+    fft_a = fft(delta)
+    
+    # compute power spectrum 
+    fft_a = fft_a[:nb_bin_FFT]
+    Pk = (fft_a.real**2+fft_a.imag**2)*length_lambda/nb_pixels**2
+    k = np.arange(nb_bin_FFT,dtype=float)*2*np.pi/length_lambda
 
-    a = pyfftw.empty_aligned(nb_pixels, dtype='complex128')
-    fft = pyfftw.builders.fft(a)
-    for i in range(nb_pixels): a[i]=delta[i]
-    fft_a = fft() 
-    
-    # compute power spectrum        
-    Pk = np.zeros(nb_bin_FFT)
-    k =  np.zeros(nb_bin_FFT)
-    for i in range(nb_bin_FFT):
-        Pk[i] = float(fft_a[i].real**2 + fft_a[i].imag**2)*length_lambda/float(nb_pixels**2)
-        k[i] = float(i)*2.0*np.pi/length_lambda
-    
     return k,Pk
 
 
 def compute_Pk_noise(dll,iv,diff,ll,run_noise):
 
     nb_pixels = len(iv)
-    nb_bin_FFT = nb_pixels/2 + 1
+    nb_bin_FFT = nb_pixels//2 + 1
 
     nb_noise_exp = 10
     Pk = np.zeros(nb_bin_FFT)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-
+from __future__ import print_function 
 import fitsio
 import argparse
 import glob
@@ -20,6 +20,9 @@ def make_tree(tree,nb_bin_max):
     mean_reso = array( 'f', [ 0. ] )
     mean_SNR = array( 'f', [ 0. ] )
     nb_mask_pix = array( 'f', [ 0. ] )
+
+    lambda_min = array( 'f', [ 0. ] )
+    lambda_max= array( 'f', [ 0. ] )
     
     plate = array( 'i', [ 0 ] )
     mjd = array( 'i', [ 0 ] )
@@ -37,6 +40,8 @@ def make_tree(tree,nb_bin_max):
     tree.Branch("mean_z",mean_z,"mean_z/F")
     tree.Branch("mean_reso",mean_reso,"mean_reso/F")
     tree.Branch("mean_SNR",mean_SNR,"mean_SNR/F")
+    tree.Branch("lambda_min",lambda_min,"lambda_min/F")
+    tree.Branch("lambda_max",lambda_max,"lambda_max/F")
     tree.Branch("nb_masked_pixel",nb_mask_pix,"nb_mask_pixel/F")
 
     tree.Branch("plate",plate,"plate/I")
@@ -51,7 +56,7 @@ def make_tree(tree,nb_bin_max):
     tree.Branch( 'cor_reso', cor_reso_r, 'cor_reso[NbBin]/F' )
     tree.Branch( 'Pk', Pk_r, 'Pk[NbBin]/F' )
     
-    return zqso,mean_z,mean_reso,mean_SNR,plate,mjd,fiber,\
+    return zqso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
     nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
 
 def compute_mean_delta(ll,delta,iv,zqso):
@@ -94,6 +99,9 @@ if __name__ == '__main__':
     parser.add_argument('--reso-max',type = float,default=85.,required=False,
                         help = 'maximal resolution in km/s ')
 
+    parser.add_argument('--lambda-obs-min',type = float,default=3600.,required=False,
+                        help = 'minimal lambda obs.' )
+
     parser.add_argument('--nb-part',type = int,default=3,required=False,
                         help = 'Number of parts in forest')
 
@@ -106,7 +114,7 @@ if __name__ == '__main__':
     parser.add_argument('--noise-estimate', type = str, default = 'mean_diff', required=False,
                         help = ' Estimate of Pk_noise  pipeline/diff/mean_diff')
 
-    parser.add_argument('--debug', type = bool, default=False, required=False,
+    parser.add_argument('--debug', action='store_true', default = False, required=False,                  
                         help = ' Fill root histograms for debugging')
     
 
@@ -118,13 +126,13 @@ if __name__ == '__main__':
         storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
-        zqso,mean_z,mean_reso,mean_SNR,plate,mjd,fiber,\
+        zqso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
         nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
-        hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 34, 3600., 7000., 16, 1040., 1200., -5.0, 5.0)
+        hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 36, 3600., 7200., 16, 1040., 1200., -5.0, 5.0)
         hdelta_RF  = TProfile( 'hdelta_RF', 'delta mean as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
-        hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
+        hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1800, 3600., 7200., -5.0, 5.0)
         hdelta_RF_we  = TProfile( 'hdelta_RF_we', 'delta mean weighted as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
-        hdelta_OBS_we  = TProfile( 'hdelta_OBS_we', 'delta mean weighted as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
+        hdelta_OBS_we  = TProfile( 'hdelta_OBS_we', 'delta mean weighted as a function of lambdaOBS', 1800, 3600., 7200., -5.0, 5.0)
         hivar = TH1D('hivar','  ivar ',10000,0.0,10000.)
         hsnr = TH1D('hsnr','  snr per pixel ',100,0.0,100.)
         hdelta_RF_we.Sumw2()
@@ -156,7 +164,7 @@ if __name__ == '__main__':
         ndata+=len(dels)
         if (args.out_format=='fits') :
             out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
-        print ' ndata = ',ndata
+        print ("\n ndata =  ",ndata)
 
         # loop over deltas
         for d in dels:
@@ -164,14 +172,18 @@ if __name__ == '__main__':
             # Selection over the SNR and the resolution
             if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
 
+            # first pixel in forest
+            for first_pixel in range(len(d.ll)) :
+                 if (np.power(10.,d.ll[first_pixel])>args.lambda_obs_min) : break
+
             # minimum number of pixel in forest
             nb_pixel_min = args.nb_pixel_min
-            if (len(d.ll)<nb_pixel_min) : continue
+            if ((len(d.ll)-first_pixel)<nb_pixel_min) : continue
 
             # Split in n parts the forest
-            nb_part_max = len(d.ll)/nb_pixel_min
+            nb_part_max = (len(d.ll)-first_pixel)/nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
-            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv)
+            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv,first_pixel)
             for f in range(nb_part): 
             
                 # Fill masked pixels with 0.
@@ -214,6 +226,8 @@ if __name__ == '__main__':
                     mean_z[0] = m_z_arr[f]
                     mean_reso[0] = d.mean_reso
                     mean_SNR[0] = d.mean_SNR
+                    lambda_min[0] =  np.power(10.,ll_new[0])
+                    lambda_max[0] =  np.power(10.,ll_new[-1])
                     nb_mask_pix[0] = nb_masked_pixel
 
                     plate[0] = d.plate
@@ -258,6 +272,6 @@ if __name__ == '__main__':
          storeFile.Write()
 
    
-    print "all done"
+    print ("all done ")
 
 
