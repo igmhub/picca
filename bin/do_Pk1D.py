@@ -114,7 +114,7 @@ if __name__ == '__main__':
     parser.add_argument('--noise-estimate', type = str, default = 'mean_diff', required=False,
                         help = ' Estimate of Pk_noise  pipeline/diff/mean_diff')
 
-    parser.add_argument('--debug', type = bool, default=False, required=False,
+    parser.add_argument('--debug', action='store_true', default = False, required=False,                  
                         help = ' Fill root histograms for debugging')
     
 
@@ -128,11 +128,11 @@ if __name__ == '__main__':
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
         zqso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
         nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
-        hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 34, 3600., 7000., 16, 1040., 1200., -5.0, 5.0)
+        hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 36, 3600., 7200., 16, 1040., 1200., -5.0, 5.0)
         hdelta_RF  = TProfile( 'hdelta_RF', 'delta mean as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
-        hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
+        hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1800, 3600., 7200., -5.0, 5.0)
         hdelta_RF_we  = TProfile( 'hdelta_RF_we', 'delta mean weighted as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
-        hdelta_OBS_we  = TProfile( 'hdelta_OBS_we', 'delta mean weighted as a function of lambdaOBS', 1700, 3600., 7000., -5.0, 5.0)
+        hdelta_OBS_we  = TProfile( 'hdelta_OBS_we', 'delta mean weighted as a function of lambdaOBS', 1800, 3600., 7200., -5.0, 5.0)
         hivar = TH1D('hivar','  ivar ',10000,0.0,10000.)
         hsnr = TH1D('hsnr','  snr per pixel ',100,0.0,100.)
         hdelta_RF_we.Sumw2()

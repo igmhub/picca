@@ -1,6 +1,5 @@
 import numpy as np
 from picca import constants
-#import pyfftw
 from scipy.fftpack import fft
 
 
@@ -82,24 +81,9 @@ def compute_Pk_raw(dll,delta,ll):
     # make 1D FFT        
     nb_pixels = len(delta)
     nb_bin_FFT = nb_pixels//2 + 1
-
-    '''
-    a = pyfftw.empty_aligned(nb_pixels, dtype='complex128')
-    fft = pyfftw.builders.fft(a)
-    for i in range(nb_pixels): a[i]=delta[i]
-    fft_a = fft() 
-    '''
     fft_a = fft(delta)
     
     # compute power spectrum 
-    '''
-    Pk = np.zeros(nb_bin_FFT)
-    k =  np.zeros(nb_bin_FFT)
-    for i in range(nb_bin_FFT):
-        Pk[i] = float(fft_a[i].real**2 + fft_a[i].imag**2)*length_lambda/float(nb_pixels**2)
-        k[i] = float(i)*2.0*np.pi/length_lambda
-    '''
-
     fft_a = fft_a[:nb_bin_FFT]
     Pk = (fft_a.real**2+fft_a.imag**2)*length_lambda/nb_pixels**2
     k = np.arange(nb_bin_FFT,dtype=float)*2*np.pi/length_lambda
