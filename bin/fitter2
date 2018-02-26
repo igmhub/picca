@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+
+import fitsio
+from picca.fitter2 import chi2,parser
+import sys
+
+dic_init = parser.parse_chi2(sys.argv[1])
+chi = chi2.chi2(dic_init)
+chi.minimize()
+chi.minos()
+chi.chi2scan()
+chi.fastMC()
+chi.export()

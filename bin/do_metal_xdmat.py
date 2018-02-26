@@ -85,6 +85,12 @@ if __name__ == '__main__':
     parser.add_argument('--z-max-obj', type = float, default = None, required=False,
                         help = 'max redshift for object field')
 
+    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
+                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift higher than z-cut-min')
+
+    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
+                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift smaller than z-cut-min')
+
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
@@ -99,6 +105,8 @@ if __name__ == '__main__':
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
     xcf.rt_max = args.rt_max
+    xcf.z_cut_max = args.z_cut_max
+    xcf.z_cut_min = args.z_cut_min
     xcf.np = args.np
     xcf.nt = args.nt
     xcf.nside = args.nside
@@ -201,6 +209,8 @@ if __name__ == '__main__':
     head['RPMAX']=xcf.rp_max
     head['RPMIN']=xcf.rp_min
     head['RTMAX']=xcf.rt_max
+    head['Z_CUT_MAX']=xcf.z_cut_max 
+    head['Z_CUT_MIN']=xcf.z_cut_min
     head['NT']=xcf.nt
     head['NP']=xcf.np
 

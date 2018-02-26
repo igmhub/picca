@@ -1,3 +1,4 @@
+from __future__ import print_function
 import fitsio
 import scipy as sp
 import healpy
@@ -114,7 +115,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 target_mobj = 500
 nside_min = 8
 
-def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False):
+def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None):
 
     sys.stderr.write("mode: "+mode)
     ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
@@ -211,7 +212,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             read_time=time.time()-t0
         elif mode == "spec" or mode =="corrected-spec":
             t0 = time.time()
-            pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
+            pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log, pk1d=pk1d)
             read_time=time.time()-t0
         elif mode == "spec-mock-1D":
             t0 = time.time()
@@ -225,7 +226,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
     return data,ndata,nside,"RING"
 
-def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
+def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1d=None):
     pix_data = []
     for t,r,d,z,p,m,f in zip(thid,ra,dec,zqso,plate,mjd,fid):
         try:
@@ -247,13 +248,16 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
         fl = h[1]["flux"][:]
         iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
 
-        # compute difference between exposure
-        diff = exp_diff(h,ll)
-        # compute spectral resolution
-        wdisp =  h[1]["wdisp"][:]
-        reso = spectral_resolution(wdisp)
+        if(pk1d is not None) :
+            # compute difference between exposure
+            diff = exp_diff(h,ll)
+            # compute spectral resolution
+            wdisp =  h[1]["wdisp"][:]
+            reso = spectral_resolution(wdisp)
+            d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
+        else :
+            d = forest(ll,fl,iv, t, r, d, z, p, m, f,order)
         
-        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
         pix_data.append(d)
         h.close()
     return pix_data
@@ -435,7 +439,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
 def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=None, best_obs=False):
     pix_data={}
     unique_plates = sp.unique(plate)
-    print "reading {} plates".format(len(unique_plates))
+    print("reading {} plates".format(len(unique_plates)))
 
     for p in unique_plates:
         wplate = plate==p
@@ -451,8 +455,6 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
                 print("INFO: can't find spplate {} {}".format(p,m))
                 if log is not None:
                     log.write("INFO: can't find spplate {} {}\n".format(p,m))
-                print mjd_in_plate
-                print mjds_found
 
         for spplate in spplates:
             h = fitsio.FITS(spplate)
@@ -485,7 +487,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
                 if log is not None:
                     log.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
 
-            print "INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), os.path.basename(spplate), (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid))
+            print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), os.path.basename(spplate), (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid)))
             h.close()
 
     data = list(pix_data.values())

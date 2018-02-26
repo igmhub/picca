@@ -1,17 +1,24 @@
 #!/usr/bin/env python
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+
+import glob
+
+from setuptools import setup, find_packages
+
+scripts = glob.glob('bin/*')
 
 description = "Package for Igm Cosmological-Correlations Analyses"
 
+version="0.9"
 setup(name="picca",
-      version="0.9",
+      version=version,
       description=description,
       url="https://github.com/igmhub/picca",
       author="Nicolas Busca et al",
-      author_email="ngbusca@apc.in2p3.fr",
-      packages=['picca'],
+      author_email="ngbusca@lpnhe.in2p3.fr",
+      packages=['picca','picca.fitter2'],
       package_dir = {'': 'py'},
-      install_requires=['iminuit','fitsio','healpy','numba'])
+      install_requires=['future','scipy','numpy','fitsio','numba', 'healpy','iminuit','h5py'],
+      test_suite='picca.test.test_cor',
+      scripts = scripts
+      )
+

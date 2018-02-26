@@ -189,7 +189,7 @@ if __name__ == '__main__':
     data,ndata,healpy_nside,healpy_pix_ordering = io.read_data(args.in_dir, args.drq, args.mode,\
         zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
         keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
-        best_obs=args.best_obs, single_exp=args.single_exp)
+        best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format )
    
     ### Get the lines to veto
     usr_mask_obs    = None
@@ -396,10 +396,11 @@ if __name__ == '__main__':
                     hd["MEANRESO"]=d.mean_reso
                     hd["MEANSNR"]=d.mean_SNR
                     hd["DLL"]=d.dll
+                    diff = d.diff
+                    if diff is None:
+                        diff = d.ll*0
 
-
-                if (args.delta_format=='Pk1D') :
-                    cols=[d.ll,d.de,d.iv,d.diff]
+                    cols=[d.ll,d.de,d.iv,diff]
                     names=['LOGLAM','DELTA','IVAR','DIFF']
                 else :
                     cols=[d.ll,d.de,d.we,d.co]

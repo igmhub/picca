@@ -6,7 +6,7 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random 
+from scipy import random
 
 from picca import constants
 from picca import xcf
@@ -74,6 +74,12 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
+    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
+                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift higher than z-cut-min')
+
+    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
+                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift smaller than z-cut-min')
+
     parser.add_argument('--z-evol-del', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
 
@@ -89,6 +95,8 @@ if __name__ == '__main__':
     parser.add_argument('--no-remove-mean-lambda-obs', action="store_true", required=False,
                     help = 'Do not remove mean delta versus lambda_obs')
 
+    parser.add_argument('--from-image', type = str, default = None, required=False,
+                    help = 'use image format to read deltas', nargs='*')
 
     args = parser.parse_args()
 
@@ -97,29 +105,63 @@ if __name__ == '__main__':
 
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
+    xcf.z_cut_max = args.z_cut_max
+    xcf.z_cut_min = args.z_cut_min
     xcf.rt_max = args.rt_max
     xcf.np = args.np
     xcf.nt = args.nt
     xcf.nside = args.nside
 
+    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
+    xcf.lambda_abs = lambda_abs
+
     cosmo = constants.cosmo(args.fid_Om)
-    
+
     lambda_abs = constants.absorber_IGM[args.lambda_abs]
     z_min_pix = 1.e6
     z_max_pix = 0.
     bin_size_ll = 1.e6
-    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
-        fi = glob.glob(args.in_dir)
+
+    fi = []
+
+    if args.from_image == None:
+        if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+            fi += glob.glob(args.in_dir)
+        elif (len(args.in_dir)>5) and (args.in_dir[-5:]==".fits"):
+            fi += glob.glob(args.in_dir)
+        else:
+            fi += glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+    elif len(args.from_image)>0:
+        for arg in args.from_image:
+            if (len(arg)>8) and (arg[-8:]==".fits.gz"):
+                fi += glob.glob(arg)
+            elif (len(arg)>5) and (arg[-5:]==".fits"):
+                fi += glob.glob(arg)
+            else:
+                fi += glob.glob(arg+"/*.fits") + glob.glob(arg+"/*.fits.gz")
     else:
-        fi = glob.glob(args.in_dir+"/*.fits.gz")
+        if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
+            fi += glob.glob(args.in_dir)
+        elif (len(args.in_dir)>5) and (args.in_dir[-5:]==".fits"):
+            fi += glob.glob(args.in_dir)
+        else:
+            fi += glob.glob(args.in_dir+"/*.fits") + glob.glob(args.in_dir+"/*.fits.gz")
+
     fi = sorted(fi)
+
     dels = {}
     ndels = 0
+
     for i,f in enumerate(fi):
-        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndels))
-        hdus = fitsio.FITS(f)
-        ds = [delta.from_fitsio(h) for h in hdus[1:]]
-        ndels+=len(ds)
+        if not args.from_image:
+            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndels))
+            hdus = fitsio.FITS(f)
+            ds = [delta.from_fitsio(h) for h in hdus[1:]]
+            ndels+=len(ds)
+        else:
+            ds = delta.from_image(f)
+            ndels += len(ds)
+
         phi = [d.ra for d in ds]
         th = [sp.pi/2-d.dec for d in ds]
         pix = healpy.ang2pix(xcf.nside,th,phi)
@@ -255,12 +297,13 @@ if __name__ == '__main__':
     head['RPMIN']=xcf.rp_min
     head['RPMAX']=xcf.rp_max
     head['RTMAX']=xcf.rt_max
+    head['Z_CUT_MIN']=xcf.z_cut_min
+    head['Z_CUT_MAX']=xcf.z_cut_max
     head['NT']=xcf.nt
     head['NP']=xcf.np
+    head['NSIDE']=xcf.nside
 
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
     out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
     out.close()
-
-    

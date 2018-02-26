@@ -7,7 +7,29 @@ import subprocess
 import os
 import tempfile
 import shutil
+import h5py
 from pkg_resources import resource_filename
+import sys
+if (sys.version_info > (3, 0)):
+    # Python 3 code in this block
+    import configparser as ConfigParser
+else:
+    import ConfigParser
+
+def update_system_status_values(path, section, system, value):
+
+    ### Make ConfigParser case sensitive
+    class CaseConfigParser(ConfigParser.SafeConfigParser):
+        def optionxform(self, optionstr):
+            return optionstr
+    cp = CaseConfigParser()
+    cp.read(path)
+    cf = open(path, 'w')
+    cp.set(section, system, value)
+    cp.write(cf)
+    cf.close()
+
+    return
 
 class TestCor(unittest.TestCase):
 
@@ -42,16 +64,25 @@ class TestCor(unittest.TestCase):
         self.send_cf()
         self.send_dmat()
         self.send_metal_dmat()
+        self.send_export_cf()
 
         self.send_cf_cross()
         self.send_dmat_cross()
         self.send_metal_dmat_cross()
+        self.send_export_cf_cross()
 
         self.send_xcf_angl()
 
         self.send_xcf()
         self.send_xdmat()
         self.send_metal_xdmat()
+        self.send_export_xcf()
+        self.send_export_cross_covariance_cf_xcf()
+
+        self.send_fitter2()
+
+        self.send_delta_Pk1D()
+        self.send_Pk1D()
 
         if self._test:
             self.remove_folder()
@@ -66,6 +97,10 @@ class TestCor(unittest.TestCase):
         lst_fold = ["/Products/","/Products/Spectra/",
         "/Products/Delta_LYA/","/Products/Delta_LYA/Delta/",
         "/Products/Delta_LYA/Log/","/Products/Correlations/",
+        "/Products/Correlations/Fit/",
+        "/Products/Delta_Pk1D/","/Products/Delta_Pk1D/Delta/",
+        "/Products/Delta_Pk1D/Log/",
+        "/Products/Pk1D/"
         ]
 
         for fold in lst_fold:
@@ -200,7 +235,7 @@ class TestCor(unittest.TestCase):
                 d_b = b[i][k][:]
                 self.assertEqual(d_m.size,d_b.size,"{}: Header key is {}".format(nameRun,k))
                 if not sp.array_equal(d_m,d_b):
-                    print("WARNING: {}: Header key is {}, arrays are not exactly equal, ussing allclose".format(nameRun,k))
+                    print("WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(nameRun,k))
                     diff = d_m-d_b
                     w = d_m!=0.
                     diff[w] = sp.absolute( diff[w]/d_m[w] )
@@ -208,6 +243,65 @@ class TestCor(unittest.TestCase):
                     self.assertTrue(allclose,"{}: Header key is {}, maximum relative difference is {}".format(nameRun,k,diff.max()))
 
         return
+    def compare_h5py(self,path1,path2,nameRun=""):
+
+        def compare_attributes(atts1,atts2):
+            self.assertListEqual(sorted(list(atts1.keys())),sorted(list(atts2.keys())),"{}".format(nameRun))
+            for item in atts1:
+                nequal = True
+                if type(atts1[item])==type(sp.array([])):
+                    nequal = sp.logical_not(sp.array_equal(atts1[item],atts2[item]))
+                else:
+                    nequal = atts1[item]!=atts2[item]
+                if nequal:
+                    print("WARNING: {}: not exactly equal, using allclose".format(nameRun,k))
+                    print(atts1[item],atts2[item])
+                    allclose = sp.allclose(atts1[item],atts2[item])
+                    self.assertTrue(allclose,"{}".format(nameRun))
+            return
+        def compare_values(val1,val2):
+            if not sp.array_equal(val1,val2):
+                print("WARNING: {}: not exactly equal, using allclose".format(nameRun,k))
+                allclose = sp.allclose(val1,val2)
+                self.assertTrue(allclose,"{}".format(nameRun))
+            return
+
+        print("\n")
+        m = h5py.File(path1,"r")
+        self.assertTrue(os.path.isfile(path2),"{}".format(nameRun))
+        b = h5py.File(path2,"r")
+
+        self.assertListEqual(sorted(list(m.keys())),sorted(list(b.keys())),"{}".format(nameRun))
+
+        ### best fit
+        k = 'best fit'
+        compare_attributes(m[k].attrs,b[k].attrs)
+
+        ### fit data
+        for k in m.keys():
+            if k in ['best fit','fast mc','minos','chi2 scan']: continue
+            compare_attributes(m[k].attrs,b[k].attrs)
+            compare_values(m[k]['fit'].value,b[k]['fit'].value)
+
+        ### minos
+        k = 'minos'
+        compare_attributes(m[k].attrs,b[k].attrs)
+        for p in m[k].keys():
+            compare_attributes(m[k][p].attrs,b[k][p].attrs)
+
+        ### chi2 scan
+        k = 'chi2 scan'
+        for p in m[k].keys():
+            compare_attributes(m[k][p].attrs,b[k][p].attrs)
+            if p == 'result':
+                compare_values(m[k][p]['values'].value,b[k][p]['values'].value)
+
+        return
+
+
+
+
+
 
 
     def send_delta(self):
@@ -230,6 +324,53 @@ class TestCor(unittest.TestCase):
             self.compare_fits(path1,path2,"do_deltas.py")
 
         return
+
+
+    def send_delta_Pk1D(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_deltas.py"
+        cmd += " --in-dir "          + self._branchFiles+"/Products/Spectra/"
+        cmd += " --drq "             + self._branchFiles+"/Products/cat.fits"
+        cmd += " --out-dir "         + self._branchFiles+"/Products/Delta_Pk1D/Delta/"
+        cmd += " --iter-out-prefix " + self._branchFiles+"/Products/Delta_Pk1D/Log/delta_attributes"
+        cmd += " --log "             + self._branchFiles+"/Products/Delta_Pk1D/Log/input.log"
+        cmd += " --delta-format Pk1D --order 0 --use-constant-weight" 
+        cmd += " --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180" 
+        cmd += " --nproc 1"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/delta_attributes_Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
+            self.compare_fits(path1,path2,"do_deltas.py")
+
+            path1 = self._masterFiles + "/delta_Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-337.fits.gz"
+            self.compare_fits(path1,path2,"do_deltas.py")
+
+        return
+
+    def send_Pk1D(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_Pk1D.py"  
+        cmd += " --in-dir "          + self._masterFiles + "/delta_Pk1D/"
+        cmd += " --out-dir "         + self._branchFiles+"/Products/Pk1D/"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Pk1D/Pk1D-0.fits.gz"
+            self.compare_fits(path1,path2,"do_deltas.py")
+
+        return
+
+    
     def send_cf1d(self):
 
         print("\n")
@@ -351,6 +492,17 @@ class TestCor(unittest.TestCase):
             self.compare_fits(path1,path2,"do_metal_dmat.py")
 
         return
+    def send_export_cf(self):
+
+        print("\n")
+        ### Send
+        cmd  = " export.py"
+        cmd += " --data " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
+        cmd += " --dmat " + self._branchFiles+"/Products/Correlations/dmat.fits.gz"
+        cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_cf.fits.gz"
+        subprocess.call(cmd, shell=True)
+
+        return
     def send_cf_cross(self):
 
         print("\n")
@@ -422,6 +574,17 @@ class TestCor(unittest.TestCase):
             path1 = self._masterFiles + "/metal_dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
             self.compare_fits(path1,path2,"do_metal_dmat.py")
+
+        return
+    def send_export_cf_cross(self):
+
+        print("\n")
+        ### Send
+        cmd  = " export.py"
+        cmd += " --data " + self._branchFiles+"/Products/Correlations/cf_cross.fits.gz"
+        cmd += " --dmat " + self._branchFiles+"/Products/Correlations/dmat_cross.fits.gz"
+        cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_cf_cross.fits.gz"
+        subprocess.call(cmd, shell=True)
 
         return
     def send_xcf_angl(self):
@@ -514,6 +677,77 @@ class TestCor(unittest.TestCase):
             self.compare_fits(path1,path2,"do_metal_xdmat.py")
 
         return
+    def send_export_xcf(self):
+
+        print("\n")
+        ### Send
+        cmd  = " export.py"
+        cmd += " --data " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
+        cmd += " --dmat " + self._branchFiles+"/Products/Correlations/xdmat.fits.gz"
+        cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_xcf.fits.gz"
+        subprocess.call(cmd, shell=True)
+
+        return
+    def send_export_cross_covariance_cf_xcf(self):
+
+        print("\n")
+        ### Send
+        cmd  = " export_cross_covariance.py"
+        cmd += " --data1 " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
+        cmd += " --data2 " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
+        cmd += " --out "   + self._branchFiles+"/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
+        subprocess.call(cmd, shell=True)
+
+        return
+    def send_fitter2(self):
+
+        print("\n")
+
+        ### copy ini files to branch
+        cmd  = 'cp '+self._masterFiles+'/*ini '+self._branchFiles+'/Products/Correlations/Fit/'
+        subprocess.call(cmd, shell=True)
+
+        ### Set path in chi2.ini
+        path   = self._branchFiles+'/Products/Correlations/Fit/chi2.ini'
+        value  = self._branchFiles+'/Products/Correlations/Fit/config_cf.ini '
+        value += self._branchFiles+'/Products/Correlations/Fit/config_xcf.ini '
+        value += self._branchFiles+'/Products/Correlations/Fit/config_cf_cross.ini '
+        update_system_status_values(path, 'data sets', 'ini files', value)
+        value  = resource_filename('picca', 'fitter2/models/PlanckDR12/PlanckDR12.fits')
+        update_system_status_values(path, 'fiducial', 'filename', value)
+        value  = self._branchFiles+'/Products/Correlations/Fit/result_fitter2.h5'
+        update_system_status_values(path, 'output', 'filename', value)
+
+        ### Set path in config_cf.ini
+        path  = self._branchFiles+'/Products/Correlations/Fit/config_cf.ini'
+        value = self._branchFiles+'/Products/Correlations/exported_cf.fits.gz'
+        update_system_status_values(path, 'data', 'filename', value)
+        value = self._branchFiles+'/Products/Correlations/metal_dmat.fits.gz'
+        update_system_status_values(path, 'metals', 'filename', value)
+
+        ### Set path in config_cf_cross.ini
+        path  = self._branchFiles+'/Products/Correlations/Fit/config_cf_cross.ini'
+        value = self._branchFiles+'/Products/Correlations/exported_cf_cross.fits.gz'
+        update_system_status_values(path, 'data', 'filename', value)
+        value = self._branchFiles+'/Products/Correlations/metal_dmat_cross.fits.gz'
+        update_system_status_values(path, 'metals', 'filename', value)
+
+        ### Set path in config_xcf.ini
+        path  = self._branchFiles+'/Products/Correlations/Fit/config_xcf.ini'
+        value = self._branchFiles+'/Products/Correlations/exported_xcf.fits.gz'
+        update_system_status_values(path, 'data', 'filename', value)
+        value = self._branchFiles+'/Products/Correlations/metal_xdmat.fits.gz'
+        update_system_status_values(path, 'metals', 'filename', value)
+
+        ### Send
+        cmd  = ' fitter2 '+self._branchFiles+'/Products/Correlations/Fit/chi2.ini'
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles+'/result_fitter2.h5'
+            path2 = self._branchFiles+'/Products/Correlations/Fit/result_fitter2.h5'
+            self.compare_h5py(path1,path2,"fitter2")
 
 if __name__ == '__main__':
     unittest.main()

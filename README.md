@@ -13,12 +13,18 @@ requirements:
 * numba
 * multiprocessing
 * configargparse
+* h5py
 
 ## Installation
 
 download
 ```
 git clone https://github.com/igmhub/picca.git
+```
+
+add to your bashrc
+```
+export PICCA_BASE=<path to your picca>
 ```
 
 run
