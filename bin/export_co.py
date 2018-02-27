@@ -15,6 +15,9 @@ if __name__ == '__main__':
     parser.add_argument('--RR-DR-dir', type = str, default = None, required=True,
                         help = 'path directory to all data-random and random-random correlations')
 
+    parser.add_argument('--cov', type = str, default = None, required=False,
+                        help = 'covariance matrix file (if not provided it will be calculated by subsampling)')
+
     parser.add_argument('--out', type = str, default = None, required=True,
                         help = 'output file')
 
@@ -35,10 +38,9 @@ if __name__ == '__main__':
     nb = sp.array(h[1]['NB'][:])
     we = sp.array(h[2]['WE'][:]).sum(axis=0)
     dd = we
-    dd /= nbObj*nbObj/2.
+    dd /= nbObj*(nbObj-1)/2.
     h.close()
     dm = sp.eye(dd.size)
-    co = sp.eye(dd.size)
 
     ### DR and RR
     rand = {}
@@ -63,7 +65,7 @@ if __name__ == '__main__':
         we = sp.array(h[2]['WE'][:]).sum(axis=0)
         if tc in ['RR','xRR']:
             nbObj = head['NOBJ']
-            we /= nbObj*nbObj/2.
+            we /= nbObj*(nbObj-1)/2.
         else:
             nbObj  = head['NOBJ']
             nbObj2 = head['NOBJ2']
@@ -96,6 +98,14 @@ if __name__ == '__main__':
         w = rr>0.
         da = sp.zeros_like(dd)
         da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
+
+    ### Covariance matrix
+    if args.cov is not None:
+        hh = fitsio.FITS(args.cov)
+        co = hh[1]['CO'][:]
+        hh.close()
+    else:
+        co = sp.eye(dd.size)
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)
