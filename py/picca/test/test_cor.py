@@ -366,7 +366,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Pk1D/Pk1D-0.fits.gz"
-            self.compare_fits(path1,path2,"do_deltas.py")
+            self.compare_fits(path1,path2,"do_Pk1D.py")
 
         return
 
