@@ -21,6 +21,9 @@ class chi2:
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
         self.pksb_lin = dic_init['fiducial']['pksb']
+        self.verbosity = 1
+        if 'verbosity' in dic_init:
+            self.verbosity = dic_init['verbosity']
 
         if 'fast mc' in dic_init:
             self.nfast_mc = dic_init['fast mc']['niterations']
@@ -36,12 +39,13 @@ class chi2:
         chi2 = 0
         for d in self.data:
             chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,dic)
-
-        for p in sorted(dic.keys()):
-            print(p+" "+str(dic[p]))
         
-        print("Chi2: "+str(chi2))
-        print("---\n")
+        if self.verbosity == 1:
+            for p in sorted(dic.keys()):
+                print(p+" "+str(dic[p]))
+        
+            print("Chi2: "+str(chi2))
+            print("---\n")
         return chi2
 
     def _minimize(self):
