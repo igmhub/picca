@@ -39,6 +39,10 @@ def parse_chi2(filename):
     dic_init['fiducial']['pksb'] = h[1]['PKSB'][:]
 
     dic_init['outfile'] = cp.get('output','filename')
+
+    if 'verbosity' in cp.sections():
+        dic_init['verbosity'] = cp.get('verbosity','level')
+
     if 'fast mc' in cp.sections():
         dic_init['fast mc'] = {}
         for item, value in cp.items('fast mc'):
