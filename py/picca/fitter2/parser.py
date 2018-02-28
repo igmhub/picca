@@ -41,7 +41,7 @@ def parse_chi2(filename):
     dic_init['outfile'] = cp.get('output','filename')
 
     if 'verbosity' in cp.sections():
-        dic_init['verbosity'] = cp.get('verbosity','level')
+        dic_init['verbosity'] = int(cp.get('verbosity','level'))
 
     if 'fast mc' in cp.sections():
         dic_init['fast mc'] = {}
