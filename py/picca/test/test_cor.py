@@ -752,11 +752,11 @@ class TestCor(unittest.TestCase):
             self.compare_fits(path1,path2,"do_co.py DD")
 
             path1 = self._masterFiles + "/co_RR.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/co_RR.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RR.fits.gz"
             self.compare_fits(path1,path2,"do_co.py RR")
 
             path1 = self._masterFiles + "/co_DR.fits.gz"
-            path2 = self._branchFiles + "/Products/Correlations/co_DR.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_DR.fits.gz"
             self.compare_fits(path1,path2,"do_co.py DR")
 
         return
