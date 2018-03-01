@@ -1,6 +1,7 @@
 import scipy as sp
 import sys
 import fitsio
+import numpy
 
 def cov(da,we):
 
@@ -76,46 +77,52 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
     '''
 
+    ## Truth table
     vac = fitsio.FITS(truth)
-    vacTargets = fitsio.FITS(targets)
 
-    ## Info of the primary observation
-    thid  = vac[1]["TARGETID"][:]
+    w  = sp.ones(vac[1]["TARGETID"][:].size).astype(bool)
+    print(" start                 : nb object in cat = {}".format(w.sum()) )
+    w &= numpy.core.defchararray.replace(vac[1]["TRUESPECTYPE"][:].astype(str),' ','')==spectype
+    print(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
+
+    thid  = vac[1]["TARGETID"][:][w]
+    zqso  = vac[1]["TRUEZ"][:][w]
+    vac.close()
     ra    = sp.zeros(thid.size)
     dec   = sp.zeros(thid.size)
-    zqso  = vac[1]["TRUEZ"][:]
     plate = 1+sp.arange(thid.size)
     mjd   = 1+sp.arange(thid.size)
     fid   = 1+sp.arange(thid.size)
-    sptype = sp.chararray.strip(vac[1]["TRUESPECTYPE"][:].astype(str))
+
+    ### Get RA and DEC from targets
+    vac = fitsio.FITS(targets)
+    thidTargets = vac[1]["TARGETID"][:]
+    raTargets   = vac[1]["RA"][:]
+    decTargets  = vac[1]["DEC"][:]
+    vac.close()
 
     from_TARGETID_to_idx = {}
-    for i,t in enumerate(thid):
-        from_TARGETID_to_idx[t] = i
-    thidTargets = vacTargets[1]["TARGETID"][:]
-    raTargets   = vacTargets[1]["RA"][:]
-    decTargets  = vacTargets[1]["DEC"][:]
     for i,t in enumerate(thidTargets):
-        idx      = from_TARGETID_to_idx[t]
-        ra[idx]  = raTargets[i]
-        dec[idx] = decTargets[i]
+        from_TARGETID_to_idx[t] = i
+    keys_from_TARGETID_to_idx = from_TARGETID_to_idx.keys()
+
+    for i,t in enumerate(thid):
+        if t not in keys_from_TARGETID_to_idx: continue
+        idx    = from_TARGETID_to_idx[t]
+        ra[i]  = raTargets[idx]
+        dec[i] = decTargets[idx]
     if (ra==0.).sum()!=0 or (dec==0.).sum()!=0:
-        print("ERROR: some targetid in truth are not in targets")
+        w  = ra!=0.
+        w &= dec!=0.
+        print(" and RA and DEC        : nb object in cat = {}".format(w.sum()))
 
-    ## Sanity
-    print(" start               : nb object in cat = {}".format(ra.size) )
-    w = (sptype==spectype)
-    print(" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) )
-
-    ra    = ra[w]
-    dec   = dec[w]
-    zqso  = zqso[w]
-    thid  = thid[w]
-    plate = plate[w]
-    mjd   = mjd[w]
-    fid   = fid[w]
-
-    vac.close()
+        ra    = ra[w]
+        dec   = dec[w]
+        zqso  = zqso[w]
+        thid  = thid[w]
+        plate = plate[w]
+        mjd   = mjd[w]
+        fid   = fid[w]
 
     ### Save
     out = fitsio.FITS(drq,'rw',clobber=True)
