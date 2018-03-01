@@ -163,7 +163,8 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     elif mode=="desi":
         nside = 8
         sys.stderr.write("Found {} qsos\n".format(len(zqso)))
-        return read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order),nside,"RING"
+        data = read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order)
+        return data,len(data),nside,"RING"
 
     else:
         sys.stderr.write("I don't know mode: {}".format(mode))
@@ -506,9 +507,11 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         path = in_dir + "spectra-"+str(in_nside)+"/"+str(int(f/100))+"/"+str(f)+"/spectra-"+str(in_nside)+"-"+str(f)+".fits"
 
         sys.stderr.write("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
-        try:
+        #try:
+        if True:
             h = fitsio.FITS(path)
-        except IOError:
+        #except IOError:
+        else:
             sys.stderr.write("Error reading pix {}\n".format(f))
             continue
 
@@ -566,7 +569,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
     sys.stderr.write("found {} quasars in input files\n".format(ndata))
 
-    return data,ndata
+    return data
 
 
 def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False):
