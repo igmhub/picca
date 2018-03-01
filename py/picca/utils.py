@@ -81,13 +81,24 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
     ## Info of the primary observation
     thid  = vac[1]["TARGETID"][:]
-    ra    = vacTargets[1]["RA"][:]
-    dec   = vacTargets[1]["DEC"][:]
+    ra    = sp.zeros(thid.size)
+    dec   = sp.zeros(thid.size)
     zqso  = vac[1]["TRUEZ"][:]
     plate = 1+sp.arange(thid.size)
     mjd   = 1+sp.arange(thid.size)
     fid   = 1+sp.arange(thid.size)
     sptype = sp.chararray.strip(vac[1]["TRUESPECTYPE"][:].astype(str))
+
+    from_TARGETID_to_idx = {}
+    for i,t in enumerate(thid):
+        from_TARGETID_to_idx[t] = i
+    thidTargets = vacTargets[1]["TARGETID"][:]
+    raTargets   = vacTargets[1]["RA"][:]
+    decTargets  = vacTargets[1]["DEC"][:]
+    for i,t in enumerate(thidTargets):
+        idx      = from_TARGETID_to_idx[t]
+        ra[idx]  = raTargets[i]
+        dec[idx] = decTargets[i]
 
     ## Sanity
     print(" start               : nb object in cat = {}".format(ra.size) )
