@@ -99,6 +99,8 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
         idx      = from_TARGETID_to_idx[t]
         ra[idx]  = raTargets[i]
         dec[idx] = decTargets[i]
+    if (ra==0.).sum()!=0 or (dec==0.).sum()!=0:
+        print("ERROR: some targetid in truth are not in targets")
 
     ## Sanity
     print(" start               : nb object in cat = {}".format(ra.size) )
