@@ -329,26 +329,33 @@ class TestCor(unittest.TestCase):
     def send_delta_Pk1D(self):
 
         print("\n")
+        ### Path
+        path_to_etc = resource_filename('picca','../../etc')
         ### Send
         cmd  = " do_deltas.py"
-        cmd += " --in-dir "          + self._branchFiles+"/Products/Spectra/"
-        cmd += " --drq "             + self._branchFiles+"/Products/cat.fits"
+        cmd += " --in-dir "          + self._masterFiles+"/test_Pk1D/Spectra_test/"
+        cmd += " --drq "             + self._masterFiles+"/test_Pk1D/DRQ_test.fits"
         cmd += " --out-dir "         + self._branchFiles+"/Products/Delta_Pk1D/Delta/"
         cmd += " --iter-out-prefix " + self._branchFiles+"/Products/Delta_Pk1D/Log/delta_attributes"
         cmd += " --log "             + self._branchFiles+"/Products/Delta_Pk1D/Log/input.log"
-        cmd += " --delta-format Pk1D --order 0 --use-constant-weight" 
-        cmd += " --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180" 
+        cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight" 
+        cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180" 
         cmd += " --nproc 1"
+        cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/delta_attributes_Pk1D.fits.gz"
+            path1 = self._masterFiles + "/test_Pk1D/delta_attributes_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
             self.compare_fits(path1,path2,"do_deltas.py")
 
-            path1 = self._masterFiles + "/delta_Pk1D.fits.gz"
-            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-337.fits.gz"
+            path1 = self._masterFiles + "/test_Pk1D/delta-64_Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-64.fits.gz"
+            self.compare_fits(path1,path2,"do_deltas.py")
+
+            path1 = self._masterFiles + "/test_Pk1D/delta-80_Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-80.fits.gz"
             self.compare_fits(path1,path2,"do_deltas.py")
 
         return
@@ -358,13 +365,13 @@ class TestCor(unittest.TestCase):
         print("\n")
         ### Send
         cmd  = " do_Pk1D.py"  
-        cmd += " --in-dir "          + self._masterFiles + "/delta_Pk1D/"
+        cmd += " --in-dir "          + self._masterFiles + "/test_Pk1D/delta_Pk1D/"
         cmd += " --out-dir "         + self._branchFiles+"/Products/Pk1D/"
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/Pk1D.fits.gz"
+            path1 = self._masterFiles + "/test_Pk1D/Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Pk1D/Pk1D-0.fits.gz"
             self.compare_fits(path1,path2,"do_deltas.py")
 
