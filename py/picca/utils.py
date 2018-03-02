@@ -1,7 +1,6 @@
 import scipy as sp
 import sys
 import fitsio
-import numpy
 
 def cov(da,we):
 
@@ -82,7 +81,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
     w  = sp.ones(vac[1]["TARGETID"][:].size).astype(bool)
     print(" start                 : nb object in cat = {}".format(w.sum()) )
-    w &= numpy.core.defchararray.replace(vac[1]["TRUESPECTYPE"][:].astype(str),' ','')==spectype
+    w &= sp.char.strip(vac[1]["TRUESPECTYPE"][:].astype(str))==spectype
     print(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
 
     thid  = vac[1]["TARGETID"][:][w]
