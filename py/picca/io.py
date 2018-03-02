@@ -507,11 +507,9 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         path = in_dir + "spectra-"+str(in_nside)+"/"+str(int(f/100))+"/"+str(f)+"/spectra-"+str(in_nside)+"-"+str(f)+".fits"
 
         sys.stderr.write("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
-        #try:
-        if True:
+        try:
             h = fitsio.FITS(path)
-        #except IOError:
-        else:
+        except IOError:
             sys.stderr.write("Error reading pix {}\n".format(f))
             continue
 
