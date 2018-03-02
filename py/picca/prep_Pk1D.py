@@ -5,7 +5,7 @@ from picca import constants
 
 def exp_diff(file,ll) :
 
-    nexp_per_col = file[0].read_header()['NEXP']/2
+    nexp_per_col = file[0].read_header()['NEXP']//2
     fltotodd  = sp.zeros(ll.size)
     ivtotodd  = sp.zeros(ll.size)
     fltoteven = sp.zeros(ll.size)
