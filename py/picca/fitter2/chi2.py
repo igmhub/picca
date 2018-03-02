@@ -80,7 +80,7 @@ class chi2:
         self.best_fit = self._minimize()
 
         for d in self.data:
-            d.best_fit_model = d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
+            d.best_fit_model = self.best_fit.values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
 
             ap = self.best_fit.values['ap']
             at = self.best_fit.values['at']
