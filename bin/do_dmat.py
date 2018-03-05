@@ -13,6 +13,7 @@ import copy
 from picca import constants
 from picca import cf
 from picca.data import delta
+from picca import utils
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
@@ -189,7 +190,7 @@ if __name__ == '__main__':
         if not args.no_project:
             d.project()
 
-    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
+    cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,z_min_pix)
     
     if x_correlation: 
         cf.alpha2 = args.z_evol2
@@ -211,7 +212,7 @@ if __name__ == '__main__':
             if not args.no_project:
                 d.project()
 
-        cf.angmax = 2.*sp.arcsin(cf.rt_max/( cosmo.r_comoving(z_min_pix)+cosmo.r_comoving(z_min_pix2) ))
+        cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,z_min_pix,z_min_pix2)
 
     cf.npix = len(data)
     cf.data = data

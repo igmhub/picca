@@ -12,6 +12,7 @@ from scipy.interpolate import interp1d
 from picca import constants
 from picca import cf
 from picca.data import delta
+from picca import utils
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
@@ -145,7 +146,7 @@ if __name__ == '__main__':
             if ndata>args.nspec:break
     sys.stderr.write("\n")
 
-    cf.angmax = 2.*sp.arcsin(cf.rt_max/(2.*cosmo.r_comoving(z_min_pix)))
+    cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,z_min_pix)
 
     cf.npix = len(data)
     cf.data = data

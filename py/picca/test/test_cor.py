@@ -36,7 +36,7 @@ class TestCor(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._branchFiles = tempfile.mkdtemp()+"/"
-        
+
     @classmethod
     def tearDownClass(cls):
         if os.path.isdir(cls._branchFiles):
@@ -53,12 +53,13 @@ class TestCor(unittest.TestCase):
         self.produce_folder()
         self.produce_cat(nObj=1000)
         self.produce_forests()
+        self.produce_cat(nObj=1000,name="random",thidoffset=1000)
 
         self.send_delta()
 
         self.send_cf1d()
         self.send_cf1d_cross()
-        
+
         self.send_cf_angl()
 
         self.send_cf()
@@ -79,6 +80,9 @@ class TestCor(unittest.TestCase):
         self.send_export_xcf()
         self.send_export_cross_covariance_cf_xcf()
 
+        self.send_co()
+        self.send_export_co()
+
         self.send_fitter2()
 
         self.send_delta_Pk1D()
@@ -97,6 +101,7 @@ class TestCor(unittest.TestCase):
         lst_fold = ["/Products/","/Products/Spectra/",
         "/Products/Delta_LYA/","/Products/Delta_LYA/Delta/",
         "/Products/Delta_LYA/Log/","/Products/Correlations/",
+        "/Products/Correlations/Co_Random/",
         "/Products/Correlations/Fit/",
         "/Products/Delta_Pk1D/","/Products/Delta_Pk1D/Delta/",
         "/Products/Delta_Pk1D/Log/",
@@ -117,7 +122,7 @@ class TestCor(unittest.TestCase):
         shutil.rmtree(self._branchFiles, ignore_errors=True)
 
         return
-    def produce_cat(self,nObj):
+    def produce_cat(self,nObj,name="cat",thidoffset=0):
         """
 
         """
@@ -131,11 +136,11 @@ class TestCor(unittest.TestCase):
         plate = numpy.random.randint(266,   high=10001, size=nObj )
         mjd   = numpy.random.randint(51608, high=57521, size=nObj )
         fid   = numpy.random.randint(1,     high=1001,  size=nObj )
-        thid  = sp.arange(1,nObj+1)
+        thid  = sp.arange(thidoffset+1,thidoffset+nObj+1)
         zqso  = (3.6-2.0)*numpy.random.random_sample(nObj) + 2.0
 
         ### Save
-        out = fitsio.FITS(self._branchFiles+"/Products/cat.fits",'rw',clobber=True)
+        out = fitsio.FITS(self._branchFiles+"/Products/"+name+".fits",'rw',clobber=True)
         cols=[ra,dec,thid,plate,mjd,fid,zqso]
         names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
         out.write(cols,names=names)
@@ -373,11 +378,11 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/test_Pk1D/Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Pk1D/Pk1D-0.fits.gz"
-            self.compare_fits(path1,path2,"do_deltas.py")
+            self.compare_fits(path1,path2,"do_Pk1D.py")
 
         return
 
-    
+
     def send_cf1d(self):
 
         print("\n")
@@ -676,7 +681,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
-        
+
         ### Test
         if self._test:
             path1 = self._masterFiles + "/metal_xdmat.fits.gz"
@@ -703,6 +708,73 @@ class TestCor(unittest.TestCase):
         cmd += " --data1 " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
         cmd += " --data2 " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
         cmd += " --out "   + self._branchFiles+"/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
+        subprocess.call(cmd, shell=True)
+
+        return
+    def send_co(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_co.py"
+        cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
+        cmd += " --out "    + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
+        cmd += " --rp-min 0."
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --nproc 1"
+        cmd += " --type-corr DD"
+        subprocess.call(cmd, shell=True)
+        ### Send
+        cmd  = " do_co.py"
+        cmd += " --drq "    + self._branchFiles+"/Products/random.fits"
+        cmd += " --out "    + self._branchFiles+"/Products/Correlations/Co_Random/co_RR.fits.gz"
+        cmd += " --rp-min 0."
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --nproc 1"
+        cmd += " --type-corr RR"
+        subprocess.call(cmd, shell=True)
+        ### Send
+        cmd  = " do_co.py"
+        cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
+        cmd += " --drq2 "   + self._branchFiles+"/Products/random.fits"
+        cmd += " --out "    + self._branchFiles+"/Products/Correlations/Co_Random/co_DR.fits.gz"
+        cmd += " --rp-min 0."
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --nproc 1"
+        cmd += " --type-corr DR"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/co_DD.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/co_DD.fits.gz"
+            self.compare_fits(path1,path2,"do_co.py DD")
+
+            path1 = self._masterFiles + "/co_RR.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RR.fits.gz"
+            self.compare_fits(path1,path2,"do_co.py RR")
+
+            path1 = self._masterFiles + "/co_DR.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_DR.fits.gz"
+            self.compare_fits(path1,path2,"do_co.py DR")
+
+        return
+    def send_export_co(self):
+
+        print("\n")
+        ### Send
+        cmd  = " export_co.py"
+        cmd += " --DD-file "   + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
+        cmd += " --RR-DR-dir " + self._branchFiles+"/Products/Correlations/Co_Random/"
+        cmd += " --out "       + self._branchFiles+"/Products/Correlations/exported_co.fits.gz"
         subprocess.call(cmd, shell=True)
 
         return

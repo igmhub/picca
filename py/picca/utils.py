@@ -157,3 +157,21 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
     out.close()
 
     return
+def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
+    '''
+    Compute the maximum angle given by the maximum transverse
+    separation the correlation should be calculated to
+    '''
+    
+    if zmin2 is None:
+        zmin2 = zmin
+
+    rmin1 = cosmo.r_comoving(zmin)
+    rmin2 = cosmo.r_comoving(zmin2)
+
+    if rmin1+rmin2<rt_max:
+        angmax = sp.pi
+    else:
+        angmax = 2.*sp.arcsin(rt_max/(rmin1+rmin2))
+
+    return angmax
