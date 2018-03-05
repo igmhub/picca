@@ -4,10 +4,6 @@ import fitsio
 
 def cov(da,we):
 
-    npix = da.shape[0]
-    nda = da.shape[1]
-    co = sp.zeros([nda,nda])
-
     mda = (da*we).sum(axis=0)
     swe = we.sum(axis=0)
     w = swe>0.
@@ -16,11 +12,7 @@ def cov(da,we):
     wda = we*(da-mda)
 
     print("Computing cov...")
-    '''
-    for ipix in range(npix):
-        sys.stderr.write("\r {} {}".format(ipix,npix))
-        co += sp.outer(wda[ipix,:],wda[ipix,:])
-    '''
+
     co = wda.T.dot(wda)
     sswe = swe*swe[:,None]
     w = sswe>0.
