@@ -102,6 +102,10 @@ class data:
         if 'metals' in dic_init:
             self.pk_met = pk.pk(getattr(pk, dic_init['metals']['model-pk-met']))
             self.pk_met *= partial(getattr(pk,'G2'), dataset_name=self.name)
+
+            if 'velocity dispersion' in dic_init['model']:
+                self.pk_met *= getattr(pk, dic_init['model']['velocity dispersion'])
+
             self.xi_met = partial(getattr(xi, dic_init['metals']['model-xi-met']), name=self.name)
 
             hmet = fitsio.FITS(dic_init['metals']['filename'])
@@ -207,7 +211,7 @@ class data:
         pars['at'] = at
         pars['sigmaNL_per'] = sigmaNL_per
 
-        xi_full = xi_peak + xi_sb
+        xi_full = pars['bao_amp']*xi_peak + xi_sb
         dxi = self.da_cut-xi_full[self.mask]
 
         return dxi.T.dot(self.ico.dot(dxi))
