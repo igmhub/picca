@@ -107,8 +107,8 @@ class data:
             self.pk_met = pk.pk(getattr(pk, dic_init['metals']['model-pk-met']))
             self.pk_met *= partial(getattr(pk,'G2'), dataset_name=self.name)
 
-            #if 'velocity dispersion' in dic_init['model']:
-            #    self.pk_met *= getattr(pk, dic_init['model']['velocity dispersion'])
+            if 'velocity dispersion' in dic_init['model']:
+                self.pk_met *= getattr(pk, dic_init['model']['velocity dispersion'])
 
             self.xi_met = partial(getattr(xi, dic_init['metals']['model-xi-met']), name=self.name)
 
