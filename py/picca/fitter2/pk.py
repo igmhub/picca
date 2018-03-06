@@ -40,8 +40,6 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     L0 = kwargs["L0_hcd"]
 
     kp = k*muk
-    kt = k*(1-muk**2)
-
     F_hcd = utils.sinc(kp*L0)
 
     bias_eff1 = (bias1 + bias_hcd*F_hcd)
@@ -90,8 +88,6 @@ def pk_hcd_uv(k, pk_lin, tracer1, tracer2, **kwargs):
     L0 = kwargs["L0_hcd"]
 
     kp = k*muk
-    kt = k*(1-muk**2)
-
     F_hcd = utils.sinc(kp*L0)
 
     bias_eff1 = (bias1 + bias_hcd*F_hcd)
@@ -158,8 +154,6 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     L0 = kwargs["L0_hcd"]
 
     kp = k*muk
-    kt = k*(1-muk**2)
-
     F_hcd = utils.sinc(kp*L0)
     
     if tracer1 == "LYA":
