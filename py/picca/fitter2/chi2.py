@@ -82,15 +82,26 @@ class chi2:
         for d in self.data:
             d.best_fit_model = self.best_fit.values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
 
-            ap = self.best_fit.values['ap']
-            at = self.best_fit.values['at']
-            self.best_fit.values['ap'] = 1
-            self.best_fit.values['at'] = 1
             snl = self.best_fit.values['sigmaNL_per']
             self.best_fit.values['sigmaNL_per'] = 0
-            d.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
-            self.best_fit.values['ap'] = ap
-            self.best_fit.values['at'] = at
+            if d.bao_dilation == 'aiso':
+                aiso = self.best_fit.values['aiso']
+                eps = self.best_fit.values['1+epsilon']
+                self.best_fit.values['aiso'] = 1
+                self.best_fit.values['1+epsilon'] = 1
+                d.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
+                self.best_fit.values['aiso'] = aiso
+                self.best_fit.values['1+epsilon'] = eps
+            
+            else:
+                ap = self.best_fit.values['ap']
+                at = self.best_fit.values['at']
+                self.best_fit.values['ap'] = 1
+                self.best_fit.values['at'] = 1
+                d.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
+                self.best_fit.values['ap'] = ap
+                self.best_fit.values['at'] = at
+            
             self.best_fit.values['sigmaNL_per'] = snl
 
     def chi2scan(self):
