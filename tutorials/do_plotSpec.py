@@ -72,6 +72,9 @@ if __name__ == '__main__':
     parser.add_argument('--flux-calib',type = str,default=None,required=False,
             help='Path to file to previously produced do_delta.py file to correct for multiplicative errors in the flux calibration')
 
+    parser.add_argument('--ivar-calib',type = str,default=None,required=False,
+            help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration')
+
     args = parser.parse_args()
 
     ### forest args
@@ -128,6 +131,18 @@ if __name__ == '__main__':
 
         except:
             print(" Error while reading flux_calib file {}".format(args.flux_calib))
+            sys.exit(1)
+
+    ### Correct multiplicative pipeline inverse variance calibration
+    if (args.ivar_calib is not None):
+        try:
+            vac = fitsio.FITS(args.ivar_calib)
+            ll  = vac[2]['LOGLAM'][:]
+            eta = vac[2]['ETA'][:]
+            forest.correc_ivar = interp1d(ll,eta,fill_value="extrapolate",kind="nearest")
+
+        except:
+            print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
             sys.exit(1)
 
     ### Get the lines to veto
