@@ -42,7 +42,7 @@ class cosmo:
         self.r_2_z = interpolate.interp1d(chi,z)
 
 ### Tracer names
-tracer = ['QSO','LOWZ','CMASS','ELG','GALAXY','DLA']
+collapsed_tracer = ['QSO','LOWZ','CMASS','ELG','GALAXY','DLA','SLA']
 
 ### Absorber names and wavelengths [Angstrom]
 absorber_IGM = {
