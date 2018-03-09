@@ -57,7 +57,7 @@ if __name__ == '__main__':
             'NP':np, 'NT':nt, 'RTMAX':rt_max, 'RPMIN':rp_min, 'RPMAX':rp_max}
         h.close()
 
-    ### same header is same
+    ### same header
     for i in range(nbData):
         for k in ['NSIDE','HLPXSCHM','NP','NT','RTMAX','RPMIN','RPMAX']:
             assert data[i][k]==data[0][k]
