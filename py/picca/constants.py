@@ -41,6 +41,9 @@ class cosmo:
         self.hubble = interpolate.interp1d(z,hubble)
         self.r_2_z = interpolate.interp1d(chi,z)
 
+### Tracer names
+tracer = ['QSO','LOWZ','CMASS','ELG','GALAXY','DLA']
+
 ### Absorber names and wavelengths [Angstrom]
 absorber_IGM = {
     'Halpha'      : 6562.8,

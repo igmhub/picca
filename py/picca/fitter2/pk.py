@@ -1,6 +1,8 @@
 import scipy as sp
 from . import utils
 
+from picca import constants
+
 muk = utils.muk
 bias_beta = utils.bias_beta
 
@@ -168,11 +170,11 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     return pk
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs): 
-    assert tracer1 == "QSO" or tracer2 == "QSO"
+    assert tracer1 in constants.tracer or tracer2 in constants.tracer
     kp = k*muk
     return sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
 
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
-    assert tracer1 == "QSO" or tracer2 == "QSO"
+    assert tracer1 in constants.tracer or tracer2 in constants.tracer
     kp = k*muk
     return 1/sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
