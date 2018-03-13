@@ -572,15 +572,32 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
     return data
 
 
-def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False):
+def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False,from_image=None):
     '''
     reads deltas from indir
     fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
     returns data,zmin_pix
     '''
-    dels = []
-    fi = glob.glob(indir+"/*.fits.gz")
+
+    if from_image is None or len(from_image)==0:
+        if len(in_dir)>8 and in_dir[-8:]=='.fits.gz':
+            fi += glob.glob(in_dir)
+        elif len(in_dir)>5 and in_dir[-5:]=='.fits':
+            fi += glob.glob(in_dir)
+        else:
+            fi += glob.glob(in_dir+'/*.fits') + glob.glob(in_dir+'/*.fits.gz')
+    else:
+        for arg in from_image:
+            if len(arg)>8 and arg[-8:]=='.fits.gz':
+                fi += glob.glob(arg)
+            elif len(arg)>5 and arg[-5:]=='.fits':
+                fi += glob.glob(arg)
+            else:
+                fi += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
+
     fi = sorted(fi)
+
+    dels = []
     ndata=0
     for i,f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
@@ -596,6 +613,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(nside,th,phi)
+    assert pix.size>0
 
     data = {}
     zmin = 10**dels[0].ll[0]/lambda_abs-1.
@@ -628,6 +646,7 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
     phi = ra
     th = sp.pi/2.-dec
     pix = healpy.ang2pix(nside,th,phi)
+    assert pix.size>0
     print("reading qsos")
 
     upix = sp.unique(pix)
