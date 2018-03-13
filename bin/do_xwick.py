@@ -64,6 +64,9 @@ if __name__ == '__main__':
     parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
                     help = 'reference redshift')
 
+    parser.add_argument('--rej', type = float, default = 1., required=False,
+                    help = 'reference redshift')
+
     parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
                     help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift higher than z-cut-min')
 
@@ -96,6 +99,7 @@ if __name__ == '__main__':
     xcf.z_cut_min = args.z_cut_min
     xcf.z_cut_max = args.z_cut_max
     xcf.nside = args.nside
+    xcf.rej = args.rej
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
 
     ### Cosmo    
@@ -157,4 +161,33 @@ if __name__ == '__main__':
     print(" Finished")
     pool.close()
 
-    print(wickT)
+    wickT       = sp.array(wickT)
+    wAll        = wickT[:,0].sum(axis=0)
+    T1          = wickT[:,1].sum(axis=0)
+    T2          = wickT[:,2].sum(axis=0)
+    npairs      = wickT[:,3].sum(axis=0)
+    npairs_used = wickT[:,4].sum(axis=0)
+    we     = wAll*wAll[:,None]
+    w      = we>0.
+    T1[w] /= we[w]
+    T2[w] /= we[w]
+    T1    *= 1.*npairs_used/npairs
+    T2    *= 1.*npairs_used/npairs
+    Ttot   = T1+T2
+
+    out = fitsio.FITS(args.out,'rw',clobber=True)
+    head = {}
+    head['RPMIN']     = xcf.rp_min
+    head['RPMAX']     = xcf.rp_max
+    head['RTMAX']     = xcf.rt_max
+    head['Z_CUT_MIN'] = xcf.z_cut_min
+    head['Z_CUT_MAX'] = xcf.z_cut_max
+    head['NT']        = xcf.nt
+    head['NP']        = xcf.np
+    head['NSIDE']     = xcf.nside
+    head['NPTOT']     = npairs
+    head['NPUSED']    = npairs_used
+    head['REJ']       = xcf.rej
+
+    out.write([Ttot,T1,T2,wAll],names=['CO','T1','T2','wAll'],header=head)
+    out.close()
