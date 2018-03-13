@@ -1,21 +1,18 @@
 #!/usr/bin/env python
 
-import scipy as sp
-import fitsio
-import argparse
 import sys
-from scipy.interpolate import interp1d
-
-from picca import constants
-from picca import xcf
-from picca import io
-
+import argparse
+import fitsio
+import scipy as sp
+from scipy import random
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
+from picca import constants, io, utils
+import xcf
 
-def corr_func(p):
+def calc_wickT(p):
     xcf.fill_neighs(p)
-    tmp = xcf.xcf(p)
+    tmp = xcf.wickT(p)
     return tmp
 
 if __name__ == '__main__':
@@ -131,43 +128,33 @@ if __name__ == '__main__':
     sys.stderr.write("\n")
     print("done, npix = {}".format(len(objs)))
 
+    ### Maximum angle
+    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
+
     ### Load cf1d
     h = fitsio.FITS(args.cf1d)
-    head    = h[1].read_header()
-    llmin   = head['LLMIN']
-    llmax   = head['LLMAX']
-    dll     = head['DLL']
-    v1d     = h[1]['v1d'][:]
-    wv1d    = h[1]['wv1d'][:]
-    nv1d    = h[1]['nv1d'][:]
-    c1d     = h[1]['c1d'][:]
-    nc1d    = h[1]['nc1d'][:]
-    nb1d    = h[1]['nb1d'][:]
-    ll      = llmin + dll*sp.arange(v1d.size)
-    w       = (wv1d>0.) & (nv1d>0.)
-    xcf.v1d = interp1d(ll[w],v1d[w],kind='nearest')
-    w       = (nc1d>0.) & (nb1d>0.)
-    xcf.c1d = interp1d((ll-llmin)[w],c1d[w],kind='nearest')
+    head = h[1].read_header()
+    xcf.lmin = head['LLMIN']
+    xcf.dll  = head['DLL']
+    xcf.cf1d = h[2]['DA'][:]
     h.close()
 
+    ### Send
+    xcf.counter = Value('i',0)
+    xcf.lock = Lock()
 
+    cpu_data = {}
+    for i,p in enumerate(list(xcf.dels.keys())):
+        ip = i%args.nproc
+        if not ip in cpu_data:
+            cpu_data[ip] = []
+        cpu_data[ip].append(p)
 
+    random.seed(0)
+    pool = Pool(processes=args.nproc)
+    print(" Starting")
+    wickT = pool.map(calc_wickT,sorted(list(cpu_data.values())))
+    print(" Finished")
+    pool.close()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    print(wickT)
