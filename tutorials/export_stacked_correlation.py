@@ -143,6 +143,9 @@ if __name__ == '__main__':
         final['DM'] = sp.eye(len(final['DA']))
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
+    head = {}
+    for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
+        head[k] = final[k]
     names = ['RP','RT','Z','DA','CO','DM','NB']
-    h.write([final[k] for k in names],names=names)
+    h.write([final[k] for k in names],names=names,header=head)
     h.close()
