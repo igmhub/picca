@@ -40,18 +40,20 @@ if __name__ == '__main__':
     we = sp.array(h[2]['WE'][:])
     hep = sp.array(h[2]['HEALPID'][:])
 
+    head = h[1].read_header()
+    nt = head['NT']
+    np = head['NP']
+    rt_min = 0.
+    rt_max = head['RTMAX']
+    rp_min = head['RPMIN']
+    rp_max = head['RPMAX']
+    h.close()
+
     if args.cov is not None:
         hh = fitsio.FITS(args.cov)
         co = hh[1]['CO'][:]
         hh.close()
     else:
-        head = h[1].read_header()
-        nt = head['NT']
-        np = head['NP']
-        rt_min = 0.
-        rt_max = head['RTMAX']
-        rp_min = head['RPMIN']
-        rp_max = head['RPMAX']
         binSizeP = (rp_max-rp_min) / np
         binSizeT = (rt_max-rt_min) / nt
         if not args.do_not_smooth_cov:
@@ -66,8 +68,6 @@ if __name__ == '__main__':
     w = we>0
     da[w]/=we[w]
 
-    h.close()
-
     try:
         scipy.linalg.cholesky(co)
     except:
@@ -81,6 +81,11 @@ if __name__ == '__main__':
         dm = sp.eye(len(da))
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
-
-    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'])
+    head = {}
+    head['RPMIN'] = rp_min
+    head['RPMAX'] = rp_max
+    head['RTMAX'] = rt_max
+    head['NT'] = nt
+    head['NP'] = np
+    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],header=head)
     h.close()
