@@ -579,6 +579,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     returns data,zmin_pix
     '''
 
+    fi = []
     if from_image is None or len(from_image)==0:
         if len(indir)>8 and indir[-8:]=='.fits.gz':
             fi += glob.glob(indir)
@@ -594,7 +595,6 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
                 fi += glob.glob(arg)
             else:
                 fi += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
-
     fi = sorted(fi)
 
     dels = []
