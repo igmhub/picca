@@ -580,12 +580,12 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     '''
 
     if from_image is None or len(from_image)==0:
-        if len(in_dir)>8 and in_dir[-8:]=='.fits.gz':
-            fi += glob.glob(in_dir)
-        elif len(in_dir)>5 and in_dir[-5:]=='.fits':
-            fi += glob.glob(in_dir)
+        if len(indir)>8 and indir[-8:]=='.fits.gz':
+            fi += glob.glob(indir)
+        elif len(indir)>5 and indir[-5:]=='.fits':
+            fi += glob.glob(indir)
         else:
-            fi += glob.glob(in_dir+'/*.fits') + glob.glob(in_dir+'/*.fits.gz')
+            fi += glob.glob(indir+'/*.fits') + glob.glob(indir+'/*.fits.gz')
     else:
         for arg in from_image:
             if len(arg)>8 and arg[-8:]=='.fits.gz':
