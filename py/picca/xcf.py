@@ -267,7 +267,10 @@ dll  = None
 def wickT(pix):
     T1   = sp.zeros([np*nt,np*nt])
     T2   = sp.zeros([np*nt,np*nt])
+    T3   = sp.zeros([np*nt,np*nt])
+    T4   = sp.zeros([np*nt,np*nt])
     wAll = sp.zeros(np*nt)
+    nb   = sp.zeros(np*nt,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
 
@@ -296,40 +299,54 @@ def wickT(pix):
             r2 = [q2.r_comov for q2 in neighs]
             w2 = [q2.we for q2 in neighs]
 
-            fill_wickT(ang,ll1,r1,r2,w1,w2,T1,T2,wAll)
+            fill_wickT(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4)
 
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
-    return wAll, T1, T2, npairs, npairs_used
+    return wAll, nb, npairs, npairs_used, T1, T2, T3, T4
 @jit
-def fill_wickT(ang,ll1,r1,r2,w1,w2,T1,T2,wAll):
+def fill_wickT(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
 
     rp   = (r1[:,None]-r2)*sp.cos(ang/2.)
     rt   = (r1[:,None]+r2)*sp.sin(ang/2.)
     we   = w1[:,None]*w2
-    idx1 = ((ll1-lmin)/dll+0.5).astype(int)
-    idx1 = idx1[:,None]*sp.ones_like(r2).astype(int)
+    idxPix = ((ll1-lmin)/dll+0.5).astype(int)
+    idxPix = idxPix[:,None]*sp.ones_like(r2).astype(int)
+    idxQso = sp.ones_like(w1[:,None]).astype(int)*sp.arange(len(r2))
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
 
     rp = rp[w]
     rt = rt[w]
     we = we[w]
-    idx1 = idx1[w]
+    idxPix = idxPix[w]
+    idxQso = idxQso[w]
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     ba = bt + nt*bp
 
     for k1 in range(rp.size):
         p1 = ba[k1]
+        i1 = idxPix[k1]
+        q1 = idxQso[k1]
         wAll[p1]  += we[k1]
-        T1[p1,p1] += cf1d[idx1[k1],idx1[k1]]*(we[k1]**2)
+        nb[p1]    += 1
+        T1[p1,p1] += cf1d[i1,i1]*(we[k1]**2)
 
         for k2 in range(k1+1,rp.size):
             p2 = ba[k2]
-            wcorr = cf1d[idx1[k1],idx1[k2]]*we[k1]*we[k2]
-            T2[p1,p2] += wcorr
-            T2[p2,p1] += wcorr
+            i2 = idxPix[k2]
+            q2 = idxQso[k2]
+            wcorr = cf1d[i1,i2]*we[k1]*we[k2]
+            if q1==q2:
+                T2[p1,p2] += wcorr
+                T2[p2,p1] += wcorr
+            elif i1==i2:
+                T3[p1,p2] += wcorr
+                T3[p2,p1] += wcorr
+            else:
+                T4[p1,p2] += wcorr
+                T4[p2,p1] += wcorr
 
     return

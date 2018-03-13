@@ -7,8 +7,7 @@ import scipy as sp
 from scipy import random
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
-from picca import constants, io, utils
-import xcf
+from picca import constants, io, utils, xcf
 
 def calc_wickT(p):
     xcf.fill_neighs(p)
@@ -112,6 +111,7 @@ if __name__ == '__main__':
     xcf.ndels = ndels
     sys.stderr.write("\n")
     print("done, npix = {}".format(xcf.npix))
+    sys.stderr.write("\n")
 
     ### Find the redshift range
     if (args.z_min_obj is None):
@@ -131,6 +131,7 @@ if __name__ == '__main__':
     xcf.objs = objs
     sys.stderr.write("\n")
     print("done, npix = {}".format(len(objs)))
+    sys.stderr.write("\n")
 
     ### Maximum angle
     xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
@@ -163,17 +164,24 @@ if __name__ == '__main__':
 
     wickT       = sp.array(wickT)
     wAll        = wickT[:,0].sum(axis=0)
-    T1          = wickT[:,1].sum(axis=0)
-    T2          = wickT[:,2].sum(axis=0)
-    npairs      = wickT[:,3].sum(axis=0)
-    npairs_used = wickT[:,4].sum(axis=0)
+    nb          = wickT[:,1].sum(axis=0)
+    npairs      = wickT[:,2].sum(axis=0)
+    npairs_used = wickT[:,3].sum(axis=0)
+    T1          = wickT[:,4].sum(axis=0)
+    T2          = wickT[:,5].sum(axis=0)
+    T3          = wickT[:,6].sum(axis=0)
+    T4          = wickT[:,7].sum(axis=0)
     we     = wAll*wAll[:,None]
     w      = we>0.
     T1[w] /= we[w]
     T2[w] /= we[w]
+    T3[w] /= we[w]
+    T4[w] /= we[w]
     T1    *= 1.*npairs_used/npairs
     T2    *= 1.*npairs_used/npairs
-    Ttot   = T1+T2
+    T3    *= 1.*npairs_used/npairs
+    T4    *= 1.*npairs_used/npairs
+    Ttot   = T1+T2+T3+T4
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
@@ -189,5 +197,5 @@ if __name__ == '__main__':
     head['NPUSED']    = npairs_used
     head['REJ']       = xcf.rej
 
-    out.write([Ttot,T1,T2,wAll],names=['CO','T1','T2','wAll'],header=head)
+    out.write([Ttot,wAll,nb,T1,T2,T3,T4],names=['CO','WALL','NB','T1','T2','T3','T4'],header=head)
     out.close()
