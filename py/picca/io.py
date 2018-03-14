@@ -600,7 +600,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     dels = []
     ndata = 0
     for i,f in enumerate(fi):
-        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndels))
+        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
         if from_image is None:
             hdus = fitsio.FITS(f)
             dels += [delta.from_fitsio(h) for h in hdus[1:]]
