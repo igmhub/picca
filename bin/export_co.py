@@ -33,7 +33,6 @@ if __name__ == '__main__':
         sys.exit()
     nt = head['NT']
     np = head['NP']
-    rt_min = 0.
     rt_max = head['RTMAX']
     rp_min = head['RPMIN']
     rp_max = head['RPMAX']

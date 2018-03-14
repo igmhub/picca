@@ -43,7 +43,6 @@ if __name__ == '__main__':
     head = h[1].read_header()
     nt = head['NT']
     np = head['NP']
-    rt_min = 0.
     rt_max = head['RTMAX']
     rp_min = head['RPMIN']
     rp_max = head['RPMAX']
@@ -55,7 +54,7 @@ if __name__ == '__main__':
         hh.close()
     else:
         binSizeP = (rp_max-rp_min) / np
-        binSizeT = (rt_max-rt_min) / nt
+        binSizeT = (rt_max-0.) / nt
         if not args.do_not_smooth_cov:
             print('INFO: The covariance will be smoothed')
             co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
