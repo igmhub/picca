@@ -617,7 +617,8 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(nside,th,phi)
-    assert pix.size>0
+    if pix.size==0
+        raise AssertionError()
 
     data = {}
     zmin = 10**dels[0].ll[0]/lambda_abs-1.
@@ -650,7 +651,8 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
     phi = ra
     th = sp.pi/2.-dec
     pix = healpy.ang2pix(nside,th,phi)
-    assert pix.size>0
+    if pix.size==0:
+        raise AssertionError()
     print("reading qsos")
 
     upix = sp.unique(pix)
