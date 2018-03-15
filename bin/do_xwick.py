@@ -101,7 +101,7 @@ if __name__ == '__main__':
     xcf.rej = args.rej
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
 
-    ### Cosmo    
+    ### Cosmo
     cosmo = constants.cosmo(args.fid_Om)
 
     ### Read deltas
