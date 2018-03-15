@@ -5,7 +5,7 @@ import argparse
 import fitsio
 import scipy as sp
 from scipy import random
-from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
+from multiprocessing import Pool,Process,Lock,cpu_count,Value
 
 from picca import constants, io, utils, xcf
 
