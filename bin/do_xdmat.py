@@ -3,16 +3,12 @@
 import scipy as sp
 import fitsio
 import argparse
-import glob
-import healpy
 import sys
 from scipy import random 
 from scipy.interpolate import interp1d
 
 from picca import constants
 from picca import xcf
-from picca.data import delta
-from picca.data import qso
 from picca import io
 from picca import utils
 

@@ -3,15 +3,11 @@
 import scipy as sp
 import fitsio
 import argparse
-import glob
-import healpy
 import sys
 from scipy import random
 
 from picca import constants
 from picca import xcf
-from picca.data import delta
-from picca.data import qso
 from picca import io
 from picca.data import forest
 from picca import prep_del
