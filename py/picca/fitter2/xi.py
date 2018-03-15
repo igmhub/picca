@@ -3,10 +3,10 @@ from .utils import Pk2Xi, bias_beta
 
 def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
-    
+
     ap = pars["ap"]
     at = pars["at"]
-    rp = r*mu 
+    rp = r*mu
     rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
@@ -38,7 +38,7 @@ def cache_xi_drp(function):
         recalc = True
         if pair in cache and sp.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
             recalc = False
-        
+
         if not recalc:
             ret = cache[pair][1]*bias1*bias2/cache[pair][0][0]/cache[pair][0][1]
         else:
@@ -51,7 +51,7 @@ def cache_xi_drp(function):
 
 def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
-    
+
     ap = pars["ap"]
     at = pars["at"]
     rp = r*mu + pars["drp"]
@@ -88,7 +88,7 @@ def cache_kaiser(function):
         recalc = True
         if pair in cache and sp.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
             recalc = False
-        
+
         if not recalc:
             ret = cache[pair][1]*bias1*bias2/cache[pair][0][0]/cache[pair][0][1]
         else:

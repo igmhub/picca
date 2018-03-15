@@ -16,7 +16,7 @@ class dla:
     @staticmethod
     def p_voigt_a(la,zabs,nhi):
         return sp.exp(-dla.tau_a(la,zabs,nhi))
-    
+
     @staticmethod
     def tau_a(la,zabs,nhi):
         lam_lya = constants.absorber_IGM["LYA"]
@@ -37,7 +37,7 @@ class dla:
     @staticmethod
     def p_voigt_b(la,zabs,nhi):
         return sp.exp(-dla.tau_b(la,zabs,nhi))
-    
+
     @staticmethod
     def tau_b(la,zabs,nhi):
         lam_lyb = constants.absorber_IGM["LYB"]

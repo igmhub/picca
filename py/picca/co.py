@@ -78,7 +78,7 @@ def co(pix):
     rt[w] /= we[w]
     z[w]  /= we[w]
     return we,rp,rt,z,nb
-@jit 
+@jit
 def fast_co(z1,r1,w1,z2,r2,w2,ang):
 
     rp  = (r1-r2)*sp.cos(ang/2.)

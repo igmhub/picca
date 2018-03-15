@@ -6,7 +6,7 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random 
+from scipy import random
 
 from picca import constants
 from picca import xcf
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    xcf.rp_min = args.wr_min 
+    xcf.rp_min = args.wr_min
     xcf.rp_max = args.wr_max
     xcf.rt_max = args.ang_max
     xcf.z_cut_min = args.z_cut_min
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     xcf.angmax  = args.ang_max
 
     lambda_abs  = constants.absorber_IGM[args.lambda_abs]
-    xcf.lambda_abs = lambda_abs 
+    xcf.lambda_abs = lambda_abs
 
     cosmo = constants.cosmo(args.fid_Om)
 
@@ -161,7 +161,7 @@ if __name__ == '__main__':
     pool.close()
 
 
-    ### Store    
+    ### Store
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]
     rps=cfs[:,2,:]

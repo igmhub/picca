@@ -187,7 +187,7 @@ class model:
         self.pall.extend(tmp_pautoQSO)
         self.pinit.extend(tmp_p0_autoQSO)
         self.pars_autoQSO_prev = None
-    
+
     @staticmethod
     def DNL(k,muk,pk,q1,kv,av,bv,kp,model):
         dnl = 1
@@ -421,7 +421,7 @@ class model:
         ### Pixel size
         pk_full *= sp.sinc(kp*Lpar/2./sp.pi)**2
         pk_full *= sp.sinc(kt*Lper/2./sp.pi)**2
-        
+
         ### Non-linear correction
         pk_full *= sp.sqrt(self.DNL(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model))
 

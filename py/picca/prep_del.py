@@ -80,7 +80,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
             count[:len(c)] += c
             nqso[sp.unique(bins)]+=1
 
-    
+
     w = count>0
     var_del[w]/=count[w]
     mdel[w]/=count[w]
@@ -123,7 +123,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 
     return ll,eta,vlss,fudge,nb_pixels,var,var_del.reshape(nlss,-1),var2_del.reshape(nlss,-1),count.reshape(nlss,-1),nqso.reshape(nlss,-1),bin_chi2,err_eta,err_vlss,err_fudge
 
-    
+
 def stack(data,delta=False):
     nstack = int((forest.lmax-forest.lmin)/forest.dll)+1
     ll = forest.lmin + sp.arange(nstack)*forest.dll

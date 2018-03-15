@@ -32,7 +32,7 @@ def t123(pix):
         r1a = d1.r_comov*sp.ones(n1)[:,None]
         r1b = r1a.T.flatten()
         r1a = r1a.flatten()
-        
+
         for d2 in d1.neighs:
             ang = d1^d2
             v2 =  v1d(d2.ll)
@@ -40,7 +40,7 @@ def t123(pix):
 
             we2 = (d2.we*d2.we[:,None])
             c1d_2 = we2*c1d(d2.ll-d2.ll[:,None])*sp.sqrt(v2*v2[:,None])
-            
+
             c1d_2 = c1d_2.flatten()
             we2 = we2.flatten()
 
@@ -91,10 +91,3 @@ def t123(pix):
     t123[w]/=w123[w]
 
     return w123,t123
-            
-
-        
-            
-
-
-
