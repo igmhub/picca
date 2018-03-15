@@ -134,7 +134,7 @@ def cache_growth_factor_de(function):
             cache[pair] = (Om, OL)
             cache[1] = cached_growth_factor_de(*args, **kwargs)
         
-        return cache[1](args[0])
+        return cache[1](args[0])/cache[1](kwargs['zref'])
             
     return wrapper
 
@@ -168,10 +168,8 @@ def cached_growth_factor_de(z, zref = None, **kwargs):
         a = 1/(1+z[i])
         D1[i] = 5/2.*Om*hubble(z[i], *pars)*quad(dD1, 0, a, args=pars)[0]
 
-    D1_interp = interp1d(z, D1)
-    D1_ref = D1_interp(zref)
-    D1_interp = interp1d(z, D1/D1_ref)
-    return D1_interp
+    D1 = interp1d(z, D1)
+    return D1
 
 ### Lya bias evolution
 def bias_vs_z_std(z, tracer, zref = None, **kwargs):
