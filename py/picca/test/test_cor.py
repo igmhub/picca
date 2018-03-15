@@ -77,6 +77,7 @@ class TestCor(unittest.TestCase):
         self.send_xcf()
         self.send_xdmat()
         self.send_metal_xdmat()
+        self.send_xwick()
         self.send_export_xcf()
         self.send_export_cross_covariance_cf_xcf()
 
@@ -687,6 +688,30 @@ class TestCor(unittest.TestCase):
             path1 = self._masterFiles + "/metal_xdmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
             self.compare_fits(path1,path2,"do_metal_xdmat.py")
+
+        return
+    def send_xwick(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_xwick.py"
+        cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
+        cmd += " --out "    + self._branchFiles+"/Products/Correlations/xwick.fits.gz"
+        cmd += " --cf1d "   + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --nproc 1"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/xwick.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/xwick.fits.gz"
+            self.compare_fits(path1,path2,"do_xwick.py")
 
         return
     def send_export_xcf(self):
