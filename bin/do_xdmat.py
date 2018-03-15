@@ -6,7 +6,7 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random 
+from scipy import random
 from scipy.interpolate import interp1d
 
 from picca import constants
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     xcf.rej = args.rej
 
     lambda_abs  = constants.absorber_IGM[args.lambda_abs]
-    xcf.lambda_abs = lambda_abs 
+    xcf.lambda_abs = lambda_abs
 
     cosmo = constants.cosmo(args.fid_Om)
 
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     xcf.counter = Value('i',0)
 
     xcf.lock = Lock()
-    
+
     cpu_data = {}
     for i,p in enumerate(sorted(list(dels.keys()))):
         ip = i%args.nproc

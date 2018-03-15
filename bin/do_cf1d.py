@@ -6,7 +6,7 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random 
+from scipy import random
 import traceback
 
 from picca import constants
@@ -19,7 +19,7 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 def cf1d(p):
     try:
-        if x_correlation: 
+        if x_correlation:
             tmp = cf.x_forest_cf1d(p)
         else :
             tmp = cf.cf1d(p)
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     cf.ndata = ndata
 
     x_correlation=False
-    if args.in_dir2: 
+    if args.in_dir2:
         x_correlation=True
         if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
             fi = glob.glob(args.in_dir2)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
                     data2[p]=[]
                 data2[p].append(d)
                 if not args.no_project:
-                    d.project() 
+                    d.project()
             if args.nspec:
                 if ndata2>args.nspec:break
     print("done")
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     cf.lock = Lock()
     pool = Pool(processes=args.nproc)
 
-    if x_correlation: 
+    if x_correlation:
         keys = []
         for i in list(data.keys()):
             if i in list(data2.keys()):
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     nbs = nbs.reshape(n1d,n1d)
 
     print("rebinning")
- 
+
     w = wes>0
     cfs[w]/=wes[w]
 
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     bins = sp.arange(n1d)
 
     dbin = bins-bins[:,None]
-    w = dbin>=0 
+    w = dbin>=0
     dbin = dbin[w]
     cor = cor[w]
     wes = wes[w]

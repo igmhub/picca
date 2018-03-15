@@ -7,9 +7,9 @@ import glob
 import healpy
 import sys
 from functools import partial
-import copy 
+import copy
 
-from scipy import random 
+from scipy import random
 from scipy.interpolate import interp1d
 
 from picca import constants
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     xcf.dels = dels
     xcf.ndels = ndels
 
-    
+
     ### Find the redshift range
     if (args.z_min_obj is None):
         dmin_pix = cosmo.r_comoving(zmin_pix)
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
     xcf.counter = Value('i',0)
     xcf.lock = Lock()
-    
+
     cpu_data = {}
     for i,p in enumerate(sorted(list(dels.keys()))):
         ip = i%args.nproc
@@ -168,7 +168,7 @@ if __name__ == '__main__':
     names=[]
     npairs_all=[]
     npairs_used_all=[]
- 
+
 
     for i,abs_igm in enumerate(args.abs_igm):
         xcf.counter.value=0
@@ -209,7 +209,7 @@ if __name__ == '__main__':
     head['RPMAX']=xcf.rp_max
     head['RPMIN']=xcf.rp_min
     head['RTMAX']=xcf.rt_max
-    head['Z_CUT_MAX']=xcf.z_cut_max 
+    head['Z_CUT_MAX']=xcf.z_cut_max
     head['Z_CUT_MIN']=xcf.z_cut_min
     head['NT']=xcf.nt
     head['NP']=xcf.np

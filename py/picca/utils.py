@@ -20,7 +20,7 @@ def cov(da,we):
 
     return co
 def smooth_cov(da,we,rp,rt,drt=4,drp=4):
-    
+
     co = cov(da,we)
 
     nda = da.shape[1]
@@ -173,7 +173,7 @@ def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
     Compute the maximum angle given by the maximum transverse
     separation the correlation should be calculated to
     '''
-    
+
     if zmin2 is None:
         zmin2 = zmin
 
