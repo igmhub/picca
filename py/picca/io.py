@@ -617,7 +617,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(nside,th,phi)
-    if pix.size==0
+    if pix.size==0:
         raise AssertionError()
 
     data = {}
