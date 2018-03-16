@@ -68,33 +68,52 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
     '''
 
+    ## Truth table
     vac = fitsio.FITS(truth)
-    vacTargets = fitsio.FITS(targets)
 
-    ## Info of the primary observation
-    thid  = vac[1]["TARGETID"][:]
-    ra    = vacTargets[1]["RA"][:]
-    dec   = vacTargets[1]["DEC"][:]
-    zqso  = vac[1]["TRUEZ"][:]
-    plate = 1+sp.arange(thid.size)
-    mjd   = 1+sp.arange(thid.size)
-    fid   = 1+sp.arange(thid.size)
-    sptype = sp.chararray.strip(vac[1]["TRUESPECTYPE"][:].astype(str))
+    w = sp.ones(vac[1]["TARGETID"][:].size).astype(bool)
+    print(" start                 : nb object in cat = {}".format(w.sum()) )
+    w &= sp.char.strip(vac[1]["TRUESPECTYPE"][:].astype(str))==spectype
+    print(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
 
-    ## Sanity
-    print(" start               : nb object in cat = {}".format(ra.size) )
-    w = (sptype==spectype)
-    print(" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) )
-
-    ra    = ra[w]
-    dec   = dec[w]
-    zqso  = zqso[w]
-    thid  = thid[w]
-    plate = plate[w]
-    mjd   = mjd[w]
-    fid   = fid[w]
-
+    thid = vac[1]["TARGETID"][:][w]
+    zqso = vac[1]["TRUEZ"][:][w]
     vac.close()
+    ra = sp.zeros(thid.size)
+    dec = sp.zeros(thid.size)
+    plate = 1+sp.arange(thid.size)
+    mjd = 1+sp.arange(thid.size)
+    fid = 1+sp.arange(thid.size)
+
+    ### Get RA and DEC from targets
+    vac = fitsio.FITS(targets)
+    thidTargets = vac[1]["TARGETID"][:]
+    raTargets = vac[1]["RA"][:]
+    decTargets = vac[1]["DEC"][:]
+    vac.close()
+
+    from_TARGETID_to_idx = {}
+    for i,t in enumerate(thidTargets):
+        from_TARGETID_to_idx[t] = i
+    keys_from_TARGETID_to_idx = from_TARGETID_to_idx.keys()
+
+    for i,t in enumerate(thid):
+        if t not in keys_from_TARGETID_to_idx: continue
+        idx = from_TARGETID_to_idx[t]
+        ra[i] = raTargets[idx]
+        dec[i] = decTargets[idx]
+    if (ra==0.).sum()!=0 or (dec==0.).sum()!=0:
+        w = ra!=0.
+        w &= dec!=0.
+        print(" and RA and DEC        : nb object in cat = {}".format(w.sum()))
+
+        ra = ra[w]
+        dec = dec[w]
+        zqso = zqso[w]
+        thid = thid[w]
+        plate = plate[w]
+        mjd = mjd[w]
+        fid = fid[w]
 
     ### Save
     out = fitsio.FITS(drq,'rw',clobber=True)
