@@ -34,6 +34,7 @@ def parse_chi2(filename):
         print('INFO: reading default Pk {}'.format(p))
 
     h = fitsio.FITS(p)
+    dic_init['fiducial']['zpk'] = h[1].read_header()['ZREF']
     dic_init['fiducial']['k'] = h[1]['K'][:]
     dic_init['fiducial']['pk'] = h[1]['PK'][:]
     dic_init['fiducial']['pksb'] = h[1]['PKSB'][:]
@@ -75,8 +76,6 @@ def parse_data(filename):
             value = float(value)
         if item == "ell-max":
             value = int(value)
-        if item == 'zref':
-            value = float(value)
         dic_init['data'][item] = value
 
     dic_init['cuts'] = {}
