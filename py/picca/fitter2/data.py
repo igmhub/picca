@@ -91,7 +91,7 @@ class data:
         self.z_evol = {}
         self.z_evol[self.tracer1] = getattr(xi, dic_init['model']['z evol {}'.format(self.tracer1)])
         self.z_evol[self.tracer2] = getattr(xi, dic_init['model']['z evol {}'.format(self.tracer2)])
-        self.growth_function = partial(getattr(xi, dic_init['model']['growth function']), zref = self.zref)
+        self.growth_function = getattr(xi, dic_init['model']['growth function'])
 
         self.dm_met = {}
         self.rp_met = {}
