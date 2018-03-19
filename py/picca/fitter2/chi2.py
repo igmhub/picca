@@ -19,7 +19,6 @@ class chi2:
         self.par_names = sp.unique([name for d in self.data for name in d.par_names])
         self.outfile = os.path.expandvars(dic_init['outfile'])
 
-        self.zref = dic_init['fiducial']['zref']
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
         self.pksb_lin = dic_init['fiducial']['pksb']
@@ -40,7 +39,7 @@ class chi2:
         dic = {p:pars[i] for i,p in enumerate(self.par_names)}
         chi2 = 0
         for d in self.data:
-            chi2 += d.chi2(self.zeff,self.zref,self.k,self.pk_lin,self.pksb_lin,dic)
+            chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,dic)
         
         if self.verbosity == 1:
             for p in sorted(dic.keys()):
@@ -82,7 +81,7 @@ class chi2:
         self.best_fit = self._minimize()
 
         for d in self.data:
-            d.best_fit_model = self.best_fit.values['bao_amp']*d.xi_model(self.zeff, self.zref, self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
+            d.best_fit_model = self.best_fit.values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
 
             ap = self.best_fit.values['ap']
             at = self.best_fit.values['at']
@@ -90,7 +89,7 @@ class chi2:
             self.best_fit.values['at'] = 1
             snl = self.best_fit.values['sigmaNL_per']
             self.best_fit.values['sigmaNL_per'] = 0
-            d.best_fit_model += d.xi_model(self.zeff, self.zref, self.k, self.pksb_lin, self.best_fit.values)
+            d.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
             self.best_fit.values['ap'] = ap
             self.best_fit.values['at'] = at
             self.best_fit.values['sigmaNL_per'] = snl
@@ -242,7 +241,7 @@ class chi2:
         for d in self.data:
             g = f.create_group(d.name)
             g.attrs['ndata'] = d.mask.sum()
-            g.attrs['chi2'] = d.chi2(self.zeff, self.zref, self.k, self.pk_lin, self.pksb_lin, self.best_fit.values)
+            g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.best_fit.values)
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
             fit[...] = d.best_fit_model
 

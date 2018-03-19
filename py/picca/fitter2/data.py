@@ -18,6 +18,8 @@ class data:
             self.tracer2 = self.tracer1
 
         self.ell_max = dic_init['data']['ell-max']
+        self.zeff = dic_init['model']['zeff']
+        self.zref = dic_init['model']['zref']
 
         fdata = dic_init['data']['filename']
         h = fitsio.FITS(fdata)
@@ -89,9 +91,9 @@ class data:
         self.xi = partial(getattr(xi, dic_init['model']['model-xi']), name=self.name)
 
         self.z_evol = {}
-        self.z_evol[self.tracer1] = getattr(xi, dic_init['model']['z evol {}'.format(self.tracer1)])
-        self.z_evol[self.tracer2] = getattr(xi, dic_init['model']['z evol {}'.format(self.tracer2)])
-        self.growth_function = getattr(xi, dic_init['model']['growth function'])
+        self.z_evol[self.tracer1] = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer1)]),zref=self.zeff)
+        self.z_evol[self.tracer2] = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer2)]),zref=self.zeff)
+        self.growth_function = partial(getattr(xi, dic_init['model']['growth function']),zref=self.zref)
 
         self.dm_met = {}
         self.rp_met = {}
@@ -115,7 +117,7 @@ class data:
                 assert dic_init['metals']['in tracer1'] == dic_init['metals']['in tracer2']
 
                 for m in dic_init['metals']['in tracer1']:
-                    self.z_evol[m] = getattr(xi, dic_init['metals']['z evol'])
+                    self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']),zref=self.zeff)
                     self.rp_met[(self.tracer1, m)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                     self.rt_met[(self.tracer1, m)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
                     self.z_met[(self.tracer1, m)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
@@ -135,7 +137,7 @@ class data:
             else:
                 if 'in tracer2' in dic_init['metals']:
                     for m in dic_init['metals']['in tracer2']:
-                        self.z_evol[m] = getattr(xi, dic_init['metals']['z evol'])
+                        self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']),zref=self.zeff)
                         self.rp_met[(self.tracer1, m)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                         self.rt_met[(self.tracer1, m)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
                         self.z_met[(self.tracer1, m)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
@@ -146,7 +148,7 @@ class data:
 
                 if 'in tracer1' in dic_init['metals']:
                     for m in dic_init['metals']['in tracer1']:
-                        self.z_evol[m] = getattr(xi, dic_init['metals']['z evol'])
+                        self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']),zref=self.zeff)
                         self.rp_met[(m, self.tracer2)] = hmet[2]["RP_{}_{}".format(m, self.tracer2)][:]
                         self.rt_met[(m, self.tracer2)] = hmet[2]["RT_{}_{}".format(m, self.tracer2)][:]
                         self.z_met[(m, self.tracer2)] = hmet[2]["Z_{}_{}".format(m, self.tracer2)][:]
@@ -167,12 +169,12 @@ class data:
                         self.z_met[(m1, m2)] = hmet[2]["Z_{}_{}".format(m1,m2)][:]
                         self.dm_met[(m1, m2)] = csr_matrix(hmet[2]["DM_{}_{}".format(m1,m2)][:])
 
-    def xi_model(self, zeff, zref, k, pk_lin, pars):
+    def xi_model(self, k, pk_lin, pars):
         xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, \
                     tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
 
-        xi *= self.z_evol[self.tracer1](self.z, self.tracer1, zref=zeff, **pars)*self.z_evol[self.tracer2](self.z, self.tracer2, zref=zeff, **pars)
-        xi *= self.growth_function(self.z, zref=zref, **pars)**2
+        xi *= self.z_evol[self.tracer1](self.z, self.tracer1, **pars)*self.z_evol[self.tracer2](self.z, self.tracer2, **pars)
+        xi *= self.growth_function(self.z, **pars)**2
 
         for tracer1, tracer2 in self.dm_met:
             rp = self.rp_met[(tracer1, tracer2)]
@@ -186,8 +188,8 @@ class data:
             xi_met = self.xi_met(r, mu, k, pk_lin, self.pk_met, \
                 tracer1 = tracer1, tracer2 = tracer2, ell_max = self.ell_max, **pars)
 
-            xi_met *= self.z_evol[tracer1](z, tracer1, zref=zeff, **pars)*self.z_evol[tracer2](z, tracer2, zref=zeff, **pars)
-            xi_met *= self.growth_function(z, zref=zref, **pars)**2
+            xi_met *= self.z_evol[tracer1](z, tracer1, **pars)*self.z_evol[tracer2](z, tracer2, **pars)
+            xi_met *= self.growth_function(z, **pars)**2
             xi_met = dm_met.dot(xi_met)
             xi += xi_met
 
@@ -195,8 +197,8 @@ class data:
 
         return xi
 
-    def chi2(self, zeff, zref, k, pk_lin, pksb_lin, pars):
-        xi_peak = self.xi_model(zeff, zref, k, pk_lin-pksb_lin, pars)
+    def chi2(self, k, pk_lin, pksb_lin, pars):
+        xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
 
         ap = pars['ap']
         at = pars['at']
@@ -205,7 +207,7 @@ class data:
 
         sigmaNL_per = pars['sigmaNL_per']
         pars['sigmaNL_per'] = 0
-        xi_sb = self.xi_model(zeff, zref, k, pksb_lin, pars)
+        xi_sb = self.xi_model(k, pksb_lin, pars)
         pars['ap'] = ap
         pars['at'] = at
         pars['sigmaNL_per'] = sigmaNL_per
