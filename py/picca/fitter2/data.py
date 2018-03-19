@@ -51,13 +51,13 @@ class data:
         bin_center_rp = sp.zeros(rp.size)
         for i,trp in enumerate(rp):
             idx = ( (trp-head['RPMIN'])/bin_size_rp ).astype(int)
-            bin_center_rp[i] = head['RPMIN']+idx*bin_size_rp
+            bin_center_rp[i] = head['RPMIN']+(idx+0.5)*bin_size_rp
 
         bin_size_rt = head['RTMAX']/head['NT']
         bin_center_rt = sp.zeros(rt.size)
         for i,trt in enumerate(rt):
             idx = ( trt/bin_size_rt ).astype(int)
-            bin_center_rt[i] = idx*bin_size_rt
+            bin_center_rt[i] = (idx+0.5)*bin_size_rt
 
         bin_center_r = sp.sqrt(bin_center_rp**2+bin_center_rt**2)
         bin_center_mu = bin_center_rp/bin_center_r
