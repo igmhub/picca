@@ -83,6 +83,10 @@ class data:
 
         if 'velocity dispersion' in dic_init['model']:
             self.pk *= getattr(pk, dic_init['model']['velocity dispersion'])
+        
+        self.bao_dilation = 'apat'
+        if 'bao dilation' in dic_init['model']:
+            self.bao_dilation = dic_init['model']['bao dilation']
 
         ## add non linear large scales
         self.pk *= pk.pk_NL
@@ -170,7 +174,7 @@ class data:
 
     def xi_model(self, k, pk_lin, pars):
         xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, \
-                    tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
+                    tracer1 = self.tracer1, tracer2 = self.tracer2, bao_dilation = self.bao_dilation, ell_max = self.ell_max, **pars)
 
         xi *= self.z_evol[self.tracer1](self.z, self.tracer1, **pars)*self.z_evol[self.tracer2](self.z, self.tracer2, **pars)
         xi *= self.growth_function(self.z, **pars)**2
@@ -185,7 +189,7 @@ class data:
             r[w] = 1e-6
             mu = rp/r
             xi_met = self.xi_met(r, mu, k, pk_lin, self.pk_met, \
-                tracer1 = tracer1, tracer2 = tracer2, ell_max = self.ell_max, **pars)
+                tracer1 = tracer1, tracer2 = tracer2, bao_dilation = self.bao_dilation, ell_max = self.ell_max, **pars)
 
             xi_met *= self.z_evol[tracer1](z, tracer1, **pars)*self.z_evol[tracer2](z, tracer2, **pars)
             xi_met *= self.growth_function(z, **pars)**2
@@ -199,16 +203,26 @@ class data:
     def chi2(self, k, pk_lin, pksb_lin, pars):
         xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
 
-        ap = pars['ap']
-        at = pars['at']
-        pars['ap']=1.
-        pars['at']=1.
-
         sigmaNL_per = pars['sigmaNL_per']
         pars['sigmaNL_per'] = 0
-        xi_sb = self.xi_model(k, pksb_lin, pars)
-        pars['ap'] = ap
-        pars['at'] = at
+        if self.bao_dilation == 'aiso':
+            aiso = pars['aiso']
+            eps = pars['1+epsilon']
+            pars['aiso'] = 1.
+            pars['1+epsilon'] = 1.
+            xi_sb = self.xi_model(k, pksb_lin, pars)
+            pars['aiso'] = aiso
+            pars['1+epsilon'] = eps
+        
+        else:
+            ap = pars['ap']
+            at = pars['at']
+            pars['ap'] = 1.
+            pars['at'] = 1.
+            xi_sb = self.xi_model(k, pksb_lin, pars)
+            pars['ap'] = ap
+            pars['at'] = at
+
         pars['sigmaNL_per'] = sigmaNL_per
 
         xi_full = pars['bao_amp']*xi_peak + xi_sb

@@ -1,11 +1,10 @@
 import scipy as sp
-from .utils import Pk2Xi, bias_beta
+from .utils import Pk2Xi, bias_beta, ap_at
 
-def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
+def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, bao_dilation=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
     
-    ap = pars["ap"]
-    at = pars["at"]
+    ap, at = ap_at(pars, bao_dilation)
     rp = r*mu 
     rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
@@ -21,13 +20,13 @@ def cache_xi_drp(function):
     cache = {}
     def wrapper(*args, **kwargs):
         name = kwargs['name']
+        bao_dilation = kwargs['bao_dilation']
         tracer1 = kwargs['tracer1']
         tracer2 = kwargs['tracer2']
 
         bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
 
-        ap = kwargs['ap']
-        at = kwargs['at']
+        ap, at = ap_at(kwargs, bao_dilation)
         drp = kwargs['drp']
 
         ## args[3] is the pk_lin, we need to make sure we recalculate
@@ -49,11 +48,10 @@ def cache_xi_drp(function):
 
     return wrapper
 
-def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
+def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, bao_dilation=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
     
-    ap = pars["ap"]
-    at = pars["at"]
+    ap, at = ap_at(pars, bao_dilation)
     rp = r*mu + pars["drp"]
     rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
@@ -72,13 +70,13 @@ def cache_kaiser(function):
     cache = {}
     def wrapper(*args, **kwargs):
         name = kwargs['name']
+        bao_dilation = kwargs['bao_dilation']
         tracer1 = kwargs['tracer1']
         tracer2 = kwargs['tracer2']
 
         bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
 
-        ap = kwargs['ap']
-        at = kwargs['at']
+        ap, at = ap_at(kwargs, bao_dilation)
 
         ## args[3] is the pk_lin, we need to make sure we recalculate
         ## when it changes (e.g. when we pass the pksb_lin)
@@ -104,7 +102,7 @@ def cached_xi_kaiser(*args, **kwargs):
     return xi(*args, **kwargs)
 
 ### QSO radiation model
-def xi_qso_radiation(r, mu, k, pk_lin, pk_func, tracer1, tracer2, ell_max=None, **pars):
+def xi_qso_radiation(r, mu, k, pk_lin, pk_func, tracer1, tracer2, bao_dilation, ell_max=None, **pars):
     assert (tracer1=="QSO" or tracer2=="QSO") and (tracer1!=tracer2)
 
     rp = r*mu + pars["drp"]
@@ -116,7 +114,7 @@ def xi_qso_radiation(r, mu, k, pk_lin, pk_func, tracer1, tracer2, ell_max=None, 
     xi_rad *= 1.-pars["qso_rad_asymmetry"]*(1.-mu_shift**2.)
     xi_rad *= sp.exp(-r_shift*( (1.+mu_shift)/pars["qso_rad_lifetime"] + 1./pars["qso_rad_decrease"]) )
 
-    return xi_drp(r, mu, k, pk_lin, pk_func, tracer1, tracer2, ell_max, **pars) + xi_rad
+    return xi_drp(r, mu, k, pk_lin, pk_func, tracer1, tracer2, bao_dilation, ell_max, **pars) + xi_rad
 
 ### Growth factor evolution
 def growth_function_no_de(z, zref = None, **kwargs):

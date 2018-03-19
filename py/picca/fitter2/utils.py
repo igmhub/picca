@@ -79,6 +79,20 @@ def bias_beta(kwargs, tracer1, tracer2):
 
     return bias1, beta1, bias2, beta2
 
+def ap_at(kwargs, bao_dilation):
+
+    if bao_dilation == "aiso":
+        aiso = kwargs["aiso"]
+        eps = kwargs["1+epsilon"]
+        ap = aiso*eps*eps
+        at = aiso/eps
+    
+    else:
+        ap = kwargs["ap"]
+        at = kwargs["at"]
+
+    return ap, at
+
 def convert_instance_to_dictionary(inst):
     dic = dict((name, getattr(inst, name)) for name in dir(inst) if not name.startswith('__'))
     return dic
