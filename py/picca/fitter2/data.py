@@ -171,10 +171,8 @@ class data:
         xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, \
                     tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
 
-        xi *= self.z_evol[self.tracer1](self.z, self.tracer1, zref=zref, **pars)*self.z_evol[self.tracer2](self.z, self.tracer2, zref=zref, **pars)
+        xi *= self.z_evol[self.tracer1](self.z, self.tracer1, zref=zeff, **pars)*self.z_evol[self.tracer2](self.z, self.tracer2, zref=zeff, **pars)
         xi *= self.growth_function(self.z, zref=zref, **pars)**2
-        xi *= self.z_evol[self.tracer1](zeff, self.tracer1, zref=zref, **pars)*self.z_evol[self.tracer2](zeff, self.tracer2, zref=zref, **pars)
-        xi *= self.growth_function(zeff, zref=zref, **pars)**2
 
         for tracer1, tracer2 in self.dm_met:
             rp = self.rp_met[(tracer1, tracer2)]
@@ -188,10 +186,8 @@ class data:
             xi_met = self.xi_met(r, mu, k, pk_lin, self.pk_met, \
                 tracer1 = tracer1, tracer2 = tracer2, ell_max = self.ell_max, **pars)
 
-            xi_met *= self.z_evol[tracer1](z, tracer1, zref=zref, **pars)*self.z_evol[tracer2](z, tracer2, zref=zref, **pars)
+            xi_met *= self.z_evol[tracer1](z, tracer1, zref=zeff, **pars)*self.z_evol[tracer2](z, tracer2, zref=zeff, **pars)
             xi_met *= self.growth_function(z, zref=zref, **pars)**2
-            xi_met *= self.z_evol[tracer1](zeff, tracer1, zref=zref, **pars)*self.z_evol[tracer2](zeff, tracer2, zref=zref, **pars)
-            xi_met *= self.growth_function(zeff, zref=zref, **pars)**2
             xi_met = dm_met.dot(xi_met)
             xi += xi_met
 
