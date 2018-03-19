@@ -29,8 +29,6 @@ class data:
         rt = h[1]['RT'][:]
         z = h[1]['Z'][:]
         head = h[1].read_header()
-        bin_size_rp = (head['RPMAX']-head['RPMIN'])/head['NP']
-        bin_size_rt = head['RTMAX']/head['NT']
 
         h.close()
 
@@ -49,15 +47,18 @@ class data:
         mu_min = dic_init['cuts']['mu-min']
         mu_max = dic_init['cuts']['mu-max']
 
-
+        bin_size_rp = (head['RPMAX']-head['RPMIN'])/head['NP']
         bin_center_rp = sp.zeros(rp.size)
         for i,trp in enumerate(rp):
             idx = ( (trp-head['RPMIN'])/bin_size_rp ).astype(int)
             bin_center_rp[i] = head['RPMIN']+idx*bin_size_rp
+
+        bin_size_rt = head['RTMAX']/head['NT']
         bin_center_rt = sp.zeros(rt.size)
         for i,trt in enumerate(rt):
             idx = ( trt/bin_size_rt ).astype(int)
             bin_center_rt[i] = idx*bin_size_rt
+
         bin_center_r = sp.sqrt(bin_center_rp**2+bin_center_rt**2)
         bin_center_mu = bin_center_rp/bin_center_r
 
