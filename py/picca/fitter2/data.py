@@ -167,12 +167,14 @@ class data:
                         self.z_met[(m1, m2)] = hmet[2]["Z_{}_{}".format(m1,m2)][:]
                         self.dm_met[(m1, m2)] = csr_matrix(hmet[2]["DM_{}_{}".format(m1,m2)][:])
 
-    def xi_model(self, zref, k, pk_lin, pars):
+    def xi_model(self, zeff, zref, k, pk_lin, pars):
         xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, \
                     tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
 
         xi *= self.z_evol[self.tracer1](self.z, self.tracer1, zref=zref, **pars)*self.z_evol[self.tracer2](self.z, self.tracer2, zref=zref, **pars)
         xi *= self.growth_function(self.z, zref=zref, **pars)**2
+        xi *= self.z_evol[self.tracer1](zeff, self.tracer1, zref=zref, **pars)*self.z_evol[self.tracer2](zeff, self.tracer2, zref=zref, **pars)
+        xi *= self.growth_function(zeff, zref=zref, **pars)**2
 
         for tracer1, tracer2 in self.dm_met:
             rp = self.rp_met[(tracer1, tracer2)]
@@ -188,6 +190,8 @@ class data:
 
             xi_met *= self.z_evol[tracer1](z, tracer1, zref=zref, **pars)*self.z_evol[tracer2](z, tracer2, zref=zref, **pars)
             xi_met *= self.growth_function(z, zref=zref, **pars)**2
+            xi_met *= self.z_evol[tracer1](zeff, tracer1, zref=zref, **pars)*self.z_evol[tracer2](zeff, tracer2, zref=zref, **pars)
+            xi_met *= self.growth_function(zeff, zref=zref, **pars)**2
             xi_met = dm_met.dot(xi_met)
             xi += xi_met
 
@@ -195,8 +199,8 @@ class data:
 
         return xi
 
-    def chi2(self, zref, k, pk_lin, pksb_lin, pars):
-        xi_peak = self.xi_model(zref, k, pk_lin-pksb_lin, pars)
+    def chi2(self, zeff, zref, k, pk_lin, pksb_lin, pars):
+        xi_peak = self.xi_model(zeff, zref, k, pk_lin-pksb_lin, pars)
 
         ap = pars['ap']
         at = pars['at']
@@ -205,7 +209,7 @@ class data:
 
         sigmaNL_per = pars['sigmaNL_per']
         pars['sigmaNL_per'] = 0
-        xi_sb = self.xi_model(zref, k, pksb_lin, pars)
+        xi_sb = self.xi_model(zeff, zref, k, pksb_lin, pars)
         pars['ap'] = ap
         pars['at'] = at
         pars['sigmaNL_per'] = sigmaNL_per

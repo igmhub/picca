@@ -20,7 +20,9 @@ def parse_chi2(filename):
 
     dic_init = {}
 
-    dic_init['data sets'] = [data.data(parse_data(os.path.expandvars(d))) for d in cp.get('data sets','ini files').split()]
+    dic_init['data sets'] = {}
+    dic_init['data sets']['data'] = [data.data(parse_data(os.path.expandvars(d))) for d in cp.get('data sets','ini files').split()]
+    dic_init['data sets']['zeff'] = float(cp.get('data sets','zeff'))
 
     dic_init['fiducial'] = {}
 
