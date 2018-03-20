@@ -261,14 +261,25 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 
+
 cf1d = None
 lmin = None
 dll  = None
+
+cf = None
+cf_np = None
+cf_nt = None
+cf_rp_min = None
+cf_rp_max = None
+cf_rt_max = None
+
 def wickT(pix):
     T1   = sp.zeros([np*nt,np*nt])
     T2   = sp.zeros([np*nt,np*nt])
     T3   = sp.zeros([np*nt,np*nt])
     T4   = sp.zeros([np*nt,np*nt])
+    T5   = sp.zeros([np*nt,np*nt])
+    T6   = sp.zeros([np*nt,np*nt])
     wAll = sp.zeros(np*nt)
     nb   = sp.zeros(np*nt,dtype=sp.int64)
     npairs = 0
@@ -280,15 +291,14 @@ def wickT(pix):
                 counter.value += 1
             sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
 
+            if d1.neighs.size==0: continue
+
             npairs += d1.neighs.size
             r = random.rand(d1.neighs.size)
             w = r>rej
             npairs_used += w.sum()
 
-            if d1.neighs.size==0 or w.sum()==0:
-                for el in list(d1.__dict__.keys()):
-                    setattr(d1,el,None)
-                continue
+            if w.sum()==0: continue
 
             ll1 = d1.ll
             r1 = d1.r_comov
@@ -299,14 +309,13 @@ def wickT(pix):
             r2 = [q2.r_comov for q2 in neighs]
             w2 = [q2.we for q2 in neighs]
 
-            fill_wickT(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4)
+            fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4)
 
-            for el in list(d1.__dict__.keys()):
-                setattr(d1,el,None)
+            if cf is None: continue
 
-    return wAll, nb, npairs, npairs_used, T1, T2, T3, T4
+    return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
-def fill_wickT(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
+def fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
 
     rp   = (r1[:,None]-r2)*sp.cos(ang/2.)
     rt   = (r1[:,None]+r2)*sp.sin(ang/2.)

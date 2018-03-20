@@ -82,7 +82,10 @@ if __name__ == '__main__':
                     help = 'maximum spectra to read')
 
     parser.add_argument('--cf1d', type=str, required=True,
-                    help = 'cf1d file')
+                    help = 'cf1d file for T1, T2, T3 and T4')
+
+    parser.add_argument('--cf', type=str, default=None, required=False,
+                    help = 'cf file for T5 and T6')
 
     args = parser.parse_args()
 
@@ -144,6 +147,24 @@ if __name__ == '__main__':
     xcf.cf1d = h[2]['DA'][:]
     h.close()
 
+    ### Load cf
+    if not args.cf is None:
+        h = fitsio.FITS(args.cf)
+        head = h[1].read_header()
+        xcf.cf_np = head['NP']
+        xcf.cf_nt = head['NT']
+        xcf.cf_rp_min = head['RPMIN']
+        xcf.cf_rp_max = head['RPMAX']
+        xcf.cf_rt_max = head['RTMAX']
+        da = h[2]['DA'][:]
+        we = h[2]['WE'][:]
+        da = (da*we).sum(axis=0)
+        we = we.sum(axis=0)
+        w = we>0.
+        da[w] /= we[w]
+        xcf.cf = da.copy()
+        h.close()
+
     ### Send
     xcf.counter = Value('i',0)
     xcf.lock = Lock()
@@ -171,17 +192,23 @@ if __name__ == '__main__':
     T2          = wickT[:,5].sum(axis=0)
     T3          = wickT[:,6].sum(axis=0)
     T4          = wickT[:,7].sum(axis=0)
+    T5          = wickT[:,8].sum(axis=0)
+    T6          = wickT[:,9].sum(axis=0)
     we     = wAll*wAll[:,None]
     w      = we>0.
     T1[w] /= we[w]
     T2[w] /= we[w]
     T3[w] /= we[w]
     T4[w] /= we[w]
+    T5[w] /= we[w]
+    T6[w] /= we[w]
     T1    *= 1.*npairs_used/npairs
     T2    *= 1.*npairs_used/npairs
     T3    *= 1.*npairs_used/npairs
     T4    *= 1.*npairs_used/npairs
-    Ttot   = T1+T2+T3+T4
+    T5    *= 1.*npairs_used/npairs
+    T6    *= 1.*npairs_used/npairs
+    Ttot   = T1+T2+T3+T4+T5+T6
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
@@ -196,5 +223,5 @@ if __name__ == '__main__':
     head['NPTOT']     = npairs
     head['REJ']       = xcf.rej
 
-    out.write([Ttot,wAll,nb,T1,T2,T3,T4],names=['CO','WALL','NB','T1','T2','T3','T4'],header=head)
+    out.write([Ttot,wAll,nb,T1,T2,T3,T4,T5,T6],names=['CO','WALL','NB','T1','T2','T3','T4','T5','T6'],header=head)
     out.close()
