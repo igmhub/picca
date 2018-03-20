@@ -190,11 +190,10 @@ if __name__ == '__main__':
     head['RTMAX']     = xcf.rt_max
     head['Z_CUT_MIN'] = xcf.z_cut_min
     head['Z_CUT_MAX'] = xcf.z_cut_max
-    head['NT']        = xcf.nt
     head['NP']        = xcf.np
-    head['NSIDE']     = xcf.nside
-    head['NPTOT']     = npairs
+    head['NT']        = xcf.nt
     head['NPUSED']    = npairs_used
+    head['NPTOT']     = npairs
     head['REJ']       = xcf.rej
 
     out.write([Ttot,wAll,nb,T1,T2,T3,T4],names=['CO','WALL','NB','T1','T2','T3','T4'],header=head)
