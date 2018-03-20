@@ -704,6 +704,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rt-max +60.0"
         cmd += " --np 30"
         cmd += " --nt 15"
+        cmd += " --rej 0.99 "
         cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
