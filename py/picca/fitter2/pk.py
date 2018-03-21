@@ -1,8 +1,6 @@
 import scipy as sp
 from . import utils
 
-from picca import constants
-
 muk = utils.muk
 bias_beta = utils.bias_beta
 
@@ -168,7 +166,6 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
         pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
 
     return pk
-
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs): 
     assert tracer1 == "QSO" or tracer2 == "QSO"
