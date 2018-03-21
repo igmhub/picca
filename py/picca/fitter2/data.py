@@ -29,6 +29,7 @@ class data:
         rp = h[1]['RP'][:]
         rt = h[1]['RT'][:]
         z = h[1]['Z'][:]
+        head = h[1].read_header()
 
         h.close()
 
@@ -47,11 +48,26 @@ class data:
         mu_min = dic_init['cuts']['mu-min']
         mu_max = dic_init['cuts']['mu-max']
 
+        bin_size_rp = (head['RPMAX']-head['RPMIN'])/head['NP']
+        bin_center_rp = sp.zeros(rp.size)
+        for i,trp in enumerate(rp):
+            idx = ( (trp-head['RPMIN'])/bin_size_rp ).astype(int)
+            bin_center_rp[i] = head['RPMIN']+(idx+0.5)*bin_size_rp
+
+        bin_size_rt = head['RTMAX']/head['NT']
+        bin_center_rt = sp.zeros(rt.size)
+        for i,trt in enumerate(rt):
+            idx = ( trt/bin_size_rt ).astype(int)
+            bin_center_rt[i] = (idx+0.5)*bin_size_rt
+
+        bin_center_r = sp.sqrt(bin_center_rp**2+bin_center_rt**2)
+        bin_center_mu = bin_center_rp/bin_center_r
+
         ## select data within cuts
-        mask = (rp > rp_min) & (rp < rp_max)
-        mask &= (rt > rt_min) & (rt < rt_max)
-        mask &= (r > r_min) & (r < r_max)
-        mask &= (mu > mu_min) & (mu < mu_max)
+        mask = (bin_center_rp > rp_min) & (bin_center_rp < rp_max)
+        mask &= (bin_center_rt > rt_min) & (bin_center_rt < rt_max)
+        mask &= (bin_center_r > r_min) & (bin_center_r < r_max)
+        mask &= (bin_center_mu > mu_min) & (bin_center_mu < mu_max)
 
         nmask = mask.sum()
         self.mask = mask
