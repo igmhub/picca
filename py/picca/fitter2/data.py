@@ -12,10 +12,13 @@ class data:
 
         self.name = dic_init['data']['name']
         self.tracer1 = dic_init['data']['tracer1']
+        self.tracer1_type = dic_init['data']['tracer1-type']
         if 'tracer2' in dic_init['data']:
             self.tracer2 = dic_init['data']['tracer2']
+            self.tracer2_type = dic_init['data']['tracer2-type']
         else:
             self.tracer2 = self.tracer1
+            self.tracer2_type = self.tracer1_type
 
         self.ell_max = dic_init['data']['ell-max']
         self.zref = dic_init['data']['zref']
