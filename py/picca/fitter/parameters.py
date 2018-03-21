@@ -60,11 +60,11 @@ class parameters:
         }
         self.dic_init_int = {
             'ell_max'           : 6,
-            
+
             'bb_ell_min'        : 0,
             'bb_ell_max'        : 6,
             'bb_ell_step'       : 2,
-                        
+
             'bb_i_max'          : 3,
             'bb_i_min'          : 0,
             'bb_i_step'         : 1,

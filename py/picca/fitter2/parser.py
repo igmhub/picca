@@ -8,7 +8,7 @@ if (sys.version_info > (3, 0)):
     # Python 3 code in this block
     import configparser as ConfigParser
 else:
-    import ConfigParser 
+    import ConfigParser
 
 import fitsio
 from . import data

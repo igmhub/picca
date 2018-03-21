@@ -7,7 +7,7 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
 
     ll_limit=[ll[first_pixel]]
     nb_bin= (len(ll)-first_pixel)//nb_part
-    
+
     m_z_arr = []
     ll_arr = []
     de_arr = []
@@ -21,10 +21,10 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
 
     for p in range(1,nb_part) :
         ll_limit.append(ll[nb_bin*p+first_pixel])
-        
+
     ll_limit.append(ll[len(ll)-1]+0.1*dll)
 
-    for p in range(nb_part) : 
+    for p in range(nb_part) :
 
         selection = (ll_c>= ll_limit[p]) & (ll_c<ll_limit[p+1])
 
@@ -32,7 +32,7 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
         de_part = de_c[selection]
         diff_part = diff_c[selection]
         iv_part = iv_c[selection]
-             
+
         lam_lya = constants.absorber_IGM["LYA"]
         m_z = (np.power(10.,ll_part[len(ll_part)-1])+np.power(10.,ll_part[0]))/2./lam_lya -1.0
 
@@ -41,7 +41,7 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
         de_arr.append(de_part)
         diff_arr.append(diff_part)
         iv_arr.append(iv_part)
-  
+
     return m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
 
 
@@ -75,15 +75,15 @@ def fill_masked_pixels(dll,ll,delta,diff,iv):
 
 def compute_Pk_raw(dll,delta,ll):
 
-    #   Length in km/s     
+    #   Length in km/s
     length_lambda = dll*constants.speed_light/1000.*np.log(10.)*len(delta)
-    
-    # make 1D FFT        
+
+    # make 1D FFT
     nb_pixels = len(delta)
     nb_bin_FFT = nb_pixels//2 + 1
     fft_a = fft(delta)
-    
-    # compute power spectrum 
+
+    # compute power spectrum
     fft_a = fft_a[:nb_bin_FFT]
     Pk = (fft_a.real**2+fft_a.imag**2)*length_lambda/nb_pixels**2
     k = np.arange(nb_bin_FFT,dtype=float)*2*np.pi/length_lambda
@@ -107,12 +107,12 @@ def compute_Pk_noise(dll,iv,diff,ll,run_noise):
             delta_exp= np.zeros(nb_pixels)
             delta_exp[w] = np.random.normal(0.,err[w])
             k_exp,Pk_exp = compute_Pk_raw(dll,delta_exp,ll)
-            Pk += Pk_exp 
-        
+            Pk += Pk_exp
+
         Pk /= float(nb_noise_exp)
 
     k_diff,Pk_diff = compute_Pk_raw(dll,diff,ll)
-    
+
     return Pk,Pk_diff
 
 def compute_cor_reso(delta_pixel,mean_reso,k):
@@ -122,7 +122,7 @@ def compute_cor_reso(delta_pixel,mean_reso,k):
 
     sinc = np.ones(nb_bin_FFT)
     sinc[k>0.] =  (np.sin(k[k>0.]*delta_pixel/2.0)/(k[k>0.]*delta_pixel/2.0))**2
-    
+
     cor *= np.exp(-(k*mean_reso)**2)
     cor *= sinc
     return cor
@@ -137,7 +137,7 @@ class Pk1D :
         self.dec = dec
         self.zqso = zqso
         self.mean_z = mean_z
-                        
+
         self.plate = plate
         self.mjd = mjd
         self.fid = fiberid

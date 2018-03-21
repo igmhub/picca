@@ -403,7 +403,7 @@ class delta(qso):
         for i in range(nspec):
             if i%100==0:
                 sys.stderr.write("\rreading deltas {} of {}".format(i,nspec))
-                
+
             delt = de[:,i]
             ivar = iv[:,i]
             w = ivar>0

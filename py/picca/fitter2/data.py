@@ -125,7 +125,7 @@ class data:
                         self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1,m)][:])
                     except:
                         self.dm_met[(self.tracer1, m)] = csr_matrix(hmet[3]["DM_{}_{}".format(self.tracer1,m)][:])
-                    
+
                     self.rp_met[(m, self.tracer1)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                     self.rt_met[(m, self.tracer1)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
                     self.z_met[(m, self.tracer1)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]

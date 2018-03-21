@@ -1,12 +1,14 @@
 import scipy as sp
 from .utils import Pk2Xi, bias_beta
+from scipy.integrate import quad
+from scipy.interpolate import interp1d
 
 def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
-    
+
     ap = pars["ap"]
     at = pars["at"]
-    rp = r*mu 
+    rp = r*mu
     rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
@@ -38,7 +40,7 @@ def cache_xi_drp(function):
         recalc = True
         if pair in cache and sp.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
             recalc = False
-        
+
         if not recalc:
             ret = cache[pair][1]*bias1*bias2/cache[pair][0][0]/cache[pair][0][1]
         else:
@@ -51,7 +53,7 @@ def cache_xi_drp(function):
 
 def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
-    
+
     ap = pars["ap"]
     at = pars["at"]
     rp = r*mu + pars["drp"]
@@ -88,7 +90,7 @@ def cache_kaiser(function):
         recalc = True
         if pair in cache and sp.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
             recalc = False
-        
+
         if not recalc:
             ret = cache[pair][1]*bias1*bias2/cache[pair][0][0]/cache[pair][0][1]
         else:
@@ -119,8 +121,55 @@ def xi_qso_radiation(r, mu, k, pk_lin, pk_func, tracer1, tracer2, ell_max=None, 
     return xi_drp(r, mu, k, pk_lin, pk_func, tracer1, tracer2, ell_max, **pars) + xi_rad
 
 ### Growth factor evolution
-def growth_function_no_de(z, zref = None, **kwargs):
+def growth_factor_no_de(z, zref=None, **kwargs):
     return (1+zref)/(1.+z)
+
+def cache_growth_factor_de(function):
+    cache = {}
+    def wrapper(*args, **kwargs):
+        Om = kwargs['Om']
+        OL = kwargs['OL']
+        pair = ('Om', 'OL')
+        if pair not in cache.keys() or not sp.allclose(cache[pair], (Om,OL)):
+            cache[pair] = (Om, OL)
+            cache[1] = cached_growth_factor_de(*args, **kwargs)
+        
+        return cache[1](args[0])/cache[1](kwargs['zref'])
+            
+    return wrapper
+
+@cache_growth_factor_de
+def growth_factor_de(*args, **kwargs):
+    return cached_growth_factor_de(*args, **kwargs)
+
+def cached_growth_factor_de(z, zref = None, **kwargs):
+    '''
+    Implements eq. 7.77 from S. Dodelson's Modern Cosmology book
+    '''
+    print('Calculating growth factor for Om = {}, OL = {}'.format(kwargs['Om'], kwargs['OL']))
+
+    def hubble(z, Om=0.3, OL=0.7):
+        return sp.sqrt(Om*(1+z)**3 + OL + (1-Om-OL)*(1+z)**2)
+
+    def dD1(a, Om=0.3, OL=0.7):
+        z = 1/a-1
+        return 1./(a*hubble(z, Om=Om, OL=OL))**3
+
+    Om = kwargs['Om']
+    OL = kwargs['OL']
+
+    ## Calculate D1 in 100 values of z between 0 and zmax, then interpolate
+    nbins = 100
+    zmax = 5.
+    z = zmax*sp.arange(nbins, dtype=float)/(nbins-1)
+    D1 = sp.zeros(nbins, dtype=float)
+    pars = (Om, OL)
+    for i in range(nbins):
+        a = 1/(1+z[i])
+        D1[i] = 5/2.*Om*hubble(z[i], *pars)*quad(dD1, 0, a, args=pars)[0]
+
+    D1 = interp1d(z, D1)
+    return D1
 
 ### Lya bias evolution
 def bias_vs_z_std(z, tracer, zref = None, **kwargs):
