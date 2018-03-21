@@ -39,11 +39,11 @@ class chi2:
         chi2 = 0
         for d in self.data:
             chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,dic)
-        
+
         if self.verbosity == 1:
             for p in sorted(dic.keys()):
                 print(p+" "+str(dic[p]))
-        
+
             print("Chi2: "+str(chi2))
             print("---\n")
         return chi2
@@ -56,17 +56,17 @@ class chi2:
         kwargs.update({name:lim for d in self.data for name, lim in d.par_limit.items()})
         kwargs.update({name:fix for d in self.data for name, fix in d.par_fixed.items()})
 
-        ## do an initial "fast" minimization fixing everything except the biases 
+        ## do an initial "fast" minimization fixing everything except the biases
         kwargs_init = {}
         for k,v in kwargs.items():
             kwargs_init[k] = v
         for name in par_names:
             if name[:4] != "bias":
                 kwargs_init["fix_"+name] = True
-                
+
         mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs_init)
         mig_init.migrad()
-    
+
         ## now get the best fit values for the biases and start a full minimization
         for name, value in mig_init.values.items():
             kwargs[name] = value
@@ -75,7 +75,7 @@ class chi2:
         fmin = mig.migrad()
         print("INFO: minimized in {}".format(time.time()-t0))
         return mig
-    
+
     def minimize(self):
         self.best_fit = self._minimize()
 

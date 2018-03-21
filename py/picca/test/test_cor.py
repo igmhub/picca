@@ -344,8 +344,8 @@ class TestCor(unittest.TestCase):
         cmd += " --out-dir "         + self._branchFiles+"/Products/Delta_Pk1D/Delta/"
         cmd += " --iter-out-prefix " + self._branchFiles+"/Products/Delta_Pk1D/Log/delta_attributes"
         cmd += " --log "             + self._branchFiles+"/Products/Delta_Pk1D/Log/input.log"
-        cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight" 
-        cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180" 
+        cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight"
+        cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
         cmd += " --nproc 1"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
         subprocess.call(cmd, shell=True)
@@ -370,7 +370,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_Pk1D.py"  
+        cmd  = " do_Pk1D.py"
         cmd += " --in-dir "          + self._masterFiles + "/test_Pk1D/delta_Pk1D/"
         cmd += " --out-dir "         + self._branchFiles+"/Products/Pk1D/"
         subprocess.call(cmd, shell=True)

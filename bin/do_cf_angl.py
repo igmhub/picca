@@ -6,8 +6,8 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random 
-import copy 
+from scipy import random
+import copy
 
 from picca import constants
 from picca import cf
@@ -18,9 +18,9 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 
 def corr_func(p):
-    if cf.x_correlation: 
+    if cf.x_correlation:
         cf.fill_neighs_x_correlation(p)
-    else: 
+    else:
         cf.fill_neighs(p)
     tmp = cf.cf(p)
     return tmp
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    cf.rp_min          = args.wr_min 
+    cf.rp_min          = args.wr_min
     cf.rp_max          = args.wr_max
     cf.rt_max          = args.ang_max
     cf.z_cut_max       = args.z_cut_max
@@ -111,12 +111,12 @@ if __name__ == '__main__':
     cf.ang_correlation = True
     cf.angmax          = args.ang_max
     cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
-    
+
     lambda_abs = constants.absorber_IGM[args.lambda_abs]
     if args.lambda_abs2: lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
     else : lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
-    cf.lambda_abs  = lambda_abs 
-    cf.lambda_abs2 = lambda_abs2 
+    cf.lambda_abs  = lambda_abs
+    cf.lambda_abs2 = lambda_abs2
 
     ### Read data 1
     data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs,args.z_evol, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
@@ -125,14 +125,14 @@ if __name__ == '__main__':
     cf.ndata = ndata
     sys.stderr.write("\n")
     print("done, npix = {}".format(cf.npix))
-    
+
     ### Read data 2
     if args.in_dir2:
         cf.x_correlation = True
         data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, args.nside, lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
         cf.data2  = data2
-        cf.ndata2 = ndata2 
-        sys.stderr.write("\n") 
+        cf.ndata2 = ndata2
+        sys.stderr.write("\n")
         print("done, npix = {}".format(len(data2)))
     elif lambda_abs != lambda_abs2:
         cf.x_correlation = True
@@ -154,11 +154,11 @@ if __name__ == '__main__':
 
     cfs = pool.map(corr_func,sorted(cpu_data.values()))
     pool.close()
-    
-    
-    
-    
-    
+
+
+
+
+
     ### Store
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]

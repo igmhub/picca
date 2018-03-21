@@ -38,14 +38,14 @@ class model:
         self.pk      = h[1]["PK"][:]
         self.pkSB    = h[1]["PKSB"][:]
 
-        ### Redshift evolution of correlation 
+        ### Redshift evolution of correlation
         self.evolution_growth_factor    = utils.evolution_growth_factor_by_hand
         self.evolution_Lya_bias         = utils.evolution_Lya_bias_0
         if dic_init['QSO_evolution'] is None:
             self.evolution_QSO_bias = utils.evolution_QSO_bias_none
         if dic_init['QSO_evolution']=='croom':
             self.evolution_QSO_bias = utils.evolution_QSO_bias_croom
-    
+
     def add_auto(self):
 
         met_prefix=self.met_prefix
@@ -154,9 +154,9 @@ class model:
             self.prev_xi_qso_met = {}
             for i in self.abs_igm_cross:
                 self.xdmat[i] = h[2]["DM_"+i][:]
-                self.xrp[i] = h[2]["RP_"+i][:] 
-                self.xrt[i] = h[2]["RT_"+i][:] 
-                self.xzeff[i] = h[2]["Z_"+i][:] 
+                self.xrp[i] = h[2]["RP_"+i][:]
+                self.xrt[i] = h[2]["RT_"+i][:]
+                self.xzeff[i] = h[2]["Z_"+i][:]
 
                 self.prev_pmet['beta_'+i]=0.
                 self.prev_pmet['alpha_'+i]=0.
@@ -190,7 +190,7 @@ class model:
             amp[:,:,0] = bias_met2*(1+(beta_met+beta_met[None,:])/3+beta_met*beta_met[None,:]/5)
             amp[:,:,1] = bias_met2*(2*(beta_met+beta_met[None,:])/3+4*beta_met*beta_met[None,:]/7)
             amp[:,:,2] = bias_met2*8*beta_met*beta_met[None,:]/35
-    
+
             xi_met_met=amp*self.temp_met_met
             xi_met_met=sp.sum(xi_met_met,axis=(1,2,3))
 
@@ -213,7 +213,7 @@ class model:
 
             Gpar = sp.sinc(kp*Lpar_auto/2/sp.pi)**2
             Gper = sp.sinc(kt*Lper_auto/2/sp.pi)**2
-        
+
             xi_lya_met = sp.zeros(nbins)
             for met in self.met_names:
                 bias_met = pars['bias_'+met]
@@ -224,7 +224,7 @@ class model:
                         or beta_lya != self.prev_pmet["beta_lya"]\
                         or alpha_lya != self.prev_pmet["alpha_lya"]\
                         or alpha_met != self.prev_pmet["alpha_"+met]
-                        
+
                 rt = self.auto_rt["LYA_"+met]
                 rp = self.auto_rp["LYA_"+met]
                 zeff  = self.auto_zeff["LYA_"+met]
@@ -232,7 +232,7 @@ class model:
                 w = (r==0)
                 r[w] = 1e-6
                 mur = rp/r
-                
+
                 if recalc:
                     if self.verbose:
                         print("recalculating ",met)
@@ -251,7 +251,7 @@ class model:
                         xi = cosmo_model.Pk2Xi(r,mur,self.k,pk,ell_max=self.ell_max)
                         xi *= ((1+zeff)/(1+self.zref))**((alpha_lya-1)*(alpha_met-1))
                         self.prev_xi_dla_met[met] = xi
-                
+
                 xi_lya_met += bias_lya*bias_met*self.prev_xi_lya_met["LYA_"+met]
                 if self.hcds_mets:
                     xi_lya_met += bias_lls*bias_met*self.prev_xi_dla_met[met]
@@ -271,7 +271,7 @@ class model:
                     dm = self.dmat[met1+"_"+met2]
                     recalc = beta_met1 != self.prev_pmet["beta_"+met1]\
                             or beta_met2 != self.prev_pmet["beta_"+met2]
-                    
+
                     if recalc:
                         if self.verbose:
                             print("recalculating ",met1,met2)
@@ -284,7 +284,7 @@ class model:
                         xi = cosmo_model.Pk2Xi(r,mur,self.k,pk,ell_max=self.ell_max)
                         xi *= ((1+zeff)/(1+self.zref))**((alpha_met1-1)*(alpha_met2-1))
                         self.prev_xi_met_met[met1+"_"+met2] = self.dmat[met1+"_"+met2].dot(xi)
-                    
+
                     xi_met_met += bias_met1*bias_met2*self.prev_xi_met_met[met1+"_"+met2]
             for i in self.prev_pmet:
                 self.prev_pmet[i] = pars[i]

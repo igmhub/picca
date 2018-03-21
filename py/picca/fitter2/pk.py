@@ -32,7 +32,7 @@ def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     return pk
 
 def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
-    
+
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
 
     bias_hcd = kwargs["bias_hcd"]
@@ -155,7 +155,7 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 
     kp = k*muk
     F_hcd = utils.sinc(kp*L0)
-    
+
     if tracer1 == "LYA":
         bias_eff1 = (bias1 + bias_hcd*F_hcd)
         beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
@@ -167,7 +167,7 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
-def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs): 
+def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
     assert tracer1 == "QSO" or tracer2 == "QSO"
     kp = k*muk
     return sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)

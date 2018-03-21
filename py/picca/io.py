@@ -47,10 +47,10 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     ## Redshift
     try:
-        zqso = vac[1]["Z"][:] 
+        zqso = vac[1]["Z"][:]
     except:
         sys.stderr.write("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)\n")
-        zqso = vac[1]["Z_VI"][:] 
+        zqso = vac[1]["Z_VI"][:]
 
     ## Info of the primary observation
     thid  = vac[1]["THING_ID"][:]
@@ -218,7 +218,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         elif mode == "spec-mock-1D":
             t0 = time.time()
             pix_data = read_from_mock_1D(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
-            read_time=time.time()-t0    
+            read_time=time.time()-t0
         if not pix_data is None:
             sys.stderr.write("{} read from pix {}, {} {} in {} secs per spectrum\n".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
         if not pix_data is None and len(pix_data)>0:
@@ -258,7 +258,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
             d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
         else :
             d = forest(ll,fl,iv, t, r, d, z, p, m, f,order)
-        
+
         pix_data.append(d)
         h.close()
     return pix_data
@@ -269,7 +269,7 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None)
 
     try:
         fin = in_dir
-        hdu = fitsio.FITS(fin) 
+        hdu = fitsio.FITS(fin)
     except IOError:
         log.write("error reading {}\n".format(fin))
 
@@ -277,7 +277,7 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None)
         h = hdu[t]
         log.write("file: {} hdu {} read  \n".format(fin,h))
         lamb = h["wavelength"][:]
-        ll = sp.log10(lamb) 
+        ll = sp.log10(lamb)
         fl = h["flux"][:]
         error =h["error"][:]
         iv = 1.0/error**2
@@ -287,12 +287,12 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None)
         # compute spectral resolution
         wdisp =  h["psf"][:]
         reso = spectral_resolution(wdisp)
-        
+
         d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
         pix_data.append(d)
 
     hdu.close()
-        
+
     return pix_data
 
 
@@ -379,7 +379,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                     str_iexp = str(iexp)
                     if iexp<10:
                         str_iexp = '0'+str_iexp
-                    
+
                     card = "EXPID"+str_iexp
                     if not card in head:
                         continue
@@ -388,7 +388,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                     iexp += 1
 
         print("INFO: found {} exposures in plate {}".format(len(exps), p))
-    
+
         if len(exps) == 0:
             continue
 
@@ -419,7 +419,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
             flux = spcframe[0].read()
             ivar = spcframe[1].read()*(spcframe[2].read()==0)
             llam = spcframe[3].read()
-            
+
             ## now convert all those fluxes into forest objects
             for index, (t, r, d, z, p, m, f) in enumerate(zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib])):
                 index =(f-1)%500
@@ -461,7 +461,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
             h = fitsio.FITS(spplate)
             head0 = h[0].read_header()
             MJD = head0["MJD"]
-            
+
             t0 = time.time()
 
             wfib = wplate
@@ -476,7 +476,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
             flux = h[0].read()
             ivar = h[1].read()*(h[2].read()==0)
             llam = coeff0 + coeff1*sp.arange(flux.shape[1])
-            
+
             ## now convert all those fluxes into forest objects
             for (t, r, d, z, p, m, f) in zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib]):
                 index = f-1
@@ -572,22 +572,43 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
     return data
 
 
-def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False):
+def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False,from_image=None):
     '''
     reads deltas from indir
     fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
     returns data,zmin_pix
     '''
-    dels = []
-    fi = glob.glob(indir+"/*.fits.gz")
+
+    fi = []
+    if from_image is None or len(from_image)==0:
+        if len(indir)>8 and indir[-8:]=='.fits.gz':
+            fi += glob.glob(indir)
+        elif len(indir)>5 and indir[-5:]=='.fits':
+            fi += glob.glob(indir)
+        else:
+            fi += glob.glob(indir+'/*.fits') + glob.glob(indir+'/*.fits.gz')
+    else:
+        for arg in from_image:
+            if len(arg)>8 and arg[-8:]=='.fits.gz':
+                fi += glob.glob(arg)
+            elif len(arg)>5 and arg[-5:]=='.fits':
+                fi += glob.glob(arg)
+            else:
+                fi += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
     fi = sorted(fi)
-    ndata=0
+
+    dels = []
+    ndata = 0
     for i,f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
-        hdus = fitsio.FITS(f)
-        dels += [delta.from_fitsio(h) for h in hdus[1:]]
-        ndata+=len(hdus[1:])
-        hdus.close()
+        if from_image is None:
+            hdus = fitsio.FITS(f)
+            dels += [delta.from_fitsio(h) for h in hdus[1:]]
+            hdus.close()
+        else:
+            dels += delta.from_image(f)
+
+        ndata = len(dels)
         if not nspec is None:
             if ndata>nspec:break
 
@@ -596,6 +617,8 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(nside,th,phi)
+    if pix.size==0:
+        raise AssertionError()
 
     data = {}
     zmin = 10**dels[0].ll[0]/lambda_abs-1.
@@ -615,7 +638,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         d.z = z
         if not cosmo is None: d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1+z)/(1+zref))**(alpha-1)
-        
+
         if not no_project:
             d.project()
 
@@ -628,6 +651,8 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
     phi = ra
     th = sp.pi/2.-dec
     pix = healpy.ang2pix(nside,th,phi)
+    if pix.size==0:
+        raise AssertionError()
     print("reading qsos")
 
     upix = sp.unique(pix)

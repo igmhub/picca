@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import print_function 
+from __future__ import print_function
 import fitsio
 import argparse
 import glob
@@ -23,11 +23,11 @@ def make_tree(tree,nb_bin_max):
 
     lambda_min = array( 'f', [ 0. ] )
     lambda_max= array( 'f', [ 0. ] )
-    
+
     plate = array( 'i', [ 0 ] )
     mjd = array( 'i', [ 0 ] )
     fiber = array( 'i', [ 0 ] )
-    
+
     nb_r = array( 'i', [ 0 ] )
     k_r = array( 'f', nb_bin_max*[ 0. ] )
     Pk_r = array( 'f', nb_bin_max*[ 0. ] )
@@ -55,7 +55,7 @@ def make_tree(tree,nb_bin_max):
     tree.Branch( 'Pk_diff', Pk_diff_r, 'Pk_diff[NbBin]/F' )
     tree.Branch( 'cor_reso', cor_reso_r, 'cor_reso[NbBin]/F' )
     tree.Branch( 'Pk', Pk_r, 'Pk[NbBin]/F' )
-    
+
     return zqso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
     nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
 
@@ -89,13 +89,13 @@ if __name__ == '__main__':
 
     parser.add_argument('--out-format', type = str, default = 'fits', required=False,
                         help = ' root or fits, if root call PyRoot')
-    
+
     parser.add_argument('--in-format', type = str, default = 'fits', required=False,
                         help = ' format used for input files, ascii or fits')
 
     parser.add_argument('--SNR-min',type = float,default=2.,required=False,
                         help = 'minimal mean SNR per pixel ')
-    
+
     parser.add_argument('--reso-max',type = float,default=85.,required=False,
                         help = 'maximal resolution in km/s ')
 
@@ -114,9 +114,9 @@ if __name__ == '__main__':
     parser.add_argument('--noise-estimate', type = str, default = 'mean_diff', required=False,
                         help = ' Estimate of Pk_noise  pipeline/diff/mean_diff')
 
-    parser.add_argument('--debug', action='store_true', default = False, required=False,                  
+    parser.add_argument('--debug', action='store_true', default = False, required=False,
                         help = ' Fill root histograms for debugging')
-    
+
 
     args = parser.parse_args()
 
@@ -138,13 +138,13 @@ if __name__ == '__main__':
         hdelta_RF_we.Sumw2()
         hdelta_OBS_we.Sumw2()
 
-        
+
     # Read deltas
     if (args.in_format=='fits') :
         fi = glob.glob(args.in_dir+"/*.fits.gz")
     elif (args.in_format=='ascii') :
         fi = glob.glob(args.in_dir+"/*.txt")
-        
+
     data = {}
     ndata = 0
 
@@ -152,15 +152,15 @@ if __name__ == '__main__':
     for i,f in enumerate(fi):
         if i%1==0:
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
-            
-        # read fits or ascii file 
+
+        # read fits or ascii file
         if (args.in_format=='fits') :
             hdus = fitsio.FITS(f)
             dels = [delta.from_fitsio(h,Pk1D_type=True) for h in hdus[1:]]
         elif (args.in_format=='ascii') :
             ascii_file = open(f,'r')
             dels = [delta.from_ascii(line) for line in ascii_file]
-            
+
         ndata+=len(dels)
         if (args.out_format=='fits') :
             out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
@@ -184,8 +184,8 @@ if __name__ == '__main__':
             nb_part_max = (len(d.ll)-first_pixel)/nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
             m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv,first_pixel)
-            for f in range(nb_part): 
-            
+            for f in range(nb_part):
+
                 # Fill masked pixels with 0.
                 ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f])
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
@@ -194,14 +194,14 @@ if __name__ == '__main__':
                 lam_lya = constants.absorber_IGM["LYA"]
                 z_abs =  np.power(10.,ll_new)/lam_lya - 1.0
                 mean_z_new = sum(z_abs)/float(len(z_abs))
-             
+
                 # Compute Pk_raw
                 k,Pk_raw = compute_Pk_raw(d.dll,delta_new,ll_new)
 
                 # Compute Pk_noise
                 run_noise = False
                 if (args.noise_estimate=='pipeline'): run_noise=True
-                Pk_noise,Pk_diff = compute_Pk_noise(d.dll,iv_new,diff_new,ll_new,run_noise)               
+                Pk_noise,Pk_diff = compute_Pk_noise(d.dll,iv_new,diff_new,ll_new,run_noise)
 
                 # Compute resolution correction
                 delta_pixel = d.dll*np.log(10.)*constants.speed_light/1000.
@@ -242,7 +242,7 @@ if __name__ == '__main__':
                         Pk_diff_r[i] = Pk_diff[i]
                         Pk_r[i] = Pk[i]
                         cor_reso_r[i] = cor_reso[i]
-                               
+
                     tree.Fill()
 
                 # save in fits format
@@ -262,16 +262,16 @@ if __name__ == '__main__':
 
                     cols=[k,Pk_raw,Pk_noise,Pk_diff,cor_reso,Pk]
                     names=['k','Pk_raw','Pk_noise','Pk_diff','cor_reso','Pk']
-                
+
                     out.write(cols,names=names,header=hd)
         if (args.out_format=='fits'):
             out.close()
-        
-# Store root file results           
+
+# Store root file results
     if (args.out_format=='root'):
          storeFile.Write()
 
-   
+
     print ("all done ")
 
 

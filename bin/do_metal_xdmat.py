@@ -7,9 +7,9 @@ import glob
 import healpy
 import sys
 from functools import partial
-import copy 
+import copy
 
-from scipy import random 
+from scipy import random
 from scipy.interpolate import interp1d
 
 from picca import constants
@@ -111,8 +111,7 @@ if __name__ == '__main__':
     xcf.nt = args.nt
     xcf.nside = args.nside
     xcf.zref = args.z_ref
-    lambda_abs = constants.absorber_IGM[args.lambda_abs]
-    xcf.lambda_abs = lambda_abs
+    xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     xcf.rej = args.rej
 
     ## use a metal grid equal to the lya grid
@@ -122,14 +121,14 @@ if __name__ == '__main__':
     cosmo = constants.cosmo(args.fid_Om)
     xcf.cosmo=cosmo
 
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs,\
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,\
                             args.z_evol_del, args.z_ref, cosmo,nspec=args.nspec)
 
     xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
 
-    
+
     ### Find the redshift range
     if (args.z_min_obj is None):
         dmin_pix = cosmo.r_comoving(zmin_pix)
@@ -150,7 +149,7 @@ if __name__ == '__main__':
 
     xcf.counter = Value('i',0)
     xcf.lock = Lock()
-    
+
     cpu_data = {}
     for i,p in enumerate(sorted(list(dels.keys()))):
         ip = i%args.nproc
@@ -168,7 +167,7 @@ if __name__ == '__main__':
     names=[]
     npairs_all=[]
     npairs_used_all=[]
- 
+
 
     for i,abs_igm in enumerate(args.abs_igm):
         xcf.counter.value=0
@@ -209,7 +208,7 @@ if __name__ == '__main__':
     head['RPMAX']=xcf.rp_max
     head['RPMIN']=xcf.rp_min
     head['RTMAX']=xcf.rt_max
-    head['Z_CUT_MAX']=xcf.z_cut_max 
+    head['Z_CUT_MAX']=xcf.z_cut_max
     head['Z_CUT_MIN']=xcf.z_cut_min
     head['NT']=xcf.nt
     head['NP']=xcf.np
