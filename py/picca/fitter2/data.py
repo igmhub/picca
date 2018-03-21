@@ -18,8 +18,11 @@ class data:
             self.tracer2 = self.tracer1
 
         self.ell_max = dic_init['data']['ell-max']
-        self.zeff = dic_init['model']['zeff']
-        self.zref = dic_init['model']['zref']
+        zeff = dic_init['model']['zeff']
+        zref = dic_init['model']['zref']
+        Om = dic_init['model']['Om']
+        OL = dic_init['model']['OL']
+
 
         fdata = dic_init['data']['filename']
         h = fitsio.FITS(fdata)
@@ -107,9 +110,9 @@ class data:
         self.xi = partial(getattr(xi, dic_init['model']['model-xi']), name=self.name)
 
         self.z_evol = {}
-        self.z_evol[self.tracer1] = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer1)]),zref=self.zeff)
-        self.z_evol[self.tracer2] = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer2)]),zref=self.zeff)
-        self.growth_function = partial(getattr(xi, dic_init['model']['growth function']),zref=self.zref)
+        self.z_evol[self.tracer1] = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer1)]),zref=zeff)
+        self.z_evol[self.tracer2] = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer2)]),zref=zeff)
+        self.growth_function = partial(getattr(xi, dic_init['model']['growth function']),zref=zref)
 
         self.dm_met = {}
         self.rp_met = {}
@@ -133,7 +136,7 @@ class data:
                 assert dic_init['metals']['in tracer1'] == dic_init['metals']['in tracer2']
 
                 for m in dic_init['metals']['in tracer1']:
-                    self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']),zref=self.zeff)
+                    self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']),zref=zeff)
                     self.rp_met[(self.tracer1, m)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                     self.rt_met[(self.tracer1, m)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
                     self.z_met[(self.tracer1, m)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
@@ -153,7 +156,7 @@ class data:
             else:
                 if 'in tracer2' in dic_init['metals']:
                     for m in dic_init['metals']['in tracer2']:
-                        self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']),zref=self.zeff)
+                        self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']),zref=zeff)
                         self.rp_met[(self.tracer1, m)] = hmet[2]["RP_{}_{}".format(self.tracer1,m)][:]
                         self.rt_met[(self.tracer1, m)] = hmet[2]["RT_{}_{}".format(self.tracer1,m)][:]
                         self.z_met[(self.tracer1, m)] = hmet[2]["Z_{}_{}".format(self.tracer1,m)][:]
@@ -164,7 +167,7 @@ class data:
 
                 if 'in tracer1' in dic_init['metals']:
                     for m in dic_init['metals']['in tracer1']:
-                        self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']),zref=self.zeff)
+                        self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']),zref=zeff)
                         self.rp_met[(m, self.tracer2)] = hmet[2]["RP_{}_{}".format(m, self.tracer2)][:]
                         self.rt_met[(m, self.tracer2)] = hmet[2]["RT_{}_{}".format(m, self.tracer2)][:]
                         self.z_met[(m, self.tracer2)] = hmet[2]["Z_{}_{}".format(m, self.tracer2)][:]

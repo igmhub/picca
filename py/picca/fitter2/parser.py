@@ -34,6 +34,8 @@ def parse_chi2(filename):
     h = fitsio.FITS(p)
     zref = h[1].read_header()['ZREF']
     dic_init['fiducial']['zref'] = zref
+    dic_init['fiducial']['Om'] = h[1].read_header()['OM']
+    dic_init['fiducial']['OL'] = h[1].read_header()['OL']
     dic_init['fiducial']['k'] = h[1]['K'][:]
     dic_init['fiducial']['pk'] = h[1]['PK'][:]
     dic_init['fiducial']['pksb'] = h[1]['PKSB'][:]
@@ -41,7 +43,7 @@ def parse_chi2(filename):
     zeff = float(cp.get('data sets','zeff'))
     dic_init['data sets'] = {}
     dic_init['data sets']['zeff'] = zeff
-    dic_init['data sets']['data'] = [data.data(parse_data(os.path.expandvars(d),zeff,zref)) for d in cp.get('data sets','ini files').split()]
+    dic_init['data sets']['data'] = [data.data(parse_data(os.path.expandvars(d),zeff,dic_init['fiducial'])) for d in cp.get('data sets','ini files').split()]
 
     dic_init['outfile'] = cp.get('output','filename')
 
@@ -67,7 +69,7 @@ def parse_chi2(filename):
 
     return dic_init
 
-def parse_data(filename,zeff,zref):
+def parse_data(filename,zeff,fiducial):
     cp = ConfigParser.ConfigParser()
     cp.optionxform=str
     cp.read(filename)
@@ -88,7 +90,9 @@ def parse_data(filename,zeff,zref):
 
     dic_init['model'] = {}
     dic_init['model']['zeff'] = zeff
-    dic_init['model']['zref'] = zref
+    dic_init['model']['zref'] = fiducial['zref']
+    dic_init['model']['Om']   = fiducial['Om']
+    dic_init['model']['OL']   = fiducial['OL']
     for item, value in cp.items('model'):
         dic_init['model'][item] = value
 
