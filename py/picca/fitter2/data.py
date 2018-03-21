@@ -112,7 +112,10 @@ class data:
         self.z_evol = {}
         self.z_evol[self.tracer1] = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer1)]),zref=zeff)
         self.z_evol[self.tracer2] = partial(getattr(xi, dic_init['model']['z evol {}'.format(self.tracer2)]),zref=zeff)
-        self.growth_function = partial(getattr(xi, dic_init['model']['growth function']),zref=zref)
+        if dic_init['model']['growth function'] in ['growth_factor_de','cached_growth_factor_de']:
+            self.growth_function = partial(getattr(xi, dic_init['model']['growth function']),zref=zref, Om=Om, OL=OL)
+        else:
+            self.growth_function = partial(getattr(xi, dic_init['model']['growth function']),zref=zref)
 
         self.dm_met = {}
         self.rp_met = {}
