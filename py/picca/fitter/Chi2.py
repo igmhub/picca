@@ -122,7 +122,7 @@ class Chi2:
                 if (self.verbose):
                     print("adding prior ",par_name,par_mean,par_sigma)
                     sys.stdout.flush()
-                    
+
                 chi2+=(pars[par_name]-par_mean)**2/par_sigma**2
 
         if (self.verbose):
@@ -132,7 +132,7 @@ class Chi2:
 
             print("Chi2: ",chi2)
             sys.stdout.flush()
-        
+
         return chi2
 
     def fastMonteCarlo(self,mig,kw):
@@ -228,7 +228,7 @@ class Chi2:
 
             print('  fastMonteCarlo: ', i, ' over ', nb_fMC)
             sys.stdout.flush()
-            
+
             ### Get realisation fastMonteCarlo
             if not dic_init['data_auto'] is None:
                 self.auto.get_realisation_fastMonteCarlo(bestFit=bestFit_auto)

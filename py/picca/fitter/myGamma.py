@@ -18,7 +18,7 @@ def gamma(z):             # great function from Wiki, but maybe could use memori
         result = pi / (sin(pi*z) * gamma(1-z))
     else:
         z -= 1
-        
+
     x = 0.99999999999980993
     for (i, pval) in enumerate(p):
         x += pval/(z+i+1)
@@ -32,7 +32,7 @@ def gamma(z):             # great function from Wiki, but maybe could use memori
 
 def LogGammaLanczos(z):
     #Log of Gamma from Lanczos with g=5, n=6/7
-    #  not in A & S 
+    #  not in A & S
     p =[76.18009172947146,-86.50532032941677, 24.01409824083091,
         -1.231739572450155, 0.1208650973866179E-2,-0.5395239384953E-5]
     LogSqrtTwoPi = 0.5*sp.log(2*sp.pi)
@@ -40,7 +40,7 @@ def LogGammaLanczos(z):
     y = z + 5.5
     series = 1.000000000190015
     #for (int i = 0; i < 6; ++i)
-    for pval in p: 
+    for pval in p:
         series += pval / denom
         denom += 1.0
     return LogSqrtTwoPi + (z + 0.5) * sp.log(y) - y + sp.log(series / z)

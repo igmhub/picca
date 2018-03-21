@@ -10,7 +10,7 @@ def exp_diff(file,ll) :
     ivtotodd  = sp.zeros(ll.size)
     fltoteven = sp.zeros(ll.size)
     ivtoteven = sp.zeros(ll.size)
-        
+
     for iexp in range (nexp_per_col) :
         for icol in range (2):
             llexp = file[4+iexp+icol*nexp_per_col]["loglam"][:]
@@ -55,5 +55,5 @@ def exp_diff(file,ll) :
 def spectral_resolution(wdisp) :
 
     reso = wdisp*constants.speed_light/1000.*1.0e-4*sp.log(10.)
-    
+
     return reso
