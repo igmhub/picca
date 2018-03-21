@@ -6,7 +6,7 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random 
+from scipy import random
 
 from picca import constants
 from picca import xcf
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    xcf.rp_min = args.wr_min 
+    xcf.rp_min = args.wr_min
     xcf.rp_max = args.wr_max
     xcf.rt_max = args.ang_max
     xcf.z_cut_min = args.z_cut_min
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     xcf.angmax  = args.ang_max
 
     lambda_abs  = constants.absorber_IGM[args.lambda_abs]
-    xcf.lambda_abs = lambda_abs 
+    xcf.lambda_abs = lambda_abs
 
     cosmo = constants.cosmo(args.fid_Om)
 
@@ -127,17 +127,23 @@ if __name__ == '__main__':
     sys.stderr.write("\n")
     print("done, npix = {}".format(xcf.npix))
 
-    ### Find the redshift range
-    if (args.z_min_obj is None):
-        dmin_pix = cosmo.r_comoving(zmin_pix)
-        dmin_obj = max(0.,dmin_pix+xcf.rp_min)
-        args.z_min_obj = cosmo.r_2_z(dmin_obj)
-        sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
-    if (args.z_max_obj is None):
-        dmax_pix = cosmo.r_comoving(zmax_pix)
-        dmax_obj = max(0.,dmax_pix+xcf.rp_max)
-        args.z_max_obj = cosmo.r_2_z(dmax_obj)
-        sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
+    ### Remove <delta> vs. lambda_obs
+    if not args.no_remove_mean_lambda_obs:
+        forest.dll = None
+        for p in xcf.dels:
+            for d in xcf.dels[p]:
+                dll = sp.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
+                if forest.dll is None:
+                    forest.dll = dll
+                else:
+                    forest.dll = min(dll,forest.dll)
+        forest.lmin  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
+        forest.lmax  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
+        ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
+        for p in xcf.dels:
+            for d in xcf.dels[p]:
+                bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+                d.de -= st[bins]
 
     ### Read objects
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
@@ -161,7 +167,7 @@ if __name__ == '__main__':
     pool.close()
 
 
-    ### Store    
+    ### Store
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]
     rps=cfs[:,2,:]

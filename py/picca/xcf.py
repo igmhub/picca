@@ -9,12 +9,12 @@ from scipy import random
 from picca import constants
 
 np = None
-nt = None 
+nt = None
 rp_max = None
 rp_min = None
 rt_max = None
 z_cut_max = None
-z_cut_min = None 
+z_cut_min = None
 angmax = None
 nside = None
 
@@ -64,14 +64,14 @@ def xcf(pix):
                 ang = d^d.neighs
                 zqso = [q.zqso for q in d.neighs]
                 we_qso = [q.we for q in d.neighs]
-                
+
                 if ang_correlation:
                     l_qso = [10.**q.ll for q in d.neighs]
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
                 else:
                     rc_qso = [q.r_comov for q in d.neighs]
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
-            
+
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
                 rp[:len(crp)]+=crp
@@ -87,7 +87,7 @@ def xcf(pix):
     rt[w]/=we[w]
     z[w]/=we[w]
     return we,xi,rp,rt,z,nb
-@jit 
+@jit
 def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     if ang_correlation:
         rp = r1[:,None]/r2
@@ -142,7 +142,7 @@ def metal_grid(pix):
 
             if (d.neighs.size != 0):
                 cw,crp,crt,cz,cnb = fast_metal_grid(d.r_comov,d.we,zqso,rc_qso,we_qso,ang,d.z_metal,d.r_comov_metal)
-            
+
                 we[:len(cw)]  += cw
                 rp[:len(crp)] += crp
                 rt[:len(crt)] += crt
@@ -157,7 +157,7 @@ def metal_grid(pix):
     z[w]  /= we[w]
 
     return we,rp,rt,z,nb
-@jit 
+@jit
 def fast_metal_grid(r1,w1,z2,r2,w2,ang,z1_metal,r1_metal):
 
     rp = (r1[:,None]-r2)*sp.cos(ang/2.)
@@ -219,7 +219,7 @@ def dmat(pix):
                 setattr(d1,el,None)
 
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
-    
+
 @jit
 def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
     rp = (r1[:,None]-r2)*sp.cos(ang/2)
@@ -227,7 +227,7 @@ def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
-    
+
     sw1 = w1.sum()
 
     ml1 = sp.average(l1,weights=w1)
@@ -299,7 +299,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 rt = (rd+rq)*sp.sin(ang/2)
                 wdq = wd*wq
 
-                wA = (rp>rp_min) & (rp<rp_max) & (rt<rt_max) 
+                wA = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
                 bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
                 bt = (rt/rt_max*nt).astype(int)
                 bA = bt + nt*bp

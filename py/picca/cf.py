@@ -8,30 +8,30 @@ from scipy import random
 from picca import constants
 
 np = None
-nt = None 
+nt = None
 ntm= None
 npm= None
 rp_max = None
-rp_min = None 
+rp_min = None
 z_cut_max = None
-z_cut_min = None 
+z_cut_min = None
 rt_max = None
 angmax = None
 nside = None
 
 counter = None
 ndata = None
-ndata2 = None 
+ndata2 = None
 
 zref = None
 alpha= None
 alpha2= None
 alpha_met= None
 lambda_abs = None
-lambda_abs2 = None 
+lambda_abs2 = None
 
 data = None
-data2 = None 
+data2 = None
 
 cosmo=None
 
@@ -84,7 +84,7 @@ def cf(pix):
                     cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.ll,d1.we,d1.de,d2.z,10.**d2.ll,d2.we,d2.de,ang,same_half_plate)
                 else:
                     cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.we,d1.de,d2.z,d2.r_comov,d2.we,d2.de,ang,same_half_plate)
-            
+
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
                 rp[:len(crp)]+=crp
@@ -99,7 +99,7 @@ def cf(pix):
     rt[w]/=we[w]
     z[w]/=we[w]
     return we,xi,rp,rt,z,nb
-@jit 
+@jit
 def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     wd1 = d1*w1
     wd2 = d2*w2
@@ -179,7 +179,7 @@ def dmat(pix):
             setattr(d1,"neighs",None)
 
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
-    
+
 @jit
 def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
 
@@ -191,7 +191,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
-    
+
     sw1 = w1.sum()
     sw2 = w2.sum()
 
@@ -224,7 +224,7 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
         else:
             wsame = rp==0.
         we[wsame] = 0.
-            
+
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
     eta1 = sp.zeros(np*nt*n1)
@@ -243,12 +243,12 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
 
-    if order2==1: 
+    if order2==1:
         c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
         eta3[:len(c)]+=c
         c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
         eta6[:len(c)]+=c
-    if order1==1: 
+    if order1==1:
         c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
         eta4[:len(c)]+=c
         c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
@@ -267,14 +267,14 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
              - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
-    
+
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
     rpeff = sp.zeros(ntm*npm)
     rteff = sp.zeros(ntm*npm)
     zeff = sp.zeros(ntm*npm)
     weff = sp.zeros(ntm*npm)
-    
+
     npairs = 0
     npairs_used = 0
     for p in pix:
@@ -285,7 +285,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             r1 = d1.r_comov
             z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
             r1_abs1 = cosmo.r_comoving(z1_abs1)
-            z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1 
+            z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
             r1_abs2 = cosmo.r_comoving(z1_abs2)
             w1 = d1.we
             l1 = d1.ll
@@ -306,10 +306,10 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 w2 = d2.we
                 l2 = d2.ll
 
-                
-                if x_correlation: 
+
+                if x_correlation:
                     rp = (r1[:,None]-r2)*sp.cos(ang/2)
-                else: 
+                else:
                     rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
                 rt = (r1[:,None]+r2)*sp.sin(ang/2)
                 w12 = w1[:,None]*w2
@@ -330,9 +330,9 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 c = sp.bincount(bA[wA],weights=w12[wA])
                 wdm[:len(c)]+=c
 
-                if x_correlation: 
+                if x_correlation:
                     rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
-                else: 
+                else:
                     rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
                 zwe12 = (1+z1_abs1[:,None])**(alpha_met-1)*(1+z2_abs2)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
@@ -356,10 +356,10 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
 
                 if (not(x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
-                    
-                    if x_correlation: 
+
+                    if x_correlation:
                         rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
-                    else: 
+                    else:
                         rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
                     zwe21 = (1+z1_abs2[:,None])**(alpha_met-1)*(1+z2_abs1)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
@@ -464,7 +464,7 @@ def t123(pix):
             setattr(d1,"neighs",None)
 
     return w123,t123_loc,npairs,npairs_used
-            
+
 
 @jit
 def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
@@ -477,9 +477,9 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
     zw2 = ((1+z2)/(1+zref))**(alpha-1)
 
     bins = i1[:,None]+n1*i2
-    if x_correlation: 
+    if x_correlation:
         rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    else : 
+    else :
         rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)

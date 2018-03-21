@@ -7,9 +7,9 @@ import glob
 import healpy
 import sys
 from functools import partial
-import copy 
+import copy
 
-from scipy import random 
+from scipy import random
 from scipy.interpolate import interp1d
 from picca import constants
 from picca import cf
@@ -19,9 +19,9 @@ from picca import utils
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
-    if x_correlation: 
+    if x_correlation:
         cf.fill_neighs_x_correlation(p)
-    else: 
+    else:
         cf.fill_neighs(p)
     tmp = cf.metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
     return tmp
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     sys.stderr.write("read {}\n".format(ndata))
 
     x_correlation=False
-    if args.in_dir2: 
+    if args.in_dir2:
         x_correlation=True
         ndata2 = 0
         if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
@@ -177,12 +177,12 @@ if __name__ == '__main__':
                 if ndata2>args.nspec:break
         sys.stderr.write("read {}\n".format(ndata2))
 
-    elif lambda_abs != lambda_abs2:   
+    elif lambda_abs != lambda_abs2:
         x_correlation=True
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
-    cf.x_correlation=x_correlation 
+    cf.x_correlation=x_correlation
 
     z_min_pix = 10**dels[0].ll[0]/lambda_abs-1.
     phi = [d.ra for d in dels]
@@ -201,7 +201,7 @@ if __name__ == '__main__':
 
     cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,z_min_pix)
 
-    if x_correlation: 
+    if x_correlation:
         cf.alpha2 = args.z_evol2
         z_min_pix2 = 10**dels2[0].ll[0]/lambda_abs2-1.
         z_min_pix=sp.amin(sp.append(z_min_pix,z_min_pix2))
@@ -229,15 +229,15 @@ if __name__ == '__main__':
 
     if x_correlation:
        print("doing cross-correlation ... ")
-       cf.data2 = data2 
-       cf.ndata2 = ndata2 
+       cf.data2 = data2
+       cf.ndata2 = ndata2
     print("done")
 
 
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
-    
+
     cpu_data = {}
     for i,p in enumerate(sorted(list(data.keys()))):
         ip = i%args.nproc
@@ -259,16 +259,16 @@ if __name__ == '__main__':
     abs_igm = [args.lambda_abs]+args.abs_igm
     print("abs_igm = {}".format(abs_igm))
 
-    if args.lambda_abs2: 
+    if args.lambda_abs2:
         lambda_abs2_type = args.lambda_abs2
-    else : 
+    else :
         lambda_abs2_type = args.lambda_abs
 
-    if args.abs_igm2: 
+    if args.abs_igm2:
         abs_igm_2 = [lambda_abs2_type]+args.abs_igm2
-    elif args.lambda_abs == lambda_abs2_type: 
+    elif args.lambda_abs == lambda_abs2_type:
         abs_igm_2 = copy.deepcopy(abs_igm)
-    else: 
+    else:
         abs_igm_2 = [lambda_abs2_type]
 
     if x_correlation: print("abs_igm2 = {}".format(abs_igm_2))
@@ -277,7 +277,7 @@ if __name__ == '__main__':
         i0=i
         if args.lambda_abs != lambda_abs2_type: i0=0
         for j in range(i0,len(abs_igm_2)):
-            if ((i==0)and(j==0)): continue 
+            if ((i==0)and(j==0)): continue
             abs_igm2 = abs_igm_2[j]
             cf.counter.value=0
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)

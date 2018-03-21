@@ -6,9 +6,9 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random 
+from scipy import random
 from scipy.interpolate import interp1d
-import copy 
+import copy
 
 from picca import constants
 from picca import cf
@@ -19,9 +19,9 @@ from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 
 def calc_dmat(p):
-    if x_correlation: 
+    if x_correlation:
         cf.fill_neighs_x_correlation(p)
-    else: 
+    else:
         cf.fill_neighs(p)
     tmp = cf.dmat(p)
     return tmp
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     if args.lambda_abs2: lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
     else: lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
     cf.lambda_abs  = lambda_abs
-    cf.lambda_abs2 = lambda_abs2 
+    cf.lambda_abs2 = lambda_abs2
 
     z_min_pix = 1.e6
     ndata=0
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     sys.stderr.write("read {}\n".format(ndata))
 
     x_correlation=False
-    if args.in_dir2: 
+    if args.in_dir2:
         x_correlation=True
         ndata2 = 0
         if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
@@ -165,14 +165,14 @@ if __name__ == '__main__':
                 if ndata2>args.nspec:break
         sys.stderr.write("read {}\n".format(ndata2))
 
-    elif lambda_abs != lambda_abs2:   
+    elif lambda_abs != lambda_abs2:
         x_correlation=True
         data2  = copy.deepcopy(data)
         ndata2 = copy.deepcopy(ndata)
         dels2  = copy.deepcopy(dels)
-    cf.x_correlation=x_correlation 
+    cf.x_correlation=x_correlation
     if x_correlation: print("doing xcorrelation")
- 
+
     z_min_pix = 10**dels[0].ll[0]/lambda_abs-1.
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
@@ -191,8 +191,8 @@ if __name__ == '__main__':
             d.project()
 
     cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,z_min_pix)
-    
-    if x_correlation: 
+
+    if x_correlation:
         cf.alpha2 = args.z_evol2
         z_min_pix2 = 10**dels2[0].ll[0]/lambda_abs2-1.
         phi2 = [d.ra for d in dels2]
@@ -217,15 +217,15 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
-    if x_correlation: 
-       cf.data2 = data2 
-       cf.ndata2 = ndata2 
+    if x_correlation:
+       cf.data2 = data2
+       cf.ndata2 = ndata2
     print("done")
 
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
-    
+
     cpu_data = {}
     for i,p in enumerate(sorted(list(data.keys()))):
         ip = i%args.nproc

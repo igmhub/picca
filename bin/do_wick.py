@@ -6,7 +6,7 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random 
+from scipy import random
 from scipy.interpolate import interp1d
 
 from picca import constants
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     cf.counter = Value('i',0)
 
     cf.lock = Lock()
-    
+
     cpu_data = {}
     for i,p in enumerate(list(data.keys())):
         ip = i%args.nproc

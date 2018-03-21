@@ -31,6 +31,11 @@ if __name__ == '__main__':
         print("ERROR: DD-file is not data-data : "+type_corr)
         h.close()
         sys.exit()
+    nt = head['NT']
+    np = head['NP']
+    rt_max = head['RTMAX']
+    rp_min = head['RPMIN']
+    rp_max = head['RPMAX']
     nbObj = head['NOBJ']
     rp = sp.array(h[1]['RP'][:])
     rt = sp.array(h[1]['RT'][:])
@@ -109,5 +114,11 @@ if __name__ == '__main__':
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)
-    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'])
+    head = {}
+    head['RPMIN'] = rp_min
+    head['RPMAX'] = rp_max
+    head['RTMAX'] = rt_max
+    head['NT'] = nt
+    head['NP'] = np
+    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],header=head)
     h.close()

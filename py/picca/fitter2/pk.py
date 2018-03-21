@@ -34,7 +34,7 @@ def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     return pk
 
 def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
-    
+
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
 
     bias_hcd = kwargs["bias_hcd"]
@@ -157,7 +157,7 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 
     kp = k*muk
     F_hcd = utils.sinc(kp*L0)
-    
+
     if tracer1 == "LYA":
         bias_eff1 = (bias1 + bias_hcd*F_hcd)
         beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
@@ -168,6 +168,7 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
         pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
 
     return pk
+
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs): 
     assert tracer1 in constants.collapsed_tracer or tracer2 in constants.collapsed_tracer
