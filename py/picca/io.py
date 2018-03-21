@@ -572,22 +572,43 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
     return data
 
 
-def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False):
+def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False,from_image=None):
     '''
     reads deltas from indir
     fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
     returns data,zmin_pix
     '''
-    dels = []
-    fi = glob.glob(indir+"/*.fits.gz")
+
+    fi = []
+    if from_image is None or len(from_image)==0:
+        if len(indir)>8 and indir[-8:]=='.fits.gz':
+            fi += glob.glob(indir)
+        elif len(indir)>5 and indir[-5:]=='.fits':
+            fi += glob.glob(indir)
+        else:
+            fi += glob.glob(indir+'/*.fits') + glob.glob(indir+'/*.fits.gz')
+    else:
+        for arg in from_image:
+            if len(arg)>8 and arg[-8:]=='.fits.gz':
+                fi += glob.glob(arg)
+            elif len(arg)>5 and arg[-5:]=='.fits':
+                fi += glob.glob(arg)
+            else:
+                fi += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
     fi = sorted(fi)
-    ndata=0
+
+    dels = []
+    ndata = 0
     for i,f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
-        hdus = fitsio.FITS(f)
-        dels += [delta.from_fitsio(h) for h in hdus[1:]]
-        ndata+=len(hdus[1:])
-        hdus.close()
+        if from_image is None:
+            hdus = fitsio.FITS(f)
+            dels += [delta.from_fitsio(h) for h in hdus[1:]]
+            hdus.close()
+        else:
+            dels += delta.from_image(f)
+
+        ndata = len(dels)
         if not nspec is None:
             if ndata>nspec:break
 
@@ -596,6 +617,8 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(nside,th,phi)
+    if pix.size==0:
+        raise AssertionError()
 
     data = {}
     zmin = 10**dels[0].ll[0]/lambda_abs-1.
@@ -628,6 +651,8 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
     phi = ra
     th = sp.pi/2.-dec
     pix = healpy.ang2pix(nside,th,phi)
+    if pix.size==0:
+        raise AssertionError()
     print("reading qsos")
 
     upix = sp.unique(pix)
