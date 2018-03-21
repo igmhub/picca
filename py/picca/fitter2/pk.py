@@ -167,7 +167,7 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
-def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs): 
+def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
     assert tracer1 == "QSO" or tracer2 == "QSO"
     kp = k*muk
     return sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
