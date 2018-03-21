@@ -3,16 +3,12 @@
 import scipy as sp
 import fitsio
 import argparse
-import glob
-import healpy
 import sys
 from scipy import random
 from scipy.interpolate import interp1d
 
 from picca import constants
 from picca import xcf
-from picca.data import delta
-from picca.data import qso
 from picca import io
 from picca import utils
 
@@ -108,112 +104,43 @@ if __name__ == '__main__':
     xcf.nside = args.nside
     xcf.zref = args.z_ref
     xcf.alpha = args.z_evol_del
-    lambda_abs = constants.absorber_IGM[args.lambda_abs]
-    xcf.lambda_abs = lambda_abs
+    xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     xcf.rej = args.rej
-
-    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
-    xcf.lambda_abs = lambda_abs
-
+    
     cosmo = constants.cosmo(args.fid_Om)
 
-    z_min_pix = 1.e6
-    z_max_pix = 0.
-    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
-        fi = glob.glob(args.in_dir)
-    else:
-        fi = glob.glob(args.in_dir+"/*.fits.gz")
-    fi = sorted(fi)
-    dels = {}
-    ndels = 0
-    for i,f in enumerate(fi):
-        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndels))
-        hdus = fitsio.FITS(f)
-        ds = [delta.from_fitsio(h) for h in hdus[1:]]
-        ndels+=len(ds)
-        phi = [d.ra for d in ds]
-        th = [sp.pi/2-d.dec for d in ds]
-        pix = healpy.ang2pix(xcf.nside,th,phi)
-        for d,p in zip(ds,pix):
-            if not p in dels:
-                dels[p]=[]
-            dels[p].append(d)
-
-            z = 10**d.ll/lambda_abs-1.
-            if z_min_pix > z.min():
-                z_min_pix = z.min()
-            if z_max_pix < z.max():
-                z_max_pix = z.max()
-            d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1.+z)/(1.+args.z_ref))**(xcf.alpha-1.)
-        if not args.nspec is None:
-            if ndels>args.nspec:break
-    sys.stderr.write("\n")
-
+    ### Read deltas
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
+        args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec)
+    xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
-    print("done")
+    sys.stderr.write("\n")
+    print("done, npix = {}\n".format(xcf.npix))
 
     ### Find the redshift range
     if (args.z_min_obj is None):
-        d_min_pix = cosmo.r_comoving(z_min_pix)
-        d_min_obj = d_min_pix+xcf.rp_min
-        args.z_min_obj = cosmo.r_2_z(d_min_obj)
+        dmin_pix = cosmo.r_comoving(zmin_pix)
+        dmin_obj = max(0.,dmin_pix+xcf.rp_min)
+        args.z_min_obj = cosmo.r_2_z(dmin_obj)
         sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
     if (args.z_max_obj is None):
-        d_max_pix = cosmo.r_comoving(z_max_pix)
-        d_max_obj = d_max_pix+xcf.rp_max
-        args.z_max_obj = cosmo.r_2_z(d_max_obj)
+        dmax_pix = cosmo.r_comoving(zmax_pix)
+        dmax_obj = max(0.,dmax_pix+xcf.rp_max)
+        args.z_max_obj = cosmo.r_2_z(dmax_obj)
         sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
 
-    objs = {}
-    ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,args.z_min_obj,args.z_max_obj,keep_bal=True)
-    phi = ra
-    th = sp.pi/2.-dec
-    pix = healpy.ang2pix(xcf.nside,th,phi)
-    print("reading qsos")
-
-    if (ra.size!=0):
-        xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,z_min_pix,sp.amin(zqso))
-    else:
-        xcf.angmax = 0.
-
-    upix = sp.unique(pix)
-    for i,ipix in enumerate(upix):
-        sys.stderr.write("\r{} of {}".format(i,len(upix)))
-        w=pix==ipix
-        objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
-        for q in objs[ipix]:
-            q.we = ((1.+q.zqso)/(1.+args.z_ref))**(args.z_evol_obj-1.)
-            q.r_comov = cosmo.r_comoving(q.zqso)
-
+    ### Read objects
+    objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
+                                args.z_evol_obj, args.z_ref,cosmo)
     sys.stderr.write("\n")
     xcf.objs = objs
 
-    ### Remove pixels if too far from objects
-    if ( ra.size!=0 and ( (z_min_pix<sp.amin(zqso)) or (sp.amax(zqso)<z_max_pix)) ):
+    ###
+    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
 
-        d_min_pix_cut = cosmo.r_comoving(sp.amin(zqso))+xcf.rp_min
-        z_min_pix_cut = cosmo.r_2_z(d_min_pix_cut)
 
-        d_max_pix_cut = cosmo.r_comoving(sp.amax(zqso))+xcf.rp_max
-        z_max_pix_cut = cosmo.r_2_z(d_max_pix_cut)
 
-        if ( (z_min_pix<z_min_pix_cut) or (z_max_pix_cut<z_max_pix) ):
-            for pix in xcf.dels:
-                for i in range(len(xcf.dels[pix])-1,-1,-1):
-                    d = xcf.dels[pix][i]
-                    z = 10**d.ll/lambda_abs-1.
-                    w = (z >= z_min_pix_cut) & (z <= z_max_pix_cut)
-                    if (z[w].size==0):
-                        del xcf.dels[pix][i]
-                        xcf.ndels -= 1
-                    else:
-                        d.de = d.de[w]
-                        d.we = d.we[w]
-                        d.ll = d.ll[w]
-                        d.co = d.co[w]
-                        d.r_comov = d.r_comov[w]
 
     xcf.counter = Value('i',0)
 

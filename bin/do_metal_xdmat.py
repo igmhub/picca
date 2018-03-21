@@ -111,8 +111,7 @@ if __name__ == '__main__':
     xcf.nt = args.nt
     xcf.nside = args.nside
     xcf.zref = args.z_ref
-    lambda_abs = constants.absorber_IGM[args.lambda_abs]
-    xcf.lambda_abs = lambda_abs
+    xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     xcf.rej = args.rej
 
     ## use a metal grid equal to the lya grid
@@ -122,7 +121,7 @@ if __name__ == '__main__':
     cosmo = constants.cosmo(args.fid_Om)
     xcf.cosmo=cosmo
 
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs,\
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,\
                             args.z_evol_del, args.z_ref, cosmo,nspec=args.nspec)
 
     xcf.npix = len(dels)
