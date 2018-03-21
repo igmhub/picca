@@ -170,7 +170,7 @@ if __name__ == '__main__':
     xcf.lock = Lock()
 
     cpu_data = {}
-    for i,p in enumerate(list(xcf.dels.keys())):
+    for i,p in enumerate(sorted(list(xcf.dels.keys()))):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
