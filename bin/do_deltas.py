@@ -151,9 +151,9 @@ if __name__ == '__main__':
     forest.fudge = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin), sp.zeros(2),fill_value="extrapolate",kind="nearest")
     forest.mean_cont = interp1d(forest.lmin_rest+sp.arange(2)*(forest.lmax_rest-forest.lmin_rest),1+sp.zeros(2))
 
-    ### Fix the order of the continuum fit, 0 or 1. 
+    ### Fix the order of the continuum fit, 0 or 1.
     if args.order:
-        if (args.order != 0) and (args.order != 1): 
+        if (args.order != 0) and (args.order != 1):
             print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(order))
             sys.exit(12)
 
@@ -190,7 +190,7 @@ if __name__ == '__main__':
         zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
         keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
         best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format )
-   
+
     ### Get the lines to veto
     usr_mask_obs    = None
     usr_mask_RF     = None
@@ -256,10 +256,10 @@ if __name__ == '__main__':
                 log.write("{} nan found\n".format(d.thid))
                 continue
 
-            if(args.use_constant_weight and (d.fl.mean()<=0.0 or d.mean_SNR<=1.0 )): 
+            if(args.use_constant_weight and (d.fl.mean()<=0.0 or d.mean_SNR<=1.0 )):
                 log.write("{} negative mean of too low SNR found\n".format(d.thid))
                 continue
-            
+
             l.append(d)
             log.write("{} accepted\n".format(d.thid))
         data[p][:] = l
@@ -290,11 +290,11 @@ if __name__ == '__main__':
                 ll, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
                     count, nqsos, chi2, err_eta, err_vlss, err_fudge = \
                         prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
-                forest.eta = interp1d(ll[nb_pixels>0], eta[nb_pixels>0], 
+                forest.eta = interp1d(ll[nb_pixels>0], eta[nb_pixels>0],
                     fill_value = "extrapolate",kind="nearest")
-                forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.], 
+                forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.],
                     fill_value = "extrapolate",kind="nearest")
-                forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0], 
+                forest.fudge = interp1d(ll[nb_pixels>0],fudge[nb_pixels>0],
                     fill_value = "extrapolate",kind="nearest")
             else:
 
@@ -372,12 +372,12 @@ if __name__ == '__main__':
                 for i in range(nbpixel): line += '{} '.format(d.ll[i])
                 for i in range(nbpixel): line += '{} '.format(d.iv[i])
                 for i in range(nbpixel): line += '{} '.format(d.diff[i])
-                line +=' \n'    
+                line +=' \n'
                 out_ascii.write(line)
-                
+
             out_ascii.close()
 
-        else :    
+        else :
             out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)
             for d in deltas[p]:
                 hd={}
@@ -407,7 +407,7 @@ if __name__ == '__main__':
                     names=['LOGLAM','DELTA','WEIGHT','CONT']
 
                 out.write(cols,names=names,header=hd)
-                
+
             out.close()
 
 

@@ -4,7 +4,7 @@ import scipy as sp
 import fitsio
 import argparse
 import sys
-from scipy import random 
+from scipy import random
 from scipy.interpolate import interp1d
 
 from picca import constants
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     xcf.alpha = args.z_evol_del
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     xcf.rej = args.rej
-
+    
     cosmo = constants.cosmo(args.fid_Om)
 
     ### Read deltas
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     xcf.counter = Value('i',0)
 
     xcf.lock = Lock()
-    
+
     cpu_data = {}
     for i,p in enumerate(sorted(list(dels.keys()))):
         ip = i%args.nproc

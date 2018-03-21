@@ -95,16 +95,16 @@ if __name__ == '__main__':
         co.x_correlation = False
     else:
         co.x_correlation = True
-    
+
     cosmo = constants.cosmo(args.fid_Om)
-    
+
     ### Read objects 1
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,args.z_evol_obj, args.z_ref, cosmo)
     sys.stderr.write("\n")
     co.objs = objs
     co.ndata = len([o1 for p in co.objs for o1 in co.objs[p]])
     co.angmax = utils.compute_ang_max(cosmo,co.rt_max,zmin_obj)
-    
+
     ### Read objects 2
     if co.x_correlation:
         objs2,zmin_obj2 = io.read_objects(args.drq2, args.nside, args.z_min_obj, args.z_max_obj, args.z_evol_obj2, args.z_ref,cosmo)
@@ -157,5 +157,5 @@ if __name__ == '__main__':
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
     out.write([hep,wes,nbs],names=['HEALPID','WE','NB'],header=head2)
     out.close()
-    
+
     sys.stderr.write("\nFinished\n")

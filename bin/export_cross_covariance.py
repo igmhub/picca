@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
 
     data = {}
-    
+
     ### Read data
     for i,p in enumerate([args.data1,args.data2]):
         h = fitsio.FITS(p)
@@ -65,20 +65,20 @@ if __name__ == '__main__':
         data[i]['DA']      = data[i]['DA'][sort]
         data[i]['WE']      = data[i]['WE'][sort]
         data[i]['HEALPID'] = data[i]['HEALPID'][sort]
-        
+
     ### Append the data
     da  = sp.append(data[0]['DA'],data[1]['DA'],axis=1)
     we  = sp.append(data[0]['WE'],data[1]['WE'],axis=1)
-    
+
     ### Compute the covariance
     co = cov(da,we)
-    
+
     ### Get the cross-covariance
     size1 = data[0]['DA'].shape[1]
     cross_co = co.copy()
     cross_co = cross_co[:,size1:]
     cross_co = cross_co[:size1,:]
-    
+
     ### Get the cross-correlation
     var = sp.diagonal(co)
     cor = co/sp.sqrt(var*var[:,None])
