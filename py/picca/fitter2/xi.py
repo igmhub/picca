@@ -107,7 +107,7 @@ def cached_xi_kaiser(*args, **kwargs):
 
 ### QSO radiation model
 def xi_qso_radiation(r, mu, k, pk_lin, pk_func, tracer1, tracer2, ell_max=None, **pars):
-    assert (tracer1=="QSO" or tracer2=="QSO") and (tracer1!=tracer2)
+    assert (tracer1['name']=="QSO" or tracer2['name']=="QSO") and (tracer1['name']!=tracer2['name'])
 
     rp = r*mu + pars["drp"]
     rt = r*sp.sqrt(1-mu**2)
@@ -173,11 +173,11 @@ def cached_growth_factor_de(z, zref = None, **kwargs):
 
 ### Lya bias evolution
 def bias_vs_z_std(z, tracer, zref = None, **kwargs):
-    p0 = kwargs['alpha_{}'.format(tracer)]
+    p0 = kwargs['alpha_{}'.format(tracer['name'])]
     return ((1.+z)/(1+zref))**p0
 
 def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
-    assert tracer=="QSO"
+    assert tracer['name']=="QSO"
     p0 = kwargs["croom_par0"]
     p1 = kwargs["croom_par1"]
     return (p0 + p1*(1.+z)**2)/(p0 + p1*(1+zref)**2)
