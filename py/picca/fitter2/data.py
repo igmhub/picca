@@ -216,7 +216,7 @@ class data:
             xi_met = self.xi_met(r, mu, k, pk_lin, self.pk_met, \
                 tracer1 = self.tracerMet[tracer1], tracer2 = self.tracerMet[tracer2], ell_max = self.ell_max, **pars)
 
-            xi_met *= self.z_evol[tracer1](z, tracer1, **pars)*self.z_evol[tracer2](z, tracer2, **pars)
+            xi_met *= self.z_evol[tracer1](z, self.tracerMet[tracer1], **pars)*self.z_evol[tracer2](z, self.tracerMet[tracer2], **pars)
             xi_met *= self.growth_function(z, **pars)**2
             xi_met = dm_met.dot(xi_met)
             xi += xi_met
