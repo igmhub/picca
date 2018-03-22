@@ -383,6 +383,20 @@ def fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
 @jit
 def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
 
+    ### Pair forest_1 - forest_3
+    rp = sp.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
+    rt = (r1+r3[:,None])*sp.sin(ang13/2.)
+
+    w = (rp<cf_rp_max) & (rt<cf_rt_max) & (rp>=cf_rp_min)
+    if w.sum()==0: return
+    w = sp.logical_not(w)
+    bp = sp.floor((rp-cf_rp_min)/(cf_rp_max-cf_rp_min)*cf_np).astype(int)
+    bt = (rt/cf_rt_max*cf_nt).astype(int)
+    ba13 = bt + cf_nt*bp
+    ba13[w] = 0
+    cf13 = cf[ba13]
+    cf13[w] = 0.
+
     ### Pair forest_1 - object_2
     rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
@@ -418,20 +432,6 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     ba34 = bt + nt*bp
-
-    ### Pair forest_1 - forest_3
-    rp = sp.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
-    rt = (r1+r3[:,None])*sp.sin(ang13/2.)
-
-    w = (rp<cf_rp_max) & (rt<cf_rt_max) & (rp>=cf_rp_min)
-    if w.sum()==0: return
-    w = sp.logical_not(w)
-    bp = sp.floor((rp-cf_rp_min)/(cf_rp_max-cf_rp_min)*cf_np).astype(int)
-    bt = (rt/cf_rt_max*cf_nt).astype(int)
-    ba13 = bt + cf_nt*bp
-    ba13[w] = 0
-    cf13 = cf[ba13]
-    cf13[w] = 0.
 
     ### Fill
     for k1, p1 in enumerate(ba12):
