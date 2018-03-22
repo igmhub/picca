@@ -271,6 +271,7 @@ cf_nt = None
 cf_rp_min = None
 cf_rp_max = None
 cf_rt_max = None
+cf_angmax = None
 
 def wickT(pix):
     T1   = sp.zeros([np*nt,np*nt])
@@ -314,18 +315,17 @@ def wickT(pix):
 
             thid2 = [q2.thid for q2 in neighs]
 
+            #-TODO: Correlation with other nside pixels
             for d3 in dels[ipix][i1+1:]:
                 if d3.neighs.size==0: continue
 
-                r = random.rand(d3.neighs.size)
-                w = r>rej
-                if w.sum()==0: continue
+                ang13 = d1^d3
+                if ang13>=cf_angmax: continue
 
                 r3 = d3.r_comov
                 w3 = d3.we
-                ang13 = d1^d3
 
-                neighs = d3.neighs[w]
+                neighs = d3.neighs
                 ang34 = d3^neighs
                 r4 = [q4.r_comov for q4 in neighs]
                 w4 = [q4.we for q4 in neighs]

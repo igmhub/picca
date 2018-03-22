@@ -156,6 +156,7 @@ if __name__ == '__main__':
         xcf.cf_rp_min = head['RPMIN']
         xcf.cf_rp_max = head['RPMAX']
         xcf.cf_rt_max = head['RTMAX']
+        xcf.cf_angmax = utils.compute_ang_max(cosmo,xcf.cf_rt_max,zmin_pix)
         da = h[2]['DA'][:]
         we = h[2]['WE'][:]
         da = (da*we).sum(axis=0)
