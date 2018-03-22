@@ -113,7 +113,7 @@ if __name__ == '__main__':
     xcf.dels = dels
     xcf.ndels = ndels
     sys.stderr.write("\n")
-    print("done, npix = {}".format(xcf.npix))
+    print("done, npix = {}, ndels = {}".format(xcf.npix,xcf.ndels))
     sys.stderr.write("\n")
 
     ### Find the redshift range
@@ -178,9 +178,9 @@ if __name__ == '__main__':
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    print(" Starting")
+    print(" \nStarting\n")
     wickT = pool.map(calc_wickT,sorted(list(cpu_data.values())))
-    print(" Finished")
+    print(" \nFinished\n")
     pool.close()
 
     wickT       = sp.array(wickT)
