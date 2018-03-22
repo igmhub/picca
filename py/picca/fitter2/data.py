@@ -130,6 +130,8 @@ class data:
             self.xi_met = partial(getattr(xi, dic_init['metals']['model-xi-met']), name=self.name)
 
             self.tracerMet = {}
+            self.tracerMet[self.tracer1['name']] = self.tracer1
+            self.tracerMet[self.tracer2['name']] = self.tracer2
             for m in dic_init['metals']['in tracer1']:
                 self.tracerMet[m] = { 'name':m, 'type':'continuus' }
             for m in dic_init['metals']['in tracer2']:
