@@ -35,7 +35,7 @@ def cache_xi_drp(function):
         ## args[3] is the pk_lin, we need to make sure we recalculate
         ## when it changes (e.g. when we pass the pksb_lin)
         t = tuple(x for x in args[3])
-        pair = (name, tracer1, tracer2, hash(t))
+        pair = (name, tracer1['name'], tracer2['name'], hash(t))
 
         recalc = True
         if pair in cache and sp.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
@@ -85,7 +85,7 @@ def cache_kaiser(function):
         ## args[3] is the pk_lin, we need to make sure we recalculate
         ## when it changes (e.g. when we pass the pksb_lin)
         t = tuple(x for x in args[3])
-        pair = (name, tracer1, tracer2, hash(t))
+        pair = (name, tracer1['name'], tracer2['name'], hash(t))
 
         recalc = True
         if pair in cache and sp.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
