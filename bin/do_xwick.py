@@ -82,10 +82,10 @@ if __name__ == '__main__':
                     help = 'maximum spectra to read')
 
     parser.add_argument('--cf1d', type=str, required=True,
-                    help = 'cf1d file for T1, T2, T3 and T4')
+                    help = '1d auto-correlation of pixels from the same forest file for T1, T2, T3 and T4')
 
     parser.add_argument('--cf', type=str, default=None, required=False,
-                    help = 'cf file for T5 and T6')
+                    help = '3d auto-correlation of pixels from different forests file for T5 and T6')
 
     args = parser.parse_args()
 
