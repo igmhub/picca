@@ -142,7 +142,7 @@ def cache_growth_factor_de(function):
 def growth_factor_de(*args, **kwargs):
     return cached_growth_factor_de(*args, **kwargs)
 
-def cached_growth_factor_de(z, zref = None, Om = None, OL = None, **kwargs):
+def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     '''
     Implements eq. 7.77 from S. Dodelson's Modern Cosmology book
     '''
