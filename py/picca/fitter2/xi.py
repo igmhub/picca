@@ -142,21 +142,18 @@ def cache_growth_factor_de(function):
 def growth_factor_de(*args, **kwargs):
     return cached_growth_factor_de(*args, **kwargs)
 
-def cached_growth_factor_de(z, zref = None, **kwargs):
+def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     '''
     Implements eq. 7.77 from S. Dodelson's Modern Cosmology book
     '''
-    print('Calculating growth factor for Om = {}, OL = {}'.format(kwargs['Om'], kwargs['OL']))
+    print('Calculating growth factor for Om = {}, OL = {}'.format(Om, OL))
 
-    def hubble(z, Om=0.3, OL=0.7):
+    def hubble(z, Om, OL):
         return sp.sqrt(Om*(1+z)**3 + OL + (1-Om-OL)*(1+z)**2)
 
-    def dD1(a, Om=0.3, OL=0.7):
+    def dD1(a, Om, OL):
         z = 1/a-1
-        return 1./(a*hubble(z, Om=Om, OL=OL))**3
-
-    Om = kwargs['Om']
-    OL = kwargs['OL']
+        return 1./(a*hubble(z=z, Om=Om, OL=OL))**3
 
     ## Calculate D1 in 100 values of z between 0 and zmax, then interpolate
     nbins = 100
