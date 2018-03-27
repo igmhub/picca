@@ -14,7 +14,8 @@ def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
 
 class chi2:
     def __init__(self,dic_init):
-        self.data = dic_init['data sets']
+        self.zeff = dic_init['data sets']['zeff']
+        self.data = dic_init['data sets']['data']
         self.par_names = sp.unique([name for d in self.data for name in d.par_names])
         self.outfile = os.path.expandvars(dic_init['outfile'])
 
@@ -226,6 +227,7 @@ class chi2:
 
         ndata = [d.mask.sum() for d in self.data]
         ndata = sum(ndata)
+        g.attrs['zeff'] = self.zeff
         g.attrs['ndata'] = ndata
         g.attrs['npar'] = len(self.best_fit.list_of_vary_param())
         g.attrs['list of free pars'] = [a.encode('utf8') for a in self.best_fit.list_of_vary_param()]
