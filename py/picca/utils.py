@@ -141,7 +141,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
     plate = 1+sp.arange(thid.size)
     mjd   = 1+sp.arange(thid.size)
     fid   = 1+sp.arange(thid.size)
-    sptype = sp.chararray.strip(vac[1]["SPECTYPE"][:].astype(str))
+    sptype = sp.char.strip(vac[1]["SPECTYPE"][:].astype(str))
 
     ## Sanity
     print(" start               : nb object in cat = {}".format(ra.size) )
