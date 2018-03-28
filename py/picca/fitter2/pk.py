@@ -143,7 +143,7 @@ def G2(k, pk_lin, tracer1, tracer2, dataset_name = None, **kwargs):
 
     kp = k*muk
     kt = k*sp.sqrt(1-muk**2)
-    return utils.sinc(kp*Lpar/2)**2*utils.sinc(kt*Lper/2)**2
+    return utils.sinc(kp*Lpar/2)*utils.sinc(kt*Lper/2)
 
 def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
