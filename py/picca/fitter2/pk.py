@@ -101,13 +101,13 @@ def pk_hcd_uv(k, pk_lin, tracer1, tracer2, **kwargs):
     return pk
 
 def dnl_mcdonald(k, pk_lin, tracer1, tracer2, **kwargs):
-    assert tracer1=="LYA" and tracer2 == "LYA"
+    assert tracer1['name']=="LYA" and tracer2['name'] == "LYA"
     kvel = 1.22*(1+k/0.923)**0.451
     dnl = sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kvel)**1.5)
     return dnl
 
 def dnl_arinyo(k, pk_lin, tracer1, tracer2, **kwargs):
-    assert tracer1=="LYA" and tracer2 == "LYA"
+    assert tracer1['name']=="LYA" and tracer2['name'] == "LYA"
     q1 = kwargs["dnl_arinyo_q1"]
     kv = kwargs["dnl_arinyo_kv"]
     av = kwargs["dnl_arinyo_av"]
@@ -143,11 +143,11 @@ def G2(k, pk_lin, tracer1, tracer2, dataset_name = None, **kwargs):
 
     kp = k*muk
     kt = k*sp.sqrt(1-muk**2)
-    return utils.sinc(kp*Lpar/2)**2*utils.sinc(kt*Lper/2)**2
+    return utils.sinc(kp*Lpar/2)*utils.sinc(kt*Lper/2)
 
 def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    assert (tracer1=="LYA" or tracer2=="LYA") and (tracer1!=tracer2)
+    assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
 
     bias_hcd = kwargs["bias_hcd"]
     beta_hcd = kwargs["beta_hcd"]
@@ -156,7 +156,7 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     kp = k*muk
     F_hcd = utils.sinc(kp*L0)
 
-    if tracer1 == "LYA":
+    if tracer1['name'] == "LYA":
         bias_eff1 = (bias1 + bias_hcd*F_hcd)
         beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
         pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
@@ -168,11 +168,11 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     return pk
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
-    assert tracer1 == "QSO" or tracer2 == "QSO"
+    assert tracer1['type'] == 'discrete' or tracer2['type'] == 'discrete'
     kp = k*muk
     return sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
 
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
-    assert tracer1 == "QSO" or tracer2 == "QSO"
+    assert tracer1['type'] == 'discrete' or tracer2['type'] == 'discrete'
     kp = k*muk
     return 1/sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
