@@ -496,7 +496,13 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
 def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
-    in_nside = 64
+    tmp_in_dir = glob.glob(in_dir+"spectra-*/")
+    if len(tmp_in_dir)!=1:
+        sys.stderr.write("Can't find out input nside: {}\n".format(in_dir+"spectra-*/"))
+        sys.exit()
+    else:
+        tmp_in_dir = tmp_in_dir[0]
+        in_nside = int(tmp_in_dir[len(in_dir+"spectra-"):-1])
     nest     = True
     data = {}
     ndata=0
