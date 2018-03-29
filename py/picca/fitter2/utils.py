@@ -11,6 +11,8 @@ muk=(sp.arange(nmuk)+0.5)/nmuk
 dmuk = 1./nmuk
 muk=muk[:,None]
 
+cosmo_fit_func = None
+
 def sinc(x):
     return sp.sin(x)/x
 
@@ -78,6 +80,26 @@ def bias_beta(kwargs, tracer1, tracer2):
     bias2 *= growth_rate/beta2
 
     return bias1, beta1, bias2, beta2
+
+def ap_at(kwargs):
+    if kwargs['SB'] == True:
+        ap = 1.
+        at = 1.
+    else:
+        ap = kwargs['ap']
+        at = kwargs['at']
+    return ap, at
+
+def aiso_epsilon(kwargs):
+    if kwargs['SB'] == True:
+        ap = 1.
+        at = 1.
+    else:
+        aiso = kwargs['aiso']
+        eps = kwargs['1+epsilon']
+        ap = aiso*eps*eps
+        at = aiso/eps
+    return ap, at
 
 def convert_instance_to_dictionary(inst):
     dic = dict((name, getattr(inst, name)) for name in dir(inst) if not name.startswith('__'))

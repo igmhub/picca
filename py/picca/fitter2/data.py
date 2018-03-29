@@ -237,16 +237,11 @@ class data:
     def chi2(self, k, pk_lin, pksb_lin, pars):
         xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
 
-        ap = pars['ap']
-        at = pars['at']
-        pars['ap']=1.
-        pars['at']=1.
-
+        pars['SB'] = True
         sigmaNL_per = pars['sigmaNL_per']
         pars['sigmaNL_per'] = 0
         xi_sb = self.xi_model(k, pksb_lin, pars)
-        pars['ap'] = ap
-        pars['at'] = at
+        pars['SB'] = False
         pars['sigmaNL_per'] = sigmaNL_per
 
         xi_full = pars['bao_amp']*xi_peak + xi_sb
