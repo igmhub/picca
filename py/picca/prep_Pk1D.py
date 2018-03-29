@@ -52,8 +52,13 @@ def exp_diff(file,ll) :
 
 
 
-def spectral_resolution(wdisp) :
+def spectral_resolution(wdisp, ll=None) :
 
     reso = wdisp*constants.speed_light/1000.*1.0e-4*sp.log(10.)
 
+    # for desi
+    if ll is not None :
+        dll = (ll[-1]-ll[0])/float(len(ll)-1)
+        reso = wdisp*constants.speed_light/1000.*dll*sp.log(10.0)
+    
     return reso

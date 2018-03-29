@@ -117,6 +117,9 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true', default = False, required=False,
                         help = ' Fill root histograms for debugging')
 
+    parser.add_argument('--no-apply-filling', action='store_true', default = False, required=False,
+                        help = ' No fill masked pixels')
+
 
     args = parser.parse_args()
 
@@ -187,7 +190,8 @@ if __name__ == '__main__':
             for f in range(nb_part):
 
                 # Fill masked pixels with 0.
-                ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f])
+                ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f],args.no_apply_filling)
+                nb_masked_pixel =0 
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
                 if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.zqso)
 

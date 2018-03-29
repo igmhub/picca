@@ -45,8 +45,11 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
     return m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
 
 
-def fill_masked_pixels(dll,ll,delta,diff,iv):
+def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
 
+
+    if no_apply_filling : return ll,delta,diff,iv,0
+    
     ll_idx = ll.copy()
     ll_idx -= ll[0]
     ll_idx /= dll
@@ -55,6 +58,7 @@ def fill_masked_pixels(dll,ll,delta,diff,iv):
     index_all = range(index[-1]+1)
     index_ok = np.in1d(index_all, index)
 
+    print (" =======  index = ",len(index)," index_all = ",len(index_all)," index_ok = ",len(index_ok)," delta = ",len(delta))
     delta_new = np.zeros(len(index_all))
     delta_new[index_ok]=delta
 

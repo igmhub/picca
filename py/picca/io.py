@@ -533,6 +533,9 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         z_ll = sp.log10(h["Z_WAVELENGTH"].read())
         z_iv = h["Z_IVAR"].read()*(h["Z_MASK"].read()==0)
         z_fl = h["Z_FLUX"].read()
+        b_reso = h["B_RESOLUTION"].read()
+        r_reso = h["R_RESOLUTION"].read()
+        z_reso = h["Z_RESOLUTION"].read()
 
         for t in tid_qsos:
             wt = h[1]["TARGETID"][:] == t
@@ -545,21 +548,39 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+            reso_sum = b_reso[wt].sum(axis=0)
+            reso= sp.clip(reso_sum,1.0e-6,1.0e6)
+            rms_in_pixel = (sp.sqrt(1.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-1][:]))
+                            + sp.sqrt(4.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-2][:])))/2.0
+            reso_in_km_per_s=spectral_resolution(rms_in_pixel,b_ll)
+            diff = b_ll*0.0
+            d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
             ### R
             iv = r_iv[wt]
             fl = (iv*r_fl[wt]).sum(axis=0)
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            ### Z
-            d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+            reso_sum = r_reso[wt].sum(axis=0)
+            reso= sp.clip(reso_sum,1.0e-6,1.0e6)
+            rms_in_pixel = (sp.sqrt(1.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-1][:]))
+                            + sp.sqrt(4.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-2][:])))/2.0
+            reso_in_km_per_s=spectral_resolution(rms_in_pixel,r_ll)
+            diff = r_ll*0.0
+            d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
+            ### Z            
             iv = z_iv[wt]
             fl = (iv*z_fl[wt]).sum(axis=0)
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+            reso_sum = z_reso[wt].sum(axis=0)
+            reso = sp.clip(reso_sum,1.0e-6,1.0e6)
+            rms_in_pixel = (sp.sqrt(1.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-1][:]))
+                            + sp.sqrt(4.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-2][:])))/2.0
+            reso_in_km_per_s=spectral_resolution(rms_in_pixel,z_ll)
+            diff = z_ll*0.0
+            d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
 
             pix = pixs[wt][0]
             if pix not in data:
