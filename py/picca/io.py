@@ -13,6 +13,7 @@ from picca.data import qso
 
 from picca.prep_Pk1D import exp_diff
 from picca.prep_Pk1D import spectral_resolution
+from picca.prep_Pk1D import spectral_resolution_desi
 
 def read_dlas(fdla):
     f=open(fdla)
@@ -548,11 +549,8 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            reso_sum = b_reso[wt].sum(axis=0)
-            reso= sp.clip(reso_sum,1.0e-6,1.0e6)
-            rms_in_pixel = (sp.sqrt(1.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-1][:]))
-                            + sp.sqrt(4.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-2][:])))/2.0
-            reso_in_km_per_s=spectral_resolution(rms_in_pixel,b_ll)
+            reso_sum = b_reso[wt].sum(axis=0)           
+            reso_in_km_per_s=spectral_resolution_desi(reso_sum,b_ll)
             diff = b_ll*0.0
             d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
             ### R
@@ -562,10 +560,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             w = iv>0
             fl[w]/=iv[w]
             reso_sum = r_reso[wt].sum(axis=0)
-            reso= sp.clip(reso_sum,1.0e-6,1.0e6)
-            rms_in_pixel = (sp.sqrt(1.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-1][:]))
-                            + sp.sqrt(4.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-2][:])))/2.0
-            reso_in_km_per_s=spectral_resolution(rms_in_pixel,r_ll)
+            reso_in_km_per_s=spectral_resolution_desi(reso_sum,r_ll)
             diff = r_ll*0.0
             d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
             ### Z            
@@ -575,10 +570,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             w = iv>0
             fl[w]/=iv[w]
             reso_sum = z_reso[wt].sum(axis=0)
-            reso = sp.clip(reso_sum,1.0e-6,1.0e6)
-            rms_in_pixel = (sp.sqrt(1.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-1][:]))
-                            + sp.sqrt(4.0/2.0/sp.log(reso[len(reso)/2][:]/reso[len(reso)/2-2][:])))/2.0
-            reso_in_km_per_s=spectral_resolution(rms_in_pixel,z_ll)
+            reso_in_km_per_s=spectral_resolution_desi(reso_sum,z_ll)
             diff = z_ll*0.0
             d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
 
