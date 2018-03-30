@@ -496,23 +496,17 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
 def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
-    tmp_in_dir = glob.glob(in_dir+"spectra-*/")
-    if len(tmp_in_dir)!=1:
-        sys.stderr.write("Can't find out input nside: {}\n".format(in_dir+"spectra-*/"))
-        sys.exit()
-    else:
-        tmp_in_dir = tmp_in_dir[0]
-        in_nside = int(tmp_in_dir[len(in_dir+"spectra-"):-1])
-    nest     = True
+    in_nside = int(in_dir.split('spectra-')[-1].replace('/',''))
+    nest = True
     data = {}
-    ndata=0
+    ndata = 0
 
     ztable = {t:z for t,z in zip(thid,zqso)}
     in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-dec, ra,nest=nest)
     fi = sp.unique(in_pixs)
 
     for i,f in enumerate(fi):
-        path = in_dir + "spectra-"+str(in_nside)+"/"+str(int(f/100))+"/"+str(f)+"/spectra-"+str(in_nside)+"-"+str(f)+".fits"
+        path = in_dir+"/"+str(int(f/100))+"/"+str(f)+"/spectra-"+str(in_nside)+"-"+str(f)+".fits"
 
         sys.stderr.write("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
         try:
@@ -523,16 +517,16 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
         ## get the quasars
         tid_qsos = thid[(in_pixs==f)]
-        ra    = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
-        de    = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
-        pixs  = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
-        exp   = h["FIBERMAP"]["EXPID"][:]
+        ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
+        de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
+        pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
+        exp = h["FIBERMAP"]["EXPID"][:]
         night = h["FIBERMAP"]["NIGHT"][:]
-        fib   = h["FIBERMAP"]["FIBER"][:]
+        fib = h["FIBERMAP"]["FIBER"][:]
 
         b_ll = sp.log10(h["B_WAVELENGTH"].read())
-        b_iv  = h["B_IVAR"].read()*(h["B_MASK"].read()==0)
-        b_fl  = h["B_FLUX"].read()
+        b_iv = h["B_IVAR"].read()*(h["B_MASK"].read()==0)
+        b_fl = h["B_FLUX"].read()
         r_ll = sp.log10(h["R_WAVELENGTH"].read())
         r_iv = h["R_IVAR"].read()*(h["R_MASK"].read()==0)
         r_fl = h["R_FLUX"].read()
@@ -551,15 +545,15 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+            d = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
             ### R
             iv = r_iv[wt]
             fl = (iv*r_fl[wt]).sum(axis=0)
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            ### Z
             d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+            ### Z
             iv = z_iv[wt]
             fl = (iv*z_fl[wt]).sum(axis=0)
             iv = iv.sum(axis=0)
