@@ -43,7 +43,8 @@ if __name__ == '__main__':
     nb = sp.array(h[1]['NB'][:])
     we = sp.array(h[2]['WE'][:]).sum(axis=0)
     dd = we
-    dd /= nbObj*(nbObj-1)/2.
+    coefDD = nbObj*(nbObj-1)/2.
+    dd /= coefDD
     h.close()
     dm = sp.eye(dd.size)
 
@@ -110,7 +111,10 @@ if __name__ == '__main__':
         co = hh[1]['CO'][:]
         hh.close()
     else:
-        co = sp.eye(dd.size)
+        w = rr>0.
+        co = sp.zeros_like(dd)
+        co[w] = dd[w]*coefDD/(coefDD*rr[w])**2
+        co = sp.diag(co)
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)
