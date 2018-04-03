@@ -95,14 +95,14 @@ if __name__ == '__main__':
         dr = rand['DR']['data']
         rr = rand['RR']['data']
         w = rr>0.
-        da = sp.zeros_like(dd)
+        da = sp.zeros(dd.size)
         da[w] = (dd[w]+rr[w]-2*dr[w])/rr[w]
     else:
         d1r2 = rand['xD1R2']['data']
         d2r1 = rand['xD2R1']['data']
         rr   = rand['xRR']['data']
         w = rr>0.
-        da = sp.zeros_like(dd)
+        da = sp.zeros(dd.size)
         da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
 
     ### Covariance matrix
@@ -112,7 +112,7 @@ if __name__ == '__main__':
         hh.close()
     else:
         w = rr>0.
-        co = sp.zeros_like(dd)
+        co = sp.zeros(dd.size)
         co[w] = dd[w]*coefDD/(coefDD*rr[w])**2
         co = sp.diag(co)
 
