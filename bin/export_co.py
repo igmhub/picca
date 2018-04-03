@@ -113,7 +113,7 @@ if __name__ == '__main__':
     else:
         w = rr>0.
         co = sp.zeros(dd.size)
-        co[w] = dd[w]*coefDD/(coefDD*rr[w])**2
+        co[w] = (coefDD*dd[w])**2/(coefDD*rr[w])**3
         co = sp.diag(co)
 
     ### Save
