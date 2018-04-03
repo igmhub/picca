@@ -37,11 +37,13 @@ class chi2:
 
     def __call__(self, *pars):
         dic = {p:pars[i] for i,p in enumerate(self.par_names)}
+        dic['SB'] = False
         chi2 = 0
         for d in self.data:
             chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,dic)
 
         if self.verbosity == 1:
+            del dic['SB']
             for p in sorted(dic.keys()):
                 print(p+" "+str(dic[p]))
 
@@ -80,19 +82,17 @@ class chi2:
     def minimize(self):
         self.best_fit = self._minimize()
 
+        self.best_fit.values['SB'] = False
         for d in self.data:
             d.best_fit_model = self.best_fit.values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
 
-            ap = self.best_fit.values['ap']
-            at = self.best_fit.values['at']
-            self.best_fit.values['ap'] = 1
-            self.best_fit.values['at'] = 1
+            self.best_fit.values['SB'] = True
             snl = self.best_fit.values['sigmaNL_per']
             self.best_fit.values['sigmaNL_per'] = 0
             d.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
-            self.best_fit.values['ap'] = ap
-            self.best_fit.values['at'] = at
+            self.best_fit.values['SB'] = False
             self.best_fit.values['sigmaNL_per'] = snl
+        del self.best_fit.values['SB']
 
     def chi2scan(self):
         if not hasattr(self, "dic_chi2scan"): return
@@ -238,12 +238,14 @@ class chi2:
         for item, value in dic_fmin.items():
             g.attrs[item] = value
 
+        self.best_fit.values['SB'] = False
         for d in self.data:
             g = f.create_group(d.name)
             g.attrs['ndata'] = d.mask.sum()
             g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.best_fit.values)
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
             fit[...] = d.best_fit_model
+        del self.best_fit.values['SB']
 
         if hasattr(self, "fast_mc"):
             g = f.create_group("fast mc")
