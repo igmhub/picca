@@ -58,7 +58,6 @@ def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
     index_all = range(index[-1]+1)
     index_ok = np.in1d(index_all, index)
 
-    print (" =======  index = ",len(index)," index_all = ",len(index_all)," index_ok = ",len(index_ok)," delta = ",len(delta))
     delta_new = np.zeros(len(index_all))
     delta_new[index_ok]=delta
 
