@@ -11,8 +11,7 @@ else:
     import ConfigParser
 
 import fitsio
-from . import data
-from . import utils
+from . import data, utils
 
 def parse_chi2(filename):
     cp = ConfigParser.ConfigParser()
