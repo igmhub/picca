@@ -125,4 +125,8 @@ if __name__ == '__main__':
     head['NT'] = nt
     head['NP'] = np
     h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],header=head)
+    if type_corr=='DD':
+        h.write([dd,rr,dr],names=['DD','RR','DR'])
+    else:
+        h.write([dd,rr,d1r2,d2r1],names=['DD','RR','D1R2','D2R1'])
     h.close()
