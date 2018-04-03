@@ -365,7 +365,7 @@ if __name__ == '__main__':
             out_ascii = open(args.out_dir+"/delta-{}".format(p)+".txt",'w')
             for d in deltas[p]:
                 nbpixel = len(d.de)
-                dll = d.dll 
+                dll = d.dll
                 if (args.mode=='desi') : dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
                 line = '{} {} {} '.format(d.plate,d.mjd,d.fid)
                 line += '{} {} {} '.format(d.ra,d.dec,d.zqso)

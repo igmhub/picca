@@ -49,7 +49,8 @@ def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
 
 
     if no_apply_filling : return ll,delta,diff,iv,0
-    
+
+
     ll_idx = ll.copy()
     ll_idx -= ll[0]
     ll_idx /= dll

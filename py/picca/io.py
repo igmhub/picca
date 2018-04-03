@@ -549,7 +549,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            reso_sum = b_reso[wt].sum(axis=0)           
+            reso_sum = b_reso[wt].sum(axis=0)
             reso_in_km_per_s=spectral_resolution_desi(reso_sum,b_ll)
             diff = sp.zeros(b_ll.shape)
             d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
@@ -563,7 +563,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             reso_in_km_per_s=spectral_resolution_desi(reso_sum,r_ll)
             diff = sp.zeros(r_ll.shape)
             d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
-            ### Z            
+            ### Z
             iv = z_iv[wt]
             fl = (iv*z_fl[wt]).sum(axis=0)
             iv = iv.sum(axis=0)
