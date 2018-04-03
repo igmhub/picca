@@ -370,7 +370,7 @@ class delta(qso):
         m_SNR = float(a[7])
         m_reso = float(a[8])
         dll = float(a[9])
-        
+
         nbpixel = int(a[10])
         de = sp.array(a[11:11+nbpixel]).astype(float)
         ll = sp.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
