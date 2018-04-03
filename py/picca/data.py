@@ -376,7 +376,7 @@ class delta(qso):
         ll = sp.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
         iv = sp.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
         diff = sp.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
-        
+
 
         thid = 0
         order = 0
