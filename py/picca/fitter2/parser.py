@@ -11,7 +11,7 @@ else:
     import ConfigParser
 
 import fitsio
-from . import data
+from . import data, utils
 
 def parse_chi2(filename):
     cp = ConfigParser.ConfigParser()
@@ -44,6 +44,8 @@ def parse_chi2(filename):
     dic_init['data sets'] = {}
     dic_init['data sets']['zeff'] = zeff
     dic_init['data sets']['data'] = [data.data(parse_data(os.path.expandvars(d),zeff,dic_init['fiducial'])) for d in cp.get('data sets','ini files').split()]
+
+    utils.cosmo_fit_func = getattr(utils, cp.get('cosmo-fit type','cosmo fit func'))
 
     dic_init['outfile'] = cp.get('output','filename')
 
