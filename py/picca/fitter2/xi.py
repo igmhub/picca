@@ -1,13 +1,12 @@
 import scipy as sp
-from .utils import Pk2Xi, bias_beta
+from . import utils
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
 
 def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
 
-    ap = pars["ap"]
-    at = pars["at"]
+    ap, at = utils.cosmo_fit_func(pars)
     rp = r*mu
     rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
@@ -15,7 +14,7 @@ def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pa
     ar = sp.sqrt(arp**2+art**2)
     amu = arp/ar
 
-    xi_full = Pk2Xi(ar, amu, k, pk_full, ell_max = ell_max)
+    xi_full = utils.Pk2Xi(ar, amu, k, pk_full, ell_max = ell_max)
     return xi_full
 
 
@@ -26,10 +25,8 @@ def cache_xi_drp(function):
         tracer1 = kwargs['tracer1']
         tracer2 = kwargs['tracer2']
 
-        bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-
-        ap = kwargs['ap']
-        at = kwargs['at']
+        bias1, beta1, bias2, beta2 = utils.bias_beta(kwargs, tracer1, tracer2)
+        ap, at = utils.cosmo_fit_func(kwargs)
         drp = kwargs['drp']
 
         ## args[3] is the pk_lin, we need to make sure we recalculate
@@ -54,8 +51,7 @@ def cache_xi_drp(function):
 def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
 
-    ap = pars["ap"]
-    at = pars["at"]
+    ap, at = utils.cosmo_fit_func(pars)
     rp = r*mu + pars["drp"]
     rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
@@ -63,7 +59,7 @@ def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, 
     ar = sp.sqrt(arp**2+art**2)
     amu = arp/ar
 
-    xi_full = Pk2Xi(ar, amu, k, pk_full, ell_max = ell_max)
+    xi_full = utils.Pk2Xi(ar, amu, k, pk_full, ell_max = ell_max)
     return xi_full
 
 @cache_xi_drp
@@ -77,10 +73,8 @@ def cache_kaiser(function):
         tracer1 = kwargs['tracer1']
         tracer2 = kwargs['tracer2']
 
-        bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-
-        ap = kwargs['ap']
-        at = kwargs['at']
+        bias1, beta1, bias2, beta2 = utils.bias_beta(kwargs, tracer1, tracer2)
+        ap, at = utils.cosmo_fit_func(kwargs)
 
         ## args[3] is the pk_lin, we need to make sure we recalculate
         ## when it changes (e.g. when we pass the pksb_lin)
