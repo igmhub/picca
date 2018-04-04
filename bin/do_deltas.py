@@ -365,9 +365,11 @@ if __name__ == '__main__':
             out_ascii = open(args.out_dir+"/delta-{}".format(p)+".txt",'w')
             for d in deltas[p]:
                 nbpixel = len(d.de)
+                dll = d.dll
+                if (args.mode=='desi') : dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
                 line = '{} {} {} '.format(d.plate,d.mjd,d.fid)
                 line += '{} {} {} '.format(d.ra,d.dec,d.zqso)
-                line += '{} {} {} {} '.format(d.mean_z,d.mean_SNR,d.mean_reso,nbpixel)
+                line += '{} {} {} {} {} '.format(d.mean_z,d.mean_SNR,d.mean_reso,dll,nbpixel)
                 for i in range(nbpixel): line += '{} '.format(d.de[i])
                 for i in range(nbpixel): line += '{} '.format(d.ll[i])
                 for i in range(nbpixel): line += '{} '.format(d.iv[i])
@@ -395,7 +397,9 @@ if __name__ == '__main__':
                     hd["MEANZ"]=d.mean_z
                     hd["MEANRESO"]=d.mean_reso
                     hd["MEANSNR"]=d.mean_SNR
-                    hd["DLL"]=d.dll
+                    dll = d.dll
+                    if (args.mode=='desi') : dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
+                    hd["DLL"]=dll
                     diff = d.diff
                     if diff is None:
                         diff = d.ll*0
