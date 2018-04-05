@@ -311,7 +311,7 @@ class TestCor(unittest.TestCase):
         path = resource_filename('picca', '/../../requirements.txt')
         for l in open(path,'r'):
             l = l.replace('\n','').split('==')
-            if len(l)!=2: continue
+            self.assertTrue(len(l)==2,"requirements.txt attribute is not valid: {}".format(str(l)))
             req[l[0]] = l[1]
 
         return req
@@ -325,7 +325,10 @@ class TestCor(unittest.TestCase):
         print("\n")
         req = self.load_requirements()
         for req_lib, req_ver in req.items():
-            local_ver = __import__(req_lib).__version__
+            try:
+                local_ver = __import__(req_lib).__version__
+            except:
+                print("WARNING: Module {} can't be found".format(req_lib))
             if local_ver!=req_ver:
                 print("WARNING: The local version of {}: {} is different from the required version: {}".format(req_lib,local_ver,req_ver))
 
