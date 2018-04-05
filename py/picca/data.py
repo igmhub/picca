@@ -139,6 +139,7 @@ class forest(qso):
 
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
+
         err = 1.0/sp.sqrt(iv)
         SNR = fl/err
         self.mean_SNR = sum(SNR)/float(len(SNR))
@@ -368,14 +369,15 @@ class delta(qso):
         m_z = float(a[6])
         m_SNR = float(a[7])
         m_reso = float(a[8])
+        dll = float(a[9])
 
-        nbpixel = int(a[9])
-        de = sp.array([float(a[10+i]) for i in range(nbpixel)])
-        ll = sp.array([float(a[10+nbpixel+i]) for i in range(nbpixel)])
-        iv = sp.array([float(a[10+2*nbpixel+i]) for i in range(nbpixel)])
-        diff = sp.array([float(a[10+3*nbpixel+i]) for i in range(nbpixel)])
+        nbpixel = int(a[10])
+        de = sp.array(a[11:11+nbpixel]).astype(float)
+        ll = sp.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
+        iv = sp.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
+        diff = sp.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
 
-        dll = 1.0e-4
+
         thid = 0
         order = 0
         we = None

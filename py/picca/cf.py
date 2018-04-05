@@ -26,7 +26,7 @@ ndata2 = None
 zref = None
 alpha= None
 alpha2= None
-alpha_met= None
+alpha_abs= None
 lambda_abs = None
 lambda_abs2 = None
 
@@ -335,7 +335,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 else:
                     rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
-                zwe12 = (1+z1_abs1[:,None])**(alpha_met-1)*(1+z2_abs2)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
+                zwe12 = (1+z1_abs1[:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2)**(alpha_abs[abs_igm2]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                 bp_abs1_abs2 = sp.floor((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
@@ -362,7 +362,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     else:
                         rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
-                    zwe21 = (1+z1_abs2[:,None])**(alpha_met-1)*(1+z2_abs1)**(alpha_met-1)/(3.25)**(2*alpha_met-2)
+                    zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                     bp_abs2_abs1 = sp.floor((rp_abs2_abs1-rp_min)/(rp_max-rp_min)*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)

@@ -126,6 +126,15 @@ if __name__ == '__main__':
     cf.alpha = args.z_evol
     cf.rej = args.rej
     cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
+    cf.alpha_abs = {}
+    cf.alpha_abs[args.lambda_abs] = args.z_evol
+    if args.lambda_abs2 : cf.alpha_abs[args.lambda_abs2] = args.z_evol2
+    for m in args.abs_igm :
+        cf.alpha_abs[m] = args.metal_alpha
+
+    if args.abs_igm2 :
+        for m in args.abs_igm2 :
+            cf.alpha_abs[m] = args.metal_alpha
 
     cosmo = constants.cosmo(args.fid_Om)
     cf.cosmo=cosmo
@@ -225,7 +234,6 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
-    cf.alpha_met = args.metal_alpha
 
     if x_correlation:
        print("doing cross-correlation ... ")
@@ -313,7 +321,7 @@ if __name__ == '__main__':
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
-    head["ALPHA_MET"]=cf.alpha_met
+    head["ALPHA_MET"]=args.metal_alpha
     head['REJ']=args.rej
     head['RPMAX']=cf.rp_max
     head['RTMAX']=cf.rt_max
