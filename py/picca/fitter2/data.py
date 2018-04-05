@@ -142,7 +142,7 @@ class data:
             if 'in tracer1' in dic_init['metals']:
                 for m in dic_init['metals']['in tracer1']:
                     self.tracerMet[m] = { 'name':m, 'type':'continuous' }
-            if 'in tracer2' in dic_init['metals']
+            if 'in tracer2' in dic_init['metals']:
                 for m in dic_init['metals']['in tracer2']:
                     self.tracerMet[m] = { 'name':m, 'type':'continuous' }
 
