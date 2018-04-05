@@ -13,6 +13,7 @@ from picca.data import qso
 
 from picca.prep_Pk1D import exp_diff
 from picca.prep_Pk1D import spectral_resolution
+from picca.prep_Pk1D import spectral_resolution_desi
 
 def read_dlas(fdla):
     f=open(fdla)
@@ -496,17 +497,17 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
 def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
-    in_nside = 64
-    nest     = True
+    in_nside = int(in_dir.split('spectra-')[-1].replace('/',''))
+    nest = True
     data = {}
-    ndata=0
+    ndata = 0
 
     ztable = {t:z for t,z in zip(thid,zqso)}
     in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-dec, ra,nest=nest)
     fi = sp.unique(in_pixs)
 
     for i,f in enumerate(fi):
-        path = in_dir + "spectra-"+str(in_nside)+"/"+str(int(f/100))+"/"+str(f)+"/spectra-"+str(in_nside)+"-"+str(f)+".fits"
+        path = in_dir+"/"+str(int(f/100))+"/"+str(f)+"/spectra-"+str(in_nside)+"-"+str(f)+".fits"
 
         sys.stderr.write("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
         try:
@@ -517,22 +518,25 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
         ## get the quasars
         tid_qsos = thid[(in_pixs==f)]
-        ra    = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
-        de    = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
-        pixs  = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
-        exp   = h["FIBERMAP"]["EXPID"][:]
+        ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
+        de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
+        pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
+        exp = h["FIBERMAP"]["EXPID"][:]
         night = h["FIBERMAP"]["NIGHT"][:]
-        fib   = h["FIBERMAP"]["FIBER"][:]
+        fib = h["FIBERMAP"]["FIBER"][:]
 
         b_ll = sp.log10(h["B_WAVELENGTH"].read())
-        b_iv  = h["B_IVAR"].read()*(h["B_MASK"].read()==0)
-        b_fl  = h["B_FLUX"].read()
+        b_iv = h["B_IVAR"].read()*(h["B_MASK"].read()==0)
+        b_fl = h["B_FLUX"].read()
         r_ll = sp.log10(h["R_WAVELENGTH"].read())
         r_iv = h["R_IVAR"].read()*(h["R_MASK"].read()==0)
         r_fl = h["R_FLUX"].read()
         z_ll = sp.log10(h["Z_WAVELENGTH"].read())
         z_iv = h["Z_IVAR"].read()*(h["Z_MASK"].read()==0)
         z_fl = h["Z_FLUX"].read()
+        b_reso = h["B_RESOLUTION"].read()
+        r_reso = h["R_RESOLUTION"].read()
+        z_reso = h["Z_RESOLUTION"].read()
 
         for t in tid_qsos:
             wt = h[1]["TARGETID"][:] == t
@@ -545,21 +549,30 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+            reso_sum = b_reso[wt].sum(axis=0)
+            reso_in_km_per_s=spectral_resolution_desi(reso_sum,b_ll)
+            diff = sp.zeros(b_ll.shape)
+            d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
             ### R
             iv = r_iv[wt]
             fl = (iv*r_fl[wt]).sum(axis=0)
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
+            reso_sum = r_reso[wt].sum(axis=0)
+            reso_in_km_per_s=spectral_resolution_desi(reso_sum,r_ll)
+            diff = sp.zeros(r_ll.shape)
+            d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
             ### Z
-            d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
             iv = z_iv[wt]
             fl = (iv*z_fl[wt]).sum(axis=0)
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order)
+            reso_sum = z_reso[wt].sum(axis=0)
+            reso_in_km_per_s=spectral_resolution_desi(reso_sum,z_ll)
+            diff = sp.zeros(z_ll.shape)
+            d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
 
             pix = pixs[wt][0]
             if pix not in data:
