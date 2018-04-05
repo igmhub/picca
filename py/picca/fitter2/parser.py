@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from functools import partial
 import sys
 import scipy as sp
 import os.path
@@ -11,7 +12,7 @@ else:
     import ConfigParser
 
 import fitsio
-from . import data, utils
+from . import data, utils, priors
 
 def parse_chi2(filename):
     cp = ConfigParser.ConfigParser()
@@ -123,6 +124,13 @@ def parse_data(filename,zeff,fiducial):
             dic_init['metals']['in tracer1'] = dic_init['metals']['in tracer1'].split()
         if 'in tracer2' in dic_init['metals']:
             dic_init['metals']['in tracer2'] = dic_init['metals']['in tracer2'].split()
+
+    if 'priors' in cp.sections():
+        for item, value in cp.items('priors'):
+            if item in priors.prior_dic.keys():
+                print("WARNING: prior on {} will be overwritten".format(item))
+            value = value.split()
+            priors.prior_dic[item] = partial(getattr(priors, value[2]), prior_pars=(float(value[0]),float(value[1])), name=item)
 
     return dic_init
 

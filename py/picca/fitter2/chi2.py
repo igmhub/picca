@@ -7,7 +7,7 @@ import h5py
 from scipy.linalg import cholesky
 from scipy import random
 
-from . import utils
+from . import utils, priors
 
 def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
     return d.chi2(k, pk, pksb, dic)
@@ -41,6 +41,9 @@ class chi2:
         chi2 = 0
         for d in self.data:
             chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,dic)
+
+        for prior in priors.prior_dic.values():
+            chi2 += prior(dic)
 
         if self.verbosity == 1:
             del dic['SB']
@@ -232,6 +235,7 @@ class chi2:
         g.attrs['npar'] = len(self.best_fit.list_of_vary_param())
         g.attrs['list of free pars'] = [a.encode('utf8') for a in self.best_fit.list_of_vary_param()]
         g.attrs['list of fixed pars'] = [a.encode('utf8') for a in self.best_fit.list_of_fixed_param()]
+        g.attrs['list of prior pars'] = [a.encode('utf8') for a in priors.prior_dic.keys()]
 
         ## write down all attributes of the minimum
         dic_fmin = utils.convert_instance_to_dictionary(self.best_fit.get_fmin())
