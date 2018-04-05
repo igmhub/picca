@@ -324,7 +324,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         req = self.load_requirements()
-        for req_lib, req_ver in req.iteritems():
+        for req_lib, req_ver in req.items():
             local_ver = __import__(req_lib).__version__
             if local_ver!=req_ver:
                 print("WARNING: The local version of {}: {} is different from the required version: {}".format(req_lib,local_ver,req_ver))
