@@ -10,7 +10,6 @@ from functools import partial
 import copy
 
 from scipy import random
-from scipy.interpolate import interp1d
 from picca import constants
 from picca import cf
 from picca.data import delta

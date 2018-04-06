@@ -4,13 +4,11 @@ import scipy as sp
 import fitsio
 import argparse
 import glob
-import healpy
 import sys
 from functools import partial
 import copy
 
 from scipy import random
-from scipy.interpolate import interp1d
 
 from picca import constants
 from picca import xcf

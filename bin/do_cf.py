@@ -6,7 +6,6 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random
 import copy
 
 from picca import constants
