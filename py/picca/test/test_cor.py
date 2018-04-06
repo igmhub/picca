@@ -45,6 +45,8 @@ class TestCor(unittest.TestCase):
 
     def test_cor(self):
 
+        self.test_requirements()
+
         numpy.random.seed(42)
 
         print("\n")
@@ -302,11 +304,35 @@ class TestCor(unittest.TestCase):
                 compare_values(m[k][p]['values'].value,b[k][p]['values'].value)
 
         return
+    def load_requirements(self):
+
+        req = {}
+
+        path = resource_filename('picca', '/../../requirements.txt')
+        for l in open(path,'r'):
+            l = l.replace('\n','').split('==')
+            self.assertTrue(len(l)==2,"requirements.txt attribute is not valid: {}".format(str(l)))
+            req[l[0]] = l[1]
+
+        return req
 
 
 
 
 
+    def test_requirements(self):
+
+        print("\n")
+        req = self.load_requirements()
+        for req_lib, req_ver in req.items():
+            try:
+                local_ver = __import__(req_lib).__version__
+                if local_ver!=req_ver:
+                    print("WARNING: The local version of {}: {} is different from the required version: {}".format(req_lib,local_ver,req_ver))
+            except ImportError:
+                print("WARNING: Module {} can't be found".format(req_lib))
+
+        return
 
 
     def send_delta(self):
