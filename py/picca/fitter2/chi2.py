@@ -235,7 +235,8 @@ class chi2:
         g.attrs['npar'] = len(self.best_fit.list_of_vary_param())
         g.attrs['list of free pars'] = [a.encode('utf8') for a in self.best_fit.list_of_vary_param()]
         g.attrs['list of fixed pars'] = [a.encode('utf8') for a in self.best_fit.list_of_fixed_param()]
-        g.attrs['list of prior pars'] = [a.encode('utf8') for a in priors.prior_dic.keys()]
+        if len(priors.prior_dic) != 0:
+            g.attrs['list of prior pars'] = [a.encode('utf8') for a in priors.prior_dic.keys()]
 
         ## write down all attributes of the minimum
         dic_fmin = utils.convert_instance_to_dictionary(self.best_fit.get_fmin())
