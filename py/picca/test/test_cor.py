@@ -45,7 +45,7 @@ class TestCor(unittest.TestCase):
 
     def test_cor(self):
 
-        self.test_requirements()
+        self.send_requirements()
 
         numpy.random.seed(42)
 
@@ -321,7 +321,7 @@ class TestCor(unittest.TestCase):
 
 
 
-    def test_requirements(self):
+    def send_requirements(self):
 
         print("\n")
         req = self.load_requirements()
