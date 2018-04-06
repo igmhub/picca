@@ -268,7 +268,7 @@ class TestCor(unittest.TestCase):
             return
         def compare_values(val1,val2):
             if not sp.array_equal(val1,val2):
-                print("WARNING: {}: not exactly equal, using allclose for {}".format(nameRun,item))
+                print("WARNING: {}: not exactly equal, using allclose".format(nameRun))
                 allclose = sp.allclose(val1,val2)
                 self.assertTrue(allclose,"{}".format(nameRun))
             return
