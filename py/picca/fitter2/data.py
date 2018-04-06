@@ -139,10 +139,12 @@ class data:
             self.tracerMet = {}
             self.tracerMet[self.tracer1['name']] = self.tracer1
             self.tracerMet[self.tracer2['name']] = self.tracer2
-            for m in dic_init['metals']['in tracer1']:
-                self.tracerMet[m] = { 'name':m, 'type':'continuous' }
-            for m in dic_init['metals']['in tracer2']:
-                self.tracerMet[m] = { 'name':m, 'type':'continuous' }
+            if 'in tracer1' in dic_init['metals']:
+                for m in dic_init['metals']['in tracer1']:
+                    self.tracerMet[m] = { 'name':m, 'type':'continuous' }
+            if 'in tracer2' in dic_init['metals']:
+                for m in dic_init['metals']['in tracer2']:
+                    self.tracerMet[m] = { 'name':m, 'type':'continuous' }
 
             hmet = fitsio.FITS(dic_init['metals']['filename'])
 
