@@ -3,17 +3,12 @@
 import scipy as sp
 import fitsio
 import argparse
-import glob
 import healpy
 import sys
-from scipy import random
 import copy
-
-from picca import constants
-from picca import cf
-from picca import io
-
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
+
+from picca import constants, cf, io
 
 
 def corr_func(p):

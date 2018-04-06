@@ -7,7 +7,6 @@ import glob
 import healpy
 import sys
 from scipy import random
-from scipy.interpolate import interp1d
 import copy
 
 from picca import constants

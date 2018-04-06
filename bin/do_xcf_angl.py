@@ -5,12 +5,8 @@ import fitsio
 import argparse
 import sys
 
-from picca import constants
-from picca import xcf
-from picca.data import delta
-from picca import io
+from picca import constants, xcf, io, prep_del
 from picca.data import forest
-from picca import prep_del
 
 from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 

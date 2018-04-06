@@ -1,6 +1,5 @@
 import astropy.io.fits as pyfits
 import scipy as sp
-from scipy import linalg
 import scipy.interpolate
 import sys
 import numpy as np

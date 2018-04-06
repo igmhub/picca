@@ -4,7 +4,6 @@ from scipy import random
 from healpy import query_disc
 from numba import jit
 
-from .data import forest
 from picca import constants
 
 np = None

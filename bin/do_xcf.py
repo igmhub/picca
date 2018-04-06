@@ -4,7 +4,6 @@ import scipy as sp
 import fitsio
 import argparse
 import sys
-from scipy import random
 
 from picca import constants
 from picca import xcf

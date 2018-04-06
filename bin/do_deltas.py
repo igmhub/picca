@@ -2,19 +2,14 @@
 
 import sys
 import fitsio
-import healpy
 import scipy as sp
-
 from scipy.interpolate import interp1d
 from multiprocessing import Pool
-from picca.data import forest
-from picca.data import delta
-from picca import prep_del
-from picca import io
-
 from math import isnan
-
 import argparse
+
+from picca.data import forest, delta
+from picca import prep_del, io
 
 def cont_fit(data):
     for d in data:

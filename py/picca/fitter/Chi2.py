@@ -1,4 +1,3 @@
-import astropy.io.fits as pyfits
 import scipy as sp
 from picca.fitter.data import data
 from scipy import stats
