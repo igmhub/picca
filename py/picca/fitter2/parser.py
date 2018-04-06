@@ -130,7 +130,7 @@ def parse_data(filename,zeff,fiducial):
             if item in priors.prior_dic.keys():
                 print("WARNING: prior on {} will be overwritten".format(item))
             value = value.split()
-            priors.prior_dic[item] = partial(getattr(priors, value[2]), prior_pars=(float(value[0]),float(value[1])), name=item)
+            priors.prior_dic[item] = partial(getattr(priors, value[0]), prior_pars=sp.array(value[1:]).astype(float), name=item)
 
     return dic_init
 
