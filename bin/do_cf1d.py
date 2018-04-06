@@ -222,5 +222,3 @@ if __name__ == '__main__':
     out.close()
 
     print("all done")
-
-    

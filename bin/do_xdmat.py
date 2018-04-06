@@ -182,5 +182,3 @@ if __name__ == '__main__':
 
     out.write([wdm,dm],names=['WDM','DM'],header=head)
     out.close()
-
-    

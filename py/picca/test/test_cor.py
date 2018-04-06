@@ -261,14 +261,14 @@ class TestCor(unittest.TestCase):
                 else:
                     nequal = atts1[item]!=atts2[item]
                 if nequal:
-                    print("WARNING: {}: not exactly equal, using allclose".format(nameRun,k))
+                    print("WARNING: {}: not exactly equal, using allclose for {}".format(nameRun,item))
                     print(atts1[item],atts2[item])
                     allclose = sp.allclose(atts1[item],atts2[item])
                     self.assertTrue(allclose,"{}".format(nameRun))
             return
         def compare_values(val1,val2):
             if not sp.array_equal(val1,val2):
-                print("WARNING: {}: not exactly equal, using allclose".format(nameRun,k))
+                print("WARNING: {}: not exactly equal, using allclose for {}".format(nameRun,item))
                 allclose = sp.allclose(val1,val2)
                 self.assertTrue(allclose,"{}".format(nameRun))
             return

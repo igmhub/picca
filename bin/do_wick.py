@@ -191,5 +191,3 @@ if __name__ == '__main__':
 
     out.write([w123,t123],names=['WE','T123'],header=head)
     out.close()
-
-    
