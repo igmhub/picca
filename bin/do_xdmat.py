@@ -1,19 +1,13 @@
 #!/usr/bin/env python
 
 import scipy as sp
+from scipy import random
 import fitsio
 import argparse
 import sys
-from scipy import random
-from scipy.interpolate import interp1d
+from multiprocessing import Pool,Lock,Manager,cpu_count,Value
 
-from picca import constants
-from picca import xcf
-from picca import io
-from picca import utils
-
-from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
-
+from picca import constants, xcf, io, utils
 
 def calc_dmat(p):
     xcf.fill_neighs(p)

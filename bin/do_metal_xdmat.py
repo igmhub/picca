@@ -1,21 +1,14 @@
 #!/usr/bin/env python
 
 import scipy as sp
+from scipy import random
 import fitsio
 import argparse
-import glob
 import sys
 from functools import partial
-import copy
+from multiprocessing import Pool,Lock,Manager,cpu_count,Value
 
-from scipy import random
-
-from picca import constants
-from picca import xcf
-from picca import io
-from picca import utils
-
-from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
+from picca import constants, xcf, io, utils
 
 def calc_metal_xdmat(abs_igm,p):
     xcf.fill_neighs(p)
