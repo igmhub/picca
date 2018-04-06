@@ -327,10 +327,10 @@ class TestCor(unittest.TestCase):
         for req_lib, req_ver in req.items():
             try:
                 local_ver = __import__(req_lib).__version__
-            except:
+                if local_ver!=req_ver:
+                    print("WARNING: The local version of {}: {} is different from the required version: {}".format(req_lib,local_ver,req_ver))
+            except ImportError:
                 print("WARNING: Module {} can't be found".format(req_lib))
-            if local_ver!=req_ver:
-                print("WARNING: The local version of {}: {} is different from the required version: {}".format(req_lib,local_ver,req_ver))
 
         return
 
