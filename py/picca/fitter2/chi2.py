@@ -228,6 +228,10 @@ class chi2:
         for (p1, p2), cov in self.best_fit.covariance.items():
             g.attrs["cov[{}, {}]".format(p1,p2)] = cov
 
+        if len(priors.prior_dic) != 0:
+            for prior in priors.prior_dic.values():
+                g.attrs["prior[{}]".format(prior.keywords['name'])] = (prior.keywords['prior_pars'][0],prior.keywords['prior_pars'][1],prior.func.__name__.encode('utf8'))
+        
         ndata = [d.mask.sum() for d in self.data]
         ndata = sum(ndata)
         g.attrs['zeff'] = self.zeff
