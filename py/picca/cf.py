@@ -285,8 +285,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             r1 = d1.r_comov
             z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
             r1_abs1 = cosmo.r_comoving(z1_abs1)
-            z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
-            r1_abs2 = cosmo.r_comoving(z1_abs2)
+            w1abs1 = z1_abs1<d1.zqso 
             w1 = d1.we
             l1 = d1.ll
             r = random.rand(len(d1.neighs))
@@ -298,21 +297,17 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 ang = d1^d2
                 r2 = d2.r_comov
-                z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
-                r2_abs1 = cosmo.r_comoving(z2_abs1)
                 z2_abs2 = 10**d2.ll/constants.absorber_IGM[abs_igm2]-1
                 r2_abs2 = cosmo.r_comoving(z2_abs2)
-
+                w2abs2 = z2_abs2<d2.zqso 
                 w2 = d2.we
-                l2 = d2.ll
-
 
                 if x_correlation:
-                    rp = (r1[:,None]-r2)*sp.cos(ang/2)
+                    rp = (r1[w1abs1][:,None]-r2[w2abs2])*sp.cos(ang/2)
                 else:
-                    rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
-                rt = (r1[:,None]+r2)*sp.sin(ang/2)
-                w12 = w1[:,None]*w2
+                    rp = abs(r1[w1abs1][:,None]-r2[w2abs2])*sp.cos(ang/2)
+                rt = (r1[w1abs1][:,None]+r2[w2abs2])*sp.sin(ang/2)
+                w12 = w1[w1abs1][:,None]*w2[w2abs2]
 
                 bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
                 bt = (rt/rt_max*nt).astype(int)
@@ -331,11 +326,11 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 wdm[:len(c)]+=c
 
                 if x_correlation:
-                    rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
+                    rp_abs1_abs2 = (r1_abs1[w1abs1][:,None]-r2_abs2[w2abs2])*sp.cos(ang/2)
                 else:
-                    rp_abs1_abs2 = abs(r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
-                rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
-                zwe12 = (1+z1_abs1[:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2)**(alpha_abs[abs_igm2]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
+                    rp_abs1_abs2 = abs(r1_abs1[w1abs1][:,None]-r2_abs2[w2abs2])*sp.cos(ang/2)
+                rt_abs1_abs2 = (r1_abs1[w1abs1][:,None]+r2_abs2[w2abs2])*sp.sin(ang/2)
+                zwe12 = (1+z1_abs1[w1abs1][:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2[w2abs2])**(alpha_abs[abs_igm2]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                 bp_abs1_abs2 = sp.floor((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
@@ -344,25 +339,52 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 wAB = wA&wBma
                 c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe12[wAB])
                 dm[:len(c)]+=c
-
                 c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
                 rpeff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
                 rteff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe12[wAB])
+                c = sp.bincount(bBma[wAB],weights=(z1_abs1[w1abs1][:,None]+z2_abs2[w2abs2])[wAB]/2*w12[wAB]*zwe12[wAB])
                 zeff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
                 weff[:len(c)]+=c
 
-
                 if (not(x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
+                    z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
+                    r1_abs2 = cosmo.r_comoving(z1_abs2)
+                    w1abs2 = z1_abs2<d1.zqso 
+                    z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
+                    r2_abs1 = cosmo.r_comoving(z2_abs1)
+                    w2abs1 = z2_abs1<d2.zqso 
 
                     if x_correlation:
-                        rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                        rp = (r1[w1abs2][:,None]-r2[w2abs1])*sp.cos(ang/2)
                     else:
-                        rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
-                    rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
-                    zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
+                        rp = abs(r1[w1abs2][:,None]-r2[w2abs1])*sp.cos(ang/2)
+                    rt = (r1[w1abs2][:,None]+r2[w2abs1])*sp.sin(ang/2)
+                    w12 = w1[w1abs2][:,None]*w2[w2abs1]
+
+                    bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
+                    bt = (rt/rt_max*nt).astype(int)
+                    if same_half_plate:
+                        wp = abs(rp) < (rp_max-rp_min)/np
+                        w12[wp]=0
+                    if no_same_wavelength_pairs:
+                        if ang_correlation:
+                            wp = rp==1.
+                        else:
+                            wp = rp==0.
+                        w12[wp] = 0.
+                    bA = bt + nt*bp
+                    wA = (bp<np) & (bt<nt) & (bp >=0)
+                    c = sp.bincount(bA[wA],weights=w12[wA])
+                    wdm[:len(c)]+=c
+                    
+                    if x_correlation:
+                        rp_abs2_abs1 = (r1_abs2[w1abs2][:,None]-r2_abs1[w2abs1])*sp.cos(ang/2)
+                    else:
+                        rp_abs2_abs1 = abs(r1_abs2[w1abs2][:,None]-r2_abs1[w2abs1])*sp.cos(ang/2)
+                    rt_abs2_abs1 = (r1_abs2[w1abs2][:,None]+r2_abs1[w2abs1])*sp.sin(ang/2)
+                    zwe21 = (1+z1_abs2[w1abs2][:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1[w2abs1])**(alpha_abs[abs_igm1]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                     bp_abs2_abs1 = sp.floor((rp_abs2_abs1-rp_min)/(rp_max-rp_min)*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
@@ -372,9 +394,9 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                     c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
                     rpeff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB],weights=rt_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
                     rteff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB],weights=(z1_abs1[w1abs2][:,None]+z2_abs2[w2abs1])[wAB]/2*w12[wAB]*zwe21[wAB])
                     zeff[:len(c)]+=c
                     c = sp.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
                     weff[:len(c)]+=c
