@@ -285,7 +285,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             r1 = d1.r_comov
             z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
             r1_abs1 = cosmo.r_comoving(z1_abs1)
-            w1abs1 = z1_abs1<d1.zqso 
+            w1abs1 = z1_abs1<d1.zqso
+
             w1 = d1.we
             l1 = d1.ll
             r = random.rand(len(d1.neighs))
@@ -299,7 +300,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 r2 = d2.r_comov
                 z2_abs2 = 10**d2.ll/constants.absorber_IGM[abs_igm2]-1
                 r2_abs2 = cosmo.r_comoving(z2_abs2)
-                w2abs2 = z2_abs2<d2.zqso 
+                w2abs2 = z2_abs2<d2.zqso
+                
                 w2 = d2.we
 
                 if x_correlation:
@@ -351,11 +353,11 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 if (not(x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
                     z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
                     r1_abs2 = cosmo.r_comoving(z1_abs2)
-                    w1abs2 = z1_abs2<d1.zqso 
+                    w1abs2 = z1_abs2<d1.zqso
+                    
                     z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
                     r2_abs1 = cosmo.r_comoving(z2_abs1)
                     w2abs1 = z2_abs1<d2.zqso 
-
                     if x_correlation:
                         rp = (r1[w1abs2][:,None]-r2[w2abs1])*sp.cos(ang/2)
                     else:
@@ -378,7 +380,6 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     wA = (bp<np) & (bt<nt) & (bp >=0)
                     c = sp.bincount(bA[wA],weights=w12[wA])
                     wdm[:len(c)]+=c
-                    
                     if x_correlation:
                         rp_abs2_abs1 = (r1_abs2[w1abs2][:,None]-r2_abs1[w2abs1])*sp.cos(ang/2)
                     else:
