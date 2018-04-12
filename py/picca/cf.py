@@ -355,7 +355,6 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     w1abs2 = z1_abs2<d1.zqso
                     z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
                     r2_abs1 = cosmo.r_comoving(z2_abs1)
-                    
                     w2abs1 = z2_abs1<d2.zqso
                     
                     if x_correlation:
