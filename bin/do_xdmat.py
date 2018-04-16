@@ -54,7 +54,7 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
 
-    parser.add_argument('--nside', type = int, default = 8, required=False,
+    parser.add_argument('--nside', type = int, default = 16, required=False,
                     help = 'healpix nside')
 
     parser.add_argument('--nproc', type = int, default = None, required=False,

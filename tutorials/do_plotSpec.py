@@ -30,7 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('--drq', type = str, default = None, required=True,
             help = 'DRQ file')
 
-    parser.add_argument('--nside', type = int, default=8, required=False,
+    parser.add_argument('--nside', type = int, default = 16, required=False,
             help = 'healpix nside')
 
     parser.add_argument('--spectrum', type = str, default = None, required=True,
