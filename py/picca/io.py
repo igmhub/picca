@@ -291,9 +291,9 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None)
         # compute spectral resolution
         wdisp =  h["psf"][:]
         # if psf is in Angstrom
-        reso = wdisp * constants.speed_light / 1000 / lamb
+        #reso = wdisp * constants.speed_light / 1000 / lamb
         #if psf is in pixel
-        #reso = spectral_resolution(wdisp)
+        reso = spectral_resolution(wdisp)
 
         cont = h["continuum"][:]
         d = forest(ll,fl,iv, t, r, d, z, p, m, f,order, diff,reso, cont)
