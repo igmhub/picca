@@ -6,6 +6,7 @@ from .dla import dla
 import fitsio
 import sys
 
+
 def variance(var,eta,var_lss,fudge):
     return eta*var + var_lss + fudge/var
 
@@ -73,7 +74,7 @@ class forest(qso):
     mean_z = None
 
 
-    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order,diff=None,reso=None):
+    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order, diff=None,reso=None, mco = None):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
 
         ## cut to specified range
@@ -90,6 +91,9 @@ class forest(qso):
         ll = ll[w]
         fl = fl[w]
         iv = iv[w]
+        #mco is mock continuum
+        if mco is not None:
+            mco = mco[w]
         if diff is not None :
             diff=diff[w]
             reso=reso[w]
@@ -98,20 +102,28 @@ class forest(qso):
         cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
         cfl = sp.zeros(bins.max()+1)
         civ = sp.zeros(bins.max()+1)
+        if mco is not None:
+            cmco = sp.zeros(bins.max()+1)
         ccfl = sp.bincount(bins,weights=iv*fl)
         cciv = sp.bincount(bins,weights=iv)
+        if mco is not None:
+            ccmco = sp.bincount(bins, weights=iv*mco)
         if diff is not None :
             cdiff = sp.bincount(bins,weights=iv*diff)
             creso = sp.bincount(bins,weights=iv*reso)
 
         cfl[:len(ccfl)] += ccfl
         civ[:len(cciv)] += cciv
+        if mco is not None:
+            cmco[:len(ccmco)] += ccmco
         w = (civ>0.)
         if w.sum()==0:
             return
         ll = cll[w]
         fl = cfl[w]/civ[w]
         iv = civ[w]
+        if mco is not None:
+            mco = cmco[w]/civ[w]
         if diff is not None :
             diff = cdiff[w]/civ[w]
             reso = creso[w]/civ[w]
@@ -129,6 +141,7 @@ class forest(qso):
         self.ll = ll
         self.fl = fl
         self.iv = iv
+        self.mco = mco
         self.order = order
         #if diff is not None :
         self.diff = diff
@@ -155,20 +168,30 @@ class forest(qso):
         ll = sp.append(self.ll,d.ll)
         fl = sp.append(self.fl,d.fl)
         iv = sp.append(self.iv,d.iv)
+        if self.mco is not None:
+            mco = sp.append(self.mco,d.mco)
 
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
         cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
         cfl = sp.zeros(bins.max()+1)
         civ = sp.zeros(bins.max()+1)
+        if mco is not None:
+            cmco = sp.zeros(bins.max()+1)
         ccfl = sp.bincount(bins,weights=iv*fl)
         cciv = sp.bincount(bins,weights=iv)
+        if mco is not None:
+            ccmco = sp.bincount(bins,weights=iv*mco)
         cfl[:len(ccfl)] += ccfl
         civ[:len(cciv)] += cciv
+        if mco is not None:
+            cmco[:len(ccmco)] += ccmco
         w = (civ>0.)
 
         self.ll = cll[w]
         self.fl = cfl[w]/civ[w]
         self.iv = civ[w]
+        if mco is not None:
+            self.mco = cmco[w]
 
         return self
 
@@ -185,6 +208,8 @@ class forest(qso):
         self.ll = self.ll[w]
         self.fl = self.fl[w]
         self.iv = self.iv[w]
+        if self.mco is not None:
+            self.mco = self.mco[w]
         if self.diff is not None :
              self.diff = self.diff[w]
              self.reso = self.reso[w]
@@ -205,6 +230,8 @@ class forest(qso):
         self.iv = self.iv[w]
         self.ll = self.ll[w]
         self.fl = self.fl[w]
+        if self.mco is not None:
+            self.mco = self.mco[w]
         self.T_dla = self.T_dla[w]
         if self.diff is not None :
             self.diff = self.diff[w]
@@ -290,21 +317,41 @@ class delta(qso):
         self.dll = dll
 
     @classmethod
-    def from_forest(cls,f,st,var_lss,eta,fudge):
-
-        ll = f.ll
-        mst = st(ll)
-        var_lss = var_lss(ll)
-        eta = eta(ll)
-        fudge = fudge(ll)
-        co = f.co
-        de = f.fl/(co*mst)-1.
-        var = 1./f.iv/(co*mst)**2
-        we = 1./variance(var,eta,var_lss,fudge)
-        diff = f.diff
-        if f.diff is not None:
-            diff /= co*mst
-        iv = f.iv/(eta+(eta==0))*(co**2)*(mst**2)
+    def from_forest(cls,f,st,var_lss,eta,fudge,mc):
+        
+        #if mc is True, use the mock continuum
+        if mc:
+            ll = f.ll
+            var_lss = var_lss(ll)
+            eta = eta(ll)
+            fudge = fudge(ll)
+            
+            Fmean = 0.8
+            co = Fmean * f.mco
+            de = f.fl/co-1.
+            
+            var = 1./f.iv/co**2
+            we = 1./variance(var,eta,var_lss,fudge)
+            diff = f.diff
+            if f.diff is not None:
+                diff /= co
+            iv = f.iv/(eta+(eta==0))*co**2
+        
+        #otherwhise, use the continuum computed by the fit
+        else:
+            ll = f.ll
+            mst = st(ll)
+            var_lss = var_lss(ll)
+            eta = eta(ll)
+            fudge = fudge(ll)
+            co = f.co
+            de = f.fl/(co*mst)-1.
+            var = 1./f.iv/(co*mst)**2
+            we = 1./variance(var,eta,var_lss,fudge)
+            diff = f.diff
+            if f.diff is not None:
+                diff /= co*mst
+            iv = f.iv/(eta+(eta==0))*(co**2)*(mst**2)
 
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
                    iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
