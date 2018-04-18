@@ -372,7 +372,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                     c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
                     rpeff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB],weights=rt_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
                     rteff[:len(c)]+=c
                     c = sp.bincount(bBam[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe21[wAB])
                     zeff[:len(c)]+=c
