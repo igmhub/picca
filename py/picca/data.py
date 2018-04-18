@@ -318,7 +318,7 @@ class delta(qso):
 
     @classmethod
     def from_forest(cls,f,st,var_lss,eta,fudge,mc=False):
-        
+
         ll = f.ll
         mst = st(ll)
         var_lss = var_lss(ll)

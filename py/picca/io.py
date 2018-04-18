@@ -15,8 +15,6 @@ from picca.prep_Pk1D import exp_diff
 from picca.prep_Pk1D import spectral_resolution
 from picca.prep_Pk1D import spectral_resolution_desi
 
-from picca import constants
-
 
 def read_dlas(fdla):
     f=open(fdla)
@@ -293,9 +291,6 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,index,order,mode,log
         diff = sp.zeros(len(lamb))
         # compute spectral resolution
         wdisp =  h["psf"][:]
-        # if psf is in Angstrom
-        #reso = wdisp * constants.speed_light / 1000 / lamb
-        #if psf is in pixel
         reso = spectral_resolution(wdisp)
 
         cont = h["continuum"][:]
