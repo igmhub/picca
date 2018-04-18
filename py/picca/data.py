@@ -317,41 +317,25 @@ class delta(qso):
         self.dll = dll
 
     @classmethod
-    def from_forest(cls,f,st,var_lss,eta,fudge,mc):
+    def from_forest(cls,f,st,var_lss,eta,fudge,mc=False):
         
-        #if mc is True, use the mock continuum
-        if mc:
-            ll = f.ll
-            var_lss = var_lss(ll)
-            eta = eta(ll)
-            fudge = fudge(ll)
-            
-            Fmean = 0.8
-            co = Fmean * f.mco
-            de = f.fl/co-1.
-            
-            var = 1./f.iv/co**2
-            we = 1./variance(var,eta,var_lss,fudge)
-            diff = f.diff
-            if f.diff is not None:
-                diff /= co
-            iv = f.iv/(eta+(eta==0))*co**2
+        ll = f.ll
+        mst = st(ll)
+        var_lss = var_lss(ll)
+        eta = eta(ll)
+        fudge = fudge(ll)
         
-        #otherwhise, use the continuum computed by the fit
-        else:
-            ll = f.ll
-            mst = st(ll)
-            var_lss = var_lss(ll)
-            eta = eta(ll)
-            fudge = fudge(ll)
-            co = f.co
-            de = f.fl/(co*mst)-1.
-            var = 1./f.iv/(co*mst)**2
-            we = 1./variance(var,eta,var_lss,fudge)
-            diff = f.diff
-            if f.diff is not None:
-                diff /= co*mst
-            iv = f.iv/(eta+(eta==0))*(co**2)*(mst**2)
+        Fmean = 0.8
+        #if mc is True use the mock continuum
+        if mc : co = Fmean * f.mco
+        else : co = f.co * mst
+        de = f.fl/ co -1.
+        var = 1./f.iv/co**2
+        we = 1./variance(var,eta,var_lss,fudge)
+        diff = f.diff
+        if f.diff is not None:
+            diff /= co
+        iv = f.iv/(eta+(eta==0))*(co**2)
 
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,co,de,f.order,
                    iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
