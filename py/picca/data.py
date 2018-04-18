@@ -6,7 +6,6 @@ from .dla import dla
 import fitsio
 import sys
 
-
 def variance(var,eta,var_lss,fudge):
     return eta*var + var_lss + fudge/var
 
@@ -324,7 +323,7 @@ class delta(qso):
         var_lss = var_lss(ll)
         eta = eta(ll)
         fudge = fudge(ll)
-        
+
         Fmean = 0.8
         #if mc is True use the mock continuum
         if mc : co = Fmean * f.mco
