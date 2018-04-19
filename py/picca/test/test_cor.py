@@ -309,7 +309,7 @@ class TestCor(unittest.TestCase):
         req = {}
 
         path = resource_filename('picca', '/../../requirements.txt')
-        with open(path,'r') as f: 
+        with open(path,'r') as f:
             for l in f:
                 l = l.replace('\n','').split('==')
                 self.assertTrue(len(l)==2,"requirements.txt attribute is not valid: {}".format(str(l)))
