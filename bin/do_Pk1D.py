@@ -191,7 +191,6 @@ if __name__ == '__main__':
 
                 # Fill masked pixels with 0.
                 ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f],args.no_apply_filling)
-                nb_masked_pixel = 0
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
                 if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.zqso)
 
@@ -259,6 +258,7 @@ if __name__ == '__main__':
                     hd["MEANZ"]=m_z_arr[f]
                     hd["MEANRESO"]=d.mean_reso
                     hd["MEANSNR"]=d.mean_SNR
+		    hd["NBMASKPIX"]=nb_masked_pixel
 
                     hd["PLATE"]=d.plate
                     hd["MJD"]=d.mjd
