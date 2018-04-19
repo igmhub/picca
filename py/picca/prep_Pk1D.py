@@ -1,5 +1,5 @@
-import fitsio
 import scipy as sp
+
 from picca import constants
 
 

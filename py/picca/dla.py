@@ -1,7 +1,5 @@
 
 import scipy as sp
-from scipy import random
-from scipy import interpolate
 from picca import constants
 
 class dla:

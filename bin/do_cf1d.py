@@ -4,18 +4,12 @@ import scipy as sp
 import fitsio
 import argparse
 import glob
-import healpy
 import sys
-from scipy import random
 import traceback
+from multiprocessing import Pool,Lock,Manager,cpu_count,Value
 
-from picca import constants
 from picca import cf
-from picca.data import delta
-from picca.data import forest
-
-from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
-
+from picca.data import delta, forest
 
 def cf1d(p):
     try:
@@ -222,5 +216,3 @@ if __name__ == '__main__':
     out.close()
 
     print("all done")
-
-    

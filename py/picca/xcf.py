@@ -1,10 +1,8 @@
-import scipy as sp
 import sys
-from healpy import query_disc
-from multiprocessing import Pool
-from numba import jit
-from .data import forest
+import scipy as sp
 from scipy import random
+from healpy import query_disc
+from numba import jit
 
 from picca import constants
 
@@ -37,15 +35,15 @@ def fill_neighs(pix):
         for d in dels[ipix]:
             npix = query_disc(nside,[d.xcart,d.ycart,d.zcart],angmax,inclusive = True)
             npix = [p for p in npix if p in objs]
-            neighs = [q for p in npix for q in objs[p] if q.thid != d.thid and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. >= z_cut_min and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. < z_cut_max]
+            neighs = [q for p in npix for q in objs[p]]
             ang = d^neighs
             w = ang<angmax
             if not ang_correlation:
-                low_dist = ( d.r_comov[0]  - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) <rp_max
-                hig_dist = ( d.r_comov[-1] - sp.array([q.r_comov for q in neighs]) )*sp.cos(ang/2) >rp_min
-                w &= low_dist & hig_dist
+                r_comov = sp.array([q.r_comov for q in neighs])
+                w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < rp_max
+                w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > rp_min
             neighs = sp.array(neighs)[w]
-            d.neighs = neighs
+            d.neighs = sp.array([q for q in neighs if q.thid != d.thid and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. >= z_cut_min and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. < z_cut_max])
 
 def xcf(pix):
     xi = sp.zeros(np*nt)
