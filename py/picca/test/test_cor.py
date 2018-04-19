@@ -223,17 +223,17 @@ class TestCor(unittest.TestCase):
             ###
             r_m = m[i].read_header().records()
             ld_m = []
-            for j in range(len(r_m)):
-                name = r_m[j]['name']
+            for el in r_m:
+                name = el['name']
                 if len(name)>5 and name[:5]=="TTYPE":
-                    ld_m += [r_m[j]['value'].replace(" ","")]
+                    ld_m += [el['value'].replace(" ","")]
             ###
             r_b = b[i].read_header().records()
             ld_b = []
-            for j in range(len(r_b)):
-                name = r_b[j]['name']
+            for el in r_b:
+                name = el['name']
                 if len(name)>5 and name[:5]=="TTYPE":
-                    ld_b += [r_b[j]['value'].replace(" ","")]
+                    ld_b += [el['value'].replace(" ","")]
 
             self.assertListEqual(ld_m,ld_b,"{}".format(nameRun))
 
