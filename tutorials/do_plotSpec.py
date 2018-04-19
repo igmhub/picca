@@ -167,7 +167,6 @@ if __name__ == '__main__':
                         usr_mask_RF_DLA += [ [float(l[1]),float(l[2])] ]
                     else:
                         raise
-            f.closed
             usr_mask_obs    = sp.log10(sp.asarray(usr_mask_obs))
             usr_mask_RF     = sp.log10(sp.asarray(usr_mask_RF))
             usr_mask_RF_DLA = sp.log10(sp.asarray(usr_mask_RF_DLA))

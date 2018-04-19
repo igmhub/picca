@@ -1,5 +1,4 @@
 import scipy as sp
-from scipy.linalg import inv
 
 class wedge:
     def __init__(self,rpmin=0.,rpmax=200.,nrp=50,rtmin=0.,rtmax=200.,nrt=50,\

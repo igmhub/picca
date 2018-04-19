@@ -1,11 +1,8 @@
 import astropy.io.fits as pyfits
 import scipy as sp
-from scipy import linalg
 import scipy.interpolate
 import sys
-from scipy import special
 import numpy as np
-from scipy import stats
 
 from picca.fitter import myGamma
 from picca.fitter import utils

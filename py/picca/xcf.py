@@ -1,10 +1,8 @@
-import scipy as sp
 import sys
-from healpy import query_disc
-from multiprocessing import Pool
-from numba import jit
-from .data import forest
+import scipy as sp
 from scipy import random
+from healpy import query_disc
+from numba import jit
 
 from picca import constants
 

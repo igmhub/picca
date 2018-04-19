@@ -2,19 +2,14 @@
 
 import sys
 import fitsio
-import healpy
 import scipy as sp
-
 from scipy.interpolate import interp1d
 from multiprocessing import Pool
-from picca.data import forest
-from picca.data import delta
-from picca import prep_del
-from picca import io
-
 from math import isnan
-
 import argparse
+
+from picca.data import forest, delta
+from picca import prep_del, io
 
 def cont_fit(data):
     for d in data:
@@ -213,7 +208,6 @@ if __name__ == '__main__':
                         usr_mask_RF_DLA += [ [float(l[1]),float(l[2])] ]
                     else:
                         raise
-            f.closed
             usr_mask_obs    = sp.log10(sp.asarray(usr_mask_obs))
             usr_mask_RF     = sp.log10(sp.asarray(usr_mask_RF))
             usr_mask_RF_DLA = sp.log10(sp.asarray(usr_mask_RF_DLA))

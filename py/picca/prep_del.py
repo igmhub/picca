@@ -1,6 +1,5 @@
 import scipy as sp
 import iminuit
-from scipy import linalg
 from picca.data import forest,variance
 
 

@@ -1,22 +1,17 @@
 #!/usr/bin/env python
 
 import scipy as sp
+from scipy import random
 import fitsio
 import argparse
 import glob
 import healpy
 import sys
-from scipy import random
-from scipy.interpolate import interp1d
 import copy
+from multiprocessing import Pool,Lock,Manager,cpu_count,Value
 
-from picca import constants
-from picca import cf
+from picca import constants, cf, utils
 from picca.data import delta
-from picca import utils
-
-from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
-
 
 def calc_dmat(p):
     if x_correlation:
@@ -262,5 +257,3 @@ if __name__ == '__main__':
 
     out.write([wdm,dm],names=['WDM','DM'],header=head)
     out.close()
-
-    

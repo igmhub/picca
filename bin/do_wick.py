@@ -14,7 +14,7 @@ from picca import cf
 from picca.data import delta
 from picca import utils
 
-from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
+from multiprocessing import Pool,Lock,Manager,cpu_count,Value
 
 
 def calc_t123(p):
@@ -191,5 +191,3 @@ if __name__ == '__main__':
 
     out.write([w123,t123],names=['WE','T123'],header=head)
     out.close()
-
-    
