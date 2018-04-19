@@ -293,8 +293,11 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,index,order,mode,log
         wdisp =  h["psf"][:]
         reso = spectral_resolution(wdisp)
 
+        # compute the mean expected flux
+        f_mean_tr = 0.8
         cont = h["continuum"][:]
-        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order, diff,reso, cont)
+        mef = f_mean_tr * cont
+        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order, diff,reso, mef)
         pix_data.append(d)
 
     hdu.close()
