@@ -78,7 +78,7 @@ class chi2:
             kwargs[name] = value
 
         mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs)
-        fmin = mig.migrad()
+
         print("INFO: minimized in {}".format(time.time()-t0))
         return mig
 
