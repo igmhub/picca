@@ -5,7 +5,7 @@ from scipy import random
 import fitsio
 import argparse
 import sys
-from multiprocessing import Pool,Lock,Manager,cpu_count,Value
+from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, xcf, io, utils
 

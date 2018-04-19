@@ -6,7 +6,7 @@ import argparse
 import glob
 import sys
 import traceback
-from multiprocessing import Pool,Lock,Manager,cpu_count,Value
+from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import cf
 from picca.data import delta, forest
