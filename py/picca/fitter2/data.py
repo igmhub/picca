@@ -134,6 +134,9 @@ class data:
             if 'velocity dispersion' in dic_init['model']:
                 self.pk_met *= getattr(pk, dic_init['model']['velocity dispersion'])
 
+            ## add non linear large scales
+            self.pk_met *= pk.pk_NL
+
             self.xi_met = partial(getattr(xi, dic_init['metals']['model-xi-met']), name=self.name)
 
             self.tracerMet = {}
