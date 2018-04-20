@@ -81,14 +81,13 @@ if __name__ == '__main__':
     cf.lmax = sp.log10(args.lambda_max)
     cf.dll = args.dll
     cf.n1d = int((cf.lmax-cf.lmin)/cf.dll+1)
-    
-    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
+    cf.x_correlation = False
+
+    cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     if args.lambda_abs2:
-        lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
+        cf.lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
     else:
-        lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
-    cf.lambda_abs = lambda_abs
-    cf.lambda_abs2 = lambda_abs2
+        cf.lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
 
 
     ### Read data 1
@@ -107,10 +106,11 @@ if __name__ == '__main__':
         cf.ndata2 = ndata2
         sys.stderr.write("\n")
         print("done, npix = {}\n".format(len(data2)))
-    elif lambda_abs != lambda_abs2:
+    elif cf.lambda_abs != cf.lambda_abs2:
         cf.x_correlation = True
-        cf.data2  = copy.deepcopy(data)
-        cf.ndata2 = copy.deepcopy(ndata)
+        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
+        cf.data2  = data2
+        cf.ndata2 = ndata2
 
 
     ###
