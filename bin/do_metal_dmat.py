@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import scipy as sp
+from scipy import random
 import fitsio
 import argparse
 import glob
@@ -8,15 +9,10 @@ import healpy
 import sys
 from functools import partial
 import copy
+from multiprocessing import Pool,Lock,Manager,cpu_count,Value
 
-from scipy import random
-from scipy.interpolate import interp1d
-from picca import constants
-from picca import cf
+from picca import constants, cf, utils
 from picca.data import delta
-from picca import utils
-
-from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
     if x_correlation:
@@ -63,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
                     help = 'Om of fiducial cosmology')
 
-    parser.add_argument('--nside', type = int, default = 8, required=False,
+    parser.add_argument('--nside', type = int, default = 16, required=False,
                     help = 'healpix nside')
 
     parser.add_argument('--nproc', type = int, default = None, required=False,
@@ -355,5 +351,3 @@ if __name__ == '__main__':
 
     out.write(out_list,names=out_names)
     out.close()
-
-    

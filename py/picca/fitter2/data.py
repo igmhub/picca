@@ -2,10 +2,10 @@ import fitsio
 from functools import partial
 import scipy as sp
 from scipy import linalg
-from . import utils
-from . import pk
-from . import xi
 from scipy.sparse import csr_matrix
+
+from . import pk, xi
+
 
 class data:
     def __init__(self,dic_init):

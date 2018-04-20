@@ -4,14 +4,9 @@ import scipy as sp
 import fitsio
 import argparse
 import sys
+from multiprocessing import Pool,Lock,Manager,cpu_count,Value
 
-from picca import constants
-from picca import co
-from picca import io
-from picca import utils
-
-from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
-
+from picca import constants, co, io, utils
 
 def corr_func(p):
     if co.x_correlation:
