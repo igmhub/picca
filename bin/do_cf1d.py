@@ -3,17 +3,16 @@
 import scipy as sp
 import fitsio
 import argparse
-import glob
 import sys
 import traceback
-from multiprocessing import Pool,Lock,Manager,cpu_count,Value
+from multiprocessing import Pool,Lock,cpu_count,Value
 
-from picca import cf
-from picca.data import delta, forest
+from picca import constants, cf, io
+
 
 def cf1d(p):
     try:
-        if x_correlation:
+        if cf.x_correlation:
             tmp = cf.x_forest_cf1d(p)
         else :
             tmp = cf.cf1d(p)
@@ -21,7 +20,7 @@ def cf1d(p):
         traceback.print_exc()
     with cf.lock:
         cf.counter.value += 1
-    sys.stderr.write("\rcomputing xi: {}%".format(round(cf.counter.value*100./cf.npix/2.,2)))
+    sys.stderr.write("\rcomputing xi: {}%".format(round(cf.counter.value*100./cf.npix,2)))
     return tmp
 
 if __name__ == '__main__':
@@ -55,95 +54,82 @@ if __name__ == '__main__':
     parser.add_argument('--dll', type=float,default=3.e-4, required=False,
                     help = 'loglam bin size')
 
+    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
+                        help = 'name of the absorption in picca.constants')
+
+    parser.add_argument('--lambda-abs2', type = str, default = None, required=False,
+                        help = 'name of the 2nd absorption in picca.constants')
+
+    parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
+                    help = 'reference redshift')
+
+    parser.add_argument('--z-evol', type = float, default = 1., required=False,
+                    help = 'exponent of the redshift evolution of the delta field')
+
+    parser.add_argument('--z-evol2', type = float, default = 1., required=False,
+                    help = 'exponent of the redshift evolution of the 2nd delta field')
+
     args = parser.parse_args()
 
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    forest.lmin = sp.log10(args.lambda_min)
-    forest.lmax = sp.log10(args.lambda_max)
-    forest.dll = args.dll
-    n1d = int((forest.lmax-forest.lmin)/forest.dll+1)
-    cf.n1d = n1d
 
-    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
-        fi = glob.glob(args.in_dir)
+    ###
+    cf.nside = 16
+    cf.lmin = sp.log10(args.lambda_min)
+    cf.lmax = sp.log10(args.lambda_max)
+    cf.dll = args.dll
+    cf.n1d = int((cf.lmax-cf.lmin)/cf.dll+1)
+    
+    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
+    if args.lambda_abs2:
+        lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
     else:
-        fi = glob.glob(args.in_dir+"/*.fits.gz")
-    fi = sorted(fi)
-    data = {}
-    ndata = 0
-    for i,f in enumerate(fi):
-        if i%1==0:
-            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
-        hdus = fitsio.FITS(f)
-        dels = [delta.from_fitsio(h) for h in hdus[1:]]
-        ndata+=len(dels)
-        for d in dels:
-            p = ndata%args.nproc
-            if not p in data:
-                data[p]=[]
-            data[p].append(d)
+        lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
+    cf.lambda_abs = lambda_abs
+    cf.lambda_abs2 = lambda_abs2
 
-            if not args.no_project:
-                d.project()
 
-        if not args.nspec is None:
-            if ndata>args.nspec:break
-
-    sys.stderr.write("\n")
-
-    cf.npix = len(data)
-    cf.data = data
+    ### Read data 1
+    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs,args.z_evol, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
+    cf.npix  = len(data)
+    cf.data  = data
     cf.ndata = ndata
+    sys.stderr.write("\n")
+    print("done, npix = {}\n".format(cf.npix))
 
-    x_correlation=False
+    ### Read data 2
     if args.in_dir2:
-        x_correlation=True
-        if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
-            fi = glob.glob(args.in_dir2)
-        else:
-            fi = glob.glob(args.in_dir2+"/*.fits.gz")
-        fi = sorted(fi)
-        data2 = {}
-        ndata2 = 0
-        dels2=[]
-        for i,f in enumerate(fi):
-            if i%1==0:
-                sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata2))
-            hdus = fitsio.FITS(f)
-            dels2 = [delta.from_fitsio(h) for h in hdus[1:]]
-            ndata2+=len(dels2)
-            for d in dels2:
-                p = ndata2%args.nproc
-                if not p in data2:
-                    data2[p]=[]
-                data2[p].append(d)
-                if not args.no_project:
-                    d.project()
-            if args.nspec:
-                if ndata2>args.nspec:break
-    print("done")
-
-    if x_correlation:
+        cf.x_correlation = True
+        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
         cf.data2  = data2
         cf.ndata2 = ndata2
+        sys.stderr.write("\n")
+        print("done, npix = {}\n".format(len(data2)))
+    elif lambda_abs != lambda_abs2:
+        cf.x_correlation = True
+        cf.data2  = copy.deepcopy(data)
+        cf.ndata2 = copy.deepcopy(ndata)
 
+
+    ###
     cf.counter = Value('i',0)
-
     cf.lock = Lock()
     pool = Pool(processes=args.nproc)
 
-    if x_correlation:
+    if cf.x_correlation:
         keys = []
         for i in list(data.keys()):
             if i in list(data2.keys()):
                 keys.append(i)
         cfs = pool.map(cf1d,sorted(keys))
     else: cfs = pool.map(cf1d,sorted(list(data.keys())))
-
     pool.close()
+    print('\n')
 
+
+    ###
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]
     nbs=cfs[:,2,:]
@@ -160,9 +146,9 @@ if __name__ == '__main__':
 
     print("done")
 
-    cfs = cfs.reshape(n1d,n1d)
-    wes = wes.reshape(n1d,n1d)
-    nbs = nbs.reshape(n1d,n1d)
+    cfs = cfs.reshape(cf.n1d,cf.n1d)
+    wes = wes.reshape(cf.n1d,cf.n1d)
+    nbs = nbs.reshape(cf.n1d,cf.n1d)
 
     print("rebinning")
 
@@ -182,10 +168,10 @@ if __name__ == '__main__':
     w = norm>0
     cor[w]/=norm[w]
 
-    c1d = sp.zeros(n1d)
-    nc1d = sp.zeros(n1d)
-    nb1d = sp.zeros(n1d,dtype=sp.int64)
-    bins = sp.arange(n1d)
+    c1d = sp.zeros(cf.n1d)
+    nc1d = sp.zeros(cf.n1d)
+    nb1d = sp.zeros(cf.n1d,dtype=sp.int64)
+    bins = sp.arange(cf.n1d)
 
     dbin = bins-bins[:,None]
     w = dbin>=0
@@ -203,13 +189,15 @@ if __name__ == '__main__':
     w=nc1d>0
     c1d[w]/=nc1d[w]
 
+
+    ###
     print("writing")
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
-    head['LLMAX']=forest.lmax
-    head['LLMIN']=forest.lmin
-    head['DLL']=forest.dll
+    head['LLMIN'] = cf.lmin
+    head['LLMAX'] = cf.lmax
+    head['DLL'] = cf.dll
 
     out.write([v1d,wv1d,nv1d,c1d,nc1d,nb1d],names=['v1d','wv1d','nv1d','c1d','nc1d','nb1d'],header=head)
     out.write([cfs_2d,wes_2d,nbs_2d],names=['DA','WE','NB'])
