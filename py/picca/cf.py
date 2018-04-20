@@ -402,7 +402,7 @@ def cf1d(pix):
         we = d.we
         xi1d[bins] += wde * wde[:,None]
         we1d[bins] += we*we[:,None]
-        nb1d[bins] += 1
+        nb1d[bins] += (we*we[:,None]>0.).astype(int)
 
     w = we1d>0
     xi1d[w]/=we1d[w]
@@ -425,7 +425,7 @@ def x_forest_cf1d(pix):
             we2 = d2.we
             xi1d[bins] += wde1 * wde2[:,None]
             we1d[bins] += we1*we2[:,None]
-            nb1d[bins] += 1
+            nb1d[bins] += (we1*we2[:,None]>0.).astype(int)
 
     w = we1d>0
     xi1d[w]/=we1d[w]
