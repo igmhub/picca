@@ -69,6 +69,9 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol2', type = float, default = 1., required=False,
                     help = 'exponent of the redshift evolution of the 2nd delta field')
 
+    parser.add_argument('--nside', type = int, default = 8, required=False,
+                    help = 'healpix nside')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -76,7 +79,7 @@ if __name__ == '__main__':
 
 
     ###
-    cf.nside = 16
+    cf.nside = args.nside
     cf.lmin = sp.log10(args.lambda_min)
     cf.lmax = sp.log10(args.lambda_max)
     cf.dll = args.dll
