@@ -258,7 +258,7 @@ if __name__ == '__main__':
                     hd["MEANZ"]=m_z_arr[f]
                     hd["MEANRESO"]=d.mean_reso
                     hd["MEANSNR"]=d.mean_SNR
-		    hd["NBMASKPIX"]=nb_masked_pixel
+                    hd["NBMASKPIX"]=nb_masked_pixel
 
                     hd["PLATE"]=d.plate
                     hd["MJD"]=d.mjd
