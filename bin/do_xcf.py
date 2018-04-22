@@ -4,17 +4,10 @@ import scipy as sp
 import fitsio
 import argparse
 import sys
-from scipy import random
+from multiprocessing import Pool,Lock,Manager,cpu_count,Value
 
-from picca import constants
-from picca import xcf
-from picca import io
+from picca import constants, xcf, io, prep_del, utils
 from picca.data import forest
-from picca import prep_del
-from picca import utils
-
-from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
-
 
 def corr_func(p):
     xcf.fill_neighs(p)

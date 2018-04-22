@@ -1,5 +1,4 @@
 import scipy as sp
-from astropy.io import fits
 from picca import constants
 import iminuit
 from .dla import dla

@@ -30,7 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('--drq', type = str, default = None, required=True,
             help = 'DRQ file')
 
-    parser.add_argument('--nside', type = int, default=8, required=False,
+    parser.add_argument('--nside', type = int, default = 16, required=False,
             help = 'healpix nside')
 
     parser.add_argument('--spectrum', type = str, default = None, required=True,
@@ -167,7 +167,6 @@ if __name__ == '__main__':
                         usr_mask_RF_DLA += [ [float(l[1]),float(l[2])] ]
                     else:
                         raise
-            f.closed
             usr_mask_obs    = sp.log10(sp.asarray(usr_mask_obs))
             usr_mask_RF     = sp.log10(sp.asarray(usr_mask_RF))
             usr_mask_RF_DLA = sp.log10(sp.asarray(usr_mask_RF_DLA))

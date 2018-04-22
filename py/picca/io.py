@@ -62,7 +62,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     mjd   = vac[1]["MJD"][:]
     fid   = vac[1]["FIBERID"][:]
 
-    print
+    print("")
     ## Sanity
     print(" start               : nb object in cat = {}".format(ra.size) )
     w = (thid>0)
@@ -101,7 +101,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
         except:
             sys.stderr.write("--bi-max set but no BI_CIV field in vac")
             sys.exit(1)
-    print
+    print("")
 
     ra    = ra[w]*sp.pi/180.
     dec   = dec[w]*sp.pi/180.

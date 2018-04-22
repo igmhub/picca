@@ -3,18 +3,11 @@
 import scipy as sp
 import fitsio
 import argparse
-import glob
-import healpy
 import sys
-from scipy import random
 import copy
+from multiprocessing import Pool,Lock,Manager,cpu_count,Value
 
-from picca import constants
-from picca import cf
-from picca import io
-from picca.data import delta
-
-from multiprocessing import Pool,Process,Lock,Manager,cpu_count,Value
+from picca import constants, cf, io
 
 
 def corr_func(p):
@@ -195,5 +188,3 @@ if __name__ == '__main__':
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
     out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
     out.close()
-
-    

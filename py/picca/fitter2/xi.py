@@ -127,9 +127,9 @@ def cache_growth_factor_de(function):
         if pair not in cache.keys() or not sp.allclose(cache[pair], (Om,OL)):
             cache[pair] = (Om, OL)
             cache[1] = cached_growth_factor_de(*args, **kwargs)
-        
+
         return cache[1](args[0])/cache[1](kwargs['zref'])
-            
+
     return wrapper
 
 @cache_growth_factor_de
