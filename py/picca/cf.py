@@ -2,8 +2,8 @@ import scipy as sp
 import sys
 from healpy import query_disc
 from numba import jit
-from .data import forest
 from scipy import random
+
 from picca import constants
 
 np = None
@@ -384,20 +384,25 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
+
+
 n1d = None
+lmin = None
+lmax = None
+dll = None
 def cf1d(pix):
     xi1d = sp.zeros(n1d**2)
     we1d = sp.zeros(n1d**2)
     nb1d = sp.zeros(n1d**2,dtype=sp.int64)
 
     for d in data[pix]:
-        bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+        bins = ((d.ll-lmin)/dll+0.5).astype(int)
         bins = bins + n1d*bins[:,None]
         wde = d.we*d.de
         we = d.we
         xi1d[bins] += wde * wde[:,None]
         we1d[bins] += we*we[:,None]
-        nb1d[bins] += 1
+        nb1d[bins] += (we*we[:,None]>0.).astype(int)
 
     w = we1d>0
     xi1d[w]/=we1d[w]
@@ -409,18 +414,18 @@ def x_forest_cf1d(pix):
     nb1d = sp.zeros(n1d**2,dtype=sp.int64)
 
     for d1 in data[pix]:
-        bins1 = ((d1.ll-forest.lmin)/forest.dll+0.5).astype(int)
+        bins1 = ((d1.ll-lmin)/dll+0.5).astype(int)
         wde1 = d1.we*d1.de
         we1 = d1.we
         for d2 in data2[pix]:
             if (d1.thid != d2.thid): continue
-            bins2 = ((d2.ll-forest.lmin)/forest.dll+0.5).astype(int)
+            bins2 = ((d2.ll-lmin)/dll+0.5).astype(int)
             bins = bins1 + n1d*bins2[:,None]
             wde2 = d2.we*d2.de
             we2 = d2.we
             xi1d[bins] += wde1 * wde2[:,None]
             we1d[bins] += we1*we2[:,None]
-            nb1d[bins] += 1
+            nb1d[bins] += (we1*we2[:,None]>0.).astype(int)
 
     w = we1d>0
     xi1d[w]/=we1d[w]
