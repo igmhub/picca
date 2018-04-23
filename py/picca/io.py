@@ -645,12 +645,8 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         data[p].append(d)
 
         z = 10**d.ll/lambda_abs-1.
-        min_z = z.min()
-        max_z = z.max()
-        if zmin>min_z:
-            zmin = min_z
-        if zmax < max_z:
-            zmax = max_z
+        zmin = min(zmin,z.min())
+        zmax = max(zmax,z.max())
         d.z = z
         if not cosmo is None: d.r_comov = cosmo.r_comoving(z)
         d.we *= ((1+z)/(1+zref))**(alpha-1)
