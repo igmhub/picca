@@ -269,7 +269,6 @@ class chi2:
                 d[...] = vals[:,0]
                 d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
                 d[...] = vals[:,1]
-                
             for p in self.fast_mc_data: 
                 xi = self.fast_mc_data[p] 
                 d = g.create_dataset(p, xi.shape, dtype="f")
