@@ -168,11 +168,21 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     return pk
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
-    assert tracer1['type'] == 'discrete' or tracer2['type'] == 'discrete'
+    assert 'discrete' in [tracer1['type'],tracer2['type']]
     kp = k*muk
-    return sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
+    res = 1.
+    if tracer1['type'] == 'discrete':
+        res *= sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
+    if tracer2['type'] == 'discrete':
+        res *= sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
+    return res
 
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
-    assert tracer1['type'] == 'discrete' or tracer2['type'] == 'discrete'
+    assert 'discrete' in [tracer1['type'],tracer2['type']]
     kp = k*muk
-    return 1/sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
+    res = 1.
+    if tracer1['type'] == 'discrete':
+        res *= sp.exp( -0.25*(kp*kwargs['sigma_velo_lorentz'])**2)
+    if tracer2['type'] == 'discrete':
+        res *= sp.exp( -0.25*(kp*kwargs['sigma_velo_lorentz'])**2)
+    return res
