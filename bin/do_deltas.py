@@ -228,6 +228,7 @@ if __name__ == '__main__':
     ### Correct for DLAs
     if not args.dla_vac is None:
         print("adding dlas")
+        sp.random.seed(0)
         dlas = io.read_dlas(args.dla_vac)
         nb_dla_in_forest = 0
         for p in data:
