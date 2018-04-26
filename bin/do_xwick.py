@@ -66,7 +66,7 @@ if __name__ == '__main__':
                     help = 'reference redshift')
 
     parser.add_argument('--rej', type = float, default = 1., required=False,
-                    help = 'reference redshift')
+                    help = 'fraction rejected: -1=no rejection, 1=all rejection')
 
     parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
                     help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift higher than z-cut-min')
