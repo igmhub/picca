@@ -8,7 +8,9 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, io, utils, xcf
 
-def calc_wickT( (p,seed) ):
+def calc_wickT(args):
+    p = args[0]
+    seed = args[1]
     xcf.fill_neighs(p)
     sp.random.seed(seed)
     tmp = xcf.wickT(p)
