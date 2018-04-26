@@ -4,13 +4,13 @@ import sys
 import argparse
 import fitsio
 import scipy as sp
-from scipy import random
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, io, utils, xcf
 
-def calc_wickT(p):
+def calc_wickT( (p,seed) ):
     xcf.fill_neighs(p)
+    sp.random.seed(seed)
     tmp = xcf.wickT(p)
     return tmp
 
@@ -177,10 +177,13 @@ if __name__ == '__main__':
             cpu_data[ip] = []
         cpu_data[ip].append(p)
 
-    random.seed(0)
+    sp.random.seed(0)
+    table_of_seed = sp.unique((100000.*sp.random.rand(10*len(cpu_data))).astype(int))
+
     pool = Pool(processes=args.nproc)
     print(" \nStarting\n")
-    wickT = pool.map(calc_wickT,sorted(list(cpu_data.values())))
+    to_send = [ (v,table_of_seed[j]) for j, v in enumerate( sorted(list(cpu_data.values())) ) ]
+    wickT = pool.map(calc_wickT,to_send)
     print(" \nFinished\n")
     pool.close()
 

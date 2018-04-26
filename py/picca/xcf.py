@@ -1,6 +1,5 @@
 import sys
 import scipy as sp
-from scipy import random
 from healpy import query_disc
 from numba import jit
 
@@ -133,7 +132,7 @@ def dmat(pix):
             r1 = d1.r_comov
             w1 = d1.we
             l1 = d1.ll
-            r = random.rand(len(d1.neighs))
+            r = sp.random.rand(len(d1.neighs))
             w=r>rej
             if w.sum()==0:continue
             npairs += len(d1.neighs)
@@ -213,7 +212,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             zd_abs = 10**d.ll/constants.absorber_IGM[abs_igm]-1
             rd_abs = cosmo.r_comoving(zd_abs)
             wd = d.we
-            r = random.rand(len(d.neighs))
+            r = sp.random.rand(len(d.neighs))
             w=r>rej
             npairs += len(d.neighs)
             npairs_used += w.sum()
@@ -292,7 +291,7 @@ def wickT(pix):
             if d1.neighs.size==0: continue
 
             npairs += d1.neighs.size
-            r = random.rand(d1.neighs.size)
+            r = sp.random.rand(d1.neighs.size)
             w = r>rej
             npairs_used += w.sum()
 
