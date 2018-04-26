@@ -58,7 +58,7 @@ if __name__ == '__main__':
                     help = 'reference redshift')
 
     parser.add_argument('--rej', type = float, default = 1., required=False,
-                    help = 'fraction rejected: 0=no rejection, 1=all rejection')
+                    help = 'fraction rejected: -1=no rejection, 1=all rejection')
 
     parser.add_argument('--z-evol-del', type = float, default = 2.9, required=False,
                     help = 'exponent of the redshift evolution of the delta field')
