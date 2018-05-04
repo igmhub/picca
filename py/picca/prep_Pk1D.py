@@ -12,7 +12,7 @@ def exp_diff(file,ll) :
     ivtoteven = sp.zeros(ll.size)
 
     if (nexp_per_col)<2 :
-        print ("DBG : not enough exposures for diff")
+        print("DBG : not enough exposures for diff")
 
     for iexp in range (nexp_per_col) :
         for icol in range (2):
