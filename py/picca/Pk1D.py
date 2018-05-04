@@ -1,4 +1,4 @@
-import numpy as np
+import scipy as sp
 from picca import constants
 from scipy.fftpack import fft
 
@@ -34,7 +34,7 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
         iv_part = iv_c[selection]
 
         lam_lya = constants.absorber_IGM["LYA"]
-        m_z = (np.power(10.,ll_part[len(ll_part)-1])+np.power(10.,ll_part[0]))/2./lam_lya -1.0
+        m_z = (sp.power(10.,ll_part[len(ll_part)-1])+sp.power(10.,ll_part[0]))/2./lam_lya -1.0
 
         m_z_arr.append(m_z)
         ll_arr.append(ll_part)
@@ -53,26 +53,26 @@ def rebin_diff_noise(dll,ll,diff):
     dll2 = crebin*dll
 
     # rebin not mixing pixels separated by masks
-    bin2 = np.floor((ll-ll.min())/dll2+0.5).astype(int)
+    bin2 = sp.floor((ll-ll.min())/dll2+0.5).astype(int)
 
     # rebin regardless of intervening masks
     # nmax = diff.size//crebin
-    # bin2 = np.zeros(diff.size)
+    # bin2 = sp.zeros(diff.size)
     # for n in range (1,nmax +1):
-    #     bin2[n*crebin:] += np.ones(diff.size-n*crebin)
+    #     bin2[n*crebin:] += sp.ones(diff.size-n*crebin)
 
-    cdiff2 = np.bincount(bin2.astype(int),weights=diff)
-    civ2 = np.bincount(bin2.astype(int))
+    cdiff2 = sp.bincount(bin2.astype(int),weights=diff)
+    civ2 = sp.bincount(bin2.astype(int))
     w = (civ2>0)
     if (len(civ2) == 0) :
         print "DBG Pb size 0 ",diff
-    diff2 = cdiff2[w]/civ2[w]*np.sqrt(civ2[w])
-    diffout = np.zeros(diff.size)
+    diff2 = cdiff2[w]/civ2[w]*sp.sqrt(civ2[w])
+    diffout = sp.zeros(diff.size)
     nmax = len(diff)//len(diff2)
     for n in range (nmax+1) :
         lengthmax = min(len(diff),(n+1)*len(diff2))
         diffout[n*len(diff2):lengthmax] = diff2[:lengthmax-n*len(diff2)]
-        np.random.shuffle(diff2)
+        sp.random.shuffle(diff2)
 
     return diffout
 
@@ -87,21 +87,21 @@ def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
     ll_idx -= ll[0]
     ll_idx /= dll
     ll_idx += 0.5
-    index =np.array(ll_idx,dtype=int)
+    index =sp.array(ll_idx,dtype=int)
     index_all = range(index[-1]+1)
-    index_ok = np.in1d(index_all, index)
+    index_ok = sp.in1d(index_all, index)
 
-    delta_new = np.zeros(len(index_all))
+    delta_new = sp.zeros(len(index_all))
     delta_new[index_ok]=delta
 
-    ll_new = np.array(index_all,dtype=float)
+    ll_new = sp.array(index_all,dtype=float)
     ll_new *= dll
     ll_new += ll[0]
 
-    diff_new = np.zeros(len(index_all))
+    diff_new = sp.zeros(len(index_all))
     diff_new[index_ok]=diff
 
-    iv_new = np.ones(len(index_all))
+    iv_new = sp.ones(len(index_all))
     iv_new *=0.0
     iv_new[index_ok]=iv
 
@@ -112,7 +112,7 @@ def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
 def compute_Pk_raw(dll,delta,ll):
 
     #   Length in km/s
-    length_lambda = dll*constants.speed_light/1000.*np.log(10.)*len(delta)
+    length_lambda = dll*constants.speed_light/1000.*sp.log(10.)*len(delta)
 
     # make 1D FFT
     nb_pixels = len(delta)
@@ -122,7 +122,7 @@ def compute_Pk_raw(dll,delta,ll):
     # compute power spectrum
     fft_a = fft_a[:nb_bin_FFT]
     Pk = (fft_a.real**2+fft_a.imag**2)*length_lambda/nb_pixels**2
-    k = np.arange(nb_bin_FFT,dtype=float)*2*np.pi/length_lambda
+    k = sp.arange(nb_bin_FFT,dtype=float)*2*sp.pi/length_lambda
 
     return k,Pk
 
@@ -133,15 +133,15 @@ def compute_Pk_noise(dll,iv,diff,ll,run_noise):
     nb_bin_FFT = nb_pixels//2 + 1
 
     nb_noise_exp = 10
-    Pk = np.zeros(nb_bin_FFT)
-    err = np.zeros(nb_pixels)
+    Pk = sp.zeros(nb_bin_FFT)
+    err = sp.zeros(nb_pixels)
     w = iv>0
-    err[w] = 1.0/np.sqrt(iv[w])
+    err[w] = 1.0/sp.sqrt(iv[w])
 
     if (run_noise) :
         for iexp in range(nb_noise_exp):
-            delta_exp= np.zeros(nb_pixels)
-            delta_exp[w] = np.random.normal(0.,err[w])
+            delta_exp= sp.zeros(nb_pixels)
+            delta_exp[w] = sp.random.normal(0.,err[w])
             k_exp,Pk_exp = compute_Pk_raw(dll,delta_exp,ll)
             Pk += Pk_exp
 
@@ -154,12 +154,12 @@ def compute_Pk_noise(dll,iv,diff,ll,run_noise):
 def compute_cor_reso(delta_pixel,mean_reso,k):
 
     nb_bin_FFT = len(k)
-    cor = np.ones(nb_bin_FFT)
+    cor = sp.ones(nb_bin_FFT)
 
-    sinc = np.ones(nb_bin_FFT)
-    sinc[k>0.] =  (np.sin(k[k>0.]*delta_pixel/2.0)/(k[k>0.]*delta_pixel/2.0))**2
+    sinc = sp.ones(nb_bin_FFT)
+    sinc[k>0.] =  (sp.sin(k[k>0.]*delta_pixel/2.0)/(k[k>0.]*delta_pixel/2.0))**2
 
-    cor *= np.exp(-(k*mean_reso)**2)
+    cor *= sp.exp(-(k*mean_reso)**2)
     cor *= sinc
     return cor
 

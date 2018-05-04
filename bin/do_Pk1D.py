@@ -5,7 +5,7 @@ import fitsio
 import argparse
 import glob
 import sys
-import numpy as np
+import scipy as sp
 
 from picca import constants
 from picca.Pk1D import Pk1D, compute_Pk_raw, compute_Pk_noise, compute_cor_reso, fill_masked_pixels, split_forest, rebin_diff_noise
@@ -62,13 +62,13 @@ def make_tree(tree,nb_bin_max):
 def compute_mean_delta(ll,delta,iv,zqso):
 
     for i in range (len(ll)):
-        ll_obs= np.power(10.,ll[i])
+        ll_obs= sp.power(10.,ll[i])
         ll_rf = ll_obs/(1.+zqso)
         hdelta.Fill(ll_obs,ll_rf,delta[i])
         hdelta_RF.Fill(ll_rf,delta[i])
         hdelta_OBS.Fill(ll_obs,delta[i])
         hivar.Fill(iv[i])
-        snr_pixel = (delta[i]+1)*np.sqrt(iv[i])
+        snr_pixel = (delta[i]+1)*sp.sqrt(iv[i])
         hsnr.Fill(snr_pixel)
         hivar.Fill(iv[i])
         if (iv[i]<1000) :
@@ -152,7 +152,7 @@ if __name__ == '__main__':
     ndata = 0
 
     # initialize randoms
-    np.random.seed(4)
+    sp.random.seed(4)
 
     # loop over input files
     for i,f in enumerate(fi):
@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
             # first pixel in forest
             for first_pixel in range(len(d.ll)) :
-                 if (np.power(10.,d.ll[first_pixel])>args.lambda_obs_min) : break
+                 if (sp.power(10.,d.ll[first_pixel])>args.lambda_obs_min) : break
 
             # minimum number of pixel in forest
             nb_pixel_min = args.nb_pixel_min
@@ -202,7 +202,7 @@ if __name__ == '__main__':
                 if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.zqso)
 
                 lam_lya = constants.absorber_IGM["LYA"]
-                z_abs =  np.power(10.,ll_new)/lam_lya - 1.0
+                z_abs =  sp.power(10.,ll_new)/lam_lya - 1.0
                 mean_z_new = sum(z_abs)/float(len(z_abs))
 
                 # Compute Pk_raw
@@ -214,7 +214,7 @@ if __name__ == '__main__':
                 Pk_noise,Pk_diff = compute_Pk_noise(d.dll,iv_new,diff_new,ll_new,run_noise)
 
                 # Compute resolution correction
-                delta_pixel = d.dll*np.log(10.)*constants.speed_light/1000.
+                delta_pixel = d.dll*sp.log(10.)*constants.speed_light/1000.
                 cor_reso = compute_cor_reso(delta_pixel,d.mean_reso,k)
 
                 # Compute 1D Pk
@@ -236,8 +236,8 @@ if __name__ == '__main__':
                     mean_z[0] = m_z_arr[f]
                     mean_reso[0] = d.mean_reso
                     mean_SNR[0] = d.mean_SNR
-                    lambda_min[0] =  np.power(10.,ll_new[0])
-                    lambda_max[0] =  np.power(10.,ll_new[-1])
+                    lambda_min[0] =  sp.power(10.,ll_new[0])
+                    lambda_max[0] =  sp.power(10.,ll_new[-1])
                     nb_mask_pix[0] = nb_masked_pixel
 
                     plate[0] = d.plate
