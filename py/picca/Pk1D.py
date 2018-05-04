@@ -44,6 +44,38 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
 
     return m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
 
+def rebin_diff_noise(dll,ll,diff):
+
+    crebin = 3
+    if (diff.size < crebin):
+        print "Warning: diff.size too small for rebin"
+        return diff
+    dll2 = crebin*dll
+
+    # rebin not mixing pixels separated by masks
+    bin2 = np.floor((ll-ll.min())/dll2+0.5).astype(int)
+
+    # rebin regardless of intervening masks 
+    # nmax = diff.size//crebin
+    # bin2 = np.zeros(diff.size)
+    # for n in range (1,nmax +1):
+    #     bin2[n*crebin:] += np.ones(diff.size-n*crebin)
+
+    cdiff2 = np.bincount(bin2.astype(int),weights=diff)
+    civ2 = np.bincount(bin2.astype(int))
+    w = (civ2>0)
+    if (len(civ2) == 0) :
+        print "DBG Pb size 0 ",diff
+    diff2 = cdiff2[w]/civ2[w]*np.sqrt(civ2[w])
+    diffout = np.zeros(diff.size)
+    nmax = len(diff)//len(diff2)
+    for n in range (nmax+1) :
+        lengthmax = min(len(diff),(n+1)*len(diff2))
+        diffout[n*len(diff2):lengthmax] = diff2[:lengthmax-n*len(diff2)]
+        np.random.shuffle(diff2)
+    
+    return diffout
+
 
 def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
 

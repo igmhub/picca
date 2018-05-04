@@ -8,7 +8,7 @@ import sys
 import numpy as np
 
 from picca import constants
-from picca.Pk1D import Pk1D, compute_Pk_raw, compute_Pk_noise, compute_cor_reso, fill_masked_pixels, split_forest
+from picca.Pk1D import Pk1D, compute_Pk_raw, compute_Pk_noise, compute_cor_reso, fill_masked_pixels, split_forest, rebin_diff_noise
 from picca.data import delta
 
 from array import array
@@ -112,7 +112,7 @@ if __name__ == '__main__':
                         help = 'Maximal number of masked pixels in a part of forest')
 
     parser.add_argument('--noise-estimate', type = str, default = 'mean_diff', required=False,
-                        help = ' Estimate of Pk_noise  pipeline/diff/mean_diff')
+                        help = ' Estimate of Pk_noise pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff')
 
     parser.add_argument('--debug', action='store_true', default = False, required=False,
                         help = ' Fill root histograms for debugging')
@@ -150,6 +150,9 @@ if __name__ == '__main__':
 
     data = {}
     ndata = 0
+
+    # initialize randoms
+    np.random.seed(4)
 
     # loop over input files
     for i,f in enumerate(fi):
@@ -189,9 +192,12 @@ if __name__ == '__main__':
             m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv,first_pixel)
             for f in range(nb_part):
 
+                # rebin diff spectrum
+                if (args.noise_estimate=='rebin_diff' or args.noise_estimate=='mean_rebin_diff'):
+                    diff_arr[f]=rebin_diff_noise(d.dll,ll_arr[f],diff_arr[f])
+
                 # Fill masked pixels with 0.
                 ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f],args.no_apply_filling)
-                nb_masked_pixel = 0
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
                 if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.zqso)
 
@@ -214,14 +220,14 @@ if __name__ == '__main__':
                 # Compute 1D Pk
                 if (args.noise_estimate=='pipeline'):
                     Pk = (Pk_raw - Pk_noise)/cor_reso
-                elif (args.noise_estimate=='diff'):
+                elif (args.noise_estimate=='diff' or args.noise_estimate=='rebin_diff'):
                     Pk = (Pk_raw - Pk_diff)/cor_reso
-                elif (args.noise_estimate=='mean_diff'):
+                elif (args.noise_estimate=='mean_diff' or args.noise_estimate=='mean_rebin_diff'):
                     selection = (k>0) & (k<0.02)
                     Pk_mean_diff = sum(Pk_diff[selection])/float(len(Pk_diff[selection]))
                     Pk = (Pk_raw - Pk_mean_diff)/cor_reso
 
-                # Build   Pk1D
+                # Build Pk1D
                 Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,k,Pk_raw,Pk_noise,cor_reso,Pk)
 
                 # save in root format
