@@ -55,7 +55,7 @@ def rebin_diff_noise(dll,ll,diff):
     # rebin not mixing pixels separated by masks
     bin2 = np.floor((ll-ll.min())/dll2+0.5).astype(int)
 
-    # rebin regardless of intervening masks 
+    # rebin regardless of intervening masks
     # nmax = diff.size//crebin
     # bin2 = np.zeros(diff.size)
     # for n in range (1,nmax +1):
@@ -73,7 +73,7 @@ def rebin_diff_noise(dll,ll,diff):
         lengthmax = min(len(diff),(n+1)*len(diff2))
         diffout[n*len(diff2):lengthmax] = diff2[:lengthmax-n*len(diff2)]
         np.random.shuffle(diff2)
-    
+
     return diffout
 
 
