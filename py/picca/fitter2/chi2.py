@@ -26,7 +26,10 @@ class chi2:
             self.verbosity = dic_init['verbosity']
 
         if 'fast mc' in dic_init:
-            self.seedfast_mc = dic_init['fast mc']['seed']
+            if 'seed' in dic_init['fast mc']:
+                self.seedfast_mc = dic_init['fast mc']['seed']
+            else:
+                self.seedfast_mc = 0
             self.nfast_mc = dic_init['fast mc']['niterations']
 
         if 'minos' in dic_init:
