@@ -5,7 +5,7 @@ from scipy import random
 import fitsio
 import argparse
 import sys
-from multiprocessing import Pool,Lock,Manager,cpu_count,Value
+from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, xcf, io, utils
 
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     xcf.alpha = args.z_evol_del
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     xcf.rej = args.rej
-    
+
     cosmo = constants.cosmo(args.fid_Om)
 
     ### Read deltas

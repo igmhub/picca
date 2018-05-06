@@ -186,9 +186,11 @@ if __name__ == '__main__':
     if not args.dla_vac is None:
         print("adding dlas")
         dlas = io.read_dlas(args.dla_vac)
-        if d.thid in dlas:
-            for dla in dlas[d.thid]:
-                data.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
+        for p in data:
+            for d in data[p]:
+                if d.thid in dlas:
+                    for dla in dlas[d.thid]:
+                        data.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
 
     ### Get delta from do_delta
     done_delta = None

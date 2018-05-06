@@ -7,7 +7,7 @@ import glob
 import healpy
 import sys
 import copy
-from multiprocessing import Pool,Lock,Manager,cpu_count,Value
+from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, utils
 from picca.data import delta
