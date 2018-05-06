@@ -179,6 +179,6 @@ def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]
     kp = k*muk
     if tracer1['type'] == tracer2['type']:
-        return sp.exp( -0.5*(kp*kwargs['sigma_velo_lorentz'])**2)
+        return 1./(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
     else:
-        return sp.exp( -0.25*(kp*kwargs['sigma_velo_lorentz'])**2)
+        return 1./sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
