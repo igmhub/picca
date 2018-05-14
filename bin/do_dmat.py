@@ -9,6 +9,7 @@ import healpy
 import sys
 import copy
 from multiprocessing import Pool,Lock,cpu_count,Value
+from mpi4py import MPI
 
 from picca import constants, cf, utils
 from picca.data import delta
@@ -221,39 +222,49 @@ if __name__ == '__main__':
 
     cf.lock = Lock()
 
-    cpu_data = {}
-    for i,p in enumerate(sorted(list(data.keys()))):
-        ip = i%args.nproc
-        if not ip in cpu_data:
-            cpu_data[ip] = []
-        cpu_data[ip].append(p)
+    comm = MPI.COMM_WORLD
+
+    cpu_data = list(data.keys())[comm.rank::comm.size]
+    cpu_data = sorted(cpu_data)
+    cpu_data = [cpu_data[i::args.nproc] for i in range(args.nproc)]
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
+    dms = pool.map(calc_dmat,cpu_data)
     pool.close()
 
-    dm = sp.array(dm)
-    wdm =dm[:,0].sum(axis=0)
-    npairs=dm[:,2].sum(axis=0)
-    npairs_used=dm[:,3].sum(axis=0)
-    dm=dm[:,1].sum(axis=0)
+    dms = sp.array(dms)
+    wdm = dms[:,0].sum(axis=0)
+    npairs = dms[:,2].sum(axis=0)
+    npairs_used = dms[:,3].sum(axis=0)
+    dm = dms[:,1].sum(axis=0)
 
-    w = wdm>0
-    dm[w]/=wdm[w,None]
+    dm = comm.gather(dm)
+    wdm = comm.gather(wdm)
+    npairs = comm.gather(npairs)
+    npairs_used = comm.gather(npairs_used)
+    
+    if comm.rank == 0:
+        dm = sp.array(dm).sum(axis=0)
+        wdm = sp.array(wdm).sum(axis=0)
+        npairs = sp.array(npairs).sum(axis=0)
+        npairs_used = sp.array(npairs_used).sum(axis=0)
+
+        w = wdm>0
+        dm[w]/=wdm[w,None]
 
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['REJ']=args.rej
-    head['RPMAX']=cf.rp_max
-    head['RTMAX']=cf.rt_max
-    head['Z_CUT_MIN']=cf.z_cut_min
-    head['Z_CUT_MAX']=cf.z_cut_max
-    head['NT']=cf.nt
-    head['NP']=cf.np
-    head['NPROR']=npairs
-    head['NPUSED']=npairs_used
+        out = fitsio.FITS(args.out,'rw',clobber=True)
+        head = {}
+        head['REJ'] = args.rej
+        head['RPMAX'] = cf.rp_max
+        head['RTMAX'] = cf.rt_max
+        head['Z_CUT_MIN'] = cf.z_cut_min
+        head['Z_CUT_MAX'] = cf.z_cut_max
+        head['NT'] = cf.nt
+        head['NP'] = cf.np
+        head['NPROR'] = npairs
+        head['NPUSED'] = npairs_used
 
-    out.write([wdm,dm],names=['WDM','DM'],header=head)
-    out.close()
+        out.write([wdm,dm],names=['WDM','DM'],header=head)
+        out.close()

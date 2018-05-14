@@ -155,7 +155,8 @@ def dmat(pix):
     npairs_used = 0
     for p in pix:
         for d1 in data[p]:
-            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
+            if counter.value%100==0:
+                sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
             with lock:
                 counter.value += 1
             order1 = d1.order

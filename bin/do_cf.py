@@ -8,6 +8,7 @@ import healpy
 import sys
 import copy
 from multiprocessing import Pool,Lock,cpu_count,Value
+from mpi4py import MPI
 
 from picca import constants, cf, utils
 from picca.data import delta
@@ -246,47 +247,64 @@ if __name__ == '__main__':
 
     cf.counter = Value('i',0)
 
+
+    comm = MPI.COMM_WORLD
     cf.lock = Lock()
-    cpu_data = {}
-    for p in list(data.keys()):
-        cpu_data[p] = [p]
+    cpu_data = list(data.keys())[comm.rank::comm.size]
+    cpu_data = sorted(cpu_data)
+    cpu_data = [[p] for p in cpu_data]
+    for i,c in enumerate(cpu_data):
+        print("rank: {} ndata in cpu {}: {}".format(comm.rank,i, len(c)))
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
+    cfs = pool.map(corr_func, cpu_data)
     pool.close()
 
-    cfs=sp.array(cfs)
-    wes=cfs[:,0,:]
-    rps=cfs[:,2,:]
-    rts=cfs[:,3,:]
-    zs=cfs[:,4,:]
-    nbs=cfs[:,5,:].astype(sp.int64)
-    cfs=cfs[:,1,:]
-    hep=sp.array(sorted(list(cpu_data.keys())))
+    print("Hello! I'm rank %d from %d running in total..." % (comm.rank, comm.size))
 
-    cut      = (wes.sum(axis=0)>0.)
-    rp       = (rps*wes).sum(axis=0)
-    rp[cut] /= wes.sum(axis=0)[cut]
-    rt       = (rts*wes).sum(axis=0)
-    rt[cut] /= wes.sum(axis=0)[cut]
-    z        = (zs*wes).sum(axis=0)
-    z[cut]  /= wes.sum(axis=0)[cut]
-    nb       = nbs.sum(axis=0)
+    cfs = comm.gather(cfs)
+    cpu_data = comm.gather(cpu_data)
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['RPMIN']=cf.rp_min
-    head['RPMAX']=cf.rp_max
-    head['RTMAX']=cf.rt_max
-    head['Z_CUT_MIN']=cf.z_cut_min
-    head['Z_CUT_MAX']=cf.z_cut_max
-    head['NT']=cf.nt
-    head['NP']=cf.np
-    head['NSIDE']=cf.nside
+    if comm.rank == 0:
+        print("TOTO ",len(cfs))
+        cfs = [cf for l in cfs for cf in l]
+        cfs = sp.array(cfs)
+        print("cfs shape", cfs.shape)
+        cpu_data = [p for l in cpu_data for p in l]
 
-    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
-    ## use the default scheme in healpy => RING
-    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
-    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
-    out.close()
+        wes=cfs[:,0,:]
+        rps=cfs[:,2,:]
+        rts=cfs[:,3,:]
+        zs=cfs[:,4,:]
+        nbs=cfs[:,5,:].astype(sp.int64)
+        cfs=cfs[:,1,:]
+
+        hep = sp.array(cpu_data)
+
+        cut = (wes.sum(axis=0)>0.)
+        rp  = (rps*wes).sum(axis=0)
+        rp[cut] /= wes.sum(axis=0)[cut]
+        rt = (rts*wes).sum(axis=0)
+        rt[cut] /= wes.sum(axis=0)[cut]
+        z = (zs*wes).sum(axis=0)
+        z[cut]  /= wes.sum(axis=0)[cut]
+        nb = nbs.sum(axis=0)
+
+        out = fitsio.FITS(args.out,'rw',clobber=True)
+        head = {}
+        head['RPMIN']=cf.rp_min
+        head['RPMAX']=cf.rp_max
+        head['RTMAX']=cf.rt_max
+        head['Z_CUT_MIN']=cf.z_cut_min
+        head['Z_CUT_MAX']=cf.z_cut_max
+        head['NT']=cf.nt
+        head['NP']=cf.np
+        head['NSIDE']=cf.nside
+
+        out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
+        ## use the default scheme in healpy => RING
+        head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
+        out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
+        out.close()
+
