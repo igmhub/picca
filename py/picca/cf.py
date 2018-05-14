@@ -71,7 +71,7 @@ def cf(pix):
     nb = sp.zeros(np*nt,dtype=sp.int64)
 
     for ipix in pix:
-        for i,d1 in enumerate(data[ipix]):
+        for d1 in data[ipix]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)))
             with lock:
                 counter.value += 1
@@ -439,7 +439,7 @@ def t123(pix):
     w123 = sp.zeros(np*nt)
     npairs = 0
     npairs_used = 0
-    for i,ipix in enumerate(pix):
+    for ipix in pix:
         for d1 in data[ipix]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
             with lock:
