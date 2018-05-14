@@ -53,7 +53,7 @@ def xcf(pix):
     nb = sp.zeros(np*nt,dtype=sp.int64)
 
     for ipix in pix:
-        for i,d in enumerate(dels[ipix]):
+        for d in dels[ipix]:
             with lock:
                 counter.value +=1
             sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
