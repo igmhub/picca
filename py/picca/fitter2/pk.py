@@ -222,9 +222,9 @@ def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]
     kp = k*muk
     if tracer1['type'] == tracer2['type']:
-        return sp.exp( -0.5*(kp*kwargs['sigma_velo_gauss'])**2)
+        return sp.exp( -0.5*(kp*kwargs['sigma_velo_gaus'])**2)
     else:
-        return sp.exp( -0.25*(kp*kwargs['sigma_velo_gauss'])**2)
+        return sp.exp( -0.25*(kp*kwargs['sigma_velo_gaus'])**2)
 
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]
