@@ -6,6 +6,7 @@ import fitsio
 import argparse
 import sys
 from multiprocessing import Pool,Lock,cpu_count,Value
+from mpi4py import MPI
 
 from picca import constants, xcf, io, utils
 
@@ -140,12 +141,11 @@ if __name__ == '__main__':
 
     xcf.lock = Lock()
 
-    cpu_data = {}
-    for i,p in enumerate(sorted(list(dels.keys()))):
-        ip = i%args.nproc
-        if not ip in cpu_data:
-            cpu_data[ip] = []
-        cpu_data[ip].append(p)
+    comm = MPI.COMM_WORLD
+
+    cpu_data = list(data.keys())[comm.rank::comm.size]
+    cpu_data = sorted(cpu_data)
+    cpu_data = [cpu_data[i::args.nproc] for i in range(args.nproc)]
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
@@ -157,22 +157,33 @@ if __name__ == '__main__':
     npairs_used=dm[:,3].sum(axis=0)
     dm=dm[:,1].sum(axis=0)
 
-    w = wdm>0.
-    dm[w,:] /= wdm[w,None]
+    dm = comm.gather(dm)
+    wdm = comm.gather(wdm)
+    npairs = comm.gather(npairs)
+    npairs_used = comm.gather(npairs_used)
+    
+    if comm.rank == 0:
+        dm = sp.array(dm).sum(axis=0)
+        wdm = sp.array(wdm).sum(axis=0)
+        npairs = sp.array(npairs).sum(axis=0)
+        npairs_used = sp.array(npairs_used).sum(axis=0)
+
+        w = wdm>0
+        dm[w,:] /= wdm[w,None]
 
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['REJ']=args.rej
-    head['RPMAX']=xcf.rp_max
-    head['RPMIN']=xcf.rp_min
-    head['RTMAX']=xcf.rt_max
-    head['Z_CUT_MAX']=xcf.z_cut_max
-    head['Z_CUT_MIN']=xcf.z_cut_min
-    head['NT']=xcf.nt
-    head['NP']=xcf.np
-    head['NPROR']=npairs
-    head['NPUSED']=npairs_used
+        out = fitsio.FITS(args.out,'rw',clobber=True)
+        head = {}
+        head['REJ']=args.rej
+        head['RPMAX']=xcf.rp_max
+        head['RPMIN']=xcf.rp_min
+        head['RTMAX']=xcf.rt_max
+        head['Z_CUT_MAX']=xcf.z_cut_max
+        head['Z_CUT_MIN']=xcf.z_cut_min
+        head['NT']=xcf.nt
+        head['NP']=xcf.np
+        head['NPROR']=npairs
+        head['NPUSED']=npairs_used
 
-    out.write([wdm,dm],names=['WDM','DM'],header=head)
-    out.close()
+        out.write([wdm,dm],names=['WDM','DM'],header=head)
+        out.close()

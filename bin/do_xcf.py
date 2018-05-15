@@ -5,6 +5,8 @@ import fitsio
 import argparse
 import sys
 from multiprocessing import Pool,Lock,cpu_count,Value
+from mpi4py import MPI
+import time
 
 from picca import constants, xcf, io, prep_del, utils
 from picca.data import forest
@@ -104,6 +106,8 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
+    t0 = time.time()
+
     ### Read deltas
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
         args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
@@ -144,59 +148,73 @@ if __name__ == '__main__':
         args.z_max_obj = cosmo.r_2_z(dmax_obj)
         sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
 
+    print('read deltas in {}'.format(time.time()-t0))
+
+    t0 = time.time()
     ### Read objects
-    objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
-                                args.z_evol_obj, args.z_ref,cosmo)
+    objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj,
+            args.z_max_obj, args.z_evol_obj, args.z_ref,cosmo)
+    print('read objects in {}'.format(time.time()-t0))
+
     sys.stderr.write("\n")
     xcf.objs = objs
 
     ###
     xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
 
-
-
     xcf.counter = Value('i',0)
-
     xcf.lock = Lock()
-    cpu_data = {}
-    for p in list(dels.keys()):
-        cpu_data[p] = [p]
+
+    comm = MPI.COMM_WORLD
+
+    cpu_data = list(dels.keys())[comm.rank::comm.size]
+    cpu_data = sorted(cpu_data)
+    cpu_data = [[p] for p in cpu_data]
 
     pool = Pool(processes=args.nproc)
 
-    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
+    cfs = pool.map(corr_func,cpu_data)
     pool.close()
 
-    cfs=sp.array(cfs)
-    wes=cfs[:,0,:]
-    rps=cfs[:,2,:]
-    rts=cfs[:,3,:]
-    zs=cfs[:,4,:]
-    nbs=cfs[:,5,:].astype(sp.int64)
-    cfs=cfs[:,1,:]
-    hep=sp.array(sorted(list(cpu_data.keys())))
+    cfs = comm.gather(cfs)
+    cpu_data = comm.gather(cpu_data)
 
-    cut      = (wes.sum(axis=0)>0.)
-    rp       = (rps*wes).sum(axis=0)
-    rp[cut] /= wes.sum(axis=0)[cut]
-    rt       = (rts*wes).sum(axis=0)
-    rt[cut] /= wes.sum(axis=0)[cut]
-    z        = (zs*wes).sum(axis=0)
-    z[cut]  /= wes.sum(axis=0)[cut]
-    nb = nbs.sum(axis=0)
+    if comm.rank == 0:
+        cfs = [cf for l in cfs for cf in l]
+        cfs = sp.array(cfs)
+        cpu_data = [p for l in cpu_data for p in l]
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['RPMIN']=xcf.rp_min
-    head['RPMAX']=xcf.rp_max
-    head['RTMAX']=xcf.rt_max
-    head['Z_CUT_MIN']=xcf.z_cut_min
-    head['Z_CUT_MAX']=xcf.z_cut_max
-    head['NT']=xcf.nt
-    head['NP']=xcf.np
-    head['NSIDE']=xcf.nside
 
-    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
-    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
-    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
-    out.close()
+        cfs=sp.array(cfs)
+        wes=cfs[:,0,:]
+        rps=cfs[:,2,:]
+        rts=cfs[:,3,:]
+        zs=cfs[:,4,:]
+        nbs=cfs[:,5,:].astype(sp.int64)
+        cfs=cfs[:,1,:]
+        hep=sp.array(sorted(list(cpu_data.keys())))
+
+        cut = (wes.sum(axis=0)>0.)
+        rp = (rps*wes).sum(axis=0)
+        rp[cut] /= wes.sum(axis=0)[cut]
+        rt = (rts*wes).sum(axis=0)
+        rt[cut] /= wes.sum(axis=0)[cut]
+        z = (zs*wes).sum(axis=0)
+        z[cut]  /= wes.sum(axis=0)[cut]
+        nb = nbs.sum(axis=0)
+
+        out = fitsio.FITS(args.out,'rw',clobber=True)
+        head = {}
+        head['RPMIN'] = xcf.rp_min
+        head['RPMAX'] = xcf.rp_max
+        head['RTMAX'] = xcf.rt_max
+        head['Z_CUT_MIN'] = xcf.z_cut_min
+        head['Z_CUT_MAX'] = xcf.z_cut_max
+        head['NT'] = xcf.nt
+        head['NP'] = xcf.np
+        head['NSIDE'] = xcf.nside
+
+        out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'], header=head)
+        head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
+        out.write([hep,wes,cfs],names=['HEALPID','WE','DA'], header=head2)
+        out.close()
