@@ -405,11 +405,6 @@ if __name__ == '__main__':
                     cols=[d.ll,d.de,d.we,d.co]
                     names=['LOGLAM','DELTA','WEIGHT','CONT']
 
-                out.write(cols,names=names,header=hd)
+                out.write(cols,names=names,header=hd,extname=str(d.thid))
 
             out.close()
-
-
-
-
-
