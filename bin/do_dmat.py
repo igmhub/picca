@@ -9,9 +9,9 @@ import healpy
 import sys
 import copy
 from multiprocessing import Pool,Lock,cpu_count,Value
-from mpi4py import MPI
+import time
 
-from picca import constants, cf, utils
+from picca import constants, cf, utils, io
 from picca.data import delta
 
 def calc_dmat(p):
@@ -92,6 +92,9 @@ if __name__ == '__main__':
     parser.add_argument('--no-same-wavelength-pairs', action="store_true", required=False,
                     help = 'Reject pairs with same wavelength')
 
+    parser.add_argument('--mpi', action="store_true", required=False,
+                    help = 'use mpi parallelization')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -128,131 +131,105 @@ if __name__ == '__main__':
     else:
         fi = glob.glob(args.in_dir+"/*.fits.gz")
     fi = sorted(fi)
+
+    ## initialize mpi
+    rank = 0
+    size = 1
+    comm = None
+    if args.mpi:
+        from mpi4py import MPI
+        comm = MPI.MPI_WORLD
+        rank = comm.rank
+        size = comm.size
+
     data = {}
-    dels = []
-    for i,f in enumerate(fi):
-        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
-        hdus = fitsio.FITS(f)
-        dels += [delta.from_fitsio(h) for h in hdus[1:]]
-        ndata+=len(hdus[1:])
-        hdus.close()
-        if not args.nspec is None:
-            if ndata>args.nspec:break
-    sys.stderr.write("read {}\n".format(ndata))
+    x_correlation = False
 
-    x_correlation=False
-    if args.in_dir2:
-        x_correlation=True
-        ndata2 = 0
-        if (len(args.in_dir2)>8) and (args.in_dir2[-8:]==".fits.gz"):
-            fi = glob.glob(args.in_dir2)
-        else:
-            fi = glob.glob(args.in_dir2+"/*.fits.gz")
-        fi = sorted(fi)
-        data2 = {}
-        dels2 = []
-        for i,f in enumerate(fi):
-            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
-            hdus = fitsio.FITS(f)
-            dels2 += [delta.from_fitsio(h) for h in hdus[1:]]
-            ndata2+=len(hdus[1:])
-            hdus.close()
-            if not args.nspec is None:
-                if ndata2>args.nspec:break
-        sys.stderr.write("read {}\n".format(ndata2))
+    if rank == 0:
+        t0 = time.time()
+        data, ndata, zmin_pix, zmax_pix = io.read_deltas(
+                args.in_dir, args.nside, lambda_abs,
+                args.z_evol, args.z_ref, cosmo,
+                nspec=args.nspec, no_project=args.no_project)
 
-    elif lambda_abs != lambda_abs2:
-        x_correlation=True
-        data2  = copy.deepcopy(data)
-        ndata2 = copy.deepcopy(ndata)
-        dels2  = copy.deepcopy(dels)
-    cf.x_correlation=x_correlation
-    if x_correlation: print("doing xcorrelation")
+        zmin_pix2 = zmin_pix
+        if (args.in_dir2 is not None) or (lambda_abs != lambda_abs2):
+            x_correlation = True
+            if args.in_dir2 is None:
+                args.in_dir2 = args.in_dir
 
-    z_min_pix = 10**dels[0].ll[0]/lambda_abs-1.
-    phi = [d.ra for d in dels]
-    th = [sp.pi/2.-d.dec for d in dels]
-    pix = healpy.ang2pix(cf.nside,th,phi)
-    for d,p in zip(dels,pix):
-        if not p in data:
-            data[p]=[]
-        data[p].append(d)
+            ## here data might be read twice from disk...
+            data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(
+                args.in_dir2, args.nside, lambda_abs2, 
+                args.z_evol, args.z_ref, cosmo, 
+                nspec=args.nspec, no_project=args.no_project)
 
-        z = 10**d.ll/lambda_abs-1.
-        z_min_pix = sp.amin( sp.append([z_min_pix],z) )
-        d.z = z
-        d.r_comov = cosmo.r_comoving(z)
-        d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
-        if not args.no_project:
-            d.project()
+        cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix, zmin_pix2)
+        print('INFO: finished io in {} sec'.format(time.time()-t0))
 
-    cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,z_min_pix)
+    sys.stderr.write("\n")
 
-    if x_correlation:
-        cf.alpha2 = args.z_evol2
-        z_min_pix2 = 10**dels2[0].ll[0]/lambda_abs2-1.
-        phi2 = [d.ra for d in dels2]
-        th2 = [sp.pi/2.-d.dec for d in dels2]
-        pix2 = healpy.ang2pix(cf.nside,th2,phi2)
+    print('DATA: {}'.format(len(data)))
 
-        for d,p in zip(dels2,pix2):
-            if not p in data2:
-                data2[p]=[]
-            data2[p].append(d)
+    ## end io
+    ## broadcast if needed
+    if comm is not None:
+        comm.Barrier()
+        t0 = MPI.Wtime()
+        data   = comm.bcast(data, root=0)
+        ndata  = comm.bcast(ndata, root=0)
+        x_correlation = comm.bcast(x_correlation, root=0)
+        if x_correlation:
+            data2   = comm.bcast(data2, root=0)
+            ndata2  = comm.bcast(ndata2, root=0)
 
-            z = 10**d.ll/lambda_abs2-1.
-            z_min_pix2 = sp.amin(sp.append([z_min_pix2],z) )
-            d.z = z
-            d.r_comov = cosmo.r_comoving(z)
-            d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha2-1.)
-            if not args.no_project:
-                d.project()
-
-        cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,z_min_pix,z_min_pix2)
+        comm.Barrier()
+        if rank == 0:
+            print('INFO: Broadcasted input data in {} sec'.format(MPI.Wtime()-t0))
 
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
+
     if x_correlation:
-       cf.data2 = data2
-       cf.ndata2 = ndata2
-    print("done")
+        cf.data2 = data2
+        cf.ndata2 = ndata2
+        cf.x_correlation = x_correlation
 
     cf.counter = Value('i',0)
-
     cf.lock = Lock()
 
-    comm = MPI.COMM_WORLD
-
-    cpu_data = list(data.keys())[comm.rank::comm.size]
+    cpu_data = list(data.keys())[rank::size]
     cpu_data = sorted(cpu_data)
     cpu_data = [cpu_data[i::args.nproc] for i in range(args.nproc)]
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dms = pool.map(calc_dmat,cpu_data)
+    dms = pool.map(calc_dmat, cpu_data)
     pool.close()
 
+    print('len of dms: {}'.format(len(dms)))
     dms = sp.array(dms)
+    print('shape of dms: {}'.format(dms.shape))
     wdm = dms[:,0].sum(axis=0)
     npairs = dms[:,2].sum(axis=0)
     npairs_used = dms[:,3].sum(axis=0)
     dm = dms[:,1].sum(axis=0)
 
-    dm = comm.gather(dm)
-    wdm = comm.gather(wdm)
-    npairs = comm.gather(npairs)
-    npairs_used = comm.gather(npairs_used)
-    
-    if comm.rank == 0:
+    if comm is not None:
+        dm = comm.gather(dm)
+        wdm = comm.gather(wdm)
+        npairs = comm.gather(npairs)
+        npairs_used = comm.gather(npairs_used)
+
         dm = sp.array(dm).sum(axis=0)
         wdm = sp.array(wdm).sum(axis=0)
         npairs = sp.array(npairs).sum(axis=0)
         npairs_used = sp.array(npairs_used).sum(axis=0)
-
+    
+    if rank == 0:
         w = wdm>0
         dm[w]/=wdm[w,None]
-
 
         out = fitsio.FITS(args.out,'rw',clobber=True)
         head = {}

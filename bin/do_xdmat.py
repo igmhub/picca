@@ -6,7 +6,6 @@ import fitsio
 import argparse
 import sys
 from multiprocessing import Pool,Lock,cpu_count,Value
-from mpi4py import MPI
 
 from picca import constants, xcf, io, utils
 
@@ -82,6 +81,9 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
+    parser.add_argument('--mpi', action="store_true", required=False,
+                    help = 'use mpi parallelization')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -104,73 +106,90 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
-    ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
-        args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec)
+    comm = None
+    rank = 0 
+    size = 1
+    
+    if args.mpi:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+        rank = comm.rank
+        size = comm.size
+
+    if rank == 0:
+        ### Read deltas
+        dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
+            args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec)
+
+        sys.stderr.write("\n")
+        print("done, npix = {}\n".format(len(dels)))
+
+        ### Find the redshift range
+        if (args.z_min_obj is None):
+            dmin_pix = cosmo.r_comoving(zmin_pix)
+            dmin_obj = max(0.,dmin_pix+xcf.rp_min)
+            args.z_min_obj = cosmo.r_2_z(dmin_obj)
+            sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
+        if (args.z_max_obj is None):
+            dmax_pix = cosmo.r_comoving(zmax_pix)
+            dmax_obj = max(0.,dmax_pix+xcf.rp_max)
+            args.z_max_obj = cosmo.r_2_z(dmax_obj)
+            sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
+
+        ### Read objects
+        objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
+                                args.z_evol_obj, args.z_ref,cosmo)
+        sys.stderr.write("\n")
+
+    if comm is not None:
+        dels = comm.bcast(dels, root=0)
+        ndels = comm.bcast(ndels, root=0)
+        objs = comm.bcast(objs, root=0)
+        z_min_pix = comm.bcast(z_min_pix, root=0)
+        z_min_obj = comm.bcast(z_min_obj, root=0)
+
+    xcf.objs = objs
     xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
-    sys.stderr.write("\n")
-    print("done, npix = {}\n".format(xcf.npix))
-
-    ### Find the redshift range
-    if (args.z_min_obj is None):
-        dmin_pix = cosmo.r_comoving(zmin_pix)
-        dmin_obj = max(0.,dmin_pix+xcf.rp_min)
-        args.z_min_obj = cosmo.r_2_z(dmin_obj)
-        sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
-    if (args.z_max_obj is None):
-        dmax_pix = cosmo.r_comoving(zmax_pix)
-        dmax_obj = max(0.,dmax_pix+xcf.rp_max)
-        args.z_max_obj = cosmo.r_2_z(dmax_obj)
-        sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
-
-    ### Read objects
-    objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
-                                args.z_evol_obj, args.z_ref,cosmo)
-    sys.stderr.write("\n")
-    xcf.objs = objs
 
     ###
     xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
-
-
-
 
     xcf.counter = Value('i',0)
 
     xcf.lock = Lock()
 
-    comm = MPI.COMM_WORLD
 
-    cpu_data = list(data.keys())[comm.rank::comm.size]
+    cpu_data = list(dels.keys())[rank::size]
     cpu_data = sorted(cpu_data)
     cpu_data = [cpu_data[i::args.nproc] for i in range(args.nproc)]
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
+    dm = pool.map(calc_dmat,cpu_data)
     pool.close()
+
     dm = sp.array(dm)
     wdm =dm[:,0].sum(axis=0)
     npairs=dm[:,2].sum(axis=0)
     npairs_used=dm[:,3].sum(axis=0)
     dm=dm[:,1].sum(axis=0)
 
-    dm = comm.gather(dm)
-    wdm = comm.gather(wdm)
-    npairs = comm.gather(npairs)
-    npairs_used = comm.gather(npairs_used)
-    
-    if comm.rank == 0:
+    if comm is not None:
+        dm = comm.gather(dm)
+        wdm = comm.gather(wdm)
+        npairs = comm.gather(npairs)
+        npairs_used = comm.gather(npairs_used)
+
         dm = sp.array(dm).sum(axis=0)
         wdm = sp.array(wdm).sum(axis=0)
         npairs = sp.array(npairs).sum(axis=0)
         npairs_used = sp.array(npairs_used).sum(axis=0)
 
+    if rank == 0:
         w = wdm>0
         dm[w,:] /= wdm[w,None]
-
 
         out = fitsio.FITS(args.out,'rw',clobber=True)
         head = {}

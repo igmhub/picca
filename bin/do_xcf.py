@@ -5,7 +5,6 @@ import fitsio
 import argparse
 import sys
 from multiprocessing import Pool,Lock,cpu_count,Value
-from mpi4py import MPI
 import time
 
 from picca import constants, xcf, io, prep_del, utils
@@ -89,6 +88,9 @@ if __name__ == '__main__':
     parser.add_argument('--from-image', type = str, default = None, required=False,
                     help = 'use image format to read deltas', nargs='*')
 
+    parser.add_argument('--mpi', action="store_true", required=False,
+                    help = 'use mpi parallelization')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -109,65 +111,84 @@ if __name__ == '__main__':
     t0 = time.time()
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
-        args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
-        from_image=args.from_image)
+    comm = None
+    rank = 0
+    size = 1
+    
+    if args.mpi:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+        rank = comm.rank
+        size = comm.size
+    
+    if rank == 0:
+        dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
+            args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
+            from_image=args.from_image)
+
+
+        ### Remove <delta> vs. lambda_obs
+        if not args.no_remove_mean_lambda_obs:
+            forest.dll = None
+            for p in dels:
+                for d in dels[p]:
+                    dll = sp.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
+                    if forest.dll is None:
+                        forest.dll = dll
+                    else:
+                        forest.dll = min(dll,forest.dll)
+            forest.lmin  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
+            forest.lmax  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
+            ll,st, wst   = prep_del.stack(dels,delta=True)
+            for p in dels:
+                for d in dels[p]:
+                    bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+                    d.de -= st[bins]
+
+        ### Find the redshift range
+        if (args.z_min_obj is None):
+            dmin_pix = cosmo.r_comoving(zmin_pix)
+            dmin_obj = max(0.,dmin_pix+xcf.rp_min)
+            args.z_min_obj = cosmo.r_2_z(dmin_obj)
+            sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
+        if (args.z_max_obj is None):
+            dmax_pix = cosmo.r_comoving(zmax_pix)
+            dmax_obj = max(0.,dmax_pix+xcf.rp_max)
+            args.z_max_obj = cosmo.r_2_z(dmax_obj)
+            sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
+
+        print('read deltas in {}'.format(time.time()-t0))
+
+        t0 = time.time()
+        ### Read objects
+        objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj,
+                args.z_max_obj, args.z_evol_obj, args.z_ref,cosmo)
+        print('read objects in {}'.format(time.time()-t0))
+
+        sys.stderr.write("\n")
+
+    ## broadcast to all nodes
+    if comm is not None:
+        dels = comm.bcast(dels, root=0)
+        ndels = comm.bcast(ndels, root=0)
+        objs = comm.bcast(objs, root=0)
+        zmin_pix = comm.bcast(z_min_pix, root=0)
+        zmin_obj = comm.bcast(z_min_obj, root=0)
+
+    ###
+    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
+
+    xcf.objs = objs
     xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
     sys.stderr.write("\n")
     print("done, npix = {}\n".format(xcf.npix))
-
-    ### Remove <delta> vs. lambda_obs
-    if not args.no_remove_mean_lambda_obs:
-        forest.dll = None
-        for p in xcf.dels:
-            for d in xcf.dels[p]:
-                dll = sp.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
-                if forest.dll is None:
-                    forest.dll = dll
-                else:
-                    forest.dll = min(dll,forest.dll)
-        forest.lmin  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
-        forest.lmax  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
-        ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
-        for p in xcf.dels:
-            for d in xcf.dels[p]:
-                bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
-                d.de -= st[bins]
-
-    ### Find the redshift range
-    if (args.z_min_obj is None):
-        dmin_pix = cosmo.r_comoving(zmin_pix)
-        dmin_obj = max(0.,dmin_pix+xcf.rp_min)
-        args.z_min_obj = cosmo.r_2_z(dmin_obj)
-        sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
-    if (args.z_max_obj is None):
-        dmax_pix = cosmo.r_comoving(zmax_pix)
-        dmax_obj = max(0.,dmax_pix+xcf.rp_max)
-        args.z_max_obj = cosmo.r_2_z(dmax_obj)
-        sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
-
-    print('read deltas in {}'.format(time.time()-t0))
-
-    t0 = time.time()
-    ### Read objects
-    objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj,
-            args.z_max_obj, args.z_evol_obj, args.z_ref,cosmo)
-    print('read objects in {}'.format(time.time()-t0))
-
-    sys.stderr.write("\n")
-    xcf.objs = objs
-
-    ###
-    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
-
     xcf.counter = Value('i',0)
     xcf.lock = Lock()
 
-    comm = MPI.COMM_WORLD
 
-    cpu_data = list(dels.keys())[comm.rank::comm.size]
+    cpu_data = list(dels.keys())[rank::size]
     cpu_data = sorted(cpu_data)
     cpu_data = [[p] for p in cpu_data]
 
@@ -176,15 +197,15 @@ if __name__ == '__main__':
     cfs = pool.map(corr_func,cpu_data)
     pool.close()
 
-    cfs = comm.gather(cfs)
-    cpu_data = comm.gather(cpu_data)
+    if comm is not None:
+        cfs = comm.gather(cfs)
+        cpu_data = comm.gather(cpu_data)
+        if rank == 0:
+            cfs = [cf for l in cfs for cf in l]
+            cpu_data = [p for l in cpu_data for p in l]
 
-    if comm.rank == 0:
-        cfs = [cf for l in cfs for cf in l]
-        cfs = sp.array(cfs)
-        cpu_data = [p for l in cpu_data for p in l]
 
-
+    if rank == 0:
         cfs=sp.array(cfs)
         wes=cfs[:,0,:]
         rps=cfs[:,2,:]
@@ -192,7 +213,7 @@ if __name__ == '__main__':
         zs=cfs[:,4,:]
         nbs=cfs[:,5,:].astype(sp.int64)
         cfs=cfs[:,1,:]
-        hep=sp.array(sorted(list(cpu_data.keys())))
+        hep=sp.array(cpu_data)
 
         cut = (wes.sum(axis=0)>0.)
         rp = (rps*wes).sum(axis=0)

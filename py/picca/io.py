@@ -585,7 +585,9 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
     return data
 
 
-def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False,from_image=None):
+def read_deltas(indir, nside, lambda_abs, alpha, zref, cosmo,
+        nspec=None, no_project=False, from_image=None):
+
     '''
     reads deltas from indir
     fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
@@ -645,7 +647,9 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         zmin = min(zmin,z.min())
         zmax = max(zmax,z.max())
         d.z = z
-        if not cosmo is None: d.r_comov = cosmo.r_comoving(z)
+        if not cosmo is None: 
+            d.r_comov = cosmo.r_comoving(z)
+
         d.we *= ((1+z)/(1+zref))**(alpha-1)
 
         if not no_project:
