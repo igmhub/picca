@@ -126,7 +126,7 @@ if __name__ == '__main__':
 #   Create root file
     if (args.out_format=='root') :
         from ROOT import TCanvas, TH1D, TFile, TTree, TProfile2D, TProfile
-        storeFile = TFile(args.out_dir+"Testpicca.root","RECREATE","PK 1D studies studies");
+        storeFile = TFile(args.out_dir+"/Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
         zqso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
