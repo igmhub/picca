@@ -7,6 +7,7 @@ import sys
 import time
 import os.path
 
+import constants
 from picca.data import forest
 from picca.data import delta
 from picca.data import qso
@@ -291,7 +292,8 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,index,order,mode,log
         diff = sp.zeros(len(lamb))
         # compute spectral resolution
         wdisp =  h["psf"][:]
-        reso = spectral_resolution(wdisp)
+        #reso = spectral_resolution(wdisp)
+	reso = wdisp * constants.speed_light / 1000 / lamb
 
         # compute the mean expected flux
         f_mean_tr = 0.8

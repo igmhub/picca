@@ -155,20 +155,22 @@ if __name__ == '__main__':
     sp.random.seed(4)
 
     # loop over input files
-    for i,f in enumerate(fi):
+    for i,fil in enumerate(fi):
         if i%1==0:
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
 
         # read fits or ascii file
         if (args.in_format=='fits') :
-            hdus = fitsio.FITS(f)
+            hdus = fitsio.FITS(fil)
             dels = [delta.from_fitsio(h,Pk1D_type=True) for h in hdus[1:]]
         elif (args.in_format=='ascii') :
-            ascii_file = open(f,'r')
+            ascii_file = open(fil,'r')
             dels = [delta.from_ascii(line) for line in ascii_file]
 
         ndata+=len(dels)
         if (args.out_format=='fits') :
+            if i == 96: print(96, fil)
+            if i == 211: print(211, fil)
             out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
         print ("\n ndata =  ",ndata)
 
