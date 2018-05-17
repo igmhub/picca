@@ -127,6 +127,10 @@ if __name__ == '__main__':
     x_correlation = False
     fi = []
 
+    zmin_pix  = None
+    zmin_pix2 = None
+    
+
     rank = 0
     size = 1
     comm = None
@@ -157,9 +161,10 @@ if __name__ == '__main__':
                 nspec=args.nspec, no_project=args.no_project,
                 from_image=args.from_image)
 
-        cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix, zmin_pix2)
+    
         print('INFO: finished io in {} sec'.format(time.time()-t0))
-
+        sys.stdout.flush()
+    
     sys.stderr.write("\n")
 
     ## end io
@@ -174,11 +179,18 @@ if __name__ == '__main__':
         if x_correlation:
             data2 = comm.bcast(data2, root=0)
             ndata2 = comm.bcast(ndata2, root=0)
-
+        
+        zmin_pix  = comm.bcast(zmin_pix, root=0)
+        zmin_pix2 = comm.bcast(zmin_pix2, root=0)
+        
+    
         comm.Barrier()
         if rank == 0:
             print('INFO: Broadcasted input data in {} sec'.format(MPI.Wtime()-t0))
+            sys.stdout.flush()
 
+    cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix, zmin_pix2)
+    
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
@@ -195,15 +207,18 @@ if __name__ == '__main__':
     cpu_data = sorted(cpu_data)
     cpu_data = [[p] for p in cpu_data]
 
-    print('INFO: rank {} will compute cf in {} pixels'.format(rank, len(cpu_data)))
-
+    #print('INFO: rank {} will compute cf in {} pixels'.format(rank, len(cpu_data)))
+    print('INFO: rank {} will compute cf in {} pixels: {}'.format(rank, len(cpu_data), cpu_data))
+    sys.stdout.flush()
+    
     pool = Pool(processes=args.nproc)
 
     cfs = pool.map(corr_func, cpu_data)
     pool.close()
 
     print('INFO: rank {} finished'.format(rank))
-
+    sys.stdout.flush()
+    
     if comm is not None:
         cfs = comm.gather(cfs)
         cpu_data = comm.gather(cpu_data)
@@ -214,7 +229,8 @@ if __name__ == '__main__':
     if rank == 0:
         cfs = sp.array(cfs)
         print("cfs shape", cfs.shape)
-
+        sys.stdout.flush()
+        
         wes=cfs[:,0,:]
         rps=cfs[:,2,:]
         rts=cfs[:,3,:]
@@ -249,4 +265,5 @@ if __name__ == '__main__':
         head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
         out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
         out.close()
+        print("wrote",args.out)
 
