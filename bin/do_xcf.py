@@ -11,9 +11,11 @@ from picca import constants, xcf, io, prep_del, utils
 from picca.data import forest
 
 def corr_func(p):
-    sys.stderr.write('calling fill_neighs in pixel {}'.format(p))
+    print('calling fill_neighs in pixel {}'.format(p))
+    sys.stdout.flush()
     xcf.fill_neighs(p)
-    sys.stderr.write('calling xcf in pixel {}'.format(p))
+    print('calling xcf in pixel {}'.format(p))
+    sys.stdout.flush()
     tmp = xcf.xcf(p)
     return tmp
 
@@ -189,15 +191,14 @@ if __name__ == '__main__':
         t0 = MPI.Wtime()
         ## broadcast deltas in chunks
         ## first send the pixels
-        #pix = list(dels.keys())
-        #pix = comm.bcast(pix, root=0)
-        #for p in pix:
-        #    if rank != 0:
-        #        dels[p] = None
-        #    dels[p] = comm.bcast(dels[p], root=0)
+        pix = comm.bcast(list(dels.keys()), root=0)
+        for p in pix:
+            if rank != 0:
+                dels[p] = None
+            dels[p] = comm.bcast(dels[p], root=0)
     
         #sys.stderr.write('rank {} got {} dels and {} in pixel {}'.format(rank, len(dels), len(dels[p]),p))
-        dels = comm.bcast(dels, root=0)
+        #dels = comm.bcast(dels, root=0)
         ndels = comm.bcast(ndels, root=0)
         objs = comm.bcast(objs, root=0)
         zmin_pix = comm.bcast(zmin_pix, root=0)
