@@ -172,7 +172,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
     out.close()
 
     return
-def desi_convert_transmission_to_delta_files(indir,outdir,lOb_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,nspec=None):
+def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,nspec=None):
     '''
     Convert desi transmission files to picca delta files
     indir: path to transmission files directory
