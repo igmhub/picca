@@ -113,6 +113,7 @@ if __name__ == '__main__':
     xcf.ndels = ndels
     sys.stderr.write("\n")
     print("done, npix = {}\n".format(xcf.npix))
+    print("ndata = {}\n".format(xcf.ndels))
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:

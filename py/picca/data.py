@@ -387,27 +387,50 @@ class delta(qso):
 
     @staticmethod
     def from_image(f):
-        h=fitsio.FITS(f)
-        de = h[0].read()
-        iv = h[1].read()
-        ll = h[2].read()
-        ra = h[3]["RA"][:]*sp.pi/180.
-        dec = h[3]["DEC"][:]*sp.pi/180.
-        z = h[3]["Z"][:]
-        plate = h[3]["PLATE"][:]
-        mjd = h[3]["MJD"][:]
-        fid = h[3]["FIBER"]
-        thid = h[3]["THING_ID"][:]
+        h = fitsio.FITS(f)
+        try:
+            ra = h[3]['RA'][:]*sp.pi/180.
+            dec = h[3]['DEC'][:]*sp.pi/180.
+            z = h[3]['Z'][:]
+            plate = h[3]['PLATE'][:]
+            mjd = h[3]['MJD'][:]
+            fid = h[3]['FIBER']
+            thid = h[3]['THING_ID'][:]
+            de = h[0].read()
+            iv = h[1].read()
+            ll = h[2].read()
+            nspec = h[0].read().shape[1]
+        except ValueError:
+            ra = h[1]['RA'][:]*sp.pi/180.
+            dec = h[1]['DEC'][:]*sp.pi/180.
+            z = h[1]['Z'][:]
+            thid = h[1]['MOCKID'][:]
+            plate = thid
+            mjd = thid
+            fid = thid
+            de = h[3].read()
+            iv = sp.ones_like(de)
+            ll = sp.log10(h[2].read())
+            nspec = ra.size
+            if de.shape[0]==nspec:
+                iv[(10**ll)/(1.+z[:,None])>=1215.67] = 0.
+            else:
+                iv[(10**ll[:,None])/(1.+z)>=1215.67] = 0.
+        h.close()
 
-        nspec = h[0].read().shape[1]
-        deltas=[]
+        deltas = []
         for i in range(nspec):
             if i%100==0:
                 sys.stderr.write("\rreading deltas {} of {}".format(i,nspec))
 
-            delt = de[:,i]
-            ivar = iv[:,i]
-            w = ivar>0
+            if de.shape[0]==nspec:
+                delt = de[i,:]
+                ivar = iv[i,:]
+            else:
+                delt = de[:,i]
+                ivar = iv[:,i]
+            w = ivar>0.
+            if w.sum()<=1: continue
             delt = delt[w]
             ivar = ivar[w]
             lam = ll[w]
@@ -421,7 +444,6 @@ class delta(qso):
 
             deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt,order,iv,diff,m_SNR,m_reso,m_z,dll))
 
-        h.close()
         return deltas
 
 
