@@ -206,21 +206,24 @@ if __name__ == '__main__':
             dels = pickle.dumps(dels)
         else:
             dels = None
-        buf = 2**27
-        for i in range(len(dels)//buf+1):
-            print('broadcasting: {}'.format(i))
+        buf = 2**30
+        nbuf = None
+        if rank == 0:
+            nbuf = len(dels)//buf+1
+        nbuf = comm.bcast(nbuf, root=0)
+        for i in range(nbuf):
             sys.stdout.flush()
             i0 = i*buf
             i1 = (i+1)*buf
-            if i1 > len(dels):
-                i1 = len(dels)
-            tmp = comm.bcast(dels[i0:i1], root=0)
+            tmp = None
+            if rank == 0:
+                tmp = dels[i0:i1]
+            tmp = comm.bcast(tmp, root=0)
             if rank != 0:
                 if dels is None:
                     dels = tmp
                 else:
                     dels += tmp
-        
         dels = pickle.loads(dels)
 
         #sys.stderr.write('rank {} got {} dels and {} in pixel {}'.format(rank, len(dels), len(dels[p]),p))
