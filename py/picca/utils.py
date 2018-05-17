@@ -172,13 +172,13 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
     out.close()
 
     return
-def desi_convert_transmission_to_delta_files(indir,outdir,lObsrange=[3600.,5500.],lRFrange=[1040.,1200.],nspec=None):
+def desi_convert_transmission_to_delta_files(indir,outdir,lOb_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,nspec=None):
     '''
     Convert desi transmission files to picca delta files
     indir: path to transmission files directory
     outdir: path to write delta files directory
-    lObsrange = [3600.,5500.]: observed wavelength range in Angstrom
-    lRFrange = [1040.,1200.]: Rest frame wavelength range in Angstrom
+    lObs_min, lObs_max = [3600.,5500.]: observed wavelength range in Angstrom
+    lRF_min, lRF_max = [1040.,1200.]: Rest frame wavelength range in Angstrom
     '''
 
     ### List of transmission files
@@ -195,8 +195,6 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObsrange=[3600.,5500.
     deltas = {}
 
     ### Stack the transmission
-    lObs_min = lObsrange[0]
-    lObs_max = lObsrange[1]
     lObs_stack = sp.arange(lObs_min,lObs_max,1.)
     T_stack = sp.zeros(lObs_stack.size)
     n_stack = sp.zeros(lObs_stack.size)
@@ -216,7 +214,7 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObsrange=[3600.,5500.
         lObs = (10**ll)*sp.ones(nObj)[:,None]
         lRF = (10**ll)/(1.+z[:,None])
         w = sp.zeros_like(trans).astype(int)
-        w[ (lObs>lObsrange[0]) & (lObs<lObsrange[1]) & (lRF>lRFrange[0]) & (lRF<lRFrange[1]) ] = 1
+        w[ (lObs>lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
         nbPixel = sp.sum(w,axis=1)
         cut = nbPixel>50
 
