@@ -5,7 +5,6 @@ import iminuit
 import time
 import h5py
 from scipy.linalg import cholesky
-from scipy import random
 
 from . import utils, priors
 
@@ -27,6 +26,10 @@ class chi2:
             self.verbosity = dic_init['verbosity']
 
         if 'fast mc' in dic_init:
+            if 'seed' in dic_init['fast mc']:
+                self.seedfast_mc = dic_init['fast mc']['seed']
+            else:
+                self.seedfast_mc = 0
             self.nfast_mc = dic_init['fast mc']['niterations']
 
         if 'minos' in dic_init:
@@ -180,6 +183,8 @@ class chi2:
     def fastMC(self):
         if not hasattr(self,"nfast_mc"): return
 
+        sp.random.seed(self.seedfast_mc)
+
         nfast_mc = self.nfast_mc
         for d in self.data:
             d.cho = cholesky(d.co)
@@ -187,7 +192,7 @@ class chi2:
         self.fast_mc = {}
         for it in range(nfast_mc):
             for d in self.data:
-                g = random.randn(len(d.da))
+                g = sp.random.randn(len(d.da))
                 d.da = d.cho.dot(g) + d.best_fit_model
                 d.da_cut = d.da[d.mask]
 
