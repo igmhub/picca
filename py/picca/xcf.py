@@ -31,7 +31,7 @@ cosmo=None
 ang_correlation = None
 
 def fill_neighs(pix):
-    for ipix in pix:
+    for iipix,ipix in enumerate(pix):
         for d in dels[ipix]:
             npix = query_disc(nside,[d.xcart,d.ycart,d.zcart],angmax,inclusive = True)
             npix = [p for p in npix if p in objs]

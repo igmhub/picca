@@ -11,7 +11,9 @@ from picca import constants, xcf, io, prep_del, utils
 from picca.data import forest
 
 def corr_func(p):
+    sys.stderr.write('calling fill_neighs in pixel {}'.format(p))
     xcf.fill_neighs(p)
+    sys.stderr.write('calling xcf in pixel {}'.format(p))
     tmp = xcf.xcf(p)
     return tmp
 
@@ -120,12 +122,24 @@ if __name__ == '__main__':
         comm = MPI.COMM_WORLD
         rank = comm.rank
         size = comm.size
-    
-    if rank == 0:
-        dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
-            args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
-            from_image=args.from_image)
+ 
+    dels = {}
+    ndels = 0
+    zmin_pix = None
+    zmax_pix = None
+    zmin_obj = None
+    objs = None
 
+    if rank == 0:
+        print('Starting io in rank 0\n')
+        sys.stdout.flush()
+        t0 = time.time()
+        dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, 
+                args.nside, xcf.lambda_abs,args.z_evol_del, args.z_ref, 
+                cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
+                from_image=args.from_image)
+        print('done io in {}\n'.format(time.time()-t0))
+        sys.stdout.flush()
 
         ### Remove <delta> vs. lambda_obs
         if not args.no_remove_mean_lambda_obs:
@@ -158,22 +172,40 @@ if __name__ == '__main__':
             sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
 
         print('read deltas in {}'.format(time.time()-t0))
+        sys.stdout.flush()
 
         t0 = time.time()
         ### Read objects
         objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj,
                 args.z_max_obj, args.z_evol_obj, args.z_ref,cosmo)
-        print('read objects in {}'.format(time.time()-t0))
+        print('read objects in {}\n'.format(time.time()-t0))
+        sys.stdout.flush()
 
-        sys.stderr.write("\n")
 
     ## broadcast to all nodes
     if comm is not None:
+        ## wait until rank 0 has read all the data
+        comm.Barrier()
+        t0 = MPI.Wtime()
+        ## broadcast deltas in chunks
+        ## first send the pixels
+        #pix = list(dels.keys())
+        #pix = comm.bcast(pix, root=0)
+        #for p in pix:
+        #    if rank != 0:
+        #        dels[p] = None
+        #    dels[p] = comm.bcast(dels[p], root=0)
+    
+        #sys.stderr.write('rank {} got {} dels and {} in pixel {}'.format(rank, len(dels), len(dels[p]),p))
         dels = comm.bcast(dels, root=0)
         ndels = comm.bcast(ndels, root=0)
         objs = comm.bcast(objs, root=0)
-        zmin_pix = comm.bcast(z_min_pix, root=0)
-        zmin_obj = comm.bcast(z_min_obj, root=0)
+        zmin_pix = comm.bcast(zmin_pix, root=0)
+        zmin_obj = comm.bcast(zmin_obj, root=0)
+        comm.Barrier()
+        if rank == 0:
+            print('INFO: broadcasted data in {}'.format(MPI.Wtime()-t0))
+            sys.stdout.flush()
 
     ###
     xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
@@ -184,19 +216,22 @@ if __name__ == '__main__':
     xcf.ndels = ndels
     sys.stderr.write("\n")
     print("done, npix = {}\n".format(xcf.npix))
+    sys.stdout.flush()
     xcf.counter = Value('i',0)
     xcf.lock = Lock()
-
 
     cpu_data = list(dels.keys())[rank::size]
     cpu_data = sorted(cpu_data)
     cpu_data = [[p] for p in cpu_data]
 
-    pool = Pool(processes=args.nproc)
-
+    nproc = min(args.nproc, len(cpu_data))
+    sys.stderr.write('opening with {} cpus\n'.format(nproc))
+    pool = Pool(processes=nproc)
+    sys.stderr.write('calling map in rank {} on {} pixels\n'.format(rank, len(cpu_data)))
     cfs = pool.map(corr_func,cpu_data)
+    sys.stderr.write('done pool in rank {}\n'.format(rank))
     pool.close()
-
+    
     if comm is not None:
         cfs = comm.gather(cfs)
         cpu_data = comm.gather(cpu_data)
