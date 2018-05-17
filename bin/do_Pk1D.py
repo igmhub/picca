@@ -278,7 +278,7 @@ if __name__ == '__main__':
                         out.write(cols,names=names,header=hd)
                     except AttributeError:
                         out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
-                        out.write(cols,names=names,header=hd)                    
+                        out.write(cols,names=names,header=hd)
         if (args.out_format=='fits' and out is not None):
             out.close()
 
