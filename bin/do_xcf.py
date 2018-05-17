@@ -194,9 +194,13 @@ if __name__ == '__main__':
         ## first send the pixels
         pix = comm.bcast(list(dels.keys()), root=0)
         for p in pix:
+            if rank==0:
+                print('broadcasting {}'.format(p))
+                sys.stdout.flush()
             if rank != 0:
                 dels[p] = None
-                tmp = comm.bcast(dels[p], root=0)
+            tmp = comm.bcast(dels[p], root=0)
+            if rank != 0:
                 dels[p] = tmp
 
         #sys.stderr.write('rank {} got {} dels and {} in pixel {}'.format(rank, len(dels), len(dels[p]),p))
