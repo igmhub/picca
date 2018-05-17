@@ -57,7 +57,8 @@ def xcf(pix):
         for d in dels[ipix]:
             with lock:
                 counter.value +=1
-            sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
+            print("\r{}%".format(round(counter.value*100./ndels,3)))
+            sys.stdout.flush()
             if (d.neighs.size != 0):
                 ang = d^d.neighs
                 zqso = [q.zqso for q in d.neighs]

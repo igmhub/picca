@@ -6,6 +6,7 @@ import argparse
 import sys
 from multiprocessing import Pool,Lock,cpu_count,Value
 import time
+import pickle
 
 from picca import constants, xcf, io, prep_del, utils
 from picca.data import forest
@@ -192,11 +193,36 @@ if __name__ == '__main__':
         ## broadcast deltas in chunks
         ## first send the pixels
         pix = comm.bcast(list(dels.keys()), root=0)
-        for p in pix:
+#        for p in pix:
+#            if rank != 0:
+#                dels[p] = None
+#            tmp = pickle.dumps(dels[p])
+#            tmp = comm.bcast(tmp, root=0)
+#            print('pickle length in pixel {} is {}'.format(p,len(tmp)))
+#            dels[p] = pickle.loads(tmp)
+
+#            print('inspecting pixel {} in rank {}: mean delta = {}'.format(p, rank, dels[p][0].de.mean()))
+        if rank == 0:
+            dels = pickle.dumps(dels)
+        else:
+            dels = None
+        buf = 2**27
+        for i in range(len(dels)//buf+1):
+            print('broadcasting: {}'.format(i))
+            sys.stdout.flush()
+            i0 = i*buf
+            i1 = (i+1)*buf
+            if i1 > len(dels):
+                i1 = len(dels)
+            tmp = comm.bcast(dels[i0:i1], root=0)
             if rank != 0:
-                dels[p] = None
-            dels[p] = comm.bcast(dels[p], root=0)
-    
+                if dels is None:
+                    dels = tmp
+                else:
+                    dels += tmp
+        
+        dels = pickle.loads(dels)
+
         #sys.stderr.write('rank {} got {} dels and {} in pixel {}'.format(rank, len(dels), len(dels[p]),p))
         #dels = comm.bcast(dels, root=0)
         ndels = comm.bcast(ndels, root=0)
@@ -213,7 +239,10 @@ if __name__ == '__main__':
 
     xcf.objs = objs
     xcf.npix = len(dels)
-    xcf.dels = dels
+    xcf.dels = {}
+    for p in dels:
+        xcf.dels[p] = dels[p]
+
     xcf.ndels = ndels
     sys.stderr.write("\n")
     print("done, npix = {}\n".format(xcf.npix))
