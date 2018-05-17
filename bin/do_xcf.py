@@ -199,8 +199,6 @@ if __name__ == '__main__':
                 tmp = comm.bcast(dels[p], root=0)
                 dels[p] = tmp
 
-            print('inspecting pixel {} in rank {}: mean delta = {}'.format(p, rank, dels[p][0].de.mean()))
-
         #sys.stderr.write('rank {} got {} dels and {} in pixel {}'.format(rank, len(dels), len(dels[p]),p))
         #dels = comm.bcast(dels, root=0)
         ndels = comm.bcast(ndels, root=0)
