@@ -193,38 +193,13 @@ if __name__ == '__main__':
         ## broadcast deltas in chunks
         ## first send the pixels
         pix = comm.bcast(list(dels.keys()), root=0)
-#        for p in pix:
-#            if rank != 0:
-#                dels[p] = None
-#            tmp = pickle.dumps(dels[p])
-#            tmp = comm.bcast(tmp, root=0)
-#            print('pickle length in pixel {} is {}'.format(p,len(tmp)))
-#            dels[p] = pickle.loads(tmp)
-
-#            print('inspecting pixel {} in rank {}: mean delta = {}'.format(p, rank, dels[p][0].de.mean()))
-        if rank == 0:
-            dels = pickle.dumps(dels)
-        else:
-            dels = None
-        buf = 2**30
-        nbuf = None
-        if rank == 0:
-            nbuf = len(dels)//buf+1
-        nbuf = comm.bcast(nbuf, root=0)
-        for i in range(nbuf):
-            sys.stdout.flush()
-            i0 = i*buf
-            i1 = (i+1)*buf
-            tmp = None
-            if rank == 0:
-                tmp = dels[i0:i1]
-            tmp = comm.bcast(tmp, root=0)
+        for p in pix:
             if rank != 0:
-                if dels is None:
-                    dels = tmp
-                else:
-                    dels += tmp
-        dels = pickle.loads(dels)
+                dels[p] = None
+                tmp = comm.bcast(dels[p], root=0)
+                dels[p] = tmp
+
+            print('inspecting pixel {} in rank {}: mean delta = {}'.format(p, rank, dels[p][0].de.mean()))
 
         #sys.stderr.write('rank {} got {} dels and {} in pixel {}'.format(rank, len(dels), len(dels[p]),p))
         #dels = comm.bcast(dels, root=0)
