@@ -177,8 +177,8 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
     Convert desi transmission files to picca delta files
     indir: path to transmission files directory
     outdir: path to write delta files directory
-    lObs_min, lObs_max = [3600.,5500.]: observed wavelength range in Angstrom
-    lRF_min, lRF_max = [1040.,1200.]: Rest frame wavelength range in Angstrom
+    lObs_min, lObs_max = 3600.,5500.: observed wavelength range in Angstrom
+    lRF_min, lRF_max = 1040.,1200.: Rest frame wavelength range in Angstrom
     '''
 
     ### List of transmission files
@@ -190,14 +190,12 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
         fi = glob.glob(indir+'/*.fits') + glob.glob(indir+'/*.fits.gz')
     fi = sorted(sp.array(fi))
 
-    ###
-    ndeltas = 0
-    deltas = {}
-
     ### Stack the transmission
     lObs_stack = sp.arange(lObs_min,lObs_max,1.)
     T_stack = sp.zeros(lObs_stack.size)
     n_stack = sp.zeros(lObs_stack.size)
+
+    deltas = {}
 
     ### Read
     for f in fi:
@@ -237,8 +235,7 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
             tivar = sp.ones(tll.size)
             ttrans = trans[i,:][w[i,:]>0]
             deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],tll,tivar,None,ttrans,1,None,None,None,None,None,None))
-            ndeltas += 1
-        if not nspec is None and ndeltas>nspec: break
+        if not nspec is None and sp.sum([ len(deltas[p]) for p in list(deltas.keys())])>=nspec: break
 
     ### Get stacked transmission
     w = n_stack>0.
