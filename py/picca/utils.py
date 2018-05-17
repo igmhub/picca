@@ -190,7 +190,7 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
         fi = glob.glob(indir)
     else:
         fi = glob.glob(indir+'/*.fits') + glob.glob(indir+'/*.fits.gz')
-    fi = sorted(sp.array(fi))
+    fi = sp.sort(sp.array(fi))
 
     ### Stack the transmission
     lmin = sp.log10(lObs_min)
@@ -202,7 +202,8 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
     deltas = {}
 
     ### Read
-    for f in fi:
+    for nf, f in enumerate(fi):
+        sys.stderr.write("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in list(deltas.keys())])))
         h = fitsio.FITS(f)
         z = h['METADATA']['Z'][:]
         ll = sp.log10(h['WAVELENGTH'].read())
@@ -256,7 +257,8 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
     T_stack[w] /= n_stack[w]
 
     ### Transform transmission to delta and store it
-    for p in sorted(list(deltas.keys())):
+    for nf, p in enumerate(sorted(list(deltas.keys()))):
+        sys.stderr.write("\rwrite {} of {} ".format(nf,len(list(deltas.keys()))))
         out = fitsio.FITS(outdir+'/delta-{}'.format(p)+'.fits.gz','rw',clobber=True)
         for d in deltas[p]:
             bins = sp.floor((d.ll-lmin)/dll+0.5).astype(int)
