@@ -1,6 +1,10 @@
 import scipy as sp
 import sys
 import fitsio
+import glob
+
+
+from picca.data import delta
 
 def cov(da,we):
 
@@ -166,6 +170,104 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
     names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
     out.write(cols,names=names)
     out.close()
+
+    return
+def desi_convert_transmission_to_delta_files(indir,outdir,lObsrange=[3600.,5500.],lRFrange=[1040.,1200.],nspec=None):
+    '''
+    Convert desi transmission files to picca delta files
+    indir: path to transmission files directory
+    outdir: path to write delta files directory
+    lObsrange = [3600.,5500.]: observed wavelength range in Angstrom
+    lRFrange = [1040.,1200.]: Rest frame wavelength range in Angstrom
+    '''
+
+    ### List of transmission files
+    if len(indir)>8 and indir[-8:]=='.fits.gz':
+        fi = glob.glob(indir)
+    elif len(indir)>5 and indir[-5:]=='.fits':
+        fi = glob.glob(indir)
+    else:
+        fi = glob.glob(indir+'/*.fits') + glob.glob(indir+'/*.fits.gz')
+    fi = sorted(sp.array(fi))
+
+    ###
+    ndeltas = 0
+    deltas = {}
+
+    ### Stack the transmission
+    lObs_min = lObsrange[0]
+    lObs_max = lObsrange[1]
+    lObs_stack = sp.arange(lObs_min,lObs_max,1.)
+    T_stack = sp.zeros(lObs_stack.size)
+    n_stack = sp.zeros(lObs_stack.size)
+
+    ### Read
+    for f in fi:
+        h = fitsio.FITS(f)
+        z = h['METADATA']['Z'][:]
+        ll = sp.log10(h['WAVELENGTH'].read())
+        trans = h['TRANSMISSION'].read()
+        nObj = z.size
+        pixnum = h['METADATA'].read_header()['PIXNUM']
+
+        if trans.shape[0]!=nObj:
+            trans = trans.transpose()
+
+        lObs = (10**ll)*sp.ones(nObj)[:,None]
+        lRF = (10**ll)/(1.+z[:,None])
+        w = sp.zeros_like(trans).astype(int)
+        w[ (lObs>lObsrange[0]) & (lObs<lObsrange[1]) & (lRF>lRFrange[0]) & (lRF<lRFrange[1]) ] = 1
+        nbPixel = sp.sum(w,axis=1)
+        cut = nbPixel>50
+
+        ra = (h['METADATA']['RA'][:]*sp.pi/180.)[cut]
+        dec = (h['METADATA']['DEC'][:]*sp.pi/180.)[cut]
+        z = z[cut]
+        thid = h['METADATA']['MOCKID'][:][cut]
+        trans = trans[cut,:]
+        w = w[cut,:]
+        nObj = z.size
+        h.close()
+
+        bins = ( ( lObs[cut,:][w>0]-lObs_min )/(lObs_max-lObs_min)*lObs_stack.size ).astype(int)
+        T_stack += sp.bincount(bins,weights=trans[w>0],minlength=lObs_stack.size)
+        n_stack += sp.bincount(bins,minlength=lObs_stack.size)
+
+        deltas[pixnum] = []
+        for i in range(nObj):
+            tll = ll[w[i,:]>0]
+            tivar = sp.ones(tll.size)
+            ttrans = trans[i,:][w[i,:]>0]
+            deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],tll,tivar,None,ttrans,1,None,None,None,None,None,None))
+            ndeltas += 1
+        if not nspec is None and ndeltas>nspec: break
+
+    ### Get stacked transmission
+    w = n_stack>0.
+    T_stack[w] /= n_stack[w]
+
+    ### Transform transmission to delta and store it
+    for p in sorted(list(deltas.keys())):
+        out = fitsio.FITS(outdir+'/delta-{}'.format(p)+'.fits.gz','rw',clobber=True)
+        for d in deltas[p]:
+            bins = ( ( 10**d.ll-lObs_min )/(lObs_max-lObs_min)*lObs_stack.size ).astype(int)
+            d.de = d.de/T_stack[bins] - 1.
+
+            hd = {}
+            hd['RA'] = d.ra
+            hd['DEC'] = d.dec
+            hd['Z'] = d.zqso
+            hd['PMF'] = '{}-{}-{}'.format(d.plate,d.mjd,d.fid)
+            hd['THING_ID'] = d.thid
+            hd['PLATE'] = d.plate
+            hd['MJD'] = d.mjd
+            hd['FIBERID'] = d.fid
+            hd['ORDER'] = d.order
+
+            cols = [d.ll,d.de,d.we,sp.ones(d.ll.size)]
+            names = ['LOGLAM','DELTA','WEIGHT','CONT']
+            out.write(cols,names=names,header=hd,extname=str(d.thid))
+        out.close()
 
     return
 def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
