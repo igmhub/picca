@@ -172,13 +172,15 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
     out.close()
 
     return
-def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,nspec=None):
+def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,dll=3.e-4,nspec=None):
     '''
     Convert desi transmission files to picca delta files
     indir: path to transmission files directory
     outdir: path to write delta files directory
     lObs_min, lObs_max = 3600.,5500.: observed wavelength range in Angstrom
     lRF_min, lRF_max = 1040.,1200.: Rest frame wavelength range in Angstrom
+    dll: size of the bins in log lambda
+    nspec: number of spectra
     '''
 
     ### List of transmission files
@@ -191,9 +193,11 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
     fi = sorted(sp.array(fi))
 
     ### Stack the transmission
-    lObs_stack = sp.arange(lObs_min,lObs_max,1.)
-    T_stack = sp.zeros(lObs_stack.size)
-    n_stack = sp.zeros(lObs_stack.size)
+    lmin = sp.log10(lObs_min)
+    lmax = sp.log10(lObs_max)
+    nstack = int((lmax-lmin)/dll)+1
+    T_stack = sp.zeros(nstack)
+    n_stack = sp.zeros(nstack)
 
     deltas = {}
 
@@ -209,12 +213,14 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
         if trans.shape[0]!=nObj:
             trans = trans.transpose()
 
-        lObs = (10**ll)*sp.ones(nObj)[:,None]
-        lRF = (10**ll)/(1.+z[:,None])
+        bins = sp.floor((ll-lmin)/dll+0.5).astype(int)
+        tll = lmin + bins*dll
+        lObs = (10**tll)*sp.ones(nObj)[:,None]
+        lRF = (10**tll)/(1.+z[:,None])
         w = sp.zeros_like(trans).astype(int)
-        w[ (lObs>lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
+        w[ (lObs>=lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
         nbPixel = sp.sum(w,axis=1)
-        cut = nbPixel>50
+        cut = nbPixel>=50
 
         ra = (h['METADATA']['RA'][:]*sp.pi/180.)[cut]
         dec = (h['METADATA']['DEC'][:]*sp.pi/180.)[cut]
@@ -225,16 +231,24 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
         nObj = z.size
         h.close()
 
-        bins = ( ( lObs[cut,:][w>0]-lObs_min )/(lObs_max-lObs_min)*lObs_stack.size ).astype(int)
-        T_stack += sp.bincount(bins,weights=trans[w>0],minlength=lObs_stack.size)
-        n_stack += sp.bincount(bins,minlength=lObs_stack.size)
-
         deltas[pixnum] = []
         for i in range(nObj):
             tll = ll[w[i,:]>0]
-            tivar = sp.ones(tll.size)
             ttrans = trans[i,:][w[i,:]>0]
-            deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],tll,tivar,None,ttrans,1,None,None,None,None,None,None))
+
+            bins = sp.floor((tll-lmin)/dll+0.5).astype(int)
+            cll = lmin + sp.arange(nstack)*dll
+            cfl = sp.bincount(bins,weights=ttrans,minlength=nstack)
+            civ = sp.bincount(bins,minlength=nstack).astype(float)
+
+            ww = civ>0.
+            if ww.sum()<50: continue
+            T_stack += cfl
+            n_stack += civ
+            cll = cll[ww]
+            cfl = cfl[ww]/civ[ww]
+            civ = civ[ww]
+            deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
         if not nspec is None and sp.sum([ len(deltas[p]) for p in list(deltas.keys())])>=nspec: break
 
     ### Get stacked transmission
@@ -245,8 +259,9 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
     for p in sorted(list(deltas.keys())):
         out = fitsio.FITS(outdir+'/delta-{}'.format(p)+'.fits.gz','rw',clobber=True)
         for d in deltas[p]:
-            bins = ( ( 10**d.ll-lObs_min )/(lObs_max-lObs_min)*lObs_stack.size ).astype(int)
+            bins = sp.floor((d.ll-lmin)/dll+0.5).astype(int)
             d.de = d.de/T_stack[bins] - 1.
+            d.we *= T_stack[bins]**2
 
             hd = {}
             hd['RA'] = d.ra
