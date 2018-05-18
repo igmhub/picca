@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import scipy as sp
+import numpy as np
 import fitsio
 import argparse
 import glob
@@ -139,37 +140,117 @@ if __name__ == '__main__':
         comm = MPI.COMM_WORLD
         rank = comm.rank
         size = comm.size
-
-    if rank == 0:
-        t0 = time.time()
-        data, ndata, zmin_pix, zmax_pix = io.read_deltas(
-                args.in_dir, args.nside, lambda_abs,
-                args.z_evol, args.z_ref, cosmo,
-                nspec=args.nspec, no_project=args.no_project,
-                from_image=args.from_image)
-
-        zmin_pix2 = zmin_pix
-        if (args.in_dir2 is not None) or (lambda_abs != lambda_abs2):
-            x_correlation = True
-            if args.in_dir2 is None:
-                args.in_dir2 = args.in_dir
-
-            ## here data might be read twice from disk...
-            data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(
-                args.in_dir2, args.nside, lambda_abs2, 
-                args.z_evol2, args.z_ref, cosmo, 
-                nspec=args.nspec, no_project=args.no_project,
-                from_image=args.from_image)
-
+        
+    # rank 0 gets the list of files to read and broadcast the list
+    list_of_delta_files = None
+    if rank== 0 :
+        list_of_delta_files = io.get_list_of_delta_files(args.in_dir,from_image=args.from_image)
+    if comm is not None :
+        list_of_delta_files = comm.bcast(list_of_delta_files, root=0)
+    # each rank has a subsample of the files
+    if size==1 : 
+        rank_list_of_delta_files = list_of_delta_files
+    else :
+        rank_list_of_delta_files = np.array_split(list_of_delta_files, size)[rank]
     
-        print('INFO: finished io in {} sec'.format(time.time()-t0))
+    # same thing if second directory
+    if  args.in_dir2 is None:
+        list_of_delta_files2 = None
+        rank_list_of_delta_files2 = None
+    else :
+        if rank== 0 :
+            list_of_delta_files2 = io.get_list_of_delta_files(args.in_dir2,from_image=args.from_image)
+        if comm is not None :
+            list_of_delta_files2 = comm.bcast(list_of_delta_files2, root=0)
+        if size==1 : 
+            rank_list_of_delta_files2 = list_of_delta_files2
+        else :
+            rank_list_of_delta_files2 = np.array_split(list_of_delta_files2, size)[rank]
+
+    if rank==0: 
+        t0=time.time()
+        
+    # read rank_list_of_delta_files
+    rank_data, rank_ndata, rank_zmin_pix, rank_zmax_pix = io.read_deltas(
+        args.in_dir, args.nside, lambda_abs,
+        args.z_evol, args.z_ref, cosmo,
+        nspec=args.nspec, no_project=args.no_project,
+        from_image=args.from_image,
+        list_of_delta_files=rank_list_of_delta_files) # this will read only those delta files
+    
+    rank_zmin_pix2 = rank_zmin_pix
+    if (args.in_dir2 is not None) or (lambda_abs != lambda_abs2):
+        x_correlation = True
+        if args.in_dir2 is None:
+            args.in_dir2 = args.in_dir
+        if rank_list_of_delta_files2 is None:
+           rank_list_of_delta_files2 = rank_list_of_delta_files
+            
+        # here data might be read twice from disk...
+        rank_data2, rank_ndata2, rank_zmin_pix2, rank_zmax_pix2 = io.read_deltas(
+            args.in_dir2, args.nside, lambda_abs2, 
+            args.z_evol2, args.z_ref, cosmo, 
+            nspec=args.nspec, no_project=args.no_project,
+            from_image=args.from_image,
+            list_of_delta_files=rank_list_of_delta_files2) # this will read only those delta files
+    
+    print('INFO rank {} read {} files'.format(rank,len(rank_list_of_delta_files)))
+    sys.stdout.flush()
+    
+    # just make sure each rank has finished reading its files
+    if comm is not None :
+        comm.barrier()
+    
+    if rank==0: 
+        t1=time.time()
+        print('INFO: finished reading in {} sec'.format(t1-t0))
+        print('INFO: now gathering...')
         sys.stdout.flush()
     
-    sys.stderr.write("\n")
+    if comm is None :
+        data  = rank_data
+        ndata = rank_ndata
+        data2  = rank_data2
+        ndata2 = rank_ndata2
+        zmin_pix  = rank_zmin_pix
+        zmin_pix2 = rank_zmin_pix2
+    else :
+        # now gather and hope for the best ...
+        # this is quite awful
+        tmp_data = comm.allgather(rank_data)
+        data  = {}
+        if tmp_data is not None :
+            for tmp_rank_data in tmp_data :
+                for k in tmp_rank_data.keys() : data[k]=tmp_rank_data[k]
+        
+        ndata = np.sum(comm.allgather(rank_ndata))
+        zmin_pix  = np.min(comm.allgather(rank_zmin_pix))
+        zmin_pix2 = np.min(comm.allgather(rank_zmin_pix2))
+        if x_correlation :
+            tmp_data = comm.allgather(rank_data2)
+            data2  = {}
+            if tmp_data is not None :
+                for tmp_rank_data in tmp_data :
+                    for k in tmp_rank_data.keys() : data2[k]=tmp_rank_data[k]
+            ndata2 = np.sum(comm.allgather(rank_ndata2))
+        else :
+            data2  = None
+            ndata2 = None
 
-    ## end io
-    ## broadcast if needed
+        if rank==0: 
+            print('INFO: finished gathering in {} sec'.format(time.time()-t1))
+            print('INFO: zmin_pix = {}'.format(zmin_pix))
+            sys.stdout.flush()
 
+        # just make sure we indeed finished gathering data
+        comm.barrier()
+    
+    '''
+    if comm is not None: comm.Abort()
+    sys.exit(12)
+    
+    
+    
     if comm is not None:
         comm.Barrier()
         t0 = MPI.Wtime()
@@ -188,6 +269,7 @@ if __name__ == '__main__':
         if rank == 0:
             print('INFO: Broadcasted input data in {} sec'.format(MPI.Wtime()-t0))
             sys.stdout.flush()
+    '''
 
     cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix, zmin_pix2)
     

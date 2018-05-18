@@ -599,16 +599,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
     return data
 
-
-def read_deltas(indir, nside, lambda_abs, alpha, zref, cosmo,
-        nspec=None, no_project=False, from_image=None):
-
-    '''
-    reads deltas from indir
-    fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
-    returns data,zmin_pix
-    '''
-
+def get_list_of_delta_files(indir,from_image=None) :
     fi = []
     if from_image is None or len(from_image)==0:
         if len(indir)>8 and indir[-8:]=='.fits.gz':
@@ -625,8 +616,22 @@ def read_deltas(indir, nside, lambda_abs, alpha, zref, cosmo,
                 fi += glob.glob(arg)
             else:
                 fi += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
-    fi = sorted(fi)
+    return sorted(fi)
 
+def read_deltas(indir, nside, lambda_abs, alpha, zref, cosmo,
+                nspec=None, no_project=False, from_image=None, list_of_delta_files=None):
+
+    '''
+    reads deltas from indir
+    fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
+    returns data,zmin_pix
+    '''
+
+    if list_of_delta_files is None :
+        fi = get_list_of_delta_files(indir,from_image)
+    else :
+        fi = list_of_delta_files
+    
     dels = []
     ndata = 0
     for i,f in enumerate(fi):
