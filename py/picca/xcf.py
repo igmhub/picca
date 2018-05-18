@@ -45,7 +45,11 @@ def fill_neighs(pix):
             neighs = sp.array(neighs)[w]
             d.neighs = sp.array([q for q in neighs if q.thid != d.thid and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. >= z_cut_min and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. < z_cut_max])
 
-def xcf(pix):
+def xcf(pix1, pix1_neighs, config):
+    np = config.np
+    nt = config.nt
+    angmax = config.angmax
+
     xi = sp.zeros(np*nt)
     we = sp.zeros(np*nt)
     rp = sp.zeros(np*nt)
@@ -53,41 +57,45 @@ def xcf(pix):
     z = sp.zeros(np*nt)
     nb = sp.zeros(np*nt,dtype=sp.int64)
 
-    for ipix in pix:
-        for d in dels[ipix]:
-            with lock:
-                counter.value +=1
-            print("\r{}%".format(round(counter.value*100./ndels,3)))
-            sys.stdout.flush()
-            if (d.neighs.size != 0):
-                ang = d^d.neighs
-                zqso = [q.zqso for q in d.neighs]
-                we_qso = [q.we for q in d.neighs]
+    for d in pix1:
+        for pix2 in pix1_neighs:
+            pix2 = sp.array(pix2)
+            ang = d^pix2
+            w = ang<angmax
+            ang = ang[w]
+            pix2 = pix2[w]
+            zqso = [q.zqso for q in pix2]
+            we_qso = [q.we for q in pix2]
 
-                if ang_correlation:
-                    l_qso = [10.**q.ll for q in d.neighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
-                else:
-                    rc_qso = [q.r_comov for q in d.neighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
+            if ang_correlation:
+                l_qso = [10.**q.ll for q in pix2]
+                cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
+            else:
+                rc_qso = [q.r_comov for q in pix2]
+                cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang, config)
 
-                xi[:len(cd)]+=cd
-                we[:len(cw)]+=cw
-                rp[:len(crp)]+=crp
-                rt[:len(crt)]+=crt
-                z[:len(cz)]+=cz
-                nb[:len(cnb)]+=cnb.astype(int)
-            for el in list(d.__dict__.keys()):
-                setattr(d,el,None)
+            xi[:len(cd)]+=cd
+            we[:len(cw)]+=cw
+            rp[:len(crp)]+=crp
+            rt[:len(crt)]+=crt
+            z[:len(cz)]+=cz
+            nb[:len(cnb)]+=cnb.astype(int)
 
     w = we>0
     xi[w]/=we[w]
     rp[w]/=we[w]
     rt[w]/=we[w]
     z[w]/=we[w]
+
     return we,xi,rp,rt,z,nb
 @jit
-def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
+def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang, config):
+    np = config.np
+    nt = config.nt
+    rp_min = config.rp_min
+    rp_max = config.rp_max
+    rt_max = config.rt_max
+
     if ang_correlation:
         rp = r1[:,None]/r2
         rt = ang*sp.ones_like(rp)

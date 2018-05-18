@@ -11,14 +11,16 @@ import pickle
 from picca import constants, xcf, io, prep_del, utils
 from picca.data import forest
 
+import healpy
+
 def corr_func(p):
-    print('calling fill_neighs in pixel {}'.format(p))
+    print('calling xcf on {} pixels and {} neighs'.format(len(p[0]), len(p[1])))
     sys.stdout.flush()
-    xcf.fill_neighs(p)
-    print('calling xcf in pixel {}'.format(p))
-    sys.stdout.flush()
-    tmp = xcf.xcf(p)
+    tmp = xcf.xcf(p[0], p[1], p[2])
     return tmp
+
+class Config(object):
+    pass
 
 if __name__ == '__main__':
 
@@ -101,15 +103,34 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    xcf.rp_max = args.rp_max
-    xcf.rp_min = args.rp_min
-    xcf.z_cut_max = args.z_cut_max
-    xcf.z_cut_min = args.z_cut_min
-    xcf.rt_max = args.rt_max
-    xcf.np = args.np
-    xcf.nt = args.nt
-    xcf.nside = args.nside
-    xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
+#    xcf.rp_max = args.rp_max
+#    xcf.rp_min = args.rp_min
+#    xcf.z_cut_max = args.z_cut_max
+#    xcf.z_cut_min = args.z_cut_min
+#    xcf.rt_max = args.rt_max
+#    xcf.np = args.np
+#    xcf.nt = args.nt
+#    xcf.nside = args.nside
+#    xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
+
+    rp_min = args.rp_min
+    rp_max = args.rp_max
+    rt_max = args.rt_max
+    np = args.np
+    nt = args.nt
+    nside = args.nside
+    lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    z_cut_min = args.z_cut_min
+    z_cut_max = args.z_cut_max
+
+    rt_max = args.rt_max
+    config = Config()
+    config.rp_min = rp_min
+    config.rp_max = rp_max
+    config.rt_max = rt_max
+    config.np = np
+    config.nt = nt
+    config.nside = nside
 
     cosmo = constants.cosmo(args.fid_Om)
 
@@ -138,7 +159,7 @@ if __name__ == '__main__':
         sys.stdout.flush()
         t0 = time.time()
         dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, 
-                args.nside, xcf.lambda_abs,args.z_evol_del, args.z_ref, 
+                args.nside, lambda_abs,args.z_evol_del, args.z_ref, 
                 cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
                 from_image=args.from_image)
         print('done io in {}\n'.format(time.time()-t0))
@@ -154,8 +175,8 @@ if __name__ == '__main__':
                         forest.dll = dll
                     else:
                         forest.dll = min(dll,forest.dll)
-            forest.lmin  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
-            forest.lmax  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
+            forest.lmin  = sp.log10( (zmin_pix+1.)*lambda_abs )-forest.dll/2.
+            forest.lmax  = sp.log10( (zmax_pix+1.)*lambda_abs )+forest.dll/2.
             ll,st, wst   = prep_del.stack(dels,delta=True)
             for p in dels:
                 for d in dels[p]:
@@ -163,16 +184,16 @@ if __name__ == '__main__':
                     d.de -= st[bins]
 
         ### Find the redshift range
-        if (args.z_min_obj is None):
+        if args.z_min_obj is None:
             dmin_pix = cosmo.r_comoving(zmin_pix)
-            dmin_obj = max(0.,dmin_pix+xcf.rp_min)
+            dmin_obj = max(0.,dmin_pix+rp_min)
             args.z_min_obj = cosmo.r_2_z(dmin_obj)
-            sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
-        if (args.z_max_obj is None):
+            print("z_min_obj = {}".format(args.z_min_obj))
+        if args.z_max_obj is None:
             dmax_pix = cosmo.r_comoving(zmax_pix)
-            dmax_obj = max(0.,dmax_pix+xcf.rp_max)
+            dmax_obj = max(0.,dmax_pix+rp_max)
             args.z_max_obj = cosmo.r_2_z(dmax_obj)
-            sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
+            print("z_max_obj = {}".format(args.z_max_obj))
 
         print('read deltas in {}'.format(time.time()-t0))
         sys.stdout.flush()
@@ -193,17 +214,17 @@ if __name__ == '__main__':
         ## broadcast deltas in chunks
         ## first send the pixels
         pix = comm.bcast(list(dels.keys()), root=0)
+        dels_tmp = {}
         for p in pix:
             if rank==0:
                 print('broadcasting {}'.format(p))
                 sys.stdout.flush()
             if rank != 0:
                 dels[p] = None
-            tmp = comm.bcast(dels[p], root=0)
-            if rank != 0:
-                dels[p] = tmp
+            dels[p] = comm.bcast(dels[p], root=0)
+            dels_tmp[p] = dels[p]
 
-        #sys.stderr.write('rank {} got {} dels and {} in pixel {}'.format(rank, len(dels), len(dels[p]),p))
+        dels = dels_tmp
         #dels = comm.bcast(dels, root=0)
         ndels = comm.bcast(ndels, root=0)
         objs = comm.bcast(objs, root=0)
@@ -215,40 +236,39 @@ if __name__ == '__main__':
             sys.stdout.flush()
 
     ###
-    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
+    angmax = utils.compute_ang_max(cosmo,rt_max,zmin_pix,zmin_obj)
+    config.angmax = angmax
 
-    xcf.objs = objs
-    xcf.npix = len(dels)
-    xcf.dels = {}
-    for p in dels:
-        xcf.dels[p] = dels[p]
-
-    xcf.ndels = ndels
-    sys.stderr.write("\n")
-    print("done, npix = {}\n".format(xcf.npix))
+    print("done, npix = {}".format(len(dels)))
     sys.stdout.flush()
-    xcf.counter = Value('i',0)
-    xcf.lock = Lock()
 
-    cpu_data = list(dels.keys())[rank::size]
-    cpu_data = sorted(cpu_data)
-    cpu_data = [[p] for p in cpu_data]
+    pix = list(dels.keys())[rank::size]
+    pix = sorted(pix)
 
-    nproc = min(args.nproc, len(cpu_data))
-    sys.stderr.write('opening with {} cpus\n'.format(nproc))
+    neighs = []
+    for p in pix:
+        center = healpy.pix2vec(args.nside,p)
+        neigh = healpy.query_disc(args.nside, center, angmax)
+        neigh = [objs[p] for p in neigh if p in objs]
+        neighs.append(neigh)
+    
+    data_pix = [dels[p] for p in pix]
+    cpu_data = list(zip(data_pix, neighs, [config]*len(pix)))
+    nproc = min(args.nproc, len(pix))
+    print('starting pool in rank {} with {} pixels'.format(rank, len(pix)))
     pool = Pool(processes=nproc)
-    sys.stderr.write('calling map in rank {} on {} pixels\n'.format(rank, len(cpu_data)))
-    cfs = pool.map(corr_func,cpu_data)
-    sys.stderr.write('done pool in rank {}\n'.format(rank))
+    cfs = pool.map(corr_func, cpu_data)
+#    cfs = list(map(corr_func, cpu_data))
+    print('done pool in rank {}'.format(rank))
     pool.close()
     
     if comm is not None:
         cfs = comm.gather(cfs)
         cpu_data = comm.gather(cpu_data)
+        print(len(cfs))
         if rank == 0:
             cfs = [cf for l in cfs for cf in l]
             cpu_data = [p for l in cpu_data for p in l]
-
 
     if rank == 0:
         cfs=sp.array(cfs)
@@ -258,7 +278,7 @@ if __name__ == '__main__':
         zs=cfs[:,4,:]
         nbs=cfs[:,5,:].astype(sp.int64)
         cfs=cfs[:,1,:]
-        hep=sp.array(cpu_data)
+        hep=sp.array(pix)
 
         cut = (wes.sum(axis=0)>0.)
         rp = (rps*wes).sum(axis=0)
@@ -271,14 +291,14 @@ if __name__ == '__main__':
 
         out = fitsio.FITS(args.out,'rw',clobber=True)
         head = {}
-        head['RPMIN'] = xcf.rp_min
-        head['RPMAX'] = xcf.rp_max
-        head['RTMAX'] = xcf.rt_max
-        head['Z_CUT_MIN'] = xcf.z_cut_min
-        head['Z_CUT_MAX'] = xcf.z_cut_max
-        head['NT'] = xcf.nt
-        head['NP'] = xcf.np
-        head['NSIDE'] = xcf.nside
+        head['RPMIN'] = rp_min
+        head['RPMAX'] = rp_max
+        head['RTMAX'] = rt_max
+        head['Z_CUT_MIN'] = z_cut_min
+        head['Z_CUT_MAX'] = z_cut_max
+        head['NT'] = nt
+        head['NP'] = np
+        head['NSIDE'] = nside
 
         out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'], header=head)
         head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
