@@ -62,7 +62,7 @@ def fill_neighs_x_correlation(pix):
             neighs = sp.array(neighs)[w]
             d1.neighs = [d for d in neighs if d1.thid != d.thid and (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. >= z_cut_min+1 and (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. < z_cut_max+1 ]
 
-def cf(pix):
+def cf(pix,comm=None):
     xi = sp.zeros(np*nt)
     we = sp.zeros(np*nt)
     rp = sp.zeros(np*nt)
@@ -72,9 +72,8 @@ def cf(pix):
 
     for ipix in pix:
         for d1 in data[ipix]:
-            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)))
-            with lock:
-                counter.value += 1
+            
+            
             for d2 in d1.neighs:
                 ang = d1^d2
                 same_half_plate = (d1.plate == d2.plate) and\
@@ -91,7 +90,17 @@ def cf(pix):
                 z[:len(crp)]+=cz
                 nb[:len(cnb)]+=cnb.astype(int)
             setattr(d1,"neighs",None)
-
+            
+        if comm is None :
+            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)))
+            with lock:
+                counter.value += len(data[ipix])
+        else :
+            # need to do something here to get rank and size
+            print("rank #{} {}%".format(comm.rank,round(counter.value*comm.size*100./ndata,2)))
+            sys.stdout.flush()
+            with lock:
+                counter.value += len(data[ipix])
     w = we>0
     xi[w]/=we[w]
     rp[w]/=we[w]

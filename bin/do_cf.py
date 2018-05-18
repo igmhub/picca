@@ -14,12 +14,14 @@ import time
 from picca import constants, cf, utils, io
 from picca.data import delta
 
+comm = None
+
 def corr_func(p):
     if x_correlation:
         cf.fill_neighs_x_correlation(p)
     else:
         cf.fill_neighs(p)
-    tmp = cf.cf(p)
+    tmp = cf.cf(p,comm)
     return tmp
 
 if __name__ == '__main__':
@@ -194,7 +196,7 @@ if __name__ == '__main__':
             from_image=args.from_image,
             list_of_delta_files=rank_list_of_delta_files2) # this will read only those delta files
     
-    print('INFO rank {} read {} files'.format(rank,len(rank_list_of_delta_files)))
+    print('INFO rank {} read {} files; npix = {}'.format(rank,len(rank_list_of_delta_files),len(rank_data.keys())))
     sys.stdout.flush()
     
     # just make sure each rank has finished reading its files
@@ -216,23 +218,64 @@ if __name__ == '__main__':
         zmin_pix2 = rank_zmin_pix2
     else :
         # now gather and hope for the best ...
-        # this is quite awful
-        tmp_data = comm.allgather(rank_data)
+        # the following is quite awful 
+        
         data  = {}
-        if tmp_data is not None :
-            for tmp_rank_data in tmp_data :
-                for k in tmp_rank_data.keys() : data[k]=tmp_rank_data[k]
+        
+        # number of pixels in this rank
+        rank_npix = len(rank_data.keys())
+        # max number of pixels per rank
+        max_rank_npix = np.max(comm.allgather(rank_npix))
+        # max number of pixels to exchange with mpi4py without crashing (empirical, 7=ok , 23=not ok)
+        max_npix_to_avoid_crash = 20
+        nloop = max_rank_npix//max_npix_to_avoid_crash + (max_rank_npix%max_npix_to_avoid_crash>0)
+        
+        if rank==0 :
+            print("nloop of all gather = {}/{}+1 = {}".format(max_rank_npix,max_npix_to_avoid_crash,nloop))
+            sys.stdout.flush()
+
+        for loop in range(nloop) :
+            if rank==0 :
+                print("allgather iter {}/{}".format(loop+1,nloop))
+                sys.stdout.flush()
+            tmp_rank_data={}
+            for k in list(rank_data.keys())[loop::nloop] :
+                tmp_rank_data[k]=rank_data[k]
+            tmp_data = comm.allgather(tmp_rank_data)
+            if tmp_data is not None :
+                for tmp_rank_data in tmp_data :
+                    for k in tmp_rank_data.keys() : data[k]=tmp_rank_data[k]
         
         ndata = np.sum(comm.allgather(rank_ndata))
         zmin_pix  = np.min(comm.allgather(rank_zmin_pix))
         zmin_pix2 = np.min(comm.allgather(rank_zmin_pix2))
+
+
+        
         if x_correlation :
-            tmp_data = comm.allgather(rank_data2)
-            data2  = {}
-            if tmp_data is not None :
-                for tmp_rank_data in tmp_data :
-                    for k in tmp_rank_data.keys() : data2[k]=tmp_rank_data[k]
+            data2={}
+            # same
+            # number of pixels in this rank
+            rank_npix = len(rank_data2.keys())
+            # max number of pixels per rank
+            max_rank_npix = np.max(comm.allgather(rank_npix))
+            # max number of pixels to exchange with mpi4py without crashing (empirical, 7=ok , 23=not ok)
+            max_npix_to_avoid_crash = 20
+            nloop = max_rank_npix//max_npix_to_avoid_crash + (max_rank_npix%max_npix_to_avoid_crash>0)
+        
+            for loop in range(nloop) :
+                if rank==0 :
+                    print("allgather iter {}/{} (sec. data set)".format(loop+1,nloop))
+                    sys.stdout.flush()
+                tmp_rank_data={}
+                for k in list(rank_data2.keys())[loop::nloop] :
+                    tmp_rank_data[k]=rank_data2[k]
+                tmp_data = comm.allgather(tmp_rank_data)
+                if tmp_data is not None :
+                    for tmp_rank_data in tmp_data :
+                        for k in tmp_rank_data.keys() : data2[k]=tmp_rank_data[k]
             ndata2 = np.sum(comm.allgather(rank_ndata2))
+            
         else :
             data2  = None
             ndata2 = None
@@ -245,32 +288,6 @@ if __name__ == '__main__':
         # just make sure we indeed finished gathering data
         comm.barrier()
     
-    '''
-    if comm is not None: comm.Abort()
-    sys.exit(12)
-    
-    
-    
-    if comm is not None:
-        comm.Barrier()
-        t0 = MPI.Wtime()
-        data = comm.bcast(data, root=0)
-        ndata = comm.bcast(ndata, root=0)
-        x_correlation = comm.bcast(x_correlation, root=0)
-        if x_correlation:
-            data2 = comm.bcast(data2, root=0)
-            ndata2 = comm.bcast(ndata2, root=0)
-        
-        zmin_pix  = comm.bcast(zmin_pix, root=0)
-        zmin_pix2 = comm.bcast(zmin_pix2, root=0)
-        
-    
-        comm.Barrier()
-        if rank == 0:
-            print('INFO: Broadcasted input data in {} sec'.format(MPI.Wtime()-t0))
-            sys.stdout.flush()
-    '''
-
     cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix, zmin_pix2)
     
     cf.npix = len(data)
@@ -289,8 +306,8 @@ if __name__ == '__main__':
     cpu_data = sorted(cpu_data)
     cpu_data = [[p] for p in cpu_data]
 
-    #print('INFO: rank {} will compute cf in {} pixels'.format(rank, len(cpu_data)))
-    print('INFO: rank {} will compute cf in {} pixels: {}'.format(rank, len(cpu_data), cpu_data))
+    print('INFO: rank {} will compute cf in {} pixels'.format(rank, len(cpu_data)))
+    #print('INFO: rank {} will compute cf in {} pixels: {}'.format(rank, len(cpu_data), cpu_data))
     sys.stdout.flush()
     
     pool = Pool(processes=args.nproc)
