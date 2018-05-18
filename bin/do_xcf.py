@@ -4,7 +4,7 @@ import scipy as sp
 import fitsio
 import argparse
 import sys
-from multiprocessing import Pool,Lock,cpu_count,Value
+from multiprocessing import Pool,Lock,cpu_count,Value, current_process
 import time
 import pickle
 
@@ -14,7 +14,7 @@ from picca.data import forest
 import healpy
 
 def corr_func(p):
-    print('calling xcf on {} pixels and {} neighs'.format(len(p[0]), len(p[1])))
+    print('calling xcf on {} pixels and {} neighs in {}'.format(len(p[0]), len(p[1]), current_process().name))
     sys.stdout.flush()
     tmp = xcf.xcf(p[0], p[1], p[2])
     return tmp
@@ -213,6 +213,7 @@ if __name__ == '__main__':
         t0 = MPI.Wtime()
         ## broadcast deltas in chunks
         ## first send the pixels
+        '''
         pix = comm.bcast(list(dels.keys()), root=0)
         dels_tmp = {}
         for p in pix:
@@ -225,7 +226,8 @@ if __name__ == '__main__':
             dels_tmp[p] = dels[p]
 
         dels = dels_tmp
-        #dels = comm.bcast(dels, root=0)
+        '''
+        dels = comm.bcast(dels, root=0)
         ndels = comm.bcast(ndels, root=0)
         objs = comm.bcast(objs, root=0)
         zmin_pix = comm.bcast(zmin_pix, root=0)
