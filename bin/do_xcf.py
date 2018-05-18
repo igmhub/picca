@@ -264,11 +264,10 @@ if __name__ == '__main__':
     
     if comm is not None:
         cfs = comm.gather(cfs)
-        cpu_data = comm.gather(cpu_data)
-        print(len(cfs))
+        pix = comm.gather(pix)
         if rank == 0:
             cfs = [cf for l in cfs for cf in l]
-            cpu_data = [p for l in cpu_data for p in l]
+            pix = [p for l in pix for p in l]
 
     if rank == 0:
         cfs=sp.array(cfs)
