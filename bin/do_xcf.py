@@ -29,8 +29,11 @@ if __name__ == '__main__':
     parser.add_argument('--out', type = str, default = None, required=True,
                         help = 'output file name')
 
-    parser.add_argument('--in-dir', type = str, default = None, required=True,
-                        help = 'data directory')
+    parser.add_argument('--in-dir', type = str, default = None,
+            required=False, help = 'data directory')
+
+    parser.add_argument('--in-files', type = str, default = None,
+            required=False, help = 'data directory', nargs="*")
 
     parser.add_argument('--drq', type = str, default = None, required=True,
                         help = 'drq')
@@ -103,16 +106,6 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-#    xcf.rp_max = args.rp_max
-#    xcf.rp_min = args.rp_min
-#    xcf.z_cut_max = args.z_cut_max
-#    xcf.z_cut_min = args.z_cut_min
-#    xcf.rt_max = args.rt_max
-#    xcf.np = args.np
-#    xcf.nt = args.nt
-#    xcf.nside = args.nside
-#    xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
-
     rp_min = args.rp_min
     rp_max = args.rp_max
     rt_max = args.rt_max
@@ -146,6 +139,8 @@ if __name__ == '__main__':
         comm = MPI.COMM_WORLD
         rank = comm.rank
         size = comm.size
+        if args.in_files is not None:
+            args.in_files = args.in_files[rank::size]
  
     dels = {}
     ndels = 0
@@ -153,14 +148,16 @@ if __name__ == '__main__':
     zmax_pix = None
     zmin_obj = None
     objs = None
+    angmax = None
 
-    if rank == 0:
+    if rank == 0 or True:
         print('Starting io in rank 0\n')
         sys.stdout.flush()
         t0 = time.time()
-        dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, 
-                args.nside, lambda_abs,args.z_evol_del, args.z_ref, 
-                cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
+        dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir,
+                args.in_files, args.nside, lambda_abs,args.z_evol_del,
+                args.z_ref, cosmo=cosmo,nspec=args.nspec,
+                no_project=args.no_project,
                 from_image=args.from_image)
         print('done io in {}\n'.format(time.time()-t0))
         sys.stdout.flush()
@@ -199,11 +196,14 @@ if __name__ == '__main__':
         sys.stdout.flush()
 
         t0 = time.time()
-        ### Read objects
-        objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj,
-                args.z_max_obj, args.z_evol_obj, args.z_ref,cosmo)
-        print('read objects in {}\n'.format(time.time()-t0))
-        sys.stdout.flush()
+        ### Read objects only in rank 0, then broadcast
+        if rank == 0:
+            objs,zmin_obj = io.read_objects(args.drq, args.nside, 
+                    args.z_min_obj,args.z_max_obj, args.z_evol_obj, 
+                    args.z_ref,cosmo)
+            print('read objects in {}\n'.format(time.time()-t0))
+            sys.stdout.flush()
+            angmax = utils.compute_ang_max(cosmo,rt_max,zmin_pix,zmin_obj)
 
 
     ## broadcast to all nodes
@@ -227,18 +227,23 @@ if __name__ == '__main__':
 
         dels = dels_tmp
         '''
-        dels = comm.bcast(dels, root=0)
-        ndels = comm.bcast(ndels, root=0)
-        objs = comm.bcast(objs, root=0)
-        zmin_pix = comm.bcast(zmin_pix, root=0)
-        zmin_obj = comm.bcast(zmin_obj, root=0)
+        all_dels = comm.allgather(dels)
+        dels = {}
+        for de in all_dels:
+            for p in de:
+                if not p in dels:
+                    dels[p]=[]
+                dels[p] += de[p]
+
+        objs = comm.allgather(objs)
+        objs = objs[0]
+        angmax = comm.bcast(angmax, root=0)
         comm.Barrier()
         if rank == 0:
             print('INFO: broadcasted data in {}'.format(MPI.Wtime()-t0))
             sys.stdout.flush()
 
     ###
-    angmax = utils.compute_ang_max(cosmo,rt_max,zmin_pix,zmin_obj)
     config.angmax = angmax
 
     print("done, npix = {}".format(len(dels)))

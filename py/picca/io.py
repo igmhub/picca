@@ -600,7 +600,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
     return data
 
 
-def read_deltas(indir, nside, lambda_abs, alpha, zref, cosmo,
+def read_deltas(indir, infiles, nside, lambda_abs, alpha, zref, cosmo,
         nspec=None, no_project=False, from_image=None):
 
     '''
@@ -609,22 +609,24 @@ def read_deltas(indir, nside, lambda_abs, alpha, zref, cosmo,
     returns data,zmin_pix
     '''
 
-    fi = []
-    if from_image is None or len(from_image)==0:
-        if len(indir)>8 and indir[-8:]=='.fits.gz':
-            fi += glob.glob(indir)
-        elif len(indir)>5 and indir[-5:]=='.fits':
-            fi += glob.glob(indir)
-        else:
-            fi += glob.glob(indir+'/*.fits') + glob.glob(indir+'/*.fits.gz')
-    else:
-        for arg in from_image:
-            if len(arg)>8 and arg[-8:]=='.fits.gz':
-                fi += glob.glob(arg)
-            elif len(arg)>5 and arg[-5:]=='.fits':
-                fi += glob.glob(arg)
+    fi = infiles
+    if fi is None:
+        fi = []
+        if from_image is None or len(from_image)==0:
+            if len(indir)>8 and indir[-8:]=='.fits.gz':
+                fi += glob.glob(indir)
+            elif len(indir)>5 and indir[-5:]=='.fits':
+                fi += glob.glob(indir)
             else:
-                fi += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
+                fi += glob.glob(indir+'/*.fits') + glob.glob(indir+'/*.fits.gz')
+        else:
+            for arg in from_image:
+                if len(arg)>8 and arg[-8:]=='.fits.gz':
+                    fi += glob.glob(arg)
+                elif len(arg)>5 and arg[-5:]=='.fits':
+                    fi += glob.glob(arg)
+                else:
+                    fi += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
     fi = sorted(fi)
 
     dels = []
@@ -681,15 +683,14 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
     if pix.size==0:
         raise AssertionError()
     print("reading qsos")
+    sys.stdout.flush()
 
     upix = sp.unique(pix)
     for i,ipix in enumerate(upix):
-        print("\r{} of {}".format(i,len(upix)))
-        sys.stdout.flush()
         w=pix==ipix
         objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
         for q in objs[ipix]:
             q.we = ((1.+q.zqso)/(1.+zref))**(alpha-1.)
             q.r_comov = cosmo.r_comoving(q.zqso)
-
+   
     return objs,zqso.min()
