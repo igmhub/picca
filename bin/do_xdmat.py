@@ -5,13 +5,15 @@ from scipy import random
 import fitsio
 import argparse
 import sys
-from multiprocessing import Pool,Lock,cpu_count,Value
+from multiprocessing import Pool,Lock,cpu_count,Value, current_process
 
 from picca import constants, xcf, io, utils
+from picca.utils import Config, form_cpu_data
 
 def calc_dmat(p):
-    xcf.fill_neighs(p)
-    tmp = xcf.dmat(p)
+    print('calling xcf on {} pixels and {} neighs in {}'.format(len(p[0]), len(p[1]), current_process().name))
+    sys.stdout.flush()
+    tmp = xcf.dmat(p[0], p[1], p[2])
     return tmp
 
 if __name__ == '__main__':
@@ -24,8 +26,11 @@ if __name__ == '__main__':
     parser.add_argument('--drq', type = str, default = None, required=True,
                         help = 'drq')
 
-    parser.add_argument('--in-dir', type = str, default = None, required=True,
+    parser.add_argument('--in-dir', type = str, default = None, required=False,
                         help = 'data directory')
+
+    parser.add_argument('--in-files', type = str, default = None, required=False,
+                        help = 'data files', nargs="*")
 
     parser.add_argument('--rp-max', type = float, default = 200., required=False,
                         help = 'max rp [h^-1 Mpc]')
@@ -91,90 +96,94 @@ if __name__ == '__main__':
 
     print("nproc",args.nproc)
 
-    xcf.rp_max = args.rp_max
-    xcf.rp_min = args.rp_min
-    xcf.rt_max = args.rt_max
-    xcf.z_cut_max = args.z_cut_max
-    xcf.z_cut_min = args.z_cut_min
-    xcf.np = args.np
-    xcf.nt = args.nt
-    xcf.nside = args.nside
-    xcf.zref = args.z_ref
-    xcf.alpha = args.z_evol_del
-    xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
-    xcf.rej = args.rej
+    config = Config()
+    config.rp_max = args.rp_max
+    config.rp_min = args.rp_min
+    config.rt_max = args.rt_max
+    config.z_cut_max = args.z_cut_max
+    config.z_cut_min = args.z_cut_min
+    config.np = args.np
+    config.nt = args.nt
+    config.nside = args.nside
+    config.zref = args.z_ref
+    config.alpha = args.z_evol_del
+    config.lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    config.rej = args.rej
 
     cosmo = constants.cosmo(args.fid_Om)
 
     comm = None
     rank = 0 
     size = 1
+
+    dels = {}
+    objs = {}
+    angmax = None
     
     if args.mpi:
         from mpi4py import MPI
         comm = MPI.COMM_WORLD
         rank = comm.rank
         size = comm.size
+        if args.in_files is not None:
+            args.in_files = args.in_files[rank::size]
 
+    ### Read deltas
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir,
+            args.in_files, args.nside, config.lambda_abs, args.z_evol_del, 
+            args.z_ref, cosmo=cosmo,nspec=args.nspec)
+
+    print("rank {} read {} deltas".format(rank, ndels))
+
+    ### Find the redshift range
+    if args.z_min_obj is None:
+        dmin_pix = cosmo.r_comoving(zmin_pix)
+        dmin_obj = max(0.,dmin_pix+config.rp_min)
+        args.z_min_obj = cosmo.r_2_z(dmin_obj)
+
+    if args.z_max_obj is None:
+        dmax_pix = cosmo.r_comoving(zmax_pix)
+        dmax_obj = max(0.,dmax_pix+config.rp_max)
+        args.z_max_obj = cosmo.r_2_z(dmax_obj)
+
+    ### Read objects only in rank 0
     if rank == 0:
-        ### Read deltas
-        dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
-            args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec)
+        objs,zmin_obj = io.read_objects(args.drq, args.nside, 
+                args.z_min_obj, args.z_max_obj,
+                args.z_evol_obj, args.z_ref,cosmo)
+        if comm is not None:
+            objs = comm.allgather(objs)
+            objs = objs[0]
 
-        sys.stderr.write("\n")
-        print("done, npix = {}\n".format(len(dels)))
-
-        ### Find the redshift range
-        if (args.z_min_obj is None):
-            dmin_pix = cosmo.r_comoving(zmin_pix)
-            dmin_obj = max(0.,dmin_pix+xcf.rp_min)
-            args.z_min_obj = cosmo.r_2_z(dmin_obj)
-            sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
-        if (args.z_max_obj is None):
-            dmax_pix = cosmo.r_comoving(zmax_pix)
-            dmax_obj = max(0.,dmax_pix+xcf.rp_max)
-            args.z_max_obj = cosmo.r_2_z(dmax_obj)
-            sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
-
-        ### Read objects
-        objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
-                                args.z_evol_obj, args.z_ref,cosmo)
-        sys.stderr.write("\n")
-
+    angmax = utils.compute_ang_max(cosmo, config.rt_max, zmin_pix, zmin_obj)
+    ## now broadcast the data to all nodes
     if comm is not None:
-        dels = comm.bcast(dels, root=0)
-        ndels = comm.bcast(ndels, root=0)
-        objs = comm.bcast(objs, root=0)
-        z_min_pix = comm.bcast(z_min_pix, root=0)
-        z_min_obj = comm.bcast(z_min_obj, root=0)
+        all_dels = comm.allgather(dels)
+        dels = {}
+        for de in all_dels:
+            for p in de:
+                if not p in dels:
+                    dels[p] = []
+                dels[p] += de[p]
 
-    xcf.objs = objs
-    xcf.npix = len(dels)
-    xcf.dels = dels
-    xcf.ndels = ndels
-
+        angmax = comm.allgather(angmax)
+        angmax = max(angmax)
     ###
-    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
 
-    xcf.counter = Value('i',0)
+    config.angmax = angmax
 
-    xcf.lock = Lock()
-
-
-    cpu_data = list(dels.keys())[rank::size]
-    cpu_data = sorted(cpu_data)
-    cpu_data = [cpu_data[i::args.nproc] for i in range(args.nproc)]
+    pix, cpu_data = form_cpu_data(dels, objs, config, rank, size)
 
     random.seed(0)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,cpu_data)
+    dm = pool.map(calc_dmat, cpu_data)
     pool.close()
 
     dm = sp.array(dm)
-    wdm =dm[:,0].sum(axis=0)
-    npairs=dm[:,2].sum(axis=0)
-    npairs_used=dm[:,3].sum(axis=0)
-    dm=dm[:,1].sum(axis=0)
+    wdm = dm[:,0].sum(axis=0)
+    npairs = dm[:,2].sum(axis=0)
+    npairs_used = dm[:,3].sum(axis=0)
+    dm = dm[:,1].sum(axis=0)
 
     if comm is not None:
         dm = comm.gather(dm)
@@ -194,13 +203,13 @@ if __name__ == '__main__':
         out = fitsio.FITS(args.out,'rw',clobber=True)
         head = {}
         head['REJ']=args.rej
-        head['RPMAX']=xcf.rp_max
-        head['RPMIN']=xcf.rp_min
-        head['RTMAX']=xcf.rt_max
-        head['Z_CUT_MAX']=xcf.z_cut_max
-        head['Z_CUT_MIN']=xcf.z_cut_min
-        head['NT']=xcf.nt
-        head['NP']=xcf.np
+        head['RPMAX']=config.rp_max
+        head['RPMIN']=config.rp_min
+        head['RTMAX']=config.rt_max
+        head['Z_CUT_MAX']=config.z_cut_max
+        head['Z_CUT_MIN']=config.z_cut_min
+        head['NT']=config.nt
+        head['NP']=config.np
         head['NPROR']=npairs
         head['NPUSED']=npairs_used
 

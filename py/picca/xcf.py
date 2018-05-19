@@ -6,6 +6,7 @@ from numba import jit
 
 from picca import constants
 
+'''
 np = None
 nt = None
 rp_max = None
@@ -26,9 +27,9 @@ objs = None
 
 rej = None
 lock = None
-
 cosmo=None
 ang_correlation = None
+'''
 
 def fill_neighs(pix):
     for iipix,ipix in enumerate(pix):
@@ -67,9 +68,9 @@ def xcf(pix1, pix1_neighs, config):
             zqso = [q.zqso for q in pix2]
             we_qso = [q.we for q in pix2]
 
-            if ang_correlation:
+            if config.ang_correlation:
                 l_qso = [10.**q.ll for q in pix2]
-                cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
+                cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang, config)
             else:
                 rc_qso = [q.r_comov for q in pix2]
                 cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang, config)
@@ -96,7 +97,7 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang, config):
     rp_max = config.rp_max
     rt_max = config.rt_max
 
-    if ang_correlation:
+    if config.ang_correlation:
         rp = r1[:,None]/r2
         rt = ang*sp.ones_like(rp)
     else:
@@ -197,38 +198,48 @@ def fast_metal_grid(r1,w1,z2,r2,w2,ang,z1_metal,r1_metal):
     return cw,crp,crt,cz,cnb
 
 
-def dmat(pix):
+def dmat(pix, neighs, config):
+    np = config.np
+    nt = config.nt
+    angmax = config.angmax
+    rej = config.rej
 
     dm = sp.zeros(np*nt*nt*np)
     wdm = sp.zeros(np*nt)
 
     npairs = 0
     npairs_used = 0
-    for p in pix:
-        for d1 in dels[p]:
-            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)))
-            with lock:
-                counter.value += 1
-            r1 = d1.r_comov
-            w1 = d1.we
-            l1 = d1.ll
-            r = random.rand(len(d1.neighs))
+    for d in pix:
+        r1 = d.r_comov
+        w1 = d.we
+        l1 = d.ll
+        for qs in neighs:
+            ang = d^qs
+            w = ang < angmax
+            ang = ang[w]
+            qs = sp.array(qs)[w]
+            r = random.rand(len(qs))
+            npairs += len(qs)
             w=r>rej
-            if w.sum()==0:continue
-            npairs += len(d1.neighs)
-            npairs_used += w.sum()
-            neighs = d1.neighs[w]
-            ang = d1^neighs
-            r2 = [q.r_comov for q in neighs]
-            w2 = [q.we for q in neighs]
-            fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm)
-            for el in list(d1.__dict__.keys()):
-                setattr(d1,el,None)
+            sw = w.sum()
+            if sw==0:
+                continue
+            npairs_used += sw
+
+            r2 = [q.r_comov for q in qs]
+            w2 = [q.we for q in qs]
+            fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm,config)
 
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
 
 @jit
-def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
+def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm,config):
+    np = config.np
+    nt = config.nt
+    rp_min = config.rp_min
+    rp_max = config.rp_max
+    rt_max = config.rt_max
+
     rp = (r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)

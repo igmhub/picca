@@ -10,6 +10,7 @@ import pickle
 
 from picca import constants, xcf, io, prep_del, utils
 from picca.data import forest
+from picca.utils import form_cpu_data, Config
 
 import healpy
 
@@ -18,9 +19,6 @@ def corr_func(p):
     sys.stdout.flush()
     tmp = xcf.xcf(p[0], p[1], p[2])
     return tmp
-
-class Config(object):
-    pass
 
 if __name__ == '__main__':
 
@@ -115,8 +113,8 @@ if __name__ == '__main__':
     lambda_abs = constants.absorber_IGM[args.lambda_abs]
     z_cut_min = args.z_cut_min
     z_cut_max = args.z_cut_max
-
     rt_max = args.rt_max
+
     config = Config()
     config.rp_min = rp_min
     config.rp_max = rp_max
@@ -124,6 +122,7 @@ if __name__ == '__main__':
     config.np = np
     config.nt = nt
     config.nside = nside
+    config.ang_correlation = False
 
     cosmo = constants.cosmo(args.fid_Om)
 
@@ -143,90 +142,73 @@ if __name__ == '__main__':
             args.in_files = args.in_files[rank::size]
  
     dels = {}
-    ndels = 0
-    zmin_pix = None
-    zmax_pix = None
-    zmin_obj = None
-    objs = None
+    objs = {}
     angmax = None
+    zmin_obj = None
 
-    if rank == 0 or True:
-        print('Starting io in rank 0\n')
+    print('Starting io in rank {}'.format(rank))
+    sys.stdout.flush()
+    t0 = time.time()
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir,
+            args.in_files, args.nside, lambda_abs,args.z_evol_del,
+            args.z_ref, cosmo=cosmo,nspec=args.nspec,
+            no_project=args.no_project,
+            from_image=args.from_image)
+    print('done io in {}\n'.format(time.time()-t0))
+    sys.stdout.flush()
+
+    ### Remove <delta> vs. lambda_obs
+    if not args.no_remove_mean_lambda_obs:
+        forest.dll = None
+        for p in dels:
+            for d in dels[p]:
+                dll = sp.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
+                if forest.dll is None:
+                    forest.dll = dll
+                else:
+                    forest.dll = min(dll,forest.dll)
+        forest.lmin  = sp.log10( (zmin_pix+1.)*lambda_abs )-forest.dll/2.
+        forest.lmax  = sp.log10( (zmax_pix+1.)*lambda_abs )+forest.dll/2.
+        ll,st, wst   = prep_del.stack(dels,delta=True)
+        for p in dels:
+            for d in dels[p]:
+                bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+                d.de -= st[bins]
+
+    ### Find the redshift range
+    if args.z_min_obj is None:
+        dmin_pix = cosmo.r_comoving(zmin_pix)
+        dmin_obj = max(0.,dmin_pix+rp_min)
+        args.z_min_obj = cosmo.r_2_z(dmin_obj)
+        print("z_min_obj = {}".format(args.z_min_obj))
+    if args.z_max_obj is None:
+        dmax_pix = cosmo.r_comoving(zmax_pix)
+        dmax_obj = max(0.,dmax_pix+rp_max)
+        args.z_max_obj = cosmo.r_2_z(dmax_obj)
+        print("z_max_obj = {}".format(args.z_max_obj))
+
+    print('read deltas in {}'.format(time.time()-t0))
+    sys.stdout.flush()
+
+    t0 = time.time()
+    ### Read objects only in rank 0, then broadcast
+    if rank == 0:
+        objs,zmin_obj = io.read_objects(args.drq, args.nside, 
+                args.z_min_obj,args.z_max_obj, args.z_evol_obj, 
+                args.z_ref,cosmo)
+        print('read objects in {}\n'.format(time.time()-t0))
         sys.stdout.flush()
-        t0 = time.time()
-        dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir,
-                args.in_files, args.nside, lambda_abs,args.z_evol_del,
-                args.z_ref, cosmo=cosmo,nspec=args.nspec,
-                no_project=args.no_project,
-                from_image=args.from_image)
-        print('done io in {}\n'.format(time.time()-t0))
-        sys.stdout.flush()
-
-        ### Remove <delta> vs. lambda_obs
-        if not args.no_remove_mean_lambda_obs:
-            forest.dll = None
-            for p in dels:
-                for d in dels[p]:
-                    dll = sp.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
-                    if forest.dll is None:
-                        forest.dll = dll
-                    else:
-                        forest.dll = min(dll,forest.dll)
-            forest.lmin  = sp.log10( (zmin_pix+1.)*lambda_abs )-forest.dll/2.
-            forest.lmax  = sp.log10( (zmax_pix+1.)*lambda_abs )+forest.dll/2.
-            ll,st, wst   = prep_del.stack(dels,delta=True)
-            for p in dels:
-                for d in dels[p]:
-                    bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
-                    d.de -= st[bins]
-
-        ### Find the redshift range
-        if args.z_min_obj is None:
-            dmin_pix = cosmo.r_comoving(zmin_pix)
-            dmin_obj = max(0.,dmin_pix+rp_min)
-            args.z_min_obj = cosmo.r_2_z(dmin_obj)
-            print("z_min_obj = {}".format(args.z_min_obj))
-        if args.z_max_obj is None:
-            dmax_pix = cosmo.r_comoving(zmax_pix)
-            dmax_obj = max(0.,dmax_pix+rp_max)
-            args.z_max_obj = cosmo.r_2_z(dmax_obj)
-            print("z_max_obj = {}".format(args.z_max_obj))
-
-        print('read deltas in {}'.format(time.time()-t0))
-        sys.stdout.flush()
-
-        t0 = time.time()
-        ### Read objects only in rank 0, then broadcast
-        if rank == 0:
-            objs,zmin_obj = io.read_objects(args.drq, args.nside, 
-                    args.z_min_obj,args.z_max_obj, args.z_evol_obj, 
-                    args.z_ref,cosmo)
-            print('read objects in {}\n'.format(time.time()-t0))
-            sys.stdout.flush()
-            angmax = utils.compute_ang_max(cosmo,rt_max,zmin_pix,zmin_obj)
-
-
-    ## broadcast to all nodes
+    
     if comm is not None:
-        ## wait until rank 0 has read all the data
         comm.Barrier()
-        t0 = MPI.Wtime()
-        ## broadcast deltas in chunks
-        ## first send the pixels
-        '''
-        pix = comm.bcast(list(dels.keys()), root=0)
-        dels_tmp = {}
-        for p in pix:
-            if rank==0:
-                print('broadcasting {}'.format(p))
-                sys.stdout.flush()
-            if rank != 0:
-                dels[p] = None
-            dels[p] = comm.bcast(dels[p], root=0)
-            dels_tmp[p] = dels[p]
+        objs = comm.allgather(objs)
+        objs = objs[0]
+        zmin_obj = comm.bcast(zmin_obj, root=0)
 
-        dels = dels_tmp
-        '''
+        angmax = utils.compute_ang_max(cosmo,rt_max,zmin_pix,zmin_obj)
+
+        t0 = MPI.Wtime()
+        comm.Barrier()
         all_dels = comm.allgather(dels)
         dels = {}
         for de in all_dels:
@@ -235,9 +217,9 @@ if __name__ == '__main__':
                     dels[p]=[]
                 dels[p] += de[p]
 
-        objs = comm.allgather(objs)
-        objs = objs[0]
-        angmax = comm.bcast(angmax, root=0)
+        angmax = comm.allgather(angmax)
+        angmax = max(angmax)
+
         comm.Barrier()
         if rank == 0:
             print('INFO: broadcasted data in {}'.format(MPI.Wtime()-t0))
@@ -249,23 +231,12 @@ if __name__ == '__main__':
     print("done, npix = {}".format(len(dels)))
     sys.stdout.flush()
 
-    pix = list(dels.keys())[rank::size]
-    pix = sorted(pix)
+    pix, cpu_data = form_cpu_data(dels, objs, config, rank, size)
 
-    neighs = []
-    for p in pix:
-        center = healpy.pix2vec(args.nside,p)
-        neigh = healpy.query_disc(args.nside, center, angmax)
-        neigh = [objs[p] for p in neigh if p in objs]
-        neighs.append(neigh)
-    
-    data_pix = [dels[p] for p in pix]
-    cpu_data = list(zip(data_pix, neighs, [config]*len(pix)))
     nproc = min(args.nproc, len(pix))
     print('starting pool in rank {} with {} pixels'.format(rank, len(pix)))
     pool = Pool(processes=nproc)
     cfs = pool.map(corr_func, cpu_data)
-#    cfs = list(map(corr_func, cpu_data))
     print('done pool in rank {}'.format(rank))
     pool.close()
     

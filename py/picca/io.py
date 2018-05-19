@@ -631,9 +631,7 @@ def read_deltas(indir, infiles, nside, lambda_abs, alpha, zref, cosmo,
 
     dels = []
     ndata = 0
-    for i,f in enumerate(fi):
-        print("\rread {} of {} {}".format(i,len(fi),ndata))
-        sys.stdout.flush()
+    for f in fi:
         if from_image is None:
             hdus = fitsio.FITS(f)
             dels += [delta.from_fitsio(h) for h in hdus[1:]]
@@ -642,6 +640,7 @@ def read_deltas(indir, infiles, nside, lambda_abs, alpha, zref, cosmo,
             dels += delta.from_image(f)
 
         ndata = len(dels)
+        print('read {} deltas from {}'.format(ndata, f))
         if not nspec is None:
             if ndata>nspec:break
 

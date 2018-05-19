@@ -1,6 +1,7 @@
 import scipy as sp
 import sys
 import fitsio
+import healpy
 
 def cov(da,we):
 
@@ -186,3 +187,24 @@ def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
         angmax = 2.*sp.arcsin(rt_max/(rmin1+rmin2))
 
     return angmax
+
+## define a dummy class to pass config info
+## to the cf functions
+class Config(object):
+    pass
+
+def form_cpu_data(dels, objs, config, rank, size):
+    pix = list(dels.keys())[rank::size]
+    pix = sorted(pix)
+
+    neighs = []
+    for p in pix:
+        center = healpy.pix2vec(config.nside,p)
+        neigh = healpy.query_disc(config.nside, center, config.angmax)
+        neigh = [objs[p] for p in neigh if p in objs]
+        neighs.append(neigh)
+
+    data_pix = [dels[p] for p in pix]
+    cpu_data = list(zip(data_pix, neighs, [config]*len(pix)))
+
+    return pix, cpu_data
