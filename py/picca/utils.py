@@ -172,16 +172,30 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
     out.close()
 
     return
-def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,dll=3.e-4,nspec=None):
-    '''
-    Convert desi transmission files to picca delta files
-    indir: path to transmission files directory
-    outdir: path to write delta files directory
-    lObs_min, lObs_max = 3600.,5500.: observed wavelength range in Angstrom
-    lRF_min, lRF_max = 1040.,1200.: Rest frame wavelength range in Angstrom
-    dll: size of the bins in log lambda
-    nspec: number of spectra
-    '''
+def desi_convert_transmission_to_delta_files(zcat,indir,outdir,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,dll=3.e-4,nspec=None):
+    """Convert desi transmission files to picca delta files
+
+    Args:
+        zcat (str): path to the catalog of object to extract the transmission from
+        indir (str): path to transmission files directory
+        outdir (str): path to write delta files directory
+        lObs_min (float) = 3600.: min observed wavelength in Angstrom
+        lObs_max (float) = 5500.: max observed wavelength in Angstrom
+        lRF_min (float) = 1040.: min Rest Frame wavelength in Angstrom
+        lRF_max (float) = 1200.: max Rest Frame wavelength in Angstrom
+        dll (float) = 3.e-4: size of the bins in log lambda
+        nspec (int) = None: number of spectra, if 'None' use all
+
+    Returns:
+        None
+
+    """
+
+    ### Catalog of objects
+    h = fitsio.FITS(zcat)
+    zcat_thid = h[1]['TARGETID'][:]
+    zcat_zqso = h[1]['Z'][:]
+    h.close()
 
     ### List of transmission files
     if len(indir)>8 and indir[-8:]=='.fits.gz':
@@ -205,7 +219,10 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
     for nf, f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in list(deltas.keys())])))
         h = fitsio.FITS(f)
+        ra = h['METADATA']['RA'][:]*sp.pi/180.
+        dec = h['METADATA']['DEC'][:]*sp.pi/180.
         z = h['METADATA']['Z'][:]
+        thid = h['METADATA']['MOCKID'][:]
         ll = sp.log10(h['WAVELENGTH'].read())
         trans = h['TRANSMISSION'].read()
         nObj = z.size
@@ -222,11 +239,15 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
         w[ (lObs>=lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
         nbPixel = sp.sum(w,axis=1)
         cut = nbPixel>=50
+        cut &= sp.in1d(thid,zcat_thid)
+        if cut.sum()==0:
+            h.close()
+            continue
 
-        ra = (h['METADATA']['RA'][:]*sp.pi/180.)[cut]
-        dec = (h['METADATA']['DEC'][:]*sp.pi/180.)[cut]
+        ra = ra[cut]
+        dec = dec[cut]
         z = z[cut]
-        thid = h['METADATA']['MOCKID'][:][cut]
+        thid = thid[cut]
         trans = trans[cut,:]
         w = w[cut,:]
         nObj = z.size
@@ -251,6 +272,8 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
             civ = civ[ww]
             deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
         if not nspec is None and sp.sum([ len(deltas[p]) for p in list(deltas.keys())])>=nspec: break
+
+    print('\n')
 
     ### Get stacked transmission
     w = n_stack>0.
@@ -280,6 +303,8 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
             names = ['LOGLAM','DELTA','WEIGHT','CONT']
             out.write(cols,names=names,header=hd,extname=str(d.thid))
         out.close()
+
+    print('\n')
 
     return
 def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
