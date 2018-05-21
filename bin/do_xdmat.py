@@ -9,8 +9,11 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, xcf, io, utils
 
-def calc_dmat(p):
+def calc_dmat(args):
+    p = args[0]
+    seed = args[1]
     xcf.fill_neighs(p)
+    sp.random.seed(seed)
     tmp = xcf.dmat(p)
     return tmp
 
@@ -81,6 +84,9 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
+    parser.add_argument('--seed', type=int,default=0, required=False,
+                    help = 'seed for random numbers')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -147,9 +153,14 @@ if __name__ == '__main__':
             cpu_data[ip] = []
         cpu_data[ip].append(p)
 
-    random.seed(0)
+    random.seed(args.seed)
+    table_of_seed_for_processes = sp.unique((100000.*sp.random.rand(10*len(cpu_data))).astype(int))
+
+
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
+    values = sorted(list(cpu_data.values()))
+    to_send = [ (v,table_of_seed_for_processes[j]) for j, v in enumerate(values) ]
+    dm = pool.map(calc_dmat,to_send)
     pool.close()
     dm = sp.array(dm)
     wdm =dm[:,0].sum(axis=0)
