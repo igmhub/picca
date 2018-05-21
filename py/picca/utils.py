@@ -231,7 +231,7 @@ def desi_convert_transmission_to_delta_files(zcat,indir,outdir,lObs_min=3600.,lO
         ll = sp.log10(h[2].read())
         trans = h[3].read()
         nObj = z.size
-        pixnum = h[1].read_header()['PIXNUM']
+        pixnum = f.split('-')[-1].split('.')[0]
 
         if trans.shape[0]!=nObj:
             trans = trans.transpose()
