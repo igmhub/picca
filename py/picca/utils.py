@@ -194,6 +194,9 @@ def desi_convert_transmission_to_delta_files(zcat,indir,outdir,lObs_min=3600.,lO
     ### Catalog of objects
     h = fitsio.FITS(zcat)
     zcat_thid = h[1]['TARGETID'][:]
+    w = h[1]['Z'][:]>max(0.,lObs_min/lRF_max -1.)
+    w &= h[1]['Z'][:]<max(0.,lObs_max/lRF_min -1.)
+    zcat_thid = zcat_thid[w]
     h.close()
 
     ### List of transmission files
