@@ -221,17 +221,17 @@ def desi_convert_transmission_to_delta_files(zcat,indir,outdir,lObs_min=3600.,lO
     for nf, f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in list(deltas.keys())])))
         h = fitsio.FITS(f)
-        thid = h['METADATA']['MOCKID'][:]
+        thid = h[1]['MOCKID'][:]
         if sp.in1d(thid,zcat_thid).sum()==0:
             h.close()
             continue
-        ra = h['METADATA']['RA'][:]*sp.pi/180.
-        dec = h['METADATA']['DEC'][:]*sp.pi/180.
-        z = h['METADATA']['Z'][:]
-        ll = sp.log10(h['WAVELENGTH'].read())
-        trans = h['TRANSMISSION'].read()
+        ra = h[1]['RA'][:]*sp.pi/180.
+        dec = h[1]['DEC'][:]*sp.pi/180.
+        z = h[1]['Z'][:]
+        ll = sp.log10(h[2].read())
+        trans = h[3].read()
         nObj = z.size
-        pixnum = h['METADATA'].read_header()['PIXNUM']
+        pixnum = h[1].read_header()['PIXNUM']
 
         if trans.shape[0]!=nObj:
             trans = trans.transpose()
