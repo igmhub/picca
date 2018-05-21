@@ -10,8 +10,11 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, xcf, io, utils
 
-def calc_metal_xdmat(abs_igm,p):
+def calc_metal_xdmat(abs_igm,args):
+    p = args[0]
+    seed = args[1]
     xcf.fill_neighs(p)
+    sp.random.seed(seed)
     tmp = xcf.metal_dmat(p,abs_igm=abs_igm)
     return tmp
 
@@ -82,11 +85,14 @@ if __name__ == '__main__':
     parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
                         help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift smaller than z-cut-min')
 
+    parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs="*",
+                    help = 'list of metals')
+
     parser.add_argument('--nspec', type=int,default=None, required=False,
                     help = 'maximum spectra to read')
 
-    parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs="*",
-                    help = 'list of metals')
+    parser.add_argument('--seed', type=int,default=0, required=False,
+                    help = 'seed for random numbers')
 
     args = parser.parse_args()
 
@@ -148,7 +154,7 @@ if __name__ == '__main__':
             cpu_data[ip] = []
         cpu_data[ip].append(p)
 
-    random.seed(0)
+    random.seed(args.seed)
 
     dm_all=[]
     wdm_all=[]
@@ -164,9 +170,14 @@ if __name__ == '__main__':
         xcf.counter.value=0
         f=partial(calc_metal_xdmat,abs_igm)
         sys.stderr.write("\n")
+
         pool = Pool(processes=args.nproc)
-        dm = pool.map(f,sorted(list(cpu_data.values())))
+        values = sorted(list(cpu_data.values()))
+        table_of_seed_for_processes = sp.unique((100000.*sp.random.rand(10*len(cpu_data))).astype(int))
+        to_send = [ (v,table_of_seed_for_processes[j]) for j, v in enumerate(values) ]
+        dm = pool.map(f,to_send)
         pool.close()
+
         dm = sp.array(dm)
         wdm =dm[:,0].sum(axis=0)
         rp = dm[:,2].sum(axis=0)

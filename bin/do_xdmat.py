@@ -154,11 +154,10 @@ if __name__ == '__main__':
         cpu_data[ip].append(p)
 
     random.seed(args.seed)
-    table_of_seed_for_processes = sp.unique((100000.*sp.random.rand(10*len(cpu_data))).astype(int))
-
 
     pool = Pool(processes=args.nproc)
     values = sorted(list(cpu_data.values()))
+    table_of_seed_for_processes = sp.unique((100000.*sp.random.rand(10*len(cpu_data))).astype(int))
     to_send = [ (v,table_of_seed_for_processes[j]) for j, v in enumerate(values) ]
     dm = pool.map(calc_dmat,to_send)
     pool.close()
