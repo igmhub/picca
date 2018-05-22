@@ -128,47 +128,67 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
     return
 
-def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
-    '''
-    Transform a desi truth.fits file and a
-    desi targets.fits into a drq like file
+def desi_from_ztarget_to_drq(zcat,drq,spectype='QSO',downsampling_z_cut=None, downsampling_nb=None):
+    """Transforms a catalog of object in desi format to a catalog in DRQ format
 
-    '''
+    Args:
+        zcat (str): path to the catalog of object
+        drq (str): path to write the DRQ catalog
+        spectype (str): Spectype of the object, can be any spectype
+            in desi catalog. Ex: 'STAR', 'GALAXY', 'QSO'
+        downsampling_z_cut (float) : Minimum redshift to downsample
+            the data, if 'None' no downsampling
+        downsampling_nb (int) : Target number of object above redshift
+            downsampling-z-cut, if 'None' no downsampling
 
-    vac = fitsio.FITS(ztarget)
+    Returns:
+        None
+
+    """
 
     ## Info of the primary observation
-    thid  = vac[1]["TARGETID"][:]
-    ra    = vac[1]["RA"][:]
-    dec   = vac[1]["DEC"][:]
-    zqso  = vac[1]["Z"][:]
-    plate = 1+sp.arange(thid.size)
-    mjd   = 1+sp.arange(thid.size)
-    fid   = 1+sp.arange(thid.size)
-    sptype = sp.char.strip(vac[1]["SPECTYPE"][:].astype(str))
+    vac = fitsio.FITS(ztarget)
+    sptype = sp.char.strip(vac[1]['SPECTYPE'][:].astype(str))
 
     ## Sanity
-    print(" start               : nb object in cat = {}".format(ra.size) )
-    w = (vac[1]["ZWARN"][:]==0.)
-    print(" and zwarn==0        : nb object in cat = {}".format(ra[w].size) )
-    w = w & (sptype==spectype)
-    print(" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) )
+    w = sp.ones(ra.size).astype(bool)
+    print(' start               : nb object in cat = {}'.format(w.sum()) )
+    w &= vac[1]['ZWARN'][:]==0.
+    print(' and zwarn==0        : nb object in cat = {}'.format(w.sum()) )
+    w &= sptype==spectype
+    print(' and spectype=={}    : nb object in cat = {}'.format(spectype,w.sum()) )
 
-    ra    = ra[w]
-    dec   = dec[w]
-    zqso  = zqso[w]
-    thid  = thid[w]
-    plate = plate[w]
-    mjd   = mjd[w]
-    fid   = fid[w]
+    ra = vac[1]['RA'][w]
+    dec = vac[1]['DEC'][w]
+    zqso = vac[1]['Z'][w]
+    thid = vac[1]['TARGETID'][:][w]
+    plate = thid.copy()
+    mjd = thid.copy()
+    fid = thid.copy()
 
     vac.close()
 
+    ###
+    if not downsampling_z_cut is None and not downsampling_nb is None:
+        if ra.size<downsampling_nb:
+            print('WARNING:: Trying to downsample, when nb cat = {} and nb downsampling = {}'.format(ra.size,downsampling_nb) )
+        else:
+            select_fraction = downsampling_nb/ra[zqso>downsampling_z_cut].size
+            sp.random.seed(0)
+            select = sp.random.choice(sp.arange(ra.size),size=ra.size*select_fraction,replace=False)
+            ra = ra[select]
+            dec = dec[select]
+            zqso = zqso[select]
+            thid = thid[select]
+            plate = plate[select]
+            mjd = mjd[select]
+            fid = fid[select]
+
     ### Save
     out = fitsio.FITS(drq,'rw',clobber=True)
-    cols=[ra,dec,thid,plate,mjd,fid,zqso]
-    names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
-    out.write(cols,names=names)
+    cols = [ra,dec,thid,plate,mjd,fid,zqso]
+    names = ['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
+    out.write(cols, names=names)
     out.close()
 
     return
