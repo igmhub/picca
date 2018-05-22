@@ -227,7 +227,7 @@ if __name__ == '__main__':
         # max number of pixels per rank
         max_rank_npix = np.max(comm.allgather(rank_npix))
         # max number of pixels to exchange with mpi4py without crashing (empirical, 7=ok , 23=not ok)
-        max_npix_to_avoid_crash = 20
+        max_npix_to_avoid_crash = 5
         nloop = max_rank_npix//max_npix_to_avoid_crash + (max_rank_npix%max_npix_to_avoid_crash>0)
         
         if rank==0 :
@@ -260,7 +260,7 @@ if __name__ == '__main__':
             # max number of pixels per rank
             max_rank_npix = np.max(comm.allgather(rank_npix))
             # max number of pixels to exchange with mpi4py without crashing (empirical, 7=ok , 23=not ok)
-            max_npix_to_avoid_crash = 20
+            max_npix_to_avoid_crash = 5
             nloop = max_rank_npix//max_npix_to_avoid_crash + (max_rank_npix%max_npix_to_avoid_crash>0)
         
             for loop in range(nloop) :
