@@ -10,10 +10,10 @@ if __name__ == '__main__':
             description='Script to convert a catalog of object in desi format to DRQ format')
 
     parser.add_argument('--in-object-cat', type = str, default = None, required=True,
-            help = 'In path to a catalog of objects from desi')
+            help = 'Input path to a catalog of objects from desi')
 
     parser.add_argument('--out-object-cat', type = str, default = None, required=True,
-            help = 'Out path to a catalog of objects in DRQ format')
+            help = 'Output path to a catalog of objects in DRQ format')
 
     parser.add_argument('--spectype', type = str, default = 'QSO', required=False,
             help = "Spectype of the object, can be any spectype in desi catalog. Ex: 'STAR', 'GALAXY', 'QSO'")
