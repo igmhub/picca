@@ -161,9 +161,6 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
     dec = vac[1]['DEC'][:][w]
     zqso = vac[1]['Z'][:][w]
     thid = vac[1]['TARGETID'][:][w]
-    plate = thid.copy()
-    mjd = thid.copy()
-    fid = thid.copy()
 
     vac.close()
 
@@ -179,14 +176,11 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
             dec = dec[select]
             zqso = zqso[select]
             thid = thid[select]
-            plate = plate[select]
-            mjd = mjd[select]
-            fid = fid[select]
             print(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(ra.size, downsampling_z_cut, (zqso>downsampling_z_cut).sum()) )
 
     ### Save
     out = fitsio.FITS(drq,'rw',clobber=True)
-    cols = [ra,dec,thid,plate,mjd,fid,zqso]
+    cols = [ra,dec,thid,thid,thid,thid,zqso]
     names = ['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
     out.write(cols, names=names)
     out.close()
