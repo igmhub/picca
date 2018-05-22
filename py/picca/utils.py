@@ -173,7 +173,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
         if ra.size<downsampling_nb:
             print('WARNING:: Trying to downsample, when nb cat = {} and nb downsampling = {}'.format(ra.size,downsampling_nb) )
         else:
-            select_fraction = downsampling_nb/ra[zqso>downsampling_z_cut].size
+            select_fraction = downsampling_nb/(zqso>downsampling_z_cut).sum()
             sp.random.seed(0)
             select = sp.random.choice(sp.arange(ra.size),size=int(ra.size*select_fraction),replace=False)
             ra = ra[select]
@@ -183,6 +183,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
             plate = plate[select]
             mjd = mjd[select]
             fid = fid[select]
+            print(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(ra.size, downsampling_z_cut, (zqso>downsampling_z_cut).sum()) )
 
     ### Save
     out = fitsio.FITS(drq,'rw',clobber=True)
