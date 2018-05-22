@@ -126,7 +126,7 @@ if __name__ == '__main__':
 #   Create root file
     if (args.out_format=='root') :
         from ROOT import TCanvas, TH1D, TFile, TTree, TProfile2D, TProfile
-        storeFile = TFile("Testpicca.root","RECREATE","PK 1D studies studies");
+        storeFile = TFile(args.out_dir+"/Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
         zqso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
@@ -168,11 +168,8 @@ if __name__ == '__main__':
             dels = [delta.from_ascii(line) for line in ascii_file]
 
         ndata+=len(dels)
-        if (args.out_format=='fits') :
-            if i == 96: print(96, fil)
-            if i == 211: print(211, fil)
-            out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
         print ("\n ndata =  ",ndata)
+        out = None
 
         # loop over deltas
         for d in dels:
@@ -226,6 +223,8 @@ if __name__ == '__main__':
                     Pk = (Pk_raw - Pk_diff)/cor_reso
                 elif (args.noise_estimate=='mean_diff' or args.noise_estimate=='mean_rebin_diff'):
                     selection = (k>0) & (k<0.02)
+                    if (args.noise_estimate=='mean_rebin_diff'):
+                        selection = (k>0.003) & (k<0.02)
                     Pk_mean_diff = sum(Pk_diff[selection])/float(len(Pk_diff[selection]))
                     Pk = (Pk_raw - Pk_mean_diff)/cor_reso
 
@@ -276,8 +275,12 @@ if __name__ == '__main__':
                     cols=[k,Pk_raw,Pk_noise,Pk_diff,cor_reso,Pk]
                     names=['k','Pk_raw','Pk_noise','Pk_diff','cor_reso','Pk']
 
-                    out.write(cols,names=names,header=hd)
-        if (args.out_format=='fits'):
+                    try:
+                        out.write(cols,names=names,header=hd)
+                    except AttributeError:
+                        out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
+                        out.write(cols,names=names,header=hd)
+        if (args.out_format=='fits' and out is not None):
             out.close()
 
 # Store root file results
@@ -286,5 +289,3 @@ if __name__ == '__main__':
 
 
     print ("all done ")
-
-

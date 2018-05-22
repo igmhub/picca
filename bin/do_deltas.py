@@ -231,6 +231,7 @@ if __name__ == '__main__':
     ### Correct for DLAs
     if not args.dla_vac is None:
         print("adding dlas")
+        sp.random.seed(0)
         dlas = io.read_dlas(args.dla_vac)
         nb_dla_in_forest = 0
         for p in data:
@@ -407,11 +408,6 @@ if __name__ == '__main__':
                     cols=[d.ll,d.de,d.we,d.co]
                     names=['LOGLAM','DELTA','WEIGHT','CONT']
 
-                out.write(cols,names=names,header=hd)
+                out.write(cols,names=names,header=hd,extname=str(d.thid))
 
             out.close()
-
-
-
-
-
