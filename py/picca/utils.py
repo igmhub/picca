@@ -213,7 +213,10 @@ def desi_convert_transmission_to_delta_files(zcat,indir,outdir,lObs_min=3600.,lO
 
     ### Catalog of objects
     h = fitsio.FITS(zcat)
-    zcat_thid = h[1]['TARGETID'][:]
+    if 'TARGETID' in h[1].read_header():
+        zcat_thid = h[1]['TARGETID'][:]
+    elif 'THING_ID' in h[1].read_header():
+        zcat_thid = h[1]['THING_ID'][:]
     w = h[1]['Z'][:]>max(0.,lObs_min/lRF_max -1.)
     w &= h[1]['Z'][:]<max(0.,lObs_max/lRF_min -1.)
     zcat_thid = zcat_thid[w]
