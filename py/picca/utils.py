@@ -151,9 +151,8 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
     sptype = sp.char.strip(vac[1]['SPECTYPE'][:].astype(str))
 
     ## Sanity
-    w = sp.ones(sptype.size).astype(bool)
-    print(' start               : nb object in cat = {}'.format(w.sum()) )
-    w &= vac[1]['ZWARN'][:]==0.
+    print(' start               : nb object in cat = {}'.format(sptype.size) )
+    w = vac[1]['ZWARN'][:]==0.
     print(' and zwarn==0        : nb object in cat = {}'.format(w.sum()) )
     w &= sptype==spectype
     print(' and spectype=={}    : nb object in cat = {}'.format(spectype,w.sum()) )
