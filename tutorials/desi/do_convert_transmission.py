@@ -7,7 +7,7 @@ from picca import utils
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            description='Script to convert noisless transmission files to delta picca files')
+            description='Script to convert noiseless transmission files to delta picca files')
 
     parser.add_argument('--object-cat', type = str, default = None, required=True,
             help = 'path to a catalog of objects to get the transmission from')
@@ -34,7 +34,7 @@ if __name__ == '__main__':
             help='Size of the rebined pixels in log lambda')
 
     parser.add_argument('--nspec',type = int,default=None,required=False,
-            help='number of spectra to fit')
+            help="number of spectra to fit, if None then run on all files")
 
     args = parser.parse_args()
 
