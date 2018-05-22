@@ -128,7 +128,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
     return
 
-def desi_from_ztarget_to_drq(zcat,drq,spectype='QSO',downsampling_z_cut=None, downsampling_nb=None):
+def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None, downsampling_nb=None):
     """Transforms a catalog of object in desi format to a catalog in DRQ format
 
     Args:
@@ -151,16 +151,16 @@ def desi_from_ztarget_to_drq(zcat,drq,spectype='QSO',downsampling_z_cut=None, do
     sptype = sp.char.strip(vac[1]['SPECTYPE'][:].astype(str))
 
     ## Sanity
-    w = sp.ones(ra.size).astype(bool)
+    w = sp.ones(sptype.size).astype(bool)
     print(' start               : nb object in cat = {}'.format(w.sum()) )
     w &= vac[1]['ZWARN'][:]==0.
     print(' and zwarn==0        : nb object in cat = {}'.format(w.sum()) )
     w &= sptype==spectype
     print(' and spectype=={}    : nb object in cat = {}'.format(spectype,w.sum()) )
 
-    ra = vac[1]['RA'][w]
-    dec = vac[1]['DEC'][w]
-    zqso = vac[1]['Z'][w]
+    ra = vac[1]['RA'][:][w]
+    dec = vac[1]['DEC'][:][w]
+    zqso = vac[1]['Z'][:][w]
     thid = vac[1]['TARGETID'][:][w]
     plate = thid.copy()
     mjd = thid.copy()
@@ -175,7 +175,7 @@ def desi_from_ztarget_to_drq(zcat,drq,spectype='QSO',downsampling_z_cut=None, do
         else:
             select_fraction = downsampling_nb/ra[zqso>downsampling_z_cut].size
             sp.random.seed(0)
-            select = sp.random.choice(sp.arange(ra.size),size=ra.size*select_fraction,replace=False)
+            select = sp.random.choice(sp.arange(ra.size),size=int(ra.size*select_fraction),replace=False)
             ra = ra[select]
             dec = dec[select]
             zqso = zqso[select]
