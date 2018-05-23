@@ -81,19 +81,19 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     print(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
 
     thid = vac[1]["TARGETID"][:][w]
-    zqso = vac[1]["TRUEZ"][:][w]
+    zqso = vac[1]["TRUEZ"][:][w].astype('float64')
     vac.close()
     ra = sp.zeros(thid.size)
     dec = sp.zeros(thid.size)
-    plate = 1+sp.arange(thid.size)
-    mjd = 1+sp.arange(thid.size)
-    fid = 1+sp.arange(thid.size)
+    plate = thid
+    mjd = thid
+    fid = thid
 
     ### Get RA and DEC from targets
     vac = fitsio.FITS(targets)
     thidTargets = vac[1]["TARGETID"][:]
-    raTargets = vac[1]["RA"][:]
-    decTargets = vac[1]["DEC"][:]
+    raTargets = vac[1]["RA"][:].astype('float64')
+    decTargets = vac[1]["DEC"][:].astype('float64')
     vac.close()
 
     from_TARGETID_to_idx = {}
@@ -157,9 +157,9 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
     w &= sptype==spectype
     print(' and spectype=={}    : nb object in cat = {}'.format(spectype,w.sum()) )
 
-    ra = vac[1]['RA'][:][w]
-    dec = vac[1]['DEC'][:][w]
-    zqso = vac[1]['Z'][:][w]
+    ra = vac[1]['RA'][:][w].astype('float64')
+    dec = vac[1]['DEC'][:][w].astype('float64')
+    zqso = vac[1]['Z'][:][w].astype('float64')
     thid = vac[1]['TARGETID'][:][w]
 
     vac.close()
@@ -243,9 +243,9 @@ def desi_convert_transmission_to_delta_files(zcat,indir,outdir,lObs_min=3600.,lO
         if sp.in1d(thid,zcat_thid).sum()==0:
             h.close()
             continue
-        ra = h[1]['RA'][:]*sp.pi/180.
-        dec = h[1]['DEC'][:]*sp.pi/180.
-        z = h[1]['Z'][:]
+        ra = h[1]['RA'][:].astype('float64')*sp.pi/180.
+        dec = h[1]['DEC'][:].astype('float64')*sp.pi/180.
+        z = h[1]['Z'][:].astype('float64')
         ll = sp.log10(h[2].read())
         trans = h[3].read()
         nObj = z.size
