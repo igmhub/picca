@@ -212,10 +212,11 @@ if __name__ == '__main__':
     if comm is None :
         data  = rank_data
         ndata = rank_ndata
-        data2  = rank_data2
-        ndata2 = rank_ndata2
         zmin_pix  = rank_zmin_pix
-        zmin_pix2 = rank_zmin_pix2
+        if x_correlation:
+            ndata2 = rank_ndata2
+            data2  = rank_data2
+            zmin_pix2 = rank_zmin_pix2
     else :
         # now gather and hope for the best ...
         # the following is quite awful 
