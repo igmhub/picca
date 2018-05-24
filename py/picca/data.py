@@ -33,24 +33,24 @@ class qso:
             z = sp.array([d.zcart for d in data])
 
             cos = x*self.xcart+y*self.ycart+z*self.zcart
-            w = cos>1.
+            w = cos>=1.
             if w.sum()!=0:
-                print('WARNING: {} pairs have cosinus>1.'.format(w.sum()))
+                print('WARNING: {} pairs have cosinus>=1.'.format(w.sum()))
                 cos[w] = 1.
-            w = cos<-1.
+            w = cos<=-1.
             if w.sum()!=0:
-                print('WARNING: {} pairs have cosinus<-1.'.format(w.sum()))
+                print('WARNING: {} pairs have cosinus<=-1.'.format(w.sum()))
                 cos[w] = -1.
         except:
             x = data.xcart
             y = data.ycart
             z = data.zcart
             cos = x*self.xcart+y*self.ycart+z*self.zcart
-            if cos>1.:
-                print('WARNING: 1 pair has cosinus>1.')
+            if cos>=1.:
+                print('WARNING: 1 pair has cosinus>=1.')
                 cos = 1.
-            elif cos<-1.:
-                print('WARNING: 1 pair has cosinus<-1.')
+            elif cos<=-1.:
+                print('WARNING: 1 pair has cosinus<=-1.')
                 cos = -1.
 
         return sp.arccos(cos)
