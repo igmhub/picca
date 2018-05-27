@@ -267,6 +267,8 @@ class chi2:
 
         if hasattr(self, "fast_mc"):
             g = f.create_group("fast mc")
+            g.attrs['niterations'] = self.nfast_mc
+            g.attrs['seed'] = self.seedfast_mc
             for p in self.fast_mc:
                 vals = sp.array(self.fast_mc[p])
                 d = g.create_dataset("{}/values".format(p), vals[:,0].shape, dtype="f")
