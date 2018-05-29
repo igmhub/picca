@@ -1,132 +1,142 @@
 #!/usr/bin/env python
 
-import fitsio
+import sys
 import scipy as sp
 import argparse
-import sys
 import glob
+import fitsio
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--DD-file', type = str, default = None, required=True,
-                        help = 'file of the data-data correlation')
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                        description='Export auto-correlation object x object and cross-correlation object_1 x object_2 for the fitter')
 
-    parser.add_argument('--RR-DR-dir', type = str, default = None, required=True,
-                        help = 'path directory to all data-random and random-random correlations')
+    parser.add_argument('--out', type=str, default=None, required=True,
+                        help = 'Output path')
 
-    parser.add_argument('--cov', type = str, default = None, required=False,
-                        help = 'covariance matrix file (if not provided it will be calculated by subsampling)')
+    parser.add_argument('--DD-file', type=str, default=None, required=False,
+                        help = 'File of the data x data auto-correlation')
 
-    parser.add_argument('--out', type = str, default = None, required=True,
-                        help = 'output file')
+    parser.add_argument('--RR-file', type=str, default=None, required=False,
+                        help = 'File of the random x random auto-correlation')
+
+    parser.add_argument('--DR-file', type=str, default=None, required=False,
+                        help = 'File of the data x random auto-correlation')
+
+    parser.add_argument('--xDD-file', type=str, default=None, required=False,
+                        help = 'File of the data_1 x data_2 cross-correlation')
+
+    parser.add_argument('--xRR-file', type=str, default=None, required=False,
+                        help = 'File of the random_1 x random_2 cross-correlation')
+
+    parser.add_argument('--xD1R2-file', type=str, default=None, required=False,
+                        help = 'File of the data_1 x random_2 cross-correlation')
+
+    parser.add_argument('--xD2R1-file', type=str, default=None, required=False,
+                        help = 'File of the data_2 x random_1 cross-correlation')
+
+    parser.add_argument('--cov', type=str, default=None, required=False,
+                        help = 'Path to a covariance matrix file (if not provided it will be calculated by subsampling or from Poisson statistics)')
+
+    parser.add_argument('--get-cov-from-poisson', action='store_true', default=False,
+                        help='Get covariance matrix from Poisson statistics')
 
     args = parser.parse_args()
 
-    ### DD
-    h = fitsio.FITS(args.DD_file)
-    head = h[1].read_header()
-    type_corr = head['TYPECORR'].replace(' ','')
-    if type_corr not in ['DD','xDD']:
-        print("ERROR: DD-file is not data-data : "+type_corr)
-        h.close()
+    ### Auto or cross correlation?
+    if (args.DD_file is None and args.xDD_file is None) or (not args.DD_file is None and not args.xDD_file is None) or (not args.cov is None and not args.get_cov_from_poisson):
+        print('ERROR: No data files, or both auto and cross data files, or two different method for covariance')
         sys.exit()
-    nt = head['NT']
-    np = head['NP']
-    rt_max = head['RTMAX']
-    rp_min = head['RPMIN']
-    rp_max = head['RPMAX']
-    nbObj = head['NOBJ']
-    rp = sp.array(h[1]['RP'][:])
-    rt = sp.array(h[1]['RT'][:])
-    z  = sp.array(h[1]['Z'][:])
-    nb = sp.array(h[1]['NB'][:])
-    we = sp.array(h[2]['WE'][:]).sum(axis=0)
-    dd = we
-    coefDD = nbObj*(nbObj-1)/2.
-    dd /= coefDD
-    h.close()
-    dm = sp.eye(dd.size)
+    elif not args.DD_file is None:
+        lst_file = [args.DD_file, args.RR_file, args.DR_file]
+    elif not args.xDD_file is None:
+        lst_file = [args.xDD_file, args.xRR_file, args.D1R2_file, args.D2R1_file]
 
-    ### DR and RR
-    rand = {}
-    if type_corr=='DD':
-        rand['DR'] = {'nb':0, 'data':None}
-        rand['RR'] = {'nb':0, 'data':None}
-    else:
-        rand['xD1R2'] = {'nb':0, 'data':None}
-        rand['xD2R1'] = {'nb':0, 'data':None}
-        rand['xRR']   = {'nb':0, 'data':None}
-    fi = sorted(glob.glob(args.RR_DR_dir+"/*.fits.gz"))
-    for f in fi:
+    ### Read files
+    data = {}
+    for f in lst_file:
         h = fitsio.FITS(f)
-
         head = h[1].read_header()
-        tc = head['TYPECORR'].replace(' ','')
-        if not tc in list(rand.keys()):
-            print("WARNING: TYPECORR not data-random or random-random : "+tc+' : '+f)
-            h.close()
-            continue
+        type_corr = head['TYPECORR'].replace(' ','')
 
-        we = sp.array(h[2]['WE'][:]).sum(axis=0)
-        if tc in ['RR','xRR']:
+        if type_corr in ['DD','RR']:
             nbObj = head['NOBJ']
-            we /= nbObj*(nbObj-1)/2.
-        else:
+            coef = nbObj*(nbObj-1)/2.
+        elif type_corr in ['DR','xDD','xRR','xD1R2','xD2R1']:
             nbObj  = head['NOBJ']
             nbObj2 = head['NOBJ2']
-            we /= nbObj*nbObj2
+            coef = nbObj*nbObj2
 
-        if rand[tc]['nb']==0:
-            rand[tc]['data'] = we.copy()
-        else:
-            rand[tc]['data'] += we.copy()
-        rand[tc]['nb'] += 1
+        if type_corr in ['DD','xDD']:
+            data['COEF'] = coef
+            for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
+                data[k] = head[k]
+            for k in ['RP','RT','Z','NB']:
+                data[k] = sp.array(h[1][k][:])
+
+        data[type_corr] = {}
+        data[type_corr]['HEALPID'] = sp.array(h[2]['HEALPID'][:])
+        data[type_corr]['WE'] = sp.array(h[2]['WE'][:])/coef
 
         h.close()
-    for tc in list(rand.keys()):
-        if rand[tc]['nb']==0:
-            print("ERROR: no DR or RR: "+tc)
-            sys.exit()
-        rand[tc]['data'] /= rand[tc]['nb']
 
-    ###
-    if type_corr=='DD':
-        dr = rand['DR']['data']
-        rr = rand['RR']['data']
+    ### Get correlation
+    if 'DD' in list(data.keys()):
+        dd = data['DD']['WE'].sum(axis=0)
+        rr = data['RR']['WE'].sum(axis=0)
+        dr = data['DR']['WE'].sum(axis=0)
         w = rr>0.
         da = sp.zeros(dd.size)
         da[w] = (dd[w]+rr[w]-2*dr[w])/rr[w]
+        data['corr_DR'] = dr
     else:
-        d1r2 = rand['xD1R2']['data']
-        d2r1 = rand['xD2R1']['data']
-        rr   = rand['xRR']['data']
+        coef = data['COEF']
+        dd = data['xDD']['WE'].sum(axis=0)
+        rr = data['xRR']['WE'].sum(axis=0)
+        d1r2 = data['xD1R2']['WE'].sum(axis=0)
+        d2r1 = data['xD2R1']['WE'].sum(axis=0)
         w = rr>0.
         da = sp.zeros(dd.size)
         da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
+        data['corr_xD1R2'] = d1r2
+        data['corr_xD2R1'] = d2r1
+    data['DA'] = da
+    data['corr_DD'] = dd
+    data['corr_RR'] = rr
 
     ### Covariance matrix
-    if args.cov is not None:
-        hh = fitsio.FITS(args.cov)
-        co = hh[1]['CO'][:]
-        hh.close()
+    if not args.cov is None:
+        print('INFO: Read covariance from file')
+        h = fitsio.FITS(args.cov)
+        data['CO'] = h[1]['CO'][:]
+        h.close()
+    #elif not args.get_cov_from_poisson:
+    #    print('INFO: Compute covariance from sub-sampling')
+    #    
     else:
-        w = rr>0.
-        co = sp.zeros(dd.size)
-        co[w] = (coefDD*dd[w])**2/(coefDD*rr[w])**3
-        co = sp.diag(co)
+        print('INFO: Compute covariance from Poisson statistics')
+        coef = data['COEF']
+        w = data['corr_RR']>0.
+        co = sp.zeros(data['corr_DD'].size)
+        co[w] = (data['COEF']*data['corr_DD'][w])**2/(data['COEF']*data['corr_RR'][w])**3
+        data['CO'] = sp.diag(co)
+
+    ### Distortion matrix
+    data['DM'] = sp.eye(data['DA'].size)
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
-    head['RPMIN'] = rp_min
-    head['RPMAX'] = rp_max
-    head['RTMAX'] = rt_max
-    head['NT'] = nt
-    head['NP'] = np
-    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],header=head)
-    if type_corr=='DD':
-        h.write([dd,rr,dr],names=['DD','RR','DR'])
+    head['RPMIN'] = data['RPMIN']
+    head['RPMAX'] = data['RPMAX']
+    head['RTMAX'] = data['RTMAX']
+    head['NT'] = data['NT']
+    head['NP'] = data['NP']
+    lst = ['RP','RT','Z','DA','CO','DM','NB']
+    h.write([ data[k] for k in lst ], names=lst, header=head)
+    if 'DD' in list(data.keys()):
+        lst = ['DD','RR','DR']
     else:
-        h.write([dd,rr,d1r2,d2r1],names=['DD','RR','D1R2','D2R1'])
+        lst = ['DD','RR','D1R2','D2R1']
+    h.write([ data['corr_'+k] for k in lst ], names=lst)
     h.close()
