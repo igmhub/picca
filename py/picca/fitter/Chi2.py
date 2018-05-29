@@ -544,8 +544,8 @@ class Chi2:
             if any(par in el for el in minos_errors): dic = minos_errors[par]
             else: dic = dic_default
             for key in minos_keys:
-                if (type(dic[key])==types.BooleanType): f.write('%i ' % (dic[key]))
-                elif (type(dic[key])==types.IntType): f.write('%i ' % (dic[key]))
+                if isinstance(dic[key],types.BooleanType): f.write('%i ' % (dic[key]))
+                elif isinstance(dic[key],types.IntType): f.write('%i ' % (dic[key]))
                 else: f.write('{:f}'.format(dic[key])+' ')
             f.write('\n')
         f.close()
