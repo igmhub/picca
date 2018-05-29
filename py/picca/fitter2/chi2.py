@@ -190,10 +190,12 @@ class chi2:
             d.cho = cholesky(d.co)
 
         self.fast_mc = {}
+        self.fast_mc_data = {}
         for it in range(nfast_mc):
             for d in self.data:
                 g = sp.random.randn(len(d.da))
                 d.da = d.cho.dot(g) + d.best_fit_model
+                self.fast_mc_data[d.name+'_'+str(it)] = d.da
                 d.da_cut = d.da[d.mask]
 
             best_fit = self._minimize()
@@ -275,6 +277,10 @@ class chi2:
                 d[...] = vals[:,0]
                 d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
                 d[...] = vals[:,1]
+            for p in self.fast_mc_data:
+                xi = self.fast_mc_data[p]
+                d = g.create_dataset(p, xi.shape, dtype="f")
+                d[...] = xi
 
         ## write down all attributes of parameters minos was run over
         if hasattr(self, "minos_para"):
