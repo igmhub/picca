@@ -345,9 +345,6 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
     plates = sp.unique(plate)
     print("reading {} plates".format(len(plates)))
 
-    prefix='spCFrame'
-    sufix=''
-
     for p in plates:
         wplate = plate==p
         plate_mjd = "{}-*".format(p)
@@ -376,7 +373,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                     nexp = head["NEXP_{}".format(c)]
                 else:
                     continue
-                for i in range(nexp):
+                for _ in range(nexp):
                     str_iexp = str(iexp)
                     if iexp<10:
                         str_iexp = '0'+str_iexp
