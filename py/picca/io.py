@@ -48,10 +48,10 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     ## Redshift
     try:
-        zqso = vac[1]["Z"][:].astype('float64')
+        zqso = vac[1]["Z"][:]
     except:
         sys.stderr.write("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)\n")
-        zqso = vac[1]["Z_VI"][:].astype('float64')
+        zqso = vac[1]["Z_VI"][:]
 
     ## Info of the primary observation
     thid  = vac[1]["THING_ID"][:]
