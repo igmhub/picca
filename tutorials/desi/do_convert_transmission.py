@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    utils.desi_convert_transmission_to_delta_files(zcat = args.object_cat, outdir = args.out_dir, indir = args.in_dir, infiles = args.in_files,
+    utils.desi_convert_transmission_to_delta_files(args.object_cat, args.out_dir, indir = args.in_dir, infiles = args.in_files,
         lObs_min = args.lambda_min, lObs_max = args.lambda_max,
         lRF_min = args.lambda_rest_min, lRF_max = args.lambda_rest_max,
         dll = args.dll, nspec = args.nspec)
