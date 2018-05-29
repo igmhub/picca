@@ -6,6 +6,8 @@ import argparse
 import glob
 import fitsio
 
+from picca.utils import smooth_cov, cov
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -35,11 +37,14 @@ if __name__ == '__main__':
     parser.add_argument('--xD2R1-file', type=str, default=None, required=False,
                         help = 'File of the data_2 x random_1 cross-correlation')
 
-    parser.add_argument('--cov', type=str, default=None, required=False,
-                        help = 'Path to a covariance matrix file (if not provided it will be calculated by subsampling or from Poisson statistics)')
+    parser.add_argument('--do-not-smooth-cov', action='store_true', default=False,
+                        help='Do not smooth the covariance matrix from sub-sampling')
 
     parser.add_argument('--get-cov-from-poisson', action='store_true', default=False,
                         help='Get covariance matrix from Poisson statistics')
+
+    parser.add_argument('--cov', type=str, default=None, required=False,
+                        help = 'Path to a covariance matrix file (if not provided it will be calculated by subsampling or from Poisson statistics)')
 
     args = parser.parse_args()
 
@@ -75,9 +80,11 @@ if __name__ == '__main__':
                 data[k] = sp.array(h[1][k][:])
 
         data[type_corr] = {}
-        data[type_corr]['HEALPID'] = sp.array(h[2]['HEALPID'][:])
-        data[type_corr]['WE'] = sp.array(h[2]['WE'][:])/coef
-
+        data[type_corr]['NSIDE'] = head['NSIDE']
+        data[type_corr]['HLPXSCHM'] = h[2].read_header()['HLPXSCHM']
+        w = sp.array(h[2]['WE'][:]).sum(axis=1)>0.
+        data[type_corr]['HEALPID'] = sp.array(h[2]['HEALPID'][:])[w]
+        data[type_corr]['WE'] = (sp.array(h[2]['WE'][:])/coef)[w]
         h.close()
 
     ### Get correlation
@@ -90,7 +97,6 @@ if __name__ == '__main__':
         da[w] = (dd[w]+rr[w]-2*dr[w])/rr[w]
         data['corr_DR'] = dr
     else:
-        coef = data['COEF']
         dd = data['xDD']['WE'].sum(axis=0)
         rr = data['xRR']['WE'].sum(axis=0)
         d1r2 = data['xD1R2']['WE'].sum(axis=0)
@@ -110,16 +116,73 @@ if __name__ == '__main__':
         h = fitsio.FITS(args.cov)
         data['CO'] = h[1]['CO'][:]
         h.close()
-    #elif not args.get_cov_from_poisson:
-    #    print('INFO: Compute covariance from sub-sampling')
-    #    
-    else:
+    elif args.get_cov_from_poisson:
         print('INFO: Compute covariance from Poisson statistics')
         coef = data['COEF']
         w = data['corr_RR']>0.
         co = sp.zeros(data['corr_DD'].size)
         co[w] = (data['COEF']*data['corr_DD'][w])**2/(data['COEF']*data['corr_RR'][w])**3
         data['CO'] = sp.diag(co)
+    else:
+        print('INFO: Compute covariance from sub-sampling')
+
+        ###
+        if 'DD' in list(data.keys()):
+            lst = ['DD','RR','DR']
+        else:
+            lst = ['xDD','xRR','xD1R2','xD2R1']
+
+        ### To have same number of HEALPix
+        for d1 in lst:
+            for d2 in lst:
+
+                if data[d1]['NSIDE']!=data[d2]['NSIDE']:
+                    print('ERROR: NSIDE are different: {} != {}'.format(data[d1]['NSIDE'],data[d2]['NSIDE']))
+                    sys.exit()
+                if data[d1]['HLPXSCHM']!=data[d2]['HLPXSCHM']:
+                    print('ERROR: HLPXSCHM are different: {} != {}'.format(data[d1]['HLPXSCHM'],data[d2]['HLPXSCHM']))
+                    sys.exit()
+
+                w = sp.logical_not( sp.in1d(data[d1]['HEALPID'],data[d2]['HEALPID']) )
+                if w.sum()!=0:
+                    print('WARNING: HEALPID are different by {} for {}:{} and {}:{}'.format(w.sum(),d1,data[d1]['HEALPID'].size,d2,data[d2]['HEALPID'].size))
+                    new_healpix = data[d1]['HEALPID'][w]
+                    nb_new_healpix = new_healpix.size
+                    nb_bins = data[d2]['WE'].shape[1]
+                    data[d2]['HEALPID'] = sp.append(data[d2]['HEALPID'],new_healpix)
+                    data[d2]['WE'] = sp.append(data[d2]['WE'],sp.zeros((nb_new_healpix,nb_bins)),axis=0)
+
+        ### Sort the data by the healpix values
+        for d1 in lst:
+            sort = sp.array(data[d1]['HEALPID']).argsort()
+            data[d1]['WE'] = data[d1]['WE'][sort]
+            data[d1]['HEALPID'] = data[d1]['HEALPID'][sort]
+
+        if 'DD' in list(data.keys()):
+            dd = data['DD']['WE']
+            rr = data['RR']['WE']
+            dr = data['DR']['WE']
+            w = rr>0.
+            da = sp.zeros(dd.shape)
+            da[w] = (dd[w]+rr[w]-2*dr[w])/rr[w]
+            we = data['DD']['WE']
+        else:
+            dd = data['xDD']['WE']
+            rr = data['xRR']['WE']
+            d1r2 = data['xD1R2']['WE']
+            d2r1 = data['xD2R1']['WE']
+            w = rr>0.
+            da = sp.zeros(dd.shape)
+            da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
+            we = data['xDD']['WE']
+
+        if args.do_not_smooth_cov:
+            co = cov(da,we)
+        else:
+            binSizeRP = (data['RPMAX']-data['RPMIN']) / data['NP']
+            binSizeRT = (data['RTMAX']-0.) / data['NT']
+            co = smooth_cov(da,we,data['RP'],data['RT'],drp=binSizeRP,drt=binSizeRT)
+        data['CO'] = co
 
     ### Distortion matrix
     data['DM'] = sp.eye(data['DA'].size)
