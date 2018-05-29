@@ -128,60 +128,94 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
     return
 
-def desi_from_ztarget_to_drq(ztarget,drq,spectype="QSO"):
-    '''
-    Transform a desi truth.fits file and a
-    desi targets.fits into a drq like file
+def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None, downsampling_nb=None):
+    """Transforms a catalog of object in desi format to a catalog in DRQ format
 
-    '''
+    Args:
+        zcat (str): path to the catalog of object
+        drq (str): path to write the DRQ catalog
+        spectype (str): Spectype of the object, can be any spectype
+            in desi catalog. Ex: 'STAR', 'GALAXY', 'QSO'
+        downsampling_z_cut (float) : Minimum redshift to downsample
+            the data, if 'None' no downsampling
+        downsampling_nb (int) : Target number of object above redshift
+            downsampling-z-cut, if 'None' no downsampling
 
-    vac = fitsio.FITS(ztarget)
+    Returns:
+        None
+
+    """
 
     ## Info of the primary observation
-    thid  = vac[1]["TARGETID"][:]
-    ra    = vac[1]["RA"][:]
-    dec   = vac[1]["DEC"][:]
-    zqso  = vac[1]["Z"][:]
-    plate = 1+sp.arange(thid.size)
-    mjd   = 1+sp.arange(thid.size)
-    fid   = 1+sp.arange(thid.size)
-    sptype = sp.char.strip(vac[1]["SPECTYPE"][:].astype(str))
+    vac = fitsio.FITS(ztarget)
+    sptype = sp.char.strip(vac[1]['SPECTYPE'][:].astype(str))
 
     ## Sanity
-    print(" start               : nb object in cat = {}".format(ra.size) )
-    w = (vac[1]["ZWARN"][:]==0.)
-    print(" and zwarn==0        : nb object in cat = {}".format(ra[w].size) )
-    w = w & (sptype==spectype)
-    print(" and spectype=={}    : nb object in cat = {}".format(spectype,ra[w].size) )
+    print(' start               : nb object in cat = {}'.format(sptype.size) )
+    w = vac[1]['ZWARN'][:]==0.
+    print(' and zwarn==0        : nb object in cat = {}'.format(w.sum()) )
+    w &= sptype==spectype
+    print(' and spectype=={}    : nb object in cat = {}'.format(spectype,w.sum()) )
 
-    ra    = ra[w]
-    dec   = dec[w]
-    zqso  = zqso[w]
-    thid  = thid[w]
-    plate = plate[w]
-    mjd   = mjd[w]
-    fid   = fid[w]
+    ra = vac[1]['RA'][:][w]
+    dec = vac[1]['DEC'][:][w]
+    zqso = vac[1]['Z'][:][w]
+    thid = vac[1]['TARGETID'][:][w]
 
     vac.close()
 
+    ###
+    if not downsampling_z_cut is None and not downsampling_nb is None:
+        if ra.size<downsampling_nb:
+            print('WARNING:: Trying to downsample, when nb cat = {} and nb downsampling = {}'.format(ra.size,downsampling_nb) )
+        else:
+            select_fraction = downsampling_nb/(zqso>downsampling_z_cut).sum()
+            sp.random.seed(0)
+            select = sp.random.choice(sp.arange(ra.size),size=int(ra.size*select_fraction),replace=False)
+            ra = ra[select]
+            dec = dec[select]
+            zqso = zqso[select]
+            thid = thid[select]
+            print(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(ra.size, downsampling_z_cut, (zqso>downsampling_z_cut).sum()) )
+
     ### Save
     out = fitsio.FITS(drq,'rw',clobber=True)
-    cols=[ra,dec,thid,plate,mjd,fid,zqso]
-    names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
-    out.write(cols,names=names)
+    cols = [ra,dec,thid,thid,thid,thid,zqso]
+    names = ['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
+    out.write(cols, names=names)
     out.close()
 
     return
-def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,dll=3.e-4,nspec=None):
-    '''
-    Convert desi transmission files to picca delta files
-    indir: path to transmission files directory
-    outdir: path to write delta files directory
-    lObs_min, lObs_max = 3600.,5500.: observed wavelength range in Angstrom
-    lRF_min, lRF_max = 1040.,1200.: Rest frame wavelength range in Angstrom
-    dll: size of the bins in log lambda
-    nspec: number of spectra
-    '''
+def desi_convert_transmission_to_delta_files(zcat,indir,outdir,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,dll=3.e-4,nspec=None):
+    """Convert desi transmission files to picca delta files
+
+    Args:
+        zcat (str): path to the catalog of object to extract the transmission from
+        indir (str): path to transmission files directory
+        outdir (str): path to write delta files directory
+        lObs_min (float) = 3600.: min observed wavelength in Angstrom
+        lObs_max (float) = 5500.: max observed wavelength in Angstrom
+        lRF_min (float) = 1040.: min Rest Frame wavelength in Angstrom
+        lRF_max (float) = 1200.: max Rest Frame wavelength in Angstrom
+        dll (float) = 3.e-4: size of the bins in log lambda
+        nspec (int) = None: number of spectra, if 'None' use all
+
+    Returns:
+        None
+
+    """
+
+    ### Catalog of objects
+    h = fitsio.FITS(zcat)
+    key_val = sp.char.strip(sp.array([ h[1].read_header()[k] for k in h[1].read_header().keys()]).astype(str))
+    if 'TARGETID' in key_val:
+        zcat_thid = h[1]['TARGETID'][:]
+    elif 'THING_ID' in key_val:
+        zcat_thid = h[1]['THING_ID'][:]
+    w = h[1]['Z'][:]>max(0.,lObs_min/lRF_max -1.)
+    w &= h[1]['Z'][:]<max(0.,lObs_max/lRF_min -1.)
+    zcat_thid = zcat_thid[w]
+    h.close()
 
     ### List of transmission files
     if len(indir)>8 and indir[-8:]=='.fits.gz':
@@ -205,11 +239,17 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
     for nf, f in enumerate(fi):
         sys.stderr.write("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in list(deltas.keys())])))
         h = fitsio.FITS(f)
-        z = h['METADATA']['Z'][:]
-        ll = sp.log10(h['WAVELENGTH'].read())
-        trans = h['TRANSMISSION'].read()
+        thid = h[1]['MOCKID'][:]
+        if sp.in1d(thid,zcat_thid).sum()==0:
+            h.close()
+            continue
+        ra = h[1]['RA'][:]*sp.pi/180.
+        dec = h[1]['DEC'][:]*sp.pi/180.
+        z = h[1]['Z'][:]
+        ll = sp.log10(h[2].read())
+        trans = h[3].read()
         nObj = z.size
-        pixnum = h['METADATA'].read_header()['PIXNUM']
+        pixnum = f.split('-')[-1].split('.')[0]
 
         if trans.shape[0]!=nObj:
             trans = trans.transpose()
@@ -222,11 +262,15 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
         w[ (lObs>=lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
         nbPixel = sp.sum(w,axis=1)
         cut = nbPixel>=50
+        cut &= sp.in1d(thid,zcat_thid)
+        if cut.sum()==0:
+            h.close()
+            continue
 
-        ra = (h['METADATA']['RA'][:]*sp.pi/180.)[cut]
-        dec = (h['METADATA']['DEC'][:]*sp.pi/180.)[cut]
+        ra = ra[cut]
+        dec = dec[cut]
         z = z[cut]
-        thid = h['METADATA']['MOCKID'][:][cut]
+        thid = thid[cut]
         trans = trans[cut,:]
         w = w[cut,:]
         nObj = z.size
@@ -251,6 +295,8 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
             civ = civ[ww]
             deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
         if not nspec is None and sp.sum([ len(deltas[p]) for p in list(deltas.keys())])>=nspec: break
+
+    print('\n')
 
     ### Get stacked transmission
     w = n_stack>0.
@@ -280,6 +326,8 @@ def desi_convert_transmission_to_delta_files(indir,outdir,lObs_min=3600.,lObs_ma
             names = ['LOGLAM','DELTA','WEIGHT','CONT']
             out.write(cols,names=names,header=hd,extname=str(d.thid))
         out.close()
+
+    print('\n')
 
     return
 def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
