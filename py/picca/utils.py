@@ -2,6 +2,7 @@ import scipy as sp
 import sys
 import fitsio
 import glob
+import healpy
 
 
 from picca.data import delta
@@ -224,12 +225,13 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         print("ERROR: No transmisson input files or both 'indir' and 'infiles' given")
         sys.exit()
     elif indir is not None:
-        in_nside = int(in_dir.split('spectra-')[-1].replace('/',''))
+        fi = glob.glob(indir+'/*/*/transmission*.fits') + glob.glob(indir+'/*/*/transmission*.fits.gz')
+        h = fitsio.FITS(sp.sort(sp.array(fi))[0])
+        in_nside = h[1].read_header()['NSIDE']
         nest = True
+        h.close()
         in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-zcat_dec, zcat_ra, nest=nest)
-        fi = sp.unique(in_pixs)
-        fi = [ indir+'/'+str(int(f/100))+'/'+str(f)+'/spectra-'+str(in_nside)+'-'+str(f)+'.fits' for f in fi]
-        fi = sp.sort(sp.array(fi))
+        fi = sp.sort(sp.array([ indir+'/'+str(int(f/100))+'/'+str(f)+'/transmission-'+str(in_nside)+'-'+str(f)+'.fits' for f in sp.unique(in_pixs)]))
     else:
         fi = sp.sort(sp.array(infiles))
 
