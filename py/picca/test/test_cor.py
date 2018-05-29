@@ -256,7 +256,7 @@ class TestCor(unittest.TestCase):
             self.assertListEqual(sorted(list(atts1.keys())),sorted(list(atts2.keys())),"{}".format(nameRun))
             for item in atts1:
                 nequal = True
-                if type(atts1[item])==type(sp.array([])):
+                if isinstance(atts1[item],numpy.ndarray):
                     nequal = sp.logical_not(sp.array_equal(atts1[item],atts2[item]))
                 else:
                     nequal = atts1[item]!=atts2[item]

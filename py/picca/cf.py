@@ -287,7 +287,6 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
             r1_abs2 = cosmo.r_comoving(z1_abs2)
             w1 = d1.we
-            l1 = d1.ll
             r = random.rand(len(d1.neighs))
             w=r>rej
             npairs += len(d1.neighs)
@@ -303,7 +302,6 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 r2_abs2 = cosmo.r_comoving(z2_abs2)
 
                 w2 = d2.we
-                l2 = d2.ll
 
 
                 if x_correlation:
