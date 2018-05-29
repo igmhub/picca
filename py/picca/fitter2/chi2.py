@@ -191,7 +191,7 @@ class chi2:
 
         self.fast_mc = {}
         self.fast_mc_data = {}
-        for _ in range(nfast_mc):
+        for it in range(nfast_mc):
             for d in self.data:
                 g = sp.random.randn(len(d.da))
                 d.da = d.cho.dot(g) + d.best_fit_model
