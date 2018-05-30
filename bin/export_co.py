@@ -2,6 +2,7 @@
 
 import sys
 import scipy as sp
+import scipy.linalg
 import argparse
 import glob
 import fitsio
@@ -183,6 +184,11 @@ if __name__ == '__main__':
             binSizeRT = (data['RTMAX']-0.) / data['NT']
             co = smooth_cov(da,we,data['RP'],data['RT'],drp=binSizeRP,drt=binSizeRT)
         data['CO'] = co
+
+    try:
+        scipy.linalg.cholesky(co)
+    except:
+        print('WARNING: Matrix is not positive definite')
 
     ### Distortion matrix
     data['DM'] = sp.eye(data['DA'].size)
