@@ -77,7 +77,6 @@ class data:
         mask &= (bin_center_r > r_min) & (bin_center_r < r_max)
         mask &= (bin_center_mu > mu_min) & (bin_center_mu < mu_max)
 
-        nmask = mask.sum()
         self.mask = mask
         self.da = da
         self.da_cut = sp.zeros(mask.sum())
