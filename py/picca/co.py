@@ -25,7 +25,7 @@ def fill_neighs(pix):
         for o1 in objs[ipix]:
             npix = query_disc(nside,[o1.xcart,o1.ycart,o1.zcart],angmax,inclusive = True)
             npix = [p for p in npix if p in objs]
-            neighs = [o2 for p in npix for o2 in objs[p]]
+            neighs = [o2 for p in npix for o2 in objs[p] if o1.thid != o2.thid]
             ang = o1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
@@ -36,11 +36,11 @@ def fill_neighs_x_correlation(pix):
         for o1 in objs[ipix]:
             npix = query_disc(nside,[o1.xcart,o1.ycart,o1.zcart],angmax,inclusive = True)
             npix = [p for p in npix if p in objs2]
-            neighs = [o2 for p in npix for o2 in objs2[p]]
+            neighs = [o2 for p in npix for o2 in objs2[p] if o1.thid != o2.thid]
             ang = o1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            o1.neighs = sp.array([o2 for o2 in neighs if o1.thid != o2.thid])
+            o1.neighs = sp.array([o2 for o2 in neighs])
 
 def co(pix):
 
