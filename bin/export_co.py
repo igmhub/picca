@@ -186,7 +186,7 @@ if __name__ == '__main__':
         data['CO'] = co
 
     try:
-        scipy.linalg.cholesky(co)
+        scipy.linalg.cholesky(data['CO'])
     except scipy.linalg.LinAlgError:
         print('WARNING: Matrix is not positive definite')
 
