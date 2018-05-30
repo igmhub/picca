@@ -33,6 +33,8 @@ class chi2:
             self.nfast_mc = dic_init['fast mc']['niterations']
             if 'covscaling' in dic_init['fast mc']:
                 self.scalefast_mc = dic_init['fast mc']['covscaling']
+            else:
+                self.scalefast_mc = sp.ones(len(self.data))
 
         if 'minos' in dic_init:
             self.minos_para = dic_init['minos']
@@ -188,12 +190,9 @@ class chi2:
         sp.random.seed(self.seedfast_mc)
         nfast_mc = self.nfast_mc
 
-        if hasattr(self,"scalefast_mc"):
-            for d, s in zip(self.data, self.scalefast_mc):
-                d.co = s*d.co
-                d.ico = d.ico/s
-
-        for d in self.data:
+        for d, s in zip(self.data, self.scalefast_mc):
+            d.co = s*d.co
+            d.ico = d.ico/s
             d.cho = cholesky(d.co)
 
         self.fast_mc = {}
@@ -280,8 +279,7 @@ class chi2:
             g = f.create_group("fast mc")
             g.attrs['niterations'] = self.nfast_mc
             g.attrs['seed'] = self.seedfast_mc
-            if hasattr(self, "scalefast_mc"):
-                g.attrs['covscaling'] = self.scalefast_mc
+            g.attrs['covscaling'] = self.scalefast_mc
             for p in self.fast_mc:
                 vals = sp.array(self.fast_mc[p])
                 if p == 'chi2':
