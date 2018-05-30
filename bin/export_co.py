@@ -187,7 +187,7 @@ if __name__ == '__main__':
 
     try:
         scipy.linalg.cholesky(co)
-    except:
+    except scipy.linalg.LinAlgError:
         print('WARNING: Matrix is not positive definite')
 
     ### Distortion matrix
