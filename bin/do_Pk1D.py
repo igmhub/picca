@@ -120,6 +120,8 @@ if __name__ == '__main__':
     parser.add_argument('--no-apply-filling', action='store_true', default = False, required=False,
                         help = ' No fill masked pixels')
 
+    parser.add_argument('--forest-type', type = str, default = 'Lya', required=False,
+                        help = ' , Forest used LY-a, SiIV or CIV')
 
     args = parser.parse_args()
 
@@ -131,10 +133,21 @@ if __name__ == '__main__':
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
         zqso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
         nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
-        hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 36, 3600., 7200., 16, 1040., 1200., -5.0, 5.0)
-        hdelta_RF  = TProfile( 'hdelta_RF', 'delta mean as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
+
+        # control histograms
+        if (args.forest_type=='Lya'):
+            forest_inf=1040.
+            forest_sup=1200.
+        elif (args.forest_type=='SiIV'):
+            forest_inf=1270.
+            forest_sup=1380.
+        elif (args.forest_type=='CIV'):
+            forest_inf=1410.
+            forest_sup=1520.
+        hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 36, 3600., 7200., 16, forest_inf, forest_sup, -5.0, 5.0)
+        hdelta_RF  = TProfile( 'hdelta_RF', 'delta mean as a function of lambdaRF', 320, forest_inf, forest_sup, -5.0, 5.0)
         hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1800, 3600., 7200., -5.0, 5.0)
-        hdelta_RF_we  = TProfile( 'hdelta_RF_we', 'delta mean weighted as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
+        hdelta_RF_we  = TProfile( 'hdelta_RF_we', 'delta mean weighted as a function of lambdaRF', 320, forest_inf, forest_sup, -5.0, 5.0)
         hdelta_OBS_we  = TProfile( 'hdelta_OBS_we', 'delta mean weighted as a function of lambdaOBS', 1800, 3600., 7200., -5.0, 5.0)
         hivar = TH1D('hivar','  ivar ',10000,0.0,10000.)
         hsnr = TH1D('hsnr','  snr per pixel ',100,0.0,100.)
