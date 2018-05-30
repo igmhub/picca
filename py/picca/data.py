@@ -161,7 +161,7 @@ class forest(qso):
 
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
-
+              
         err = 1.0/sp.sqrt(iv)
         SNR = fl/err
         self.mean_SNR = sum(SNR)/float(len(SNR))

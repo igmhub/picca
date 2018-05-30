@@ -255,7 +255,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
             diff = exp_diff(h,ll)
             # compute spectral resolution
             wdisp =  h[1]["wdisp"][:]
-            reso = spectral_resolution(wdisp)
+            reso = spectral_resolution(wdisp,True,f,ll)
             d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
         else :
             d = forest(ll,fl,iv, t, r, d, z, p, m, f,order)
