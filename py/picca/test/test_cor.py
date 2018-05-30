@@ -799,9 +799,11 @@ class TestCor(unittest.TestCase):
         print("\n")
         ### Send
         cmd  = " export_co.py"
-        cmd += " --DD-file "   + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
-        cmd += " --RR-DR-dir " + self._branchFiles+"/Products/Correlations/Co_Random/"
-        cmd += " --out "       + self._branchFiles+"/Products/Correlations/exported_co.fits.gz"
+        cmd += " --DD-file " + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
+        cmd += " --RR-file " + self._branchFiles+"/Products/Correlations/Co_Random/co_RR.fits.gz"
+        cmd += " --DR-file " + self._branchFiles+"/Products/Correlations/Co_Random/co_DR.fits.gz"
+        cmd += " --out " + self._branchFiles+"/Products/Correlations/exported_co.fits.gz"
+        cmd += " --get-cov-from-poisson"
         subprocess.call(cmd, shell=True)
 
         return
