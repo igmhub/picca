@@ -59,7 +59,8 @@ def parse_chi2(filename):
             if item=='covscaling':
                 value = value.split()
                 dic_init['fast mc'][item] = sp.array(value).astype(float)
-                assert len(dic_init['fast mc'][item])==len(dic_init['data sets']['data'])
+                if not len(dic_init['fast mc'][item])==len(dic_init['data sets']['data']):
+                    raise AssertionError()
             else:
                 dic_init['fast mc'][item] = int(value)
 
