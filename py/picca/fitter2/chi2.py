@@ -197,6 +197,7 @@ class chi2:
             d.cho = cholesky(d.co)
 
         self.fast_mc = {}
+        self.fast_mc['chi2'] = []
         self.fast_mc_data = {}
         for it in range(nfast_mc):
             for d in self.data:
@@ -210,6 +211,7 @@ class chi2:
                 if not p in self.fast_mc:
                     self.fast_mc[p] = []
                 self.fast_mc[p].append([v, best_fit.errors[p]])
+            self.fast_mc['chi2'].append(best_fit.fval)
 
     def minos(self):
         if not hasattr(self,"minos_para"): return
@@ -282,10 +284,14 @@ class chi2:
                 g.attrs['covscaling'] = self.scalefast_mc
             for p in self.fast_mc:
                 vals = sp.array(self.fast_mc[p])
-                d = g.create_dataset("{}/values".format(p), vals[:,0].shape, dtype="f")
-                d[...] = vals[:,0]
-                d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
-                d[...] = vals[:,1]
+                if p == 'chi2':
+                    d = g.create_dataset("{}".format(p), vals.shape, dtype="f")
+                    d[...] = vals
+                else:
+                    d = g.create_dataset("{}/values".format(p), vals[:,0].shape, dtype="f")
+                    d[...] = vals[:,0]
+                    d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
+                    d[...] = vals[:,1]
             for p in self.fast_mc_data:
                 xi = self.fast_mc_data[p]
                 d = g.create_dataset(p, xi.shape, dtype="f")
