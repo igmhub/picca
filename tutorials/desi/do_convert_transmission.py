@@ -16,7 +16,7 @@ if __name__ == '__main__':
             help='Desi formated data directory to transmission files')
 
     parser.add_argument('--in-files',type = str,default=None,required=False,
-            help='List of transmission files', nargs='*')
+            help='List of transmission files.', nargs='*')
 
     parser.add_argument('--out-dir',type = str,default=None,required=True,
             help='Output directory')
