@@ -2,6 +2,7 @@ import scipy as sp
 import sys
 import fitsio
 import glob
+import healpy
 
 
 from picca.data import delta
@@ -85,15 +86,15 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     vac.close()
     ra = sp.zeros(thid.size)
     dec = sp.zeros(thid.size)
-    plate = 1+sp.arange(thid.size)
-    mjd = 1+sp.arange(thid.size)
-    fid = 1+sp.arange(thid.size)
+    plate = thid
+    mjd = thid
+    fid = thid
 
     ### Get RA and DEC from targets
     vac = fitsio.FITS(targets)
     thidTargets = vac[1]["TARGETID"][:]
-    raTargets = vac[1]["RA"][:]
-    decTargets = vac[1]["DEC"][:]
+    raTargets = vac[1]["RA"][:].astype('float64')
+    decTargets = vac[1]["DEC"][:].astype('float64')
     vac.close()
 
     from_TARGETID_to_idx = {}
@@ -157,8 +158,8 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
     w &= sptype==spectype
     print(' and spectype=={}    : nb object in cat = {}'.format(spectype,w.sum()) )
 
-    ra = vac[1]['RA'][:][w]
-    dec = vac[1]['DEC'][:][w]
+    ra = vac[1]['RA'][:][w].astype('float64')
+    dec = vac[1]['DEC'][:][w].astype('float64')
     zqso = vac[1]['Z'][:][w]
     thid = vac[1]['TARGETID'][:][w]
 
@@ -186,7 +187,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
     out.close()
 
     return
-def desi_convert_transmission_to_delta_files(zcat,indir,outdir,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,dll=3.e-4,nspec=None):
+def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,dll=3.e-4,nspec=None):
     """Convert desi transmission files to picca delta files
 
     Args:
@@ -214,17 +215,25 @@ def desi_convert_transmission_to_delta_files(zcat,indir,outdir,lObs_min=3600.,lO
         zcat_thid = h[1]['THING_ID'][:]
     w = h[1]['Z'][:]>max(0.,lObs_min/lRF_max -1.)
     w &= h[1]['Z'][:]<max(0.,lObs_max/lRF_min -1.)
+    zcat_ra = h[1]['RA'][:][w].astype('float64')*sp.pi/180.
+    zcat_dec = h[1]['DEC'][:][w].astype('float64')*sp.pi/180.
     zcat_thid = zcat_thid[w]
     h.close()
 
     ### List of transmission files
-    if len(indir)>8 and indir[-8:]=='.fits.gz':
-        fi = glob.glob(indir)
-    elif len(indir)>5 and indir[-5:]=='.fits':
-        fi = glob.glob(indir)
+    if (indir is None and infiles is None) or (indir is not None and infiles is not None):
+        print("ERROR: No transmisson input files or both 'indir' and 'infiles' given")
+        sys.exit()
+    elif indir is not None:
+        fi = glob.glob(indir+'/*/*/transmission*.fits') + glob.glob(indir+'/*/*/transmission*.fits.gz')
+        h = fitsio.FITS(sp.sort(sp.array(fi))[0])
+        in_nside = h[1].read_header()['NSIDE']
+        nest = True
+        h.close()
+        in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-zcat_dec, zcat_ra, nest=nest)
+        fi = sp.sort(sp.array([ indir+'/'+str(int(f/100))+'/'+str(f)+'/transmission-'+str(in_nside)+'-'+str(f)+'.fits' for f in sp.unique(in_pixs)]))
     else:
-        fi = glob.glob(indir+'/*.fits') + glob.glob(indir+'/*.fits.gz')
-    fi = sp.sort(sp.array(fi))
+        fi = sp.sort(sp.array(infiles))
 
     ### Stack the transmission
     lmin = sp.log10(lObs_min)
@@ -243,8 +252,8 @@ def desi_convert_transmission_to_delta_files(zcat,indir,outdir,lObs_min=3600.,lO
         if sp.in1d(thid,zcat_thid).sum()==0:
             h.close()
             continue
-        ra = h[1]['RA'][:]*sp.pi/180.
-        dec = h[1]['DEC'][:]*sp.pi/180.
+        ra = h[1]['RA'][:].astype('float64')*sp.pi/180.
+        dec = h[1]['DEC'][:].astype('float64')*sp.pi/180.
         z = h[1]['Z'][:]
         ll = sp.log10(h[2].read())
         trans = h[3].read()

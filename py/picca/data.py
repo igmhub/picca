@@ -22,6 +22,7 @@ class qso:
         self.xcart = sp.cos(ra)*sp.cos(dec)
         self.ycart = sp.sin(ra)*sp.cos(dec)
         self.zcart = sp.sin(dec)
+        self.cosdec = sp.cos(dec)
 
         self.zqso = zqso
         self.thid = thid
@@ -31,19 +32,41 @@ class qso:
             x = sp.array([d.xcart for d in data])
             y = sp.array([d.ycart for d in data])
             z = sp.array([d.zcart for d in data])
+            ra = sp.array([d.ra for d in data])
+            dec = sp.array([d.dec for d in data])
 
             cos = x*self.xcart+y*self.ycart+z*self.zcart
             w = cos>=1.
-            cos[w]=1.
+            if w.sum()!=0:
+                print('WARNING: {} pairs have cosinus>=1.'.format(w.sum()))
+                cos[w] = 1.
+            w = cos<=-1.
+            if w.sum()!=0:
+                print('WARNING: {} pairs have cosinus<=-1.'.format(w.sum()))
+                cos[w] = -1.
+            angl = sp.arccos(cos)
+
+            w = (sp.absolute(ra-self.ra)<constants.small_angle_cut_off) & (sp.absolute(dec-self.dec)<constants.small_angle_cut_off)
+            if w.sum()!=0:
+                angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cosdec*(ra[w]-self.ra))**2 )
         except:
             x = data.xcart
             y = data.ycart
             z = data.zcart
+            ra = data.ra
+            dec = data.dec
+
             cos = x*self.xcart+y*self.ycart+z*self.zcart
             if cos>=1.:
+                print('WARNING: 1 pair has cosinus>=1.')
                 cos = 1.
-
-        return sp.arccos(cos)
+            elif cos<=-1.:
+                print('WARNING: 1 pair has cosinus<=-1.')
+                cos = -1.
+            angl = sp.arccos(cos)
+            if (sp.absolute(ra-self.ra)<constants.small_angle_cut_off) & (sp.absolute(dec-self.dec)<constants.small_angle_cut_off):
+                angl = sp.sqrt( (dec-self.dec)**2 + (self.cosdec*(ra-self.ra))**2 )
+        return angl
 
 class forest(qso):
 

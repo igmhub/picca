@@ -57,8 +57,8 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     ## Info of the primary observation
     thid  = vac[1]["THING_ID"][:]
-    ra    = vac[1]["RA"][:]
-    dec   = vac[1]["DEC"][:]
+    ra    = vac[1]["RA"][:].astype('float64')
+    dec   = vac[1]["DEC"][:].astype('float64')
     plate = vac[1]["PLATE"][:]
     mjd   = vac[1]["MJD"][:]
     fid   = vac[1]["FIBERID"][:]
