@@ -4,7 +4,6 @@ import sys
 import scipy as sp
 import scipy.linalg
 import argparse
-import glob
 import fitsio
 
 from picca.utils import smooth_cov, cov
