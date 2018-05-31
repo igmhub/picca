@@ -52,7 +52,7 @@ def exp_diff(file,ll) :
 def spectral_resolution(wdisp,with_correction=None,fiber=None,ll=None) :
 
     reso = wdisp*constants.speed_light/1000.*1.0e-4*sp.log(10.)
-  
+
     if (with_correction):
         wave = sp.power(10.,ll)
         corrPlateau = 1.267 - 0.000142716*wave + 1.9068e-08*wave*wave;
@@ -61,7 +61,7 @@ def spectral_resolution(wdisp,with_correction=None,fiber=None,ll=None) :
         fibnum = fiber%500
         if(fibnum<100):
             corr = 1. + (corrPlateau-1)*.25 + (corrPlateau-1)*.75*(fibnum)/100.
-        elif (fibnum>400): 
+        elif (fibnum>400):
             corr = 1. + (corrPlateau-1)*.25 + (corrPlateau-1)*.75*(500-fibnum)/100.
         else:
             corr = corrPlateau;
