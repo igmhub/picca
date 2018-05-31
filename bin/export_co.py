@@ -62,7 +62,7 @@ if __name__ == '__main__':
         corr = 'AUTO'
         lst_file = {'DD':args.DD_file, 'RR':args.RR_file, 'DR':args.DR_file, 'RD':args.RD_file}
     elif not args.xDD_file is None:
-        # TODO: Test if do_co.py and export_co.py works for cross
+        # TODO: Test if do_co.py and export_co.py work for cross
         corr = 'CROSS'
         lst_file = {'xDD':args.xDD_file, 'xRR':args.xRR_file, 'xD1R2':args.D1R2_file, 'xD2R1':args.D2R1_file}
 
@@ -75,16 +75,17 @@ if __name__ == '__main__':
         if type_corr in ['DD','RR']:
             nbObj = head['NOBJ']
             coef = nbObj*(nbObj-1)
-            #coef = nbObj*(nbObj-1)/2.
+        else:
+            nbObj  = head['NOBJ']
+            nbObj2 = head['NOBJ2']
+            coef = nbObj*nbObj2
+
+        if type_corr in ['DD','xDD']:
             data['COEF'] = coef
             for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
                 data[k] = head[k]
             for k in ['RP','RT','Z','NB']:
                 data[k] = sp.array(h[1][k][:])
-        else:
-            nbObj  = head['NOBJ']
-            nbObj2 = head['NOBJ2']
-            coef = nbObj*nbObj2
 
         data[type_corr] = {}
         data[type_corr]['NSIDE'] = head['NSIDE']
@@ -130,7 +131,7 @@ if __name__ == '__main__':
         print('INFO: Compute covariance from Poisson statistics')
         w = data['corr_RR']>0.
         co = sp.zeros(data['corr_DD'].size)
-        co[w] = data['corr_DD'][w]**2/(data['corr_RR'][w]**3*data['COEF'])
+        co[w] = (data['COEF']/2.*data['corr_DD'][w])**2/(data['COEF']/2.*data['corr_RR'][w])**3
         data['CO'] = sp.diag(co)
     else:
         print('INFO: Compute covariance from sub-sampling')

@@ -29,7 +29,7 @@ def fill_neighs(pix):
             ang = o1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            o1.neighs = sp.array([o2 for o2 in neighs if o2.ra > o1.ra])
+            o1.neighs = sp.array([o2 for o2 in neighs])
 
 def fill_neighs_x_correlation(pix):
     for ipix in pix:
