@@ -7,6 +7,8 @@ boss_lambda_min = 3600. ## Angstrom
 
 speed_light = 299792458. ## m/s
 
+small_angle_cut_off = 2./3600.*sp.pi/180. ## 2 arcsec
+
 class cosmo:
 
     def __init__(self,Om,Ok=0):
