@@ -284,7 +284,7 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None)
         dicth[t] = ih
 
     for t,r,d,z,p,m,f in zip(thid,ra,dec,zqso,plate,mjd,fid):
-        h = hdu[dicth[thid]]
+        h = hdu[dicth[t]]
         log.write("file: {} hdu {} read  \n".format(fin,h))
         lamb = h["wavelength"][:]
         ll = sp.log10(lamb)
