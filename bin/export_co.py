@@ -62,6 +62,7 @@ if __name__ == '__main__':
         corr = 'AUTO'
         lst_file = {'DD':args.DD_file, 'RR':args.RR_file, 'DR':args.DR_file, 'RD':args.RD_file}
     elif not args.xDD_file is None:
+        # TODO: Test if do_co.py and export_co.py works for cross
         corr = 'CROSS'
         lst_file = {'xDD':args.xDD_file, 'xRR':args.xRR_file, 'xD1R2':args.D1R2_file, 'xD2R1':args.D2R1_file}
 
