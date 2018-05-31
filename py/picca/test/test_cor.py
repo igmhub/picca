@@ -806,9 +806,9 @@ class TestCor(unittest.TestCase):
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_DR.fits.gz"
             self.compare_fits(path1,path2,"do_co.py DR")
 
-            #path1 = self._masterFiles + "/co_RD.fits.gz"
-            #path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RD.fits.gz"
-            #self.compare_fits(path1,path2,"do_co.py RD")
+            path1 = self._masterFiles + "/co_RD.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RD.fits.gz"
+            self.compare_fits(path1,path2,"do_co.py RD")
 
         return
     def send_export_co(self):
