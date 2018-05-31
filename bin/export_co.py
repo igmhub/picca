@@ -184,8 +184,10 @@ if __name__ == '__main__':
         data['HLP_WE'] = we
 
         if args.do_not_smooth_cov:
+            print('INFO: The covariance will not be smoothed')
             co = cov(da,we)
         else:
+            print('INFO: The covariance will be smoothed')
             binSizeRP = (data['RPMAX']-data['RPMIN']) / data['NP']
             binSizeRT = (data['RTMAX']-0.) / data['NT']
             co = smooth_cov(da,we,data['RP'],data['RT'],drp=binSizeRP,drt=binSizeRT)
@@ -202,6 +204,11 @@ if __name__ == '__main__':
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
+    if corr=='AUTO':
+        nside = data['DD']['NSIDE']
+    else:
+        nside = data['xDD']['NSIDE']
+    head['NSIDE'] = nside
     head['RPMIN'] = data['RPMIN']
     head['RPMAX'] = data['RPMAX']
     head['RTMAX'] = data['RTMAX']
