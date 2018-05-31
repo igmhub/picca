@@ -155,16 +155,16 @@ if __name__ == '__main__':
     sp.random.seed(4)
 
     # loop over input files
-    for i,fil in enumerate(fi):
+    for i,f in enumerate(fi):
         if i%1==0:
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
 
         # read fits or ascii file
         if (args.in_format=='fits') :
-            hdus = fitsio.FITS(fil)
+            hdus = fitsio.FITS(f)
             dels = [delta.from_fitsio(h,Pk1D_type=True) for h in hdus[1:]]
         elif (args.in_format=='ascii') :
-            ascii_file = open(fil,'r')
+            ascii_file = open(f,'r')
             dels = [delta.from_ascii(line) for line in ascii_file]
 
         ndata+=len(dels)
