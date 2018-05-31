@@ -69,7 +69,7 @@ if __name__ == '__main__':
                     help = 'exponent of the redshift evolution of the object 2 field')
 
     parser.add_argument('--type-corr', type = str, default = 'DD', required=False,
-                    help = 'type of correlation: DD, RR, DR, xDD, xRR, xD1R2, xD2R1')
+                    help = 'type of correlation: DD, RR, DR, RD, xDD, xRR, xD1R2, xD2R1')
 
     args = parser.parse_args()
 
@@ -83,8 +83,8 @@ if __name__ == '__main__':
     co.nt     = args.nt
     co.nside  = args.nside
     co.type_corr = args.type_corr
-    if co.type_corr not in ['DD', 'RR', 'DR', 'xDD', 'xRR', 'xD1R2', 'xD2R1']:
-        print("ERROR: type-corr not in ['DD', 'RR', 'DR', 'xDD', 'xRR', 'xD1R2', 'xD2R1']")
+    if co.type_corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xD2R1']:
+        print("ERROR: type-corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xD2R1']")
         sys.exit()
     if args.drq2 is None:
         co.x_correlation = False

@@ -29,7 +29,7 @@ def fill_neighs(pix):
             ang = o1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            o1.neighs = sp.array([o2 for o2 in neighs if o2.ra > o1.ra])
+            o1.neighs = sp.array([o2 for o2 in neighs]) # if o2.ra > o1.ra
 
 def fill_neighs_x_correlation(pix):
     for ipix in pix:
@@ -82,7 +82,7 @@ def co(pix):
 def fast_co(z1,r1,w1,z2,r2,w2,ang):
 
     rp  = (r1-r2)*sp.cos(ang/2.)
-    if not x_correlation or type_corr=='DR':
+    if not x_correlation or type_corr in ['DR','RD']:
         rp = sp.absolute(rp)
     rt  = (r1+r2)*sp.sin(ang/2.)
     z   = (z1+z2)/2.
