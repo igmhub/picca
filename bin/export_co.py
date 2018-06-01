@@ -106,7 +106,6 @@ if __name__ == '__main__':
         w = rr>0.
         da = sp.zeros(dd.size)
         da[w] = (dd[w]+rr[w]-rd[w]-dr[w])/rr[w]
-        data['corr_DR'] = dr
     else:
         dd = data['xDD']['WE'].sum(axis=0)
         rr = data['xRR']['WE'].sum(axis=0)
@@ -115,8 +114,6 @@ if __name__ == '__main__':
         w = rr>0.
         da = sp.zeros(dd.size)
         da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
-        data['corr_xD1R2'] = d1r2
-        data['corr_xD2R1'] = d2r1
     data['DA'] = da
     data['corr_DD'] = dd
     data['corr_RR'] = rr
