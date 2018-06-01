@@ -64,7 +64,7 @@ def spectral_resolution(wdisp,with_correction=None,fiber=None,ll=None) :
         elif (fibnum>400):
             corr = 1. + (corrPlateau-1)*.25 + (corrPlateau-1)*.75*(500-fibnum)/100.
         else:
-            corr = corrPlateau;
+            corr = corrPlateau
             
         reso *= corr
         
