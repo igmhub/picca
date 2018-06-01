@@ -48,7 +48,6 @@ def exp_diff(file,ll) :
     return diff
 
 
-
 def spectral_resolution(wdisp,with_correction=None,fiber=None,ll=None) :
 
     reso = wdisp*constants.speed_light/1000.*1.0e-4*sp.log(10.)
@@ -66,7 +65,6 @@ def spectral_resolution(wdisp,with_correction=None,fiber=None,ll=None) :
         else:
             corr = corrPlateau
         reso *= corr
-        
     return reso
 
 def spectral_resolution_desi(reso_matrix, ll) :
