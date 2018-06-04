@@ -198,9 +198,13 @@ if __name__ == '__main__':
         {'name':'Z_CUT_MAX',xcf.z_cut_max'value':,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}
     ]
-    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],comment=['R-parallel','R-transverse','Redshift','Number of pairs'],header=head,extname='ATTRIBUTES')
+    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
+        comment=['R-parallel','R-transverse','Redshift','Number of pairs'],
+        header=head,extname='ATTRIBUTES')
 
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]
-    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],comment=['Healpix index', 'Sum of weight', 'Correlation'],header=head2,extname='CORRELATION')
+    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],
+        comment=['Healpix index', 'Sum of weight', 'Correlation'],
+        header=head2,extname='CORRELATION')
 
     out.close()
