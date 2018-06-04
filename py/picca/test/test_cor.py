@@ -62,7 +62,7 @@ class TestCor(unittest.TestCase):
         self.send_cf1d()
         self.send_cf1d_cross()
 
-        self.send_cf_angl()
+        #self.send_cf_angl()
 
         self.send_cf()
         self.send_dmat()
