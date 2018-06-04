@@ -9,10 +9,21 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 from picca import constants, xcf, io, prep_del, utils
 from picca.data import forest
 
-def corr_func(p):
-    xcf.fill_neighs(p)
-    tmp = xcf.xcf(p)
-    return tmp
+def corr_func(pixels):
+    """Send correlation on one processor for a list of healpix
+    
+    Args:
+        pixels (list of int): list of healpix to compute
+            the correlation on.
+
+    Returs:
+        cor (list of scipy array): list of array with the
+            computed correlation and other attributes.
+    
+    """
+    xcf.fill_neighs(pixels)
+    cor = xcf.xcf(pixels)
+    return cor
 
 if __name__ == '__main__':
 
