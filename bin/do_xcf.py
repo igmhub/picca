@@ -205,8 +205,8 @@ if __name__ == '__main__':
         {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse'},
         {'name':'NP','value':xcf.np,'comment':'Number bin r-parallel'},
         {'name':'NT','value':xcf.nt,'comment':'Number bin r-transverse'},
-        {'name':'Z_CUT_MIN',xcf.z_cut_min'value':,'comment':'Minimum redshift of pairs'},
-        {'name':'Z_CUT_MAX',xcf.z_cut_max'value':,'comment':'Maximum redshift of pairs'},
+        {'name':'Z_CUT_MIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
+        {'name':'Z_CUT_MAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}
     ]
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
