@@ -54,11 +54,11 @@ if __name__ == '__main__':
 
     parser.add_argument('--z-cut-min', type = float, default=0., required=False,
         help = 'Use only pairs of forest x object with the mean of the last absorber \
-        redshift and the qso redshift higher than z-cut-min')
+        redshift and the object redshift higher than z-cut-min')
 
     parser.add_argument('--z-cut-max', type=float, default=10., required=False,
         help = 'Use only pairs of forestx object with the mean of the last absorber \
-        redshift and the qso redshift smaller than z-cut-max')
+        redshift and the object redshift smaller than z-cut-max')
 
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
         help = 'Name of the absorption in picca.constants defining the redshift of the delta')
