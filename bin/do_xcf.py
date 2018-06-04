@@ -16,7 +16,7 @@ def corr_func(pixels):
         pixels (list of int): list of healpix to compute
             the correlation on.
 
-    Returs:
+    Returns:
         cor (list of scipy array): list of array with the
             computed correlation and other attributes.
     
@@ -65,10 +65,10 @@ if __name__ == '__main__':
 
     parser.add_argument('--z-cut-min', type = float, default=0., required=False,
         help = 'Use only pairs of forest x object with the mean of the last absorber \
-        redshift and the object redshift higher than z-cut-min')
+        redshift and the object redshift larger than z-cut-min')
 
     parser.add_argument('--z-cut-max', type=float, default=10., required=False,
-        help = 'Use only pairs of forestx object with the mean of the last absorber \
+        help = 'Use only pairs of forest x object with the mean of the last absorber \
         redshift and the object redshift smaller than z-cut-max')
 
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
@@ -99,7 +99,7 @@ if __name__ == '__main__':
         help = 'Number of processors')
 
     parser.add_argument('--nspec', type=int, default=None, required=False,
-        help = 'Maximum spectra to read')
+        help = 'Maximum number of spectra to read')
 
     args = parser.parse_args()
 
@@ -203,8 +203,8 @@ if __name__ == '__main__':
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel'},
         {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel'},
         {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse'},
-        {'name':'NP','value':xcf.np,'comment':'Number bin r-parallel'},
-        {'name':'NT','value':xcf.nt,'comment':'Number bin r-transverse'},
+        {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
         {'name':'Z_CUT_MIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'Z_CUT_MAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}
