@@ -26,7 +26,7 @@ if __name__ == '__main__':
         help = 'Directory to delta files')
 
     parser.add_argument('--from-image', type=str, default=None, required=False,
-        help = 'use image format to read deltas', nargs='*')
+        help = 'Read delta from image format', nargs='*')
 
     parser.add_argument('--drq', type=str, default=None, required=True,
         help = 'Catalog of objects in DRQ format')
