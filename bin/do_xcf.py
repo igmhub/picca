@@ -53,11 +53,11 @@ if __name__ == '__main__':
         help = 'Max redshift for object field')
 
     parser.add_argument('--z-cut-min', type = float, default=0., required=False,
-        help = 'Use only pairs of forest/qso with the mean of the last absorber \
+        help = 'Use only pairs of forest x object with the mean of the last absorber \
         redshift and the qso redshift higher than z-cut-min')
 
     parser.add_argument('--z-cut-max', type=float, default=10., required=False,
-        help = 'Use only pairs of forest/qso with the mean of the last absorber \
+        help = 'Use only pairs of forestx object with the mean of the last absorber \
         redshift and the qso redshift smaller than z-cut-max')
 
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
