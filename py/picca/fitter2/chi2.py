@@ -31,6 +31,10 @@ class chi2:
             else:
                 self.seedfast_mc = 0
             self.nfast_mc = dic_init['fast mc']['niterations']
+            if 'covscaling' in dic_init['fast mc']:
+                self.scalefast_mc = dic_init['fast mc']['covscaling']
+            else:
+                self.scalefast_mc = sp.ones(len(self.data))
 
         if 'minos' in dic_init:
             self.minos_para = dic_init['minos']
@@ -184,12 +188,15 @@ class chi2:
         if not hasattr(self,"nfast_mc"): return
 
         sp.random.seed(self.seedfast_mc)
-
         nfast_mc = self.nfast_mc
-        for d in self.data:
+
+        for d, s in zip(self.data, self.scalefast_mc):
+            d.co = s*d.co
+            d.ico = d.ico/s
             d.cho = cholesky(d.co)
 
         self.fast_mc = {}
+        self.fast_mc['chi2'] = []
         self.fast_mc_data = {}
         for it in range(nfast_mc):
             for d in self.data:
@@ -203,6 +210,7 @@ class chi2:
                 if not p in self.fast_mc:
                     self.fast_mc[p] = []
                 self.fast_mc[p].append([v, best_fit.errors[p]])
+            self.fast_mc['chi2'].append(best_fit.fval)
 
     def minos(self):
         if not hasattr(self,"minos_para"): return
@@ -271,12 +279,17 @@ class chi2:
             g = f.create_group("fast mc")
             g.attrs['niterations'] = self.nfast_mc
             g.attrs['seed'] = self.seedfast_mc
+            g.attrs['covscaling'] = self.scalefast_mc
             for p in self.fast_mc:
                 vals = sp.array(self.fast_mc[p])
-                d = g.create_dataset("{}/values".format(p), vals[:,0].shape, dtype="f")
-                d[...] = vals[:,0]
-                d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
-                d[...] = vals[:,1]
+                if p == 'chi2':
+                    d = g.create_dataset("{}".format(p), vals.shape, dtype="f")
+                    d[...] = vals
+                else:
+                    d = g.create_dataset("{}/values".format(p), vals[:,0].shape, dtype="f")
+                    d[...] = vals[:,0]
+                    d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
+                    d[...] = vals[:,1]
             for p in self.fast_mc_data:
                 xi = self.fast_mc_data[p]
                 d = g.create_dataset(p, xi.shape, dtype="f")
