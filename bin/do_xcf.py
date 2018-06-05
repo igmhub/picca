@@ -11,7 +11,7 @@ from picca.data import forest
 
 def corr_func(pixels):
     """Send correlation on one processor for a list of healpix
-    
+
     Args:
         pixels (list of int): list of healpix to compute
             the correlation on.
@@ -19,7 +19,7 @@ def corr_func(pixels):
     Returns:
         cor (list of scipy array): list of array with the
             computed correlation and other attributes.
-    
+
     """
     xcf.fill_neighs(pixels)
     cor = xcf.xcf(pixels)
