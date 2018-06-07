@@ -35,6 +35,7 @@ class chi2:
                 self.scalefast_mc = dic_init['fast mc']['covscaling']
             else:
                 self.scalefast_mc = sp.ones(len(self.data))
+            self.fidfast_mc = dic_init['fast mc']['fiducial']
 
         if 'minos' in dic_init:
             self.minos_para = dic_init['minos']
@@ -195,13 +196,30 @@ class chi2:
             d.ico = d.ico/s
             d.cho = cholesky(d.co)
 
+        self.fiducial_values = self.best_fit.values.copy()
+        if len(self.fidfast_mc) != 0:
+            for p in self.fidfast_mc:
+                self.fiducial_values[p] = self.fidfast_mc[p]
+
+        self.fiducial_values['SB'] = False
+        for d in self.data:
+            d.fiducial_model = self.fiducial_values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.fiducial_values)
+
+            self.fiducial_values['SB'] = True
+            snl = self.fiducial_values['sigmaNL_per']
+            self.fiducial_values['sigmaNL_per'] = 0
+            d.fiducial_model += d.xi_model(self.k, self.pksb_lin, self.fiducial_values)
+            self.fiducial_values['SB'] = False
+            self.fiducial_values['sigmaNL_per'] = snl
+        del self.fiducial_values['SB']
+
         self.fast_mc = {}
         self.fast_mc['chi2'] = []
         self.fast_mc_data = {}
         for it in range(nfast_mc):
             for d in self.data:
                 g = sp.random.randn(len(d.da))
-                d.da = d.cho.dot(g) + d.best_fit_model
+                d.da = d.cho.dot(g) + d.fiducial_model
                 self.fast_mc_data[d.name+'_'+str(it)] = d.da
                 d.da_cut = d.da[d.mask]
 
@@ -280,6 +298,15 @@ class chi2:
             g.attrs['niterations'] = self.nfast_mc
             g.attrs['seed'] = self.seedfast_mc
             g.attrs['covscaling'] = self.scalefast_mc
+            if len(self.fidfast_mc) != 0:
+                fid = []
+                for p in self.fidfast_mc:
+                    g.attrs["fiducial[{}]".format(p)] = self.fidfast_mc[p]
+                    fid.append(p.encode('utf8'))
+                g.attrs['list of fiducial pars'] = fid
+                for d in self.data:
+                    fiducial = g.create_dataset("{}_fiducial".format(d.name), d.da.shape, dtype = "f")
+                    fiducial[...] = d.fiducial_model
             for p in self.fast_mc:
                 vals = sp.array(self.fast_mc[p])
                 if p == 'chi2':

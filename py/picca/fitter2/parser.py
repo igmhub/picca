@@ -55,14 +55,17 @@ def parse_chi2(filename):
 
     if 'fast mc' in cp.sections():
         dic_init['fast mc'] = {}
+        dic_init['fast mc']['fiducial'] = {}
         for item, value in cp.items('fast mc'):
-            if item=='covscaling':
+            if item=='niterations' or item=='seed':
+                dic_init['fast mc'][item] = int(value)
+            elif item=='covscaling':
                 value = value.split()
                 dic_init['fast mc'][item] = sp.array(value).astype(float)
                 if not len(dic_init['fast mc'][item])==len(dic_init['data sets']['data']):
                     raise AssertionError()
             else:
-                dic_init['fast mc'][item] = int(value)
+                dic_init['fast mc']['fiducial'][item] = float(value)
 
     if cp.has_section('minos'):
         dic_init['minos'] = {}
