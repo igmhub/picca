@@ -139,21 +139,24 @@ if __name__ == '__main__':
     nb = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['RPMIN']    = co.rp_min
-    head['RPMAX']    = co.rp_max
-    head['RTMAX']    = co.rt_max
-    head['NT']       = co.nt
-    head['NP']       = co.np
-    head['NSIDE']    = co.nside
-    head['TYPECORR'] = co.type_corr
-    head['NOBJ']     = len([o1 for p in co.objs for o1 in co.objs[p]])
+    head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel'},
+        {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse'},
+        {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}
+        {'name':'TYPECORR','value':co.type_corr,'comment':'Correlation type'}
+        {'name':'NOBJ','value':len([o1 for p in co.objs for o1 in co.objs[p]]),'comment':'Number of objects'}
+    ]
     if co.x_correlation:
-        head['NOBJ2']  = len([o2 for p in co.objs2 for o2 in co.objs2[p]])
+        head += [{'name':'NOBJ2','value':len([o2 for p in co.objs2 for o2 in co.objs2[p]]),'comment':'Number of objects 2'}]
 
-    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
+    comment = ['R-parallel','R-transverse','Redshift','Number of pairs']
+    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head,comment=comment,extname='ATTRI')
+
+    comment = ['Healpix index', 'Sum of weight', 'Number of pairs']
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
-    out.write([hep,wes,nbs],names=['HEALPID','WE','NB'],header=head2)
+    out.write([hep,wes,nbs],names=['HEALPID','WE','NB'],header=head2,comment=comment,extname='COR')
     out.close()
 
     sys.stderr.write("\nFinished\n")
