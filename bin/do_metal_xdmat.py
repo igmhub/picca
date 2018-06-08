@@ -17,12 +17,8 @@ def calc_metal_xdmat(abs_igm,p):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-
-
-
-
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the distortion matrix of the cross-correlation delta x object for a list of IGM absorption.')
 
     parser.add_argument('--out', type=str, default=None, required=True,
         help = 'Output file name')
