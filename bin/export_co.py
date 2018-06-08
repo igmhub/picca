@@ -11,46 +11,43 @@ from picca.utils import smooth_cov, cov
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                        description='Export auto-correlation object x object and cross-correlation object_1 x object_2 for the fitter')
+        description='Export auto and cross-correlation of catalog of objects for the fitter.')
 
     parser.add_argument('--out', type=str, default=None, required=True,
-                        help = 'Output path')
-
+        help='Output file name')
 
     parser.add_argument('--DD-file', type=str, default=None, required=False,
-                        help = 'File of the data x data auto-correlation')
+        help='File of the data x data auto-correlation')
 
     parser.add_argument('--RR-file', type=str, default=None, required=False,
-                        help = 'File of the random x random auto-correlation')
+        help='File of the random x random auto-correlation')
 
     parser.add_argument('--DR-file', type=str, default=None, required=False,
-                        help = 'File of the data x random auto-correlation')
+        help='File of the data x random auto-correlation')
 
     parser.add_argument('--RD-file', type=str, default=None, required=False,
-                        help = 'File of the random x data auto-correlation')
-
+        help='File of the random x data auto-correlation')
 
     parser.add_argument('--xDD-file', type=str, default=None, required=False,
-                        help = 'File of the data_1 x data_2 cross-correlation')
+        help='File of the data_1 x data_2 cross-correlation')
 
     parser.add_argument('--xRR-file', type=str, default=None, required=False,
-                        help = 'File of the random_1 x random_2 cross-correlation')
+        help='File of the random_1 x random_2 cross-correlation')
 
     parser.add_argument('--xD1R2-file', type=str, default=None, required=False,
-                        help = 'File of the data_1 x random_2 cross-correlation')
+        help='File of the data_1 x random_2 cross-correlation')
 
     parser.add_argument('--xD2R1-file', type=str, default=None, required=False,
-                        help = 'File of the data_2 x random_1 cross-correlation')
-
+        help='File of the data_2 x random_1 cross-correlation')
 
     parser.add_argument('--do-not-smooth-cov', action='store_true', default=False,
-                        help='Do not smooth the covariance matrix from sub-sampling')
+        help='Do not smooth the covariance matrix from sub-sampling')
 
     parser.add_argument('--get-cov-from-poisson', action='store_true', default=False,
-                        help='Get covariance matrix from Poisson statistics')
+        help='Get covariance matrix from Poisson statistics')
 
     parser.add_argument('--cov', type=str, default=None, required=False,
-                        help = 'Path to a covariance matrix file (if not provided it will be calculated by subsampling or from Poisson statistics)')
+        help='Path to a covariance matrix file (if not provided it will be calculated by subsampling or from Poisson statistics)')
 
     args = parser.parse_args()
 
@@ -205,14 +202,16 @@ if __name__ == '__main__':
         nside = data['DD']['NSIDE']
     else:
         nside = data['xDD']['NSIDE']
-    head['NSIDE'] = nside
-    head['RPMIN'] = data['RPMIN']
-    head['RPMAX'] = data['RPMAX']
-    head['RTMAX'] = data['RTMAX']
-    head['NT'] = data['NT']
-    head['NP'] = data['NP']
+    head = [ {'name':'RPMIN','value':data['RPMIN'],'comment':'Minimum r-parallel'},
+        {'name':'RPMAX','value':data['RPMAX'],'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':data['RTMAX'],'comment':'Maximum r-transverse'},
+        {'name':'NP','value':data['NP'],'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':data['NT'],'comment':'Number of bins in r-transverse'},
+        {'name':'NSIDE','value':nside,'comment':'Healpix nside'}
+    ]
     lst = ['RP','RT','Z','DA','CO','DM','NB']
-    h.write([ data[k] for k in lst ], names=lst, header=head)
+    comment=['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
+    h.write([ data[k] for k in lst ], names=lst, header=head, comment=comment)
 
     if args.cov is None and not args.get_cov_from_poisson:
         if corr=='AUTO':
@@ -222,6 +221,7 @@ if __name__ == '__main__':
             HLPXSCHM = data['xDD']['HLPXSCHM']
             hep = data['xDD']['HEALPID']
         head2 = [{'name':'HLPXSCHM','value':HLPXSCHM,'comment':'healpix scheme'}]
-        h.write([hep,data['HLP_WE'],data['HLP_DA']],names=['HEALPID','WE','DA'],header=head2)
+        comment=['Healpix index', 'Sum of weight', 'Correlation']
+        h.write([hep,data['HLP_WE'],data['HLP_DA']],names=['HEALPID','WE','DA'],header=head2,comment=comment)
 
     h.close()
