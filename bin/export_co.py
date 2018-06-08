@@ -8,18 +8,21 @@ import glob
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--DD-file', type = str, default = None, required=True,
-                        help = 'file of the data-data correlation')
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Export auto and cross-correlation of catalog of objects for the fitter.')
 
-    parser.add_argument('--RR-DR-dir', type = str, default = None, required=True,
-                        help = 'path directory to all data-random and random-random correlations')
+    parser.add_argument('--DD-file', type=str, default=None, required=True,
+        help='File of the data-data correlation')
 
-    parser.add_argument('--cov', type = str, default = None, required=False,
-                        help = 'covariance matrix file (if not provided it will be calculated by subsampling)')
+    parser.add_argument('--RR-DR-dir', type=str, default=None, required=True,
+        help='Path directory to all data-random and random-random correlations')
 
-    parser.add_argument('--out', type = str, default = None, required=True,
-                        help = 'output file')
+    parser.add_argument('--out', type=str, default=None, required=True,
+        help='Output file name')
+
+    parser.add_argument('--cov', type=str, default=None, required=False,
+        help='Covariance matrix file (if not provided it will be calculated by Poisson)')
+
 
     args = parser.parse_args()
 
@@ -118,15 +121,16 @@ if __name__ == '__main__':
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['RPMIN'] = rp_min
-    head['RPMAX'] = rp_max
-    head['RTMAX'] = rt_max
-    head['NT'] = nt
-    head['NP'] = np
-    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],header=head)
+    head = [ {'name':'RPMIN','value':rp_min,'comment':'Minimum r-parallel'},
+        {'name':'RPMAX','value':rp_max,'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':rt_max,'comment':'Maximum r-transverse'},
+        {'name':'NP','value':np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':nt,'comment':'Number of bins in r-transverse'}
+    ]
+    comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
+    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
     if type_corr=='DD':
-        h.write([dd,rr,dr],names=['DD','RR','DR'])
+        h.write([dd,rr,dr],names=['DD','RR','DR'],comment=['Data-Data','Random-Random','Data-Random'],extname='ELEMENT')
     else:
-        h.write([dd,rr,d1r2,d2r1],names=['DD','RR','D1R2','D2R1'])
+        h.write([dd,rr,d1r2,d2r1],names=['DD','RR','D1R2','D2R1'],comment=['Data1-Data2','Random1-Random2','Data1-Random2','Data2-Random1'],extname='ELEMENT')
     h.close()

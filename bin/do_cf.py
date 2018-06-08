@@ -22,73 +22,77 @@ def corr_func(p):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the auto and cross-correlation of delta fields')
 
-    parser.add_argument('--out', type = str, default = None, required=True,
-                        help = 'output file name')
+    parser.add_argument('--out', type=str, default=None, required=True,
+        help='Output file name')
 
-    parser.add_argument('--in-dir', type = str, default = None, required=True,
-                        help = 'data directory')
+    parser.add_argument('--in-dir', type=str, default=None, required=True,
+        help='Directory to delta files')
 
-    parser.add_argument('--in-dir2', type = str, default = None, required=False,
-                        help = 'data directory #2, for forest x-correlation')
+    parser.add_argument('--from-image', type=str, default=None, required=False,
+        help='Read delta from image format', nargs='*')
 
-    parser.add_argument('--rp-max', type = float, default = 200., required=False,
-                        help = 'max rp [h^-1 Mpc]')
+    parser.add_argument('--in-dir2', type=str, default=None, required=False,
+        help='Directory to 2nd delta files')
 
-    parser.add_argument('--rp-min', type = float, default = 0., required=False,
-                        help = 'min rp., rp can be <0 [h^-1 Mpc]')
+    parser.add_argument('--rp-min', type=float, default=0., required=False,
+        help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--rt-max', type = float, default = 200., required=False,
-                        help = 'max rt [h^-1 Mpc]')
+    parser.add_argument('--rp-max', type=float, default=200., required=False,
+        help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--np', type = int, default = 50, required=False,
-                        help = 'number of r-parallel bins')
+    parser.add_argument('--rt-max', type=float, default=200., required=False,
+        help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument('--nt', type = int, default = 50, required=False,
-                        help = 'number of r-transverse bins')
+    parser.add_argument('--np', type=int, default=50, required=False,
+        help='Number of r-parallel bins')
 
-    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
-                        help = 'name of the absorption in picca.constants')
+    parser.add_argument('--nt', type=int, default=50, required=False,
+        help='Number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs2', type = str, default = None, required=False,
-                        help = 'name of the 2nd absorption in picca.constants')
+    parser.add_argument('--z-cut-min', type=float, default=0., required=False,
+        help='Use only pairs of forest x object with the mean of the last absorber \
+        redshift and the object redshift larger than z-cut-min')
 
-    parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
-                    help = 'Om of fiducial cosmology')
+    parser.add_argument('--z-cut-max', type=float, default=10., required=False,
+        help='Use only pairs of forest x object with the mean of the last absorber \
+        redshift and the object redshift smaller than z-cut-max')
 
-    parser.add_argument('--nside', type = int, default = 16, required=False,
-                    help = 'healpix nside')
+    parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the delta')
 
-    parser.add_argument('--nproc', type = int, default = None, required=False,
-                    help = 'number of processors')
+    parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the 2nd delta')
 
-    parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
-                    help = 'reference redshift')
+    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+        help='Reference redshift')
 
-    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
-                        help = 'use only pairs of forests with the mean redshift of the last absorbers higher than z-cut-min')
+    parser.add_argument('--z-evol', type=float, default=2.9, required=False,
+        help='Exponent of the redshift evolution of the delta field')
 
-    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
-                        help = 'use only pairs of forests with the mean redshift of the last absorbers smaller than z-cut-max')
+    parser.add_argument('--z-evol2', type=float, default=2.9, required=False,
+        help='Exponent of the redshift evolution of the 2nd delta field')
 
-    parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
-                    help = 'exponent of the redshift evolution of the delta field')
+    parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
+        help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--z-evol2', type = float, default = 2.9, required=False,
-                    help = 'exponent of the redshift evolution of the 2nd delta field')
+    parser.add_argument('--no-project', action='store_true', required=False,
+        help='Do not project out continuum fitting modes')
 
-    parser.add_argument('--no-project', action="store_true", required=False,
-                    help = 'do not project out continuum fitting modes')
+    parser.add_argument('--no-same-wavelength-pairs', action='store_true', required=False,
+        help='Reject pairs with same wavelength')
 
-    parser.add_argument('--from-image', type = str, default = None, required=False,
-                    help = 'use image format to read deltas', nargs='*')
+    parser.add_argument('--nside', type=int, default=16, required=False,
+        help='Healpix nside')
 
-    parser.add_argument('--nspec', type=int,default=None, required=False,
-                    help = 'maximum spectra to read')
+    parser.add_argument('--nproc', type=int, default=None, required=False,
+        help='Number of processors')
 
-    parser.add_argument('--no-same-wavelength-pairs', action="store_true", required=False,
-                    help = 'Reject pairs with same wavelength')
+    parser.add_argument('--nspec', type=int, default=None, required=False,
+        help='Maximum number of spectra to read')
+
 
     args = parser.parse_args()
 
@@ -274,19 +278,25 @@ if __name__ == '__main__':
     z[cut]  /= wes.sum(axis=0)[cut]
     nb       = nbs.sum(axis=0)
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['RPMIN']=cf.rp_min
-    head['RPMAX']=cf.rp_max
-    head['RTMAX']=cf.rt_max
-    head['Z_CUT_MIN']=cf.z_cut_min
-    head['Z_CUT_MAX']=cf.z_cut_max
-    head['NT']=cf.nt
-    head['NP']=cf.np
-    head['NSIDE']=cf.nside
 
-    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
-    ## use the default scheme in healpy => RING
-    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
-    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
+    out = fitsio.FITS(args.out,'rw',clobber=True)
+    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
+        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
+        {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
+        {'name':'NSIDE','value':cf.nside,'comment':'Healpix nside'}
+    ]
+    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
+        comment=['R-parallel','R-transverse','Redshift','Number of pairs'],
+        units=['h^-1 Mpc','h^-1 Mpc','',''],
+        header=head,extname='ATTRI')
+
+    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]
+    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],
+        comment=['Healpix index', 'Sum of weight', 'Correlation'],
+        header=head2,extname='COR')
+
     out.close()
