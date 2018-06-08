@@ -236,5 +236,5 @@ if __name__ == '__main__':
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
     comment = ['Sum of weight','Covariance','Nomber of pairs','T1','T2','T3','T4','T5','T6']
-    out.write([Ttot,wAll,nb,T1,T2,T3,T4,T5,T6],names=['WALL','CO','NB','T1','T2','T3','T4','T5','T6'],comment=comment,header=head,extname='COV')
+    out.write([wAll,Ttot,nb,T1,T2,T3,T4,T5,T6],names=['WALL','CO','NB','T1','T2','T3','T4','T5','T6'],comment=comment,header=head,extname='COV')
     out.close()
