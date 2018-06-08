@@ -139,12 +139,12 @@ if __name__ == '__main__':
     nb = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel'},
-        {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel'},
-        {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse'},
-        {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
-        {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}
+    head = [ {'name':'RPMIN','value':co.rp_min,'comment':'Minimum r-parallel'},
+        {'name':'RPMAX','value':co.rp_max,'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':co.rt_max,'comment':'Maximum r-transverse'},
+        {'name':'NP','value':co.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':co.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'NSIDE','value':co.nside,'comment':'Healpix nside'}
         {'name':'TYPECORR','value':co.type_corr,'comment':'Correlation type'}
         {'name':'NOBJ','value':len([o1 for p in co.objs for o1 in co.objs[p]]),'comment':'Number of objects'}
     ]
