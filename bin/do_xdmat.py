@@ -177,6 +177,5 @@ if __name__ == '__main__':
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'}
     ]
-
     out.write([wdm,dm],names=['WDM','DM'],header=head,comment=['Sum of weight','Distortion matrix'],extname='DMAT')
     out.close()
