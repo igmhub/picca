@@ -10,34 +10,34 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--prefix-pk', type=str, default=None, required=True,
-        help = 'Prefix to pk file')
+        help='Prefix to pk file')
 
     parser.add_argument('--out', type=str, default=None, required=True,
-        help = 'Output file name')
+        help='Output file name')
 
     parser.add_argument('--zref', type=float, default=None, required=True,
-        help = 'Reference redshift')
+        help='Reference redshift')
 
     parser.add_argument('--Om', type=float, default=None, required=True,
-        help = 'Matter density parameter')
+        help='Matter density parameter')
 
     parser.add_argument('--Ok', type=float, default=None, required=True,
-        help = 'Curvature density parameter')
+        help='Curvature density parameter')
 
     parser.add_argument('--w', type=float, default=None, required=True,
-        help = 'Dark energy equation of state')
+        help='Dark energy equation of state')
 
     parser.add_argument('--H0', type=float, default=None, required=True,
-        help = 'Hubble constant')
+        help='Hubble constant')
 
     parser.add_argument('--sigma8', type=float, default=None, required=True,
-        help = 'Fluctuation amplitude on 8 Mpc/h scale')
+        help='Fluctuation amplitude on 8 Mpc/h scale')
 
     parser.add_argument('--zdrag', type=float, default=None, required=True,
-        help = 'Redshift at the drag epoch')
+        help='Redshift at the drag epoch')
 
     parser.add_argument('--rdrag', type=float, default=None, required=True,
-        help = 'Sound horizon at the drag epoch')
+        help='Sound horizon at the drag epoch')
 
 
     args=parser.parse_args()

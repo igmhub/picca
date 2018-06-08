@@ -52,7 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
-    parser.add_argument('--z-cut-min', type = float, default=0., required=False,
+    parser.add_argument('--z-cut-min', type=float, default=0., required=False,
         help='Use only pairs of forest x object with the mean of the last absorber \
         redshift and the object redshift larger than z-cut-min')
 
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol2', type=float, default=2.9, required=False,
         help='Exponent of the redshift evolution of the 2nd delta field')
 
-    parser.add_argument('--metal-alpha', type = float, default = 1., required=False,
+    parser.add_argument('--metal-alpha', type=float, default=1., required=False,
         help='Dxponent of the redshift evolution of the metal delta field')
 
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,

@@ -63,7 +63,7 @@ if __name__ == '__main__':
     parser.add_argument('--z-max-obj', type=float, default=None, required=False,
         help='Max redshift for object field')
 
-    parser.add_argument('--z-cut-min', type = float, default=0., required=False,
+    parser.add_argument('--z-cut-min', type=float, default=0., required=False,
         help='Use only pairs of forest x object with the mean of the last absorber \
         redshift and the object redshift larger than z-cut-min')
 

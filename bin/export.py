@@ -12,7 +12,7 @@ from picca.utils import smooth_cov, cov
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Export auto-correlation and cross-correlation for the fitter.')
+        description='Export auto and cross-correlation for the fitter.')
 
     parser.add_argument('--data', type=str, default=None, required=True,
         help='Correlation produced via do_cf.py, do_xcf.py, ...')

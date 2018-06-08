@@ -106,10 +106,10 @@ if __name__ == '__main__':
     parser.add_argument('--delta-format',type=str,default=None,required=False,
         help='Format for Pk 1D: Pk1D')
 
-    parser.add_argument('--use-ivar-as-weight', action='store_true', default = False,
+    parser.add_argument('--use-ivar-as-weight', action='store_true', default=False,
         help='Use ivar as weights (implemented as eta = 1, sigma_lss = fudge = 0)')
 
-    parser.add_argument('--use-constant-weight', action='store_true', default = False,
+    parser.add_argument('--use-constant-weight', action='store_true', default=False,
         help='Set all the delta weights to one (implemented as eta = 0, sigma_lss = 1, fudge = 0)')
 
     parser.add_argument('--order',type=int,default=1,required=False,
