@@ -18,58 +18,61 @@ def corr_func(p):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('--out', type = str, default = None, required=True,
-                        help = 'output file name')
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the auto and cross-correlation between catalogs of objects')
 
-    parser.add_argument('--drq', type = str, default = None, required=True,
-                        help = 'drq')
+    parser.add_argument('--out', type=str, default=None, required=True,
+        help='Output file name')
 
-    parser.add_argument('--drq2', type = str, default = None, required=False,
-                        help = 'drq 2')
+    parser.add_argument('--drq', type=str, default=None, required=True,
+        help='Catalog of objects in DRQ format')
 
-    parser.add_argument('--rp-min', type = float, default = 0., required=False,
-                        help = 'min rp [h^-1 Mpc]')
+    parser.add_argument('--drq2', type=str, default=None, required=True,
+        help='Catalog of objects 2 in DRQ format')
 
-    parser.add_argument('--rp-max', type = float, default = 200., required=False,
-                        help = 'max rp [h^-1 Mpc]')
+    parser.add_argument('--rp-min', type=float, default=0., required=False,
+        help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--rt-max', type = float, default = 200., required=False,
-                        help = 'max rt [h^-1 Mpc]')
+    parser.add_argument('--rp-max', type=float, default=200., required=False,
+        help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--np', type = int, default = 50, required=False,
-                        help = 'number of r-parallel bins')
+    parser.add_argument('--rt-max', type=float, default=200., required=False,
+        help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument('--nt', type = int, default = 50, required=False,
-                        help = 'number of r-transverse bins')
+    parser.add_argument('--np', type=int, default=50, required=False,
+        help='Number of r-parallel bins')
 
-    parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
-                    help = 'Om of fiducial cosmology')
+    parser.add_argument('--nt', type=int, default=50, required=False,
+        help='Number of r-transverse bins')
 
-    parser.add_argument('--nside', type = int, default = 16, required=False,
-                    help = 'healpix nside')
+    parser.add_argument('--z-min-obj', type=float, default=None, required=False,
+        help='Min redshift for object field')
 
-    parser.add_argument('--nproc', type = int, default = None, required=False,
-                    help = 'number of processors')
+    parser.add_argument('--z-max-obj', type=float, default=None, required=False,
+        help='Max redshift for object field')
 
-    parser.add_argument('--z-min-obj', type = float, default = None, required=False,
-                    help = 'min redshift for object field')
+    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+        help='Reference redshift')
 
-    parser.add_argument('--z-max-obj', type = float, default = None, required=False,
-                    help = 'max redshift for object field')
+    parser.add_argument('--z-evol-obj', type=float, default=1., required=False,
+        help='Exponent of the redshift evolution of the object field')
 
-    parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
-                    help = 'reference redshift')
+    parser.add_argument('--z-evol-obj2', type=float, default=1., required=False,
+        help='Exponent of the redshift evolution of the object 2 field')
 
-    parser.add_argument('--z-evol-obj', type = float, default = 1., required=False,
-                    help = 'exponent of the redshift evolution of the object field')
+    parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
+        help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--z-evol-obj2', type = float, default = 1., required=False,
-                    help = 'exponent of the redshift evolution of the object 2 field')
+    parser.add_argument('--type-corr', type=str, default='DD', required=False,
+        help='type of correlation: DD, RR, DR, xDD, xRR, xD1R2, xD2R1')
 
-    parser.add_argument('--type-corr', type = str, default = 'DD', required=False,
-                    help = 'type of correlation: DD, RR, DR, xDD, xRR, xD1R2, xD2R1')
+    parser.add_argument('--nside', type=int, default=16, required=False,
+        help='Healpix nside')
+
+    parser.add_argument('--nproc', type=int, default=None, required=False,
+        help='Number of processors')
+
 
     args = parser.parse_args()
 

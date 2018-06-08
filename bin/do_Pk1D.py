@@ -79,49 +79,51 @@ def compute_mean_delta(ll,delta,iv,zqso):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the 1D power spectrum')
 
-    parser.add_argument('--out-dir', type = str, default = None, required=True,
-                        help = 'output file name')
+    parser.add_argument('--out-dir', type=str, default=None, required=True,
+        help='Output directory')
 
-    parser.add_argument('--in-dir', type = str, default = None, required=True,
-                        help = 'data directory')
+    parser.add_argument('--out-format', type=str, default='fits', required=False,
+        help='Output format: root or fits (if root call PyRoot)')
 
-    parser.add_argument('--out-format', type = str, default = 'fits', required=False,
-                        help = ' root or fits, if root call PyRoot')
+    parser.add_argument('--in-dir', type=str, default=None, required=True,
+        help='Directory to delta files')
 
-    parser.add_argument('--in-format', type = str, default = 'fits', required=False,
-                        help = ' format used for input files, ascii or fits')
+    parser.add_argument('--in-format', type=str, default='fits', required=False,
+        help=' Input format used for input files: ascii or fits')
 
-    parser.add_argument('--SNR-min',type = float,default=2.,required=False,
-                        help = 'minimal mean SNR per pixel ')
+    parser.add_argument('--SNR-min',type=float,default=2.,required=False,
+        help='Minimal mean SNR per pixel ')
 
-    parser.add_argument('--reso-max',type = float,default=85.,required=False,
-                        help = 'maximal resolution in km/s ')
+    parser.add_argument('--reso-max',type=float,default=85.,required=False,
+        help='Maximal resolution in km/s ')
 
-    parser.add_argument('--lambda-obs-min',type = float,default=3600.,required=False,
-                        help = 'minimal lambda obs.' )
+    parser.add_argument('--lambda-obs-min',type=float,default=3600.,required=False,
+        help='Lower limit on observed wavelength [Angstrom]' )
 
-    parser.add_argument('--nb-part',type = int,default=3,required=False,
-                        help = 'Number of parts in forest')
+    parser.add_argument('--nb-part',type=int,default=3,required=False,
+        help='Number of parts in forest')
 
-    parser.add_argument('--nb-pixel-min',type = int,default=75,required=False,
-                        help = 'Minimal number of pixels in a part of forest')
+    parser.add_argument('--nb-pixel-min',type=int,default=75,required=False,
+        help='Minimal number of pixels in a part of forest')
 
-    parser.add_argument('--nb-pixel-masked-max',type = int,default=40,required=False,
-                        help = 'Maximal number of masked pixels in a part of forest')
+    parser.add_argument('--nb-pixel-masked-max',type=int,default=40,required=False,
+        help='Maximal number of masked pixels in a part of forest')
 
-    parser.add_argument('--noise-estimate', type = str, default = 'mean_diff', required=False,
-                        help = ' Estimate of Pk_noise pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff')
+    parser.add_argument('--no-apply-filling', action='store_true', default=False, required=False,
+        help='Dont fill masked pixels')
 
-    parser.add_argument('--debug', action='store_true', default = False, required=False,
-                        help = ' Fill root histograms for debugging')
+    parser.add_argument('--noise-estimate', type=str, default='mean_diff', required=False,
+        help='Estimate of Pk_noise pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff')
 
-    parser.add_argument('--no-apply-filling', action='store_true', default = False, required=False,
-                        help = ' No fill masked pixels')
+    parser.add_argument('--forest-type', type=str, default='Lya', required=False,
+        help='Forest used: Lya, SiIV, CIV')
 
-    parser.add_argument('--forest-type', type = str, default = 'Lya', required=False,
-                        help = ' , Forest used LY-a, SiIV or CIV')
+    parser.add_argument('--debug', action='store_true', default=False, required=False,
+        help='Fill root histograms for debugging')
+
 
     args = parser.parse_args()
 
