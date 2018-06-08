@@ -231,7 +231,7 @@ if __name__ == '__main__':
         {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
-        {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
+        {'name':'REJ','value':xcf.rej,'comment':'Rejection factor'},
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
