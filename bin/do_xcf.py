@@ -31,75 +31,75 @@ if __name__ == '__main__':
         description='Compute the cross-correlation between a catalog of objects and a delta field.')
 
     parser.add_argument('--out', type=str, default=None, required=True,
-        help = 'Output file name')
+        help='Output file name')
 
     parser.add_argument('--in-dir', type=str, default=None, required=True,
-        help = 'Directory to delta files')
+        help='Directory to delta files')
 
     parser.add_argument('--from-image', type=str, default=None, required=False,
-        help = 'Read delta from image format', nargs='*')
+        help='Read delta from image format', nargs='*')
 
     parser.add_argument('--drq', type=str, default=None, required=True,
-        help = 'Catalog of objects in DRQ format')
+        help='Catalog of objects in DRQ format')
 
     parser.add_argument('--rp-min', type=float, default=-200., required=False,
-        help = 'Min r-parallel [h^-1 Mpc]')
+        help='Min r-parallel [h^-1 Mpc]')
 
     parser.add_argument('--rp-max', type=float, default=200., required=False,
-        help = 'Max r-parallel [h^-1 Mpc]')
+        help='Max r-parallel [h^-1 Mpc]')
 
     parser.add_argument('--rt-max', type=float, default=200., required=False,
-        help = 'Max r-transverse [h^-1 Mpc]')
+        help='Max r-transverse [h^-1 Mpc]')
 
     parser.add_argument('--np', type=int, default=100, required=False,
-        help = 'Number of r-parallel bins')
+        help='Number of r-parallel bins')
 
     parser.add_argument('--nt', type=int, default=50, required=False,
-        help = 'Number of r-transverse bins')
+        help='Number of r-transverse bins')
 
     parser.add_argument('--z-min-obj', type=float, default=None, required=False,
-        help = 'Min redshift for object field')
+        help='Min redshift for object field')
 
     parser.add_argument('--z-max-obj', type=float, default=None, required=False,
-        help = 'Max redshift for object field')
+        help='Max redshift for object field')
 
     parser.add_argument('--z-cut-min', type = float, default=0., required=False,
-        help = 'Use only pairs of forest x object with the mean of the last absorber \
+        help='Use only pairs of forest x object with the mean of the last absorber \
         redshift and the object redshift larger than z-cut-min')
 
     parser.add_argument('--z-cut-max', type=float, default=10., required=False,
-        help = 'Use only pairs of forest x object with the mean of the last absorber \
+        help='Use only pairs of forest x object with the mean of the last absorber \
         redshift and the object redshift smaller than z-cut-max')
 
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
-        help = 'Name of the absorption in picca.constants defining the redshift of the delta')
+        help='Name of the absorption in picca.constants defining the redshift of the delta')
 
     parser.add_argument('--z-ref', type=float, default=2.25, required=False,
-        help = 'Reference redshift')
+        help='Reference redshift')
 
     parser.add_argument('--z-evol-del', type=float, default=2.9, required=False,
-        help = 'Exponent of the redshift evolution of the delta field')
+        help='Exponent of the redshift evolution of the delta field')
 
     parser.add_argument('--z-evol-obj', type=float, default=1., required=False,
-        help = 'Exponent of the redshift evolution of the object field')
+        help='Exponent of the redshift evolution of the object field')
 
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
-        help = 'Omega_matter(z=0) of fiducial LambdaCDM cosmology')
+        help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
     parser.add_argument('--no-project', action='store_true', required=False,
-        help = 'Do not project out continuum fitting modes')
+        help='Do not project out continuum fitting modes')
 
     parser.add_argument('--no-remove-mean-lambda-obs', action='store_true', required=False,
-        help = 'Do not remove mean delta versus lambda_obs')
+        help='Do not remove mean delta versus lambda_obs')
 
     parser.add_argument('--nside', type=int, default=16, required=False,
-        help = 'Healpix nside')
+        help='Healpix nside')
 
     parser.add_argument('--nproc', type=int, default=None, required=False,
-        help = 'Number of processors')
+        help='Number of processors')
 
     parser.add_argument('--nspec', type=int, default=None, required=False,
-        help = 'Maximum number of spectra to read')
+        help='Maximum number of spectra to read')
 
     args = parser.parse_args()
 
@@ -211,11 +211,11 @@ if __name__ == '__main__':
     ]
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
         comment=['R-parallel','R-transverse','Redshift','Number of pairs'],
-        header=head,extname='ATTRIBUTES')
+        header=head,extname='ATTRI')
 
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]
     out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],
         comment=['Healpix index', 'Sum of weight', 'Correlation'],
-        header=head2,extname='CORRELATION')
+        header=head2,extname='COR')
 
     out.close()

@@ -13,13 +13,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Compute the cross-covariance matrix between two correlations')
     parser.add_argument('--data1', type=str, default=None, required=True,
-        help = 'Correlation 1 produced via do_cf.py, do_xcf.py, ...')
+        help='Correlation 1 produced via do_cf.py, do_xcf.py, ...')
 
     parser.add_argument('--data2', type=str, default=None, required=True,
-        help = 'Correlation 2 produced via do_cf.py, do_xcf.py, ...')
+        help='Correlation 2 produced via do_cf.py, do_xcf.py, ...')
 
     parser.add_argument('--out', type=str, default=None, required=True,
-        help = 'Output file name')
+        help='Output file name')
 
 
     args = parser.parse_args()
@@ -96,5 +96,5 @@ if __name__ == '__main__':
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)
-    h.write([cross_co,cross_cor],names=['CO','COR'],comment=['Covariance matrix','Correlation matrix'],extname='COVARIANCE')
+    h.write([cross_co,cross_cor],names=['CO','COR'],comment=['Covariance matrix','Correlation matrix'],extname='COVAR')
     h.close()

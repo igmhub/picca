@@ -15,16 +15,16 @@ if __name__ == '__main__':
         description='Export auto-correlation and cross-correlation for the fitter.')
 
     parser.add_argument('--data', type=str, default=None, required=True,
-        help = 'Correlation produced via do_cf.py, do_xcf.py, ...')
+        help='Correlation produced via do_cf.py, do_xcf.py, ...')
 
     parser.add_argument('--out', type=str, default=None, required=True,
-        help = 'Output file name')
+        help='Output file name')
 
     parser.add_argument('--dmat', type=str, default=None, required=False,
-        help = 'Distortion matrix produced via do_dmat.py, do_xdmat.py... (if not provided will be identity)')
+        help='Distortion matrix produced via do_dmat.py, do_xdmat.py... (if not provided will be identity)')
 
     parser.add_argument('--cov', type=str, default=None, required=False,
-        help = 'Covariance matrix (if not provided will be calculated by subsampling)')
+        help='Covariance matrix (if not provided will be calculated by subsampling)')
 
     parser.add_argument('--do-not-smooth-cov', action='store_true', default=False,
         help='Do not smooth the covariance matrix')
@@ -89,5 +89,5 @@ if __name__ == '__main__':
         {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'}
     ]
     comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
-    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='CORRELATION')
+    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
     h.close()
