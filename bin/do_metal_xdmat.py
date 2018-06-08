@@ -238,5 +238,5 @@ if __name__ == '__main__':
         out_list += [wdm_all[i]]
         out_comment += ['Sum of weight']
 
-    out.write(out_list,names=out_names,comment=out_comment,extname='MXDMAT')
+    out.write(out_list,names=out_names,comment=out_comment,extname='MDMAT')
     out.close()

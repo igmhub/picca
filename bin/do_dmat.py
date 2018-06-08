@@ -244,16 +244,16 @@ if __name__ == '__main__':
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['REJ']=args.rej
-    head['RPMAX']=cf.rp_max
-    head['RTMAX']=cf.rt_max
-    head['Z_CUT_MIN']=cf.z_cut_min
-    head['Z_CUT_MAX']=cf.z_cut_max
-    head['NT']=cf.nt
-    head['NP']=cf.np
-    head['NPROR']=npairs
-    head['NPUSED']=npairs_used
-
-    out.write([wdm,dm],names=['WDM','DM'],header=head)
+    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel'},
+        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse'},
+        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
+        {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
+        {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
+        {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
+        {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
+    ]
+    out.write([wdm,dm],names=['WDM','DM'],header=head,comment=['Sum of weight','Distortion matrix'],extname='DMAT')
     out.close()

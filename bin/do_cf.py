@@ -274,19 +274,24 @@ if __name__ == '__main__':
     z[cut]  /= wes.sum(axis=0)[cut]
     nb       = nbs.sum(axis=0)
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['RPMIN']=cf.rp_min
-    head['RPMAX']=cf.rp_max
-    head['RTMAX']=cf.rt_max
-    head['Z_CUT_MIN']=cf.z_cut_min
-    head['Z_CUT_MAX']=cf.z_cut_max
-    head['NT']=cf.nt
-    head['NP']=cf.np
-    head['NSIDE']=cf.nside
 
-    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
-    ## use the default scheme in healpy => RING
-    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
-    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
+    out = fitsio.FITS(args.out,'rw',clobber=True)
+    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel'},
+        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse'},
+        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
+        {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
+        {'name':'NSIDE','value':cf.nside,'comment':'Healpix nside'}
+    ]
+    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
+        comment=['R-parallel','R-transverse','Redshift','Number of pairs'],
+        header=head,extname='ATTRI')
+
+    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]
+    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],
+        comment=['Healpix index', 'Sum of weight', 'Correlation'],
+        header=head2,extname='COR')
+
     out.close()

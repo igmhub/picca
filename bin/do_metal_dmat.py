@@ -316,38 +316,46 @@ if __name__ == '__main__':
             npairs_used_all.append(npairs_used)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head["ALPHA_MET"]=args.metal_alpha
-    head['REJ']=args.rej
-    head['RPMAX']=cf.rp_max
-    head['RTMAX']=cf.rt_max
-    head['Z_CUT_MIN']=cf.z_cut_min
-    head['Z_CUT_MAX']=cf.z_cut_max
-    head['NT']=cf.nt
-    head['NP']=cf.np
+    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel'},
+        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse'},
+        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
+        {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
+        {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
+        {'name':'ALPHAMET','value':args.metal_alpha,'comment':'Evolution of metal bias'},
+    ]
 
     len_names = sp.array([ len(s) for s in names ]).max()
     names = sp.array(names, dtype='S'+str(len_names))
-    out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=["NPALL","NPUSED","ABS_IGM"],header=head)
+    out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=['NPALL','NPUSED','ABS_IGM'],header=head,
+        comment=['Number of pairs','Number of used pairs','Absorption name'],extname='ATTRI')
 
     names = names.astype(str)
     out_list = []
-    out_names=[]
+    out_names = []
+    out_comment = []
     for i,ai in enumerate(names):
-        out_names=out_names + ["RP_"+ai]
-        out_list = out_list + [rp_all[i]]
+        out_names += ['RP_'+args.obj_name+'_'+ai]
+        out_list += [rp_all[i]]
+        out_comment += ['R-parallel']
 
-        out_names=out_names + ["RT_"+ai]
-        out_list = out_list + [rt_all[i]]
+        out_names += ['RT_'+args.obj_name+'_'+ai]
+        out_list += [rt_all[i]]
+        out_comment += ['R-transverse']
 
-        out_names=out_names + ["Z_"+ai]
-        out_list = out_list + [z_all[i]]
+        out_names += ['Z_'+args.obj_name+'_'+ai]
+        out_list += [z_all[i]]
+        out_comment += ['Redshift']
 
-        out_names = out_names + ["DM_"+ai]
-        out_list = out_list + [dm_all[i]]
+        out_names += ['DM_'+args.obj_name+'_'+ai]
+        out_list += [dm_all[i]]
+        out_comment += ['Distortion matrix']
 
-        out_names=out_names+["WDM_"+ai]
-        out_list = out_list+[wdm_all[i]]
+        out_names += ['WDM_'+args.obj_name+'_'+ai]
+        out_list += [wdm_all[i]]
+        out_comment += ['Sum of weight']
 
-    out.write(out_list,names=out_names)
+    out.write(out_list,names=out_names,comment=out_comment,extname='MDMAT')
     out.close()

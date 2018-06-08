@@ -181,15 +181,15 @@ if __name__ == '__main__':
     t123[w]/=we[w]
     t123 = npairs_used*t123/npairs
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['RPMAX']=cf.rp_max
-    head['RTMAX']=cf.rt_max
-    head['NT']=cf.nt
-    head['NP']=cf.np
-    head['NPTOT']=npairs
-    head['NPUSED']=npairs_used
-    head['REJ']=args.rej
 
-    out.write([w123,t123],names=['WE','T123'],header=head)
+    out = fitsio.FITS(args.out,'rw',clobber=True)
+    head = [ {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse'},
+        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
+        {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
+        {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
+    ]
+    out.write([w123,t123],names=['WE','CO'],header=head,comment=['Sum of weight','Covariance from T123'],extname='COV')
     out.close()
