@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--drq', type=str, default=None, required=True,
         help='Catalog of objects in DRQ format')
 
-    parser.add_argument('--drq2', type=str, default=None, required=True,
+    parser.add_argument('--drq2', type=str, default=None, required=False,
         help='Catalog of objects 2 in DRQ format')
 
     parser.add_argument('--rp-min', type=float, default=0., required=False,
