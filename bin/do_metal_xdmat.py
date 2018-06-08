@@ -62,10 +62,10 @@ if __name__ == '__main__':
         help='Name of the absorption in picca.constants defining the redshift of the delta')
 
     parser.add_argument('--obj-name', type=str, default='QSO', required=False,
-        help='name of the object tracer')
+        help='Name of the object tracer')
 
     parser.add_argument('--abs-igm', type=str,default=None, required=False, nargs='*',
-        help='List of metals in picca.constants')
+        help='List of names of metal absorption in picca.constants')
 
     parser.add_argument('--z-ref', type=float, default=2.25, required=False,
         help='Reference redshift')

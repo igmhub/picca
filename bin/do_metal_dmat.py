@@ -24,79 +24,84 @@ def calc_metal_dmat(abs_igm1,abs_igm2,p):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the auto and cross-correlation of delta fields for a list of IGM absorption.')
 
-    parser.add_argument('--out', type = str, default = None, required=True,
-                        help = 'output file name')
 
-    parser.add_argument('--in-dir', type = str, default = None, required=True,
-                        help = 'data directory')
+    parser.add_argument('--out', type=str, default=None, required=True,
+        help='Output file name')
 
-    parser.add_argument('--in-dir2', type = str, default = None, required=False,
-                        help = 'data directory #2')
+    parser.add_argument('--in-dir', type=str, default=None, required=True,
+        help='Directory to delta files')
 
-    parser.add_argument('--rp-max', type = float, default = 200., required=False,
-                        help = 'max rp [h^-1 Mpc]')
+    parser.add_argument('--in-dir2', type=str, default=None, required=False,
+        help='Directory to 2nd delta files')
 
-    parser.add_argument('--rp-min', type = float, default = 0., required=False,
-                        help = 'min rp [h^-1 Mpc]')
+    parser.add_argument('--rp-min', type=float, default=0., required=False,
+        help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--rt-max', type = float, default = 200., required=False,
-                        help = 'max rt [h^-1 Mpc]')
+    parser.add_argument('--rp-max', type=float, default=200., required=False,
+        help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--np', type = int, default = 50, required=False,
-                        help = 'number of r-parallel bins')
+    parser.add_argument('--rt-max', type=float, default=200., required=False,
+        help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument('--nt', type = int, default = 50, required=False,
-                        help = 'number of r-transverse bins')
+    parser.add_argument('--np', type=int, default=50, required=False,
+        help='Number of r-parallel bins')
 
-    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
-                        help = 'name of the absorption in picca.constants')
+    parser.add_argument('--nt', type=int, default=50, required=False,
+        help='Number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs2', type = str, default = None, required=False,
-                        help = 'name of the 2nd absorption in picca.constants')
+    parser.add_argument('--z-cut-min', type = float, default=0., required=False,
+        help='Use only pairs of forest x object with the mean of the last absorber \
+        redshift and the object redshift larger than z-cut-min')
 
-    parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
-                    help = 'Om of fiducial cosmology')
+    parser.add_argument('--z-cut-max', type=float, default=10., required=False,
+        help='Use only pairs of forest x object with the mean of the last absorber \
+        redshift and the object redshift smaller than z-cut-max')
 
-    parser.add_argument('--nside', type = int, default = 16, required=False,
-                    help = 'healpix nside')
+    parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the delta')
 
-    parser.add_argument('--nproc', type = int, default = None, required=False,
-                    help = 'number of processors')
+    parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the 2nd delta')
 
-    parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
-                    help = 'reference redshift')
+    parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs='*',
+        help='List of names of metal absorption in picca.constants present in forest')
 
-    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
-                        help = 'use only pairs of forests with the mean redshift of the last absorbers higher than z-cut-min')
+    parser.add_argument('--abs-igm2', type=str,default=None, required=False,nargs='*',
+        help='List of names of metal absorption in picca.constants present in 2nd forest')
 
-    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
-                        help = 'use only pairs of forests with the mean redshift of the last absorbers smaller than z-cut-max')
+    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+        help='Reference redshift')
 
-    parser.add_argument('--rej', type = float, default = 1., required=False,
-                    help = 'fraction rejected: -1=no rejection, 1=all rejection')
+    parser.add_argument('--z-evol', type=float, default=2.9, required=False,
+        help='Exponent of the redshift evolution of the delta field')
 
-    parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
-                    help = 'exponent of the redshift evolution of the delta field')
-
-    parser.add_argument('--z-evol2', type = float, default = 2.9, required=False,
-                    help = 'exponent of the redshift evolution of the 2nd delta field')
+    parser.add_argument('--z-evol2', type=float, default=2.9, required=False,
+        help='Exponent of the redshift evolution of the 2nd delta field')
 
     parser.add_argument('--metal-alpha', type = float, default = 1., required=False,
-                    help = 'exponent of the redshift evolution of the metal delta field')
+        help='Dxponent of the redshift evolution of the metal delta field')
 
-    parser.add_argument('--nspec', type=int,default=None, required=False,
-                    help = 'maximum spectra to read')
+    parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
+        help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs="*",
-                    help = 'list of metals')
+    parser.add_argument('--no-same-wavelength-pairs', action='store_true', required=False,
+        help='Reject pairs with same wavelength')
 
-    parser.add_argument('--abs-igm2', type=str,default=None, required=False,nargs="*",
-                        help = 'list #2 of metals')
+    parser.add_argument('--rej', type=float, default=1., required=False,
+        help='Fraction of rejected forest-forest pairs: -1=no rejection, 1=all rejection')
 
-    parser.add_argument('--no-same-wavelength-pairs', action="store_true", required=False,
-                    help = 'Reject pairs with same wavelength')
+    parser.add_argument('--nside', type=int, default=16, required=False,
+        help='Healpix nside')
+
+    parser.add_argument('--nproc', type=int, default=None, required=False,
+        help='Number of processors')
+
+    parser.add_argument('--nspec', type=int, default=None, required=False,
+        help='Maximum number of spectra to read')
+
 
     args = parser.parse_args()
 
@@ -337,23 +342,23 @@ if __name__ == '__main__':
     out_names = []
     out_comment = []
     for i,ai in enumerate(names):
-        out_names += ['RP_'+args.obj_name+'_'+ai]
+        out_names += ['RP_'+ai]
         out_list += [rp_all[i]]
         out_comment += ['R-parallel']
 
-        out_names += ['RT_'+args.obj_name+'_'+ai]
+        out_names += ['RT_'+ai]
         out_list += [rt_all[i]]
         out_comment += ['R-transverse']
 
-        out_names += ['Z_'+args.obj_name+'_'+ai]
+        out_names += ['Z_'+ai]
         out_list += [z_all[i]]
         out_comment += ['Redshift']
 
-        out_names += ['DM_'+args.obj_name+'_'+ai]
+        out_names += ['DM_'+ai]
         out_list += [dm_all[i]]
         out_comment += ['Distortion matrix']
 
-        out_names += ['WDM_'+args.obj_name+'_'+ai]
+        out_names += ['WDM_'+ai]
         out_list += [wdm_all[i]]
         out_comment += ['Sum of weight']
 
