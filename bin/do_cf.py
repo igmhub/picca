@@ -280,9 +280,9 @@ if __name__ == '__main__':
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel'},
-        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel'},
-        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse'},
+    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel','units':'h^-1 Mpc'},
+        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel','units':'h^-1 Mpc'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse','units':'h^-1 Mpc'},
         {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
@@ -291,6 +291,7 @@ if __name__ == '__main__':
     ]
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
         comment=['R-parallel','R-transverse','Redshift','Number of pairs'],
+        units=['h^-1 Mpc','h^-1 Mpc','',''],
         header=head,extname='ATTRI')
 
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]

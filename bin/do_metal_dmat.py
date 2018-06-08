@@ -321,9 +321,9 @@ if __name__ == '__main__':
             npairs_used_all.append(npairs_used)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel'},
-        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel'},
-        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse'},
+    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel','units':'h^-1 Mpc'},
+        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel','units':'h^-1 Mpc'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse','units':'h^-1 Mpc'},
         {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
@@ -341,26 +341,32 @@ if __name__ == '__main__':
     out_list = []
     out_names = []
     out_comment = []
+    out_units = []
     for i,ai in enumerate(names):
         out_names += ['RP_'+ai]
         out_list += [rp_all[i]]
         out_comment += ['R-parallel']
+        out_units += ['h^-1 Mpc']
 
         out_names += ['RT_'+ai]
         out_list += [rt_all[i]]
         out_comment += ['R-transverse']
+        out_units += ['h^-1 Mpc']
 
         out_names += ['Z_'+ai]
         out_list += [z_all[i]]
         out_comment += ['Redshift']
+        out_units += ['']
 
         out_names += ['DM_'+ai]
         out_list += [dm_all[i]]
         out_comment += ['Distortion matrix']
+        out_units += ['']
 
         out_names += ['WDM_'+ai]
         out_list += [wdm_all[i]]
         out_comment += ['Sum of weight']
+        out_units += ['']
 
-    out.write(out_list,names=out_names,comment=out_comment,extname='MDMAT')
+    out.write(out_list,names=out_names,comment=out_comment,units=out_units,extname='MDMAT')
     out.close()

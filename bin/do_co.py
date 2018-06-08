@@ -139,9 +139,9 @@ if __name__ == '__main__':
     nb = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':co.rp_min,'comment':'Minimum r-parallel'},
-        {'name':'RPMAX','value':co.rp_max,'comment':'Maximum r-parallel'},
-        {'name':'RTMAX','value':co.rt_max,'comment':'Maximum r-transverse'},
+    head = [ {'name':'RPMIN','value':co.rp_min,'comment':'Minimum r-parallel','units':'h^-1 Mpc'},
+        {'name':'RPMAX','value':co.rp_max,'comment':'Maximum r-parallel','units':'h^-1 Mpc'},
+        {'name':'RTMAX','value':co.rt_max,'comment':'Maximum r-transverse','units':'h^-1 Mpc'},
         {'name':'NP','value':co.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':co.nt,'comment':'Number of bins in r-transverse'},
         {'name':'NSIDE','value':co.nside,'comment':'Healpix nside'},
@@ -152,7 +152,8 @@ if __name__ == '__main__':
         head += [{'name':'NOBJ2','value':len([o2 for p in co.objs2 for o2 in co.objs2[p]]),'comment':'Number of objects 2'}]
 
     comment = ['R-parallel','R-transverse','Redshift','Number of pairs']
-    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head,comment=comment,extname='ATTRI')
+    units=['h^-1 Mpc','h^-1 Mpc','','']
+    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head,comment=comment,units=units,extname='ATTRI')
 
     comment = ['Healpix index', 'Sum of weight', 'Number of pairs']
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]

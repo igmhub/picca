@@ -124,6 +124,7 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
 
+
     args = parser.parse_args()
 
     ## init forest class
@@ -381,8 +382,8 @@ if __name__ == '__main__':
         else :
             out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)
             for d in deltas[p]:
-                hd = [ {'name':'RA','value':d.ra,'comment':'Right Ascension (rad)'},
-                       {'name':'DEC','value':d.dec,'comment':'Declination (rad)'},
+                hd = [ {'name':'RA','value':d.ra,'comment':'Right Ascension','units':'rad'},
+                       {'name':'DEC','value':d.dec,'comment':'Declination','units':'rad'},
                        {'name':'Z','value':d.zqso,'comment':'Redshift'},
                        {'name':'PMF','value':'{}-{}-{}'.format(d.plate,d.mjd,d.fid)},
                        {'name':'THING_ID','value':d.thid,'comment':'Object identification'},
@@ -400,19 +401,21 @@ if __name__ == '__main__':
                     dll = d.dll
                     if (args.mode=='desi'):
                         dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
-                    hd += [{'name':'DLL','value':dll,'comment':'Loglam bin size'}]
+                    hd += [{'name':'DLL','value':dll,'comment':'Loglam bin size','units':'log Angstrom'}]
                     diff = d.diff
                     if diff is None:
                         diff = d.ll*0
 
                     cols=[d.ll,d.de,d.iv,diff]
                     names=['LOGLAM','DELTA','IVAR','DIFF']
+                    units=['log Angstrom','','','']
                     comments = ['Log lambda','Delta field','Inverse variance','Difference']
                 else :
                     cols=[d.ll,d.de,d.we,d.co]
-                    comments = ['Log lambda','Delta field','Pixel weights','Continuum']
                     names=['LOGLAM','DELTA','WEIGHT','CONT']
+                    units=['log Angstrom','','','']
+                    comments = ['Log lambda','Delta field','Pixel weights','Continuum']
 
-                out.write(cols,names=names,header=hd,comment=comments,extname=str(d.thid))
+                out.write(cols,names=names,header=hd,comment=comments,units=units,extname=str(d.thid))
 
             out.close()
