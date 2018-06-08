@@ -28,13 +28,13 @@ if __name__ == '__main__':
     parser.add_argument('--drq', type=str, default=None, required=True,
         help='Catalog of objects in DRQ format')
 
-    parser.add_argument('--wr-min', type = float, default = 0.9, required=False,
+    parser.add_argument('--wr-min', type=float, default=0.9, required=False,
         help='Min of wavelength ratio')
 
-    parser.add_argument('--wr-max', type = float, default = 1.1, required=False,
+    parser.add_argument('--wr-max', type=float, default=1.1, required=False,
         help='Max of wavelength ratio')
 
-    parser.add_argument('--ang-max', type = float, default = 0.02, required=False,
+    parser.add_argument('--ang-max', type=float, default=0.02, required=False,
         help='Max angle (rad)')
 
     parser.add_argument('--np', type=int, default=100, required=False,
