@@ -11,21 +11,23 @@ from picca.utils import smooth_cov, cov
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--data', type = str, default = None, required=True,
-                        help = 'data file')
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Export auto and cross-correlation for the fitter.')
 
-    parser.add_argument('--out', type = str, default = None, required=True,
-                        help = 'output file')
+    parser.add_argument('--data', type=str, default=None, required=True,
+        help='Correlation produced via do_cf.py, do_xcf.py, ...')
 
-    parser.add_argument('--dmat', type = str, default = None, required=False,
-                        help = 'distorsion matrix file')
+    parser.add_argument('--out', type=str, default=None, required=True,
+        help='Output file name')
 
-    parser.add_argument('--cov', type = str, default = None, required=False,
-                        help = 'covariance matrix file (if not provided it will be calculated by subsampling)')
+    parser.add_argument('--dmat', type=str, default=None, required=False,
+        help='Distortion matrix produced via do_dmat.py, do_xdmat.py... (if not provided will be identity)')
 
-    parser.add_argument('--do-not-smooth-cov', action='store_true', default = False,
-                        help='do not smooth the covariance matrix')
+    parser.add_argument('--cov', type=str, default=None, required=False,
+        help='Covariance matrix (if not provided will be calculated by subsampling)')
+
+    parser.add_argument('--do-not-smooth-cov', action='store_true', default=False,
+        help='Do not smooth the covariance matrix')
 
 
     args = parser.parse_args()
@@ -80,11 +82,12 @@ if __name__ == '__main__':
         dm = sp.eye(len(da))
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['RPMIN'] = rp_min
-    head['RPMAX'] = rp_max
-    head['RTMAX'] = rt_max
-    head['NT'] = nt
-    head['NP'] = np
-    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],header=head)
+    head = [ {'name':'RPMIN','value':rp_min,'comment':'Minimum r-parallel'},
+        {'name':'RPMAX','value':rp_max,'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':rt_max,'comment':'Maximum r-transverse'},
+        {'name':'NP','value':np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':nt,'comment':'Number of bins in r-transverse'}
+    ]
+    comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
+    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
     h.close()
