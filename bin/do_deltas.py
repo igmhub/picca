@@ -390,7 +390,7 @@ if __name__ == '__main__':
                        {'name':'PLATE','value':d.plate},
                        {'name':'MJD','value':d.mjd,'comment':'Modified Julian date'},
                        {'name':'FIBERID','value':d.fid},
-                       {'name':'ORDER','value':d.order,'comment':'Order if the continuum fit'},
+                       {'name':'ORDER','value':d.order,'comment':'Order of the continuum fit'},
                 ]
 
                 if (args.delta_format=='Pk1D'):
