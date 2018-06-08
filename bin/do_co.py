@@ -144,9 +144,9 @@ if __name__ == '__main__':
         {'name':'RTMAX','value':co.rt_max,'comment':'Maximum r-transverse'},
         {'name':'NP','value':co.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':co.nt,'comment':'Number of bins in r-transverse'},
-        {'name':'NSIDE','value':co.nside,'comment':'Healpix nside'}
-        {'name':'TYPECORR','value':co.type_corr,'comment':'Correlation type'}
-        {'name':'NOBJ','value':len([o1 for p in co.objs for o1 in co.objs[p]]),'comment':'Number of objects'}
+        {'name':'NSIDE','value':co.nside,'comment':'Healpix nside'},
+        {'name':'TYPECORR','value':co.type_corr,'comment':'Correlation type'},
+        {'name':'NOBJ','value':len([o1 for p in co.objs for o1 in co.objs[p]]),'comment':'Number of objects'},
     ]
     if co.x_correlation:
         head += [{'name':'NOBJ2','value':len([o2 for p in co.objs2 for o2 in co.objs2[p]]),'comment':'Number of objects 2'}]
