@@ -35,7 +35,8 @@ class chi2:
                 self.scalefast_mc = dic_init['fast mc']['covscaling']
             else:
                 self.scalefast_mc = sp.ones(len(self.data))
-            self.fidfast_mc = dic_init['fast mc']['fiducial']
+            self.fidfast_mc = dic_init['fast mc']['fiducial']['values']
+            self.fixfast_mc = dic_init['fast mc']['fiducial']['fix']
 
         if 'minos' in dic_init:
             self.minos_para = dic_init['minos']
@@ -200,6 +201,10 @@ class chi2:
         if len(self.fidfast_mc) != 0:
             for p in self.fidfast_mc:
                 self.fiducial_values[p] = self.fidfast_mc[p]
+                for d in self.data:
+                    if p in d.par_names:
+                        d.pars_init[p] = self.fidfast_mc[p]
+                        d.par_fixed['fix_'+p] = self.fixfast_mc['fix_'+p]
 
         self.fiducial_values['SB'] = False
         for d in self.data:
@@ -301,7 +306,9 @@ class chi2:
             if len(self.fidfast_mc) != 0:
                 fid = []
                 for p in self.fidfast_mc:
-                    g.attrs["fiducial[{}]".format(p)] = self.fidfast_mc[p]
+                    fix = "fixed"
+                    if self.fixfast_mc['fix_'+p] == False: fix = "free"
+                    g.attrs["fiducial[{}]".format(p)] = [self.fidfast_mc[p], fix.encode('utf8')]
                     fid.append(p.encode('utf8'))
                 g.attrs['list of fiducial pars'] = fid
                 for d in self.data:

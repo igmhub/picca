@@ -56,6 +56,8 @@ def parse_chi2(filename):
     if 'fast mc' in cp.sections():
         dic_init['fast mc'] = {}
         dic_init['fast mc']['fiducial'] = {}
+        dic_init['fast mc']['fiducial']['values'] = {}
+        dic_init['fast mc']['fiducial']['fix'] = {}
         for item, value in cp.items('fast mc'):
             if item=='niterations' or item=='seed':
                 dic_init['fast mc'][item] = int(value)
@@ -65,7 +67,11 @@ def parse_chi2(filename):
                 if not len(dic_init['fast mc'][item])==len(dic_init['data sets']['data']):
                     raise AssertionError()
             else:
-                dic_init['fast mc']['fiducial'][item] = float(value)
+                value = value.split()
+                dic_init['fast mc']['fiducial']['values'][item] = float(value[0])
+                if not (value[1]=='fixed' or value[1]=='free'):
+                    raise AssertionError()
+                dic_init['fast mc']['fiducial']['fix']['fix_'+item] = value[1]  == 'fixed'
 
     if cp.has_section('minos'):
         dic_init['minos'] = {}
