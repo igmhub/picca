@@ -25,7 +25,8 @@ def cf1d(p):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the 1D auto or cross-correlation between delta field from the same forest.')
 
     parser.add_argument('--out', type=str, default=None, required=True,
         help='Output file name')

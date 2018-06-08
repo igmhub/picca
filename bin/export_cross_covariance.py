@@ -12,6 +12,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Compute the cross-covariance matrix between two correlations')
+
     parser.add_argument('--data1', type=str, default=None, required=True,
         help='Correlation 1 produced via do_cf.py, do_xcf.py, ...')
 
