@@ -139,9 +139,9 @@ if __name__ == '__main__':
     nb = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':co.rp_min,'comment':'Minimum r-parallel','units':'h^-1 Mpc'},
-        {'name':'RPMAX','value':co.rp_max,'comment':'Maximum r-parallel','units':'h^-1 Mpc'},
-        {'name':'RTMAX','value':co.rt_max,'comment':'Maximum r-transverse','units':'h^-1 Mpc'},
+    head = [ {'name':'RPMIN','value':co.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':co.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':co.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':co.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':co.nt,'comment':'Number of bins in r-transverse'},
         {'name':'NSIDE','value':co.nside,'comment':'Healpix nside'},

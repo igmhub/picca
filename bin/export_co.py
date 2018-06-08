@@ -121,15 +121,14 @@ if __name__ == '__main__':
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':rp_min,'comment':'Minimum r-parallel','units':'h^-1 Mpc'},
-        {'name':'RPMAX','value':rp_max,'comment':'Maximum r-parallel','units':'h^-1 Mpc'},
-        {'name':'RTMAX','value':rt_max,'comment':'Maximum r-transverse','units':'h^-1 Mpc'},
+    head = [ {'name':'RPMIN','value':rp_min,'comment':'Minimum r-parallel'},
+        {'name':'RPMAX','value':rp_max,'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':rt_max,'comment':'Maximum r-transverse'},
         {'name':'NP','value':np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':nt,'comment':'Number of bins in r-transverse'}
     ]
     comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
-    units = ['h^-1 Mpc','h^-1 Mpc','','','','','']
-    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,units=units,header=head,extname='COR')
+    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
     if type_corr=='DD':
         h.write([dd,rr,dr],names=['DD','RR','DR'],comment=['Data-Data','Random-Random','Data-Random'],extname='ELEMENT')
     else:

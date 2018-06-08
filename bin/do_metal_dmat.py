@@ -321,9 +321,9 @@ if __name__ == '__main__':
             npairs_used_all.append(npairs_used)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel','units':'h^-1 Mpc'},
-        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel','units':'h^-1 Mpc'},
-        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse','units':'h^-1 Mpc'},
+    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},

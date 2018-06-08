@@ -180,7 +180,7 @@ if __name__ == '__main__':
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum wavelength ratio'},
         {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum wavelength ratio'},
-        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum angle','units':'rad'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum angle [rad]'},
         {'name':'NP','value':cf.np,'comment':'Number of bins in wavelength ratio'},
         {'name':'NT','value':cf.nt,'comment':'Number of bins in angle'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},

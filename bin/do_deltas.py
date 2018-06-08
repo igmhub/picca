@@ -382,8 +382,8 @@ if __name__ == '__main__':
         else :
             out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)
             for d in deltas[p]:
-                hd = [ {'name':'RA','value':d.ra,'comment':'Right Ascension','units':'rad'},
-                       {'name':'DEC','value':d.dec,'comment':'Declination','units':'rad'},
+                hd = [ {'name':'RA','value':d.ra,'comment':'Right Ascension [rad]'},
+                       {'name':'DEC','value':d.dec,'comment':'Declination [rad]'},
                        {'name':'Z','value':d.zqso,'comment':'Redshift'},
                        {'name':'PMF','value':'{}-{}-{}'.format(d.plate,d.mjd,d.fid)},
                        {'name':'THING_ID','value':d.thid,'comment':'Object identification'},
@@ -401,7 +401,7 @@ if __name__ == '__main__':
                     dll = d.dll
                     if (args.mode=='desi'):
                         dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
-                    hd += [{'name':'DLL','value':dll,'comment':'Loglam bin size','units':'log Angstrom'}]
+                    hd += [{'name':'DLL','value':dll,'comment':'Loglam bin size [log Angstrom]'}]
                     diff = d.diff
                     if diff is None:
                         diff = d.ll*0

@@ -181,14 +181,14 @@ if __name__ == '__main__':
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum wavelength ratio'},
-        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum wavelength ratio'},
-        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum angle','units':'rad'},
-        {'name':'NP','value':cf.np,'comment':'Number of bins in wavelength ratio'},
-        {'name':'NT','value':cf.nt,'comment':'Number of bins in angle'},
-        {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
-        {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
-        {'name':'NSIDE','value':cf.nside,'comment':'Healpix nside'}
+    head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum wavelength ratio'},
+        {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum wavelength ratio'},
+        {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum angle [rad]'},
+        {'name':'NP','value':xcf.np,'comment':'Number of bins in wavelength ratio'},
+        {'name':'NT','value':xcf.nt,'comment':'Number of bins in angle'},
+        {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
+        {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
+        {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}
     ]
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
         units=['','rad','',''],

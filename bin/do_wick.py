@@ -183,9 +183,9 @@ if __name__ == '__main__':
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel','units':'h^-1 Mpc'},
-        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse','units':'h^-1 Mpc'},
-        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel','units':'h^-1 Mpc'},
+    head = [ {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
+        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel [h^-1 Mpc]'},
         {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
         {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},

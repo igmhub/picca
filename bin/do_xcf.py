@@ -200,9 +200,9 @@ if __name__ == '__main__':
     nb = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel','units':'h^-1 Mpc'},
-        {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel','units':'h^-1 Mpc'},
-        {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse','units':'h^-1 Mpc'},
+    head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},

@@ -198,9 +198,9 @@ if __name__ == '__main__':
     print("writing")
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'LLMIN','value':cf.lmin,'comment':'Minimum log10 lambda','units':'log Angstrom'},
-             {'name':'LLMAX','value':cf.lmax,'comment':'Maximum log10 lambda','units':'log Angstrom'},
-             {'name':'DLL','value':cf.dll,'comment':'Loglam bin size','units':'log Angstrom'},
+    head = [ {'name':'LLMIN','value':cf.lmin,'comment':'Minimum log10 lambda [log Angstrom]'},
+             {'name':'LLMAX','value':cf.lmax,'comment':'Maximum log10 lambda [log Angstrom]'},
+             {'name':'DLL','value':cf.dll,'comment':'Loglam bin size [log Angstrom]'},
     ]
     comment = ['Variance','Sum of weight for variance','Sum of pairs for variance',
                'Correlation','Sum of weight for correlation','Sum of pairs for correlation']
