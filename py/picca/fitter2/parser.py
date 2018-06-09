@@ -69,7 +69,7 @@ def parse_chi2(filename):
             else:
                 value = value.split()
                 dic_init['fast mc']['fiducial']['values'][item] = float(value[0])
-                if not (value[1]=='fixed' or value[1]=='free'):
+                if not value[1] in ['fixed','free']:
                     raise AssertionError()
                 dic_init['fast mc']['fiducial']['fix']['fix_'+item] = value[1]  == 'fixed'
 
