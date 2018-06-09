@@ -206,9 +206,24 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
         return data, len(pixs), nside, "RING"
 
+    if mode == "spec-mock-1D":
+        try:
+            fin = in_dir
+            hdu = fitsio.FITS(fin)
+        except IOError:
+            log.write("error reading {}\n".format(fin))
+            #match between the thid and hdu index
+        dicth = {}
+        for ih,h in enumerate(hdu[1:],1):
+            head = h.read_header()
+            t = head['ID']
+            dicth[t] = ih
+
     upix = sp.unique(pixs)
+
     for i, pix in enumerate(upix):
         w = pixs == pix
+        #index = sp.where(w)
         ## read all hiz qsos
         if mode == "pix":
             t0 = time.time()
@@ -220,7 +235,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             read_time=time.time()-t0
         elif mode == "spec-mock-1D":
             t0 = time.time()
-            pix_data = read_from_mock_1D(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
+            pix_data = read_from_mock_1D(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], dicth, order, mode=mode,log=log)
             read_time=time.time()-t0
         if not pix_data is None:
             sys.stderr.write("{} read from pix {}, {} {} in {} secs per spectrum\n".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
@@ -267,7 +282,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
     return pix_data
 
 
-def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
+def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid, dicth,order,mode,log=None):
     pix_data = []
 
     try:
@@ -276,15 +291,18 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None)
     except IOError:
         log.write("error reading {}\n".format(fin))
 
-    ##match between the thid and hdu index
-    dicth = {}
-    for ih,h in enumerate(hdu[1:],1):
-        head = h.read_header()
-        t = head['ID']
-        dicth[t] = ih
+#    #match between the thid and hdu index
+#    dicth = {}
+#    for ih,h in enumerate(hdu[1:],1):
+#        head = h.read_header()
+#        t = head['ID']
+#        dicth[t] = ih
 
+    ih=0
     for t,r,d,z,p,m,f in zip(thid,ra,dec,zqso,plate,mjd,fid):
         h = hdu[dicth[t]]
+        #h = hdu[index[0][ih]+1]
+        ih += 1
         log.write("file: {} hdu {} read  \n".format(fin,h))
         lamb = h["wavelength"][:]
         ll = sp.log10(lamb)
@@ -296,8 +314,8 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None)
         diff = sp.zeros(len(lamb))
         # compute spectral resolution
         wdisp =  h["psf"][:]
-        reso = spectral_resolution(wdisp)
-        #reso = wdisp * constants.speed_light / 1000 / lamb
+        #reso = spectral_resolution(wdisp)
+        reso = wdisp * constants.speed_light / 1000 / lamb
 
         # compute the mean expected flux
         f_mean_tr = 0.8

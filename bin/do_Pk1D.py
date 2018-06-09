@@ -259,27 +259,42 @@ if __name__ == '__main__':
                 # save in fits format
 
                 if (args.out_format=='fits'):
-                    hd={}
-                    hd["RA"]=d.ra
-                    hd["DEC"]=d.dec
-                    hd["Z"]=d.zqso
-                    hd["MEANZ"]=m_z_arr[f]
-                    hd["MEANRESO"]=d.mean_reso
-                    hd["MEANSNR"]=d.mean_SNR
-                    hd["NBMASKPIX"]=nb_masked_pixel
+#                    hd={}
+#                    hd["RA"]=d.ra
+#                    hd["DEC"]=d.dec
+#                    hd["Z"]=d.zqso
+#                    hd["MEANZ"]=m_z_arr[f]
+#                    hd["MEANRESO"]=d.mean_reso
+#                    hd["MEANSNR"]=d.mean_SNR
+#                    hd["NBMASKPIX"]=nb_masked_pixel
+#
+#                    hd["PLATE"]=d.plate
+#                    hd["MJD"]=d.mjd
+#                    hd["FIBER"]=d.fid
 
-                    hd["PLATE"]=d.plate
-                    hd["MJD"]=d.mjd
-                    hd["FIBER"]=d.fid
+                    hd = [ {'name':'RA','value':d.ra,'comment':"QSO's Right Ascension [degrees]"},
+                        {'name':'DEC','value':d.dec,'comment':"QSO's Declination [degrees]"},
+                        {'name':'Z','value':d.zqso,'comment':"QSO's redshift"},
+                        {'name':'MEANZ','value':m_z_arr[f],'comment':"Absorbers mean redshift"},
+                        {'name':'MEANRESO','value':d.mean_reso,'comment':'Mean resolution [km/s]'},
+                        {'name':'MEANSNR','value':d.mean_SNR,'comment':'Mean signal to noise ratio'},
+                        {'name':'NBMASKPIX','value':nb_masked_pixel,'comment':'Number of masked pixels in the section'},
+                        {'name':'PLATE','value':d.plate,'comment':"Spectrum's plate id"},
+                        {'name':'MJD','value':d.mjd,'comment':'Modified Julian Date,date the spectrum was taken'},
+                        {'name':'FIBER','value':d.fid,'comment':"Spectrum's fiber number"}
+                    ]
 
                     cols=[k,Pk_raw,Pk_noise,Pk_diff,cor_reso,Pk]
                     names=['k','Pk_raw','Pk_noise','Pk_diff','cor_reso','Pk']
+                    comments=['Wavenumber', 'Raw power spectrum', "Noise's power spectrum", 'Noise coadd difference power spectrum',\
+                              'Correction resolution function', 'Corrected power spectrum (resolution and noise)']
+                    units=['(km/s)^-1', 'km/s', 'km/s', 'km/s', 'km/s', 'km/s']
 
                     try:
-                        out.write(cols,names=names,header=hd)
+                        out.write(cols,names=names,header=hd,comments=comments,units=units)
                     except AttributeError:
                         out = fitsio.FITS(args.out_dir+'/Pk1D-'+str(i)+'.fits.gz','rw',clobber=True)
-                        out.write(cols,names=names,header=hd)
+                        out.write(cols,names=names,header=hd,comment=comments,units=units)
         if (args.out_format=='fits' and out is not None):
             out.close()
 
