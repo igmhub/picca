@@ -281,21 +281,23 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             with lock:
                 sys.stderr.write("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)))
                 counter.value += 1
-            r1 = d1.r_comov
-            z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
-            r1_abs1 = cosmo.r_comoving(z1_abs1)
-            w1 = d1.we
-
-            wzcut = z1_abs1<d1.zqso
-            r1 = r1[wzcut]
-            z1_abs1 = z1_abs1[wzcut]
-            r1_abs1 = r1_abs1[wzcut]
 
             r = random.rand(len(d1.neighs))
             w=r>rej
             npairs += len(d1.neighs)
             npairs_used += w.sum()
             for d2 in sp.array(d1.neighs)[w]:
+                r1 = d1.r_comov
+                z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
+                r1_abs1 = cosmo.r_comoving(z1_abs1)
+                w1 = d1.we
+
+                wzcut = z1_abs1<d1.zqso
+                r1 = r1[wzcut]
+                w1 = w1[wzcut]
+                r1_abs1 = r1_abs1[wzcut]
+                z1_abs1 = z1_abs1[wzcut]
+
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 ang = d1^d2
@@ -306,8 +308,9 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 wzcut = z2_abs2<d2.zqso
                 r2 = r2[wzcut]
-                z2_abs2 = z2_abs2[wzcut]
+                w2 = w2[wzcut]
                 r2_abs2 = r2_abs2[wzcut]
+                z2_abs2 = z2_abs2[wzcut]
 
                 rp = (r1[:,None]-r2)*sp.cos(ang/2)
                 if not x_correlation:
@@ -354,13 +357,13 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 rpeff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
                 rteff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=(z1_abs1[w1abs1][:,None]+z2_abs2[w2abs2])[wAB]/2*w12[wAB]*zwe12[wAB])
+                c = sp.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe12[wAB])
                 zeff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
                 weff[:len(c)]+=c
-
+                
                 if ((not x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
-                    r1 = d1.r1
+                    r1 = d1.r_comov
                     w1 = d1.we
                     z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
                     r1_abs2 = cosmo.r_comoving(z1_abs2)
@@ -371,7 +374,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     z1_abs2 = z1_abs2[wzcut]
                     r1_abs2 = r1_abs2[wzcut]
 
-                    r2 = d2.r2
+                    r2 = d2.r_comov
                     w2 = d2.we
                     z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
                     r2_abs1 = cosmo.r_comoving(z2_abs1)
@@ -421,7 +424,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     rpeff[:len(c)]+=c
                     c = sp.bincount(bBam[wAB],weights=rt_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
                     rteff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=(z1_abs2[w1abs2][:,None]+z2_abs1[w2abs1])[wAB]/2*w12[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB],weights=(z1_abs2[:,None]+z2_abs1)[wAB]/2*w12[wAB]*zwe21[wAB])
                     zeff[:len(c)]+=c
                     c = sp.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
                     weff[:len(c)]+=c
@@ -429,6 +432,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     c = sp.bincount(bBam[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe21[wAB])
                     dm[:len(c)]+=c
             setattr(d1,"neighs",None)
+            
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
