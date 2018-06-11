@@ -2,10 +2,10 @@ import fitsio
 from functools import partial
 import scipy as sp
 from scipy import linalg
-from . import utils
-from . import pk
-from . import xi
 from scipy.sparse import csr_matrix
+
+from . import pk, xi
+
 
 class data:
     def __init__(self,dic_init):
@@ -77,7 +77,6 @@ class data:
         mask &= (bin_center_r > r_min) & (bin_center_r < r_max)
         mask &= (bin_center_mu > mu_min) & (bin_center_mu < mu_max)
 
-        nmask = mask.sum()
         self.mask = mask
         self.da = da
         self.da_cut = sp.zeros(mask.sum())
@@ -133,6 +132,9 @@ class data:
 
             if 'velocity dispersion' in dic_init['model']:
                 self.pk_met *= getattr(pk, dic_init['model']['velocity dispersion'])
+
+            ## add non linear large scales
+            self.pk_met *= pk.pk_NL
 
             self.xi_met = partial(getattr(xi, dic_init['metals']['model-xi-met']), name=self.name)
 

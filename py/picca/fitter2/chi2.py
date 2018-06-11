@@ -5,7 +5,6 @@ import iminuit
 import time
 import h5py
 from scipy.linalg import cholesky
-from scipy import random
 
 from . import utils, priors
 
@@ -27,7 +26,17 @@ class chi2:
             self.verbosity = dic_init['verbosity']
 
         if 'fast mc' in dic_init:
+            if 'seed' in dic_init['fast mc']:
+                self.seedfast_mc = dic_init['fast mc']['seed']
+            else:
+                self.seedfast_mc = 0
             self.nfast_mc = dic_init['fast mc']['niterations']
+            if 'covscaling' in dic_init['fast mc']:
+                self.scalefast_mc = dic_init['fast mc']['covscaling']
+            else:
+                self.scalefast_mc = sp.ones(len(self.data))
+            self.fidfast_mc = dic_init['fast mc']['fiducial']['values']
+            self.fixfast_mc = dic_init['fast mc']['fiducial']['fix']
 
         if 'minos' in dic_init:
             self.minos_para = dic_init['minos']
@@ -78,7 +87,8 @@ class chi2:
             kwargs[name] = value
 
         mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs)
-        fmin = mig.migrad()
+        mig.migrad()
+
         print("INFO: minimized in {}".format(time.time()-t0))
         return mig
 
@@ -179,15 +189,42 @@ class chi2:
     def fastMC(self):
         if not hasattr(self,"nfast_mc"): return
 
+        sp.random.seed(self.seedfast_mc)
         nfast_mc = self.nfast_mc
-        for d in self.data:
+
+        for d, s in zip(self.data, self.scalefast_mc):
+            d.co = s*d.co
+            d.ico = d.ico/s
             d.cho = cholesky(d.co)
 
+        self.fiducial_values = self.best_fit.values.copy()
+        for p in self.fidfast_mc:
+            self.fiducial_values[p] = self.fidfast_mc[p]
+            for d in self.data:
+                if p in d.par_names:
+                    d.pars_init[p] = self.fidfast_mc[p]
+                    d.par_fixed['fix_'+p] = self.fixfast_mc['fix_'+p]
+
+        self.fiducial_values['SB'] = False
+        for d in self.data:
+            d.fiducial_model = self.fiducial_values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.fiducial_values)
+
+            self.fiducial_values['SB'] = True
+            snl = self.fiducial_values['sigmaNL_per']
+            self.fiducial_values['sigmaNL_per'] = 0
+            d.fiducial_model += d.xi_model(self.k, self.pksb_lin, self.fiducial_values)
+            self.fiducial_values['SB'] = False
+            self.fiducial_values['sigmaNL_per'] = snl
+        del self.fiducial_values['SB']
+
         self.fast_mc = {}
+        self.fast_mc['chi2'] = []
+        self.fast_mc_data = {}
         for it in range(nfast_mc):
             for d in self.data:
-                g = random.randn(len(d.da))
-                d.da = d.cho.dot(g) + d.best_fit_model
+                g = sp.random.randn(len(d.da))
+                d.da = d.cho.dot(g) + d.fiducial_model
+                self.fast_mc_data[d.name+'_'+str(it)] = d.da
                 d.da_cut = d.da[d.mask]
 
             best_fit = self._minimize()
@@ -195,6 +232,7 @@ class chi2:
                 if not p in self.fast_mc:
                     self.fast_mc[p] = []
                 self.fast_mc[p].append([v, best_fit.errors[p]])
+            self.fast_mc['chi2'].append(best_fit.fval)
 
     def minos(self):
         if not hasattr(self,"minos_para"): return
@@ -261,12 +299,34 @@ class chi2:
 
         if hasattr(self, "fast_mc"):
             g = f.create_group("fast mc")
+            g.attrs['niterations'] = self.nfast_mc
+            g.attrs['seed'] = self.seedfast_mc
+            g.attrs['covscaling'] = self.scalefast_mc
+            if len(self.fidfast_mc) != 0:
+                fid = []
+                for p in self.fidfast_mc:
+                    fix = "fixed"
+                    if not self.fixfast_mc['fix_'+p]: fix = "free"
+                    g.attrs["fiducial[{}]".format(p)] = [self.fidfast_mc[p], fix.encode('utf8')]
+                    fid.append(p.encode('utf8'))
+                g.attrs['list of fiducial pars'] = fid
+                for d in self.data:
+                    fiducial = g.create_dataset("{}_fiducial".format(d.name), d.da.shape, dtype = "f")
+                    fiducial[...] = d.fiducial_model
             for p in self.fast_mc:
                 vals = sp.array(self.fast_mc[p])
-                d = g.create_dataset("{}/values".format(p), vals[:,0].shape, dtype="f")
-                d[...] = vals[:,0]
-                d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
-                d[...] = vals[:,1]
+                if p == 'chi2':
+                    d = g.create_dataset("{}".format(p), vals.shape, dtype="f")
+                    d[...] = vals
+                else:
+                    d = g.create_dataset("{}/values".format(p), vals[:,0].shape, dtype="f")
+                    d[...] = vals[:,0]
+                    d = g.create_dataset("{}/errors".format(p), vals[:,1].shape, dtype="f")
+                    d[...] = vals[:,1]
+            for p in self.fast_mc_data:
+                xi = self.fast_mc_data[p]
+                d = g.create_dataset(p, xi.shape, dtype="f")
+                d[...] = xi
 
         ## write down all attributes of parameters minos was run over
         if hasattr(self, "minos_para"):

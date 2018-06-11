@@ -45,7 +45,7 @@ class TestCor(unittest.TestCase):
 
     def test_cor(self):
 
-        self.test_requirements()
+        self.send_requirements()
 
         numpy.random.seed(42)
 
@@ -223,17 +223,17 @@ class TestCor(unittest.TestCase):
             ###
             r_m = m[i].read_header().records()
             ld_m = []
-            for j in range(len(r_m)):
-                name = r_m[j]['name']
+            for el in r_m:
+                name = el['name']
                 if len(name)>5 and name[:5]=="TTYPE":
-                    ld_m += [r_m[j]['value'].replace(" ","")]
+                    ld_m += [el['value'].replace(" ","")]
             ###
             r_b = b[i].read_header().records()
             ld_b = []
-            for j in range(len(r_b)):
-                name = r_b[j]['name']
+            for el in r_b:
+                name = el['name']
                 if len(name)>5 and name[:5]=="TTYPE":
-                    ld_b += [r_b[j]['value'].replace(" ","")]
+                    ld_b += [el['value'].replace(" ","")]
 
             self.assertListEqual(ld_m,ld_b,"{}".format(nameRun))
 
@@ -256,19 +256,19 @@ class TestCor(unittest.TestCase):
             self.assertListEqual(sorted(list(atts1.keys())),sorted(list(atts2.keys())),"{}".format(nameRun))
             for item in atts1:
                 nequal = True
-                if type(atts1[item])==type(sp.array([])):
+                if isinstance(atts1[item],numpy.ndarray):
                     nequal = sp.logical_not(sp.array_equal(atts1[item],atts2[item]))
                 else:
                     nequal = atts1[item]!=atts2[item]
                 if nequal:
-                    print("WARNING: {}: not exactly equal, using allclose".format(nameRun,k))
+                    print("WARNING: {}: not exactly equal, using allclose for {}".format(nameRun,item))
                     print(atts1[item],atts2[item])
                     allclose = sp.allclose(atts1[item],atts2[item])
                     self.assertTrue(allclose,"{}".format(nameRun))
             return
         def compare_values(val1,val2):
             if not sp.array_equal(val1,val2):
-                print("WARNING: {}: not exactly equal, using allclose".format(nameRun,k))
+                print("WARNING: {}: not exactly equal, using allclose".format(nameRun))
                 allclose = sp.allclose(val1,val2)
                 self.assertTrue(allclose,"{}".format(nameRun))
             return
@@ -309,10 +309,11 @@ class TestCor(unittest.TestCase):
         req = {}
 
         path = resource_filename('picca', '/../../requirements.txt')
-        for l in open(path,'r'):
-            l = l.replace('\n','').split('==')
-            self.assertTrue(len(l)==2,"requirements.txt attribute is not valid: {}".format(str(l)))
-            req[l[0]] = l[1]
+        with open(path,'r') as f:
+            for l in f:
+                l = l.replace('\n','').split('==')
+                self.assertTrue(len(l)==2,"requirements.txt attribute is not valid: {}".format(str(l)))
+                req[l[0]] = l[1]
 
         return req
 
@@ -320,7 +321,7 @@ class TestCor(unittest.TestCase):
 
 
 
-    def test_requirements(self):
+    def send_requirements(self):
 
         print("\n")
         req = self.load_requirements()

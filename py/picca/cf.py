@@ -1,10 +1,9 @@
 import scipy as sp
 import sys
 from healpy import query_disc
-from multiprocessing import Pool
 from numba import jit
-from .data import forest
 from scipy import random
+
 from picca import constants
 
 np = None
@@ -46,7 +45,7 @@ def fill_neighs(pix):
         for d1 in data[ipix]:
             npix = query_disc(nside,[d1.xcart,d1.ycart,d1.zcart],angmax,inclusive = True)
             npix = [p for p in npix if p in data]
-            neighs = [d for p in npix for d in data[p]]
+            neighs = [d for p in npix for d in data[p] if d1.thid != d.thid]
             ang = d1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
@@ -57,11 +56,11 @@ def fill_neighs_x_correlation(pix):
         for d1 in data[ipix]:
             npix = query_disc(nside,[d1.xcart,d1.ycart,d1.zcart],angmax,inclusive = True)
             npix = [p for p in npix if p in data2]
-            neighs = [d for p in npix for d in data2[p]]
+            neighs = [d for p in npix for d in data2[p] if d1.thid != d.thid]
             ang = d1^neighs
             w = (ang<angmax)
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.thid != d.thid and (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. >= z_cut_min+1 and (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. < z_cut_max+1 ]
+            d1.neighs = [d for d in neighs if (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. >= z_cut_min+1 and (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. < z_cut_max+1 ]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
@@ -72,7 +71,7 @@ def cf(pix):
     nb = sp.zeros(np*nt,dtype=sp.int64)
 
     for ipix in pix:
-        for i,d1 in enumerate(data[ipix]):
+        for d1 in data[ipix]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)))
             with lock:
                 counter.value += 1
@@ -285,10 +284,13 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             r1 = d1.r_comov
             z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
             r1_abs1 = cosmo.r_comoving(z1_abs1)
-            w1abs1 = z1_abs1<d1.zqso
-
             w1 = d1.we
-            l1 = d1.ll
+
+            wzcut = z1_abs1<d1.zqso
+            r1 = r1[wzcut]
+            z1_abs1 = z1_abs1[wzcut]
+            r1_abs1 = r1_abs1[wzcut]
+
             r = random.rand(len(d1.neighs))
             w=r>rej
             npairs += len(d1.neighs)
@@ -300,44 +302,52 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 r2 = d2.r_comov
                 z2_abs2 = 10**d2.ll/constants.absorber_IGM[abs_igm2]-1
                 r2_abs2 = cosmo.r_comoving(z2_abs2)
-                w2abs2 = z2_abs2<d2.zqso
                 w2 = d2.we
 
-                if x_correlation:
-                    rp = (r1[w1abs1][:,None]-r2[w2abs2])*sp.cos(ang/2)
-                else:
-                    rp = abs(r1[w1abs1][:,None]-r2[w2abs2])*sp.cos(ang/2)
-                rt = (r1[w1abs1][:,None]+r2[w2abs2])*sp.sin(ang/2)
-                w12 = w1[w1abs1][:,None]*w2[w2abs2]
+                wzcut = z2_abs2<d2.zqso
+                r2 = r2[wzcut]
+                z2_abs2 = z2_abs2[wzcut]
+                r2_abs2 = r2_abs2[wzcut]
+
+                rp = (r1[:,None]-r2)*sp.cos(ang/2)
+                if not x_correlation:
+                    rp = abs(rp)
+
+                rt = (r1[:,None]+r2)*sp.sin(ang/2)
+                w12 = w1[:,None]*w2
 
                 bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
                 bt = (rt/rt_max*nt).astype(int)
+
                 if same_half_plate:
                     wp = abs(rp) < (rp_max-rp_min)/np
                     w12[wp]=0
+
                 if no_same_wavelength_pairs:
                     if ang_correlation:
                         wp = rp==1.
                     else:
                         wp = rp==0.
                     w12[wp] = 0.
+
                 bA = bt + nt*bp
                 wA = (bp<np) & (bt<nt) & (bp >=0)
                 c = sp.bincount(bA[wA],weights=w12[wA])
                 wdm[:len(c)]+=c
 
-                if x_correlation:
-                    rp_abs1_abs2 = (r1_abs1[w1abs1][:,None]-r2_abs2[w2abs2])*sp.cos(ang/2)
-                else:
-                    rp_abs1_abs2 = abs(r1_abs1[w1abs1][:,None]-r2_abs2[w2abs2])*sp.cos(ang/2)
-                rt_abs1_abs2 = (r1_abs1[w1abs1][:,None]+r2_abs2[w2abs2])*sp.sin(ang/2)
-                zwe12 = (1+z1_abs1[w1abs1][:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2[w2abs2])**(alpha_abs[abs_igm2]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
+                rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
+
+                if not x_correlation:
+                    rp_abs1_abs2 = abs(rp_abs1_abs2)
+
+                rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
+                zwe12 = (1+z1_abs1[:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2)**(alpha_abs[abs_igm2]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                 bp_abs1_abs2 = sp.floor((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/rt_max*ntm).astype(int)
                 bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
                 wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm) & (bp_abs1_abs2>=0)
-                wAB = wA&wBma
+                wAB = wA & wBma
                 c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe12[wAB])
                 dm[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
@@ -349,19 +359,31 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
                 weff[:len(c)]+=c
 
-                if (not(x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
+                if ((not x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
+                    r1 = d1.r1
                     z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
                     r1_abs2 = cosmo.r_comoving(z1_abs2)
-                    w1abs2 = z1_abs2<d1.zqso
+
+                    wzcut = z1_abs2<d1.zqso
+                    r1 = r1[wzcut]
+                    z1_abs2 = z1_abs2[wzcut]
+                    r1_abs2 = r1_abs2[wzcut]
+
+                    r2 = d2.r2
                     z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
                     r2_abs1 = cosmo.r_comoving(z2_abs1)
-                    w2abs1 = z2_abs1<d2.zqso
-                    if x_correlation:
-                        rp = (r1[w1abs2][:,None]-r2[w2abs1])*sp.cos(ang/2)
-                    else:
-                        rp = abs(r1[w1abs2][:,None]-r2[w2abs1])*sp.cos(ang/2)
-                    rt = (r1[w1abs2][:,None]+r2[w2abs1])*sp.sin(ang/2)
-                    w12 = w1[w1abs2][:,None]*w2[w2abs1]
+
+                    wzcut = z2_abs1<d2.zqso
+                    z2_abs1 = z2_abs1[wzcut]
+                    r2_abs1 = r2_abs1[wzcut]
+                    r2 = r2[wzcut]
+
+                    rp = (r1[:,None]-r2)*sp.cos(ang/2)
+                    if not x_correlation:
+                        rp = abs(rp)
+
+                    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+                    w12 = w1[:,None]*w2
 
                     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
                     bt = (rt/rt_max*nt).astype(int)
@@ -378,18 +400,17 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     wA = (bp<np) & (bt<nt) & (bp >=0)
                     c = sp.bincount(bA[wA],weights=w12[wA])
                     wdm[:len(c)]+=c
-                    if x_correlation:
-                        rp_abs2_abs1 = (r1_abs2[w1abs2][:,None]-r2_abs1[w2abs1])*sp.cos(ang/2)
-                    else:
-                        rp_abs2_abs1 = abs(r1_abs2[w1abs2][:,None]-r2_abs1[w2abs1])*sp.cos(ang/2)
-                    rt_abs2_abs1 = (r1_abs2[w1abs2][:,None]+r2_abs1[w2abs1])*sp.sin(ang/2)
-                    zwe21 = (1+z1_abs2[w1abs2][:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1[w2abs1])**(alpha_abs[abs_igm1]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
+                    rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                    if not x_correlation:
+                        rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                    rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
+                    zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                     bp_abs2_abs1 = sp.floor((rp_abs2_abs1-rp_min)/(rp_max-rp_min)*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/rt_max*ntm).astype(int)
                     bBam = bt_abs2_abs1 + ntm*bp_abs2_abs1
                     wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm) & (bp_abs2_abs1>=0)
-                    wAB = wA&wBam
+                    wAB = wA & wBam
 
                     c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
                     rpeff[:len(c)]+=c
@@ -406,20 +427,25 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
+
+
 n1d = None
+lmin = None
+lmax = None
+dll = None
 def cf1d(pix):
     xi1d = sp.zeros(n1d**2)
     we1d = sp.zeros(n1d**2)
     nb1d = sp.zeros(n1d**2,dtype=sp.int64)
 
     for d in data[pix]:
-        bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+        bins = ((d.ll-lmin)/dll+0.5).astype(int)
         bins = bins + n1d*bins[:,None]
         wde = d.we*d.de
         we = d.we
         xi1d[bins] += wde * wde[:,None]
         we1d[bins] += we*we[:,None]
-        nb1d[bins] += 1
+        nb1d[bins] += (we*we[:,None]>0.).astype(int)
 
     w = we1d>0
     xi1d[w]/=we1d[w]
@@ -431,18 +457,18 @@ def x_forest_cf1d(pix):
     nb1d = sp.zeros(n1d**2,dtype=sp.int64)
 
     for d1 in data[pix]:
-        bins1 = ((d1.ll-forest.lmin)/forest.dll+0.5).astype(int)
+        bins1 = ((d1.ll-lmin)/dll+0.5).astype(int)
         wde1 = d1.we*d1.de
         we1 = d1.we
         for d2 in data2[pix]:
             if (d1.thid != d2.thid): continue
-            bins2 = ((d2.ll-forest.lmin)/forest.dll+0.5).astype(int)
+            bins2 = ((d2.ll-lmin)/dll+0.5).astype(int)
             bins = bins1 + n1d*bins2[:,None]
             wde2 = d2.we*d2.de
             we2 = d2.we
             xi1d[bins] += wde1 * wde2[:,None]
             we1d[bins] += we1*we2[:,None]
-            nb1d[bins] += 1
+            nb1d[bins] += (we1*we2[:,None]>0.).astype(int)
 
     w = we1d>0
     xi1d[w]/=we1d[w]
@@ -456,7 +482,7 @@ def t123(pix):
     w123 = sp.zeros(np*nt)
     npairs = 0
     npairs_used = 0
-    for i,ipix in enumerate(pix):
+    for ipix in pix:
         for d1 in data[ipix]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
             with lock:

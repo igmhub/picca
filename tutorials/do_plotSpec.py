@@ -30,7 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('--drq', type = str, default = None, required=True,
             help = 'DRQ file')
 
-    parser.add_argument('--nside', type = int, default=8, required=False,
+    parser.add_argument('--nside', type = int, default = 16, required=False,
             help = 'healpix nside')
 
     parser.add_argument('--spectrum', type = str, default = None, required=True,
@@ -167,7 +167,6 @@ if __name__ == '__main__':
                         usr_mask_RF_DLA += [ [float(l[1]),float(l[2])] ]
                     else:
                         raise
-            f.closed
             usr_mask_obs    = sp.log10(sp.asarray(usr_mask_obs))
             usr_mask_RF     = sp.log10(sp.asarray(usr_mask_RF))
             usr_mask_RF_DLA = sp.log10(sp.asarray(usr_mask_RF_DLA))
@@ -187,9 +186,11 @@ if __name__ == '__main__':
     if not args.dla_vac is None:
         print("adding dlas")
         dlas = io.read_dlas(args.dla_vac)
-        if d.thid in dlas:
-            for dla in dlas[d.thid]:
-                data.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
+        for p in data:
+            for d in data[p]:
+                if d.thid in dlas:
+                    for dla in dlas[d.thid]:
+                        data.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
 
     ### Get delta from do_delta
     done_delta = None
