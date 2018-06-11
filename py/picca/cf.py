@@ -361,22 +361,26 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 if ((not x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
                     r1 = d1.r1
+                    w1 = d1.we
                     z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
                     r1_abs2 = cosmo.r_comoving(z1_abs2)
 
                     wzcut = z1_abs2<d1.zqso
                     r1 = r1[wzcut]
+                    w1 = w1[wzcut]
                     z1_abs2 = z1_abs2[wzcut]
                     r1_abs2 = r1_abs2[wzcut]
 
                     r2 = d2.r2
+                    w2 = d2.we
                     z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
                     r2_abs1 = cosmo.r_comoving(z2_abs1)
 
                     wzcut = z2_abs1<d2.zqso
+                    r2 = r2[wzcut]
+                    w2 = w2[wzcut]
                     z2_abs1 = z2_abs1[wzcut]
                     r2_abs1 = r2_abs1[wzcut]
-                    r2 = r2[wzcut]
 
                     rp = (r1[:,None]-r2)*sp.cos(ang/2)
                     if not x_correlation:
@@ -402,7 +406,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     wdm[:len(c)]+=c
                     rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     if not x_correlation:
-                        rp_abs2_abs1 = abs(r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                        rp_abs2_abs1 = abs(rp_abs2_abs1)
+
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
                     zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
@@ -416,7 +421,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     rpeff[:len(c)]+=c
                     c = sp.bincount(bBam[wAB],weights=rt_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
                     rteff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=(z1_abs1[w1abs2][:,None]+z2_abs2[w2abs1])[wAB]/2*w12[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB],weights=(z1_abs2[w1abs2][:,None]+z2_abs1[w2abs1])[wAB]/2*w12[wAB]*zwe21[wAB])
                     zeff[:len(c)]+=c
                     c = sp.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
                     weff[:len(c)]+=c
