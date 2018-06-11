@@ -277,10 +277,12 @@ if __name__ == '__main__':
         print("abs_igm2 = {}".format(abs_igm_2))
 
     for i,abs_igm1 in enumerate(abs_igm):
-        i0 = i+1
+        i0 = i
         if args.lambda_abs != args.lambda_abs2:
             i0=0
         for j,abs_igm2 in enumerate(abs_igm_2[i0:]):
+            if i==0 and j==0:
+                continue
             cf.counter.value=0
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
             sys.stderr.write("\n")
