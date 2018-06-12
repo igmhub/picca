@@ -278,6 +278,10 @@ if __name__ == '__main__':
     z[cut]  /= wes.sum(axis=0)[cut]
     nb       = nbs.sum(axis=0)
 
+    w = wes.sum(axis=1)>0.
+    hep = hep[w]
+    wes = wes[w]
+    cfs = cfs[w]
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
