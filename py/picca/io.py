@@ -7,7 +7,7 @@ import sys
 import time
 import os.path
 
-import constants
+from picca import constants
 from picca.data import forest
 from picca.data import delta
 from picca.data import qso
@@ -218,6 +218,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             head = h.read_header()
             t = head['ID']
             dicth[t] = ih
+        hdu.close()
 
     upix = sp.unique(pixs)
 
@@ -290,13 +291,6 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid, dicth,order,mode,lo
         hdu = fitsio.FITS(fin)
     except IOError:
         log.write("error reading {}\n".format(fin))
-
-#    #match between the thid and hdu index
-#    dicth = {}
-#    for ih,h in enumerate(hdu[1:],1):
-#        head = h.read_header()
-#        t = head['ID']
-#        dicth[t] = ih
 
     ih=0
     for t,r,d,z,p,m,f in zip(thid,ra,dec,zqso,plate,mjd,fid):
