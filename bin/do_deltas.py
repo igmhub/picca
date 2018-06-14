@@ -86,7 +86,7 @@ if __name__ == '__main__':
         help='Absorber catalog file')
 
     parser.add_argument('--absorber-mask',type=float,default=2.5,required=False,
-        help='Number of spectral pixels to mask on either side of the absorber central observed wavelength')
+        help='Number of spectral pixels to mask on each side of the absorber central observed wavelength')
 
     parser.add_argument('--mask-file',type=str,default=None,required=False,
         help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
@@ -239,7 +239,7 @@ if __name__ == '__main__':
 
     ### Veto absorbers
     if not args.absorber_vac is None:
-        print("removing absorbers")
+        print("adding absorbers")
         absorbers = io.read_absorbers(args.absorber_vac)
         nb_absorbers_in_forest = 0
         for p in data:
