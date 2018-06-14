@@ -32,7 +32,8 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     var = sp.diagonal(co)
     if sp.any(var==0.):
         print('ERROR: data has some empty bins, impossible to smooth')
-        sys.exit()
+        print('ERROR: returning the unsmoothed covariance')
+        return co
 
     cor = co/sp.sqrt(var*var[:,None])
 
