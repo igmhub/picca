@@ -86,7 +86,7 @@ if __name__ == '__main__':
         help='Absorber catalog file')
 
     parser.add_argument('--absorber-mask',type=float,default=2.5,required=False,
-        help='Number of spectral pixels to mask on each side of the absorber central observed wavelength')
+        help='Mask width on each side of the absorber central observed wavelength in units of 1e4*dlog10(lambda)')
 
     parser.add_argument('--mask-file',type=str,default=None,required=False,
         help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
