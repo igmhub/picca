@@ -182,3 +182,33 @@ class Pk1D :
         self.Pk = Pk_noise
         self.cor_reso = cor_reso
         self.Pk = Pk
+        
+    @classmethod
+    def from_fitsio(cls,hdu):
+
+        """
+        read Pk1D from fits file
+        """
+
+        hdr = hdu.read_header()
+
+        ra = hdr['RA']
+        dec = hdr['DEC']
+        zqso = hdr['Z']
+        mean_z = hdr['MEANZ']
+        mean_reso = hdr['MEANRESO']
+        mean_SNR = hdr['MEANSNR']
+        plate = hdr['PLATE']
+        mjd = hdr['MJD']
+        fid = hdr['FIBER']
+        nb_mp = hdr['NBMASKPIX']
+
+        data = hdu.read()
+        k = data['k'][:]
+        Pk = data['Pk'][:]
+        Pk_raw = data['Pk_raw'][:]
+        Pk_noise = data['Pk_noise'][:]
+        cor_reso = data['cor_reso'][:]
+        Pk_diff = data['Pk_diff'][:]
+
+        return cls(ra,dec,zqso,mean_z,plate,mjd,fid, mean_SNR, mean_reso, k,Pk_raw,Pk_noise,cor_reso, Pk, nb_mp, Pk_diff)
