@@ -239,8 +239,8 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
 
-        w = sp.ones(self.ll.size).astype(bool)
-        w &= (sp.fabs(1e4*(self.ll-sp.log10(lambda_absorber)))>forest.absorber_mask)
+        w = sp.ones(self.ll.size, dtype=bool)
+        w &= sp.fabs(1.e4*(self.ll-sp.log10(lambda_absorber)))>forest.absorber_mask
 
         self.iv = self.iv[w]
         self.ll = self.ll[w]
