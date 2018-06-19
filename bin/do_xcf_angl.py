@@ -16,76 +16,79 @@ def corr_func(p):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the cross-correlation between a catalog of objects and a delta field as a function of angle and wavelength ratio')
 
-    parser.add_argument('--out', type = str, default = None, required=True,
-                    help = 'output file name')
+    parser.add_argument('--out', type=str, default=None, required=True,
+        help='Output file name')
 
-    parser.add_argument('--in-dir', type = str, default = None, required=True,
-                    help = 'data directory')
+    parser.add_argument('--in-dir', type=str, default=None, required=True,
+        help='Directory to delta files')
 
-    parser.add_argument('--drq', type = str, default = None, required=True,
-                    help = 'drq')
+    parser.add_argument('--drq', type=str, default=None, required=True,
+        help='Catalog of objects in DRQ format')
 
-    parser.add_argument('--wr-min', type = float, default = 0.9, required=False,
-                    help = 'min of wavelength ratio')
+    parser.add_argument('--wr-min', type=float, default=0.9, required=False,
+        help='Min of wavelength ratio')
 
-    parser.add_argument('--wr-max', type = float, default = 1.1, required=False,
-                    help = 'max of wavelength ratio')
+    parser.add_argument('--wr-max', type=float, default=1.1, required=False,
+        help='Max of wavelength ratio')
 
-    parser.add_argument('--ang-max', type = float, default = 0.02, required=False,
-                    help = 'max angle')
+    parser.add_argument('--ang-max', type=float, default=0.02, required=False,
+        help='Max angle (rad)')
 
-    parser.add_argument('--np', type = int, default = 100, required=False,
-                    help = 'number of parallel bins')
+    parser.add_argument('--np', type=int, default=100, required=False,
+        help='Number of wavelength ratio bins')
 
-    parser.add_argument('--nt', type = int, default = 50, required=False,
-                    help = 'number of transverse bins')
+    parser.add_argument('--nt', type=int, default=50, required=False,
+        help='Number of angular bins')
 
-    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
-                    help = 'name of the absorption in picca.constants')
+    parser.add_argument('--z-min-obj', type=float, default=None, required=False,
+        help='Min redshift for object field')
 
-    parser.add_argument('--lambda-abs-obj', type = str, default = 'LYA', required=False,
-                    help = 'name of the absorption in picca.constants the object is considered as')
+    parser.add_argument('--z-max-obj', type=float, default=None, required=False,
+        help='Max redshift for object field')
 
-    parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
-                    help = 'Om of fiducial cosmology')
+    parser.add_argument('--z-cut-min', type=float, default=0., required=False,
+        help='Use only pairs of forest x object with the mean of the last absorber \
+        redshift and the object redshift larger than z-cut-min')
 
-    parser.add_argument('--nside', type = int, default = 16, required=False,
-                    help = 'healpix nside')
+    parser.add_argument('--z-cut-max', type=float, default=10., required=False,
+        help='Use only pairs of forest x object with the mean of the last absorber \
+        redshift and the object redshift smaller than z-cut-max')
 
-    parser.add_argument('--nproc', type = int, default = None, required=False,
-                    help = 'number of processors')
+    parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the delta')
 
-    parser.add_argument('--z-min-obj', type = float, default = None, required=False,
-                    help = 'min redshift for object field')
+    parser.add_argument('--lambda-abs-obj', type=str, default='LYA', required=False,
+        help='Name of the absorption in picca.constants the object is considered as')
 
-    parser.add_argument('--z-max-obj', type = float, default = None, required=False,
-                    help = 'max redshift for object field')
+    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+        help='Reference redshift')
 
-    parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
-                    help = 'reference redshift')
+    parser.add_argument('--z-evol-del', type=float, default=2.9, required=False,
+        help='Exponent of the redshift evolution of the delta field')
 
-    parser.add_argument('--z-evol-del', type = float, default = 2.9, required=False,
-                    help = 'exponent of the redshift evolution of the delta field')
+    parser.add_argument('--z-evol-obj', type=float, default=1., required=False,
+        help='Exponent of the redshift evolution of the object field')
 
-    parser.add_argument('--z-evol-obj', type = float, default = 1., required=False,
-                    help = 'exponent of the redshift evolution of the object field')
+    parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
+        help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
-                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift higher than z-cut-min')
+    parser.add_argument('--no-project', action='store_true', required=False,
+        help='Do not project out continuum fitting modes')
 
-    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
-                        help = 'use only pairs of forest/qso with the mean of the last absorber redshift and the qso redshift smaller than z-cut-min')
+    parser.add_argument('--no-remove-mean-lambda-obs', action='store_true', required=False,
+        help='Do not remove mean delta versus lambda_obs')
 
-    parser.add_argument('--no-project', action="store_true", required=False,
-                    help = 'do not project out continuum fitting modes')
+    parser.add_argument('--nside', type=int, default=16, required=False,
+        help='Healpix nside')
 
-    parser.add_argument('--nspec', type=int,default=None, required=False,
-                    help = 'maximum spectra to read')
+    parser.add_argument('--nproc', type=int, default=None, required=False,
+        help='Number of processors')
 
-    parser.add_argument('--no-remove-mean-lambda-obs', action="store_true", required=False,
-                    help = 'Do not remove mean delta versus lambda_obs')
+    parser.add_argument('--nspec', type=int, default=None, required=False,
+        help='Maximum number of spectra to read')
 
 
     args = parser.parse_args()
@@ -176,18 +179,25 @@ if __name__ == '__main__':
     z[cut]  /= wes.sum(axis=0)[cut]
     nb = nbs.sum(axis=0)
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['RPMIN']=xcf.rp_min
-    head['RPMAX']=xcf.rp_max
-    head['RTMAX']=xcf.rt_max
-    head['Z_CUT_MIN']=xcf.z_cut_min
-    head['Z_CUT_MAX']=xcf.z_cut_max
-    head['NT']=xcf.nt
-    head['NP']=xcf.np
-    head['NSIDE']=xcf.nside
 
-    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],header=head)
-    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
-    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],header=head2)
+    out = fitsio.FITS(args.out,'rw',clobber=True)
+    head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum wavelength ratio'},
+        {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum wavelength ratio'},
+        {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum angle [rad]'},
+        {'name':'NP','value':xcf.np,'comment':'Number of bins in wavelength ratio'},
+        {'name':'NT','value':xcf.nt,'comment':'Number of bins in angle'},
+        {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
+        {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
+        {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}
+    ]
+    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
+        units=['','rad','',''],
+        comment=['Wavelength ratio','Angle','Redshift','Number of pairs'],
+        header=head,extname='ATTRI')
+
+    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]
+    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],
+        comment=['Healpix index', 'Sum of weight', 'Correlation'],
+        header=head2,extname='COR')
+
     out.close()

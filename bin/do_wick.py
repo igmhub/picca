@@ -24,58 +24,60 @@ def calc_t123(p):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the wick covariance for the auto-correlation of forests')
 
-    parser.add_argument('--out', type = str, default = None, required=True,
-                        help = 'output file name')
+    parser.add_argument('--out', type=str, default=None, required=True,
+        help='Output file name')
 
-    parser.add_argument('--in-dir', type = str, default = None, required=True,
-                        help = 'data directory')
+    parser.add_argument('--in-dir', type=str, default=None, required=True,
+        help='Directory to delta files')
 
-    parser.add_argument('--rp-max', type = float, default = 200., required=False,
-                        help = 'max rp [h^-1 Mpc]')
+    parser.add_argument('--rp-max', type=float, default=200., required=False,
+        help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--rt-max', type = float, default = 200., required=False,
-                        help = 'max rt [h^-1 Mpc]')
+    parser.add_argument('--rt-max', type=float, default=200., required=False,
+        help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument('--np', type = int, default = 50, required=False,
-                        help = 'number of r-parallel bins')
+    parser.add_argument('--np', type=int, default=50, required=False,
+        help='Number of r-parallel bins')
 
-    parser.add_argument('--nt', type = int, default = 50, required=False,
-                        help = 'number of r-transverse bins')
+    parser.add_argument('--nt', type=int, default=50, required=False,
+        help='Number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs', type = float, default = constants.absorber_IGM["LYA"], required=False,
-                        help = 'wavelength of absorption [Angstrom]')
+    parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the delta')
 
-    parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
-                    help = 'Om of fiducial cosmology')
+    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+        help='Reference redshift')
 
-    parser.add_argument('--nside', type = int, default = 16, required=False,
-                    help = 'healpix nside')
+    parser.add_argument('--z-evol', type=float, default=2.9, required=False,
+        help='Exponent of the redshift evolution of the delta field')
 
-    parser.add_argument('--nproc', type = int, default = None, required=False,
-                    help = 'number of processors')
+    parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
+        help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
-                    help = 'reference redshift')
-
-    parser.add_argument('--rej', type = float, default = 1., required=False,
-                    help = 'fraction rejected: -1=no rejection, 1=all rejection')
-
-    parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
-                    help = 'exponent of the redshift evolution of the delta field')
+    parser.add_argument('--no-project', action='store_true', required=False,
+        help='Do not project out continuum fitting modes')
 
     parser.add_argument('--cf1d', type=str, required=True,
-                    help = 'cf1d file')
+        help='1D auto-correlation of pixels from the same forest file: do_cf1d.py')
 
-    parser.add_argument('--nspec', type=int,default=None, required=False,
-                    help = 'maximum spectra to read')
+    parser.add_argument('--old-deltas', action='store_true', required=False,
+        help='Do not correct weights for redshift evolution')
 
-    parser.add_argument('--no-project', action="store_true", required=False,
-                    help = 'do not project out continuum fitting modes')
+    parser.add_argument('--rej', type=float, default=1., required=False,
+        help='Fraction of rejected pairs: -1=no rejection, 1=all rejection')
 
-    parser.add_argument('--old-deltas', action="store_true", required=False,
-                    help = 'do not correct weights for redshift evolution')
+    parser.add_argument('--nside', type=int, default=16, required=False,
+        help='Healpix nside')
+
+    parser.add_argument('--nproc', type=int, default=None, required=False,
+        help='Number of processors')
+
+    parser.add_argument('--nspec', type=int, default=None, required=False,
+        help='Maximum number of spectra to read')
+
 
     args = parser.parse_args()
 
@@ -91,7 +93,7 @@ if __name__ == '__main__':
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
-    cf.lambda_abs = args.lambda_abs
+    cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     cf.rej = args.rej
 
     cosmo = constants.cosmo(args.fid_Om)
@@ -179,15 +181,15 @@ if __name__ == '__main__':
     t123[w]/=we[w]
     t123 = npairs_used*t123/npairs
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['RPMAX']=cf.rp_max
-    head['RTMAX']=cf.rt_max
-    head['NT']=cf.nt
-    head['NP']=cf.np
-    head['NPTOT']=npairs
-    head['NPUSED']=npairs_used
-    head['REJ']=args.rej
 
-    out.write([w123,t123],names=['WE','T123'],header=head)
+    out = fitsio.FITS(args.out,'rw',clobber=True)
+    head = [ {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
+        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel [h^-1 Mpc]'},
+        {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
+        {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
+        {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
+    ]
+    out.write([w123,t123],names=['WE','CO'],header=head,comment=['Sum of weight','Covariance from T123'],extname='COV')
     out.close()

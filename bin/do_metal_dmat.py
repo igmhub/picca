@@ -24,79 +24,84 @@ def calc_metal_dmat(abs_igm1,abs_igm2,p):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the auto and cross-correlation of delta fields for a list of IGM absorption.')
 
-    parser.add_argument('--out', type = str, default = None, required=True,
-                        help = 'output file name')
 
-    parser.add_argument('--in-dir', type = str, default = None, required=True,
-                        help = 'data directory')
+    parser.add_argument('--out', type=str, default=None, required=True,
+        help='Output file name')
 
-    parser.add_argument('--in-dir2', type = str, default = None, required=False,
-                        help = 'data directory #2')
+    parser.add_argument('--in-dir', type=str, default=None, required=True,
+        help='Directory to delta files')
 
-    parser.add_argument('--rp-max', type = float, default = 200., required=False,
-                        help = 'max rp [h^-1 Mpc]')
+    parser.add_argument('--in-dir2', type=str, default=None, required=False,
+        help='Directory to 2nd delta files')
 
-    parser.add_argument('--rp-min', type = float, default = 0., required=False,
-                        help = 'min rp [h^-1 Mpc]')
+    parser.add_argument('--rp-min', type=float, default=0., required=False,
+        help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--rt-max', type = float, default = 200., required=False,
-                        help = 'max rt [h^-1 Mpc]')
+    parser.add_argument('--rp-max', type=float, default=200., required=False,
+        help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--np', type = int, default = 50, required=False,
-                        help = 'number of r-parallel bins')
+    parser.add_argument('--rt-max', type=float, default=200., required=False,
+        help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument('--nt', type = int, default = 50, required=False,
-                        help = 'number of r-transverse bins')
+    parser.add_argument('--np', type=int, default=50, required=False,
+        help='Number of r-parallel bins')
 
-    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
-                        help = 'name of the absorption in picca.constants')
+    parser.add_argument('--nt', type=int, default=50, required=False,
+        help='Number of r-transverse bins')
 
-    parser.add_argument('--lambda-abs2', type = str, default = None, required=False,
-                        help = 'name of the 2nd absorption in picca.constants')
+    parser.add_argument('--z-cut-min', type=float, default=0., required=False,
+        help='Use only pairs of forest x object with the mean of the last absorber \
+        redshift and the object redshift larger than z-cut-min')
 
-    parser.add_argument('--fid-Om', type = float, default = 0.315, required=False,
-                    help = 'Om of fiducial cosmology')
+    parser.add_argument('--z-cut-max', type=float, default=10., required=False,
+        help='Use only pairs of forest x object with the mean of the last absorber \
+        redshift and the object redshift smaller than z-cut-max')
 
-    parser.add_argument('--nside', type = int, default = 16, required=False,
-                    help = 'healpix nside')
+    parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the delta')
 
-    parser.add_argument('--nproc', type = int, default = None, required=False,
-                    help = 'number of processors')
+    parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the 2nd delta')
 
-    parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
-                    help = 'reference redshift')
+    parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs='*',
+        help='List of names of metal absorption in picca.constants present in forest')
 
-    parser.add_argument('--z-cut-min', type = float, default = 0., required=False,
-                        help = 'use only pairs of forests with the mean redshift of the last absorbers higher than z-cut-min')
+    parser.add_argument('--abs-igm2', type=str,default=[], required=False,nargs='*',
+        help='List of names of metal absorption in picca.constants present in 2nd forest')
 
-    parser.add_argument('--z-cut-max', type = float, default = 10., required=False,
-                        help = 'use only pairs of forests with the mean redshift of the last absorbers smaller than z-cut-max')
+    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+        help='Reference redshift')
 
-    parser.add_argument('--rej', type = float, default = 1., required=False,
-                    help = 'fraction rejected: -1=no rejection, 1=all rejection')
+    parser.add_argument('--z-evol', type=float, default=2.9, required=False,
+        help='Exponent of the redshift evolution of the delta field')
 
-    parser.add_argument('--z-evol', type = float, default = 2.9, required=False,
-                    help = 'exponent of the redshift evolution of the delta field')
+    parser.add_argument('--z-evol2', type=float, default=2.9, required=False,
+        help='Exponent of the redshift evolution of the 2nd delta field')
 
-    parser.add_argument('--z-evol2', type = float, default = 2.9, required=False,
-                    help = 'exponent of the redshift evolution of the 2nd delta field')
+    parser.add_argument('--metal-alpha', type=float, default=1., required=False,
+        help='Dxponent of the redshift evolution of the metal delta field')
 
-    parser.add_argument('--metal-alpha', type = float, default = 1., required=False,
-                    help = 'exponent of the redshift evolution of the metal delta field')
+    parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
+        help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--nspec', type=int,default=None, required=False,
-                    help = 'maximum spectra to read')
+    parser.add_argument('--no-same-wavelength-pairs', action='store_true', required=False,
+        help='Reject pairs with same wavelength')
 
-    parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs="*",
-                    help = 'list of metals')
+    parser.add_argument('--rej', type=float, default=1., required=False,
+        help='Fraction of rejected forest-forest pairs: -1=no rejection, 1=all rejection')
 
-    parser.add_argument('--abs-igm2', type=str,default=None, required=False,nargs="*",
-                        help = 'list #2 of metals')
+    parser.add_argument('--nside', type=int, default=16, required=False,
+        help='Healpix nside')
 
-    parser.add_argument('--no-same-wavelength-pairs', action="store_true", required=False,
-                    help = 'Reject pairs with same wavelength')
+    parser.add_argument('--nproc', type=int, default=None, required=False,
+        help='Number of processors')
+
+    parser.add_argument('--nspec', type=int, default=None, required=False,
+        help='Maximum number of spectra to read')
+
 
     args = parser.parse_args()
 
@@ -128,9 +133,8 @@ if __name__ == '__main__':
     for m in args.abs_igm :
         cf.alpha_abs[m] = args.metal_alpha
 
-    if args.abs_igm2 :
-        for m in args.abs_igm2 :
-            cf.alpha_abs[m] = args.metal_alpha
+    for m in args.abs_igm2 :
+        cf.alpha_abs[m] = args.metal_alpha
 
     cosmo = constants.cosmo(args.fid_Om)
     cf.cosmo=cosmo
@@ -263,26 +267,22 @@ if __name__ == '__main__':
     abs_igm = [args.lambda_abs]+args.abs_igm
     print("abs_igm = {}".format(abs_igm))
 
-    if args.lambda_abs2:
-        lambda_abs2_type = args.lambda_abs2
-    else :
-        lambda_abs2_type = args.lambda_abs
+    if args.lambda_abs2 is None :
+        args.lambda_abs2 = args.lambda_abs
+        args.abs_igm2 = args.abs_igm
 
-    if args.abs_igm2:
-        abs_igm_2 = [lambda_abs2_type]+args.abs_igm2
-    elif args.lambda_abs == lambda_abs2_type:
-        abs_igm_2 = copy.deepcopy(abs_igm)
-    else:
-        abs_igm_2 = [lambda_abs2_type]
+    abs_igm_2 = [args.lambda_abs2]+args.abs_igm2
 
-    if x_correlation: print("abs_igm2 = {}".format(abs_igm_2))
+    if x_correlation:
+        print("abs_igm2 = {}".format(abs_igm_2))
 
     for i,abs_igm1 in enumerate(abs_igm):
-        i0=i
-        if args.lambda_abs != lambda_abs2_type: i0=0
-        for j in range(i0,len(abs_igm_2)):
-            if ((i==0)and(j==0)): continue
-            abs_igm2 = abs_igm_2[j]
+        i0 = i
+        if args.lambda_abs != args.lambda_abs2:
+            i0=0
+        for j,abs_igm2 in enumerate(abs_igm_2[i0:]):
+            if i==0 and j==0:
+                continue
             cf.counter.value=0
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
             sys.stderr.write("\n")
@@ -316,38 +316,52 @@ if __name__ == '__main__':
             npairs_used_all.append(npairs_used)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head["ALPHA_MET"]=args.metal_alpha
-    head['REJ']=args.rej
-    head['RPMAX']=cf.rp_max
-    head['RTMAX']=cf.rt_max
-    head['Z_CUT_MIN']=cf.z_cut_min
-    head['Z_CUT_MAX']=cf.z_cut_max
-    head['NT']=cf.nt
-    head['NP']=cf.np
+    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
+        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
+        {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
+        {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
+        {'name':'ALPHAMET','value':args.metal_alpha,'comment':'Evolution of metal bias'},
+    ]
 
     len_names = sp.array([ len(s) for s in names ]).max()
     names = sp.array(names, dtype='S'+str(len_names))
-    out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=["NPALL","NPUSED","ABS_IGM"],header=head)
+    out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=['NPALL','NPUSED','ABS_IGM'],header=head,
+        comment=['Number of pairs','Number of used pairs','Absorption name'],extname='ATTRI')
 
     names = names.astype(str)
     out_list = []
-    out_names=[]
+    out_names = []
+    out_comment = []
+    out_units = []
     for i,ai in enumerate(names):
-        out_names=out_names + ["RP_"+ai]
-        out_list = out_list + [rp_all[i]]
+        out_names += ['RP_'+ai]
+        out_list += [rp_all[i]]
+        out_comment += ['R-parallel']
+        out_units += ['h^-1 Mpc']
 
-        out_names=out_names + ["RT_"+ai]
-        out_list = out_list + [rt_all[i]]
+        out_names += ['RT_'+ai]
+        out_list += [rt_all[i]]
+        out_comment += ['R-transverse']
+        out_units += ['h^-1 Mpc']
 
-        out_names=out_names + ["Z_"+ai]
-        out_list = out_list + [z_all[i]]
+        out_names += ['Z_'+ai]
+        out_list += [z_all[i]]
+        out_comment += ['Redshift']
+        out_units += ['']
 
-        out_names = out_names + ["DM_"+ai]
-        out_list = out_list + [dm_all[i]]
+        out_names += ['DM_'+ai]
+        out_list += [dm_all[i]]
+        out_comment += ['Distortion matrix']
+        out_units += ['']
 
-        out_names=out_names+["WDM_"+ai]
-        out_list = out_list+[wdm_all[i]]
+        out_names += ['WDM_'+ai]
+        out_list += [wdm_all[i]]
+        out_comment += ['Sum of weight']
+        out_units += ['']
 
-    out.write(out_list,names=out_names)
+    out.write(out_list,names=out_names,comment=out_comment,units=out_units,extname='MDMAT')
     out.close()
