@@ -279,14 +279,24 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             with lock:
                 sys.stderr.write("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)))
                 counter.value += 1
-            rd = d.r_comov
-            zd_abs = 10**d.ll/constants.absorber_IGM[abs_igm]-1
-            rd_abs = cosmo.r_comoving(zd_abs)
-            wd = d.we
+
             r = random.rand(len(d.neighs))
             w=r>rej
             npairs += len(d.neighs)
             npairs_used += w.sum()
+
+            rd = d.r_comov
+            wd = d.we
+            zd_abs = 10**d.ll/constants.absorber_IGM[abs_igm]-1
+            rd_abs = cosmo.r_comoving(zd_abs)
+
+            wzcut = zd_abs<d.zqso
+            rd = rd[wzcut]
+            wd = wd[wzcut]
+            zd_abs = zd_abs[wzcut]
+            rd_abs = rd_abs[wzcut]
+            if rd.size==0: continue
+
             for q in sp.array(d.neighs)[w]:
                 ang = d^q
 
