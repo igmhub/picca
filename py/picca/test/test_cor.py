@@ -51,6 +51,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         self._test = True
+#        self._branchFiles = './new_data/'
         self._masterFiles = resource_filename('picca', 'test/data/')
         self.produce_folder()
         self.produce_cat(nObj=1000)

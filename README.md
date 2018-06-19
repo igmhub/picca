@@ -27,7 +27,12 @@ add to your bashrc
 export PICCA_BASE=<path to your picca>
 ```
 
-run
+then make sure you have all required modules by running 
+```
+pip install -r requirements.txt --user
+```
+
+and finally run 
 ```
 python setup.py install --user
 ```

@@ -69,7 +69,7 @@ if __name__ == '__main__':
     parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs='*',
         help='List of names of metal absorption in picca.constants present in forest')
 
-    parser.add_argument('--abs-igm2', type=str,default=None, required=False,nargs='*',
+    parser.add_argument('--abs-igm2', type=str,default=[], required=False,nargs='*',
         help='List of names of metal absorption in picca.constants present in 2nd forest')
 
     parser.add_argument('--z-ref', type=float, default=2.25, required=False,
@@ -133,9 +133,8 @@ if __name__ == '__main__':
     for m in args.abs_igm :
         cf.alpha_abs[m] = args.metal_alpha
 
-    if args.abs_igm2 :
-        for m in args.abs_igm2 :
-            cf.alpha_abs[m] = args.metal_alpha
+    for m in args.abs_igm2 :
+        cf.alpha_abs[m] = args.metal_alpha
 
     cosmo = constants.cosmo(args.fid_Om)
     cf.cosmo=cosmo
@@ -268,26 +267,22 @@ if __name__ == '__main__':
     abs_igm = [args.lambda_abs]+args.abs_igm
     print("abs_igm = {}".format(abs_igm))
 
-    if args.lambda_abs2:
-        lambda_abs2_type = args.lambda_abs2
-    else :
-        lambda_abs2_type = args.lambda_abs
+    if args.lambda_abs2 is None :
+        args.lambda_abs2 = args.lambda_abs
+        args.abs_igm2 = args.abs_igm
 
-    if args.abs_igm2:
-        abs_igm_2 = [lambda_abs2_type]+args.abs_igm2
-    elif args.lambda_abs == lambda_abs2_type:
-        abs_igm_2 = copy.deepcopy(abs_igm)
-    else:
-        abs_igm_2 = [lambda_abs2_type]
+    abs_igm_2 = [args.lambda_abs2]+args.abs_igm2
 
-    if x_correlation: print("abs_igm2 = {}".format(abs_igm_2))
+    if x_correlation:
+        print("abs_igm2 = {}".format(abs_igm_2))
 
     for i,abs_igm1 in enumerate(abs_igm):
-        i0=i
-        if args.lambda_abs != lambda_abs2_type: i0=0
-        for j in range(i0,len(abs_igm_2)):
-            if ((i==0)and(j==0)): continue
-            abs_igm2 = abs_igm_2[j]
+        i0 = i
+        if args.lambda_abs != args.lambda_abs2:
+            i0=0
+        for j,abs_igm2 in enumerate(abs_igm_2[i0:]):
+            if i==0 and j==0:
+                continue
             cf.counter.value=0
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
             sys.stderr.write("\n")
