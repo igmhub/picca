@@ -55,8 +55,8 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     ## Info of the primary observation
     thid  = vac[1]["THING_ID"][:]
-    ra    = vac[1]["RA"][:]
-    dec   = vac[1]["DEC"][:]
+    ra    = vac[1]["RA"][:].astype('float64')
+    dec   = vac[1]["DEC"][:].astype('float64')
     plate = vac[1]["PLATE"][:]
     mjd   = vac[1]["MJD"][:]
     fid   = vac[1]["FIBERID"][:]
@@ -255,7 +255,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
             diff = exp_diff(h,ll)
             # compute spectral resolution
             wdisp =  h[1]["wdisp"][:]
-            reso = spectral_resolution(wdisp)
+            reso = spectral_resolution(wdisp,True,f,ll)
             d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
         else :
             d = forest(ll,fl,iv, t, r, d, z, p, m, f,order)
@@ -345,9 +345,6 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
     plates = sp.unique(plate)
     print("reading {} plates".format(len(plates)))
 
-    prefix='spCFrame'
-    sufix=''
-
     for p in plates:
         wplate = plate==p
         plate_mjd = "{}-*".format(p)
@@ -376,7 +373,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                     nexp = head["NEXP_{}".format(c)]
                 else:
                     continue
-                for i in range(nexp):
+                for _ in range(nexp):
                     str_iexp = str(iexp)
                     if iexp<10:
                         str_iexp = '0'+str_iexp

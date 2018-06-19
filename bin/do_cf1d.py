@@ -25,58 +25,59 @@ def cf1d(p):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the 1D auto or cross-correlation between delta field from the same forest.')
 
-    parser.add_argument('--out', type = str, default = None, required=True,
-                        help = 'output file name')
+    parser.add_argument('--out', type=str, default=None, required=True,
+        help='Output file name')
 
-    parser.add_argument('--in-dir', type = str, default = None, required=True,
-                        help = 'data directory')
+    parser.add_argument('--in-dir', type=str, default=None, required=True,
+        help='Directory to delta files')
 
-    parser.add_argument('--in-dir2', type = str, default = None, required=False,
-                        help = 'second delta directory')
+    parser.add_argument('--in-dir2', type=str, default=None, required=False,
+        help='Directory to 2nd delta files')
 
-    parser.add_argument('--nproc', type = int, default = None, required=False,
-                    help = 'number of processors')
+    parser.add_argument('--lambda-min', type=float, default=3600., required=False,
+        help='Lower limit on observed wavelength [Angstrom]')
 
-    parser.add_argument('--no-project', action="store_true", required=False,
-                    help = 'do not project out continuum fitting modes')
+    parser.add_argument('--lambda-max', type=float, default=5500., required=False,
+        help='Upper limit on observed wavelength [Angstrom]')
 
-    parser.add_argument('--nspec', type=int,default=None, required=False,
-                    help = 'maximum spectra to read')
+    parser.add_argument('--dll', type=float, default=3.e-4, required=False,
+        help='Loglam bin size')
 
-    parser.add_argument('--lambda-min',type = float,default=3600.,required=False,
-            help='lower limit on observed wavelength [Angstrom]')
+    parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the delta')
 
-    parser.add_argument('--lambda-max',type = float,default=5500.,required=False,
-            help='upper limit on observed wavelength [Angstrom]')
+    parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the 2nd delta (if not give, same as 1st delta)')
 
-    parser.add_argument('--dll', type=float,default=3.e-4, required=False,
-                    help = 'loglam bin size')
+    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+        help='Reference redshift')
 
-    parser.add_argument('--lambda-abs', type = str, default = 'LYA', required=False,
-                        help = 'name of the absorption in picca.constants')
+    parser.add_argument('--z-evol', type=float, default=1., required=False,
+        help='Exponent of the redshift evolution of the delta field')
 
-    parser.add_argument('--lambda-abs2', type = str, default = None, required=False,
-                        help = 'name of the 2nd absorption in picca.constants')
+    parser.add_argument('--z-evol2', type=float, default=1., required=False,
+        help='Exponent of the redshift evolution of the 2nd delta field')
 
-    parser.add_argument('--z-ref', type = float, default = 2.25, required=False,
-                    help = 'reference redshift')
+    parser.add_argument('--no-project', action='store_true', required=False,
+        help='Do not project out continuum fitting modes')
 
-    parser.add_argument('--z-evol', type = float, default = 1., required=False,
-                    help = 'exponent of the redshift evolution of the delta field')
+    parser.add_argument('--nside', type=int, default=16, required=False,
+        help='Healpix nside')
 
-    parser.add_argument('--z-evol2', type = float, default = 1., required=False,
-                    help = 'exponent of the redshift evolution of the 2nd delta field')
+    parser.add_argument('--nproc', type=int, default=None, required=False,
+        help='Number of processors')
 
-    parser.add_argument('--nside', type = int, default = 8, required=False,
-                    help = 'healpix nside')
+    parser.add_argument('--nspec', type=int, default=None, required=False,
+        help='Maximum number of spectra to read')
+
 
     args = parser.parse_args()
 
     if args.nproc is None:
         args.nproc = cpu_count()//2
-
 
     ###
     cf.nside = args.nside
@@ -197,13 +198,18 @@ if __name__ == '__main__':
     print("writing")
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = {}
-    head['LLMIN'] = cf.lmin
-    head['LLMAX'] = cf.lmax
-    head['DLL'] = cf.dll
+    head = [ {'name':'LLMIN','value':cf.lmin,'comment':'Minimum log10 lambda [log Angstrom]'},
+             {'name':'LLMAX','value':cf.lmax,'comment':'Maximum log10 lambda [log Angstrom]'},
+             {'name':'DLL','value':cf.dll,'comment':'Loglam bin size [log Angstrom]'},
+    ]
+    comment = ['Variance','Sum of weight for variance','Sum of pairs for variance',
+               'Correlation','Sum of weight for correlation','Sum of pairs for correlation']
+    out.write([v1d,wv1d,nv1d,c1d,nc1d,nb1d],names=['v1d','wv1d','nv1d','c1d','nc1d','nb1d'],
+        header=head,comment=comment,extname='1DCOR')
 
-    out.write([v1d,wv1d,nv1d,c1d,nc1d,nb1d],names=['v1d','wv1d','nv1d','c1d','nc1d','nb1d'],header=head)
-    out.write([cfs_2d,wes_2d,nbs_2d],names=['DA','WE','NB'])
+    comment = ['Covariance','Sum of weight','Number of pairs']
+    out.write([cfs_2d,wes_2d,nbs_2d],names=['DA','WE','NB'],
+        comment=comment,extname='2DCOR')
     out.close()
 
     print("all done")

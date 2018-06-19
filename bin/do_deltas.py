@@ -19,106 +19,111 @@ def cont_fit(data):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--drq', type = str, default = None, required=True,
-                        help = 'DRQ file')
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the delta field from a list of spectra')
 
-    parser.add_argument('--in-dir',type = str,default=None,required=True,
-            help='data directory')
+    parser.add_argument('--out-dir',type=str,default=None,required=True,
+        help='Output directory')
 
-    parser.add_argument('--out-dir',type = str,default=None,required=True,
-            help='output directory')
+    parser.add_argument('--drq', type=str, default=None, required=True,
+        help='Catalog of objects in DRQ format')
 
-    parser.add_argument('--dla-vac',type = str,default=None,required=False,
-            help='dla catalog file')
+    parser.add_argument('--in-dir', type=str, default=None, required=True,
+        help='Directory to spectra files')
 
-    parser.add_argument('--nspec',type = int,default=None,required=False,
-            help='number of spectra to fit')
+    parser.add_argument('--log',type=str,default='input.log',required=False,
+        help='Log input data')
 
-    parser.add_argument('--zqso-min',type = float,default=None,required=False,
-            help='lower limit on quasar redshift')
+    parser.add_argument('--iter-out-prefix',type=str,default='iter',required=False,
+        help='Prefix of the iteration file')
 
-    parser.add_argument('--zqso-max',type = float,default=None,required=False,
-            help='upper limit on quasar redshift')
-
-    parser.add_argument('--log',type = str,default='input.log',required=False,
-            help='log input data')
-
-    parser.add_argument('--npix-min',type = int,default=50,required=False,
-            help='log input data')
-
-    parser.add_argument('--lambda-min',type = float,default=3600.,required=False,
-            help='lower limit on observed wavelength [Angstrom]')
-
-    parser.add_argument('--lambda-max',type = float,default=5500.,required=False,
-            help='upper limit on observed wavelength [Angstrom]')
-
-    parser.add_argument('--lambda-rest-min',type = float,default=1040.,required=False,
-            help='lower limit on rest frame wavelength [Angstrom]')
-
-    parser.add_argument('--lambda-rest-max',type = float,default=1200.,required=False,
-            help='upper limit on rest frame wavelength [Angstrom]')
-
-    parser.add_argument('--rebin',type = int,default=3,required=False,
-            help='rebin wavelength grid by combining this number of adjacent pixels (ivar weight)')
-
-    parser.add_argument('--dla-mask',type = float,default=0.8,required=False,
-            help='lower limit on the DLA transmission. Transmissions below this number are masked')
-
-    parser.add_argument('--nit',type = int,default=5,required=False,
-            help='number of iterations to determine the mean continuum shape, LSS variances, etc.')
-
-    parser.add_argument('--iter-out-prefix',type = str,default='iter',required=False,
-            help='prefix of the iteration file')
-
-    parser.add_argument('--mode',type = str,default='pix',required=False,
-            help='open mode: pix, spec, spcframe, desi')
+    parser.add_argument('--mode',type=str,default='pix',required=False,
+        help='Open mode of the spectra files: pix, spec, spcframe, spplate, desi')
 
     parser.add_argument('--best-obs',action='store_true', required=False,
-            help='if mode == spcframe, then use only the best observation')
+        help='If mode == spcframe, then use only the best observation')
 
     parser.add_argument('--single-exp',action='store_true', required=False,
-            help='if mode == spcframe, then use only one of the available exposures. If best-obs then choose it among those contributing to the best obs')
+        help='If mode == spcframe, then use only one of the available exposures. If best-obs then choose it among those contributing to the best obs')
+
+    parser.add_argument('--zqso-min',type=float,default=None,required=False,
+        help='Lower limit on quasar redshift from drq')
+
+    parser.add_argument('--zqso-max',type=float,default=None,required=False,
+        help='Upper limit on quasar redshift from drq')
 
     parser.add_argument('--keep-bal',action='store_true',required=False,
-            help='do not reject BALs')
+        help='Do not reject BALs in drq')
 
     parser.add_argument('--bi-max',type=float,required=False,default=None,
-            help="maximum CIV balnicity index (overrides --keep-bal")
+        help='Maximum CIV balnicity index in drq (overrides --keep-bal)')
 
-    parser.add_argument('--nproc', type = int, default = None, required=False,
-                    help = 'number of processors')
+    parser.add_argument('--lambda-min',type=float,default=3600.,required=False,
+        help='Lower limit on observed wavelength [Angstrom]')
 
-    parser.add_argument('--mask-file',type = str,default=None,required=False,
-            help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
+    parser.add_argument('--lambda-max',type=float,default=5500.,required=False,
+        help='Upper limit on observed wavelength [Angstrom]')
 
-    parser.add_argument('--flux-calib',type = str,default=None,required=False,
-            help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
+    parser.add_argument('--lambda-rest-min',type=float,default=1040.,required=False,
+        help='Lower limit on rest frame wavelength [Angstrom]')
 
-    parser.add_argument('--ivar-calib',type = str,default=None,required=False,
-            help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration')
+    parser.add_argument('--lambda-rest-max',type=float,default=1200.,required=False,
+        help='Upper limit on rest frame wavelength [Angstrom]')
 
-    parser.add_argument('--eta-min',type = float,default=0.5,required=False,
-            help='lower limit for eta')
-    parser.add_argument('--eta-max',type = float,default=1.5,required=False,
-            help='upper limit for eta')
+    parser.add_argument('--rebin',type=int,default=3,required=False,
+        help='Rebin wavelength grid by combining this number of adjacent pixels (ivar weight)')
 
-    parser.add_argument('--vlss-min',type = float,default=0.,required=False,
-            help='lower limit for variance LSS')
-    parser.add_argument('--vlss-max',type = float,default=0.3,required=False,
-            help='upper limit for variance LSS')
+    parser.add_argument('--npix-min',type=int,default=50,required=False,
+        help='Minimum of rebined pixels')
+
+    parser.add_argument('--dla-vac',type=str,default=None,required=False,
+        help='DLA catalog file')
+
+    parser.add_argument('--dla-mask',type=float,default=0.8,required=False,
+        help='Lower limit on the DLA transmission. Transmissions below this number are masked')
+
+    parser.add_argument('--mask-file',type=str,default=None,required=False,
+        help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
+
+    parser.add_argument('--flux-calib',type=str,default=None,required=False,
+        help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
+
+    parser.add_argument('--ivar-calib',type=str,default=None,required=False,
+        help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration')
+
+    parser.add_argument('--eta-min',type=float,default=0.5,required=False,
+        help='Lower limit for eta')
+
+    parser.add_argument('--eta-max',type=float,default=1.5,required=False,
+        help='Upper limit for eta')
+
+    parser.add_argument('--vlss-min',type=float,default=0.,required=False,
+        help='Lower limit for variance LSS')
+
+    parser.add_argument('--vlss-max',type=float,default=0.3,required=False,
+        help='Upper limit for variance LSS')
+
+    parser.add_argument('--delta-format',type=str,default=None,required=False,
+        help='Format for Pk 1D: Pk1D')
+
+    parser.add_argument('--use-ivar-as-weight', action='store_true', default=False,
+        help='Use ivar as weights (implemented as eta = 1, sigma_lss = fudge = 0)')
+
+    parser.add_argument('--use-constant-weight', action='store_true', default=False,
+        help='Set all the delta weights to one (implemented as eta = 0, sigma_lss = 1, fudge = 0)')
 
     parser.add_argument('--order',type=int,default=1,required=False,
-            help='order of the log(lambda) polynomial for the continuum fit, by default 1.')
+        help='Order of the log(lambda) polynomial for the continuum fit, by default 1.')
 
-    parser.add_argument('--delta-format',type = str,default=None,required=False,
-            help='format for Pk 1D: Pk1D')
+    parser.add_argument('--nit',type=int,default=5,required=False,
+        help='Number of iterations to determine the mean continuum shape, LSS variances, etc.')
 
-    parser.add_argument('--use-ivar-as-weight', action='store_true', default = False,
-            help='use ivar as weights (implemented as eta = 1, sigma_lss = fudge = 0)')
+    parser.add_argument('--nproc', type=int, default=None, required=False,
+        help='Number of processors')
 
-    parser.add_argument('--use-constant-weight', action='store_true', default = False,
-            help='set all the delta weights to one (implemented as eta = 0, sigma_lss = 1, fudge = 0)')
+    parser.add_argument('--nspec', type=int, default=None, required=False,
+        help='Maximum number of spectra to read')
+
 
     args = parser.parse_args()
 
@@ -377,34 +382,40 @@ if __name__ == '__main__':
         else :
             out = fitsio.FITS(args.out_dir+"/delta-{}".format(p)+".fits.gz",'rw',clobber=True)
             for d in deltas[p]:
-                hd={}
-                hd["RA"]=d.ra
-                hd["DEC"]=d.dec
-                hd["Z"]=d.zqso
-                hd["PMF"]="{}-{}-{}".format(d.plate,d.mjd,d.fid)
-                hd["THING_ID"]=d.thid
-                hd["PLATE"]=d.plate
-                hd["MJD"]=d.mjd
-                hd["FIBERID"]=d.fid
-                hd["ORDER"]=d.order
+                hd = [ {'name':'RA','value':d.ra,'comment':'Right Ascension [rad]'},
+                       {'name':'DEC','value':d.dec,'comment':'Declination [rad]'},
+                       {'name':'Z','value':d.zqso,'comment':'Redshift'},
+                       {'name':'PMF','value':'{}-{}-{}'.format(d.plate,d.mjd,d.fid)},
+                       {'name':'THING_ID','value':d.thid,'comment':'Object identification'},
+                       {'name':'PLATE','value':d.plate},
+                       {'name':'MJD','value':d.mjd,'comment':'Modified Julian date'},
+                       {'name':'FIBERID','value':d.fid},
+                       {'name':'ORDER','value':d.order,'comment':'Order of the continuum fit'},
+                ]
 
-                if (args.delta_format=='Pk1D') :
-                    hd["MEANZ"]=d.mean_z
-                    hd["MEANRESO"]=d.mean_reso
-                    hd["MEANSNR"]=d.mean_SNR
+                if (args.delta_format=='Pk1D'):
+                    hd += [{'name':'MEANZ','value':d.mean_z,'comment':'Mean redshift'},
+                           {'name':'MEANRESO','value':d.mean_reso,'comment':'Mean resolution'},
+                           {'name':'MEANSNR','value':d.mean_SNR,'comment':'Mean SNR'},
+                    ]
                     dll = d.dll
-                    if (args.mode=='desi') : dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
-                    hd["DLL"]=dll
+                    if (args.mode=='desi'):
+                        dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
+                    hd += [{'name':'DLL','value':dll,'comment':'Loglam bin size [log Angstrom]'}]
                     diff = d.diff
                     if diff is None:
                         diff = d.ll*0
 
                     cols=[d.ll,d.de,d.iv,diff]
                     names=['LOGLAM','DELTA','IVAR','DIFF']
+                    units=['log Angstrom','','','']
+                    comments = ['Log lambda','Delta field','Inverse variance','Difference']
                 else :
                     cols=[d.ll,d.de,d.we,d.co]
                     names=['LOGLAM','DELTA','WEIGHT','CONT']
+                    units=['log Angstrom','','','']
+                    comments = ['Log lambda','Delta field','Pixel weights','Continuum']
 
-                out.write(cols,names=names,header=hd,extname=str(d.thid))
+                out.write(cols,names=names,header=hd,comment=comments,units=units,extname=str(d.thid))
 
             out.close()

@@ -35,7 +35,7 @@ def fill_neighs(pix):
         for d in dels[ipix]:
             npix = query_disc(nside,[d.xcart,d.ycart,d.zcart],angmax,inclusive = True)
             npix = [p for p in npix if p in objs]
-            neighs = [q for p in npix for q in objs[p]]
+            neighs = [q for p in npix for q in objs[p] if q.thid != d.thid]
             ang = d^neighs
             w = ang<angmax
             if not ang_correlation:
@@ -43,7 +43,7 @@ def fill_neighs(pix):
                 w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < rp_max
                 w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > rp_min
             neighs = sp.array(neighs)[w]
-            d.neighs = sp.array([q for q in neighs if q.thid != d.thid and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. >= z_cut_min and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. < z_cut_max])
+            d.neighs = sp.array([q for q in neighs if (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. >= z_cut_min and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. < z_cut_max])
 
 def xcf(pix):
     xi = sp.zeros(np*nt)
@@ -279,14 +279,24 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             with lock:
                 sys.stderr.write("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)))
                 counter.value += 1
-            rd = d.r_comov
-            zd_abs = 10**d.ll/constants.absorber_IGM[abs_igm]-1
-            rd_abs = cosmo.r_comoving(zd_abs)
-            wd = d.we
+
             r = random.rand(len(d.neighs))
             w=r>rej
             npairs += len(d.neighs)
             npairs_used += w.sum()
+
+            rd = d.r_comov
+            wd = d.we
+            zd_abs = 10**d.ll/constants.absorber_IGM[abs_igm]-1
+            rd_abs = cosmo.r_comoving(zd_abs)
+
+            wzcut = zd_abs<d.zqso
+            rd = rd[wzcut]
+            wd = wd[wzcut]
+            zd_abs = zd_abs[wzcut]
+            rd_abs = rd_abs[wzcut]
+            if rd.size==0: continue
+
             for q in sp.array(d.neighs)[w]:
                 ang = d^q
 

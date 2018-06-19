@@ -79,46 +79,50 @@ def compute_mean_delta(ll,delta,iv,zqso):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the 1D power spectrum')
 
-    parser.add_argument('--out-dir', type = str, default = None, required=True,
-                        help = 'output file name')
+    parser.add_argument('--out-dir', type=str, default=None, required=True,
+        help='Output directory')
 
-    parser.add_argument('--in-dir', type = str, default = None, required=True,
-                        help = 'data directory')
+    parser.add_argument('--out-format', type=str, default='fits', required=False,
+        help='Output format: root or fits (if root call PyRoot)')
 
-    parser.add_argument('--out-format', type = str, default = 'fits', required=False,
-                        help = ' root or fits, if root call PyRoot')
+    parser.add_argument('--in-dir', type=str, default=None, required=True,
+        help='Directory to delta files')
 
-    parser.add_argument('--in-format', type = str, default = 'fits', required=False,
-                        help = ' format used for input files, ascii or fits')
+    parser.add_argument('--in-format', type=str, default='fits', required=False,
+        help=' Input format used for input files: ascii or fits')
 
-    parser.add_argument('--SNR-min',type = float,default=2.,required=False,
-                        help = 'minimal mean SNR per pixel ')
+    parser.add_argument('--SNR-min',type=float,default=2.,required=False,
+        help='Minimal mean SNR per pixel ')
 
-    parser.add_argument('--reso-max',type = float,default=85.,required=False,
-                        help = 'maximal resolution in km/s ')
+    parser.add_argument('--reso-max',type=float,default=85.,required=False,
+        help='Maximal resolution in km/s ')
 
-    parser.add_argument('--lambda-obs-min',type = float,default=3600.,required=False,
-                        help = 'minimal lambda obs.' )
+    parser.add_argument('--lambda-obs-min',type=float,default=3600.,required=False,
+        help='Lower limit on observed wavelength [Angstrom]' )
 
-    parser.add_argument('--nb-part',type = int,default=3,required=False,
-                        help = 'Number of parts in forest')
+    parser.add_argument('--nb-part',type=int,default=3,required=False,
+        help='Number of parts in forest')
 
-    parser.add_argument('--nb-pixel-min',type = int,default=75,required=False,
-                        help = 'Minimal number of pixels in a part of forest')
+    parser.add_argument('--nb-pixel-min',type=int,default=75,required=False,
+        help='Minimal number of pixels in a part of forest')
 
-    parser.add_argument('--nb-pixel-masked-max',type = int,default=40,required=False,
-                        help = 'Maximal number of masked pixels in a part of forest')
+    parser.add_argument('--nb-pixel-masked-max',type=int,default=40,required=False,
+        help='Maximal number of masked pixels in a part of forest')
 
-    parser.add_argument('--noise-estimate', type = str, default = 'mean_diff', required=False,
-                        help = ' Estimate of Pk_noise pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff')
+    parser.add_argument('--no-apply-filling', action='store_true', default=False, required=False,
+        help='Dont fill masked pixels')
 
-    parser.add_argument('--debug', action='store_true', default = False, required=False,
-                        help = ' Fill root histograms for debugging')
+    parser.add_argument('--noise-estimate', type=str, default='mean_diff', required=False,
+        help='Estimate of Pk_noise pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff')
 
-    parser.add_argument('--no-apply-filling', action='store_true', default = False, required=False,
-                        help = ' No fill masked pixels')
+    parser.add_argument('--forest-type', type=str, default='Lya', required=False,
+        help='Forest used: Lya, SiIV, CIV')
+
+    parser.add_argument('--debug', action='store_true', default=False, required=False,
+        help='Fill root histograms for debugging')
 
 
     args = parser.parse_args()
@@ -131,10 +135,21 @@ if __name__ == '__main__':
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
         zqso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
         nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
-        hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 36, 3600., 7200., 16, 1040., 1200., -5.0, 5.0)
-        hdelta_RF  = TProfile( 'hdelta_RF', 'delta mean as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
+
+        # control histograms
+        if (args.forest_type=='Lya'):
+            forest_inf=1040.
+            forest_sup=1200.
+        elif (args.forest_type=='SiIV'):
+            forest_inf=1270.
+            forest_sup=1380.
+        elif (args.forest_type=='CIV'):
+            forest_inf=1410.
+            forest_sup=1520.
+        hdelta  = TProfile2D( 'hdelta', 'delta mean as a function of lambda-lambdaRF', 36, 3600., 7200., 16, forest_inf, forest_sup, -5.0, 5.0)
+        hdelta_RF  = TProfile( 'hdelta_RF', 'delta mean as a function of lambdaRF', 320, forest_inf, forest_sup, -5.0, 5.0)
         hdelta_OBS  = TProfile( 'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1800, 3600., 7200., -5.0, 5.0)
-        hdelta_RF_we  = TProfile( 'hdelta_RF_we', 'delta mean weighted as a function of lambdaRF', 320, 1040., 1200., -5.0, 5.0)
+        hdelta_RF_we  = TProfile( 'hdelta_RF_we', 'delta mean weighted as a function of lambdaRF', 320, forest_inf, forest_sup, -5.0, 5.0)
         hdelta_OBS_we  = TProfile( 'hdelta_OBS_we', 'delta mean weighted as a function of lambdaOBS', 1800, 3600., 7200., -5.0, 5.0)
         hivar = TH1D('hivar','  ivar ',10000,0.0,10000.)
         hsnr = TH1D('hsnr','  snr per pixel ',100,0.0,100.)

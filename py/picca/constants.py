@@ -7,6 +7,8 @@ boss_lambda_min = 3600. ## Angstrom
 
 speed_light = 299792458. ## m/s
 
+small_angle_cut_off = 2./3600.*sp.pi/180. ## 2 arcsec
+
 class cosmo:
 
     def __init__(self,Om,Ok=0):
@@ -79,6 +81,7 @@ absorber_IGM = {
     'OVI(1038)'   : 1037.613,
     'OVI(1032)'   : 1031.912,
     'LYB'         : 1025.72,
+    'SiII(990)'   : 989.8731,
+    'OI(989)'     : 988.7,
+    'CIII(977)'   : 977.020,
 }
-
-
