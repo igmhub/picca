@@ -166,22 +166,27 @@ def compute_cor_reso(delta_pixel,mean_reso,k):
 
 class Pk1D :
 
-    def __init__(self,ra,dec,zqso,mean_z,plate,mjd,fiberid,
-                 k,Pk_raw,Pk_noise,cor_reso,Pk):
+    def __init__(self,ra,dec,zqso,mean_z,plate,mjd,fiberid, msnr, mreso,
+                 k,Pk_raw,Pk_noise,cor_reso,Pk, nb_mp, Pk_diff):
 
         self.ra = ra
         self.dec = dec
         self.zqso = zqso
         self.mean_z = mean_z
+        self.mean_snr = msnr
+        self.mean_reso = mreso
+        self.nb_mp = nb_mp
 
         self.plate = plate
         self.mjd = mjd
         self.fid = fiberid
         self.k = k
         self.Pk_raw = Pk_raw
-        self.Pk = Pk_noise
+        self.Pk_noise = Pk_noise
         self.cor_reso = cor_reso
         self.Pk = Pk
+        self.Pk_diff = Pk_diff
+
         
     @classmethod
     def from_fitsio(cls,hdu):
