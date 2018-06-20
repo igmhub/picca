@@ -82,6 +82,9 @@ class forest(qso):
     ### Correction function for multiplicative errors in inverse pipeline variance calibration
     correc_ivar = None
 
+    ## absorber pixel mask limit
+    absorber_mask = None
+
     ## minumum dla transmission
     dla_mask = None
 
@@ -232,6 +235,19 @@ class forest(qso):
             self.diff = self.diff[w]
             self.reso = self.reso[w]
 
+    def add_absorber(self,lambda_absorber):
+        if not hasattr(self,'ll'):
+            return
+
+        w = sp.ones(self.ll.size, dtype=bool)
+        w &= sp.fabs(1.e4*(self.ll-sp.log10(lambda_absorber)))>forest.absorber_mask
+
+        self.iv = self.iv[w]
+        self.ll = self.ll[w]
+        self.fl = self.fl[w]
+        if self.diff is not None :
+            self.diff = self.diff[w]
+            self.reso = self.reso[w]
 
     def cont_fit(self):
         lmax = forest.lmax_rest+sp.log10(1+self.zqso)
