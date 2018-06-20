@@ -167,7 +167,7 @@ def compute_cor_reso(delta_pixel,mean_reso,k):
 class Pk1D :
 
     def __init__(self,ra,dec,zqso,mean_z,plate,mjd,fiberid, msnr, mreso,
-                 k,Pk_raw,Pk_noise,cor_reso,Pk, nb_mp, Pk_diff):
+                 k,Pk_raw,Pk_noise,cor_reso,Pk, nb_mp, Pk_diff=None):
 
         self.ra = ra
         self.dec = dec
@@ -187,7 +187,7 @@ class Pk1D :
         self.Pk = Pk
         self.Pk_diff = Pk_diff
 
-        
+
     @classmethod
     def from_fitsio(cls,hdu):
 

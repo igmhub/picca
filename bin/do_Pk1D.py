@@ -244,7 +244,10 @@ if __name__ == '__main__':
                     Pk = (Pk_raw - Pk_mean_diff)/cor_reso
 
                 # Build Pk1D
-                Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,k,Pk_raw,Pk_noise,cor_reso,Pk)
+                if (args.noise_estimate=='mean_diff' or args.noise_estimate=='mean_rebin_diff'):
+                    Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,d.mean_SNR,d.mean_reso,k,Pk_raw,Pk_noise,cor_reso,Pk,nb_masked_pixel,Pk_mean_diff)
+                else:
+                    Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,d.mean_SNR,d.mean_reso,k,Pk_raw,Pk_noise,cor_reso,Pk,nb_masked_pixel)
 
                 # save in root format
                 if (args.out_format=='root'):
