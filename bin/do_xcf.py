@@ -57,6 +57,15 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
+    parser.add_argument('--nhisto', type=int, default=36, required=False,
+        help='Number of redshift histogram bins')
+
+    parser.add_argument('--z-histo-min', type=float, default=1.7, required=False,
+        help='Minimum redshift of histogram')
+
+    parser.add_argument('--z-histo-max', type=float, default=3.5, required=False,
+        help='Maximum redshift of histogram')
+
     parser.add_argument('--z-min-obj', type=float, default=None, required=False,
         help='Min redshift for object field')
 
@@ -115,6 +124,9 @@ if __name__ == '__main__':
     xcf.nt = args.nt
     xcf.nside = args.nside
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    xcf.nhisto = args.nhisto
+    xcf.zhisto_min = args.z_histo_min
+    xcf.zhisto_max = args.z_histo_max
 
     cosmo = constants.cosmo(args.fid_Om)
 
@@ -187,6 +199,7 @@ if __name__ == '__main__':
     rts=cfs[:,3,:]
     zs=cfs[:,4,:]
     nbs=cfs[:,5,:].astype(sp.int64)
+    nhs=cfs[:,6,:].astype(sp.int64)
     cfs=cfs[:,1,:]
     hep=sp.array(sorted(list(cpu_data.keys())))
 
@@ -198,6 +211,9 @@ if __name__ == '__main__':
     z        = (zs*wes).sum(axis=0)
     z[cut]  /= wes.sum(axis=0)[cut]
     nb = nbs.sum(axis=0)
+    nh = nhs.sum(axis=0)
+    nh = nh[:xcf.nhisto]
+    zh = xcf.zhisto_min + (sp.arange(xcf.nhisto)+0.5)*(xcf.zhisto_max-xcf.zhisto_min)/xcf.nhisto
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
@@ -218,5 +234,13 @@ if __name__ == '__main__':
     out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],
         comment=['Healpix index', 'Sum of weight', 'Correlation'],
         header=head2,extname='COR')
+
+    head3 = [ {'name':'NH','value':xcf.nhisto,'comment':'Number of histogram bins'},
+        {'name':'ZHMIN','value':xcf.zhisto_min,'comment':'Minimum redshift of histogram'},
+        {'name':'ZHMAX','value':xcf.zhisto_max,'comment':'Maximum redshift of histogram'}
+    ]
+    out.write([zh,nh],names=['ZPHISTO','NPHISTO'],
+        comment=['Redshift bin centers', 'Number of pairs'],
+        header=head3,extname='HISTO')
 
     out.close()

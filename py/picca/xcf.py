@@ -19,6 +19,10 @@ nside = None
 counter = None
 ndels = None
 
+nhisto = None
+zhisto_min = None
+zhisto_max = None
+
 lambda_abs = None
 
 dels = None
@@ -52,6 +56,7 @@ def xcf(pix):
     rt = sp.zeros(np*nt)
     z = sp.zeros(np*nt)
     nb = sp.zeros(np*nt,dtype=sp.int64)
+    nh = sp.zeros(np*nt,dtype=sp.int64)
 
     for ipix in pix:
         for d in dels[ipix]:
@@ -65,10 +70,10 @@ def xcf(pix):
 
                 if ang_correlation:
                     l_qso = [10.**q.ll for q in d.neighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb,cnh = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
                 else:
                     rc_qso = [q.r_comov for q in d.neighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb,cnh = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
 
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
@@ -76,6 +81,7 @@ def xcf(pix):
                 rt[:len(crt)]+=crt
                 z[:len(cz)]+=cz
                 nb[:len(cnb)]+=cnb.astype(int)
+                nh[:len(cnh)]+=cnh.astype(int)
             for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
 
@@ -84,7 +90,7 @@ def xcf(pix):
     rp[w]/=we[w]
     rt[w]/=we[w]
     z[w]/=we[w]
-    return we,xi,rp,rt,z,nb
+    return we,xi,rp,rt,z,nb,nh
 @jit
 def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     if ang_correlation:
@@ -108,6 +114,7 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
+    bins_histo = (nhisto*(z-zhisto_min)/(zhisto_max-zhisto_min)).astype(int)
 
     cd = sp.bincount(bins,weights=wde)
     cw = sp.bincount(bins,weights=we)
@@ -115,8 +122,9 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     crt = sp.bincount(bins,weights=rt*we)
     cz = sp.bincount(bins,weights=z*we)
     cnb = sp.bincount(bins,weights=(we>0.))
+    cnh = sp.bincount(bins_histo,weights=(we>0.))
 
-    return cw,cd,crp,crt,cz,cnb
+    return cw,cd,crp,crt,cz,cnb,cnh
 
 
 
