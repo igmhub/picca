@@ -82,6 +82,12 @@ if __name__ == '__main__':
     parser.add_argument('--dla-mask',type=float,default=0.8,required=False,
         help='Lower limit on the DLA transmission. Transmissions below this number are masked')
 
+    parser.add_argument('--absorber-vac',type=str,default=None,required=False,
+        help='Absorber catalog file')
+
+    parser.add_argument('--absorber-mask',type=float,default=2.5,required=False,
+        help='Mask width on each side of the absorber central observed wavelength in units of 1e4*dlog10(lambda)')
+
     parser.add_argument('--mask-file',type=str,default=None,required=False,
         help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
@@ -137,6 +143,7 @@ if __name__ == '__main__':
     forest.dll = args.rebin*1e-4
     ## minumum dla transmission
     forest.dla_mask = args.dla_mask
+    forest.absorber_mask = args.absorber_mask
 
     ### Find the redshift range
     if (args.zqso_min is None):
@@ -229,6 +236,19 @@ if __name__ == '__main__':
             for p in data:
                 for d in data[p]:
                     d.mask(mask_obs=usr_mask_obs , mask_RF=usr_mask_RF)
+
+    ### Veto absorbers
+    if not args.absorber_vac is None:
+        print("adding absorbers")
+        absorbers = io.read_absorbers(args.absorber_vac)
+        nb_absorbers_in_forest = 0
+        for p in data:
+            for d in data[p]:
+                if d.thid in absorbers:
+                    for lambda_absorber in absorbers[d.thid]:
+                        d.add_absorber(lambda_absorber)
+                        nb_absorbers_in_forest += 1
+        log.write("Found {} absorbers in forests\n".format(nb_absorbers_in_forest))
 
     ### Correct for DLAs
     if not args.dla_vac is None:
