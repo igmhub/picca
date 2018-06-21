@@ -43,6 +43,34 @@ def read_dlas(fdla):
 
     return dlas
 
+def read_absorbers(file_absorbers):
+    f=open(file_absorbers)
+    absorbers={}
+    nb_absorbers = 0
+    col_names=None
+    for l in f:
+        l = l.split()
+        if len(l)==0:continue
+        if l[0][0]=="#":continue
+        if l[0]=="ThingID":
+            col_names = l
+            continue
+        if l[0][0]=="-":continue
+        thid = int(l[col_names.index("ThingID")])
+        if thid not in absorbers:
+            absorbers[thid]=[]
+        lambda_absorber = float(l[col_names.index("lambda")])
+        absorbers[thid].append(lambda_absorber)
+        nb_absorbers += 1
+    f.close()
+
+    print("")
+    print(" In catalog: {} absorbers".format(nb_absorbers) )
+    print(" In catalog: {} forests have absorbers".format(len(absorbers)) )
+    print("")
+
+    return absorbers
+
 def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     vac = fitsio.FITS(drq)
 

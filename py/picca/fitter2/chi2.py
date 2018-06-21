@@ -233,6 +233,7 @@ class chi2:
                     self.fast_mc[p] = []
                 self.fast_mc[p].append([v, best_fit.errors[p]])
             self.fast_mc['chi2'].append(best_fit.fval)
+            print("INFO: finished fastMC iteration {} of {}".format(it+1,nfast_mc))
 
     def minos(self):
         if not hasattr(self,"minos_para"): return
