@@ -100,7 +100,7 @@ def cached_xi_kaiser(*args, **kwargs):
     return xi(*args, **kwargs)
 
 ### QSO radiation model
-def xi_qso_radiation(r, mu, k, pk_lin, pk_func, tracer1, tracer2, ell_max=None, **pars):
+def xi_qso_radiation(r, mu, tracer1, tracer2, **pars):
     assert (tracer1['name']=="QSO" or tracer2['name']=="QSO") and (tracer1['name']!=tracer2['name'])
 
     rp = r*mu + pars["drp"]
@@ -112,7 +112,7 @@ def xi_qso_radiation(r, mu, k, pk_lin, pk_func, tracer1, tracer2, ell_max=None, 
     xi_rad *= 1.-pars["qso_rad_asymmetry"]*(1.-mu_shift**2.)
     xi_rad *= sp.exp(-r_shift*( (1.+mu_shift)/pars["qso_rad_lifetime"] + 1./pars["qso_rad_decrease"]) )
 
-    return xi_drp(r, mu, k, pk_lin, pk_func, tracer1, tracer2, ell_max, **pars) + xi_rad
+    return xi_rad
 
 ### Growth factor evolution
 def growth_factor_no_de(z, zref=None, **kwargs):

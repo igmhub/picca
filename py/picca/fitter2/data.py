@@ -121,6 +121,10 @@ class data:
         else:
             self.growth_function = partial(getattr(xi, dic_init['model']['growth function']),zref=zref)
 
+        self.xi_rad_model = None
+        if 'radiation effects' in dic_init['model']:
+            self.xi_rad_model = partial(getattr(xi, dic_init['model']['radiation effects']), name=self.name)
+
         self.dm_met = {}
         self.rp_met = {}
         self.rt_met = {}
@@ -249,6 +253,8 @@ class data:
         pars['sigmaNL_per'] = sigmaNL_per
 
         xi_full = pars['bao_amp']*xi_peak + xi_sb
+        if self.xi_rad_model is not None:
+            xi_full += self.xi_rad_model(self.r, self.mu, self.tracer1, self.tracer2, **pars)
         dxi = self.da_cut-xi_full[self.mask]
 
         return dxi.T.dot(self.ico.dot(dxi))
