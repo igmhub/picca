@@ -8,11 +8,9 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, io, utils, xcf
 
-def calc_wickT(args):
-    p = args[0]
-    seed = args[1]
+def calc_wickT(p):
     xcf.fill_neighs(p)
-    sp.random.seed(seed)
+    sp.random.seed(p[0])
     tmp = xcf.wickT(p)
     return tmp
 
@@ -186,13 +184,9 @@ if __name__ == '__main__':
             cpu_data[ip] = []
         cpu_data[ip].append(p)
 
-    sp.random.seed(0)
-    table_of_seed = sp.unique((100000.*sp.random.rand(10*len(cpu_data))).astype(int))
-
     pool = Pool(processes=args.nproc)
     print(" \nStarting\n")
-    to_send = [ (v,table_of_seed[j]) for j, v in enumerate( sorted(list(cpu_data.values())) ) ]
-    wickT = pool.map(calc_wickT,to_send)
+    wickT = pool.map(calc_wickT,sorted(list(cpu_data.values())))
     print(" \nFinished\n")
     pool.close()
 
