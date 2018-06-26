@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import scipy as sp
-from scipy import random
 import fitsio
 import argparse
 import glob
@@ -19,6 +18,7 @@ def calc_metal_dmat(abs_igm1,abs_igm2,p):
         cf.fill_neighs_x_correlation(p)
     else:
         cf.fill_neighs(p)
+    sp.random.seed(p[0])
     tmp = cf.metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
     return tmp
 
@@ -252,8 +252,6 @@ if __name__ == '__main__':
         if not ip in cpu_data:
             cpu_data[ip] = []
         cpu_data[ip].append(p)
-
-    random.seed(0)
 
     dm_all=[]
     wdm_all=[]

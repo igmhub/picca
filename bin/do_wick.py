@@ -6,7 +6,6 @@ import argparse
 import glob
 import healpy
 import sys
-from scipy import random
 from scipy.interpolate import interp1d
 
 from picca import constants
@@ -19,6 +18,7 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 
 def calc_t123(p):
     cf.fill_neighs(p)
+    sp.random.seed(p[0])
     tmp = cf.t123(p)
     return tmp
 
@@ -166,7 +166,6 @@ if __name__ == '__main__':
             cpu_data[ip] = []
         cpu_data[ip].append(p)
 
-    random.seed(0)
     pool = Pool(processes=args.nproc)
     t123 = pool.map(calc_t123,sorted(list(cpu_data.values())))
     pool.close()
