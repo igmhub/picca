@@ -294,7 +294,7 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid, order,mode,log=None
         reso = wdisp * constants.speed_light / 1000 / lamb
 
         # compute the mean expected flux
-        f_mean_tr = h.read_header()["meanFlux"]
+        f_mean_tr = h.read_header()["MEANFLUX"]
         cont = h["continuum"][:]
         mef = f_mean_tr * cont
         d = forest(ll,fl,iv, t, r, d, z, p, m, f,order, diff,reso, mef)
