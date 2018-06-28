@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import scipy as sp
-from scipy import random
 import fitsio
 import argparse
 import glob
@@ -18,6 +17,7 @@ def calc_dmat(p):
         cf.fill_neighs_x_correlation(p)
     else:
         cf.fill_neighs(p)
+    sp.random.seed(p[0])
     tmp = cf.dmat(p)
     return tmp
 
@@ -233,7 +233,6 @@ if __name__ == '__main__':
             cpu_data[ip] = []
         cpu_data[ip].append(p)
 
-    random.seed(0)
     pool = Pool(processes=args.nproc)
     dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
     pool.close()

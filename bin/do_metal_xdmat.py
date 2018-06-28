@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import scipy as sp
-from scipy import random
 import fitsio
 import argparse
 import sys
@@ -12,6 +11,7 @@ from picca import constants, xcf, io, utils
 
 def calc_metal_xdmat(abs_igm,p):
     xcf.fill_neighs(p)
+    sp.random.seed(p[0])
     tmp = xcf.metal_dmat(p,abs_igm=abs_igm)
     return tmp
 
@@ -151,8 +151,6 @@ if __name__ == '__main__':
         if not ip in cpu_data:
             cpu_data[ip] = []
         cpu_data[ip].append(p)
-
-    random.seed(0)
 
     dm_all=[]
     wdm_all=[]
