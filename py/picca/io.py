@@ -7,7 +7,6 @@ import sys
 import time
 import os.path
 
-from picca import constants
 from picca.data import forest
 from picca.data import delta
 from picca.data import qso
