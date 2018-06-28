@@ -290,8 +290,7 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid, order,mode,log=None
         diff = sp.zeros(len(lamb))
         # compute spectral resolution
         wdisp =  h["psf"][:]
-        #reso = spectral_resolution(wdisp)
-        reso = wdisp * constants.speed_light / 1000 / lamb
+        reso = spectral_resolution(wdisp)
 
         # compute the mean expected flux
         f_mean_tr = h.read_header()["MEANFLUX"]
