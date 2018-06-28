@@ -238,6 +238,9 @@ class data:
             xi_met = dm_met.dot(xi_met)
             xi += xi_met
 
+        if self.xi_rad_model is not None and pars['SB']==True:
+            xi += self.xi_rad_model(self.r, self.mu, self.tracer1, self.tracer2, **pars)
+
         xi = self.dm.dot(xi)
 
         return xi
@@ -253,8 +256,6 @@ class data:
         pars['sigmaNL_per'] = sigmaNL_per
 
         xi_full = pars['bao_amp']*xi_peak + xi_sb
-        if self.xi_rad_model is not None:
-            xi_full += self.xi_rad_model(self.r, self.mu, self.tracer1, self.tracer2, **pars)
         dxi = self.da_cut-xi_full[self.mask]
 
         return dxi.T.dot(self.ico.dot(dxi))
