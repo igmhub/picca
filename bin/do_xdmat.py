@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import scipy as sp
-from scipy import random
 import fitsio
 import argparse
 import sys
@@ -11,6 +10,7 @@ from picca import constants, xcf, io, utils
 
 def calc_dmat(p):
     xcf.fill_neighs(p)
+    sp.random.seed(p[0])
     tmp = xcf.dmat(p)
     return tmp
 
@@ -151,7 +151,6 @@ if __name__ == '__main__':
             cpu_data[ip] = []
         cpu_data[ip].append(p)
 
-    random.seed(0)
     pool = Pool(processes=args.nproc)
     dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
     pool.close()
