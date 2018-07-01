@@ -52,6 +52,9 @@ def fill_neighs(pix):
             if (d.neighs.size != 0):
                 thingid.append(d.thid)
 
+def getthingid():
+    return thingid
+
 def xcf(pix):
     xi = sp.zeros(np*nt)
     we = sp.zeros(np*nt)
