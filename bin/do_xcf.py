@@ -215,7 +215,7 @@ if __name__ == '__main__':
     nh = nh[:xcf.nhisto]
     zh = xcf.zhisto_min + (sp.arange(xcf.nhisto)+0.5)*(xcf.zhisto_max-xcf.zhisto_min)/xcf.nhisto
 
-    thingid = sp.array(xcf.getthingid())
+    thingid = sp.array(xcf.getthingid(sorted(list(cpu_data.keys()))))
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
@@ -246,8 +246,8 @@ if __name__ == '__main__':
         header=head3,extname='HISTO')
 
     head4 = []
-    out.write([thingid],names=['THINGID'],
+    out.write([thingid],names=['THING_ID'],
         comment=['THING_IDs of forest quasars'],
-        header=head4,extname='THINGID')
+        header=head4,extname='ID')
 
     out.close()
