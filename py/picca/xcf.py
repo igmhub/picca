@@ -27,6 +27,7 @@ lambda_abs = None
 
 dels = None
 objs = None
+thingid = []
 
 rej = None
 lock = None
@@ -48,6 +49,8 @@ def fill_neighs(pix):
                 w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > rp_min
             neighs = sp.array(neighs)[w]
             d.neighs = sp.array([q for q in neighs if (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. >= z_cut_min and (10**(d.ll[-1]- sp.log10(lambda_abs))-1 + q.zqso)/2. < z_cut_max])
+            if (d.neighs.size != 0):
+                thingid.append(d.thid)
 
 def xcf(pix):
     xi = sp.zeros(np*nt)

@@ -215,11 +215,6 @@ if __name__ == '__main__':
     nh = nh[:xcf.nhisto]
     zh = xcf.zhisto_min + (sp.arange(xcf.nhisto)+0.5)*(xcf.zhisto_max-xcf.zhisto_min)/xcf.nhisto
 
-    thingid = []
-    for p in xcf.dels:
-        for d in xcf.dels[p]:
-            if d.neighs.size != 0:
-                thingid.append(d.thid)
     thingid = sp.array(thingid)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
