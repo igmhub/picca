@@ -215,7 +215,7 @@ if __name__ == '__main__':
     nh = nh[:xcf.nhisto]
     zh = xcf.zhisto_min + (sp.arange(xcf.nhisto)+0.5)*(xcf.zhisto_max-xcf.zhisto_min)/xcf.nhisto
 
-    thingid = sp.array(thingid)
+    thingid = sp.array(xcf.thingid)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
