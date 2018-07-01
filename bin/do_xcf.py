@@ -215,6 +215,13 @@ if __name__ == '__main__':
     nh = nh[:xcf.nhisto]
     zh = xcf.zhisto_min + (sp.arange(xcf.nhisto)+0.5)*(xcf.zhisto_max-xcf.zhisto_min)/xcf.nhisto
 
+    thingid = []
+    for p in xcf.dels:
+        for d in xcf.dels[p]:
+            if d.neighs.size != 0:
+                thingid.append(d.thid)
+    thingid = sp.array(thingid)
+
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
         {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
@@ -242,5 +249,10 @@ if __name__ == '__main__':
     out.write([zh,nh],names=['ZPHISTO','NPHISTO'],
         comment=['Redshift bin centers', 'Number of pairs'],
         header=head3,extname='HISTO')
+
+    head4 = []
+    out.write([thingid],names=['THINGID'],
+        comment=['THING_IDs of forest quasars'],
+        header=head4,extname='THINGID')
 
     out.close()
