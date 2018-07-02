@@ -26,6 +26,9 @@ if __name__ == '__main__':
     parser.add_argument('--cov', type=str, default=None, required=False,
         help='Covariance matrix (if not provided will be calculated by subsampling)')
 
+    parser.add_argument('--cor', type=str, default=None, required=False,
+        help='Correlation matrix (if not provided will be calculated by subsampling)')
+
     parser.add_argument('--do-not-smooth-cov', action='store_true', default=False,
         help='Do not smooth the covariance matrix')
 
@@ -51,9 +54,18 @@ if __name__ == '__main__':
     h.close()
 
     if args.cov is not None:
+        print('INFO: The covariance-matrix will be read from file: {}'.format(args.cov))
         hh = fitsio.FITS(args.cov)
         co = hh[1]['CO'][:]
         hh.close()
+    elif args.cor is not None:
+        print('INFO: The correlation-matrix will be read from file: {}'.format(args.cor))
+        hh = fitsio.FITS(args.cor)
+        cor = hh[1]['COR'][:]
+        hh.close()
+        co = cov(da,we)
+        var = sp.diagonal(co)
+        co = cor * sp.sqrt(var*var[:,None])
     else:
         binSizeP = (rp_max-rp_min) / np
         binSizeT = (rt_max-0.) / nt
