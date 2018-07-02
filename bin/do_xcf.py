@@ -110,6 +110,9 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
 
+    parser.add_argument('--save-thingid', action='store_true', required=False,
+        help='Save THING_IDs of used forest quasars')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -215,7 +218,8 @@ if __name__ == '__main__':
     nh = nh[:xcf.nhisto]
     zh = xcf.zhisto_min + (sp.arange(xcf.nhisto)+0.5)*(xcf.zhisto_max-xcf.zhisto_min)/xcf.nhisto
 
-    thingid = sp.array(xcf.getthingid(sorted(list(cpu_data.keys()))))
+    if args.save_thingid:
+        thingid = sp.array(xcf.getthingid(sorted(list(cpu_data.values()))))
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
@@ -245,9 +249,10 @@ if __name__ == '__main__':
         comment=['Redshift bin centers', 'Number of pairs'],
         header=head3,extname='HISTO')
 
-    head4 = []
-    out.write([thingid],names=['THING_ID'],
-        comment=['THING_IDs of forest quasars'],
-        header=head4,extname='ID')
+    if args.save_thingid:
+        head4 = []
+        out.write([thingid],names=['THING_ID'],
+            comment=['THING_IDs of forest quasars'],
+            header=head4,extname='ID')
 
     out.close()
