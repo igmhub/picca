@@ -172,7 +172,7 @@ class chi2:
                             d.pars_init[par2] = step2
                     result += [send_one_fit()]
                     print("INFO: finished chi2scan iteration {} of {}".format(
-                        it1*self.dic_chi2scan[par2]['grid']+it2+1,
+                        it1*self.dic_chi2scan[par2]['grid'].size+it2+1,
                         self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
         self.dic_chi2scan_result = {}
