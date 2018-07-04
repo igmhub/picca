@@ -62,6 +62,8 @@ if __name__ == '__main__':
         print('INFO: The correlation-matrix will be read from file: {}'.format(args.cor))
         hh = fitsio.FITS(args.cor)
         cor = hh[1]['COR'][:]
+        assert (cor.min()>=-1.) & (cor.min()<=1.) & (cor.max()>=-1.) & (cor.max()<=1.)
+        assert (sp.diag(cor)!=1.).sum()==0
         hh.close()
         co = cov(da,we)
         var = sp.diagonal(co)
