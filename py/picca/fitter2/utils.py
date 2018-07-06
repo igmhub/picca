@@ -61,6 +61,45 @@ def Pk2Xi(ar,mur,k,pk,ell_max=None):
         xi[ell//2,:]*=L(mur,ell)
     return sp.sum(xi,axis=0)
 
+def Pk2MpRel(ar,k,pk):
+    k0 = k[0]
+    l=sp.log(k.max()/k0)
+    r0=1.
+
+    N=len(k)
+    emm=N*fft.fftfreq(N)
+    r=r0*sp.exp(-emm*l/N)
+    dr=abs(sp.log(r[1]/r[0]))
+    s=sp.argsort(r)
+    r=r[s]
+
+    nu=sp.zeros([2,len(ar)])
+
+    for ell in [1,3]:
+        mu=ell+0.5
+        n=1.
+        q=2-n-0.5
+        x=q+2*sp.pi*1j*emm/l
+        lg1=myGamma.LogGammaLanczos((mu+1+x)/2)
+        lg2=myGamma.LogGammaLanczos((mu+1-x)/2)
+
+        um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
+        um[0]=sp.real(um[0])
+        an=fft.fft(pk*k**n*sp.sqrt(sp.pi/2))
+        an*=um
+        nu_loc=fft.ifft(an)
+        nu_loc=nu_loc[s]
+        nu_loc/=r**(3-n)
+        nu_loc[-1]=0
+        spline=sp.interpolate.splrep(sp.log(r)-dr/2,sp.real(nu_loc),k=3,s=0)
+        nu[ell//2,:]=sp.interpolate.splev(sp.log(ar),spline)
+
+    return nu
+
+def Pk2XiRel(ar,mur,k,pk,kwargs):
+    nu=Pk2MpRel(ar,k,pk)
+    return nu[0,:]*L(mur,1)*kwargs["Arel1"] + nu[1,:]*L(mur,3)*kwargs["Arel3"]
+
 ### Legendre Polynomial
 def L(mu,ell):
     return special.legendre(ell)(mu)

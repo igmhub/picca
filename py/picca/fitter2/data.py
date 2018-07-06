@@ -125,6 +125,10 @@ class data:
         if 'radiation effects' in dic_init['model']:
             self.xi_rad_model = partial(getattr(xi, dic_init['model']['radiation effects']), name=self.name)
 
+        self.xi_rel_model = None
+        if 'relativistic effects' in dic_init['model']:
+            self.xi_rel_model = partial(getattr(xi, dic_init['model']['relativistic effects']), name=self.name)
+
         self.dm_met = {}
         self.rp_met = {}
         self.rt_met = {}
@@ -240,6 +244,9 @@ class data:
 
         if self.xi_rad_model is not None and pars['SB']==True:
             xi += self.xi_rad_model(self.r, self.mu, self.tracer1, self.tracer2, **pars)
+
+        if self.xi_rel_model is not None:
+            xi += self.xi_rel_model(self.r, self.mu, k, pk_lin, self.tracer1, self.tracer2, **pars)
 
         xi = self.dm.dot(xi)
 

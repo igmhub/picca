@@ -114,6 +114,21 @@ def xi_qso_radiation(r, mu, tracer1, tracer2, **pars):
 
     return xi_rad
 
+### Relativistic effects
+def xi_relativistic(r, mu, k, pk_lin, tracer1, tracer2, **pars):
+    assert (tracer1['type']=="continuous" or tracer2['type']=="continuous") and (tracer1['type']!=tracer2['type'])
+
+    ap, at = utils.cosmo_fit_func(pars)
+    rp = r*mu + pars["drp"]
+    rt = r*sp.sqrt(1-mu**2)
+    arp = ap*rp
+    art = at*rt
+    ar = sp.sqrt(arp**2+art**2)
+    amu = arp/ar
+
+    xi_rel = utils.Pk2XiRel(ar, amu, k, pk_lin, pars)
+    return xi_rel
+
 ### Growth factor evolution
 def growth_factor_no_de(z, zref=None, **kwargs):
     return (1+zref)/(1.+z)
