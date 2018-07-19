@@ -15,6 +15,7 @@ from picca.prep_Pk1D import exp_diff
 from picca.prep_Pk1D import spectral_resolution
 from picca.prep_Pk1D import spectral_resolution_desi
 
+
 def read_dlas(fdla):
     f=open(fdla)
     dlas={}
@@ -233,6 +234,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         return data, len(pixs), nside, "RING"
 
     upix = sp.unique(pixs)
+
     for i, pix in enumerate(upix):
         w = pixs == pix
         ## read all hiz qsos
@@ -293,7 +295,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
     return pix_data
 
 
-def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None):
+def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid, order,mode,log=None):
     pix_data = []
 
     try:
@@ -303,7 +305,7 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None)
         log.write("error reading {}\n".format(fin))
 
     for t,r,d,z,p,m,f in zip(thid,ra,dec,zqso,plate,mjd,fid):
-        h = hdu[t]
+        h = hdu["{}".format(t)]
         log.write("file: {} hdu {} read  \n".format(fin,h))
         lamb = h["wavelength"][:]
         ll = sp.log10(lamb)
@@ -317,7 +319,11 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None)
         wdisp =  h["psf"][:]
         reso = spectral_resolution(wdisp)
 
-        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
+        # compute the mean expected flux
+        f_mean_tr = h.read_header()["MEANFLUX"]
+        cont = h["continuum"][:]
+        mef = f_mean_tr * cont
+        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order, diff,reso, mef)
         pix_data.append(d)
 
     hdu.close()

@@ -166,19 +166,54 @@ def compute_cor_reso(delta_pixel,mean_reso,k):
 
 class Pk1D :
 
-    def __init__(self,ra,dec,zqso,mean_z,plate,mjd,fiberid,
-                 k,Pk_raw,Pk_noise,cor_reso,Pk):
+    def __init__(self,ra,dec,zqso,mean_z,plate,mjd,fiberid, msnr, mreso,
+                 k,Pk_raw,Pk_noise,cor_reso,Pk, nb_mp, Pk_diff=None):
 
         self.ra = ra
         self.dec = dec
         self.zqso = zqso
         self.mean_z = mean_z
+        self.mean_snr = msnr
+        self.mean_reso = mreso
+        self.nb_mp = nb_mp
 
         self.plate = plate
         self.mjd = mjd
         self.fid = fiberid
         self.k = k
         self.Pk_raw = Pk_raw
-        self.Pk = Pk_noise
+        self.Pk_noise = Pk_noise
         self.cor_reso = cor_reso
         self.Pk = Pk
+        self.Pk_diff = Pk_diff
+
+
+    @classmethod
+    def from_fitsio(cls,hdu):
+
+        """
+        read Pk1D from fits file
+        """
+
+        hdr = hdu.read_header()
+
+        ra = hdr['RA']
+        dec = hdr['DEC']
+        zqso = hdr['Z']
+        mean_z = hdr['MEANZ']
+        mean_reso = hdr['MEANRESO']
+        mean_SNR = hdr['MEANSNR']
+        plate = hdr['PLATE']
+        mjd = hdr['MJD']
+        fid = hdr['FIBER']
+        nb_mp = hdr['NBMASKPIX']
+
+        data = hdu.read()
+        k = data['k'][:]
+        Pk = data['Pk'][:]
+        Pk_raw = data['Pk_raw'][:]
+        Pk_noise = data['Pk_noise'][:]
+        cor_reso = data['cor_reso'][:]
+        Pk_diff = data['Pk_diff'][:]
+
+        return cls(ra,dec,zqso,mean_z,plate,mjd,fid, mean_SNR, mean_reso, k,Pk_raw,Pk_noise,cor_reso, Pk, nb_mp, Pk_diff)
