@@ -131,6 +131,9 @@ if __name__ == '__main__':
         help='Maximum number of spectra to read')
 
 
+    parser.add_argument('--use-mock-continuum', action='store_true', default = False,
+            help='use the mock continuum for computing the deltas')
+
     args = parser.parse_args()
 
     ## init forest class
@@ -369,7 +372,7 @@ if __name__ == '__main__':
     deltas = {}
     data_bad_cont = []
     for p in sorted(list(data.keys())):
-        deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge) for d in data[p] if d.bad_cont is None]
+        deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:

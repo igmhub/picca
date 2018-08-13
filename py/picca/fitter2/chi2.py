@@ -153,22 +153,27 @@ class chi2:
         ###
         if dim==1:
             par = list(self.dic_chi2scan.keys())[0]
-            for step in self.dic_chi2scan[par]['grid']:
+            for it, step in enumerate(self.dic_chi2scan[par]['grid']):
                 for d in self.data:
                     if par in d.pars_init.keys():
                         d.pars_init[par] = step
                 result += [send_one_fit()]
+                print("INFO: finished chi2scan iteration {} of {}".format(it+1,
+                    self.dic_chi2scan[par]['grid'].size))
         elif dim==2:
             par1  = list(self.dic_chi2scan.keys())[0]
             par2  = list(self.dic_chi2scan.keys())[1]
-            for step1 in self.dic_chi2scan[par1]['grid']:
-                for step2 in self.dic_chi2scan[par2]['grid']:
+            for it1, step1 in enumerate(self.dic_chi2scan[par1]['grid']):
+                for it2, step2 in enumerate(self.dic_chi2scan[par2]['grid']):
                     for d in self.data:
                         if par1 in d.pars_init.keys():
                             d.pars_init[par1] = step1
                         if par2 in d.pars_init.keys():
                             d.pars_init[par2] = step2
                     result += [send_one_fit()]
+                    print("INFO: finished chi2scan iteration {} of {}".format(
+                        it1*self.dic_chi2scan[par2]['grid'].size+it2+1,
+                        self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
         self.dic_chi2scan_result = {}
         self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
