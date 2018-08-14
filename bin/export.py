@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+import sys
 import fitsio
 import scipy as sp
 import scipy.linalg
@@ -62,9 +63,9 @@ if __name__ == '__main__':
         print('INFO: The correlation-matrix will be read from file: {}'.format(args.cor))
         hh = fitsio.FITS(args.cor)
         cor = hh[1]['COR'][:]
-        assert (cor.min()>=-1.) & (cor.min()<=1.) & (cor.max()>=-1.) & (cor.max()<=1.)
-        assert (sp.diag(cor)!=1.).sum()==0
         hh.close()
+        if (cor.min()<-1.) | (cor.min()>1.) | (cor.max()<-1.) | (cor.max()>1.) | sp.any(sp.diag(cor)!=1.):
+            print('WARNING: The correlation-matrix has some incorrect values')
         co = cov(da,we)
         var = sp.diagonal(co)
         co = cor * sp.sqrt(var*var[:,None])
