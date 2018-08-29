@@ -103,7 +103,7 @@ class data:
         self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
         self.pk *= partial(getattr(pk,'G2'), dataset_name=self.name)
         if 'small scale nl' in dic_init['model']:
-            self.pk *= getattr(pk, dic_init['model']['small scale nl'])
+            self.pk *= partial(getattr(pk, dic_init['model']['small scale nl']), pk_fid=dic_init['model']['pk']*((1+zref)/(1.+zeff))**2)
 
         if 'velocity dispersion' in dic_init['model']:
             self.pk *= getattr(pk, dic_init['model']['velocity dispersion'])
