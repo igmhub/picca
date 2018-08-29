@@ -192,6 +192,7 @@ class forest(qso):
         ll = sp.append(self.ll,d.ll)
         fl = sp.append(self.fl,d.fl)
         iv = sp.append(self.iv,d.iv)
+        mmef = None
         if self.mmef is not None:
             mmef = sp.append(self.mmef,d.mmef)
 
