@@ -100,21 +100,21 @@ def pk_hcd_uv(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
-def dnl_mcdonald(k, pk_lin, tracer1, tracer2, **kwargs):
-    assert tracer1['name']=="LYA" and tracer2['name'] == "LYA"
+def dnl_mcdonald(k, pk_lin, tracer1, tracer2, pk_fid, **kwargs):
+    assert tracer1['name']=="LYA" and tracer2['name']=="LYA"
     kvel = 1.22*(1+k/0.923)**0.451
     dnl = sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kvel)**1.5)
     return dnl
 
-def dnl_arinyo(k, pk_lin, tracer1, tracer2, **kwargs):
-    assert tracer1['name']=="LYA" and tracer2['name'] == "LYA"
+def dnl_arinyo(k, pk_lin, tracer1, tracer2, pk_fid, **kwargs):
+    assert tracer1['name']=="LYA" and tracer2['name']=="LYA"
     q1 = kwargs["dnl_arinyo_q1"]
     kv = kwargs["dnl_arinyo_kv"]
     av = kwargs["dnl_arinyo_av"]
     bv = kwargs["dnl_arinyo_bv"]
     kp = kwargs["dnl_arinyo_kp"]
 
-    growth = q1*k*k*k*pk/(2*sp.pi*sp.pi)
+    growth = q1*k*k*k*pk_fid/(2*sp.pi*sp.pi)
     pecvelocity = sp.power(k/kv,av)*sp.power(sp.fabs(muk),bv)
     pressure = (k/kp)*(k/kp)
     dnl = sp.exp(growth*(1-pecvelocity)-pressure)
