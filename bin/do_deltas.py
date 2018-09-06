@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import os
 import fitsio
 import scipy as sp
 from scipy.interpolate import interp1d
@@ -194,9 +195,9 @@ if __name__ == '__main__':
 
     nit = args.nit
 
-    log = open(args.log,'w')
+    log = open(os.path.expandvars(args.log),'w')
 
-    data,ndata,healpy_nside,healpy_pix_ordering = io.read_data(args.in_dir, args.drq, args.mode,\
+    data,ndata,healpy_nside,healpy_pix_ordering = io.read_data(os.path.expandvars(args.in_dir), args.drq, args.mode,\
         zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
         keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
         best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format )
@@ -206,6 +207,7 @@ if __name__ == '__main__':
     usr_mask_RF     = None
     usr_mask_RF_DLA = None
     if (args.mask_file is not None):
+        args.mask_file = os.path.expandvars(args.mask_file)
         try:
             usr_mask_obs    = []
             usr_mask_RF     = []
