@@ -53,6 +53,9 @@ def parse_chi2(filename):
     if 'verbosity' in cp.sections():
         dic_init['verbosity'] = int(cp.get('verbosity','level'))
 
+    if 'hess' in cp.sections():
+        dic_init['hess'] = int(cp.get('verbosity','level'))==1
+
     if 'fast mc' in cp.sections():
         dic_init['fast mc'] = {}
         dic_init['fast mc']['fiducial'] = {}

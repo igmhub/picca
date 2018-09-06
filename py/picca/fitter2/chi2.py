@@ -21,9 +21,14 @@ class chi2:
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
         self.pksb_lin = dic_init['fiducial']['pksb']
+
         self.verbosity = 1
         if 'verbosity' in dic_init:
             self.verbosity = dic_init['verbosity']
+
+        self.hess = False
+        if 'hess' in dic_init:
+            self.hess = dic_init['hess']
 
         if 'fast mc' in dic_init:
             if 'seed' in dic_init['fast mc']:
@@ -94,6 +99,8 @@ class chi2:
 
     def minimize(self):
         self.best_fit = self._minimize()
+        if self.hess:
+            self.best_fit.hess()
 
         self.best_fit.values['SB'] = False
         for d in self.data:
@@ -106,6 +113,9 @@ class chi2:
             self.best_fit.values['SB'] = False
             self.best_fit.values['sigmaNL_per'] = snl
         del self.best_fit.values['SB']
+
+    def hess(self):
+        self.best_fit.hesse()
 
     def chi2scan(self):
         if not hasattr(self, "dic_chi2scan"): return
