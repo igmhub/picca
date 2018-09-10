@@ -4,6 +4,7 @@ import scipy as sp
 import iminuit
 import time
 import h5py
+import sys
 from scipy.linalg import cholesky
 
 from . import utils, priors
