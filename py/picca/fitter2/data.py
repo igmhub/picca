@@ -126,8 +126,12 @@ class data:
             self.xi_rad_model = partial(getattr(xi, dic_init['model']['radiation effects']), name=self.name)
 
         self.xi_rel_model = None
-        if 'relativistic effects' in dic_init['model']:
-            self.xi_rel_model = partial(getattr(xi, dic_init['model']['relativistic effects']), name=self.name)
+        if 'relativistic correction' in dic_init['model']:
+            self.xi_rel_model = partial(getattr(xi, dic_init['model']['relativistic correction']), name=self.name)
+
+        self.xi_asy_model = None
+        if 'standard asymmetry' in dic_init['model']:
+            self.xi_asy_model = partial(getattr(xi, dic_init['model']['standard asymmetry']), name=self.name)
 
         self.dm_met = {}
         self.rp_met = {}
@@ -247,6 +251,9 @@ class data:
 
         if self.xi_rel_model is not None:
             xi += self.xi_rel_model(self.r, self.mu, k, pk_lin, self.tracer1, self.tracer2, **pars)
+
+        if self.xi_asy_model is not None:
+            xi += self.xi_asy_model(self.r, self.mu, k, pk_lin, self.tracer1, self.tracer2, **pars)
 
         xi = self.dm.dot(xi)
 

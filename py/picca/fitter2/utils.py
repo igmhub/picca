@@ -40,6 +40,9 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
         if tform=="rel":
             pk_ell=pk
             n=1.
+        elif tform=="asy":
+            pk_ell=pk
+            n=2.
         else:
             pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)/2/sp.pi**2
             n=2.
@@ -75,46 +78,15 @@ def Pk2Xi(ar,mur,k,pk,ell_max=None):
         xi[ell//2,:]*=L(mur,ell)
     return sp.sum(xi,axis=0)
 
-def Pk2MpRel(ar,k,pk):
-    k0 = k[0]
-    l=sp.log(k.max()/k0)
-    r0=1.
-
-    N=len(k)
-    emm=N*fft.fftfreq(N)
-    r=r0*sp.exp(-emm*l/N)
-    dr=abs(sp.log(r[1]/r[0]))
-    s=sp.argsort(r)
-    r=r[s]
-
-    nu=sp.zeros([2,len(ar)])
-
-    for ell in [1,3]:
-        mu=ell+0.5
-        n=1.
-        q=2-n-0.5
-        x=q+2*sp.pi*1j*emm/l
-        lg1=myGamma.LogGammaLanczos((mu+1+x)/2)
-        lg2=myGamma.LogGammaLanczos((mu+1-x)/2)
-
-        um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
-        um[0]=sp.real(um[0])
-        an=fft.fft(pk*k**n*sp.sqrt(sp.pi/2))
-        an*=um
-        nu_loc=fft.ifft(an)
-        nu_loc=nu_loc[s]
-        nu_loc/=r**(3-n)
-        nu_loc[-1]=0
-        spline=sp.interpolate.splrep(sp.log(r)-dr/2,sp.real(nu_loc),k=3,s=0)
-        nu[ell//2,:]=sp.interpolate.splev(sp.log(ar),spline)
-
-    return nu
-
 def Pk2XiRel(ar,mur,k,pk,kwargs):
-    #nu=Pk2MpRel(ar,k,pk)
     ell_vals=[1,3]
-    nu=Pk2Mp(ar,k,pk,ell_vals,tform="rel")
-    return nu[0,:]*L(mur,1)*kwargs["Arel1"] + nu[1,:]*L(mur,3)*kwargs["Arel3"]
+    xi=Pk2Mp(ar,k,pk,ell_vals,tform="rel")
+    return xi[1//2,:]*L(mur,1)*kwargs["Arel1"] + xi[3//2,:]*L(mur,3)*kwargs["Arel3"]
+
+def Pk2XiAsy(ar,mur,k,pk,kwargs):
+    ell_vals=[0,2]
+    xi=Pk2Mp(ar,k,pk,ell_vals,tform="asy")
+    return (kwargs["Aasy0"]*xi[0//2,:] - kwargs["Aasy2"]*xi[2//2,:])*ar*L(mur,1) + kwargs["Aasy3"]*xi[2//2,:]*ar*L(mur,3)
 
 ### Legendre Polynomial
 def L(mu,ell):
