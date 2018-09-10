@@ -17,7 +17,7 @@ from picca.prep_Pk1D import spectral_resolution_desi
 
 
 def read_dlas(fdla):
-    f=open(fdla)
+    f=open(os.path.expandvars(fdla))
     dlas={}
     nb_dla = 0
     col_names=None
