@@ -159,7 +159,7 @@ class chi2:
                     if par in d.pars_init.keys():
                         d.pars_init[par] = step
                 result += [send_one_fit()]
-                print("INFO: finished chi2scan iteration {} of {}".format(it+1,
+                sys.stderr.write("\nINFO: finished chi2scan iteration {} of {}\n".format(it+1,
                     self.dic_chi2scan[par]['grid'].size))
         elif dim==2:
             par1  = list(self.dic_chi2scan.keys())[0]
@@ -172,7 +172,7 @@ class chi2:
                         if par2 in d.pars_init.keys():
                             d.pars_init[par2] = step2
                     result += [send_one_fit()]
-                    print("INFO: finished chi2scan iteration {} of {}".format(
+                    sys.stderr.write("\nINFO: finished chi2scan iteration {} of {}\n".format(
                         it1*self.dic_chi2scan[par2]['grid'].size+it2+1,
                         self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
