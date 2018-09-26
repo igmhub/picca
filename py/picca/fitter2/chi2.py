@@ -4,6 +4,7 @@ import scipy as sp
 import iminuit
 import time
 import h5py
+import sys
 from scipy.linalg import cholesky
 
 from . import utils, priors
@@ -21,9 +22,14 @@ class chi2:
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
         self.pksb_lin = dic_init['fiducial']['pksb']
+
         self.verbosity = 1
         if 'verbosity' in dic_init:
             self.verbosity = dic_init['verbosity']
+
+        self.hesse = False
+        if 'hesse' in dic_init:
+            self.hesse = dic_init['hesse']
 
         if 'fast mc' in dic_init:
             if 'seed' in dic_init['fast mc']:
@@ -94,6 +100,8 @@ class chi2:
 
     def minimize(self):
         self.best_fit = self._minimize()
+        if self.hesse:
+            self.best_fit.hesse()
 
         self.best_fit.values['SB'] = False
         for d in self.data:
@@ -158,7 +166,7 @@ class chi2:
                     if par in d.pars_init.keys():
                         d.pars_init[par] = step
                 result += [send_one_fit()]
-                print("INFO: finished chi2scan iteration {} of {}".format(it+1,
+                sys.stderr.write("\nINFO: finished chi2scan iteration {} of {}\n".format(it+1,
                     self.dic_chi2scan[par]['grid'].size))
         elif dim==2:
             par1  = list(self.dic_chi2scan.keys())[0]
@@ -171,7 +179,7 @@ class chi2:
                         if par2 in d.pars_init.keys():
                             d.pars_init[par2] = step2
                     result += [send_one_fit()]
-                    print("INFO: finished chi2scan iteration {} of {}".format(
+                    sys.stderr.write("\nINFO: finished chi2scan iteration {} of {}\n".format(
                         it1*self.dic_chi2scan[par2]['grid'].size+it2+1,
                         self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
@@ -238,7 +246,7 @@ class chi2:
                     self.fast_mc[p] = []
                 self.fast_mc[p].append([v, best_fit.errors[p]])
             self.fast_mc['chi2'].append(best_fit.fval)
-            print("INFO: finished fastMC iteration {} of {}".format(it+1,nfast_mc))
+            sys.stderr.write("\nINFO: finished fastMC iteration {} of {}\n".format(it+1,nfast_mc))
 
     def minos(self):
         if not hasattr(self,"minos_para"): return
