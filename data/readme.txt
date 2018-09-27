@@ -11,7 +11,7 @@ arXiv:1708.02225
 duMasdesBourbouxetal2017/fits/
 	standard fit results to quasar-lyman-alpha forest cross-correlation
 	data and combined with lyman-alpha forest auto-correlation
-	
+
 In each folder:
 	- *.combined_fit.chisq gives the total chi2 at best fit
 	- *..at.ap.scan.dat gives the 2D scan of chi2 allong the
