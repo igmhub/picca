@@ -14,7 +14,6 @@ muk=muk[:,None]
 def sinc(x):
     return sp.sin(x)/x
 
-#def Pk2Mp(ar,k,pk,ell_max=None):
 def Pk2Mp(ar,k,pk,ell_vals,tform=None):
     """
     Implementation of FFTLog from A.J.S. Hamilton (2000)
@@ -32,10 +31,8 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
     s=sp.argsort(r)
     r=r[s]
 
-    #xi=sp.zeros([ell_max//2+1,len(ar)])
     xi=sp.zeros([len(ell_vals),len(ar)])
 
-    #for ell in range(0,ell_max+1,2):
     for ell in ell_vals:
         if tform=="rel":
             pk_ell=pk
@@ -46,9 +43,7 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
         else:
             pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)/2/sp.pi**2
             n=2.
-        #pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)
         mu=ell+0.5
-        #n=2.
         q=2-n-0.5
         x=q+2*sp.pi*1j*emm/l
         lg1=myGamma.LogGammaLanczos((mu+1+x)/2)
@@ -56,7 +51,6 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
 
         um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
         um[0]=sp.real(um[0])
-        #an=fft.fft(pk_ell*k**n/2/sp.pi**2*sp.sqrt(sp.pi/2))
         an=fft.fft(pk_ell*k**n*sp.sqrt(sp.pi/2))
         an*=um
         xi_loc=fft.ifft(an)
@@ -69,9 +63,6 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
     return xi
 
 def Pk2Xi(ar,mur,k,pk,ell_max=None):
-    #xi=Pk2Mp(ar,k,pk,ell_max)
-    #for ell in range(0,ell_max+1,2):
-    #    xi[ell//2,:]*=L(mur,ell)
     ell_vals=[ell for ell in range(0,ell_max+1,2)]
     xi=Pk2Mp(ar,k,pk,ell_vals)
     for ell in ell_vals:
@@ -81,7 +72,7 @@ def Pk2Xi(ar,mur,k,pk,ell_max=None):
 def Pk2XiRel(ar,mur,k,pk,kwargs):
     ell_vals=[1,3]
     xi=Pk2Mp(ar,k,pk,ell_vals,tform="rel")
-    return xi[1//2,:]*L(mur,1)*kwargs["Arel1"] + xi[3//2,:]*L(mur,3)*kwargs["Arel3"]
+    return kwargs["Arel1"]*xi[1//2,:]*L(mur,1) + kwargs["Arel3"]*xi[3//2,:]*L(mur,3)
 
 def Pk2XiAsy(ar,mur,k,pk,kwargs):
     ell_vals=[0,2]
