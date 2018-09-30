@@ -70,11 +70,37 @@ def Pk2Xi(ar,mur,k,pk,ell_max=None):
     return sp.sum(xi,axis=0)
 
 def Pk2XiRel(ar,mur,k,pk,kwargs):
+    """Calculate the cross-correlation contribution from relativistic effects (Bonvin et al. 2014).
+
+    Args:
+        ar (float): r coordinates
+        mur (float): mu coordinates
+        k (float): wavenumbers
+        pk (float): linear matter power spectrum
+        kwargs: dictionary of fit parameters
+
+    Returns:
+        sum of dipole and octupole correlation terms (float)
+
+    """
     ell_vals=[1,3]
     xi=Pk2Mp(ar,k,pk,ell_vals,tform="rel")
     return kwargs["Arel1"]*xi[1//2,:]*L(mur,1) + kwargs["Arel3"]*xi[3//2,:]*L(mur,3)
 
 def Pk2XiAsy(ar,mur,k,pk,kwargs):
+    """Calculate the cross-correlation contribution from standard asymmetry (Bonvin et al. 2014).
+
+    Args:
+        ar (float): r coordinates
+        mur (float): mu coordinates
+        k (float): wavenumbers
+        pk (float): linear matter power spectrum
+        kwargs: dictionary of fit parameters
+
+    Returns:
+        sum of dipole and octupole correlation terms (float)
+
+    """
     ell_vals=[0,2]
     xi=Pk2Mp(ar,k,pk,ell_vals,tform="asy")
     return (kwargs["Aasy0"]*xi[0//2,:] - kwargs["Aasy2"]*xi[2//2,:])*ar*L(mur,1) + kwargs["Aasy3"]*xi[2//2,:]*ar*L(mur,3)
