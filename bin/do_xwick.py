@@ -9,6 +9,15 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 from picca import constants, io, utils, xcf
 
 def calc_wickT(p):
+    """Send the Wick computation for a set of pixels
+
+    Args:
+        p (lst): list of HEALpix pixels
+
+    Returns:
+        (tuple): results of the Wick computation
+
+    """
     xcf.fill_neighs(p)
     sp.random.seed(p[0])
     tmp = xcf.wickT(p)

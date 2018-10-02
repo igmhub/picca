@@ -281,6 +281,16 @@ cf_rt_max = None
 cf_angmax = None
 
 def wickT(pix):
+    """Compute the Wick covariance matrix for the object-pixel
+        cross-correlation
+
+    Args:
+        pix (lst): list of HEALpix pixels
+
+    Returns:
+        (tuple): results of the Wick computation
+
+    """
     T1   = sp.zeros([np*nt,np*nt])
     T2   = sp.zeros([np*nt,np*nt])
     T3   = sp.zeros([np*nt,np*nt])
@@ -343,7 +353,28 @@ def wickT(pix):
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
 def fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
+    """Compute the Wick covariance matrix for the object-pixel
+        cross-correlation for the T1, T2, T3 and T4 diagrams:
+        i.e. the contribution of the 1D auto-correlation to the
+        covariance matrix
 
+    Args:
+        ang (float array): angle between forest and array of objects
+        ll1 (float array): log(lam) of each pixel of the forest
+        r1 (float array): comoving distance to each pixel of the forest [Mpc/h]
+        r2 (float array): comoving distance to each object [Mpc/h]
+        w1 (float array): weight of each pixel of the forest
+        w2 (float array): weight of each object
+        wAll (float array): Sum of weight
+        nb (int64 array): Number of pairs
+        T1 (float 2d array): Contribution of diagram T1
+        T2 (float 2d array): Contribution of diagram T2
+        T3 (float 2d array): Contribution of diagram T3
+        T4 (float 2d array): Contribution of diagram T4
+
+    Returns:
+
+    """
     rp = (r1[:,None]-r2)*sp.cos(ang/2.)
     rt = (r1[:,None]+r2)*sp.sin(ang/2.)
     we = w1[:,None]*w2
@@ -389,7 +420,31 @@ def fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
     return
 @jit
 def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
+    """Compute the Wick covariance matrix for the object-pixel
+        cross-correlation for the T5 and T6 diagrams:
+        i.e. the contribution of the 3D auto-correlation to the
+        covariance matrix
 
+    Args:
+        ang12 (float array): angle between forest and array of objects
+        ang34 (float array): angle between another forest and another array of objects
+        ang13 (float array): angle between the two forests
+        r1 (float array): comoving distance to each pixel of the forest [Mpc/h]
+        r2 (float array): comoving distance to each object [Mpc/h]
+        r3 (float array): comoving distance to each pixel of another forests [Mpc/h]
+        r4 (float array): comoving distance to each object paired to the other forest [Mpc/h]
+        w1 (float array): weight of each pixel of the forest
+        w2 (float array): weight of each object
+        w3 (float array): weight of each pixel of another forest
+        w4 (float array): weight of each object paired to the other forest
+        thid2 (float array): THING_ID of each object
+        thid4 (float array): THING_ID of each object paired to the other forest
+        T5 (float 2d array): Contribution of diagram T5
+        T6 (float 2d array): Contribution of diagram T6
+
+    Returns:
+
+    """
     ### Pair forest_1 - forest_3
     rp = sp.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
     rt = (r1+r3[:,None])*sp.sin(ang13/2.)
