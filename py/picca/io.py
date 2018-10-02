@@ -494,6 +494,10 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
             head0 = h[0].read_header()
             MJD = head0["MJD"]
 
+            h_photoPlate = fitsio.FITS(spplate.replace('spPlate','photoPosPlate'))
+            thingid_photoPlate = h_photoPlate[1]['THING_ID'][:]
+            thingid2fiberid = { idd:i+1 for i,idd in enumerate(thingid_photoPlate) }
+
             t0 = time.time()
 
             wfib = wplate
@@ -511,7 +515,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
             ## now convert all those fluxes into forest objects
             for (t, r, d, z, p, m, f) in zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib]):
-                index = f-1
+                index = thingid2fiberid[t]-1
                 d = forest(llam,flux[index],ivar[index], t, r, d, z, p, m, f, order)
                 if t in pix_data:
                     pix_data[t] += d
