@@ -142,13 +142,50 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     return ra,dec,zqso,thid,plate,mjd,fid
 
+def read_platequality(fpath):
+    """Read the platequality.txt giving the quality of each observation
+        in SDSS
+
+    Args:
+        fpath (path): Path to the platequality.txt file
+
+    Returns:
+        platequality (dic): Dictionnary of plate quality,
+            'BAD' or 'GOOD'
+
+    """
+    if not os.path.isfile(os.path.expandvars(fpath)):
+        print("ERROR: can't find platequality {}".format(fpath))
+        sys.exit(1)
+
+    platequality = {}
+    for l in open(os.path.expandvars(fpath), 'r'):
+        l = l.split()
+
+        if l[0]=='PLATE':
+            fromkeytoindex = { k:i for i,k in enumerate(l) }
+            continue
+        elif '-' in l[0]: continue
+
+        key = l[fromkeytoindex['PLATE']]+'-'+l[fromkeytoindex['MJD']]
+        try:
+            platequality[key] = l[fromkeytoindex['QUALITY']].upper()
+        except IndexError:
+            platequality[key] = 'BAD'
+
+    return platequality
+
+
 target_mobj = 500
 nside_min = 8
 
-def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None):
+def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None, platequality=None):
 
     sys.stderr.write("mode: "+mode)
     ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
+
+    if not platequality is None:
+        platequality = read_platequality(platequality)
 
     if nspec != None:
         ra = ra[:nspec]
@@ -206,7 +243,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     ndata = 0
 
     if mode=="spcframe":
-        pix_data = read_from_spcframe(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, mode=mode, log=log, best_obs=best_obs, single_exp=single_exp)
+        pix_data = read_from_spcframe(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, mode=mode, log=log, best_obs=best_obs, single_exp=single_exp, platequality=platequality)
         ra = [d.ra for d in pix_data]
         ra = sp.array(ra)
         dec = [d.dec for d in pix_data]
@@ -220,7 +257,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         return data, len(pixs),nside,"RING"
 
     if mode=="spplate":
-        pix_data = read_from_spplate(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, log=log, best_obs=best_obs)
+        pix_data = read_from_spplate(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, log=log, best_obs=best_obs, platequality=platequality)
         ra = [d.ra for d in pix_data]
         ra = sp.array(ra)
         dec = [d.dec for d in pix_data]
@@ -374,7 +411,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         h.close()
         return pix_data
 
-def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode=None, log=None, best_obs=False, single_exp = False):
+def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode=None, log=None, best_obs=False, single_exp = False, platequality=None):
     pix_data={}
     plates = sp.unique(plate)
     print("reading {} plates".format(len(plates)))
@@ -403,7 +440,17 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
             print("INFO: reading plate {}".format(f))
             h=fitsio.FITS(f)
             head = h[0].read_header()
+            MJD = head['MJD']
             h.close()
+
+            if not platequality is None:
+                k = str(p)+'-'+str(MJD)
+                if k not in platequality:
+                    log.write("Will not read file {} because is not in platequality, considered as BAD\n".format(f))
+                    continue
+                if platequality[k]=='BAD':
+                    log.write("Will not read file {} because BAD\n".format(f))
+                    continue
 
             if not best_obs:
                 try:
@@ -491,7 +538,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
     data = list(pix_data.values())
     return data
 
-def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=None, best_obs=False):
+def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=None, best_obs=False, platequality=None):
     pix_data={}
     unique_plates = sp.unique(plate)
     print("reading {} plates".format(len(unique_plates)))
@@ -516,6 +563,15 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
             h = fitsio.FITS(spplate)
             head0 = h[0].read_header()
             MJD = head0["MJD"]
+
+            if not platequality is None:
+                k = str(p)+'-'+str(MJD)
+                if k not in platequality:
+                    log.write("Will not read file {} because is not in platequality, considered as BAD\n".format(spplate))
+                    continue
+                if platequality[k]=='BAD':
+                    log.write("Will not read file {} because BAD\n".format(spplate))
+                    continue
 
             t0 = time.time()
 

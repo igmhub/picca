@@ -47,6 +47,9 @@ if __name__ == '__main__':
     parser.add_argument('--single-exp',action='store_true', required=False,
         help='If mode == spcframe, then use only one of the available exposures. If best-obs then choose it among those contributing to the best obs')
 
+    parser.add_argument('--platequality',type=str,default=None,required=False,
+        help="Remove 'bad' observations from platequality file, works for mode in [spcframe,spplate]")
+
     parser.add_argument('--zqso-min',type=float,default=None,required=False,
         help='Lower limit on quasar redshift from drq')
 
@@ -200,7 +203,8 @@ if __name__ == '__main__':
     data,ndata,healpy_nside,healpy_pix_ordering = io.read_data(os.path.expandvars(args.in_dir), args.drq, args.mode,\
         zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
         keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
-        best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format )
+        best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format,\
+        platequality=args.platequality )
 
     ### Get the lines to veto
     usr_mask_obs    = None
