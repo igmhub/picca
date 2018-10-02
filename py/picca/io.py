@@ -480,6 +480,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
         mjd_in_plate = sp.unique(mjd[wplate])
 
         spplates = glob.glob(in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd))
+        spplates = sp.sorted(spplates)
 
         mjds_found = sp.array([spfile.split("-")[-1].replace(".fits",'') for spfile in spplates]).astype(int)
         wmissing = ~sp.in1d(mjd_in_plate, mjds_found)
