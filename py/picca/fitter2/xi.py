@@ -114,8 +114,22 @@ def xi_qso_radiation(r, mu, tracer1, tracer2, **pars):
 
     return xi_rad
 
-### Relativistic correction
 def xi_relativistic(r, mu, k, pk_lin, tracer1, tracer2, **pars):
+    """Calculate the cross-correlation contribution from relativistic effects (Bonvin et al. 2014).
+
+    Args:
+        r (float): r coordinates
+        mu (float): mu coordinates
+        k (float): wavenumbers
+        pk_lin (float): linear matter power spectrum
+        tracer1: dictionary of tracer1
+        tracer2: dictionary of tracer2
+        pars: dictionary of fit parameters
+
+    Returns:
+        sum of dipole and octupole correlation terms (float)
+
+    """
     assert (tracer1['type']=="continuous" or tracer2['type']=="continuous") and (tracer1['type']!=tracer2['type'])
 
     ap, at = utils.cosmo_fit_func(pars)
@@ -129,8 +143,22 @@ def xi_relativistic(r, mu, k, pk_lin, tracer1, tracer2, **pars):
     xi_rel = utils.Pk2XiRel(ar, amu, k, pk_lin, pars)
     return xi_rel
 
-### Standard asymmetry
 def xi_asymmetry(r, mu, k, pk_lin, tracer1, tracer2, **pars):
+    """Calculate the cross-correlation contribution from standard asymmetry (Bonvin et al. 2014).
+
+    Args:
+        r (float): r coordinates
+        mu (float): mu coordinates
+        k (float): wavenumbers
+        pk_lin (float): linear matter power spectrum
+        tracer1: dictionary of tracer1
+        tracer2: dictionary of tracer2
+        pars: dictionary of fit parameters
+
+    Returns:
+        sum of dipole and octupole correlation terms (float)
+
+    """
     assert (tracer1['type']=="continuous" or tracer2['type']=="continuous") and (tracer1['type']!=tracer2['type'])
 
     ap, at = utils.cosmo_fit_func(pars)
