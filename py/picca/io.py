@@ -549,21 +549,21 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
     if not best_obs:
         platequality = read_platequality(in_dir)
 
-    for p in unique_plates:
-        wplate = plate==p
-        plate_mjd = "{}-*".format(p)
+    for pp in unique_plates:
+        wplate = plate==pp
+        plate_mjd = "{}-*".format(pp)
         mjd_in_plate = sp.unique(mjd[wplate])
 
-        spplates = glob.glob(in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd))
+        spplates = glob.glob(in_dir+"/{}/spPlate-{}.fits".format(pp, plate_mjd))
         spplates = sp.sort(spplates)
 
         mjds_found = sp.array([spfile.split("-")[-1].replace(".fits",'') for spfile in spplates]).astype(int)
         wmissing = ~sp.in1d(mjd_in_plate, mjds_found)
         if wmissing.sum()>0:
             for m in mjd_in_plate[wmissing]:
-                print("INFO: can't find spplate {} {}".format(p,m))
+                print("INFO: can't find spplate {} {}".format(pp,m))
                 if log is not None:
-                    log.write("INFO: can't find spplate {} {}\n".format(p,m))
+                    log.write("INFO: can't find spplate {} {}\n".format(pp,m))
 
         for spplate in spplates:
             h = fitsio.FITS(spplate)
@@ -572,14 +572,13 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
             t0 = time.time()
 
-            wfib = wplate
             if best_obs:
                 ## select only the objects which have specified mjd within this plate
                 wmjd = mjd == MJD
                 wfib = wplate & wmjd
             else:
 
-                k = str(p)+'-'+str(MJD)
+                k = str(pp)+'-'+str(MJD)
                 if k not in platequality:
                     log.write("Will not read file {} because is not in platequality, considered as BAD\n".format(spplate))
                     continue
@@ -594,6 +593,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
                     sys.stderr.write("ERROR: Please get photoPosPlate or run with --best-obs\n")
                     sys.exit(1)
                 thingid_photoPlate = h_photoPlate[1]['THING_ID'][:]
+                wfib = sp.in1d(thid,thingid_photoPlate)
                 thingid2fiberid = { idd:i+1 for i,idd in enumerate(thingid_photoPlate) }
                 h_photoPlate.close()
 
