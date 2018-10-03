@@ -142,6 +142,43 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     return ra,dec,zqso,thid,plate,mjd,fid
 
+def read_platequality(in_dir):
+    """Read the platequality.txt giving the quality of each observation
+        in SDSS
+
+    Args:
+        in_dir (path): Path to the in_dir folder where to find the
+            platequality.txt file
+
+    Returns:
+        platequality (dic): Dictionnary of plate quality,
+            'BAD' or 'GOOD'
+
+    """
+    fpath = os.path.expandvars(in_dir)+'/platequality.txt'
+    if not os.path.isfile(fpath):
+        print("ERROR: can't find platequality {}".format(fpath))
+        print("ERROR: either give it or use --best-obs")
+        sys.exit(1)
+
+    platequality = {}
+    for l in open(fpath, 'r'):
+        l = l.split()
+
+        if l[0]=='PLATE':
+            fromkeytoindex = { k:i for i,k in enumerate(l) }
+            continue
+        elif '-' in l[0]: continue
+
+        key = l[fromkeytoindex['PLATE']]+'-'+l[fromkeytoindex['MJD']]
+        try:
+            platequality[key] = l[fromkeytoindex['QUALITY']].upper()
+        except IndexError:
+            platequality[key] = 'BAD'
+
+    return platequality
+
+
 target_mobj = 500
 nside_min = 8
 
@@ -379,27 +416,58 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
     plates = sp.unique(plate)
     print("reading {} plates".format(len(plates)))
 
-    for p in plates:
-        wplate = plate==p
-        plate_mjd = "{}-*".format(p)
+    if not best_obs:
+        platequality = read_platequality(in_dir)
+
+    for pp in plates:
+        wplate = plate==pp
+        plate_mjd = "{}-*".format(pp)
 
         ##if best_obs then select only the given mjd
         if best_obs:
             the_mjd = sp.unique(mjd[wplate])
             print(the_mjd)
             m = the_mjd[0]
-            plate_mjd = "{}-{}".format(p, m)
+            plate_mjd = "{}-{}".format(pp, m)
 
         ## find out exposures from all the spPlates
-        fi = in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd)
+        fi = in_dir+"/{}/spPlate-{}.fits".format(pp, plate_mjd)
         print(fi)
         fi = glob.glob(fi)
         fi = sorted(fi)
         exps = []
+        thingid2fiberid = {}
+        fromexp2file = {}
+        wfibeachplate = {}
+
         for f in fi:
             print("INFO: reading plate {}".format(f))
             h=fitsio.FITS(f)
             head = h[0].read_header()
+            MJD = head['MJD']
+            h.close()
+
+            if not best_obs:
+
+                k = str(pp)+'-'+str(MJD)
+                if k not in platequality:
+                    log.write("Will not read file {} because is not in platequality, considered as BAD\n".format(f))
+                    continue
+                if platequality[k]=='BAD':
+                    log.write("Will not read file {} because BAD\n".format(f))
+                    continue
+
+                try:
+                    h_photoPlate = fitsio.FITS(f.replace('spPlate','photoPosPlate'))
+                except IOError:
+                    sys.stderr.write("ERROR: can't find photoPosPlate {}".format(f.replace('spPlate','photoPosPlate')))
+                    sys.stderr.write("ERROR: Please get photoPosPlate or run with --best-obs")
+                    sys.exit(1)
+                thingid_photoPlate = h_photoPlate[1]['THING_ID'][:]
+                wfibeachplate[f] = sp.in1d(thid,thingid_photoPlate)
+                thingid2fiberid[f] = { idd:i+1 for i,idd in enumerate(thingid_photoPlate) }
+                h_photoPlate.close()
+
             iexp = 1
             for c in ["B1", "B2", "R1", "R2"]:
                 card = "NEXP_{}".format(c)
@@ -408,18 +476,21 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                 else:
                     continue
                 for _ in range(nexp):
-                    str_iexp = str(iexp)
-                    if iexp<10:
-                        str_iexp = '0'+str_iexp
 
+                    str_iexp = str(iexp).zfill(2)
                     card = "EXPID"+str_iexp
+                    if not card in head:
+                        str_iexp = str(iexp).zfill(3)
+                        card = "EXPID"+str_iexp
                     if not card in head:
                         continue
 
                     exps.append(head["EXPID"+str_iexp][:11])
+                    if not best_obs:
+                        fromexp2file[head["EXPID"+str_iexp][:11]] = f
                     iexp += 1
 
-        print("INFO: found {} exposures in plate {}".format(len(exps), p))
+        print("INFO: found {} exposures in plate {}".format(len(exps), pp))
 
         if len(exps) == 0:
             continue
@@ -438,23 +509,32 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
             assert spectro == 1 or spectro == 2
 
             ## find out the fibers where the qsos are:
+            if best_obs:
+                wfib = wplate.copy()
+            else:
+                wfib = wfibeachplate[fromexp2file[exp]].copy()
+
             if spectro == 1:
-                wfib = wplate & (fid <= 500)
+                wfib &= fid <= 500
             if spectro == 2:
-                wfib = wplate & (fid > 500)
+                wfib &= fid > 500
 
             if wfib.sum()==0:
                 continue
 
-            spcframe = fitsio.FITS(in_dir+"/{}/spCFrame-{}.fits".format(p, exp))
+            spcframe = fitsio.FITS(in_dir+"/{}/spCFrame-{}.fits".format(pp, exp))
 
             flux = spcframe[0].read()
             ivar = spcframe[1].read()*(spcframe[2].read()==0)
             llam = spcframe[3].read()
+            spcframe.close()
 
             ## now convert all those fluxes into forest objects
-            for index, (t, r, d, z, p, m, f) in enumerate(zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib])):
-                index =(f-1)%500
+            for t, r, d, z, p, m, f in zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib]):
+                if best_obs:
+                    index = (f-1)%500
+                else:
+                    index = (thingid2fiberid[fromexp2file[exp]][t]-1)%500
                 d = forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
                 if t in pix_data:
                     pix_data[t] += d
@@ -464,7 +544,6 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                     log.write("{} read from exp {} and mjd {}\n".format(t, exp, m))
 
             print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), exp, (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid)))
-            spcframe.close()
 
     data = list(pix_data.values())
     return data
@@ -474,20 +553,24 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
     unique_plates = sp.unique(plate)
     print("reading {} plates".format(len(unique_plates)))
 
-    for p in unique_plates:
-        wplate = plate==p
-        plate_mjd = "{}-*".format(p)
+    if not best_obs:
+        platequality = read_platequality(in_dir)
+
+    for pp in unique_plates:
+        wplate = plate==pp
+        plate_mjd = "{}-*".format(pp)
         mjd_in_plate = sp.unique(mjd[wplate])
 
-        spplates = glob.glob(in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd))
+        spplates = glob.glob(in_dir+"/{}/spPlate-{}.fits".format(pp, plate_mjd))
+        spplates = sp.sort(spplates)
 
         mjds_found = sp.array([spfile.split("-")[-1].replace(".fits",'') for spfile in spplates]).astype(int)
         wmissing = ~sp.in1d(mjd_in_plate, mjds_found)
         if wmissing.sum()>0:
             for m in mjd_in_plate[wmissing]:
-                print("INFO: can't find spplate {} {}".format(p,m))
+                print("INFO: can't find spplate {} {}".format(pp,m))
                 if log is not None:
-                    log.write("INFO: can't find spplate {} {}\n".format(p,m))
+                    log.write("INFO: can't find spplate {} {}\n".format(pp,m))
 
         for spplate in spplates:
             h = fitsio.FITS(spplate)
@@ -496,11 +579,30 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
             t0 = time.time()
 
-            wfib = wplate
             if best_obs:
                 ## select only the objects which have specified mjd within this plate
                 wmjd = mjd == MJD
                 wfib = wplate & wmjd
+            else:
+
+                k = str(pp)+'-'+str(MJD)
+                if k not in platequality:
+                    log.write("Will not read file {} because is not in platequality, considered as BAD\n".format(spplate))
+                    continue
+                if platequality[k]=='BAD':
+                    log.write("Will not read file {} because BAD\n".format(spplate))
+                    continue
+
+                try:
+                    h_photoPlate = fitsio.FITS(spplate.replace('spPlate','photoPosPlate'))
+                except IOError:
+                    sys.stderr.write("ERROR: can't find photoPosPlate {}\n".format(spplate.replace('spPlate','photoPosPlate')))
+                    sys.stderr.write("ERROR: Please get photoPosPlate or run with --best-obs\n")
+                    sys.exit(1)
+                thingid_photoPlate = h_photoPlate[1]['THING_ID'][:]
+                wfib = sp.in1d(thid,thingid_photoPlate)
+                thingid2fiberid = { idd:i+1 for i,idd in enumerate(thingid_photoPlate) }
+                h_photoPlate.close()
 
             coeff0 = head0["COEFF0"]
             coeff1 = head0["COEFF1"]
@@ -508,10 +610,14 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
             flux = h[0].read()
             ivar = h[1].read()*(h[2].read()==0)
             llam = coeff0 + coeff1*sp.arange(flux.shape[1])
+            h.close()
 
             ## now convert all those fluxes into forest objects
             for (t, r, d, z, p, m, f) in zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib]):
-                index = f-1
+                if best_obs:
+                    index = f-1
+                else:
+                    index = thingid2fiberid[t]-1
                 d = forest(llam,flux[index],ivar[index], t, r, d, z, p, m, f, order)
                 if t in pix_data:
                     pix_data[t] += d
@@ -521,7 +627,6 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
                     log.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
 
             print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), os.path.basename(spplate), (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid)))
-            h.close()
 
     data = list(pix_data.values())
     return data
