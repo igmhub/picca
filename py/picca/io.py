@@ -419,25 +419,26 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
     if not best_obs:
         platequality = read_platequality(in_dir)
 
-    for p in plates:
-        wplate = plate==p
-        plate_mjd = "{}-*".format(p)
+    for pp in plates:
+        wplate = plate==pp
+        plate_mjd = "{}-*".format(pp)
 
         ##if best_obs then select only the given mjd
         if best_obs:
             the_mjd = sp.unique(mjd[wplate])
             print(the_mjd)
             m = the_mjd[0]
-            plate_mjd = "{}-{}".format(p, m)
+            plate_mjd = "{}-{}".format(pp, m)
 
         ## find out exposures from all the spPlates
-        fi = in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd)
+        fi = in_dir+"/{}/spPlate-{}.fits".format(pp, plate_mjd)
         print(fi)
         fi = glob.glob(fi)
         fi = sorted(fi)
         exps = []
         thingid2fiberid = {}
         fromexp2file = {}
+        wfibeachplate = {}
 
         for f in fi:
             print("INFO: reading plate {}".format(f))
@@ -448,7 +449,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
 
             if not best_obs:
 
-                k = str(p)+'-'+str(MJD)
+                k = str(pp)+'-'+str(MJD)
                 if k not in platequality:
                     log.write("Will not read file {} because is not in platequality, considered as BAD\n".format(f))
                     continue
@@ -463,6 +464,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                     sys.stderr.write("ERROR: Please get photoPosPlate or run with --best-obs")
                     sys.exit(1)
                 thingid_photoPlate = h_photoPlate[1]['THING_ID'][:]
+                wfibeachplate[f] = sp.in1d(thid,thingid_photoPlate)
                 thingid2fiberid[f] = { idd:i+1 for i,idd in enumerate(thingid_photoPlate) }
                 h_photoPlate.close()
 
@@ -488,7 +490,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                         fromexp2file[head["EXPID"+str_iexp][:11]] = f
                     iexp += 1
 
-        print("INFO: found {} exposures in plate {}".format(len(exps), p))
+        print("INFO: found {} exposures in plate {}".format(len(exps), pp))
 
         if len(exps) == 0:
             continue
@@ -507,15 +509,20 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
             assert spectro == 1 or spectro == 2
 
             ## find out the fibers where the qsos are:
+            if best_obs:
+                wfib = wplate.copy()
+            else:
+                wfib = wfibeachplate[fromexp2file[exp]].copy()
+
             if spectro == 1:
-                wfib = wplate & (fid <= 500)
+                wfib &= fid <= 500
             if spectro == 2:
-                wfib = wplate & (fid > 500)
+                wfib &= fid > 500
 
             if wfib.sum()==0:
                 continue
 
-            spcframe = fitsio.FITS(in_dir+"/{}/spCFrame-{}.fits".format(p, exp))
+            spcframe = fitsio.FITS(in_dir+"/{}/spCFrame-{}.fits".format(pp, exp))
 
             flux = spcframe[0].read()
             ivar = spcframe[1].read()*(spcframe[2].read()==0)
