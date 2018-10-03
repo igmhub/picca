@@ -147,7 +147,7 @@ def read_platequality(in_dir):
         in SDSS
 
     Args:
-        fpath (path): Path to the in_dir folder where to find the
+        in_dir (path): Path to the in_dir folder where to find the
             platequality.txt file
 
     Returns:
