@@ -378,7 +378,6 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         return pix_data
 
 def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode=None, log=None, best_obs=False, single_exp = False):
-    drq_dict = {t:(r,d,z) for t,r,d,z in zip(thid,ra,dec,zqso)}
 
     if not best_obs:
         print("ERROR: multiple observations not (yet) compatible with spframe option")
@@ -487,7 +486,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
     drq_dict = {t:(r,d,z) for t,r,d,z in zip(thid,ra,dec,zqso)}
 
-    ## if using multiple observations, 
+    ## if using multiple observations,
     ## then replace thid, plate, mjd, fid
     ## by what's available in spAll
 
