@@ -537,11 +537,11 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
     pix_data = {}
     platemjd = {}
-    for i,p in enumerate(plate):
-        pm = (p,mjd[i])
+    for p,m,meta in zip(plate,mjd,allmeta):
+        pm = (p,m)
         if not pm in platemjd:
             platemjd[pm] = []
-        platemjd[pm].append(allmeta[i])
+        platemjd[pm].append(meta)
 
 
     print("reading {} plates".format(len(platemjd)))
