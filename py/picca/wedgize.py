@@ -2,7 +2,7 @@ import scipy as sp
 
 class wedge:
     def __init__(self,rpmin=0.,rpmax=200.,nrp=50,rtmin=0.,rtmax=200.,nrt=50,\
-            rmin=0.,rmax=200.,nr=50,mumin=0.8,mumax=0.95,ss=10):
+            rmin=0.,rmax=200.,nr=50,mumin=0.8,mumax=0.95,ss=10,absoluteMu=False):
         nrtmc = ss*nrt
         nrpmc = ss*nrp
         nss=nrtmc*nrpmc
@@ -13,6 +13,8 @@ class wedge:
         rpmc = rpmin+(irpmc+0.5)*(rpmax-rpmin)/nrpmc
         rmc = sp.sqrt(rtmc**2+rpmc**2)
         mumc = rpmc/rmc
+        if absoluteMu:
+            mumc = sp.absolute(mumc)
 
         br = (rmc-rmin)/(rmax-rmin)*nr
         br = br.astype(int)

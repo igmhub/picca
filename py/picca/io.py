@@ -15,6 +15,9 @@ from picca.prep_Pk1D import exp_diff
 from picca.prep_Pk1D import spectral_resolution
 from picca.prep_Pk1D import spectral_resolution_desi
 
+## use a metadata class to simplify things
+class metadata:
+    pass
 
 def read_dlas(fdla):
     f=open(os.path.expandvars(fdla))
@@ -375,51 +378,61 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
         return pix_data
 
 def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode=None, log=None, best_obs=False, single_exp = False):
+
+    if not best_obs:
+        print("ERROR: multiple observations not (yet) compatible with spframe option")
+        print("ERROR: rerun with the --best-obs option")
+        sys.exit(1)
+
+    allmeta = []
+    for t,r,d,z,p,m,f in zip(thid,ra,dec,zqso,plate,mjd,fid):
+        meta = metadata()
+        meta.thid = t
+        meta.ra = r
+        meta.dec = d
+        meta.zqso = z
+        meta.plate = p
+        meta.mjd = m
+        meta.fid = f
+        meta.order = order
+        allmeta.append(meta)
+    platemjd = {}
+    for i in range(len(thid)):
+        pm = (plate[i], mjd[i])
+        if not pm in platemjd:
+            platemjd[pm] = []
+        platemjd[pm].append(allmeta[i])
+
     pix_data={}
-    plates = sp.unique(plate)
-    print("reading {} plates".format(len(plates)))
+    print("reading {} plates".format(len(platemjd)))
 
-    for p in plates:
-        wplate = plate==p
-        plate_mjd = "{}-*".format(p)
-
-        ##if best_obs then select only the given mjd
-        if best_obs:
-            the_mjd = sp.unique(mjd[wplate])
-            print(the_mjd)
-            m = the_mjd[0]
-            plate_mjd = "{}-{}".format(p, m)
-
-        ## find out exposures from all the spPlates
-        fi = in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd)
-        print(fi)
-        fi = glob.glob(fi)
-        fi = sorted(fi)
+    for pm in platemjd:
+        p,m = pm
         exps = []
-        for f in fi:
-            print("INFO: reading plate {}".format(f))
-            h=fitsio.FITS(f)
-            head = h[0].read_header()
-            iexp = 1
-            for c in ["B1", "B2", "R1", "R2"]:
-                card = "NEXP_{}".format(c)
-                if card in head:
-                    nexp = head["NEXP_{}".format(c)]
-                else:
+        spplate = in_dir+"/{0}/spPlate-{0}-{1}.fits".format(p,m)
+        print("INFO: reading plate {}".format(spplate))
+        h=fitsio.FITS(spplate)
+        head = h[0].read_header()
+        iexp = 1
+        for c in ["B1", "B2", "R1", "R2"]:
+            card = "NEXP_{}".format(c)
+            if card in head:
+                nexp = head["NEXP_{}".format(c)]
+            else:
+                continue
+            for _ in range(nexp):
+                str_iexp = str(iexp)
+                if iexp<10:
+                    str_iexp = '0'+str_iexp
+
+                card = "EXPID"+str_iexp
+                if not card in head:
                     continue
-                for _ in range(nexp):
-                    str_iexp = str(iexp)
-                    if iexp<10:
-                        str_iexp = '0'+str_iexp
 
-                    card = "EXPID"+str_iexp
-                    if not card in head:
-                        continue
+                exps.append(head["EXPID"+str_iexp][:11])
+                iexp += 1
 
-                    exps.append(head["EXPID"+str_iexp][:11])
-                    iexp += 1
-
-        print("INFO: found {} exposures in plate {}".format(len(exps), p))
+        print("INFO: found {} exposures in plate {}-{}".format(len(exps), p,m))
 
         if len(exps) == 0:
             continue
@@ -437,15 +450,6 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
             spectro = int(exp[1])
             assert spectro == 1 or spectro == 2
 
-            ## find out the fibers where the qsos are:
-            if spectro == 1:
-                wfib = wplate & (fid <= 500)
-            if spectro == 2:
-                wfib = wplate & (fid > 500)
-
-            if wfib.sum()==0:
-                continue
-
             spcframe = fitsio.FITS(in_dir+"/{}/spCFrame-{}.fits".format(p, exp))
 
             flux = spcframe[0].read()
@@ -453,8 +457,16 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
             llam = spcframe[3].read()
 
             ## now convert all those fluxes into forest objects
-            for index, (t, r, d, z, p, m, f) in enumerate(zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib])):
-                index =(f-1)%500
+            for meta in platemjd[pm]:
+                if spectro == 1 and meta.fid > 500: continue
+                if spectro == 2 and meta.fid <= 500: continue
+                index =(meta.fid-1)%500
+                t = meta.thid
+                r = meta.ra
+                d = meta.dec
+                z = meta.zqso
+                f = meta.fid
+                order = meta.order
                 d = forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
                 if t in pix_data:
                     pix_data[t] += d
@@ -462,66 +474,113 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                     pix_data[t] = d
                 if log is not None:
                     log.write("{} read from exp {} and mjd {}\n".format(t, exp, m))
+            nread = len(platemjd[pm])
 
-            print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), exp, (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid)))
+            print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, exp, (time.time()-t0)/(nread+1e-3), len(pix_data), len(thid)))
             spcframe.close()
 
     data = list(pix_data.values())
     return data
 
 def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=None, best_obs=False):
-    pix_data={}
-    unique_plates = sp.unique(plate)
-    print("reading {} plates".format(len(unique_plates)))
 
-    for p in unique_plates:
-        wplate = plate==p
-        plate_mjd = "{}-*".format(p)
-        mjd_in_plate = sp.unique(mjd[wplate])
+    drq_dict = {t:(r,d,z) for t,r,d,z in zip(thid,ra,dec,zqso)}
 
-        spplates = glob.glob(in_dir+"/{}/spPlate-{}.fits".format(p, plate_mjd))
+    ## if using multiple observations,
+    ## then replace thid, plate, mjd, fid
+    ## by what's available in spAll
 
-        mjds_found = sp.array([spfile.split("-")[-1].replace(".fits",'') for spfile in spplates]).astype(int)
-        wmissing = ~sp.in1d(mjd_in_plate, mjds_found)
-        if wmissing.sum()>0:
-            for m in mjd_in_plate[wmissing]:
-                print("INFO: can't find spplate {} {}".format(p,m))
-                if log is not None:
-                    log.write("INFO: can't find spplate {} {}\n".format(p,m))
+    if not best_obs:
+        fi = glob.glob(in_dir+"/spAll-*.fits")
+        if len(fi) > 1:
+            print("ERROR: found multiple spAll files")
+            print("ERROR: try running with --bestobs option (but you will lose reobservations)")
+            for f in fi:
+                print("found: ",fi)
+            sys.exit(1)
+        if len(fi) == 0:
+            print("ERROR: can't find required spAll file in {}".format(in_dir))
+            print("ERROR: try runnint with --bestobs option (but you will lose reobservations)")
+            sys.exit(1)
 
-        for spplate in spplates:
-            h = fitsio.FITS(spplate)
-            head0 = h[0].read_header()
-            MJD = head0["MJD"]
+        spAll = fitsio.FITS(fi[0])
+        print("INFO: reading spAll from {}".format(fi[0]))
+        thid_spall = spAll[1]["THING_ID"][:]
+        plate_spall = spAll[1]["PLATE"][:]
+        mjd_spall = spAll[1]["MJD"][:]
+        fid_spall = spAll[1]["FIBERID"][:]
+        qual_spall = spAll[1]["PLATEQUALITY"][:]
 
-            t0 = time.time()
+        w = sp.in1d(thid_spall, thid) & (qual_spall == b"good")
+        print("INFO: # unique objs: ",len(thid))
+        print("INFO: # spectra: ",w.sum())
+        thid = thid_spall[w]
+        plate = plate_spall[w]
+        mjd = mjd_spall[w]
+        fid = fid_spall[w]
+        spAll.close()
 
-            wfib = wplate
-            if best_obs:
-                ## select only the objects which have specified mjd within this plate
-                wmjd = mjd == MJD
-                wfib = wplate & wmjd
+    ## to simplify, use a list of all metadata
+    allmeta = []
+    for t,p,m,f in zip(thid,plate,mjd,fid):
+        r,d,z = drq_dict[t]
+        meta = metadata()
+        meta.thid = t
+        meta.ra = r
+        meta.dec = d
+        meta.zqso = z
+        meta.plate = p
+        meta.mjd = m
+        meta.fid = f
+        meta.order = order
+        allmeta.append(meta)
 
-            coeff0 = head0["COEFF0"]
-            coeff1 = head0["COEFF1"]
+    pix_data = {}
+    platemjd = {}
+    for p,m,meta in zip(plate,mjd,allmeta):
+        pm = (p,m)
+        if not pm in platemjd:
+            platemjd[pm] = []
+        platemjd[pm].append(meta)
 
-            flux = h[0].read()
-            ivar = h[1].read()*(h[2].read()==0)
-            llam = coeff0 + coeff1*sp.arange(flux.shape[1])
 
-            ## now convert all those fluxes into forest objects
-            for (t, r, d, z, p, m, f) in zip(thid[wfib], ra[wfib], dec[wfib], zqso[wfib], plate[wfib], mjd[wfib], fid[wfib]):
-                index = f-1
-                d = forest(llam,flux[index],ivar[index], t, r, d, z, p, m, f, order)
-                if t in pix_data:
-                    pix_data[t] += d
-                else:
-                    pix_data[t] = d
-                if log is not None:
-                    log.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
+    print("reading {} plates".format(len(platemjd)))
 
-            print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(wfib.sum(), os.path.basename(spplate), (time.time()-t0)/(wfib.sum()+1e-3), len(pix_data), len(thid)))
-            h.close()
+    for pm in platemjd:
+        p,m = pm
+        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(p,m)
+
+        h = fitsio.FITS(spplate)
+        head0 = h[0].read_header()
+        t0 = time.time()
+
+        coeff0 = head0["COEFF0"]
+        coeff1 = head0["COEFF1"]
+
+        flux = h[0].read()
+        ivar = h[1].read()*(h[2].read()==0)
+        llam = coeff0 + coeff1*sp.arange(flux.shape[1])
+
+        ## now convert all those fluxes into forest objects
+        for meta in platemjd[pm]:
+            t = meta.thid
+            r = meta.ra
+            d = meta.dec
+            z = meta.zqso
+            f = meta.fid
+            o = meta.order
+
+            i = meta.fid-1
+            d = forest(llam,flux[i],ivar[i], t, r, d, z, p, m, f, o)
+            if t in pix_data:
+                pix_data[t] += d
+            else:
+                pix_data[t] = d
+            if log is not None:
+                log.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
+        nread = len(platemjd[pm])
+        print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, os.path.basename(spplate), (time.time()-t0)/(nread+1e-3), len(pix_data), len(thid)))
+        h.close()
 
     data = list(pix_data.values())
     return data
