@@ -513,6 +513,9 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
         zwarn_spall = spAll[1]["ZWARNING"][:]
 
         w = sp.in1d(thid_spall, thid) & (qual_spall == b"good")
+        ## Removing spectra with the following ZWARNING bits set:
+        ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
+        ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
         for zwarnbit in [0,1,7,8,9]:
             w &= (zwarn_spall&2**zwarnbit)==0
         print("INFO: # unique objs: ",len(thid))
