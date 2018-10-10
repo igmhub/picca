@@ -6,6 +6,10 @@ import glob
 import argparse
 
 class batch:
+    '''
+    Generic class to hold the names of the 
+    .batch slurm submission files.
+    '''
     def __init__(self):
         self.outdir = None
         self.do_deltas = None
@@ -17,6 +21,16 @@ class batch:
         self.xexport = []
  
 def get_header(time, name, email=None, queue="regular"):
+    '''
+    returns the standard header for running the analyses.
+    Input:
+        - time (string): requested maximum runtime, format: hh:mm:ss
+        - name (string): name of the job
+        - email (string, optional): email address to send updates
+        - queue (string, optional): name of the submission queue
+    Returns:
+        a string holding the header
+    '''
     header = ""
     header += "#!/bin/bash\n"
     header += "#SBATCH -N 1\n"
@@ -35,6 +49,16 @@ def get_header(time, name, email=None, queue="regular"):
     return header
 
 def do_deltas(b,time, in_dir, out_dir, drq, email=None,debug=False):
+    '''
+    Writes a .batch file to submit the do_deltas.py script
+    Inputs:
+        - b (batch): a batch instance
+        - time (string): requested maximum runtime, format: hh:mm:ss
+        - in_dir (string): input directory
+        - drq (string): drq file
+        - email (string, optiona): email address to send progress
+        - debug (bool): if True, run over 10000 quasars
+    '''
     header = get_header(time, name="do_deltas", email=email)
     header += "srun -n 1 -c 64 do_deltas.py " + \
                 "--in-dir {} --drq {} ".format(in_dir, drq) + \
@@ -48,6 +72,18 @@ def do_deltas(b,time, in_dir, out_dir, drq, email=None,debug=False):
     fout.close()
 
 def cf(b,time, zint, outdir, email=None):
+    '''
+    Writes the .batch files to submit the do_cf.py
+    and the export.py scripts
+    and adds them to the b.cf and b.export lists
+    Inputs:
+        - b (class batch): a batch instance
+        - time (string): requested maximum runtime, format: hh:mm:ss
+        - zint (list of strings): a list holdint zint-ervals.
+            Each interval is of the format "zmin:zmax"
+        - outdir (string): the output directory
+        - email (string, optional): email address to send progress
+    '''
     for zz in zint:
         zmin,zmax = zz.split(":")
         out = "cf_z_{}_{}.fits".format(zmin,zmax)
@@ -60,7 +96,6 @@ def cf(b,time, zint, outdir, email=None):
                 "--z-cut-min {} --z-cut-max {} ".format(zmin,zmax) +\
                 "--out {} --nproc 32\n".format(out)
 
-        print(out)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.cf.append(basename(fbatch))
         b.export.append(basename(exp_batch))
@@ -70,6 +105,17 @@ def cf(b,time, zint, outdir, email=None):
         fout.close()
 
 def dmat(b,time, zint, outdir, email=None, rej=0.99):
+    '''
+    Writes the .batch files to submit the do_dmat.py script
+    and adds them to the b.dmat script
+    Inputs:
+        - b (class batch): a batch instance
+        - time (string): requested maximum runtime, format: hh:mm:ss
+        - zint (list of strings): a list holdint zint-ervals.
+            Each interval is of the format "zmin:zmax"
+        - outdir (string): the output directory
+        - email (string, optional): email address to send progress
+    '''
     for zz in zint:
         zmin,zmax = zz.split(":")
         out = "dmat_z_{}_{}.fits".format(zmin,zmax)
@@ -85,6 +131,18 @@ def dmat(b,time, zint, outdir, email=None, rej=0.99):
         fout.close()
     
 def xcf(b,time, drq, zint, outdir, email=None):
+    '''
+    Writes the .batch files to submit the do_xcf.py script
+    and the export.py scripts
+    and adds them to the b.xcf and b.xexport lists
+    Inputs:
+        - b (class batch): a batch instance
+        - time (string): requested maximum runtime, format: hh:mm:ss
+        - zint (list of strings): a list holdint zint-ervals.
+            Each interval is of the format "zmin:zmax"
+        - outdir (string): the output directory
+        - email (string, optional): email address to send progress
+    '''
     for zz in zint:
         zmin,zmax = zz.split(":")
         out = "xcf_z_{}_{}.fits".format(zmin,zmax)
@@ -106,6 +164,17 @@ def xcf(b,time, drq, zint, outdir, email=None):
         fout.close()
     
 def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95):
+    '''
+    Writes the .batch files to submit the do_xdmat.py script
+    and adds if to the b.xdmat list
+    Inputs:
+        - b (class batch): a batch instance
+        - time (string): requested maximum runtime, format: hh:mm:ss
+        - zint (list of strings): a list holdint zint-ervals.
+            Each interval is of the format "zmin:zmax"
+        - outdir (string): the output directory
+        - email (string, optional): email address to send progress
+    '''
     for zz in zint:
         zmin, zmax = zz.split(":")
         out = "xdmat_z_{}_{}.fits".format(zmin,zmax)
@@ -122,6 +191,14 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95):
         fout.close()
         
 def export(time, cf_file, dmat_file, out):
+    '''
+    Writes the .batch file to submit the export.py and fitter2 
+    Input:
+        - time (string): requested maximum runtime, format: hh:mm:ss
+        - cf_file (string): path to the cf_file
+        - dmat_file (string): path to the dmat_file
+        - out (string): output of the export.py script
+    '''
     header = get_header(time, name=basename(out), queue="regular")
     cc = glob.glob(cf_file)
     dd = glob.glob(dmat_file)
@@ -138,6 +215,14 @@ def export(time, cf_file, dmat_file, out):
     return fbatch
 
 def do_ini(outdir, cf_file):
+    '''
+    Writes the .ini files to control the fits
+    Input:
+        - outdir (string): output directory of the fits
+        - cf_file (string): path to the input file for the fitter
+    Returns:
+        The (basename) of the chi2.ini file
+    '''
     fout = open(outdir+"/"+cf_file.replace(".fits",".ini"),"w")
     fout.write("[data]\n")
     fout.write("name = {}\n".format(basename(cf_file).replace(".fits","")))
