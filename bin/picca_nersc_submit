@@ -248,7 +248,7 @@ def do_ini(outdir, cf_file):
     fout.write("r-max = 180\n")
 
     fout.write("mu-min = -1\n")
-    fout.write("mu-max = 11\n")
+    fout.write("mu-max = 1\n")
 
     fout.write("[model]\n")
     fout.write("model-pk = pk_kaiser\n")
@@ -258,7 +258,7 @@ def do_ini(outdir, cf_file):
         fout.write("model-xi = xi_drp\n")
         fout.write("z evol QSO = qso_bias_vs_z_croom\n")
     else:
-        fout.write("model-xi = cached_xi_kaiser\n")
+        fout.write("model-xi = xi\n")
 
 
     fout.write("[parameters]\n")
@@ -277,8 +277,8 @@ def do_ini(outdir, cf_file):
     fout.write("sigmaNL_per = 3.24 0.1 None None fixed\n")
     fout.write("1+f = 1.966 0.1 None None fixed\n")
 
-    fout.write("par binsize {} = 4. 0.4 None None fixed\n".format(cf_file.replace(".fits","")))
-    fout.write("per binsize {} = 4. 0.4 None None fixed\n".format(cf_file.replace(".fits","")))
+    fout.write("par binsize {} = 4. 0.4 None None free\n".format(cf_file.replace(".fits","")))
+    fout.write("per binsize {} = 4. 0.4 None None free\n".format(cf_file.replace(".fits","")))
 
     fout.write("bao_amp = 1. 0.1 None None fixed\n")
     if "xcf" in cf_file:
