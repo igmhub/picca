@@ -269,7 +269,7 @@ def do_ini(outdir, cf_file):
     fout.write("beta_LYA = 1. 0.1 None None free\n")
     fout.write("alpha_LYA = 2.9 0.1 None None fixed\n")
     if "xcf" in cf_file:
-        fout.write("bias_QSO = 1. 0.1 None None free\n")
+        fout.write("bias_QSO = 1. 0.1 None None fixed\n")
         fout.write("beta_QSO = 0.3 0.1 None None free\n")
 
     fout.write("growth_rate = 0.962524 0.1 None None fixed\n")
