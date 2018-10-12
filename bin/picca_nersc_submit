@@ -20,7 +20,7 @@ class batch:
         self.xdmat = []
         self.xexport = []
  
-def get_header(time, name, email=None, queue="regular"):
+def get_header(time, name, email=None, queue="regular", account="desi"):
     '''
     returns the standard header for running the analyses.
     Input:
@@ -42,13 +42,14 @@ def get_header(time, name, email=None, queue="regular"):
         header += "#SBATCH --mail-type=ALL\n"
     header += "#SBATCH -t {}\n".format(time)
     header += "#SBATCH -L project\n"
-    header += "#SBATCH -A desi\n"
+    header += "#SBATCH -A {}\n".format(account)
     header += "#OpenMP settings:\n"
     header += "export OMP_NUM_THREADS=1\n"
 
     return header
 
-def do_deltas(b,time, in_dir, out_dir, drq, email=None,debug=False):
+def do_deltas(b,time, in_dir, out_dir, drq, 
+        email=None,debug=False,mode="desi"):
     '''
     Writes a .batch file to submit the do_deltas.py script
     Inputs:
@@ -56,13 +57,17 @@ def do_deltas(b,time, in_dir, out_dir, drq, email=None,debug=False):
         - time (string): requested maximum runtime, format: hh:mm:ss
         - in_dir (string): input directory
         - drq (string): drq file
-        - email (string, optiona): email address to send progress
-        - debug (bool): if True, run over 10000 quasars
+        - email (string, optional): email address to send progress
+        - debug (bool, optional): if True, run over 10000 quasars
+        - mode (str, optional): desi or eboss (default: desi)
     '''
+    assert mode in ["eboss", "desi"]
+    if mode=="eboss":
+        mode="spplate"
     header = get_header(time, name="do_deltas", email=email)
     header += "srun -n 1 -c 64 do_deltas.py " + \
                 "--in-dir {} --drq {} ".format(in_dir, drq) + \
-                "--out-dir deltas --mode desi "
+                "--out-dir deltas --mode {} ".format(mode)
     if debug:
         header += "--nspec 10000"
     header += "\n" 
@@ -314,27 +319,40 @@ def submit(b):
     fout.write("#!/bin/bash\n")
     if b.do_deltas is not None:
         fout.write("do_deltas=$(sbatch --parsable {})\n".format(b.do_deltas))
+        fout.write('echo "do_deltas: "$do_deltas\n')
     for cf_batch, dmat_batch,exp_batch in zip(b.cf, b.dmat, b.export):
         var_cf = cf_batch.replace(".batch","").replace(".","_")
         var_dmat = dmat_batch.replace(".batch","").replace(".","_")
         if b.do_deltas is not None:
             fout.write("{}=$(sbatch --parsable --dependency=afterok:$do_deltas {})\n".format(var_cf,cf_batch))
+            fout.write('echo "{0}: "${0} \n'.format(var_cf))
             fout.write("{}=$(sbatch --parsable --dependency=afterok:$do_deltas {})\n".format(var_dmat,dmat_batch))
+            fout.write('echo "{0}: "${0} \n'.format(var_dmat))
         else:
             fout.write("{}=$(sbatch --parsable {})\n".format(var_cf,cf_batch))
+            fout.write('echo "{0}: "${0} \n'.format(var_cf))
             fout.write("{}=$(sbatch --parsable {})\n".format(var_dmat,dmat_batch))
-        fout.write("sbatch --dependency=afterok:${},afterok:${} {}\n".format(var_cf,var_dmat,exp_batch))
+            fout.write('echo "{0}: "${0} \n'.format(var_dmat))
+        var_exp = exp_batch.replace(".batch","").replace(".","_").replace("-","_")
+        fout.write("{}=$(sbatch --parsable --dependency=afterok:${},afterok:${} {})\n".format(var_exp,var_cf,var_dmat,exp_batch))
+        fout.write('echo "{0}: "${0} \n'.format(var_exp))
         
     for xcf_batch, xdmat_batch,xexp_batch in zip(b.xcf, b.xdmat, b.xexport):
         var_xcf = xcf_batch.replace(".batch","").replace(".","_")
         var_xdmat = xdmat_batch.replace(".batch","").replace(".","_")
         if b.do_deltas is not None:
             fout.write("{}=$(sbatch --parsable --dependency=afterok:$do_deltas {})\n".format(var_xcf,xcf_batch))
+            fout.write('echo "{0}: "${0} \n'.format(var_xcf))
             fout.write("{}=$(sbatch --parsable --dependency=afterok:$do_deltas {})\n".format(var_xdmat,xdmat_batch))
+            fout.write('echo "{0}: "${0} \n'.format(var_xdmat))
         else:
             fout.write("{}=$(sbatch --parsable {})\n".format(var_xcf,xcf_batch))
+            fout.write('echo "{0}: "${0} \n'.format(var_xcf))
             fout.write("{}=$(sbatch --parsable {})\n".format(var_xdmat,xdmat_batch))
-        fout.write("sbatch --dependency=afterok:${},afterok:${} {}\n".format(var_cf,var_dmat,xexp_batch))
+            fout.write('echo "{0}: "${0} \n'.format(var_xdmat))
+        var_xexp = xexp_batch.replace(".batch","").replace(".","_").replace("-","_")
+        fout.write("{}=$(sbatch --parsable --dependency=afterok:${},afterok:${} {})\n".format(var_xexp,var_cf,var_xdmat,xexp_batch))
+        fout.write('echo "{0}: "${0} \n'.format(var_xexp))
         
     fout.close()
     os.chmod(out_name,stat.S_IRWXU | stat.S_IRWXG)
@@ -359,16 +377,20 @@ parser.add_argument("--to-do", type=str, nargs="*",
         default=["cf","xcf"],
         required=False, help="what to do")
 
-parser.add_argument("--zint", type=str, 
+parser.add_argument("--zint", type=str, nargs="*",
         default=["0:2.35","2.35:2.65","2.65:3.05","3.05:10"],
         required=False, help="redshifts intervals")
+ 
+parser.add_argument("--mode", type=str, 
+        default="desi",
+        required=False, help="use eboss or desi data")
  
 parser.add_argument("--debug", 
         action="store_true", default=False)
 
 parser.add_argument("--no-deltas",
         action="store_true", default=False,
-        help="do not run do_deltas (because they were already run)")
+        help="do not run do_deltas (e.g. because they were already run)")
 
 args = parser.parse_args()
 
@@ -408,6 +430,6 @@ if args.debug:
     time = time_debug
 if not args.no_deltas:
     do_deltas(b,time,args.in_dir, args.out_dir,args.drq,
-            email=args.email, debug=args.debug)
+            email=args.email, debug=args.debug, mode=args.mode)
 
 submit(b)
