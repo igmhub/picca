@@ -1,7 +1,11 @@
+from __future__ import print_function
+
 import scipy as sp
 import sys
 from healpy import query_disc
 from numba import jit
+
+from picca.utils import print
 
 np = None
 nt = None
@@ -53,7 +57,7 @@ def co(pix):
     for ipix in pix:
         for o1 in objs[ipix]:
 
-            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)))
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)),end="")
             with lock:
                 counter.value += 1
 

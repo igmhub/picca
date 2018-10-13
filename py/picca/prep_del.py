@@ -1,7 +1,8 @@
+from __future__ import print_function
 import scipy as sp
 import iminuit
 from picca.data import forest,variance
-
+from picca.utils import print
 
 ## mean continuum
 def mc(data):

@@ -7,6 +7,8 @@ import sys
 import time
 import os.path
 
+from picca.utils import print
+
 from picca.data import forest
 from picca.data import delta
 from picca.data import qso
@@ -82,7 +84,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     try:
         zqso = vac[1]["Z"][:]
     except:
-        sys.stderr.write("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)\n")
+        print("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
         zqso = vac[1]["Z_VI"][:]
 
     ## Info of the primary observation
@@ -122,7 +124,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
             w = w & (bal_flag==0)
             print(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
         except:
-            sys.stderr.write("BAL_FLAG_VI not found\n")
+            print("BAL_FLAG_VI not found\n")
     ## BAL CIV
     if bi_max is not None:
         try:
@@ -130,7 +132,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
             w = w & (bi<=bi_max)
             print(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
         except:
-            sys.stderr.write("--bi-max set but no BI_CIV field in vac")
+            print("--bi-max set but no BI_CIV field in vac")
             sys.exit(1)
     print("")
 
@@ -150,17 +152,20 @@ nside_min = 8
 
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None):
 
-    sys.stderr.write("mode: "+mode)
+    print("mode: "+mode)
     ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
 
     if nspec != None:
-        ra = ra[:nspec]
-        dec = dec[:nspec]
-        zqso = zqso[:nspec]
-        thid = thid[:nspec]
-        plate = plate[:nspec]
-        mjd = mjd[:nspec]
-        fid = fid[:nspec]
+        ## choose them in a small number of pixels
+        pixs = healpy.ang2pix(16, sp.pi / 2 - dec, ra)
+        s = sp.argsort(pixs)
+        ra = ra[s][:nspec]
+        dec = dec[s][:nspec]
+        zqso = zqso[s][:nspec]
+        thid = thid[s][:nspec]
+        plate = plate[s][:nspec]
+        mjd = mjd[s][:nspec]
+        fid = fid[s][:nspec]
 
     if mode == "pix":
         try:
@@ -186,23 +191,23 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         mobj = sp.bincount(pixs).sum()/len(sp.unique(pixs))
 
         ## determine nside such that there are 1000 objs per pixel on average
-        sys.stderr.write("determining nside\n")
+        print("determining nside")
         while mobj<target_mobj and nside >= nside_min:
             nside //= 2
             pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
             mobj = sp.bincount(pixs).sum()/len(sp.unique(pixs))
-        sys.stderr.write("nside = {} -- mean #obj per pixel = {}\n".format(nside,mobj))
+        print("nside = {} -- mean #obj per pixel = {}".format(nside,mobj))
         if log is not None:
             log.write("nside = {} -- mean #obj per pixel = {}\n".format(nside,mobj))
 
     elif mode=="desi":
         nside = 8
-        sys.stderr.write("Found {} qsos\n".format(len(zqso)))
+        print("Found {} qsos".format(len(zqso)))
         data = read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order)
         return data,len(data),nside,"RING"
 
     else:
-        sys.stderr.write("I don't know mode: {}".format(mode))
+        print("I don't know mode: {}".format(mode))
         sys.exit(1)
 
     data ={}
@@ -254,7 +259,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             pix_data = read_from_mock_1D(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
             read_time=time.time()-t0
         if not pix_data is None:
-            sys.stderr.write("{} read from pix {}, {} {} in {} secs per spectrum\n".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
+            print("{} read from pix {}, {} {} in {} secs per spectrum".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
         if not pix_data is None and len(pix_data)>0:
             data[pix] = pix_data
             ndata += len(pix_data)
@@ -351,7 +356,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
             for t in thid:
                 if t not in h[0][:]:
                     log.write("{} missing from pixel {}\n".format(t,pix))
-                    sys.stderr.write("{} missing from pixel {}\n".format(t,pix))
+                    print("{} missing from pixel {}".format(t,pix))
 
         pix_data=[]
         thid_list=list(h[0][:])
@@ -367,7 +372,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
                 ## fill log
                 if log is not None:
                     log.write("{} missing from pixel {}\n".format(t,pix))
-                sys.stderr.write("{} missing from pixel {}\n".format(t,pix))
+                print("{} missing from pixel {}".format(t,pix))
                 continue
             d = forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f,order)
 
@@ -599,11 +604,11 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
     for i,f in enumerate(fi):
         path = in_dir+"/"+str(int(f/100))+"/"+str(f)+"/spectra-"+str(in_nside)+"-"+str(f)+".fits"
 
-        sys.stderr.write("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
+        print("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
         try:
             h = fitsio.FITS(path)
         except IOError:
-            sys.stderr.write("Error reading pix {}\n".format(f))
+            print("Error reading pix {}\n".format(f))
             continue
 
         ## get the quasars
@@ -627,11 +632,13 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         b_reso = h["B_RESOLUTION"].read()
         r_reso = h["R_RESOLUTION"].read()
         z_reso = h["Z_RESOLUTION"].read()
+        in_tids = h[1]["TARGETID"][:]
+        h.close()
 
         for t in tid_qsos:
-            wt = h[1]["TARGETID"][:] == t
+            wt = in_tids == t
             if wt.sum()==0:
-                sys.stderr.write("\nError reading thingid {}\n".format(t))
+                print("\nError reading thingid {}\n".format(t))
                 continue
             ### B
             iv = b_iv[wt]
@@ -670,7 +677,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             data[pix].append(d)
             ndata+=1
 
-    sys.stderr.write("found {} quasars in input files\n".format(ndata))
+    print("found {} quasars in input files\n".format(ndata))
 
     return data
 
@@ -703,7 +710,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     dels = []
     ndata = 0
     for i,f in enumerate(fi):
-        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+        print("\rread {} of {} {}".format(i,len(fi),ndata))
         if from_image is None:
             hdus = fitsio.FITS(f)
             dels += [delta.from_fitsio(h) for h in hdus[1:]]
@@ -715,7 +722,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         if not nspec is None:
             if ndata>nspec:break
 
-    sys.stderr.write("\n")
+    print("\n")
 
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
@@ -756,13 +763,13 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
 
     upix = sp.unique(pix)
     for i,ipix in enumerate(upix):
-        sys.stderr.write("\r{} of {}".format(i,len(upix)))
+        print("\r{} of {}".format(i,len(upix)))
         w=pix==ipix
         objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
         for q in objs[ipix]:
             q.we = ((1.+q.zqso)/(1.+zref))**(alpha-1.)
             q.r_comov = cosmo.r_comoving(q.zqso)
 
-    sys.stderr.write("\n")
+    print("\n")
 
     return objs,zqso.min()
