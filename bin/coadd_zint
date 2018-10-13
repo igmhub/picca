@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+
+import fitsio
+import argparse
+from scipy.linalg import inv
+
+from picca.utils import smooth_cov
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--data",type=str,nargs="*",required=True,
+        help="the (x)cf_z_....fits files to be coadded")
+
+parser.add_argument("--out",type=str,required=True,
+        help="output file")
+
+args=parser.parse_args()
+h=fitsio.FITS(args.data[0])
+head = h[1].read_header()
+we = h[2]['WE'][:]
+da = h[2]['DA'][:]*we
+wet = we.sum(axis=0)
+rp = h[1]['RP'][:]*wet
+rt = h[1]['RT'][:]*wet
+nb = h[1]['NB'][:]*wet
+z = h[1]['Z'][:]*wet
+h.close()
+
+h = fitsio.FITS(args.data[0].replace('cf','dmat'))
+dm = h[1]['DM'][:]
+dm *= wet[:,None]
+
+for f in args.data[1:]:
+    h = fitsio.FITS(f)
+    we_aux = h[2]["WE"][:]
+    we += we_aux
+    wet_aux = we_aux.sum(axis=0)
+    wet += wet_aux
+
+    da += h[2]["DA"][:]*we_aux
+    rp  += h[1]['RP'][:]*wet_aux
+    rt += h[1]['RT'][:]*wet_aux
+    z += h[1]['Z'][:]*wet_aux
+    nb += h[1]['NB'][:]
+    h.close()
+
+    h = fitsio.FITS(f.replace('cf','dmat'))
+    dm += h[1]['DM'][:]*wet_aux[:,None]
+
+w = we>0
+da[w] /= we[w]
+rp /= wet
+rt /= wet
+z /= wet
+dm /= wet[:,None]
+
+co = smooth_cov(da,we,rp,rt)
+da = (da*we).sum(axis=0)
+da /= wet
+
+h = fitsio.FITS(args.out,"rw",clobber=True)
+h.write([rp,rt,z,nb,da,dm,co],names=["RP","RT","Z","NB","DA","DM","CO"],header=head)
+h.close()
