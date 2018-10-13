@@ -8,7 +8,7 @@ import healpy
 
 try:
     import __builtin__
-except:
+except ImportError:
     import builtins as __builtin__
 
 def print(*args, **kwds):
