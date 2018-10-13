@@ -235,7 +235,7 @@ def do_ini(outdir, cf_file):
     fout.write("tracer1-type = continuous\n")
     if "xcf" in cf_file:
         fout.write("tracer2 = QSO\n")
-        fout.write("tracer2-type = continuous\n")
+        fout.write("tracer2-type = discrete\n")
     else:
         fout.write("tracer2 = LYA\n")
         fout.write("tracer2-type = continuous\n")
