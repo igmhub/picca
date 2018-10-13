@@ -425,7 +425,7 @@ if "xcf" in args.to_do:
         time = time_debug
     xdmat(b,time, args.drq, args.zint, args.out_dir, email=args.email)
 
-time = "01:30:00"
+time = "02:00:00"
 if args.debug:
     time = time_debug
 if not args.no_deltas:

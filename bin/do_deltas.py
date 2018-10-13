@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python 
+
+from __future__ import print_function
 
 import sys
 import os
@@ -11,6 +13,7 @@ import argparse
 
 from picca.data import forest, delta
 from picca import prep_del, io
+from picca.utils import print
 
 def cont_fit(data):
     for d in data:
