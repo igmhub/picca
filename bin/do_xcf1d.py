@@ -10,6 +10,12 @@ from picca import constants, xcf, io, prep_del
 from picca.data import forest
 
 def corr_func(p):
+    '''Send the computation for a given list of pixels
+    Args:
+        p (lit): List of HEALpix pixels
+    Returns:
+        tmp (tuple): Results of computation
+    '''
     tmp = xcf.xcf1d(p)
     return tmp
 
@@ -142,7 +148,7 @@ if __name__ == '__main__':
         cpu_data[p] = [p]
 
     pool = Pool(processes=args.nproc)
-    cfs = map(corr_func,sorted(list(cpu_data.values())))
+    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
     ### Store

@@ -338,6 +338,18 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 def xcf1d(pix):
+    """Compute the 1D cross-correlation between delta and objects on the same LOS
+
+    Args:
+        pix (list): List of HEALpix to compute
+
+    Returns:
+        we (float array): weight
+        xi (float array): correlation
+        rp (float array): wavelenght ratio
+        z (float array): Mean redshift of pairs
+        nb (int array): Number of pairs
+    """
     xi = sp.zeros(np)
     we = sp.zeros(np)
     rp = sp.zeros(np)
