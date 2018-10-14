@@ -16,7 +16,7 @@ def corr_func(p):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Compute the cross-correlation between a catalog of objects and a delta field as a function of angle and wavelength ratio')
+        description='Compute the 1D cross-correlation between a catalog of objects and a delta field as a function of wavelength ratio')
 
     parser.add_argument('--out', type=str, default=None, required=True,
         help='Output file name')
