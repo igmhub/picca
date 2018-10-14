@@ -22,7 +22,7 @@ da = h[2]['DA'][:]*we
 wet = we.sum(axis=0)
 rp = h[1]['RP'][:]*wet
 rt = h[1]['RT'][:]*wet
-nb = h[1]['NB'][:]*wet
+nb = h[1]['NB'][:]
 z = h[1]['Z'][:]*wet
 h.close()
 
