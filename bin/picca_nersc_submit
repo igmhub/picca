@@ -76,7 +76,7 @@ def do_deltas(b,time, in_dir, out_dir, drq,
     fout.write(header)
     fout.close()
 
-def cf(b,time, zint, outdir, email=None):
+def cf(b,time, zint, outdir, email=None, fidOm = None, fidPk = None):
     '''
     Writes the .batch files to submit the do_cf.py
     and the export.py scripts
@@ -95,11 +95,12 @@ def cf(b,time, zint, outdir, email=None):
         exp_batch = export("00:10:00",
                 "cf_z_{}_{}.fits".format(zmin,zmax),
                 "dmat_z_{}_{}.fits".format(zmin,zmax),
-                outdir+"/cf_z_{}_{}-exp.fits".format(zmin,zmax))
+                outdir+"/cf_z_{}_{}-exp.fits".format(zmin,zmax),
+                fidPk=fidPk)
         header = get_header(time, name=out, email=email)
         srun = header + "srun -n 1 -c 64 do_cf.py --in-dir deltas " +\
                 "--z-cut-min {} --z-cut-max {} ".format(zmin,zmax) +\
-                "--out {} --nproc 32\n".format(out)
+                "--out {} --nproc 32 --fid-Om {}\n".format(out,fidOm)
 
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.cf.append(basename(fbatch))
@@ -109,7 +110,7 @@ def cf(b,time, zint, outdir, email=None):
         fout.write(srun)
         fout.close()
 
-def dmat(b,time, zint, outdir, email=None, rej=0.99):
+def dmat(b,time, zint, outdir, email=None, rej=0.99, fidOm=None):
     '''
     Writes the .batch files to submit the do_dmat.py script
     and adds them to the b.dmat script
@@ -127,7 +128,7 @@ def dmat(b,time, zint, outdir, email=None, rej=0.99):
         header = get_header(time, name=out, email=email)
         srun = header + "srun -n 1 -c 64 do_dmat.py --in-dir deltas " +\
                 "--z-cut-min {} --z-cut-max {} ".format(zmin,zmax) +\
-                "--out {} --rej {} --nproc 32\n".format(out,rej)
+                "--out {} --rej {} --nproc 32 --fid-Om {}\n".format(out,rej,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.dmat.append(basename(fbatch))
 
@@ -135,7 +136,7 @@ def dmat(b,time, zint, outdir, email=None, rej=0.99):
         fout.write(srun)
         fout.close()
     
-def xcf(b,time, drq, zint, outdir, email=None):
+def xcf(b,time, drq, zint, outdir, email=None,fidOm=None):
     '''
     Writes the .batch files to submit the do_xcf.py script
     and the export.py scripts
@@ -155,11 +156,12 @@ def xcf(b,time, drq, zint, outdir, email=None):
         exp_batch = export("00:10:00",
                 "xcf_z_{}_{}.fits".format(zmin,zmax),
                 "xdmat_z_{}_{}.fits".format(zmin,zmax),
-                outdir+"/xcf_z_{}_{}-exp.fits".format(zmin,zmax))
+                outdir+"/xcf_z_{}_{}-exp.fits".format(zmin,zmax),
+                fidPk=fidPk)
         srun = header + "srun -n 1 -c 64 do_xcf.py " +\
             "--drq {} --in-dir deltas ".format(drq) +\
              "--z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
-             "--out {} --nproc 32\n".format(out)
+             "--out {} --nproc 32 --fid-Om {}\n".format(out,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xcf.append(basename(fbatch))
         b.xexport.append(basename(exp_batch))
@@ -168,7 +170,7 @@ def xcf(b,time, drq, zint, outdir, email=None):
         fout.write(srun)
         fout.close()
     
-def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95):
+def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None):
     '''
     Writes the .batch files to submit the do_xdmat.py script
     and adds if to the b.xdmat list
@@ -187,7 +189,7 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95):
         srun = header + "srun -n 1 -c 64 do_xdmat.py " +\
             "--drq {} --in-dir deltas ".format(drq) +\
             "--z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
-            "--out {} --rej {} --nproc 32\n".format(out,rej)
+            "--out {} --rej {} --nproc 32 --fid-Om\n".format(out,rej,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xdmat.append(basename(fbatch))
 
@@ -195,7 +197,7 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95):
         fout.write(srun)
         fout.close()
         
-def export(time, cf_file, dmat_file, out):
+def export(time, cf_file, dmat_file, out,fidPk):
     '''
     Writes the .batch file to submit the export.py and fitter2 
     Input:
@@ -210,7 +212,7 @@ def export(time, cf_file, dmat_file, out):
     srun = header + "srun -n 1 -c 64 export.py "+\
             "--data {} --dmat {} ".format(cf_file,dmat_file)+\
             "--out {}\n".format(basename(out))
-    chi2_ini = do_ini(dirname(out), basename(out))
+    chi2_ini = do_ini(dirname(out), basename(out),fidPk)
     srun += "srun -n 1 -c 64 fitter2 {}\n".format(chi2_ini)
     fbatch = out.replace(".fits",".batch")
     fout = open(fbatch,"w")
@@ -219,7 +221,7 @@ def export(time, cf_file, dmat_file, out):
 
     return fbatch
 
-def do_ini(outdir, cf_file):
+def do_ini(outdir, cf_file,fidPk):
     '''
     Writes the .ini files to control the fits
     Input:
@@ -299,7 +301,7 @@ def do_ini(outdir, cf_file):
     fout.write("ini files = {}\n".format(cf_file.replace(".fits",".ini")))
 
     fout.write("[fiducial]\n")
-    fout.write("filename = /global/homes/n/nbusca/igmhub/picca/py/picca/fitter2/models/PlanckDR12/PlanckDR12.fits\n")
+    fout.write("filename = {}\n".format(fidPk))
 
     fout.write("[verbosity]\n")
     fout.write("level = 0\n")
@@ -377,6 +379,14 @@ parser.add_argument("--to-do", type=str, nargs="*",
         default=["cf","xcf"],
         required=False, help="what to do")
 
+parser.add_argument("--fid-Om", type=float,
+        default=0.3147,
+        required=False, help="fiducial Om")
+
+parser.add_argument("--fid-Pk", type=str,
+        default="PlanckDR12/PlanckDR12.fits",
+        required=False, help="fiducial Pk")
+
 parser.add_argument("--zint", type=str, nargs="*",
         default=["0:2.2","2.2:2.4","2.4:2.6","2.6:2.8","2.8:3.0","3.0:3.2","3.2:10"],
         required=False, help="redshifts intervals")
@@ -407,23 +417,27 @@ if "cf" in args.to_do:
     time = "03:30:00"
     if args.debug:
         time = time_debug
-    cf(b,time, args.zint, args.out_dir, email=args.email)
+    cf(b,time, args.zint, args.out_dir,
+            email=args.email,fidOm=args.fid_Om,fidPk=args.fid_Pk)
 
     time = "02:00:00"
     if args.debug:
         time = time_debug
-    dmat(b,time, args.zint, args.out_dir, email=args.email)
+    dmat(b,time, args.zint, args.out_dir,
+            email=args.email,fidOm=args.fid_Om)
 
 if "xcf" in args.to_do:
     time = "01:30:00"
     if args.debug:
         time = time_debug
-    xcf(b,time, args.drq, args.zint, args.out_dir, email=args.email)
+    xcf(b,time, args.drq, args.zint, args.out_dir,
+            email=args.email,fidOm=args.fid_Om, fidPk=args.fid_Pk)
 
     time = "03:00:00"
     if args.debug:
         time = time_debug
-    xdmat(b,time, args.drq, args.zint, args.out_dir, email=args.email)
+    xdmat(b,time, args.drq, args.zint, args.out_dir,
+            email=args.email, args=args.fid_Om)
 
 time = "02:00:00"
 if args.debug:

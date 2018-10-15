@@ -23,14 +23,10 @@ def parse_chi2(filename):
 
     dic_init['fiducial'] = {}
 
-    if cp.has_section('fiducial'):
-        p = cp.get('fiducial','filename')
-        p = os.path.expandvars(p)
-        print('INFO: reading input Pk {}'.format(p))
-    else:
-        p = resource_filename('picca', 'fitter2/models/PlanckDR12/PlanckDR12.fits')
-        p = os.path.expandvars(p)
-        print('INFO: reading default Pk {}'.format(p))
+    p = cp.get('fiducial','filename')
+    p = resource_filename('picca', 'fitter2/models/{}'.format(p))
+    p = os.path.expandvars(p)
+    print('INFO: reading input Pk {}'.format(p))
 
     h = fitsio.FITS(p)
     zref = h[1].read_header()['ZREF']
