@@ -7,7 +7,7 @@ import scipy.linalg
 import argparse
 
 from picca.utils import smooth_cov, cov
-
+from picca.utils import print
 
 if __name__ == '__main__':
 

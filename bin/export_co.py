@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 import fitsio
 import scipy as sp
 import argparse
 import sys
 import glob
+from picca.utils import print
 
 if __name__ == '__main__':
 
