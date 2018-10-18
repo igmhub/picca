@@ -125,6 +125,10 @@ if __name__ == '__main__':
 
     ### Read deltas
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs, args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec)
+    for p,delsp in dels.items():
+        for d in delsp:
+            for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','dll']:
+                setattr(d,k,None)
     xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels

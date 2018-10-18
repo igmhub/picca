@@ -65,14 +65,8 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--no-project', action='store_true', required=False,
-        help='Do not project out continuum fitting modes')
-
     parser.add_argument('--cf1d', type=str, required=True,
         help='1D auto-correlation of pixels from the same forest file: do_cf1d.py')
-
-    parser.add_argument('--old-deltas', action='store_true', required=False,
-        help='Do not correct weights for redshift evolution')
 
     parser.add_argument('--rej', type=float, default=1., required=False,
         help='Fraction of rejected pairs: -1=no rejection, 1=all rejection')
@@ -126,7 +120,11 @@ if __name__ == '__main__':
     h.close()
 
     ### Read data
-    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, cf.lambda_abs,args.z_evol, args.z_ref, cosmo,nspec=args.nspec,no_project=args.no_project)
+    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, cf.lambda_abs, args.z_evol, args.z_ref, cosmo, nspec=args.nspec)
+    for p,datap in data.items():
+        for d in datap:
+            for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','dll']:
+                setattr(d,k,None)
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata

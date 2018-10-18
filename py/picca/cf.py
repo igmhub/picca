@@ -501,7 +501,7 @@ def t123(pix):
             w1 = d1.we
             c1d_1 = (w1*w1[:,None])*c1d(abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
-            z1 = 10**d1.ll/lambda_abs-1.
+            z1 = d1.ll
             r = random.rand(len(d1.neighs))
             w = r>rej
             npairs += len(d1.neighs)
@@ -513,12 +513,9 @@ def t123(pix):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 v2 = v1d(d2.ll)
-                w2 = d2.we
                 c1d_2 = (w2*w2[:,None])*c1d(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
-                r2 = d2.r_comov
-                z2 = 10**d2.ll/lambda_abs-1.
 
-                fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate)
+                fill_t123(r1,d2.r_comov,ang,w1,d2.we,z1,d2.z,c1d_1,c1d_2,w123,t123_loc,same_half_plate)
             setattr(d1,"neighs",None)
 
     return w123,t123_loc,npairs,npairs_used
