@@ -199,32 +199,32 @@ if __name__ == '__main__':
     print(" \nFinished\n")
     pool.close()
 
-    wickT       = sp.array(wickT)
-    wAll        = wickT[:,0].sum(axis=0)
-    nb          = wickT[:,1].sum(axis=0)
-    npairs      = wickT[:,2].sum(axis=0)
+    wickT = sp.array(wickT)
+    wAll = wickT[:,0].sum(axis=0)
+    nb = wickT[:,1].sum(axis=0)
+    npairs = wickT[:,2].sum(axis=0)
     npairs_used = wickT[:,3].sum(axis=0)
-    T1          = wickT[:,4].sum(axis=0)
-    T2          = wickT[:,5].sum(axis=0)
-    T3          = wickT[:,6].sum(axis=0)
-    T4          = wickT[:,7].sum(axis=0)
-    T5          = wickT[:,8].sum(axis=0)
-    T6          = wickT[:,9].sum(axis=0)
-    we     = wAll*wAll[:,None]
-    w      = we>0.
+    T1 = wickT[:,4].sum(axis=0)
+    T2 = wickT[:,5].sum(axis=0)
+    T3 = wickT[:,6].sum(axis=0)
+    T4 = wickT[:,7].sum(axis=0)
+    T5 = wickT[:,8].sum(axis=0)
+    T6 = wickT[:,9].sum(axis=0)
+    we = wAll*wAll[:,None]
+    w = we>0.
     T1[w] /= we[w]
     T2[w] /= we[w]
     T3[w] /= we[w]
     T4[w] /= we[w]
     T5[w] /= we[w]
     T6[w] /= we[w]
-    T1    *= 1.*npairs_used/npairs
-    T2    *= 1.*npairs_used/npairs
-    T3    *= 1.*npairs_used/npairs
-    T4    *= 1.*npairs_used/npairs
-    T5    *= 1.*npairs_used/npairs
-    T6    *= 1.*npairs_used/npairs
-    Ttot   = T1+T2+T3+T4+T5+T6
+    T1 *= 1.*npairs_used/npairs
+    T2 *= 1.*npairs_used/npairs
+    T3 *= 1.*npairs_used/npairs
+    T4 *= 1.*npairs_used/npairs
+    T5 *= 1.*npairs_used/npairs
+    T6 *= 1.*npairs_used/npairs
+    Ttot = T1+T2+T3+T4+T5+T6
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},

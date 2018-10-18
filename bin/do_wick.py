@@ -7,13 +7,10 @@ import glob
 import healpy
 import sys
 from scipy.interpolate import interp1d
-
-from picca import constants
-from picca import cf
-from picca.data import delta
-from picca import utils
-
 from multiprocessing import Pool,Lock,cpu_count,Value
+
+from picca import constants, cf, utils, io
+from picca.data import delta
 
 
 def calc_t123(p):
@@ -33,6 +30,9 @@ if __name__ == '__main__':
     parser.add_argument('--in-dir', type=str, default=None, required=True,
         help='Directory to delta files')
 
+    parser.add_argument('--rp-min', type=float, default=0., required=False,
+        help='Min r-parallel [h^-1 Mpc]')
+
     parser.add_argument('--rp-max', type=float, default=200., required=False,
         help='Max r-parallel [h^-1 Mpc]')
 
@@ -44,6 +44,14 @@ if __name__ == '__main__':
 
     parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
+
+    parser.add_argument('--z-cut-min', type=float, default=0., required=False,
+        help='Use only pairs of forest x object with the mean of the last absorber \
+        redshift and the object redshift larger than z-cut-min')
+
+    parser.add_argument('--z-cut-max', type=float, default=10., required=False,
+        help='Use only pairs of forest x object with the mean of the last absorber \
+        redshift and the object redshift smaller than z-cut-max')
 
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
         help='Name of the absorption in picca.constants defining the redshift of the delta')
@@ -88,6 +96,9 @@ if __name__ == '__main__':
 
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
+    cf.rp_min = args.rp_min
+    cf.z_cut_max = args.z_cut_max
+    cf.z_cut_min = args.z_cut_min
     cf.np = args.np
     cf.nt = args.nt
     cf.nside = args.nside
@@ -98,86 +109,54 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
-
+    ### Load cf1d
     h = fitsio.FITS(args.cf1d)
     head = h[1].read_header()
     llmin = head['LLMIN']
     llmax = head['LLMAX']
     dll = head['DLL']
-    nv1d   = h[1]['nv1d'][:]
+    nv1d = h[1]['nv1d'][:]
     cf.v1d = h[1]['v1d'][:]
     ll = llmin + dll*sp.arange(len(cf.v1d))
-    cf.v1d = interp1d(ll[nv1d>0],cf.v1d[nv1d>0],kind='nearest')
+    cf.v1d = interp1d(ll[nv1d>0],cf.v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
 
     nb1d   = h[1]['nb1d'][:]
     cf.c1d = h[1]['c1d'][:]
     cf.c1d = interp1d((ll-llmin)[nb1d>0],cf.c1d[nb1d>0],kind='nearest')
     h.close()
 
-
-    z_min_pix = 1.e6
-    if (len(args.in_dir)>8) and (args.in_dir[-8:]==".fits.gz"):
-        fi = glob.glob(args.in_dir)
-    else:
-        fi = glob.glob(args.in_dir+"/*.fits.gz")
-    fi = sorted(fi)
-    data = {}
-    ndata = 0
-    for i,f in enumerate(fi):
-        if i%10==0:
-            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
-        hdus = fitsio.FITS(f)
-        dels = [delta.from_fitsio(h) for h in hdus[1:]]
-        ndata+=len(dels)
-        phi = [d.ra for d in dels]
-        th = [sp.pi/2-d.dec for d in dels]
-        pix = healpy.ang2pix(cf.nside,th,phi)
-        for d,p in zip(dels,pix):
-            if not p in data:
-                data[p]=[]
-            data[p].append(d)
-
-            z = 10**d.ll/args.lambda_abs-1.
-            z_min_pix = sp.amin( sp.append([z_min_pix],z) )
-            d.r_comov = cosmo.r_comoving(z)
-            if not args.old_deltas:
-                d.we *= ((1.+z)/(1.+args.z_ref))**(cf.alpha-1.)
-            if not args.no_project:
-                d.project()
-        if not args.nspec is None:
-            if ndata>args.nspec:break
-    sys.stderr.write("\n")
-
-    cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,z_min_pix)
-
+    ### Read data
+    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, cf.lambda_abs,args.z_evol, args.z_ref, cosmo,nspec=args.nspec,no_project=args.no_project)
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
-    print("done")
+    sys.stderr.write("\n")
+    print("done, npix = {}".format(cf.npix))
 
+    cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix)
+
+    ###
     cf.counter = Value('i',0)
-
     cf.lock = Lock()
-
     cpu_data = {}
     for i,p in enumerate(sorted(list(data.keys()))):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
         cpu_data[ip].append(p)
-
     pool = Pool(processes=args.nproc)
     t123 = pool.map(calc_t123,sorted(list(cpu_data.values())))
     pool.close()
 
+    ###
     t123 = sp.array(t123)
-    w123=t123[:,0].sum(axis=0)
-    npairs=t123[:,2].sum(axis=0)
-    npairs_used=t123[:,3].sum(axis=0)
-    t123=t123[:,1].sum(axis=0)
+    w123 = t123[:,0].sum(axis=0)
+    npairs = t123[:,2].sum(axis=0)
+    npairs_used = t123[:,3].sum(axis=0)
+    t123 = t123[:,1].sum(axis=0)
     we = w123*w123[:,None]
-    w=we>0
-    t123[w]/=we[w]
+    w = we>0
+    t123[w] /= we[w]
     t123 = npairs_used*t123/npairs
 
 

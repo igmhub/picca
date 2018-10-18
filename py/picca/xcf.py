@@ -291,14 +291,14 @@ def wickT(pix):
         (tuple): results of the Wick computation
 
     """
-    T1   = sp.zeros([np*nt,np*nt])
-    T2   = sp.zeros([np*nt,np*nt])
-    T3   = sp.zeros([np*nt,np*nt])
-    T4   = sp.zeros([np*nt,np*nt])
-    T5   = sp.zeros([np*nt,np*nt])
-    T6   = sp.zeros([np*nt,np*nt])
+    T1 = sp.zeros([np*nt,np*nt])
+    T2 = sp.zeros([np*nt,np*nt])
+    T3 = sp.zeros([np*nt,np*nt])
+    T4 = sp.zeros([np*nt,np*nt])
+    T5 = sp.zeros([np*nt,np*nt])
+    T6 = sp.zeros([np*nt,np*nt])
     wAll = sp.zeros(np*nt)
-    nb   = sp.zeros(np*nt,dtype=sp.int64)
+    nb = sp.zeros(np*nt,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
 

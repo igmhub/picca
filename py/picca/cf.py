@@ -486,10 +486,12 @@ v1d = None
 c1d = None
 ## auto
 def t123(pix):
+
     t123_loc = sp.zeros([np*nt,np*nt])
     w123 = sp.zeros(np*nt)
     npairs = 0
     npairs_used = 0
+
     for ipix in pix:
         for d1 in data[ipix]:
             sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
@@ -502,8 +504,10 @@ def t123(pix):
             z1 = 10**d1.ll/lambda_abs-1
             r = random.rand(len(d1.neighs))
             w = r>rej
-            npairs+=len(d1.neighs)
+            npairs += len(d1.neighs)
             npairs_used += w.sum()
+            if w.sum()==0: continue
+
             for d2 in sp.array(d1.neighs)[w]:
                 ang = d1^d2
 
@@ -546,7 +550,7 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
 
     if same_half_plate:
-        w = w & (abs(rp)>(rp_max-rp_min)/np)
+        w &= abs(rp)>(rp_max-rp_min)/np
 
     bins = bins[w]
     ba = ba[w]
