@@ -513,6 +513,7 @@ def t123(pix):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 v2 = v1d(d2.ll)
+                w2 = d2.we
                 c1d_2 = (w2*w2[:,None])*c1d(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
 
                 fill_t123(r1,d2.r_comov,ang,w1,d2.we,z1,d2.z,c1d_1,c1d_2,w123,t123_loc,same_half_plate)
