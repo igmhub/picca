@@ -501,12 +501,11 @@ def t123(pix):
             w1 = d1.we
             c1d_1 = (w1*w1[:,None])*c1d(abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
-            z1 = 10**d1.ll/lambda_abs-1
+            z1 = 10**d1.ll/lambda_abs-1.
             r = random.rand(len(d1.neighs))
             w = r>rej
             npairs += len(d1.neighs)
             npairs_used += w.sum()
-            if w.sum()==0: continue
 
             for d2 in sp.array(d1.neighs)[w]:
                 ang = d1^d2
@@ -517,7 +516,7 @@ def t123(pix):
                 w2 = d2.we
                 c1d_2 = (w2*w2[:,None])*c1d(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
                 r2 = d2.r_comov
-                z2 = 10**d2.ll/lambda_abs-1
+                z2 = 10**d2.ll/lambda_abs-1.
 
                 fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate)
             setattr(d1,"neighs",None)
@@ -532,15 +531,14 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
     n2 = len(r2)
     i1 = sp.arange(n1)
     i2 = sp.arange(n2)
-    zw1 = ((1+z1)/(1+zref))**(alpha-1)
-    zw2 = ((1+z2)/(1+zref))**(alpha-1)
+    zw1 = ((1.+z1)/(1.+zref))**(alpha-1.)
+    zw2 = ((1.+z2)/(1.+zref))**(alpha-1.)
 
     bins = i1[:,None]+n1*i2
-    if x_correlation:
-        rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    else :
-        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+    rp = (r1[:,None]-r2)*sp.cos(ang/2.)
+    rt = (r1[:,None]+r2)*sp.sin(ang/2.)
+    if not x_correlation:
+        rp = abs(rp)
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     ba = bt + nt*bp
