@@ -157,8 +157,7 @@ if __name__ == '__main__':
     we = w123*w123[:,None]
     w = we>0
     t123[w] /= we[w]
-    t123 = npairs_used*t123/npairs
-
+    t123 *= 1.*npairs_used/npairs
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
