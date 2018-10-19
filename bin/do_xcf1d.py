@@ -103,15 +103,12 @@ if __name__ == '__main__':
     xcf.ang_correlation = True
 
     lambda_abs = constants.absorber_IGM[args.lambda_abs]
-    xcf.lambda_abs = lambda_abs
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, constants.absorber_IGM[args.lambda_abs],args.z_evol_del, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
-    xcf.npix = len(dels)
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs, args.z_evol_del, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
     xcf.dels = dels
-    xcf.ndels = ndels
     sys.stderr.write("\n")
-    print("done, npix = {}".format(xcf.npix))
+    print("done, npix = {}".format(len(dels)))
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
@@ -123,9 +120,9 @@ if __name__ == '__main__':
                     forest.dll = dll
                 else:
                     forest.dll = min(dll,forest.dll)
-        forest.lmin  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
-        forest.lmax  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
-        ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
+        forest.lmin = sp.log10( (zmin_pix+1.)*lambda_abs )-forest.dll/2.
+        forest.lmax = sp.log10( (zmax_pix+1.)*lambda_abs )+forest.dll/2.
+        ll,st, wst = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
             for d in xcf.dels[p]:
                 bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
@@ -134,18 +131,16 @@ if __name__ == '__main__':
     ### Read objects
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
                                 args.z_evol_obj, args.z_ref,cosmo=None)
-    for i,ipix in enumerate(sorted(objs.keys())):
-        for q in objs[ipix]:
+    xcf.objs = objs
+    for objsp in xcf.objs.values():
+        for q in objsp:
             q.ll = sp.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
     sys.stderr.write("\n")
-    xcf.objs = objs
 
     ### Send
-    xcf.counter = Value('i',0)
-    xcf.lock = Lock()
     pool = Pool(processes=args.nproc)
-    cpu_data = {p:[p] for p in list(dels.keys()) if p in list(objs.keys()) }
-    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
+    pixList = [ [p] for p in sorted(dels.keys()) if p in xcf.objs.keys() ]
+    cfs = pool.map(corr_func, pixList)
     pool.close()
 
     ### Store
@@ -155,7 +150,7 @@ if __name__ == '__main__':
     zs = cfs[:,3,:]
     nbs = cfs[:,4,:].astype(sp.int64)
     cfs = cfs[:,1,:]
-    hep = sp.array(sorted(list(cpu_data.keys())))
+    hep = sp.array([p for p in sorted(dels.keys()) if p in xcf.objs.keys()])
 
     w = (wes.sum(axis=0)>0.)
     rp = (rps*wes).sum(axis=0)
