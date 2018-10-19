@@ -143,11 +143,8 @@ if __name__ == '__main__':
     ### Send
     xcf.counter = Value('i',0)
     xcf.lock = Lock()
-    cpu_data = {}
-    for p in list(dels.keys()):
-        cpu_data[p] = [p]
-
     pool = Pool(processes=args.nproc)
+    cpu_data = {p:[p] for p in list(dels.keys()) if p in list(objs.keys()) }
     cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 

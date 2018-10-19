@@ -357,8 +357,6 @@ def xcf1d(pix):
     nb = sp.zeros(np,dtype=sp.int64)
 
     for ipix in pix:
-        if ipix not in objs.keys(): continue
-
         for d in dels[ipix]:
 
             neighs = [q for q in objs[ipix] if q.thid==d.thid]
