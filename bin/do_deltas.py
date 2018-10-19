@@ -289,7 +289,8 @@ if __name__ == '__main__':
                 continue
 
             l.append(d)
-            log.write("{} accepted\n".format(d.thid))
+            log.write("{} {}-{}-{} accepted\n".format(d.thid,
+                d.plate,d.mjd,d.thid))
         data[p][:] = l
         if len(data[p])==0:
             del data[p]

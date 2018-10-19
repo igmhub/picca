@@ -616,7 +616,10 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
         de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
         pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
-        exp = h["FIBERMAP"]["EXPID"][:]
+        ##exp = h["FIBERMAP"]["EXPID"][:]
+        ## the follwing line is a hack until quickquasars 
+        ## writes realistic EXPID (currently they are all zero)
+        exp = h["FIBERMAP"]["NIGHT"][:]
         night = h["FIBERMAP"]["NIGHT"][:]
         fib = h["FIBERMAP"]["FIBER"][:]
 
