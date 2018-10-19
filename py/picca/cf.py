@@ -465,7 +465,6 @@ def x_forest_cf1d(pix):
     nb1d = sp.zeros(n1d**2,dtype=sp.int64)
 
     for d1 in data[pix]:
-        if pix not in data2.keys(): continue
         bins1 = ((d1.ll-lmin)/dll+0.5).astype(int)
         wde1 = d1.we*d1.de
         we1 = d1.we

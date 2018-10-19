@@ -123,12 +123,10 @@ if __name__ == '__main__':
     pool = Pool(processes=args.nproc)
 
     if cf.x_correlation:
-        keys = []
-        for i in list(data.keys()):
-            if i in list(data2.keys()):
-                keys.append(i)
-        cfs = pool.map(cf1d,sorted(keys))
-    else: cfs = pool.map(cf1d,sorted(list(data.keys())))
+        keys = sorted([ k for k in list(data.keys()) if k in list(data2.keys()) ])
+    else:
+        keys = sorted(list(data.keys()))
+    cfs = pool.map(cf1d,keys)
     pool.close()
     print('\n')
 
