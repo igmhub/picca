@@ -619,7 +619,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         ##exp = h["FIBERMAP"]["EXPID"][:]
         ## the follwing line is a hack until quickquasars 
         ## writes realistic EXPID (currently they are all zero)
-        exp = h["FIBERMAP"]["NIGHT"][:]
+        exp = h["FIBERMAP"]["FIBER"][:]
         night = h["FIBERMAP"]["NIGHT"][:]
         fib = h["FIBERMAP"]["FIBER"][:]
 
