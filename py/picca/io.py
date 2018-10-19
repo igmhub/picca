@@ -613,13 +613,13 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
         ## get the quasars
         tid_qsos = thid[(in_pixs==f)]
+        plate_qsos = plate[(in_pixs==f)]
+        mjd_qsos = mjd[(in_pixs==f)]
+        fid_qsos = fid[(in_pixs==f)]
         ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
         de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
         pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
-        ##exp = h["FIBERMAP"]["EXPID"][:]
-        ## the follwing line is a hack until quickquasars 
-        ## writes realistic EXPID (currently they are all zero)
-        exp = h["FIBERMAP"]["FIBER"][:]
+        exp = h["FIBERMAP"]["EXPID"][:]
         night = h["FIBERMAP"]["NIGHT"][:]
         fib = h["FIBERMAP"]["FIBER"][:]
 
@@ -638,7 +638,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         in_tids = h[1]["TARGETID"][:]
         h.close()
 
-        for t in tid_qsos:
+        for t,p,m,f in zip(tid_qsos,plate_qsos,mjd_qsos,fid_qsos):
             wt = in_tids == t
             if wt.sum()==0:
                 print("\nError reading thingid {}\n".format(t))
@@ -652,7 +652,8 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             reso_sum = b_reso[wt].sum(axis=0)
             reso_in_km_per_s=spectral_resolution_desi(reso_sum,b_ll)
             diff = sp.zeros(b_ll.shape)
-            d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
+            d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
+                    p,m,f,order,diff,reso_in_km_per_s)
             ### R
             iv = r_iv[wt]
             fl = (iv*r_fl[wt]).sum(axis=0)
@@ -662,7 +663,8 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             reso_sum = r_reso[wt].sum(axis=0)
             reso_in_km_per_s=spectral_resolution_desi(reso_sum,r_ll)
             diff = sp.zeros(r_ll.shape)
-            d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
+            d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
+                    p,m,f,order,diff,reso_in_km_per_s)
             ### Z
             iv = z_iv[wt]
             fl = (iv*z_fl[wt]).sum(axis=0)
@@ -672,7 +674,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             reso_sum = z_reso[wt].sum(axis=0)
             reso_in_km_per_s=spectral_resolution_desi(reso_sum,z_ll)
             diff = sp.zeros(z_ll.shape)
-            d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],exp[wt][0],night[wt][0],fib[wt][0],order,diff,reso_in_km_per_s)
+            d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],p,m,f,order,diff,reso_in_km_per_s)
 
             pix = pixs[wt][0]
             if pix not in data:
