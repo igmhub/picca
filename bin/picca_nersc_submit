@@ -437,7 +437,7 @@ if "xcf" in args.to_do:
     if args.debug:
         time = time_debug
     xdmat(b,time, args.drq, args.zint, args.out_dir,
-            email=args.email, args=args.fid_Om)
+            email=args.email, fidOm=args.fid_Om)
 
 time = "02:00:00"
 if args.debug:
