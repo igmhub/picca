@@ -4,7 +4,7 @@ import scipy as sp
 import fitsio
 import argparse
 import sys
-from multiprocessing import Pool,Lock,cpu_count,Value
+from multiprocessing import Pool,cpu_count
 
 from picca import constants, xcf, io, prep_del
 from picca.data import forest
