@@ -136,7 +136,7 @@ def dmat(b,time, zint, outdir, email=None, rej=0.99, fidOm=None):
         fout.write(srun)
         fout.close()
     
-def xcf(b,time, drq, zint, outdir, email=None,fidOm=None):
+def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None):
     '''
     Writes the .batch files to submit the do_xcf.py script
     and the export.py scripts
