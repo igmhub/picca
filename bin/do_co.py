@@ -88,8 +88,8 @@ if __name__ == '__main__':
     co.rp_max = args.rp_max
     co.rp_min = args.rp_min
     co.rt_max = args.rt_max
-    cf.z_cut_min = args.z_cut_min
-    cf.z_cut_max = args.z_cut_max
+    co.z_cut_min = args.z_cut_min
+    co.z_cut_max = args.z_cut_max
     co.np     = args.np
     co.nt     = args.nt
     co.nside  = args.nside
