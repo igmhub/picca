@@ -45,6 +45,12 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
+    parser.add_argument('--z-cut-min', type=float, default=0., required=False,
+        help='Use only pairs of object x object with the mean redshift larger than z-cut-min')
+
+    parser.add_argument('--z-cut-max', type=float, default=10., required=False,
+        help='Use only pairs of object x object with the mean redshift lower than z-cut-max')
+
     parser.add_argument('--z-min-obj', type=float, default=None, required=False,
         help='Min redshift for object field')
 
@@ -81,6 +87,8 @@ if __name__ == '__main__':
     co.rp_max = args.rp_max
     co.rp_min = args.rp_min
     co.rt_max = args.rt_max
+    co.z_cut_min = args.z_cut_min
+    co.z_cut_max = args.z_cut_max
     co.np     = args.np
     co.nt     = args.nt
     co.nside  = args.nside
