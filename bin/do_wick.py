@@ -13,7 +13,7 @@ from picca import constants, cf, utils, io
 from picca.data import delta
 
 
-def calc_t123(p):
+def calc_wickT(p):
     cf.fill_neighs(p)
     sp.random.seed(p[0])
     tmp = cf.t123(p)
@@ -142,29 +142,41 @@ if __name__ == '__main__':
         if not ip in cpu_data:
             cpu_data[ip] = []
         cpu_data[ip].append(p)
+
     pool = Pool(processes=args.nproc)
-    t123 = pool.map(calc_t123,sorted(list(cpu_data.values())))
+    print(" \nStarting\n")
+    wickT = pool.map(calc_wickT,sorted(list(cpu_data.values())))
+    print(" \nFinished\n")
     pool.close()
 
-    ###
-    t123 = sp.array(t123)
-    w123 = t123[:,0].sum(axis=0)
-    npairs = t123[:,2].sum(axis=0)
-    npairs_used = t123[:,3].sum(axis=0)
-    t123 = t123[:,1].sum(axis=0)
-    we = w123*w123[:,None]
-    w = we>0
-    t123[w] /= we[w]
-    t123 *= 1.*npairs_used/npairs
+    wickT = sp.array(wickT)
+    wAll = wickT[:,0].sum(axis=0)
+    nb = wickT[:,1].sum(axis=0)
+    npairs = wickT[:,2].sum(axis=0)
+    npairs_used = wickT[:,3].sum(axis=0)
+    T1 = wickT[:,4].sum(axis=0)
+    T2 = wickT[:,5].sum(axis=0)
+    we = wAll*wAll[:,None]
+    w = we>0.
+    T1[w] /= we[w]
+    T2[w] /= we[w]
+    T1 *= 1.*npairs_used/npairs
+    T2 *= 1.*npairs_used/npairs
+    Ttot = T1+T2
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+    head = [
+        {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel [h^-1 Mpc]'},
+        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
+        {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
-    out.write([w123,t123],names=['WE','CO'],header=head,comment=['Sum of weight','Covariance from T123'],extname='COV')
+    comment = ['Sum of weight','Covariance','Nomber of pairs','T1','T2']
+    out.write([Ttot,wAll,nb,T1,T2],names=['CO','WALL','NB','T1','T2'],comment=comment,header=head,extname='COV')
     out.close()

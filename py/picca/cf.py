@@ -487,8 +487,10 @@ c1d = None
 ## auto
 def t123(pix):
 
-    t123_loc = sp.zeros([np*nt,np*nt])
-    w123 = sp.zeros(np*nt)
+    T1 = sp.zeros([np*nt,np*nt])
+    T2 = sp.zeros([np*nt,np*nt])
+    wAll = sp.zeros(np*nt)
+    nb = sp.zeros(np*nt,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
 
@@ -502,7 +504,7 @@ def t123(pix):
             c1d_1 = (w1*w1[:,None])*c1d(abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.ll
-            r = random.rand(len(d1.neighs))
+            r = sp.random.rand(len(d1.neighs))
             w = r>rej
             npairs += len(d1.neighs)
             npairs_used += w.sum()
@@ -516,14 +518,13 @@ def t123(pix):
                 w2 = d2.we
                 c1d_2 = (w2*w2[:,None])*c1d(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
 
-                fill_t123(r1,d2.r_comov,ang,w1,d2.we,z1,d2.z,c1d_1,c1d_2,w123,t123_loc,same_half_plate)
+                fill_t123(r1,d2.r_comov,ang,w1,d2.we,z1,d2.z,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2)
             setattr(d1,"neighs",None)
 
-    return w123,t123_loc,npairs,npairs_used
-
+    return wAll, nb, npairs, npairs_used, T1, T2
 
 @jit
-def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
+def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2):
 
     n1 = len(r1)
     n2 = len(r2)
@@ -556,12 +557,16 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
     for k in range(w.sum()):
         i1 = bins[k]%n1
         j1 = (bins[k]-i1)//n1
-        w123[ba[k]]+=we[k]
-        t123_loc[ba[k],ba[k]]+=we[k]/zw[k]
+
+        wAll[ba[k]] += we[k]
+        nb[ba[k]] += 1
+        T1[ba[k],ba[k]] += we[k]/zw[k]
+
         for l in range(k+1,w.sum()):
             i2 = bins[l]%n1
             j2 = (bins[l]-i2)//n1
             prod = c1d_1[i1,i2]*c1d_2[j1,j2]
-            t123_loc[ba[k],ba[l]]+=prod
-            t123_loc[ba[l],ba[k]]+=prod
+            T2[ba[k],ba[l]] += prod
+            T2[ba[l],ba[k]] += prod
 
+    return
