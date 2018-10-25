@@ -117,9 +117,9 @@ if __name__ == '__main__':
         cf.ndata2 = ndata2
 
     ### Convert lists to arrays
-    data = {k:sp.array(v) for k,v in data.items()}
+    cf.data = {k:sp.array(v) for k,v in cf.data.items()}
     if cf.x_correlation:
-        data2 = {k:sp.array(v) for k,v in data2.items()}
+        cf.data2 = {k:sp.array(v) for k,v in cf.data2.items()}
 
     ###
     cf.counter = Value('i',0)
@@ -127,9 +127,9 @@ if __name__ == '__main__':
     pool = Pool(processes=args.nproc)
 
     if cf.x_correlation:
-        keys = sorted([ k for k in list(data.keys()) if k in list(data2.keys()) ])
+        keys = sorted([ k for k in list(cf.data.keys()) if k in list(cf.data2.keys()) ])
     else:
-        keys = sorted(list(data.keys()))
+        keys = sorted(list(cf.data.keys()))
     cfs = pool.map(cf1d,keys)
     pool.close()
     print('\n')
