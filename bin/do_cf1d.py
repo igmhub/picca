@@ -117,10 +117,9 @@ if __name__ == '__main__':
         cf.ndata2 = ndata2
 
     ### Convert lists to arrays
-    for k in data.keys():
-        data[k] = sp.array(data[k])
-    for k in data2.keys():
-        data2[k] = sp.array(data2[k])
+    data = {k:sp.array(v) for k,v in data.items()}
+    if cf.x_correlation:
+        data2 = {k:sp.array(v) for k,v in data2.items()}
 
     ###
     cf.counter = Value('i',0)
