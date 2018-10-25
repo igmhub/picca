@@ -116,6 +116,11 @@ if __name__ == '__main__':
         cf.data2  = data2
         cf.ndata2 = ndata2
 
+    ### Convert lists to arrays
+    for k in data.keys():
+        data[k] = sp.array(data[k])
+    for k in data2.keys():
+        data2[k] = sp.array(data2[k])
 
     ###
     cf.counter = Value('i',0)
