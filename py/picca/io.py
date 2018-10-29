@@ -500,7 +500,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
             sys.exit(1)
         if len(fi) == 0:
             print("ERROR: can't find required spAll file in {}".format(in_dir))
-            print("ERROR: try runnint with --bestobs option (but you will lose reobservations)")
+            print("ERROR: try runnint with --best-obs option (but you will lose reobservations)")
             sys.exit(1)
 
         spAll = fitsio.FITS(fi[0])
