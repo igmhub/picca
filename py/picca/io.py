@@ -554,9 +554,13 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
     for pm in platemjd:
         p,m = pm
-        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(p.zfill(4),m)
+        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(str(p).zfill(4),m)
 
-        h = fitsio.FITS(spplate)
+        try:
+            h = fitsio.FITS(spplate)
+        except IOError:
+            log.write("error reading {}\n".format(spplate))
+            continue
         head0 = h[0].read_header()
         t0 = time.time()
 
