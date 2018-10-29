@@ -554,7 +554,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
     for pm in platemjd:
         p,m = pm
-        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(p,m)
+        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(p.zfill(4),m)
 
         h = fitsio.FITS(spplate)
         head0 = h[0].read_header()
