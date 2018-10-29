@@ -313,7 +313,8 @@ class chi2:
                 gbb = g.create_group("broadband")
                 for k,bbs in d.bb.items():
                     for bb in bbs:
-                        bband = gbb.create_dataset(bb.name, d.da.shape, dtype = "f")
+                        bband = gbb.create_dataset(bb.name, 
+                                d.da.shape, dtype = "f")
                         bband[...] = bb(d.r, d.mu, **self.best_fit.values)
         del self.best_fit.values['SB']
 

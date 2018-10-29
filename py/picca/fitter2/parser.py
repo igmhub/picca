@@ -157,7 +157,7 @@ def parse_data(filename,zeff,fiducial):
             dic_bb['pre'] = value[1]
 
             assert value[2]=='rp,rt' or value[2]=='r,mu'
-            dic_bb['rt_rp'] = value[2]=='rp,rt'
+            dic_bb['rp_rt'] = value[2]
 
             deg_r_min,deg_r_max,ddeg_r = value[3].split(':')
             dic_bb['deg_r_min'] = int(deg_r_min)

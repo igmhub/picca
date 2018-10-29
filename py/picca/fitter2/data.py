@@ -143,8 +143,8 @@ class data:
                 deg_mu_max = dic_bb['deg_mu_max']
                 ddeg_mu = dic_bb['ddeg_mu']
     
-                name = 'BB-{}-{} {} {}'.format(self.name,
-                        ibb,dic_bb['type'],dic_bb['pre'])
+                name = 'BB-{}-{} {} {} {}'.format(self.name,
+                        ibb,dic_bb['type'],dic_bb['pre'],dic_bb['rp_rt'])
 
                 bb_pars = {'{} ({},{})'.format(name,i,j):0\
                     for i in range(deg_r_min,deg_r_max+1,ddeg_r)\
@@ -157,7 +157,7 @@ class data:
                 bb = partial(xi.broadband, deg_r_min=deg_r_min,
                     deg_r_max=deg_r_max, ddeg_r=ddeg_r,
                     deg_mu_min=deg_mu_min, deg_mu_max=deg_mu_max,
-                    ddeg_mu=ddeg_mu, 
+                    ddeg_mu=ddeg_mu,rp_rt = dic_bb['rp_rt']=='rp,rt',
                     name=name)
                 bb.name = name
 

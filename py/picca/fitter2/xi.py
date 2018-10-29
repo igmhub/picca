@@ -235,7 +235,7 @@ def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
 def broadband(r, mu, deg_r_min=None, deg_r_max=None, 
         ddeg_r=None, deg_mu_min=None, deg_mu_max=None,
         ddeg_mu=None, deg_mu=None, name=None, 
-        rt_rp=False, *pars, **kwargs):
+        rp_rt=False, *pars, **kwargs):
     '''
     Broadband function interface.
     Calculates a power-law broadband in r and mu or rp,rt
@@ -259,9 +259,9 @@ def broadband(r, mu, deg_r_min=None, deg_r_max=None,
     bb = 0
     r1 = r/100
     r2 = mu
-    if rt_rp:
-        r1 = r*mu
-        r2 = r*sp.sqrt(1-mu**2)
+    if rp_rt:
+        r1 = (r/100)*mu
+        r2 = (r/100)*sp.sqrt(1-mu**2)
 
     r1_pows = sp.arange(deg_r_min, deg_r_max+1, ddeg_r)
     r2_pows = sp.arange(deg_mu_min, deg_mu_max+1, ddeg_mu)
