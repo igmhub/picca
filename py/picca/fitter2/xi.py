@@ -232,10 +232,10 @@ def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
     return (p0 + p1*(1.+z)**2)/(p0 + p1*(1+zref)**2)
 
 
-def broadband(r, mu, *pars, deg_r_min=None, deg_r_max=None, 
+def broadband(r, mu, deg_r_min=None, deg_r_max=None, 
         ddeg_r=None, deg_mu_min=None, deg_mu_max=None,
         ddeg_mu=None, deg_mu=None, name=None, 
-        rt_rp=False, **kwargs):
+        rt_rp=False, *pars, **kwargs):
     '''
     Broadband function interface.
     Calculates a power-law broadband in r and mu or rp,rt
