@@ -94,11 +94,6 @@ class data:
         self.r = r
         self.mu = mu
 
-        self.par_names = dic_init['parameters']['values'].keys()
-        self.pars_init = dic_init['parameters']['values']
-        self.par_error = dic_init['parameters']['errors']
-        self.par_limit = dic_init['parameters']['limits']
-        self.par_fixed = dic_init['parameters']['fix']
 
         self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
         self.pk *= partial(getattr(pk,'G2'), dataset_name=self.name)
@@ -132,6 +127,47 @@ class data:
         self.xi_asy_model = None
         if 'standard asymmetry' in dic_init['model']:
             self.xi_asy_model = partial(getattr(xi, dic_init['model']['standard asymmetry']), name=self.name)
+
+        self.bb = {}
+        self.bb['pre-add'] = []
+        self.bb['pos-add'] = []
+        self.bb['pre-mul'] = []
+        self.bb['pos-mul'] = []
+        if 'broadband' in dic_init:
+            for ibb,dic_bb in enumerate(dic_init['broadband']):
+                deg_r_min = dic_bb['deg_r_min']
+                deg_r_max = dic_bb['deg_r_max']
+                ddeg_r = dic_bb['ddeg_r']
+
+                deg_mu_min = dic_bb['deg_mu_min']
+                deg_mu_max = dic_bb['deg_mu_max']
+                ddeg_mu = dic_bb['ddeg_mu']
+
+                name = 'BB-{}-{} {} {} {}'.format(self.name,
+                        ibb,dic_bb['type'],dic_bb['pre'],dic_bb['rp_rt'])
+
+                bb_pars = {'{} ({},{})'.format(name,i,j):0\
+                    for i in range(deg_r_min,deg_r_max+1,ddeg_r)\
+                        for j in range(deg_mu_min, deg_mu_max+1, ddeg_mu)}
+
+                for k,v in bb_pars.items():
+                   dic_init['parameters']['values'][k] = v
+                   dic_init['parameters']['errors']['error_'+k] = 0.01
+
+                bb = partial(xi.broadband, deg_r_min=deg_r_min,
+                    deg_r_max=deg_r_max, ddeg_r=ddeg_r,
+                    deg_mu_min=deg_mu_min, deg_mu_max=deg_mu_max,
+                    ddeg_mu=ddeg_mu,rp_rt = dic_bb['rp_rt']=='rp,rt',
+                    name=name)
+                bb.name = name
+
+                self.bb[dic_bb['pre']+"-"+dic_bb['type']].append(bb)
+
+        self.par_names = dic_init['parameters']['values'].keys()
+        self.pars_init = dic_init['parameters']['values']
+        self.par_error = dic_init['parameters']['errors']
+        self.par_limit = dic_init['parameters']['limits']
+        self.par_fixed = dic_init['parameters']['fix']
 
         self.dm_met = {}
         self.rp_met = {}
@@ -255,7 +291,23 @@ class data:
         if self.xi_asy_model is not None:
             xi += self.xi_asy_model(self.r, self.mu, k, pk_lin, self.tracer1, self.tracer2, **pars)
 
+        ## pre-distortion broadband
+        for bb in self.bb['pre-mul']:
+            xi *= 1+ bb(self.r, self.mu,**pars)
+
+        ## pre-distortion additive
+        for bb in self.bb['pre-add']:
+            xi += bb(self.r, self.mu, **pars)
+
         xi = self.dm.dot(xi)
+
+        ## pos-distortion multiplicative
+        for bb in self.bb['pos-mul']:
+            xi *= 1+bb(self.r, self.mu, **pars)
+
+        ## pos-distortion additive
+        for bb in self.bb['pos-add']:
+            xi += bb(self.r, self.mu, **pars)
 
         return xi
 
