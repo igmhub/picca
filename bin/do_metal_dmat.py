@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
@@ -12,6 +12,7 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, utils
 from picca.data import delta
+from picca.utils import print
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
     if x_correlation:
@@ -156,14 +157,14 @@ if __name__ == '__main__':
     data = {}
     dels = []
     for i,f in enumerate(fi):
-        sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+        print("\rread {} of {} {}".format(i,len(fi),ndata),end="")
         hdus = fitsio.FITS(f)
         dels += [delta.from_fitsio(h) for h in hdus[1:]]
         ndata+=len(hdus[1:])
         hdus.close()
         if not args.nspec is None:
             if ndata>args.nspec:break
-    sys.stderr.write("read {}\n".format(ndata))
+    print("read {}".format(ndata))
 
     x_correlation=False
     if args.in_dir2:
@@ -177,14 +178,14 @@ if __name__ == '__main__':
         data2 = {}
         dels2 = []
         for i,f in enumerate(fi):
-            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+            print("\rread {} of {} {}".format(i,len(fi),ndata),end="")
             hdus = fitsio.FITS(f)
             dels2 += [delta.from_fitsio(h) for h in hdus[1:]]
             ndata2+=len(hdus[1:])
             hdus.close()
             if not args.nspec is None:
                 if ndata2>args.nspec:break
-        sys.stderr.write("read {}\n".format(ndata2))
+        print("read {}\n".format(ndata2),end="")
 
     elif lambda_abs != lambda_abs2:
         x_correlation=True
@@ -283,7 +284,7 @@ if __name__ == '__main__':
                 continue
             cf.counter.value=0
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
-            sys.stderr.write("\n")
+            print("")
             pool = Pool(processes=args.nproc)
             dm = pool.map(f,sorted(list(cpu_data.values())))
             pool.close()

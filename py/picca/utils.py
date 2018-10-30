@@ -1,11 +1,19 @@
+from __future__ import print_function
+
 import scipy as sp
 import sys
 import fitsio
 import glob
 import healpy
 
+try:
+    import __builtin__
+except ImportError:
+    import builtins as __builtin__
 
-from picca.data import delta
+def print(*args, **kwds):
+    __builtin__.print(*args,**kwds)
+    sys.stdout.flush()
 
 def cov(da,we):
 
@@ -43,7 +51,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     dncor={}
 
     for i in range(nda):
-        sys.stderr.write("\rsmoothing {}".format(i))
+        print("\rsmoothing {}".format(i),end="")
         for j in range(i+1,nda):
             idrp = round(abs(rp[j]-rp[i])/drp)
             idrt = round(abs(rt[i]-rt[j])/drt)
@@ -63,7 +71,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
             cor_smooth[j,i]=cor_smooth[i,j]
 
 
-    sys.stderr.write("\n")
+    print("\n")
     co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
     return co_smooth
 
@@ -189,6 +197,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
 
     return
 def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,dll=3.e-4,nspec=None):
+    from picca.data import delta
     """Convert desi transmission files to picca delta files
 
     Args:
@@ -247,7 +256,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     ### Read
     for nf, f in enumerate(fi):
-        sys.stderr.write("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in list(deltas.keys())])))
+        print("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in list(deltas.keys())])), end="")
         h = fitsio.FITS(f)
         thid = h[1]['MOCKID'][:]
         if sp.in1d(thid,zcat_thid).sum()==0:
@@ -314,7 +323,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     ### Transform transmission to delta and store it
     for nf, p in enumerate(sorted(list(deltas.keys()))):
-        sys.stderr.write("\rwrite {} of {} ".format(nf,len(list(deltas.keys()))))
+        print("\rwrite {} of {} ".format(nf,len(list(deltas.keys()))), end="")
         out = fitsio.FITS(outdir+'/delta-{}'.format(p)+'.fits.gz','rw',clobber=True)
         for d in deltas[p]:
             bins = sp.floor((d.ll-lmin)/dll+0.5).astype(int)
@@ -337,7 +346,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             out.write(cols,names=names,header=hd,extname=str(d.thid))
         out.close()
 
-    print('\n')
+    print("")
 
     return
 def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):

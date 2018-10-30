@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
@@ -8,6 +8,7 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, xcf, io, prep_del, utils
 from picca.data import forest
+from picca.utils import print
 
 def corr_func(pixels):
     """Send correlation on one processor for a list of healpix
@@ -125,7 +126,7 @@ if __name__ == '__main__':
     xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
-    sys.stderr.write("\n")
+    print("")
     print("done, npix = {}\n".format(xcf.npix))
 
     ### Remove <delta> vs. lambda_obs
@@ -151,17 +152,17 @@ if __name__ == '__main__':
         dmin_pix = cosmo.r_comoving(zmin_pix)
         dmin_obj = max(0.,dmin_pix+xcf.rp_min)
         args.z_min_obj = cosmo.r_2_z(dmin_obj)
-        sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
+        print("\r z_min_obj = {}\r".format(args.z_min_obj),end="")
     if (args.z_max_obj is None):
         dmax_pix = cosmo.r_comoving(zmax_pix)
         dmax_obj = max(0.,dmax_pix+xcf.rp_max)
         args.z_max_obj = cosmo.r_2_z(dmax_obj)
-        sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
+        print("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
 
     ### Read objects
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
                                 args.z_evol_obj, args.z_ref,cosmo)
-    sys.stderr.write("\n")
+    print("")
     xcf.objs = objs
 
     ###

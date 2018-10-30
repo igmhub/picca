@@ -309,6 +309,13 @@ class chi2:
             g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.best_fit.values)
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
             fit[...] = d.best_fit_model
+            if d.bb != None:
+                gbb = g.create_group("broadband")
+                for bbs in d.bb.values():
+                    for bb in bbs:
+                        bband = gbb.create_dataset(bb.name,
+                                d.da.shape, dtype = "f")
+                        bband[...] = bb(d.r, d.mu, **self.best_fit.values)
         del self.best_fit.values['SB']
 
         if hasattr(self, "fast_mc"):
