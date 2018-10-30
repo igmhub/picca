@@ -363,3 +363,51 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             setattr(d,"neighs",None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
+
+def xcf1d(pix):
+    """Compute the 1D cross-correlation between delta and objects on the same LOS
+
+    Args:
+        pix (list): List of HEALpix to compute
+
+    Returns:
+        we (float array): weight
+        xi (float array): correlation
+        rp (float array): wavelenght ratio
+        z (float array): Mean redshift of pairs
+        nb (int array): Number of pairs
+    """
+    xi = sp.zeros(np)
+    we = sp.zeros(np)
+    rp = sp.zeros(np)
+    z = sp.zeros(np)
+    nb = sp.zeros(np,dtype=sp.int64)
+
+    for ipix in pix:
+        for d in dels[ipix]:
+
+            neighs = [q for q in objs[ipix] if q.thid==d.thid]
+            if len(neighs)==0: continue
+
+            zqso = [ q.zqso for q in neighs ]
+            we_qso = [ q.we for q in neighs ]
+            l_qso = [ 10.**q.ll for q in neighs ]
+            ang = sp.zeros(len(l_qso))
+
+            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
+
+            xi[:cd.size] += cd
+            we[:cw.size] += cw
+            rp[:crp.size] += crp
+            z[:cz.size] += cz
+            nb[:cnb.size] += cnb.astype(int)
+
+            for el in list(d.__dict__.keys()):
+                setattr(d,el,None)
+
+    w = we>0.
+    xi[w] /= we[w]
+    rp[w] /= we[w]
+    z[w] /= we[w]
+
+    return we,xi,rp,z,nb

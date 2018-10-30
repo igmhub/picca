@@ -500,7 +500,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
             sys.exit(1)
         if len(fi) == 0:
             print("ERROR: can't find required spAll file in {}".format(in_dir))
-            print("ERROR: try runnint with --bestobs option (but you will lose reobservations)")
+            print("ERROR: try runnint with --best-obs option (but you will lose reobservations)")
             sys.exit(1)
 
         spAll = fitsio.FITS(fi[0])
@@ -510,8 +510,14 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
         mjd_spall = spAll[1]["MJD"][:]
         fid_spall = spAll[1]["FIBERID"][:]
         qual_spall = spAll[1]["PLATEQUALITY"][:]
+        zwarn_spall = spAll[1]["ZWARNING"][:]
 
         w = sp.in1d(thid_spall, thid) & (qual_spall == b"good")
+        ## Removing spectra with the following ZWARNING bits set:
+        ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
+        ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
+        for zwarnbit in [0,1,7,8,9]:
+            w &= (zwarn_spall&2**zwarnbit)==0
         print("INFO: # unique objs: ",len(thid))
         print("INFO: # spectra: ",w.sum())
         thid = thid_spall[w]
@@ -548,9 +554,13 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
     for pm in platemjd:
         p,m = pm
-        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(p,m)
+        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(str(p).zfill(4),m)
 
-        h = fitsio.FITS(spplate)
+        try:
+            h = fitsio.FITS(spplate)
+        except IOError:
+            log.write("error reading {}\n".format(spplate))
+            continue
         head0 = h[0].read_header()
         t0 = time.time()
 
@@ -761,7 +771,7 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
         objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
         for q in objs[ipix]:
             q.we = ((1.+q.zqso)/(1.+zref))**(alpha-1.)
-            q.r_comov = cosmo.r_comoving(q.zqso)
+            if not cosmo is None: q.r_comov = cosmo.r_comoving(q.zqso)
 
     sys.stderr.write("\n")
 
