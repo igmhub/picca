@@ -142,7 +142,7 @@ class data:
                 deg_mu_min = dic_bb['deg_mu_min']
                 deg_mu_max = dic_bb['deg_mu_max']
                 ddeg_mu = dic_bb['ddeg_mu']
-    
+
                 name = 'BB-{}-{} {} {} {}'.format(self.name,
                         ibb,dic_bb['type'],dic_bb['pre'],dic_bb['rp_rt'])
 
