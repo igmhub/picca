@@ -138,7 +138,7 @@ if __name__ == '__main__':
         if args.lambda_abs2:
             cf.lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
         else:
-            cf.lambda_abs2 = constants.absorber_IGM[cf.lambda_abs]
+            cf.lambda_abs2 = cf.lambda_abs
 
         data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, nspec=args.nspec, no_project=args.no_project)
         cf.data2 = data2

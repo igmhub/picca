@@ -154,7 +154,7 @@ if __name__ == '__main__':
         if args.lambda_abs2:
             cf.lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
         else:
-            cf.lambda_abs2 = constants.absorber_IGM[cf.lambda_abs]
+            cf.lambda_abs2 = cf.lambda_abs
         cf.alpha_abs[args.lambda_abs2] = cf.alpha2
         for m in args.abs_igm2:
             cf.alpha_abs[m] = args.metal_alpha
