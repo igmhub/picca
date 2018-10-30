@@ -150,11 +150,9 @@ class data:
                     for i in range(deg_r_min,deg_r_max+1,ddeg_r)\
                         for j in range(deg_mu_min, deg_mu_max+1, ddeg_mu)}
 
-                dic_init['parameters']['values'] =\
-                        {k:v for k,v in bb_pars.items()}
-
-                dic_init['parameters']['errors'] =\
-                        {'error_'+k:0.01 for k in bb_pars.keys()}
+                for k,v in bb_pars.items():
+                   dic_init['parameters']['values'][k] = v
+                   dic_init['parameters']['errors']['error_'+k] = 0.01
 
                 bb = partial(xi.broadband, deg_r_min=deg_r_min,
                     deg_r_max=deg_r_max, ddeg_r=ddeg_r,
