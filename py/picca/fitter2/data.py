@@ -292,7 +292,7 @@ class data:
 
         if self.xi_asy_model is not None:
             xi += self.xi_asy_model(self.r, self.mu, k, pk_lin, self.tracer1, self.tracer2, **pars)
- 
+
         ## pre-distortion broadband
         for bb in self.bb['pre-mul']:
             xi *= 1+ bb(self.r, self.mu,**pars)
