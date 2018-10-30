@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
@@ -11,6 +11,7 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, utils
 from picca.data import delta
+from picca.utils import print
 
 def corr_func(p):
     if x_correlation:

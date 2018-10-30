@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 from picca.fitter import parameters
 from picca.fitter import cosmo
 from picca.fitter import Chi2
@@ -8,7 +8,7 @@ import iminuit
 import scipy
 import sys
 import configargparse
-
+from picca.utils import print
 ### Get the parser
 param = parameters.parameters()
 parser = configargparse.ArgParser()
@@ -49,8 +49,6 @@ if not dic_init['metals'] is None:
         kw[n]=v
         kw['error_'+n]=0.005
     print()
-
-sys.stdout.flush()
 
 m=cosmo.model(dic_init)
 if not dic_init['data_auto'] is None:
@@ -119,8 +117,6 @@ for i in kw:
     if ( i[:4]!='fix_' ): continue
     if not kw[i]: continue
     kw[ 'error_'+i[4:] ] = 0.
-
-sys.stdout.flush()
 
 mig = iminuit.Minuit(chi2, throw_nan=True ,forced_parameters=chi2.pname,print_level=dic_init['verbose'],errordef=1,**kw)
 mig.tol = dic_init['migrad_tol']

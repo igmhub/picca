@@ -1,6 +1,8 @@
+from __future__ import print_function
 import scipy as sp
 
 from picca import constants
+from picca.utils import print
 
 
 def exp_diff(file,ll) :

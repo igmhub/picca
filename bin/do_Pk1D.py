@@ -11,6 +11,7 @@ import scipy as sp
 from picca import constants
 from picca.Pk1D import Pk1D, compute_Pk_raw, compute_Pk_noise, compute_cor_reso, fill_masked_pixels, split_forest, rebin_diff_noise
 from picca.data import delta
+from picca.utils import print
 
 from array import array
 
@@ -173,7 +174,7 @@ if __name__ == '__main__':
     # loop over input files
     for i,f in enumerate(fi):
         if i%1==0:
-            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+            print("\rread {} of {} {}".format(i,len(fi),ndata),end="")
 
         # read fits or ascii file
         if (args.in_format=='fits') :
