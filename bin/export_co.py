@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
 import sys
+import glob
+import fitsio
 import scipy as sp
 import scipy.linalg
 import argparse
-import fitsio
 
 from picca.utils import smooth_cov, cov
+from picca.utils import print
 
 if __name__ == '__main__':
 

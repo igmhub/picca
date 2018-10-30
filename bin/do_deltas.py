@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import sys
 import os
 import fitsio
@@ -11,6 +13,7 @@ import argparse
 
 from picca.data import forest, delta
 from picca import prep_del, io
+from picca.utils import print
 
 def cont_fit(data):
     for d in data:
@@ -286,7 +289,8 @@ if __name__ == '__main__':
                 continue
 
             l.append(d)
-            log.write("{} accepted\n".format(d.thid))
+            log.write("{} {}-{}-{} accepted\n".format(d.thid,
+                d.plate,d.mjd,d.thid))
         data[p][:] = l
         if len(data[p])==0:
             del data[p]
