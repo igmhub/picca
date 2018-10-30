@@ -232,9 +232,9 @@ def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
     return (p0 + p1*(1.+z)**2)/(p0 + p1*(1+zref)**2)
 
 
-def broadband(r, mu, deg_r_min=None, deg_r_max=None, 
+def broadband(r, mu, deg_r_min=None, deg_r_max=None,
         ddeg_r=None, deg_mu_min=None, deg_mu_max=None,
-        ddeg_mu=None, deg_mu=None, name=None, 
+        ddeg_mu=None, deg_mu=None, name=None,
         rp_rt=False, *pars, **kwargs):
     '''
     Broadband function interface.
@@ -251,12 +251,11 @@ def broadband(r, mu, deg_r_min=None, deg_r_max=None,
                     typically the dataset name and whether it's multiplicative
                     of additive
         - rt_rp: (bool) use r,mu (if False) or rp,rt (if True)
-        - *pars: additional parameters to be ignored
+        - *pars: additional parameters that are ignored (for convenience)
         **kwargs: (dict) dictionary containing all the polynomial
-                    coefficients
+                    coefficients. Any extra keywords are ignored
     '''
-    
-    bb = 0
+
     r1 = r/100
     r2 = mu
     if rp_rt:

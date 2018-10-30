@@ -150,9 +150,11 @@ class data:
                     for i in range(deg_r_min,deg_r_max+1,ddeg_r)\
                         for j in range(deg_mu_min, deg_mu_max+1, ddeg_mu)}
         
-                for k,v in bb_pars.items():
-                    dic_init['parameters']['values'][k]=v
-                    dic_init['parameters']['errors']['error_'+k]=0.01
+                dic_init['parameters']['values'] =\
+                        {k:v for k,v in bb_pars.items()}
+
+                dic_init['parameters']['errors'] =\
+                        {'error_'+k:0.01 for k in bb_pars.keys()}
 
                 bb = partial(xi.broadband, deg_r_min=deg_r_min,
                     deg_r_max=deg_r_max, ddeg_r=ddeg_r,
@@ -161,7 +163,6 @@ class data:
                     name=name)
                 bb.name = name
 
-                pre = dic_bb['pre']
                 self.bb[dic_bb['pre']+"-"+dic_bb['type']].append(bb)
 
         self.par_names = dic_init['parameters']['values'].keys()
@@ -292,9 +293,9 @@ class data:
         if self.xi_asy_model is not None:
             xi += self.xi_asy_model(self.r, self.mu, k, pk_lin, self.tracer1, self.tracer2, **pars)
  
-        ## pre-distortion broadband 
+        ## pre-distortion broadband
         for bb in self.bb['pre-mul']:
-            xi *= (1+ bb(self.r, self.mu,**pars))
+            xi *= 1+ bb(self.r, self.mu,**pars)
 
         ## pre-distortion additive
         for bb in self.bb['pre-add']:
@@ -304,7 +305,7 @@ class data:
 
         ## pos-distortion multiplicative
         for bb in self.bb['pos-mul']:
-            xi *= (1+bb(self.r, self.mu, **pars))
+            xi *= 1+bb(self.r, self.mu, **pars)
 
         ## pos-distortion additive
         for bb in self.bb['pos-add']:
