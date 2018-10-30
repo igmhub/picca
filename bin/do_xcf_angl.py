@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
@@ -8,6 +8,7 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, xcf, io, prep_del
 from picca.data import forest
+from picca.utils import print
 
 def corr_func(p):
     xcf.fill_neighs(p)
@@ -117,7 +118,7 @@ if __name__ == '__main__':
     xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
-    sys.stderr.write("\n")
+    print("")
     print("done, npix = {}".format(xcf.npix))
 
     ### Remove <delta> vs. lambda_obs
@@ -144,7 +145,7 @@ if __name__ == '__main__':
     for i,ipix in enumerate(sorted(objs.keys())):
         for q in objs[ipix]:
             q.ll = sp.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
-    sys.stderr.write("\n")
+    print("")
     xcf.objs = objs
 
 

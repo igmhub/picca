@@ -1,3 +1,4 @@
+from __future__ import print_function
 import scipy as sp
 import sys
 from healpy import query_disc
@@ -5,6 +6,7 @@ from numba import jit
 from scipy import random
 
 from picca import constants
+from picca.utils import print
 
 np = None
 nt = None
@@ -72,7 +74,7 @@ def cf(pix):
 
     for ipix in pix:
         for d1 in data[ipix]:
-            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)))
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)),end="")
             with lock:
                 counter.value += 1
             for d2 in d1.neighs:
@@ -155,7 +157,7 @@ def dmat(pix):
     npairs_used = 0
     for p in pix:
         for d1 in data[p]:
-            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)),end="")
             with lock:
                 counter.value += 1
             order1 = d1.order
@@ -279,7 +281,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
     for p in pix:
         for d1 in data[p]:
             with lock:
-                sys.stderr.write("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)))
+                print("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)),end="")
                 counter.value += 1
 
             r = random.rand(len(d1.neighs))
@@ -492,7 +494,7 @@ def t123(pix):
     npairs_used = 0
     for ipix in pix:
         for d1 in data[ipix]:
-            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)))
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)),end="")
             with lock:
                 counter.value += 1
             v1 = v1d(d1.ll)

@@ -819,7 +819,7 @@ class TestCor(unittest.TestCase):
         value += self._branchFiles+'/Products/Correlations/Fit/config_xcf.ini '
         value += self._branchFiles+'/Products/Correlations/Fit/config_cf_cross.ini '
         update_system_status_values(path, 'data sets', 'ini files', value)
-        value  = resource_filename('picca', 'fitter2/models/PlanckDR12/PlanckDR12.fits')
+        value  = 'PlanckDR12/PlanckDR12.fits'
         update_system_status_values(path, 'fiducial', 'filename', value)
         value  = self._branchFiles+'/Products/Correlations/Fit/result_fitter2.h5'
         update_system_status_values(path, 'output', 'filename', value)
