@@ -87,7 +87,6 @@ if __name__ == '__main__':
             for i in range (len(pk.k)) :
                 ik = int((pk.k[i]-k_inf)/(k_sup-k_inf)*nb_k_bin);
                 if(ik>= nb_k_bin or ik<0) : continue 
-                #print(" iz, ik = ",iz,ik)
                 sumPk[iz,ik] += pk.Pk[i]*pk.k[i]/sp.pi
                 sumPk2[iz,ik] += (pk.Pk[i]*pk.k[i]/sp.pi)**2
                 sum[iz,ik] += 1.0
@@ -96,12 +95,6 @@ if __name__ == '__main__':
     meanPk = sp.where(sum!=0,sumPk/sum,0.0)
     errorPk = sp.where(sum!=0,sp.sqrt(((sumPk2/sum)-meanPk**2)/sum),0.0)
     
-    print ("=========== sumPk ========",sumPk)
-    print ("=========== sumPk2 ========",sumPk2)
-    print ("=========== sum ========",sum)
-    print ("=========== Pk mean ========",meanPk)
-    print ("=========== Pk error ========",errorPk)
-
     # Print figure
     figure_file = args.out_fig
    
@@ -125,19 +118,14 @@ if __name__ == '__main__':
     ax.xaxis.set_ticks_position('both')
     ax.xaxis.set_tick_params(direction='in')
     ax.yaxis.set_ticks_position('both')
-    ax.yaxis.set_tick_params(direction='inout')
+    ax.yaxis.set_tick_params(direction='in')
     ax.xaxis.set_tick_params(labelsize=fontlab)
     ax.yaxis.set_tick_params(labelsize=fontlab)
 
     handles, labels = ax.get_legend_handles_labels()
-    #l9 = mlines.Line2D([], [], color = 'k',marker='^',markersize=10, label=r'DR9', alpha = 0.3)
-    #l12 = mlines.Line2D([], [], color = 'k', marker='o',markersize=10, label=r'DR12')
-    #handles = handles+[l9,l12]
-    #labels= labels+[r'\bf DR9',r'\bf DR12']
     lgd = ax.legend(handles, labels, loc=2, bbox_to_anchor=(1.03, 0.98), borderaxespad=0.,fontsize = fontl)
     fig.subplots_adjust(top=0.98,bottom=0.114,left=0.078,right=0.758,hspace=0.2,wspace=0.2)
     
-    #plt.legend(loc='lower right')
     
     plt.show()    
     fig.savefig(figure_file, transparent=False)
