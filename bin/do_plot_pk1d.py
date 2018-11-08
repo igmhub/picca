@@ -66,7 +66,6 @@ if __name__ == '__main__':
         # read fits files
         hdus = fitsio.FITS(f)
         pk1ds = [Pk1D.from_fitsio(h) for h in hdus[1:]]
- 
         ndata+=len(pk1ds)
         print ("\n ndata =  ",ndata)
   
