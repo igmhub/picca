@@ -51,7 +51,6 @@ if __name__ == '__main__':
     ek = sp.zeros([nb_k_bin],dtype=sp.float64)
     for ik in range (nb_k_bin) :
         k[ik] = k_inf + (ik+0.5)*0.000542
-        
 
     # list of Pk(1D)
     fi = glob.glob(args.in_dir+"/*.fits.gz")
