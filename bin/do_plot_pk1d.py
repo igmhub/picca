@@ -9,11 +9,11 @@ import scipy as sp
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 
-from matplotlib import rc,rcParams
-rcParams['text.usetex'] = True
-rcParams['text.latex.unicode'] = True
-rcParams['font.family'] = 'sans-serif'
-rcParams['text.latex.preamble'] = [r'\usepackage{sfmath} \boldmath']
+#from matplotlib import rc,rcParams
+#rcParams['text.usetex'] = True
+#rcParams['text.latex.unicode'] = True
+#rcParams['font.family'] = 'sans-serif'
+#rcParams['text.latex.preamble'] = [r'\usepackage{sfmath} \boldmath']
 
 
 from picca.Pk1D import Pk1D
@@ -111,10 +111,13 @@ if __name__ == '__main__':
     
     for iz in range(nb_z_bin) :
         z = 2.2 + iz*0.2
-        ax.errorbar(k,meanPk[iz,:], yerr =errorPk[iz,:], fmt = 'o', color = colors[iz], markersize = s, label =r'\bf {:1.1f} $\displaystyle <$ z $\displaystyle <$ {:1.1f}'.format(z-0.1,z+0.1))
+        #ax.errorbar(k,meanPk[iz,:], yerr =errorPk[iz,:], fmt = 'o', color = colors[iz], markersize = s, label =r'\bf {:1.1f} $\displaystyle <$ z $\displaystyle <$ {:1.1f}'.format(z-0.1,z+0.1))
+        ax.errorbar(k,meanPk[iz,:], yerr =errorPk[iz,:], fmt = 'o', color = colors[iz], markersize = s, label =r' z = {:1.1f}'.format(z))
 
-    ax.set_xlabel(r'\bf $\displaystyle k [km.s^{-1}]$', fontsize = fontt)
-    ax.set_ylabel(r'\bf $\displaystyle \Delta^2_{\mathrm{1d}}(k) $', fontsize=fontt, labelpad=-1)
+    #ax.set_xlabel(r'\bf $\displaystyle k [km.s^{-1}]$', fontsize = fontt)
+    ax.set_xlabel(r' k [km/s]', fontsize = fontt)
+    #ax.set_ylabel(r'\bf $\displaystyle \Delta^2_{\mathrm{1d}}(k) $', fontsize=fontt, labelpad=-1)
+    ax.set_ylabel(r'P(k)k/pi ', fontsize=fontt, labelpad=-1)
     ax.xaxis.set_ticks_position('both')
     ax.xaxis.set_tick_params(direction='in')
     ax.yaxis.set_ticks_position('both')
