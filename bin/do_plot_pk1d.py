@@ -6,7 +6,6 @@ import argparse
 import glob
 import sys
 import scipy as sp
-import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 
 #from matplotlib import rc,rcParams
@@ -44,7 +43,6 @@ if __name__ == '__main__':
     nb_k_bin=35
     k_inf=0.000813
     k_sup=k_inf + nb_k_bin*0.000542
-    
 
     sumPk = sp.zeros([nb_z_bin,nb_k_bin],dtype=sp.float64)
     sumPk2 = sp.zeros([nb_z_bin,nb_k_bin],dtype=sp.float64)
@@ -66,7 +64,7 @@ if __name__ == '__main__':
         if i%1==0:
             sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
 
-        # read fits files        
+        # read fits files
         hdus = fitsio.FITS(f)
         pk1ds = [Pk1D.from_fitsio(h) for h in hdus[1:]]
  
@@ -86,12 +84,12 @@ if __name__ == '__main__':
             
             for i in range (len(pk.k)) :
                 ik = int((pk.k[i]-k_inf)/(k_sup-k_inf)*nb_k_bin);
-                if(ik>= nb_k_bin or ik<0) : continue 
+                if(ik>= nb_k_bin or ik<0) : continue
                 sumPk[iz,ik] += pk.Pk[i]*pk.k[i]/sp.pi
                 sumPk2[iz,ik] += (pk.Pk[i]*pk.k[i]/sp.pi)**2
                 sum[iz,ik] += 1.0
                 
-    # compute mean and error on Pk    
+    # compute mean and error on Pk
     meanPk = sp.where(sum!=0,sumPk/sum,0.0)
     errorPk = sp.where(sum!=0,sp.sqrt(((sumPk2/sum)-meanPk**2)/sum),0.0)
     
@@ -130,7 +128,7 @@ if __name__ == '__main__':
     fig.subplots_adjust(top=0.98,bottom=0.114,left=0.078,right=0.758,hspace=0.2,wspace=0.2)
     
     
-    plt.show()    
+    plt.show()
     fig.savefig(figure_file, transparent=False)
 
     
