@@ -124,8 +124,8 @@ if __name__ == '__main__':
     ### Test covariance matrix
     try:
         scipy.linalg.cholesky(final['CO'])
-    except:
-        print("Warning: Matrix is not positive definite")
+    except scipy.linalg.LinAlgError:
+        print('WARNING: Matrix is not positive definite')
 
     ### Measurement
     final['DA'] = (final['DA']*final['WE']).sum(axis=0)

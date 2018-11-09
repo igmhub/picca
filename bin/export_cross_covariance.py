@@ -92,8 +92,8 @@ if __name__ == '__main__':
     ### Test if valid
     try:
         scipy.linalg.cholesky(co)
-    except:
-        print("Matrix is not positive definite")
+    except scipy.linalg.LinAlgError:
+        print('WARNING: Matrix is not positive definite')
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)

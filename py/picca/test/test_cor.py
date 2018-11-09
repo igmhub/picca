@@ -778,6 +778,19 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += " --type-corr DR"
         subprocess.call(cmd, shell=True)
+        ### Send
+        cmd  = " do_co.py"
+        cmd += " --drq "    + self._branchFiles+"/Products/random.fits"
+        cmd += " --drq2 "   + self._branchFiles+"/Products/cat.fits"
+        cmd += " --out "    + self._branchFiles+"/Products/Correlations/Co_Random/co_RD.fits.gz"
+        cmd += " --rp-min 0."
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --nproc 1"
+        cmd += " --type-corr RD"
+        subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
@@ -793,15 +806,22 @@ class TestCor(unittest.TestCase):
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_DR.fits.gz"
             self.compare_fits(path1,path2,"do_co.py DR")
 
+            path1 = self._masterFiles + "/co_RD.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RD.fits.gz"
+            self.compare_fits(path1,path2,"do_co.py RD")
+
         return
     def send_export_co(self):
 
         print("\n")
         ### Send
         cmd  = " export_co.py"
-        cmd += " --DD-file "   + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
-        cmd += " --RR-DR-dir " + self._branchFiles+"/Products/Correlations/Co_Random/"
-        cmd += " --out "       + self._branchFiles+"/Products/Correlations/exported_co.fits.gz"
+        cmd += " --DD-file " + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
+        cmd += " --RR-file " + self._branchFiles+"/Products/Correlations/Co_Random/co_RR.fits.gz"
+        cmd += " --DR-file " + self._branchFiles+"/Products/Correlations/Co_Random/co_DR.fits.gz"
+        cmd += " --RD-file " + self._branchFiles+"/Products/Correlations/Co_Random/co_RD.fits.gz"
+        cmd += " --out " + self._branchFiles+"/Products/Correlations/exported_co.fits.gz"
+        cmd += " --get-cov-from-poisson"
         subprocess.call(cmd, shell=True)
 
         return
