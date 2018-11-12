@@ -68,10 +68,10 @@ if __name__ == '__main__':
         pk1ds = [Pk1D.from_fitsio(h) for h in hdus[1:]]
         ndata+=len(pk1ds)
         print ("\n ndata =  ",ndata)
-  
+
         # loop over pk1ds
         for pk in pk1ds:
-             
+
             # Selection over the SNR and the resolution
             if (pk.mean_snr<=args.SNR_min or pk.mean_reso>=args.reso_max) : continue
 
