@@ -353,7 +353,7 @@ def submit(b):
             fout.write("{}=$(sbatch --parsable {})\n".format(var_xdmat,xdmat_batch))
             fout.write('echo "{0}: "${0} \n'.format(var_xdmat))
         var_xexp = xexp_batch.replace(".batch","").replace(".","_").replace("-","_")
-        fout.write("{}=$(sbatch --parsable --dependency=afterok:${},afterok:${} {})\n".format(var_xexp,var_cf,var_xdmat,xexp_batch))
+        fout.write("{}=$(sbatch --parsable --dependency=afterok:${},afterok:${} {})\n".format(var_xexp,var_xcf,var_xdmat,xexp_batch))
         fout.write('echo "{0}: "${0} \n'.format(var_xexp))
         
     fout.close()
