@@ -189,7 +189,7 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None):
         srun = header + "srun -n 1 -c 64 do_xdmat.py " +\
             "--drq {} --in-dir deltas ".format(drq) +\
             "--z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
-            "--out {} --rej {} --nproc 32 --fid-Om\n".format(out,rej,fidOm)
+            "--out {} --rej {} --nproc 32 --fid-Om {}\n".format(out,rej,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xdmat.append(basename(fbatch))
 
