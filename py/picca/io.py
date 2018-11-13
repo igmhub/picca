@@ -626,8 +626,14 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         plate_qsos = plate[(in_pixs==f)]
         mjd_qsos = mjd[(in_pixs==f)]
         fid_qsos = fid[(in_pixs==f)]
-        ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
-        de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
+        try:
+            ra = h["FIBERMAP"]["TARGET_RA"][:]*sp.pi/180.
+            de = h["FIBERMAP"]["TARGET_DEC"][:]*sp.pi/180.
+        except ValueError:
+            ## TODO: These lines are for backward compatibility
+            ## Should be removed at some point
+            ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
+            de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
         pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
         exp = h["FIBERMAP"]["EXPID"][:]
         night = h["FIBERMAP"]["NIGHT"][:]
