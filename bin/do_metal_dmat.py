@@ -83,7 +83,7 @@ if __name__ == '__main__':
         help='Exponent of the redshift evolution of the 2nd delta field')
 
     parser.add_argument('--metal-alpha', type=float, default=1., required=False,
-        help='Dxponent of the redshift evolution of the metal delta field')
+        help='Exponent of the redshift evolution of the metal delta field')
 
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
