@@ -110,52 +110,44 @@ if __name__ == '__main__':
     cf.ang_correlation = True
     cf.angmax          = args.ang_max
     cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
+    cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
 
-    lambda_abs = constants.absorber_IGM[args.lambda_abs]
-    if args.lambda_abs2: lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
-    else : lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
-    cf.lambda_abs  = lambda_abs
-    cf.lambda_abs2 = lambda_abs2
 
     ### Read data 1
-    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs,args.z_evol, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
-    cf.npix  = len(data)
-    cf.data  = data
+    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.zref, cosmo=None, nspec=args.nspec, no_project=args.no_project)
+    cf.npix = len(data)
+    cf.data = data
     cf.ndata = ndata
     print("")
     print("done, npix = {}".format(cf.npix))
 
     ### Read data 2
-    if args.in_dir2:
+    if args.in_dir2 or args.lambda_abs2:
         cf.x_correlation = True
-        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, args.nside, lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
-        cf.data2  = data2
+        cf.alpha2 = args.z_evol2
+        if args.in_dir2 is None:
+            args.in_dir2 = args.in_dir
+        if args.lambda_abs2:
+            cf.lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
+        else:
+            cf.lambda_abs2 = cf.lambda_abs
+
+        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo=None, nspec=args.nspec, no_project=args.no_project)
+        cf.data2 = data2
         cf.ndata2 = ndata2
         print("")
         print("done, npix = {}".format(len(data2)))
-    elif lambda_abs != lambda_abs2:
-        cf.x_correlation = True
-        cf.data2  = copy.deepcopy(data)
-        cf.ndata2 = copy.deepcopy(ndata)
-
-
 
 
     ### Send
     cf.counter = Value('i',0)
-
     cf.lock = Lock()
     cpu_data = {}
-    for p in list(data.keys()):
+    for p in data.keys():
         cpu_data[p] = [p]
-
     pool = Pool(processes=args.nproc)
-
     cfs = pool.map(corr_func,sorted(cpu_data.values()))
     pool.close()
-
-
-
 
 
     ### Store
