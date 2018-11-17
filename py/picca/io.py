@@ -626,11 +626,10 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         plate_qsos = plate[(in_pixs==f)]
         mjd_qsos = mjd[(in_pixs==f)]
         fid_qsos = fid[(in_pixs==f)]
-        head = [ h["FIBERMAP"].read_header()[k] for k in h["FIBERMAP"].read_header() if 'TTYPE' in k ]
-        if 'TARGET_RA' in head:
+        if 'TARGET_RA' in h["FIBERMAP"].get_colnames():
             ra = h["FIBERMAP"]["TARGET_RA"][:]*sp.pi/180.
             de = h["FIBERMAP"]["TARGET_DEC"][:]*sp.pi/180.
-        elif 'RA_TARGET' in head:
+        elif 'RA_TARGET' in h["FIBERMAP"].get_colnames():
             ## TODO: These lines are for backward compatibility
             ## Should be removed at some point
             ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
