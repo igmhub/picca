@@ -81,7 +81,8 @@ for p in da:
 rp /= wet
 rt /= wet
 z /= wet
-dm /= wet[:,None]
+if not args.no_dmat:
+    dm /= wet[:,None]
 
 da = sp.vstack(list(da.values()))
 we = sp.vstack(list(we.values()))
