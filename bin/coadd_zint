@@ -44,7 +44,7 @@ if not args.no_dmat:
     dm = h[1]['DM'][:]*0
     h.close()
 else:
-    dm = sp.zeros((nb.shape[0],nb.shape[0]))
+    dm = sp.eye(nb.shape[0])
 
 for f in args.data:
     if not (os.path.isfile(f.replace('cf','dmat')) or args.no_dmat):
@@ -73,8 +73,7 @@ for f in args.data:
         h = fitsio.FITS(f.replace('cf','dmat'))
         dm += h[1]['DM'][:]*wet_aux[:,None]
         h.close()
-    else:
-        dm += sp.identity(nb.shape[0])*wet_aux[:,None]
+
 for p in da:
     w=we[p]>0
     da[p][w]/=we[p][w]
