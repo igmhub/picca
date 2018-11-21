@@ -31,6 +31,15 @@ def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
+def pk_kaiser_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
+    pk  = pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs)
+    kp  = k*muk
+    kt  = k*sp.sqrt(1-muk**2)
+    st2 = kwargs["sigma_smooth_per"]**2
+    sp2 = kwargs["sigma_smooth_par"]**2
+    pk *= sp.exp(-(kp**2*sp2+kt**2*st2)/2)
+    return pk
+
 def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
 
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
