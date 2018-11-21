@@ -17,6 +17,8 @@ parser.add_argument("--data",type=str,nargs="*",required=True,
 parser.add_argument("--out",type=str,required=True,
         help="output file")
 
+parser.add_argument("--no-dmat",action='store_true',default=False,required=False,
+        help='Use an identity matrix as the distortion matrix.')
 
 args=parser.parse_args()
 
@@ -37,12 +39,15 @@ h.close()
 da = {}
 we = {}
 
-h = fitsio.FITS(args.data[0].replace('cf','dmat'))
-dm = h[1]['DM'][:]*0
-h.close()
+if not args.no_dmat:
+    h = fitsio.FITS(args.data[0].replace('cf','dmat'))
+    dm = h[1]['DM'][:]*0
+    h.close()
+else:
+    dm = sp.eye(nb.shape[0])
 
 for f in args.data:
-    if not os.path.isfile(f.replace('cf','dmat')):
+    if not (os.path.isfile(f.replace('cf','dmat')) or args.no_dmat):
         continue
     h = fitsio.FITS(f)
     we_aux = h[2]["WE"][:]
@@ -64,8 +69,10 @@ for f in args.data:
             we[p] = we_aux[i]
     h.close()
 
-    h = fitsio.FITS(f.replace('cf','dmat'))
-    dm += h[1]['DM'][:]*wet_aux[:,None]
+    if not args.no_dmat:
+        h = fitsio.FITS(f.replace('cf','dmat'))
+        dm += h[1]['DM'][:]*wet_aux[:,None]
+        h.close()
 
 for p in da:
     w=we[p]>0
@@ -74,7 +81,8 @@ for p in da:
 rp /= wet
 rt /= wet
 z /= wet
-dm /= wet[:,None]
+if not args.no_dmat:
+    dm /= wet[:,None]
 
 da = sp.vstack(list(da.values()))
 we = sp.vstack(list(we.values()))
