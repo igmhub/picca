@@ -739,7 +739,7 @@ def read_from_desi_transmission(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,orde
         pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
 
         ll_all = sp.log10(h["WAVELENGTH"].read())
-        iv_all = sp.ones(b_ll.shape)*1000000
+        iv_all = sp.ones(ll_all.shape)*1000000
         fl_all = h["TRANSMISSION"].read()
         in_tids = h['METADATA']["MOCKID"][:]
         h.close()
