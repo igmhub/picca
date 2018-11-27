@@ -738,8 +738,8 @@ def read_from_desi_transmission(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,orde
         de = h["METADATA"]["DEC"][:]*sp.pi/180.
         pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
 
-        ll_all = sp.log10(h["WAVELENGTH"].read())
-        iv_all = sp.ones(ll_all.shape)*1000000
+        ll = sp.log10(h["WAVELENGTH"].read())
+        iv = sp.ones(ll_all.shape)*1000000
         fl_all = h["TRANSMISSION"].read()
         in_tids = h['METADATA']["MOCKID"][:]
         h.close()
@@ -749,8 +749,6 @@ def read_from_desi_transmission(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,orde
             if wt.sum()==0:
                 print("\nError reading thingid {}\n".format(t))
                 continue
-            ll = ll_all[wt]
-            iv = iv_all[wt]
             fl = fl_all[wt]
             reso_in_km_per_s=0.001*sp.ones(iv.shape)
             diff = sp.zeros(ll.shape)
@@ -758,8 +756,8 @@ def read_from_desi_transmission(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,orde
                     p,m,f,order,diff,reso_in_km_per_s)
 
             pix = pixs[wt][0]
-            #if pix not in data:
-            #    data[pix]=[]
+            if pix not in data:
+                data[pix]=[]
             data[pix].append(d)
             ndata+=1
 
