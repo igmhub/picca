@@ -206,6 +206,11 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         data = read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order)
         return data,len(data),nside,"RING"
 
+    elif mode=="desi_transmission":
+            nside = 8
+            print("Found {} qsos".format(len(zqso)))
+            data = read_from_desi_transmission(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order)
+            return data,len(data),nside,"RING"
     else:
         print("I don't know mode: {}".format(mode))
         sys.exit(1)
@@ -691,6 +696,67 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             reso_in_km_per_s=spectral_resolution_desi(reso_sum,z_ll)
             diff = sp.zeros(z_ll.shape)
             d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],p,m,f,order,diff,reso_in_km_per_s)
+
+            pix = pixs[wt][0]
+            if pix not in data:
+                data[pix]=[]
+            data[pix].append(d)
+            ndata+=1
+
+    print("found {} quasars in input files\n".format(ndata))
+
+    return data
+
+
+def read_from_desi_transmission(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
+
+    in_nside = int(in_dir.split('spectra-')[-1].replace('/',''))
+    nest = True
+    data = {}
+    ndata = 0
+
+    ztable = {t:z for t,z in zip(thid,zqso)}
+    in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-dec, ra,nest=nest)
+    fi = sp.unique(in_pixs)
+
+    for i,f in enumerate(fi):
+        path = in_dir+"/"+str(int(f/100))+"/"+str(f)+"/transmission-"+str(in_nside)+"-"+str(f)+".fits"
+
+        print("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
+        try:
+            h = fitsio.FITS(path)
+        except IOError:
+            print("Error reading pix {}\n".format(f))
+            continue
+
+        ## get the quasars
+        tid_qsos = thid[(in_pixs==f)]
+        plate_qsos = plate[(in_pixs==f)]
+        mjd_qsos = mjd[(in_pixs==f)]
+        fid_qsos = fid[(in_pixs==f)]
+        ra = h["METADATA"]["RA"][:]*sp.pi/180.
+        de = h["METADATA"]["DEC"][:]*sp.pi/180.
+        pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
+
+        ll_all = sp.log10(h["WAVELENGTH"].read())
+        iv_all = sp.ones(b_ll.shape)*1000000
+        fl_all = h["TRANSMISSION"].read()
+        in_tids = h['METADATA']["MOCKID"][:]
+        h.close()
+
+        for t,p,m,f in zip(tid_qsos,plate_qsos,mjd_qsos,fid_qsos):
+            wt = in_tids == t
+            if wt.sum()==0:
+                print("\nError reading thingid {}\n".format(t))
+                continue
+            ### B
+            ll = ll_all[wt]
+            iv = iv_all[wt]
+            fl = fl_all[wt]
+            reso_in_km_per_s=0.001*sp.ones(iv.shape)
+            diff = sp.zeros(b_ll.shape)
+            d  = forest(ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
+                    p,m,f,order,diff,reso_in_km_per_s)
 
             pix = pixs[wt][0]
             if pix not in data:
