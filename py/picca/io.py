@@ -710,7 +710,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
 def read_from_desi_transmission(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
 
-    in_nside = int(in_dir.split('spectra-')[-1].replace('/',''))
+    in_nside = 16  #int(in_dir.split('spectra-')[-1].replace('/',''))
     nest = True
     data = {}
     ndata = 0
