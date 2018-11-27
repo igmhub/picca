@@ -749,18 +749,17 @@ def read_from_desi_transmission(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,orde
             if wt.sum()==0:
                 print("\nError reading thingid {}\n".format(t))
                 continue
-            ### B
             ll = ll_all[wt]
             iv = iv_all[wt]
             fl = fl_all[wt]
             reso_in_km_per_s=0.001*sp.ones(iv.shape)
-            diff = sp.zeros(b_ll.shape)
+            diff = sp.zeros(ll.shape)
             d  = forest(ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
                     p,m,f,order,diff,reso_in_km_per_s)
 
             pix = pixs[wt][0]
-            if pix not in data:
-                data[pix]=[]
+            #if pix not in data:
+            #    data[pix]=[]
             data[pix].append(d)
             ndata+=1
 
