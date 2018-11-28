@@ -138,6 +138,7 @@ if __name__ == '__main__':
     parser.add_argument('--use-mock-continuum', action='store_true', default = False,
             help='use the mock continuum for computing the deltas')
 
+
     args = parser.parse_args()
 
     ## init forest class
@@ -304,7 +305,10 @@ if __name__ == '__main__':
         print("iteration: ", it)
         nfit = 0
         sort = sp.array(list(data.keys())).argsort()
-        data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort] )
+        if not 'transmission' in args.mode:
+            data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort] )
+        else:
+            data_fit_cont = sp.array(list(data.values()))[sort]
         for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 
@@ -395,7 +399,7 @@ if __name__ == '__main__':
             for d in deltas[p]:
                 nbpixel = len(d.de)
                 dll = d.dll
-                if (args.mode=='desi') : dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
+                if ('desi' in args.mode) : dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
                 line = '{} {} {} '.format(d.plate,d.mjd,d.fid)
                 line += '{} {} {} '.format(d.ra,d.dec,d.zqso)
                 line += '{} {} {} {} {} '.format(d.mean_z,d.mean_SNR,d.mean_reso,dll,nbpixel)
@@ -428,7 +432,7 @@ if __name__ == '__main__':
                            {'name':'MEANSNR','value':d.mean_SNR,'comment':'Mean SNR'},
                     ]
                     dll = d.dll
-                    if (args.mode=='desi'):
+                    if ('desi' in args.mode):
                         dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
                     hd += [{'name':'DLL','value':dll,'comment':'Loglam bin size [log Angstrom]'}]
                     diff = d.diff
