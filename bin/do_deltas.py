@@ -310,9 +310,9 @@ if __name__ == '__main__':
         else:
             data_fit_cont = sp.array(list(data.values()))[sort]
             for i,p in enumerate(sorted(list(data.keys()))):
-                data[p].co=sp.ones(data[p].iv.shape)
-                data[p].p0=1
-                data[p].p1=0
+                data_fit_cont[p].co=sp.ones(data_fit_cont[p].iv.shape)
+                data_fit_cont[p].p0=1
+                data_fit_cont[p].p1=0
         for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 
