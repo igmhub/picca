@@ -309,10 +309,10 @@ if __name__ == '__main__':
             data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort] )
         else:
             data_fit_cont = sp.array(list(data.values()))[sort]
-            for i,p in enumerate(sorted(list(data.keys()))):
-                data_fit_cont[p].co=sp.ones(data_fit_cont[p].iv.shape)
-                data_fit_cont[p].p0=1
-                data_fit_cont[p].p1=0
+            for d in data_fit_cont:
+                d.co=sp.ones(data_fit_cont[p].iv.shape)
+                d.p0=1
+                d.p1=0
         for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 
