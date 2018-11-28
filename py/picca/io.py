@@ -754,9 +754,6 @@ def read_from_desi_transmission(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,orde
             diff = sp.zeros(ll.shape)
             d  = forest(ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
                     p,m,f,order,diff,reso_in_km_per_s)
-            d.co = sp.ones(ll.shape)
-            d.p0 = 1
-            d.p1 = 0
 
             pix = pixs[wt][0]
             if pix not in data:
