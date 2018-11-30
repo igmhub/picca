@@ -314,6 +314,7 @@ if __name__ == '__main__':
                     d.co=sp.ones(d.iv.shape)
                     d.p0=1
                     d.p1=0
+                    d.bad_cont=None
         for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 
