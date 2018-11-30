@@ -306,13 +306,13 @@ if __name__ == '__main__':
         nfit = 0
         sort = sp.array(list(data.keys())).argsort()
         if not 'transmission' in args.mode:
-            data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort] )
+            data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort])
         else:
             data_fit_cont = sp.array(list(data.values()))[sort]
-            for d in data_fit_cont:
-                d.co=sp.ones(d.iv.shape)
-                d.p0=1
-                d.p1=0
+            for dfc in data_fit_cont:
+                dfc.co=sp.ones(d.iv.shape)
+                dfc.p0=1
+                dfc.p1=0
         for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 
