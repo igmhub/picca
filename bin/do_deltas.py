@@ -308,6 +308,7 @@ if __name__ == '__main__':
         if not 'transmission' in args.mode:
             data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort])
         else:
+            print("Transmission file detected: continuum fixed to be 1 everywhere")
             data_fit_cont = sp.array(list(data.values()))[sort]
             for dfc in data_fit_cont:
                 for d in dfc:
