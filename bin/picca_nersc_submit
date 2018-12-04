@@ -7,7 +7,7 @@ import argparse
 
 class batch:
     '''
-    Generic class to hold the names of the 
+    Generic class to hold the names of the
     .batch slurm submission files.
     '''
     def __init__(self):
@@ -19,7 +19,7 @@ class batch:
         self.xcf = []
         self.xdmat = []
         self.xexport = []
- 
+
 def get_header(time, name, email=None, queue="regular", account="desi"):
     '''
     returns the standard header for running the analyses.
@@ -48,7 +48,7 @@ def get_header(time, name, email=None, queue="regular", account="desi"):
 
     return header
 
-def do_deltas(b,time, in_dir, out_dir, drq, 
+def do_deltas(b,time, in_dir, out_dir, drq,
         email=None,debug=False,mode="desi"):
     '''
     Writes a .batch file to submit the do_deltas.py script
@@ -70,7 +70,7 @@ def do_deltas(b,time, in_dir, out_dir, drq,
                 "--out-dir deltas --mode {} ".format(mode)
     if debug:
         header += "--nspec 10000"
-    header += "\n" 
+    header += "\n"
     b.do_deltas = "do_deltas.batch"
     fout = open(out_dir+"/do_deltas.batch","w")
     fout.write(header)
@@ -135,7 +135,7 @@ def dmat(b,time, zint, outdir, email=None, rej=0.99, fidOm=None):
         fout = open(fbatch,"w")
         fout.write(srun)
         fout.close()
-    
+
 def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None):
     '''
     Writes the .batch files to submit the do_xcf.py script
@@ -169,7 +169,7 @@ def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None):
         fout = open(fbatch,"w")
         fout.write(srun)
         fout.close()
-    
+
 def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None):
     '''
     Writes the .batch files to submit the do_xdmat.py script
@@ -189,17 +189,17 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None):
         srun = header + "srun -n 1 -c 64 do_xdmat.py " +\
             "--drq {} --in-dir deltas ".format(drq) +\
             "--z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
-            "--out {} --rej {} --nproc 32 --fid-Om\n".format(out,rej,fidOm)
+            "--out {} --rej {} --nproc 32 --fid-Om {}\n".format(out,rej,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xdmat.append(basename(fbatch))
 
         fout = open(fbatch,"w")
         fout.write(srun)
         fout.close()
-        
+
 def export(time, cf_file, dmat_file, out,fidPk):
     '''
-    Writes the .batch file to submit the export.py and fitter2 
+    Writes the .batch file to submit the export.py and fitter2
     Input:
         - time (string): requested maximum runtime, format: hh:mm:ss
         - cf_file (string): path to the cf_file
@@ -338,7 +338,7 @@ def submit(b):
         var_exp = exp_batch.replace(".batch","").replace(".","_").replace("-","_")
         fout.write("{}=$(sbatch --parsable --dependency=afterok:${},afterok:${} {})\n".format(var_exp,var_cf,var_dmat,exp_batch))
         fout.write('echo "{0}: "${0} \n'.format(var_exp))
-        
+
     for xcf_batch, xdmat_batch,xexp_batch in zip(b.xcf, b.xdmat, b.xexport):
         var_xcf = xcf_batch.replace(".batch","").replace(".","_")
         var_xdmat = xdmat_batch.replace(".batch","").replace(".","_")
@@ -353,54 +353,55 @@ def submit(b):
             fout.write("{}=$(sbatch --parsable {})\n".format(var_xdmat,xdmat_batch))
             fout.write('echo "{0}: "${0} \n'.format(var_xdmat))
         var_xexp = xexp_batch.replace(".batch","").replace(".","_").replace("-","_")
-        fout.write("{}=$(sbatch --parsable --dependency=afterok:${},afterok:${} {})\n".format(var_xexp,var_cf,var_xdmat,xexp_batch))
+        fout.write("{}=$(sbatch --parsable --dependency=afterok:${},afterok:${} {})\n".format(var_xexp,var_xcf,var_xdmat,xexp_batch))
         fout.write('echo "{0}: "${0} \n'.format(var_xexp))
-        
+
     fout.close()
     os.chmod(out_name,stat.S_IRWXU | stat.S_IRWXG)
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Writes scripts to send the picca BAO analysis. Once ran, run `./submit.sh` '+\
+                'in your terminal. This script works on nersc::cori not on nersc::edison.')
 
-parser.add_argument("--in-dir", type=str, default=None, required=True, 
-        help="absolute path to spectra-NSIDE directory "+\
-                "(including spectra-NSIDE)")
+parser.add_argument("--out-dir", type=str, default=None, required=True,
+        help="Output directory")
 
 parser.add_argument("--drq", type=str,default=None, required=True,
-        help="absolute path to drq file")
+        help="Absolute path to drq file")
 
-parser.add_argument("--out-dir", type=str, default=None, required=True, 
-        help="absolute path to spectra-NSIDE directory " +\
+parser.add_argument("--in-dir", type=str, default=None, required=True,
+        help="Absolute path to spectra-NSIDE directory "+\
                 "(including spectra-NSIDE)")
 
 parser.add_argument("--email", type=str, default=None, required=False,
-        help="your email address (optional)")
+        help="Your email address (optional)")
 
 parser.add_argument("--to-do", type=str, nargs="*",
         default=["cf","xcf"],
-        required=False, help="what to do")
+        required=False, help="What to do")
 
 parser.add_argument("--fid-Om", type=float,
         default=0.3147,
-        required=False, help="fiducial Om")
+        required=False, help="Fiducial Om")
 
 parser.add_argument("--fid-Pk", type=str,
         default="PlanckDR12/PlanckDR12.fits",
-        required=False, help="fiducial Pk")
+        required=False, help="Fiducial Pk")
 
 parser.add_argument("--zint", type=str, nargs="*",
         default=["0:2.2","2.2:2.4","2.4:2.6","2.6:2.8","2.8:3.0","3.0:3.2","3.2:10"],
-        required=False, help="redshifts intervals")
- 
-parser.add_argument("--mode", type=str, 
+        required=False, help="Redshifts intervals")
+
+parser.add_argument("--mode", type=str,
         default="desi",
-        required=False, help="use eboss or desi data")
- 
-parser.add_argument("--debug", 
+        required=False, help="Use eboss or desi data")
+
+parser.add_argument("--debug",
         action="store_true", default=False)
 
 parser.add_argument("--no-deltas",
         action="store_true", default=False,
-        help="do not run do_deltas (e.g. because they were already run)")
+        help="Do not run do_deltas (e.g. because they were already run)")
 
 args = parser.parse_args()
 

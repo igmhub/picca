@@ -170,8 +170,8 @@ def compute_cor_reso(delta_pixel,mean_reso,k):
 
 class Pk1D :
 
-    def __init__(self,ra,dec,zqso,mean_z,plate,mjd,fiberid, msnr, mreso,
-                 k,Pk_raw,Pk_noise,cor_reso,Pk, nb_mp, Pk_diff=None):
+    def __init__(self,ra,dec,zqso,mean_z,plate,mjd,fiberid,msnr,mreso,
+                 k,Pk_raw,Pk_noise,cor_reso,Pk,nb_mp,Pk_diff=None):
 
         self.ra = ra
         self.dec = dec
@@ -220,4 +220,4 @@ class Pk1D :
         cor_reso = data['cor_reso'][:]
         Pk_diff = data['Pk_diff'][:]
 
-        return cls(ra,dec,zqso,mean_z,plate,mjd,fid, mean_SNR, mean_reso, k,Pk_raw,Pk_noise,cor_reso, Pk, nb_mp, Pk_diff)
+        return cls(ra,dec,zqso,mean_z,plate,mjd,fid, mean_SNR, mean_reso,k,Pk_raw,Pk_noise,cor_reso, Pk,nb_mp,Pk_diff)

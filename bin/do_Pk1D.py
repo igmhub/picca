@@ -245,12 +245,6 @@ if __name__ == '__main__':
                     Pk_mean_diff = sum(Pk_diff[selection])/float(len(Pk_diff[selection]))
                     Pk = (Pk_raw - Pk_mean_diff)/cor_reso
 
-                # Build Pk1D
-                if (args.noise_estimate=='mean_diff' or args.noise_estimate=='mean_rebin_diff'):
-                    Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,d.mean_SNR,d.mean_reso,k,Pk_raw,Pk_noise,cor_reso,Pk,nb_masked_pixel,Pk_mean_diff)
-                else:
-                    Pk1D_final = Pk1D(d.ra,d.dec,d.zqso,d.mean_z,d.plate,d.mjd,d.fid,d.mean_SNR,d.mean_reso,k,Pk_raw,Pk_noise,cor_reso,Pk,nb_masked_pixel)
-
                 # save in root format
                 if (args.out_format=='root'):
                     zqso[0] = d.zqso
@@ -279,19 +273,6 @@ if __name__ == '__main__':
                 # save in fits format
 
                 if (args.out_format=='fits'):
-#                    hd={}
-#                    hd["RA"]=d.ra
-#                    hd["DEC"]=d.dec
-#                    hd["Z"]=d.zqso
-#                    hd["MEANZ"]=m_z_arr[f]
-#                    hd["MEANRESO"]=d.mean_reso
-#                    hd["MEANSNR"]=d.mean_SNR
-#                    hd["NBMASKPIX"]=nb_masked_pixel
-#
-#                    hd["PLATE"]=d.plate
-#                    hd["MJD"]=d.mjd
-#                    hd["FIBER"]=d.fid
-
                     hd = [ {'name':'RA','value':d.ra,'comment':"QSO's Right Ascension [degrees]"},
                         {'name':'DEC','value':d.dec,'comment':"QSO's Declination [degrees]"},
                         {'name':'Z','value':d.zqso,'comment':"QSO's redshift"},

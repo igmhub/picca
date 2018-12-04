@@ -18,7 +18,6 @@ def corr_func(p):
 
 if __name__ == '__main__':
 
-
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Compute the auto and cross-correlation between catalogs of objects')
 
@@ -71,7 +70,7 @@ if __name__ == '__main__':
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
     parser.add_argument('--type-corr', type=str, default='DD', required=False,
-        help='type of correlation: DD, RR, DR, xDD, xRR, xD1R2, xD2R1')
+        help='type of correlation: DD, RR, DR, RD, xDD, xRR, xD1R2, xD2R1')
 
     parser.add_argument('--nside', type=int, default=16, required=False,
         help='Healpix nside')
@@ -94,8 +93,8 @@ if __name__ == '__main__':
     co.nt     = args.nt
     co.nside  = args.nside
     co.type_corr = args.type_corr
-    if co.type_corr not in ['DD', 'RR', 'DR', 'xDD', 'xRR', 'xD1R2', 'xD2R1']:
-        print("ERROR: type-corr not in ['DD', 'RR', 'DR', 'xDD', 'xRR', 'xD1R2', 'xD2R1']")
+    if co.type_corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xD2R1']:
+        print("ERROR: type-corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xD2R1']")
         sys.exit()
     if args.drq2 is None:
         co.x_correlation = False
