@@ -231,6 +231,16 @@ def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
     p1 = kwargs["croom_par1"]
     return (p0 + p1*(1.+z)**2)/(p0 + p1*(1+zref)**2)
 
+def sky_residual_correlation(r, mu, name, bin_size_rp, *pars, **kwargs):
+
+    rp = mu*r
+    rt = sp.sqrt(r**2-rp**2)
+
+    cor = sp.zeros(r.size)
+    w = (rp>=0.) & (rp<bin_size_rp)
+    cor[w] = kwargs['scale_sky '+name]*(1.+rt[w])**kwargs['gamma_sky '+name]
+
+    return cor
 
 def broadband(r, mu, deg_r_min=None, deg_r_max=None,
         ddeg_r=None, deg_mu_min=None, deg_mu_max=None,

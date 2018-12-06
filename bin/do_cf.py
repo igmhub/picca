@@ -82,9 +82,6 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action='store_true', required=False,
         help='Do not project out continuum fitting modes')
 
-    parser.add_argument('--no-same-wavelength-pairs', action='store_true', required=False,
-        help='Reject pairs with same wavelength')
-
     parser.add_argument('--nside', type=int, default=16, required=False,
         help='Healpix nside')
 
@@ -110,7 +107,6 @@ if __name__ == '__main__':
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
-    cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
 
     cosmo = constants.cosmo(args.fid_Om)
