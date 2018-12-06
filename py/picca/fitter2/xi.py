@@ -232,6 +232,20 @@ def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
     return (p0 + p1*(1.+z)**2)/(p0 + p1*(1+zref)**2)
 
 def sky_residual_correlation(r, mu, name, bin_size_rp, *pars, **kwargs):
+    '''Contribution to the correlation of delta field
+        by the sky residuals
+
+        Arguments:
+            - r (array or float): separation
+            - mu (array or float): cosnus of angle
+            - name (str): name of the correlation
+            - bin_size_rp (float): size of the bin in r-parallel
+            - *pars: additional parameters that are ignored (for convenience)
+            - **kwargs: (dict) dictionary containing all the polynomial
+                coefficients. Any extra keywords are ignored
+        Returns:
+            cor (array of float): Correlation
+    '''
 
     rp = mu*r
     rt = sp.sqrt(r**2-rp**2)
