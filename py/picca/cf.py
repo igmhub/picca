@@ -525,7 +525,7 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
 
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
 
-    if remove_same_half_plate_close_pairs same_half_plate:
+    if remove_same_half_plate_close_pairs and same_half_plate:
         w &= abs(rp)>(rp_max-rp_min)/np
 
     bins = bins[w]
