@@ -52,6 +52,32 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
+def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
+    # alternative to pk_hcd with a physically motivated model (Rogers++ 2018)
+
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+
+    bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+    # Lorentzian part
+    F_hcd = utils.sinc(kp*L0)
+    # Gaussian part (1 Mpc/h ~ 100 km/s)
+    b = 1.0
+    F_hcd = sp.exp(-L0*kp) * sp.exp(-0.5*kp*kp*b*b)
+
+    bias_eff1 = (bias1 + bias_hcd*F_hcd)
+    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+
+    bias_eff2 = (bias2 + bias_hcd*F_hcd)
+    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+
+    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
 def pk_uv(k, pk_lin, tracer1, tracer2, **kwargs):
 
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
