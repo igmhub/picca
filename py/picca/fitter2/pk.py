@@ -57,7 +57,7 @@ def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
        of a Lorentzian profile. Motivated by Rogers et al. (2018).
 
     Args:
-		Same than pk_hcd
+        Same than pk_hcd
 
     Returns:
         Same than pk_hcd
