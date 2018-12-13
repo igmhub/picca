@@ -53,7 +53,7 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     return pk
 
 def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
-    """Models the effect of HCD systems with the Fourier transform
+    """Model the effect of HCD systems with the Fourier transform
        of a Lorentzian profile. Motivated by Rogers et al. (2018).
 
     Args:
@@ -64,8 +64,6 @@ def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
 
     """
 
-    # alternative to pk_hcd with a physically motivated model (Rogers++ 2018)
-
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
 
     bias_hcd = kwargs["bias_hcd"]
@@ -73,11 +71,7 @@ def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
     L0 = kwargs["L0_hcd"]
 
     kp = k*muk
-    # Lorentzian part
-    F_hcd = utils.sinc(kp*L0)
-    # Gaussian part (1 Mpc/h ~ 100 km/s)
-    b = 1.0
-    F_hcd = sp.exp(-L0*kp) * sp.exp(-0.5*kp*kp*b*b)
+    F_hcd = sp.exp(-L0*kp)
 
     bias_eff1 = (bias1 + bias_hcd*F_hcd)
     beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
