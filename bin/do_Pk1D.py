@@ -195,7 +195,7 @@ if __name__ == '__main__':
 
             # first pixel in forest
             for first_pixel,first_pixel_ll in enumerate(d.ll):
-                if (sp.power(10.,first_pixel_ll)>args.lambda_obs_min) : break
+                if 10.**first_pixel_ll>args.lambda_obs_min : break
 
             # minimum number of pixel in forest
             nb_pixel_min = args.nb_pixel_min
