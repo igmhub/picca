@@ -154,7 +154,8 @@ class data:
                     dic_init['parameters']['values'][k] = v
                     dic_init['parameters']['errors']['error_'+k] = 0.01
 
-                bb = partial(xi.broadband, deg_r_min=deg_r_min,
+                bb = partial( getattr(xi, dic_bb['func']),
+                    deg_r_min=deg_r_min,
                     deg_r_max=deg_r_max, ddeg_r=ddeg_r,
                     deg_mu_min=deg_mu_min, deg_mu_max=deg_mu_max,
                     ddeg_mu=ddeg_mu,rp_rt = dic_bb['rp_rt']=='rp,rt',

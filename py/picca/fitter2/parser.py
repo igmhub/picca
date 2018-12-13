@@ -156,10 +156,9 @@ def parse_data(filename,zeff,fiducial):
             dic_bb['rp_rt'] = value[2]
 
             if len(value)==6:
-                assert value[5] == 'sky'
-                dic_bb['sky'] = value[5]=='sky'
+                dic_bb['func'] = value[5]
             else:
-                dic_bb['sky'] = False
+                dic_bb['func'] = 'broadband'
 
             deg_r_min,deg_r_max,ddeg_r = value[3].split(':')
             dic_bb['deg_r_min'] = int(deg_r_min)
