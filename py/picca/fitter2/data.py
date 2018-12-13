@@ -128,10 +128,6 @@ class data:
         if 'standard asymmetry' in dic_init['model']:
             self.xi_asy_model = partial(getattr(xi, dic_init['model']['standard asymmetry']), name=self.name)
 
-        self.sky_residuals = None
-        if 'sky residuals' in dic_init['model']:
-            self.sky_residuals = partial(getattr(xi, dic_init['model']['sky residuals']), name=self.name, bin_size_rp=bin_size_rp)
-
         self.bb = {}
         self.bb['pre-add'] = []
         self.bb['pos-add'] = []
@@ -155,8 +151,8 @@ class data:
                         for j in range(deg_mu_min, deg_mu_max+1, ddeg_mu)}
 
                 for k,v in bb_pars.items():
-                   dic_init['parameters']['values'][k] = v
-                   dic_init['parameters']['errors']['error_'+k] = 0.01
+                    dic_init['parameters']['values'][k] = v
+                    dic_init['parameters']['errors']['error_'+k] = 0.01
 
                 bb = partial(xi.broadband, deg_r_min=deg_r_min,
                     deg_r_max=deg_r_max, ddeg_r=ddeg_r,
@@ -294,10 +290,6 @@ class data:
 
         if self.xi_asy_model is not None:
             xi += self.xi_asy_model(self.r, self.mu, k, pk_lin, self.tracer1, self.tracer2, **pars)
-
-        ## Sky residuals correlation
-        if self.sky_residuals is not None:
-            xi += self.sky_residuals(self.r, self.mu, **pars)
 
         ## pre-distortion broadband
         for bb in self.bb['pre-mul']:
