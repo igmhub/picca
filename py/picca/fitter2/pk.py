@@ -53,6 +53,17 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     return pk
 
 def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
+    """Models the effect of HCD systems with the Fourier transform
+       of a Lorentzian profile. Motivated by Rogers et al. (2018).
+
+    Args:
+		Same than pk_hcd
+
+    Returns:
+        Same than pk_hcd
+
+    """
+
     # alternative to pk_hcd with a physically motivated model (Rogers++ 2018)
 
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
