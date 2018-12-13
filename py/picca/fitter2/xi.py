@@ -231,10 +231,10 @@ def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
     p1 = kwargs["croom_par1"]
     return (p0 + p1*(1.+z)**2)/(p0 + p1*(1+zref)**2)
 
-def broadband_sky(r, mu, bin_size_rp, deg_r_min=None, deg_r_max=None,
+def broadband_sky(r, mu, deg_r_min=None, deg_r_max=None,
         ddeg_r=None, deg_mu_min=None, deg_mu_max=None,
         ddeg_mu=None, deg_mu=None, name=None,
-        rp_rt=False, *pars, **kwargs):
+        rp_rt=False, bin_size_rp=None, *pars, **kwargs):
     '''
         Broadband function interface.
         Calculates a power-law broadband in r and mu or rp,rt for the sky residuals
@@ -285,7 +285,7 @@ def broadband_sky(r, mu, bin_size_rp, deg_r_min=None, deg_r_max=None,
 def broadband(r, mu, deg_r_min=None, deg_r_max=None,
         ddeg_r=None, deg_mu_min=None, deg_mu_max=None,
         ddeg_mu=None, deg_mu=None, name=None,
-        rp_rt=False, *pars, **kwargs):
+        rp_rt=False, bin_size_rp=None, *pars, **kwargs):
     '''
     Broadband function interface.
     Calculates a power-law broadband in r and mu or rp,rt

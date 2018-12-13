@@ -159,7 +159,7 @@ class data:
                     deg_r_max=deg_r_max, ddeg_r=ddeg_r,
                     deg_mu_min=deg_mu_min, deg_mu_max=deg_mu_max,
                     ddeg_mu=ddeg_mu,rp_rt = dic_bb['rp_rt']=='rp,rt',
-                    name=name)
+                    bin_size_rp=bin_size_rp, name=name)
                 bb.name = name
 
                 self.bb[dic_bb['pre']+"-"+dic_bb['type']].append(bb)
