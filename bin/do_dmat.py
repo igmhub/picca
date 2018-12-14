@@ -96,6 +96,8 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
 
+    parser.add_argument('--sym-xcf', action='store_true', required=False,
+        help='fold up the cross-correlation function, rp = abs(rp)')
 
     args = parser.parse_args()
 
@@ -117,7 +119,8 @@ if __name__ == '__main__':
     cf.rej = args.rej
     cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
-
+    cf.sym_xcf = args.sym_xcf
+    
     cosmo = constants.cosmo(args.fid_Om)
 
     ### Read data 1

@@ -41,6 +41,7 @@ lock = None
 x_correlation = None
 ang_correlation = None
 no_same_wavelength_pairs = None
+sym_xcf = None
 
 def fill_neighs(pix):
     for ipix in pix:
@@ -110,7 +111,7 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
             rp[(rp<1.)] = 1./rp[(rp<1.)]
         rt = ang*sp.ones_like(rp)
     else:
-        if x_correlation : rp = (r1-r2[:,None])*sp.cos(ang/2)
+        if x_correlation and not sym_xcf: rp = (r1-r2[:,None])*sp.cos(ang/2)
         else : rp = abs(r1-r2[:,None])*sp.cos(ang/2)
         rt = (r1+r2[:,None])*sp.sin(ang/2)
     wd12 = wd1*wd2[:,None]
@@ -184,7 +185,7 @@ def dmat(pix):
 @jit
 def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
 
-    if x_correlation:
+    if x_correlation and not sym_xcf:
         rp = (r1[:,None]-r2)*sp.cos(ang/2)
     else:
         rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
@@ -315,7 +316,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 z2_abs2 = z2_abs2[wzcut]
 
                 rp = (r1[:,None]-r2)*sp.cos(ang/2)
-                if not x_correlation:
+                if not x_correlation and sym_xcf:
                     rp = abs(rp)
 
                 rt = (r1[:,None]+r2)*sp.sin(ang/2)
@@ -342,7 +343,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
 
-                if not x_correlation:
+                if not x_correlation and sym_xcf:
                     rp_abs1_abs2 = abs(rp_abs1_abs2)
 
                 rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
@@ -388,7 +389,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     r2_abs1 = r2_abs1[wzcut]
 
                     rp = (r1[:,None]-r2)*sp.cos(ang/2)
-                    if not x_correlation:
+                    if not x_correlation and sym_xcf:
                         rp = abs(rp)
 
                     rt = (r1[:,None]+r2)*sp.sin(ang/2)
@@ -410,7 +411,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     c = sp.bincount(bA[wA],weights=w12[wA])
                     wdm[:len(c)]+=c
                     rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
-                    if not x_correlation:
+                    if not x_correlation and sym_xcf:
                         rp_abs2_abs1 = abs(rp_abs2_abs1)
 
                     rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
