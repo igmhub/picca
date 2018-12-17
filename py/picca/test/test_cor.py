@@ -475,6 +475,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 15"
         cmd += " --nt 15"
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -498,6 +499,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -522,6 +524,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -556,6 +559,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 30"
         cmd += " --nt 15"
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -580,6 +584,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -606,6 +611,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
