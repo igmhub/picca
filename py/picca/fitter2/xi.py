@@ -231,52 +231,26 @@ def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
     p1 = kwargs["croom_par1"]
     return (p0 + p1*(1.+z)**2)/(p0 + p1*(1+zref)**2)
 
-def broadband_sky(r, mu, deg_r_min=None, deg_r_max=None,
-        ddeg_r=None, deg_mu_min=None, deg_mu_max=None,
-        ddeg_mu=None, deg_mu=None, name=None,
-        rp_rt=False, bin_size_rp=None, *pars, **kwargs):
+def broadband_sky(r, mu, name=None, bin_size_rp=None, *pars, **kwargs):
     '''
         Broadband function interface.
-        Calculates a power-law broadband in r and mu or rp,rt for the sky residuals
+        Calculates a Gaussian broadband in rp,rt for the sky residuals
     Arguments:
-        - r,mu: (array or float) where to calcualte the broadband
-        - deg_r_min: (int) degree of the lowest-degree monomial in r or rp
-        - deg_r_max: (int) degree of the highest-degree monomual in r or rp
-        - ddeg_r: (int) degree step in r or rp
-        - deg_mu_min: (int) degree of the lowest-degree monomial in mu or rt
-        - deg_mu_max: (int) degree of the highest-degree monmial in mu or rt
-        - ddeg_mu: (int) degree step in mu or rt
+        - r,mu (array or float): where to calcualte the broadband
+        - bin_size_rp (array): Bin size of the distortion matrix
         - name: (string) name ot identify the corresponding parameters,
                     typically the dataset name and whether it's multiplicative
                     of additive
-        - rt_rp: (bool) use r,mu (if False) or rp,rt (if True)
         - *pars: additional parameters that are ignored (for convenience)
-        **kwargs: (dict) dictionary containing all the polynomial
+        **kwargs (dict): dictionary containing all the polynomial
                     coefficients. Any extra keywords are ignored
-
     Returns:
         - cor (array of float): Correlation function
     '''
 
-    rp = mu*r
-    rt = sp.sqrt(r**2-rp**2)
-
-    if rp_rt:
-        r1 = (r/100.)*mu
-        r2 = (r/100.)*sp.sqrt(1-mu**2)
-    else:
-        r1 = r/100.
-        r2 = mu
-
-    r1_pows = sp.arange(deg_r_min, deg_r_max+1, ddeg_r)
-    r2_pows = sp.arange(deg_mu_min, deg_mu_max+1, ddeg_mu)
-    BB = [kwargs['{} ({},{})'.format(name,i,j)] for i in r1_pows
-            for j in r2_pows]
-    BB = sp.array(BB).reshape(-1,deg_r_max-deg_r_min+1)
-
-    cor = (BB[:,:,None,None]*r1**r1_pows[:,None,None]*\
-            r2**r2_pows[None,:,None]).sum(axis=(0,1,2))
-
+    rp = r*mu
+    rt = r*sp.sqrt(1-mu**2)
+    cor = kwargs[name+'-scale-sky']*sp.exp(-(rt/bin_size_rp)**2/kwargs[name+'-sigma-sky']**2)
     w = (rp>=0.) & (rp<bin_size_rp)
     cor[~w] = 0.
 

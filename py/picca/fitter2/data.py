@@ -134,7 +134,7 @@ class data:
         self.bb['pre-mul'] = []
         self.bb['pos-mul'] = []
         if 'broadband' in dic_init:
-            for ibb,dic_bb in enumerate(dic_init['broadband']):
+            for ibb,dic_bb in enumerate( [el for el in dic_init['broadband'] if el['func']!='broadband_sky']):
                 deg_r_min = dic_bb['deg_r_min']
                 deg_r_max = dic_bb['deg_r_max']
                 ddeg_r = dic_bb['ddeg_r']
@@ -163,6 +163,22 @@ class data:
                 bb.name = name
 
                 self.bb[dic_bb['pre']+"-"+dic_bb['type']].append(bb)
+
+            size_bb = len(self.bb['pre-add'])+len(self.bb['pos-add'])+len(self.bb['pre-mul'])+len(self.bb['pos-mul'])
+            for ibb,dic_bb in enumerate( [el for el in dic_init['broadband'] if el['func']=='broadband_sky']):
+                ibb += size_bb
+                name = 'BB-{}-{}-{}'.format(self.name,ibb,dic_bb['func'])
+
+                for k in ['scale-sky','sigma-sky']:
+                    if not name+'-'+k in dic_init['parameters']['values']:
+                        dic_init['parameters']['values'][name+'-'+k] = 0.
+                        dic_init['parameters']['errors']['error_'+name+'-'+k] = 0.01
+
+                bb = partial( getattr(xi, dic_bb['func']),
+                    bin_size_rp=bin_size_rp, name=name)
+
+                bb.name = name
+                self.bb[dic_bb['pre']+'-'+dic_bb['type']].append(bb)
 
         self.par_names = dic_init['parameters']['values'].keys()
         self.pars_init = dic_init['parameters']['values']
