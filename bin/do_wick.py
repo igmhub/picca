@@ -5,7 +5,6 @@ import fitsio
 import argparse
 import glob
 import healpy
-import sys
 from scipy.interpolate import interp1d
 
 from picca import constants
