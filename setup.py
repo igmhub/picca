@@ -2,7 +2,7 @@
 
 import glob
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 scripts = glob.glob('bin/*')
 
@@ -23,4 +23,3 @@ setup(name="picca",
       test_suite='picca.test.test_cor',
       scripts = scripts
       )
-

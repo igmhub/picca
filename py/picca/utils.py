@@ -213,7 +213,6 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     Returns:
         None
-
     """
 
     ### Catalog of objects

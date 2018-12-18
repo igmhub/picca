@@ -3,14 +3,9 @@ from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
-import glob
-import healpy
-import sys
-import copy
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, utils, io
-from picca.data import delta
 from picca.utils import print
 
 def calc_dmat(p):
