@@ -5,7 +5,6 @@ import fitsio
 import argparse
 import glob
 import healpy
-import sys
 from scipy.interpolate import interp1d
 from multiprocessing import Pool,Lock,cpu_count,Value
 

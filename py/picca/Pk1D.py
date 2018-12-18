@@ -143,15 +143,15 @@ def compute_Pk_noise(dll,iv,diff,ll,run_noise):
     err[w] = 1.0/sp.sqrt(iv[w])
 
     if (run_noise) :
-        for iexp in range(nb_noise_exp):
+        for _ in range(nb_noise_exp): #iexp unused, but needed
             delta_exp= sp.zeros(nb_pixels)
             delta_exp[w] = sp.random.normal(0.,err[w])
-            k_exp,Pk_exp = compute_Pk_raw(dll,delta_exp,ll)
+            _,Pk_exp = compute_Pk_raw(dll,delta_exp,ll) #k_exp unused, but needed
             Pk += Pk_exp
 
         Pk /= float(nb_noise_exp)
 
-    k_diff,Pk_diff = compute_Pk_raw(dll,diff,ll)
+    _,Pk_diff = compute_Pk_raw(dll,diff,ll) #k_diff unused, but needed
 
     return Pk,Pk_diff
 
