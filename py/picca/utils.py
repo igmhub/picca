@@ -367,7 +367,16 @@ def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
 
     return angmax
 def shuffle_distrib_obj(obj,seed):
+    '''Shuffle the distribution of objects by giving to an object the redshift
+        of another random one.
 
+    Args:
+        obj (dic): Catalog of objects
+        seed (int): seed for the given realization of the shuffle
+
+    Returns:
+        obj (dic): Catalog of objects
+    '''
     dic = {}
     lst_p = ['we','zqso','r_comov']
     for p in lst_p:
