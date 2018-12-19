@@ -366,3 +366,21 @@ def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
         angmax = 2.*sp.arcsin(rt_max/(rmin1+rmin2))
 
     return angmax
+def shuffle_distrib_obj(obj,seed):
+
+    dic = {}
+    lst_p = ['we','zqso','r_comov']
+    for p in lst_p:
+        dic[p] = [getattr(o, p) for oss in obj.values() for o in oss]
+
+    sp.random.seed(seed)
+    idx = sp.arange(len(dic['zqso']))
+    sp.random.shuffle(idx)
+
+    i = 0
+    for oss in obj.values():
+        for o in oss:
+            for p in lst_p:
+                setattr(o,p,dic[p][idx[i]])
+            i += 1
+    return obj
