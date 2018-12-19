@@ -47,6 +47,12 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
+    parser.add_argument('--npm', type=int, default=50, required=False,
+        help='Number of r-parallel bins for the model')
+
+    parser.add_argument('--ntm', type=int, default=50, required=False,
+        help='Number of r-transverse bins for the model')
+
     parser.add_argument('--z-cut-min', type=float, default=0., required=False,
         help='Use only pairs of forest x object with the mean of the last absorber \
         redshift and the object redshift larger than z-cut-min')
@@ -106,6 +112,8 @@ if __name__ == '__main__':
     cf.z_cut_min = args.z_cut_min
     cf.np = args.np
     cf.nt = args.nt
+    cf.npm = args.npm
+    cf.ntm = args.ntm
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
@@ -172,6 +180,8 @@ if __name__ == '__main__':
         {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'NPM','value':cf.npm,'comment':'Number of bins in r-parallel for the model'},
+        {'name':'NTM','value':cf.ntm,'comment':'Number of bins in r-transverse for the model'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},

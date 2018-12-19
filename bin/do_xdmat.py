@@ -43,6 +43,12 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
+    parser.add_argument('--npm', type=int, default=100, required=False,
+        help='Number of r-parallel bins for the model')
+
+    parser.add_argument('--ntm', type=int, default=50, required=False,
+        help='Number of r-transverse bins for the model')
+
     parser.add_argument('--z-min-obj', type=float, default=None, required=False,
         help='Min redshift for object field')
 
@@ -99,6 +105,8 @@ if __name__ == '__main__':
     xcf.z_cut_min = args.z_cut_min
     xcf.np = args.np
     xcf.nt = args.nt
+    xcf.npm = args.npm
+    xcf.ntm = args.ntm
     xcf.nside = args.nside
     xcf.zref = args.z_ref
     xcf.alpha = args.z_evol_del
@@ -170,6 +178,8 @@ if __name__ == '__main__':
         {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'NPM','value':xcf.npm,'comment':'Number of bins in r-parallel for the model'},
+        {'name':'NTM','value':xcf.ntm,'comment':'Number of bins in r-transverse for the model'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':xcf.rej,'comment':'Rejection factor'},

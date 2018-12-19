@@ -9,8 +9,8 @@ from picca.utils import print
 
 np = None
 nt = None
-ntm= None
-npm= None
+ntm = None
+npm = None
 rp_max = None
 rp_min = None
 z_cut_max = None

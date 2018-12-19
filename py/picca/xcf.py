@@ -8,6 +8,8 @@ from picca import constants
 
 np = None
 nt = None
+npm = None
+ntm = None
 rp_max = None
 rp_min = None
 rt_max = None
