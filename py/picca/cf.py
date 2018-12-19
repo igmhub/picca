@@ -149,7 +149,7 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
 
 def dmat(pix):
 
-    dm = sp.zeros(np*nt*nt*np)
+    dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
 
     npairs = 0
@@ -178,7 +178,7 @@ def dmat(pix):
                 fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2)
             setattr(d1,"neighs",None)
 
-    return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
+    return wdm,dm.reshape(np*nt,npm*ntm),npairs,npairs_used
 
 @jit
 def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):

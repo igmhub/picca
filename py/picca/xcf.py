@@ -192,7 +192,7 @@ def fast_metal_grid(r1,w1,z2,r2,w2,ang,z1_metal,r1_metal):
 
 def dmat(pix):
 
-    dm = sp.zeros(np*nt*nt*np)
+    dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
 
     npairs = 0
@@ -218,7 +218,7 @@ def dmat(pix):
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
-    return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
+    return wdm,dm.reshape(np*nt,npm*ntm),npairs,npairs_used
 
 @jit
 def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
