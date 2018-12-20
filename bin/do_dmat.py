@@ -47,11 +47,8 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
-    parser.add_argument('--npm', type=int, default=50, required=False,
-        help='Number of r-parallel bins for the model')
-
-    parser.add_argument('--ntm', type=int, default=50, required=False,
-        help='Number of r-transverse bins for the model')
+    parser.add_argument('--coef-binning-model', type=int, default=1, required=False,
+        help='Coefficient multiplying np and nt to get finner binning for the model')
 
     parser.add_argument('--z-cut-min', type=float, default=0., required=False,
         help='Use only pairs of forest x object with the mean of the last absorber \
@@ -112,8 +109,8 @@ if __name__ == '__main__':
     cf.z_cut_min = args.z_cut_min
     cf.np = args.np
     cf.nt = args.nt
-    cf.npm = args.npm
-    cf.ntm = args.ntm
+    cf.npm = args.np*args.coef_binning_model
+    cf.ntm = args.nt*args.coef_binning_model
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
