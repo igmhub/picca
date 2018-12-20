@@ -158,7 +158,6 @@ if __name__ == '__main__':
     rp_all=[]
     rt_all=[]
     z_all=[]
-    we_all = []
     names=[]
     npairs_all=[]
     npairs_used_all=[]
@@ -192,7 +191,6 @@ if __name__ == '__main__':
         rp_all.append(rp)
         rt_all.append(rt)
         z_all.append(z)
-        we_all.append(we)
         names.append(abs_igm)
 
         npairs_all.append(npairs)
@@ -204,8 +202,7 @@ if __name__ == '__main__':
         {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
-        {'name':'NPM','value':xcf.npm,'comment':'Number of bins in r-parallel for the model'},
-        {'name':'NTM','value':xcf.ntm,'comment':'Number of bins in r-transverse for the model'},
+        {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':xcf.rej,'comment':'Rejection factor'},
@@ -237,11 +234,6 @@ if __name__ == '__main__':
         out_comment += ['Redshift']
         out_units += ['']
 
-        out_names += ['WE_'+args.obj_name+'_'+ai]
-        out_list += [we_all[i]]
-        out_comment += ['Sum of weight']
-        out_units += ['']
-
         out_names += ['DM_'+args.obj_name+'_'+ai]
         out_list += [dm_all[i]]
         out_comment += ['Distortion matrix']
@@ -251,5 +243,6 @@ if __name__ == '__main__':
         out_list += [wdm_all[i]]
         out_comment += ['Sum of weight']
         out_units += ['']
+
     out.write(out_list,names=out_names,comment=out_comment,units=out_units,extname='MDMAT')
     out.close()

@@ -194,6 +194,10 @@ def dmat(pix):
 
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
+    rpeff = sp.zeros(ntm*npm)
+    rteff = sp.zeros(ntm*npm)
+    zeff = sp.zeros(ntm*npm)
+    weff = sp.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -218,10 +222,10 @@ def dmat(pix):
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
-    return wdm,dm.reshape(np*nt,npm*ntm),npairs,npairs_used
+    return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 @jit
-def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
+def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     rp = (r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)

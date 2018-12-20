@@ -160,16 +160,21 @@ if __name__ == '__main__':
     dm = pool.map(calc_dmat,sorted(cpu_data.values()))
     pool.close()
 
-
     dm = sp.array(dm)
-    wdm =dm[:,0].sum(axis=0)
-    npairs=dm[:,2].sum(axis=0)
-    npairs_used=dm[:,3].sum(axis=0)
-    dm=dm[:,1].sum(axis=0)
-
+    wdm = dm[:,0].sum(axis=0)
+    rp = dm[:,2].sum(axis=0)
+    rt = dm[:,3].sum(axis=0)
+    z = dm[:,4].sum(axis=0)
+    we = dm[:,5].sum(axis=0)
+    npairs = dm[:,6].sum(axis=0)
+    npairs_used = dm[:,7].sum(axis=0)
+    dm = dm[:,1].sum(axis=0)
+    w = we>0.
+    rp[w] /= we[w]
+    rt[w] /= we[w]
+    z[w] /= we[w]
     w = wdm>0
-    dm[w]/=wdm[w,None]
-
+    dm[w] /= wdm[w,None]
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
@@ -177,13 +182,16 @@ if __name__ == '__main__':
         {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
-        {'name':'NPM','value':cf.npm,'comment':'Number of bins in r-parallel for the model'},
-        {'name':'NTM','value':cf.ntm,'comment':'Number of bins in r-transverse for the model'},
+        {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
-    out.write([wdm,dm],names=['WDM','DM'],header=head,comment=['Sum of weight','Distortion matrix'],extname='DMAT')
+    out.write([rp,rt,z,wdm,dm],
+        names=['RP','RT','Z','WDM','DM'],
+        comment=['R-parallel','R-transverse','Redshift','Sum of weight','Distortion matrix'],
+        units=['h^-1 Mpc','h^-1 Mpc','','',''],
+        header=head,extname='DMAT')
     out.close()

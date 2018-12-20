@@ -151,6 +151,10 @@ def dmat(pix):
 
     dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
+    rpeff = sp.zeros(ntm*npm)
+    rteff = sp.zeros(ntm*npm)
+    zeff = sp.zeros(ntm*npm)
+    weff = sp.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -178,10 +182,10 @@ def dmat(pix):
                 fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2)
             setattr(d1,"neighs",None)
 
-    return wdm,dm.reshape(np*nt,npm*ntm),npairs,npairs_used
+    return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 @jit
-def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
+def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 
     if x_correlation:
         rp = (r1[:,None]-r2)*sp.cos(ang/2)
