@@ -262,7 +262,6 @@ class data:
                             self.dm_met[(m1, m2)] = csr_matrix(hmet[3]["DM_{}_{}".format(m1,m2)][:])
 
     def xi_model(self, k, pk_lin, pars):
-
         xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, \
                     tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
 
