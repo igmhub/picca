@@ -43,13 +43,13 @@ if __name__ == '__main__':
         help='Max r-transverse [h^-1 Mpc]')
 
     parser.add_argument('--np', type=int, default=50, required=False,
-        help='Number of r-parallel bins for the model, i.e. 2nd dimension of dmat')
+        help='Number of r-parallel bins')
 
     parser.add_argument('--nt', type=int, default=50, required=False,
-        help='Number of r-transverse bins for the model, i.e. 2nd dimension of dmat')
+        help='Number of r-transverse bins')
 
     parser.add_argument('--coef-binning-model', type=int, default=1, required=False,
-        help='Coefficient multiplying np and nt to get finner binning for the model of metals')
+        help='Coefficient multiplying np and nt to get finner binning for the model')
 
     parser.add_argument('--z-cut-min', type=float, default=0., required=False,
         help='Use only pairs of forest x object with the mean of the last absorber \
@@ -115,8 +115,8 @@ if __name__ == '__main__':
     cf.rp_min = args.rp_min
     cf.z_cut_max = args.z_cut_max
     cf.z_cut_min = args.z_cut_min
-    cf.np = args.np
-    cf.nt = args.nt
+    cf.np = args.np*args.coef_binning_model
+    cf.nt = args.nt*args.coef_binning_model
     cf.npm = args.np*args.coef_binning_model
     cf.ntm = args.nt*args.coef_binning_model
     cf.nside = args.nside
@@ -280,13 +280,7 @@ if __name__ == '__main__':
         out_list += [we_all[i]]
         out_comment += ['Sum of weight']
         out_units += ['']
-    out.write(out_list,names=out_names,comment=out_comment,units=out_units,extname='BINS')
 
-    out_list = []
-    out_names = []
-    out_comment = []
-    out_units = []
-    for i,ai in enumerate(names):
         out_names += ['DM_'+ai]
         out_list += [dm_all[i]]
         out_comment += ['Distortion matrix']
