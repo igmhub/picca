@@ -189,9 +189,14 @@ if __name__ == '__main__':
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
-    out.write([rp,rt,z,wdm,dm],
-        names=['RP','RT','Z','WDM','DM'],
-        comment=['R-parallel','R-transverse','Redshift','Sum of weight','Distortion matrix'],
-        units=['h^-1 Mpc','h^-1 Mpc','','',''],
+    out.write([wdm,dm],
+        names=['WDM','DM'],
+        comment=['Sum of weight','Distortion matrix'],
+        units=['',''],
         header=head,extname='DMAT')
+    out.write([rp,rt,z],
+        names=['RP','RT','Z'],
+        comment=['R-parallel','R-transverse','Redshift'],
+        units=['h^-1 Mpc','h^-1 Mpc','',],
+        header=head,extname='ATTRI')
     out.close()

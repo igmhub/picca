@@ -218,7 +218,7 @@ def dmat(pix):
             ang = d1^neighs
             r2 = [q.r_comov for q in neighs]
             w2 = [q.we for q in neighs]
-            fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm)
+            fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
