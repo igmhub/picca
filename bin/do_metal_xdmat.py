@@ -158,6 +158,7 @@ if __name__ == '__main__':
     rp_all=[]
     rt_all=[]
     z_all=[]
+    we_all = []
     names=[]
     npairs_all=[]
     npairs_used_all=[]
@@ -191,6 +192,7 @@ if __name__ == '__main__':
         rp_all.append(rp)
         rt_all.append(rt)
         z_all.append(z)
+        we_all.append(we)
         names.append(abs_igm)
 
         npairs_all.append(npairs)
@@ -235,6 +237,18 @@ if __name__ == '__main__':
         out_comment += ['Redshift']
         out_units += ['']
 
+        out_names += ['WE_'+args.obj_name+'_'+ai]
+        out_list += [we_all[i]]
+        out_comment += ['Sum of weight']
+        out_units += ['']
+    out.write(out_list,names=out_names,comment=out_comment,units=out_units,extname='BINS')
+
+    out_list = []
+    out_names = []
+    out_comment = []
+    out_units = []
+    for i,ai in enumerate(names):
+
         out_names += ['DM_'+args.obj_name+'_'+ai]
         out_list += [dm_all[i]]
         out_comment += ['Distortion matrix']
@@ -244,6 +258,5 @@ if __name__ == '__main__':
         out_list += [wdm_all[i]]
         out_comment += ['Sum of weight']
         out_units += ['']
-
     out.write(out_list,names=out_names,comment=out_comment,units=out_units,extname='MDMAT')
     out.close()
