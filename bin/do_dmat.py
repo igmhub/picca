@@ -198,5 +198,5 @@ if __name__ == '__main__':
         names=['RP','RT','Z'],
         comment=['R-parallel','R-transverse','Redshift'],
         units=['h^-1 Mpc','h^-1 Mpc','',],
-        header=head,extname='ATTRI')
+        extname='ATTRI')
     out.close()

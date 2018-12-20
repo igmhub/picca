@@ -209,6 +209,7 @@ def dmat(pix):
             r1 = d1.r_comov
             w1 = d1.we
             l1 = d1.ll
+            z1 = d1.z
             r = random.rand(len(d1.neighs))
             w=r>rej
             if w.sum()==0:continue
@@ -218,30 +219,34 @@ def dmat(pix):
             ang = d1^neighs
             r2 = [q.r_comov for q in neighs]
             w2 = [q.we for q in neighs]
-            fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
+            z2 = [q.zqso for q in neighs]
+            fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 @jit
-def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
-    rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
+    rp = (r1[:,None]-r2)*sp.cos(ang/2.)
+    rt = (r1[:,None]+r2)*sp.sin(ang/2.)
+    z = (z1[:,None]+z2)/2.
+    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
+
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
+    bins = bins[w]
+
+    m_bp = ((rp-rp_min)/(rp_max-rp_min)*npm).astype(int)
+    m_bt = (rt/rt_max*ntm).astype(int)
+    m_bins = m_bt + ntm*m_bp
+    m_bins = m_bins[w]
 
     sw1 = w1.sum()
-
     ml1 = sp.average(l1,weights=w1)
-
     dl1 = l1-ml1
-
     slw1 = (w1*dl1**2).sum()
-
-    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
-    bins = bins[w]
 
     n1 = len(l1)
     n2 = len(r2)
@@ -251,14 +256,23 @@ def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     we = w1[:,None]*w2
     we = we[w]
     c = sp.bincount(bins,weights=we)
-    wdm[:len(c)] += c
-    eta2 = sp.zeros(np*nt*n2)
-    eta4 = sp.zeros(np*nt*n2)
+    wdm[:c.size] += c
 
+    c = sp.bincount(m_bins,weights=we*rp[w])
+    rpeff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we*rt[w])
+    rteff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we*z[w])
+    zeff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we)
+    weff[:c.size] += c
+
+    eta2 = sp.zeros(np*nt*n2)
     c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
-    eta2[:len(c)]+=c
+    eta2[:c.size]+=c
+    eta4 = sp.zeros(np*nt*n2)
     c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
-    eta4[:len(c)]+=c
+    eta4[:c.size]+=c
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):
