@@ -167,6 +167,7 @@ def dmat(pix):
             r1 = d1.r_comov
             w1 = d1.we
             l1 = d1.ll
+            z1 = d1.z
             r = random.rand(len(d1.neighs))
             w=r>rej
             npairs += len(d1.neighs)
@@ -179,22 +180,33 @@ def dmat(pix):
                 r2 = d2.r_comov
                 w2 = d2.we
                 l2 = d2.ll
-                fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
+                z2 = d2.z
+                fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
             setattr(d1,"neighs",None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 @jit
-def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
+def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 
     if x_correlation:
-        rp = (r1[:,None]-r2)*sp.cos(ang/2)
+        rp = (r1[:,None]-r2)*sp.cos(ang/2.)
     else:
-        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+        rp = abs(r1[:,None]-r2)*sp.cos(ang/2.)
+    rt = (r1[:,None]+r2)*sp.sin(ang/2.)
+    z = (z1[:,None]+z2)/2.
+
+    w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
+
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
+    bins = bins[w]
+
+    m_bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*npm).astype(int)
+    m_bt = (rt/rt_max*ntm).astype(int)
+    m_bins = m_bt + ntm*m_bp
+    m_bins = m_bins[w]
 
     sw1 = w1.sum()
     sw2 = w2.sum()
@@ -207,10 +219,6 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate
 
     slw1 = (w1*dl1**2).sum()
     slw2 = (w2*dl2**2).sum()
-
-    w = (rp<rp_max) & (rt<rt_max)& (rp>=rp_min)
-
-    bins = bins[w]
 
     n1 = len(l1)
     n2 = len(l2)
@@ -229,6 +237,15 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate
             wsame = rp==0.
         we[wsame] = 0.
 
+    c = sp.bincount(m_bins,weights=we*rp[w])
+    rpeff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we*rt[w])
+    rteff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we*z[w])
+    zeff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we)
+    weff[:c.size] += c
+
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
     eta1 = sp.zeros(np*nt*n1)
@@ -239,7 +256,6 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate
     eta6 = sp.zeros(np*nt)
     eta7 = sp.zeros(np*nt)
     eta8 = sp.zeros(np*nt)
-
     c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
     eta1[:len(c)]+=c
     c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
