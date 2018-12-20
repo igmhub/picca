@@ -43,13 +43,13 @@ if __name__ == '__main__':
         help='Max r-transverse [h^-1 Mpc]')
 
     parser.add_argument('--np', type=int, default=50, required=False,
-        help='Number of r-parallel bins')
+        help='Number of r-parallel bins for the model, i.e. 2nd dimension of dmat')
 
     parser.add_argument('--nt', type=int, default=50, required=False,
-        help='Number of r-transverse bins')
+        help='Number of r-transverse bins for the model, i.e. 2nd dimension of dmat')
 
     parser.add_argument('--coef-binning-model', type=int, default=1, required=False,
-        help='Coefficient multiplying np and nt to get finner binning for the model')
+        help='Coefficient multiplying np and nt to get finner binning for the model of metals')
 
     parser.add_argument('--z-cut-min', type=float, default=0., required=False,
         help='Use only pairs of forest x object with the mean of the last absorber \
