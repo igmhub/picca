@@ -79,14 +79,12 @@ for f in args.data:
     if not args.no_dmat:
         h = fitsio.FITS(f.replace('cf','dmat'))
         dm += h[1]['DM'][:]*wet_aux[:,None]
-        try:
+        if 'dmrp' in locals():
             ## TODO: get the weights
             dmrp += h[2]['RP'][:]
             dmrt += h[2]['RT'][:]
             dmz += h[2]['Z'][:]
             nbdm += 1.
-        except IOError:
-            pass
         h.close()
 
 for p in da:
