@@ -218,7 +218,7 @@ class TestCor(unittest.TestCase):
 
         self.assertEqual(len(m),len(b),"{}".format(nameRun))
 
-        for i in range(len(m)):
+        for i,_ in enumerate(m):
 
             ###
             r_m = m[i].read_header().records()
