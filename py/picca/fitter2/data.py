@@ -37,6 +37,14 @@ class data:
         rp = h[1]['RP'][:]
         rt = h[1]['RT'][:]
         z = h[1]['Z'][:]
+        try:
+            dmrp = h[2]['DMRP'][:]
+            dmrt = h[2]['DMRT'][:]
+            dmz = h[2]['DMZ'][:]
+        except IOError:
+            dmrp = rp.copy()
+            dmrt = rt.copy()
+            dmz = z.copy()
         head = h[1].read_header()
 
         h.close()
@@ -87,12 +95,12 @@ class data:
         self.ico = linalg.inv(ico)
         self.dm = dm
 
-        self.rp = rp
-        self.rt = rt
-        self.z = z
+        self.rp = dmrp
+        self.rt = dmrt
+        self.z = dmz
 
-        self.r = r
-        self.mu = mu
+        self.r = sp.sqrt(self.rp**2+self.rt**2)
+        self.mu = self.rp/self.r
 
 
         self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
