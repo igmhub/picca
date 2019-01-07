@@ -121,75 +121,6 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     return cw,cd,crp,crt,cz,cnb
 
 
-
-def metal_grid(pix):
-
-    we = sp.zeros(np*nt)
-    rp = sp.zeros(np*nt)
-    rt = sp.zeros(np*nt)
-    z  = sp.zeros(np*nt)
-    nb = sp.zeros(np*nt,dtype=sp.int64)
-
-    for ipix in pix:
-        for d in dels[ipix]:
-            with lock:
-                counter.value +=1
-            sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
-            ang = d^d.neighs
-            rc_qso = [q.r_comov for q in d.neighs]
-            zqso   = [q.zqso for q in d.neighs]
-            we_qso = [q.we for q in d.neighs]
-
-            if (d.neighs.size != 0):
-                cw,crp,crt,cz,cnb = fast_metal_grid(d.r_comov,d.we,zqso,rc_qso,we_qso,ang,d.z_metal,d.r_comov_metal)
-
-                we[:len(cw)]  += cw
-                rp[:len(crp)] += crp
-                rt[:len(crt)] += crt
-                z[:len(cz)]   += cz
-                nb[:len(cnb)] += cnb.astype(int)
-            for el in list(d.__dict__.keys()):
-                setattr(d,el,None)
-
-    w = we>0
-    rp[w] /= we[w]
-    rt[w] /= we[w]
-    z[w]  /= we[w]
-
-    return we,rp,rt,z,nb
-@jit
-def fast_metal_grid(r1,w1,z2,r2,w2,ang,z1_metal,r1_metal):
-
-    rp = (r1[:,None]-r2)*sp.cos(ang/2.)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2.)
-
-    w   = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
-    rp  = rp[w]
-    rt  = rt[w]
-
-    bp   = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
-    bt   = (rt/rt_max*nt).astype(int)
-    bins = bt + nt*bp
-
-    rp_metal = (r1_metal[:,None]-r2)*sp.cos(ang/2.)
-    rt_metal = (r1_metal[:,None]+r2)*sp.sin(ang/2.)
-    z_metal  = (z1_metal[:,None]+z2)/2.
-    we       = w1[:,None]*w2
-
-    rp_metal = rp_metal[w]
-    rt_metal = rt_metal[w]
-    z_metal  = z_metal[w]
-    we       = we[w]
-
-    cw  = sp.bincount(bins,weights=we)
-    crp = sp.bincount(bins,weights=rp_metal*we)
-    crt = sp.bincount(bins,weights=rt_metal*we)
-    cz  = sp.bincount(bins,weights=z_metal*we)
-    cnb = sp.bincount(bins,weights=(we>0.))
-
-    return cw,crp,crt,cz,cnb
-
-
 def dmat(pix):
 
     dm = sp.zeros(np*nt*ntm*npm)
@@ -225,7 +156,6 @@ def dmat(pix):
                 setattr(d1,el,None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
-
 @jit
 def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     rp = (r1[:,None]-r2)*sp.cos(ang/2.)
@@ -256,6 +186,9 @@ def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     we = w1[:,None]*w2
     we = we[w]
 
+    c = sp.bincount(bins,weights=we)
+    wdm[:c.size] += c
+
     c = sp.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
     c = sp.bincount(m_bins,weights=we*rt[w])
@@ -265,13 +198,12 @@ def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     c = sp.bincount(m_bins,weights=we)
     weff[:c.size] += c
 
-    c = sp.bincount(bins,weights=we)
-    wdm[:c.size] += c
     eta2 = sp.zeros(np*nt*n2)
-    c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*bins, weights=(w1[:,None]*sp.ones(n2))[w]/sw1 )
     eta2[:c.size]+=c
+
     eta4 = sp.zeros(np*nt*n2)
-    c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*bins, weights=((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1 )
     eta4[:c.size]+=c
 
     ubb = sp.unique(bins)

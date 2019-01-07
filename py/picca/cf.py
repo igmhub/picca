@@ -185,14 +185,12 @@ def dmat(pix):
             setattr(d1,"neighs",None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
-
 @jit
 def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 
-    if x_correlation:
-        rp = (r1[:,None]-r2)*sp.cos(ang/2.)
-    else:
-        rp = abs(r1[:,None]-r2)*sp.cos(ang/2.)
+    rp = (r1[:,None]-r2)*sp.cos(ang/2.)
+    if not x_correlation:
+        rp = sp.absolute(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang/2.)
     z = (z1[:,None]+z2)/2.
 
@@ -247,7 +245,7 @@ def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half
     weff[:c.size] += c
 
     c = sp.bincount(bins,weights=we)
-    wdm[:len(c)] += c
+    wdm[:c.size] += c
     eta1 = sp.zeros(np*nt*n1)
     eta2 = sp.zeros(np*nt*n2)
     eta3 = sp.zeros(np*nt*n1)
@@ -257,25 +255,25 @@ def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half
     eta7 = sp.zeros(np*nt)
     eta8 = sp.zeros(np*nt)
     c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
-    eta1[:len(c)]+=c
+    eta1[:c.size]+=c
     c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
-    eta2[:len(c)]+=c
+    eta2[:c.size]+=c
     c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
-    eta5[:len(c)]+=c
+    eta5[:c.size]+=c
 
     if order2==1:
         c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
-        eta3[:len(c)]+=c
+        eta3[:c.size]+=c
         c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
-        eta6[:len(c)]+=c
+        eta6[:c.size]+=c
     if order1==1:
         c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
-        eta4[:len(c)]+=c
+        eta4[:c.size]+=c
         c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
-        eta7[:len(c)]+=c
+        eta7[:c.size]+=c
         if order2==1:
             c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
-            eta8[:len(c)]+=c
+            eta8[:c.size]+=c
 
     ubb = sp.unique(bins)
     for k,ba in enumerate(bins):
