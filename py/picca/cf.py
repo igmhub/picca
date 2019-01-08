@@ -237,7 +237,7 @@ def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half
         we[wsame] = 0.
 
     c = sp.bincount(bins,weights=we)
-    wdm[:c.size] += c
+    wdm[:len(c)] += c
 
     c = sp.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
@@ -258,31 +258,31 @@ def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half
     eta8 = sp.zeros(npm*ntm)
 
     c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
-    eta1[:c.size]+=c
+    eta1[:len(c)]+=c
 
     c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
-    eta2[:c.size]+=c
+    eta2[:len(c)]+=c
 
     c = sp.bincount(m_bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
-    eta5[:c.size]+=c
+    eta5[:len(c)]+=c
 
     if order2==1:
         c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
-        eta3[:c.size]+=c
+        eta3[:len(c)]+=c
 
         c = sp.bincount(m_bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
-        eta6[:c.size]+=c
+        eta6[:len(c)]+=c
 
     if order1==1:
         c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
-        eta4[:c.size]+=c
+        eta4[:len(c)]+=c
 
         c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
-        eta7[:c.size]+=c
+        eta7[:len(c)]+=c
 
         if order2==1:
             c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
-            eta8[:c.size]+=c
+            eta8[:len(c)]+=c
 
     ubb = sp.unique(m_bins)
     for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
