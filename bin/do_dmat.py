@@ -169,7 +169,8 @@ if __name__ == '__main__':
     we = dm[:,5].sum(axis=0)
     npairs = dm[:,6].sum(axis=0)
     npairs_used = dm[:,7].sum(axis=0)
-    dm = dm[:,1].sum(axis=0)
+    dm=dm[:,1].sum(axis=0)
+
     w = we>0.
     rp[w] /= we[w]
     rt[w] /= we[w]
