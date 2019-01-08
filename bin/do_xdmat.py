@@ -159,7 +159,6 @@ if __name__ == '__main__':
     pool = Pool(processes=args.nproc)
     dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
     pool.close()
-
     dm = sp.array(dm)
     wdm =dm[:,0].sum(axis=0)
     rp = dm[:,2].sum(axis=0)
