@@ -152,7 +152,7 @@ if __name__ == '__main__':
             cpu_data[ip] = []
         cpu_data[ip].append(p)
     pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,sorted(cpu_data.values()))
+    dm = map(calc_dmat,sorted(cpu_data.values()))
     pool.close()
 
 
