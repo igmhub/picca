@@ -198,21 +198,21 @@ def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     c = sp.bincount(m_bins,weights=we)
     weff[:c.size] += c
 
-    eta2 = sp.zeros(np*nt*n2)
-    c = sp.bincount((ij-ij%n1)//n1+n2*bins, weights=(w1[:,None]*sp.ones(n2))[w]/sw1 )
+    eta2 = sp.zeros(npm*ntm*n2)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins, weights=(w1[:,None]*sp.ones(n2))[w]/sw1 )
     eta2[:c.size]+=c
 
-    eta4 = sp.zeros(np*nt*n2)
-    c = sp.bincount((ij-ij%n1)//n1+n2*bins, weights=((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1 )
+    eta4 = sp.zeros(npm*ntm*n2)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins, weights=((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1 )
     eta4[:c.size]+=c
 
-    ubb = sp.unique(bins)
-    for k,ba in enumerate(bins):
-        dm[ba+np*nt*ba]+=we[k]
+    ubb = sp.unique(m_bins)
+    for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
+        dm[m_ba+npm*ntm*ba]+=we[k]
         i = ij[k]%n1
         j = (ij[k]-i)//n1
         for bb in ubb:
-            dm[bb+np*nt*ba] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+            dm[bb+npm*ntm*ba] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 
 def metal_dmat(pix,abs_igm="SiII(1526)"):

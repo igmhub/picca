@@ -5,6 +5,9 @@ import argparse
 
 if __name__ == '__main__':
 
+    from platform import python_version
+    print(python_version())
+
     pars = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Fit the correlation function.')
 
