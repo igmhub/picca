@@ -189,6 +189,8 @@ def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     we = we[w]
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
+    eta2 = sp.zeros(npm*ntm*n2)
+    eta4 = sp.zeros(npm*ntm*n2)
 
     c = sp.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
@@ -199,10 +201,8 @@ def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     c = sp.bincount(m_bins,weights=we)
     weff[:c.size] += c
 
-    eta2 = sp.zeros(npm*ntm*n2)
     c = sp.bincount((ij-ij%n1)//n1+n2*m_bins, weights=(w1[:,None]*sp.ones(n2))[w]/sw1 )
     eta2[:len(c)]+=c
-    eta4 = sp.zeros(npm*ntm*n2)
     c = sp.bincount((ij-ij%n1)//n1+n2*m_bins, weights=((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1 )
     eta4[:len(c)]+=c
 
