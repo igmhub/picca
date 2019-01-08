@@ -158,8 +158,8 @@ def dmat(pix):
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
 def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
-    rp = (r1[:,None]-r2)*sp.cos(ang/2.)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2.)
+    rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    rt = (r1[:,None]+r2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
 
@@ -175,7 +175,9 @@ def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     sw1 = w1.sum()
     ml1 = sp.average(l1,weights=w1)
+
     dl1 = l1-ml1
+
     slw1 = (w1*dl1**2).sum()
 
     n1 = len(l1)
@@ -185,9 +187,8 @@ def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     we = w1[:,None]*w2
     we = we[w]
-
     c = sp.bincount(bins,weights=we)
-    wdm[:c.size] += c
+    wdm[:len(c)] += c
 
     c = sp.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
@@ -200,11 +201,10 @@ def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     eta2 = sp.zeros(npm*ntm*n2)
     c = sp.bincount((ij-ij%n1)//n1+n2*m_bins, weights=(w1[:,None]*sp.ones(n2))[w]/sw1 )
-    eta2[:c.size]+=c
-
+    eta2[:len(c)]+=c
     eta4 = sp.zeros(npm*ntm*n2)
     c = sp.bincount((ij-ij%n1)//n1+n2*m_bins, weights=((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1 )
-    eta4[:c.size]+=c
+    eta4[:len(c)]+=c
 
     ubb = sp.unique(m_bins)
     for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
