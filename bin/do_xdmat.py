@@ -174,8 +174,8 @@ if __name__ == '__main__':
     rp[w] /= we[w]
     rt[w] /= we[w]
     z[w] /= we[w]
-    w = wdm>0
-    dm[w] /= wdm[w,None]
+    w = wdm>0.
+    dm[w,:] /= wdm[w,None]
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
