@@ -161,7 +161,7 @@ if __name__ == '__main__':
     pool.close()
 
     dm = sp.array(dm)
-    wdm = dm[:,0].sum(axis=0)
+    wdm =dm[:,0].sum(axis=0)
     rp = dm[:,2].sum(axis=0)
     rt = dm[:,3].sum(axis=0)
     z = dm[:,4].sum(axis=0)
