@@ -236,9 +236,6 @@ def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half
             wsame = rp==0.
         we[wsame] = 0.
 
-    c = sp.bincount(bins,weights=we)
-    wdm[:len(c)] += c
-
     c = sp.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
     c = sp.bincount(m_bins,weights=we*rt[w])
@@ -248,6 +245,8 @@ def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half
     c = sp.bincount(m_bins,weights=we)
     weff[:c.size] += c
 
+    c = sp.bincount(bins,weights=we)
+    wdm[:len(c)] += c
     eta1 = sp.zeros(npm*ntm*n1)
     eta2 = sp.zeros(npm*ntm*n2)
     eta3 = sp.zeros(npm*ntm*n1)
@@ -263,6 +262,7 @@ def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half
     eta2[:len(c)]+=c
     c = sp.bincount(m_bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
+
     if order2==1:
         c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
         eta3[:len(c)]+=c
