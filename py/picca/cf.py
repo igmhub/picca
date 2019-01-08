@@ -9,8 +9,8 @@ from picca.utils import print
 
 np = None
 nt = None
-ntm = None
-npm = None
+ntm= None
+npm= None
 rp_max = None
 rp_min = None
 z_cut_max = None
@@ -188,10 +188,11 @@ def dmat(pix):
 @jit
 def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 
-    rp = (r1[:,None]-r2)*sp.cos(ang/2.)
-    if not x_correlation:
-        rp = sp.absolute(rp)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2.)
+    if x_correlation:
+        rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    else:
+        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+    rt = (r1[:,None]+r2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
 
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
