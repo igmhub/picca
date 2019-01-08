@@ -160,6 +160,7 @@ if __name__ == '__main__':
     dm = pool.map(calc_dmat,sorted(cpu_data.values()))
     pool.close()
 
+
     dm = sp.array(dm)
     wdm = dm[:,0].sum(axis=0)
     rp = dm[:,2].sum(axis=0)
@@ -174,7 +175,8 @@ if __name__ == '__main__':
     rt[w] /= we[w]
     z[w] /= we[w]
     w = wdm>0
-    dm[w] /= wdm[w,None]
+    dm[w]/=wdm[w,None]
+
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
