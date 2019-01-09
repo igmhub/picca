@@ -356,7 +356,7 @@ class chi2:
             minos_results = self.best_fit.get_merrors()
             for par in list(minos_results.keys()):
                 subgrp = g.create_group(par)
-                dic_minos = utils.convert_instance_to_dictionary(minos_results[par])
+                dic_minos = minos_results[par]
                 for item, value in dic_minos.items():
                     subgrp.attrs[item] = value
 
