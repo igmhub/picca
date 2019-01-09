@@ -99,6 +99,10 @@ if __name__ == '__main__':
             dmrp = rp.copy()
             dmrt = rt.copy()
             dmz = z.copy()
+        if dm.shape==(da.size,da.size):
+            dmrp = rp.copy()
+            dmrt = rt.copy()
+            dmz = z.copy()
         h.close()
     else:
         dm = sp.eye(len(da))
