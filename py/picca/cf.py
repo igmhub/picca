@@ -185,7 +185,7 @@ def dmat(pix):
             setattr(d1,"neighs",None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
-#@jit
+@jit
 def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 
     if x_correlation:
