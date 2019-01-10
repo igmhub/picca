@@ -100,7 +100,9 @@ class data:
         self.z = dmz
 
         self.r = sp.sqrt(self.rp**2+self.rt**2)
-        self.mu = self.rp/self.r
+        self.mu = sp.zeros(self.r.size)
+        w = self.r>0.
+        self.mu[w] = self.rp[w]/self.r[w]
 
 
         self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
