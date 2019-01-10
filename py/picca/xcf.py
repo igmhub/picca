@@ -218,7 +218,7 @@ def dmat(pix):
 
     return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
 
-#@jit
+@jit
 def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
     rp = (r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
