@@ -3,7 +3,8 @@ numpy==1.13.1
 iminuit==1.2
 healpy==1.11
 fitsio==0.9.11
-numba==0.35.0
+numba==0.41.0
+llvmlite==0.26.0
 h5py==2.6.0
 future==0.16.0
 setuptools==27.2.0
