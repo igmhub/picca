@@ -167,9 +167,15 @@ if __name__ == '__main__':
         xcf.counter.value=0
         f=partial(calc_metal_xdmat,abs_igm)
         print("")
-        pool = Pool(processes=args.nproc)
-        dm = pool.map(f,sorted(list(cpu_data.values())))
-        pool.close()
+
+        if args.nproc>1:
+            pool = Pool(processes=args.nproc)
+            dm = pool.map(f,sorted(cpu_data.values()))
+            pool.close()
+        elif args.nproc==1:
+            dm = map(f,sorted(cpu_data.values()))
+            dm = list(dm)
+
         dm = sp.array(dm)
         wdm =dm[:,0].sum(axis=0)
         rp = dm[:,2].sum(axis=0)
