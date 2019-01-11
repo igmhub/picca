@@ -156,10 +156,14 @@ if __name__ == '__main__':
         if not ip in cpu_data:
             cpu_data[ip] = []
         cpu_data[ip].append(p)
-    pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,sorted(cpu_data.values()))
-    pool.close()
 
+    if args.nproc>1:
+        pool = Pool(processes=args.nproc)
+        dm = pool.map(calc_dmat,sorted(cpu_data.values()))
+        pool.close()
+    elif args.nproc==1:
+        dm = map(calc_dmat,sorted(cpu_data.values()))
+        dm = list(dm)
 
     dm = sp.array(dm)
     wdm =dm[:,0].sum(axis=0)
