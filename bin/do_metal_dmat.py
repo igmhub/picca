@@ -3,15 +3,10 @@ from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
-import glob
-import healpy
-import sys
 from functools import partial
-import copy
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, utils, io
-from picca.data import delta
 from picca.utils import print
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):

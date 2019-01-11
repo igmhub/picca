@@ -5,17 +5,12 @@ import fitsio
 import argparse
 import glob
 import healpy
-import sys
 from scipy.interpolate import interp1d
-
-from picca import constants
-from picca import cf
-from picca.data import delta
-from picca import utils
-from picca.utils import print
-
 from multiprocessing import Pool,Lock,cpu_count,Value
 
+from picca import constants, cf, utils
+from picca.data import delta
+from picca.utils import print
 
 def calc_t123(p):
     cf.fill_neighs(p)

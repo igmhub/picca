@@ -57,7 +57,7 @@ for f in args.data:
     z  += h[1]['Z'][:]*wet_aux
     nb += h[1]['NB'][:]
     wet += wet_aux
-    
+
     hid = h[2]['HEALPID'][:]
     for i,p in enumerate(hid):
         print("\rcoadding healpix {} in file {}".format(p,f),end="")

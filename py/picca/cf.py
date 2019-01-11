@@ -1,6 +1,5 @@
 from __future__ import print_function
 import scipy as sp
-import sys
 from healpy import query_disc
 from numba import jit
 from scipy import random
