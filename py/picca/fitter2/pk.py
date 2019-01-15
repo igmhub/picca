@@ -42,10 +42,10 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     kp = k*muk
     F_hcd = utils.sinc(kp*L0)
 
-    bias_eff1 = (bias1 + bias_hcd*F_hcd)
+    bias_eff1 = bias1 + bias_hcd*F_hcd
     beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
 
-    bias_eff2 = (bias2 + bias_hcd*F_hcd)
+    bias_eff2 = bias2 + bias_hcd*F_hcd
     beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
 
     pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
@@ -73,10 +73,10 @@ def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
     kp = k*muk
     F_hcd = sp.exp(-L0*kp)
 
-    bias_eff1 = (bias1 + bias_hcd*F_hcd)
+    bias_eff1 = bias1 + bias_hcd*F_hcd
     beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
 
-    bias_eff2 = (bias2 + bias_hcd*F_hcd)
+    bias_eff2 = bias2 + bias_hcd*F_hcd
     beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
 
     pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
@@ -121,10 +121,41 @@ def pk_hcd_uv(k, pk_lin, tracer1, tracer2, **kwargs):
     kp = k*muk
     F_hcd = utils.sinc(kp*L0)
 
-    bias_eff1 = (bias1 + bias_hcd*F_hcd)
+    bias_eff1 = bias1 + bias_hcd*F_hcd
     beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
 
-    bias_eff2 = (bias2 + bias_hcd*F_hcd)
+    bias_eff2 = bias2 + bias_hcd*F_hcd
+    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+
+    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
+def pk_hcd_Rogers2018_uv(k, pk_lin, tracer1, tracer2, **kwargs):
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+
+    bias_gamma = kwargs["bias_gamma"]
+    bias_prim = kwargs["bias_prim"]
+    lambda_uv = kwargs["lambda_uv"]
+
+    W = sp.arctan(k*lambda_uv)/(k*lambda_uv)
+    beta1 = beta1/(1 + bias_gamma/bias1*W/(1 + bias_prim*W))
+    bias1 = bias1 + bias_gamma*W/(1+bias_prim*W)
+
+    beta2 = beta2/(1 + bias_gamma/bias2*W/(1 + bias_prim*W))
+    bias2 = bias2 + bias_gamma*W/(1+bias_prim*W)
+
+    bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+    F_hcd = sp.exp(-kp*L0)
+
+    bias_eff1 = bias1 + bias_hcd*F_hcd
+    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+
+    bias_eff2 = bias2 + bias_hcd*F_hcd
     beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
 
     pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
@@ -188,11 +219,33 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     F_hcd = utils.sinc(kp*L0)
 
     if tracer1['name'] == "LYA":
-        bias_eff1 = (bias1 + bias_hcd*F_hcd)
+        bias_eff1 = bias1 + bias_hcd*F_hcd
         beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
         pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
     else:
-        bias_eff2 = (bias2 + bias_hcd*F_hcd)
+        bias_eff2 = bias2 + bias_hcd*F_hcd
+        beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+        pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
+def pk_hcd_Rogers2018_cross(k, pk_lin, tracer1, tracer2, **kwargs):
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+    assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
+
+    bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+    F_hcd = sp.exp(-kp*L0)
+
+    if tracer1['name'] == "LYA":
+        bias_eff1 = bias1 + bias_hcd*F_hcd
+        beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+        pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
+    else:
+        bias_eff2 = bias2 + bias_hcd*F_hcd
         beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
         pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
 
@@ -237,13 +290,45 @@ def pk_hcd_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     if tracer1['name'] == "LYA":
         beta1 = beta1/(1 + bias_gamma/bias1*W/(1 + bias_prim*W))
         bias1 = bias1 + bias_gamma*W/(1+bias_prim*W)
-        bias_eff1 = (bias1 + bias_hcd*F_hcd)
+        bias_eff1 = bias1 + bias_hcd*F_hcd
         beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
         pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
     else:
         beta2 = beta2/(1 + bias_gamma/bias2*W/(1 + bias_prim*W))
         bias2 = bias2 + bias_gamma*W/(1+bias_prim*W)
-        bias_eff2 = (bias2 + bias_hcd*F_hcd)
+        bias_eff2 = bias2 + bias_hcd*F_hcd
+        beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+        pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
+def pk_hcd_Rogers2018_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+    assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
+
+    bias_gamma = kwargs["bias_gamma"]
+    bias_prim = kwargs["bias_prim"]
+    lambda_uv = kwargs["lambda_uv"]
+
+    W = sp.arctan(k*lambda_uv)/(k*lambda_uv)
+
+    bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+    F_hcd = sp.exp(-kp*L0)
+
+    if tracer1['name'] == "LYA":
+        beta1 = beta1/(1 + bias_gamma/bias1*W/(1 + bias_prim*W))
+        bias1 = bias1 + bias_gamma*W/(1+bias_prim*W)
+        bias_eff1 = bias1 + bias_hcd*F_hcd
+        beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+        pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
+    else:
+        beta2 = beta2/(1 + bias_gamma/bias2*W/(1 + bias_prim*W))
+        bias2 = bias2 + bias_gamma*W/(1+bias_prim*W)
+        bias_eff2 = bias2 + bias_hcd*F_hcd
         beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
         pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
 
