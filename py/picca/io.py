@@ -741,10 +741,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
 
         ndata = len(dels)
         if not nspec is None:
-            if ndata>nspec:
-                dels = dels[:nspec]
-                ndata = len(dels)
-                break
+            if ndata>nspec:break
 
     print("\n")
 

@@ -111,7 +111,7 @@ if __name__ == '__main__':
     llmin = head['LLMIN']
     llmax = head['LLMAX']
     dll = head['DLL']
-    nv1d = h[1]['nv1d'][:]
+    nv1d   = h[1]['nv1d'][:]
     cf.v1d = h[1]['v1d'][:]
     ll = llmin + dll*sp.arange(len(cf.v1d))
     cf.v1d = interp1d(ll[nv1d>0],cf.v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
@@ -135,9 +135,9 @@ if __name__ == '__main__':
 
     cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix)
 
-    ###
     cf.counter = Value('i',0)
     cf.lock = Lock()
+
     cpu_data = {}
     for i,p in enumerate(sorted(list(data.keys()))):
         ip = i%args.nproc

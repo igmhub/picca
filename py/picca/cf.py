@@ -496,7 +496,6 @@ def t123(pix):
     nb = sp.zeros(np*nt,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
-
     for ipix in pix:
         for d1 in data[ipix]:
             print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)),end="")
@@ -506,12 +505,11 @@ def t123(pix):
             w1 = d1.we
             c1d_1 = (w1*w1[:,None])*c1d(abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
-            z1 = d1.ll
+            z1 = d1.z
             r = sp.random.rand(len(d1.neighs))
             w = r>rej
-            npairs += len(d1.neighs)
+            npairs+=len(d1.neighs)
             npairs_used += w.sum()
-
             for d2 in sp.array(d1.neighs)[w]:
                 ang = d1^d2
 
@@ -533,14 +531,15 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2):
     n2 = len(r2)
     i1 = sp.arange(n1)
     i2 = sp.arange(n2)
-    zw1 = ((1.+z1)/(1.+zref))**(alpha-1.)
-    zw2 = ((1.+z2)/(1.+zref))**(alpha-1.)
+    zw1 = ((1+z1)/(1+zref))**(alpha-1)
+    zw2 = ((1+z2)/(1+zref))**(alpha-1)
 
     bins = i1[:,None]+n1*i2
-    rp = (r1[:,None]-r2)*sp.cos(ang/2.)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2.)
-    if not x_correlation:
-        rp = abs(rp)
+    if x_correlation:
+        rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    else :
+        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+    rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     ba = bt + nt*bp
@@ -550,7 +549,7 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2):
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
 
     if same_half_plate:
-        w &= abs(rp)>(rp_max-rp_min)/np
+        w = w & (abs(rp)>(rp_max-rp_min)/np)
 
     bins = bins[w]
     ba = ba[w]
