@@ -14,7 +14,6 @@ from picca import constants, cf, utils, io
 from picca.data import delta
 from picca.utils import print
 
-
 def calc_wickT(p):
     cf.fill_neighs(p)
     sp.random.seed(p[0])
@@ -105,7 +104,7 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(args.fid_Om)
 
-    ### Load cf1d
+
     h = fitsio.FITS(args.cf1d)
     head = h[1].read_header()
     llmin = head['LLMIN']

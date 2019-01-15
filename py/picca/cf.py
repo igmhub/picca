@@ -489,7 +489,6 @@ v1d = None
 c1d = None
 ## auto
 def t123(pix):
-
     T1 = sp.zeros([np*nt,np*nt])
     T2 = sp.zeros([np*nt,np*nt])
     wAll = sp.zeros(np*nt)
@@ -523,7 +522,6 @@ def t123(pix):
             setattr(d1,"neighs",None)
 
     return wAll, nb, npairs, npairs_used, T1, T2
-
 @jit
 def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2):
 
@@ -559,11 +557,9 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2):
     for k in range(w.sum()):
         i1 = bins[k]%n1
         j1 = (bins[k]-i1)//n1
-
         wAll[ba[k]] += we[k]
         nb[ba[k]] += 1
         T1[ba[k],ba[k]] += we[k]/zw[k]
-
         for l in range(k+1,w.sum()):
             i2 = bins[l]%n1
             j2 = (bins[l]-i2)//n1
