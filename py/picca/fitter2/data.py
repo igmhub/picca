@@ -175,7 +175,7 @@ class data:
                         dic_init['parameters']['errors']['error_'+name+'-'+k] = 0.01
 
                 bb = partial( getattr(xi, dic_bb['func']),
-                    bin_size_rp=bin_size_rp, name=name)
+                    bin_size_rp=bin_size_rp, bin_size_rt=bin_size_rt, name=name)
 
                 bb.name = name
                 self.bb[dic_bb['pre']+'-'+dic_bb['type']].append(bb)
