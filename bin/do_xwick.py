@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import argparse
 import fitsio
@@ -7,6 +8,7 @@ import scipy as sp
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, io, utils, xcf
+from picca.utils import print
 
 def calc_wickT(p):
     """Send the Wick computation for a set of pixels
