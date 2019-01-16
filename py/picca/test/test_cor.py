@@ -67,6 +67,7 @@ class TestCor(unittest.TestCase):
         self.send_cf()
         self.send_dmat()
         self.send_metal_dmat()
+        self.send_wick()
         self.send_export_cf()
 
         self.send_cf_cross()
@@ -530,6 +531,30 @@ class TestCor(unittest.TestCase):
             path1 = self._masterFiles + "/metal_dmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
             self.compare_fits(path1,path2,"do_metal_dmat.py")
+
+        return
+    def send_wick(self):
+
+        print("\n")
+        ### Send
+        cmd  = " do_wick.py"
+        cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --out "    + self._branchFiles+"/Products/Correlations/wick.fits.gz"
+        cmd += " --cf1d "   + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --rej 0.99 "
+        cmd += " --nproc 1"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/wick.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/wick.fits.gz"
+            self.compare_fits(path1,path2,"do_wick.py")
 
         return
     def send_export_cf(self):
