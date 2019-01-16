@@ -5,6 +5,7 @@ import sys
 import argparse
 import fitsio
 import scipy as sp
+from scipy.interpolate import interp1d
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, io, utils, xcf
@@ -120,6 +121,9 @@ if __name__ == '__main__':
     xcf.z_cut_max = args.z_cut_max
     xcf.nside = args.nside
     xcf.rej = args.rej
+    xcf.zref = args.z_ref
+    xcf.z_evol_del = args.z_evol_del
+    xcf.z_evol_obj = args.z_evol_obj
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
 
     ### Cosmo
@@ -164,9 +168,17 @@ if __name__ == '__main__':
     ### Load cf1d
     h = fitsio.FITS(args.cf1d)
     head = h[1].read_header()
-    xcf.lmin = head['LLMIN']
-    xcf.dll  = head['DLL']
-    xcf.cf1d = h[2]['DA'][:]
+    llmin = head['LLMIN']
+    llmax = head['LLMAX']
+    dll = head['DLL']
+    nv1d   = h[1]['nv1d'][:]
+    xcf.v1d = h[1]['v1d'][:]
+    ll = llmin + dll*sp.arange(xcf.v1d.size)
+    xcf.v1d = interp1d(ll[nv1d>0],xcf.v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
+
+    nb1d   = h[1]['nb1d'][:]
+    xcf.c1d = h[1]['c1d'][:]
+    xcf.c1d = interp1d((ll-llmin)[nb1d>0],xcf.c1d[nb1d>0],kind='nearest')
     h.close()
 
     ### Load cf

@@ -156,13 +156,25 @@ if __name__ == '__main__':
     npairs_used = wickT[:,3].sum(axis=0)
     T1 = wickT[:,4].sum(axis=0)
     T2 = wickT[:,5].sum(axis=0)
+    T3 = wickT[:,6].sum(axis=0)
+    T4 = wickT[:,7].sum(axis=0)
+    T5 = wickT[:,8].sum(axis=0)
+    T6 = wickT[:,9].sum(axis=0)
     we = wAll*wAll[:,None]
     w = we>0.
     T1[w] /= we[w]
     T2[w] /= we[w]
+    T3[w] /= we[w]
+    T4[w] /= we[w]
+    T5[w] /= we[w]
+    T6[w] /= we[w]
     T1 *= 1.*npairs_used/npairs
     T2 *= 1.*npairs_used/npairs
-    Ttot = T1+T2
+    T3 *= 1.*npairs_used/npairs
+    T4 *= 1.*npairs_used/npairs
+    T5 *= 1.*npairs_used/npairs
+    T6 *= 1.*npairs_used/npairs
+    Ttot = T1+T2+T3+T4+T5+T6
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [
@@ -177,6 +189,6 @@ if __name__ == '__main__':
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
-    comment = ['Sum of weight','Covariance','Nomber of pairs','T1','T2']
-    out.write([Ttot,wAll,nb,T1,T2],names=['CO','WALL','NB','T1','T2'],comment=comment,header=head,extname='COV')
+    comment = ['Sum of weight','Covariance','Nomber of pairs','T1','T2','T3','T4','T5','T6']
+    out.write([Ttot,wAll,nb,T1,T2,T3],names=['CO','WALL','NB','T1','T2','T3','T4','T5','T6'],comment=comment,header=head,extname='COV')
     out.close()

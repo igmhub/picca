@@ -18,6 +18,9 @@ nside = None
 counter = None
 ndels = None
 
+zref = None
+z_evol_del = None
+z_evol_obj = None
 lambda_abs = None
 
 dels = None
@@ -267,9 +270,8 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 
-cf1d = None
-lmin = None
-dll  = None
+v1d = None
+c1d = None
 
 cf = None
 cf_np = None
@@ -290,12 +292,12 @@ def wickT(pix):
         (tuple): results of the Wick computation
 
     """
-    T1 = sp.zeros([np*nt,np*nt])
-    T2 = sp.zeros([np*nt,np*nt])
-    T3 = sp.zeros([np*nt,np*nt])
-    T4 = sp.zeros([np*nt,np*nt])
-    T5 = sp.zeros([np*nt,np*nt])
-    T6 = sp.zeros([np*nt,np*nt])
+    T1 = sp.zeros((np*nt,np*nt))
+    T2 = sp.zeros((np*nt,np*nt))
+    T3 = sp.zeros((np*nt,np*nt))
+    T4 = sp.zeros((np*nt,np*nt))
+    T5 = sp.zeros((np*nt,np*nt))
+    T6 = sp.zeros((np*nt,np*nt))
     wAll = sp.zeros(np*nt)
     nb = sp.zeros(np*nt,dtype=sp.int64)
     npairs = 0
@@ -316,16 +318,19 @@ def wickT(pix):
 
             if w.sum()==0: continue
 
-            ll1 = d1.ll
-            r1 = d1.r_comov
+            v1 = v1d(d1.ll)
             w1 = d1.we
+            c1d_1 = (w1*w1[:,None])*c1d(abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
+            r1 = d1.r_comov
+            z1 = d1.z
 
             neighs = d1.neighs[w]
             ang = d1^neighs
             r2 = [q2.r_comov for q2 in neighs]
+            z2 = sp.array([q2.zqso for q2 in neighs])
             w2 = [q2.we for q2 in neighs]
 
-            fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4)
+            fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
 
             if cf is None: continue
 
@@ -351,7 +356,7 @@ def wickT(pix):
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
-def fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
+def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     """Compute the Wick covariance matrix for the object-pixel
         cross-correlation for the T1, T2, T3 and T4 diagrams:
         i.e. the contribution of the 1D auto-correlation to the
@@ -359,11 +364,13 @@ def fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
 
     Args:
         ang (float array): angle between forest and array of objects
-        ll1 (float array): log(lam) of each pixel of the forest
         r1 (float array): comoving distance to each pixel of the forest [Mpc/h]
         r2 (float array): comoving distance to each object [Mpc/h]
+        z1 (float array): redshift of each pixel of the forest
+        z2 (float array): redshift of each object
         w1 (float array): weight of each pixel of the forest
         w2 (float array): weight of each object
+        c1d_1 (float array): covariance between two pixels of the same forest
         wAll (float array): Sum of weight
         nb (int64 array): Number of pairs
         T1 (float 2d array): Contribution of diagram T1
@@ -376,10 +383,12 @@ def fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
     """
     rp = (r1[:,None]-r2)*sp.cos(ang/2.)
     rt = (r1[:,None]+r2)*sp.sin(ang/2.)
+    zw1 = ((1.+z1)/(1.+zref))**(z_evol_del-1.)
+    zw2 = ((1.+z2)/(1.+zref))**(z_evol_obj-1.)
     we = w1[:,None]*w2
-    idxPix = ((ll1-lmin)/dll+0.5).astype(int)
-    idxPix = idxPix[:,None]*sp.ones_like(r2).astype(int)
-    idxQso = sp.ones_like(w1[:,None]).astype(int)*sp.arange(len(r2))
+    we1 = w1[:,None]*sp.ones(len(r2))
+    idxPix = sp.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
+    idxQso = sp.ones(r1.size,dtype='int')[:,None]*sp.arange(len(r2))
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
@@ -387,6 +396,7 @@ def fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
     rp = rp[w]
     rt = rt[w]
     we = we[w]
+    we1 = we1[w]
     idxPix = idxPix[w]
     idxQso = idxQso[w]
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
@@ -399,20 +409,22 @@ def fill_wickT1234(ang,ll1,r1,r2,w1,w2,wAll,nb,T1,T2,T3,T4):
         q1 = idxQso[k1]
         wAll[p1]  += we[k1]
         nb[p1]    += 1
-        T1[p1,p1] += cf1d[i1,i1]*(we[k1]**2)
+        T1[p1,p1] += (we[k1]**2)/we1[k1]*zw1[i1]
 
         for k2 in range(k1+1,rp.size):
             p2 = ba[k2]
             i2 = idxPix[k2]
             q2 = idxQso[k2]
-            wcorr = cf1d[i1,i2]*we[k1]*we[k2]
             if q1==q2:
+                wcorr = c1d_1[i1,i2]*(zw2[q1]**2)
                 T2[p1,p2] += wcorr
                 T2[p2,p1] += wcorr
             elif i1==i2:
+                wcorr = (we[k1]*we[k2])/we1[k1]*zw1[i1]
                 T3[p1,p2] += wcorr
                 T3[p2,p1] += wcorr
             else:
+                wcorr = c1d_1[i1,i2]*zw2[q1]*zw2[q2]
                 T4[p1,p2] += wcorr
                 T4[p2,p1] += wcorr
 

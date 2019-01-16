@@ -489,8 +489,12 @@ v1d = None
 c1d = None
 ## auto
 def t123(pix):
-    T1 = sp.zeros([np*nt,np*nt])
-    T2 = sp.zeros([np*nt,np*nt])
+    T1 = sp.zeros((np*nt,np*nt))
+    T2 = sp.zeros((np*nt,np*nt))
+    T3 = sp.zeros((np*nt,np*nt))
+    T4 = sp.zeros((np*nt,np*nt))
+    T5 = sp.zeros((np*nt,np*nt))
+    T6 = sp.zeros((np*nt,np*nt))
     wAll = sp.zeros(np*nt)
     nb = sp.zeros(np*nt,dtype=sp.int64)
     npairs = 0
@@ -518,12 +522,12 @@ def t123(pix):
                 w2 = d2.we
                 c1d_2 = (w2*w2[:,None])*c1d(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
 
-                fill_t123(r1,d2.r_comov,ang,w1,d2.we,z1,d2.z,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2)
+                fill_t123(r1,d2.r_comov,ang,w1,d2.we,z1,d2.z,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3)
             setattr(d1,"neighs",None)
 
-    return wAll, nb, npairs, npairs_used, T1, T2
+    return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
-def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2):
+def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3):
 
     n1 = len(r1)
     n2 = len(r2)
@@ -542,6 +546,8 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2):
     bt = (rt/rt_max*nt).astype(int)
     ba = bt + nt*bp
     we = w1[:,None]*w2
+    we1 = w1[:,None]*sp.ones(w2.size)
+    we2 = sp.ones(w1.size)[:,None]*w2
     zw = zw1[:,None]*zw2
 
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
@@ -552,19 +558,33 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2):
     bins = bins[w]
     ba = ba[w]
     we = we[w]
+    we1 = we1[w]
+    we2 = we2[w]
     zw = zw[w]
 
-    for k in range(w.sum()):
+    for k in range(ba.size):
+        p1 = ba[k]
         i1 = bins[k]%n1
         j1 = (bins[k]-i1)//n1
-        wAll[ba[k]] += we[k]
-        nb[ba[k]] += 1
-        T1[ba[k],ba[k]] += we[k]/zw[k]
-        for l in range(k+1,w.sum()):
+        wAll[p1] += we[k]
+        nb[p1] += 1
+        T1[p1,p1] += we[k]*zw[k]
+
+        for l in range(k+1,ba.size):
+            p2 = ba[l]
             i2 = bins[l]%n1
             j2 = (bins[l]-i2)//n1
-            prod = c1d_1[i1,i2]*c1d_2[j1,j2]
-            T2[ba[k],ba[l]] += prod
-            T2[ba[l],ba[k]] += prod
+            if i1==i2:
+                prod = c1d_2[j1,j2]*we1[k]*zw1[i1]
+                T2[p1,p2] += prod
+                T2[p2,p1] += prod
+            elif j1==j2:
+                prod = c1d_1[i1,i2]*we2[l]*zw2[j1]
+                T2[p1,p2] += prod
+                T2[p2,p1] += prod
+            else:
+                prod = c1d_1[i1,i2]*c1d_2[j1,j2]
+                T3[p1,p2] += prod
+                T3[p2,p1] += prod
 
     return
