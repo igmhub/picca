@@ -14,7 +14,10 @@ from picca.data import delta
 from picca.utils import print
 
 def calc_wickT(p):
-    cf.fill_neighs(p)
+    if cf.x_correlation:
+        cf.fill_neighs_x_correlation(p)
+    else:
+        cf.fill_neighs(p)
     sp.random.seed(p[0])
     tmp = cf.t123(p)
     return tmp
@@ -29,6 +32,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--in-dir', type=str, default=None, required=True,
         help='Directory to delta files')
+
+    parser.add_argument('--in-dir2', type=str, default=None, required=False,
+        help='Directory to 2nd delta files')
 
     parser.add_argument('--rp-min', type=float, default=0., required=False,
         help='Min r-parallel [h^-1 Mpc]')
@@ -56,17 +62,26 @@ if __name__ == '__main__':
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
         help='Name of the absorption in picca.constants defining the redshift of the delta')
 
+    parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
+        help='Name of the absorption in picca.constants defining the redshift of the 2nd delta')
+
     parser.add_argument('--z-ref', type=float, default=2.25, required=False,
         help='Reference redshift')
 
     parser.add_argument('--z-evol', type=float, default=2.9, required=False,
         help='Exponent of the redshift evolution of the delta field')
 
+    parser.add_argument('--z-evol2', type=float, default=2.9, required=False,
+        help='Exponent of the redshift evolution of the 2nd delta field')
+
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
     parser.add_argument('--cf1d', type=str, required=True,
         help='1D auto-correlation of pixels from the same forest file: do_cf1d.py')
+
+    parser.add_argument('--cf1d2', type=str, required=False,
+        help='1D auto-correlation of pixels from the same forest file of the 2nd delta field: do_cf1d.py')
 
     parser.add_argument('--rej', type=float, default=1., required=False,
         help='Fraction of rejected pairs: -1=no rejection, 1=all rejection')
@@ -98,12 +113,26 @@ if __name__ == '__main__':
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
+    cf.alpha2 = args.z_evol
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     cf.rej = args.rej
 
     cosmo = constants.cosmo(args.fid_Om)
 
+    ### Read data
+    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.zref, cosmo, nspec=args.nspec)
+    for p,datap in data.items():
+        for d in datap:
+            for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','dll']:
+                setattr(d,k,None)
+    cf.npix = len(data)
+    cf.data = data
+    cf.ndata = ndata
+    cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix)
+    sys.stderr.write("\n")
+    print("done, npix = {}".format(cf.npix))
 
+    ### Load cf1d for data
     h = fitsio.FITS(args.cf1d)
     head = h[1].read_header()
     llmin = head['LLMIN']
@@ -117,21 +146,48 @@ if __name__ == '__main__':
     nb1d   = h[1]['nb1d'][:]
     cf.c1d = h[1]['c1d'][:]
     cf.c1d = interp1d((ll-llmin)[nb1d>0],cf.c1d[nb1d>0],kind='nearest')
+    cf.v1d2 = cf.v1d
+    cf.c1d2 = cf.c1d
     h.close()
 
-    ### Read data
-    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, cf.lambda_abs, args.z_evol, args.z_ref, cosmo, nspec=args.nspec)
-    for p,datap in data.items():
-        for d in datap:
-            for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','dll']:
-                setattr(d,k,None)
-    cf.npix = len(data)
-    cf.data = data
-    cf.ndata = ndata
-    sys.stderr.write("\n")
-    print("done, npix = {}".format(cf.npix))
+    ### Read data 2
+    if args.in_dir2 or args.lambda_abs2:
+        cf.x_correlation = True
+        cf.alpha2 = args.z_evol2
+        if args.in_dir2 is None:
+            args.in_dir2 = args.in_dir
+        if args.lambda_abs2:
+            cf.lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
+        else:
+            cf.lambda_abs2 = cf.lambda_abs
 
-    cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix)
+        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, nspec=args.nspec)
+        for p,datap in data2.items():
+            for d in datap:
+                for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','dll']:
+                    setattr(d,k,None)
+        cf.data2 = data2
+        cf.ndata2 = ndata2
+        cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix,zmin_pix2)
+        print("")
+        print("done, npix = {}".format(len(data2)))
+
+        ### Load cf1d for data2
+        h = fitsio.FITS(args.cf1d2)
+        head = h[1].read_header()
+        llmin = head['LLMIN']
+        llmax = head['LLMAX']
+        dll = head['DLL']
+        nv1d   = h[1]['nv1d'][:]
+        cf.v1d2 = h[1]['v1d'][:]
+        ll = llmin + dll*sp.arange(len(cf.v1d2))
+        cf.v1d2 = interp1d(ll[nv1d>0],cf.v1d2[nv1d>0],kind='nearest',fill_value='extrapolate')
+
+        nb1d   = h[1]['nb1d'][:]
+        cf.c1d2 = h[1]['c1d'][:]
+        cf.c1d2 = interp1d((ll-llmin)[nb1d>0],cf.c1d2[nb1d>0],kind='nearest')
+        h.close()
+
 
     cf.counter = Value('i',0)
     cf.lock = Lock()
@@ -190,5 +246,5 @@ if __name__ == '__main__':
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
     comment = ['Sum of weight','Covariance','Nomber of pairs','T1','T2','T3','T4','T5','T6']
-    out.write([Ttot,wAll,nb,T1,T2,T3],names=['CO','WALL','NB','T1','T2','T3','T4','T5','T6'],comment=comment,header=head,extname='COV')
+    out.write([Ttot,wAll,nb,T1,T2,T3,T4,T5,T6],names=['CO','WALL','NB','T1','T2','T3','T4','T5','T6'],comment=comment,header=head,extname='COV')
     out.close()

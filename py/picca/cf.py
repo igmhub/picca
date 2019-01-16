@@ -487,6 +487,8 @@ def x_forest_cf1d(pix):
 
 v1d = None
 c1d = None
+v1d2 = None
+c1d2 = None
 ## auto
 def t123(pix):
     T1 = sp.zeros((np*nt,np*nt))
@@ -518,9 +520,9 @@ def t123(pix):
 
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
-                v2 = v1d(d2.ll)
+                v2 = v1d2(d2.ll)
                 w2 = d2.we
-                c1d_2 = (w2*w2[:,None])*c1d(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
+                c1d_2 = (w2*w2[:,None])*c1d2(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
 
                 fill_t123(r1,d2.r_comov,ang,w1,d2.we,z1,d2.z,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3)
             setattr(d1,"neighs",None)
@@ -534,7 +536,7 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3
     i1 = sp.arange(n1)
     i2 = sp.arange(n2)
     zw1 = ((1+z1)/(1+zref))**(alpha-1)
-    zw2 = ((1+z2)/(1+zref))**(alpha-1)
+    zw2 = ((1+z2)/(1+zref))**(alpha2-1)
 
     bins = i1[:,None]+n1*i2
     if x_correlation:
