@@ -58,7 +58,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
         help='Name of the absorption in picca.constants defining the redshift of the delta')
 
-    parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
+    parser.add_argument('--lambda-abs2', type=str, default='LYA', required=False,
         help='Name of the absorption in picca.constants defining the redshift of the 2nd delta')
 
     parser.add_argument('--z-ref', type=float, default=2.25, required=False,
