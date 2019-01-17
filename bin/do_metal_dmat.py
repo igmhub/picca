@@ -10,7 +10,7 @@ from picca import constants, cf, utils, io
 from picca.utils import print
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
-    if args.in_dir != args.in_dir2:
+    if cf.x_correlation:
         cf.fill_neighs_x_correlation(p)
     else:
         cf.fill_neighs(p)
