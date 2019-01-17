@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
     nb1d   = h[1]['nb1d'][:]
     cf.c1d = h[1]['c1d'][:]
-    cf.c1d = interp1d((ll-llmin)[nb1d>0],cf.c1d[nb1d>0],kind='nearest')
+    cf.c1d = interp1d((ll-llmin)[nb1d>0],cf.c1d[nb1d>0],kind='nearest',fill_value='extrapolate')
     cf.v1d2 = cf.v1d
     cf.c1d2 = cf.c1d
     h.close()
@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
         nb1d   = h[1]['nb1d'][:]
         cf.c1d2 = h[1]['c1d'][:]
-        cf.c1d2 = interp1d((ll-llmin)[nb1d>0],cf.c1d2[nb1d>0],kind='nearest')
+        cf.c1d2 = interp1d((ll-llmin)[nb1d>0],cf.c1d2[nb1d>0],kind='nearest',fill_value='extrapolate')
         h.close()
 
 

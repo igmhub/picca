@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
     nb1d   = h[1]['nb1d'][:]
     xcf.c1d = h[1]['c1d'][:]
-    xcf.c1d = interp1d((ll-llmin)[nb1d>0],xcf.c1d[nb1d>0],kind='nearest')
+    xcf.c1d = interp1d((ll-llmin)[nb1d>0],xcf.c1d[nb1d>0],kind='nearest',fill_value='extrapolate')
     h.close()
 
     ### Load cf
