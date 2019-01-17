@@ -9,7 +9,7 @@ from picca import constants, cf, utils, io
 from picca.utils import print
 
 def corr_func(p):
-    if cf.x_correlation:
+    if args.in_dir != args.in_dir2:
         cf.fill_neighs_x_correlation(p)
     else:
         cf.fill_neighs(p)
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
 
-
+    
     args = parser.parse_args()
 
     if args.nproc is None:
