@@ -10,7 +10,7 @@ from picca import constants, cf, utils, io
 from picca.utils import print
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
-    if cf.x_correlation:
+    if args.in_dir2:
         cf.fill_neighs_x_correlation(p)
     else:
         cf.fill_neighs(p)
@@ -97,7 +97,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
-
+    
+    parser.add_argument('--unfold-cf', action='store_true', required=False,
+        help='rp can be positive or negative depending on the relative position between absorber1 and absorber2')
 
     args = parser.parse_args()
 
@@ -141,8 +143,9 @@ if __name__ == '__main__':
     print("done, npix = {}".format(cf.npix))
 
     ### Read data 2
-    if args.in_dir2 or args.lambda_abs2:
-        cf.x_correlation = True
+    if args.in_dir2 or args.lambda_abs2:    
+        if args.lambda_abs2 or args.unfold_cf:
+            cf.x_correlation = True
         cf.alpha2 = args.z_evol2
         if args.in_dir2 is None:
             args.in_dir2 = args.in_dir
