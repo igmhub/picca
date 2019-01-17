@@ -10,7 +10,7 @@ from picca import constants, cf, utils, io
 from picca.utils import print
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
-    if cf.x_correlation:
+    if args.in_dir != args.in_dir2:
         cf.fill_neighs_x_correlation(p)
     else:
         cf.fill_neighs(p)
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
         help='Name of the absorption in picca.constants defining the redshift of the delta')
 
-    parser.add_argument('--lambda-abs2', type=str, default='LYA', required=False,
+    parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
         help='Name of the absorption in picca.constants defining the redshift of the 2nd delta')
 
     parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs='*',
@@ -145,8 +145,8 @@ if __name__ == '__main__':
     ### Read data 2
     if args.in_dir2 or args.lambda_abs2:
         cf.x_correlation = True
-        #if args.lambda_abs2 !=  args.lambda_abs or args.unfold_cf:
-        #    cf.x_correlation = True
+        if args.lambda_abs2 or args.unfold_cf:
+            cf.x_correlation = True
         cf.alpha2 = args.z_evol2
         if args.in_dir2 is None:
             args.in_dir2 = args.in_dir

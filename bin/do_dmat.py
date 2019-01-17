@@ -58,7 +58,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
         help='Name of the absorption in picca.constants defining the redshift of the delta')
 
-    parser.add_argument('--lambda-abs2', type=str, default='LYA', required=False,
+    parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
         help='Name of the absorption in picca.constants defining the redshift of the 2nd delta')
 
     parser.add_argument('--z-ref', type=float, default=2.25, required=False,
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     ### Read data 2
     if args.in_dir2 or args.lambda_abs2:
-        if args.lambda_abs2 !=  args.lambda_abs or args.unfold_cf:
+        if args.lambda_abs2 or args.unfold_cf:
             cf.x_correlation = True
         cf.alpha2 = args.z_evol2
         if args.in_dir2 is None:
