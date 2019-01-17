@@ -10,13 +10,13 @@ from picca import constants, cf, utils, io
 from picca.utils import print
 
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
-    if args.in_dir != args.in_dir2:
+    if cf.x_correlation:
         cf.fill_neighs_x_correlation(p)
     else:
         cf.fill_neighs(p)
     sp.random.seed(p[0])
     tmp = cf.metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
-    return tmp
+return tmp
 
 if __name__ == '__main__':
 
@@ -144,8 +144,9 @@ if __name__ == '__main__':
 
     ### Read data 2
     if args.in_dir2 or args.lambda_abs2:
-        if args.lambda_abs2 !=  args.lambda_abs or args.unfold_cf:
-            cf.x_correlation = True
+        cf.x_correlation = True
+        #if args.lambda_abs2 !=  args.lambda_abs or args.unfold_cf:
+        #    cf.x_correlation = True
         cf.alpha2 = args.z_evol2
         if args.in_dir2 is None:
             args.in_dir2 = args.in_dir
