@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--unfold-cf', action='store_true', required=False,
         help='rp can be positive or negative depending on the relative position between absorber1 and absorber2')
-    
+
     args = parser.parse_args()
 
     if args.nproc is None:
