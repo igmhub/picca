@@ -160,7 +160,7 @@ def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None):
                 fidPk=fidPk)
         srun = header + "srun -n 1 -c 64 do_xcf.py " +\
             "--drq {} --in-dir deltas ".format(drq) +\
-             "--z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
+             "--z-evol-obj 1.44 --z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
              "--out {} --nproc 32 --fid-Om {}\n".format(out,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xcf.append(basename(fbatch))
@@ -188,7 +188,7 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None):
         header = get_header(time, name=out, email=email)
         srun = header + "srun -n 1 -c 64 do_xdmat.py " +\
             "--drq {} --in-dir deltas ".format(drq) +\
-            "--z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
+            "--z-evol-obj 1.44 --z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
             "--out {} --rej {} --nproc 32 --fid-Om {}\n".format(out,rej,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xdmat.append(basename(fbatch))
