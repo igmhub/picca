@@ -320,8 +320,7 @@ def pk_hcd_Rogers2018_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 
     bias_gamma = kwargs["bias_gamma"]
     bias_prim = kwargs["bias_prim"]
-    lambda_uv = kwargs["lambda_uv"]
-      
+    lambda_uv = kwargs["lambda_uv"]      
     W = sp.arctan(k*lambda_uv)/(k*lambda_uv)
 
     key = "bias_hcd_{}".format(kwargs['name'])
