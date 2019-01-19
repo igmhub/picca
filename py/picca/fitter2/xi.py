@@ -261,6 +261,7 @@ def broadband(r, mu, deg_r_min=None, deg_r_max=None,
     if rp_rt:
         r1 = (r/100)*mu
         r2 = (r/100)*sp.sqrt(1-mu**2)
+
     r1_pows = sp.arange(deg_r_min, deg_r_max+1, ddeg_r)
     r2_pows = sp.arange(deg_mu_min, deg_mu_max+1, ddeg_mu)
     BB = [kwargs['{} ({},{})'.format(name,i,j)] for i in r1_pows
