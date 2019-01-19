@@ -241,7 +241,7 @@ def pk_hcd_Rogers2018_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
     assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
     
-    key = "bias_hcd_{}".format(kwargs['name']) 
+    key = "bias_hcd_{}".format(kwargs['name'])
     if key in kwargs :
         bias_hcd = kwargs[key]
     else :
@@ -321,7 +321,7 @@ def pk_hcd_Rogers2018_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias_gamma = kwargs["bias_gamma"]
     bias_prim = kwargs["bias_prim"]
     lambda_uv = kwargs["lambda_uv"]
-    
+     
     W = sp.arctan(k*lambda_uv)/(k*lambda_uv)
 
     key = "bias_hcd_{}".format(kwargs['name'])
