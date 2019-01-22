@@ -109,8 +109,9 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
             rp[(rp<1.)] = 1./rp[(rp<1.)]
         rt = ang*sp.ones_like(rp)
     else:
-        if x_correlation : rp = (r1-r2[:,None])*sp.cos(ang/2)
-        else : rp = abs(r1-r2[:,None])*sp.cos(ang/2)
+        rp = (r1-r2[:,None])*sp.cos(ang/2)
+        if not x_correlation :
+            rp = abs(rp)
         rt = (r1+r2[:,None])*sp.sin(ang/2)
     wd12 = wd1*wd2[:,None]
     w12 = w1*w2[:,None]
@@ -183,10 +184,9 @@ def dmat(pix):
 @jit
 def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
 
-    if x_correlation:
-        rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    else:
-        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+    rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    if  not x_correlation:
+        rp = abs(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
@@ -539,10 +539,9 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3
     zw2 = ((1+z2)/(1+zref))**(alpha2-1)
 
     bins = i1[:,None]+n1*i2
-    if x_correlation:
-        rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    else :
-        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+    rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    if not x_correlation:
+        rp = abs(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
