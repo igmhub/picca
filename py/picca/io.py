@@ -203,7 +203,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     elif mode=="desi":
         nside = 8
         print("Found {} qsos".format(len(zqso)))
-        data = read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order)
+        data = read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order, pk1d=pk1d)
         return data,len(data),nside,"RING"
 
     else:
@@ -600,7 +600,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
     data = list(pix_data.values())
     return data
 
-def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
+def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
 
     in_nside = int(in_dir.split('spectra-')[-1].replace('/',''))
     nest = True
@@ -638,20 +638,26 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
         exp = h["FIBERMAP"]["EXPID"][:]
         night = h["FIBERMAP"]["NIGHT"][:]
         fib = h["FIBERMAP"]["FIBER"][:]
+        in_tids = h["FIBERMAP"]["TARGETID"][:]
 
         b_ll = sp.log10(h["B_WAVELENGTH"].read())
         b_iv = h["B_IVAR"].read()*(h["B_MASK"].read()==0)
+        b_iv[sp.isnan(b_iv)] = 0.
         b_fl = h["B_FLUX"].read()
+        b_reso = h["B_RESOLUTION"].read()
         r_ll = sp.log10(h["R_WAVELENGTH"].read())
         r_iv = h["R_IVAR"].read()*(h["R_MASK"].read()==0)
+        r_iv[sp.isnan(r_iv)] = 0.
         r_fl = h["R_FLUX"].read()
-        z_ll = sp.log10(h["Z_WAVELENGTH"].read())
-        z_iv = h["Z_IVAR"].read()*(h["Z_MASK"].read()==0)
-        z_fl = h["Z_FLUX"].read()
-        b_reso = h["B_RESOLUTION"].read()
         r_reso = h["R_RESOLUTION"].read()
-        z_reso = h["Z_RESOLUTION"].read()
-        in_tids = h[1]["TARGETID"][:]
+        try:
+            z_ll = sp.log10(h["Z_WAVELENGTH"].read())
+            z_iv = h["Z_IVAR"].read()*(h["Z_MASK"].read()==0)
+            z_iv[sp.isnan(z_iv)] = 0.
+            z_fl = h["Z_FLUX"].read()
+            z_reso = h["Z_RESOLUTION"].read()
+        except OSError:
+            pass
         h.close()
 
         for t,p,m,f in zip(tid_qsos,plate_qsos,mjd_qsos,fid_qsos):
@@ -665,9 +671,13 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            reso_sum = b_reso[wt].sum(axis=0)
-            reso_in_km_per_s=spectral_resolution_desi(reso_sum,b_ll)
-            diff = sp.zeros(b_ll.shape)
+            if not pk1d is None:
+                reso_sum = b_reso[wt].sum(axis=0)
+                reso_in_km_per_s=spectral_resolution_desi(reso_sum,b_ll)
+                diff = sp.zeros(b_ll.shape)
+            else:
+                reso_in_km_per_s = None
+                diff = None
             d  = forest(b_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
                     p,m,f,order,diff,reso_in_km_per_s)
             ### R
@@ -676,21 +686,32 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order):
             iv = iv.sum(axis=0)
             w = iv>0
             fl[w]/=iv[w]
-            reso_sum = r_reso[wt].sum(axis=0)
-            reso_in_km_per_s=spectral_resolution_desi(reso_sum,r_ll)
-            diff = sp.zeros(r_ll.shape)
+            if not pk1d is None:
+                reso_sum = r_reso[wt].sum(axis=0)
+                reso_in_km_per_s=spectral_resolution_desi(reso_sum,r_ll)
+                diff = sp.zeros(r_ll.shape)
+            else:
+                reso_in_km_per_s = None
+                diff = None
             d += forest(r_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
                     p,m,f,order,diff,reso_in_km_per_s)
-            ### Z
-            iv = z_iv[wt]
-            fl = (iv*z_fl[wt]).sum(axis=0)
-            iv = iv.sum(axis=0)
-            w = iv>0
-            fl[w]/=iv[w]
-            reso_sum = z_reso[wt].sum(axis=0)
-            reso_in_km_per_s=spectral_resolution_desi(reso_sum,z_ll)
-            diff = sp.zeros(z_ll.shape)
-            d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],p,m,f,order,diff,reso_in_km_per_s)
+            try:
+                ### Z
+                iv = z_iv[wt]
+                fl = (iv*z_fl[wt]).sum(axis=0)
+                iv = iv.sum(axis=0)
+                w = iv>0
+                fl[w]/=iv[w]
+                if not pk1d is None:
+                    reso_sum = z_reso[wt].sum(axis=0)
+                    reso_in_km_per_s=spectral_resolution_desi(reso_sum,z_ll)
+                    diff = sp.zeros(z_ll.shape)
+                else:
+                    reso_in_km_per_s = None
+                    diff = None
+                d += forest(z_ll,fl,iv,t,ra[wt][0],de[wt][0],ztable[t],p,m,f,order,diff,reso_in_km_per_s)
+            except UnboundLocalError:
+                pass
 
             pix = pixs[wt][0]
             if pix not in data:
