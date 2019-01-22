@@ -3,7 +3,6 @@ from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
-import sys
 import traceback
 from multiprocessing import Pool,Lock,cpu_count,Value
 
