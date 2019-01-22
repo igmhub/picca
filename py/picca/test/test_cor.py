@@ -560,6 +560,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --unfold-cf"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -585,6 +586,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --unfold-cf"
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -612,6 +614,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --unfold-cf"
         subprocess.call(cmd, shell=True)
 
         ### Test
