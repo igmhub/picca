@@ -292,7 +292,7 @@ def do_ini(outdir, cf_file,fidPk):
     fout.write("bao_amp = 1. 0.1 None None fixed\n")
     if "xcf" in cf_file:
         fout.write("drp = 0. 0.1 None None free\n")
-        fout.write("sigma_velo_lorentz = 5. 0.1 None None free\n")
+        fout.write("sigma_velo_lorentz = 5. 0.1 0. None free\n")
     fout.close()
 
     chi2_ini = outdir+"/chi2_{}".format(cf_file.replace(".fits",".ini"))
@@ -390,7 +390,7 @@ parser.add_argument("--fid-Pk", type=str,
         required=False, help="Fiducial Pk")
 
 parser.add_argument("--zint", type=str, nargs="*",
-        default=["0:2.2","2.2:2.4","2.4:2.6","2.6:2.8","2.8:3.0","3.0:3.2","3.2:10"],
+        default=['0:2.35','2.35:2.65','2.65:3.05','3.05:10'],
         required=False, help="Redshifts intervals")
 
 parser.add_argument("--mode", type=str,
