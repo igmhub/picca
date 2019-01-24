@@ -76,8 +76,8 @@ if __name__ == '__main__':
     parser.add_argument('--no-project', action='store_true', required=False,
         help='Do not project out continuum fitting modes')
 
-    parser.add_argument('--no-same-wavelength-pairs', action='store_true', required=False,
-        help='Reject pairs with same wavelength')
+    parser.add_argument('--remove-same-half-plate-close-pairs', action='store_true', required=False,
+        help='Reject pairs in the first bin in r-parallel from same half plate')
 
     parser.add_argument('--rej', type=float, default=1., required=False,
         help='Fraction of rejected forest-forest pairs: -1=no rejection, 1=all rejection')
@@ -112,8 +112,8 @@ if __name__ == '__main__':
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
     cf.rej = args.rej
-    cf.no_same_wavelength_pairs = args.no_same_wavelength_pairs
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
     cosmo = constants.cosmo(args.fid_Om)
 

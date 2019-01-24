@@ -290,7 +290,7 @@ class TestCor(unittest.TestCase):
         for k in m.keys():
             if k in ['best fit','fast mc','minos','chi2 scan']: continue
             compare_attributes(m[k].attrs,b[k].attrs)
-            compare_values(m[k]['fit'].value,b[k]['fit'].value)
+            compare_values(m[k]['fit'][()],b[k]['fit'][()])
 
         ### minos
         k = 'minos'
@@ -303,7 +303,7 @@ class TestCor(unittest.TestCase):
         for p in m[k].keys():
             compare_attributes(m[k][p].attrs,b[k][p].attrs)
             if p == 'result':
-                compare_values(m[k][p]['values'].value,b[k][p]['values'].value)
+                compare_values(m[k][p]['values'][()],b[k][p]['values'][()])
 
         return
     def load_requirements(self):
@@ -477,6 +477,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 15"
         cmd += " --nt 15"
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -500,6 +501,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -524,6 +526,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
@@ -582,6 +585,7 @@ class TestCor(unittest.TestCase):
         cmd += " --np 30"
         cmd += " --nt 15"
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
         subprocess.call(cmd, shell=True)
 
@@ -607,6 +611,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
         subprocess.call(cmd, shell=True)
 
@@ -634,6 +639,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
         subprocess.call(cmd, shell=True)
 

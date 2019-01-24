@@ -231,11 +231,36 @@ def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
     p1 = kwargs["croom_par1"]
     return (p0 + p1*(1.+z)**2)/(p0 + p1*(1+zref)**2)
 
+def broadband_sky(r, mu, name=None, bin_size_rp=None, bin_size_rt=None, *pars, **kwargs):
+    '''
+        Broadband function interface.
+        Calculates a Gaussian broadband in rp,rt for the sky residuals
+    Arguments:
+        - r,mu (array or float): where to calcualte the broadband
+        - bin_size_rp (array): Bin size of the distortion matrix along the line-of-sight
+        - bin_size_rt (array): Bin size of the distortion matrix across the line-of-sight
+        - name: (string) name ot identify the corresponding parameters,
+                    typically the dataset name and whether it's multiplicative
+                    of additive
+        - *pars: additional parameters that are ignored (for convenience)
+        **kwargs (dict): dictionary containing all the polynomial
+                    coefficients. Any extra keywords are ignored
+    Returns:
+        - cor (array of float): Correlation function
+    '''
+
+    rp = r*mu
+    rt = r*sp.sqrt(1-mu**2)
+    cor = kwargs[name+'-scale-sky']*sp.exp(-(rt/bin_size_rt)**2/kwargs[name+'-sigma-sky']**2)
+    w = (rp>=0.) & (rp<bin_size_rp)
+    cor[~w] = 0.
+
+    return cor
 
 def broadband(r, mu, deg_r_min=None, deg_r_max=None,
         ddeg_r=None, deg_mu_min=None, deg_mu_max=None,
         ddeg_mu=None, deg_mu=None, name=None,
-        rp_rt=False, *pars, **kwargs):
+        rp_rt=False, bin_size_rp=None, *pars, **kwargs):
     '''
     Broadband function interface.
     Calculates a power-law broadband in r and mu or rp,rt
