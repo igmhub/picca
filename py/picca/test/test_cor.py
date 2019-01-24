@@ -19,7 +19,7 @@ else:
 def update_system_status_values(path, section, system, value):
 
     ### Make ConfigParser case sensitive
-    class CaseConfigParser(ConfigParser.SafeConfigParser):
+    class CaseConfigParser(ConfigParser.ConfigParser):
         def optionxform(self, optionstr):
             return optionstr
     cp = CaseConfigParser()
