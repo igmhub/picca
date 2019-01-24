@@ -83,6 +83,9 @@ if __name__ == '__main__':
     parser.add_argument('--cf1d2', type=str, required=False,
         help='1D auto-correlation of pixels from the same forest file of the 2nd delta field: do_cf1d.py')
 
+    parser.add_argument('--remove-same-half-plate-close-pairs', action='store_true', required=False,
+        help='Reject pairs in the first bin in r-parallel from same half plate')
+
     parser.add_argument('--rej', type=float, default=1., required=False,
         help='Fraction of rejected pairs: -1=no rejection, 1=all rejection')
 
@@ -116,6 +119,7 @@ if __name__ == '__main__':
     cf.alpha2 = args.z_evol
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     cf.rej = args.rej
+    cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
     cosmo = constants.cosmo(args.fid_Om)
 
