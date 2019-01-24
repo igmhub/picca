@@ -1,7 +1,7 @@
 scipy==0.19.1
 numpy==1.13.1
-iminuit==1.2
-healpy==1.11
+iminuit==1.3.3
+healpy==1.11.0
 fitsio==0.9.11
 numba==0.41.0
 llvmlite==0.26.0

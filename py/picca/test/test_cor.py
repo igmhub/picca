@@ -288,7 +288,7 @@ class TestCor(unittest.TestCase):
         for k in m.keys():
             if k in ['best fit','fast mc','minos','chi2 scan']: continue
             compare_attributes(m[k].attrs,b[k].attrs)
-            compare_values(m[k]['fit'].value,b[k]['fit'].value)
+            compare_values(m[k]['fit'][()],b[k]['fit'][()])
 
         ### minos
         k = 'minos'
@@ -301,7 +301,7 @@ class TestCor(unittest.TestCase):
         for p in m[k].keys():
             compare_attributes(m[k][p].attrs,b[k][p].attrs)
             if p == 'result':
-                compare_values(m[k][p]['values'].value,b[k][p]['values'].value)
+                compare_values(m[k][p]['values'][()],b[k][p]['values'][()])
 
         return
     def load_requirements(self):
