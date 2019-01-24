@@ -88,4 +88,4 @@ python bin/export --data cf.fits.gz --dmat dmat.fits.gz --out cf-exp.out.gz
 ### Name of tags
 
 The tags name follow the names of the king of France:
-https://fr.wikipedia.org/wiki/Liste\_des\_monarques\_de\_France#Liste\_des\_monarques\_de\_France
+https://fr.wikipedia.org/wiki/Liste_des_monarques_de_France#Liste_des_monarques_de_France
