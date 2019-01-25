@@ -1,0 +1,10 @@
+scipy==0.19.1
+numpy==1.13.1
+iminuit==1.3.3
+healpy==1.11.0
+fitsio==0.9.11
+numba==0.41.0
+llvmlite==0.26.0
+h5py==2.6.0
+future==0.16.0
+setuptools==27.2.0

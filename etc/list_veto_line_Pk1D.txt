@@ -1,0 +1,47 @@
+#
+# File to veto lines either in observed or rest frame
+#	or even rest frame of DLA
+#
+#  Veto lines used for Pk1D anlaysis (DR9)
+#
+# lambda is given in Angstrom
+#
+# name  lambda_min  lambda_max  ('OBS' or 'RF' or 'RF_DLA')
+#
+absorption_K   3931.0 3937.0 OBS
+absorption_H   3966.0 3972.0 OBS
+sky_lines      4042.0 4054.0 OBS
+sky_lines      4355.0 4365.0 OBS
+sky_lines      5455.0 5467.0 OBS
+sky_lines_OI   5573.0 5585.0 OBS
+sky_lines      5682.0 5695.0 OBS
+sky_lines      5811.0 5815.0 OBS
+sky_lines      5865.0 5873.0 OBS
+absorption_NaD 5885.0 5902.0 OBS
+sky_lines      5811.0 5815.0 OBS
+sky_lines_OH   6172.2 6172.5 OBS
+sky_lines_OH   6204.3 6204.6 OBS
+sky_lines_OH   6223.3 6223.7 OBS
+sky_lines      6236.0 6241.0 OBS  
+sky_lines      6256.0 6263.0 OBS  
+sky_lines_O    6296.0 6311.0 OBS
+sky_lines   6329.9 6332.9  OBS
+sky_lines   6362.1 6369.5  OBS
+sky_lines   6498.3 6502.8  OBS
+sky_lines_OH   6506.7 6506.9 OBS
+sky_lines_OH   6534.7 6535 OBS
+sky_lines_OH   6545.7 6545.9 OBS
+sky_lines   6553.9 6559.9  OBS
+sky_lines_OH   6578.9 6579.3 OBS
+sky_lines   6826.6 6839.0  OBS
+sky_lines   6862.8 6873.8  OBS
+sky_lines   6880.0 6884.0  OBS
+sky_lines   6888.5 6892.0  OBS
+sky_lines   6900.0 6903.0  OBS
+sky_lines   6913.0 6915.0  OBS
+sky_lines   6923.2 6927.8  OBS
+sky_lines   6940.0 6942.9  OBS
+sky_lines   6948.7 6953.3  OBS
+sky_lines   6977.6 6982.2  OBS
+sky_lines_OH   7013 7013.7 OBS
+sky_lines_OH   7240.7 7247.2 OBS

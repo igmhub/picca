@@ -1,0 +1,8 @@
+future
+scipy
+numpy
+fitsio
+numba
+healpy
+iminuit
+h5py
