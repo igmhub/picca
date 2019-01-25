@@ -249,9 +249,6 @@ class TestCor(unittest.TestCase):
                     allclose = sp.allclose(d_m,d_b)
                     self.assertTrue(allclose,"{}: Header key is {}, maximum relative difference is {}".format(nameRun,k,diff.max()))
 
-        m.close()
-        b.close()
-
         return
     def compare_h5py(self,path1,path2,nameRun=""):
 

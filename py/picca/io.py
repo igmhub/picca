@@ -413,7 +413,6 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
         print("INFO: reading plate {}".format(spplate))
         h=fitsio.FITS(spplate)
         head = h[0].read_header()
-        h.close()
         iexp = 1
         for c in ["B1", "B2", "R1", "R2"]:
             card = "NEXP_{}".format(c)
