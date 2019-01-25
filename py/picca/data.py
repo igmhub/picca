@@ -224,7 +224,6 @@ class forest(qso):
 
         return self
 
-
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):
             return
