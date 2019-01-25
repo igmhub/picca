@@ -160,7 +160,7 @@ def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None):
                 fidPk=fidPk)
         srun = header + "srun -n 1 -c 64 do_xcf.py " +\
             "--drq {} --in-dir deltas ".format(drq) +\
-             "--z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
+             "--z-evol-obj 1.44 --z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
              "--out {} --nproc 32 --fid-Om {}\n".format(out,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xcf.append(basename(fbatch))
@@ -188,7 +188,7 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None):
         header = get_header(time, name=out, email=email)
         srun = header + "srun -n 1 -c 64 do_xdmat.py " +\
             "--drq {} --in-dir deltas ".format(drq) +\
-            "--z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
+            "--z-evol-obj 1.44 --z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
             "--out {} --rej {} --nproc 32 --fid-Om {}\n".format(out,rej,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xdmat.append(basename(fbatch))
@@ -260,10 +260,11 @@ def do_ini(outdir, cf_file,fidPk):
     fout.write("[model]\n")
     fout.write("model-pk = pk_kaiser\n")
     fout.write("z evol LYA = bias_vs_z_std\n")
-    fout.write("growth function = growth_factor_no_de\n")
+    fout.write("growth function = growth_factor_de\n")
     if "xcf" in cf_file:
         fout.write("model-xi = xi_drp\n")
-        fout.write("z evol QSO = qso_bias_vs_z_croom\n")
+        fout.write("z evol QSO = bias_vs_z_std\n")
+        fout.write("velocity dispersion = pk_velo_lorentz\n")
     else:
         fout.write("model-xi = xi\n")
 
@@ -277,7 +278,8 @@ def do_ini(outdir, cf_file,fidPk):
     fout.write("alpha_LYA = 2.9 0.1 None None fixed\n")
     if "xcf" in cf_file:
         fout.write("bias_QSO = 1. 0.1 None None fixed\n")
-        fout.write("beta_QSO = 0.3 0.1 None None free\n")
+        fout.write("beta_QSO = 0.3 0.1 None None fixed\n")
+        fout.write("alpha_QSO = 1.44 0.1 None None fixed\n")
 
     fout.write("growth_rate = 0.962524 0.1 None None fixed\n")
 
@@ -290,8 +292,7 @@ def do_ini(outdir, cf_file,fidPk):
     fout.write("bao_amp = 1. 0.1 None None fixed\n")
     if "xcf" in cf_file:
         fout.write("drp = 0. 0.1 None None free\n")
-        fout.write("croom_par0 = 0.53 0.1 None None fixed\n")
-        fout.write("croom_par1 = 0.289 0.1 None None fixed\n")
+        fout.write("sigma_velo_lorentz = 5. 0.1 None None free\n")
     fout.close()
 
     chi2_ini = outdir+"/chi2_{}".format(cf_file.replace(".fits",".ini"))
@@ -389,7 +390,7 @@ parser.add_argument("--fid-Pk", type=str,
         required=False, help="Fiducial Pk")
 
 parser.add_argument("--zint", type=str, nargs="*",
-        default=["0:2.2","2.2:2.4","2.4:2.6","2.6:2.8","2.8:3.0","3.0:3.2","3.2:10"],
+        default=['0:2.35','2.35:2.65','2.65:3.05','3.05:10'],
         required=False, help="Redshifts intervals")
 
 parser.add_argument("--mode", type=str,
