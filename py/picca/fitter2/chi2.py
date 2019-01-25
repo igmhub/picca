@@ -7,7 +7,7 @@ import h5py
 import sys
 from scipy.linalg import cholesky
 
-from . import utils, priors
+from . import priors
 
 def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
     return d.chi2(k, pk, pksb, dic)
