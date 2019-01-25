@@ -207,12 +207,12 @@ class forest(qso):
         if self.reso is not None:
             dic['reso'] = sp.append(self.reso, d.reso)
 
-        bins = sp.floor((ll - forest.lmin) / forest.dll + 0.5).astype(int)
-        cll = forest.lmin + sp.arange(bins.max() + 1) * forest.dll
-        civ = sp.zeros(bins.max() + 1)
-        cciv = sp.bincount(bins, weights=iv)
+        bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
+        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
+        civ = sp.zeros(bins.max()+1)
+        cciv = sp.bincount(bins,weights=iv)
         civ[:len(cciv)] += cciv
-        w = (civ > 0.)
+        w = (civ>0.)
         self.ll = cll[w]
         self.iv = civ[w]
 
