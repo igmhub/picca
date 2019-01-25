@@ -222,13 +222,11 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
         return data, len(pixs),nside,"RING"
 
-    if mode in ["spplate","spec","corrected-spec]:
-        t0 = time.time()
+    if mode in ["spplate","spec","corrected-spec"]:
         if mode == "spplate":
             pix_data = read_from_spplate(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, log=log, best_obs=best_obs)
         else:
             pix_data = read_from_spec(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, mode=mode,log=log, pk1d=pk1d, best_obs=best_obs)
-        read_time=time.time()-t0
         ra = [d.ra for d in pix_data]
         ra = sp.array(ra)
         dec = [d.dec for d in pix_data]
@@ -269,7 +267,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
     ## then replace thid, plate, mjd, fid
     ## by what's available in spAll
     if not best_obs:
-        fi = glob.glob(in_dir+"/spAll-*.fits")
+        fi = glob.glob(in_dir.replace("spectra/","").replace("lite","").replace("full","")+"/spAll-*.fits")
         if len(fi) > 1:
             print("ERROR: found multiple spAll files")
             print("ERROR: try running with --bestobs option (but you will lose reobservations)")
