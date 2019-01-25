@@ -189,16 +189,16 @@ class forest(qso):
         self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
 
 
-    def __add__(self, d):
+    def __add__(self,d):
 
-        if not hasattr(self, 'll') or not hasattr(d, 'll'):
+        if not hasattr(self,'ll') or not hasattr(d,'ll'):
             return self
 
         dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
 
-        ll = sp.append(self.ll, d.ll)
+        ll = sp.append(self.ll,d.ll)
         dic['fl'] = sp.append(self.fl, d.fl)
-        iv = sp.append(self.iv, d.iv)
+        iv = sp.append(self.iv,d.iv)
 
         if self.mmef is not None:
             dic['mmef'] = sp.append(self.mmef, d.mmef)
