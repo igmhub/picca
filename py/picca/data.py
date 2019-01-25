@@ -187,10 +187,10 @@ class forest(qso):
 
 
     def __add__(self,d):
-        
+
         if not hasattr(self,'ll') or not hasattr(d,'ll'):
             return self
-        
+
         ll = sp.append(self.ll,d.ll)
         fl = sp.append(self.fl,d.fl)
         diff = sp.append(self.diff,d.diff)
@@ -199,7 +199,7 @@ class forest(qso):
         mmef = None
         if self.mmef is not None:
             mmef = sp.append(self.mmef,d.mmef)
-            
+
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
         cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
         cfl = sp.zeros(bins.max()+1)
@@ -221,7 +221,7 @@ class forest(qso):
         if mmef is not None:
             cmmef[:len(ccmmef)] += ccmmef
         w = (civ>0.)
-        
+
         self.ll = cll[w]
         self.fl = cfl[w]/civ[w]
         self.iv = civ[w]
@@ -233,7 +233,7 @@ class forest(qso):
         err = 1./sp.sqrt(self.iv)
         SNR = self.fl/err
         self.mean_SNR = sp.mean(SNR)
-        
+
         return self
 
     def mask(self,mask_obs,mask_RF):
