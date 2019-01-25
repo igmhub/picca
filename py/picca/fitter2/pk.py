@@ -25,6 +25,17 @@ def pk_NL(k, pk_lin, tracer1, tracer2, **kwargs):
     sp2 = st2*kwargs['1+f']**2
     return sp.exp(-(kp**2*sp2+kt**2*st2)/2)
 
+def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
+    """
+    Apply a Gaussian smoothing to the full correlation function
+
+    """
+    kp  = k*muk
+    kt  = k*sp.sqrt(1.-muk**2)
+    st2 = kwargs['per_sigma_smooth']**2
+    sp2 = kwargs['par_sigma_smooth']**2
+    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)
+
 def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
     pk = bias1*bias2*pk_lin*(1+beta1*muk**2)*(1+beta2*muk**2)
