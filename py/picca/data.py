@@ -187,39 +187,48 @@ class forest(qso):
 
 
     def __add__(self,d):
-
         if not hasattr(self,'ll') or not hasattr(d,'ll'):
             return self
-
         ll = sp.append(self.ll,d.ll)
         fl = sp.append(self.fl,d.fl)
+        diff = sp.append(self.diff,d.diff)
+        reso=sp.append(self.reso,d.reso)
         iv = sp.append(self.iv,d.iv)
         mmef = None
         if self.mmef is not None:
             mmef = sp.append(self.mmef,d.mmef)
-
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
         cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
         cfl = sp.zeros(bins.max()+1)
+        cdiff=sp.zeros(bins.max()+1)
+        creso=sp.zeros(bins.max()+1)
         civ = sp.zeros(bins.max()+1)
         if mmef is not None:
             cmmef = sp.zeros(bins.max()+1)
         ccfl = sp.bincount(bins,weights=iv*fl)
+        ccdiff=sp.bincount(bins,weights=iv*diff)
+        ccreso=sp.bincount(bins,weights=iv*reso)
         cciv = sp.bincount(bins,weights=iv)
         if mmef is not None:
             ccmmef = sp.bincount(bins,weights=iv*mmef)
         cfl[:len(ccfl)] += ccfl
         civ[:len(cciv)] += cciv
+        cdiff[:len(ccdiff)]+=ccdiff
+        creso[:len(ccreso)]+=ccreso
         if mmef is not None:
             cmmef[:len(ccmmef)] += ccmmef
         w = (civ>0.)
-
         self.ll = cll[w]
         self.fl = cfl[w]/civ[w]
         self.iv = civ[w]
+        self.diff = cdiff[w]/civ[w]
+        self.reso = creso[w]/civ[w]
         if mmef is not None:
             self.mmef = cmmef[w]
-
+        self.mean_reso = sp.mean(self.reso)
+        err = 1./sp.sqrt(self.iv)
+        SNR = self.fl/err
+        self.mean_SNR = sp.mean(SNR)        
         return self
 
     def mask(self,mask_obs,mask_RF):
