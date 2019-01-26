@@ -364,7 +364,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
             h.close()
         if t_delta is not None:
             pix_data.append(t_delta)
-    return pix_data 
+    return pix_data
 
 def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid, order,mode,log=None):
     pix_data = []
