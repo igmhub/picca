@@ -120,8 +120,9 @@ class forest(qso):
         ## mmef is the mean expected flux fraction using the mock continuum
         if mmef is not None:
             mmef = mmef[w]
-        if diff is not None :
+        if diff is not None:
             diff=diff[w]
+        if reso is not None:
             reso=reso[w]
 
         ## rebin
@@ -134,8 +135,9 @@ class forest(qso):
         cciv = sp.bincount(bins,weights=iv)
         if mmef is not None:
             ccmmef = sp.bincount(bins, weights=iv*mmef)
-        if diff is not None :
+        if diff is not None:
             cdiff = sp.bincount(bins,weights=iv*diff)
+        if reso is not None:
             creso = sp.bincount(bins,weights=iv*reso)
 
         cfl[:len(ccfl)] += ccfl
@@ -150,8 +152,9 @@ class forest(qso):
         iv = civ[w]
         if mmef is not None:
             mmef = cmmef[w]/civ[w]
-        if diff is not None :
+        if diff is not None:
             diff = cdiff[w]/civ[w]
+        if reso is not None
             reso = creso[w]/civ[w]
 
         ## Flux calibration correction
@@ -191,50 +194,40 @@ class forest(qso):
         if not hasattr(self,'ll') or not hasattr(d,'ll'):
             return self
 
+        dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
+
         ll = sp.append(self.ll,d.ll)
-        fl = sp.append(self.fl,d.fl)
-        diff = sp.append(self.diff,d.diff)
-        reso=sp.append(self.reso,d.reso)
+        dic['fl'] = sp.append(self.fl, d.fl)
         iv = sp.append(self.iv,d.iv)
-        mmef = None
+
         if self.mmef is not None:
-            mmef = sp.append(self.mmef,d.mmef)
+            dic['mmef'] = sp.append(self.mmef, d.mmef)
+        if self.diff is not None:
+            dic['diff'] = sp.append(self.diff, d.diff)
+        if self.reso is not None:
+            dic['reso'] = sp.append(self.reso, d.reso)
 
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
         cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
-        cfl = sp.zeros(bins.max()+1)
-        cdiff=sp.zeros(bins.max()+1)
-        creso=sp.zeros(bins.max()+1)
         civ = sp.zeros(bins.max()+1)
-        if mmef is not None:
-            cmmef = sp.zeros(bins.max()+1)
-        ccfl = sp.bincount(bins,weights=iv*fl)
-        ccdiff=sp.bincount(bins,weights=iv*diff)
-        ccreso=sp.bincount(bins,weights=iv*reso)
         cciv = sp.bincount(bins,weights=iv)
-        if mmef is not None:
-            ccmmef = sp.bincount(bins,weights=iv*mmef)
-        cfl[:len(ccfl)] += ccfl
         civ[:len(cciv)] += cciv
-        cdiff[:len(ccdiff)]+=ccdiff
-        creso[:len(ccreso)]+=ccreso
-        if mmef is not None:
-            cmmef[:len(ccmmef)] += ccmmef
         w = (civ>0.)
-
         self.ll = cll[w]
-        self.fl = cfl[w]/civ[w]
         self.iv = civ[w]
-        self.diff = cdiff[w]/civ[w]
-        self.reso = creso[w]/civ[w]
-        if mmef is not None:
-            self.mmef = cmmef[w]    
-        self.mean_reso = sp.mean(self.reso)
+
+        for k, v in dic.items():
+            cnew = sp.zeros(bins.max() + 1)
+            ccnew = sp.bincount(bins, weights=iv * v)
+            cnew[:len(ccnew)] += ccnew
+            setattr(self, k, cnew[w] / civ[w])
         err = 1./sp.sqrt(self.iv)
         SNR = self.fl/err
         self.mean_SNR = sp.mean(SNR)
+        self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
 
         return self
+
 
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):
