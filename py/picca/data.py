@@ -244,8 +244,9 @@ class forest(qso):
         self.iv = self.iv[w]
         if self.mmef is not None:
             self.mmef = self.mmef[w]
-        if self.diff is not None :
+        if self.diff is not None:
              self.diff = self.diff[w]
+        if self.reso is not None:
              self.reso = self.reso[w]
 
     def add_dla(self,zabs,nhi,mask=None):
@@ -269,6 +270,7 @@ class forest(qso):
         self.T_dla = self.T_dla[w]
         if self.diff is not None :
             self.diff = self.diff[w]
+        if self.reso is not None:
             self.reso = self.reso[w]
 
     def add_absorber(self,lambda_absorber):
@@ -283,6 +285,7 @@ class forest(qso):
         self.fl = self.fl[w]
         if self.diff is not None :
             self.diff = self.diff[w]
+        if self.reso is not None:
             self.reso = self.reso[w]
 
     def cont_fit(self):
