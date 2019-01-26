@@ -154,7 +154,7 @@ class forest(qso):
             mmef = cmmef[w]/civ[w]
         if diff is not None:
             diff = cdiff[w]/civ[w]
-        if reso is not None
+        if reso is not None:
             reso = creso[w]/civ[w]
 
         ## Flux calibration correction
