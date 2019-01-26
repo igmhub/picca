@@ -322,7 +322,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
     pix_data = []
     thids = {}
 
-    
+
     for meta in allmeta:
         t = meta.thid
         if not t in thids:
