@@ -19,7 +19,7 @@ else:
 def update_system_status_values(path, section, system, value):
 
     ### Make ConfigParser case sensitive
-    class CaseConfigParser(ConfigParser.SafeConfigParser):
+    class CaseConfigParser(ConfigParser.ConfigParser):
         def optionxform(self, optionstr):
             return optionstr
     cp = CaseConfigParser()
@@ -248,6 +248,9 @@ class TestCor(unittest.TestCase):
                     diff[w] = sp.absolute( diff[w]/d_m[w] )
                     allclose = sp.allclose(d_m,d_b)
                     self.assertTrue(allclose,"{}: Header key is {}, maximum relative difference is {}".format(nameRun,k,diff.max()))
+
+        m.close()
+        b.close()
 
         return
     def compare_h5py(self,path1,path2,nameRun=""):

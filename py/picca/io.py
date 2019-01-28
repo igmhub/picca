@@ -413,6 +413,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
         print("INFO: reading plate {}".format(spplate))
         h=fitsio.FITS(spplate)
         head = h[0].read_header()
+        h.close()
         iexp = 1
         for c in ["B1", "B2", "R1", "R2"]:
             card = "NEXP_{}".format(c)
@@ -630,9 +631,9 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
             ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
             de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
         pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
-        exp = h["FIBERMAP"]["EXPID"][:]
-        night = h["FIBERMAP"]["NIGHT"][:]
-        fib = h["FIBERMAP"]["FIBER"][:]
+        #exp = h["FIBERMAP"]["EXPID"][:]
+        #night = h["FIBERMAP"]["NIGHT"][:]
+        #fib = h["FIBERMAP"]["FIBER"][:]
         in_tids = h["FIBERMAP"]["TARGETID"][:]
 
         specData = {}
