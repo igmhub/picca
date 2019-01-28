@@ -221,8 +221,6 @@ class forest(qso):
             ccnew = sp.bincount(bins, weights=iv * v)
             cnew[:len(ccnew)] += ccnew
             setattr(self, k, cnew[w] / civ[w])
-        # recompute means
-        if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
         err = 1./sp.sqrt(self.iv)
         SNR = self.fl/err
         self.mean_SNR = sp.mean(SNR)
@@ -230,7 +228,6 @@ class forest(qso):
         self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
 
         return self
-
 
     def mask(self,mask_obs,mask_RF):
         if not hasattr(self,'ll'):
