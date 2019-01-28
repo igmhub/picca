@@ -304,9 +304,13 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
 
     ## to simplify, use a list of all metadata
     allmeta = []
+    ## Used to preserve original order and pass unit tests.
     t_list = []
+    t_set = set()
     for t,p,m,f in zip(thid,plate,mjd,fid):
-        t_list.append(t)
+        if t not in t_set:
+            t_list.append(t)
+            t_set.add(t)
         r,d,z = drq_dict[t]
         meta = metadata()
         meta.thid = t
@@ -321,7 +325,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
 
     pix_data = []
     thids = {}
-
+    
 
     for meta in allmeta:
         t = meta.thid
@@ -336,8 +340,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
         for meta in thids[t]:
             r,d,z,p,m,f = meta.ra,meta.dec,meta.zqso,meta.plate,meta.mjd,meta.fid
             try:
-                fid = str(f).zfill(4)
-                fin = in_dir + "/{}/{}-{}-{}-{}.fits".format(p,mode,p,m,fid)
+                fin = in_dir + "/{}/{}-{}-{}-{:04d}.fits".format(p,mode,p,m,fid)
                 h = fitsio.FITS(fin)
             except IOError:
                 log.write("error reading {}\n".format(fin))
