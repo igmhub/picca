@@ -291,8 +291,8 @@ def do_ini(outdir, cf_file,fidPk):
 
     fout.write("bao_amp = 1. 0.1 None None fixed\n")
     if "xcf" in cf_file:
-        fout.write("drp = 0. 0.1 None None free\n")
-        fout.write("sigma_velo_lorentz = 5. 0.1 None None free\n")
+        fout.write("drp_QSO = 0. 0.1 None None free\n")
+        fout.write("sigma_velo_lorentz_QSO = 5. 0.1 None None free\n")
     fout.close()
 
     chi2_ini = outdir+"/chi2_{}".format(cf_file.replace(".fits",".ini"))
