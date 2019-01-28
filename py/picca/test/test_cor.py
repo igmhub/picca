@@ -343,7 +343,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_deltas.py"
+        cmd  = " picca_deltas.py"
         cmd += " --in-dir "          + self._branchFiles+"/Products/Spectra/"
         cmd += " --drq "             + self._branchFiles+"/Products/cat.fits"
         cmd += " --out-dir "         + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -367,7 +367,7 @@ class TestCor(unittest.TestCase):
         ### Path
         path_to_etc = resource_filename('picca','../../etc')
         ### Send
-        cmd  = " do_deltas.py"
+        cmd  = " picca_deltas.py"
         cmd += " --in-dir "          + self._masterFiles+"/test_Pk1D/Spectra_test/"
         cmd += " --drq "             + self._masterFiles+"/test_Pk1D/DRQ_test.fits"
         cmd += " --out-dir "         + self._branchFiles+"/Products/Delta_Pk1D/Delta/"
@@ -399,7 +399,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_Pk1D.py"
+        cmd  = " picca_Pk1D.py"
         cmd += " --in-dir "          + self._masterFiles + "/test_Pk1D/delta_Pk1D/"
         cmd += " --out-dir "         + self._branchFiles+"/Products/Pk1D/"
         subprocess.call(cmd, shell=True)
@@ -417,7 +417,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_cf1d.py"
+        cmd  = " picca_cf1d.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
         cmd += " --nproc 1"
@@ -434,7 +434,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_cf1d.py"
+        cmd  = " picca_cf1d.py"
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/cf1d_cross.fits.gz"
@@ -452,7 +452,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_cf_angl.py"
+        cmd  = " picca_cf_angl.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf_angl.fits.gz"
         cmd += " --nproc 1"
@@ -469,7 +469,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_cf.py"
+        cmd  = " picca_cf.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf.fits.gz"
         cmd += " --rp-min +0.0"
@@ -492,7 +492,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_dmat.py"
+        cmd  = " picca_dmat.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/dmat.fits.gz"
         cmd += " --rp-min +0.0"
@@ -516,7 +516,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_metal_dmat.py"
+        cmd  = " picca_metal_dmat.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/metal_dmat.fits.gz"
         cmd += " --abs-igm SiIII\(1207\)"
@@ -541,7 +541,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " export.py"
+        cmd  = " picca_export.py"
         cmd += " --data " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
         cmd += " --dmat " + self._branchFiles+"/Products/Correlations/dmat.fits.gz"
         cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_cf.fits.gz"
@@ -552,7 +552,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_cf.py"
+        cmd  = " picca_cf.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/cf_cross.fits.gz"
@@ -577,7 +577,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_dmat.py"
+        cmd  = " picca_dmat.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/dmat_cross.fits.gz"
@@ -603,7 +603,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_metal_dmat.py"
+        cmd  = " picca_metal_dmat.py"
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/metal_dmat_cross.fits.gz"
@@ -631,7 +631,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " export.py"
+        cmd  = " picca_export.py"
         cmd += " --data " + self._branchFiles+"/Products/Correlations/cf_cross.fits.gz"
         cmd += " --dmat " + self._branchFiles+"/Products/Correlations/dmat_cross.fits.gz"
         cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_cf_cross.fits.gz"
@@ -642,7 +642,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_xcf_angl.py"
+        cmd  = " picca_xcf_angl.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/xcf_angl.fits.gz"
@@ -660,7 +660,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_xcf.py"
+        cmd  = " picca_xcf.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
@@ -683,7 +683,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_xdmat.py"
+        cmd  = " picca_xdmat.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/xdmat.fits.gz"
@@ -707,7 +707,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_metal_xdmat.py"
+        cmd  = " picca_metal_xdmat.py"
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "     + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/metal_xdmat.fits.gz"
@@ -732,7 +732,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " export.py"
+        cmd  = " picca_export.py"
         cmd += " --data " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
         cmd += " --dmat " + self._branchFiles+"/Products/Correlations/xdmat.fits.gz"
         cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_xcf.fits.gz"
@@ -743,7 +743,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " export_cross_covariance.py"
+        cmd  = " picca_export_cross_covariance.py"
         cmd += " --data1 " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
         cmd += " --data2 " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
         cmd += " --out "   + self._branchFiles+"/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
@@ -754,7 +754,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_co.py"
+        cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
         cmd += " --rp-min 0."
@@ -766,7 +766,7 @@ class TestCor(unittest.TestCase):
         cmd += " --type-corr DD"
         subprocess.call(cmd, shell=True)
         ### Send
-        cmd  = " do_co.py"
+        cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/random.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/Co_Random/co_RR.fits.gz"
         cmd += " --rp-min 0."
@@ -778,7 +778,7 @@ class TestCor(unittest.TestCase):
         cmd += " --type-corr RR"
         subprocess.call(cmd, shell=True)
         ### Send
-        cmd  = " do_co.py"
+        cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --drq2 "   + self._branchFiles+"/Products/random.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/Co_Random/co_DR.fits.gz"
@@ -791,7 +791,7 @@ class TestCor(unittest.TestCase):
         cmd += " --type-corr DR"
         subprocess.call(cmd, shell=True)
         ### Send
-        cmd  = " do_co.py"
+        cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/random.fits"
         cmd += " --drq2 "   + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/Co_Random/co_RD.fits.gz"
@@ -827,7 +827,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " export_co.py"
+        cmd  = " picca_export_co.py"
         cmd += " --DD-file " + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
         cmd += " --RR-file " + self._branchFiles+"/Products/Correlations/Co_Random/co_RR.fits.gz"
         cmd += " --DR-file " + self._branchFiles+"/Products/Correlations/Co_Random/co_DR.fits.gz"
@@ -878,7 +878,7 @@ class TestCor(unittest.TestCase):
         update_system_status_values(path, 'metals', 'filename', value)
 
         ### Send
-        cmd  = ' fitter2 '+self._branchFiles+'/Products/Correlations/Fit/chi2.ini'
+        cmd  = ' picca_fitter2.py '+self._branchFiles+'/Products/Correlations/Fit/chi2.ini'
         subprocess.call(cmd, shell=True)
 
         ### Test
