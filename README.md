@@ -84,3 +84,8 @@ python bin/do_wick.py --in-dir deltas/ --out t123.fits.gz --rej 0.999 --cf1d cf1
 ## use the export script to export to picca fitter format
 python bin/export --data cf.fits.gz --dmat dmat.fits.gz --out cf-exp.out.gz
 ```
+
+### Name of tags
+
+The tags name follow the names of the king of France:
+https://fr.wikipedia.org/wiki/Liste_des_monarques_de_France#Liste_des_monarques_de_France
