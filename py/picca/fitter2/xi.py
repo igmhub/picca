@@ -27,9 +27,9 @@ def cache_xi_drp(function):
 
         bias1, beta1, bias2, beta2 = utils.bias_beta(kwargs, tracer1, tracer2)
         ap, at = utils.cosmo_fit_func(kwargs)
-        if tracer1['type']=='continuous':
+        if tracer1['type']=='discrete':
             drp = kwargs['drp_'+tracer1['name']]
-        elif tracer2['type']=='continuous':
+        elif tracer2['type']=='discrete':
             drp = kwargs['drp_'+tracer2['name']]
 
         ## args[3] is the pk_lin, we need to make sure we recalculate
@@ -54,10 +54,10 @@ def cache_xi_drp(function):
 def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
 
-    if tracer1['type']=='continuous':
-        drp = kwargs['drp_'+tracer1['name']]
-    elif tracer2['type']=='continuous':
-        drp = kwargs['drp_'+tracer2['name']]
+    if tracer1['type']=='discrete':
+        drp = pars['drp_'+tracer1['name']]
+    elif tracer2['type']=='discrete':
+        drp = pars['drp_'+tracer2['name']]
     ap, at = utils.cosmo_fit_func(pars)
     rp = r*mu + drp
     rt = r*sp.sqrt(1-mu**2)
@@ -110,10 +110,10 @@ def cached_xi_kaiser(*args, **kwargs):
 def xi_qso_radiation(r, mu, tracer1, tracer2, **pars):
     assert (tracer1['name']=="QSO" or tracer2['name']=="QSO") and (tracer1['name']!=tracer2['name'])
 
-    if tracer1['type']=='continuous':
-        drp = kwargs['drp_'+tracer1['name']]
-    elif tracer2['type']=='continuous':
-        drp = kwargs['drp_'+tracer2['name']]
+    if tracer1['type']=='discrete':
+        drp = pars['drp_'+tracer1['name']]
+    elif tracer2['type']=='discrete':
+        drp = pars['drp_'+tracer2['name']]
     rp = r*mu + drp
     rt = r*sp.sqrt(1-mu**2)
     r_shift = sp.sqrt(rp**2.+rt**2.)
@@ -143,10 +143,10 @@ def xi_relativistic(r, mu, k, pk_lin, tracer1, tracer2, **pars):
     """
     assert (tracer1['type']=="continuous" or tracer2['type']=="continuous") and (tracer1['type']!=tracer2['type'])
 
-    if tracer1['type']=='continuous':
-        drp = kwargs['drp_'+tracer1['name']]
-    elif tracer2['type']=='continuous':
-        drp = kwargs['drp_'+tracer2['name']]
+    if tracer1['type']=='discrete':
+        drp = pars['drp_'+tracer1['name']]
+    elif tracer2['type']=='discrete':
+        drp = pars['drp_'+tracer2['name']]
 
     ap, at = utils.cosmo_fit_func(pars)
     rp = r*mu + drp
@@ -177,10 +177,10 @@ def xi_asymmetry(r, mu, k, pk_lin, tracer1, tracer2, **pars):
     """
     assert (tracer1['type']=="continuous" or tracer2['type']=="continuous") and (tracer1['type']!=tracer2['type'])
 
-    if tracer1['type']=='continuous':
-        drp = kwargs['drp_'+tracer1['name']]
-    elif tracer2['type']=='continuous':
-        drp = kwargs['drp_'+tracer2['name']]
+    if tracer1['type']=='discrete':
+        drp = pars['drp_'+tracer1['name']]
+    elif tracer2['type']=='discrete':
+        drp = pars['drp_'+tracer2['name']]
 
     ap, at = utils.cosmo_fit_func(pars)
     rp = r*mu + drp
