@@ -406,7 +406,7 @@ args = parser.parse_args()
 
 try:
     os.makedirs(args.out_dir+"/deltas")
-except:
+except FileExistsError:
     pass
 
 b = batch()
