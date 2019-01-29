@@ -207,8 +207,6 @@ def export(time, cf_file, dmat_file, out,fidPk):
         - out (string): output of the picca_export.py script
     '''
     header = get_header(time, name=basename(out), queue="regular")
-    cc = glob.glob(cf_file)
-    dd = glob.glob(dmat_file)
     srun = header + "srun -n 1 -c 64 picca_export.py "+\
             "--data {} --dmat {} ".format(cf_file,dmat_file)+\
             "--out {}\n".format(basename(out))
