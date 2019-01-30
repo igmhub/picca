@@ -2,7 +2,6 @@
 
 import os
 from os.path import basename, dirname, stat
-import glob
 import argparse
 
 class batch:
