@@ -376,6 +376,7 @@ class TestCor(unittest.TestCase):
         cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight"
         cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
         cmd += " --nproc 1"
+        cmd += " --best-obs"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
         subprocess.call(cmd, shell=True)
 
