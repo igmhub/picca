@@ -340,7 +340,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
         for meta in thids[t]:
             r,d,z,p,m,f = meta.ra,meta.dec,meta.zqso,meta.plate,meta.mjd,meta.fid
             try:
-                fin = in_dir + "/{}/{}-{}-{}-{:04d}.fits".format(p,mode,p,m,f
+                fin = in_dir + "/{}/{}-{}-{}-{:04d}.fits".format(p,mode,p,m,f)
                 h = fitsio.FITS(fin)
             except IOError:
                 log.write("error reading {}\n".format(fin))
