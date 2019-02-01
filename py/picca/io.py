@@ -222,8 +222,11 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
         return data, len(pixs),nside,"RING"
 
-    if mode=="spplate":
-        pix_data = read_from_spplate(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, log=log, best_obs=best_obs)
+    if mode in ["spplate","spec","corrected-spec"]:
+        if mode == "spplate":
+            pix_data = read_from_spplate(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, log=log, best_obs=best_obs)
+        else:
+            pix_data = read_from_spec(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, mode=mode,log=log, pk1d=pk1d, best_obs=best_obs)
         ra = [d.ra for d in pix_data]
         ra = sp.array(ra)
         dec = [d.dec for d in pix_data]
@@ -245,10 +248,6 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             t0 = time.time()
             pix_data = read_from_pix(in_dir,pix,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, log=log)
             read_time=time.time()-t0
-        elif mode == "spec" or mode =="corrected-spec":
-            t0 = time.time()
-            pix_data = read_from_spec(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log, pk1d=pk1d)
-            read_time=time.time()-t0
         elif mode == "spec-mock-1D":
             t0 = time.time()
             pix_data = read_from_mock_1D(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
@@ -261,42 +260,114 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
     return data,ndata,nside,"RING"
 
-def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1d=None):
+def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1d=None,best_obs=None):
+    drq_dict = {t:(r,d,z) for t,r,d,z in zip(thid,ra,dec,zqso)}
+
+    ## if using multiple observations,
+    ## then replace thid, plate, mjd, fid
+    ## by what's available in spAll
+    if not best_obs:
+        fi = glob.glob(in_dir.replace("spectra/","").replace("lite","").replace("full","")+"/spAll-*.fits")
+        if len(fi) > 1:
+            print("ERROR: found multiple spAll files")
+            print("ERROR: try running with --bestobs option (but you will lose reobservations)")
+            for f in fi:
+                print("found: ",fi)
+            sys.exit(1)
+        if len(fi) == 0:
+            print("ERROR: can't find required spAll file in {}".format(in_dir))
+            print("ERROR: try runnint with --best-obs option (but you will lose reobservations)")
+            sys.exit(1)
+
+        spAll = fitsio.FITS(fi[0])
+        print("INFO: reading spAll from {}".format(fi[0]))
+        thid_spall = spAll[1]["THING_ID"][:]
+        plate_spall = spAll[1]["PLATE"][:]
+        mjd_spall = spAll[1]["MJD"][:]
+        fid_spall = spAll[1]["FIBERID"][:]
+        qual_spall = spAll[1]["PLATEQUALITY"][:]
+        zwarn_spall = spAll[1]["ZWARNING"][:]
+
+        w = sp.in1d(thid_spall, thid) & (qual_spall == b"good")
+        ## Removing spectra with the following ZWARNING bits set:
+        ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
+        ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
+        for zwarnbit in [0,1,7,8,9]:
+            w &= (zwarn_spall&2**zwarnbit)==0
+        print("INFO: # unique objs: ",len(thid))
+        print("INFO: # spectra: ",w.sum())
+        thid = thid_spall[w]
+        plate = plate_spall[w]
+        mjd = mjd_spall[w]
+        fid = fid_spall[w]
+        spAll.close()
+
+    ## to simplify, use a list of all metadata
+    allmeta = []
+    ## Used to preserve original order and pass unit tests.
+    t_list = []
+    t_set = set()
+    for t,p,m,f in zip(thid,plate,mjd,fid):
+        if t not in t_set:
+            t_list.append(t)
+            t_set.add(t)
+        r,d,z = drq_dict[t]
+        meta = metadata()
+        meta.thid = t
+        meta.ra = r
+        meta.dec = d
+        meta.zqso = z
+        meta.plate = p
+        meta.mjd = m
+        meta.fid = f
+        meta.order = order
+        allmeta.append(meta)
+
     pix_data = []
-    for t,r,d,z,p,m,f in zip(thid,ra,dec,zqso,plate,mjd,fid):
-        try:
-            fid = str(f)
-            if f<10:
-                fid='0'+fid
-            if f<100:
-                fid = '0'+fid
-            if f<1000:
-                fid = '0'+fid
-            fin = in_dir + "/{}/{}-{}-{}-{}.fits".format(p,mode,p,m,fid)
-            h = fitsio.FITS(fin)
-        except IOError:
-            log.write("error reading {}\n".format(fin))
-            continue
+    thids = {}
 
-        log.write("{} read\n".format(fin))
-        ll = h[1]["loglam"][:]
-        fl = h[1]["flux"][:]
-        iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
 
-        if(pk1d is not None) :
-            # compute difference between exposure
-            diff = exp_diff(h,ll)
-            # compute spectral resolution
-            wdisp =  h[1]["wdisp"][:]
-            reso = spectral_resolution(wdisp,True,f,ll)
-            d = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff,reso)
-        else :
-            d = forest(ll,fl,iv, t, r, d, z, p, m, f,order)
+    for meta in allmeta:
+        t = meta.thid
+        if not t in thids:
+            thids[t] = []
+        thids[t].append(meta)
 
-        pix_data.append(d)
-        h.close()
+    print("reading {} thids".format(len(thids)))
+
+    for t in t_list:
+        t_delta = None
+        for meta in thids[t]:
+            r,d,z,p,m,f = meta.ra,meta.dec,meta.zqso,meta.plate,meta.mjd,meta.fid
+            try:
+                fin = in_dir + "/{}/{}-{}-{}-{:04d}.fits".format(p,mode,p,m,f)
+                h = fitsio.FITS(fin)
+            except IOError:
+                log.write("error reading {}\n".format(fin))
+                continue
+            log.write("{} read\n".format(fin))
+            ll = h[1]["loglam"][:]
+            fl = h[1]["flux"][:]
+            iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
+
+            if pk1d is not None:
+                # compute difference between exposure
+                diff = exp_diff(h,ll)
+                # compute spectral resolution
+                wdisp =  h[1]["wdisp"][:]
+                reso = spectral_resolution(wdisp,True,f,ll)
+            else:
+                diff = None
+                reso = None
+            deltas = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff=diff,reso=reso)
+            if t_delta is None:
+                t_delta = deltas
+            else:
+                t_delta += deltas
+            h.close()
+        if t_delta is not None:
+            pix_data.append(t_delta)
     return pix_data
-
 
 def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid, order,mode,log=None):
     pix_data = []
