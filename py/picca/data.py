@@ -221,6 +221,13 @@ class forest(qso):
             ccnew = sp.bincount(bins, weights=iv * v)
             cnew[:len(ccnew)] += ccnew
             setattr(self, k, cnew[w] / civ[w])
+        # recompute means of quality variables
+        if reso is not None : self.mean_reso = reso.mean()
+        err = 1./sp.sqrt(self.iv)
+        SNR = self.fl/err
+        self.mean_SNR = SNR.mean()
+        lam_lya = constants.absorber_IGM["LYA"]
+        self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
 
         return self
 
