@@ -106,6 +106,11 @@ class forest(qso):
     def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order, diff=None,reso=None, mmef = None):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
 
+        if not self.ebv_map is None:
+            corr = unred(10**ll,self.ebv_map[thid])
+            fl /= corr
+            iv *= corr**2
+
         ## cut to specified range
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
         ll = forest.lmin + bins*forest.dll
@@ -120,11 +125,6 @@ class forest(qso):
         ll = ll[w]
         fl = fl[w]
         iv = iv[w]
-
-        if not self.ebv_map is None:
-            corr = unred(10**ll,ebv_map[thid])
-            fl /= corr
-            iv *= corr**2
 
         ## mmef is the mean expected flux fraction using the mock continuum
         if mmef is not None:
@@ -204,10 +204,10 @@ class forest(qso):
             return self
 
         if not self.ebv_map is None:
-            corr = unred(10**ll,ebv_map[thid])
+            corr = unred(10**d.ll,self.ebv_map[d.thid])
             d.fl /= corr
             d.iv *= corr**2
-        
+
         dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
 
         ll = sp.append(self.ll,d.ll)
