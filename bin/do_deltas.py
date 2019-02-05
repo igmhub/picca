@@ -346,7 +346,7 @@ if __name__ == '__main__':
                 err_fudge = sp.zeros(nlss)
                 chi2 = sp.zeros(nlss)
 
-                nb_pixels = sp.zeros((nlss, nlss))
+                nb_pixels = sp.zeros(nlss)
                 var = sp.zeros(nlss)
                 var_del = sp.zeros((nlss, nlss))
                 var2_del = sp.zeros((nlss, nlss))
