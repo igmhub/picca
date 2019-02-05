@@ -296,7 +296,7 @@ if __name__ == '__main__':
         data[p][:] = l
         if len(data[p])==0:
             del data[p]
-                
+
     for p in data:
         for d in data[p]:
             assert hasattr(d,'ll')
