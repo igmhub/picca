@@ -147,7 +147,7 @@ def read_dust_map(drq):
 	    thid = h[1]['THING_ID'][:]
 	    ext  = h[1]['EXTINCTION'][:][:,1]
 	    h.close()
-	
+
 	    return dict(zip(thid, ext))
 
 target_mobj = 500
