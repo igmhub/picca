@@ -83,6 +83,9 @@ class forest(qso):
     correc_flux = None
     ### Correction function for multiplicative errors in inverse pipeline variance calibration
     correc_ivar = None
+   
+    ### map of g-band extinction to thids for dust correction
+    ebv_map = None
 
     ## absorber pixel mask limit
     absorber_mask = None
@@ -117,6 +120,12 @@ class forest(qso):
         ll = ll[w]
         fl = fl[w]
         iv = iv[w]
+
+        if not self.ebv_map is None:
+            corr = unred(10**ll,ebv_map[thid])
+	        fl /= corr
+	        iv *= corr**2
+
         ## mmef is the mean expected flux fraction using the mock continuum
         if mmef is not None:
             mmef = mmef[w]
@@ -194,6 +203,11 @@ class forest(qso):
         if not hasattr(self,'ll') or not hasattr(d,'ll'):
             return self
 
+        if not self.ebv_map is None:
+            corr = unred(10**ll,ebv_map[thid])
+	        d.fl /= corr
+	        d.iv *= corr**2
+        
         dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
 
         ll = sp.append(self.ll,d.ll)
@@ -252,13 +266,6 @@ class forest(qso):
              self.diff = self.diff[w]
         if self.reso is not None:
              self.reso = self.reso[w]
-
-    def dust_correction(self,ebv):
-        if not hasattr(self,'ll'):
-            return
-        corr = unred(10**(self.ll),ebv)
-        self.fl /= corr
-        self.iv *= corr**2
 
     def add_dla(self,zabs,nhi,mask=None):
         if not hasattr(self,'ll'):
