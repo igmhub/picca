@@ -149,7 +149,7 @@ def read_dust_map(drq):
     h = fitsio.FITS(drq)
     thid = h[1]['THING_ID'][:]
     ext  = h[1]['EXTINCTION'][:][:,1]
-    vac.close()
+    h.close()
 
     return dict(zip(thid, ext))
 
