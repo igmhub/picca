@@ -200,9 +200,9 @@ if __name__ == '__main__':
             sys.exit(1)
 
     ### Apply dust correction
-	if not args.dust_map is None:
-	    print("applying dust correction")
-	    forest.ebv_map = io.read_dust_map(args.dust_map)
+    if not args.dust_map is None:
+        print("applying dust correction")
+	forest.ebv_map = io.read_dust_map(args.dust_map)
 
     nit = args.nit
 
