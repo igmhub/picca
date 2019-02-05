@@ -205,8 +205,8 @@ class forest(qso):
 
         if not self.ebv_map is None:
             corr = unred(10**ll,ebv_map[thid])
-	        d.fl /= corr
-	        d.iv *= corr**2
+            d.fl /= corr
+            d.iv *= corr**2
         
         dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
 
