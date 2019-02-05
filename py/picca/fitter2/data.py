@@ -37,6 +37,14 @@ class data:
         rp = h[1]['RP'][:]
         rt = h[1]['RT'][:]
         z = h[1]['Z'][:]
+        try:
+            dmrp = h[2]['DMRP'][:]
+            dmrt = h[2]['DMRT'][:]
+            dmz = h[2]['DMZ'][:]
+        except IOError:
+            dmrp = rp.copy()
+            dmrt = rt.copy()
+            dmz = z.copy()
         head = h[1].read_header()
 
         h.close()
@@ -87,12 +95,14 @@ class data:
         self.ico = linalg.inv(ico)
         self.dm = dm
 
-        self.rp = rp
-        self.rt = rt
-        self.z = z
+        self.rp = dmrp
+        self.rt = dmrt
+        self.z = dmz
 
-        self.r = r
-        self.mu = mu
+        self.r = sp.sqrt(self.rp**2+self.rt**2)
+        self.mu = sp.zeros(self.r.size)
+        w = self.r>0.
+        self.mu[w] = self.rp[w]/self.r[w]
 
 
         self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
@@ -275,7 +285,10 @@ class data:
                         self.rp_met[(m1, m2)] = hmet[2]["RP_{}_{}".format(m1,m2)][:]
                         self.rt_met[(m1, m2)] = hmet[2]["RT_{}_{}".format(m1,m2)][:]
                         self.z_met[(m1, m2)] = hmet[2]["Z_{}_{}".format(m1,m2)][:]
-                        self.dm_met[(m1, m2)] = csr_matrix(hmet[2]["DM_{}_{}".format(m1,m2)][:])
+                        try:
+                            self.dm_met[(m1, m2)] = csr_matrix(hmet[2]["DM_{}_{}".format(m1,m2)][:])
+                        except ValueError:
+                            self.dm_met[(m1, m2)] = csr_matrix(hmet[3]["DM_{}_{}".format(m1,m2)][:])
 
             hmet.close()
 

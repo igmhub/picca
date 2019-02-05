@@ -48,6 +48,9 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
+    parser.add_argument('--coef-binning-model', type=int, default=1, required=False,
+        help='Coefficient multiplying np and nt to get finner binning for the model')
+
     parser.add_argument('--z-cut-min', type=float, default=0., required=False,
         help='Use only pairs of forest x object with the mean of the last absorber \
         redshift and the object redshift larger than z-cut-min')
@@ -114,17 +117,16 @@ if __name__ == '__main__':
     cf.rp_min = args.rp_min
     cf.z_cut_max = args.z_cut_max
     cf.z_cut_min = args.z_cut_min
-    cf.np = args.np
-    cf.nt = args.nt
+    cf.np = args.np*args.coef_binning_model
+    cf.nt = args.nt*args.coef_binning_model
+    cf.npm = args.np*args.coef_binning_model
+    cf.ntm = args.nt*args.coef_binning_model
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
     cf.rej = args.rej
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
-    ## use a metal grid equal to the lya grid
-    cf.npm = args.np
-    cf.ntm = args.nt
 
     cf.alpha_abs = {}
     cf.alpha_abs[args.lambda_abs] = cf.alpha
@@ -206,9 +208,15 @@ if __name__ == '__main__':
             cf.counter.value=0
             f=partial(calc_metal_dmat,abs_igm1,abs_igm2)
             print("")
-            pool = Pool(processes=args.nproc)
-            dm = pool.map(f,sorted(list(cpu_data.values())))
-            pool.close()
+
+            if args.nproc>1:
+                pool = Pool(processes=args.nproc)
+                dm = pool.map(f,sorted(cpu_data.values()))
+                pool.close()
+            elif args.nproc==1:
+                dm = map(f,sorted(cpu_data.values()))
+                dm = list(dm)
+
             dm = sp.array(dm)
             wdm =dm[:,0].sum(axis=0)
             rp = dm[:,2].sum(axis=0)
@@ -241,6 +249,7 @@ if __name__ == '__main__':
         {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},

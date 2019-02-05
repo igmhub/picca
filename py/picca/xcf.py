@@ -7,6 +7,8 @@ from picca import constants
 
 np = None
 nt = None
+npm = None
+ntm = None
 rp_max = None
 rp_min = None
 rt_max = None
@@ -122,8 +124,12 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
 
 def dmat(pix):
 
-    dm = sp.zeros(np*nt*nt*np)
+    dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
+    rpeff = sp.zeros(ntm*npm)
+    rteff = sp.zeros(ntm*npm)
+    zeff = sp.zeros(ntm*npm)
+    weff = sp.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -135,6 +141,7 @@ def dmat(pix):
             r1 = d1.r_comov
             w1 = d1.we
             l1 = d1.ll
+            z1 = d1.z
             r = sp.random.rand(len(d1.neighs))
             w=r>rej
             if w.sum()==0:continue
@@ -144,30 +151,35 @@ def dmat(pix):
             ang = d1^neighs
             r2 = [q.r_comov for q in neighs]
             w2 = [q.we for q in neighs]
-            fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm)
+            z2 = [q.zqso for q in neighs]
+            fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
-    return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
-
+    return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
-def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
+def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     rp = (r1[:,None]-r2)*sp.cos(ang/2)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
+    z = (z1[:,None]+z2)/2.
+    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
+
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
+    bins = bins[w]
+
+    m_bp = ((rp-rp_min)/(rp_max-rp_min)*npm).astype(int)
+    m_bt = (rt/rt_max*ntm).astype(int)
+    m_bins = m_bt + ntm*m_bp
+    m_bins = m_bins[w]
 
     sw1 = w1.sum()
-
     ml1 = sp.average(l1,weights=w1)
 
     dl1 = l1-ml1
 
     slw1 = (w1*dl1**2).sum()
-
-    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
-    bins = bins[w]
 
     n1 = len(l1)
     n2 = len(r2)
@@ -178,21 +190,30 @@ def fill_dmat(l1,r1,w1,r2,w2,ang,wdm,dm):
     we = we[w]
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
-    eta2 = sp.zeros(np*nt*n2)
-    eta4 = sp.zeros(np*nt*n2)
+    eta2 = sp.zeros(npm*ntm*n2)
+    eta4 = sp.zeros(npm*ntm*n2)
 
-    c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount(m_bins,weights=we*rp[w])
+    rpeff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we*rt[w])
+    rteff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we*z[w])
+    zeff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we)
+    weff[:c.size] += c
+
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
     eta4[:len(c)]+=c
 
-    ubb = sp.unique(bins)
-    for k,ba in enumerate(bins):
-        dm[ba+np*nt*ba]+=we[k]
+    ubb = sp.unique(m_bins)
+    for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
+        dm[m_ba+npm*ntm*ba]+=we[k]
         i = ij[k]%n1
         j = (ij[k]-i)//n1
         for bb in ubb:
-            dm[bb+np*nt*ba] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+            dm[bb+npm*ntm*ba] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 
 def metal_dmat(pix,abs_igm="SiII(1526)"):

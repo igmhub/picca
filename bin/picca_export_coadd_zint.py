@@ -42,6 +42,13 @@ we = {}
 if not args.no_dmat:
     h = fitsio.FITS(args.data[0].replace('cf','dmat'))
     dm = h[1]['DM'][:]*0
+    try:
+        dmrp = sp.zeros(h[2]['RP'][:].size)
+        dmrt = sp.zeros(h[2]['RT'][:].size)
+        dmz = sp.zeros(h[2]['Z'][:].size)
+        nbdm = 0.
+    except IOError:
+        pass
     h.close()
 else:
     dm = sp.eye(nb.shape[0])
@@ -72,6 +79,12 @@ for f in args.data:
     if not args.no_dmat:
         h = fitsio.FITS(f.replace('cf','dmat'))
         dm += h[1]['DM'][:]*wet_aux[:,None]
+        if 'dmrp' in locals():
+            ## TODO: get the weights
+            dmrp += h[2]['RP'][:]
+            dmrt += h[2]['RT'][:]
+            dmz += h[2]['Z'][:]
+            nbdm += 1.
         h.close()
 
 for p in da:
@@ -91,11 +104,25 @@ co = smooth_cov(da,we,rp,rt)
 da = (da*we).sum(axis=0)
 da /= wet
 
+
+if 'dmrp' in locals():
+    dmrp /= nbdm
+    dmrt /= nbdm
+    dmz /= nbdm
+elif dmrp.size==rp.size:
+    dmrp = rp.copy()
+    dmrt = rt.copy()
+    dmz = z.copy()
+
 try:
     scipy.linalg.cholesky(co)
 except scipy.linalg.LinAlgError:
     print('WARNING: Matrix is not positive definite')
 
+
 h = fitsio.FITS(args.out,"rw",clobber=True)
-h.write([rp,rt,z,nb,da,dm,co],names=["RP","RT","Z","NB","DA","DM","CO"],header=head,extname='COR')
+comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
+h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
+comment = ['R-parallel model','R-transverse model','Redshift model']
+h.write([dmrp,dmrt,dmz],names=['DMRP','DMRT','DMZ'],comment=comment,extname='DMATTRI')
 h.close()
