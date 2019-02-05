@@ -47,6 +47,9 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
+    parser.add_argument('--coef-binning-model', type=int, default=1, required=False,
+        help='Coefficient multiplying np and nt to get finner binning for the model')
+
     parser.add_argument('--z-cut-min', type=float, default=0., required=False,
         help='Use only pairs of forest x object with the mean of the last absorber \
         redshift and the object redshift larger than z-cut-min')
@@ -108,6 +111,8 @@ if __name__ == '__main__':
     cf.z_cut_min = args.z_cut_min
     cf.np = args.np
     cf.nt = args.nt
+    cf.npm = args.np*args.coef_binning_model
+    cf.ntm = args.nt*args.coef_binning_model
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
@@ -154,17 +159,29 @@ if __name__ == '__main__':
         if not ip in cpu_data:
             cpu_data[ip] = []
         cpu_data[ip].append(p)
-    pool = Pool(processes=args.nproc)
-    dm = pool.map(calc_dmat,sorted(cpu_data.values()))
-    pool.close()
 
+    if args.nproc>1:
+        pool = Pool(processes=args.nproc)
+        dm = pool.map(calc_dmat,sorted(cpu_data.values()))
+        pool.close()
+    elif args.nproc==1:
+        dm = map(calc_dmat,sorted(cpu_data.values()))
+        dm = list(dm)
 
     dm = sp.array(dm)
     wdm =dm[:,0].sum(axis=0)
-    npairs=dm[:,2].sum(axis=0)
-    npairs_used=dm[:,3].sum(axis=0)
+    rp = dm[:,2].sum(axis=0)
+    rt = dm[:,3].sum(axis=0)
+    z = dm[:,4].sum(axis=0)
+    we = dm[:,5].sum(axis=0)
+    npairs = dm[:,6].sum(axis=0)
+    npairs_used = dm[:,7].sum(axis=0)
     dm=dm[:,1].sum(axis=0)
 
+    w = we>0.
+    rp[w] /= we[w]
+    rt[w] /= we[w]
+    z[w] /= we[w]
     w = wdm>0
     dm[w]/=wdm[w,None]
 
@@ -175,11 +192,21 @@ if __name__ == '__main__':
         {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
-    out.write([wdm,dm],names=['WDM','DM'],header=head,comment=['Sum of weight','Distortion matrix'],extname='DMAT')
+    out.write([wdm,dm],
+        names=['WDM','DM'],
+        comment=['Sum of weight','Distortion matrix'],
+        units=['',''],
+        header=head,extname='DMAT')
+    out.write([rp,rt,z],
+        names=['RP','RT','Z'],
+        comment=['R-parallel','R-transverse','Redshift'],
+        units=['h^-1 Mpc','h^-1 Mpc','',],
+        extname='ATTRI')
     out.close()
