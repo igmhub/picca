@@ -13,7 +13,7 @@ import argparse
 
 from picca.data import forest, delta
 from picca import prep_del, io
-from picca.utils import print, unred
+from picca.utils import print
 
 def cont_fit(data):
     for d in data:
@@ -95,6 +95,9 @@ if __name__ == '__main__':
     parser.add_argument('--mask-file',type=str,default=None,required=False,
         help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
+    parser.add_argument('--dust-map', type=str, default=None, required=False,
+        help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
+
     parser.add_argument('--flux-calib',type=str,default=None,required=False,
         help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
 
@@ -136,9 +139,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--use-mock-continuum', action='store_true', default = False,
             help='use the mock continuum for computing the deltas')
-    
-    parser.add_argument('--dust-map', type=str, default=None, required=False,
-        help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
 
     args = parser.parse_args()
 
@@ -240,11 +240,6 @@ if __name__ == '__main__':
             print(" Error while reading mask_file file {}".format(args.mask_file))
             sys.exit(1)
 
-    ### Prepare to apply dust correction
-    if not args.dust_map is None:
-        print("applying dust correction")
-        ebv_map = io.read_dust_map(args.dust_map)
-
     ### Veto lines
     if not usr_mask_obs is None:
         if ( usr_mask_obs.size+usr_mask_RF.size!=0):
@@ -295,23 +290,25 @@ if __name__ == '__main__':
                 log.write("{} negative mean of too low SNR found\n".format(d.thid))
                 continue
 
-            ### Apply dust correction
-            if not args.dust_map is None:
-                ebv = ebv_map.get(d.thid)
-                corr = unred(10**(d.ll),ebv)
-                d.fl /= corr
-                d.iv *= corr**2
-
             l.append(d)
             log.write("{} {}-{}-{} accepted\n".format(d.thid,
                 d.plate,d.mjd,d.thid))
         data[p][:] = l
         if len(data[p])==0:
             del data[p]
-
+                
     for p in data:
         for d in data[p]:
             assert hasattr(d,'ll')
+
+    ### Apply dust correction
+    if not args.dust_map is None:
+        print("applying dust correction")
+        ebv_map = io.read_dust_map(args.dust_map)
+        for p in data:
+            for d in data[p]:
+                ebv = ebv_map.get(d.thid)
+                d.dust_correction(ebv)
 
     for it in range(nit):
         pool = Pool(processes=args.nproc)
