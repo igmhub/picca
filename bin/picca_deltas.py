@@ -13,7 +13,7 @@ import argparse
 
 from picca.data import forest, delta
 from picca import prep_del, io
-from picca.utils import print
+from picca.utils import print, unred
 
 def cont_fit(data):
     for d in data:
@@ -134,11 +134,11 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
 
-
     parser.add_argument('--use-mock-continuum', action='store_true', default = False,
             help='use the mock continuum for computing the deltas')
+    
     parser.add_argument('--dust-map', type=str, default=None, required=False,
-        help='Path to dust map to apply the Schlegel correction')
+        help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
 
     args = parser.parse_args()
 
@@ -240,16 +240,10 @@ if __name__ == '__main__':
             print(" Error while reading mask_file file {}".format(args.mask_file))
             sys.exit(1)
 
-    ### Apply Dust correction
+    ### Prepare to apply dust correction
     if not args.dust_map is None:
         print("applying dust correction")
         ebv_map = io.read_dust_map(args.dust_map)
-        for p in data:
-            for d in data[p]:
-                ebv = ebv_map.get(d.thid)
-                corr = utils.unred(10**(d.ll),ebv)
-                d.fl /= corr
-                d.iv *= corr**2
 
     ### Veto lines
     if not usr_mask_obs is None:
@@ -300,6 +294,13 @@ if __name__ == '__main__':
             if(args.use_constant_weight and (d.fl.mean()<=0.0 or d.mean_SNR<=1.0 )):
                 log.write("{} negative mean of too low SNR found\n".format(d.thid))
                 continue
+
+            ### Apply dust correction
+            if not args.dust_map is None:
+                ebv = ebv_map.get(d.thid)
+                corr = unred(10**(d.ll),ebv)
+                d.fl /= corr
+                d.iv *= corr**2
 
             l.append(d)
             log.write("{} {}-{}-{} accepted\n".format(d.thid,
