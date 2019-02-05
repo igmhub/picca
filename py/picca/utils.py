@@ -133,7 +133,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     out = fitsio.FITS(drq,'rw',clobber=True)
     cols=[ra,dec,thid,plate,mjd,fid,zqso]
     names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
-    out.write(cols,names=names)
+    out.write(cols,names=names,extname='CAT')
     out.close()
 
     return
@@ -192,7 +192,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
     out = fitsio.FITS(drq,'rw',clobber=True)
     cols = [ra,dec,thid,thid,thid,thid,zqso]
     names = ['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
-    out.write(cols, names=names)
+    out.write(cols, names=names,extname='CAT')
     out.close()
 
     return

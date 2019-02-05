@@ -212,7 +212,7 @@ if __name__ == '__main__':
     ]
     lst = ['RP','RT','Z','DA','CO','DM','NB']
     comment=['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
-    h.write([ data[k] for k in lst ], names=lst, header=head, comment=comment)
+    h.write([ data[k] for k in lst ], names=lst, header=head, comment=comment,extname='COR')
 
     if args.cov is None and not args.get_cov_from_poisson:
         if corr=='AUTO':
@@ -223,6 +223,6 @@ if __name__ == '__main__':
             hep = data['xDD']['HEALPID']
         head2 = [{'name':'HLPXSCHM','value':HLPXSCHM,'comment':'healpix scheme'}]
         comment=['Healpix index', 'Sum of weight', 'Correlation']
-        h.write([hep,data['HLP_WE'],data['HLP_DA']],names=['HEALPID','WE','DA'],header=head2,comment=comment)
+        h.write([hep,data['HLP_WE'],data['HLP_DA']],names=['HEALPID','WE','DA'],header=head2,comment=comment,extname='SUB_COR')
 
     h.close()

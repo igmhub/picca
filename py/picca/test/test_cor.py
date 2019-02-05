@@ -145,7 +145,7 @@ class TestCor(unittest.TestCase):
         out = fitsio.FITS(self._branchFiles+"/Products/"+name+".fits",'rw',clobber=True)
         cols=[ra,dec,thid,plate,mjd,fid,zqso]
         names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
-        out.write(cols,names=names)
+        out.write(cols,names=names,extname='CAT')
         out.close()
 
         return
