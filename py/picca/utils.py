@@ -467,5 +467,5 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
 	    #Now apply extinction correction to input flux vector
 	    curve *= ebv
 	    corr = 1./(10.**(0.4*curve))
-	
+
 	    return corr
