@@ -96,8 +96,8 @@ if __name__ == '__main__':
         help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
     parser.add_argument('--dust-map', type=str, default=None, required=False,
-        help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
-
+	        help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
+    
     parser.add_argument('--flux-calib',type=str,default=None,required=False,
         help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
 
@@ -136,6 +136,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
+
 
     parser.add_argument('--use-mock-continuum', action='store_true', default = False,
             help='use the mock continuum for computing the deltas')
@@ -197,6 +198,11 @@ if __name__ == '__main__':
         except:
             print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
             sys.exit(1)
+
+    ### Apply dust correction
+	if not args.dust_map is None:
+	    print("applying dust correction")
+	    forest.ebv_map = io.read_dust_map(args.dust_map)
 
     nit = args.nit
 
@@ -300,15 +306,6 @@ if __name__ == '__main__':
     for p in data:
         for d in data[p]:
             assert hasattr(d,'ll')
-
-    ### Apply dust correction
-    if not args.dust_map is None:
-        print("applying dust correction")
-        ebv_map = io.read_dust_map(args.dust_map)
-        for p in data:
-            for d in data[p]:
-                ebv = ebv_map[d.thid]
-                d.dust_correction(ebv)
 
     for it in range(nit):
         pool = Pool(processes=args.nproc)
