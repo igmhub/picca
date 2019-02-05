@@ -4,8 +4,8 @@ from __future__ import print_function
 import os
 import fitsio
 import argparse
-from scipy.linalg import inv
 import scipy as sp
+import scipy.linalg
 
 from picca.utils import smooth_cov, print
 
@@ -104,14 +104,21 @@ co = smooth_cov(da,we,rp,rt)
 da = (da*we).sum(axis=0)
 da /= wet
 
+
 if 'dmrp' in locals():
     dmrp /= nbdm
     dmrt /= nbdm
     dmz /= nbdm
-if dmrp.size==rp.size or 'dmrp' not in locals():
+elif dmrp.size==rp.size:
     dmrp = rp.copy()
     dmrt = rt.copy()
     dmz = z.copy()
+
+try:
+    scipy.linalg.cholesky(co)
+except scipy.linalg.LinAlgError:
+    print('WARNING: Matrix is not positive definite')
+
 
 h = fitsio.FITS(args.out,"rw",clobber=True)
 comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']

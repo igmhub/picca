@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from picca.fitter import parameters
-from picca.fitter import cosmo
-from picca.fitter import Chi2
-from picca.fitter import metals
 import iminuit
-import scipy
 import sys
 import configargparse
+
 from picca.utils import print
+from picca.fitter import parameters, cosmo, Chi2, metals
+
 ### Get the parser
 param = parameters.parameters()
 parser = configargparse.ArgParser()
@@ -147,22 +145,3 @@ if not dic_init['chi2Scan'] is None:
 ### Realisation of fast Monte-Carlo
 elif not dic_init['fastMonteCarlo'] is None:
     chi2.fastMonteCarlo(mig,kw)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
