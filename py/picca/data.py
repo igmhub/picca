@@ -83,7 +83,7 @@ class forest(qso):
     correc_flux = None
     ### Correction function for multiplicative errors in inverse pipeline variance calibration
     correc_ivar = None
-   
+
     ### map of g-band extinction to thids for dust correction
     ebv_map = None
 
@@ -125,7 +125,6 @@ class forest(qso):
         ll = ll[w]
         fl = fl[w]
         iv = iv[w]
-
         ## mmef is the mean expected flux fraction using the mock continuum
         if mmef is not None:
             mmef = mmef[w]
