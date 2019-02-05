@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import scipy as sp
 from picca import constants
-from picca.utils import print
+from picca.utils import print, unred
 import iminuit
 from .dla import dla
 import fitsio
@@ -252,6 +252,13 @@ class forest(qso):
              self.diff = self.diff[w]
         if self.reso is not None:
              self.reso = self.reso[w]
+
+    def dust_correction(self,ebv):
+        if not hasattr(self,'ll'):
+            return
+        corr = unred(10**(self.ll),ebv)
+        self.fl /= corr
+        self.iv *= corr**2
 
     def add_dla(self,zabs,nhi,mask=None):
         if not hasattr(self,'ll'):
