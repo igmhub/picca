@@ -2,7 +2,6 @@
 
 from astropy.io import fits
 import scipy as sp
-import sys
 import argparse
 
 if __name__ == '__main__':
