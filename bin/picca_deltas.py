@@ -307,7 +307,7 @@ if __name__ == '__main__':
         ebv_map = io.read_dust_map(args.dust_map)
         for p in data:
             for d in data[p]:
-                ebv = ebv_map.get(d.thid)
+                ebv = ebv_map[d.thid]
                 d.dust_correction(ebv)
 
     for it in range(nit):
