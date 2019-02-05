@@ -544,7 +544,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_wick.py"
+        cmd  = " picca_wick.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/wick.fits.gz"
         cmd += " --cf1d "   + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
@@ -759,7 +759,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_xwick.py"
+        cmd  = " picca_xwick.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/xwick.fits.gz"
