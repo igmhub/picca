@@ -145,6 +145,17 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 target_mobj = 500
 nside_min = 8
 
+def read_dust_map(drq):
+    vac = fitsio.FITS(drq)
+
+    ## Info of the primary observation
+    thid  = vac[1]["THING_ID"][:]
+    ext =  vac[1]['EXTINCTION'][:][:,1]
+    
+    vac.close()
+
+    return dict(zip(thid, ext))
+
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None):
 
     print("mode: "+mode)
