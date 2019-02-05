@@ -146,12 +146,9 @@ target_mobj = 500
 nside_min = 8
 
 def read_dust_map(drq):
-    vac = fitsio.FITS(drq)
-
-    ## Info of the primary observation
-    thid  = vac[1]["THING_ID"][:]
-    ext =  vac[1]['EXTINCTION'][:][:,1]
-    
+    h = fitsio.FITS(drq)
+    thid = h[1]['THING_ID'][:]
+    ext  = h[1]['EXTINCTION'][:][:,1]
     vac.close()
 
     return dict(zip(thid, ext))
