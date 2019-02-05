@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--dust-map', type=str, default=None, required=False,
 	        help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
-    
+
     parser.add_argument('--flux-calib',type=str,default=None,required=False,
         help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
 
