@@ -6,6 +6,10 @@ import fitsio
 import glob
 import healpy
 
+import scipy.interpolate as interpolate
+
+import picca.data
+
 try:
     import __builtin__
 except ImportError:
