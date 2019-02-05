@@ -221,8 +221,10 @@ class forest(qso):
             ccnew = sp.bincount(bins, weights=iv * v)
             cnew[:len(ccnew)] += ccnew
             setattr(self, k, cnew[w] / civ[w])
+
         # recompute means of quality variables
-        if reso is not None : self.mean_reso = reso.mean()
+        if self.reso is not None:
+            self.mean_reso = self.reso.mean()
         err = 1./sp.sqrt(self.iv)
         SNR = self.fl/err
         self.mean_SNR = SNR.mean()
