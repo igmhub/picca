@@ -137,6 +137,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--use-mock-continuum', action='store_true', default = False,
             help='use the mock continuum for computing the deltas')
+    parser.add_argument('--dust-map', type=str, default=None, required=False,
+        help='Path to dust map to apply the Schlegel correction')
 
     args = parser.parse_args()
 
@@ -237,6 +239,17 @@ if __name__ == '__main__':
         except:
             print(" Error while reading mask_file file {}".format(args.mask_file))
             sys.exit(1)
+
+    ### Apply Dust correction
+    if not args.dust_map is None:
+        print("applying dust correction")
+        ebv_map = io.read_dust_map(args.dust_map)
+        for p in data:
+            for d in data[p]:
+                ebv = ebv_map.get(d.thid)
+                corr = utils.unred(10**(d.ll),ebv)
+                d.fl /= corr
+                d.iv *= corr**2
 
     ### Veto lines
     if not usr_mask_obs is None:
