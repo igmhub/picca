@@ -142,16 +142,16 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     return ra,dec,zqso,thid,plate,mjd,fid
 
+def read_dust_map(drq):
+	    h = fitsio.FITS(drq)
+	    thid = h[1]['THING_ID'][:]
+	    ext  = h[1]['EXTINCTION'][:][:,1]
+	    h.close()
+	
+	    return dict(zip(thid, ext))
+
 target_mobj = 500
 nside_min = 8
-
-def read_dust_map(drq):
-    h = fitsio.FITS(drq)
-    thid = h[1]['THING_ID'][:]
-    ext  = h[1]['EXTINCTION'][:][:,1]
-    h.close()
-
-    return dict(zip(thid, ext))
 
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None):
 
