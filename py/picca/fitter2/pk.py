@@ -364,15 +364,19 @@ def pk_hcd_Rogers2018_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]
     kp = k*muk
-    if tracer1['type'] == tracer2['type']:
-        return sp.exp( -0.5*(kp*kwargs['sigma_velo_gaus'])**2)
-    else:
-        return sp.exp( -0.25*(kp*kwargs['sigma_velo_gaus'])**2)
+    smooth = sp.ones(kp.shape)
+    if tracer1['type']=='discrete':
+        smooth *= sp.exp( -0.25*(kp*kwargs['sigma_velo_gaus_'+tracer1['name']])**2)
+    if tracer2['type']=='discrete':
+        smooth *= sp.exp( -0.25*(kp*kwargs['sigma_velo_gaus_'+tracer2['name']])**2)
+    return smooth
 
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]
     kp = k*muk
-    if tracer1['type'] == tracer2['type']:
-        return 1./(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
-    else:
-        return 1./sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz'])**2)
+    smooth = sp.ones(kp.shape)
+    if tracer1['type']=='discrete':
+        smooth *= 1./sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz_'+tracer1['name']])**2)
+    if tracer2['type']=='discrete':
+        smooth *= 1./sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz_'+tracer2['name']])**2)
+    return smooth

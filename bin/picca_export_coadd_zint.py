@@ -97,5 +97,5 @@ except scipy.linalg.LinAlgError:
     print('WARNING: Matrix is not positive definite')
 
 h = fitsio.FITS(args.out,"rw",clobber=True)
-h.write([rp,rt,z,nb,da,dm,co],names=["RP","RT","Z","NB","DA","DM","CO"],header=head)
+h.write([rp,rt,z,nb,da,dm,co],names=["RP","RT","Z","NB","DA","DM","CO"],header=head,extname='COR')
 h.close()

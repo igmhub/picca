@@ -156,5 +156,5 @@ if __name__ == '__main__':
     for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
         head[k] = final[k]
     names = ['RP','RT','Z','DA','CO','DM','NB']
-    h.write([final[k] for k in names],names=names,header=head)
+    h.write([final[k] for k in names],names=names,header=head,extname='COR')
     h.close()
