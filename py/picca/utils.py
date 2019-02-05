@@ -5,7 +5,6 @@ import sys
 import fitsio
 import glob
 import healpy
-
 import scipy.interpolate as interpolate
 
 try:
@@ -397,76 +396,76 @@ def shuffle_distrib_obj(obj,seed):
     return obj
 
 def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
-    """
-    https://github.com/sczesla/PyAstronomy
-    in /src/pyasl/asl/unred
-    """
-
-    x = 10000./wave # Convert to inverse microns
-    curve = x*0.
-
-    # Set some standard values:
-    x0 = 4.596
-    gamma = 0.99
-    c3 = 3.23
-    c4 = 0.41
-    c2 = -0.824 + 4.717/R_V
-    c1 = 2.030 - 3.007*c2
-
-    if LMC2:
-        x0    =  4.626
-        gamma =  1.05
-        c4   =  0.42
-        c3    =  1.92
-        c2    = 1.31
-        c1    =  -2.16
-    elif AVGLMC:
-        x0 = 4.596
-        gamma = 0.91
-        c4   =  0.64
-        c3    =  2.73
-        c2    = 1.11
-        c1    =  -1.28
-
-    # Compute UV portion of A(lambda)/E(B-V) curve using FM fitting function and
-    # R-dependent coefficients
-    xcutuv = sp.array([10000.0/2700.0])
-    xspluv = 10000.0/sp.array([2700.0,2600.0])
-
-    iuv = sp.where(x >= xcutuv)[0]
-    N_UV = iuv.size
-    iopir = sp.where(x < xcutuv)[0]
-    Nopir = iopir.size
-    if N_UV>0:
-        xuv = sp.concatenate((xspluv,x[iuv]))
-    else:
-        xuv = xspluv
-
-    yuv = c1 + c2*xuv
-    yuv = yuv + c3*xuv**2/((xuv**2-x0**2)**2 +(xuv*gamma)**2)
-    yuv = yuv + c4*(0.5392*(sp.maximum(xuv,5.9)-5.9)**2+0.05644*(sp.maximum(xuv,5.9)-5.9)**3)
-    yuv = yuv + R_V
-    yspluv = yuv[0:2]  # save spline points
-
-    if N_UV>0:
-        curve[iuv] = yuv[2::] # remove spline points
-
-    # Compute optical portion of A(lambda)/E(B-V) curve
-    # using cubic spline anchored in UV, optical, and IR
-    xsplopir = sp.concatenate(([0],10000.0/sp.array([26500.0,12200.0,6000.0,5470.0,4670.0,4110.0])))
-    ysplir = sp.array([0.0,0.26469,0.82925])*R_V/3.1
-    ysplop = sp.array((sp.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1],R_V ),
-            sp.polyval([-5.13540e-02, 1.00216, -7.35778e-05][::-1],R_V ),
-            sp.polyval([ 7.00127e-01, 1.00184, -3.32598e-05][::-1],R_V ),
-            sp.polyval([ 1.19456, 1.01707, -5.46959e-03, 7.97809e-04, -4.45636e-05][::-1],R_V ) ))
-    ysplopir = sp.concatenate((ysplir,ysplop))
-
-    if Nopir>0:
-      tck = interpolate.splrep(sp.concatenate((xsplopir,xspluv)),sp.concatenate((ysplopir,yspluv)),s=0)
-      curve[iopir] = interpolate.splev(x[iopir], tck)
-
-    #Now apply extinction correction to input flux vector
-    curve *= ebv
-    corr = 1./(10.**(0.4*curve))
-
-    return corr
+	    """
+	    https://github.com/sczesla/PyAstronomy
+	    in /src/pyasl/asl/unred
+	    """
+	
+	    x = 10000./wave # Convert to inverse microns
+	    curve = x*0.
+	
+	    # Set some standard values:
+	    x0 = 4.596
+	    gamma = 0.99
+	    c3 = 3.23
+	    c4 = 0.41
+	    c2 = -0.824 + 4.717/R_V
+	    c1 = 2.030 - 3.007*c2
+	
+	    if LMC2:
+	        x0    =  4.626
+	        gamma =  1.05
+	        c4   =  0.42
+	        c3    =  1.92
+	        c2    = 1.31
+	        c1    =  -2.16
+	    elif AVGLMC:
+	        x0 = 4.596
+	        gamma = 0.91
+	        c4   =  0.64
+	        c3    =  2.73
+	        c2    = 1.11
+	        c1    =  -1.28
+	
+	    # Compute UV portion of A(lambda)/E(B-V) curve using FM fitting function and
+	    # R-dependent coefficients
+	    xcutuv = sp.array([10000.0/2700.0])
+	    xspluv = 10000.0/sp.array([2700.0,2600.0])
+	
+	    iuv = sp.where(x >= xcutuv)[0]
+	    N_UV = iuv.size
+	    iopir = sp.where(x < xcutuv)[0]
+	    Nopir = iopir.size
+	    if N_UV>0:
+	        xuv = sp.concatenate((xspluv,x[iuv]))
+	    else:
+	        xuv = xspluv
+	
+	    yuv = c1 + c2*xuv
+	    yuv = yuv + c3*xuv**2/((xuv**2-x0**2)**2 +(xuv*gamma)**2)
+	    yuv = yuv + c4*(0.5392*(sp.maximum(xuv,5.9)-5.9)**2+0.05644*(sp.maximum(xuv,5.9)-5.9)**3)
+	    yuv = yuv + R_V
+	    yspluv = yuv[0:2]  # save spline points
+	
+	    if N_UV>0:
+	        curve[iuv] = yuv[2::] # remove spline points
+	
+	    # Compute optical portion of A(lambda)/E(B-V) curve
+	    # using cubic spline anchored in UV, optical, and IR
+	    xsplopir = sp.concatenate(([0],10000.0/sp.array([26500.0,12200.0,6000.0,5470.0,4670.0,4110.0])))
+	    ysplir = sp.array([0.0,0.26469,0.82925])*R_V/3.1
+	    ysplop = sp.array((sp.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1],R_V ),
+	            sp.polyval([-5.13540e-02, 1.00216, -7.35778e-05][::-1],R_V ),
+	            sp.polyval([ 7.00127e-01, 1.00184, -3.32598e-05][::-1],R_V ),
+	            sp.polyval([ 1.19456, 1.01707, -5.46959e-03, 7.97809e-04, -4.45636e-05][::-1],R_V ) ))
+	    ysplopir = sp.concatenate((ysplir,ysplop))
+	
+	    if Nopir>0:
+	      tck = interpolate.splrep(sp.concatenate((xsplopir,xspluv)),sp.concatenate((ysplopir,yspluv)),s=0)
+	      curve[iopir] = interpolate.splev(x[iopir], tck)
+	
+	    #Now apply extinction correction to input flux vector
+	    curve *= ebv
+	    corr = 1./(10.**(0.4*curve))
+	
+	    return corr
