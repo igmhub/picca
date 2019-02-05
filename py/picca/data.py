@@ -123,8 +123,8 @@ class forest(qso):
 
         if not self.ebv_map is None:
             corr = unred(10**ll,ebv_map[thid])
-	        fl /= corr
-	        iv *= corr**2
+            fl /= corr
+            iv *= corr**2
 
         ## mmef is the mean expected flux fraction using the mock continuum
         if mmef is not None:
