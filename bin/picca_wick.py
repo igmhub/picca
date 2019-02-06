@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import sys
-import scipy as sp
 import fitsio
 import argparse
-import glob
-import healpy
+import scipy as sp
 from scipy.interpolate import interp1d
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, utils, io
-from picca.data import delta
 from picca.utils import print
 
 def calc_wickT(p):
