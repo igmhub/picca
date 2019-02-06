@@ -202,11 +202,6 @@ class forest(qso):
         if not hasattr(self,'ll') or not hasattr(d,'ll'):
             return self
 
-        if not self.ebv_map is None:
-            corr = unred(10**d.ll,self.ebv_map[d.thid])
-            d.fl /= corr
-            d.iv *= corr**2
-
         dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
 
         ll = sp.append(self.ll,d.ll)
