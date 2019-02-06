@@ -96,7 +96,7 @@ if __name__ == '__main__':
         help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
     parser.add_argument('--dust-map', type=str, default=None, required=False,
-	        help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
+                help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
 
     parser.add_argument('--flux-calib',type=str,default=None,required=False,
         help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     ### Apply dust correction
     if not args.dust_map is None:
         print("applying dust correction")
-	forest.ebv_map = io.read_dust_map(args.dust_map)
+        forest.ebv_map = io.read_dust_map(args.dust_map)
 
     nit = args.nit
 
