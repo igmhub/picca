@@ -397,7 +397,7 @@ def shuffle_distrib_obj(obj,seed):
 
 def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     """
-        https://github.com/sczesla/PyAstronomy
+    https://github.com/sczesla/PyAstronomy
     in /src/pyasl/asl/unred
     """
 
