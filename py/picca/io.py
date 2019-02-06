@@ -77,10 +77,10 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     ## Redshift
     try:
-        h = h[1]['Z'][:]
+        zqso = h[1]['Z'][:]
     except:
         print("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
-        h = h[1]['Z_VI'][:]
+        zqso = h[1]['Z_VI'][:]
 
     ## Info of the primary observation
     thid = h[1]['THING_ID'][:]
@@ -128,7 +128,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
             w &= bi<=bi_max
             print(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
         except:
-            print("--bi-max set but no BI_CIV field in vac")
+            print("--bi-max set but no BI_CIV field in h")
             sys.exit(1)
     print("")
 
