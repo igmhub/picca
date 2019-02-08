@@ -50,9 +50,6 @@ class data:
 
         h.close()
 
-        r = sp.sqrt(rp**2+rt**2)
-        mu = rp/r
-
         rp_min = dic_init['cuts']['rp-min']
         rp_max = dic_init['cuts']['rp-max']
 
