@@ -37,11 +37,17 @@ class data:
         rp = h[1]['RP'][:]
         rt = h[1]['RT'][:]
         z = h[1]['Z'][:]
-        dmrp = h[2]['DMRP'][:]
-        dmrt = h[2]['DMRT'][:]
-        dmz = h[2]['DMZ'][:]
+        try:
+            dmrp = h[2]['DMRP'][:]
+            dmrt = h[2]['DMRT'][:]
+            dmz = h[2]['DMZ'][:]
+        except IOError:
+            dmrp = rp.copy()
+            dmrt = rt.copy()
+            dmz = z.copy()
         coef_binning_model = sp.sqrt(dmrp.size/rp.size)
         head = h[1].read_header()
+
         h.close()
 
         r = sp.sqrt(rp**2+rt**2)
