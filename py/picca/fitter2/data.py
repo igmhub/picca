@@ -37,16 +37,11 @@ class data:
         rp = h[1]['RP'][:]
         rt = h[1]['RT'][:]
         z = h[1]['Z'][:]
-        try:
-            dmrp = h[2]['DMRP'][:]
-            dmrt = h[2]['DMRT'][:]
-            dmz = h[2]['DMZ'][:]
-        except IOError:
-            dmrp = rp.copy()
-            dmrt = rt.copy()
-            dmz = z.copy()
+        dmrp = h[2]['DMRP'][:]
+        dmrt = h[2]['DMRT'][:]
+        dmz = h[2]['DMZ'][:]
+        coef_binning_model = sp.sqrt(dmrp.size/rp.size)
         head = h[1].read_header()
-
         h.close()
 
         r = sp.sqrt(rp**2+rt**2)
@@ -187,7 +182,7 @@ class data:
                         dic_init['parameters']['errors']['error_'+name+'-'+k] = 0.01
 
                 bb = partial( getattr(xi, dic_bb['func']),
-                    bin_size_rp=bin_size_rp, bin_size_rt=bin_size_rt, name=name)
+                    bin_size_rp=bin_size_rp/coef_binning_model, bin_size_rt=bin_size_rt/coef_binning_model, name=name)
 
                 bb.name = name
                 self.bb[dic_bb['pre']+'-'+dic_bb['type']].append(bb)
