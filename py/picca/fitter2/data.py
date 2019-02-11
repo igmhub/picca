@@ -3,6 +3,7 @@ from functools import partial
 import scipy as sp
 from scipy import linalg
 from scipy.sparse import csr_matrix
+import scipy.interpolate
 
 from . import pk, xi
 
@@ -139,6 +140,13 @@ class data:
         self.xi_asy_model = None
         if 'standard asymmetry' in dic_init['model']:
             self.xi_asy_model = partial(getattr(xi, dic_init['model']['standard asymmetry']), name=self.name)
+
+        self.tranfer_func_mock = None
+        if 'tranfer-func-mock' in dic_init['model']:
+            h = fitsio.FITS(dic_init['model']['tranfer-func-mock'])
+            t = h[1]['T'][:]
+            self.tranfer_func_mock = sp.interpolate.interp1d(t[:,0],t[:,1],kind='linear',bounds_error=True)
+            h.close()
 
         self.bb = {}
         self.bb['pre-add'] = []
@@ -332,6 +340,10 @@ class data:
         ## pre-distortion additive
         for bb in self.bb['pre-add']:
             xi += bb(self.r, self.mu, **pars)
+
+        ## from theory to mocks
+        if self.tranfer_func_mock is not None:
+            xi = self.tranfer_func_mock(xi)
 
         xi = self.dm.dot(xi)
 
