@@ -142,10 +142,10 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     return ra,dec,zqso,thid,plate,mjd,fid
 
-def read_dust_map(drq):
+def read_dust_map(drq, Rv = 3.793):
     h = fitsio.FITS(drq)
     thid = h[1]['THING_ID'][:]
-    ext  = h[1]['EXTINCTION'][:][:,1]
+    ext  = h[1]['EXTINCTION'][:][:,1]/3.793
     h.close()
 
     return dict(zip(thid, ext))
