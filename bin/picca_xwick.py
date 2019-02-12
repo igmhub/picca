@@ -91,7 +91,7 @@ if __name__ == '__main__':
         help='1D auto-correlation of pixels from the same forest file: do_cf1d.py')
 
     parser.add_argument('--cf', type=str, default=None, required=False,
-        help='3D auto-correlation of pixels from different forests')
+        help='3D auto-correlation of pixels from different forests: picca_cf.py')
 
     parser.add_argument('--rej', type=float, default=1., required=False,
         help='Fraction of rejected object-forests pairs: -1=no rejection, 1=all rejection')

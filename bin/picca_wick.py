@@ -16,7 +16,7 @@ def calc_wickT(p):
     else:
         cf.fill_neighs(p)
     sp.random.seed(p[0])
-    tmp = cf.t123(p)
+    tmp = cf.wickT(p)
     return tmp
 
 if __name__ == '__main__':
@@ -77,8 +77,11 @@ if __name__ == '__main__':
     parser.add_argument('--cf1d', type=str, required=True,
         help='1D auto-correlation of pixels from the same forest file: do_cf1d.py')
 
-    parser.add_argument('--cf1d2', type=str, required=False,
+    parser.add_argument('--cf1d2', type=str, default=None, required=False,
         help='1D auto-correlation of pixels from the same forest file of the 2nd delta field: do_cf1d.py')
+
+    parser.add_argument('--cf', type=str, default=None, required=False,
+        help='3D auto-correlation of pixels from different forests: picca_cf.py')
 
     parser.add_argument('--remove-same-half-plate-close-pairs', action='store_true', required=False,
         help='Reject pairs in the first bin in r-parallel from same half plate')
@@ -150,6 +153,25 @@ if __name__ == '__main__':
     cf.v1d2 = cf.v1d
     cf.c1d2 = cf.c1d
     h.close()
+
+    ### Load cf
+    if not args.cf is None:
+        h = fitsio.FITS(args.cf)
+        head = h[1].read_header()
+        cf.cf_np = head['NP']
+        cf.cf_nt = head['NT']
+        cf.cf_rp_min = head['RPMIN']
+        cf.cf_rp_max = head['RPMAX']
+        cf.cf_rt_max = head['RTMAX']
+        cf.cf_angmax = utils.compute_ang_max(cosmo,cf.cf_rt_max,zmin_pix)
+        da = h[2]['DA'][:]
+        we = h[2]['WE'][:]
+        da = (da*we).sum(axis=0)
+        we = we.sum(axis=0)
+        w = we>0.
+        da[w] /= we[w]
+        cf.cf = da.copy()
+        h.close()
 
     ### Read data 2
     if args.in_dir2 or args.lambda_abs2:

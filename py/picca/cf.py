@@ -485,8 +485,17 @@ v1d = None
 c1d = None
 v1d2 = None
 c1d2 = None
+
+cf = None
+cf_np = None
+cf_nt = None
+cf_rp_min = None
+cf_rp_max = None
+cf_rt_max = None
+cf_angmax = None
+
 ## auto
-def t123(pix):
+def wickT(pix):
     T1 = sp.zeros((np*nt,np*nt))
     T2 = sp.zeros((np*nt,np*nt))
     T3 = sp.zeros((np*nt,np*nt))
