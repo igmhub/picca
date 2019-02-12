@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import scipy as sp
 from picca import constants
-from picca.utils import print
+from picca.utils import print, unred
 import iminuit
 from .dla import dla
 import fitsio
@@ -84,6 +84,9 @@ class forest(qso):
     ### Correction function for multiplicative errors in inverse pipeline variance calibration
     correc_ivar = None
 
+    ### map of g-band extinction to thids for dust correction
+    ebv_map = None
+
     ## absorber pixel mask limit
     absorber_mask = None
 
@@ -102,6 +105,11 @@ class forest(qso):
 
     def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order, diff=None,reso=None, mmef = None):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
+
+        if not self.ebv_map is None:
+            corr = unred(10**ll,self.ebv_map[thid])
+            fl /= corr
+            iv *= corr**2
 
         ## cut to specified range
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
