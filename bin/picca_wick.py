@@ -11,7 +11,7 @@ from picca import constants, cf, utils, io
 from picca.utils import print
 
 def calc_wickT(p):
-    if cf.x_correlation:
+    if args.in_dir2:
         cf.fill_neighs_x_correlation(p)
     else:
         cf.fill_neighs(p)
