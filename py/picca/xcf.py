@@ -488,7 +488,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     bt = (rt/cfWick_rt_max*cfWick_nt).astype(int)
     ba13 = bt + cfWick_nt*bp
     ba13[w] = 0
-    cf13 = cf[ba13]
+    cf13 = cfWick[ba13]
     cf13[w] = 0.
 
     ### Pair forest_1 - object_2
