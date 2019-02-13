@@ -294,13 +294,13 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 v1d = None
 c1d = None
 
-cf = None
-cf_np = None
-cf_nt = None
-cf_rp_min = None
-cf_rp_max = None
-cf_rt_max = None
-cf_angmax = None
+cfWick = None
+cfWick_np = None
+cfWick_nt = None
+cfWick_rp_min = None
+cfWick_rp_max = None
+cfWick_rt_max = None
+cfWick_angmax = None
 
 def wickT(pix):
     """Compute the Wick covariance matrix for the object-pixel
@@ -362,7 +362,7 @@ def wickT(pix):
                 if d3.qneighs.size==0: continue
 
                 ang13 = d1^d3
-                if ang13>=cf_angmax: continue
+                if ang13>=cfWick_angmax: continue
 
                 r3 = d3.r_comov
                 w3 = d3.we
@@ -481,12 +481,12 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rp = sp.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
     rt = (r1+r3[:,None])*sp.sin(ang13/2.)
 
-    w = (rp<cf_rp_max) & (rt<cf_rt_max) & (rp>=cf_rp_min)
+    w = (rp<cfWick_rp_max) & (rt<cfWick_rt_max) & (rp>=cfWick_rp_min)
     if w.sum()==0: return
     w = sp.logical_not(w)
-    bp = sp.floor((rp-cf_rp_min)/(cf_rp_max-cf_rp_min)*cf_np).astype(int)
-    bt = (rt/cf_rt_max*cf_nt).astype(int)
-    ba13 = bt + cf_nt*bp
+    bp = sp.floor((rp-cfWick_rp_min)/(cfWick_rp_max-cfWick_rp_min)*cfWick_np).astype(int)
+    bt = (rt/cfWick_rt_max*cfWick_nt).astype(int)
+    ba13 = bt + cfWick_nt*bp
     ba13[w] = 0
     cf13 = cf[ba13]
     cf13[w] = 0.

@@ -488,13 +488,13 @@ c1d = None
 v1d2 = None
 c1d2 = None
 
-cf = None
-cf_np = None
-cf_nt = None
-cf_rp_min = None
-cf_rp_max = None
-cf_rt_max = None
-cf_angmax = None
+cfWick = None
+cfWick_np = None
+cfWick_nt = None
+cfWick_rp_min = None
+cfWick_rp_max = None
+cfWick_rt_max = None
+cfWick_angmax = None
 
 ## auto
 def wickT(pix):
@@ -541,10 +541,10 @@ def wickT(pix):
                 for d3 in data[ipix][i1+1:]:
 
                     ang13 = d1^d3
-                    if ang13>=cf_angmax:
+                    if ang13>=cfWick_angmax:
                         continue
                     ang23 = d2^d3
-                    if ang23>=cf_angmax:
+                    if ang23>=cfWick_angmax:
                         continue
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6

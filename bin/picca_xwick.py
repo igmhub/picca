@@ -22,7 +22,7 @@ def calc_wickT(p):
 
     """
     xcf.fill_neighs(p)
-    if not xcf.cf is None:
+    if not xcf.cfWick is None:
         cf.fill_neighs(p)
     sp.random.seed(p[0])
     tmp = xcf.wickT(p)
@@ -187,23 +187,23 @@ if __name__ == '__main__':
     if not args.cf is None:
         h = fitsio.FITS(args.cf)
         head = h[1].read_header()
-        xcf.cf_np = head['NP']
-        xcf.cf_nt = head['NT']
-        xcf.cf_rp_min = head['RPMIN']
-        xcf.cf_rp_max = head['RPMAX']
-        xcf.cf_rt_max = head['RTMAX']
-        xcf.cf_angmax = utils.compute_ang_max(cosmo,xcf.cf_rt_max,zmin_pix)
+        xcf.cfWick_np = head['NP']
+        xcf.cfWick_nt = head['NT']
+        xcf.cfWick_rp_min = head['RPMIN']
+        xcf.cfWick_rp_max = head['RPMAX']
+        xcf.cfWick_rt_max = head['RTMAX']
+        xcf.cfWick_angmax = utils.compute_ang_max(cosmo,xcf.cfWick_rt_max,zmin_pix)
         da = h[2]['DA'][:]
         we = h[2]['WE'][:]
         da = (da*we).sum(axis=0)
         we = we.sum(axis=0)
         w = we>0.
         da[w] /= we[w]
-        xcf.cf = da.copy()
+        xcf.cfWick = da.copy()
         h.close()
 
         cf.data = xcf.dels
-        cf.angmax = xcf.cf_angmax
+        cf.angmax = xcf.cfWick_angmax
         cf.nside = xcf.nside
         cf.z_cut_max = xcf.z_cut_max
         cf.z_cut_min = xcf.z_cut_min

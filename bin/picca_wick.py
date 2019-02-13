@@ -162,19 +162,19 @@ if __name__ == '__main__':
     if not args.cf is None:
         h = fitsio.FITS(args.cf)
         head = h[1].read_header()
-        cf.cf_np = head['NP']
-        cf.cf_nt = head['NT']
-        cf.cf_rp_min = head['RPMIN']
-        cf.cf_rp_max = head['RPMAX']
-        cf.cf_rt_max = head['RTMAX']
-        cf.cf_angmax = utils.compute_ang_max(cosmo,cf.cf_rt_max,zmin_pix)
+        cf.cfWick_np = head['NP']
+        cf.cfWick_nt = head['NT']
+        cf.cfWick_rp_min = head['RPMIN']
+        cf.cfWick_rp_max = head['RPMAX']
+        cf.cfWick_rt_max = head['RTMAX']
+        cf.cfWick_angmax = utils.compute_ang_max(cosmo,cf.cfWick_rt_max,zmin_pix)
         da = h[2]['DA'][:]
         we = h[2]['WE'][:]
         da = (da*we).sum(axis=0)
         we = we.sum(axis=0)
         w = we>0.
         da[w] /= we[w]
-        cf.cf = da.copy()
+        cf.cfWick = da.copy()
         h.close()
 
     ### Read data 2
