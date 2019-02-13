@@ -293,6 +293,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
 v1d = None
 c1d = None
+xcfWick = None
 
 cfWick = None
 cfWick_np = None
@@ -410,41 +411,43 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     idxPix = sp.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
     idxQso = sp.ones(r1.size,dtype='int')[:,None]*sp.arange(len(r2))
 
-    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
-    if w.sum()==0: return
-
-    rp = rp[w]
-    rt = rt[w]
-    we = we[w]
-    we1 = we1[w]
-    idxPix = idxPix[w]
-    idxQso = idxQso[w]
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     ba = bt + nt*bp
 
-    for k1 in range(rp.size):
+    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
+    if w.sum()==0: return
+    txcfWick = sp.zeros(ba.shape)
+    txcfWick[w] = xcfWick[ba[w]]
+
+    ba = ba[w]
+    we = we[w]
+    we1 = we1[w]
+    idxPix = idxPix[w]
+    idxQso = idxQso[w]
+
+    for k1 in range(ba.size):
         p1 = ba[k1]
         i1 = idxPix[k1]
         q1 = idxQso[k1]
-        wAll[p1]  += we[k1]
-        nb[p1]    += 1
-        T1[p1,p1] += (we[k1]**2)/we1[k1]*zw1[i1]
+        wAll[p1] += we[k1]
+        nb[p1] += 1
+        T1[p1,p1] += (we[k1]**2)/we1[k1]*zw1[i1] + (we[k1]*xcfWick[p1])**2
 
-        for k2 in range(k1+1,rp.size):
+        for k2 in range(k1+1,ba.size):
             p2 = ba[k2]
             i2 = idxPix[k2]
             q2 = idxQso[k2]
             if q1==q2:
-                wcorr = c1d_1[i1,i2]*(zw2[q1]**2)
+                wcorr = c1d_1[i1,i2]*(zw2[q1]**2) + we[k1]*we[k2]*xcfWick[p1]*xcfWick[p2]
                 T2[p1,p2] += wcorr
                 T2[p2,p1] += wcorr
             elif i1==i2:
-                wcorr = (we[k1]*we[k2])/we1[k1]*zw1[i1]
+                wcorr = (we[k1]*we[k2])/we1[k1]*zw1[i1] + we[k1]*we[k2]*xcfWick[p1]*xcfWick[p2]
                 T3[p1,p2] += wcorr
                 T3[p2,p1] += wcorr
             else:
-                wcorr = c1d_1[i1,i2]*zw2[q1]*zw2[q2]
+                wcorr = c1d_1[i1,i2]*zw2[q1]*zw2[q2] + we[k1]*we[k2]*txcfWick[i1,q2]*txcfWick[i2,q1]
                 T4[p1,p2] += wcorr
                 T4[p2,p1] += wcorr
 
