@@ -50,7 +50,7 @@ def fill_neighs(pix):
             ang = d1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.ra > d.ra and (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
+            d1.dneighs = [d for d in neighs if d1.ra > d.ra and (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
 
 def fill_neighs_x_correlation(pix):
     for ipix in pix:
@@ -61,7 +61,7 @@ def fill_neighs_x_correlation(pix):
             ang = d1^neighs
             w = (ang<angmax)
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
+            d1.dneighs = [d for d in neighs if (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
@@ -76,7 +76,7 @@ def cf(pix):
             print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)),end="")
             with lock:
                 counter.value += 1
-            for d2 in d1.neighs:
+            for d2 in d1.dneighs:
                 ang = d1^d2
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
@@ -163,11 +163,11 @@ def dmat(pix):
             w1 = d1.we
             l1 = d1.ll
             z1 = d1.z
-            r = random.rand(len(d1.neighs))
+            r = random.rand(len(d1.dneighs))
             w=r>rej
-            npairs += len(d1.neighs)
+            npairs += len(d1.dneighs)
             npairs_used += w.sum()
-            for d2 in sp.array(d1.neighs)[w]:
+            for d2 in sp.array(d1.dneighs)[w]:
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 order2 = d2.order
@@ -292,11 +292,11 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 print("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)),end="")
                 counter.value += 1
 
-            r = random.rand(len(d1.neighs))
+            r = random.rand(len(d1.dneighs))
             w=r>rej
-            npairs += len(d1.neighs)
+            npairs += len(d1.dneighs)
             npairs_used += w.sum()
-            for d2 in sp.array(d1.neighs)[w]:
+            for d2 in sp.array(d1.dneighs)[w]:
                 r1 = d1.r_comov
                 z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
                 r1_abs1 = cosmo.r_comoving(z1_abs1)
@@ -481,6 +481,8 @@ def x_forest_cf1d(pix):
     xi1d[w]/=we1d[w]
     return we1d,xi1d,nb1d
 
+max_diagram = None
+
 v1d = None
 c1d = None
 v1d2 = None
@@ -507,7 +509,7 @@ def wickT(pix):
     npairs = 0
     npairs_used = 0
     for ipix in pix:
-        for d1 in data[ipix]:
+        for i1, d1 in enumerate(data[ipix]):
             print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)),end="")
             with lock:
                 counter.value += 1
@@ -516,11 +518,11 @@ def wickT(pix):
             c1d_1 = (w1*w1[:,None])*c1d(abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
-            r = sp.random.rand(len(d1.neighs))
+            r = sp.random.rand(len(d1.dneighs))
             w = r>rej
-            npairs+=len(d1.neighs)
+            npairs+=len(d1.dneighs)
             npairs_used += w.sum()
-            for d2 in sp.array(d1.neighs)[w]:
+            for d2 in sp.array(d1.dneighs)[w]:
                 ang = d1^d2
 
                 same_half_plate = (d1.plate == d2.plate) and\
@@ -529,12 +531,25 @@ def wickT(pix):
                 w2 = d2.we
                 c1d_2 = (w2*w2[:,None])*c1d2(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
 
-                fill_t123(r1,d2.r_comov,ang,w1,d2.we,z1,d2.z,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3)
-            setattr(d1,"neighs",None)
+                fill_wickT123(r1,d2.r_comov,ang,w1,d2.we,z1,d2.z,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3)
+
+                if max_diagram<=3:
+                    continue
+
+                ### Compute T4 and T5
+                #-TODO: Correlation with other nside pixels
+                for d3 in data[ipix][i1+1:]:
+
+                    ang13 = d1^d3
+                    if ang13>=cf_angmax:
+                        continue
+                    ang23 = d2^d3
+                    if ang23>=cf_angmax:
+                        continue
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
-def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3):
+def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3):
 
     n1 = len(r1)
     n2 = len(r2)

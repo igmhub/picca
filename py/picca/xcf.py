@@ -47,7 +47,7 @@ def fill_neighs(pix):
                 w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < rp_max
                 w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > rp_min
             neighs = sp.array(neighs)[w]
-            d.neighs = sp.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
+            d.qneighs = sp.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
 
 def xcf(pix):
     xi = sp.zeros(np*nt)
@@ -62,16 +62,16 @@ def xcf(pix):
             with lock:
                 counter.value +=1
             sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
-            if (d.neighs.size != 0):
-                ang = d^d.neighs
-                zqso = [q.zqso for q in d.neighs]
-                we_qso = [q.we for q in d.neighs]
+            if (d.qneighs.size != 0):
+                ang = d^d.qneighs
+                zqso = [q.zqso for q in d.qneighs]
+                we_qso = [q.we for q in d.qneighs]
 
                 if ang_correlation:
-                    l_qso = [10.**q.ll for q in d.neighs]
+                    l_qso = [10.**q.ll for q in d.qneighs]
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
                 else:
-                    rc_qso = [q.r_comov for q in d.neighs]
+                    rc_qso = [q.r_comov for q in d.qneighs]
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
 
                 xi[:len(cd)]+=cd
@@ -142,12 +142,12 @@ def dmat(pix):
             w1 = d1.we
             l1 = d1.ll
             z1 = d1.z
-            r = sp.random.rand(len(d1.neighs))
+            r = sp.random.rand(len(d1.qneighs))
             w=r>rej
             if w.sum()==0:continue
-            npairs += len(d1.neighs)
+            npairs += len(d1.qneighs)
             npairs_used += w.sum()
-            neighs = d1.neighs[w]
+            neighs = d1.qneighs[w]
             ang = d1^neighs
             r2 = [q.r_comov for q in neighs]
             w2 = [q.we for q in neighs]
@@ -233,9 +233,9 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 sys.stderr.write("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)))
                 counter.value += 1
 
-            r = sp.random.rand(len(d.neighs))
+            r = sp.random.rand(len(d.qneighs))
             w=r>rej
-            npairs += len(d.neighs)
+            npairs += len(d.qneighs)
             npairs_used += w.sum()
 
             rd = d.r_comov
@@ -250,7 +250,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             rd_abs = rd_abs[wzcut]
             if rd.size==0: continue
 
-            for q in sp.array(d.neighs)[w]:
+            for q in sp.array(d.qneighs)[w]:
                 ang = d^q
 
                 rq = q.r_comov
@@ -330,10 +330,10 @@ def wickT(pix):
                 counter.value += 1
             sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
 
-            if d1.neighs.size==0: continue
+            if d1.qneighs.size==0: continue
 
-            npairs += d1.neighs.size
-            r = sp.random.rand(d1.neighs.size)
+            npairs += d1.qneighs.size
+            r = sp.random.rand(d1.qneighs.size)
             w = r>rej
             npairs_used += w.sum()
 
@@ -345,7 +345,7 @@ def wickT(pix):
             r1 = d1.r_comov
             z1 = d1.z
 
-            neighs = d1.neighs[w]
+            neighs = d1.qneighs[w]
             ang = d1^neighs
             r2 = [q2.r_comov for q2 in neighs]
             z2 = sp.array([q2.zqso for q2 in neighs])
@@ -359,7 +359,7 @@ def wickT(pix):
 
             #-TODO: Correlation with other nside pixels
             for d3 in dels[ipix][i1+1:]:
-                if d3.neighs.size==0: continue
+                if d3.qneighs.size==0: continue
 
                 ang13 = d1^d3
                 if ang13>=cf_angmax: continue
@@ -367,7 +367,7 @@ def wickT(pix):
                 r3 = d3.r_comov
                 w3 = d3.we
 
-                neighs = d3.neighs
+                neighs = d3.qneighs
                 ang34 = d3^neighs
                 r4 = [q4.r_comov for q4 in neighs]
                 w4 = [q4.we for q4 in neighs]

@@ -74,6 +74,9 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--max-diagram', type=int, default=3, required=False,
+        help='Maximum diagram to compute')
+
     parser.add_argument('--cf1d', type=str, required=True,
         help='1D auto-correlation of pixels from the same forest file: do_cf1d.py')
 
@@ -120,6 +123,7 @@ if __name__ == '__main__':
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     cf.rej = args.rej
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
+    cf.max_diagram = args.max_diagram
 
     cosmo = constants.cosmo(args.fid_Om)
 
