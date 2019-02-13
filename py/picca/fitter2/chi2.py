@@ -109,11 +109,14 @@ class chi2:
             d.best_fit_model = values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, values)
 
             values['SB'] = True
-            snl = values['sigmaNL_per']
-            values['sigmaNL_per'] = 0
+            sigmaNL_par = values['sigmaNL_par']
+            sigmaNL_per = values['sigmaNL_per']
+            values['sigmaNL_par'] = 0.
+            values['sigmaNL_per'] = 0.
             d.best_fit_model += d.xi_model(self.k, self.pksb_lin, values)
             values['SB'] = False
-            values['sigmaNL_per'] = snl
+            values['sigmaNL_par'] = sigmaNL_par
+            values['sigmaNL_per'] = sigmaNL_per
 
     def chi2scan(self):
         if not hasattr(self, "dic_chi2scan"): return
