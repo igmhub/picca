@@ -220,7 +220,7 @@ if __name__ == '__main__':
     cf.lock = Lock()
 
     cpu_data = {}
-    for i,p in enumerate(sorted(list(data.keys()))):
+    for i,p in enumerate(sorted(data.keys())):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
@@ -228,7 +228,7 @@ if __name__ == '__main__':
 
     pool = Pool(processes=args.nproc)
     print(" \nStarting\n")
-    wickT = pool.map(calc_wickT,sorted(list(cpu_data.values())))
+    wickT = pool.map(calc_wickT,sorted(cpu_data.values()))
     print(" \nFinished\n")
     pool.close()
 

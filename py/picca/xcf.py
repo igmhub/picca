@@ -353,16 +353,15 @@ def wickT(pix):
 
             fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
 
-            if cfWick is None: continue
+            if cfWick is None:
+                continue
 
             thid2 = [q2.thid for q2 in neighs]
 
-            #-TODO: Correlation with other nside pixels
-            for d3 in dels[ipix][i1+1:]:
+            for d3 in sp.array(d1.dneighs):
                 if d3.qneighs.size==0: continue
 
                 ang13 = d1^d3
-                if ang13>=cfWick_angmax: continue
 
                 r3 = d3.r_comov
                 w3 = d3.we

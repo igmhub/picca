@@ -21,9 +21,6 @@ def calc_wickT(p):
         (tuple): results of the Wick computation
 
     """
-    xcf.fill_neighs(p)
-    if not xcf.cfWick is None:
-        cf.fill_neighs(p)
     sp.random.seed(p[0])
     tmp = xcf.wickT(p)
     return tmp
@@ -213,15 +210,21 @@ if __name__ == '__main__':
     xcf.lock = Lock()
 
     cpu_data = {}
-    for i,p in enumerate(sorted(list(xcf.dels.keys()))):
+    for i,p in enumerate(sorted(xcf.dels.keys())):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
         cpu_data[ip].append(p)
 
+    ### Get neighbours
+    for p in cpu_data.values():
+        xcf.fill_neighs(p)
+        if not xcf.cfWick is None:
+            cf.fill_neighs(p)
+
     pool = Pool(processes=args.nproc)
     print(" \nStarting\n")
-    wickT = pool.map(calc_wickT,sorted(list(cpu_data.values())))
+    wickT = pool.map(calc_wickT,sorted(cpu_data.values()))
     print(" \nFinished\n")
     pool.close()
 
