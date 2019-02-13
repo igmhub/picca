@@ -761,9 +761,10 @@ class TestCor(unittest.TestCase):
         ### Send
         cmd  = " picca_xwick.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
-        cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
-        cmd += " --out "    + self._branchFiles+"/Products/Correlations/xwick.fits.gz"
-        cmd += " --cf1d "   + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
+        cmd += " --drq " + self._branchFiles+"/Products/cat.fits"
+        cmd += " --out " + self._branchFiles+"/Products/Correlations/xwick.fits.gz"
+        cmd += " --cf1d " + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
+        cmd += ' --xcf ' + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
