@@ -353,7 +353,7 @@ def wickT(pix):
 
             fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
 
-            if cf is None: continue
+            if cfWick is None: continue
 
             thid2 = [q2.thid for q2 in neighs]
 
