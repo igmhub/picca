@@ -8,7 +8,7 @@ import scipy as sp
 from scipy.interpolate import interp1d
 from multiprocessing import Pool,Lock,cpu_count,Value
 
-from picca import constants, io, utils, xcf
+from picca import constants, io, utils, xcf, cf
 from picca.utils import print
 
 def calc_wickT(p):
@@ -22,6 +22,8 @@ def calc_wickT(p):
 
     """
     xcf.fill_neighs(p)
+    if not xcf.cf is None:
+        cf.fill_neighs(p)
     sp.random.seed(p[0])
     tmp = xcf.wickT(p)
     return tmp
@@ -199,6 +201,12 @@ if __name__ == '__main__':
         da[w] /= we[w]
         xcf.cf = da.copy()
         h.close()
+
+        cf.data = xcf.dels
+        cf.angmax = xcf.cf_angmax
+        cf.nside = xcf.nside
+        cf.z_cut_max = xcf.z_cut_max
+        cf.z_cut_min = xcf.z_cut_min
 
     ### Send
     xcf.counter = Value('i',0)
