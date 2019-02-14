@@ -529,14 +529,8 @@ def wickT(pix):
                     continue
 
                 ### Compute T4 and T5
-                #-TODO: Correlation with other nside pixels
-                for d3 in data[ipix][i1+1:]:
-
-                    ang13 = d1^d3
-                    if ang13>=angmax:
-                        continue
-                    ang23 = d2^d3
-                    if ang23>=angmax:
+                for d3 in d1.dneighs:
+                    if d3 not in d2.dneighs:
                         continue
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6

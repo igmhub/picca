@@ -417,8 +417,9 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
-    txcfWick = sp.zeros(ba.shape)
-    txcfWick[w] = xcfWick[ba[w]]
+    ba[~w] = 0
+    txcfWick = xcfWick[ba]
+    txcfWick[~w] = 0.
 
     ba = ba[w]
     we = we[w]
@@ -485,13 +486,12 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
 
     w = (rp<cfWick_rp_max) & (rt<cfWick_rt_max) & (rp>=cfWick_rp_min)
     if w.sum()==0: return
-    w = sp.logical_not(w)
     bp = sp.floor((rp-cfWick_rp_min)/(cfWick_rp_max-cfWick_rp_min)*cfWick_np).astype(int)
     bt = (rt/cfWick_rt_max*cfWick_nt).astype(int)
     ba13 = bt + cfWick_nt*bp
-    ba13[w] = 0
+    ba13[~w] = 0
     cf13 = cfWick[ba13]
-    cf13[w] = 0.
+    cf13[~w] = 0.
 
     ### Pair forest_1 - object_2
     rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
@@ -543,8 +543,8 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
             if wcorr==0.: continue
 
             if t1==t2:
-                T5[p1,p2] += wcorr
-                T5[p2,p1] += wcorr
+                T5[p1,p2] += wcorr + w1*w2*xcfWick[p1]*xcfWick[p2]
+                T5[p2,p1] += wcorr + w1*w2*xcfWick[p1]*xcfWick[p2]
             else:
                 T6[p1,p2] += wcorr
                 T6[p2,p1] += wcorr
