@@ -83,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('--cf1d2', type=str, default=None, required=False,
         help='1D auto-correlation of pixels from the same forest file of the 2nd delta field: do_cf1d.py')
 
-    parser.add_argument('--cf', type=str, default=None, required=False,
+    parser.add_argument('--cf', type=str, required=True,
         help='3D auto-correlation of pixels from different forests: picca_cf.py')
 
     parser.add_argument('--remove-same-half-plate-close-pairs', action='store_true', required=False,
@@ -162,23 +162,21 @@ if __name__ == '__main__':
     h.close()
 
     ### Load cf
-    if not args.cf is None:
-        h = fitsio.FITS(args.cf)
-        head = h[1].read_header()
-        cf.cfWick_np = head['NP']
-        cf.cfWick_nt = head['NT']
-        cf.cfWick_rp_min = head['RPMIN']
-        cf.cfWick_rp_max = head['RPMAX']
-        cf.cfWick_rt_max = head['RTMAX']
-        cf.cfWick_angmax = utils.compute_ang_max(cosmo,cf.cfWick_rt_max,zmin_pix)
-        da = h[2]['DA'][:]
-        we = h[2]['WE'][:]
-        da = (da*we).sum(axis=0)
-        we = we.sum(axis=0)
-        w = we>0.
-        da[w] /= we[w]
-        cf.cfWick = da.copy()
-        h.close()
+    h = fitsio.FITS(args.cf)
+    head = h[1].read_header()
+    assert cf.np == head['NP']
+    assert cf.nt == head['NT']
+    assert cf.rp_min == head['RPMIN']
+    assert cf.rp_max == head['RPMAX']
+    assert cf.rt_max == head['RTMAX']
+    da = h[2]['DA'][:]
+    we = h[2]['WE'][:]
+    da = (da*we).sum(axis=0)
+    we = we.sum(axis=0)
+    w = we>0.
+    da[w] /= we[w]
+    cf.cfWick = da.copy()
+    h.close()
 
     ### Read data 2
     if args.in_dir2 or args.lambda_abs2:

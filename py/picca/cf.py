@@ -482,19 +482,11 @@ def x_forest_cf1d(pix):
     return we1d,xi1d,nb1d
 
 max_diagram = None
-
 v1d = None
 c1d = None
 v1d2 = None
 c1d2 = None
-
 cfWick = None
-cfWick_np = None
-cfWick_nt = None
-cfWick_rp_min = None
-cfWick_rp_max = None
-cfWick_rt_max = None
-cfWick_angmax = None
 
 ## auto
 def wickT(pix):
@@ -541,10 +533,10 @@ def wickT(pix):
                 for d3 in data[ipix][i1+1:]:
 
                     ang13 = d1^d3
-                    if ang13>=cfWick_angmax:
+                    if ang13>=angmax:
                         continue
                     ang23 = d2^d3
-                    if ang23>=cfWick_angmax:
+                    if ang23>=angmax:
                         continue
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
@@ -576,6 +568,10 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T
     if remove_same_half_plate_close_pairs and same_half_plate:
         w &= abs(rp)>(rp_max-rp_min)/np
 
+    if w.sum()==0: return
+    tcfWick = sp.zeros(ba.shape)
+    tcfWick[w] = cfWick[ba[w]]
+
     bins = bins[w]
     ba = ba[w]
     we = we[w]
@@ -583,28 +579,28 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T
     we2 = we2[w]
     zw = zw[w]
 
-    for k in range(ba.size):
-        p1 = ba[k]
-        i1 = bins[k]%n1
-        j1 = (bins[k]-i1)//n1
-        wAll[p1] += we[k]
+    for k1 in range(ba.size):
+        p1 = ba[k1]
+        i1 = bins[k1]%n1
+        j1 = (bins[k1]-i1)//n1
+        wAll[p1] += we[k1]
         nb[p1] += 1
-        T1[p1,p1] += we[k]*zw[k]
+        T1[p1,p1] += we[k1]*zw[k1] + (we[k1]*cfWick[p1])**2
 
-        for l in range(k+1,ba.size):
-            p2 = ba[l]
-            i2 = bins[l]%n1
-            j2 = (bins[l]-i2)//n1
+        for k2 in range(k1+1,ba.size):
+            p2 = ba[k2]
+            i2 = bins[k2]%n1
+            j2 = (bins[k2]-i2)//n1
             if i1==i2:
-                prod = c1d_2[j1,j2]*we1[k]*zw1[i1]
+                prod = c1d_2[j1,j2]*we1[k1]*zw1[i1] + we[k1]*we[k2]*cfWick[p1]*cfWick[p2]
                 T2[p1,p2] += prod
                 T2[p2,p1] += prod
             elif j1==j2:
-                prod = c1d_1[i1,i2]*we2[l]*zw2[j1]
+                prod = c1d_1[i1,i2]*we2[k2]*zw2[j1] + we[k1]*we[k2]*cfWick[p1]*cfWick[p2]
                 T2[p1,p2] += prod
                 T2[p2,p1] += prod
             else:
-                prod = c1d_1[i1,i2]*c1d_2[j1,j2]
+                prod = c1d_1[i1,i2]*c1d_2[j1,j2] + we[k1]*we[k2]*tcfWick[i1,j2]*tcfWick[i2,j1]
                 T3[p1,p2] += prod
                 T3[p2,p1] += prod
 

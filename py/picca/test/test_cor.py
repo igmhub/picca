@@ -546,8 +546,9 @@ class TestCor(unittest.TestCase):
         ### Send
         cmd  = " picca_wick.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
-        cmd += " --out "    + self._branchFiles+"/Products/Correlations/wick.fits.gz"
-        cmd += " --cf1d "   + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
+        cmd += " --out " + self._branchFiles+"/Products/Correlations/wick.fits.gz"
+        cmd += " --cf1d " + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
+        cmd += " --cf " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
