@@ -288,8 +288,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
     npairs_used = 0
     for p in pix:
         for d1 in data[p]:
+            print("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)),end="")
             with lock:
-                print("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)),end="")
                 counter.value += 1
 
             r = random.rand(len(d1.dneighs))

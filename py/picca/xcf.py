@@ -1,9 +1,11 @@
+from __future__ import print_function
 import sys
 import scipy as sp
 from healpy import query_disc
 from numba import jit
 
 from picca import constants
+from picca.utils import print
 
 np = None
 nt = None
@@ -59,9 +61,9 @@ def xcf(pix):
 
     for ipix in pix:
         for d in dels[ipix]:
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
             with lock:
                 counter.value +=1
-            sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
             if (d.qneighs.size != 0):
                 ang = d^d.qneighs
                 zqso = [q.zqso for q in d.qneighs]
@@ -135,7 +137,7 @@ def dmat(pix):
     npairs_used = 0
     for p in pix:
         for d1 in dels[p]:
-            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)))
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
             with lock:
                 counter.value += 1
             r1 = d1.r_comov
@@ -229,8 +231,8 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
     npairs_used = 0
     for p in pix:
         for d in dels[p]:
+            print("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)),end="")
             with lock:
-                sys.stderr.write("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)))
                 counter.value += 1
 
             r = sp.random.rand(len(d.qneighs))
@@ -327,9 +329,9 @@ def wickT(pix):
 
     for ipix in pix:
         for i1, d1 in enumerate(dels[ipix]):
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
             with lock:
                 counter.value += 1
-            sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
 
             if d1.qneighs.size==0: continue
 
