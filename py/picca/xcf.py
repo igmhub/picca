@@ -1,5 +1,4 @@
 from __future__ import print_function
-import sys
 import scipy as sp
 from healpy import query_disc
 from numba import jit
@@ -334,7 +333,7 @@ def wickT(pix):
         npairs_used += w.sum()
         if w.sum()==0: continue
 
-        for i1, d1 in enumerate([ td for ti,td in enumerate(dels[ipix]) if w[ti] ]):
+        for d1 in [ td for ti,td in enumerate(dels[ipix]) if w[ti] ]:
             print("\rcomputing xi: {}%".format(round(counter.value*100./ndels/(1.-rej),3)),end="")
             with lock:
                 counter.value += 1

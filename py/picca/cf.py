@@ -2,7 +2,6 @@ from __future__ import print_function
 import scipy as sp
 from healpy import query_disc
 from numba import jit
-from scipy import random
 
 from picca import constants
 from picca.utils import print
@@ -163,7 +162,7 @@ def dmat(pix):
             w1 = d1.we
             l1 = d1.ll
             z1 = d1.z
-            r = random.rand(len(d1.dneighs))
+            r = sp.random.rand(len(d1.dneighs))
             w=r>rej
             npairs += len(d1.dneighs)
             npairs_used += w.sum()
@@ -292,7 +291,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             with lock:
                 counter.value += 1
 
-            r = random.rand(len(d1.dneighs))
+            r = sp.random.rand(len(d1.dneighs))
             w=r>rej
             npairs += len(d1.dneighs)
             npairs_used += w.sum()
@@ -510,7 +509,7 @@ def wickT(pix):
         npairs_used += w.sum()
         if w.sum()==0: continue
 
-        for i1, d1 in enumerate([ td for ti,td in enumerate(data[ipix]) if w[ti] ]):
+        for d1 in [ td for ti,td in enumerate(data[ipix]) if w[ti] ]:
             print("\rcomputing xi: {}%".format(round(counter.value*100./ndata/(1.-rej),3)),end="")
             with lock:
                 counter.value += 1
