@@ -291,10 +291,8 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
-
-v1d = None
-c1d = None
-
+def v1d(): return
+def c1d(): return
 cfWick = None
 cfWick_np = None
 cfWick_nt = None
