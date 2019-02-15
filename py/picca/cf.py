@@ -489,6 +489,7 @@ c1d2 = None
 
 ## auto
 def wickT(pix):
+
     T1 = sp.zeros((np*nt,np*nt))
     T2 = sp.zeros((np*nt,np*nt))
     T3 = sp.zeros((np*nt,np*nt))
@@ -499,21 +500,28 @@ def wickT(pix):
     nb = sp.zeros(np*nt,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
+
     for ipix in pix:
-        for i1, d1 in enumerate(data[ipix]):
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)),end="")
+
+        r = sp.random.rand(len(data[ipix]))
+        w = r>rej
+        npairs += len(data[ipix])
+        npairs_used += w.sum()
+        if w.sum()==0: continue
+
+        for i1, d1 in enumerate([ td for ti,td in enumerate(data[ipix]) if w[ti] ]):
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata/(1.-rej),3)),end="")
             with lock:
                 counter.value += 1
+            if len(d1.dneighs)==0: continue
+
             v1 = v1d(d1.ll)
             w1 = d1.we
             c1d_1 = (w1*w1[:,None])*c1d(abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
-            r = sp.random.rand(len(d1.dneighs))
-            w = r>rej
-            npairs+=len(d1.dneighs)
-            npairs_used += w.sum()
-            for d2 in sp.array(d1.dneighs)[w]:
+
+            for d2 in d1.dneighs:
                 ang = d1^d2
 
                 same_half_plate = (d1.plate == d2.plate) and\
@@ -521,13 +529,13 @@ def wickT(pix):
                 v2 = v1d2(d2.ll)
                 w2 = d2.we
                 c1d_2 = (w2*w2[:,None])*c1d2(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
+                r2 = d2.r_comov
+                z2 = d2.z
 
-                fill_wickT123(r1,d2.r_comov,ang,w1,d2.we,z1,d2.z,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3)
-
-                if max_diagram<=3:
-                    continue
+                fill_wickT123(r1,r2,ang,w1,d2.we,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3)
 
                 ### Compute T4 and T5
+                if max_diagram<=3: continue
                 for d3 in d1.dneighs:
                     if d3 not in d2.dneighs:
                         continue
