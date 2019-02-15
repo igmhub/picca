@@ -482,6 +482,7 @@ def x_forest_cf1d(pix):
     return we1d,xi1d,nb1d
 
 max_diagram = None
+cfWick = None
 v1d = None
 c1d = None
 v1d2 = None
@@ -522,27 +523,39 @@ def wickT(pix):
             z1 = d1.z
 
             for d2 in d1.dneighs:
-                ang = d1^d2
+                ang12 = d1^d2
 
-                same_half_plate = (d1.plate == d2.plate) and\
-                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 v2 = v1d2(d2.ll)
                 w2 = d2.we
                 c1d_2 = (w2*w2[:,None])*c1d2(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
                 r2 = d2.r_comov
                 z2 = d2.z
 
-                fill_wickT123(r1,r2,ang,w1,d2.we,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3)
+                fill_wickT123(r1,r2,ang12,w1,d2.we,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3)
 
                 ### Compute T4 and T5
+                ### TODO: understand how things play out with the fact that a pair is only
+                ###     in one "dneighs"
+                ### TODO: understand how things play out when doing cross(d1,d2)
                 if max_diagram<=3: continue
                 for d3 in d1.dneighs:
                     if d3 not in d2.dneighs:
                         continue
+                    ang13 = d1^d3
+                    ang23 = d2^d3
+
+                    v3 = v1d(d3.ll)
+                    w3 = d3.we
+                    c1d_3 = (w3*w3[:,None])*c1d(abs(d3.ll-d3.ll[:,None]))*sp.sqrt(v3*v3[:,None])
+                    r3 = d3.r_comov
+                    z3 = d3.z
+
+                    fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3,
+                        z1,z2,z3, c1d_1,c1d_2,c1d_3, T4,T5)
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
-def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T2,T3):
+def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
 
     n1 = len(r1)
     n2 = len(r2)
@@ -565,10 +578,6 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T
     zw = zw1[:,None]*zw2
 
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
-
-    if remove_same_half_plate_close_pairs and same_half_plate:
-        w &= abs(rp)>(rp_max-rp_min)/np
-
     if w.sum()==0: return
 
     bins = bins[w]
@@ -602,5 +611,12 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T
                 prod = c1d_1[i1,i2]*c1d_2[j1,j2]
                 T3[p1,p2] += prod
                 T3[p2,p1] += prod
+
+    return
+@jit
+def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1d_3, T4,T5):
+    """
+
+    """
 
     return

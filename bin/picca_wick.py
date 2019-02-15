@@ -86,9 +86,6 @@ if __name__ == '__main__':
     parser.add_argument('--cf', type=str, default=None, required=False,
         help='3D auto-correlation of pixels from different forests: picca_cf.py')
 
-    parser.add_argument('--remove-same-half-plate-close-pairs', action='store_true', required=False,
-        help='Reject pairs in the first bin in r-parallel from same half plate')
-
     parser.add_argument('--unfold-cf', action='store_true', required=False,
         help='rp can be positive or negative depending on the relative position between absorber1 and absorber2')
 
@@ -125,7 +122,6 @@ if __name__ == '__main__':
     cf.alpha2 = args.z_evol
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     cf.rej = args.rej
-    cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
     cf.max_diagram = args.max_diagram
 
     cosmo = constants.cosmo(args.fid_Om)

@@ -475,6 +475,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     Returns:
 
     """
+
     ### Pair forest_1 - forest_3
     rp = sp.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
     rt = (r1+r3[:,None])*sp.sin(ang13/2.)
@@ -538,8 +539,8 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
             if wcorr==0.: continue
 
             if t1==t2:
-                T5[p1,p2] += wcorr + w1*w2*xcfWick[p1]*xcfWick[p2]
-                T5[p2,p1] += wcorr + w1*w2*xcfWick[p1]*xcfWick[p2]
+                T5[p1,p2] += wcorr
+                T5[p2,p1] += wcorr
             else:
                 T6[p1,p2] += wcorr
                 T6[p2,p1] += wcorr
