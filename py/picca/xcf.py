@@ -295,7 +295,6 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
 v1d = None
 c1d = None
-xcfWick = None
 
 cfWick = None
 cfWick_np = None
@@ -328,19 +327,18 @@ def wickT(pix):
     npairs_used = 0
 
     for ipix in pix:
-        for i1, d1 in enumerate(dels[ipix]):
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
+
+        npairs += len(dels[ipix])
+        r = sp.random.rand(len(dels[ipix]))
+        w = r>rej
+        npairs_used += w.sum()
+        if w.sum()==0: continue
+
+        for i1, d1 in enumerate([ td for ti,td in enumerate(dels[ipix]) if w[ti] ]):
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels/(1.-rej),3)),end="")
             with lock:
                 counter.value += 1
-
             if d1.qneighs.size==0: continue
-
-            npairs += d1.qneighs.size
-            r = sp.random.rand(d1.qneighs.size)
-            w = r>rej
-            npairs_used += w.sum()
-
-            if w.sum()==0: continue
 
             v1 = v1d(d1.ll)
             w1 = d1.we
@@ -348,7 +346,7 @@ def wickT(pix):
             r1 = d1.r_comov
             z1 = d1.z
 
-            neighs = d1.qneighs[w]
+            neighs = d1.qneighs
             ang = d1^neighs
             r2 = [q2.r_comov for q2 in neighs]
             z2 = sp.array([q2.zqso for q2 in neighs])
@@ -359,8 +357,8 @@ def wickT(pix):
             if cfWick is None:
                 continue
 
+            ### Higher order diagrams
             thid2 = [q2.thid for q2 in neighs]
-
             for d3 in sp.array(d1.dneighs):
                 if d3.qneighs.size==0: continue
 
@@ -419,9 +417,6 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
-    ba[~w] = 0
-    txcfWick = xcfWick[ba]
-    txcfWick[~w] = 0.
 
     ba = ba[w]
     we = we[w]
@@ -435,22 +430,22 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
         q1 = idxQso[k1]
         wAll[p1] += we[k1]
         nb[p1] += 1
-        T1[p1,p1] += (we[k1]**2)/we1[k1]*zw1[i1] + (we[k1]*xcfWick[p1])**2
+        T1[p1,p1] += (we[k1]**2)/we1[k1]*zw1[i1]
 
         for k2 in range(k1+1,ba.size):
             p2 = ba[k2]
             i2 = idxPix[k2]
             q2 = idxQso[k2]
             if q1==q2:
-                wcorr = c1d_1[i1,i2]*(zw2[q1]**2) + we[k1]*we[k2]*xcfWick[p1]*xcfWick[p2]
+                wcorr = c1d_1[i1,i2]*(zw2[q1]**2)
                 T2[p1,p2] += wcorr
                 T2[p2,p1] += wcorr
             elif i1==i2:
-                wcorr = (we[k1]*we[k2])/we1[k1]*zw1[i1] + we[k1]*we[k2]*xcfWick[p1]*xcfWick[p2]
+                wcorr = (we[k1]*we[k2])/we1[k1]*zw1[i1]
                 T3[p1,p2] += wcorr
                 T3[p2,p1] += wcorr
             else:
-                wcorr = c1d_1[i1,i2]*zw2[q1]*zw2[q2] + we[k1]*we[k2]*txcfWick[i1,q2]*txcfWick[i2,q1]
+                wcorr = c1d_1[i1,i2]*zw2[q1]*zw2[q2]
                 T4[p1,p2] += wcorr
                 T4[p2,p1] += wcorr
 

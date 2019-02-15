@@ -486,7 +486,6 @@ v1d = None
 c1d = None
 v1d2 = None
 c1d2 = None
-cfWick = None
 
 ## auto
 def wickT(pix):
@@ -563,8 +562,6 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T
         w &= abs(rp)>(rp_max-rp_min)/np
 
     if w.sum()==0: return
-    tcfWick = sp.zeros(ba.shape)
-    tcfWick[w] = cfWick[ba[w]]
 
     bins = bins[w]
     ba = ba[w]
@@ -579,22 +576,22 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,same_half_plate,wAll,nb,T1,T
         j1 = (bins[k1]-i1)//n1
         wAll[p1] += we[k1]
         nb[p1] += 1
-        T1[p1,p1] += we[k1]*zw[k1] + (we[k1]*cfWick[p1])**2
+        T1[p1,p1] += we[k1]*zw[k1]
 
         for k2 in range(k1+1,ba.size):
             p2 = ba[k2]
             i2 = bins[k2]%n1
             j2 = (bins[k2]-i2)//n1
             if i1==i2:
-                prod = c1d_2[j1,j2]*we1[k1]*zw1[i1] + we[k1]*we[k2]*cfWick[p1]*cfWick[p2]
+                prod = c1d_2[j1,j2]*we1[k1]*zw1[i1]
                 T2[p1,p2] += prod
                 T2[p2,p1] += prod
             elif j1==j2:
-                prod = c1d_1[i1,i2]*we2[k2]*zw2[j1] + we[k1]*we[k2]*cfWick[p1]*cfWick[p2]
+                prod = c1d_1[i1,i2]*we2[k2]*zw2[j1]
                 T2[p1,p2] += prod
                 T2[p2,p1] += prod
             else:
-                prod = c1d_1[i1,i2]*c1d_2[j1,j2] + we[k1]*we[k2]*tcfWick[i1,j2]*tcfWick[i2,j1]
+                prod = c1d_1[i1,i2]*c1d_2[j1,j2]
                 T3[p1,p2] += prod
                 T3[p2,p1] += prod
 

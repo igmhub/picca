@@ -89,9 +89,6 @@ if __name__ == '__main__':
     parser.add_argument('--cf1d', type=str, required=True,
         help='1D auto-correlation of pixels from the same forest file: do_cf1d.py')
 
-    parser.add_argument('--xcf', type=str, required=True,
-        help='3D cross-correlation of pixels with objects: picca_xcf.py')
-
     parser.add_argument('--cf', type=str, default=None, required=False,
         help='3D auto-correlation of pixels from different forests: picca_cf.py')
 
@@ -181,23 +178,6 @@ if __name__ == '__main__':
     nb1d   = h[1]['nb1d'][:]
     xcf.c1d = h[1]['c1d'][:]
     xcf.c1d = interp1d((ll-llmin)[nb1d>0],xcf.c1d[nb1d>0],kind='nearest',fill_value='extrapolate')
-    h.close()
-
-    ### Load xcf
-    h = fitsio.FITS(args.xcf)
-    head = h[1].read_header()
-    assert xcf.np == head['NP']
-    assert xcf.nt == head['NT']
-    assert xcf.rp_min == head['RPMIN']
-    assert xcf.rp_max == head['RPMAX']
-    assert xcf.rt_max == head['RTMAX']
-    da = h[2]['DA'][:]
-    we = h[2]['WE'][:]
-    da = (da*we).sum(axis=0)
-    we = we.sum(axis=0)
-    w = we>0.
-    da[w] /= we[w]
-    xcf.xcfWick = da.copy()
     h.close()
 
     ### Load cf
