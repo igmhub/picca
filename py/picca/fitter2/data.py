@@ -193,7 +193,7 @@ class data:
 
                 for k in ['scale-sky','sigma-sky']:
                     if not name+'-'+k in dic_init['parameters']['values']:
-                        dic_init['parameters']['values'][name+'-'+k] = 0.
+                        dic_init['parameters']['values'][name+'-'+k] = 1.
                         dic_init['parameters']['errors']['error_'+name+'-'+k] = 0.01
 
                 bb = partial( getattr(xi, dic_bb['func']),
