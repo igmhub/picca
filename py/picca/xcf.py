@@ -293,6 +293,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
 v1d = None
 c1d = None
+max_diagram = None
 cfWick = None
 cfWick_np = None
 cfWick_nt = None
@@ -344,15 +345,15 @@ def wickT(pix):
             z1 = d1.z
 
             neighs = d1.qneighs
-            ang = d1^neighs
+            ang12 = d1^neighs
             r2 = [q2.r_comov for q2 in neighs]
             z2 = sp.array([q2.zqso for q2 in neighs])
             w2 = [q2.we for q2 in neighs]
 
-            fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
+            fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
 
             ### Higher order diagrams
-            if cfWick is None: continue
+            if (cfWick is None) or (max_diagram<=4): continue
             thid2 = [q2.thid for q2 in neighs]
             for d3 in sp.array(d1.dneighs):
                 if d3.qneighs.size==0: continue
@@ -368,7 +369,7 @@ def wickT(pix):
                 w4 = [q4.we for q4 in neighs]
                 thid4 = [q4.thid for q4 in neighs]
 
-                fill_wickT56(ang,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6)
+                fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6)
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
@@ -522,7 +523,23 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     bt = (rt/rt_max*nt).astype(int)
     ba34 = bt + nt*bp
 
-    ### Fill
+    ### T5
+    for k1, p1 in enumerate(ba12):
+        pix1 = pix12[k1]
+        t1 = thid12[k1]
+        w1 = we12[k1]
+
+        w = thid34==t1
+        for k2, p2 in enumerate(ba34[w]):
+            pix2 = pix34[w][k2]
+            t2 = thid34[w][k2]
+            w2 = we34[w][k2]
+            wcorr = cf13[pix2,pix1]*w1*w2
+            T5[p1,p2] += wcorr
+            T5[p2,p1] += wcorr
+
+    ### T6
+    if max_diagram==5: continue
     for k1, p1 in enumerate(ba12):
         pix1 = pix12[k1]
         t1 = thid12[k1]
@@ -533,14 +550,9 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
             t2 = thid34[k2]
             w2 = we34[k2]
             wcorr = cf13[pix2,pix1]*w1*w2
-            if wcorr==0.: continue
-
-            if t1==t2:
-                T5[p1,p2] += wcorr
-                T5[p2,p1] += wcorr
-            else:
-                T6[p1,p2] += wcorr
-                T6[p2,p1] += wcorr
+            if t2==t1: continue
+            T6[p1,p2] += wcorr
+            T6[p2,p1] += wcorr
 
     return
 def xcf1d(pix):
