@@ -480,10 +480,10 @@ def x_forest_cf1d(pix):
     xi1d[w]/=we1d[w]
     return we1d,xi1d,nb1d
 
-def v1d(): return
-def c1d(): return
-def v1d2(): return
-def c1d2(): return
+v1d = None
+c1d = None
+v1d2 = None
+c1d2 = None
 max_diagram = None
 cfWick = None
 
