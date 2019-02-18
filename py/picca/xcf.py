@@ -346,15 +346,15 @@ def wickT(pix):
 
             neighs = d1.qneighs
             ang12 = d1^neighs
-            r2 = [q2.r_comov for q2 in neighs]
+            r2 = sp.array([q2.r_comov for q2 in neighs])
             z2 = sp.array([q2.zqso for q2 in neighs])
-            w2 = [q2.we for q2 in neighs]
+            w2 = sp.array([q2.we for q2 in neighs])
 
             fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
 
             ### Higher order diagrams
             if (cfWick is None) or (max_diagram<=4): continue
-            thid2 = [q2.thid for q2 in neighs]
+            thid2 = sp.array([q2.thid for q2 in neighs])
             for d3 in sp.array(d1.dneighs):
                 if d3.qneighs.size==0: continue
 
@@ -365,11 +365,26 @@ def wickT(pix):
 
                 neighs = d3.qneighs
                 ang34 = d3^neighs
-                r4 = [q4.r_comov for q4 in neighs]
-                w4 = [q4.we for q4 in neighs]
-                thid4 = [q4.thid for q4 in neighs]
+                r4 = sp.array([q4.r_comov for q4 in neighs])
+                w4 = sp.array([q4.we for q4 in neighs])
+                thid4 = sp.array([q4.thid for q4 in neighs])
 
-                fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6)
+                if max_diagram==5:
+                    w = sp.in1d(d1.qneighs,d3.qneighs)
+                    if w.sum()==0: continue
+                    t_ang12 = ang12[w]
+                    t_r2 = r2[w]
+                    t_w2 = w2[w]
+                    t_thid2 = thid2[w]
+
+                    w = sp.in1d(d3.qneighs,d1.qneighs)
+                    if w.sum()==0: continue
+                    ang34 = ang34[w]
+                    r4 = r4[w]
+                    w4 = w4[w]
+                    thid4 = thid4[w]
+
+                fill_wickT56(t_ang12,ang34,ang13,r1,t_r2,r3,r4,w1,t_w2,w3,w4,t_thid2,thid4,T5,T6)
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
@@ -539,7 +554,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
             T5[p2,p1] += wcorr
 
     ### T6
-    if max_diagram==5: continue
+    if max_diagram==5: return
     for k1, p1 in enumerate(ba12):
         pix1 = pix12[k1]
         t1 = thid12[k1]
