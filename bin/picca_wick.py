@@ -130,6 +130,7 @@ if __name__ == '__main__':
     data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.zref, cosmo, nspec=args.nspec)
     for p,datap in data.items():
         for d in datap:
+            d.fname = 'D1'
             for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','dll']:
                 setattr(d,k,None)
     cf.npix = len(data)
@@ -145,16 +146,14 @@ if __name__ == '__main__':
     llmin = head['LLMIN']
     llmax = head['LLMAX']
     dll = head['DLL']
-    nv1d   = h[1]['nv1d'][:]
-    cf.v1d = h[1]['v1d'][:]
-    ll = llmin + dll*sp.arange(len(cf.v1d))
-    cf.v1d = interp1d(ll[nv1d>0],cf.v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
+    nv1d = h[1]['nv1d'][:]
+    v1d = h[1]['v1d'][:]
+    ll = llmin + dll*sp.arange(len(v1d))
+    cf.v1d['D1'] = interp1d(ll[nv1d>0],v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
 
-    nb1d   = h[1]['nb1d'][:]
-    cf.c1d = h[1]['c1d'][:]
-    cf.c1d = interp1d((ll-llmin)[nb1d>0],cf.c1d[nb1d>0],kind='nearest',fill_value='extrapolate')
-    cf.v1d2 = cf.v1d
-    cf.c1d2 = cf.c1d
+    nb1d = h[1]['nb1d'][:]
+    c1d = h[1]['c1d'][:]
+    cf.c1d['D1'] = interp1d((ll-llmin)[nb1d>0],c1d[nb1d>0],kind='nearest',fill_value='extrapolate')
     h.close()
 
     ### Load cf
@@ -191,6 +190,7 @@ if __name__ == '__main__':
         data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, nspec=args.nspec)
         for p,datap in data2.items():
             for d in datap:
+                d.fname = 'D2'
                 for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','dll']:
                     setattr(d,k,None)
         cf.data2 = data2
@@ -205,14 +205,14 @@ if __name__ == '__main__':
         llmin = head['LLMIN']
         llmax = head['LLMAX']
         dll = head['DLL']
-        nv1d   = h[1]['nv1d'][:]
-        cf.v1d2 = h[1]['v1d'][:]
-        ll = llmin + dll*sp.arange(len(cf.v1d2))
-        cf.v1d2 = interp1d(ll[nv1d>0],cf.v1d2[nv1d>0],kind='nearest',fill_value='extrapolate')
+        nv1d = h[1]['nv1d'][:]
+        v1d = h[1]['v1d'][:]
+        ll = llmin + dll*sp.arange(len(v1d))
+        cf.v1d['D2'] = interp1d(ll[nv1d>0],v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
 
-        nb1d   = h[1]['nb1d'][:]
-        cf.c1d2 = h[1]['c1d'][:]
-        cf.c1d2 = interp1d((ll-llmin)[nb1d>0],cf.c1d2[nb1d>0],kind='nearest',fill_value='extrapolate')
+        nb1d = h[1]['nb1d'][:]
+        c1d = h[1]['c1d'][:]
+        cf.c1d['D2'] = interp1d((ll-llmin)[nb1d>0],c1d[nb1d>0],kind='nearest',fill_value='extrapolate')
         h.close()
 
 

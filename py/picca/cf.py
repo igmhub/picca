@@ -480,10 +480,8 @@ def x_forest_cf1d(pix):
     xi1d[w]/=we1d[w]
     return we1d,xi1d,nb1d
 
-v1d = None
-c1d = None
-v1d2 = None
-c1d2 = None
+v1d = {}
+c1d = {}
 max_diagram = None
 cfWick = None
 
@@ -515,18 +513,18 @@ def wickT(pix):
                 counter.value += 1
             if len(d1.dneighs)==0: continue
 
-            v1 = v1d(d1.ll)
+            v1 = v1d[d1.fname](d1.ll)
             w1 = d1.we
-            c1d_1 = (w1*w1[:,None])*c1d(abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
+            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
 
             for d2 in d1.dneighs:
                 ang12 = d1^d2
 
-                v2 = v1d2(d2.ll)
+                v2 = v1d[d2.fname](d2.ll)
                 w2 = d2.we
-                c1d_2 = (w2*w2[:,None])*c1d2(abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
+                c1d_2 = (w2*w2[:,None])*c1d[d2.fname](abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
                 r2 = d2.r_comov
                 z2 = d2.z
 
@@ -543,9 +541,9 @@ def wickT(pix):
                     ang13 = d1^d3
                     ang23 = d2^d3
 
-                    v3 = v1d(d3.ll)
+                    v3 = v1d[d3.fname](d3.ll)
                     w3 = d3.we
-                    c1d_3 = (w3*w3[:,None])*c1d(abs(d3.ll-d3.ll[:,None]))*sp.sqrt(v3*v3[:,None])
+                    c1d_3 = (w3*w3[:,None])*c1d[d3.fname](abs(d3.ll-d3.ll[:,None]))*sp.sqrt(v3*v3[:,None])
                     r3 = d3.r_comov
                     z3 = d3.z
 
