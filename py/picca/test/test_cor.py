@@ -356,7 +356,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/delta_attributes.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_LYA/Log/delta_attributes.fits.gz"
-            self.compare_fits(path1,path2,"do_deltas.py")
+            self.compare_fits(path1,path2,"picca_deltas.py")
 
         return
 
@@ -384,15 +384,15 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/test_Pk1D/delta_attributes_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
-            self.compare_fits(path1,path2,"do_deltas.py")
+            self.compare_fits(path1,path2,"picca_deltas.py")
 
             path1 = self._masterFiles + "/test_Pk1D/delta-64_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-64.fits.gz"
-            self.compare_fits(path1,path2,"do_deltas.py")
+            self.compare_fits(path1,path2,"picca_deltas.py")
 
             path1 = self._masterFiles + "/test_Pk1D/delta-80_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-80.fits.gz"
-            self.compare_fits(path1,path2,"do_deltas.py")
+            self.compare_fits(path1,path2,"picca_deltas.py")
 
         return
 
@@ -409,7 +409,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/test_Pk1D/Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Pk1D/Pk1D-0.fits.gz"
-            self.compare_fits(path1,path2,"do_Pk1D.py")
+            self.compare_fits(path1,path2,"picca_Pk1D.py")
 
         return
 
@@ -428,7 +428,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/cf1d.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf1d.fits.gz"
-            self.compare_fits(path1,path2,"do_cf1d.py")
+            self.compare_fits(path1,path2,"picca_cf1d.py")
 
         return
     def send_cf1d_cross(self):
@@ -446,7 +446,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/cf1d_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf1d_cross.fits.gz"
-            self.compare_fits(path1,path2,"do_cf1d.py")
+            self.compare_fits(path1,path2,"picca_cf1d.py")
 
         return
     def send_cf_angl(self):
@@ -463,7 +463,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/cf_angl.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf_angl.fits.gz"
-            self.compare_fits(path1,path2,"do_cf_angl.py")
+            self.compare_fits(path1,path2,"picca_cf_angl.py")
 
         return
     def send_cf(self):
@@ -486,7 +486,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/cf.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf.fits.gz"
-            self.compare_fits(path1,path2,"do_cf.py")
+            self.compare_fits(path1,path2,"picca_cf.py")
 
         return
     def send_dmat(self):
@@ -510,7 +510,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/dmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/dmat.fits.gz"
-            self.compare_fits(path1,path2,"do_dmat.py")
+            self.compare_fits(path1,path2,"picca_dmat.py")
 
         return
     def send_metal_dmat(self):
@@ -535,7 +535,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/metal_dmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
-            self.compare_fits(path1,path2,"do_metal_dmat.py")
+            self.compare_fits(path1,path2,"picca_metal_dmat.py")
 
         return
     def send_export_cf(self):
@@ -571,7 +571,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/cf_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf_cross.fits.gz"
-            self.compare_fits(path1,path2,"do_cf.py")
+            self.compare_fits(path1,path2,"picca_cf.py")
 
         return
     def send_dmat_cross(self):
@@ -597,7 +597,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/dmat_cross.fits.gz"
-            self.compare_fits(path1,path2,"do_dmat.py")
+            self.compare_fits(path1,path2,"picca_dmat.py")
 
         return
     def send_metal_dmat_cross(self):
@@ -625,7 +625,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/metal_dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
-            self.compare_fits(path1,path2,"do_metal_dmat.py")
+            self.compare_fits(path1,path2,"picca_metal_dmat.py")
 
         return
     def send_export_cf_cross(self):
@@ -654,7 +654,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/xcf_angl.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
-            self.compare_fits(path1,path2,"do_xcf_angl.py")
+            self.compare_fits(path1,path2,"picca_xcf_angl.py")
 
         return
     def send_xcf(self):
@@ -677,7 +677,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/xcf.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xcf.fits.gz"
-            self.compare_fits(path1,path2,"do_xcf.py")
+            self.compare_fits(path1,path2,"picca_xcf.py")
 
         return
     def send_xdmat(self):
@@ -701,7 +701,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/xdmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xdmat.fits.gz"
-            self.compare_fits(path1,path2,"do_xdmat.py")
+            self.compare_fits(path1,path2,"picca_xdmat.py")
 
         return
     def send_metal_xdmat(self):
@@ -726,7 +726,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/metal_xdmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
-            self.compare_fits(path1,path2,"do_metal_xdmat.py")
+            self.compare_fits(path1,path2,"picca_metal_xdmat.py")
 
         return
     def send_export_xcf(self):
@@ -809,19 +809,19 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/co_DD.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/co_DD.fits.gz"
-            self.compare_fits(path1,path2,"do_co.py DD")
+            self.compare_fits(path1,path2,"picca_co.py DD")
 
             path1 = self._masterFiles + "/co_RR.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RR.fits.gz"
-            self.compare_fits(path1,path2,"do_co.py RR")
+            self.compare_fits(path1,path2,"picca_co.py RR")
 
             path1 = self._masterFiles + "/co_DR.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_DR.fits.gz"
-            self.compare_fits(path1,path2,"do_co.py DR")
+            self.compare_fits(path1,path2,"picca_co.py DR")
 
             path1 = self._masterFiles + "/co_RD.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RD.fits.gz"
-            self.compare_fits(path1,path2,"do_co.py RD")
+            self.compare_fits(path1,path2,"picca_co.py RD")
 
         return
     def send_export_co(self):
@@ -886,7 +886,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles+'/result_fitter2.h5'
             path2 = self._branchFiles+'/Products/Correlations/Fit/result_fitter2.h5'
-            self.compare_h5py(path1,path2,"fitter2")
+            self.compare_h5py(path1,path2,"picca_fitter2")
 
 if __name__ == '__main__':
     unittest.main()
