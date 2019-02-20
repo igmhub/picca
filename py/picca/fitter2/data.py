@@ -349,10 +349,13 @@ class data:
         xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
 
         pars['SB'] = True
+        sigmaNL_par = pars['sigmaNL_par']
         sigmaNL_per = pars['sigmaNL_per']
-        pars['sigmaNL_per'] = 0
+        pars['sigmaNL_par'] = 0.
+        pars['sigmaNL_per'] = 0.
         xi_sb = self.xi_model(k, pksb_lin, pars)
         pars['SB'] = False
+        pars['sigmaNL_par'] = sigmaNL_par
         pars['sigmaNL_per'] = sigmaNL_per
 
         xi_full = pars['bao_amp']*xi_peak + xi_sb

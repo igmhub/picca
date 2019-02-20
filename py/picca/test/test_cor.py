@@ -256,7 +256,7 @@ class TestCor(unittest.TestCase):
     def compare_h5py(self,path1,path2,nameRun=""):
 
         def compare_attributes(atts1,atts2):
-            self.assertListEqual(sorted(list(atts1.keys())),sorted(list(atts2.keys())),"{}".format(nameRun))
+            self.assertListEqual(sorted(atts1.keys()),sorted(atts2.keys()),"{}".format(nameRun))
             for item in atts1:
                 nequal = True
                 if isinstance(atts1[item],numpy.ndarray):
@@ -281,7 +281,7 @@ class TestCor(unittest.TestCase):
         self.assertTrue(os.path.isfile(path2),"{}".format(nameRun))
         b = h5py.File(path2,"r")
 
-        self.assertListEqual(sorted(list(m.keys())),sorted(list(b.keys())),"{}".format(nameRun))
+        self.assertListEqual(sorted(m.keys()),sorted(b.keys()),"{}".format(nameRun))
 
         ### best fit
         k = 'best fit'
