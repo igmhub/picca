@@ -73,72 +73,73 @@ def read_absorbers(file_absorbers):
     return absorbers
 
 def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
-    vac = fitsio.FITS(drq)
+    h = fitsio.FITS(drq)
 
     ## Redshift
     try:
-        zqso = vac[1]["Z"][:]
+        zqso = h[1]['Z'][:]
     except:
         print("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
-        zqso = vac[1]["Z_VI"][:]
+        zqso = h[1]['Z_VI'][:]
 
     ## Info of the primary observation
-    thid  = vac[1]["THING_ID"][:]
-    ra    = vac[1]["RA"][:].astype('float64')
-    dec   = vac[1]["DEC"][:].astype('float64')
-    plate = vac[1]["PLATE"][:]
-    mjd   = vac[1]["MJD"][:]
-    fid   = vac[1]["FIBERID"][:]
+    thid = h[1]['THING_ID'][:]
+    ra = h[1]['RA'][:].astype('float64')
+    dec = h[1]['DEC'][:].astype('float64')
+    plate = h[1]['PLATE'][:]
+    mjd = h[1]['MJD'][:]
+    fid = h[1]['FIBERID'][:]
 
-    print("")
     ## Sanity
-    print(" start               : nb object in cat = {}".format(ra.size) )
-    w = (thid>0)
-    print(" and thid>0          : nb object in cat = {}".format(ra[w].size) )
-    w = w & (ra!=dec)
-    print(" and ra!=dec         : nb object in cat = {}".format(ra[w].size) )
-    w = w & (ra!=0.)
-    print(" and ra!=0.          : nb object in cat = {}".format(ra[w].size) )
-    w = w & (dec!=0.)
-    print(" and dec!=0.         : nb object in cat = {}".format(ra[w].size) )
-    w = w & (zqso>0.)
-    print(" and z>0.            : nb object in cat = {}".format(ra[w].size) )
+    print('')
+    w = sp.ones(ra.size,dtype=bool)
+    print(" start               : nb object in cat = {}".format(w.sum()) )
+    w &= thid>0
+    print(" and thid>0          : nb object in cat = {}".format(w.sum()) )
+    w &= ra!=dec
+    print(" and ra!=dec         : nb object in cat = {}".format(w.sum()) )
+    w &= ra!=0.
+    print(" and ra!=0.          : nb object in cat = {}".format(w.sum()) )
+    w &= dec!=0.
+    print(" and dec!=0.         : nb object in cat = {}".format(w.sum()) )
+    w &= zqso>0.
+    print(" and z>0.            : nb object in cat = {}".format(w.sum()) )
 
     ## Redshift range
     if not zmin is None:
-        w &= zqso>zmin
-        print(" and z>zmin          : nb object in cat = {}".format(ra[w].size) )
+        w &= zqso>=zmin
+        print(" and z>=zmin         : nb object in cat = {}".format(w.sum()) )
     if not zmax is None:
         w &= zqso<zmax
-        print(" and z<zmax          : nb object in cat = {}".format(ra[w].size) )
+        print(" and z<zmax          : nb object in cat = {}".format(w.sum()) )
 
     ## BAL visual
     if not keep_bal and bi_max==None:
         try:
-            bal_flag = vac[1]["BAL_FLAG_VI"][:]
-            w = w & (bal_flag==0)
+            bal_flag = h[1]['BAL_FLAG_VI'][:]
+            w &= bal_flag==0
             print(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
         except:
             print("BAL_FLAG_VI not found\n")
     ## BAL CIV
     if bi_max is not None:
         try:
-            bi = vac[1]["BI_CIV"][:]
-            w = w & (bi<=bi_max)
+            bi = h[1]['BI_CIV'][:]
+            w &= bi<=bi_max
             print(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
         except:
-            print("--bi-max set but no BI_CIV field in vac")
+            print("--bi-max set but no BI_CIV field in h")
             sys.exit(1)
     print("")
 
-    ra    = ra[w]*sp.pi/180.
-    dec   = dec[w]*sp.pi/180.
-    zqso  = zqso[w]
-    thid  = thid[w]
+    ra = ra[w]*sp.pi/180.
+    dec = dec[w]*sp.pi/180.
+    zqso = zqso[w]
+    thid = thid[w]
     plate = plate[w]
-    mjd   = mjd[w]
-    fid   = fid[w]
-    vac.close()
+    mjd = mjd[w]
+    fid = fid[w]
+    h.close()
 
     return ra,dec,zqso,thid,plate,mjd,fid
 

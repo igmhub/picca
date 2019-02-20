@@ -21,8 +21,8 @@ class pk:
 def pk_NL(k, pk_lin, tracer1, tracer2, **kwargs):
     kp = k*muk
     kt = k*sp.sqrt(1-muk**2)
-    st2 = kwargs["sigmaNL_per"]**2
-    sp2 = st2*kwargs['1+f']**2
+    st2 = kwargs['sigmaNL_per']**2
+    sp2 = kwargs['sigmaNL_par']**2
     return sp.exp(-(kp**2*sp2+kt**2*st2)/2)
 
 def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):

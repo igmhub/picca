@@ -280,8 +280,8 @@ def do_ini(outdir, cf_file,fidPk):
 
     fout.write("growth_rate = 0.962524 0.1 None None fixed\n")
 
+    fout.write("sigmaNL_par = 6.36984 0.1 None None fixed\n")
     fout.write("sigmaNL_per = 3.24 0.1 None None fixed\n")
-    fout.write("1+f = 1.966 0.1 None None fixed\n")
 
     fout.write("par binsize {} = 4. 0.4 None None free\n".format(cf_file.replace(".fits","")))
     fout.write("per binsize {} = 4. 0.4 None None free\n".format(cf_file.replace(".fits","")))
