@@ -92,6 +92,16 @@ class data:
         self.co = co
         ico = co[:,mask]
         ico = ico[mask,:]
+        try:
+            sp.linalg.cholesky(co)
+            print('LOG: Full matrix is positive definite')
+        except sp.linalg.LinAlgError:
+            print('WARNING: Full matrix is not positive definite')
+        try:
+            sp.linalg.cholesky(ico)
+            print('LOG: Reduced matrix is positive definite')
+        except sp.linalg.LinAlgError:
+            print('WARNING: Reduced matrix is not positive definite')
         self.ico = linalg.inv(ico)
         self.dm = dm
 
