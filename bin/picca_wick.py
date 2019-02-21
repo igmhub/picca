@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
     ### Load cf
     dic_cf = { 'D1_D1':args.cf, 'D2_D2':args.cf2, 'D1_D2':args.cf12, 'D2_D1':args.cf12 }
-    for n,p in dic_cf.keys():
+    for n,p in dic_cf.items():
         if p is None:
             continue
         h = fitsio.FITS(p)
