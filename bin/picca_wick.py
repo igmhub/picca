@@ -86,6 +86,12 @@ if __name__ == '__main__':
     parser.add_argument('--cf', type=str, default=None, required=False,
         help='3D auto-correlation of pixels from different forests: picca_cf.py')
 
+    parser.add_argument('--cf2', type=str, default=None, required=False,
+        help='3D auto-correlation of pixels from different forests for 2nd catalog: picca_cf.py')
+
+    parser.add_argument('--cf12', type=str, default=None, required=False,
+        help='3D auto-correlation of pixels from different forests for cross 1st and 2nd catalog: picca_cf.py')
+
     parser.add_argument('--unfold-cf', action='store_true', required=False,
         help='rp can be positive or negative depending on the relative position between absorber1 and absorber2')
 
@@ -157,8 +163,11 @@ if __name__ == '__main__':
     h.close()
 
     ### Load cf
-    if not args.cf is None:
-        h = fitsio.FITS(args.cf)
+    dic_cf = { 'D1_D1':args.cf, 'D2_D2':args.cf2, 'D1_D2':args.cf12, 'D2_D1':args.cf12 }
+    for n,p in dic_cf.keys():
+        if p is None:
+            continue
+        h = fitsio.FITS(p)
         head = h[1].read_header()
         assert cf.np == head['NP']
         assert cf.nt == head['NT']
@@ -171,7 +180,7 @@ if __name__ == '__main__':
         we = we.sum(axis=0)
         w = we>0.
         da[w] /= we[w]
-        cf.cfWick = da.copy()
+        cf.cfWick[n] = da.copy()
         h.close()
 
     ### Read data 2

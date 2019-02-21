@@ -483,7 +483,7 @@ def x_forest_cf1d(pix):
 v1d = {}
 c1d = {}
 max_diagram = None
-cfWick = None
+cfWick = {}
 
 ## auto
 def wickT(pix):
