@@ -811,6 +811,11 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         if not nspec is None:
             if ndata>nspec:break
 
+    ###
+    if not nspec is None:
+        dels = dels[:nspec]
+        ndata = len(dels)
+
     print("\n")
 
     phi = [d.ra for d in dels]
