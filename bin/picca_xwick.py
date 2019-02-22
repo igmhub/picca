@@ -227,7 +227,7 @@ if __name__ == '__main__':
         if not xcf.cfWick is None:
             cf.fill_neighs(p)
 
-    pool = Pool(processes=args.nproc)
+    pool = Pool(processes=min(args.nproc,len(cpu_data.values())))
     print(" \nStarting\n")
     wickT = pool.map(calc_wickT,sorted(cpu_data.values()))
     print(" \nFinished\n")
