@@ -73,7 +73,7 @@ def picca_deltas(b,time, in_dir, out_dir, drq,
     if not lambda_rest_max is None:
         header += " --lambda-rest-max {}".format(lambda_rest_max)
     if debug:
-        header += "--nspec 10000"
+        header += " --nspec 10000"
 
     header += "\n"
     b.picca_deltas = "picca_deltas.batch"
