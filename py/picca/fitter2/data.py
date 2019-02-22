@@ -41,7 +41,7 @@ class data:
             dmrp = h[2]['DMRP'][:]
             dmrt = h[2]['DMRT'][:]
             dmz = h[2]['DMZ'][:]
-        except IOError:
+        except (IOError, ValueError):
             dmrp = rp.copy()
             dmrt = rt.copy()
             dmz = z.copy()
