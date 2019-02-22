@@ -621,6 +621,8 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     if not x_correlation:
         rp = sp.absolute(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
+    pix1_12 = (sp.arange(r1.size)[:,None]*sp.ones(r2.size)).astype(int)
+    pix2_12 = (sp.ones(r1.size)[:,None]*sp.arange(r2.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
@@ -630,11 +632,17 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     cf12 = cfWick['{}_{}'.format(fname1,fname2)][ba12]
     cf12[~w] = 0.
 
+    ba12 = ba12[w]
+    pix1_12 = pix1_12[w]
+    pix2_12 = pix2_12[w]
+
     ### forest-1 x forest-3
     rp = (r1[:,None]-r3)*sp.cos(ang13/2.)
     if not x_correlation:
         rp = sp.absolute(rp)
     rt = (r1[:,None]+r3)*sp.sin(ang13/2.)
+    pix1_13 = (sp.arange(r1.size)[:,None]*sp.ones(r3.size)).astype(int)
+    pix3_13 = (sp.ones(r1.size)[:,None]*sp.arange(r3.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
@@ -644,11 +652,17 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     cf13 = cfWick['{}_{}'.format(fname1,fname3)][ba13]
     cf13[~w] = 0.
 
+    ba13 = ba13[w]
+    pix1_13 = pix1_13[w]
+    pix3_13 = pix3_13[w]
+
     ### forest-2 x forest-3
     rp = (r2[:,None]-r3)*sp.cos(ang23/2.)
     if not x_correlation:
         rp = sp.absolute(rp)
-    rt = (r2[:,None]+r2)*sp.sin(ang23/2.)
+    rt = (r2[:,None]+r3)*sp.sin(ang23/2.)
+    pix2_23 = (sp.arange(r2.size)[:,None]*sp.ones(r3.size)).astype(int)
+    pix3_23 = (sp.ones(r2.size)[:,None]*sp.arange(r3.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
@@ -658,7 +672,27 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     cf23 = cfWick['{}_{}'.format(fname2,fname3)][ba23]
     cf23[~w] = 0.
 
-    ### Wick
+    ba23 = ba23[w]
+    pix2_23 = pix2_23[w]
+    pix3_23 = pix3_23[w]
 
+    ### Wick T4 and T5
+    for k1,p1 in enumerate(ba12):
+        tpix1_12 = pix1_12[k1]
+        tpix2_12 = pix2_12[k1]
+
+        for k2,p2 in enumerate(ba13):
+            tpix1_13 = pix1_13[k2]
+            tpix3_13 = pix3_13[k2]
+
+            tcf23 = cf23[tpix2_12,tpix3_13]
+            if tpix1_12==tpix1_13:
+                wcorr = w1[tpix1_12]*tcf23 ### TODO work on the good formula
+                T4[p1,p2] += wcorr
+                T4[p2,p1] += wcorr
+            else:
+                wcorr = c1d_1[tpix1_12,tpix1_13]*tcf23 ### TODO work on the good formula
+                T5[p1,p2] += wcorr
+                T5[p2,p1] += wcorr
 
     return
