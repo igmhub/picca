@@ -291,8 +291,8 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
-v1d = None
-c1d = None
+v1d = {}
+c1d = {}
 max_diagram = None
 cfWick = None
 cfWick_np = None
@@ -338,9 +338,9 @@ def wickT(pix):
                 counter.value += 1
             if d1.qneighs.size==0: continue
 
-            v1 = v1d(d1.ll)
+            v1 = v1d[d1.fname](d1.ll)
             w1 = d1.we
-            c1d_1 = (w1*w1[:,None])*c1d(abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
+            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
 
