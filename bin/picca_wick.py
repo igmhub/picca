@@ -146,7 +146,7 @@ if __name__ == '__main__':
     sys.stderr.write("\n")
     print("done, npix = {}".format(cf.npix))
 
-    ### Load cf1d for data
+    ### Load cf1d
     dic_cf1d = { 'D1':args.cf1d, 'D2':args.cf1d2 }
     for n,p in dic_cf1d.items():
         if p is None:

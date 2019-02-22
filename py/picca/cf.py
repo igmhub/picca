@@ -519,7 +519,7 @@ def wickT(pix):
             r1 = d1.r_comov
             z1 = d1.z
 
-            for d2 in d1.dneighs:
+            for i2,d2 in enumerate(d1.dneighs):
                 ang12 = d1^d2
 
                 v2 = v1d[d2.fname](d2.ll)
@@ -529,15 +529,10 @@ def wickT(pix):
                 z2 = d2.z
 
                 fill_wickT123(r1,r2,ang12,w1,d2.we,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3)
-
-                ### Compute T4 and T5
-                ### TODO: understand how things play out with the fact that a pair is only
-                ###     in one "dneighs"
-                ### TODO: understand how things play out when doing cross(d1,d2)
                 if max_diagram<=3: continue
-                for d3 in d1.dneighs:
-                    if d3 not in d2.dneighs:
-                        continue
+
+                ### d3 and d2 have the same 'fname'
+                for d3 in d1.dneighs[:i2]:
                     ang13 = d1^d3
                     ang23 = d2^d3
 
@@ -548,7 +543,12 @@ def wickT(pix):
                     z3 = d3.z
 
                     fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3,
-                        z1,z2,z3, c1d_1,c1d_2,c1d_3, T4,T5)
+                        z1,z2,z3, c1d_1,c1d_2,c1d_3,
+                        d1.fname,d2.fname,d3.fname,
+                        T4,T5)
+
+                ### TODO: when there is two different catalogs
+                ### d3 and d1 have the same 'fname'
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
@@ -611,9 +611,54 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
 
     return
 @jit
-def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1d_3, T4,T5):
+def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1d_3, fname1,fname2,fname3, T4,T5):
     """
 
     """
+
+    ### forest-1 x forest-2
+    rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
+    if not x_correlation:
+        rp = sp.absolute(rp)
+    rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
+    w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
+    if w.sum()==0: return
+    bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
+    bt = (rt/rt_max*nt).astype(int)
+    ba12 = bt + nt*bp
+    ba12[~w] = 0
+    cf12 = cfWick['{}_{}'.format(fname1,fname2)][ba12]
+    cf12[~w] = 0.
+
+    ### forest-1 x forest-3
+    rp = (r1[:,None]-r3)*sp.cos(ang13/2.)
+    if not x_correlation:
+        rp = sp.absolute(rp)
+    rt = (r1[:,None]+r3)*sp.sin(ang13/2.)
+    w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
+    if w.sum()==0: return
+    bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
+    bt = (rt/rt_max*nt).astype(int)
+    ba13 = bt + nt*bp
+    ba13[~w] = 0
+    cf13 = cfWick['{}_{}'.format(fname1,fname3)][ba13]
+    cf13[~w] = 0.
+
+    ### forest-2 x forest-3
+    rp = (r2[:,None]-r3)*sp.cos(ang23/2.)
+    if not x_correlation:
+        rp = sp.absolute(rp)
+    rt = (r2[:,None]+r2)*sp.sin(ang23/2.)
+    w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
+    if w.sum()==0: return
+    bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
+    bt = (rt/rt_max*nt).astype(int)
+    ba23 = bt + nt*bp
+    ba23[~w] = 0
+    cf23 = cfWick['{}_{}'.format(fname2,fname3)][ba23]
+    cf23[~w] = 0.
+
+    ### Wick
+
 
     return
