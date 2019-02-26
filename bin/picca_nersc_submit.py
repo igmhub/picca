@@ -48,7 +48,8 @@ def get_header(time, name, email=None, queue="regular", account="desi"):
     return header
 
 def picca_deltas(b,time, in_dir, out_dir, drq,
-        email=None,debug=False,mode="desi"):
+        email=None,debug=False,mode="desi",
+        lambda_rest_min=None, lambda_rest_max=None):
     '''
     Writes a .batch file to submit the picca_deltas.py script
     Inputs:
@@ -67,8 +68,13 @@ def picca_deltas(b,time, in_dir, out_dir, drq,
     header += "srun -n 1 -c 64 picca_deltas.py " + \
                 "--in-dir {} --drq {} ".format(in_dir, drq) + \
                 "--out-dir deltas --mode {} ".format(mode)
+    if not lambda_rest_min is None:
+        header += " --lambda-rest-min {}".format(lambda_rest_min)
+    if not lambda_rest_max is None:
+        header += " --lambda-rest-max {}".format(lambda_rest_max)
     if debug:
-        header += "--nspec 10000"
+        header += " --nspec 10000"
+
     header += "\n"
     b.picca_deltas = "picca_deltas.batch"
     fout = open(out_dir+"/picca_deltas.batch","w")
@@ -401,6 +407,12 @@ parser.add_argument("--no-deltas",
         action="store_true", default=False,
         help="Do not run picca_deltas (e.g. because they were already run)")
 
+parser.add_argument('--lambda-rest-min',type=float,default=None,required=False,
+        help='Lower limit on rest frame wavelength [Angstrom]')
+
+parser.add_argument('--lambda-rest-max',type=float,default=None,required=False,
+        help='Upper limit on rest frame wavelength [Angstrom]')
+
 args = parser.parse_args()
 
 try:
@@ -443,6 +455,7 @@ if args.debug:
     time = time_debug
 if not args.no_deltas:
     picca_deltas(b,time,args.in_dir, args.out_dir,args.drq,
-            email=args.email, debug=args.debug, mode=args.mode)
+            email=args.email, debug=args.debug, mode=args.mode,
+        lambda_rest_min=args.lambda_rest_min, lambda_rest_max=args.lambda_rest_max)
 
 submit(b)
