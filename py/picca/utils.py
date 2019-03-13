@@ -95,7 +95,7 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
                 dcat[kk] = []
             continue
         else:
-            for k,idx in fromkeytoindex.items():
+            for k in fromkeytoindex.keys():
                 v = l[fromkeytoindex[k]]
                 if k=='MJD-plate-fiber':
                     v = v.split('-')
