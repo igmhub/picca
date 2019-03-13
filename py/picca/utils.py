@@ -173,6 +173,7 @@ def desi_convert_DLA(inPath,outPath):
     for k,v in fromDESIkey2piccaKey.items():
         cat[k] = h['DLACAT'][v][:]
     h.close()
+    print('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, sp.unique(cat['THING_ID']).size))
 
     ### Save
     out = fitsio.FITS(outPath,'rw',clobber=True)
