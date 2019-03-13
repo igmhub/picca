@@ -76,6 +76,112 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
     return co_smooth
 
+def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
+    """
+    Convert Pasquier Noterdaeme ASCII DLA catalog
+    to a fits file
+    """
+
+    cat = { 'RA':sp.array([],dtype=sp.float64),
+        'DEC':sp.array([],dtype=sp.float64),
+        'Z':sp.array([],dtype=sp.float64),
+        'ZQSO':sp.array([],dtype=sp.float64),
+        'THING_ID':sp.array([],dtype=sp.int64),
+        'NHI':sp.array([],dtype=sp.float64),
+        'PLATE':sp.array([],dtype=sp.int64),
+        'MJD':sp.array([],dtype=sp.int64),
+        'FIBERID':sp.array([],dtype=sp.int64)}
+
+    f = open(inPath,'r')
+    for l in f:
+        l = l.split()
+        if len(l)==0 or l[0][0]=='#' or l[0][0]=='-': continue
+        if l[0]=='ThingID':
+            fromkeytoindex = { el:i for i,el in enumerate(l) }
+            continue
+        cat['RA'] = sp.append(cat['RA'],float(l[fromkeytoindex['RA']]))
+        cat['DEC'] = sp.append(cat['DEC'],float(l[fromkeytoindex['Dec']]))
+        cat['Z'] = sp.append(cat['Z'],float(l[fromkeytoindex['z_abs']]))
+        cat['ZQSO'] = sp.append(cat['ZQSO'],float(l[fromkeytoindex['zqso']]))
+        cat['THING_ID'] = sp.append(cat['THING_ID'],int(l[fromkeytoindex['ThingID']]))
+        cat['NHI'] = sp.append(cat['NHI'],float(l[fromkeytoindex['NHI']]))
+        mpf = l[fromkeytoindex['MJD-plate-fiber']].split('-')
+        cat['PLATE'] = sp.append(cat['PLATE'],int(mpf[1]))
+        cat['MJD'] = sp.append(cat['MJD'],int(mpf[0]))
+        cat['FIBERID'] = sp.append(cat['FIBERID'],int(mpf[2]))
+    f.close()
+    print('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, sp.unique(cat['THING_ID']).size))
+
+    w = cat['THING_ID']>0
+    print('INFO: Removed {} DLA, because THING_ID<=0'.format((cat['THING_ID']<=0).sum()))
+    w &= cat['Z']>0.
+    print('INFO: Removed {} DLA, because Z<=0.'.format((cat['Z']<=0.).sum()))
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+
+    h = fitsio.FITS(drq)
+    thid = h[1]['THING_ID'][:]
+    ra = h[1]['RA'][:]
+    dec = h[1]['DEC'][:]
+    zqso = h[1][drqzkey][:]
+    h.close()
+    fromThingid2idx = { el:i for i,el in enumerate(thid) }
+    cat['RA'] = sp.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['DEC'] = sp.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['ZQSO'] = sp.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+
+    w = cat['RA']!=cat['DEC']
+    print('INFO: Removed {} DLA, because RA==DEC'.format((cat['RA']==cat['DEC']).sum()))
+    w &= cat['RA']!=0.
+    print('INFO: Removed {} DLA, because RA==0'.format((cat['RA']==0.).sum()))
+    w &= cat['DEC']!=0.
+    print('INFO: Removed {} DLA, because DEC==0'.format((cat['DEC']==0.).sum()))
+    w &= cat['ZQSO']>0.
+    print('INFO: Removed {} DLA, because ZQSO<=0.'.format((cat['ZQSO']<=0.).sum()))
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+
+    w = sp.argsort(cat['Z'])
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+    w = sp.argsort(cat['THING_ID'])
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+    cat['DLAID'] = sp.arange(1,cat['Z'].size+1,dtype=sp.int64)
+
+    ### Save
+    out = fitsio.FITS(outPath,'rw',clobber=True)
+    cols = [ v for v in cat.values() ]
+    names = [ k for k in cat.keys() ]
+    out.write(cols,names=names,extname='DLACAT')
+    out.close()
+
+    return
+def desi_convert_DLA(inPath,outPath):
+    """
+    Convert a catalog of DLA from a DESI format to
+    the format used by picca
+    """
+
+    fromDESIkey2piccaKey = {'RA':'RA', 'DEC':'DEC',
+        'Z':'Z_DLA_RSD', 'ZQSO':'Z_QSO_RSD',
+        'NHI':'N_HI_DLA', 'THING_ID':'MOCKID', 'DLAID':'DLAID',
+        'PLATE':'MOCKID', 'MJD':'MOCKID', 'FIBERID':'MOCKID' }
+
+    cat = {}
+    h = fitsio.FITS(inPath)
+    for k,v in fromDESIkey2piccaKey.items():
+        cat[k] = h['DLACAT'][v][:]
+    h.close()
+
+    ### Save
+    out = fitsio.FITS(outPath,'rw',clobber=True)
+    cols = [ v for v in cat.values() ]
+    names = [ k for k in cat.keys() ]
+    out.write(cols,names=names,extname='DLACAT')
+    out.close()
+
+    return
 def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     '''
     Transform a desi truth.fits file and a
