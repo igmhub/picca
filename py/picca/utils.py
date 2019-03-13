@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import scipy as sp
 import sys
 import fitsio
@@ -82,35 +83,35 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     to a fits file
     """
 
-    cat = { 'RA':sp.array([],dtype=sp.float64),
-        'DEC':sp.array([],dtype=sp.float64),
-        'Z':sp.array([],dtype=sp.float64),
-        'ZQSO':sp.array([],dtype=sp.float64),
-        'THING_ID':sp.array([],dtype=sp.int64),
-        'NHI':sp.array([],dtype=sp.float64),
-        'PLATE':sp.array([],dtype=sp.int64),
-        'MJD':sp.array([],dtype=sp.int64),
-        'FIBERID':sp.array([],dtype=sp.int64)}
-
-    f = open(inPath,'r')
+    f = open(os.path.expandvars(inPath),'r')
     for l in f:
         l = l.split()
-        if len(l)==0 or l[0][0]=='#' or l[0][0]=='-': continue
-        if l[0]=='ThingID':
-            fromkeytoindex = { el:i for i,el in enumerate(l) }
+        if (len(l)==0) or (l[0][0]=='#') or (l[0][0]=='-'):
             continue
-        cat['RA'] = sp.append(cat['RA'],float(l[fromkeytoindex['RA']]))
-        cat['DEC'] = sp.append(cat['DEC'],float(l[fromkeytoindex['Dec']]))
-        cat['Z'] = sp.append(cat['Z'],float(l[fromkeytoindex['z_abs']]))
-        cat['ZQSO'] = sp.append(cat['ZQSO'],float(l[fromkeytoindex['zqso']]))
-        cat['THING_ID'] = sp.append(cat['THING_ID'],int(l[fromkeytoindex['ThingID']]))
-        cat['NHI'] = sp.append(cat['NHI'],float(l[fromkeytoindex['NHI']]))
-        mpf = l[fromkeytoindex['MJD-plate-fiber']].split('-')
-        cat['PLATE'] = sp.append(cat['PLATE'],int(mpf[1]))
-        cat['MJD'] = sp.append(cat['MJD'],int(mpf[0]))
-        cat['FIBERID'] = sp.append(cat['FIBERID'],int(mpf[2]))
+        elif l[0]=='ThingID':
+            fromkeytoindex = { el:i for i,el in enumerate(l) }
+            dcat = { el:[] for el in fromkeytoindex.keys() }
+            for kk in 'MJD-plate-fiber'.split('-'):
+                dcat[kk] = []
+            continue
+        else:
+            for k,idx in fromkeytoindex.items():
+                v = l[fromkeytoindex[k]]
+                if k=='MJD-plate-fiber':
+                    v = v.split('-')
+                    for i,kk in enumerate('MJD-plate-fiber'.split('-')):
+                        dcat[kk] += [v[i]]
+                dcat[k] += [v]
     f.close()
-    print('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, sp.unique(cat['THING_ID']).size))
+    print('INFO: Found {} DLA from {} quasars'.format(len(dcat['ThingID']), sp.unique(dcat['ThingID']).size))
+
+    fromNoterdaemeKey2Picca = {'ThingID':'THING_ID', 'z_abs':'Z', 'zqso':'ZQSO','NHI':'NHI',
+        'plate':'PLATE','MJD':'MJD','fiber':'FIBERID',
+        'RA':'RA', 'Dec':'DEC'}
+    fromPiccaKey2Type = {'THING_ID':sp.int64, 'Z':sp.float64, 'ZQSO':sp.float64, 'NHI':sp.float64,
+        'PLATE':sp.int64,'MJD':sp.int64,'FIBERID':sp.int64,
+        'RA':sp.float64, 'DEC':sp.float64}
+    cat = { v:sp.array(dcat[k],dtype=fromPiccaKey2Type[v]) for k,v in fromNoterdaemeKey2Picca.items() }
 
     w = cat['THING_ID']>0
     print('INFO: Removed {} DLA, because THING_ID<=0'.format((cat['THING_ID']<=0).sum()))
