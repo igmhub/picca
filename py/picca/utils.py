@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import scipy as sp
 import sys
 import fitsio
@@ -76,6 +77,113 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
     return co_smooth
 
+def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
+    """
+    Convert Pasquier Noterdaeme ASCII DLA catalog
+    to a fits file
+    """
+
+    f = open(os.path.expandvars(inPath),'r')
+    for l in f:
+        l = l.split()
+        if (len(l)==0) or (l[0][0]=='#') or (l[0][0]=='-'):
+            continue
+        elif l[0]=='ThingID':
+            fromkeytoindex = { el:i for i,el in enumerate(l) }
+            dcat = { el:[] for el in fromkeytoindex.keys() }
+            for kk in 'MJD-plate-fiber'.split('-'):
+                dcat[kk] = []
+            continue
+        else:
+            for k in fromkeytoindex.keys():
+                v = l[fromkeytoindex[k]]
+                if k=='MJD-plate-fiber':
+                    v = v.split('-')
+                    for i,kk in enumerate('MJD-plate-fiber'.split('-')):
+                        dcat[kk] += [v[i]]
+                dcat[k] += [v]
+    f.close()
+    print('INFO: Found {} DLA from {} quasars'.format(len(dcat['ThingID']), sp.unique(dcat['ThingID']).size))
+
+    fromNoterdaemeKey2Picca = {'ThingID':'THING_ID', 'z_abs':'Z', 'zqso':'ZQSO','NHI':'NHI',
+        'plate':'PLATE','MJD':'MJD','fiber':'FIBERID',
+        'RA':'RA', 'Dec':'DEC'}
+    fromPiccaKey2Type = {'THING_ID':sp.int64, 'Z':sp.float64, 'ZQSO':sp.float64, 'NHI':sp.float64,
+        'PLATE':sp.int64,'MJD':sp.int64,'FIBERID':sp.int64,
+        'RA':sp.float64, 'DEC':sp.float64}
+    cat = { v:sp.array(dcat[k],dtype=fromPiccaKey2Type[v]) for k,v in fromNoterdaemeKey2Picca.items() }
+
+    w = cat['THING_ID']>0
+    print('INFO: Removed {} DLA, because THING_ID<=0'.format((cat['THING_ID']<=0).sum()))
+    w &= cat['Z']>0.
+    print('INFO: Removed {} DLA, because Z<=0.'.format((cat['Z']<=0.).sum()))
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+
+    h = fitsio.FITS(drq)
+    thid = h[1]['THING_ID'][:]
+    ra = h[1]['RA'][:]
+    dec = h[1]['DEC'][:]
+    zqso = h[1][drqzkey][:]
+    h.close()
+    fromThingid2idx = { el:i for i,el in enumerate(thid) }
+    cat['RA'] = sp.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['DEC'] = sp.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['ZQSO'] = sp.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+
+    w = cat['RA']!=cat['DEC']
+    print('INFO: Removed {} DLA, because RA==DEC'.format((cat['RA']==cat['DEC']).sum()))
+    w &= cat['RA']!=0.
+    print('INFO: Removed {} DLA, because RA==0'.format((cat['RA']==0.).sum()))
+    w &= cat['DEC']!=0.
+    print('INFO: Removed {} DLA, because DEC==0'.format((cat['DEC']==0.).sum()))
+    w &= cat['ZQSO']>0.
+    print('INFO: Removed {} DLA, because ZQSO<=0.'.format((cat['ZQSO']<=0.).sum()))
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+
+    w = sp.argsort(cat['Z'])
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+    w = sp.argsort(cat['THING_ID'])
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+    cat['DLAID'] = sp.arange(1,cat['Z'].size+1,dtype=sp.int64)
+
+    ### Save
+    out = fitsio.FITS(outPath,'rw',clobber=True)
+    cols = [ v for v in cat.values() ]
+    names = [ k for k in cat.keys() ]
+    out.write(cols,names=names,extname='DLACAT')
+    out.close()
+
+    return
+def desi_convert_DLA(inPath,outPath):
+    """
+    Convert a catalog of DLA from a DESI format to
+    the format used by picca
+    """
+
+    fromDESIkey2piccaKey = {'RA':'RA', 'DEC':'DEC',
+        'Z':'Z_DLA_RSD', 'ZQSO':'Z_QSO_RSD',
+        'NHI':'N_HI_DLA', 'THING_ID':'MOCKID', 'DLAID':'DLAID',
+        'PLATE':'MOCKID', 'MJD':'MOCKID', 'FIBERID':'MOCKID' }
+
+    cat = {}
+    h = fitsio.FITS(inPath)
+    for k,v in fromDESIkey2piccaKey.items():
+        cat[k] = h['DLACAT'][v][:]
+    h.close()
+    print('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, sp.unique(cat['THING_ID']).size))
+
+    ### Save
+    out = fitsio.FITS(outPath,'rw',clobber=True)
+    cols = [ v for v in cat.values() ]
+    names = [ k for k in cat.keys() ]
+    out.write(cols,names=names,extname='DLACAT')
+    out.close()
+
+    return
 def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     '''
     Transform a desi truth.fits file and a
