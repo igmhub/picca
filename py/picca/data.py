@@ -13,8 +13,8 @@ def variance(var,eta,var_lss,fudge):
 
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
-        self.ra = ra
-        self.dec = dec
+        self.ra = ra.astype(sp.float64)
+        self.dec = dec.astype(sp.float64)
 
         self.plate=plate
         self.mjd=mjd
@@ -26,7 +26,7 @@ class qso:
         self.zcart = sp.sin(dec)
         self.cosdec = sp.cos(dec)
 
-        self.zqso = zqso
+        self.zqso = zqso.astype(sp.float64)
         self.thid = thid
 
     def __xor__(self,data):
@@ -183,9 +183,9 @@ class forest(qso):
         #if diff is not None :
         self.diff = diff
         self.reso = reso
-#        else :
-#           self.diff = sp.zeros(len(ll))
-#           self.reso = sp.ones(len(ll))
+        #else :
+        #   self.diff = sp.zeros(len(ll))
+        #   self.reso = sp.ones(len(ll))
 
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
