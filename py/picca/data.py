@@ -183,9 +183,9 @@ class forest(qso):
         #if diff is not None :
         self.diff = diff
         self.reso = reso
-#        else :
-#           self.diff = sp.zeros(len(ll))
-#           self.reso = sp.ones(len(ll))
+        #else :
+        #   self.diff = sp.zeros(len(ll))
+        #   self.reso = sp.ones(len(ll))
 
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
@@ -484,9 +484,9 @@ class delta(qso):
         de = h[0].read()
         iv = h[1].read()
         ll = h[2].read()
-        ra = h[3]["RA"][:]*sp.pi/180.
-        dec = h[3]["DEC"][:]*sp.pi/180.
-        z = h[3]["Z"][:]
+        ra = h[3]["RA"][:].astype(sp.float64)*sp.pi/180.
+        dec = h[3]["DEC"][:].astype(sp.float64)*sp.pi/180.
+        z = h[3]["Z"][:].astype(sp.float64)
         plate = h[3]["PLATE"][:]
         mjd = h[3]["MJD"][:]
         fid = h[3]["FIBER"]
