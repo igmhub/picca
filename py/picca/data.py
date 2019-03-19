@@ -13,8 +13,8 @@ def variance(var,eta,var_lss,fudge):
 
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
-        self.ra = ra.astype(sp.float64)
-        self.dec = dec.astype(sp.float64)
+        self.ra = ra
+        self.dec = dec
 
         self.plate=plate
         self.mjd=mjd
@@ -26,7 +26,7 @@ class qso:
         self.zcart = sp.sin(dec)
         self.cosdec = sp.cos(dec)
 
-        self.zqso = zqso.astype(sp.float64)
+        self.zqso = zqso
         self.thid = thid
 
     def __xor__(self,data):
@@ -484,9 +484,9 @@ class delta(qso):
         de = h[0].read()
         iv = h[1].read()
         ll = h[2].read()
-        ra = h[3]["RA"][:]*sp.pi/180.
-        dec = h[3]["DEC"][:]*sp.pi/180.
-        z = h[3]["Z"][:]
+        ra = h[3]["RA"][:].astype(sp.float64)*sp.pi/180.
+        dec = h[3]["DEC"][:].astype(sp.float64)*sp.pi/180.
+        z = h[3]["Z"][:].astype(sp.float64)
         plate = h[3]["PLATE"][:]
         mjd = h[3]["MJD"][:]
         fid = h[3]["FIBER"]
