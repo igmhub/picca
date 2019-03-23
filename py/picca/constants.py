@@ -5,7 +5,7 @@ deg = sp.pi/180.
 
 boss_lambda_min = 3600. ## Angstrom
 
-speed_light = 299792458. ## m/s
+from scipy.constants import speed_of_light as speed_light
 
 small_angle_cut_off = 2./3600.*sp.pi/180. ## 2 arcsec
 
