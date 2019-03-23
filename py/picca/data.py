@@ -110,6 +110,8 @@ class forest(qso):
             corr = unred(10**ll,self.ebv_map[thid])
             fl /= corr
             iv *= corr**2
+            if not diff is None:
+                diff /= corr
 
         ## cut to specified range
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
