@@ -337,6 +337,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     zcat_dec = h[1]['DEC'][:][w].astype('float64')*sp.pi/180.
     zcat_thid = zcat_thid[w]
     h.close()
+    print('INFO: Found {} quasars'.format(zcat_ra.size))
 
     ### List of transmission files
     if (indir is None and infiles is None) or (indir is not None and infiles is not None):
@@ -345,8 +346,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     elif indir is not None:
         fi = glob.glob(indir+'/*/*/transmission*.fits') + glob.glob(indir+'/*/*/transmission*.fits.gz')
         h = fitsio.FITS(sp.sort(sp.array(fi))[0])
-        in_nside = h[1].read_header()['NSIDE']
-        nest = True
+        in_nside = h[1].read_header()['HPXNSIDE']
+        nest = h[1].read_header()['HPXNEST']
         h.close()
         in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-zcat_dec, zcat_ra, nest=nest)
         fi = sp.sort(sp.array([ indir+'/'+str(int(f/100))+'/'+str(f)+'/transmission-'+str(in_nside)+'-'+str(f)+'.fits' for f in sp.unique(in_pixs)]))
