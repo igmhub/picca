@@ -65,7 +65,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
         help='Name of the absorption in picca.constants defining the redshift of the 2nd delta')
 
-    parser.add_argument('--abs-igm', type=str,default=None, required=False,nargs='*',
+    parser.add_argument('--abs-igm', type=str,default=[], required=False,nargs='*',
         help='List of names of metal absorption in picca.constants present in forest')
 
     parser.add_argument('--abs-igm2', type=str,default=[], required=False,nargs='*',

@@ -67,7 +67,8 @@ def picca_deltas(b,time, in_dir, out_dir, drq,
     header = get_header(time, name="picca_deltas", email=email)
     header += "srun -n 1 -c 64 picca_deltas.py " + \
                 "--in-dir {} --drq {} ".format(in_dir, drq) + \
-                "--out-dir deltas --mode {} ".format(mode)
+                "--out-dir {}/deltas/ --mode {} ".format(out_dir,mode) + \
+                "--iter-out-prefix {}/iter --log {}/input.log".format(out_dir,out_dir)
     if not lambda_rest_min is None:
         header += " --lambda-rest-min {}".format(lambda_rest_min)
     if not lambda_rest_max is None:
@@ -98,14 +99,14 @@ def cf(b,time, zint, outdir, email=None, fidOm = None, fidPk = None):
         zmin,zmax = zz.split(":")
         out = "cf_z_{}_{}.fits".format(zmin,zmax)
         exp_batch = export("00:10:00",
-                "cf_z_{}_{}.fits".format(zmin,zmax),
-                "dmat_z_{}_{}.fits".format(zmin,zmax),
+                outdir+"/cf_z_{}_{}.fits".format(zmin,zmax),
+                outdir+"/dmat_z_{}_{}.fits".format(zmin,zmax),
                 outdir+"/cf_z_{}_{}-exp.fits".format(zmin,zmax),
                 fidPk=fidPk)
         header = get_header(time, name=out, email=email)
-        srun = header + "srun -n 1 -c 64 picca_cf.py --in-dir deltas " +\
+        srun = header + "srun -n 1 -c 64 picca_cf.py --in-dir {}/deltas/ ".format(outdir) +\
                 "--z-cut-min {} --z-cut-max {} ".format(zmin,zmax) +\
-                "--out {} --nproc 32 --fid-Om {}\n".format(out,fidOm)
+                "--out {}/{} --nproc 32 --fid-Om {}\n".format(outdir,out,fidOm)
 
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.cf.append(basename(fbatch))
@@ -131,9 +132,9 @@ def dmat(b,time, zint, outdir, email=None, rej=0.99, fidOm=None):
         zmin,zmax = zz.split(":")
         out = "dmat_z_{}_{}.fits".format(zmin,zmax)
         header = get_header(time, name=out, email=email)
-        srun = header + "srun -n 1 -c 64 picca_dmat.py --in-dir deltas " +\
+        srun = header + "srun -n 1 -c 64 picca_dmat.py --in-dir {}/deltas/ ".format(outdir) +\
                 "--z-cut-min {} --z-cut-max {} ".format(zmin,zmax) +\
-                "--out {} --rej {} --nproc 32 --fid-Om {}\n".format(out,rej,fidOm)
+                "--out {}/{} --rej {} --nproc 32 --fid-Om {}\n".format(outdir,out,rej,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.dmat.append(basename(fbatch))
 
@@ -159,14 +160,14 @@ def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None):
         out = "xcf_z_{}_{}.fits".format(zmin,zmax)
         header = get_header(time, name=out, email=email)
         exp_batch = export("00:10:00",
-                "xcf_z_{}_{}.fits".format(zmin,zmax),
-                "xdmat_z_{}_{}.fits".format(zmin,zmax),
+                outdir+"/xcf_z_{}_{}.fits".format(zmin,zmax),
+                outdir+"/xdmat_z_{}_{}.fits".format(zmin,zmax),
                 outdir+"/xcf_z_{}_{}-exp.fits".format(zmin,zmax),
                 fidPk=fidPk)
         srun = header + "srun -n 1 -c 64 picca_xcf.py " +\
-            "--drq {} --in-dir deltas ".format(drq) +\
+            "--drq {} --in-dir {}/deltas/ ".format(drq,outdir) +\
              "--z-evol-obj 1.44 --z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
-             "--out {} --nproc 32 --fid-Om {}\n".format(out,fidOm)
+             "--out {}/{} --nproc 32 --fid-Om {}\n".format(outdir,out,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xcf.append(basename(fbatch))
         b.xexport.append(basename(exp_batch))
@@ -192,9 +193,9 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None):
         out = "xdmat_z_{}_{}.fits".format(zmin,zmax)
         header = get_header(time, name=out, email=email)
         srun = header + "srun -n 1 -c 64 picca_xdmat.py " +\
-            "--drq {} --in-dir deltas ".format(drq) +\
+            "--drq {} --in-dir {}/deltas/ ".format(drq,outdir) +\
             "--z-evol-obj 1.44 --z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
-            "--out {} --rej {} --nproc 32 --fid-Om {}\n".format(out,rej,fidOm)
+            "--out {}/{} --rej {} --nproc 32 --fid-Om {}\n".format(outdir,out,rej,fidOm)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xdmat.append(basename(fbatch))
 
@@ -202,7 +203,7 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None):
         fout.write(srun)
         fout.close()
 
-def export(time, cf_file, dmat_file, out,fidPk):
+def export(time, cf_file, dmat_file, out, fidPk):
     '''
     Writes the .batch file to submit the picca_export.py and picca_fitter2.py
     Input:
@@ -214,7 +215,7 @@ def export(time, cf_file, dmat_file, out,fidPk):
     header = get_header(time, name=basename(out), queue="regular")
     srun = header + "srun -n 1 -c 64 picca_export.py "+\
             "--data {} --dmat {} ".format(cf_file,dmat_file)+\
-            "--out {}\n".format(basename(out))
+            "--out {}\n".format(out)
     chi2_ini = do_ini(dirname(out), basename(out),fidPk)
     srun += "srun -n 1 -c 64 picca_fitter2.py {}\n".format(chi2_ini)
     fbatch = out.replace(".fits",".batch")
@@ -244,7 +245,7 @@ def do_ini(outdir, cf_file,fidPk):
     else:
         fout.write("tracer2 = LYA\n")
         fout.write("tracer2-type = continuous\n")
-    fout.write("filename = {}\n".format(cf_file))
+    fout.write("filename = {}\n".format(outdir+'/'+cf_file))
     fout.write("ell-max = 6\n")
 
     fout.write("[cuts]\n")
@@ -302,7 +303,7 @@ def do_ini(outdir, cf_file,fidPk):
     fout = open(chi2_ini,"w")
     fout.write("[data sets]\n")
     fout.write("zeff = 2.310\n")
-    fout.write("ini files = {}\n".format(cf_file.replace(".fits",".ini")))
+    fout.write("ini files = {}\n".format(outdir+"/"+cf_file.replace(".fits",".ini")))
 
     fout.write("[fiducial]\n")
     fout.write("filename = {}\n".format(fidPk))
@@ -311,13 +312,13 @@ def do_ini(outdir, cf_file,fidPk):
     fout.write("level = 0\n")
 
     fout.write("[output]\n")
-    fout.write("filename = {}\n".format(cf_file.replace(".fits",".h5")))
+    fout.write("filename = {}\n".format(outdir+"/"+cf_file.replace(".fits",".h5")))
 
     fout.write("[cosmo-fit type]\n")
     fout.write("cosmo fit func = ap_at\n")
     fout.close()
 
-    return basename(chi2_ini)
+    return chi2_ini
 
 def submit(b):
     out_name = b.outdir+"/submit.sh"

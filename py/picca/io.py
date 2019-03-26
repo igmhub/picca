@@ -827,7 +827,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(nside,th,phi)
     if pix.size==0:
-        raise AssertionError()
+        raise AssertionError('ERROR: No data in {}'.format(indir))
 
     data = {}
     zmin = 10**dels[0].ll[0]/lambda_abs-1.
