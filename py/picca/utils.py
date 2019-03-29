@@ -150,6 +150,9 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
         cat[k] = cat[k][w]
     cat['DLAID'] = sp.arange(1,cat['Z'].size+1,dtype=sp.int64)
 
+    for k in ['RA','DEC']:
+        cat[k] = cat[k].astype('float64')
+
     ### Save
     out = fitsio.FITS(outPath,'rw',clobber=True)
     cols = [ v for v in cat.values() ]
@@ -176,6 +179,13 @@ def desi_convert_DLA(inPath,outPath):
     h.close()
     print('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, sp.unique(cat['THING_ID']).size))
 
+    w = sp.argsort(cat['THING_ID'])
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+
+    for k in ['RA','DEC']:
+        cat[k] = cat[k].astype('float64')
+
     ### Save
     out = fitsio.FITS(outPath,'rw',clobber=True)
     cols = [ v for v in cat.values() ]
@@ -194,13 +204,13 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     ## Truth table
     vac = fitsio.FITS(truth)
 
-    w = sp.ones(vac[1]["TARGETID"][:].size).astype(bool)
+    w = sp.ones(vac[1]['TARGETID'][:].size).astype(bool)
     print(" start                 : nb object in cat = {}".format(w.sum()) )
-    w &= sp.char.strip(vac[1]["TRUESPECTYPE"][:].astype(str))==spectype
+    w &= sp.char.strip(vac[1]['TRUESPECTYPE'][:].astype(str))==spectype
     print(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
 
-    thid = vac[1]["TARGETID"][:][w]
-    zqso = vac[1]["TRUEZ"][:][w]
+    thid = vac[1]['TARGETID'][:][w]
+    zqso = vac[1]['TRUEZ'][:][w]
     vac.close()
     ra = sp.zeros(thid.size)
     dec = sp.zeros(thid.size)
@@ -210,9 +220,9 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
     ### Get RA and DEC from targets
     vac = fitsio.FITS(targets)
-    thidTargets = vac[1]["TARGETID"][:]
-    raTargets = vac[1]["RA"][:].astype('float64')
-    decTargets = vac[1]["DEC"][:].astype('float64')
+    thidTargets = vac[1]['TARGETID'][:]
+    raTargets = vac[1]['RA'][:].astype('float64')
+    decTargets = vac[1]['DEC'][:].astype('float64')
     vac.close()
 
     from_TARGETID_to_idx = {}
@@ -266,41 +276,46 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
     """
 
     ## Info of the primary observation
-    vac = fitsio.FITS(ztarget)
-    sptype = sp.char.strip(vac[1]['SPECTYPE'][:].astype(str))
+    h = fitsio.FITS(ztarget)
+    sptype = sp.char.strip(h[1]['SPECTYPE'][:].astype(str))
 
     ## Sanity
     print(' start               : nb object in cat = {}'.format(sptype.size) )
-    w = vac[1]['ZWARN'][:]==0.
+    w = h[1]['ZWARN'][:]==0.
     print(' and zwarn==0        : nb object in cat = {}'.format(w.sum()) )
     w &= sptype==spectype
     print(' and spectype=={}    : nb object in cat = {}'.format(spectype,w.sum()) )
 
-    ra = vac[1]['RA'][:][w].astype('float64')
-    dec = vac[1]['DEC'][:][w].astype('float64')
-    zqso = vac[1]['Z'][:][w]
-    thid = vac[1]['TARGETID'][:][w]
+    cat = {}
+    lst = {'RA':'RA', 'DEC':'DEC', 'Z':'Z',
+        'THING_ID':'TARGETID', 'PLATE':'TARGETID', 'MJD':'TARGETID', 'FIBERID':'TARGETID'}
+    for k,v in lst.items():
+        cat[k] = h[1][v][:][w]
+    h.close()
 
-    vac.close()
+    for k in ['RA','DEC']:
+        cat[k] = cat[k].astype('float64')
 
     ###
     if not downsampling_z_cut is None and not downsampling_nb is None:
-        if ra.size<downsampling_nb:
-            print('WARNING:: Trying to downsample, when nb cat = {} and nb downsampling = {}'.format(ra.size,downsampling_nb) )
+        if cat['RA'].size<downsampling_nb:
+            print('WARNING:: Trying to downsample, when nb cat = {} and nb downsampling = {}'.format(cat['RA'].size,downsampling_nb) )
         else:
-            select_fraction = downsampling_nb/(zqso>downsampling_z_cut).sum()
+            select_fraction = downsampling_nb/(cat['Z']>downsampling_z_cut).sum()
             sp.random.seed(0)
-            select = sp.random.choice(sp.arange(ra.size),size=int(ra.size*select_fraction),replace=False)
-            ra = ra[select]
-            dec = dec[select]
-            zqso = zqso[select]
-            thid = thid[select]
-            print(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(ra.size, downsampling_z_cut, (zqso>downsampling_z_cut).sum()) )
+            w = sp.random.choice(sp.arange(cat['RA'].size),size=int(cat['RA'].size*select_fraction),replace=False)
+            for k in cat.keys():
+                cat[k] = cat[k][w]
+            print(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(cat['RA'].size, downsampling_z_cut, (zqso>downsampling_z_cut).sum()) )
+
+    w = sp.argsort(cat['THING_ID'])
+    for k in cat.keys():
+        cat[k] = cat[k][w]
 
     ### Save
     out = fitsio.FITS(drq,'rw',clobber=True)
-    cols = [ra,dec,thid,thid,thid,thid,zqso]
-    names = ['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
+    cols = [ v for v in cat.values() ]
+    names = [ k for k in cat.keys() ]
     out.write(cols, names=names,extname='CAT')
     out.close()
 
@@ -337,6 +352,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     zcat_dec = h[1]['DEC'][:][w].astype('float64')*sp.pi/180.
     zcat_thid = zcat_thid[w]
     h.close()
+    print('INFO: Found {} quasars'.format(zcat_ra.size))
 
     ### List of transmission files
     if (indir is None and infiles is None) or (indir is not None and infiles is not None):
@@ -345,8 +361,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     elif indir is not None:
         fi = glob.glob(indir+'/*/*/transmission*.fits') + glob.glob(indir+'/*/*/transmission*.fits.gz')
         h = fitsio.FITS(sp.sort(sp.array(fi))[0])
-        in_nside = h[1].read_header()['NSIDE']
-        nest = True
+        in_nside = h[1].read_header()['HPXNSIDE']
+        nest = h[1].read_header()['HPXNEST']
         h.close()
         in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-zcat_dec, zcat_ra, nest=nest)
         fi = sp.sort(sp.array([ indir+'/'+str(int(f/100))+'/'+str(f)+'/transmission-'+str(in_nside)+'-'+str(f)+'.fits' for f in sp.unique(in_pixs)]))
