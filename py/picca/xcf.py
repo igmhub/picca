@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import scipy as sp
 from scipy import random
@@ -5,6 +6,7 @@ from healpy import query_disc
 from numba import jit
 
 from picca import constants
+from picca.utils import print
 
 np = None
 nt = None
@@ -59,7 +61,7 @@ def xcf(pix):
         for d in dels[ipix]:
             with lock:
                 counter.value +=1
-            sys.stderr.write("\r{}%".format(round(counter.value*100./ndels,3)))
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
             if (d.neighs.size != 0):
                 ang = d^d.neighs
                 zqso = [q.zqso for q in d.neighs]
@@ -134,7 +136,7 @@ def dmat(pix):
     npairs_used = 0
     for p in pix:
         for d1 in dels[p]:
-            sys.stderr.write("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)))
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
             with lock:
                 counter.value += 1
             r1 = d1.r_comov
@@ -229,7 +231,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
     for p in pix:
         for d in dels[p]:
             with lock:
-                sys.stderr.write("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)))
+                print("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)),end="")
                 counter.value += 1
 
             r = random.rand(len(d.neighs))
