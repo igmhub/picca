@@ -1,4 +1,5 @@
 from __future__ import print_function
+import sys
 import scipy as sp
 from healpy import query_disc
 from numba import jit
@@ -60,13 +61,13 @@ def xcf(pix):
 
     for ipix in pix:
         for d in dels[ipix]:
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
             with lock:
                 counter.value +=1
-            if (d.qneighs.size != 0):
-                ang = d^d.qneighs
-                zqso = [q.zqso for q in d.qneighs]
-                we_qso = [q.we for q in d.qneighs]
+            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
+            if (d.neighs.size != 0):
+                ang = d^d.neighs
+                zqso = [q.zqso for q in d.neighs]
+                we_qso = [q.we for q in d.neighs]
 
                 if ang_correlation:
                     l_qso = [10.**q.ll for q in d.qneighs]
@@ -230,8 +231,8 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
     npairs_used = 0
     for p in pix:
         for d in dels[p]:
-            print("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)),end="")
             with lock:
+                print("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)),end="")
                 counter.value += 1
 
             r = sp.random.rand(len(d.qneighs))

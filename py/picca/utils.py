@@ -359,15 +359,17 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         print("ERROR: No transmisson input files or both 'indir' and 'infiles' given")
         sys.exit()
     elif indir is not None:
-        fi = glob.glob(indir+'/*/*/transmission*.fits') + glob.glob(indir+'/*/*/transmission*.fits.gz')
-        h = fitsio.FITS(sp.sort(sp.array(fi))[0])
-        in_nside = h[1].read_header()['HPXNSIDE']
-        nest = h[1].read_header()['HPXNEST']
+        fi = glob.glob(indir+'/*/*/transmission*.fits*')
+        fi = sp.sort(sp.array(fi))
+        h = fitsio.FITS(fi[0])
+        in_nside = h['METADATA'].read_header()['HPXNSIDE']
+        nest = h['METADATA'].read_header()['HPXNEST']
         h.close()
         in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-zcat_dec, zcat_ra, nest=nest)
-        fi = sp.sort(sp.array([ indir+'/'+str(int(f/100))+'/'+str(f)+'/transmission-'+str(in_nside)+'-'+str(f)+'.fits' for f in sp.unique(in_pixs)]))
+        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits'.format(indir,int(f//100),f,in_nside,f) for f in sp.unique(in_pixs)]))
     else:
         fi = sp.sort(sp.array(infiles))
+    print('INFO: Found {} files'.format(fi.size))
 
     ### Stack the transmission
     lmin = sp.log10(lObs_min)
@@ -380,17 +382,17 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     ### Read
     for nf, f in enumerate(fi):
-        print("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in list(deltas.keys())])), end="")
+        print("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in deltas.keys()])), end="")
         h = fitsio.FITS(f)
-        thid = h[1]['MOCKID'][:]
+        thid = h['METADATA']['MOCKID'][:]
         if sp.in1d(thid,zcat_thid).sum()==0:
             h.close()
             continue
-        ra = h[1]['RA'][:].astype('float64')*sp.pi/180.
-        dec = h[1]['DEC'][:].astype('float64')*sp.pi/180.
-        z = h[1]['Z'][:]
-        ll = sp.log10(h[2].read())
-        trans = h[3].read()
+        ra = h['METADATA']['RA'][:].astype(sp.float64)*sp.pi/180.
+        dec = h['METADATA']['DEC'][:].astype(sp.float64)*sp.pi/180.
+        z = h['METADATA']['Z'][:]
+        ll = sp.log10(h['WAVELENGTH'].read())
+        trans = h['TRANSMISSION'].read()
         nObj = z.size
         pixnum = f.split('-')[-1].split('.')[0]
 
@@ -437,7 +439,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             cfl = cfl[ww]/civ[ww]
             civ = civ[ww]
             deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
-        if not nspec is None and sp.sum([ len(deltas[p]) for p in list(deltas.keys())])>=nspec: break
+        if not nspec is None and sp.sum([ len(deltas[p]) for p in deltas.keys()])>=nspec: break
 
     print('\n')
 
@@ -446,8 +448,10 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     T_stack[w] /= n_stack[w]
 
     ### Transform transmission to delta and store it
-    for nf, p in enumerate(sorted(list(deltas.keys()))):
-        print("\rwrite {} of {} ".format(nf,len(list(deltas.keys()))), end="")
+    for nf, p in enumerate(sorted(deltas.keys())):
+        if len(deltas[p])==0:
+            print('No data in {}'.format(p))
+            continue
         out = fitsio.FITS(outdir+'/delta-{}'.format(p)+'.fits.gz','rw',clobber=True)
         for d in deltas[p]:
             bins = sp.floor((d.ll-lmin)/dll+0.5).astype(int)
@@ -469,6 +473,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             names = ['LOGLAM','DELTA','WEIGHT','CONT']
             out.write(cols,names=names,header=hd,extname=str(d.thid))
         out.close()
+        print("\rwrite {} of {}: {} quasars".format(nf,len(list(deltas.keys())), len(deltas[p])), end="")
 
     print("")
 
