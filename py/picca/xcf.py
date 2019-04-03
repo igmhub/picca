@@ -68,7 +68,6 @@ def xcf(pix):
                 ang = d^d.qneighs
                 zqso = [q.zqso for q in d.qneighs]
                 we_qso = [q.we for q in d.qneighs]
-add_wick_xcf
                 if ang_correlation:
                     l_qso = [10.**q.ll for q in d.qneighs]
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
