@@ -64,11 +64,11 @@ def xcf(pix):
             with lock:
                 counter.value +=1
             print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
-            if (d.neighs.size != 0):
-                ang = d^d.neighs
-                zqso = [q.zqso for q in d.neighs]
-                we_qso = [q.we for q in d.neighs]
-
+            if (d.qneighs.size != 0):
+                ang = d^d.qneighs
+                zqso = [q.zqso for q in d.qneighs]
+                we_qso = [q.we for q in d.qneighs]
+add_wick_xcf
                 if ang_correlation:
                     l_qso = [10.**q.ll for q in d.qneighs]
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
@@ -288,7 +288,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 zeff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=wdq[wAB])
                 weff[:len(c)]+=c
-            setattr(d,"neighs",None)
+            setattr(d,"qneighs",None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
