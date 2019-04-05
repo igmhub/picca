@@ -38,6 +38,10 @@ def parse_chi2(filename):
     dic_init['fiducial']['pk'] = h[1]['PK'][:]
     dic_init['fiducial']['pksb'] = h[1]['PKSB'][:]
     h.close()
+    if 'full-shape' in cp['fiducial'].keys():
+        dic_init['fiducial']['full-shape'] = int(cp['fiducial']['full-shape'])==1
+    else:
+        dic_init['fiducial']['full-shape'] = False
 
     zeff = float(cp.get('data sets','zeff'))
     dic_init['data sets'] = {}
