@@ -40,7 +40,7 @@ def parse_chi2(filename):
     h.close()
     try: ## Try for Python2.7 compatibility
         dic_init['fiducial']['full-shape'] = int(cp['fiducial']['full-shape'])==1
-    except KeyError, AttributeError:
+    except (KeyError, AttributeError):
         dic_init['fiducial']['full-shape'] = False
 
     zeff = float(cp.get('data sets','zeff'))
