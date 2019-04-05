@@ -366,22 +366,19 @@ class data:
         return xi
 
     def chi2(self, k, pk_lin, pksb_lin, full_shape, pars):
-        if full_shape:
-            xi_full = self.xi_model(k, pk_lin, pars)
-        else:
-            xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
+        xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
 
-            pars['SB'] = True
-            sigmaNL_par = pars['sigmaNL_par']
-            sigmaNL_per = pars['sigmaNL_per']
-            pars['sigmaNL_par'] = 0.
-            pars['sigmaNL_per'] = 0.
-            xi_sb = self.xi_model(k, pksb_lin, pars)
-            pars['SB'] = False
-            pars['sigmaNL_par'] = sigmaNL_par
-            pars['sigmaNL_per'] = sigmaNL_per
+        pars['SB'] = True & (not full_shape)
+        sigmaNL_par = pars['sigmaNL_par']
+        sigmaNL_per = pars['sigmaNL_per']
+        pars['sigmaNL_par'] = 0.
+        pars['sigmaNL_per'] = 0.
+        xi_sb = self.xi_model(k, pksb_lin, pars)
+        pars['SB'] = False
+        pars['sigmaNL_par'] = sigmaNL_par
+        pars['sigmaNL_per'] = sigmaNL_per
 
-            xi_full = pars['bao_amp']*xi_peak + xi_sb
+        xi_full = pars['bao_amp']*xi_peak + xi_sb
 
         dxi = self.da_cut-xi_full[self.mask]
 
