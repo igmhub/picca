@@ -82,6 +82,9 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--fid-Ok', type=float, default=0., required=False,
+        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+
     parser.add_argument('--rej', type=float, default=1., required=False,
         help='Fraction of rejected object-forests pairs: -1=no rejection, 1=all rejection')
 
@@ -114,7 +117,7 @@ if __name__ == '__main__':
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     xcf.rej = args.rej
 
-    cosmo = constants.cosmo(args.fid_Om)
+    cosmo = constants.cosmo(args.fid_Om,Ok=args.fid_Ok)
     xcf.cosmo=cosmo
 
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,\

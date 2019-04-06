@@ -86,6 +86,9 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--fid-Ok', type=float, default=0., required=False,
+        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+
     parser.add_argument('--no-project', action='store_true', required=False,
         help='Do not project out continuum fitting modes')
 
@@ -119,7 +122,7 @@ if __name__ == '__main__':
     xcf.nside = args.nside
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
 
-    cosmo = constants.cosmo(args.fid_Om)
+    cosmo = constants.cosmo(args.fid_Om,Ok=args.fid_Ok)
 
     ### Read deltas
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
