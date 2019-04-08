@@ -1,0 +1,30 @@
+Om_b h^2             =  0.022220
+Om_c h^2             =  0.119700
+Om_nu h^2            =  0.000600
+Om_darkenergy        =  0.685351
+Om_K                 =  0.000000
+Om_m (inc Om_u)      =  0.314570
+100 theta (CosmoMC)  =  1.040723
+N_eff (total)        =  3.046000
+ 1 nu, g= 1.0153 m_nu*c^2/k_B/T_nu0=    331.59 (m_nu=  0.056 eV)
+Reion opt depth      =  0.0000
+Age of universe/GYr  =  13.815
+zstar                =  1090.18
+r_s(zstar)/Mpc       =  144.62
+100*theta            =  1.040878
+DA(zstar)/Gpc        =  13.89390
+zdrag                =  1059.64
+r_s(zdrag)/Mpc       =  147.33
+k_D(zstar) Mpc       =  0.1404
+100*theta_D          =  0.161050
+z_EQ (if v_nu=1)     =  3391.45
+k_EQ Mpc (if v_nu=1) =  0.010351
+100*theta_EQ         =  0.814645
+100*theta_rs_EQ      =  0.450210
+tau_recomb/Mpc       =  280.74  tau_now/Mpc =  14174.5
+at z =  2.300 sigma8 (all matter) =  0.3167
+at z =  0.570 sigma8 (all matter) =  0.6166
+at z =  0.000 sigma8 (all matter) =  0.8299
+at z =  2.300 sigma8^2_vd/sigma8  =  0.3070
+at z =  0.570 sigma8^2_vd/sigma8  =  0.4832
+at z =  0.000 sigma8^2_vd/sigma8  =  0.4377
