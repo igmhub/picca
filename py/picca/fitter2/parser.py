@@ -24,8 +24,9 @@ def parse_chi2(filename):
     dic_init['fiducial'] = {}
 
     p = cp.get('fiducial','filename')
+    if not os.path.isfile(p):
+        p = resource_filename('picca', 'fitter2')+'/models/{}'.format(p)
     print('INFO: reading input Pk {}'.format(p))
-    p = resource_filename('picca', 'fitter2')+'/models/{}'.format(p)
     p = os.path.expandvars(p)
 
     h = fitsio.FITS(p)
