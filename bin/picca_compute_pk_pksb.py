@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
-import numpy as np
-import scipy as sp
 import argparse
 import subprocess
 import fitsio
-import iminuit
+import numpy as np
+import scipy as sp
+from scipy.optimize import curve_fit
 
 from picca.fitter2 import utils
 
 def xi_from_pk(k,pk):
-    k  = sp.append([0.],k)
+    k = sp.append([0.],k)
     pk = sp.append([0.],pk)
     pkInter = sp.interpolate.InterpolatedUnivariateSpline(k,pk)
     nk = 1000000
@@ -91,24 +91,26 @@ if __name__ == '__main__':
     ### Get the Side-Bands
     ### Follow 2.2.1 of Kirkby et al. 2013: https://arxiv.org/pdf/1301.3456.pdf
     r, xi = xi_from_pk(k,pk)
-    w = ((r>=50.) & (r<82.)) | ((r>=150.) & (r<190.))
-    def chi2(am3,am2,am1,a0,a1):
-        data = xi[w]
-        par = [am3,am2,am1,a0,a1]
-        model = sp.array([ p*sp.power(r[w],i-3) for i,p in enumerate(par) ]).sum(axis=0)
-        return ((data-model)**2).sum()
-    mig = iminuit.Minuit(chi2,
-        am3=-108,error_am3=1.,
-        am2=13.1,error_am2=1.,
-        am1=-0.208,error_am1=1.,
-        a0=0.00104,error_a0=1.,
-        a1=-1.67E-06,error_a1=1.,
-        print_level=1, errordef=1)
-    mig.migrad()
-    mig.hesse()
-    par = [mig.values['am3'],mig.values['am2'],mig.values['am1'],mig.values['a0'],mig.values['a1']]
-    model = sp.array([ p*sp.power(r,i-3) for i,p in enumerate(par) ]).sum(axis=0)
 
+    def f_xiSB(r,am3,am2,am1,a0,a1):
+        par = [am3,am2,am1,a0,a1]
+        model = sp.zeros((len(par),r.size))
+        tw = r!=0.
+        model[0,tw] = par[0]/r[tw]**3
+        model[1,tw] = par[1]/r[tw]**2
+        model[2,tw] = par[2]/r[tw]**1
+        model[3,tw] = par[3]
+        model[4,:] = par[4]*r
+        model = sp.array(model)
+        return model.sum(axis=0)
+
+    w = ((r>=50.) & (r<82.)) | ((r>=150.) & (r<190.))
+    sigma = 0.1*sp.ones(xi.size)
+    sigma[(r>=48.) & (r<52.)] = 1.e-6
+    sigma[(r>=188.) & (r<192.)] = 1.e-6
+    popt, pcov = curve_fit(f_xiSB, r[w], xi[w], sigma=sigma[w])
+
+    model = f_xiSB(r, *popt)
     xiSB = xi.copy()
     ww = (r>=50.) & (r<190.)
     xiSB[ww] = model[ww]
