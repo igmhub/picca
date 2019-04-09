@@ -25,11 +25,8 @@ def parse_chi2(filename):
 
     p = cp.get('fiducial','filename')
     print('INFO: reading input Pk {}'.format(p))
-    try:
-        tp = resource_filename('picca', 'fitter2')+'/models/{}'.format(p)
-        h = fitsio.FITS(os.path.expandvars(tp))
-    except OSError:
-        h = fitsio.FITS(os.path.expandvars(p))
+    p = resource_filename('picca', 'fitter2')+'/models/{}'.format(p)
+    h = fitsio.FITS(os.path.expandvars(p))
     zref = h[1].read_header()['ZREF']
     dic_init['fiducial']['zref'] = zref
     dic_init['fiducial']['Om'] = h[1].read_header()['OM']
