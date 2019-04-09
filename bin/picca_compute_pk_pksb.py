@@ -3,29 +3,12 @@
 import argparse
 import subprocess
 import fitsio
-import numpy as np
 import scipy as sp
+from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
+import nbodykit.cosmology.correlation
 
 from picca.fitter2 import utils
-
-def xi_from_pk(k,pk):
-    k = sp.append([0.],k)
-    pk = sp.append([0.],pk)
-    pkInter = sp.interpolate.InterpolatedUnivariateSpline(k,pk)
-    nk = 1000000
-    kmin = k.min()
-    kmax = k.max()
-    kIn = sp.linspace(kmin,kmax,nk)
-    pkIn = pkInter(kIn)
-    kIn[0] = 0.
-    pkIn[0] = 0.
-    r = 2.*sp.pi/kmax*sp.arange(nk)
-    pkk = kIn*pkIn
-    cric = -sp.imag(np.fft.fft(pkk)/nk)/r/2./sp.pi**2*kmax
-    cric[0] = 0.
-
-    return r,cric
 
 if __name__ == '__main__':
 
@@ -72,7 +55,7 @@ if __name__ == '__main__':
         import camb
     except ImportError:
         print('ERROR: CAMB can not be found')
-    #subprocess.run('camb {} > {}'.format(args.ini,cat['output_root']+'_out.txt'),shell=True)
+    subprocess.run('camb {} > {}'.format(args.ini,cat['output_root']+'_out.txt'),shell=True)
 
     ### TODO: understand why O_m+O_L+O_k!=1.
     f = open(cat['output_root']+'_out.txt','r')
@@ -86,11 +69,12 @@ if __name__ == '__main__':
     d = sp.loadtxt('{}_{}'.format(cat['output_root'],cat['transfer_matterpower']))
     k = d[:,0]
     pk = d[:,1]
-    pksb = d[:,1]
 
     ### Get the Side-Bands
     ### Follow 2.2.1 of Kirkby et al. 2013: https://arxiv.org/pdf/1301.3456.pdf
-    r, xi = xi_from_pk(k,pk)
+    xi = nbodykit.cosmology.correlation.pk_to_xi(k,pk)
+    r = 10**sp.linspace(-7.,3.5,1e4)
+    xi = xi(r)
 
     def f_xiSB(r,am3,am2,am1,a0,a1):
         par = [am3,am2,am1,a0,a1]
@@ -115,17 +99,11 @@ if __name__ == '__main__':
     ww = (r>=50.) & (r<190.)
     xiSB[ww] = model[ww]
 
-    import matplotlib.pyplot as plt
-    plt.plot(r,xi*r**2)
-    plt.plot(r,xiSB*r**2)
-    plt.grid()
-    plt.show()
-    w = (xi-xiSB)!=0.
-    plt.plot(r[w],(xi-xiSB)[w])
-    plt.grid()
-    plt.show()
+    pkSB = nbodykit.cosmology.correlation.pk_to_xi(r,xiSB,extrap=True)
+    pkSB = pkSB(k)
+    pkSB *= pk[-1]/pkSB[-1]
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [{'name':k,'value':float(v)} for k,v in cat.items() if k not in ['transfer_matterpower','output_root'] ]
-    out.write([k,pk,pksb],names=['K','PK','PKSB'],header=head,extname='PK')
+    out.write([k,pk,pkSB],names=['K','PK','PKSB'],header=head,extname='PK')
     out.close()
