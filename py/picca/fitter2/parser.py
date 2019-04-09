@@ -42,7 +42,7 @@ def parse_chi2(filename):
     except (KeyError, AttributeError):
         dic_init['fiducial']['full-shape'] = False
     if dic_init['fiducial']['full-shape']:
-        print('WARNING!!!: Sailor you are reaching unexplored territories, precede at your own risk.')
+        print('WARNING!!!: Using full-shape fit to the correlation function. Sailor you are reaching unexplored territories, precede at your own risk.')
 
     zeff = float(cp.get('data sets','zeff'))
     dic_init['data sets'] = {}
