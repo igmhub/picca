@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 import h5py
-#from picca.fitter2 import chi2,data,xi
-from picca.fitter2 import parser as fit_parser
 import sys
-import pylab
+import matplotlib.pyplot as plt
 import scipy as sp
 import fitsio
 import copy
@@ -14,8 +12,7 @@ if (sys.version_info > (3, 0)):
     import configparser as ConfigParser
 else:
     import ConfigParser
-#from picca import wedgize
-
+from picca.fitter2 import parser as fit_parser
 
 def derivative(f,x):
     eps = 10**(-5)
@@ -89,12 +86,12 @@ def xi_mod(pars,dic_init):
     return xi_best_fit
     
 def plot_xi(xi,title = ' '):
-    pylab.figure()
-    pylab.imshow(xi.reshape((np,nt)),origin=0,interpolation='nearest',extent=[rt_min,rt_max,rp_min,rp_max],cmap='seismic')
-    pylab.colorbar()
-    pylab.ylabel(r"$r_{\parallel}$",size=20)
-    pylab.xlabel(r"$r_{\perp}$",size=20)
-    pylab.title(title,size = 20)
+    plt.figure()
+    plt.imshow(xi.reshape((np,nt)),origin=0,interpolation='nearest',extent=[rt_min,rt_max,rp_min,rp_max],cmap='seismic')
+    plt.colorbar()
+    plt.ylabel(r"$r_{\parallel}$",size=20)
+    plt.xlabel(r"$r_{\perp}$",size=20)
+    plt.title(title,size = 20)
 
 def xi_mod_p(x,pname,pars):
     pars2 = copy.deepcopy(pars)
@@ -131,10 +128,10 @@ if __name__ == '__main__':
                         help = 'chi2 input file name')
     
     parser.add_argument('--params', type=str,default=[], required=False,nargs='*',
-        help='list of the fitted parameters')
+                        help='List of the fitted parameters')
     
-    parser.add_argument('--plot-effective-bins', action='store_true', required=False,
-        help='display an image with the bins involved in the fit of each selected parameter')
+    parser.add_argument('--plot-effective-bins', action='store_true', required=True,
+                        help='display an image with the bins involved in the fit of each selected parameter')
 
     args = parser.parse_args()
     chi2_file = args.chi2_file
@@ -183,4 +180,4 @@ if __name__ == '__main__':
             else :
                 lab = r'$\partial m/ \partial$'+p
             plot_xi(dm_dp['ap'],lab)
-        pylab.show()
+        plt.show()
