@@ -146,3 +146,12 @@ def aiso_epsilon(kwargs):
 def convert_instance_to_dictionary(inst):
     dic = dict((name, getattr(inst, name)) for name in dir(inst) if not name.startswith('__'))
     return dic
+def get_updated_cosmology_parameters(ap,at,h):
+    """
+
+    """
+
+    n_h = h + 1.-at
+    n_omegak = (1.-ap)/h**2
+
+    return n_h, n_omegak

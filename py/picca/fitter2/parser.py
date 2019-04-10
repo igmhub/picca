@@ -24,10 +24,10 @@ def parse_chi2(filename):
     dic_init['fiducial'] = {}
 
     p = cp.get('fiducial','filename')
+    p = os.path.expandvars(p)
     if not os.path.isfile(p):
         p = resource_filename('picca', 'fitter2')+'/models/{}'.format(p)
     print('INFO: reading input Pk {}'.format(p))
-    p = os.path.expandvars(p)
 
     h = fitsio.FITS(p)
     zref = h[1].read_header()['ZREF']
