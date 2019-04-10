@@ -140,7 +140,7 @@ if __name__ == '__main__':
         help='List of the fitted parameters')
 
     parser.add_argument('--plot-effective-bins', action='store_true',
-        help='display an image with the bins involved in the fit of each selected parameter')
+        help='Display an image with the bins involved in the fit of each selected parameter')
 
     args = parser.parse_args()
     chi2_file = args.chi2_file
