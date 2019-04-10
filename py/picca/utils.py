@@ -77,6 +77,48 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
     return co_smooth
 
+def smooth_cov_wick(da,we,rp,rt,cow,drt=4,drp=4):
+
+    co = cov(da,we)
+
+    nda = da.shape[1]
+    var = sp.diagonal(co)
+    if sp.any(var==0.):
+        print('WARNING: data has some empty bins, impossible to smooth')
+        print('WARNING: returning the unsmoothed covariance')
+        return co
+
+    cor = co/sp.sqrt(var*var[:,None])
+
+    cor_smooth = sp.zeros([nda,nda])
+
+    dcor={}
+    dncor={}
+
+    for i in range(nda):
+        print("\rsmoothing {}".format(i),end="")
+        idrp = round(abs(rp[j]-rp[i])/drp)
+            #idrt = round(abs(rt[i]-rt[j])/drt)
+            if not (idrp,idrt) in dcor:
+                dcor[(idrp,idrt)]=0.
+                dncor[(idrp,idrt)]=0
+
+            dcor[(idrp,idrt)] +=cor[i,j]
+            dncor[(idrp,idrt)] +=1
+
+    for i in range(nda):
+        cor_smooth[i,i]=1.
+        for j in range(i+1,nda):
+            idrp = round(abs(rp[j]-rp[i])/drp)
+            idrt = round(abs(rt[i]-rt[j])/drt)
+            cor_smooth[i,j]=dcor[(idrp,idrt)]/dncor[(idrp,idrt)]
+            cor_smooth[j,i]=cor_smooth[i,j]
+
+
+    print("\n")
+    co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
+    return co_smooth
+
 def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     """
     Convert Pasquier Noterdaeme ASCII DLA catalog
