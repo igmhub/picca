@@ -92,28 +92,12 @@ def smooth_cov_wick(da,we,rp,rt,cow,drt=4,drp=4):
 
     cor_smooth = sp.zeros([nda,nda])
 
-    dcor={}
-    dncor={}
-
-    for i in range(nda):
-        print("\rsmoothing {}".format(i),end="")
-        idrp = round(abs(rp[j]-rp[i])/drp)
-            #idrt = round(abs(rt[i]-rt[j])/drt)
-            if not (idrp,idrt) in dcor:
-                dcor[(idrp,idrt)]=0.
-                dncor[(idrp,idrt)]=0
-
-            dcor[(idrp,idrt)] +=cor[i,j]
-            dncor[(idrp,idrt)] +=1
-
-    for i in range(nda):
-        cor_smooth[i,i]=1.
-        for j in range(i+1,nda):
-            idrp = round(abs(rp[j]-rp[i])/drp)
-            idrt = round(abs(rt[i]-rt[j])/drt)
-            cor_smooth[i,j]=dcor[(idrp,idrt)]/dncor[(idrp,idrt)]
-            cor_smooth[j,i]=cor_smooth[i,j]
-
+    ## idrp = round(abs(rp[j]-rp[i])/drp)
+    idrp = sp.around(abs(rp-rp[:,None])/drp)
+    idrt = sp.around(abs(rt-rt[:,None])/drt)
+    idrp1d = sp.around(abs(rp-rp[:,None])/drp).reshape
+    idrt1d = sp.around(abs(rt-rt[:,None])/drt)
+        
 
     print("\n")
     co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
