@@ -1,17 +1,20 @@
 #!/usr/bin/env python
-import h5py
+
+import os
 import sys
-import matplotlib.pyplot as plt
-import scipy as sp
 import fitsio
 import copy
 import functools
 import argparse
+import h5py
+import scipy as sp
 from scipy import linalg
+import matplotlib.pyplot as plt
 if (sys.version_info > (3, 0)):
     import configparser as ConfigParser
 else:
     import ConfigParser
+
 from picca.fitter2 import parser as fit_parser
 
 def derivative(f,x):
@@ -19,8 +22,8 @@ def derivative(f,x):
     der = (f(x+eps)-f(x))/eps
     return der
 
-def extract_h5file(fname):
-    f = h5py.File(fname)
+def extract_h5file(fname,cor_name):
+    f = h5py.File(os.path.expandvars(fname),'r')
     free_p  = []
     for i in f['best fit'].attrs['list of free pars']: free_p.append(i.decode('UTF-8'))
     fixed_p  = []
@@ -33,20 +36,21 @@ def extract_h5file(fname):
     for i in fixed_p:
         pars[i] = f['best fit'].attrs[i][0]
         err_pars[i] = 0
-    xi= sp.array(f['LYA(LYA)-LYA(LYA)']['fit'])
+    xi= sp.array(f[cor_name]['fit'])
     return free_p,fixed_p,pars,err_pars,xi
 
 def extract_data(chi2file,dic_init):
     cp = ConfigParser.ConfigParser()
     cp.optionxform=str
-    cp.read(chi2file)
-    dic_data = fit_parser.parse_data(cp.get('data sets','ini files'),cp.get('data sets','zeff'),dic_init['fiducial'])
+    cp.read(os.path.expandvars(chi2file))
+    dic_data = fit_parser.parse_data(os.path.expandvars(cp.get('data sets','ini files')),
+        cp.get('data sets','zeff'),dic_init['fiducial'])
     data_file = dic_data['data']['filename']
     f = fitsio.FITS(data_file)
-    cov = f[1]["CO"][:]
-    rp  = f[1]["RP"][:]
-    rt  = f[1]["RT"][:]
-    z   = f[1]["Z"][:]
+    cov = f[1]['CO'][:]
+    rp = f[1]['RP'][:]
+    rt = f[1]['RT'][:]
+    z = f[1]['Z'][:]
     ico = linalg.inv(cov)
 
     head = f[1].read_header()
@@ -68,7 +72,7 @@ def apply_mask(dm,ico,z,dic):
         ico[:,d.mask==0] = 0
         ico[d.mask==0,:] = 0
         z[d.mask==0] = 0
-    
+
 def xi_mod(pars,dic_init):
     k = dic_init['fiducial']['k']
     pk_lin = dic_init['fiducial']['pk']
@@ -82,12 +86,14 @@ def xi_mod(pars,dic_init):
         xi_best_fit += d.xi_model(k, pksb_lin, pars)
         pars['sigmaNL_per'] = snl
         pars['SB'] = False
-        
+
     return xi_best_fit
-    
-def plot_xi(xi,title = ' '):
+
+def plot_xi(xi,title=' '):
     plt.figure()
-    plt.imshow(xi.reshape((np,nt)),origin=0,interpolation='nearest',extent=[rt_min,rt_max,rp_min,rp_max],cmap='seismic')
+    plt.imshow(xi.reshape((np,nt)),origin=0,interpolation='nearest',
+        extent=[rt_min,rt_max,rp_min,rp_max],cmap='seismic',
+        vmin=-max(abs(xi.min()),abs(xi.max())),vmax=max(abs(xi.min()),abs(xi.max())))
     plt.colorbar()
     plt.ylabel(r"$r_{\parallel}$",size=20)
     plt.xlabel(r"$r_{\perp}$",size=20)
@@ -124,38 +130,42 @@ def compute_z0(M,z):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('--chi2-file', type = str, default = None, required=True,
-                        help = 'Path to the config 'chi2.ini' file used in fitter2')
-    
-    parser.add_argument('--params', type=str,default=[], required=False,nargs='*',
-                        help='List of the fitted parameters')
-    
-    parser.add_argument('--plot-effective-bins', action='store_true', required=True,
-                        help='display an image with the bins involved in the fit of each selected parameter')
+    parser.add_argument('--chi2-file', type=str, required=True,
+        help = "Path to the config 'chi2.ini' file used in fitter2")
+
+    parser.add_argument('--cor-name', type=str, required=True,
+        help = "Name of the correlation in 'config.ini' to look at")
+
+    parser.add_argument('--params', type=str,default=[], required=False, nargs='*',
+        help='List of the fitted parameters')
+
+    parser.add_argument('--plot-effective-bins', action='store_true',
+        help='display an image with the bins involved in the fit of each selected parameter')
 
     args = parser.parse_args()
     chi2_file = args.chi2_file
 
-    ######### Open files
+    ### Open files
     dic_init = fit_parser.parse_chi2(chi2_file)
     h5_file = dic_init['outfile']
-    free_pars,fixed_pars,best_fit_pars,err_best_fit_pars,xi_best_fit = extract_h5file(h5_file)
+    free_pars,fixed_pars,best_fit_pars,err_best_fit_pars,xi_best_fit = extract_h5file(h5_file,args.cor_name)
     for p in args.params:
         if p not in free_pars:
             print('ERROR : parameter %s is not fitted'%(p))
             sys.exit(12)
     ico,rp,rt,np,nt,rp_min,rp_max,rt_min,rt_max,r_min,r_max,z = extract_data(chi2_file,dic_init)
-    ######### Computation of the effective bins
+
+    ### Computation of the effective bins
     dm_dp = compute_dm_dp(free_pars,best_fit_pars)
     apply_mask(dm_dp,ico,z,dic_init)
 
     for p in args.params:
-        print("Parameter %s"%(p))
+        print('Parameter {}'.format(p))
         M = compute_M(dm_dp[p],ico)
         res,den = compute_z0(M,z)
-        print("res = ",res,"den = ",den)
-        print("<z> = ",res/den)
-        print(" ")
+        print('res = {}, den = {}'.format(res,den))
+        print('<z> = {}'.format(res/den))
+        print('\n')
 
     if args.plot_effective_bins:
         labels = {}
@@ -175,5 +185,5 @@ if __name__ == '__main__':
                 lab = r'$\partial m/ \partial$'+labels[p]
             else :
                 lab = r'$\partial m/ \partial$'+p
-            plot_xi(dm_dp['ap'],lab)
+            plot_xi(dm_dp[p],lab)
         plt.show()
