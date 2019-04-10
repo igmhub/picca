@@ -125,7 +125,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--chi2-file', type = str, default = None, required=True,
-                        help = 'chi2 input file name')
+                        help = 'Path to the config 'chi2.ini' file used in fitter2')
     
     parser.add_argument('--params', type=str,default=[], required=False,nargs='*',
                         help='List of the fitted parameters')
