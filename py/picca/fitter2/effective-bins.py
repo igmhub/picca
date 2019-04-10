@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import h5py
-from picca.fitter2 import chi2,data,xi
+#from picca.fitter2 import chi2,data,xi
 from picca.fitter2 import parser as fit_parser
 import sys
 import pylab
@@ -14,7 +14,7 @@ if (sys.version_info > (3, 0)):
     import configparser as ConfigParser
 else:
     import ConfigParser
-from picca import wedgize
+#from picca import wedgize
 
 
 def derivative(f,x):
@@ -37,7 +37,7 @@ def extract_h5file(fname):
         pars[i] = f['best fit'].attrs[i][0]
         err_pars[i] = 0
     xi= sp.array(f['LYA(LYA)-LYA(LYA)']['fit'])
-    return free_p,fixed_p,pars,err_pars,xi 
+    return free_p,fixed_p,pars,err_pars,xi
 
 def extract_data(chi2file,dic_init):
     cp = ConfigParser.ConfigParser()
@@ -50,7 +50,6 @@ def extract_data(chi2file,dic_init):
     rp  = f[1]["RP"][:]
     rt  = f[1]["RT"][:]
     z   = f[1]["Z"][:]
-    r = sp.sqrt(rp**2+rt**2)
     ico = linalg.inv(cov)
 
     head = f[1].read_header()
@@ -68,12 +67,12 @@ def extract_data(chi2file,dic_init):
 def apply_mask(dm,ico,z,dic):
     for d in dic['data sets']['data']:
         for i in dm:
-            dm_dp[i][d.mask==0] = 0 
+            dm_dp[i][d.mask==0] = 0
         ico[:,d.mask==0] = 0
         ico[d.mask==0,:] = 0
-        z[d.mask==0] = 0 
+        z[d.mask==0] = 0
     
-def xi_mod(pars,dic_init):    
+def xi_mod(pars,dic_init):
     k = dic_init['fiducial']['k']
     pk_lin = dic_init['fiducial']['pk']
     pksb_lin = dic_init['fiducial']['pksb']
@@ -118,12 +117,12 @@ def compute_M(dm_dp,icov):
 
 def compute_z0(M,z):
     res = 0
-    den = 0 
+    den = 0
     for i in range(z.shape[0]):
         for j in range(z.shape[0]):
             res += M[i,j]*z[i]
             den += M[i,j]
-    return res,den 
+    return res,den
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -138,12 +137,12 @@ if __name__ == '__main__':
         help='display an image with the bins involved in the fit of each selected parameter')
 
     args = parser.parse_args()
-    chi2_file = args.chi2_file 
+    chi2_file = args.chi2_file
 
     if not args.params:
         print('ERROR : empty parameter list')
         sys.exit(12)
-        
+       
     ######### Open files
     dic_init = fit_parser.parse_chi2(chi2_file)
     h5_file = dic_init['outfile']
@@ -160,7 +159,7 @@ if __name__ == '__main__':
     for p in args.params:
         print("Parameter %s"%(p))
         M = compute_M(dm_dp[p],ico)
-        res,den = compute_z0(M,z) 
+        res,den = compute_z0(M,z)
         print("res = ",res,"den = ",den)
         print("<z> = ",res/den)
         print(" ")
