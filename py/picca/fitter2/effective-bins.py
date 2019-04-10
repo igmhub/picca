@@ -90,7 +90,7 @@ def xi_mod(pars,dic_init):
     
 def plot_xi(xi,title = ' '):
     pylab.figure()
-    pylab.imshow(xi.reshape((np,nt)),origin=0,interpolation='nearest',extent=[rt_min,rt_max,rp_min,rp_max])
+    pylab.imshow(xi.reshape((np,nt)),origin=0,interpolation='nearest',extent=[rt_min,rt_max,rp_min,rp_max],cmap='seismic')
     pylab.colorbar()
     pylab.ylabel(r"$r_{\parallel}$",size=20)
     pylab.xlabel(r"$r_{\perp}$",size=20)
@@ -142,7 +142,7 @@ if __name__ == '__main__':
     if not args.params:
         print('ERROR : empty parameter list')
         sys.exit(12)
-       
+
     ######### Open files
     dic_init = fit_parser.parse_chi2(chi2_file)
     h5_file = dic_init['outfile']
