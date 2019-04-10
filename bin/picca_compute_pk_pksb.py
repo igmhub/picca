@@ -4,11 +4,8 @@ import argparse
 import subprocess
 import fitsio
 import scipy as sp
-from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 import nbodykit.cosmology.correlation
-
-from picca.fitter2 import utils
 
 if __name__ == '__main__':
 
@@ -34,7 +31,7 @@ if __name__ == '__main__':
         'transfer_redshift(1)':'ZREF',
         'output_root':'output_root',
         'transfer_matterpower(1)':'transfer_matterpower'}
-    from_output2fits = {                                            
+    from_output2fits = {
         'Om_m(incOm_u)':'OM',
         'Om_darkenergy':'OL',
         'atz0.000sigma8(allmatter)':'SIGMA8',
