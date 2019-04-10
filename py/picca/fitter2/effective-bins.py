@@ -136,10 +136,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     chi2_file = args.chi2_file
 
-    if not args.params:
-        print('ERROR : empty parameter list')
-        sys.exit(12)
-
     ######### Open files
     dic_init = fit_parser.parse_chi2(chi2_file)
     h5_file = dic_init['outfile']
