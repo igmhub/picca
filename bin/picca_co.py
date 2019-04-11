@@ -72,6 +72,9 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Ok', type=float, default=0., required=False,
         help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--fid-wl', type=float, default=-1., required=False,
+        help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
+
     parser.add_argument('--type-corr', type=str, default='DD', required=False,
         help='type of correlation: DD, RR, DR, RD, xDD, xRR, xD1R2, xR1D2')
 
@@ -104,7 +107,7 @@ if __name__ == '__main__':
     else:
         co.x_correlation = True
 
-    cosmo = constants.cosmo(args.fid_Om,Ok=args.fid_Ok)
+    cosmo = constants.cosmo(args.fid_Om,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read objects 1
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,args.z_evol_obj, args.z_ref, cosmo)
