@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
+import os
 import argparse
 import subprocess
 import fitsio
 import scipy as sp
+from scipy.constants import speed_of_light
 from scipy.optimize import curve_fit
+import camb
 import nbodykit.cosmology.correlation
 
 if __name__ == '__main__':
@@ -17,55 +20,73 @@ if __name__ == '__main__':
     parser.add_argument('-o','--out', type=str, required=True,
         help='Output FITS file')
 
+    parser.add_argument('--H0', type=float, required=False, default=None,
+        help='Hubble parameter, if not given use the one from the config file')
+
+    parser.add_argument('--omega-k', type=float, required=False, default=None,
+        help='Curvature energy density, if not given use the one from the config file')
+
+    parser.add_argument('--z-ref', type=float, required=False, default=None,
+        help='Power-spectrum redshift, if not given use the one from the config file')
+
+
     args = parser.parse_args()
 
-    from_config2fits = {
-        'hubble':'H0',
-        'ombh2':'ombh2',
-        'omch2':'omch2',
-        'omnuh2':'omnuh2',
-        'omk':'OK',
-        'w':'W',
-        'temp_cmb':'TCMB',
-        'scalar_spectral_index(1)':'NS',
-        'transfer_redshift(1)':'ZREF',
-        'output_root':'output_root',
-        'transfer_matterpower(1)':'transfer_matterpower'}
-    from_output2fits = {
-        'Om_m(incOm_u)':'OM',
-        'Om_darkenergy':'OL',
-        'atz0.000sigma8(allmatter)':'SIGMA8',
-        'zdrag':'ZDRAG',
-        'r_s(zdrag)/Mpc':'RDRAG'}
-
-    cat = {}
-
-    f = open(args.ini,'r')
-    for l in f:
-        l = l.replace(' ','').replace('\n','').split('=')
-        if l[0] in from_config2fits.keys():
-            cat[from_config2fits[l[0]]] = l[1]
-    f.close()
+    ## Parameters kmin and kmax to get exactly same as DR12
+    minkh = 1.e-4
+    maxkh = 1.1525e3
+    npoints = 814
 
     print('INFO: running CAMB on {}'.format(args.ini))
-    try:
-        import camb
-    except ImportError:
-        print('ERROR: CAMB can not be found')
-    subprocess.run('camb {} > {}'.format(args.ini,cat['output_root']+'_out.txt'),shell=True)
+    pars = camb.read_ini(os.path.expandvars(args.ini))
+    pars.Transfer.kmax = maxkh
+    if not args.z_ref is None:
+        pars.Transfer.PK_redshifts[0] = args.z_ref
+    if not args.H0 is None:
+        pars.H0 = args.H0
+    if not args.omega_k is None:
+        pars.omk = args.omega_k
 
-    ### TODO: understand why O_m+O_L+O_k!=1.
-    f = open(cat['output_root']+'_out.txt','r')
-    for l in f:
-        l = l.replace(' ','').replace('\n','').replace('atz=','atz').split('=')
-        if l[0] in from_output2fits.keys():
-            cat[from_output2fits[l[0]]] = l[1]
-    f.close()
+    results = camb.get_results(pars)
+    k, z, pk = results.get_matter_power_spectrum(minkh=minkh, maxkh=pars.Transfer.kmax, npoints=npoints)
+    pk = pk[1]
+    pars = results.Params
+    pars2 = results.get_derived_params()
 
-    ### TODO: get P(k) decomposition
-    d = sp.loadtxt('{}_{}'.format(cat['output_root'],cat['transfer_matterpower']))
-    k = d[:,0]
-    pk = d[:,1]
+    ### Save the parameters
+    ### TODO: What do we do with OM?
+    ### =sum(ombh2,omch2,omnuh2)? or =1-OL-OK?
+    cat = {}
+    cat['H0'] = pars.H0
+    cat['ombh2'] = pars.ombh2
+    cat['omch2'] = pars.omch2
+    cat['omnuh2'] = pars.omnuh2
+    cat['OK'] = pars.omk
+    cat['OL'] = results.get_Omega('de')
+    cat['OM'] = (cat['ombh2']+cat['omch2']+cat['omnuh2'])/(cat['H0']/100.)**2
+    cat['W'] = pars.DarkEnergy.w
+    cat['TCMB'] = pars.TCMB
+    cat['NS'] = pars.InitPower.ns
+    cat['ZREF'] = pars.Transfer.PK_redshifts[0]
+    cat['SIGMA8'] = results.get_sigma8()[1]
+    cat['F'] = results.get_fsigma8()[0]/results.get_sigma8()[0]
+    cat['ZDRAG'] = pars2['zdrag']
+    cat['RDRAG'] = pars2['rdrag']
+
+    c = speed_of_light/1000. ## km/s
+    h = cat['H0']/100.
+    dh = c/(results.hubble_parameter(cat['ZREF'])/h)
+    chi = results.comoving_radial_distance(cat['ZREF'])*h
+    if cat['OK']==0.:
+        dm = chi
+    elif cat['OK']<0.:
+        dm = sp.sin(100.*sp.sqrt(-cat['OK'])/c*chi)/(100.*sp.sqrt(-cat['OK'])/c)
+    elif cat['OK']>0.:
+        dm = sp.sinh(100.*sp.sqrt(cat['OK'])/c*chi)/(100.*sp.sqrt(cat['OK'])/c)
+    cat['DH'] = dh
+    cat['DM'] = dm
+    cat['DHoRD'] = cat['DH']/(cat['RDRAG']*h)
+    cat['DMoRD'] = cat['DM']/(cat['RDRAG']*h)
 
     ### Get the Side-Bands
     ### Follow 2.2.1 of Kirkby et al. 2013: https://arxiv.org/pdf/1301.3456.pdf
@@ -101,6 +122,6 @@ if __name__ == '__main__':
     pkSB *= pk[-1]/pkSB[-1]
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [{'name':k,'value':float(v)} for k,v in cat.items() if k not in ['transfer_matterpower','output_root'] ]
+    head = [{'name':k,'value':float(v)} for k,v in cat.items() ]
     out.write([k,pk,pkSB],names=['K','PK','PKSB'],header=head,extname='PK')
     out.close()
