@@ -104,22 +104,22 @@ def smooth_cov_wick(da,we,cow,np,nt):
     Dcor1d = cor1d - corw1d
     
     #### indices
-    ind  = sp.arange(nbin)
-    rtindex   = ind%nt
-    rpindex   = ind/nt
-    idrt2d    = abs(rtindex-rtindex[:,None])
-    idrp2d    = abs(rpindex-rpindex[:,None])
-    idrt1d  = idrt2d.reshape(nbin*nbin)
-    idrp1d  = idrp2d.reshape(nbin*nbin)
+    ind = sp.arange(nbin)
+    rtindex = ind%nt
+    rpindex = ind/nt
+    idrt2d = abs(rtindex-rtindex[:,None])
+    idrp2d = abs(rpindex-rpindex[:,None])
+    idrt1d = idrt2d.reshape(nbin*nbin)
+    idrp1d = idrp2d.reshape(nbin*nbin)
 
     #### reduced covariance  (50*50)
-    cor_red1d  = sp.zeros(nbin)
+    cor_red1d = sp.zeros(nbin)
     Dcor_red1d = sp.zeros(nbin)
     for idr in range(0,nbin):
         print("\rsmoothing {}".format(idr),end="")
         Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
-        cor_red1d[idr]  = cor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])][0]
-    cor_red  = cor_red1d.reshape(np,nt)
+        cor_red1d[idr] = cor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])][0]
+    cor_red = cor_red1d.reshape(np,nt)
     Dcor_red = Dcor_red1d.reshape(np,nt)
 
     #### fit for L and A at each drp
@@ -135,10 +135,11 @@ def smooth_cov_wick(da,we,cow,np,nt):
         chi2 = chi2*np*nbin   
         return chi2
     
-    Lfit=sp.zeros(np)
-    Afit=sp.zeros(np)
+    Lfit = sp.zeros(np)
+    Afit = sp.zeros(np)
     for idrp in range(np):
-        m = iminuit.Minuit(chisq,L = 5.,error_L = 0.2,limit_L = (1.,400.),A = 1.,error_A = 0.2,idrp = idrp,fix_idrp = True,print_level = 1,errordef = 1.)
+        m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),A=1.,error_A=0.2,idrp=idrp,fix_idrp=True,
+                           print_level=1,errordef=1.)
         m.migrad()
         Lfit[idrp] = m.values['L']
         Afit[idrp] = m.values['A']
