@@ -6,7 +6,7 @@ import scipy as sp
 import scipy.linalg
 import argparse
 
-from picca.utils import smooth_cov, cov, smooth_cov_wick
+from picca.utils import smooth_cov, cov
 from picca.utils import print
 
 if __name__ == '__main__':
@@ -32,9 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('--do-not-smooth-cov', action='store_true', default=False,
         help='Do not smooth the covariance matrix')
 
-    parser.add_argument('--wick-cov', type=str, default=None, required=False,
-                        help='Wick T123 covariance (if provided, the subsample cov matrix will be smoothed using the wick cov)')
-    
+
     args = parser.parse_args()
 
     h = fitsio.FITS(args.data)
@@ -54,12 +52,7 @@ if __name__ == '__main__':
     rp_min = head['RPMIN']
     rp_max = head['RPMAX']
     h.close()
-    
-    if args.wick_cov is not None:
-        hh = fitsio.FITS(args.wick_cov)
-        cow = hh[1]['CO'][:]
-        hh.close()
-        
+
     if args.cov is not None:
         print('INFO: The covariance-matrix will be read from file: {}'.format(args.cov))
         hh = fitsio.FITS(args.cov)
@@ -78,16 +71,13 @@ if __name__ == '__main__':
     else:
         binSizeP = (rp_max-rp_min) / np
         binSizeT = (rt_max-0.) / nt
-        if args.do_not_smooth_cov :
-            print('INFO: The covariance will not be smoothed')
-            co = cov(da,we)
-        elif args.wick_cov is not None:
-            print('INFO: The covariance will be smoothed using the Wick T123 covariance')
-            co = smooth_cov_wick(da,we,cow,np,nt)
-        else : 
+        if not args.do_not_smooth_cov:
             print('INFO: The covariance will be smoothed')
             co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
-        
+        else:
+            print('INFO: The covariance will not be smoothed')
+            co = cov(da,we)
+
     da = (da*we).sum(axis=0)
     we = we.sum(axis=0)
     w = we>0
@@ -131,4 +121,4 @@ if __name__ == '__main__':
     h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
     comment = ['R-parallel model','R-transverse model','Redshift model']
     h.write([dmrp,dmrt,dmz],names=['DMRP','DMRT','DMZ'],comment=comment,extname='DMATTRI')
-    h.close()
+h.close()

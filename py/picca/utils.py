@@ -138,10 +138,10 @@ def smooth_cov_wick(da,we,cow,np,nt):
     Lfit=sp.zeros(np)
     Afit=sp.zeros(np)
     for idrp in range(np):
-        m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),A=1.,error_A=0.2,idrp=idrp,fix_idrp=True,print_level=1,errordef=1.)
+        m = iminuit.Minuit(chisq,L = 5.,error_L = 0.2,limit_L = (1.,400.),A = 1.,error_A = 0.2,idrp = idrp,fix_idrp = True,print_level = 1,errordef = 1.)
         m.migrad()
-        Lfit[idrp]     = m.values['L']
-        Afit[idrp]     = m.values['A']
+        Lfit[idrp] = m.values['L']
+        Afit[idrp] = m.values['A']
 
     #### hybrid covariance from wick + fit
     co_smooth = sp.sqrt(var*var[:,None])
