@@ -128,7 +128,8 @@ def compute_z0(M,z):
     return res,den
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    description='Measure the bins contribution to the fitted parameters and  compute their effective redshift')
 
     parser.add_argument('--chi2-file', type=str, required=True,
         help = "Path to the config 'chi2.ini' file used in fitter2")
@@ -163,8 +164,7 @@ if __name__ == '__main__':
         print('Parameter {}'.format(p))
         M = compute_M(dm_dp[p],ico)
         res,den = compute_z0(M,z)
-        print('res = {}, den = {}'.format(res,den))
-        print('<z> = {}'.format(res/den))
+        print('<z> = %2.3f/%2.3f = %2.3f'%(res,den,res/den))
         print('\n')
 
     if args.plot_effective_bins:
