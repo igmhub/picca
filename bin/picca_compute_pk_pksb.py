@@ -23,12 +23,14 @@ if __name__ == '__main__':
     parser.add_argument('--H0', type=float, required=False, default=None,
         help='Hubble parameter, if not given use the one from the config file')
 
-    parser.add_argument('--omega-k', type=float, required=False, default=None,
-        help='Curvature energy density, if not given use the one from the config file')
+    parser.add_argument('--fid-Ok', type=float, default=None, required=False,
+        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+
+    parser.add_argument('--fid-wl', type=float, default=None, required=False,
+        help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
     parser.add_argument('--z-ref', type=float, required=False, default=None,
         help='Power-spectrum redshift, if not given use the one from the config file')
-
 
     args = parser.parse_args()
 
@@ -44,8 +46,10 @@ if __name__ == '__main__':
         pars.Transfer.PK_redshifts[0] = args.z_ref
     if not args.H0 is None:
         pars.H0 = args.H0
-    if not args.omega_k is None:
-        pars.omk = args.omega_k
+    if not args.fid_Ok is None:
+        pars.omk = args.fid_Ok
+    if not args.fid_wl is None:
+        pars.DarkEnergy.w = args.fid_wl
 
     results = camb.get_results(pars)
     k, z, pk = results.get_matter_power_spectrum(minkh=minkh, maxkh=pars.Transfer.kmax, npoints=npoints)
