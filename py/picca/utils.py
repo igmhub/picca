@@ -7,6 +7,7 @@ import fitsio
 import glob
 import healpy
 import scipy.interpolate as interpolate
+import iminuit 
 
 try:
     import __builtin__
@@ -77,11 +78,11 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
     return co_smooth
 
-def smooth_cov_wick(da,we,rp,rt,cow,drt=4,drp=4):
+def smooth_cov_wick(da,we,cow,np,nt):
 
     co = cov(da,we)
 
-    nda = da.shape[1]
+    nbin = da.shape[1]
     var = sp.diagonal(co)
     if sp.any(var==0.):
         print('WARNING: data has some empty bins, impossible to smooth')
@@ -89,18 +90,76 @@ def smooth_cov_wick(da,we,rp,rt,cow,drt=4,drp=4):
         return co
 
     cor = co/sp.sqrt(var*var[:,None])
+    cor1d = cor.reshape(nbin*nbin)
+    
+    varw = sp.diagonal(cow)
+    if sp.any(varw==0.):
+        print('WARNING: Wick covariance has bins with var = 0')
+        print('WARNING: returning the unsmoothed covariance')
+        return co
 
-    cor_smooth = sp.zeros([nda,nda])
+    corw = cow/sp.sqrt(varw*varw[:,None])
+    corw1d = corw.reshape(nbin*nbin)
 
-    ## idrp = round(abs(rp[j]-rp[i])/drp)
-    idrp = sp.around(abs(rp-rp[:,None])/drp)
-    idrt = sp.around(abs(rt-rt[:,None])/drt)
-    idrp1d = sp.around(abs(rp-rp[:,None])/drp).reshape
-    idrt1d = sp.around(abs(rt-rt[:,None])/drt)
-        
+    Dcor1d = cor1d - corw1d
+    
+    #### indices
+    ind  = sp.arange(nbin)
+    rtindex   = ind%nt
+    rpindex   = ind/nt
+    idrt2d    = abs(rtindex-rtindex[:,None])
+    idrp2d    = abs(rpindex-rpindex[:,None])
+    idrt1d  = idrt2d.reshape(nbin*nbin)
+    idrp1d  = idrp2d.reshape(nbin*nbin)
+
+    #### reduced covariance  (50*50)
+    cor_red1d  = sp.zeros(nbin)
+    Dcor_red1d = sp.zeros(nbin)
+    for idr in range(0,nbin):
+        print("\rsmoothing {}".format(idr),end="")
+        Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
+        cor_red1d[idr]  = cor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])][0]
+    cor_red  = cor_red1d.reshape(np,nt)
+    Dcor_red = Dcor_red1d.reshape(np,nt)
+
+    #### fit for L and A at each drp
+    def corrfun(idrp,idrt,L,A):
+        r = sp.sqrt(float(idrt)**2+float(idrp)**2) - float(idrp)
+        return A*sp.exp(-r/L)
+    def chisq(L,A,idrp):
+        chi2 = 0.
+        idrp = int(idrp) 
+        for idrt in range(1,nt):
+            chi = Dcor_red[idrp,idrt]-corrfun(idrp,idrt,L,A)
+            chi2 += chi**2
+        chi2 = chi2*np*nbin   
+        return chi2
+    
+    Lfit=sp.zeros(np)
+    Afit=sp.zeros(np)
+    for idrp in range(np):
+        m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),A=1.,error_A=0.2,idrp=idrp,fix_idrp=True,print_level=1,errordef=1.)
+        m.migrad()
+        Lfit[idrp]     = m.values['L']
+        Afit[idrp]     = m.values['A']
+
+    #### hybrid covariance from wick + fit
+    co_smooth = sp.sqrt(var*var[:,None])
+    
+    cor0 = Dcor_red1d[rtindex==0]
+    for i in range(nbin):
+        for j in range(i+1,nbin):
+            idrp = idrp2d[i,j]
+            idrt = idrt2d[i,j]
+            newcov = corw[i,j]
+            if (idrt == 0):
+                newcov += cor0[idrp]
+            else:
+                newcov += corrfun(idrp,idrt,Lfit[idrp],Afit[idrp])
+            co_smooth[i,j] *= newcov
+            co_smooth[j,i] *= newcov
 
     print("\n")
-    co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
     return co_smooth
 
 def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):

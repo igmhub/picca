@@ -78,15 +78,15 @@ if __name__ == '__main__':
     else:
         binSizeP = (rp_max-rp_min) / np
         binSizeT = (rt_max-0.) / nt
-        if not args.do_not_smooth_cov:
-            print('INFO: The covariance will be smoothed')
-            co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
-        elif args.wick_cov is not None:
-            print('INFO: The covariance will be smoothed using the Wick T123 covariance')
-            co = smooth_cov_wick(da,we,rp,rt,cow,drt=binSizeT,drp=binSizeP)
-        else:
+        if args.do_not_smooth_cov :
             print('INFO: The covariance will not be smoothed')
             co = cov(da,we)
+        elif args.wick_cov is not None:
+            print('INFO: The covariance will be smoothed using the Wick T123 covariance')
+            co = smooth_cov_wick(da,we,cow,np,nt)
+        else : 
+            print('INFO: The covariance will be smoothed')
+            co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
         
     da = (da*we).sum(axis=0)
     we = we.sum(axis=0)
