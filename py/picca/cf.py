@@ -81,9 +81,11 @@ def cf(pix):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 if ang_correlation:
-                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.ll,d1.we,d1.de,d2.z,10.**d2.ll,d2.we,d2.de,ang,same_half_plate)
+                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.ll,10.**d1.ll,d1.we,d1.de,
+                        d2.z,10.**d2.ll,10.**d2.ll,d2.we,d2.de,ang,same_half_plate)
                 else:
-                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.we,d1.de,d2.z,d2.r_comov,d2.we,d2.de,ang,same_half_plate)
+                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.rdm_comov,d1.we,d1.de,
+                        d2.z,d2.r_comov,d2.rdm_comov,d2.we,d2.de,ang,same_half_plate)
 
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
@@ -100,7 +102,7 @@ def cf(pix):
     z[w]/=we[w]
     return we,xi,rp,rt,z,nb
 @jit
-def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
+def fast_cf(z1,r1,rdm1,w1,d1, z2,r2,rdm2,w2,d2, ang,same_half_plate):
     wd1 = d1*w1
     wd2 = d2*w2
     if ang_correlation:
@@ -112,7 +114,7 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
         rp = (r1-r2[:,None])*sp.cos(ang/2)
         if not x_correlation :
             rp = abs(rp)
-        rt = (r1+r2[:,None])*sp.sin(ang/2)
+        rt = (rdm1+rdm2[:,None])*sp.sin(ang/2)
     wd12 = wd1*wd2[:,None]
     w12 = w1*w2[:,None]
     z = (z1+z2[:,None])/2
@@ -160,6 +162,7 @@ def dmat(pix):
                 counter.value += 1
             order1 = d1.order
             r1 = d1.r_comov
+            rdm1 = d1.rdm_comov
             w1 = d1.we
             l1 = d1.ll
             z1 = d1.z
@@ -173,20 +176,21 @@ def dmat(pix):
                 order2 = d2.order
                 ang = d1^d2
                 r2 = d2.r_comov
+                rdm2 = d2.rdm_comov
                 w2 = d2.we
                 l2 = d2.ll
                 z2 = d2.z
-                fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
+                fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
             setattr(d1,"neighs",None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
-def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
+def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 
     rp = (r1[:,None]-r2)*sp.cos(ang/2)
     if  not x_correlation:
         rp = abs(rp)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+    rt = (rdm1+rdm2[:,None])*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
 
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)

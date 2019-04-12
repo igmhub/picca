@@ -69,10 +69,11 @@ def xcf(pix):
 
                 if ang_correlation:
                     l_qso = [10.**q.ll for q in d.neighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,zqso,l_qso,l_qso,we_qso,ang)
                 else:
                     rc_qso = [q.r_comov for q in d.neighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
+                    rdm_qso = [q.rdm_comov for q in d.neighs]
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.rdm_comov,d.we,d.de,zqso,rc_qso,rdm_qso,we_qso,ang)
 
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
@@ -90,13 +91,13 @@ def xcf(pix):
     z[w]/=we[w]
     return we,xi,rp,rt,z,nb
 @jit
-def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
+def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     if ang_correlation:
         rp = r1[:,None]/r2
         rt = ang*sp.ones_like(rp)
     else:
         rp = (r1[:,None]-r2)*sp.cos(ang/2)
-        rt = (r1[:,None]+r2)*sp.sin(ang/2)
+        rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2
 
     we = w1[:,None]*w2
@@ -140,6 +141,7 @@ def dmat(pix):
             with lock:
                 counter.value += 1
             r1 = d1.r_comov
+            rdm1 = d1.rdm_comov
             w1 = d1.we
             l1 = d1.ll
             z1 = d1.z
@@ -151,17 +153,18 @@ def dmat(pix):
             neighs = d1.neighs[w]
             ang = d1^neighs
             r2 = [q.r_comov for q in neighs]
+            rdm2 = [q.rdm_comov for q in neighs]
             w2 = [q.we for q in neighs]
             z2 = [q.zqso for q in neighs]
-            fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
+            fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
     return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
-def fill_dmat(l1,r1,z1,w1,r2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
+def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+    rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
 

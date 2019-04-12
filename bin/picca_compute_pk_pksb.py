@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    ## Parameters kmin and kmax to get exactly same as DR12
+    ### Parameters kmin and kmax to get exactly same as DR12
     minkh = 1.e-4
     maxkh = 1.1525e3
     npoints = 814
