@@ -190,7 +190,7 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
     rp = (r1[:,None]-r2)*sp.cos(ang/2)
     if  not x_correlation:
         rp = abs(rp)
-    rt = (rdm1+rdm2[:,None])*sp.sin(ang/2)
+    rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
 
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
