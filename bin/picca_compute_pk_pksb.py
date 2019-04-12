@@ -57,8 +57,6 @@ if __name__ == '__main__':
     pars2 = results.get_derived_params()
 
     ### Save the parameters
-    ### TODO: What do we do with OM?
-    ### =sum(ombh2,omch2,omnuh2)? or =1-OL-OK?
     cat = {}
     cat['H0'] = pars.H0
     cat['ombh2'] = pars.ombh2
@@ -66,6 +64,8 @@ if __name__ == '__main__':
     cat['omnuh2'] = pars.omnuh2
     cat['OK'] = pars.omk
     cat['OL'] = results.get_Omega('de')
+    cat['ORPHOTON'] = results.get_Omega('photon')
+    cat['ORNEUTRI'] = results.get_Omega('neutrino')
     cat['OM'] = (cat['ombh2']+cat['omch2']+cat['omnuh2'])/(cat['H0']/100.)**2
     cat['W'] = pars.DarkEnergy.w
     cat['TCMB'] = pars.TCMB
