@@ -2,7 +2,6 @@
 
 import os
 import argparse
-import subprocess
 import fitsio
 import scipy as sp
 from scipy.constants import speed_of_light
