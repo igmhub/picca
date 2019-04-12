@@ -11,12 +11,11 @@ small_angle_cut_off = 2./3600.*sp.pi/180. ## 2 arcsec
 
 class cosmo:
 
-    def __init__(self,Om,Ok=0,wl=-1.):
+    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=100.):
 
-        ### ignore Orad and neutrinos
+        ### Ignore evolution of neutrinos from matter to radiation
+        ### H0 in km/s/Mpc
         c = speed_light/1000. ## km/s
-        H0 = 100. ## km/s/Mpc
-        Or = 0.
         Ol = 1.-Ok-Om-Or
 
         nbins = 10000

@@ -69,6 +69,9 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--fid-Or', type=float, default=0., required=False,
+        help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
+
     parser.add_argument('--fid-Ok', type=float, default=0., required=False,
         help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
 
@@ -107,7 +110,7 @@ if __name__ == '__main__':
     else:
         co.x_correlation = True
 
-    cosmo = constants.cosmo(args.fid_Om,Ok=args.fid_Ok,wl=args.fid_wl)
+    cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read objects 1
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,args.z_evol_obj, args.z_ref, cosmo)
