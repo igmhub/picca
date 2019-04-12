@@ -79,13 +79,7 @@ if __name__ == '__main__':
     c = speed_of_light/1000. ## km/s
     h = cat['H0']/100.
     dh = c/(results.hubble_parameter(cat['ZREF'])/h)
-    chi = results.comoving_radial_distance(cat['ZREF'])*h
-    if cat['OK']==0.:
-        dm = chi
-    elif cat['OK']<0.:
-        dm = sp.sin(100.*sp.sqrt(-cat['OK'])/c*chi)/(100.*sp.sqrt(-cat['OK'])/c)
-    elif cat['OK']>0.:
-        dm = sp.sinh(100.*sp.sqrt(cat['OK'])/c*chi)/(100.*sp.sqrt(cat['OK'])/c)
+    dm = (1.+cat['ZREF'])*results.angular_diameter_distance(cat['ZREF'])*h
     cat['DH'] = dh
     cat['DM'] = dm
     cat['DHoRD'] = cat['DH']/(cat['RDRAG']*h)
