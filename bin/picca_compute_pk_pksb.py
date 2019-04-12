@@ -70,6 +70,7 @@ if __name__ == '__main__':
     cat['OL'] = results.get_Omega('de')
     cat['ORPHOTON'] = results.get_Omega('photon')
     cat['ORNEUTRI'] = results.get_Omega('neutrino')
+    cat['OR'] = cat['ORPHOTON']+cat['ORNEUTRI']
     cat['OM'] = (cat['ombh2']+cat['omch2']+cat['omnuh2'])/(cat['H0']/100.)**2
     cat['W'] = pars.DarkEnergy.w
     cat['TCMB'] = pars.TCMB
