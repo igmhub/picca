@@ -6,6 +6,7 @@ import fitsio
 import scipy as sp
 from scipy.constants import speed_of_light
 from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
 import camb
 import nbodykit.cosmology.correlation
 
@@ -30,6 +31,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--z-ref', type=float, required=False, default=None,
         help='Power-spectrum redshift, if not given use the one from the config file')
+
+    parser.add_argument('--plot', action='store_true', required=False,
+        help='Plot the resulting correlation functions and power-spectra')
 
     args = parser.parse_args()
 
@@ -87,6 +91,10 @@ if __name__ == '__main__':
 
     ### Get the Side-Bands
     ### Follow 2.2.1 of Kirkby et al. 2013: https://arxiv.org/pdf/1301.3456.pdf
+    sb1_rmin = 50.*(cat['H0']/67.31)*(cat['RDRAG']/147.334271564563)
+    sb1_rmax = 82.*(cat['H0']/67.31)*(cat['RDRAG']/147.334271564563)
+    sb2_rmin = 150.*(cat['H0']/67.31)*(cat['RDRAG']/147.334271564563)
+    sb2_rmax = 190.*(cat['H0']/67.31)*(cat['RDRAG']/147.334271564563)
     xi = nbodykit.cosmology.correlation.pk_to_xi(k,pk)
     r = 10**sp.linspace(-7.,3.5,1e4)
     xi = xi(r)
@@ -103,15 +111,15 @@ if __name__ == '__main__':
         model = sp.array(model)
         return model.sum(axis=0)
 
-    w = ((r>=50.) & (r<82.)) | ((r>=150.) & (r<190.))
+    w = ((r>=sb1_rmin) & (r<sb1_rmax)) | ((r>=sb2_rmin) & (r<sb2_rmax))
     sigma = 0.1*sp.ones(xi.size)
-    sigma[(r>=48.) & (r<52.)] = 1.e-6
-    sigma[(r>=188.) & (r<192.)] = 1.e-6
+    sigma[(r>=sb1_rmin-2.) & (r<sb1_rmin+2.)] = 1.e-6
+    sigma[(r>=sb2_rmax-2.) & (r<sb2_rmax+2.)] = 1.e-6
     popt, pcov = curve_fit(f_xiSB, r[w], xi[w], sigma=sigma[w])
 
     model = f_xiSB(r, *popt)
     xiSB = xi.copy()
-    ww = (r>=50.) & (r<190.)
+    ww = (r>=sb1_rmin) & (r<sb2_rmax)
     xiSB[ww] = model[ww]
 
     pkSB = nbodykit.cosmology.correlation.pk_to_xi(r,xiSB,extrap=True)
@@ -122,3 +130,34 @@ if __name__ == '__main__':
     head = [{'name':k,'value':float(v)} for k,v in cat.items() ]
     out.write([k,pk,pkSB],names=['K','PK','PKSB'],header=head,extname='PK')
     out.close()
+
+    if args.plot:
+        plt.plot(r,xi*r**2,label='Full')
+        w = (r>=sb1_rmin) & (r<sb1_rmax)
+        plt.plot(r[w],xi[w]*r[w]**2,label='SB1')
+        w = (r>=sb2_rmin) & (r<sb2_rmax)
+        plt.plot(r[w],xi[w]*r[w]**2,label='SB2')
+        plt.plot(r,xiSB*r**2,label='noBAO')
+        plt.xlabel(r'$r\,[h^{-1}\,\mathrm{Mpc}]$')
+        plt.ylabel(r'$r^{2}\,\xi(r)$')
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+        plt.plot(k,pk,label='Full')
+        plt.plot(k,pkSB,label='noBAO')
+        plt.xscale('log')
+        plt.yscale('log')
+        plt.xlabel(r'$k$')
+        plt.ylabel(r'$P(k)$')
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+        plt.plot(k,pk-pkSB,label='BAO')
+        plt.xscale('log')
+        plt.xlabel(r'$k$')
+        plt.ylabel(r'$P(k)$')
+        plt.legend()
+        plt.grid()
+        plt.show()
