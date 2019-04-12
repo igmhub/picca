@@ -91,10 +91,11 @@ if __name__ == '__main__':
 
     ### Get the Side-Bands
     ### Follow 2.2.1 of Kirkby et al. 2013: https://arxiv.org/pdf/1301.3456.pdf
-    sb1_rmin = 50.*(cat['H0']/67.31)*(cat['RDRAG']/147.334271564563)
-    sb1_rmax = 82.*(cat['H0']/67.31)*(cat['RDRAG']/147.334271564563)
-    sb2_rmin = 150.*(cat['H0']/67.31)*(cat['RDRAG']/147.334271564563)
-    sb2_rmax = 190.*(cat['H0']/67.31)*(cat['RDRAG']/147.334271564563)
+    coef_Planck2015 = (cat['H0']/67.31)*(cat['RDRAG']/147.334271564563)
+    sb1_rmin = 50.*coef_Planck2015
+    sb1_rmax = 82.*coef_Planck2015
+    sb2_rmin = 150.*coef_Planck2015
+    sb2_rmax = 190.*coef_Planck2015
     xi = nbodykit.cosmology.correlation.pk_to_xi(k,pk)
     r = 10**sp.linspace(-7.,3.5,1e4)
     xi = xi(r)
