@@ -17,30 +17,35 @@ class metadata:
     pass
 
 def read_dlas(fdla):
-    f=open(os.path.expandvars(fdla))
-    dlas={}
-    nb_dla = 0
-    col_names=None
-    for l in f:
-        l = l.split()
-        if len(l)==0:continue
-        if l[0][0]=="#":continue
-        if l[0]=="ThingID":
-            col_names = l
-            continue
-        if l[0][0]=="-":continue
-        thid = int(l[col_names.index("ThingID")])
-        if thid not in dlas:
-            dlas[thid]=[]
-        zabs = float(l[col_names.index("z_abs")])
-        nhi = float(l[col_names.index("NHI")])
-        dlas[thid].append((zabs,nhi))
-        nb_dla += 1
+    """
+    Read the DLA catalog from a fits file.
+    ASCII or DESI files can be converted using:
+        utils.eBOSS_convert_DLA()
+        utils.desi_convert_DLA()
+    """
 
-    print("")
-    print(" In catalog: {} DLAs".format(nb_dla) )
-    print(" In catalog: {} forests have a DLA".format(len(dlas)) )
-    print("")
+    lst = ['THING_ID','Z','NHI']
+    h = fitsio.FITS(fdla)
+    cat = { k:h['DLACAT'][k][:] for k in lst }
+    h.close()
+
+    w = sp.argsort(cat['Z'])
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+    w = sp.argsort(cat['THING_ID'])
+    for k in cat.keys():
+        cat[k] = cat[k][w]
+
+    dlas = {}
+    for t in sp.unique(cat['THING_ID']):
+        w = t==cat['THING_ID']
+        dlas[t] = [ (z,nhi) for z,nhi in zip(cat['Z'][w],cat['NHI'][w]) ]
+    nb_dla = sp.sum([len(d) for d in dlas.values()])
+
+    print('\n')
+    print(' In catalog: {} DLAs'.format(nb_dla) )
+    print(' In catalog: {} forests have a DLA'.format(len(dlas)) )
+    print('\n')
 
     return dlas
 
@@ -817,7 +822,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     th = [sp.pi/2.-d.dec for d in dels]
     pix = healpy.ang2pix(nside,th,phi)
     if pix.size==0:
-        raise AssertionError()
+        raise AssertionError('ERROR: No data in {}'.format(indir))
 
     data = {}
     zmin = 10**dels[0].ll[0]/lambda_abs-1.

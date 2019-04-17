@@ -70,7 +70,7 @@ if __name__ == '__main__':
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
     parser.add_argument('--type-corr', type=str, default='DD', required=False,
-        help='type of correlation: DD, RR, DR, RD, xDD, xRR, xD1R2, xD2R1')
+        help='type of correlation: DD, RR, DR, RD, xDD, xRR, xD1R2, xR1D2')
 
     parser.add_argument('--nside', type=int, default=16, required=False,
         help='Healpix nside')
@@ -93,8 +93,8 @@ if __name__ == '__main__':
     co.nt     = args.nt
     co.nside  = args.nside
     co.type_corr = args.type_corr
-    if co.type_corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xD2R1']:
-        print("ERROR: type-corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xD2R1']")
+    if co.type_corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xR1D2']:
+        print("ERROR: type-corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xR1D2']")
         sys.exit()
     if args.drq2 is None:
         co.x_correlation = False
