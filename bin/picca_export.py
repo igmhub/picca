@@ -121,4 +121,4 @@ if __name__ == '__main__':
     h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
     comment = ['R-parallel model','R-transverse model','Redshift model']
     h.write([dmrp,dmrt,dmz],names=['DMRP','DMRT','DMZ'],comment=comment,extname='DMATTRI')
-h.close()
+    h.close()

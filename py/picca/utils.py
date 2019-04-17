@@ -7,7 +7,7 @@ import fitsio
 import glob
 import healpy
 import scipy.interpolate as interpolate
-import iminuit 
+import iminuit
 
 try:
     import __builtin__
@@ -113,13 +113,10 @@ def smooth_cov_wick(da,we,cow,np,nt):
     idrp1d = idrp2d.reshape(nbin*nbin)
 
     #### reduced covariance  (50*50)
-    cor_red1d = sp.zeros(nbin)
     Dcor_red1d = sp.zeros(nbin)
     for idr in range(0,nbin):
         print("\rsmoothing {}".format(idr),end="")
         Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
-        cor_red1d[idr] = cor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])][0]
-    cor_red = cor_red1d.reshape(np,nt)
     Dcor_red = Dcor_red1d.reshape(np,nt)
 
     #### fit for L and A at each drp
@@ -132,7 +129,7 @@ def smooth_cov_wick(da,we,cow,np,nt):
         for idrt in range(1,nt):
             chi = Dcor_red[idrp,idrt]-corrfun(idrp,idrt,L,A)
             chi2 += chi**2
-        chi2 = chi2*np*nbin   
+        chi2 = chi2*np*nbin
         return chi2
     
     Lfit = sp.zeros(np)
@@ -146,7 +143,7 @@ def smooth_cov_wick(da,we,cow,np,nt):
 
     #### hybrid covariance from wick + fit
     co_smooth = sp.sqrt(var*var[:,None])
-    
+
     cor0 = Dcor_red1d[rtindex==0]
     for i in range(nbin):
         for j in range(i+1,nbin):
