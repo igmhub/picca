@@ -1,6 +1,5 @@
 from __future__ import print_function
 import scipy as sp
-import sys
 from healpy import query_disc
 from numba import jit
 from scipy import random
@@ -40,7 +39,7 @@ rej = None
 lock = None
 x_correlation = None
 ang_correlation = None
-no_same_wavelength_pairs = None
+remove_same_half_plate_close_pairs = False
 
 def fill_neighs(pix):
     for ipix in pix:
@@ -51,7 +50,7 @@ def fill_neighs(pix):
             ang = d1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if d1.ra > d.ra and (10**(d.ll[-1]- sp.log10(lambda_abs)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. >= z_cut_min+1 and (10**(d.ll[-1]- sp.log10(lambda_abs)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. < z_cut_max+1 ]
+            d1.neighs = [d for d in neighs if d1.ra > d.ra and (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
 
 def fill_neighs_x_correlation(pix):
     for ipix in pix:
@@ -62,7 +61,7 @@ def fill_neighs_x_correlation(pix):
             ang = d1^neighs
             w = (ang<angmax)
             neighs = sp.array(neighs)[w]
-            d1.neighs = [d for d in neighs if (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. >= z_cut_min+1 and (10**(d.ll[-1]- sp.log10(lambda_abs2)) + 10**(d1.ll[-1] - sp.log10(lambda_abs)))/2. < z_cut_max+1 ]
+            d1.neighs = [d for d in neighs if (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
 
 def cf(pix):
     xi = sp.zeros(np*nt)
@@ -110,8 +109,9 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
             rp[(rp<1.)] = 1./rp[(rp<1.)]
         rt = ang*sp.ones_like(rp)
     else:
-        if x_correlation : rp = (r1-r2[:,None])*sp.cos(ang/2)
-        else : rp = abs(r1-r2[:,None])*sp.cos(ang/2)
+        rp = (r1-r2[:,None])*sp.cos(ang/2)
+        if not x_correlation :
+            rp = abs(rp)
         rt = (r1+r2[:,None])*sp.sin(ang/2)
     wd12 = wd1*wd2[:,None]
     w12 = w1*w2[:,None]
@@ -127,15 +127,9 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
-    if same_half_plate:
+
+    if remove_same_half_plate_close_pairs and same_half_plate:
         w = abs(rp)<(rp_max-rp_min)/np
-        wd12[w] = 0
-        w12[w]=0
-    if no_same_wavelength_pairs:
-        if ang_correlation:
-            w = rp==1.
-        else:
-            w = rp==0.
         wd12[w] = 0.
         w12[w] = 0.
 
@@ -150,8 +144,12 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
 
 def dmat(pix):
 
-    dm = sp.zeros(np*nt*nt*np)
+    dm = sp.zeros(np*nt*ntm*npm)
     wdm = sp.zeros(np*nt)
+    rpeff = sp.zeros(ntm*npm)
+    rteff = sp.zeros(ntm*npm)
+    zeff = sp.zeros(ntm*npm)
+    weff = sp.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -164,6 +162,7 @@ def dmat(pix):
             r1 = d1.r_comov
             w1 = d1.we
             l1 = d1.ll
+            z1 = d1.z
             r = random.rand(len(d1.neighs))
             w=r>rej
             npairs += len(d1.neighs)
@@ -176,22 +175,31 @@ def dmat(pix):
                 r2 = d2.r_comov
                 w2 = d2.we
                 l2 = d2.ll
-                fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2)
+                z2 = d2.z
+                fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
             setattr(d1,"neighs",None)
 
-    return wdm,dm.reshape(np*nt,np*nt),npairs,npairs_used
-
+    return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
-def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
+def fill_dmat(l1,l2,r1,r2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 
-    if x_correlation:
-        rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    else:
-        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+    rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    if  not x_correlation:
+        rp = abs(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
+    z = (z1[:,None]+z2)/2.
+
+    w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
+
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
+    bins = bins[w]
+
+    m_bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*npm).astype(int)
+    m_bt = (rt/rt_max*ntm).astype(int)
+    m_bins = m_bt + ntm*m_bp
+    m_bins = m_bins[w]
 
     sw1 = w1.sum()
     sw2 = w2.sum()
@@ -205,10 +213,6 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
     slw1 = (w1*dl1**2).sum()
     slw2 = (w2*dl2**2).sum()
 
-    w = (rp<rp_max) & (rt<rt_max)& (rp>=rp_min)
-
-    bins = bins[w]
-
     n1 = len(l1)
     n2 = len(l2)
     ij = sp.arange(n1)[:,None]+n1*sp.arange(n2)
@@ -216,55 +220,59 @@ def fill_dmat(l1,l2,r1,r2,w1,w2,ang,wdm,dm,same_half_plate,order1,order2):
 
     we = w1[:,None]*w2
     we = we[w]
-    if same_half_plate:
+
+    if remove_same_half_plate_close_pairs and same_half_plate:
         wsame = abs(rp[w])<(rp_max-rp_min)/np
-        we[wsame]=0
-    if no_same_wavelength_pairs:
-        if ang_correlation:
-            wsame = rp==1.
-        else:
-            wsame = rp==0.
         we[wsame] = 0.
+
+    c = sp.bincount(m_bins,weights=we*rp[w])
+    rpeff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we*rt[w])
+    rteff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we*z[w])
+    zeff[:c.size] += c
+    c = sp.bincount(m_bins,weights=we)
+    weff[:c.size] += c
 
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
-    eta1 = sp.zeros(np*nt*n1)
-    eta2 = sp.zeros(np*nt*n2)
-    eta3 = sp.zeros(np*nt*n1)
-    eta4 = sp.zeros(np*nt*n2)
-    eta5 = sp.zeros(np*nt)
-    eta6 = sp.zeros(np*nt)
-    eta7 = sp.zeros(np*nt)
-    eta8 = sp.zeros(np*nt)
+    eta1 = sp.zeros(npm*ntm*n1)
+    eta2 = sp.zeros(npm*ntm*n2)
+    eta3 = sp.zeros(npm*ntm*n1)
+    eta4 = sp.zeros(npm*ntm*n2)
+    eta5 = sp.zeros(npm*ntm)
+    eta6 = sp.zeros(npm*ntm)
+    eta7 = sp.zeros(npm*ntm)
+    eta8 = sp.zeros(npm*ntm)
 
-    c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
+    c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
     eta1[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount(bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
+    c = sp.bincount(m_bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
 
     if order2==1:
-        c = sp.bincount(ij%n1+n1*bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
+        c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
         eta3[:len(c)]+=c
-        c = sp.bincount(bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
+        c = sp.bincount(m_bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
         eta6[:len(c)]+=c
     if order1==1:
-        c = sp.bincount((ij-ij%n1)//n1+n2*bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
         eta4[:len(c)]+=c
-        c = sp.bincount(bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
+        c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
         eta7[:len(c)]+=c
         if order2==1:
-            c = sp.bincount(bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
+            c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
             eta8[:len(c)]+=c
 
-    ubb = sp.unique(bins)
-    for k,ba in enumerate(bins):
-        dm[ba+np*nt*ba]+=we[k]
+    ubb = sp.unique(m_bins)
+    for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
+        dm[m_ba+npm*ntm*ba]+=we[k]
         i = ij[k]%n1
         j = (ij[k]-i)//n1
         for bb in ubb:
-            dm[bb+np*nt*ba] += we[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
+            dm[bb+npm*ntm*ba] += we[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
              - we[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
@@ -324,15 +332,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
                 bt = (rt/rt_max*nt).astype(int)
 
-                if same_half_plate:
+                if remove_same_half_plate_close_pairs and same_half_plate:
                     wp = abs(rp) < (rp_max-rp_min)/np
-                    w12[wp]=0
-
-                if no_same_wavelength_pairs:
-                    if ang_correlation:
-                        wp = rp==1.
-                    else:
-                        wp = rp==0.
                     w12[wp] = 0.
 
                 bA = bt + nt*bp
@@ -396,14 +397,8 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
                     bt = (rt/rt_max*nt).astype(int)
-                    if same_half_plate:
+                    if remove_same_half_plate_close_pairs and same_half_plate:
                         wp = abs(rp) < (rp_max-rp_min)/np
-                        w12[wp]=0
-                    if no_same_wavelength_pairs:
-                        if ang_correlation:
-                            wp = rp==1.
-                        else:
-                            wp = rp==0.
                         w12[wp] = 0.
                     bA = bt + nt*bp
                     wA = (bp<np) & (bt<nt) & (bp >=0)
@@ -536,10 +531,9 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
     zw2 = ((1+z2)/(1+zref))**(alpha-1)
 
     bins = i1[:,None]+n1*i2
-    if x_correlation:
-        rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    else :
-        rp = abs(r1[:,None]-r2)*sp.cos(ang/2)
+    rp = (r1[:,None]-r2)*sp.cos(ang/2)
+    if not x_correlation:
+        rp = abs(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
@@ -549,8 +543,8 @@ def fill_t123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,w123,t123_loc,same_half_plate):
 
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
 
-    if same_half_plate:
-        w = w & (abs(rp)>(rp_max-rp_min)/np)
+    if remove_same_half_plate_close_pairs and same_half_plate:
+        w &= abs(rp)>(rp_max-rp_min)/np
 
     bins = bins[w]
     ba = ba[w]

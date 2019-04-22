@@ -7,7 +7,7 @@ import h5py
 import sys
 from scipy.linalg import cholesky
 
-from . import utils, priors
+from . import priors
 
 def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
     return d.chi2(k, pk, pksb, dic)
@@ -103,17 +103,20 @@ class chi2:
         if self.hesse:
             self.best_fit.hesse()
 
-        self.best_fit.values['SB'] = False
+        values = dict(self.best_fit.values)
+        values['SB'] = False
         for d in self.data:
-            d.best_fit_model = self.best_fit.values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.best_fit.values)
+            d.best_fit_model = values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, values)
 
-            self.best_fit.values['SB'] = True
-            snl = self.best_fit.values['sigmaNL_per']
-            self.best_fit.values['sigmaNL_per'] = 0
-            d.best_fit_model += d.xi_model(self.k, self.pksb_lin, self.best_fit.values)
-            self.best_fit.values['SB'] = False
-            self.best_fit.values['sigmaNL_per'] = snl
-        del self.best_fit.values['SB']
+            values['SB'] = True
+            sigmaNL_par = values['sigmaNL_par']
+            sigmaNL_per = values['sigmaNL_per']
+            values['sigmaNL_par'] = 0.
+            values['sigmaNL_per'] = 0.
+            d.best_fit_model += d.xi_model(self.k, self.pksb_lin, values)
+            values['SB'] = False
+            values['sigmaNL_par'] = sigmaNL_par
+            values['sigmaNL_per'] = sigmaNL_per
 
     def chi2scan(self):
         if not hasattr(self, "dic_chi2scan"): return
@@ -298,25 +301,26 @@ class chi2:
             g.attrs['list of prior pars'] = [a.encode('utf8') for a in priors.prior_dic.keys()]
 
         ## write down all attributes of the minimum
-        dic_fmin = utils.convert_instance_to_dictionary(self.best_fit.get_fmin())
+        dic_fmin = self.best_fit.get_fmin()
         for item, value in dic_fmin.items():
             g.attrs[item] = value
 
-        self.best_fit.values['SB'] = False
+        values = dict(self.best_fit.values)
+        values['SB'] = False
         for d in self.data:
             g = f.create_group(d.name)
             g.attrs['ndata'] = d.mask.sum()
-            g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.best_fit.values)
+            g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, values)
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
             fit[...] = d.best_fit_model
-            if d.bb != None:
+            if not d.bb is None:
                 gbb = g.create_group("broadband")
                 for bbs in d.bb.values():
                     for bb in bbs:
+                        tbb = bb(d.r, d.mu, **values)
                         bband = gbb.create_dataset(bb.name,
-                                d.da.shape, dtype = "f")
-                        bband[...] = bb(d.r, d.mu, **self.best_fit.values)
-        del self.best_fit.values['SB']
+                                tbb.shape, dtype = "f")
+                        bband[...] = tbb
 
         if hasattr(self, "fast_mc"):
             g = f.create_group("fast mc")
@@ -356,7 +360,7 @@ class chi2:
             minos_results = self.best_fit.get_merrors()
             for par in list(minos_results.keys()):
                 subgrp = g.create_group(par)
-                dic_minos = utils.convert_instance_to_dictionary(minos_results[par])
+                dic_minos = minos_results[par]
                 for item, value in dic_minos.items():
                     subgrp.attrs[item] = value
 

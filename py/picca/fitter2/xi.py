@@ -27,7 +27,10 @@ def cache_xi_drp(function):
 
         bias1, beta1, bias2, beta2 = utils.bias_beta(kwargs, tracer1, tracer2)
         ap, at = utils.cosmo_fit_func(kwargs)
-        drp = kwargs['drp']
+        if tracer1['type']=='discrete':
+            drp = kwargs['drp_'+tracer1['name']]
+        elif tracer2['type']=='discrete':
+            drp = kwargs['drp_'+tracer2['name']]
 
         ## args[3] is the pk_lin, we need to make sure we recalculate
         ## when it changes (e.g. when we pass the pksb_lin)
@@ -51,8 +54,12 @@ def cache_xi_drp(function):
 def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
 
+    if tracer1['type']=='discrete':
+        drp = pars['drp_'+tracer1['name']]
+    elif tracer2['type']=='discrete':
+        drp = pars['drp_'+tracer2['name']]
     ap, at = utils.cosmo_fit_func(pars)
-    rp = r*mu + pars["drp"]
+    rp = r*mu + drp
     rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
@@ -103,7 +110,11 @@ def cached_xi_kaiser(*args, **kwargs):
 def xi_qso_radiation(r, mu, tracer1, tracer2, **pars):
     assert (tracer1['name']=="QSO" or tracer2['name']=="QSO") and (tracer1['name']!=tracer2['name'])
 
-    rp = r*mu + pars["drp"]
+    if tracer1['type']=='discrete':
+        drp = pars['drp_'+tracer1['name']]
+    elif tracer2['type']=='discrete':
+        drp = pars['drp_'+tracer2['name']]
+    rp = r*mu + drp
     rt = r*sp.sqrt(1-mu**2)
     r_shift = sp.sqrt(rp**2.+rt**2.)
     mu_shift = rp/r_shift
@@ -132,8 +143,13 @@ def xi_relativistic(r, mu, k, pk_lin, tracer1, tracer2, **pars):
     """
     assert (tracer1['type']=="continuous" or tracer2['type']=="continuous") and (tracer1['type']!=tracer2['type'])
 
+    if tracer1['type']=='discrete':
+        drp = pars['drp_'+tracer1['name']]
+    elif tracer2['type']=='discrete':
+        drp = pars['drp_'+tracer2['name']]
+
     ap, at = utils.cosmo_fit_func(pars)
-    rp = r*mu + pars["drp"]
+    rp = r*mu + drp
     rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
@@ -161,8 +177,13 @@ def xi_asymmetry(r, mu, k, pk_lin, tracer1, tracer2, **pars):
     """
     assert (tracer1['type']=="continuous" or tracer2['type']=="continuous") and (tracer1['type']!=tracer2['type'])
 
+    if tracer1['type']=='discrete':
+        drp = pars['drp_'+tracer1['name']]
+    elif tracer2['type']=='discrete':
+        drp = pars['drp_'+tracer2['name']]
+
     ap, at = utils.cosmo_fit_func(pars)
-    rp = r*mu + pars["drp"]
+    rp = r*mu + drp
     rt = r*sp.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
@@ -231,11 +252,35 @@ def qso_bias_vs_z_croom(z, tracer, zref = None, **kwargs):
     p1 = kwargs["croom_par1"]
     return (p0 + p1*(1.+z)**2)/(p0 + p1*(1+zref)**2)
 
+def broadband_sky(r, mu, name=None, bin_size_rp=None, *pars, **kwargs):
+    '''
+        Broadband function interface.
+        Calculates a Gaussian broadband in rp,rt for the sky residuals
+    Arguments:
+        - r,mu (array or float): where to calcualte the broadband
+        - bin_size_rp (array): Bin size of the distortion matrix along the line-of-sight
+        - name: (string) name ot identify the corresponding parameters,
+                    typically the dataset name and whether it's multiplicative
+                    of additive
+        - *pars: additional parameters that are ignored (for convenience)
+        **kwargs (dict): dictionary containing all the polynomial
+                    coefficients. Any extra keywords are ignored
+    Returns:
+        - cor (array of float): Correlation function
+    '''
+
+    rp = r*mu
+    rt = r*sp.sqrt(1-mu**2)
+    cor = kwargs[name+'-scale-sky']/(kwargs[name+'-sigma-sky']*sp.sqrt(2.*sp.pi))*sp.exp(-0.5*(rt/kwargs[name+'-sigma-sky'])**2)
+    w = (rp>=0.) & (rp<bin_size_rp)
+    cor[~w] = 0.
+
+    return cor
 
 def broadband(r, mu, deg_r_min=None, deg_r_max=None,
         ddeg_r=None, deg_mu_min=None, deg_mu_max=None,
         ddeg_mu=None, deg_mu=None, name=None,
-        rp_rt=False, *pars, **kwargs):
+        rp_rt=False, bin_size_rp=None, *pars, **kwargs):
     '''
     Broadband function interface.
     Calculates a power-law broadband in r and mu or rp,rt

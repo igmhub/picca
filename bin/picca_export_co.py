@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import fitsio
 import scipy as sp
@@ -37,8 +38,8 @@ if __name__ == '__main__':
     parser.add_argument('--xD1R2-file', type=str, default=None, required=False,
         help='File of the data_1 x random_2 cross-correlation')
 
-    parser.add_argument('--xD2R1-file', type=str, default=None, required=False,
-        help='File of the data_2 x random_1 cross-correlation')
+    parser.add_argument('--xR1D2-file', type=str, default=None, required=False,
+        help='File of the random_1 x data_2 cross-correlation')
 
     parser.add_argument('--do-not-smooth-cov', action='store_true', default=False,
         help='Do not smooth the covariance matrix from sub-sampling')
@@ -61,7 +62,7 @@ if __name__ == '__main__':
     elif not args.xDD_file is None:
         # TODO: Test if do_co.py and export_co.py work for cross
         corr = 'CROSS'
-        lst_file = {'xDD':args.xDD_file, 'xRR':args.xRR_file, 'xD1R2':args.D1R2_file, 'xD2R1':args.D2R1_file}
+        lst_file = {'xDD':args.xDD_file, 'xRR':args.xRR_file, 'xD1R2':args.xD1R2_file, 'xR1D2':args.xR1D2_file}
 
     ### Read files
     data = {}
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         dd = data['xDD']['WE'].sum(axis=0)
         rr = data['xRR']['WE'].sum(axis=0)
         d1r2 = data['xD1R2']['WE'].sum(axis=0)
-        d2r1 = data['xD2R1']['WE'].sum(axis=0)
+        d2r1 = data['xR1D2']['WE'].sum(axis=0)
         w = rr>0.
         da = sp.zeros(dd.size)
         da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
@@ -169,7 +170,7 @@ if __name__ == '__main__':
             dd = data['xDD']['WE']
             rr = data['xRR']['WE']
             d1r2 = data['xD1R2']['WE']
-            d2r1 = data['xD2R1']['WE']
+            d2r1 = data['xR1D2']['WE']
             w = rr>0.
             da = sp.zeros(dd.shape)
             da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
@@ -211,7 +212,7 @@ if __name__ == '__main__':
     ]
     lst = ['RP','RT','Z','DA','CO','DM','NB']
     comment=['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
-    h.write([ data[k] for k in lst ], names=lst, header=head, comment=comment)
+    h.write([ data[k] for k in lst ], names=lst, header=head, comment=comment,extname='COR')
 
     if args.cov is None and not args.get_cov_from_poisson:
         if corr=='AUTO':
@@ -222,6 +223,6 @@ if __name__ == '__main__':
             hep = data['xDD']['HEALPID']
         head2 = [{'name':'HLPXSCHM','value':HLPXSCHM,'comment':'healpix scheme'}]
         comment=['Healpix index', 'Sum of weight', 'Correlation']
-        h.write([hep,data['HLP_WE'],data['HLP_DA']],names=['HEALPID','WE','DA'],header=head2,comment=comment)
+        h.write([hep,data['HLP_WE'],data['HLP_DA']],names=['HEALPID','WE','DA'],header=head2,comment=comment,extname='SUB_COR')
 
     h.close()

@@ -3,23 +3,21 @@ from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
-import sys
-from functools import partial
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, xcf, io, utils
 from picca.utils import print
 
-def calc_metal_xdmat(abs_igm,p):
+def calc_dmat(p):
     xcf.fill_neighs(p)
     sp.random.seed(p[0])
-    tmp = xcf.metal_dmat(p,abs_igm=abs_igm)
+    tmp = xcf.dmat(p)
     return tmp
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Compute the distortion matrix of the cross-correlation delta x object for a list of IGM absorption.')
+        description='Compute the distortion matrix of the cross-correlation delta x object.')
 
     parser.add_argument('--out', type=str, default=None, required=True,
         help='Output file name')
@@ -45,6 +43,9 @@ if __name__ == '__main__':
     parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
+    parser.add_argument('--coef-binning-model', type=int, default=1, required=False,
+        help='Coefficient multiplying np and nt to get finner binning for the model')
+
     parser.add_argument('--z-min-obj', type=float, default=None, required=False,
         help='Min redshift for object field')
 
@@ -62,12 +63,6 @@ if __name__ == '__main__':
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
         help='Name of the absorption in picca.constants defining the redshift of the delta')
 
-    parser.add_argument('--obj-name', type=str, default='QSO', required=False,
-        help='Name of the object tracer')
-
-    parser.add_argument('--abs-igm', type=str,default=None, required=False, nargs='*',
-        help='List of names of metal absorption in picca.constants')
-
     parser.add_argument('--z-ref', type=float, default=2.25, required=False,
         help='Reference redshift')
 
@@ -81,7 +76,7 @@ if __name__ == '__main__':
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
     parser.add_argument('--rej', type=float, default=1., required=False,
-        help='Fraction of rejected object-forests pairs: -1=no rejection, 1=all rejection')
+        help='Fraction of rejected pairs: -1=no rejection, 1=all rejection')
 
     parser.add_argument('--nside', type=int, default=16, required=False,
         help='Healpix nside')
@@ -98,6 +93,8 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
+    print("nproc",args.nproc)
+
     xcf.rp_max = args.rp_max
     xcf.rp_min = args.rp_min
     xcf.rt_max = args.rt_max
@@ -105,25 +102,24 @@ if __name__ == '__main__':
     xcf.z_cut_min = args.z_cut_min
     xcf.np = args.np
     xcf.nt = args.nt
+    xcf.npm = args.np*args.coef_binning_model
+    xcf.ntm = args.nt*args.coef_binning_model
     xcf.nside = args.nside
     xcf.zref = args.z_ref
+    xcf.alpha = args.z_evol_del
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     xcf.rej = args.rej
 
-    ## use a metal grid equal to the lya grid
-    xcf.npm = args.np
-    xcf.ntm = args.nt
-
     cosmo = constants.cosmo(args.fid_Om)
-    xcf.cosmo=cosmo
 
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,\
-                            args.z_evol_del, args.z_ref, cosmo,nspec=args.nspec)
-
+    ### Read deltas
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
+        args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec)
     xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
-
+    print("\n")
+    print("done, npix = {}\n".format(xcf.npix))
 
     ### Find the redshift range
     if (args.z_min_obj is None):
@@ -137,13 +133,20 @@ if __name__ == '__main__':
         args.z_max_obj = cosmo.r_2_z(dmax_obj)
         print("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
 
+    ### Read objects
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
                                 args.z_evol_obj, args.z_ref,cosmo)
+    print("\n")
     xcf.objs = objs
 
+    ###
     xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
 
+
+
+
     xcf.counter = Value('i',0)
+
     xcf.lock = Lock()
 
     cpu_data = {}
@@ -153,48 +156,30 @@ if __name__ == '__main__':
             cpu_data[ip] = []
         cpu_data[ip].append(p)
 
-    dm_all=[]
-    wdm_all=[]
-    rp_all=[]
-    rt_all=[]
-    z_all=[]
-    names=[]
-    npairs_all=[]
-    npairs_used_all=[]
-
-
-    for i,abs_igm in enumerate(args.abs_igm):
-        xcf.counter.value=0
-        f=partial(calc_metal_xdmat,abs_igm)
-        print("")
+    if args.nproc>1:
         pool = Pool(processes=args.nproc)
-        dm = pool.map(f,sorted(list(cpu_data.values())))
+        dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
         pool.close()
-        dm = sp.array(dm)
-        wdm =dm[:,0].sum(axis=0)
-        rp = dm[:,2].sum(axis=0)
-        rt = dm[:,3].sum(axis=0)
-        z = dm[:,4].sum(axis=0)
-        we = dm[:,5].sum(axis=0)
-        w=we>0
-        rp[w]/=we[w]
-        rt[w]/=we[w]
-        z[w]/=we[w]
-        npairs=dm[:,6].sum(axis=0)
-        npairs_used=dm[:,7].sum(axis=0)
-        dm=dm[:,1].sum(axis=0)
-        w=wdm>0
-        dm[w,:]/=wdm[w,None]
+    elif args.nproc==1:
+        dm = map(calc_dmat,sorted(list(cpu_data.values())))
+        dm = list(dm)
 
-        dm_all.append(dm)
-        wdm_all.append(wdm)
-        rp_all.append(rp)
-        rt_all.append(rt)
-        z_all.append(z)
-        names.append(abs_igm)
+    dm = sp.array(dm)
+    wdm =dm[:,0].sum(axis=0)
+    rp = dm[:,2].sum(axis=0)
+    rt = dm[:,3].sum(axis=0)
+    z = dm[:,4].sum(axis=0)
+    we = dm[:,5].sum(axis=0)
+    npairs = dm[:,6].sum(axis=0)
+    npairs_used = dm[:,7].sum(axis=0)
+    dm=dm[:,1].sum(axis=0)
 
-        npairs_all.append(npairs)
-        npairs_used_all.append(npairs_used)
+    w = we>0.
+    rp[w] /= we[w]
+    rt[w] /= we[w]
+    z[w] /= we[w]
+    w = wdm>0.
+    dm[w,:] /= wdm[w,None]
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
@@ -202,46 +187,21 @@ if __name__ == '__main__':
         {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':xcf.rej,'comment':'Rejection factor'},
+        {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
+        {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
-
-    len_names = sp.array([ len(s) for s in names ]).max()
-    names = sp.array(names, dtype='S'+str(len_names))
-    out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=['NPALL','NPUSED','ABS_IGM'],header=head,
-        comment=['Number of pairs','Number of used pairs','Absorption name'],extname='ATTRI')
-
-    names = names.astype(str)
-    out_list = []
-    out_names = []
-    out_comment = []
-    out_units = []
-    for i,ai in enumerate(names):
-        out_names += ['RP_'+args.obj_name+'_'+ai]
-        out_list += [rp_all[i]]
-        out_comment += ['R-parallel']
-        out_units += ['h^-1 Mpc']
-
-        out_names += ['RT_'+args.obj_name+'_'+ai]
-        out_list += [rt_all[i]]
-        out_comment += ['R-transverse']
-        out_units += ['h^-1 Mpc']
-
-        out_names += ['Z_'+args.obj_name+'_'+ai]
-        out_list += [z_all[i]]
-        out_comment += ['Redshift']
-        out_units += ['']
-
-        out_names += ['DM_'+args.obj_name+'_'+ai]
-        out_list += [dm_all[i]]
-        out_comment += ['Distortion matrix']
-        out_units += ['']
-
-        out_names += ['WDM_'+args.obj_name+'_'+ai]
-        out_list += [wdm_all[i]]
-        out_comment += ['Sum of weight']
-        out_units += ['']
-
-    out.write(out_list,names=out_names,comment=out_comment,units=out_units,extname='MDMAT')
+    out.write([wdm,dm],
+        names=['WDM','DM'],
+        comment=['Sum of weight','Distortion matrix'],
+        units=['',''],
+        header=head,extname='DMAT')
+    out.write([rp,rt,z],
+        names=['RP','RT','Z'],
+        comment=['R-parallel','R-transverse','Redshift'],
+        units=['h^-1 Mpc','h^-1 Mpc','',],
+        extname='ATTRI')
     out.close()

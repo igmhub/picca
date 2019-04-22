@@ -128,7 +128,7 @@ if __name__ == '__main__':
             st    = vac[1]['stack'][:]
             w     = (st!=0.)
             forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate")
-
+            vac.close()
         except:
             print(" Error while reading flux_calib file {}".format(args.flux_calib))
             sys.exit(1)
@@ -140,7 +140,7 @@ if __name__ == '__main__':
             ll  = vac[2]['LOGLAM'][:]
             eta = vac[2]['ETA'][:]
             forest.correc_ivar = interp1d(ll,eta,fill_value="extrapolate",kind="nearest")
-
+            vac.close()
         except:
             print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
             sys.exit(1)

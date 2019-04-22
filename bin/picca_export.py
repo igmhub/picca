@@ -91,9 +91,24 @@ if __name__ == '__main__':
     if args.dmat is not None:
         h = fitsio.FITS(args.dmat)
         dm = h[1]['DM'][:]
+        try:
+            dmrp = h[2]['RP'][:]
+            dmrt = h[2]['RT'][:]
+            dmz = h[2]['Z'][:]
+        except IOError:
+            dmrp = rp.copy()
+            dmrt = rt.copy()
+            dmz = z.copy()
+        if dm.shape==(da.size,da.size):
+            dmrp = rp.copy()
+            dmrt = rt.copy()
+            dmz = z.copy()
         h.close()
     else:
         dm = sp.eye(len(da))
+        dmrp = rp.copy()
+        dmrt = rt.copy()
+        dmz = z.copy()
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':rp_min,'comment':'Minimum r-parallel'},
@@ -104,4 +119,6 @@ if __name__ == '__main__':
     ]
     comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
     h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
+    comment = ['R-parallel model','R-transverse model','Redshift model']
+    h.write([dmrp,dmrt,dmz],names=['DMRP','DMRT','DMZ'],comment=comment,extname='DMATTRI')
     h.close()

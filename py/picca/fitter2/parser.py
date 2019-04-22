@@ -36,6 +36,7 @@ def parse_chi2(filename):
     dic_init['fiducial']['k'] = h[1]['K'][:]
     dic_init['fiducial']['pk'] = h[1]['PK'][:]
     dic_init['fiducial']['pksb'] = h[1]['PKSB'][:]
+    h.close()
 
     zeff = float(cp.get('data sets','zeff'))
     dic_init['data sets'] = {}
@@ -154,6 +155,11 @@ def parse_data(filename,zeff,fiducial):
 
             assert value[2]=='rp,rt' or value[2]=='r,mu'
             dic_bb['rp_rt'] = value[2]
+
+            if len(value)==6:
+                dic_bb['func'] = value[5]
+            else:
+                dic_bb['func'] = 'broadband'
 
             deg_r_min,deg_r_max,ddeg_r = value[3].split(':')
             dic_bb['deg_r_min'] = int(deg_r_min)

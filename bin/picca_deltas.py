@@ -95,6 +95,9 @@ if __name__ == '__main__':
     parser.add_argument('--mask-file',type=str,default=None,required=False,
         help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
+    parser.add_argument('--dust-map', type=str, default=None, required=False,
+                help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
+
     parser.add_argument('--flux-calib',type=str,default=None,required=False,
         help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
 
@@ -179,7 +182,7 @@ if __name__ == '__main__':
             st    = vac[1]['stack'][:]
             w     = (st!=0.)
             forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate",kind="nearest")
-
+            vac.close()
         except:
             print(" Error while reading flux_calib file {}".format(args.flux_calib))
             sys.exit(1)
@@ -191,10 +194,15 @@ if __name__ == '__main__':
             ll  = vac[2]['LOGLAM'][:]
             eta = vac[2]['ETA'][:]
             forest.correc_ivar = interp1d(ll,eta,fill_value="extrapolate",kind="nearest")
-
+            vac.close()
         except:
             print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
             sys.exit(1)
+
+    ### Apply dust correction
+    if not args.dust_map is None:
+        print("applying dust correction")
+        forest.ebv_map = io.read_dust_map(args.dust_map)
 
     nit = args.nit
 
@@ -346,7 +354,7 @@ if __name__ == '__main__':
                 err_fudge = sp.zeros(nlss)
                 chi2 = sp.zeros(nlss)
 
-                nb_pixels = sp.zeros((nlss, nlss))
+                nb_pixels = sp.zeros(nlss)
                 var = sp.zeros(nlss)
                 var_del = sp.zeros((nlss, nlss))
                 var2_del = sp.zeros((nlss, nlss))
@@ -366,11 +374,11 @@ if __name__ == '__main__':
     hd["NSIDE"] = healpy_nside
     hd["PIXORDER"] = healpy_pix_ordering
     hd["FITORDER"] = args.order
-    res.write([ll_st,st,wst],names=['loglam','stack','weight'],header=hd)
-    res.write([ll,eta,vlss,fudge,nb_pixels],names=['loglam','eta','var_lss','fudge','nb_pixels'])
-    res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'])
+    res.write([ll_st,st,wst],names=['loglam','stack','weight'],header=hd,extname='STACK')
+    res.write([ll,eta,vlss,fudge,nb_pixels],names=['loglam','eta','var_lss','fudge','nb_pixels'],extname='WEIGHT')
+    res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'],extname='CONT')
     var = sp.broadcast_to(var.reshape(1,-1),var_del.shape)
-    res.write([var,var_del,var2_del,count,nqsos,chi2],names=['var_pipe','var_del','var2_del','count','nqsos','chi2'])
+    res.write([var,var_del,var2_del,count,nqsos,chi2],names=['var_pipe','var_del','var2_del','count','nqsos','chi2'],extname='VAR')
     res.close()
 
     ### Save delta

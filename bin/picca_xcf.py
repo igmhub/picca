@@ -3,22 +3,32 @@ from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
-import sys
 from multiprocessing import Pool,Lock,cpu_count,Value
 
-from picca import constants, xcf, io, prep_del
+from picca import constants, xcf, io, prep_del, utils
 from picca.data import forest
 from picca.utils import print
 
-def corr_func(p):
-    xcf.fill_neighs(p)
-    tmp = xcf.xcf(p)
-    return tmp
+def corr_func(pixels):
+    """Send correlation on one processor for a list of healpix
+
+    Args:
+        pixels (list of int): list of healpix to compute
+            the correlation on.
+
+    Returns:
+        cor (list of scipy array): list of array with the
+            computed correlation and other attributes.
+
+    """
+    xcf.fill_neighs(pixels)
+    cor = xcf.xcf(pixels)
+    return cor
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Compute the cross-correlation between a catalog of objects and a delta field as a function of angle and wavelength ratio')
+        description='Compute the cross-correlation between a catalog of objects and a delta field.')
 
     parser.add_argument('--out', type=str, default=None, required=True,
         help='Output file name')
@@ -26,23 +36,26 @@ if __name__ == '__main__':
     parser.add_argument('--in-dir', type=str, default=None, required=True,
         help='Directory to delta files')
 
+    parser.add_argument('--from-image', type=str, default=None, required=False,
+        help='Read delta from image format', nargs='*')
+
     parser.add_argument('--drq', type=str, default=None, required=True,
         help='Catalog of objects in DRQ format')
 
-    parser.add_argument('--wr-min', type=float, default=0.9, required=False,
-        help='Min of wavelength ratio')
+    parser.add_argument('--rp-min', type=float, default=-200., required=False,
+        help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--wr-max', type=float, default=1.1, required=False,
-        help='Max of wavelength ratio')
+    parser.add_argument('--rp-max', type=float, default=200., required=False,
+        help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--ang-max', type=float, default=0.02, required=False,
-        help='Max angle (rad)')
+    parser.add_argument('--rt-max', type=float, default=200., required=False,
+        help='Max r-transverse [h^-1 Mpc]')
 
     parser.add_argument('--np', type=int, default=100, required=False,
-        help='Number of wavelength ratio bins')
+        help='Number of r-parallel bins')
 
     parser.add_argument('--nt', type=int, default=50, required=False,
-        help='Number of angular bins')
+        help='Number of r-transverse bins')
 
     parser.add_argument('--z-min-obj', type=float, default=None, required=False,
         help='Min redshift for object field')
@@ -60,9 +73,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
         help='Name of the absorption in picca.constants defining the redshift of the delta')
-
-    parser.add_argument('--lambda-abs-obj', type=str, default='LYA', required=False,
-        help='Name of the absorption in picca.constants the object is considered as')
 
     parser.add_argument('--z-ref', type=float, default=2.25, required=False,
         help='Reference redshift')
@@ -91,35 +101,51 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
 
+    parser.add_argument('--shuffle-distrib-obj-seed', type=int, default=None, required=False,
+        help='Shuffle the distribution of objects on the sky following the given seed. Do not shuffle if None')
+
+    parser.add_argument('--nhisto', type=int, default=36, required=False,
+        help='Number of redshift histogram bins')
+
+    parser.add_argument('--z-histo-min', type=float, default=1.7, required=False,
+        help='Minimum redshift of histogram')
+
+    parser.add_argument('--z-histo-max', type=float, default=3.5, required=False,
+        help='Maximum redshift of histogram')
+
+    parser.add_argument('--save-thingid', action='store_true', required=False,
+        help='Save THING_IDs of used forest quasars')
+
 
     args = parser.parse_args()
 
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    xcf.rp_min = args.wr_min
-    xcf.rp_max = args.wr_max
-    xcf.rt_max = args.ang_max
-    xcf.z_cut_min = args.z_cut_min
+    xcf.rp_max = args.rp_max
+    xcf.rp_min = args.rp_min
     xcf.z_cut_max = args.z_cut_max
-    xcf.np     = args.np
-    xcf.nt     = args.nt
-    xcf.nside  = args.nside
-    xcf.ang_correlation = True
-    xcf.angmax  = args.ang_max
-
-    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
-    xcf.lambda_abs = lambda_abs
+    xcf.z_cut_min = args.z_cut_min
+    xcf.rt_max = args.rt_max
+    xcf.np = args.np
+    xcf.nt = args.nt
+    xcf.nside = args.nside
+    xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    xcf.nhisto = args.nhisto
+    xcf.zhisto_min = args.z_histo_min
+    xcf.zhisto_max = args.z_histo_max
 
     cosmo = constants.cosmo(args.fid_Om)
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, constants.absorber_IGM[args.lambda_abs],args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec,no_project=args.no_project)
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
+        args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
+        from_image=args.from_image)
     xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
     print("")
-    print("done, npix = {}".format(xcf.npix))
+    print("done, npix = {}\n".format(xcf.npix))
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
@@ -139,35 +165,52 @@ if __name__ == '__main__':
                 bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
                 d.de -= st[bins]
 
+    ### Find the redshift range
+    if (args.z_min_obj is None):
+        dmin_pix = cosmo.r_comoving(zmin_pix)
+        dmin_obj = max(0.,dmin_pix+xcf.rp_min)
+        args.z_min_obj = cosmo.r_2_z(dmin_obj)
+        print("\r z_min_obj = {}\r".format(args.z_min_obj),end="")
+    if (args.z_max_obj is None):
+        dmax_pix = cosmo.r_comoving(zmax_pix)
+        dmax_obj = max(0.,dmax_pix+xcf.rp_max)
+        args.z_max_obj = cosmo.r_2_z(dmax_obj)
+        print("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
+
     ### Read objects
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
                                 args.z_evol_obj, args.z_ref,cosmo)
-    for i,ipix in enumerate(sorted(objs.keys())):
-        for q in objs[ipix]:
-            q.ll = sp.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
+
+    if not args.shuffle_distrib_obj_seed is None:
+        objs = utils.shuffle_distrib_obj(objs,args.shuffle_distrib_obj_seed)
+
     print("")
     xcf.objs = objs
 
+    ###
+    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
 
-    ### Send
+
+
     xcf.counter = Value('i',0)
+
     xcf.lock = Lock()
     cpu_data = {}
     for p in list(dels.keys()):
         cpu_data[p] = [p]
 
     pool = Pool(processes=args.nproc)
+
     cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
-
-    ### Store
     cfs=sp.array(cfs)
     wes=cfs[:,0,:]
     rps=cfs[:,2,:]
     rts=cfs[:,3,:]
     zs=cfs[:,4,:]
     nbs=cfs[:,5,:].astype(sp.int64)
+    nhs=cfs[:,6,:].astype(sp.int64)
     cfs=cfs[:,1,:]
     hep=sp.array(sorted(list(cpu_data.keys())))
 
@@ -179,26 +222,45 @@ if __name__ == '__main__':
     z        = (zs*wes).sum(axis=0)
     z[cut]  /= wes.sum(axis=0)[cut]
     nb = nbs.sum(axis=0)
+    nh = nhs.sum(axis=0)
+    nh = nh[:xcf.nhisto]
+    zh = xcf.zhisto_min + (sp.arange(xcf.nhisto)+0.5)*(xcf.zhisto_max-xcf.zhisto_min)/xcf.nhisto
 
+    if args.save_thingid:
+        thingid = sp.array(xcf.getthingid(sorted(list(cpu_data.keys()))))
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum wavelength ratio'},
-        {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum wavelength ratio'},
-        {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum angle [rad]'},
-        {'name':'NP','value':xcf.np,'comment':'Number of bins in wavelength ratio'},
-        {'name':'NT','value':xcf.nt,'comment':'Number of bins in angle'},
+    head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
+        {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}
     ]
     out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
-        units=['','rad','',''],
-        comment=['Wavelength ratio','Angle','Redshift','Number of pairs'],
+        comment=['R-parallel','R-transverse','Redshift','Number of pairs'],
+        units=['h^-1 Mpc','h^-1 Mpc','',''],
         header=head,extname='ATTRI')
 
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]
     out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],
         comment=['Healpix index', 'Sum of weight', 'Correlation'],
         header=head2,extname='COR')
+
+    head3 = [ {'name':'NH','value':xcf.nhisto,'comment':'Number of histogram bins'},
+        {'name':'ZHMIN','value':xcf.zhisto_min,'comment':'Minimum redshift of histogram'},
+        {'name':'ZHMAX','value':xcf.zhisto_max,'comment':'Maximum redshift of histogram'}
+    ]
+    out.write([zh,nh],names=['ZPHISTO','NPHISTO'],
+        comment=['Redshift bin centers', 'Number of pairs'],
+        header=head3,extname='HISTO')
+
+    if args.save_thingid:
+        head4 = []
+        out.write([thingid],names=['THING_ID'],
+            comment=['THING_IDs of forest quasars'],
+            header=head4,extname='ID')
 
     out.close()

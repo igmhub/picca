@@ -2,11 +2,10 @@ from __future__ import print_function
 
 import scipy as sp
 from picca import constants
-from picca.utils import print
+from picca.utils import print, unred
 import iminuit
 from .dla import dla
 import fitsio
-import sys
 
 def variance(var,eta,var_lss,fudge):
     return eta*var + var_lss + fudge/var
@@ -85,6 +84,9 @@ class forest(qso):
     ### Correction function for multiplicative errors in inverse pipeline variance calibration
     correc_ivar = None
 
+    ### map of g-band extinction to thids for dust correction
+    ebv_map = None
+
     ## absorber pixel mask limit
     absorber_mask = None
 
@@ -104,6 +106,13 @@ class forest(qso):
     def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order, diff=None,reso=None, mmef = None):
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
 
+        if not self.ebv_map is None:
+            corr = unred(10**ll,self.ebv_map[thid])
+            fl /= corr
+            iv *= corr**2
+            if not diff is None:
+                diff /= corr
+
         ## cut to specified range
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
         ll = forest.lmin + bins*forest.dll
@@ -121,8 +130,9 @@ class forest(qso):
         ## mmef is the mean expected flux fraction using the mock continuum
         if mmef is not None:
             mmef = mmef[w]
-        if diff is not None :
+        if diff is not None:
             diff=diff[w]
+        if reso is not None:
             reso=reso[w]
 
         ## rebin
@@ -135,8 +145,9 @@ class forest(qso):
         cciv = sp.bincount(bins,weights=iv)
         if mmef is not None:
             ccmmef = sp.bincount(bins, weights=iv*mmef)
-        if diff is not None :
+        if diff is not None:
             cdiff = sp.bincount(bins,weights=iv*diff)
+        if reso is not None:
             creso = sp.bincount(bins,weights=iv*reso)
 
         cfl[:len(ccfl)] += ccfl
@@ -151,8 +162,9 @@ class forest(qso):
         iv = civ[w]
         if mmef is not None:
             mmef = cmmef[w]/civ[w]
-        if diff is not None :
+        if diff is not None:
             diff = cdiff[w]/civ[w]
+        if reso is not None:
             reso = creso[w]/civ[w]
 
         ## Flux calibration correction
@@ -173,9 +185,9 @@ class forest(qso):
         #if diff is not None :
         self.diff = diff
         self.reso = reso
-#        else :
-#           self.diff = sp.zeros(len(ll))
-#           self.reso = sp.ones(len(ll))
+        #else :
+        #   self.diff = sp.zeros(len(ll))
+        #   self.reso = sp.ones(len(ll))
 
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
@@ -192,34 +204,42 @@ class forest(qso):
         if not hasattr(self,'ll') or not hasattr(d,'ll'):
             return self
 
+        dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
+
         ll = sp.append(self.ll,d.ll)
-        fl = sp.append(self.fl,d.fl)
+        dic['fl'] = sp.append(self.fl, d.fl)
         iv = sp.append(self.iv,d.iv)
-        mmef = None
+
         if self.mmef is not None:
-            mmef = sp.append(self.mmef,d.mmef)
+            dic['mmef'] = sp.append(self.mmef, d.mmef)
+        if self.diff is not None:
+            dic['diff'] = sp.append(self.diff, d.diff)
+        if self.reso is not None:
+            dic['reso'] = sp.append(self.reso, d.reso)
 
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
         cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
-        cfl = sp.zeros(bins.max()+1)
         civ = sp.zeros(bins.max()+1)
-        if mmef is not None:
-            cmmef = sp.zeros(bins.max()+1)
-        ccfl = sp.bincount(bins,weights=iv*fl)
         cciv = sp.bincount(bins,weights=iv)
-        if mmef is not None:
-            ccmmef = sp.bincount(bins,weights=iv*mmef)
-        cfl[:len(ccfl)] += ccfl
         civ[:len(cciv)] += cciv
-        if mmef is not None:
-            cmmef[:len(ccmmef)] += ccmmef
         w = (civ>0.)
-
         self.ll = cll[w]
-        self.fl = cfl[w]/civ[w]
         self.iv = civ[w]
-        if mmef is not None:
-            self.mmef = cmmef[w]
+
+        for k, v in dic.items():
+            cnew = sp.zeros(bins.max() + 1)
+            ccnew = sp.bincount(bins, weights=iv * v)
+            cnew[:len(ccnew)] += ccnew
+            setattr(self, k, cnew[w] / civ[w])
+
+        # recompute means of quality variables
+        if self.reso is not None:
+            self.mean_reso = self.reso.mean()
+        err = 1./sp.sqrt(self.iv)
+        SNR = self.fl/err
+        self.mean_SNR = SNR.mean()
+        lam_lya = constants.absorber_IGM["LYA"]
+        self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
 
         return self
 
@@ -238,8 +258,9 @@ class forest(qso):
         self.iv = self.iv[w]
         if self.mmef is not None:
             self.mmef = self.mmef[w]
-        if self.diff is not None :
+        if self.diff is not None:
              self.diff = self.diff[w]
+        if self.reso is not None:
              self.reso = self.reso[w]
 
     def add_dla(self,zabs,nhi,mask=None):
@@ -263,6 +284,7 @@ class forest(qso):
         self.T_dla = self.T_dla[w]
         if self.diff is not None :
             self.diff = self.diff[w]
+        if self.reso is not None:
             self.reso = self.reso[w]
 
     def add_absorber(self,lambda_absorber):
@@ -277,6 +299,7 @@ class forest(qso):
         self.fl = self.fl[w]
         if self.diff is not None :
             self.diff = self.diff[w]
+        if self.reso is not None:
             self.reso = self.reso[w]
 
     def cont_fit(self):
@@ -463,9 +486,9 @@ class delta(qso):
         de = h[0].read()
         iv = h[1].read()
         ll = h[2].read()
-        ra = h[3]["RA"][:]*sp.pi/180.
-        dec = h[3]["DEC"][:]*sp.pi/180.
-        z = h[3]["Z"][:]
+        ra = h[3]["RA"][:].astype(sp.float64)*sp.pi/180.
+        dec = h[3]["DEC"][:].astype(sp.float64)*sp.pi/180.
+        z = h[3]["Z"][:].astype(sp.float64)
         plate = h[3]["PLATE"][:]
         mjd = h[3]["MJD"][:]
         fid = h[3]["FIBER"]

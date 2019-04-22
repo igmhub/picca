@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 
-from __future__ import division
-from __future__ import print_function
-import fitsio
+from __future__ import division, print_function
+
 import argparse
 import glob
-import sys
+from array import array
+
 import scipy as sp
 
+import fitsio
 from picca import constants
-from picca.Pk1D import Pk1D, compute_Pk_raw, compute_Pk_noise, compute_cor_reso, fill_masked_pixels, split_forest, rebin_diff_noise
 from picca.data import delta
+from picca.Pk1D import (compute_cor_reso, compute_Pk_noise, compute_Pk_raw,
+                        fill_masked_pixels, rebin_diff_noise, split_forest)
 from picca.utils import print
 
-from array import array
 
 def make_tree(tree,nb_bin_max):
 
@@ -63,19 +64,19 @@ def make_tree(tree,nb_bin_max):
 
 def compute_mean_delta(ll,delta,iv,zqso):
 
-    for i in range (len(ll)):
-        ll_obs= sp.power(10.,ll[i])
+    for i, _ in enumerate (ll):
+        ll_obs = sp.power(10., ll[i])
         ll_rf = ll_obs/(1.+zqso)
-        hdelta.Fill(ll_obs,ll_rf,delta[i])
-        hdelta_RF.Fill(ll_rf,delta[i])
-        hdelta_OBS.Fill(ll_obs,delta[i])
+        hdelta.Fill(ll_obs, ll_rf, delta[i])
+        hdelta_RF.Fill(ll_rf, delta[i])
+        hdelta_OBS.Fill(ll_obs, delta[i])
         hivar.Fill(iv[i])
         snr_pixel = (delta[i]+1)*sp.sqrt(iv[i])
         hsnr.Fill(snr_pixel)
         hivar.Fill(iv[i])
-        if (iv[i]<1000) :
-            hdelta_RF_we.Fill(ll_rf,delta[i],iv[i])
-            hdelta_OBS_we.Fill(ll_obs,delta[i],iv[i])
+        if (iv[i] < 1000):
+            hdelta_RF_we.Fill(ll_rf, delta[i], iv[i])
+            hdelta_OBS_we.Fill(ll_obs, delta[i], iv[i])
 
     return
 
@@ -131,7 +132,7 @@ if __name__ == '__main__':
 
 #   Create root file
     if (args.out_format=='root') :
-        from ROOT import TCanvas, TH1D, TFile, TTree, TProfile2D, TProfile
+        from ROOT import TH1D, TFile, TTree, TProfile2D, TProfile
         storeFile = TFile(args.out_dir+"/Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
@@ -195,8 +196,8 @@ if __name__ == '__main__':
             if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
 
             # first pixel in forest
-            for first_pixel in range(len(d.ll)) :
-                 if (sp.power(10.,d.ll[first_pixel])>args.lambda_obs_min) : break
+            for first_pixel,first_pixel_ll in enumerate(d.ll):
+                if 10.**first_pixel_ll>args.lambda_obs_min : break
 
             # minimum number of pixel in forest
             nb_pixel_min = args.nb_pixel_min

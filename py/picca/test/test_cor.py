@@ -19,7 +19,7 @@ else:
 def update_system_status_values(path, section, system, value):
 
     ### Make ConfigParser case sensitive
-    class CaseConfigParser(ConfigParser.SafeConfigParser):
+    class CaseConfigParser(ConfigParser.ConfigParser):
         def optionxform(self, optionstr):
             return optionstr
     cp = CaseConfigParser()
@@ -145,7 +145,7 @@ class TestCor(unittest.TestCase):
         out = fitsio.FITS(self._branchFiles+"/Products/"+name+".fits",'rw',clobber=True)
         cols=[ra,dec,thid,plate,mjd,fid,zqso]
         names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
-        out.write(cols,names=names)
+        out.write(cols,names=names,extname='CAT')
         out.close()
 
         return
@@ -218,7 +218,7 @@ class TestCor(unittest.TestCase):
 
         self.assertEqual(len(m),len(b),"{}".format(nameRun))
 
-        for i in range(len(m)):
+        for i,_ in enumerate(m):
 
             ###
             r_m = m[i].read_header().records()
@@ -249,11 +249,14 @@ class TestCor(unittest.TestCase):
                     allclose = sp.allclose(d_m,d_b)
                     self.assertTrue(allclose,"{}: Header key is {}, maximum relative difference is {}".format(nameRun,k,diff.max()))
 
+        m.close()
+        b.close()
+
         return
     def compare_h5py(self,path1,path2,nameRun=""):
 
         def compare_attributes(atts1,atts2):
-            self.assertListEqual(sorted(list(atts1.keys())),sorted(list(atts2.keys())),"{}".format(nameRun))
+            self.assertListEqual(sorted(atts1.keys()),sorted(atts2.keys()),"{}".format(nameRun))
             for item in atts1:
                 nequal = True
                 if isinstance(atts1[item],numpy.ndarray):
@@ -278,7 +281,7 @@ class TestCor(unittest.TestCase):
         self.assertTrue(os.path.isfile(path2),"{}".format(nameRun))
         b = h5py.File(path2,"r")
 
-        self.assertListEqual(sorted(list(m.keys())),sorted(list(b.keys())),"{}".format(nameRun))
+        self.assertListEqual(sorted(m.keys()),sorted(b.keys()),"{}".format(nameRun))
 
         ### best fit
         k = 'best fit'
@@ -288,7 +291,7 @@ class TestCor(unittest.TestCase):
         for k in m.keys():
             if k in ['best fit','fast mc','minos','chi2 scan']: continue
             compare_attributes(m[k].attrs,b[k].attrs)
-            compare_values(m[k]['fit'].value,b[k]['fit'].value)
+            compare_values(m[k]['fit'][()],b[k]['fit'][()])
 
         ### minos
         k = 'minos'
@@ -301,7 +304,7 @@ class TestCor(unittest.TestCase):
         for p in m[k].keys():
             compare_attributes(m[k][p].attrs,b[k][p].attrs)
             if p == 'result':
-                compare_values(m[k][p]['values'].value,b[k][p]['values'].value)
+                compare_values(m[k][p]['values'][()],b[k][p]['values'][()])
 
         return
     def load_requirements(self):
@@ -340,7 +343,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_deltas.py"
+        cmd  = " picca_deltas.py"
         cmd += " --in-dir "          + self._branchFiles+"/Products/Spectra/"
         cmd += " --drq "             + self._branchFiles+"/Products/cat.fits"
         cmd += " --out-dir "         + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -353,7 +356,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/delta_attributes.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_LYA/Log/delta_attributes.fits.gz"
-            self.compare_fits(path1,path2,"do_deltas.py")
+            self.compare_fits(path1,path2,"picca_deltas.py")
 
         return
 
@@ -364,7 +367,7 @@ class TestCor(unittest.TestCase):
         ### Path
         path_to_etc = resource_filename('picca','../../etc')
         ### Send
-        cmd  = " do_deltas.py"
+        cmd  = " picca_deltas.py"
         cmd += " --in-dir "          + self._masterFiles+"/test_Pk1D/Spectra_test/"
         cmd += " --drq "             + self._masterFiles+"/test_Pk1D/DRQ_test.fits"
         cmd += " --out-dir "         + self._branchFiles+"/Products/Delta_Pk1D/Delta/"
@@ -373,6 +376,7 @@ class TestCor(unittest.TestCase):
         cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight"
         cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
         cmd += " --nproc 1"
+        cmd += " --best-obs"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
         subprocess.call(cmd, shell=True)
 
@@ -380,15 +384,15 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/test_Pk1D/delta_attributes_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
-            self.compare_fits(path1,path2,"do_deltas.py")
+            self.compare_fits(path1,path2,"picca_deltas.py")
 
             path1 = self._masterFiles + "/test_Pk1D/delta-64_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-64.fits.gz"
-            self.compare_fits(path1,path2,"do_deltas.py")
+            self.compare_fits(path1,path2,"picca_deltas.py")
 
             path1 = self._masterFiles + "/test_Pk1D/delta-80_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-80.fits.gz"
-            self.compare_fits(path1,path2,"do_deltas.py")
+            self.compare_fits(path1,path2,"picca_deltas.py")
 
         return
 
@@ -396,7 +400,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_Pk1D.py"
+        cmd  = " picca_Pk1D.py"
         cmd += " --in-dir "          + self._masterFiles + "/test_Pk1D/delta_Pk1D/"
         cmd += " --out-dir "         + self._branchFiles+"/Products/Pk1D/"
         subprocess.call(cmd, shell=True)
@@ -405,7 +409,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/test_Pk1D/Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Pk1D/Pk1D-0.fits.gz"
-            self.compare_fits(path1,path2,"do_Pk1D.py")
+            self.compare_fits(path1,path2,"picca_Pk1D.py")
 
         return
 
@@ -414,7 +418,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_cf1d.py"
+        cmd  = " picca_cf1d.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
         cmd += " --nproc 1"
@@ -424,14 +428,14 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/cf1d.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf1d.fits.gz"
-            self.compare_fits(path1,path2,"do_cf1d.py")
+            self.compare_fits(path1,path2,"picca_cf1d.py")
 
         return
     def send_cf1d_cross(self):
 
         print("\n")
         ### Send
-        cmd  = " do_cf1d.py"
+        cmd  = " picca_cf1d.py"
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/cf1d_cross.fits.gz"
@@ -442,14 +446,14 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/cf1d_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf1d_cross.fits.gz"
-            self.compare_fits(path1,path2,"do_cf1d.py")
+            self.compare_fits(path1,path2,"picca_cf1d.py")
 
         return
     def send_cf_angl(self):
 
         print("\n")
         ### Send
-        cmd  = " do_cf_angl.py"
+        cmd  = " picca_cf_angl.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf_angl.fits.gz"
         cmd += " --nproc 1"
@@ -459,14 +463,14 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/cf_angl.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf_angl.fits.gz"
-            self.compare_fits(path1,path2,"do_cf_angl.py")
+            self.compare_fits(path1,path2,"picca_cf_angl.py")
 
         return
     def send_cf(self):
 
         print("\n")
         ### Send
-        cmd  = " do_cf.py"
+        cmd  = " picca_cf.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/cf.fits.gz"
         cmd += " --rp-min +0.0"
@@ -475,20 +479,21 @@ class TestCor(unittest.TestCase):
         cmd += " --np 15"
         cmd += " --nt 15"
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
             path1 = self._masterFiles + "/cf.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf.fits.gz"
-            self.compare_fits(path1,path2,"do_cf.py")
+            self.compare_fits(path1,path2,"picca_cf.py")
 
         return
     def send_dmat(self):
 
         print("\n")
         ### Send
-        cmd  = " do_dmat.py"
+        cmd  = " picca_dmat.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/dmat.fits.gz"
         cmd += " --rp-min +0.0"
@@ -498,20 +503,21 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
             path1 = self._masterFiles + "/dmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/dmat.fits.gz"
-            self.compare_fits(path1,path2,"do_dmat.py")
+            self.compare_fits(path1,path2,"picca_dmat.py")
 
         return
     def send_metal_dmat(self):
 
         print("\n")
         ### Send
-        cmd  = " do_metal_dmat.py"
+        cmd  = " picca_metal_dmat.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/metal_dmat.fits.gz"
         cmd += " --abs-igm SiIII\(1207\)"
@@ -522,20 +528,21 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
             path1 = self._masterFiles + "/metal_dmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
-            self.compare_fits(path1,path2,"do_metal_dmat.py")
+            self.compare_fits(path1,path2,"picca_metal_dmat.py")
 
         return
     def send_export_cf(self):
 
         print("\n")
         ### Send
-        cmd  = " export.py"
+        cmd  = " picca_export.py"
         cmd += " --data " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
         cmd += " --dmat " + self._branchFiles+"/Products/Correlations/dmat.fits.gz"
         cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_cf.fits.gz"
@@ -546,7 +553,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_cf.py"
+        cmd  = " picca_cf.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/cf_cross.fits.gz"
@@ -556,20 +563,22 @@ class TestCor(unittest.TestCase):
         cmd += " --np 30"
         cmd += " --nt 15"
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --unfold-cf"
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
             path1 = self._masterFiles + "/cf_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf_cross.fits.gz"
-            self.compare_fits(path1,path2,"do_cf.py")
+            self.compare_fits(path1,path2,"picca_cf.py")
 
         return
     def send_dmat_cross(self):
 
         print("\n")
         ### Send
-        cmd  = " do_dmat.py"
+        cmd  = " picca_dmat.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/dmat_cross.fits.gz"
@@ -580,20 +589,22 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --unfold-cf"
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
             path1 = self._masterFiles + "/dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/dmat_cross.fits.gz"
-            self.compare_fits(path1,path2,"do_dmat.py")
+            self.compare_fits(path1,path2,"picca_dmat.py")
 
         return
     def send_metal_dmat_cross(self):
 
         print("\n")
         ### Send
-        cmd  = " do_metal_dmat.py"
+        cmd  = " picca_metal_dmat.py"
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/metal_dmat_cross.fits.gz"
@@ -606,20 +617,22 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --rej 0.99 "
         cmd += " --nproc 1"
+        cmd += ' --remove-same-half-plate-close-pairs'
+        cmd += " --unfold-cf"
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
             path1 = self._masterFiles + "/metal_dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
-            self.compare_fits(path1,path2,"do_metal_dmat.py")
+            self.compare_fits(path1,path2,"picca_metal_dmat.py")
 
         return
     def send_export_cf_cross(self):
 
         print("\n")
         ### Send
-        cmd  = " export.py"
+        cmd  = " picca_export.py"
         cmd += " --data " + self._branchFiles+"/Products/Correlations/cf_cross.fits.gz"
         cmd += " --dmat " + self._branchFiles+"/Products/Correlations/dmat_cross.fits.gz"
         cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_cf_cross.fits.gz"
@@ -630,7 +643,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_xcf_angl.py"
+        cmd  = " picca_xcf_angl.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/xcf_angl.fits.gz"
@@ -641,14 +654,14 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/xcf_angl.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
-            self.compare_fits(path1,path2,"do_xcf_angl.py")
+            self.compare_fits(path1,path2,"picca_xcf_angl.py")
 
         return
     def send_xcf(self):
 
         print("\n")
         ### Send
-        cmd  = " do_xcf.py"
+        cmd  = " picca_xcf.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
@@ -664,14 +677,14 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/xcf.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xcf.fits.gz"
-            self.compare_fits(path1,path2,"do_xcf.py")
+            self.compare_fits(path1,path2,"picca_xcf.py")
 
         return
     def send_xdmat(self):
 
         print("\n")
         ### Send
-        cmd  = " do_xdmat.py"
+        cmd  = " picca_xdmat.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/xdmat.fits.gz"
@@ -688,14 +701,14 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/xdmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xdmat.fits.gz"
-            self.compare_fits(path1,path2,"do_xdmat.py")
+            self.compare_fits(path1,path2,"picca_xdmat.py")
 
         return
     def send_metal_xdmat(self):
 
         print("\n")
         ### Send
-        cmd  = " do_metal_xdmat.py"
+        cmd  = " picca_metal_xdmat.py"
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq "     + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "     + self._branchFiles+"/Products/Correlations/metal_xdmat.fits.gz"
@@ -713,14 +726,14 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/metal_xdmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
-            self.compare_fits(path1,path2,"do_metal_xdmat.py")
+            self.compare_fits(path1,path2,"picca_metal_xdmat.py")
 
         return
     def send_export_xcf(self):
 
         print("\n")
         ### Send
-        cmd  = " export.py"
+        cmd  = " picca_export.py"
         cmd += " --data " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
         cmd += " --dmat " + self._branchFiles+"/Products/Correlations/xdmat.fits.gz"
         cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_xcf.fits.gz"
@@ -731,7 +744,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " export_cross_covariance.py"
+        cmd  = " picca_export_cross_covariance.py"
         cmd += " --data1 " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
         cmd += " --data2 " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
         cmd += " --out "   + self._branchFiles+"/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
@@ -742,7 +755,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Send
-        cmd  = " do_co.py"
+        cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
         cmd += " --rp-min 0."
@@ -754,7 +767,7 @@ class TestCor(unittest.TestCase):
         cmd += " --type-corr DD"
         subprocess.call(cmd, shell=True)
         ### Send
-        cmd  = " do_co.py"
+        cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/random.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/Co_Random/co_RR.fits.gz"
         cmd += " --rp-min 0."
@@ -766,7 +779,7 @@ class TestCor(unittest.TestCase):
         cmd += " --type-corr RR"
         subprocess.call(cmd, shell=True)
         ### Send
-        cmd  = " do_co.py"
+        cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
         cmd += " --drq2 "   + self._branchFiles+"/Products/random.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/Co_Random/co_DR.fits.gz"
@@ -779,7 +792,7 @@ class TestCor(unittest.TestCase):
         cmd += " --type-corr DR"
         subprocess.call(cmd, shell=True)
         ### Send
-        cmd  = " do_co.py"
+        cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/random.fits"
         cmd += " --drq2 "   + self._branchFiles+"/Products/cat.fits"
         cmd += " --out "    + self._branchFiles+"/Products/Correlations/Co_Random/co_RD.fits.gz"
@@ -796,26 +809,26 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/co_DD.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/co_DD.fits.gz"
-            self.compare_fits(path1,path2,"do_co.py DD")
+            self.compare_fits(path1,path2,"picca_co.py DD")
 
             path1 = self._masterFiles + "/co_RR.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RR.fits.gz"
-            self.compare_fits(path1,path2,"do_co.py RR")
+            self.compare_fits(path1,path2,"picca_co.py RR")
 
             path1 = self._masterFiles + "/co_DR.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_DR.fits.gz"
-            self.compare_fits(path1,path2,"do_co.py DR")
+            self.compare_fits(path1,path2,"picca_co.py DR")
 
             path1 = self._masterFiles + "/co_RD.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RD.fits.gz"
-            self.compare_fits(path1,path2,"do_co.py RD")
+            self.compare_fits(path1,path2,"picca_co.py RD")
 
         return
     def send_export_co(self):
 
         print("\n")
         ### Send
-        cmd  = " export_co.py"
+        cmd  = " picca_export_co.py"
         cmd += " --DD-file " + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
         cmd += " --RR-file " + self._branchFiles+"/Products/Correlations/Co_Random/co_RR.fits.gz"
         cmd += " --DR-file " + self._branchFiles+"/Products/Correlations/Co_Random/co_DR.fits.gz"
@@ -866,14 +879,14 @@ class TestCor(unittest.TestCase):
         update_system_status_values(path, 'metals', 'filename', value)
 
         ### Send
-        cmd  = ' fitter2 '+self._branchFiles+'/Products/Correlations/Fit/chi2.ini'
+        cmd  = ' picca_fitter2.py '+self._branchFiles+'/Products/Correlations/Fit/chi2.ini'
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
             path1 = self._masterFiles+'/result_fitter2.h5'
             path2 = self._branchFiles+'/Products/Correlations/Fit/result_fitter2.h5'
-            self.compare_h5py(path1,path2,"fitter2")
+            self.compare_h5py(path1,path2,"picca_fitter2")
 
 if __name__ == '__main__':
     unittest.main()
