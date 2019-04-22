@@ -15,7 +15,8 @@ class dla:
     def p_voigt_a(la,zabs,nhi):
         return sp.exp(-dla.tau_a(la,zabs,nhi))
 
-    ## Explanation of the calculation and of what are the parameters in Rutten 2003 at 3.3.3
+    ### Implementation of Pasquier code,
+    ###     also in Rutten 2003 at 3.3.3
     @staticmethod
     def tau_a(la,zabs,nhi):
         lam_lya = constants.absorber_IGM["LYA"] ## A
@@ -30,9 +31,9 @@ class dla:
         a = lam_lya*1e-10*gamma/(4*sp.pi*b)
         h = dla.voigt(a,u)
         b/=1000.
-        tau = 1.497e-15*nn*f*lrf*h/b
         ## 1.497e-16 = e**2/(4*sqrt(pi)*epsilon0*m_electron*c)*1e-10 ## m^2.s^-1.m/A
         ## we have b/1000 & 1.497e-15 to convert 1.497e-15*f*lrf*h/n to cm^2
+        tau = 1.497e-15*nn*f*lrf*h/b
         return tau
 
     @staticmethod
