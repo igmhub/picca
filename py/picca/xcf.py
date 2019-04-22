@@ -56,6 +56,8 @@ def xcf(pix):
     rt = sp.zeros(np*nt)
     z = sp.zeros(np*nt)
     nb = sp.zeros(np*nt,dtype=sp.int64)
+    hist = sp.zeros(100)
+    whist = sp.zeros(100)
 
     for ipix in pix:
         for d in dels[ipix]:
@@ -80,6 +82,8 @@ def xcf(pix):
                 rt[:len(crt)]+=crt
                 z[:len(cz)]+=cz
                 nb[:len(cnb)]+=cnb.astype(int)
+                hist[:chist.size] += chist
+                whist[:cwhist.size] += cwhist
             for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
 
@@ -88,7 +92,9 @@ def xcf(pix):
     rp[w]/=we[w]
     rt[w]/=we[w]
     z[w]/=we[w]
-    return we,xi,rp,rt,z,nb
+    w = whist>0.
+    hist[w] /= whist[w]
+    return we,xi,rp,rt,z,nb,hist,whist
 @jit
 def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     if ang_correlation:
@@ -113,6 +119,7 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     bt = (rt/rt_max*nt).astype(int)
     bins = bt + nt*bp
 
+
     cd = sp.bincount(bins,weights=wde)
     cw = sp.bincount(bins,weights=we)
     crp = sp.bincount(bins,weights=rp*we)
@@ -120,7 +127,11 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     cz = sp.bincount(bins,weights=z*we)
     cnb = sp.bincount(bins,weights=(we>0.))
 
-    return cw,cd,crp,crt,cz,cnb
+    zbins = (z/10.*100).astype(int)
+    chist = sp.bincount(zbins,weights=z*we)
+    cwhist = sp.bincount(zbins,weights=(we>0.))
+
+    return cw,cd,crp,crt,cz,cnb,chist,cwhist
 
 
 def dmat(pix):

@@ -194,6 +194,8 @@ if __name__ == '__main__':
     rts=cfs[:,3,:]
     zs=cfs[:,4,:]
     nbs=cfs[:,5,:].astype(sp.int64)
+    hist = 
+    whist = 
     cfs=cfs[:,1,:]
     hep=sp.array(sorted(list(cpu_data.keys())))
 
