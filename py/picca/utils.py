@@ -91,7 +91,7 @@ def smooth_cov_wick(da,we,cow,np,nt):
 
     cor = co/sp.sqrt(var*var[:,None])
     cor1d = cor.reshape(nbin*nbin)
-    
+
     varw = sp.diagonal(cow)
     if sp.any(varw==0.):
         print('WARNING: Wick covariance has bins with var = 0')
@@ -102,7 +102,7 @@ def smooth_cov_wick(da,we,cow,np,nt):
     corw1d = corw.reshape(nbin*nbin)
 
     Dcor1d = cor1d - corw1d
-    
+
     #### indices
     ind = sp.arange(nbin)
     rtindex = ind%nt
@@ -125,13 +125,13 @@ def smooth_cov_wick(da,we,cow,np,nt):
         return A*sp.exp(-r/L)
     def chisq(L,A,idrp):
         chi2 = 0.
-        idrp = int(idrp) 
+        idrp = int(idrp)
         for idrt in range(1,nt):
             chi = Dcor_red[idrp,idrt]-corrfun(idrp,idrt,L,A)
             chi2 += chi**2
         chi2 = chi2*np*nbin
         return chi2
-    
+
     Lfit = sp.zeros(np)
     Afit = sp.zeros(np)
     for idrp in range(np):
