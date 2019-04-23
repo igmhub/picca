@@ -37,6 +37,12 @@ def parse_chi2(filename):
     dic_init['fiducial']['pk'] = h[1]['PK'][:]
     dic_init['fiducial']['pksb'] = h[1]['PKSB'][:]
     h.close()
+    try: ## For Python2.7 compatibility
+        dic_init['fiducial']['full-shape'] = int(cp['fiducial']['full-shape'])==1
+    except (KeyError, AttributeError):
+        dic_init['fiducial']['full-shape'] = False
+    if dic_init['fiducial']['full-shape']:
+        print('WARNING!!!: Using full-shape fit to the correlation function. Sailor you are reaching unexplored territories, precede at your own risk.')
 
     zeff = float(cp.get('data sets','zeff'))
     dic_init['data sets'] = {}
