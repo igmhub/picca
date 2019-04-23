@@ -243,25 +243,30 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             npairs_used += w.sum()
 
             rd = d.r_comov
+            rdm = d.rdm_comov
             wd = d.we
             zd_abs = 10**d.ll/constants.absorber_IGM[abs_igm]-1
             rd_abs = cosmo.r_comoving(zd_abs)
+            rdm_abs = cosmo.dm(zd_abs)
 
             wzcut = zd_abs<d.zqso
             rd = rd[wzcut]
+            rdm = rdm[wzcut]
             wd = wd[wzcut]
             zd_abs = zd_abs[wzcut]
             rd_abs = rd_abs[wzcut]
+            rdm_abs = rdm_abs[wzcut]
             if rd.size==0: continue
 
             for q in sp.array(d.neighs)[w]:
                 ang = d^q
 
                 rq = q.r_comov
+                rqm = q.rdm_comov
                 wq = q.we
                 zq = q.zqso
                 rp = (rd-rq)*sp.cos(ang/2)
-                rt = (rd+rq)*sp.sin(ang/2)
+                rt = (rdm+rqm)*sp.sin(ang/2)
                 wdq = wd*wq
 
                 wA = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
@@ -272,7 +277,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 wdm[:len(c)]+=c
 
                 rp_abs = (rd_abs-rq)*sp.cos(ang/2)
-                rt_abs = (rd_abs+rq)*sp.sin(ang/2)
+                rt_abs = (rdm_abs+rqm)*sp.sin(ang/2)
 
                 bp_abs = ((rp_abs-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs = (rt_abs/rt_max*ntm).astype(int)
