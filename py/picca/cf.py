@@ -302,35 +302,43 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             npairs_used += w.sum()
             for d2 in sp.array(d1.neighs)[w]:
                 r1 = d1.r_comov
+                rdm1 = d1.rdm_comov
                 z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
                 r1_abs1 = cosmo.r_comoving(z1_abs1)
+                rdm1_abs1 = cosmo.dm(z1_abs1)
                 w1 = d1.we
 
                 wzcut = z1_abs1<d1.zqso
                 r1 = r1[wzcut]
+                rdm1 = rdm1[wzcut]
                 w1 = w1[wzcut]
                 r1_abs1 = r1_abs1[wzcut]
+                rdm1_abs1 = rdm1_abs1[wzcut]
                 z1_abs1 = z1_abs1[wzcut]
 
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 ang = d1^d2
                 r2 = d2.r_comov
+                rdm2 = d2.rdm_comov
                 z2_abs2 = 10**d2.ll/constants.absorber_IGM[abs_igm2]-1
                 r2_abs2 = cosmo.r_comoving(z2_abs2)
+                rdm2_abs2 = cosmo.dm(z2_abs2)
                 w2 = d2.we
 
                 wzcut = z2_abs2<d2.zqso
                 r2 = r2[wzcut]
+                rdm2 = rdm2[wzcut]
                 w2 = w2[wzcut]
                 r2_abs2 = r2_abs2[wzcut]
+                rdm2_abs2 = rdm2_abs2[wzcut]
                 z2_abs2 = z2_abs2[wzcut]
 
                 rp = (r1[:,None]-r2)*sp.cos(ang/2)
                 if not x_correlation:
                     rp = abs(rp)
 
-                rt = (r1[:,None]+r2)*sp.sin(ang/2)
+                rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
                 w12 = w1[:,None]*w2
 
                 bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
@@ -350,7 +358,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 if not x_correlation:
                     rp_abs1_abs2 = abs(rp_abs1_abs2)
 
-                rt_abs1_abs2 = (r1_abs1[:,None]+r2_abs2)*sp.sin(ang/2)
+                rt_abs1_abs2 = (rdm1_abs1[:,None]+rdm2_abs2)*sp.sin(ang/2)
                 zwe12 = (1+z1_abs1[:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2)**(alpha_abs[abs_igm2]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                 bp_abs1_abs2 = sp.floor((rp_abs1_abs2-rp_min)/(rp_max-rp_min)*npm).astype(int)
@@ -371,32 +379,40 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 if ((not x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
                     r1 = d1.r_comov
+                    rdm1 = d1.rdm_comov
                     w1 = d1.we
                     z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
                     r1_abs2 = cosmo.r_comoving(z1_abs2)
+                    rdm1_abs2 = cosmo.dm(z1_abs2)
 
                     wzcut = z1_abs2<d1.zqso
                     r1 = r1[wzcut]
+                    rdm1 = rdm1[wzcut]
                     w1 = w1[wzcut]
                     z1_abs2 = z1_abs2[wzcut]
                     r1_abs2 = r1_abs2[wzcut]
+                    rdm1_abs2 = rdm1_abs2[wzcut]
 
                     r2 = d2.r_comov
+                    rdm2 = d2.rdm_comov
                     w2 = d2.we
                     z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
                     r2_abs1 = cosmo.r_comoving(z2_abs1)
+                    rdm2_abs1 = cosmo.dm(z2_abs1)
 
                     wzcut = z2_abs1<d2.zqso
                     r2 = r2[wzcut]
+                    rdm2 = rdm2[wzcut]
                     w2 = w2[wzcut]
                     z2_abs1 = z2_abs1[wzcut]
                     r2_abs1 = r2_abs1[wzcut]
+                    rdm2_abs1 = rdm2_abs1[wzcut]
 
                     rp = (r1[:,None]-r2)*sp.cos(ang/2)
                     if not x_correlation:
                         rp = abs(rp)
 
-                    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+                    rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
                     w12 = w1[:,None]*w2
 
                     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
@@ -412,7 +428,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     if not x_correlation:
                         rp_abs2_abs1 = abs(rp_abs2_abs1)
 
-                    rt_abs2_abs1 = (r1_abs2[:,None]+r2_abs1)*sp.sin(ang/2)
+                    rt_abs2_abs1 = (rdm1_abs2[:,None]+rdm2_abs1)*sp.sin(ang/2)
                     zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                     bp_abs2_abs1 = sp.floor((rp_abs2_abs1-rp_min)/(rp_max-rp_min)*npm).astype(int)
