@@ -78,8 +78,16 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
     return co_smooth
 
-def smooth_cov_wick(da,we,cow,np,nt):
-
+def smooth_cov_wick(infile,Wick_infile,outfile):
+    
+    h = fitsio.FITS(args.data)
+    da = sp.array(h[2]['DA'][:])
+    we = sp.array(h[2]['WE'][:])
+    head = h[1].read_header()
+    nt = head['NT']
+    np = head['NP']
+    h.close()
+    
     co = cov(da,we)
 
     nbin = da.shape[1]
@@ -91,7 +99,11 @@ def smooth_cov_wick(da,we,cow,np,nt):
 
     cor = co/sp.sqrt(var*var[:,None])
     cor1d = cor.reshape(nbin*nbin)
-
+    
+    h = fitsio.FITS(args.data)
+    cow = sp.array(h[1]['CO'][:])
+    h.close()
+    
     varw = sp.diagonal(cow)
     if sp.any(varw==0.):
         print('WARNING: Wick covariance has bins with var = 0')
@@ -158,7 +170,12 @@ def smooth_cov_wick(da,we,cow,np,nt):
             co_smooth[j,i] *= newcov
 
     print("\n")
-    return co_smooth
+
+    h = fitsio.FITS(outfile,'rw',clobber=True)
+    h.write([co_smooth],names=['CO'],extname='COR')
+    h.close()
+    print(outfile,' written')
+    return
 
 def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     """
