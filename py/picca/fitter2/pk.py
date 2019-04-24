@@ -1,8 +1,12 @@
 import scipy as sp
+import numpy as np
 from . import utils
 
 muk = utils.muk
 bias_beta = utils.bias_beta
+
+data = np.loadtxt('Fvoigt.txt') #mettre le fichier Fvoid.txt dans l'endroit ou on lance le programme !!
+
 
 class pk:
     def __init__(self, func):
@@ -35,6 +39,21 @@ def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     st2 = kwargs['per_sigma_smooth']**2
     sp2 = kwargs['par_sigma_smooth']**2
     return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)
+
+def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
+    """
+    Apply a Gaussian smoothing to the full correlation function
+
+    """
+    kp  = k*muk
+    kt  = k*sp.sqrt(1.-muk**2)
+    st2 = kwargs['per_sigma_smooth']**2
+    sp2 = kwargs['par_sigma_smooth']**2
+
+    et2 = kwargs['per_exp_smooth']**2
+    ep2 = kwargs['par_exp_smooth']**2
+
+    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)*sp.exp(-(np.abs(kp)*ep2+np.abs(kt)*et2) )
 
 def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
@@ -87,6 +106,45 @@ def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
 
     kp = k*muk
     F_hcd = sp.exp(-L0*kp)
+
+    bias_eff1 = bias1 + bias_hcd*F_hcd
+    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+
+    bias_eff2 = bias2 + bias_hcd*F_hcd
+    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+
+    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
+def pk_hcd_Voigt(k, pk_lin, tracer1, tracer2, **kwargs):
+    """Model the effect of HCD systems with the Fourier transform
+       of a Voigt profile. Motivated by Rogers et al. (2018). eq (3).
+
+    Args:
+        Same than pk_hcd
+
+    Returns:
+        Same than pk_hcd
+
+    """
+
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+
+    key = "bias_hcd_{}".format(kwargs['name'])
+    if key in kwargs :
+        bias_hcd = kwargs[key]
+    else :
+        bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+
+    k_data = data[:,0]
+    F_data = data[:,1]
+
+    F_hcd = np.interp(L0*kp, k_data, F_data)
 
     bias_eff1 = bias1 + bias_hcd*F_hcd
     beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
