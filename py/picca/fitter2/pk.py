@@ -156,56 +156,6 @@ def pk_hcd_Voigt(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
-def pk_hcd_Rogers2018_cross(k, pk_lin, tracer1, tracer2, **kwargs):
-    """ Modification --> Quasars are not affected by HCD !!"""
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    key = "bias_hcd_{}".format(kwargs['name'])
-    if key in kwargs :
-        bias_hcd = kwargs[key]
-    else :
-        bias_hcd = kwargs["bias_hcd"]
-    beta_hcd = kwargs["beta_hcd"]
-    L0 = kwargs["L0_hcd"]
-
-    kp = k*muk
-    F_hcd = sp.exp(-L0*kp)
-
-    bias_eff1 = bias1 + bias_hcd*F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
-
-    bias_eff2 = bias2
-    beta_eff2 = beta2
-
-    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
-
-    return pk
-
-def pk_hcd_Voigt_cross(k, pk_lin, tracer1, tracer2, **kwargs):
-    """ Modification --> Quasars are not affected by HCD !!"""
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    key = "bias_hcd_{}".format(kwargs['name'])
-    if key in kwargs :
-        bias_hcd = kwargs[key]
-    else :
-        bias_hcd = kwargs["bias_hcd"]
-    beta_hcd = kwargs["beta_hcd"]
-    L0 = kwargs["L0_hcd"]
-
-    kp = k*muk
-    k_data = data[:,0]
-    F_data = data[:,1]
-    F_hcd = np.interp(L0*kp, k_data, F_data)
-
-    bias_eff1 = bias1 + bias_hcd*F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
-
-    bias_eff2 = bias2
-    beta_eff2 = beta2
-
-    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
-
-    return pk
-
 def pk_uv(k, pk_lin, tracer1, tracer2, **kwargs):
 
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
@@ -382,6 +332,35 @@ def pk_hcd_Rogers2018_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
+def pk_hcd_Voigt_cross(k, pk_lin, tracer1, tracer2, **kwargs):
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+    assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
+
+    key = "bias_hcd_{}".format(kwargs['name'])
+    if key in kwargs :
+        bias_hcd = kwargs[key]
+    else :
+        bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+    k_data = data[:,0]
+    F_data = data[:,1]
+    F_hcd = np.interp(L0*kp, k_data, F_data)
+
+    if tracer1['name'] == "LYA":
+        bias_eff1 = bias1 + bias_hcd*F_hcd
+        beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+        pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
+    else:
+        bias_eff2 = bias2 + bias_hcd*F_hcd
+        beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+        pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
+
 def pk_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
     assert (tracer1['type']=="continuous" or tracer2['type']=="continuous") and (tracer1['type']!=tracer2['type'])
@@ -488,3 +467,4 @@ def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     if tracer2['type']=='discrete':
         smooth *= 1./sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz_'+tracer2['name']])**2)
     return smooth
+
