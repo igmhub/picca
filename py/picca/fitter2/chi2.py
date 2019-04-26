@@ -22,6 +22,7 @@ class chi2:
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
         self.pksb_lin = dic_init['fiducial']['pksb']
+        self.full_shape = dic_init['fiducial']['full-shape']
 
         self.verbosity = 1
         if 'verbosity' in dic_init:
@@ -55,7 +56,7 @@ class chi2:
         dic['SB'] = False
         chi2 = 0
         for d in self.data:
-            chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,dic)
+            chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,self.full_shape,dic)
 
         for prior in priors.prior_dic.values():
             chi2 += prior(dic)
@@ -108,7 +109,7 @@ class chi2:
         for d in self.data:
             d.best_fit_model = values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, values)
 
-            values['SB'] = True
+            values['SB'] = True & (not self.full_shape)
             sigmaNL_par = values['sigmaNL_par']
             sigmaNL_per = values['sigmaNL_per']
             values['sigmaNL_par'] = 0.
@@ -310,7 +311,7 @@ class chi2:
         for d in self.data:
             g = f.create_group(d.name)
             g.attrs['ndata'] = d.mask.sum()
-            g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, values)
+            g.attrs['chi2'] = d.chi2(self.k, self.pk_lin, self.pksb_lin, self.full_shape, values)
             fit = g.create_dataset("fit", d.da.shape, dtype = "f")
             fit[...] = d.best_fit_model
             if not d.bb is None:
