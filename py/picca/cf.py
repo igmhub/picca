@@ -70,6 +70,8 @@ def cf(pix):
     rt = sp.zeros(np*nt)
     z = sp.zeros(np*nt)
     nb = sp.zeros(np*nt,dtype=sp.int64)
+    hist = sp.zeros(np*nt)
+    whist = sp.zeros(np*nt)
 
     for ipix in pix:
         for d1 in data[ipix]:
@@ -81,9 +83,9 @@ def cf(pix):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 if ang_correlation:
-                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.ll,d1.we,d1.de,d2.z,10.**d2.ll,d2.we,d2.de,ang,same_half_plate)
+                    cw,cd,crp,crt,cz,cnb,chist,cwhist = fast_cf(d1.z,10.**d1.ll,d1.we,d1.de,d2.z,10.**d2.ll,d2.we,d2.de,ang,same_half_plate)
                 else:
-                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.we,d1.de,d2.z,d2.r_comov,d2.we,d2.de,ang,same_half_plate)
+                    cw,cd,crp,crt,cz,cnb,chist,cwhist = fast_cf(d1.z,d1.r_comov,d1.we,d1.de,d2.z,d2.r_comov,d2.we,d2.de,ang,same_half_plate)
 
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
@@ -91,6 +93,8 @@ def cf(pix):
                 rt[:len(crp)]+=crt
                 z[:len(crp)]+=cz
                 nb[:len(cnb)]+=cnb.astype(int)
+                hist[:chist.size] += chist
+                whist[:cwhist.size] += cwhist
             setattr(d1,"neighs",None)
 
     w = we>0
@@ -98,7 +102,9 @@ def cf(pix):
     rp[w]/=we[w]
     rt[w]/=we[w]
     z[w]/=we[w]
-    return we,xi,rp,rt,z,nb
+    w = whist>0.
+    hist[w] /= whist[w]
+    return we,xi,rp,rt,z,nb,hist,whist
 @jit
 def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     wd1 = d1*w1
@@ -140,7 +146,13 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     cz = sp.bincount(bins,weights=z*w12)
     cnb = sp.bincount(bins,weights=(w12>0.))
 
-    return cw,cd,crp,crt,cz,cnb
+    r = sp.sqrt(rp**2+rt**2)
+    w = (r>80.) & (r<120.)
+    zbins = (z/10.*100).astype(int)
+    chist = sp.bincount(zbins[w],weights=z[w]*w12[w])
+    cwhist = sp.bincount(zbins[w],weights=(w12[w]>0.))
+
+    return cw,cd,crp,crt,cz,cnb,chist,cwhist
 
 def dmat(pix):
 

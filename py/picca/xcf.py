@@ -56,8 +56,8 @@ def xcf(pix):
     rt = sp.zeros(np*nt)
     z = sp.zeros(np*nt)
     nb = sp.zeros(np*nt,dtype=sp.int64)
-    hist = sp.zeros(100)
-    whist = sp.zeros(100)
+    hist = sp.zeros(np*nt)
+    whist = sp.zeros(np*nt)
 
     for ipix in pix:
         for d in dels[ipix]:
@@ -130,8 +130,8 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     r = sp.sqrt(rp**2+rt**2)
     w = (r>80.) & (r<120.)
     zbins = (z/10.*100).astype(int)
-    chist = sp.bincount(zbins,weights=z[w]*we[w])
-    cwhist = sp.bincount(zbins,weights=(we[w]>0.))
+    chist = sp.bincount(zbins[w],weights=z[w]*we[w])
+    cwhist = sp.bincount(zbins[w],weights=(we[w]>0.))
 
     return cw,cd,crp,crt,cz,cnb,chist,cwhist
 

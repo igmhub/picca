@@ -211,6 +211,7 @@ if __name__ == '__main__':
     cut = whist.sum(axis=0)>0.
     hist = (hist*whist).sum(axis=0)
     hist[cut] /= whist.sum(axis=0)[cut]
+    whist = whist.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
@@ -237,7 +238,7 @@ if __name__ == '__main__':
     {'name':'RMIN','value':'80.'},
     {'name':'RMAX','value':'120.'},
     ]
-    out.write([hist,whist],names=['ZHIST','WZHIST'],
+    out.write([hist[:100],whist[:100]],names=['ZHIST','WZHIST'],
         comment=['Redshift distribution'],
         header=head3,extname='ZHIST')
 
