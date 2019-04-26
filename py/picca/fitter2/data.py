@@ -378,10 +378,10 @@ class data:
 
         return xi
 
-    def chi2(self, k, pk_lin, pksb_lin, pars):
+    def chi2(self, k, pk_lin, pksb_lin, full_shape, pars):
         xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
 
-        pars['SB'] = True
+        pars['SB'] = True & (not full_shape)
         sigmaNL_par = pars['sigmaNL_par']
         sigmaNL_per = pars['sigmaNL_per']
         pars['sigmaNL_par'] = 0.

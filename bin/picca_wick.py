@@ -53,6 +53,15 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--fid-Or', type=float, default=0., required=False,
+        help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
+
+    parser.add_argument('--fid-Ok', type=float, default=0., required=False,
+        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+
+    parser.add_argument('--fid-wl', type=float, default=-1., required=False,
+        help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
+
     parser.add_argument('--no-project', action='store_true', required=False,
         help='Do not project out continuum fitting modes')
 
@@ -92,7 +101,7 @@ if __name__ == '__main__':
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     cf.rej = args.rej
 
-    cosmo = constants.cosmo(args.fid_Om)
+    cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
 
     h = fitsio.FITS(args.cf1d)
