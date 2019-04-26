@@ -79,7 +79,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     return co_smooth
 
 def smooth_cov_wick(infile,Wick_infile,outfile):
-    
+
     h = fitsio.FITS(args.data)
     da = sp.array(h[2]['DA'][:])
     we = sp.array(h[2]['WE'][:])
@@ -87,7 +87,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     nt = head['NT']
     np = head['NP']
     h.close()
-    
+
     co = cov(da,we)
 
     nbin = da.shape[1]
@@ -99,11 +99,11 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
 
     cor = co/sp.sqrt(var*var[:,None])
     cor1d = cor.reshape(nbin*nbin)
-    
+
     h = fitsio.FITS(args.data)
     cow = sp.array(h[1]['CO'][:])
     h.close()
-    
+
     varw = sp.diagonal(cow)
     if sp.any(varw==0.):
         print('WARNING: Wick covariance has bins with var = 0')
