@@ -71,10 +71,10 @@ def xcf(pix):
 
                 if ang_correlation:
                     l_qso = [10.**q.ll for q in d.neighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb,chist,cwhist = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
                 else:
                     rc_qso = [q.r_comov for q in d.neighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb,chist,cwhist = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
 
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
@@ -127,9 +127,11 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
     cz = sp.bincount(bins,weights=z*we)
     cnb = sp.bincount(bins,weights=(we>0.))
 
+    r = sp.sqrt(rp**2+rt**2)
+    w = (r>80.) & (r<120.)
     zbins = (z/10.*100).astype(int)
-    chist = sp.bincount(zbins,weights=z*we)
-    cwhist = sp.bincount(zbins,weights=(we>0.))
+    chist = sp.bincount(zbins,weights=z[w]*we[w])
+    cwhist = sp.bincount(zbins,weights=(we[w]>0.))
 
     return cw,cd,crp,crt,cz,cnb,chist,cwhist
 

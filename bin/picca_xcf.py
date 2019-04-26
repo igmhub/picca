@@ -194,8 +194,8 @@ if __name__ == '__main__':
     rts=cfs[:,3,:]
     zs=cfs[:,4,:]
     nbs=cfs[:,5,:].astype(sp.int64)
-    hist = 
-    whist = 
+    hist = cfs[:,6,:]
+    whist = cfs[:,7,:]
     cfs=cfs[:,1,:]
     hep=sp.array(sorted(list(cpu_data.keys())))
 
@@ -207,6 +207,10 @@ if __name__ == '__main__':
     z        = (zs*wes).sum(axis=0)
     z[cut]  /= wes.sum(axis=0)[cut]
     nb = nbs.sum(axis=0)
+
+    cut = whist.sum(axis=0)>0.
+    hist = (hist*whist).sum(axis=0)
+    hist[cut] /= whist.sum(axis=0)[cut]
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
@@ -227,5 +231,14 @@ if __name__ == '__main__':
     out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],
         comment=['Healpix index', 'Sum of weight', 'Correlation'],
         header=head2,extname='COR')
+
+    head3 = [{'name':'ZMIN','value':'0.'},
+    {'name':'ZMAX','value':'10.'},
+    {'name':'RMIN','value':'80.'},
+    {'name':'RMAX','value':'120.'},
+    ]
+    out.write([hist,whist],names=['ZHIST','WZHIST'],
+        comment=['Redshift distribution'],
+        header=head3,extname='ZHIST')
 
     out.close()
