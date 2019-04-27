@@ -102,8 +102,6 @@ def cf(pix):
     rp[w]/=we[w]
     rt[w]/=we[w]
     z[w]/=we[w]
-    w = whist>0.
-    hist[w] /= whist[w]
     return we,xi,rp,rt,z,nb,hist,whist
 @jit
 def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
@@ -149,8 +147,8 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
     r = sp.sqrt(rp**2+rt**2)
     w = (r>80.) & (r<120.)
     zbins = (z/10.*100).astype(int)
-    chist = sp.bincount(zbins[w],weights=z[w]*w12[w])
-    cwhist = sp.bincount(zbins[w],weights=(w12[w]>0.))
+    chist = sp.bincount(zbins[w],weights=w12[w])
+    cwhist = sp.bincount(zbins[w],weights=w12[w]>0.)
 
     return cw,cd,crp,crt,cz,cnb,chist,cwhist
 

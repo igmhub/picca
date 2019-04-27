@@ -171,9 +171,7 @@ if __name__ == '__main__':
     z[cut]  /= wes.sum(axis=0)[cut]
     nb       = nbs.sum(axis=0)
 
-    cut = whist.sum(axis=0)>0.
-    hist = (hist*whist).sum(axis=0)
-    hist[cut] /= whist.sum(axis=0)[cut]
+    hist = hist.sum(axis=0)
     whist = whist.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
@@ -201,7 +199,7 @@ if __name__ == '__main__':
     {'name':'RMIN','value':'80.'},
     {'name':'RMAX','value':'120.'},
     ]
-    out.write([hist[:100],whist[:100]],names=['ZHIST','WZHIST'],
+    out.write([hist[:1000],whist[:1000]],names=['ZHIST','WZHIST'],
         comment=['Redshift distribution'],
         header=head3,extname='ZHIST')
 

@@ -92,8 +92,6 @@ def xcf(pix):
     rp[w]/=we[w]
     rt[w]/=we[w]
     z[w]/=we[w]
-    w = whist>0.
-    hist[w] /= whist[w]
     return we,xi,rp,rt,z,nb,hist,whist
 @jit
 def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
@@ -129,9 +127,9 @@ def fast_xcf(z1,r1,w1,d1,z2,r2,w2,ang):
 
     r = sp.sqrt(rp**2+rt**2)
     w = (r>80.) & (r<120.)
-    zbins = (z/10.*100).astype(int)
-    chist = sp.bincount(zbins[w],weights=z[w]*we[w])
-    cwhist = sp.bincount(zbins[w],weights=(we[w]>0.))
+    zbins = (z/10.*1000).astype(int)
+    chist = sp.bincount(zbins[w],weights=we[w])
+    cwhist = sp.bincount(zbins[w],weights=we[w]>0.)
 
     return cw,cd,crp,crt,cz,cnb,chist,cwhist
 
