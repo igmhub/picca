@@ -329,7 +329,7 @@ def xcf1d(pix):
             l_qso = [ 10.**q.ll for q in neighs ]
             ang = sp.zeros(len(l_qso))
 
-            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
+            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,zqso,l_qso,l_qso,we_qso,ang)
 
             xi[:cd.size] += cd
             we[:cw.size] += cw
