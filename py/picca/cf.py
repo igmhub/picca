@@ -146,7 +146,7 @@ def fast_cf(z1,r1,w1,d1,z2,r2,w2,d2,ang,same_half_plate):
 
     r = sp.sqrt(rp**2+rt**2)
     w = (r>80.) & (r<120.)
-    zbins = (z/10.*100).astype(int)
+    zbins = (z/10.*1000).astype(int)
     chist = sp.bincount(zbins[w],weights=w12[w])
     cwhist = sp.bincount(zbins[w],weights=w12[w]>0.)
 
