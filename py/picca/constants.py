@@ -11,19 +11,18 @@ small_angle_cut_off = 2./3600.*sp.pi/180. ## 2 arcsec
 
 class cosmo:
 
-    def __init__(self,Om,Ok=0):
+    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=100.):
 
-        ### ignore Orad and neutrinos
+        ### Ignore evolution of neutrinos from matter to radiation
+        ### H0 in km/s/Mpc
         c = speed_light/1000. ## km/s
-        H0 = 100. ## km/s/Mpc
-        Or = 0.
         Ol = 1.-Ok-Om-Or
 
         nbins = 10000
         zmax  = 10.
         dz    = zmax/nbins
         z=sp.arange(nbins)*dz
-        hubble = H0*sp.sqrt( Ol + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
+        hubble = H0*sp.sqrt( Ol*(1.+z)**(3.*(1.+wl)) + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
 
         chi=sp.zeros(nbins)
         for i in range(1,nbins):
@@ -31,17 +30,24 @@ class cosmo:
 
         self.r_comoving = interpolate.interp1d(z,chi)
 
-        ## da here is the comoving angular diameter distance
+        ### dm here is the comoving angular diameter distance
         if Ok==0.:
-            da = chi
+            dm = chi
         elif Ok<0.:
-            da = sp.sin(H0*sp.sqrt(-Ok)/c*chi)/(H0*sp.sqrt(-Ok)/c)
+            dm = sp.sin(H0*sp.sqrt(-Ok)/c*chi)/(H0*sp.sqrt(-Ok)/c)
         elif Ok>0.:
-            da = sp.sinh(H0*sp.sqrt(Ok)/c*chi)/(H0*sp.sqrt(Ok)/c)
+            dm = sp.sinh(H0*sp.sqrt(Ok)/c*chi)/(H0*sp.sqrt(Ok)/c)
 
-        self.da = interpolate.interp1d(z,da)
         self.hubble = interpolate.interp1d(z,hubble)
         self.r_2_z = interpolate.interp1d(chi,z)
+
+        ### D_H
+        self.dist_hubble = interpolate.interp1d(z,c/hubble)
+        ### D_M
+        self.dm = interpolate.interp1d(z,dm)
+        ### D_V
+        y = sp.power(z*self.dm(z)**2*self.dist_hubble(z),1./3.)
+        self.dist_v = interpolate.interp1d(z,y)
 
 ### Absorber names and wavelengths [Angstrom]
 absorber_IGM = {
