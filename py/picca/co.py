@@ -66,9 +66,10 @@ def co(pix):
             ang      = o1^o1.neighs
             zo2      = sp.array([o2.zqso    for o2 in o1.neighs])
             r_comov2 = sp.array([o2.r_comov for o2 in o1.neighs])
+            rdm_comov2 = sp.array([o2.rdm_comov for o2 in o1.neighs])
             weo2     = sp.array([o2.we      for o2 in o1.neighs])
 
-            cw,crp,crt,cz,cnb = fast_co(o1.zqso,o1.r_comov,o1.we,zo2,r_comov2,weo2,ang)
+            cw,crp,crt,cz,cnb = fast_co(o1.zqso,o1.r_comov,o1.rdm_comov,o1.we,zo2,r_comov2,rdm_comov2,weo2,ang)
 
             we[:len(cw)]  += cw
             rp[:len(crp)] += crp
@@ -83,12 +84,12 @@ def co(pix):
     z[w]  /= we[w]
     return we,rp,rt,z,nb
 @jit
-def fast_co(z1,r1,w1,z2,r2,w2,ang):
+def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
 
     rp  = (r1-r2)*sp.cos(ang/2.)
     if not x_correlation or type_corr in ['DR','RD']:
         rp = sp.absolute(rp)
-    rt  = (r1+r2)*sp.sin(ang/2.)
+    rt  = (rdm1+rdm2)*sp.sin(ang/2.)
     z   = (z1+z2)/2.
     w12 = w1*w2
 

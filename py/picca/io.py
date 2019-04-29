@@ -836,7 +836,9 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         zmin = min(zmin,z.min())
         zmax = max(zmax,z.max())
         d.z = z
-        if not cosmo is None: d.r_comov = cosmo.r_comoving(z)
+        if not cosmo is None:
+            d.r_comov = cosmo.r_comoving(z)
+            d.rdm_comov = cosmo.dm(z)
         d.we *= ((1+z)/(1+zref))**(alpha-1)
 
         if not no_project:
@@ -862,7 +864,9 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
         objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
         for q in objs[ipix]:
             q.we = ((1.+q.zqso)/(1.+zref))**(alpha-1.)
-            if not cosmo is None: q.r_comov = cosmo.r_comoving(q.zqso)
+            if not cosmo is None:
+                q.r_comov = cosmo.r_comoving(q.zqso)
+                q.rdm_comov = cosmo.dm(q.zqso)
 
     print("\n")
 
