@@ -240,6 +240,10 @@ class TestCor(unittest.TestCase):
             for k in ld_m:
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
+                if d_m.dtype=='<U23':
+                    d_m = sp.char.strip(d_m)
+                if d_b.dtype=='<U23':
+                    d_b = sp.char.strip(d_b)
                 self.assertEqual(d_m.size,d_b.size,"{}: Header key is {}".format(nameRun,k))
                 if not sp.array_equal(d_m,d_b):
                     print("WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(nameRun,k))
