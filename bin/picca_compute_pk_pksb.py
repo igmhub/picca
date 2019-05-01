@@ -124,7 +124,7 @@ if __name__ == '__main__':
     ww = (r>=sb1_rmin) & (r<sb2_rmax)
     xiSB[ww] = model[ww]
 
-    pkSB = nbodykit.cosmology.correlation.pk_to_xi(r,xiSB,extrap=True)
+    pkSB = nbodykit.cosmology.correlation.xi_to_pk(r,xiSB,extrap=True)
     pkSB = pkSB(k)
     pkSB *= pk[-1]/pkSB[-1]
 
