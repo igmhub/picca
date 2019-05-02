@@ -242,6 +242,10 @@ class TestCor(unittest.TestCase):
             for k in ld_m:
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
+                if d_m.dtype in ['<U23','S23']: ### for fitsio old version compatibility
+                    d_m = sp.char.strip(d_m)
+                if d_b.dtype in ['<U23','S23']: ### for fitsio old version compatibility
+                    d_b = sp.char.strip(d_b)
                 self.assertEqual(d_m.size,d_b.size,"{}: Header key is {}".format(nameRun,k))
                 if not sp.array_equal(d_m,d_b):
                     print("WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(nameRun,k))
@@ -316,7 +320,7 @@ class TestCor(unittest.TestCase):
         path = resource_filename('picca', '/../../requirements.txt')
         with open(path,'r') as f:
             for l in f:
-                l = l.replace('\n','').split('==')
+                l = l.replace('\n','').replace('==',' ').replace('>=',' ').split()
                 self.assertTrue(len(l)==2,"requirements.txt attribute is not valid: {}".format(str(l)))
                 req[l[0]] = l[1]
 
