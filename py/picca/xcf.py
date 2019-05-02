@@ -69,20 +69,12 @@ def xcf(pix):
                 zqso = [q.zqso for q in d.qneighs]
                 we_qso = [q.we for q in d.qneighs]
                 if ang_correlation:
-<<<<<<< HEAD
                     l_qso = [10.**q.ll for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,d.we,d.de,zqso,l_qso,we_qso,ang)
-                else:
-                    rc_qso = [q.r_comov for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.we,d.de,zqso,rc_qso,we_qso,ang)
-=======
-                    l_qso = [10.**q.ll for q in d.neighs]
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,zqso,l_qso,l_qso,we_qso,ang)
                 else:
-                    rc_qso = [q.r_comov for q in d.neighs]
-                    rdm_qso = [q.rdm_comov for q in d.neighs]
+                    rc_qso = [q.r_comov for q in d.qneighs]
+                    rdm_qso = [q.rdm_comov for q in d.qneighs]
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.rdm_comov,d.we,d.de,zqso,rc_qso,rdm_qso,we_qso,ang)
->>>>>>> master
 
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
