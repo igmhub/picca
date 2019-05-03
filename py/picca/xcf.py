@@ -1,5 +1,4 @@
 from __future__ import print_function
-import sys
 import scipy as sp
 from scipy import random
 from healpy import query_disc
