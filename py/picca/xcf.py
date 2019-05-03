@@ -1,5 +1,4 @@
 from __future__ import print_function
-import sys
 import scipy as sp
 from healpy import query_disc
 from numba import jit
