@@ -32,7 +32,7 @@ Results of M. Blomqvist et al., 2019
 Blomqvistetal2019/
 	- standard fit results to quasar-(Lya+Lyb) regions cross-correlation
 	data
-	- combined with the correlations functions from de Sainte Agathe et al., 2019.  
+	- combined with the correlations functions from de Sainte Agathe et al., 2019.
 
 In each folder:
 	- *.chisq gives the total chi2 at best fit
