@@ -1,6 +1,6 @@
 #
 # File to veto lines either in observed or rest frame
-#	or even rest frame of DLA
+#   or even rest frame of DLA
 #
 #  Veto lines used for Pk1D anlaysis (DR9)
 #
