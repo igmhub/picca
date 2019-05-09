@@ -1,6 +1,6 @@
 #
 # File to veto lines either in observed or rest frame
-#	or even rest frame of DLA
+#    or even rest frame of DLA
 #
 # lambda_obs lines are in
 # http://classic.sdss.org/dr6/algorithms/linestable.html
