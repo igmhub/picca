@@ -65,12 +65,15 @@ picca_cf.py
 --out cf.fits.gz
 --nside 32
 ```
-*   nside determines the healpixelization used for the subsamples. nside=32 gives ~3200 subsamples for DR12.
+*   `nside` determines the healpixelization used for the subsamples. `nside=32` gives ~3200 subsamples for DR12.
 
 ### distortion matrix
 
 ```bash
-python bin/do_dmat.py --in-dir deltas/ --out dmat.fits.gz --rej 0.95
+picca_dmat.py
+--in-dir deltas/
+--out dmat.fits.gz
+--rej 0.95
 ```
 
 *   `--rej` is 1-fraction of pairs used for the calculation
