@@ -101,5 +101,5 @@ picca_export.py
 
 ### Name of tags
 
-The tags name follow the names of the king of France:
-*   https://fr.wikipedia.org/wiki/Liste_des_monarques_de_France#Liste_des_monarques_de_France
+The tags name follow the names of the king of France:<br/>
+https://fr.wikipedia.org/wiki/Liste_des_monarques_de_France#Liste_des_monarques_de_France
