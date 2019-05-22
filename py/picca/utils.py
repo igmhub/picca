@@ -79,8 +79,22 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     return co_smooth
 
 def smooth_cov_wick(infile,Wick_infile,outfile):
+    """
+    Model the missing correlation in the Wick computation
+    with an exponential
 
-    h = fitsio.FITS(args.data)
+    Args:
+        infile (str): path to the correlation function
+            (produced by picca_cf, picca_xcf)
+        Wick_infile (str): path to the Wick correlation function
+            (produced by picca_wick, picca_xwick)
+        outfile (str): poutput path
+
+    Returns:
+        None
+    """
+
+    h = fitsio.FITS(infile)
     da = sp.array(h[2]['DA'][:])
     we = sp.array(h[2]['WE'][:])
     head = h[1].read_header()
@@ -100,7 +114,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     cor = co/sp.sqrt(var*var[:,None])
     cor1d = cor.reshape(nbin*nbin)
 
-    h = fitsio.FITS(args.data)
+    h = fitsio.FITS(Wick_infile)
     cow = sp.array(h[1]['CO'][:])
     h.close()
 
@@ -130,6 +144,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
         print("\rsmoothing {}".format(idr),end="")
         Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
     Dcor_red = Dcor_red1d.reshape(np,nt)
+    print("")
 
     #### fit for L and A at each drp
     def corrfun(idrp,idrt,L,A):
