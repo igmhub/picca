@@ -109,7 +109,7 @@ if 'dmrp' in locals():
     dmrp /= nbdm
     dmrt /= nbdm
     dmz /= nbdm
-elif dmrp.size==rp.size:
+if ('dmrp' not in locals()) or (dmrp.size==rp.size):
     dmrp = rp.copy()
     dmrt = rt.copy()
     dmz = z.copy()
