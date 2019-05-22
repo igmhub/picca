@@ -260,6 +260,7 @@ class TestCor(unittest.TestCase):
     def compare_h5py(self,path1,path2,nameRun=""):
 
         def compare_attributes(atts1,atts2):
+            self.assertEqual(len(atts1.keys()),len(atts2.keys()),"{}".format(nameRun))
             self.assertListEqual(sorted(atts1.keys()),sorted(atts2.keys()),"{}".format(nameRun))
             for item in atts1:
                 nequal = True
