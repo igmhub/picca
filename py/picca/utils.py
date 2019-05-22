@@ -175,6 +175,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
 
     cor0 = Dcor_red1d[rtindex==0]
     for i in range(nbin):
+        print("\rupdating {}".format(i),end="")
         for j in range(i+1,nbin):
             idrp = idrp2d[i,j]
             idrt = idrt2d[i,j]
