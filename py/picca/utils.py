@@ -132,7 +132,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     #### indices
     ind = sp.arange(nbin)
     rtindex = ind%nt
-    rpindex = ind/nt
+    rpindex = ind//nt
     idrt2d = abs(rtindex-rtindex[:,None])
     idrp2d = abs(rpindex-rpindex[:,None])
     idrt1d = idrt2d.reshape(nbin*nbin)
@@ -162,8 +162,10 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     Lfit = sp.zeros(np)
     Afit = sp.zeros(np)
     for idrp in range(np):
-        m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),A=1.,error_A=0.2,idrp=idrp,fix_idrp=True,
-                           print_level=1,errordef=1.)
+        m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),
+            A=1.,error_A=0.2,
+            idrp=idrp,fix_idrp=True,
+            print_level=1,errordef=1.)
         m.migrad()
         Lfit[idrp] = m.values['L']
         Afit[idrp] = m.values['A']
@@ -190,6 +192,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     h.write([co_smooth],names=['CO'],extname='COR')
     h.close()
     print(outfile,' written')
+
     return
 
 def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
