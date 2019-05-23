@@ -598,12 +598,16 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
         qual_spall = spAll[1]["PLATEQUALITY"][:].astype(str)
         zwarn_spall = spAll[1]["ZWARNING"][:]
 
-        w = sp.in1d(thid_spall, thid) & (qual_spall == "good")
+        w = sp.in1d(thid_spall, thid)
+        print("INFO: Found {} spectra with required THING_ID".format(w.sum()))
+        w &= qual_spall == "good"
+        print("INFO: Found {} spectra with 'good' plate".format(w.sum()))
         ## Removing spectra with the following ZWARNING bits set:
         ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
         ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
         for zwarnbit in [0,1,7,8,9]:
             w &= (zwarn_spall&2**zwarnbit)==0
+            print("INFO: Found {} spectra without {} bit set".format(w.sum(), zwarnbit))
         print("INFO: # unique objs: ",len(thid))
         print("INFO: # spectra: ",w.sum())
         thid = thid_spall[w]
