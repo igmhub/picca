@@ -658,7 +658,7 @@ def shuffle_distrib_forests(obj,seed):
     print('INFO: Shuffling the forests angular position with seed {}'.format(seed))
 
     dic = {}
-    lst_p = ['ra','dec','xcart','ycart','zcart','cosdec']
+    lst_p = ['ra','dec','xcart','ycart','zcart','cosdec','thid']
     for p in lst_p:
         dic[p] = [getattr(o, p) for oss in obj.values() for o in oss]
     sp.random.seed(seed)
