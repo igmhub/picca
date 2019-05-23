@@ -79,8 +79,22 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4):
     return co_smooth
 
 def smooth_cov_wick(infile,Wick_infile,outfile):
+    """
+    Model the missing correlation in the Wick computation
+    with an exponential
 
-    h = fitsio.FITS(args.data)
+    Args:
+        infile (str): path to the correlation function
+            (produced by picca_cf, picca_xcf)
+        Wick_infile (str): path to the Wick correlation function
+            (produced by picca_wick, picca_xwick)
+        outfile (str): poutput path
+
+    Returns:
+        None
+    """
+
+    h = fitsio.FITS(infile)
     da = sp.array(h[2]['DA'][:])
     we = sp.array(h[2]['WE'][:])
     head = h[1].read_header()
@@ -100,7 +114,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     cor = co/sp.sqrt(var*var[:,None])
     cor1d = cor.reshape(nbin*nbin)
 
-    h = fitsio.FITS(args.data)
+    h = fitsio.FITS(Wick_infile)
     cow = sp.array(h[1]['CO'][:])
     h.close()
 
@@ -118,7 +132,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     #### indices
     ind = sp.arange(nbin)
     rtindex = ind%nt
-    rpindex = ind/nt
+    rpindex = ind//nt
     idrt2d = abs(rtindex-rtindex[:,None])
     idrp2d = abs(rpindex-rpindex[:,None])
     idrt1d = idrt2d.reshape(nbin*nbin)
@@ -130,6 +144,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
         print("\rsmoothing {}".format(idr),end="")
         Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
     Dcor_red = Dcor_red1d.reshape(np,nt)
+    print("")
 
     #### fit for L and A at each drp
     def corrfun(idrp,idrt,L,A):
@@ -147,8 +162,10 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     Lfit = sp.zeros(np)
     Afit = sp.zeros(np)
     for idrp in range(np):
-        m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),A=1.,error_A=0.2,idrp=idrp,fix_idrp=True,
-                           print_level=1,errordef=1.)
+        m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),
+            A=1.,error_A=0.2,
+            idrp=idrp,fix_idrp=True,
+            print_level=1,errordef=1.)
         m.migrad()
         Lfit[idrp] = m.values['L']
         Afit[idrp] = m.values['A']
@@ -158,6 +175,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
 
     cor0 = Dcor_red1d[rtindex==0]
     for i in range(nbin):
+        print("\rupdating {}".format(i),end="")
         for j in range(i+1,nbin):
             idrp = idrp2d[i,j]
             idrt = idrt2d[i,j]
@@ -175,6 +193,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     h.write([co_smooth],names=['CO'],extname='COR')
     h.close()
     print(outfile,' written')
+
     return
 
 def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
