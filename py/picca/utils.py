@@ -35,11 +35,12 @@ def cov(da,we):
     co[w] /= sswe[w]
 
     return co
-def smooth_cov(da,we,rp,rt,drt=4,drp=4):
+def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
 
-    co = cov(da,we)
+    if co is None:
+        co = cov(da,we)
 
-    nda = da.shape[1]
+    nda = co.shape[1]
     var = sp.diagonal(co)
     if sp.any(var==0.):
         print('WARNING: data has some empty bins, impossible to smooth')
