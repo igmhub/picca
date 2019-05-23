@@ -61,10 +61,12 @@ if __name__ == '__main__':
     elif args.cor is not None:
         print('INFO: The correlation-matrix will be read from file: {}'.format(args.cor))
         hh = fitsio.FITS(args.cor)
-        cor = hh[1]['COR'][:]
+        cor = hh[1]['CO'][:]
         hh.close()
         if (cor.min()<-1.) | (cor.min()>1.) | (cor.max()<-1.) | (cor.max()>1.) | sp.any(sp.diag(cor)!=1.):
             print('WARNING: The correlation-matrix has some incorrect values')
+        tvar = sp.diagonal(cor)
+        cor = cor/sp.sqrt(tvar*tvar[:,None])
         co = cov(da,we)
         var = sp.diagonal(co)
         co = cor * sp.sqrt(var*var[:,None])
