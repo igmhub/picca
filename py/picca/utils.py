@@ -643,6 +643,35 @@ def shuffle_distrib_obj(obj,seed):
                 setattr(o,p,dic[p][idx[i]])
             i += 1
     return obj
+def shuffle_distrib_forests(obj,seed):
+    '''Shuffle the distribution of forests by assiging the angular
+        positions from another forest
+
+    Args:
+        obj (dic): Catalog of forests
+        seed (int): seed for the given realization of the shuffle
+
+    Returns:
+        obj (dic): Catalog of forest
+    '''
+
+    print('INFO: Shuffling the forests angular position with seed {}'.format(seed))
+
+    dic = {}
+    lst_p = ['ra','dec','xcart','ycart','zcart','cosdec']
+    for p in lst_p:
+        dic[p] = [getattr(o, p) for oss in obj.values() for o in oss]
+    sp.random.seed(seed)
+    idx = sp.arange(len(dic['ra']))
+    sp.random.shuffle(idx)
+
+    i = 0
+    for oss in obj.values():
+        for o in oss:
+            for p in lst_p:
+                setattr(o,p,dic[p][idx[i]])
+            i += 1
+    return obj
 
 def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     """
