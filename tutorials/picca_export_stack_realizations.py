@@ -5,10 +5,8 @@ import fitsio
 import scipy as sp
 import scipy.linalg
 import argparse
-import glob
 
-from picca.utils import smooth_cov, cov
-from picca.utils import print
+from picca.utils import smooth_cov, print
 
 if __name__ == '__main__':
 
@@ -64,6 +62,7 @@ if __name__ == '__main__':
     for k in [ el for el in dic.keys() if el!='CO']:
         dic[k] = dic[k].mean(axis=0)
 
+    ###
     if not args.do_not_smooth_cov:
         print('INFO: The covariance will be smoothed')
         binSizeP = (head['RPMAX']-head['RPMIN']) / head['NP']
@@ -72,11 +71,18 @@ if __name__ == '__main__':
             drt=binSizeT,drp=binSizeP,co=dic['CO'])
 
     ###
+    try:
+        scipy.linalg.cholesky(dic['CO'])
+    except scipy.linalg.LinAlgError:
+        print('WARNING: Matrix is not positive definite')
+
+    ###
     dic['DM'] = sp.eye(dic['DA'].size)
     dic['DMRP'] = dic['RP'].copy()
     dic['DMRT'] = dic['RT'].copy()
     dic['DMZ'] = dic['Z'].copy()
 
+    ###
     h = fitsio.FITS(args.out,'rw',clobber=True)
     head = [
         {'name':'RPMIN','value':head['RPMIN'],'comment':'Minimum r-parallel'},
