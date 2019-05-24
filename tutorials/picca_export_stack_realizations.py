@@ -36,20 +36,23 @@ if __name__ == '__main__':
 
         for k in head.keys():
             if head[k] is None:
-                head[k] = h['ATTRI'].read_header()[k]
+                head[k] = h[1].read_header()[k]
             else:
-                assert head[k]==h['ATTRI'].read_header()[k]
+                assert head[k]==h[1].read_header()[k]
 
         for k in [ el for el in dic.keys() if el!='DA']:
-            dic[k] += [h['ATTRI'][k][:]]
+            dic[k] += [h[1][k][:]]
 
-        da = sp.array(h['COR']['DA'][:])
-        we = sp.array(h['COR']['WE'][:])
-        da = (da*we).sum(axis=0)
-        we = we.sum(axis=0)
-        w = we>0
-        da[w] /= we[w]
-        dic['DA'] += [da]
+        if h[1].read_header()['EXTNAME']=='ATTRI':
+            da = sp.array(h['COR']['DA'][:])
+            we = sp.array(h['COR']['WE'][:])
+            da = (da*we).sum(axis=0)
+            we = we.sum(axis=0)
+            w = we>0
+            da[w] /= we[w]
+            dic['DA'] += [da]
+        else:
+            dic['DA'] += [h[1]['DA'][:]]
 
         h.close()
 
