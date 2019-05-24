@@ -43,7 +43,7 @@ if __name__ == '__main__':
         for k in [ el for el in dic.keys() if el!='DA']:
             dic[k] += [h[1][k][:]]
 
-        if h[1].read_header()['EXTNAME']=='ATTRI':
+        if h[1].read_header()['EXTNAME'].strip()=='ATTRI':
             da = sp.array(h['COR']['DA'][:])
             we = sp.array(h['COR']['WE'][:])
             da = (da*we).sum(axis=0)
