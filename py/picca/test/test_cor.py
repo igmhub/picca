@@ -47,7 +47,6 @@ class TestCor(unittest.TestCase):
 
 
         self.picca_base = resource_filename('picca', './').replace('py/picca/./','')
-        print(self.picca_base)
         self.send_requirements()
         numpy.random.seed(42)
 
