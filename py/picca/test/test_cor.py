@@ -45,13 +45,15 @@ class TestCor(unittest.TestCase):
 
     def test_cor(self):
 
-        self.send_requirements()
 
+        self.picca_base = resource_filename('picca', './').replace('py/picca/./','')
+        print(self.picca_base)
+        self.send_requirements()
         numpy.random.seed(42)
 
         print("\n")
         self._test = True
-        self._masterFiles = resource_filename('picca', 'test/data/')
+        self._masterFiles = self.picca_base+'/py/picca/test/data/'
         self.produce_folder()
         self.produce_cat(nObj=1000)
         self.produce_forests()
@@ -318,7 +320,7 @@ class TestCor(unittest.TestCase):
 
         req = {}
 
-        path = resource_filename('picca', '/../../requirements.txt')
+        path = self.picca_base+'/requirements.txt'
         with open(path,'r') as f:
             for l in f:
                 l = l.replace('\n','').replace('==',' ').replace('>=',' ').split()
@@ -372,7 +374,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Path
-        path_to_etc = resource_filename('picca','../../etc')
+        path_to_etc = self.picca_base+'/etc/'
         ### Send
         cmd  = " picca_deltas.py"
         cmd += " --in-dir "          + self._masterFiles+"/test_Pk1D/Spectra_test/"
