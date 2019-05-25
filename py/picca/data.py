@@ -176,6 +176,7 @@ class forest(qso):
             correction = self.correc_ivar(ll)
             iv /= correction
 
+        self.T = None
         self.T_dla = None
         self.ll = ll
         self.fl = fl
@@ -253,15 +254,21 @@ class forest(qso):
         for l in mask_RF:
             w = w & ( (self.ll-sp.log10(1.+self.zqso)<l[0]) | (self.ll-sp.log10(1.+self.zqso)>l[1]) )
 
-        self.ll = self.ll[w]
-        self.fl = self.fl[w]
-        self.iv = self.iv[w]
-        if self.mmef is not None:
-            self.mmef = self.mmef[w]
-        if self.diff is not None:
-             self.diff = self.diff[w]
-        if self.reso is not None:
-             self.reso = self.reso[w]
+        ps = ['iv','ll','fl','T_dla','T','mmef','diff','reso']
+        for p in ps:
+            if hasattr(self,p) and (getattr(self,p) is not None):
+                setattr(self,p,getattr(self,p)[w])
+
+    def add_optical_depth(self,tau,gamma,waveRF):
+        """Add mean optical depth
+        """
+        if not hasattr(self,'ll'):
+            return
+
+        z = 10.**self.ll/waveRF-1.
+        self.T = sp.exp(-tau*(1.+z)**gamma)
+
+        return
 
     def add_dla(self,zabs,nhi,mask=None):
         if not hasattr(self,'ll'):
@@ -276,16 +283,10 @@ class forest(qso):
             for l in mask:
                 w = w & ( (self.ll-sp.log10(1.+zabs)<l[0]) | (self.ll-sp.log10(1.+zabs)>l[1]) )
 
-        self.iv = self.iv[w]
-        self.ll = self.ll[w]
-        self.fl = self.fl[w]
-        if self.mmef is not None:
-            self.mmef = self.mmef[w]
-        self.T_dla = self.T_dla[w]
-        if self.diff is not None :
-            self.diff = self.diff[w]
-        if self.reso is not None:
-            self.reso = self.reso[w]
+        ps = ['iv','ll','fl','T_dla','T','mmef','diff','reso']
+        for p in ps:
+            if hasattr(self,p) and (getattr(self,p) is not None):
+                setattr(self,p,getattr(self,p)[w])
 
     def add_absorber(self,lambda_absorber):
         if not hasattr(self,'ll'):
@@ -310,6 +311,8 @@ class forest(qso):
         except ValueError:
             raise Exception
 
+        if not self.T is None:
+            mc *= self.T
         if not self.T_dla is None:
             mc*=self.T_dla
 
@@ -365,7 +368,7 @@ class forest(qso):
 
 class delta(qso):
 
-    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
+    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll,p0=None,p1=None):
 
         qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
         self.ll = ll
@@ -379,6 +382,8 @@ class delta(qso):
         self.mean_reso = m_reso
         self.mean_z = m_z
         self.dll = dll
+        self.p0 = p0
+        self.p1 = p1
 
     @classmethod
     def from_forest(cls,f,st,var_lss,eta,fudge,mc=False):
@@ -401,7 +406,7 @@ class delta(qso):
         iv = f.iv/(eta+(eta==0))*(mef**2)
 
         return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,f.co,de,f.order,
-                   iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
+                   iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll,f.p0,f.p1)
 
 
     @classmethod

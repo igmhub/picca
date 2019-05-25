@@ -12,7 +12,7 @@ from math import isnan
 import argparse
 
 from picca.data import forest, delta
-from picca import prep_del, io
+from picca import prep_del, io, constants
 from picca.utils import print
 
 def cont_fit(data):
@@ -95,8 +95,11 @@ if __name__ == '__main__':
     parser.add_argument('--mask-file',type=str,default=None,required=False,
         help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
+    parser.add_argument('--optical-depth', action='store_true', default=False,
+        help='Correct for the optical depth')
+
     parser.add_argument('--dust-map', type=str, default=None, required=False,
-                help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
+        help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
 
     parser.add_argument('--flux-calib',type=str,default=None,required=False,
         help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
@@ -266,9 +269,19 @@ if __name__ == '__main__':
                         nb_absorbers_in_forest += 1
         log.write("Found {} absorbers in forests\n".format(nb_absorbers_in_forest))
 
+    ### Apply optical depth
+    if args.optical_depth:
+        print("INFO: Adding optical depth")
+        tau = 5.54e-3
+        gamma = 3.182
+        waveRF = constants.absorber_IGM['LYA']
+        for p in data:
+            for d in data[p]:
+                d.add_optical_depth(tau,gamma,waveRF)
+
     ### Correct for DLAs
     if not args.dla_vac is None:
-        print("adding dlas")
+        print("INFO: Adding DLAs")
         sp.random.seed(0)
         dlas = io.read_dlas(args.dla_vac)
         nb_dla_in_forest = 0
@@ -394,7 +407,7 @@ if __name__ == '__main__':
 
     log.close()
 
-#    for p in deltas:
+    ###
     for p in sorted(list(deltas.keys())):
 
         if len(deltas[p])==0: continue
@@ -428,6 +441,8 @@ if __name__ == '__main__':
                        {'name':'MJD','value':d.mjd,'comment':'Modified Julian date'},
                        {'name':'FIBERID','value':d.fid},
                        {'name':'ORDER','value':d.order,'comment':'Order of the continuum fit'},
+                        {'name':'P0','value':d.p0,'comment':'Order 0 parameter of the continuum fit'},
+                        {'name':'P1','value':d.p1,'comment':'Order 1 parameter of the continuum fit'},
                 ]
 
                 if (args.delta_format=='Pk1D'):
