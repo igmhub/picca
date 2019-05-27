@@ -270,8 +270,9 @@ class forest(qso):
         if self.T is None:
             self.T = sp.ones(self.ll.size)
 
+        w = 10.**self.ll/(1.+self.zqso)<=waveRF
         z = 10.**self.ll/waveRF-1.
-        self.T *= sp.exp(-tau*(1.+z)**gamma)
+        self.T[w] *= sp.exp(-tau*(1.+z[w])**gamma)
 
         return
 
