@@ -110,6 +110,9 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
 
+    parser.add_argument('--shuffle-distrib-obj-seed', type=int, default=None, required=False,
+        help='Shuffle the distribution of objects on the sky following the given seed. Do not shuffle if None')
+
     parser.add_argument('--shuffle-distrib-forest-seed', type=int, default=None, required=False,
         help='Shuffle the distribution of forests on the sky following the given seed. Do not shuffle if None')
 
@@ -174,6 +177,8 @@ if __name__ == '__main__':
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
                                 args.z_evol_obj, args.z_ref,cosmo)
 
+    if not args.shuffle_distrib_obj_seed is None:
+        objs = utils.shuffle_distrib_obj(objs,args.shuffle_distrib_obj_seed)
     if not args.shuffle_distrib_forest_seed is None:
         xcf.dels = utils.shuffle_distrib_forests(xcf.dels,
             args.shuffle_distrib_forest_seed)
