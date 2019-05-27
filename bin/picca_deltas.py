@@ -273,8 +273,8 @@ if __name__ == '__main__':
         print("INFO: Adding optical depth")
         assert args.optical_depth%3==0
         for idxop in range(args.optical_depth//3):
-            tau = args.optical_depth[3*idxop]
-            gamma = args.optical_depth[3*idxop+1]
+            tau = float(args.optical_depth[3*idxop])
+            gamma = float(args.optical_depth[3*idxop+1])
             waveRF = constants.absorber_IGM[args.optical_depth[3*idxop+2]]
             print("INFO: Adding optical depth for tau = {}, gamma = {}, waveRF = {} A".format(tau,gamma,waveRF))
             print(tau,gamma,waveRF)
