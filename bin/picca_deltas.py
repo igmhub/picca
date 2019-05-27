@@ -95,8 +95,8 @@ if __name__ == '__main__':
     parser.add_argument('--mask-file',type=str,default=None,required=False,
         help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
-    parser.add_argument('--optical-depth', action='store_true', default=False,
-        help='Correct for the optical depth')
+    parser.add_argument('--optical-depth', type=str, default=None, required=False,
+        help='Correct for the optical depth: tau_1, gamma_1, waveRF_1, tau_2, gamma_2, waveRF_2', nargs='*')
 
     parser.add_argument('--dust-map', type=str, default=None, required=False,
         help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
@@ -140,9 +140,8 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
 
-
     parser.add_argument('--use-mock-continuum', action='store_true', default = False,
-            help='use the mock continuum for computing the deltas')
+        help='use the mock continuum for computing the deltas')
 
     args = parser.parse_args()
 
@@ -270,14 +269,18 @@ if __name__ == '__main__':
         log.write("Found {} absorbers in forests\n".format(nb_absorbers_in_forest))
 
     ### Apply optical depth
-    if args.optical_depth:
+    if not args.optical_depth is None:
         print("INFO: Adding optical depth")
-        tau = 5.54e-3
-        gamma = 3.182
-        waveRF = constants.absorber_IGM['LYA']
-        for p in data:
-            for d in data[p]:
-                d.add_optical_depth(tau,gamma,waveRF)
+        assert args.optical_depth%3==0
+        for idxop in range(args.optical_depth//3):
+            tau = args.optical_depth[3*idxop]
+            gamma = args.optical_depth[3*idxop+1]
+            waveRF = constants.absorber_IGM[args.optical_depth[3*idxop+2]]
+            print("INFO: Adding optical depth for tau = {}, gamma = {}, waveRF = {} A".format(tau,gamma,waveRF))
+            print(tau,gamma,waveRF)
+            for p in data:
+                for d in data[p]:
+                    d.add_optical_depth(tau,gamma,waveRF)
 
     ### Correct for DLAs
     if not args.dla_vac is None:
