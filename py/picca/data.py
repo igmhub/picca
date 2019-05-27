@@ -248,16 +248,18 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
 
-        w = sp.ones(self.ll.size).astype(bool)
+        w = sp.ones(self.ll.size,dtype=bool)
         for l in mask_obs:
-            w = w & ( (self.ll<l[0]) | (self.ll>l[1]) )
+            w &= (self.ll<l[0]) | (self.ll>l[1])
         for l in mask_RF:
-            w = w & ( (self.ll-sp.log10(1.+self.zqso)<l[0]) | (self.ll-sp.log10(1.+self.zqso)>l[1]) )
+            w &= (self.ll-sp.log10(1.+self.zqso)<l[0]) | (self.ll-sp.log10(1.+self.zqso)>l[1])
 
         ps = ['iv','ll','fl','T_dla','T','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
+
+        return
 
     def add_optical_depth(self,tau,gamma,waveRF):
         """Add mean optical depth
@@ -265,8 +267,11 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
 
+        if self.T is None:
+            self.T = sp.ones(self.ll.size)
+
         z = 10.**self.ll/waveRF-1.
-        self.T = sp.exp(-tau*(1.+z)**gamma)
+        self.T *= sp.exp(-tau*(1.+z)**gamma)
 
         return
 
@@ -278,15 +283,17 @@ class forest(qso):
 
         self.T_dla *= dla(self,zabs,nhi).t
 
-        w = (self.T_dla>forest.dla_mask)
+        w = self.T_dla>forest.dla_mask
         if not mask is None:
             for l in mask:
-                w = w & ( (self.ll-sp.log10(1.+zabs)<l[0]) | (self.ll-sp.log10(1.+zabs)>l[1]) )
+                w &= (self.ll-sp.log10(1.+zabs)<l[0]) | (self.ll-sp.log10(1.+zabs)>l[1])
 
         ps = ['iv','ll','fl','T_dla','T','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
+
+        return
 
     def add_absorber(self,lambda_absorber):
         if not hasattr(self,'ll'):
@@ -295,13 +302,12 @@ class forest(qso):
         w = sp.ones(self.ll.size, dtype=bool)
         w &= sp.fabs(1.e4*(self.ll-sp.log10(lambda_absorber)))>forest.absorber_mask
 
-        self.iv = self.iv[w]
-        self.ll = self.ll[w]
-        self.fl = self.fl[w]
-        if self.diff is not None :
-            self.diff = self.diff[w]
-        if self.reso is not None:
-            self.reso = self.reso[w]
+        ps = ['iv','ll','fl','T_dla','T','mmef','diff','reso']
+        for p in ps:
+            if hasattr(self,p) and (getattr(self,p) is not None):
+                setattr(self,p,getattr(self,p)[w])
+
+        return
 
     def cont_fit(self):
         lmax = forest.lmax_rest+sp.log10(1+self.zqso)
