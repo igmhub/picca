@@ -441,8 +441,6 @@ if __name__ == '__main__':
                        {'name':'MJD','value':d.mjd,'comment':'Modified Julian date'},
                        {'name':'FIBERID','value':d.fid},
                        {'name':'ORDER','value':d.order,'comment':'Order of the continuum fit'},
-                        {'name':'P0','value':d.p0,'comment':'Order 0 parameter of the continuum fit'},
-                        {'name':'P1','value':d.p1,'comment':'Order 1 parameter of the continuum fit'},
                 ]
 
                 if (args.delta_format=='Pk1D'):
