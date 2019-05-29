@@ -96,7 +96,7 @@ if __name__ == '__main__':
         help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
     parser.add_argument('--optical-depth', type=str, default=None, required=False,
-        help='Correct for the optical depth: tau_1, gamma_1, absorber_1, tau_2, gamma_2, absorber_2, ...', nargs='*')
+        help='Correct for the optical depth: tau_1 gamma_1 absorber_1 tau_2 gamma_2 absorber_2 ...', nargs='*')
 
     parser.add_argument('--dust-map', type=str, default=None, required=False,
         help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
