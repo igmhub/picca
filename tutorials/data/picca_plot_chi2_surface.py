@@ -53,16 +53,26 @@ if __name__ == '__main__':
         fromkeytoindex_bestfit = { el:i for i,el in enumerate(first_line) }
         chi2_bestfit = sp.loadtxt(path.replace('.ap.at.scan.dat','.chisq'))
 
+        ### Read the best fit BAO
+        with open(path.replace('.ap.at.scan.dat','.save.pars')) as f:
+            first_line = f.readline()
+        first_line = first_line.replace('#','')
+        first_line = first_line.split()
+        fromkeytoindex_bestfitBAO = { el:i for i,el in enumerate(first_line) }
+        chi2_bestfitBAO = sp.loadtxt(path.replace('.ap.at.scan.dat','.save.pars'))
+
         ### Plot
         par1 = 'ap'
         min1 = chi2[:,fromkeytoindex[par1]].min()
         max1 = chi2[:,fromkeytoindex[par1]].max()
         nb1 = sp.unique(chi2[:,fromkeytoindex[par1]]).size
+        val1 = chi2_bestfitBAO[0,fromkeytoindex_bestfitBAO[par1]]
 
         par2 = 'at'
         min2 = chi2[:,fromkeytoindex[par2]].min()
         max2 = chi2[:,fromkeytoindex[par2]].max()
         nb2 = sp.unique(chi2[:,fromkeytoindex[par2]]).size
+        val2 = chi2_bestfitBAO[0,fromkeytoindex_bestfitBAO[par2]]
 
         if 'Dchi2' in fromkeytoindex.keys():
             parChi2 = 'Dchi2'
@@ -76,7 +86,7 @@ if __name__ == '__main__':
 
         plt.contour(zzz,levels=levels,extent=extent,origin='lower',colors=color[i])
         plt.plot([0.],[0.],color=color[i],label=r'$\mathrm{'+args.label[i]+'}$')
-        #plt.errorbar([at],[ap],fmt='o',color=color[j])
+        plt.errorbar([val2],[val1],fmt='o',color=color[i])
 
     plt.errorbar([1.],[1.],fmt='o',color='black')
     plt.xlabel(r'$\alpha_{\perp}$', fontsize=20)
