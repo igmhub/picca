@@ -28,6 +28,9 @@ if __name__ == '__main__':
     parser.add_argument('--label', type=str, default=None, required=True,nargs="*",
         help='Label of files given in --chi2scan')
 
+    parser.add_argument('--d-over-rd', action='store_true', required=False,
+        help='Plot in the (D_H/r_d,D_M/r_d) space')
+
     args = parser.parse_args()
 
     color = ['blue','red','green','orange']
@@ -61,27 +64,32 @@ if __name__ == '__main__':
         fromkeytoindex_bestfitBAO = { el:i for i,el in enumerate(first_line) }
         chi2_bestfitBAO = sp.loadtxt(path.replace('.ap.at.scan.dat','.save.pars'))
 
-
         ### Read the fiducial cosmology
-        with open(path.replace('.ap.at.scan.dat','.fiducial')) as f:
-            first_line = f.readline()
-        first_line = first_line.replace('#','')
-        first_line = first_line.split()
-        fromkeytoindex_bestfitfiducial = { el:i for i,el in enumerate(first_line) }
-        chi2_bestfitfiducial = sp.loadtxt(path.replace('.ap.at.scan.dat','.fiducial'))
+        if args.d_over_rd:
+            with open(path.replace('.ap.at.scan.dat','.fiducial')) as f:
+                first_line = f.readline()
+            first_line = first_line.replace('#','')
+            first_line = first_line.split()
+            fromkeytoindex_bestfitfiducial = { el:i for i,el in enumerate(first_line) }
+            chi2_bestfitfiducial = sp.loadtxt(path.replace('.ap.at.scan.dat','.fiducial'))
+            dhord = chi2_bestfitfiducial[fromkeytoindex_bestfitfiducial['Dh/rd']]
+            dmord = chi2_bestfitfiducial[fromkeytoindex_bestfitfiducial['Dm/rd']]
+        else:
+            dhord = 1.
+            dmord = 1.
 
         ### Plot
         par1 = 'ap'
-        min1 = chi2[:,fromkeytoindex[par1]].min()
-        max1 = chi2[:,fromkeytoindex[par1]].max()
+        min1 = chi2[:,fromkeytoindex[par1]].min()*dhord
+        max1 = chi2[:,fromkeytoindex[par1]].max()*dhord
         nb1 = sp.unique(chi2[:,fromkeytoindex[par1]]).size
-        val1 = chi2_bestfitBAO[0,fromkeytoindex_bestfitBAO[par1]]
+        val1 = chi2_bestfitBAO[0,fromkeytoindex_bestfitBAO[par1]]*dhord
 
         par2 = 'at'
-        min2 = chi2[:,fromkeytoindex[par2]].min()
-        max2 = chi2[:,fromkeytoindex[par2]].max()
+        min2 = chi2[:,fromkeytoindex[par2]].min()*dmord
+        max2 = chi2[:,fromkeytoindex[par2]].max()*dmord
         nb2 = sp.unique(chi2[:,fromkeytoindex[par2]]).size
-        val2 = chi2_bestfitBAO[0,fromkeytoindex_bestfitBAO[par2]]
+        val2 = chi2_bestfitBAO[0,fromkeytoindex_bestfitBAO[par2]]*dmord
 
         if 'Dchi2' in fromkeytoindex.keys():
             parChi2 = 'Dchi2'
@@ -97,11 +105,16 @@ if __name__ == '__main__':
         plt.plot([0.],[0.],color=color[i],label=r'$\mathrm{'+args.label[i]+'}$')
         plt.errorbar([val2],[val1],fmt='o',color=color[i])
 
-    plt.errorbar([1.],[1.],fmt='o',color='black')
-    plt.xlabel(r'$\alpha_{\perp}$', fontsize=20)
-    plt.ylabel(r'$\alpha_{\parallel}$', fontsize=20)
-    plt.xlim([0.5,1.5])
-    plt.ylim([0.5,1.5])
+    if args.d_over_rd:
+        plt.xlabel(r'$D_{M}(z_{\mathrm{eff}})/r_{d}$', fontsize=20)
+        plt.ylabel(r'$D_{H}(z_{\mathrm{eff}})/r_{d}$', fontsize=20)
+    else:
+        plt.xlabel(r'$\alpha_{\perp}$', fontsize=20)
+        plt.ylabel(r'$\alpha_{\parallel}$', fontsize=20)
+        plt.errorbar([1.],[1.],fmt='o',color='black')
+
+    plt.xlim([0.5*dmord,1.5*dmord])
+    plt.ylim([0.5*dhord,1.5*dhord])
     plt.grid(True)
     plt.legend()
     plt.show()
