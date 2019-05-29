@@ -13,8 +13,10 @@ tutorials/data/picca_plot_chi2_surface.py
 --chi2scan data/deSainteAgatheetal2019/auto_alone_stdFit/auto_alone_stdFit.ap.at.scan.dat
 data/Blomqvistetal2019/cross_alone_stdFit/cross_alone_stdFit.ap.at.scan.dat
 data/deSainteAgatheetal2019/combined_stdFit/combined_stdFit.ap.at.scan.dat
---label auto cross combined
+--label auto-DR14 cross-DR14 combined-DR14
 ```
+
+![GitHub Logo](/tutorials/data/DR14-chi2-scan-ap-at.png)
 
 ## DR14
 
