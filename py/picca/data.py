@@ -176,7 +176,7 @@ class forest(qso):
             correction = self.correc_ivar(ll)
             iv /= correction
 
-        self.T = None
+        self.Fbar = None
         self.T_dla = None
         self.ll = ll
         self.fl = fl
@@ -267,12 +267,12 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
 
-        if self.T is None:
-            self.T = sp.ones(self.ll.size)
+        if self.Fbar is None:
+            self.Fbar = sp.ones(self.ll.size)
 
         w = 10.**self.ll/(1.+self.zqso)<=waveRF
         z = 10.**self.ll/waveRF-1.
-        self.T[w] *= sp.exp(-tau*(1.+z[w])**gamma)
+        self.Fbar[w] *= sp.exp(-tau*(1.+z[w])**gamma)
 
         return
 
@@ -318,8 +318,8 @@ class forest(qso):
         except ValueError:
             raise Exception
 
-        if not self.T is None:
-            mc *= self.T
+        if not self.Fbar is None:
+            mc *= self.Fbar
         if not self.T_dla is None:
             mc*=self.T_dla
 
