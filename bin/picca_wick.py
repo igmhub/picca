@@ -90,7 +90,7 @@ if __name__ == '__main__':
         help='Maximum diagram to compute')
 
     parser.add_argument('--cf1d', type=str, required=True,
-        help='1D auto-correlation of pixels from the same forest file: do_cf1d.py')
+        help='1D auto-correlation of pixels from the same forest file: picca_cf1d.py')
 
     parser.add_argument('--cf1d2', type=str, default=None, required=False,
         help='1D auto-correlation of pixels from the same forest file of the 2nd delta field: do_cf1d.py')
