@@ -7,6 +7,15 @@ In each folder:
  * `*.at.ap.scan.dat` gives the 2D scan of chi2 allong the
         `(alpha_parallel,alpha_perp)` parameters
 
+To plot the chi2-scan, you can run for example:
+```bash
+tutorials/data/picca_plot_chi2_surface.py
+--chi2scan data/deSainteAgatheetal2019/auto_alone_stdFit/auto_alone_stdFit.ap.at.scan.dat
+data/Blomqvistetal2019/cross_alone_stdFit/cross_alone_stdFit.ap.at.scan.dat
+data/deSainteAgatheetal2019/combined_stdFit/combined_stdFit.ap.at.scan.dat
+--label auto cross combined
+```
+
 ## DR14
 
 ### Results of V. de Sainte Agathe et al. 2019
