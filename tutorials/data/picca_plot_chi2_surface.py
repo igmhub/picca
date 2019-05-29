@@ -61,6 +61,15 @@ if __name__ == '__main__':
         fromkeytoindex_bestfitBAO = { el:i for i,el in enumerate(first_line) }
         chi2_bestfitBAO = sp.loadtxt(path.replace('.ap.at.scan.dat','.save.pars'))
 
+
+        ### Read the fiducial cosmology
+        with open(path.replace('.ap.at.scan.dat','.fiducial')) as f:
+            first_line = f.readline()
+        first_line = first_line.replace('#','')
+        first_line = first_line.split()
+        fromkeytoindex_bestfitfiducial = { el:i for i,el in enumerate(first_line) }
+        chi2_bestfitfiducial = sp.loadtxt(path.replace('.ap.at.scan.dat','.fiducial'))
+
         ### Plot
         par1 = 'ap'
         min1 = chi2[:,fromkeytoindex[par1]].min()
