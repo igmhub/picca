@@ -16,7 +16,7 @@ data/deSainteAgatheetal2019/combined_stdFit/combined_stdFit.ap.at.scan.dat
 --label auto-DR14 cross-DR14 combined-DR14
 ```
 
-![GitHub Logo](/tutorials/data/DR14-chi2-scan-ap-at.png){:height="50%" width="50%"}
+![GitHub Logo](/tutorials/data/DR14-chi2-scan-ap-at.png | width=48)
 
 ## DR14
 
