@@ -176,6 +176,7 @@ class forest(qso):
             correction = self.correc_ivar(ll)
             iv /= correction
 
+        self.Fbar = None
         self.T_dla = None
         self.ll = ll
         self.fl = fl
@@ -247,21 +248,33 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
 
-        w = sp.ones(self.ll.size).astype(bool)
+        w = sp.ones(self.ll.size,dtype=bool)
         for l in mask_obs:
-            w = w & ( (self.ll<l[0]) | (self.ll>l[1]) )
+            w &= (self.ll<l[0]) | (self.ll>l[1])
         for l in mask_RF:
-            w = w & ( (self.ll-sp.log10(1.+self.zqso)<l[0]) | (self.ll-sp.log10(1.+self.zqso)>l[1]) )
+            w &= (self.ll-sp.log10(1.+self.zqso)<l[0]) | (self.ll-sp.log10(1.+self.zqso)>l[1])
 
-        self.ll = self.ll[w]
-        self.fl = self.fl[w]
-        self.iv = self.iv[w]
-        if self.mmef is not None:
-            self.mmef = self.mmef[w]
-        if self.diff is not None:
-             self.diff = self.diff[w]
-        if self.reso is not None:
-             self.reso = self.reso[w]
+        ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
+        for p in ps:
+            if hasattr(self,p) and (getattr(self,p) is not None):
+                setattr(self,p,getattr(self,p)[w])
+
+        return
+
+    def add_optical_depth(self,tau,gamma,waveRF):
+        """Add mean optical depth
+        """
+        if not hasattr(self,'ll'):
+            return
+
+        if self.Fbar is None:
+            self.Fbar = sp.ones(self.ll.size)
+
+        w = 10.**self.ll/(1.+self.zqso)<=waveRF
+        z = 10.**self.ll/waveRF-1.
+        self.Fbar[w] *= sp.exp(-tau*(1.+z[w])**gamma)
+
+        return
 
     def add_dla(self,zabs,nhi,mask=None):
         if not hasattr(self,'ll'):
@@ -271,21 +284,17 @@ class forest(qso):
 
         self.T_dla *= dla(self,zabs,nhi).t
 
-        w = (self.T_dla>forest.dla_mask)
+        w = self.T_dla>forest.dla_mask
         if not mask is None:
             for l in mask:
-                w = w & ( (self.ll-sp.log10(1.+zabs)<l[0]) | (self.ll-sp.log10(1.+zabs)>l[1]) )
+                w &= (self.ll-sp.log10(1.+zabs)<l[0]) | (self.ll-sp.log10(1.+zabs)>l[1])
 
-        self.iv = self.iv[w]
-        self.ll = self.ll[w]
-        self.fl = self.fl[w]
-        if self.mmef is not None:
-            self.mmef = self.mmef[w]
-        self.T_dla = self.T_dla[w]
-        if self.diff is not None :
-            self.diff = self.diff[w]
-        if self.reso is not None:
-            self.reso = self.reso[w]
+        ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
+        for p in ps:
+            if hasattr(self,p) and (getattr(self,p) is not None):
+                setattr(self,p,getattr(self,p)[w])
+
+        return
 
     def add_absorber(self,lambda_absorber):
         if not hasattr(self,'ll'):
@@ -294,13 +303,12 @@ class forest(qso):
         w = sp.ones(self.ll.size, dtype=bool)
         w &= sp.fabs(1.e4*(self.ll-sp.log10(lambda_absorber)))>forest.absorber_mask
 
-        self.iv = self.iv[w]
-        self.ll = self.ll[w]
-        self.fl = self.fl[w]
-        if self.diff is not None :
-            self.diff = self.diff[w]
-        if self.reso is not None:
-            self.reso = self.reso[w]
+        ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
+        for p in ps:
+            if hasattr(self,p) and (getattr(self,p) is not None):
+                setattr(self,p,getattr(self,p)[w])
+
+        return
 
     def cont_fit(self):
         lmax = forest.lmax_rest+sp.log10(1+self.zqso)
@@ -310,6 +318,8 @@ class forest(qso):
         except ValueError:
             raise Exception
 
+        if not self.Fbar is None:
+            mc *= self.Fbar
         if not self.T_dla is None:
             mc*=self.T_dla
 
