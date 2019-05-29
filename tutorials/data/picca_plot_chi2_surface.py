@@ -1,5 +1,8 @@
+#!/usr/bin/env python
+
 import scipy as sp
 import matplotlib.pyplot as plt
+import argparse
 
 def convert1DTo2D(array1D,nbX,nbY):
     '''
@@ -13,28 +16,34 @@ def convert1DTo2D(array1D,nbX,nbY):
         array2D[i,j] = el
 
     return array2D
-def plot_chi2_surface(input_chi2scan):
-    """
 
-    """
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Plot the scan of chi2 as a function of (ap,at)')
+
+    parser.add_argument('--chi2scan', type=str, default=None, required=True,
+        help='Input file with chi2 scan data')
+
+    args = parser.parse_args()
 
     levels = [2.29, 6.18, 11.82]
 
     ### Read chi2 scan
-    with open(input_chi2scan) as f:
+    with open(args.chi2scan) as f:
         first_line = f.readline()
     first_line = first_line.replace('#','')
     first_line = first_line.split()
     fromkeytoindex = { el:i for i,el in enumerate(first_line) }
-    chi2 = sp.loadtxt(input_chi2scan)
+    chi2 = sp.loadtxt(args.chi2scan)
 
     ### Read the best-fit chi2
-    with open(input_chi2scan.replace('.ap.at.scan.dat','.chisq')) as f:
+    with open(args.chi2scan.replace('.ap.at.scan.dat','.chisq')) as f:
         first_line = f.readline()
     first_line = first_line.replace('#','')
     first_line = first_line.split()
     fromkeytoindex_bestfit = { el:i for i,el in enumerate(first_line) }
-    chi2_bestfit = sp.loadtxt(input_chi2scan.replace('.ap.at.scan.dat','.chisq'))
+    chi2_bestfit = sp.loadtxt(args.chi2scan.replace('.ap.at.scan.dat','.chisq'))
 
     ### Plot
     par1 = 'ap'
@@ -65,5 +74,3 @@ def plot_chi2_surface(input_chi2scan):
     plt.ylabel(r'$\alpha_{\parallel}$', fontsize=20)
     plt.grid(True)
     plt.show()
-
-    return
