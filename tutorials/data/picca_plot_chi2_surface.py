@@ -113,8 +113,9 @@ if __name__ == '__main__':
         plt.ylabel(r'$\alpha_{\parallel}$', fontsize=20)
         plt.errorbar([1.],[1.],fmt='o',color='black')
 
-    plt.xlim([0.5*dmord,1.5*dmord])
-    plt.ylim([0.5*dhord,1.5*dhord])
+    plt.xlim([0.75*dmord,1.25*dmord])
+    plt.ylim([0.75*dhord,1.25*dhord])
+    plt.subplots_adjust(bottom=0.15,top=0.95,right=0.95)
     plt.grid(True)
     plt.legend()
     plt.show()
