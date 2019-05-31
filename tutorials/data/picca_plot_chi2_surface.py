@@ -83,13 +83,13 @@ if __name__ == '__main__':
         min1 = chi2[:,fromkeytoindex[par1]].min()*dhord
         max1 = chi2[:,fromkeytoindex[par1]].max()*dhord
         nb1 = sp.unique(chi2[:,fromkeytoindex[par1]]).size
-        val1 = chi2_bestfitBAO[0,fromkeytoindex_bestfitBAO[par1]]*dhord
+        val1 = chi2_bestfitBAO[fromkeytoindex_bestfitBAO[par1]]*dhord
 
         par2 = 'at'
         min2 = chi2[:,fromkeytoindex[par2]].min()*dmord
         max2 = chi2[:,fromkeytoindex[par2]].max()*dmord
         nb2 = sp.unique(chi2[:,fromkeytoindex[par2]]).size
-        val2 = chi2_bestfitBAO[0,fromkeytoindex_bestfitBAO[par2]]*dmord
+        val2 = chi2_bestfitBAO[fromkeytoindex_bestfitBAO[par2]]*dmord
 
         if 'Dchi2' in fromkeytoindex.keys():
             parChi2 = 'Dchi2'
