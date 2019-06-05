@@ -86,15 +86,17 @@ class chi2:
             if name[:4] != "bias":
                 kwargs_init["fix_"+name] = True
 
-        mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs_init)
+        mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,print_level=1,**kwargs_init)
         mig_init.migrad()
+        mig_init.print_param()
 
         ## now get the best fit values for the biases and start a full minimization
         for name, value in mig_init.values.items():
             kwargs[name] = value
 
-        mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,**kwargs)
+        mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,print_level=1,**kwargs)
         mig.migrad()
+        mig.print_param()
 
         print("INFO: minimized in {}".format(time.time()-t0))
         return mig
@@ -103,6 +105,7 @@ class chi2:
         self.best_fit = self._minimize()
         if self.hesse:
             self.best_fit.hesse()
+            self.best_fit.print_fmin()
 
         values = dict(self.best_fit.values)
         values['SB'] = False

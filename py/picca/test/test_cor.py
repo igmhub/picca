@@ -45,13 +45,14 @@ class TestCor(unittest.TestCase):
 
     def test_cor(self):
 
-        self.send_requirements()
 
+        self.picca_base = resource_filename('picca', './').replace('py/picca/./','')
+        self.send_requirements()
         numpy.random.seed(42)
 
         print("\n")
         self._test = True
-        self._masterFiles = resource_filename('picca', 'test/data/')
+        self._masterFiles = self.picca_base+'/py/picca/test/data/'
         self.produce_folder()
         self.produce_cat(nObj=1000)
         self.produce_forests()
@@ -318,7 +319,7 @@ class TestCor(unittest.TestCase):
 
         req = {}
 
-        path = resource_filename('picca', '/../../requirements.txt')
+        path = self.picca_base+'/requirements.txt'
         with open(path,'r') as f:
             for l in f:
                 l = l.replace('\n','').replace('==',' ').replace('>=',' ').split()
@@ -372,7 +373,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Path
-        path_to_etc = resource_filename('picca','../../etc')
+        path_to_etc = self.picca_base+'/etc/'
         ### Send
         cmd  = " picca_deltas.py"
         cmd += " --in-dir "          + self._masterFiles+"/test_Pk1D/Spectra_test/"
@@ -566,7 +567,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/wick.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/wick.fits.gz"
-            self.compare_fits(path1,path2,"do_wick.py")
+            self.compare_fits(path1,path2,"picca_wick.py")
 
         return
     def send_export_cf(self):
@@ -782,7 +783,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/xwick.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xwick.fits.gz"
-            self.compare_fits(path1,path2,"do_xwick.py")
+            self.compare_fits(path1,path2,"picca_xwick.py")
 
         return
     def send_export_xcf(self):

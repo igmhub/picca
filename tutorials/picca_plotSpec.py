@@ -70,10 +70,10 @@ if __name__ == '__main__':
             help='Path to file to mask regions in lambda_OBS and lambda_RF. In file each line is: region_name region_min region_max (OBS or RF) [Angstrom]')
 
     parser.add_argument('--flux-calib',type = str,default=None,required=False,
-            help='Path to file to previously produced do_delta.py file to correct for multiplicative errors in the flux calibration')
+            help='Path to file to previously produced picca_delta.py file to correct for multiplicative errors in the flux calibration')
 
     parser.add_argument('--ivar-calib',type = str,default=None,required=False,
-            help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration')
+            help='Path to previously produced picca_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration')
 
     args = parser.parse_args()
 
@@ -192,7 +192,7 @@ if __name__ == '__main__':
                     for dla in dlas[d.thid]:
                         data.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
 
-    ### Get delta from do_delta
+    ### Get delta from picca_delta
     done_delta = None
     f = args.spectrum+"/delta-"+str(pix[0])+".fits.gz"
     hdus = fitsio.FITS(f)

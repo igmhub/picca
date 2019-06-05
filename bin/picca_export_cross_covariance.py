@@ -14,10 +14,10 @@ if __name__ == '__main__':
         description='Compute the cross-covariance matrix between two correlations')
 
     parser.add_argument('--data1', type=str, default=None, required=True,
-        help='Correlation 1 produced via do_cf.py, do_xcf.py, ...')
+        help='Correlation 1 produced via picca_cf.py, picca_xcf.py, ...')
 
     parser.add_argument('--data2', type=str, default=None, required=True,
-        help='Correlation 2 produced via do_cf.py, do_xcf.py, ...')
+        help='Correlation 2 produced via picca_cf.py, picca_xcf.py, ...')
 
     parser.add_argument('--out', type=str, default=None, required=True,
         help='Output file name')
