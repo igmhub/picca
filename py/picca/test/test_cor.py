@@ -567,7 +567,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/wick.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/wick.fits.gz"
-            self.compare_fits(path1,path2,"do_wick.py")
+            self.compare_fits(path1,path2,"picca_wick.py")
 
         return
     def send_export_cf(self):
@@ -783,7 +783,7 @@ class TestCor(unittest.TestCase):
         if self._test:
             path1 = self._masterFiles + "/xwick.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xwick.fits.gz"
-            self.compare_fits(path1,path2,"do_xwick.py")
+            self.compare_fits(path1,path2,"picca_xwick.py")
 
         return
     def send_export_xcf(self):
