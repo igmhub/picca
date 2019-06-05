@@ -113,6 +113,9 @@ if __name__ == '__main__':
     parser.add_argument('--shuffle-distrib-obj-seed', type=int, default=None, required=False,
         help='Shuffle the distribution of objects on the sky following the given seed. Do not shuffle if None')
 
+    parser.add_argument('--shuffle-distrib-forest-seed', type=int, default=None, required=False,
+        help='Shuffle the distribution of forests on the sky following the given seed. Do not shuffle if None')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -176,6 +179,9 @@ if __name__ == '__main__':
 
     if not args.shuffle_distrib_obj_seed is None:
         objs = utils.shuffle_distrib_obj(objs,args.shuffle_distrib_obj_seed)
+    if not args.shuffle_distrib_forest_seed is None:
+        xcf.dels = utils.shuffle_distrib_forests(xcf.dels,
+            args.shuffle_distrib_forest_seed)
 
     print("")
     xcf.objs = objs
