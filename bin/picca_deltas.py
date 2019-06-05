@@ -102,10 +102,10 @@ if __name__ == '__main__':
         help='Path to DRQ catalog of objects for dust map to apply the Schlegel correction')
 
     parser.add_argument('--flux-calib',type=str,default=None,required=False,
-        help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
+        help='Path to previously produced picca_delta.py file to correct for multiplicative errors in the pipeline flux calibration')
 
     parser.add_argument('--ivar-calib',type=str,default=None,required=False,
-        help='Path to previously produced do_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration')
+        help='Path to previously produced picca_delta.py file to correct for multiplicative errors in the pipeline inverse variance calibration')
 
     parser.add_argument('--eta-min',type=float,default=0.5,required=False,
         help='Lower limit for eta')
