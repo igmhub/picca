@@ -12,19 +12,19 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--data', type = str, default = None, required=True,nargs="*",
-                        help = 'all data files to stack')
+        help = 'all data files to stack')
 
     parser.add_argument('--out', type = str, default = None, required=True,
-                        help = 'output file')
+        help = 'output file')
 
     parser.add_argument('--dmat', type = str, default = None, required=False,nargs="*",
-                        help = 'distorsion matrix file')
+        help = 'distorsion matrix file')
 
     parser.add_argument('--cov', type = str, default = None, required=False,
-                        help = 'covariance matrix file (if not provided it will be calculated by subsampling)')
+        help = 'covariance matrix file (if not provided it will be calculated by subsampling)')
 
     parser.add_argument('--do-not-smooth-cov', action='store_true', default = False,
-                        help='do not smooth the covariance matrix')
+        help='do not smooth the covariance matrix')
 
     args = parser.parse_args()
 

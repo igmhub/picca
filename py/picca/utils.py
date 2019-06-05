@@ -35,11 +35,12 @@ def cov(da,we):
     co[w] /= sswe[w]
 
     return co
-def smooth_cov(da,we,rp,rt,drt=4,drp=4):
+def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
 
-    co = cov(da,we)
+    if co is None:
+        co = cov(da,we)
 
-    nda = da.shape[1]
+    nda = co.shape[1]
     var = sp.diagonal(co)
     if sp.any(var==0.):
         print('WARNING: data has some empty bins, impossible to smooth')
@@ -633,6 +634,35 @@ def shuffle_distrib_obj(obj,seed):
 
     sp.random.seed(seed)
     idx = sp.arange(len(dic['zqso']))
+    sp.random.shuffle(idx)
+
+    i = 0
+    for oss in obj.values():
+        for o in oss:
+            for p in lst_p:
+                setattr(o,p,dic[p][idx[i]])
+            i += 1
+    return obj
+def shuffle_distrib_forests(obj,seed):
+    '''Shuffle the distribution of forests by assiging the angular
+        positions from another forest
+
+    Args:
+        obj (dic): Catalog of forests
+        seed (int): seed for the given realization of the shuffle
+
+    Returns:
+        obj (dic): Catalog of forest
+    '''
+
+    print('INFO: Shuffling the forests angular position with seed {}'.format(seed))
+
+    dic = {}
+    lst_p = ['ra','dec','xcart','ycart','zcart','cosdec','thid']
+    for p in lst_p:
+        dic[p] = [getattr(o, p) for oss in obj.values() for o in oss]
+    sp.random.seed(seed)
+    idx = sp.arange(len(dic['ra']))
     sp.random.shuffle(idx)
 
     i = 0
