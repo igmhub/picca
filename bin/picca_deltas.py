@@ -296,6 +296,7 @@ if __name__ == '__main__':
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## cuts
+    log.write("INFO: Sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
     for p in data.keys():
         l = []
         for d in data[p]:
