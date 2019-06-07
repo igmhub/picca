@@ -129,7 +129,7 @@ if __name__ == '__main__':
         help='Set all the delta weights to one (implemented as eta = 0, sigma_lss = 1, fudge = 0)')
 
     parser.add_argument('--order',type=int,default=1,required=False,
-        help='Order of the log(lambda) polynomial for the continuum fit, by default 1.')
+        help='Order of the log10(lambda) polynomial for the continuum fit, by default 1.')
 
     parser.add_argument('--nit',type=int,default=5,required=False,
         help='Number of iterations to determine the mean continuum shape, LSS variances, etc.')
@@ -300,15 +300,15 @@ if __name__ == '__main__':
         l = []
         for d in data[p]:
             if not hasattr(d,'ll') or len(d.ll) < args.npix_min:
-                log.write("{} forest too short\n".format(d.thid))
+                log.write("INFO: Rejected {} due to forest too short\n".format(d.thid))
                 continue
 
             if isnan((d.fl*d.iv).sum()):
-                log.write("{} nan found\n".format(d.thid))
+                log.write("INFO: Rejected {} due to nan found\n".format(d.thid))
                 continue
 
             if(args.use_constant_weight and (d.fl.mean()<=0.0 or d.mean_SNR<=1.0 )):
-                log.write("{} negative mean of too low SNR found\n".format(d.thid))
+                log.write("INFO: Rejected {} due to negative mean of too low SNR found\n".format(d.thid))
                 continue
 
             l.append(d)
@@ -405,7 +405,7 @@ if __name__ == '__main__':
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:
-        log.write("rejected {} due to {}\n".format(d.thid,d.bad_cont))
+        log.write("INFO: Rejected {} due to {}\n".format(d.thid,d.bad_cont))
 
     log.close()
 
