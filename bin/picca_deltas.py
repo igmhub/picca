@@ -296,7 +296,7 @@ if __name__ == '__main__':
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## cuts
-    for p in list(data.keys()):
+    for p in data.keys():
         l = []
         for d in data[p]:
             if not hasattr(d,'ll') or len(d.ll) < args.npix_min:
@@ -317,6 +317,7 @@ if __name__ == '__main__':
         data[p][:] = l
         if len(data[p])==0:
             del data[p]
+    log.write("INFO: Sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
 
     for p in data:
         for d in data[p]:
@@ -400,17 +401,19 @@ if __name__ == '__main__':
     st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
-    for p in sorted(list(data.keys())):
+    for p in sorted(data.keys()):
         deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:
         log.write("INFO: Rejected {} due to {}\n".format(d.thid,d.bad_cont))
 
+    log.write("INFO: Sample has {} forests\n".format(sp.sum([len(p) for p in deltas.values()])))
+
     log.close()
 
     ###
-    for p in sorted(list(deltas.keys())):
+    for p in sorted(deltas.keys()):
 
         if len(deltas[p])==0: continue
         if (args.delta_format=='Pk1D_ascii') :
