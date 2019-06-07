@@ -313,7 +313,7 @@ if __name__ == '__main__':
 
             l.append(d)
             log.write("{} {}-{}-{} accepted\n".format(d.thid,
-                d.plate,d.mjd,d.thid))
+                d.plate,d.mjd,d.fid))
         data[p][:] = l
         if len(data[p])==0:
             del data[p]
