@@ -86,6 +86,15 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--fid-Or', type=float, default=0., required=False,
+        help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
+
+    parser.add_argument('--fid-Ok', type=float, default=0., required=False,
+        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+
+    parser.add_argument('--fid-wl', type=float, default=-1., required=False,
+        help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
+
     parser.add_argument('--no-project', action='store_true', required=False,
         help='Do not project out continuum fitting modes')
 
@@ -104,6 +113,9 @@ if __name__ == '__main__':
     parser.add_argument('--shuffle-distrib-obj-seed', type=int, default=None, required=False,
         help='Shuffle the distribution of objects on the sky following the given seed. Do not shuffle if None')
 
+    parser.add_argument('--shuffle-distrib-forest-seed', type=int, default=None, required=False,
+        help='Shuffle the distribution of forests on the sky following the given seed. Do not shuffle if None')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -119,7 +131,7 @@ if __name__ == '__main__':
     xcf.nside = args.nside
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
 
-    cosmo = constants.cosmo(args.fid_Om)
+    cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read deltas
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
@@ -167,6 +179,9 @@ if __name__ == '__main__':
 
     if not args.shuffle_distrib_obj_seed is None:
         objs = utils.shuffle_distrib_obj(objs,args.shuffle_distrib_obj_seed)
+    if not args.shuffle_distrib_forest_seed is None:
+        xcf.dels = utils.shuffle_distrib_forests(xcf.dels,
+            args.shuffle_distrib_forest_seed)
 
     print("")
     xcf.objs = objs

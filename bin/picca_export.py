@@ -15,13 +15,13 @@ if __name__ == '__main__':
         description='Export auto and cross-correlation for the fitter.')
 
     parser.add_argument('--data', type=str, default=None, required=True,
-        help='Correlation produced via do_cf.py, do_xcf.py, ...')
+        help='Correlation produced via picca_cf.py, picca_xcf.py, ...')
 
     parser.add_argument('--out', type=str, default=None, required=True,
         help='Output file name')
 
     parser.add_argument('--dmat', type=str, default=None, required=False,
-        help='Distortion matrix produced via do_dmat.py, do_xdmat.py... (if not provided will be identity)')
+        help='Distortion matrix produced via picca_dmat.py, picca_xdmat.py... (if not provided will be identity)')
 
     parser.add_argument('--cov', type=str, default=None, required=False,
         help='Covariance matrix (if not provided will be calculated by subsampling)')
@@ -61,10 +61,12 @@ if __name__ == '__main__':
     elif args.cor is not None:
         print('INFO: The correlation-matrix will be read from file: {}'.format(args.cor))
         hh = fitsio.FITS(args.cor)
-        cor = hh[1]['COR'][:]
+        cor = hh[1]['CO'][:]
         hh.close()
         if (cor.min()<-1.) | (cor.min()>1.) | (cor.max()<-1.) | (cor.max()>1.) | sp.any(sp.diag(cor)!=1.):
             print('WARNING: The correlation-matrix has some incorrect values')
+        tvar = sp.diagonal(cor)
+        cor = cor/sp.sqrt(tvar*tvar[:,None])
         co = cov(da,we)
         var = sp.diagonal(co)
         co = cor * sp.sqrt(var*var[:,None])

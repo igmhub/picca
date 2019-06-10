@@ -299,10 +299,10 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
         plate_spall = spAll[1]["PLATE"][:]
         mjd_spall = spAll[1]["MJD"][:]
         fid_spall = spAll[1]["FIBERID"][:]
-        qual_spall = spAll[1]["PLATEQUALITY"][:]
+        qual_spall = spAll[1]["PLATEQUALITY"][:].astype(str)
         zwarn_spall = spAll[1]["ZWARNING"][:]
 
-        w = sp.in1d(thid_spall, thid) & (qual_spall == b"good")
+        w = sp.in1d(thid_spall, thid) & (qual_spall == "good")
         ## Removing spectra with the following ZWARNING bits set:
         ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
         ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
@@ -595,15 +595,19 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
         plate_spall = spAll[1]["PLATE"][:]
         mjd_spall = spAll[1]["MJD"][:]
         fid_spall = spAll[1]["FIBERID"][:]
-        qual_spall = spAll[1]["PLATEQUALITY"][:]
+        qual_spall = spAll[1]["PLATEQUALITY"][:].astype(str)
         zwarn_spall = spAll[1]["ZWARNING"][:]
 
-        w = sp.in1d(thid_spall, thid) & (qual_spall == b"good")
+        w = sp.in1d(thid_spall, thid)
+        print("INFO: Found {} spectra with required THING_ID".format(w.sum()))
+        w &= qual_spall == "good"
+        print("INFO: Found {} spectra with 'good' plate".format(w.sum()))
         ## Removing spectra with the following ZWARNING bits set:
         ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
         ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
         for zwarnbit in [0,1,7,8,9]:
             w &= (zwarn_spall&2**zwarnbit)==0
+            print("INFO: Found {} spectra without {} bit set".format(w.sum(), zwarnbit))
         print("INFO: # unique objs: ",len(thid))
         print("INFO: # spectra: ",w.sum())
         thid = thid_spall[w]
@@ -816,6 +820,11 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         if not nspec is None:
             if ndata>nspec:break
 
+    ###
+    if not nspec is None:
+        dels = dels[:nspec]
+        ndata = len(dels)
+
     print("\n")
 
     phi = [d.ra for d in dels]
@@ -836,7 +845,9 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         zmin = min(zmin,z.min())
         zmax = max(zmax,z.max())
         d.z = z
-        if not cosmo is None: d.r_comov = cosmo.r_comoving(z)
+        if not cosmo is None:
+            d.r_comov = cosmo.r_comoving(z)
+            d.rdm_comov = cosmo.dm(z)
         d.we *= ((1+z)/(1+zref))**(alpha-1)
 
         if not no_project:
@@ -862,7 +873,9 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
         objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
         for q in objs[ipix]:
             q.we = ((1.+q.zqso)/(1.+zref))**(alpha-1.)
-            if not cosmo is None: q.r_comov = cosmo.r_comoving(q.zqso)
+            if not cosmo is None:
+                q.r_comov = cosmo.r_comoving(q.zqso)
+                q.rdm_comov = cosmo.dm(q.zqso)
 
     print("\n")
 

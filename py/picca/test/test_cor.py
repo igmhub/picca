@@ -45,13 +45,14 @@ class TestCor(unittest.TestCase):
 
     def test_cor(self):
 
-        self.send_requirements()
 
+        self.picca_base = resource_filename('picca', './').replace('py/picca/./','')
+        self.send_requirements()
         numpy.random.seed(42)
 
         print("\n")
         self._test = True
-        self._masterFiles = resource_filename('picca', 'test/data/')
+        self._masterFiles = self.picca_base+'/py/picca/test/data/'
         self.produce_folder()
         self.produce_cat(nObj=1000)
         self.produce_forests()
@@ -67,6 +68,7 @@ class TestCor(unittest.TestCase):
         self.send_cf()
         self.send_dmat()
         self.send_metal_dmat()
+        self.send_wick()
         self.send_export_cf()
 
         self.send_cf_cross()
@@ -79,6 +81,7 @@ class TestCor(unittest.TestCase):
         self.send_xcf()
         self.send_xdmat()
         self.send_metal_xdmat()
+        self.send_xwick()
         self.send_export_xcf()
         self.send_export_cross_covariance_cf_xcf()
 
@@ -240,6 +243,10 @@ class TestCor(unittest.TestCase):
             for k in ld_m:
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
+                if d_m.dtype in ['<U23','S23']: ### for fitsio old version compatibility
+                    d_m = sp.char.strip(d_m)
+                if d_b.dtype in ['<U23','S23']: ### for fitsio old version compatibility
+                    d_b = sp.char.strip(d_b)
                 self.assertEqual(d_m.size,d_b.size,"{}: Header key is {}".format(nameRun,k))
                 if not sp.array_equal(d_m,d_b):
                     print("WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(nameRun,k))
@@ -256,6 +263,7 @@ class TestCor(unittest.TestCase):
     def compare_h5py(self,path1,path2,nameRun=""):
 
         def compare_attributes(atts1,atts2):
+            self.assertEqual(len(atts1.keys()),len(atts2.keys()),"{}".format(nameRun))
             self.assertListEqual(sorted(atts1.keys()),sorted(atts2.keys()),"{}".format(nameRun))
             for item in atts1:
                 nequal = True
@@ -311,10 +319,10 @@ class TestCor(unittest.TestCase):
 
         req = {}
 
-        path = resource_filename('picca', '/../../requirements.txt')
+        path = self.picca_base+'/requirements.txt'
         with open(path,'r') as f:
             for l in f:
-                l = l.replace('\n','').split('==')
+                l = l.replace('\n','').replace('==',' ').replace('>=',' ').split()
                 self.assertTrue(len(l)==2,"requirements.txt attribute is not valid: {}".format(str(l)))
                 req[l[0]] = l[1]
 
@@ -365,7 +373,7 @@ class TestCor(unittest.TestCase):
 
         print("\n")
         ### Path
-        path_to_etc = resource_filename('picca','../../etc')
+        path_to_etc = self.picca_base+'/etc/'
         ### Send
         cmd  = " picca_deltas.py"
         cmd += " --in-dir "          + self._masterFiles+"/test_Pk1D/Spectra_test/"
@@ -536,6 +544,30 @@ class TestCor(unittest.TestCase):
             path1 = self._masterFiles + "/metal_dmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
             self.compare_fits(path1,path2,"picca_metal_dmat.py")
+
+        return
+    def send_wick(self):
+
+        print("\n")
+        ### Send
+        cmd  = " picca_wick.py"
+        cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --out " + self._branchFiles+"/Products/Correlations/wick.fits.gz"
+        cmd += " --cf1d " + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
+        cmd += " --rp-min +0.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 15"
+        cmd += " --nt 15"
+        cmd += " --rej 0.99 "
+        cmd += " --nproc 1"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/wick.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/wick.fits.gz"
+            self.compare_fits(path1,path2,"picca_wick.py")
 
         return
     def send_export_cf(self):
@@ -727,6 +759,31 @@ class TestCor(unittest.TestCase):
             path1 = self._masterFiles + "/metal_xdmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
             self.compare_fits(path1,path2,"picca_metal_xdmat.py")
+
+        return
+    def send_xwick(self):
+
+        print("\n")
+        ### Send
+        cmd  = " picca_xwick.py"
+        cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
+        cmd += " --drq " + self._branchFiles+"/Products/cat.fits"
+        cmd += " --out " + self._branchFiles+"/Products/Correlations/xwick.fits.gz"
+        cmd += " --cf1d " + self._branchFiles+"/Products/Correlations/cf1d.fits.gz"
+        cmd += " --rp-min -60.0"
+        cmd += " --rp-max +60.0"
+        cmd += " --rt-max +60.0"
+        cmd += " --np 30"
+        cmd += " --nt 15"
+        cmd += " --rej 0.99 "
+        cmd += " --nproc 1"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/xwick.fits.gz"
+            path2 = self._branchFiles + "/Products/Correlations/xwick.fits.gz"
+            self.compare_fits(path1,path2,"picca_xwick.py")
 
         return
     def send_export_xcf(self):

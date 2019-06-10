@@ -74,6 +74,15 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--fid-Or', type=float, default=0., required=False,
+        help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
+
+    parser.add_argument('--fid-Ok', type=float, default=0., required=False,
+        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+
+    parser.add_argument('--fid-wl', type=float, default=-1., required=False,
+        help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
+
     parser.add_argument('--no-project', action='store_true', required=False,
         help='Do not project out continuum fitting modes')
 
@@ -91,6 +100,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--unfold-cf', action='store_true', required=False,
         help='rp can be positive or negative depending on the relative position between absorber1 and absorber2')
+
+    parser.add_argument('--shuffle-distrib-forest-seed', type=int, default=None, required=False,
+        help='Shuffle the distribution of forests on the sky following the given seed. Do not shuffle if None')
 
     args = parser.parse_args()
 
@@ -110,10 +122,13 @@ if __name__ == '__main__':
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
-    cosmo = constants.cosmo(args.fid_Om)
+    cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,
+        Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read data 1
-    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.zref, cosmo, nspec=args.nspec, no_project=args.no_project, from_image=args.from_image)
+    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside,
+        cf.lambda_abs, cf.alpha, cf.zref, cosmo, nspec=args.nspec,
+        no_project=args.no_project, from_image=args.from_image)
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
@@ -133,12 +148,18 @@ if __name__ == '__main__':
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, nspec=args.nspec, no_project=args.no_project, from_image=args.from_image)
+        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2,
+            cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, nspec=args.nspec,
+            no_project=args.no_project, from_image=args.from_image)
         cf.data2 = data2
         cf.ndata2 = ndata2
         cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix,zmin_pix2)
         print("")
         print("done, npix = {}".format(len(data2)))
+
+    if not args.shuffle_distrib_forest_seed is None:
+        cf.data = utils.shuffle_distrib_forests(cf.data,
+            args.shuffle_distrib_forest_seed)
 
 
     cf.counter = Value('i',0)
