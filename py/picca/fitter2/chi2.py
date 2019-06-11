@@ -217,7 +217,7 @@ class chi2:
             d.ico = d.ico/s
             d.cho = cholesky(d.co)
 
-        self.fiducial_values = self.best_fit.values.copy()
+        self.fiducial_values = dict(self.best_fit.values).copy()
         for p in self.fidfast_mc:
             self.fiducial_values[p] = self.fidfast_mc[p]
             for d in self.data:

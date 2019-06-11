@@ -605,9 +605,10 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
         ## Removing spectra with the following ZWARNING bits set:
         ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
         ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
-        for zwarnbit in [0,1,7,8,9]:
+        bad_zwarnbit = {0:'SKY',1:'LITTLE_COVERAGE',7:'UNPLUGGED',8:'BAD_TARGET',9:'NODATA'}
+        for zwarnbit,zwarnbit_str in bad_zwarnbit.items():
             w &= (zwarn_spall&2**zwarnbit)==0
-            print("INFO: Found {} spectra without {} bit set".format(w.sum(), zwarnbit))
+            print("INFO: Found {} spectra without {} bit set: {}".format(w.sum(), zwarnbit, zwarnbit_str))
         print("INFO: # unique objs: ",len(thid))
         print("INFO: # spectra: ",w.sum())
         thid = thid_spall[w]
