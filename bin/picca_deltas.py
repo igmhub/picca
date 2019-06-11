@@ -129,7 +129,7 @@ if __name__ == '__main__':
         help='Set all the delta weights to one (implemented as eta = 0, sigma_lss = 1, fudge = 0)')
 
     parser.add_argument('--order',type=int,default=1,required=False,
-        help='Order of the log(lambda) polynomial for the continuum fit, by default 1.')
+        help='Order of the log10(lambda) polynomial for the continuum fit, by default 1.')
 
     parser.add_argument('--nit',type=int,default=5,required=False,
         help='Number of iterations to determine the mean continuum shape, LSS variances, etc.')
@@ -296,27 +296,29 @@ if __name__ == '__main__':
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## cuts
-    for p in list(data.keys()):
+    log.write("INFO: Input sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
+    for p in data.keys():
         l = []
         for d in data[p]:
             if not hasattr(d,'ll') or len(d.ll) < args.npix_min:
-                log.write("{} forest too short\n".format(d.thid))
+                log.write("INFO: Rejected {} due to forest too short\n".format(d.thid))
                 continue
 
             if isnan((d.fl*d.iv).sum()):
-                log.write("{} nan found\n".format(d.thid))
+                log.write("INFO: Rejected {} due to nan found\n".format(d.thid))
                 continue
 
             if(args.use_constant_weight and (d.fl.mean()<=0.0 or d.mean_SNR<=1.0 )):
-                log.write("{} negative mean of too low SNR found\n".format(d.thid))
+                log.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(d.thid))
                 continue
 
             l.append(d)
             log.write("{} {}-{}-{} accepted\n".format(d.thid,
-                d.plate,d.mjd,d.thid))
+                d.plate,d.mjd,d.fid))
         data[p][:] = l
         if len(data[p])==0:
             del data[p]
+    log.write("INFO: Remaining sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
 
     for p in data:
         for d in data[p]:
@@ -400,17 +402,19 @@ if __name__ == '__main__':
     st = interp1d(ll_st[wst>0.],st[wst>0.],kind="nearest",fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
-    for p in sorted(list(data.keys())):
+    for p in sorted(data.keys()):
         deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:
-        log.write("rejected {} due to {}\n".format(d.thid,d.bad_cont))
+        log.write("INFO: Rejected {} due to {}\n".format(d.thid,d.bad_cont))
+
+    log.write("INFO: Accepted sample has {} forests\n".format(sp.sum([len(p) for p in deltas.values()])))
 
     log.close()
 
     ###
-    for p in sorted(list(deltas.keys())):
+    for p in sorted(deltas.keys()):
 
         if len(deltas[p])==0: continue
         if (args.delta_format=='Pk1D_ascii') :
