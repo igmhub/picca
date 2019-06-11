@@ -296,7 +296,7 @@ if __name__ == '__main__':
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## cuts
-    log.write("INFO: Sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
+    log.write("INFO: Input sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
     for p in data.keys():
         l = []
         for d in data[p]:
@@ -309,7 +309,7 @@ if __name__ == '__main__':
                 continue
 
             if(args.use_constant_weight and (d.fl.mean()<=0.0 or d.mean_SNR<=1.0 )):
-                log.write("INFO: Rejected {} due to negative mean of too low SNR found\n".format(d.thid))
+                log.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(d.thid))
                 continue
 
             l.append(d)
@@ -318,7 +318,7 @@ if __name__ == '__main__':
         data[p][:] = l
         if len(data[p])==0:
             del data[p]
-    log.write("INFO: Sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
+    log.write("INFO: Remaining sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
 
     for p in data:
         for d in data[p]:
@@ -409,7 +409,7 @@ if __name__ == '__main__':
     for d in data_bad_cont:
         log.write("INFO: Rejected {} due to {}\n".format(d.thid,d.bad_cont))
 
-    log.write("INFO: Sample has {} forests\n".format(sp.sum([len(p) for p in deltas.values()])))
+    log.write("INFO: Remaining sample has {} forests\n".format(sp.sum([len(p) for p in deltas.values()])))
 
     log.close()
 
