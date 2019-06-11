@@ -409,7 +409,7 @@ if __name__ == '__main__':
     for d in data_bad_cont:
         log.write("INFO: Rejected {} due to {}\n".format(d.thid,d.bad_cont))
 
-    log.write("INFO: Remaining sample has {} forests\n".format(sp.sum([len(p) for p in deltas.values()])))
+    log.write("INFO: Accepted sample has {} forests\n".format(sp.sum([len(p) for p in deltas.values()])))
 
     log.close()
 
