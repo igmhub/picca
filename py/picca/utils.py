@@ -607,8 +607,8 @@ def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
     if zmin2 is None:
         zmin2 = zmin
 
-    rmin1 = cosmo.r_comoving(zmin)
-    rmin2 = cosmo.r_comoving(zmin2)
+    rmin1 = cosmo.dm(zmin)
+    rmin2 = cosmo.dm(zmin2)
 
     if rmin1+rmin2<rt_max:
         angmax = sp.pi
