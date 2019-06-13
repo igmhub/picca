@@ -23,6 +23,7 @@ class data:
             self.tracer2['type'] = self.tracer1['type']
 
         self.ell_max = dic_init['data']['ell-max']
+
         zeff = dic_init['model']['zeff']
         zref = dic_init['model']['zref']
         Om = dic_init['model']['Om']
@@ -116,8 +117,10 @@ class data:
         w = self.r>0.
         self.mu[w] = self.rp[w]/self.r[w]
 
-
-        self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
+        if 'hcd_model' in dic_init:
+            self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']),dic_init['hcd_model']['name_hcd_model'])
+        else:
+            self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
         self.pk *= partial(getattr(pk,'G2'), dataset_name=self.name)
         if 'pk-gauss-smoothing' in dic_init['model']:
             self.pk *= partial(getattr(pk, dic_init['model']['pk-gauss-smoothing']))
@@ -157,6 +160,7 @@ class data:
         self.bb['pos-add'] = []
         self.bb['pre-mul'] = []
         self.bb['pos-mul'] = []
+
         if 'broadband' in dic_init:
             for ibb,dic_bb in enumerate( [el for el in dic_init['broadband'] if el['func']!='broadband_sky']):
                 deg_r_min = dic_bb['deg_r_min']
@@ -313,8 +317,7 @@ class data:
             hmet.close()
 
     def xi_model(self, k, pk_lin, pars):
-        xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, \
-                    tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
+        xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
 
         xi *= self.z_evol[self.tracer1['name']](self.z, self.tracer1, **pars)*self.z_evol[self.tracer2['name']](self.z, self.tracer2, **pars)
         xi *= self.growth_function(self.z, **pars)**2

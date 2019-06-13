@@ -1,26 +1,25 @@
 import scipy as sp
 import numpy as np
 from . import utils
+from pkg_resources import resource_filename
 
 muk = utils.muk
 bias_beta = utils.bias_beta
 
-data_london = np.loadtxt('/global/homes/e/edmondc/software/picca/py/picca/fitter2/Fvoigt_london_6.0.txt')
-data_london_2 = np.loadtxt('/global/homes/e/edmondc/software/picca/py/picca/fitter2/Fvoigt_london_6.0_norm.txt')
-data_saclay = np.loadtxt('/global/homes/e/edmondc/software/picca/py/picca/fitter2/Fvoigt_saclay_4.4.txt')
-data_saclay_bin1 = np.loadtxt('/global/homes/e/edmondc/software/picca/py/picca/fitter2/Fvoigt_saclay_4.4_bin1.txt')
-data_saclay_bin2 = np.loadtxt('/global/homes/e/edmondc/software/picca/py/picca/fitter2/Fvoigt_saclay_4.4_bin2.txt')
-data_saclay_2 = np.loadtxt('/global/homes/e/edmondc/software/picca/py/picca/fitter2/Fvoigt_saclay_4.4_norm.txt')
-##faire attention ou est le fichier Fvoigt.txt
+Fvoigt_data = []
 
 class pk:
-    def __init__(self, func):
+    def __init__(self, func, name_model=None):
         self.func = func
+        global Fvoigt_data    
+        if name_model != None and Fvoigt_data == []:
+            path = resource_filename('picca', 'fitter2')+'/models/Fvoigt_Models/Fvoigt_{}.txt'.format(name_model)
+            Fvoigt_data = np.loadtxt(path)
 
     def __call__(self, k, pk_lin, tracer1, tracer2, **kwargs):
-        return self.func(k, pk_lin, tracer1, tracer2, **kwargs)
+            return self.func(k, pk_lin, tracer1, tracer2, **kwargs)
 
-    def __mul__(self,func2):
+    def __mul__(self, func2):
         func = lambda k, pk_lin, tracer1, tracer2, **kwargs: self(k, pk_lin, tracer1, tracer2, **kwargs)*func2(k, pk_lin, tracer1, tracer2, **kwargs)
         return pk(func)
 
@@ -47,7 +46,7 @@ def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
 
 def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     """
-    Apply a Gaussian smoothing to the full correlation function
+    Apply a Gaussian and exp smoothing to the full correlation function (use full for london_mocks_v6.0
 
     """
     kp  = k*muk
@@ -67,74 +66,12 @@ def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     return pk
 
 def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
-
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-
-    bias_hcd = kwargs["bias_hcd"]
-    beta_hcd = kwargs["beta_hcd"]
-    L0 = kwargs["L0_hcd"]
-
-    kp = k*muk
-    F_hcd = utils.sinc(kp*L0)
-
-    bias_eff1 = bias1 + bias_hcd*F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
-
-    bias_eff2 = bias2 + bias_hcd*F_hcd
-    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
-
-    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
-
-    return pk
-
-def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
-    """Model the effect of HCD systems with the Fourier transform
-       of a Lorentzian profile. Motivated by Rogers et al. (2018).
-
-    Args:
-        Same than pk_hcd
-
-    Returns:
-        Same than pk_hcd
+    """
+    Use Fvoigt function to fit the DLA in the autocorrelation Lyman-alpha
 
     """
-
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-
-    key = "bias_hcd_{}".format(kwargs['name'])
-    if key in kwargs :
-        bias_hcd = kwargs[key]
-    else :
-        bias_hcd = kwargs["bias_hcd"]
-    beta_hcd = kwargs["beta_hcd"]
-    L0 = kwargs["L0_hcd"]
-
-    kp = k*muk
-    F_hcd = sp.exp(-L0*kp)
-
-    bias_eff1 = bias1 + bias_hcd*F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
-
-    bias_eff2 = bias2 + bias_hcd*F_hcd
-    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
-
-    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
-
-    return pk
-
-def pk_hcd_Voigt_london(k, pk_lin, tracer1, tracer2, **kwargs):
-    """Model the effect of HCD systems with the Fourier transform
-       of a Voigt profile. Motivated by Rogers et al. (2018). eq (3).
-       using cddf of london
-
-    Args:
-        Same than pk_hcd
-
-    Returns:
-        Same than pk_hcd
-
-    """
-
+    global Fvoigt_data
+    
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
 
     key = "bias_hcd_{}".format(kwargs['name'])
@@ -147,156 +84,10 @@ def pk_hcd_Voigt_london(k, pk_lin, tracer1, tracer2, **kwargs):
 
     kp = k*muk
 
-    k_data = data_london[:,0]
-    F_data = data_london[:,1]
+    k_data = Fvoigt_data[:,0]
+    F_data = Fvoigt_data[:,1]
 
-    F_hcd = np.interp(L0*kp, k_data, F_data)
-
-    bias_eff1 = bias1 + bias_hcd*F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
-
-    bias_eff2 = bias2 + bias_hcd*F_hcd
-    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
-
-    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
-
-    return pk
-
-def pk_hcd_Voigt_saclay(k, pk_lin, tracer1, tracer2, **kwargs):
-    """Model the effect of HCD systems with the Fourier transform
-       of a Voigt profile. Motivated by Rogers et al. (2018). eq (3).
-       using cddf of saclay
-
-    Args:
-        Same than pk_hcd
-
-    Returns:
-        Same than pk_hcd
-
-    """
-
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-
-    key = "bias_hcd_{}".format(kwargs['name'])
-    if key in kwargs :
-        bias_hcd = kwargs[key]
-    else :
-        bias_hcd = kwargs["bias_hcd"]
-    beta_hcd = kwargs["beta_hcd"]
-    L0 = kwargs["L0_hcd"]
-
-    kp = k*muk
-
-    k_data = data_saclay[:,0]
-    F_data = data_saclay[:,1]
-
-    F_hcd = np.interp(L0*kp, k_data, F_data)
-
-    bias_eff1 = bias1 + bias_hcd*F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
-
-    bias_eff2 = bias2 + bias_hcd*F_hcd
-    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
-
-    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
-
-    return pk
-
-def pk_hcd_Voigt_saclay_bin(k, pk_lin, tracer1, tracer2, **kwargs):
-    """Model the effect of HCD systems with the Fourier transform
-       of a Voigt profile. Motivated by Rogers et al. (2018). eq (3).
-       using cddf of saclay and binning the HCDs in two parts
-
-    Args:
-        Same than pk_hcd
-
-    Returns:
-        Same than pk_hcd
-
-    """
-
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-
-    bias_hcd_1 = kwargs["bias_hcd1"]
-    beta_hcd_1 = kwargs["beta_hcd1"]
-    L_1 = kwargs["L0_hcd1"]
-
-    bias_hcd_2 = kwargs["bias_hcd2"]
-    beta_hcd_2 = kwargs["beta_hcd2"]
-    L_2 = kwargs["L0_hcd2"]
-
-    kp = k*muk
-
-    k_data1 = data_saclay_bin1[:,0]
-    F_data1 = data_saclay_bin1[:,1]
-    k_data2 = data_saclay_bin2[:,0]
-    F_data2 = data_saclay_bin2[:,1]
-
-    F_hcd1 = np.interp(L_1*kp, k_data1, F_data1)
-    F_hcd2 = np.interp(L_2*kp, k_data2, F_data2)
-
-    bf = bias1*(1 + beta1*muk**2)
-    bh1 = bias_hcd_1*(1 + beta_hcd_1*muk**2)*F_hcd1
-    bh2 = bias_hcd_2*(1 + beta_hcd_2*muk**2)*F_hcd2
-
-    pk = pk_lin*(bf**2 + 2*bf*bh1 + 2*bf*bh2 + 2*bh1*bh2 + bh1**2 + bh2**2)
-
-    return pk
-
-def pk_hcd_Voigt_saclay_norm(k, pk_lin, tracer1, tracer2, **kwargs):
-    """
-        we do not normalized the voigt profile but only at the end
-    """
-
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-
-    key = "bias_hcd_{}".format(kwargs['name'])
-    if key in kwargs :
-        bias_hcd = kwargs[key]
-    else :
-        bias_hcd = kwargs["bias_hcd"]
-    beta_hcd = kwargs["beta_hcd"]
-    L0 = kwargs["L0_hcd"]
-
-    kp = k*muk
-
-    k_data = data_saclay_2[:,0]
-    F_data = data_saclay_2[:,1]
-
-    F_hcd = np.interp(L0*kp, k_data, F_data)
-
-    bias_eff1 = bias1 + bias_hcd*F_hcd
-    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
-
-    bias_eff2 = bias2 + bias_hcd*F_hcd
-    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
-
-    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
-
-    return pk
-
-
-def pk_hcd_Voigt_london_norm(k, pk_lin, tracer1, tracer2, **kwargs):
-    """
-        we do not normalized the voigt profile but only at the end
-    """
-
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-
-    key = "bias_hcd_{}".format(kwargs['name'])
-    if key in kwargs :
-        bias_hcd = kwargs[key]
-    else :
-        bias_hcd = kwargs["bias_hcd"]
-    beta_hcd = kwargs["beta_hcd"]
-    L0 = kwargs["L0_hcd"]
-
-    kp = k*muk
-
-    k_data = data_london_2[:,0]
-    F_data = data_london_2[:,1]
-
-    F_hcd = np.interp(L0*kp, k_data, F_data)
+    F_hcd = np.interp(L0*kp, k_data, F_data, left=0, right=0)
 
     bias_eff1 = bias1 + bias_hcd*F_hcd
     beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
@@ -440,28 +231,6 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
     assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
 
-    bias_hcd = kwargs["bias_hcd"]
-    beta_hcd = kwargs["beta_hcd"]
-    L0 = kwargs["L0_hcd"]
-
-    kp = k*muk
-    F_hcd = utils.sinc(kp*L0)
-
-    if tracer1['name'] == "LYA":
-        bias_eff1 = bias1 + bias_hcd*F_hcd
-        beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
-        pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
-    else:
-        bias_eff2 = bias2 + bias_hcd*F_hcd
-        beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
-        pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
-
-    return pk
-
-def pk_hcd_Rogers2018_cross(k, pk_lin, tracer1, tracer2, **kwargs):
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
-
     key = "bias_hcd_{}".format(kwargs['name'])
     if key in kwargs :
         bias_hcd = kwargs[key]
@@ -471,62 +240,8 @@ def pk_hcd_Rogers2018_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     L0 = kwargs["L0_hcd"]
 
     kp = k*muk
-    F_hcd = sp.exp(-kp*L0)
-
-    if tracer1['name'] == "LYA":
-        bias_eff1 = bias1 + bias_hcd*F_hcd
-        beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
-        pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
-    else:
-        bias_eff2 = bias2 + bias_hcd*F_hcd
-        beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
-        pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
-
-    return pk
-
-def pk_hcd_Voigt_cross_london(k, pk_lin, tracer1, tracer2, **kwargs):
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
-
-    key = "bias_hcd_{}".format(kwargs['name'])
-    if key in kwargs :
-        bias_hcd = kwargs[key]
-    else :
-        bias_hcd = kwargs["bias_hcd"]
-    beta_hcd = kwargs["beta_hcd"]
-    L0 = kwargs["L0_hcd"]
-
-    kp = k*muk
-    k_data = data_london_2[:,0]
-    F_data = data_london_2[:,1]
-    F_hcd = np.interp(L0*kp, k_data, F_data)
-
-    if tracer1['name'] == "LYA":
-        bias_eff1 = bias1 + bias_hcd*F_hcd
-        beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
-        pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
-    else:
-        bias_eff2 = bias2 + bias_hcd*F_hcd
-        beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
-        pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
-
-    return pk
-
-def pk_hcd_Voigt_cross_saclay(k, pk_lin, tracer1, tracer2, **kwargs):
-    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
-    assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
-
-    key = "bias_hcd_{}".format(kwargs['name'])
-    if key in kwargs :
-        bias_hcd = kwargs[key]
-    else :
-        bias_hcd = kwargs["bias_hcd"]
-    beta_hcd = kwargs["beta_hcd"]
-    L0 = kwargs["L0_hcd"]
-
-    kp = k*muk
-    k_data = data_saclay_2[:,0]
-    F_data = data_saclay_2[:,1]
+    k_data = Fvoigt_data[:,0]
+    F_data = Fvoigt_data[:,1]
     F_hcd = np.interp(L0*kp, k_data, F_data)
 
     if tracer1['name'] == "LYA":
