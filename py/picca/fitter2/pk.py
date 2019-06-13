@@ -13,7 +13,7 @@ class pk:
         self.func = func
         global Fvoigt_data    
         if name_model != None and Fvoigt_data == []:
-            path = resource_filename('picca', 'fitter2')+'/models/Fvoigt_Models/Fvoigt_{}.txt'.format(name_model)
+            path = resource_filename('picca', 'fitter2')+'/models/fvoigt_models/Fvoigt_{}.txt'.format(name_model)
             Fvoigt_data = np.loadtxt(path)
 
     def __call__(self, k, pk_lin, tracer1, tracer2, **kwargs):
