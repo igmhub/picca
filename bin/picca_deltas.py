@@ -297,6 +297,7 @@ if __name__ == '__main__':
 
     ## cuts
     log.write("INFO: Input sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
+    lstKeysToDel = []
     for p in data.keys():
         l = []
         for d in data[p]:
@@ -317,7 +318,11 @@ if __name__ == '__main__':
                 d.plate,d.mjd,d.fid))
         data[p][:] = l
         if len(data[p])==0:
-            del data[p]
+            lstKeysToDel += [p]
+
+    for p in lstKeysToDel:
+        del data[p]
+
     log.write("INFO: Remaining sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
 
     for p in data:
