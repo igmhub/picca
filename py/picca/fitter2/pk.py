@@ -67,7 +67,11 @@ def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
 
 def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     """
-    Use Fvoigt function to fit the DLA in the autocorrelation Lyman-alpha
+    Use Fvoigt function to fit the DLA in the autocorrelation Lyman-alpha without masking them ! (L0 = 1)
+
+    (If you want to mask them --> use Fvoigt_exp.txt and L0 = 10 as eBOOS DR14)
+
+    epsilon_hcd = explain DLA formations due to extra-physic
 
     """
     global Fvoigt_data
@@ -81,6 +85,11 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
         bias_hcd = kwargs["bias_hcd"]
     beta_hcd = kwargs["beta_hcd"]
     L0 = kwargs["L0_hcd"]
+    
+    if "epsilon_hcd" in kwargs:    
+        epsilon = kwargs["epsilon_hcd"]
+    else:
+        epsilon = 0.0
 
     kp = k*muk
 
@@ -95,7 +104,7 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     bias_eff2 = bias2 + bias_hcd*F_hcd
     beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
 
-    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
+    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2) + epsilon*epsilon*F_hcd**2
 
     return pk
 
