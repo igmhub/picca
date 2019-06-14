@@ -85,11 +85,6 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
         bias_hcd = kwargs["bias_hcd"]
     beta_hcd = kwargs["beta_hcd"]
     L0 = kwargs["L0_hcd"]
-    
-    if "epsilon_hcd" in kwargs:    
-        epsilon = kwargs["epsilon_hcd"]
-    else:
-        epsilon = 0.0
 
     kp = k*muk
 
@@ -104,7 +99,7 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     bias_eff2 = bias2 + bias_hcd*F_hcd
     beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
 
-    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2) + epsilon*epsilon*F_hcd**2
+    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
 
     return pk
 

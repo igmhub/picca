@@ -17,7 +17,6 @@
 * bias_hcd = real bias hcd (measured in the DLA-autocorrelation) * $Fvoigt^{non-norm}(0)$
 * beta_hcd = real beta hcd
 * L0_hcd = 1.0 (scale factor) --> hard to fit due to degenerancy
-* epsilon_hcd = 0.001 ? other effects for the DLA probability density distribution
 
 
 ## Description of each Fvoigt function in fvoigt_models
