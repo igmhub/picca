@@ -22,7 +22,7 @@ labels = {
     'ap':'\\alpha_{\parallel}',
     'at':'\\alpha_{\perp}',
     'beta_LYA':'\\beta_{\mathrm{Ly}\\alpha}',
-    'bias_LYA':'b_{\mathrm{Ly}\\alpha}',
+    'bias_eta_LYA':'b_{\mathrm{Ly}\\alpha}',
     'bias_hcd':'b_{\mathrm{HCD}}',
     'beta_hcd':'\\beta_{\mathrm{HCD}}',
     'bias_SiII(1190)':'b_{\mathrm{SiII(1190)}}',
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     h5_file = dic_init['outfile']
     free_pars,fixed_pars,best_fit_pars,err_best_fit_pars,xi_best_fit = extract_h5file(h5_file,args.cor_name)
     if 'all' in args.params:
-        args.params = free_pars
+        args.params = free_pars.copy()
     if sp.any(~sp.in1d(args.params,free_pars)):
         print('ERROR: Some parameters are not fitted {}, the list is {}'.format(args.params,free_pars))
         sys.exit(12)
@@ -196,6 +196,6 @@ if __name__ == '__main__':
             if p in labels:
                 lab += labels[p]
             else:
-                lab += p
+                lab += p.replace('_','-')
             plot_xi(dm_dp[p],lab)
         plt.show()
