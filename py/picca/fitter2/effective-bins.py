@@ -80,12 +80,17 @@ def xi_mod(pars,dic_init):
     for d in dic_init['data sets']['data']:
         pars['SB'] = False
         xi_best_fit = pars['bao_amp']*d.xi_model(k, pk_lin-pksb_lin, pars)
+
         pars['SB'] = True
-        snl = pars['sigmaNL_per']
-        pars['sigmaNL_per'] = 0
+        snl_par = pars['sigmaNL_par']
+        snl_per = pars['sigmaNL_per']
+        pars['sigmaNL_par'] = 0.
+        pars['sigmaNL_per'] = 0.
         xi_best_fit += d.xi_model(k, pksb_lin, pars)
-        pars['sigmaNL_per'] = snl
+
         pars['SB'] = False
+        pars['sigmaNL_par'] = snl_par
+        pars['sigmaNL_per'] = snl_per
 
     return xi_best_fit
 
