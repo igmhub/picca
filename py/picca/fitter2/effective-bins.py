@@ -143,7 +143,7 @@ if __name__ == '__main__':
         help = "Name of the correlation in 'config.ini' to look at")
 
     parser.add_argument('--params', type=str,default=[], required=False, nargs='*',
-        help='List of the fitted parameters')
+        help="List of the fitted parameters, if 'all' in list compute all")
 
     parser.add_argument('--plot-effective-bins', action='store_true',
         help='Display an image with the bins involved in the fit of each selected parameter')
@@ -155,10 +155,11 @@ if __name__ == '__main__':
     dic_init = fit_parser.parse_chi2(chi2_file)
     h5_file = dic_init['outfile']
     free_pars,fixed_pars,best_fit_pars,err_best_fit_pars,xi_best_fit = extract_h5file(h5_file,args.cor_name)
-    for p in args.params:
-        if p not in free_pars:
-            print('ERROR : parameter %s is not fitted'%(p))
-            sys.exit(12)
+    if 'all' in args.params:
+        args.params = free_pars
+    if sp.any(~sp.in1d(args.params,free_pars)):
+        print('ERROR: Some parameters are not fitted {}, the list is {}'.format(args.params,free_pars))
+        sys.exit(12)
     ico,rp,rt,np,nt,rp_min,rp_max,rt_min,rt_max,r_min,r_max,z = extract_data(chi2_file,dic_init)
 
     ### Computation of the effective bins
