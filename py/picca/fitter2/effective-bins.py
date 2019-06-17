@@ -17,6 +17,21 @@ else:
 
 from picca.fitter2 import parser as fit_parser
 
+
+labels = {
+    'ap':'\\alpha_{\parallel}',
+    'at':'\\alpha_{\perp}',
+    'beta_LYA':'\\beta_{\mathrm{Ly}\\alpha}',
+    'bias_LYA':'b_{\mathrm{Ly}\\alpha}',
+    'bias_hcd':'b_{\mathrm{HCD}}',
+    'beta_hcd':'\\beta_{\mathrm{HCD}}',
+    'bias_SiII(1190)':'b_{\mathrm{SiII(1190)}}',
+    'bias_SiII(1193)':'b_{\mathrm{SiII(1193)}}',
+    'bias_SiIII(1207)':'b_{\mathrm{SiIII(1207)}}',
+    'bias_SiII(1260)':'b_{\mathrm{SiII(1260)}}',
+}
+
+
 def derivative(f,x):
     eps = 10**(-5)
     der = (f(x+eps)-f(x))/eps
@@ -24,10 +39,8 @@ def derivative(f,x):
 
 def extract_h5file(fname,cor_name):
     f = h5py.File(os.path.expandvars(fname),'r')
-    free_p  = []
-    for i in f['best fit'].attrs['list of free pars']: free_p.append(i.decode('UTF-8'))
-    fixed_p  = []
-    for i in f['best fit'].attrs['list of fixed pars']: free_p.append(i.decode('UTF-8'))
+    free_p = [ el.decode('UTF-8') for el in f['best fit'].attrs['list of free pars'] ]
+    fixed_p = [ el.decode('UTF-8') for el in f['best fit'].attrs['list of fixed pars'] ]
     pars = {}
     err_pars = {}
     for i in free_p:
@@ -35,8 +48,10 @@ def extract_h5file(fname,cor_name):
         err_pars[i] = f['best fit'].attrs[i][1]
     for i in fixed_p:
         pars[i] = f['best fit'].attrs[i][0]
-        err_pars[i] = 0
-    xi= sp.array(f[cor_name]['fit'])
+        err_pars[i] = 0.
+    xi = sp.array(f[cor_name]['fit'])
+    f.close()
+
     return free_p,fixed_p,pars,err_pars,xi
 
 def extract_data(chi2file,dic_init):
@@ -56,22 +71,24 @@ def extract_data(chi2file,dic_init):
     head = f[1].read_header()
     nt = head['NT']
     np = head['NP']
-    rt_min = 0
+    rt_min = 0.
     rt_max = head['RTMAX']
     rp_min = head['RPMIN']
     rp_max = head['RPMAX']
 
     r_min = dic_data['cuts']['r-min']
     r_max = dic_data['cuts']['r-max']
+    f.close()
+
     return ico,rp,rt,np,nt,rp_min,rp_max,rt_min,rt_max,r_min,r_max,z
 
 def apply_mask(dm,ico,z,dic):
     for d in dic['data sets']['data']:
         for i in dm:
-            dm_dp[i][d.mask==0] = 0
-        ico[:,d.mask==0] = 0
-        ico[d.mask==0,:] = 0
-        z[d.mask==0] = 0
+            dm_dp[i][~d.mask] = 0.
+        ico[:,~d.mask] = 0.
+        ico[~d.mask,:] = 0.
+        z[~d.mask] = 0.
 
 def xi_mod(pars,dic_init):
     k = dic_init['fiducial']['k']
@@ -102,7 +119,7 @@ def plot_xi(xi,title=' '):
     plt.colorbar()
     plt.ylabel(r"$r_{\parallel}$",size=20)
     plt.xlabel(r"$r_{\perp}$",size=20)
-    plt.title(title,size = 20)
+    plt.title(r'$'+title+'$',size = 20)
 
 def xi_mod_p(x,pname,pars):
     pars2 = copy.deepcopy(pars)
@@ -124,8 +141,8 @@ def compute_M(dm_dp,icov):
     return M
 
 def compute_z0(M,z):
-    res = 0
-    den = 0
+    res = 0.
+    den = 0.
     for i in range(z.shape[0]):
         for j in range(z.shape[0]):
             res += M[i,j]*z[i]
@@ -174,22 +191,11 @@ if __name__ == '__main__':
         print('\n')
 
     if args.plot_effective_bins:
-        labels = {}
-        labels['ap'] = r'$\alpha_{\parallel}$'
-        labels['at'] = r'$\alpha_{\perp}$'
-        labels['beta_LYA'] = r'$\beta_{Ly\alpha}$'
-        labels['bias_LYA'] = r'$b_{Ly\alpha}$'
-        labels['bias_hcd'] = r'$b_{HCD}$'
-        labels['beta_hcd'] = r'$\beta_{HCD}$'
-        labels['bias_SiII(1190)'] = r'$b_{SiII(1190)}$'
-        labels['bias_SiII(1193)'] = r'$b_{SiII(1193)}$'
-        labels['bias_SiIII(1207)'] = r'$b_{SiIII(1207)}$'
-        labels['bias_SiII(1260)'] = r'$b_{SiII(1260)}$'
-
         for p in args.params:
+            lab = '\partial m/ \partial '
             if p in labels:
-                lab = r'$\partial m/ \partial$'+labels[p]
-            else :
-                lab = r'$\partial m/ \partial$'+p
+                lab += labels[p]
+            else:
+                lab += p
             plot_xi(dm_dp[p],lab)
         plt.show()
