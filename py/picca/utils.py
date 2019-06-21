@@ -512,7 +512,11 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         dec = h['METADATA']['DEC'][:].astype(sp.float64)*sp.pi/180.
         z = h['METADATA']['Z'][:]
         ll = sp.log10(h['WAVELENGTH'].read())
-        trans = h['TRANSMISSION'].read()
+        if 'F_LYA' in h :
+            trans = h['F_LYA'].read()
+        else:
+            trans = h['TRANSMISSION'].read()
+
         nObj = z.size
         pixnum = f.split('-')[-1].split('.')[0]
 
