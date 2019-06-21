@@ -82,7 +82,7 @@ def picca_deltas(b,time, in_dir, out_dir, drq,
     fout.write(header)
     fout.close()
 
-def cf(b,time, zint, outdir, email=None, fidOm = None, fidPk = None):
+def cf(b,time, zint, outdir, email=None, fidOm = None, fidPk = None, fidOr = None):
     '''
     Writes the .batch files to submit the picca_cf.py
     and the picca_export.py scripts
@@ -106,7 +106,7 @@ def cf(b,time, zint, outdir, email=None, fidOm = None, fidPk = None):
         header = get_header(time, name=out, email=email)
         srun = header + "srun -n 1 -c 64 picca_cf.py --in-dir {}/deltas/ ".format(outdir) +\
                 "--z-cut-min {} --z-cut-max {} ".format(zmin,zmax) +\
-                "--out {}/{} --nproc 32 --fid-Om {}\n".format(outdir,out,fidOm)
+                "--out {}/{} --nproc 32 --fid-Om {} --fid-Or {} \n".format(outdir,out,fidOm,fidOr)
 
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.cf.append(basename(fbatch))
@@ -116,7 +116,7 @@ def cf(b,time, zint, outdir, email=None, fidOm = None, fidPk = None):
         fout.write(srun)
         fout.close()
 
-def dmat(b,time, zint, outdir, email=None, rej=0.99, fidOm=None):
+def dmat(b,time, zint, outdir, email=None, rej=0.99, fidOm=None, fidOr = None):
     '''
     Writes the .batch files to submit the picca_dmat.py script
     and adds them to the b.dmat script
@@ -134,7 +134,7 @@ def dmat(b,time, zint, outdir, email=None, rej=0.99, fidOm=None):
         header = get_header(time, name=out, email=email)
         srun = header + "srun -n 1 -c 64 picca_dmat.py --in-dir {}/deltas/ ".format(outdir) +\
                 "--z-cut-min {} --z-cut-max {} ".format(zmin,zmax) +\
-                "--out {}/{} --rej {} --nproc 32 --fid-Om {}\n".format(outdir,out,rej,fidOm)
+                "--out {}/{} --rej {} --nproc 32 --fid-Om {} --fid-Or {}\n".format(outdir,out,rej,fidOm,fidOr)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.dmat.append(basename(fbatch))
 
@@ -142,7 +142,7 @@ def dmat(b,time, zint, outdir, email=None, rej=0.99, fidOm=None):
         fout.write(srun)
         fout.close()
 
-def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None):
+def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None, fidOr = None):
     '''
     Writes the .batch files to submit the picca_xcf.py script
     and the picca_export.py scripts
@@ -167,7 +167,7 @@ def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None):
         srun = header + "srun -n 1 -c 64 picca_xcf.py " +\
             "--drq {} --in-dir {}/deltas/ ".format(drq,outdir) +\
              "--z-evol-obj 1.44 --z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
-             "--out {}/{} --nproc 32 --fid-Om {}\n".format(outdir,out,fidOm)
+             "--out {}/{} --nproc 32 --fid-Om {} --fid-Or {}\n".format(outdir,out,fidOm,fidOr)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xcf.append(basename(fbatch))
         b.xexport.append(basename(exp_batch))
@@ -176,7 +176,7 @@ def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None):
         fout.write(srun)
         fout.close()
 
-def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None):
+def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None, fidOr = None):
     '''
     Writes the .batch files to submit the picca_xdmat.py script
     and adds if to the b.xdmat list
@@ -195,7 +195,7 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None):
         srun = header + "srun -n 1 -c 64 picca_xdmat.py " +\
             "--drq {} --in-dir {}/deltas/ ".format(drq,outdir) +\
             "--z-evol-obj 1.44 --z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
-            "--out {}/{} --rej {} --nproc 32 --fid-Om {}\n".format(outdir,out,rej,fidOm)
+            "--out {}/{} --rej {} --nproc 32 --fid-Om {} --fid-Or {}\n".format(outdir,out,rej,fidOm,fidOr)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xdmat.append(basename(fbatch))
 
@@ -389,6 +389,10 @@ parser.add_argument("--fid-Om", type=float,
         default=0.3147,
         required=False, help="Fiducial Om")
 
+parser.add_argument("--fid-Or", type=float,
+        default=0.,
+        required=False, help="Fiducial Or")
+
 parser.add_argument("--fid-Pk", type=str,
         default="PlanckDR12/PlanckDR12.fits",
         required=False, help="Fiducial Pk")
@@ -430,26 +434,26 @@ if "cf" in args.to_do:
     if args.debug:
         time = time_debug
     cf(b,time, args.zint, args.out_dir,
-            email=args.email,fidOm=args.fid_Om,fidPk=args.fid_Pk)
+            email=args.email,fidOm=args.fid_Om,fidPk=args.fid_Pk, fidOr=args.fid_Or)
 
     time = "02:00:00"
     if args.debug:
         time = time_debug
     dmat(b,time, args.zint, args.out_dir,
-            email=args.email,fidOm=args.fid_Om)
+            email=args.email,fidOm=args.fid_Om, fidOr=args.fid_Or)
 
 if "xcf" in args.to_do:
     time = "01:30:00"
     if args.debug:
         time = time_debug
     xcf(b,time, args.drq, args.zint, args.out_dir,
-            email=args.email,fidOm=args.fid_Om, fidPk=args.fid_Pk)
+            email=args.email,fidOm=args.fid_Om, fidPk=args.fid_Pk, fidOr=args.fid_Or)
 
     time = "03:00:00"
     if args.debug:
         time = time_debug
     xdmat(b,time, args.drq, args.zint, args.out_dir,
-            email=args.email, fidOm=args.fid_Om)
+            email=args.email, fidOm=args.fid_Om, fidOr=args.fid_Or)
 
 time = "02:00:00"
 if args.debug:
