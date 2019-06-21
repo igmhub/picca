@@ -29,6 +29,9 @@ if __name__ == '__main__':
     parser.add_argument('--cor', type=str, default=None, required=False,
         help='Correlation matrix (if not provided will be calculated by subsampling)')
 
+    parser.add_argument('--remove-shuffled-correlation', type=str, default=None, required=False,
+        help='Remove a correlation from shuffling the distribution of los')
+
     parser.add_argument('--do-not-smooth-cov', action='store_true', default=False,
         help='Do not smooth the covariance matrix')
 
@@ -52,6 +55,17 @@ if __name__ == '__main__':
     rp_min = head['RPMIN']
     rp_max = head['RPMAX']
     h.close()
+
+    if not args.remove_shuffled_correlation is None:
+        th = fitsio.FITS(args.remove_shuffled_correlation)
+        da_s = th['COR']['DA'][:]
+        we_s = th['COR']['WE'][:]
+        da_s = (da_s*we_s).sum(axis=1)
+        we_s = we_s.sum(axis=1)
+        w = we_s>0.
+        da_s[w] /= we_s[w]
+        th.close()
+        da -= da_s[:,None]
 
     if args.cov is not None:
         print('INFO: The covariance-matrix will be read from file: {}'.format(args.cov))
