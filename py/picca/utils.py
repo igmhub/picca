@@ -620,33 +620,7 @@ def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
         angmax = 2.*sp.arcsin(rt_max/(rmin1+rmin2))
 
     return angmax
-def shuffle_distrib_obj(obj,seed):
-    '''Shuffle the distribution of objects by giving to an object the redshift
-        of another random one.
 
-    Args:
-        obj (dic): Catalog of objects
-        seed (int): seed for the given realization of the shuffle
-
-    Returns:
-        obj (dic): Catalog of objects
-    '''
-    dic = {}
-    lst_p = ['we','zqso','r_comov']
-    for p in lst_p:
-        dic[p] = [getattr(o, p) for oss in obj.values() for o in oss]
-
-    sp.random.seed(seed)
-    idx = sp.arange(len(dic['zqso']))
-    sp.random.shuffle(idx)
-
-    i = 0
-    for oss in obj.values():
-        for o in oss:
-            for p in lst_p:
-                setattr(o,p,dic[p][idx[i]])
-            i += 1
-    return obj
 def shuffle_distrib_forests(obj,seed):
     '''Shuffle the distribution of forests by assiging the angular
         positions from another forest
@@ -663,19 +637,32 @@ def shuffle_distrib_forests(obj,seed):
 
     dic = {}
     lst_p = ['ra','dec','xcart','ycart','zcart','cosdec','thid']
+    dic['pix'] = []
     for p in lst_p:
-        dic[p] = [getattr(o, p) for oss in obj.values() for o in oss]
+        dic[p] = []
+
+    for pix, oss in obj.items():
+        for o in oss:
+            dic['pix'].append(pix)
+            for p in lst_p:
+                dic[p].append(getattr(o, p))
+
     sp.random.seed(seed)
     idx = sp.arange(len(dic['ra']))
     sp.random.shuffle(idx)
 
     i = 0
+    data_shuffled = {}
     for oss in obj.values():
         for o in oss:
             for p in lst_p:
                 setattr(o,p,dic[p][idx[i]])
+            if not dic['pix'][idx[i]] in data_shuffled:
+                data_shuffled[dic['pix'][idx[i]]]=[]
+            data_shuffled[dic['pix'][idx[i]]].append(o)
             i += 1
-    return obj
+
+    return data_shuffled
 
 def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     """
