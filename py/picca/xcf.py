@@ -136,9 +136,9 @@ def dmat(pix):
     npairs_used = 0
     for p in pix:
 
-        npairs += len(dels[p])
         r = sp.random.rand(len(dels[p]))
         w = r>rej
+        npairs += len(dels[p])
         npairs_used += w.sum()
         if w.sum()==0: continue
 
@@ -234,13 +234,13 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
     npairs_used = 0
     for p in pix:
 
-        npairs += len(dels[p])
         r = sp.random.rand(len(dels[p]))
         w = r>rej
+        npairs += len(dels[p])
         npairs_used += w.sum()
         if w.sum()==0: continue
 
-        for d1 in [ td for ti,td in enumerate(dels[p]) if w[ti] ]:
+        for d in [ td for ti,td in enumerate(dels[p]) if w[ti] ]:
             with lock:
                 print("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)),end="")
                 counter.value += 1
