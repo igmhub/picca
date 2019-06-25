@@ -85,9 +85,9 @@ def extract_data(chi2file,dic_init):
 
     return data
 
-def apply_mask(data,dm_dp):
-    for k in dm_dp.keys():
-        dm_dp[k][~data.mask] = 0.
+def apply_mask(data):
+    for k in data.dm_dp.keys():
+        data.dm_dp[k][~data.mask] = 0.
     data.ico = linalg.inv(data.co)
     data.ico[:,~data.mask] = 0.
     data.ico[~data.mask,:] = 0.
@@ -182,7 +182,7 @@ if __name__ == '__main__':
     for data in dic_init['data sets']['data']:
         print('\n data: {}\n'.format(data.name))
         data.dm_dp = compute_dm_dp(data,dic_init,free_pars,best_fit_pars)
-        apply_mask(data,data.dm_dp)
+        apply_mask(data)
 
     ### Computation of the effective bins
     print("\n")
