@@ -134,20 +134,13 @@ def compute_dm_dp(data, dic_init, freep, pars):
 
     return dm
 
-def compute_M(dm_dp,icov):
-    M = sp.zeros(icov.shape)
-    for i in range(icov.shape[0]):
-        for j in range(icov.shape[0]):
-            M[i,j] = dm_dp[i] * icov[i,j] * dm_dp[j]
+def compute_M(dm_dp,ico):
+    M = ico*(dm_dp*dm_dp[:,None])
     return M
 
 def compute_z0(M,z):
-    res = 0.
-    den = 0.
-    for i in range(z.shape[0]):
-        for j in range(z.shape[0]):
-            res += M[i,j]*z[i]
-            den += M[i,j]
+    res = (M*z[:,None]).sum()
+    den = M.sum()
     return res,den
 
 def plot_xi(xi,data,title=' '):
@@ -193,9 +186,8 @@ if __name__ == '__main__':
 
     ### Computation of the effective bins
     print("\n")
-    if False:
-    #for p in args.params:
-        print('Parameter {}'.format(p))
+    for p in args.params:
+        print('\n\nParameter {}'.format(p))
 
         res = []
         den = []
@@ -211,7 +203,6 @@ if __name__ == '__main__':
             den = sp.array(den).sum()
             print('Combined')
             print('<z> = {}/{} = {}'.format(res,den,res/den))
-            print('\n')
 
     ### Plot
     if args.plot_effective_bins:
