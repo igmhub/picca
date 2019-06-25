@@ -294,16 +294,19 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
     npairs = 0
     npairs_used = 0
     for p in pix:
-        for d1 in data[p]:
+
+        r = sp.random.rand(len(data[p]))
+        w = r>rej
+        npairs += len(data[p])
+        npairs_used += w.sum()
+        if w.sum()==0: continue
+
+        for d1 in [ td for ti,td in enumerate(data[p]) if w[ti] ]:
             print("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)),end="")
             with lock:
                 counter.value += 1
 
-            r = sp.random.rand(len(d1.dneighs))
-            w=r>rej
-            npairs += len(d1.dneighs)
-            npairs_used += w.sum()
-            for d2 in sp.array(d1.dneighs)[w]:
+            for d2 in sp.array(d1.dneighs):
                 r1 = d1.r_comov
                 rdm1 = d1.rdm_comov
                 z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
