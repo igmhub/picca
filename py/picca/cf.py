@@ -155,7 +155,15 @@ def dmat(pix):
     npairs = 0
     npairs_used = 0
     for p in pix:
-        for d1 in data[p]:
+
+        r = sp.random.rand(len(data[p]))
+        w = r>rej
+        npairs += len(data[p])
+        npairs_used += w.sum()
+        if w.sum()==0: continue
+
+        for d1 in [ td for ti,td in enumerate(data[p]) if w[ti] ]:
+
             print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)),end="")
             with lock:
                 counter.value += 1
@@ -165,11 +173,7 @@ def dmat(pix):
             w1 = d1.we
             l1 = d1.ll
             z1 = d1.z
-            r = sp.random.rand(len(d1.dneighs))
-            w=r>rej
-            npairs += len(d1.dneighs)
-            npairs_used += w.sum()
-            for d2 in sp.array(d1.dneighs)[w]:
+            for d2 in sp.array(d1.dneighs):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 order2 = d2.order

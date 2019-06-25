@@ -135,7 +135,14 @@ def dmat(pix):
     npairs = 0
     npairs_used = 0
     for p in pix:
-        for d1 in dels[p]:
+
+        npairs += len(dels[p])
+        r = sp.random.rand(len(dels[p]))
+        w = r>rej
+        npairs_used += w.sum()
+        if w.sum()==0: continue
+
+        for d1 in [ td for ti,td in enumerate(dels[p]) if w[ti] ]:
             print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
             with lock:
                 counter.value += 1
@@ -144,12 +151,7 @@ def dmat(pix):
             w1 = d1.we
             l1 = d1.ll
             z1 = d1.z
-            r = sp.random.rand(len(d1.qneighs))
-            w=r>rej
-            if w.sum()==0:continue
-            npairs += len(d1.qneighs)
-            npairs_used += w.sum()
-            neighs = d1.qneighs[w]
+            neighs = d1.qneighs
             ang = d1^neighs
             r2 = [q.r_comov for q in neighs]
             rdm2 = [q.rdm_comov for q in neighs]
@@ -231,15 +233,17 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
     npairs = 0
     npairs_used = 0
     for p in pix:
-        for d in dels[p]:
+
+        npairs += len(dels[p])
+        r = sp.random.rand(len(dels[p]))
+        w = r>rej
+        npairs_used += w.sum()
+        if w.sum()==0: continue
+
+        for d1 in [ td for ti,td in enumerate(dels[p]) if w[ti] ]:
             with lock:
                 print("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)),end="")
                 counter.value += 1
-
-            r = sp.random.rand(len(d.qneighs))
-            w=r>rej
-            npairs += len(d.qneighs)
-            npairs_used += w.sum()
 
             rd = d.r_comov
             rdm = d.rdm_comov
@@ -257,7 +261,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             rdm_abs = rdm_abs[wzcut]
             if rd.size==0: continue
 
-            for q in sp.array(d.qneighs)[w]:
+            for q in sp.array(d.qneighs):
                 ang = d^q
 
                 rq = q.r_comov
