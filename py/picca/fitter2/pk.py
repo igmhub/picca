@@ -71,8 +71,6 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
 
     (If you want to mask them --> use Fvoigt_exp.txt and L0 = 10 as eBOOS DR14)
 
-    epsilon_hcd = explain DLA formations due to extra-physic
-
     """
     global Fvoigt_data
     
