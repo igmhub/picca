@@ -6,20 +6,23 @@
 
 ## How to use fvoigt_models : 
 
+Modification in the file **.ini :
+
+* In [model] use model-pk = *pk_hcd*
+
 * Add a new section in the data.ini files : [hcd_model]
 
 * Add in this section : name_hcd_model = *whatever*
 
-* Add parameters for hcd (see below) in the section [parameters]
+* In [parameters] : add HCD parameters (see below)
 
 ## HCD parameters :
 
-* bias_hcd = real bias hcd (measured in the DLA-autocorrelation) * $Fvoigt^{non-norm}(0)$
-* beta_hcd = real beta hcd
-* L0_hcd = 1.0 (scale factor) --> hard to fit due to degenerancy
+* *bias_hcd* = real bias hcd (measured in the DLA-autocorrelation) * $Fvoigt^{non-norm}(0)$
+* *beta_hcd* = real beta hcd
+* *L0_hcd* == 1.0 (scale factor) --> hard to fit due to degenerancy (has to be one)
 
-
-## Description of each Fvoigt function in fvoigt_models
+## Description of each Fvoigt function in fvoigt_models directory
 
 * exp : implementation in eBOSS DR14
 
