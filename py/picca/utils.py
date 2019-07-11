@@ -487,9 +487,10 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         h.close()
         in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-zcat_dec, zcat_ra, nest=nest)
         if fi[0].endswith('.gz'):
-            fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits.gz'.format(indir,int(f//100),f,in_nside,f) for f in sp.unique(in_pixs)]))
+            endoffile = '.gz'
         else:
-            fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits'.format(indir,int(f//100),f,in_nside,f) for f in sp.unique(in_pixs)]))
+            endoffile = ''
+        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in sp.unique(in_pixs)],))
     else:
         fi = sp.sort(sp.array(infiles))
     print('INFO: Found {} files'.format(fi.size))
