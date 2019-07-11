@@ -490,7 +490,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             endoffile = '.gz'
         else:
             endoffile = ''
-        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in sp.unique(in_pixs)],))
+        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in sp.unique(in_pixs)]))
     else:
         fi = sp.sort(sp.array(infiles))
     print('INFO: Found {} files'.format(fi.size))
