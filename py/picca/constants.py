@@ -11,7 +11,11 @@ small_angle_cut_off = 2./3600.*sp.pi/180. ## 2 arcsec
 
 class cosmo:
 
-    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=100.):
+    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=100.,unblind=False):
+
+        # Blind data
+        if not unblind:
+            Om = 0.3  # prov: this should be read from a file
 
         ### Ignore evolution of neutrinos from matter to radiation
         ### H0 in km/s/Mpc

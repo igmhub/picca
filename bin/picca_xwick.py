@@ -86,6 +86,9 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--unblind', action='store_true', required=False,
+        help='Do not project out continuum fitting modes')
+
     parser.add_argument('--max-diagram', type=int, default=4, required=False,
         help='Maximum diagram to compute')
 
@@ -130,7 +133,7 @@ if __name__ == '__main__':
     xcf.max_diagram = args.max_diagram
 
     ### Cosmo
-    cosmo = constants.cosmo(args.fid_Om)
+    cosmo = constants.cosmo(args.fid_Om, unblind=args.unblind)
 
     ### Read deltas
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs, args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec)

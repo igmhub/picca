@@ -95,6 +95,9 @@ if __name__ == '__main__':
     parser.add_argument('--fid-wl', type=float, default=-1., required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--unblind', action='store_true', required=False,
+        help='Do not project out continuum fitting modes')
+
     parser.add_argument('--remove-same-half-plate-close-pairs', action='store_true', required=False,
         help='Reject pairs in the first bin in r-parallel from same half plate')
 
@@ -142,7 +145,7 @@ if __name__ == '__main__':
     for m in args.abs_igm:
         cf.alpha_abs[m] = args.metal_alpha
 
-    cf.cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
+    cf.cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl, unblind=args.unblind)
 
     ### Read data 1
     data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.zref, cf.cosmo, nspec=args.nspec)
