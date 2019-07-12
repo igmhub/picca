@@ -1,4 +1,4 @@
-1#!/usr/bin/env python
+#!/usr/bin/env python
 
 import os
 from os.path import basename, dirname, stat
