@@ -99,6 +99,7 @@ class chi2:
         mig.print_param()
 
         print("INFO: minimized in {}".format(time.time()-t0))
+        sys.stdout.flush()
         return mig
 
     def minimize(self):
@@ -369,6 +370,7 @@ class chi2:
                 subgrp = g.create_group(par)
                 dic_minos = minos_results[par]
                 for item, value in dic_minos.items():
+                    if item=='name': value = str(value) ###TODO: Fix h5py not handling numpy.str_
                     subgrp.attrs[item] = value
 
         if hasattr(self, "dic_chi2scan"):
