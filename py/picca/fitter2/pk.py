@@ -11,7 +11,7 @@ Fvoigt_data = []
 class pk:
     def __init__(self, func, name_model=None):
         self.func = func
-        global Fvoigt_data    
+        global Fvoigt_data
         if name_model != None and Fvoigt_data == []:
             path = resource_filename('picca', 'fitter2')+'/models/fvoigt_models/Fvoigt_{}.txt'.format(name_model)
             Fvoigt_data = np.loadtxt(path)
@@ -73,7 +73,6 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
 
     """
     global Fvoigt_data
-    
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
 
     key = "bias_hcd_{}".format(kwargs['name'])
