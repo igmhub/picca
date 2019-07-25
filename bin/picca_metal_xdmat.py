@@ -125,9 +125,9 @@ if __name__ == '__main__':
     xcf.zref = args.z_ref
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     xcf.rej = args.rej
-    
+
     xcf.alpha_abs = {}
-    xcf.alpha_abs[args.lambda_abs] = xcf.alpha
+    xcf.alpha_abs[args.lambda_abs] = args.z_evol_del
     for m in args.abs_igm:
         xcf.alpha_abs[m] = args.metal_alpha
 
