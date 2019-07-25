@@ -126,10 +126,10 @@ if __name__ == '__main__':
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     xcf.rej = args.rej
     
-    cf.alpha_abs = {}
-    cf.alpha_abs[args.lambda_abs] = cf.alpha
+    xcf.alpha_abs = {}
+    xcf.alpha_abs[args.lambda_abs] = xcf.alpha
     for m in args.abs_igm:
-        cf.alpha_abs[m] = args.metal_alpha
+        xcf.alpha_abs[m] = args.metal_alpha
 
     cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
     xcf.cosmo=cosmo
