@@ -130,7 +130,7 @@ if __name__ == '__main__':
     cf.alpha_abs[args.lambda_abs] = cf.alpha
     for m in args.abs_igm:
         cf.alpha_abs[m] = args.metal_alpha
-    
+
     cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
     xcf.cosmo=cosmo
 
