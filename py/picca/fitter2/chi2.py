@@ -99,6 +99,7 @@ class chi2:
         mig.print_param()
 
         print("INFO: minimized in {}".format(time.time()-t0))
+        sys.stdout.flush()
         return mig
 
     def minimize(self):
@@ -230,11 +231,14 @@ class chi2:
             d.fiducial_model = self.fiducial_values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.fiducial_values)
 
             self.fiducial_values['SB'] = True
-            snl = self.fiducial_values['sigmaNL_per']
+            snl_per = self.fiducial_values['sigmaNL_per']
+            snl_par = self.fiducial_values['sigmaNL_par']
             self.fiducial_values['sigmaNL_per'] = 0
+            self.fiducial_values['sigmaNL_par'] = 0
             d.fiducial_model += d.xi_model(self.k, self.pksb_lin, self.fiducial_values)
             self.fiducial_values['SB'] = False
-            self.fiducial_values['sigmaNL_per'] = snl
+            self.fiducial_values['sigmaNL_per'] = snl_per
+            self.fiducial_values['sigmaNL_par'] = snl_par
         del self.fiducial_values['SB']
 
         self.fast_mc = {}
@@ -366,6 +370,7 @@ class chi2:
                 subgrp = g.create_group(par)
                 dic_minos = minos_results[par]
                 for item, value in dic_minos.items():
+                    if item=='name': value = str(value) ###TODO: Fix h5py not handling numpy.str_
                     subgrp.attrs[item] = value
 
         if hasattr(self, "dic_chi2scan"):

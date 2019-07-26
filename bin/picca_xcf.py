@@ -178,7 +178,7 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
 
     if not args.shuffle_distrib_obj_seed is None:
-        objs = utils.shuffle_distrib_obj(objs,args.shuffle_distrib_obj_seed)
+        objs = utils.shuffle_distrib_forests(objs,args.shuffle_distrib_obj_seed)
     if not args.shuffle_distrib_forest_seed is None:
         xcf.dels = utils.shuffle_distrib_forests(xcf.dels,
             args.shuffle_distrib_forest_seed)
