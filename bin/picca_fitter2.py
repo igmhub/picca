@@ -11,7 +11,6 @@ if __name__ == '__main__':
     pars.add_argument('config', type=str, default=None,
         help='Config file')
 
-
     args = pars.parse_args()
     dic_init = parser.parse_chi2(args.config)
     chi = chi2.chi2(dic_init)
