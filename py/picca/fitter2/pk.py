@@ -17,9 +17,9 @@ class pk:
             Fvoigt_data = np.loadtxt(path)
 
     def __call__(self, k, pk_lin, tracer1, tracer2, **kwargs):
-            return self.func(k, pk_lin, tracer1, tracer2, **kwargs)
+        return self.func(k, pk_lin, tracer1, tracer2, **kwargs)
 
-    def __mul__(self, func2):
+    def __mul__(self,func2):
         func = lambda k, pk_lin, tracer1, tracer2, **kwargs: self(k, pk_lin, tracer1, tracer2, **kwargs)*func2(k, pk_lin, tracer1, tracer2, **kwargs)
         return pk(func)
 
@@ -362,4 +362,3 @@ def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     if tracer2['type']=='discrete':
         smooth *= 1./sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz_'+tracer2['name']])**2)
     return smooth
-
