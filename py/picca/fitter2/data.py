@@ -23,7 +23,6 @@ class data:
             self.tracer2['type'] = self.tracer1['type']
 
         self.ell_max = dic_init['data']['ell-max']
-
         zeff = dic_init['model']['zeff']
         zref = dic_init['model']['zref']
         Om = dic_init['model']['Om']
@@ -160,7 +159,6 @@ class data:
         self.bb['pos-add'] = []
         self.bb['pre-mul'] = []
         self.bb['pos-mul'] = []
-
         if 'broadband' in dic_init:
             for ibb,dic_bb in enumerate( [el for el in dic_init['broadband'] if el['func']!='broadband_sky']):
                 deg_r_min = dic_bb['deg_r_min']
