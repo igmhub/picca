@@ -119,7 +119,6 @@ def parse_data(filename,zeff,fiducial):
     dic_init['model']['Om'] = fiducial['Om']
     dic_init['model']['OL'] = fiducial['OL']
     dic_init['model']['pk'] = fiducial['pk']
-
     for item, value in cp.items('model'):
         dic_init['model'][item] = value
 
