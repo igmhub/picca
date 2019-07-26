@@ -278,7 +278,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
                 rp_abs = (rd_abs-rq)*sp.cos(ang/2)
                 rt_abs = (rdm_abs+rqm)*sp.sin(ang/2)
-                zwe = ((1+zd_abs)/(1+zref))**(alpha_abs[abs_igm]-1.)
+                zwe = ((1.+zd_abs)/(1.+zref))**(alpha_abs[abs_igm]-1.)
 
                 bp_abs = ((rp_abs-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs = (rt_abs/rt_max*ntm).astype(int)
