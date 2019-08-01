@@ -116,6 +116,9 @@ if __name__ == '__main__':
     parser.add_argument('--shuffle-distrib-forest-seed', type=int, default=None, required=False,
         help='Shuffle the distribution of forests on the sky following the given seed. Do not shuffle if None')
 
+    parser.add_argument('--nhi-weighted', action = 'store_true',
+        help='Weight according to NHI')
+
     args = parser.parse_args()
 
     if args.nproc is None:
@@ -175,7 +178,7 @@ if __name__ == '__main__':
 
     ### Read objects
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
-                                args.z_evol_obj, args.z_ref,cosmo)
+                                    args.z_evol_obj, args.z_ref,cosmo,nhi_weigthed=args.nhi_weighted)
 
     if not args.shuffle_distrib_obj_seed is None:
         objs = utils.shuffle_distrib_forests(objs,args.shuffle_distrib_obj_seed)
