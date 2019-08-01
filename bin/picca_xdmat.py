@@ -96,6 +96,8 @@ if __name__ == '__main__':
     parser.add_argument('--nspec', type=int, default=None, required=False,
         help='Maximum number of spectra to read')
 
+    parser.add_argument('--nhi-weighted', action = 'store_true',
+        help='Weight according to NHI')
 
     args = parser.parse_args()
 
@@ -144,7 +146,7 @@ if __name__ == '__main__':
 
     ### Read objects
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
-                                args.z_evol_obj, args.z_ref,cosmo)
+                                args.z_evol_obj, args.z_ref,cosmo,nhi_weigthed=args.nhi_weighted)
     print("\n")
     xcf.objs = objs
 
