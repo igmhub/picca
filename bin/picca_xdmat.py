@@ -146,7 +146,7 @@ if __name__ == '__main__':
 
     ### Read objects
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
-                                args.z_evol_obj, args.z_ref,cosmo,nhi_weigthed=args.nhi_weighted)
+                                args.z_evol_obj, args.z_ref,cosmo,nhi_weighted=args.nhi_weighted)
     print("\n")
     xcf.objs = objs
 
