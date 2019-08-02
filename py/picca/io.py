@@ -95,6 +95,11 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     mjd = h[1]['MJD'][:]
     fid = h[1]['FIBERID'][:]
 
+    if 'NHI' in h[1].get_colnames() :
+        nhi = h[1]['NHI'][:]
+    else :
+        nhi = None
+
     ## Sanity
     print('')
     w = sp.ones(ra.size,dtype=bool)
@@ -144,9 +149,13 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     plate = plate[w]
     mjd = mjd[w]
     fid = fid[w]
+    if nhi is not None :
+        nhi = nhi[w]
+    else :
+        nhi = sp.zeros(ra.size)
     h.close()
 
-    return ra,dec,zqso,thid,plate,mjd,fid
+    return ra,dec,zqso,thid,plate,mjd,fid,nhi
 
 def read_dust_map(drq, Rv = 3.793):
     h = fitsio.FITS(drq)
@@ -857,9 +866,9 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     return data,ndata,zmin,zmax
 
 
-def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
+def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True,nhi_weighted=False):
     objs = {}
-    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal=True)
+    ra,dec,zqso,thid,plate,mjd,fid,nhi = read_drq(drq,zmin,zmax,keep_bal=True)
     phi = ra
     th = sp.pi/2.-dec
     pix = healpy.ang2pix(nside,th,phi)
@@ -877,6 +886,10 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
             if not cosmo is None:
                 q.r_comov = cosmo.r_comoving(q.zqso)
                 q.rdm_comov = cosmo.dm(q.zqso)
+        if nhi_weighted :
+            # weight each object (a DLA), by the HI column density (nhi is in log(10))
+            for q,q_nhi in zip(objs[ipix],nhi[w]) :
+                q.we *= 10**q_nhi
 
     print("\n")
 
