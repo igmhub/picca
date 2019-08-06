@@ -4,15 +4,14 @@ from pkg_resources import resource_filename
 
 muk = utils.muk
 bias_beta = utils.bias_beta
-
 Fvoigt_data = []
 
 class pk:
     def __init__(self, func, name_model=None):
         self.func = func
         global Fvoigt_data
-        if name_model != None and Fvoigt_data == []:
-            path = resource_filename('picca', 'fitter2')+'/models/fvoigt_models/Fvoigt_{}.txt'.format(name_model)
+        if (not name_model is None) and (Fvoigt_data == []):
+            path = '{}/models/fvoigt_models/Fvoigt_{}.txt'.format(resource_filename('picca', 'fitter2'),name_model)
             Fvoigt_data = sp.loadtxt(path)
 
     def __call__(self, k, pk_lin, tracer1, tracer2, **kwargs):
