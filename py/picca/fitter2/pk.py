@@ -38,6 +38,27 @@ def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     return pk
 
 def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
+
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+
+    bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+    F_hcd = utils.sinc(kp*L0)
+
+    bias_eff1 = bias1 + bias_hcd*F_hcd
+    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+
+    bias_eff2 = bias2 + bias_hcd*F_hcd
+    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+
+    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
+def pk_hcd_no_mask(k, pk_lin, tracer1, tracer2, **kwargs):
     """
     Use Fvoigt function to fit the DLA in the autocorrelation Lyman-alpha without masking them ! (L0 = 1)
 
@@ -200,7 +221,30 @@ def G2(k, pk_lin, tracer1, tracer2, dataset_name = None, **kwargs):
     kt = k*sp.sqrt(1-muk**2)
     return utils.sinc(kp*Lpar/2)*utils.sinc(kt*Lper/2)
 
+
 def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+    assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
+
+    bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+    F_hcd = utils.sinc(kp*L0)
+
+    if tracer1['name'] == "LYA":
+        bias_eff1 = bias1 + bias_hcd*F_hcd
+        beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+        pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
+    else:
+        bias_eff2 = bias2 + bias_hcd*F_hcd
+        beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+        pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
+def pk_hcd_cross_no_mask(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
     assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
 
