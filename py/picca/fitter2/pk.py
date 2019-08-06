@@ -1,5 +1,4 @@
 import scipy as sp
-import numpy as np
 from . import utils
 from pkg_resources import resource_filename
 
@@ -14,7 +13,7 @@ class pk:
         global Fvoigt_data
         if name_model != None and Fvoigt_data == []:
             path = resource_filename('picca', 'fitter2')+'/models/fvoigt_models/Fvoigt_{}.txt'.format(name_model)
-            Fvoigt_data = np.loadtxt(path)
+            Fvoigt_data = sp.loadtxt(path)
 
     def __call__(self, k, pk_lin, tracer1, tracer2, **kwargs):
         return self.func(k, pk_lin, tracer1, tracer2, **kwargs)
@@ -57,7 +56,7 @@ def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     et2 = kwargs['per_exp_smooth']**2
     ep2 = kwargs['par_exp_smooth']**2
 
-    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)*sp.exp(-(np.abs(kp)*ep2+np.abs(kt)*et2) )
+    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)*sp.exp(-(sp.absolute(kp)*ep2+sp.absolute(kt)*et2) )
 
 def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
@@ -88,7 +87,7 @@ def pk_hcd(k, pk_lin, tracer1, tracer2, **kwargs):
     k_data = Fvoigt_data[:,0]
     F_data = Fvoigt_data[:,1]
 
-    F_hcd = np.interp(L0*kp, k_data, F_data, left=0, right=0)
+    F_hcd = sp.interp(L0*kp, k_data, F_data, left=0, right=0)
 
     bias_eff1 = bias1 + bias_hcd*F_hcd
     beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
@@ -243,7 +242,7 @@ def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     kp = k*muk
     k_data = Fvoigt_data[:,0]
     F_data = Fvoigt_data[:,1]
-    F_hcd = np.interp(L0*kp, k_data, F_data)
+    F_hcd = sp.interp(L0*kp, k_data, F_data)
 
     if tracer1['name'] == "LYA":
         bias_eff1 = bias1 + bias_hcd*F_hcd
