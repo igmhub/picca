@@ -31,32 +31,6 @@ def pk_NL(k, pk_lin, tracer1, tracer2, **kwargs):
     sp2 = kwargs['sigmaNL_par']**2
     return sp.exp(-(kp**2*sp2+kt**2*st2)/2)
 
-def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
-    """
-    Apply a Gaussian smoothing to the full correlation function
-
-    """
-    kp  = k*muk
-    kt  = k*sp.sqrt(1.-muk**2)
-    st2 = kwargs['per_sigma_smooth']**2
-    sp2 = kwargs['par_sigma_smooth']**2
-    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)
-
-def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
-    """
-    Apply a Gaussian and exp smoothing to the full correlation function (use full for london_mocks_v6.0
-
-    """
-    kp  = k*muk
-    kt  = k*sp.sqrt(1.-muk**2)
-    st2 = kwargs['per_sigma_smooth']**2
-    sp2 = kwargs['par_sigma_smooth']**2
-
-    et2 = kwargs['per_exp_smooth']**2
-    ep2 = kwargs['par_exp_smooth']**2
-
-    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)*sp.exp(-(sp.absolute(kp)*ep2+sp.absolute(kt)*et2) )
-
 def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
     pk = bias1*bias2*pk_lin*(1+beta1*muk**2)*(1+beta2*muk**2)
@@ -340,6 +314,32 @@ def pk_hcd_Rogers2018_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
         pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
 
     return pk
+
+def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
+    """
+    Apply a Gaussian smoothing to the full correlation function
+
+    """
+    kp  = k*muk
+    kt  = k*sp.sqrt(1.-muk**2)
+    st2 = kwargs['per_sigma_smooth']**2
+    sp2 = kwargs['par_sigma_smooth']**2
+    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)
+
+def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
+    """
+    Apply a Gaussian and exp smoothing to the full correlation function (use full for london_mocks_v6.0
+
+    """
+    kp  = k*muk
+    kt  = k*sp.sqrt(1.-muk**2)
+    st2 = kwargs['per_sigma_smooth']**2
+    sp2 = kwargs['par_sigma_smooth']**2
+
+    et2 = kwargs['per_exp_smooth']**2
+    ep2 = kwargs['par_exp_smooth']**2
+
+    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)*sp.exp(-(sp.absolute(kp)*ep2+sp.absolute(kt)*et2) )
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]
