@@ -68,11 +68,11 @@ def coadd_correlations(fi,fout=None):
         z  += h[1]['Z'][:]*wet_aux
         nb += h[1]['NB'][:]
         wet += wet_aux
+        f_hid = h[2]['HEALPID'][:]
 
         """
         ## OLD METHOD USING A DICTIONARY FOR DA AND WE
         # Add to the data and weights dictionaries.
-        f_hid = h[2]['HEALPID'][:]
         #hid = sp.array(list(range(10)))
         for i,p in enumerate(hid):
             print("coadding healpix {} in file {}".format(p,f),end="\r")
