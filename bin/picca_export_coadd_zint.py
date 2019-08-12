@@ -85,7 +85,7 @@ def coadd_correlations(fi,fout=None):
         """
 
         #Check that the HEALPix pixels are the same.
-        if f_hid == hid:
+        if sp.sum(f_hid == hid) == hid.shape[0]:
             da += h[2]["DA"][:] * we_aux
             we += h[2]['WE'][:]
         elif set(f_hid) == set(hid):
