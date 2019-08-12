@@ -46,8 +46,8 @@ def coadd_correlations(fi,fout=None):
     z = h[1]['Z'][:]*0
     hid = h[2]['HEALPID'][:]
     wet = rp*0
-    da = sp.zeros(h[2]['DA'].shape)
-    we = sp.zeros(h[2]['WE'].shape)
+    da = sp.zeros(h[2]['DA'][:].size)
+    we = sp.zeros(h[2]['WE'][:].size)
     h.close()
     """
     ## OLD METHOD USING A DICTIONARY FOR DA AND WE
