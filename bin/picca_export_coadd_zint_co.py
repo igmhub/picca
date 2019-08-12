@@ -29,6 +29,22 @@ if __name__ == '__main__':
     parser.add_argument('--RD-files', type=str,nargs="*", default=None, required=False,
         help='Files of the random x data auto-correlation')
 
+
+    #Not yet implemented.
+    """
+    parser.add_argument("--coadd-out-DD",type=str,default=None,required=False,
+        help="coadded (not exported) DD output file")
+
+    parser.add_argument("--coadd-out-RR",type=str,default=None,required=False,
+        help="coadded (not exported) RR output file")
+
+    parser.add_argument("--coadd-out-DR",type=str,default=None,required=False,
+        help="coadded (not exported) DR output file")
+
+    parser.add_argument("--coadd-out-RD",type=str,default=None,required=False,
+        help="coadded (not exported) RD output file")
+    """
+
     #Not sure of the purpose of these: does it make much of a difference?
     parser.add_argument('--xDD-files', type=str, default=None, required=False,
         help='Files of the data_1 x data_2 cross-correlation')
@@ -68,12 +84,13 @@ if __name__ == '__main__':
     ### Read files
     data = {}
     for type_corr, fi in lst_file.items():
+        print("looking at correlation {}".format(type_corr),end="\r")
 
         #Open up the first file to set up arrays etc.
         f = fi[0]
         h = fitsio.FITS(f)
         head = h[1].read_header()
-        if type_corr in ['DD','xDD']:        
+        if type_corr in ['DD','xDD']:
             # Assume that same nt, np, rtmax, rpmin, rpmax are used for each z bin correlations.
             for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
                 data[k] = head[k]
@@ -100,6 +117,7 @@ if __name__ == '__main__':
 
 
         for f in fi:
+            print("coadding file {}".format(f),end="\r")
 
             h = fitsio.FITS(f)
             head = h[1].read_header()
@@ -112,7 +130,15 @@ if __name__ == '__main__':
                 data['NB']  += sp.array(h[1]['NB'][:])
                 data['WET'] += wet_aux
 
-            data[type_corr]['WE'] += h[2]['WE'][:]
+            #Check that the HEALPix pixels are the same.
+            if h[2].data['HEALPID'] == data[type_corr]['HEALPID']:
+                data[type_corr]['WE'] += h[2]['WE'][:]
+            elif set(h[2].data['HEALPID']) == set(data[type_corr]['HEALPID']):
+                # TODO: Add in check to see if they're the same but just ordered differently.
+                raise IOError('Correlations\' pixels are not ordered in the same way!')
+            else:
+                raise IOError('Correlations do not have the same footprint!')
+
 
             h.close()
 

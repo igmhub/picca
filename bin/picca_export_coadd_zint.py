@@ -44,19 +44,24 @@ def coadd_correlations(fi,fout=None):
     rt = h[1]['RT'][:]*0
     nb = h[1]['NB'][:]*0
     z = h[1]['Z'][:]*0
+    hid = h[2]['HEALPID'][:]
     wet = rp*0
+    da = np.zeros(h[2]['DA'].shape)
+    we = np.zeros(h[2]['WE'].shape)
     h.close()
+    """
+    ## OLD METHOD USING A DICTIONARY FOR DA AND WE
     da = {}
     we = {}
+    """
 
     # For each data file:
     for f in fi:
-        if not (os.path.isfile(f.replace('cf','dmat')) or args.no_dmat):
-            continue
+        print("coadding file {}".format(f),end="\r")
 
         # Add information about the weights and correlation bins.
         h = fitsio.FITS(f)
-        we_aux = h[2]["WE"][:]
+        we_aux = h[2]['WE'][:]
         wet_aux = we_aux.sum(axis=0)
         rp += h[1]['RP'][:]*wet_aux
         rt += h[1]['RT'][:]*wet_aux
@@ -64,8 +69,10 @@ def coadd_correlations(fi,fout=None):
         nb += h[1]['NB'][:]
         wet += wet_aux
 
+        """
+        ## OLD METHOD USING A DICTIONARY FOR DA AND WE
         # Add to the data and weights dictionaries.
-        hid = h[2]['HEALPID'][:]
+        f_hid = h[2]['HEALPID'][:]
         #hid = sp.array(list(range(10)))
         for i,p in enumerate(hid):
             print("coadding healpix {} in file {}".format(p,f),end="\r")
@@ -75,22 +82,45 @@ def coadd_correlations(fi,fout=None):
             else:
                 da[p] = h[2]["DA"][:][i]*we_aux[i]
                 we[p] = we_aux[i]
+        """
+
+        #Check that the HEALPix pixels are the same.
+        if f_hid == hid:
+            da += h[2]["DA"][:] * we_aux
+            we += h[2]['WE'][:]
+        elif set(f_hid) == set(hid):
+            # TODO: Add in check to see if they're the same but just ordered differently.
+            raise IOError('Correlations\' pixels are not ordered in the same way!')
+        else:
+            raise IOError('Correlations do not have the same footprint!')
+
         h.close()
         print('')
 
     # Normalise all variables by the total weights.
+    """
+    ## OLD METHOD USING A DICTIONARY FOR DA AND WE
     for p in da:
         w = we[p]>0
         da[p][w] /= we[p][w]
+    """
+    w = we>0
+    da[w] /= we[w]
     rp /= wet
     rt /= wet
     z /= wet
 
     if fout is not None:
-        hep = sp.array(list(da.keys()))
+
+        """
+        ## OLD METHOD USING A DICTIONARY FOR DA AND WE
+        hid = sp.array(list(da.keys()))
         da_arr = sp.vstack(list(da.values()))
         we_arr = sp.vstack(list(we.values()))
-    
+        """
+        da_arr = da
+        we_arr = we
+
         out = fitsio.FITS(fout,'rw',clobber=True)
         out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
             comment=['R-parallel','R-transverse','Redshift','Number of pairs'],
@@ -98,7 +128,7 @@ def coadd_correlations(fi,fout=None):
             header=head,extname='ATTRI')
 
         head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]
-        out.write([hep,we_arr,da_arr],names=['HEALPID','WE','DA'],
+        out.write([hid,we_arr,da_arr],names=['HEALPID','WE','DA'],
             comment=['Healpix index', 'Sum of weight', 'Correlation'],
             header=head2,extname='COR')
 
@@ -163,6 +193,8 @@ we = sp.vstack(list(we.values()))
 if not args.remove_shuffled_correlation is None:
     rp_s,rt_s,nb_s,z_s,wet_s,da_s,we_s,head_s = coadd_correlations(args.remove_shuffled_correlation,args.coadd_out_shuffled)
     print('')
+    """
+    ## OLD METHOD USING A DICTIONARY FOR DA AND WE
     pix = list(da.keys())
     for p in pix:
         print('Removing shuffled correlation from HEALPix pixel {}'.format(p),end='\r')
@@ -173,25 +205,21 @@ if not args.remove_shuffled_correlation is None:
         if we_s_p>0.:
             da_s_p /= we_s_p
             da[p] -= da_s_p
-    print('')
-    
     """
-    
-    # Stack the shuffled data and average over z and separation bins.
-    da_s = sp.vstack(list(da_s.values()))
-    we_s = sp.vstack(list(we_s.values()))
+    print('Removing shuffled correlation...')
     da_s = (da_s*we_s).sum(axis=1)
-    we_s = (we_s).sum(axis=1)
-    w = we_s>0.
+    we_s = we_s.sum(axis=1)
+    w = we_s>0
     da_s[w] /= we_s[w]
-
-    # Remove shuffled signal
     da -= da_s[:,None]
-    """
-    
+    print('')
+
+"""
+## OLD METHOD USING A DICTIONARY FOR DA AND WE
 # Stack data and weights arrays from all zbins.
 da = sp.vstack(list(da.values()))
 we = sp.vstack(list(we.values()))
+"""
 
 # Calculate the smoothed covariance from subsampling.
 co = smooth_cov(da,we,rp,rt)
