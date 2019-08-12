@@ -46,8 +46,8 @@ def coadd_correlations(fi,fout=None):
     z = h[1]['Z'][:]*0
     hid = h[2]['HEALPID'][:]
     wet = rp*0
-    da = sp.zeros(h[2]['DA'][:].size)
-    we = sp.zeros(h[2]['WE'][:].size)
+    da = sp.zeros(h[2]['DA'][:].shape)
+    we = sp.zeros(h[2]['WE'][:].shape)
     h.close()
     """
     ## OLD METHOD USING A DICTIONARY FOR DA AND WE
@@ -86,7 +86,7 @@ def coadd_correlations(fi,fout=None):
 
         #Check that the HEALPix pixels are the same.
         if sp.sum(f_hid == hid) == hid.shape[0]:
-            da += h[2]["DA"][:] * we_aux
+            da += h[2]['DA'][:] * we_aux
             we += h[2]['WE'][:]
         elif set(f_hid) == set(hid):
             # TODO: Add in check to see if they're the same but just ordered differently.
