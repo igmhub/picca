@@ -17,11 +17,17 @@ parser.add_argument("--data",type=str,nargs="*",required=True,
 parser.add_argument("--out",type=str,required=True,
         help="output file")
 
+parser.add_argument("--coadd-out",type=str,default=None,required=False,
+        help="coadded (not exported) output file")
+
 parser.add_argument("--no-dmat",action='store_true',default=False,required=False,
         help='Use an identity matrix as the distortion matrix.')
 
 parser.add_argument('--remove-shuffled-correlation',type=str,default=None,nargs="*",required=False,
         help="the shuffled (x)cf_z_....fits files to be coadded and then removed")
+
+parser.add_argument("--coadd-out-shuffled",type=str,default=None,required=False,
+        help="coadded (not exported) shuffled output file")
 
 args=parser.parse_args()
 
@@ -30,7 +36,7 @@ for f in args.data:
         args.data.remove(f)
 
 # Function to coadd a set of cf of xcf measurements.
-def coadd_correlations(fi):
+def coadd_correlations(fi,fout=None):
     # Define variables of the correct shape to store correlation information.
     h = fitsio.FITS(fi[0])
     head = h[1].read_header()
@@ -60,8 +66,9 @@ def coadd_correlations(fi):
 
         # Add to the data and weights dictionaries.
         hid = h[2]['HEALPID'][:]
+        #hid = sp.array(list(range(10)))
         for i,p in enumerate(hid):
-            print("\rcoadding healpix {} in file {}".format(p,f),end="")
+            print("coadding healpix {} in file {}".format(p,f),end="\r")
             if p in da:
                 da[p] += h[2]["DA"][:][i]*we_aux[i]
                 we[p] += we_aux[i,:]
@@ -69,7 +76,7 @@ def coadd_correlations(fi):
                 da[p] = h[2]["DA"][:][i]*we_aux[i]
                 we[p] = we_aux[i]
         h.close()
-
+        print('')
 
     # Normalise all variables by the total weights.
     for p in da:
@@ -79,7 +86,25 @@ def coadd_correlations(fi):
     rt /= wet
     z /= wet
 
-    return rp,rt,nb,z,wet,da,we,dm,head
+    if fout is not None:
+        hep = sp.array(list(da.keys()))
+        da_arr = sp.vstack(list(da.values()))
+        we_arr = sp.vstack(list(we.values()))
+    
+        out = fitsio.FITS(fout,'rw',clobber=True)
+        out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
+            comment=['R-parallel','R-transverse','Redshift','Number of pairs'],
+            units=['h^-1 Mpc','h^-1 Mpc','',''],
+            header=head,extname='ATTRI')
+
+        head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]
+        out.write([hep,we_arr,da_arr],names=['HEALPID','WE','DA'],
+            comment=['Healpix index', 'Sum of weight', 'Correlation'],
+            header=head2,extname='COR')
+
+        out.close()
+
+    return rp,rt,nb,z,wet,da,we,head
 
 # Function to coadd a set of cf of xcf distortion matrices.
 def coadd_dmats(fi):
@@ -120,7 +145,7 @@ def coadd_dmats(fi):
     return dmrp,dmrt,dmz,nbdm,dm
 
 # Coadd the data files.
-rp,rt,nb,z,wet,da,we,head = coadd_correlations(args.data)
+rp,rt,nb,z,wet,da,we,head = coadd_correlations(args.data,args.coadd_out)
 
 # If required, coadd the distortion matrices.
 if not args.no_dmat:
@@ -128,23 +153,52 @@ if not args.no_dmat:
 else:
     dm = sp.eye(nb.shape[0])
 
-# If required, remove the shuffled correlations.
-if not args.remove_shuffled_correlation is None:
-    rp_s,rt_s,nb_s,z_s,wet_s,da_s,we_s,dm_s,head_s = coadd_correlations(args.remove_shuffled_correlation)
-    da_s = (da_s*we_s).sum(axis=1)
-    we_s = we_s.sum(axis=1)
-    w = we_s>0.
-    da_s[w] /= we_s[w]
-    da -= da_s[:,None]
-
-# Average data and weights over all HEALPix pixels.
+"""
+# Stack data and weights arrays from all zbins.
 da = sp.vstack(list(da.values()))
 we = sp.vstack(list(we.values()))
-da = (da*we).sum(axis=0)
-da /= wet
+"""
+
+# If required, remove the shuffled correlations.
+if not args.remove_shuffled_correlation is None:
+    rp_s,rt_s,nb_s,z_s,wet_s,da_s,we_s,head_s = coadd_correlations(args.remove_shuffled_correlation,args.coadd_out_shuffled)
+    print('')
+    pix = list(da.keys())
+    for p in pix:
+        print('Removing shuffled correlation from HEALPix pixel {}'.format(p),end='\r')
+        da_s_p = da_s[p]
+        we_s_p = we_s[p]
+        da_s_p = (da_s_p*we_s_p).sum()
+        we_s_p = (we_s_p).sum()
+        if we_s_p>0.:
+            da_s_p /= we_s_p
+            da[p] -= da_s_p
+    print('')
+    
+    """
+    
+    # Stack the shuffled data and average over z and separation bins.
+    da_s = sp.vstack(list(da_s.values()))
+    we_s = sp.vstack(list(we_s.values()))
+    da_s = (da_s*we_s).sum(axis=1)
+    we_s = (we_s).sum(axis=1)
+    w = we_s>0.
+    da_s[w] /= we_s[w]
+
+    # Remove shuffled signal
+    da -= da_s[:,None]
+    """
+    
+# Stack data and weights arrays from all zbins.
+da = sp.vstack(list(da.values()))
+we = sp.vstack(list(we.values()))
 
 # Calculate the smoothed covariance from subsampling.
 co = smooth_cov(da,we,rp,rt)
+
+# Average over all z bins and HEAlPix pixels.
+da = (da*we).sum(axis=0)
+da /= wet
 
 # Not sure what this does.
 if ('dmrp' not in locals()) or (dmrp.size==rp.size):

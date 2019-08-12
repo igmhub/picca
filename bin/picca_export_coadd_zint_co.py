@@ -69,23 +69,30 @@ if __name__ == '__main__':
     data = {}
     for type_corr, fi in lst_file.items():
 
-        nbObj = 0
-        nbObj2 = 0
-
+        #Open up the first file to set up arrays etc.
         f = fi[0]
         h = fitsio.FITS(f)
         head = h[1].read_header()
-        # Assume that same nt, np, rtmax, rpmin, rpmax are used for all correlations of each type.
-        for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
-            data[k] = head[k]
-        # Set up arrays of the correct size for each data type.
-        for k in ['RP','RT','Z','NB']:
-            data[k] = sp.zeros(sp.array(h[1][k][:]).shape)
+        if type_corr in ['DD','xDD']:        
+            # Assume that same nt, np, rtmax, rpmin, rpmax are used for each z bin correlations.
+            for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
+                data[k] = head[k]
+            for k in ['RP','RT','Z','NB']:
+                data[k] = sp.zeros(sp.array(h[1][k][:]).shape)
         data['WET'] = sp.zeros(sp.array(h[1]['RP'][:]).shape)
+
+        #Assume that all files from the same correlation type used the same catalog, thus same nbObj.
+        if type_corr in ['DD','RR']:
+            nbObj = head['NOBJ']
+        else:
+            nbObj  = head['NOBJ']
+            nbObj2 = head['NOBJ2']
+
         # Assume that same nside, healpix scheme and footprint are used for all correlations of each type.
         data[type_corr] = {}
         data[type_corr]['NSIDE'] = head['NSIDE']
         data[type_corr]['HLPXSCHM'] = h[2].read_header()['HLPXSCHM']
+        w = sp.array(h[2]['WE'][:]).sum(axis=1)>0.
         data[type_corr]['HEALPID'] = h[2]['HEALPID'][:][w]
         data[type_corr]['WE'] = sp.zeros(h[2]['WE'][:].shape)
 
@@ -97,24 +104,15 @@ if __name__ == '__main__':
             h = fitsio.FITS(f)
             head = h[1].read_header()
 
-            if type_corr in ['DD','RR']:
-                nbObj += head['NOBJ']
-            else:
-                nbObj  += head['NOBJ']
-                nbObj2 += head['NOBJ2']
-
             if type_corr in ['DD','xDD']:
                 we_aux = h[2]["WE"][:]
                 wet_aux = we_aux.sum(axis=0)
                 for k in ['RP','RT','Z']:
                     data[k] += sp.array(h[1][k][:])*wet_aux
-                data['NB']  += sp.array(h[1][k][:])
+                data['NB']  += sp.array(h[1]['NB'][:])
                 data['WET'] += wet_aux
 
-            w = sp.array(h[2]['WE'][:]).sum(axis=1)>0.
-            if w.sum()!=w.size:
-                print('INFO: {} sub-samples were empty in {}'.format(w.size-w.sum(),f))
-            data[type_corr]['WE'] += h[2]['WE'][:][w]
+            data[type_corr]['WE'] += h[2]['WE'][:]
 
             h.close()
 
@@ -125,6 +123,9 @@ if __name__ == '__main__':
             coef = nbObj*nbObj2
         if type_corr in ['DD','xDD']:
             data['COEF'] = coef
+            for k in ['RP','RT','Z']:
+                    data[k] /= data['WET']
+
         data[type_corr]['WE'] /= coef
 
     ### Get correlation
