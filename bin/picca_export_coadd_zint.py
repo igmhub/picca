@@ -76,7 +76,6 @@ def coadd_correlations(fi,fout=None):
             raise IOError('Correlations do not have the same footprint!')
 
         h.close()
-        print('')
 
     # Normalise all variables by the total weights.
     w = we>0
