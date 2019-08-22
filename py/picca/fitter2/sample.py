@@ -13,7 +13,7 @@ from pypolychord.settings import PolyChordSettings
 from pypolychord.priors import UniformPrior
 from scipy.linalg import cholesky
 
-from . import priors,utils
+from . import priors,utils,chi2
 
 class sample:
     def __init__(self,dic_init):
@@ -28,6 +28,27 @@ class sample:
         self.pksb_lin = dic_init['fiducial']['pksb']
         self.full_shape = dic_init['fiducial']['full-shape']
 
+        if 'fast mc' in dic_init:
+            if 'seed' in dic_init['fast mc']:
+                self.seedfast_mc = dic_init['fast mc']['seed']
+            else:
+                self.seedfast_mc = 0
+            self.nfast_mc = dic_init['fast mc']['niterations']
+            if 'covscaling' in dic_init['fast mc']:
+                self.scalefast_mc = dic_init['fast mc']['covscaling']
+            else:
+                self.scalefast_mc = sp.ones(len(self.data))
+            self.fidfast_mc = dic_init['fast mc']['fiducial']['values']
+            self.fixfast_mc = dic_init['fast mc']['fiducial']['fix']
+
+        run_mock = bool(self.polychord_setup.get('run_mock', False))
+        if run_mock:
+            filename = self.polychord_setup.get('mock_file')
+            mock_da = np.loadtxt(filename)
+            self.data[0].da = mock_da
+            self.data[0].da_cut = mock_da[self.data[0].mask]
+            print('Replaced data with mock: ' + filename)
+    
         # self.verbosity = 1
         # if 'verbosity' in dic_init:
         #     self.verbosity = dic_init['verbosity']
@@ -44,24 +65,62 @@ class sample:
         # kwargs.update({name:fix for d in self.data for name, fix in d.par_fixed.items()})
 
 
-    def chisq(self, pars):
+    def log_lik(self, pars):
         # dic = {p:pars[i] for i,p in enumerate(self.par_names)}
         pars['SB'] = False
-        chi2 = 0
+        log_lik = 0
         for d in self.data:
-            chi2 += d.chi2(self.k,self.pk_lin,self.pksb_lin,self.full_shape,pars)
+            log_lik += d.log_lik(self.k,self.pk_lin,self.pksb_lin,self.full_shape,pars)
 
         for prior in priors.prior_dic.values():
-            chi2 += prior(pars)
+            log_lik += prior(pars)
 
-        # if self.verbosity == 1:
-        #     del dic['SB']
-        #     for p in sorted(dic.keys()):
-        #         print(p+" "+str(dic[p]))
+        return log_lik
 
-        #     print("Chi2: "+str(chi2))
-        #     print("---\n")
-        return chi2
+    def make_mock(self, dic_init):
+        self.chi = chi2.chi2(dic_init)
+        self.chi.minimize()
+
+        sp.random.seed(self.seedfast_mc)
+        nfast_mc = self.nfast_mc
+
+        for d, s in zip(self.data, self.scalefast_mc):
+            d.co = s*d.co
+            d.ico = d.ico/s
+            d.cho = cholesky(d.co)
+
+        self.fiducial_values = dict(self.chi.best_fit.values).copy()
+        for p in self.fidfast_mc:
+            self.fiducial_values[p] = self.fidfast_mc[p]
+            for d in self.data:
+                if p in d.par_names:
+                    d.pars_init[p] = self.fidfast_mc[p]
+                    d.par_fixed['fix_'+p] = self.fixfast_mc['fix_'+p]
+
+        self.fiducial_values['SB'] = False
+        for d in self.data:
+            d.fiducial_model = self.fiducial_values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.fiducial_values)
+
+            self.fiducial_values['SB'] = True
+            snl_per = self.fiducial_values['sigmaNL_per']
+            snl_par = self.fiducial_values['sigmaNL_par']
+            self.fiducial_values['sigmaNL_per'] = 0
+            self.fiducial_values['sigmaNL_par'] = 0
+            d.fiducial_model += d.xi_model(self.k, self.pksb_lin, self.fiducial_values)
+            self.fiducial_values['SB'] = False
+            self.fiducial_values['sigmaNL_per'] = snl_per
+            self.fiducial_values['sigmaNL_par'] = snl_par
+        del self.fiducial_values['SB']
+
+        self.fast_mc_data = {}
+
+        for i in range(self.nfast_mc):
+            for d in self.data:
+                g = sp.random.randn(len(d.da))
+                mock = d.cho.dot(g) + d.fiducial_model
+                self.fast_mc_data[d.name+'_'+str(i)] = mock
+
+                np.savetxt(self.outfile+'/mock_'+d.name+'_'+str(i), mock)
 
     def run_sampler(self):
         '''
@@ -100,8 +159,8 @@ class sample:
                     pars[key] = theta[i]
                     i += 1
 
-            log_lik = self.chisq(pars)
-            return -0.5 * log_lik, []
+            log_lik = self.log_lik(pars)
+            return log_lik, []
 
         # print(log_lik([1.11,1.01]))
         # print(log_lik([1.12,1.02]))

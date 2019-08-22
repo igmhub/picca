@@ -1,2 +1,6 @@
 **/*.pyc
 *~
+
+\.vscode/
+
+py/picca\.egg-info/

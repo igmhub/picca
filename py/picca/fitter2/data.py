@@ -100,6 +100,8 @@ class data:
             print('LOG: Reduced matrix is positive definite')
         except sp.linalg.LinAlgError:
             print('WARNING: Reduced matrix is not positive definite')
+        _, d, __ = linalg.ldl(ico)
+        self.log_co_det = sp.log(d.diagonal()).sum()
         self.ico = linalg.inv(ico)
         self.dm = dm
 
@@ -382,3 +384,11 @@ class data:
         dxi = self.da_cut-xi_full[self.mask]
 
         return dxi.T.dot(self.ico.dot(dxi))
+
+    def log_lik(self, k, pk_lin, pksb_lin, full_shape, pars):
+        
+        chi2 = self.chi2(k, pk_lin, pksb_lin, full_shape, pars)
+        log_lik = - 0.5 * sp.log(2 * sp.pi) - 0.5 * self.log_co_det
+        log_lik -= 0.5 * chi2
+
+        return log_lik
