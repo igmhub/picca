@@ -125,6 +125,11 @@ def parse_data(filename,zeff,fiducial):
     for item, value in cp.items('model'):
         dic_init['model'][item] = value
 
+    if 'hcd_model' in cp.sections():
+        dic_init['hcd_model'] = {}
+        for item, value in cp.items('hcd_model'):
+            dic_init['hcd_model'][item] = value
+
     dic_init['parameters'] = {}
     dic_init['parameters']['values'] = {}
     dic_init['parameters']['errors'] = {}

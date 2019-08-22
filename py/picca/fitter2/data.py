@@ -119,7 +119,10 @@ class data:
         self.mu[w] = self.rp[w]/self.r[w]
 
 
-        self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
+        if 'hcd_model' in dic_init:
+            self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']),dic_init['hcd_model']['name_hcd_model'])
+        else:
+            self.pk = pk.pk(getattr(pk, dic_init['model']['model-pk']))
         self.pk *= partial(getattr(pk,'G2'), dataset_name=self.name)
         if 'pk-gauss-smoothing' in dic_init['model']:
             self.pk *= partial(getattr(pk, dic_init['model']['pk-gauss-smoothing']))
