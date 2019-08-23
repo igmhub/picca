@@ -93,7 +93,7 @@ def parse_chi2(filename):
         dic_init['chi2 scan'] = parse_chi2scan(cp.items('chi2 scan'))
 
     if cp.has_section('Polychord'):
-        dic_init['Polychord'] = dict(cp.items('Polychord'))
+        dic_init['Polychord'] = cp['Polychord']
 
     return dic_init
 

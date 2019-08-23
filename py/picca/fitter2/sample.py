@@ -41,7 +41,7 @@ class sample:
             self.fidfast_mc = dic_init['fast mc']['fiducial']['values']
             self.fixfast_mc = dic_init['fast mc']['fiducial']['fix']
 
-        run_mock = bool(self.polychord_setup.get('run_mock', False))
+        run_mock = self.polychord_setup.getboolean('run_mock', False)
         if run_mock:
             filename = self.polychord_setup.get('mock_file')
             mock_da = np.loadtxt(filename)
@@ -177,11 +177,11 @@ class sample:
         def dumper(live, dead, logweights, logZ, logZerr):
             pass
 
-        nlive = int(self.polychord_setup.get('nlive', int(25*npar)))
-        seed = int(self.polychord_setup.get('seed', int(0)))
-        num_repeats = int(self.polychord_setup.get('num_repeats', int(5*npar)))
-        precision = float(self.polychord_setup.get('precision', float(0.001)))
-        resume = self.polychord_setup.get('resume', True)
+        nlive = self.polychord_setup.getint('nlive', int(25*npar))
+        seed = self.polychord_setup.getint('seed', int(0))
+        num_repeats = self.polychord_setup.getint('num_repeats', int(5*npar))
+        precision = self.polychord_setup.getfloat('precision', float(0.001))
+        resume = self.polychord_setup.getboolean('resume', True)
         path = self.polychord_setup.get('path')
         filename = self.polychord_setup.get('name')
         settings = PolyChordSettings(npar, nder,
