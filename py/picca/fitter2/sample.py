@@ -22,6 +22,7 @@ class sample:
         self.par_names = sp.unique([name for d in self.data for name in d.par_names])
         self.outfile = os.path.expandvars(dic_init['outfile'])
         self.polychord_setup = dic_init['Polychord']
+        self.control = dic_init['control']
 
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
@@ -41,29 +42,22 @@ class sample:
             self.fidfast_mc = dic_init['fast mc']['fiducial']['values']
             self.fixfast_mc = dic_init['fast mc']['fiducial']['fix']
 
-        run_mock = self.polychord_setup.getboolean('run_mock', False)
+        run_chi2 = self.control.getboolean('chi2', False)
+        if run_chi2:
+            self.chi = chi2.chi2(dic_init)
+
+        run_mock = self.control.getboolean('run_mock', False)
         if run_mock:
-            filename = self.polychord_setup.get('mock_file')
+            filename = self.control.get('mock_file')
             mock_da = np.loadtxt(filename)
             self.data[0].da = mock_da
             self.data[0].da_cut = mock_da[self.data[0].mask]
+
+            if run_chi2:
+                self.chi.data[0].da = mock_da
+                self.chi.data[0].da_cut = mock_da[self.chi.data[0].mask]
+
             print('Replaced data with mock: ' + filename)
-    
-        # self.verbosity = 1
-        # if 'verbosity' in dic_init:
-        #     self.verbosity = dic_init['verbosity']
-
-        # What's this?
-        # self.hesse = False
-        # if 'hesse' in dic_init:
-        #     self.hesse = dic_init['hesse']
-
-        # par_names = [name for d in self.data for name in d.pars_init]
-        # kwargs = {name:val for d in self.data for name, val in d.pars_init.items()}
-        # kwargs.update({name:err for d in self.data for name, err in d.par_error.items()})
-        # kwargs.update({name:lim for d in self.data for name, lim in d.par_limit.items()})
-        # kwargs.update({name:fix for d in self.data for name, fix in d.par_fixed.items()})
-
 
     def log_lik(self, pars):
         # dic = {p:pars[i] for i,p in enumerate(self.par_names)}

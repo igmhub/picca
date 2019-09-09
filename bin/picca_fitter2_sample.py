@@ -16,10 +16,17 @@ if __name__ == '__main__':
 
     dic_init = parser.parse_chi2(args.config)
     sampler = sample.sample(dic_init)
-    sampler.run_sampler()
 
-    # chi.minimize()
+    run_sampler = dic_init['control'].getboolean('sampler', False)
+    run_chi2 = dic_init['control'].getboolean('chi2', False)
+    
+    if run_sampler:
+        sampler.run_sampler()
+
+    if run_chi2:
+        sampler.chi.minimize()
+        sampler.chi.chi2scan()
+        sampler.chi.export()
+
     # chi.minos()
-    # chi.chi2scan()
     # chi.fastMC()
-    # chi.export()
