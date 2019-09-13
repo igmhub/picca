@@ -25,6 +25,7 @@ zref = None
 z_evol_del = None
 z_evol_obj = None
 lambda_abs = None
+alpha_abs= None
 
 dels = None
 objs = None
@@ -288,22 +289,23 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
                 rp_abs = (rd_abs-rq)*sp.cos(ang/2)
                 rt_abs = (rdm_abs+rqm)*sp.sin(ang/2)
+                zwe = ((1.+zd_abs)/(1.+zref))**(alpha_abs[abs_igm]-1.)
 
                 bp_abs = ((rp_abs-rp_min)/(rp_max-rp_min)*npm).astype(int)
                 bt_abs = (rt_abs/rt_max*ntm).astype(int)
                 bBma = bt_abs + ntm*bp_abs
                 wBma = (rp_abs>rp_min) & (rp_abs<rp_max) & (rt_abs<rt_max)
                 wAB = wA&wBma
-                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=wdq[wAB])
+                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=wdq[wAB]*zwe[wAB])
                 dm[:len(c)]+=c
 
-                c = sp.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB])
+                c = sp.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
                 rpeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB])
+                c = sp.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB]*zwe[wAB])
                 rteff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB])
+                c = sp.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB]*zwe[wAB])
                 zeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=wdq[wAB])
+                c = sp.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
                 weff[:len(c)]+=c
             setattr(d,"qneighs",None)
 
