@@ -1,5 +1,9 @@
 # Fvoigt for HCD modelling
 
+## Building fvoigt_models : 
+
+Use the code in the directory build_Fvoigt and read the README.md
+
 ## Adding files in fvoigt_models :
   
 **always** : Fvoigt_whatever.txt  :smile:
