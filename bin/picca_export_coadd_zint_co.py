@@ -134,9 +134,9 @@ if __name__ == '__main__':
             data[type_corr]['WET'] += wet_aux
 
             #Check that the HEALPix pixels are the same.
-            if h[2].data['HEALPID'] == data[type_corr]['HEALPID']:
+            if (h[2]['HEALPID'][:] == data[type_corr]['HEALPID']).all():
                 data[type_corr]['WE'] += h[2]['WE'][:]
-            elif set(h[2].data['HEALPID']) == set(data[type_corr]['HEALPID']):
+            elif set(h[2]['HEALPID'][:]) == set(data[type_corr]['HEALPID']):
                 # TODO: Add in check to see if they're the same but just ordered differently.
                 raise IOError('Correlations\' pixels are not ordered in the same way!')
             else:
