@@ -93,9 +93,6 @@ if __name__ == '__main__':
             for k in ['RP','RT','Z','NB']:
                 data[k] = sp.zeros(sp.array(h[1][k][:]).shape)
                 data['WET'] = sp.zeros(sp.array(h[1]['RP'][:]).shape)
-        for k in ['RP','RT','Z','NB']:
-            data[type_corr][k] = sp.zeros(sp.array(h[1][k][:]).shape)
-        data[type_corr]['WET'] = sp.zeros(sp.array(h[1]['RP'][:]).shape)
 
         # Assume that same nside, healpix scheme and footprint are used for all
         #correlations of each type.
@@ -104,9 +101,9 @@ if __name__ == '__main__':
         w = sp.array(h[2]['WE'][:]).sum(axis=1)>0.
         data[type_corr]['HEALPID'] = h[2]['HEALPID'][:][w]
         data[type_corr]['WE'] = sp.zeros(h[2]['WE'][:].shape)
-        for k in ['RP','RT','Z','NB']:
+        for k in ['RP','RT','Z','NB','WET']:
             data[type_corr][k] = data[k]
-
+            
         #Picca saves the output file from picca_co.py with head['NOBJ'] as the
         #total number of objects in the catalog *before* any redshift cuts are
         #applied. Thus we do not need to sum the values from each of the files.
