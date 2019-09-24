@@ -101,6 +101,7 @@ if __name__ == '__main__':
         w = sp.array(h[2]['WE'][:]).sum(axis=1)>0.
         data[type_corr]['HEALPID'] = h[2]['HEALPID'][:][w]
         data[type_corr]['WE'] = sp.zeros(h[2]['WE'][:].shape)
+        data[type_corr]['NBS'] = sp.zeros(h[2]['NB'][:].shape)
         for k in ['RP','RT','Z','NB','WET']:
             data[type_corr][k] = data[k]
 
@@ -136,6 +137,7 @@ if __name__ == '__main__':
             #Check that the HEALPix pixels are the same.
             if (h[2]['HEALPID'][:] == data[type_corr]['HEALPID']).all():
                 data[type_corr]['WE'] += h[2]['WE'][:]
+                data[type_corr]['NBS'] += h[2]['NB'][:]
             elif set(h[2]['HEALPID'][:]) == set(data[type_corr]['HEALPID']):
                 # TODO: Add in check to see if they're the same but just ordered differently.
                 raise IOError('Correlations\' pixels are not ordered in the same way!')
@@ -203,7 +205,8 @@ if __name__ == '__main__':
         comment = ['Healpix index', 'Sum of weight', 'Number of pairs']
         head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
         names = ['HEALPID','WE','NB']
-        out.write([data[type_corr][k] for k in names],names=names,header=head2,comment=comment,extname='COR')
+        hold_names = ['HEALPID','WE','NBS']
+        out.write([data[type_corr][k] for k in hold_names],names=names,header=head2,comment=comment,extname='COR')
         out.close()
 
         return
