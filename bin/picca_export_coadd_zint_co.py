@@ -29,9 +29,6 @@ if __name__ == '__main__':
     parser.add_argument('--RD-files', type=str,nargs="*", default=None, required=False,
         help='Files of the random x data auto-correlation')
 
-
-    #Not yet implemented.
-    """
     parser.add_argument("--coadd-out-DD",type=str,default=None,required=False,
         help="coadded (not exported) DD output file")
 
@@ -43,7 +40,6 @@ if __name__ == '__main__':
 
     parser.add_argument("--coadd-out-RD",type=str,default=None,required=False,
         help="coadded (not exported) RD output file")
-    """
 
     #Not sure of the purpose of these: does it make much of a difference?
     parser.add_argument('--xDD-files', type=str, default=None, required=False,
@@ -91,30 +87,38 @@ if __name__ == '__main__':
         h = fitsio.FITS(f)
         head = h[1].read_header()
         if type_corr in ['DD','xDD']:
-            # Assume that same nt, np, rtmax, rpmin, rpmax are used for each z bin correlations.
-            for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
+            # Assume that same nt, np, rtmax, rpmin, rpmax, nside are used for each z bin correlations.
+            for k in ['NT','NP','RTMAX','RPMIN','RPMAX','NSIDE']:
                 data[k] = head[k]
             for k in ['RP','RT','Z','NB']:
                 data[k] = sp.zeros(sp.array(h[1][k][:]).shape)
         data['WET'] = sp.zeros(sp.array(h[1]['RP'][:]).shape)
 
-        #Assume that all files from the same correlation type used the same catalog, thus same nbObj.
-        if type_corr in ['DD','RR']:
-            nbObj = head['NOBJ']
-        else:
-            nbObj  = head['NOBJ']
-            nbObj2 = head['NOBJ2']
-
-        # Assume that same nside, healpix scheme and footprint are used for all correlations of each type.
+        # Assume that same nside, healpix scheme and footprint are used for all
+        #correlations of each type.
         data[type_corr] = {}
-        data[type_corr]['NSIDE'] = head['NSIDE']
         data[type_corr]['HLPXSCHM'] = h[2].read_header()['HLPXSCHM']
         w = sp.array(h[2]['WE'][:]).sum(axis=1)>0.
         data[type_corr]['HEALPID'] = h[2]['HEALPID'][:][w]
         data[type_corr]['WE'] = sp.zeros(h[2]['WE'][:].shape)
+        for k in ['RP','RT','Z','NB']:
+            data[type_corr][k] = data[k]
+
+        #Picca saves the output file from picca_co.py with head['NOBJ'] as the
+        #total number of objects in the catalog *before* any redshift cuts are
+        #applied. Thus we do not need to sum the values from each of the files.
+        #We assume that all files from the same correlation type used the same
+        #catalog, thus have the same nbObj.
+        if type_corr in ['DD','RR']:
+            nbObj = head['NOBJ']
+            data[type_corr]['NOBJ'] = nbObj
+        else:
+            nbObj  = head['NOBJ']
+            nbObj2 = head['NOBJ2']
+            data[type_corr]['NOBJ'] = nbObj
+            data[type_corr]['NOBJ2'] = nbObj2
 
         h.close()
-
 
         for f in fi:
             print("coadding file {}".format(f),end="\r")
@@ -122,13 +126,12 @@ if __name__ == '__main__':
             h = fitsio.FITS(f)
             head = h[1].read_header()
 
-            if type_corr in ['DD','xDD']:
-                we_aux = h[2]["WE"][:]
-                wet_aux = we_aux.sum(axis=0)
-                for k in ['RP','RT','Z']:
-                    data[k] += sp.array(h[1][k][:])*wet_aux
-                data['NB']  += sp.array(h[1]['NB'][:])
-                data['WET'] += wet_aux
+            we_aux = h[2]["WE"][:]
+            wet_aux = we_aux.sum(axis=0)
+            for k in ['RP','RT','Z']:
+                data[type_corr][k] += sp.array(h[1][k][:])*wet_aux
+            data[type_corr]['NB']  += sp.array(h[1]['NB'][:])
+            data[type_corr]['WET'] += wet_aux
 
             #Check that the HEALPix pixels are the same.
             if h[2].data['HEALPID'] == data[type_corr]['HEALPID']:
@@ -139,7 +142,6 @@ if __name__ == '__main__':
             else:
                 raise IOError('Correlations do not have the same footprint!')
 
-
             h.close()
 
 
@@ -147,10 +149,16 @@ if __name__ == '__main__':
             coef = nbObj*(nbObj-1)
         else:
             coef = nbObj*nbObj2
+        data['COEF'] = coef
+
+        #Correctly normalise all of the data.
+        for k in ['RP','RT','Z']:
+            data[type_corr][k] /= data[type_corr]['WET']
+
+        #Move the DD data to a special location.
         if type_corr in ['DD','xDD']:
-            data['COEF'] = coef
-            for k in ['RP','RT','Z']:
-                    data[k] /= data['WET']
+            for k in ['RP','RT','Z','NB','WET']:
+                data[k] = data[type_corr][k]
 
         data[type_corr]['WE'] /= coef
 
@@ -171,9 +179,49 @@ if __name__ == '__main__':
         w = rr>0.
         da = sp.zeros(dd.size)
         da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
+
+    def save_co_file(outname,data,type_corr):
+
+        out = fitsio.FITS(outname,'rw',clobber=True)
+        head = [ {'name':'RPMIN','value':data['RPMIN'],'comment':'Minimum r-parallel [h^-1 Mpc]'},
+            {'name':'RPMAX','value':data['RPMAX'],'comment':'Maximum r-parallel [h^-1 Mpc]'},
+            {'name':'RTMAX','value':data['RTMAX'],'comment':'Maximum r-transverse [h^-1 Mpc]'},
+            {'name':'NP','value':data['NP'],'comment':'Number of bins in r-parallel'},
+            {'name':'NT','value':data['NT'],'comment':'Number of bins in r-transverse'},
+            {'name':'NSIDE','value':data['NSIDE'],'comment':'Healpix nside'},
+            {'name':'TYPECORR','value':type_corr,'comment':'Correlation type'},
+            {'name':'NOBJ','value':data[type_corr]['NBOBJ'],'comment':'Number of objects'},
+        ]
+        if type_corr in ['DR','RD']:
+            head += [{'name':'NOBJ2','value':data[type_corr]['NBOBJ2'],'comment':'Number of objects 2'}]
+
+        comment = ['R-parallel','R-transverse','Redshift','Number of pairs']
+        units = ['h^-1 Mpc','h^-1 Mpc','','']
+        names = ['RP','RT','Z','NB']
+        out.write([data[type_corr][k] for k in names],names=names,header=head,comment=comment,units=units,extname='ATTRI')
+
+        comment = ['Healpix index', 'Sum of weight', 'Number of pairs']
+        head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
+        names = ['HEALPID','WE','NB']
+        out.write([data[type_corr][k] for k in names],names=names,header=head2,comment=comment,extname='COR')
+        out.close()
+
+        return
+
+    if (args.coadd_out_DD is not None) and ('DD' in data.keys()):
+        save_co_file(args.coadd_out_DD,data,'DD')
+    if (args.coadd_out_RD is not None) and ('RD' in data.keys()):
+        save_co_file(args.coadd_out_RD,data,'RD')
+    if (args.coadd_out_DR is not None) and ('DR' in data.keys()):
+        save_co_file(args.coadd_out_DR,data,'DR')
+    if (args.coadd_out_RR is not None) and ('RR' in data.keys()):
+        save_co_file(args.coadd_out_RR,data,'RR')
+
+
     data['DA'] = da
     data['corr_DD'] = dd
     data['corr_RR'] = rr
+
 
     ### Covariance matrix
     if not args.cov is None:
