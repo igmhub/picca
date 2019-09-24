@@ -80,7 +80,7 @@ if __name__ == '__main__':
     ### Read files
     data = {}
     for type_corr, fi in lst_file.items():
-        print("looking at correlation {}".format(type_corr),end="\r")
+        print("looking at correlation {}".format(type_corr))
 
         #Open up the first file to set up arrays etc.
         f = fi[0]
@@ -148,6 +148,7 @@ if __name__ == '__main__':
 
             h.close()
 
+        print('')
 
         if type_corr in ['DD','RR']:
             coef = nObj*(nObj-1)
