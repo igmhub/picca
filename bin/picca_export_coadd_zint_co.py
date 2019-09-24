@@ -92,7 +92,7 @@ if __name__ == '__main__':
                 data[k] = head[k]
             for k in ['RP','RT','Z','NB']:
                 data[k] = sp.zeros(sp.array(h[1][k][:]).shape)
-                data['WET'] = sp.zeros(sp.array(h[1]['RP'][:]).shape)
+            data['WET'] = sp.zeros(sp.array(h[1]['RP'][:]).shape)
 
         # Assume that same nside, healpix scheme and footprint are used for all
         #correlations of each type.
@@ -102,6 +102,8 @@ if __name__ == '__main__':
         data[type_corr]['HEALPID'] = h[2]['HEALPID'][:][w]
         data[type_corr]['WE'] = sp.zeros(h[2]['WE'][:].shape)
         data[type_corr]['NBS'] = sp.zeros(h[2]['NB'][:].shape)
+        for k in ['NT','NP','RTMAX','RPMIN','RPMAX','NSIDE']:
+            data[type_corr][k] = data[k]
         for k in ['RP','RT','Z','NB','WET']:
             data[type_corr][k] = data[k]
 
