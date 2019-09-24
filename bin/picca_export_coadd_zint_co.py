@@ -103,20 +103,20 @@ if __name__ == '__main__':
         data[type_corr]['WE'] = sp.zeros(h[2]['WE'][:].shape)
         for k in ['RP','RT','Z','NB','WET']:
             data[type_corr][k] = data[k]
-            
+
         #Picca saves the output file from picca_co.py with head['NOBJ'] as the
         #total number of objects in the catalog *before* any redshift cuts are
         #applied. Thus we do not need to sum the values from each of the files.
         #We assume that all files from the same correlation type used the same
-        #catalog, thus have the same nbObj.
+        #catalog, thus have the same nObj.
         if type_corr in ['DD','RR']:
-            nbObj = head['NOBJ']
-            data[type_corr]['NOBJ'] = nbObj
+            nObj = head['NOBJ']
+            data[type_corr]['NOBJ'] = nObj
         else:
-            nbObj  = head['NOBJ']
-            nbObj2 = head['NOBJ2']
-            data[type_corr]['NOBJ'] = nbObj
-            data[type_corr]['NOBJ2'] = nbObj2
+            nObj  = head['NOBJ']
+            nObj2 = head['NOBJ2']
+            data[type_corr]['NOBJ'] = nObj
+            data[type_corr]['NOBJ2'] = nObj2
 
         h.close()
 
@@ -146,9 +146,9 @@ if __name__ == '__main__':
 
 
         if type_corr in ['DD','RR']:
-            coef = nbObj*(nbObj-1)
+            coef = nObj*(nObj-1)
         else:
-            coef = nbObj*nbObj2
+            coef = nObj*nObj2
         data['COEF'] = coef
 
         #Correctly normalise all of the data.
@@ -190,10 +190,10 @@ if __name__ == '__main__':
             {'name':'NT','value':data['NT'],'comment':'Number of bins in r-transverse'},
             {'name':'NSIDE','value':data['NSIDE'],'comment':'Healpix nside'},
             {'name':'TYPECORR','value':type_corr,'comment':'Correlation type'},
-            {'name':'NOBJ','value':data[type_corr]['NBOBJ'],'comment':'Number of objects'},
+            {'name':'NOBJ','value':data[type_corr]['NOBJ'],'comment':'Number of objects'},
         ]
         if type_corr in ['DR','RD']:
-            head += [{'name':'NOBJ2','value':data[type_corr]['NBOBJ2'],'comment':'Number of objects 2'}]
+            head += [{'name':'NOBJ2','value':data[type_corr]['NOBJ2'],'comment':'Number of objects 2'}]
 
         comment = ['R-parallel','R-transverse','Redshift','Number of pairs']
         units = ['h^-1 Mpc','h^-1 Mpc','','']
