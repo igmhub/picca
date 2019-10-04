@@ -104,7 +104,7 @@ def xi_mod(pars, data, dic_init):
     pars['SB'] = False
     xi_best_fit = pars['bao_amp']*data.xi_model(k, pk_lin-pksb_lin, pars)
 
-    pars['SB'] = True
+    pars['SB'] = True & (not dic_init['fiducial']['full-shape'])
     snl_par = pars['sigmaNL_par']
     snl_per = pars['sigmaNL_per']
     pars['sigmaNL_par'] = 0.
