@@ -145,6 +145,10 @@ if __name__ == '__main__':
     cf.rej = args.rej
     cf.max_diagram = args.max_diagram
 
+    ### Cosmo
+    if (args.fid_Or!=0.) or (args.fid_Ok!=0.) or (args.fid_wl!=-1.):
+        print("ERROR: Cosmology with other than Omega_m set are not yet implemented")
+        sys.exit()
     cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl, unblind=args.unblind)
 
     ### Read data

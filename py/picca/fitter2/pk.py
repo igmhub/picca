@@ -1,12 +1,18 @@
 import scipy as sp
 from . import utils
+from pkg_resources import resource_filename
 
 muk = utils.muk
 bias_beta = utils.bias_beta
+Fvoigt_data = []
 
 class pk:
-    def __init__(self, func):
+    def __init__(self, func, name_model=None):
         self.func = func
+        global Fvoigt_data
+        if (not name_model is None) and (Fvoigt_data == []):
+            path = '{}/models/fvoigt_models/Fvoigt_{}.txt'.format(resource_filename('picca', 'fitter2'),name_model)
+            Fvoigt_data = sp.loadtxt(path)
 
     def __call__(self, k, pk_lin, tracer1, tracer2, **kwargs):
         return self.func(k, pk_lin, tracer1, tracer2, **kwargs)
@@ -24,17 +30,6 @@ def pk_NL(k, pk_lin, tracer1, tracer2, **kwargs):
     st2 = kwargs['sigmaNL_per']**2
     sp2 = kwargs['sigmaNL_par']**2
     return sp.exp(-(kp**2*sp2+kt**2*st2)/2)
-
-def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
-    """
-    Apply a Gaussian smoothing to the full correlation function
-
-    """
-    kp  = k*muk
-    kt  = k*sp.sqrt(1.-muk**2)
-    st2 = kwargs['per_sigma_smooth']**2
-    sp2 = kwargs['par_sigma_smooth']**2
-    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)
 
 def pk_kaiser(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
@@ -87,6 +82,41 @@ def pk_hcd_Rogers2018(k, pk_lin, tracer1, tracer2, **kwargs):
 
     kp = k*muk
     F_hcd = sp.exp(-L0*kp)
+
+    bias_eff1 = bias1 + bias_hcd*F_hcd
+    beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+
+    bias_eff2 = bias2 + bias_hcd*F_hcd
+    beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+
+    pk = pk_lin*bias_eff1*bias_eff2*(1 + beta_eff1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
+def pk_hcd_no_mask(k, pk_lin, tracer1, tracer2, **kwargs):
+    """
+    Use Fvoigt function to fit the DLA in the autocorrelation Lyman-alpha without masking them ! (L0 = 1)
+
+    (If you want to mask them --> use Fvoigt_exp.txt and L0 = 10 as eBOOS DR14)
+
+    """
+    global Fvoigt_data
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+
+    key = "bias_hcd_{}".format(kwargs['name'])
+    if key in kwargs :
+        bias_hcd = kwargs[key]
+    else :
+        bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+
+    k_data = Fvoigt_data[:,0]
+    F_data = Fvoigt_data[:,1]
+
+    F_hcd = sp.interp(L0*kp, k_data, F_data, left=0, right=0)
 
     bias_eff1 = bias1 + bias_hcd*F_hcd
     beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
@@ -274,6 +304,34 @@ def pk_hcd_Rogers2018_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 
     return pk
 
+def pk_hcd_cross_no_mask(k, pk_lin, tracer1, tracer2, **kwargs):
+    bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
+    assert (tracer1['name']=="LYA" or tracer2['name']=="LYA") and (tracer1['name']!=tracer2['name'])
+
+    key = "bias_hcd_{}".format(kwargs['name'])
+    if key in kwargs :
+        bias_hcd = kwargs[key]
+    else :
+        bias_hcd = kwargs["bias_hcd"]
+    beta_hcd = kwargs["beta_hcd"]
+    L0 = kwargs["L0_hcd"]
+
+    kp = k*muk
+    k_data = Fvoigt_data[:,0]
+    F_data = Fvoigt_data[:,1]
+    F_hcd = sp.interp(L0*kp, k_data, F_data)
+
+    if tracer1['name'] == "LYA":
+        bias_eff1 = bias1 + bias_hcd*F_hcd
+        beta_eff1 = (bias1 * beta1 + bias_hcd*beta_hcd*F_hcd)/(bias1 + bias_hcd*F_hcd)
+        pk = pk_lin*bias_eff1*bias2*(1 + beta_eff1*muk**2)*(1 + beta2*muk**2)
+    else:
+        bias_eff2 = bias2 + bias_hcd*F_hcd
+        beta_eff2 = (bias2 * beta2 + bias_hcd*beta_hcd*F_hcd)/(bias2 + bias_hcd*F_hcd)
+        pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
+
+    return pk
+
 def pk_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
     bias1, beta1, bias2, beta2 = bias_beta(kwargs, tracer1, tracer2)
     assert (tracer1['type']=="continuous" or tracer2['type']=="continuous") and (tracer1['type']!=tracer2['type'])
@@ -360,6 +418,32 @@ def pk_hcd_Rogers2018_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
         pk = pk_lin*bias1*bias_eff2*(1 + beta1*muk**2)*(1 + beta_eff2*muk**2)
 
     return pk
+
+def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
+    """
+    Apply a Gaussian smoothing to the full correlation function
+
+    """
+    kp  = k*muk
+    kt  = k*sp.sqrt(1.-muk**2)
+    st2 = kwargs['per_sigma_smooth']**2
+    sp2 = kwargs['par_sigma_smooth']**2
+    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)
+
+def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
+    """
+    Apply a Gaussian and exp smoothing to the full correlation function (use full for london_mocks_v6.0
+
+    """
+    kp  = k*muk
+    kt  = k*sp.sqrt(1.-muk**2)
+    st2 = kwargs['per_sigma_smooth']**2
+    sp2 = kwargs['par_sigma_smooth']**2
+
+    et2 = kwargs['per_exp_smooth']**2
+    ep2 = kwargs['par_exp_smooth']**2
+
+    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)*sp.exp(-(sp.absolute(kp)*ep2+sp.absolute(kt)*et2) )
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]

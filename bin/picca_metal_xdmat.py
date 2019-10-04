@@ -79,6 +79,9 @@ if __name__ == '__main__':
     parser.add_argument('--z-evol-obj', type=float, default=1., required=False,
         help='Exponent of the redshift evolution of the object field')
 
+    parser.add_argument('--metal-alpha', type=float, default=1., required=False,
+        help='Exponent of the redshift evolution of the metal delta field')
+
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
@@ -125,6 +128,11 @@ if __name__ == '__main__':
     xcf.zref = args.z_ref
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
     xcf.rej = args.rej
+
+    xcf.alpha_abs = {}
+    xcf.alpha_abs[args.lambda_abs] = args.z_evol_del
+    for m in args.abs_igm:
+        xcf.alpha_abs[m] = args.metal_alpha
 
     cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl, unblind=args.unblind)
     xcf.cosmo=cosmo

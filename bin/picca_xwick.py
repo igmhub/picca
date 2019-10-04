@@ -86,6 +86,15 @@ if __name__ == '__main__':
     parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
+    parser.add_argument('--fid-Or', type=float, default=0., required=False,
+        help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
+
+    parser.add_argument('--fid-Ok', type=float, default=0., required=False,
+        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+
+    parser.add_argument('--fid-wl', type=float, default=-1., required=False,
+        help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
+
     parser.add_argument('--unblind', action='store_true', required=False,
         help='Do not project out continuum fitting modes')
 
@@ -133,7 +142,10 @@ if __name__ == '__main__':
     xcf.max_diagram = args.max_diagram
 
     ### Cosmo
-    cosmo = constants.cosmo(args.fid_Om, unblind=args.unblind)
+    if (args.fid_Or!=0.) or (args.fid_Ok!=0.) or (args.fid_wl!=-1.):
+        print("ERROR: Cosmology with other than Omega_m set are not yet implemented")
+        sys.exit()
+    cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl, unblind=args.unblind)
 
     ### Read deltas
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs, args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec)
