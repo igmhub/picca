@@ -14,7 +14,9 @@ class cosmo:
     def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=100.,unblind=False):
 
         # Blind data
-        if not unblind:
+        if unblind:
+            print("Analysis is not blinded: Om={}".format(Om))
+        else:
             Om = 0.3  # prov: this should be read from a file
 
         ### Ignore evolution of neutrinos from matter to radiation
