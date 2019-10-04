@@ -486,7 +486,11 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         nest = h['METADATA'].read_header()['HPXNEST']
         h.close()
         in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-zcat_dec, zcat_ra, nest=nest)
-        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits'.format(indir,int(f//100),f,in_nside,f) for f in sp.unique(in_pixs)]))
+        if fi[0].endswith('.gz'):
+            endoffile = '.gz'
+        else:
+            endoffile = ''
+        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in sp.unique(in_pixs)]))
     else:
         fi = sp.sort(sp.array(infiles))
     print('INFO: Found {} files'.format(fi.size))
@@ -512,7 +516,11 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         dec = h['METADATA']['DEC'][:].astype(sp.float64)*sp.pi/180.
         z = h['METADATA']['Z'][:]
         ll = sp.log10(h['WAVELENGTH'].read())
-        trans = h['TRANSMISSION'].read()
+        if 'F_LYA' in h :
+            trans = h['F_LYA'].read()
+        else:
+            trans = h['TRANSMISSION'].read()
+
         nObj = z.size
         pixnum = f.split('-')[-1].split('.')[0]
 
@@ -616,33 +624,7 @@ def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
         angmax = 2.*sp.arcsin(rt_max/(rmin1+rmin2))
 
     return angmax
-def shuffle_distrib_obj(obj,seed):
-    '''Shuffle the distribution of objects by giving to an object the redshift
-        of another random one.
 
-    Args:
-        obj (dic): Catalog of objects
-        seed (int): seed for the given realization of the shuffle
-
-    Returns:
-        obj (dic): Catalog of objects
-    '''
-    dic = {}
-    lst_p = ['we','zqso','r_comov']
-    for p in lst_p:
-        dic[p] = [getattr(o, p) for oss in obj.values() for o in oss]
-
-    sp.random.seed(seed)
-    idx = sp.arange(len(dic['zqso']))
-    sp.random.shuffle(idx)
-
-    i = 0
-    for oss in obj.values():
-        for o in oss:
-            for p in lst_p:
-                setattr(o,p,dic[p][idx[i]])
-            i += 1
-    return obj
 def shuffle_distrib_forests(obj,seed):
     '''Shuffle the distribution of forests by assiging the angular
         positions from another forest
@@ -659,19 +641,32 @@ def shuffle_distrib_forests(obj,seed):
 
     dic = {}
     lst_p = ['ra','dec','xcart','ycart','zcart','cosdec','thid']
+    dic['pix'] = []
     for p in lst_p:
-        dic[p] = [getattr(o, p) for oss in obj.values() for o in oss]
+        dic[p] = []
+
+    for pix, oss in obj.items():
+        for o in oss:
+            dic['pix'].append(pix)
+            for p in lst_p:
+                dic[p].append(getattr(o, p))
+
     sp.random.seed(seed)
     idx = sp.arange(len(dic['ra']))
     sp.random.shuffle(idx)
 
     i = 0
+    data_shuffled = {}
     for oss in obj.values():
         for o in oss:
             for p in lst_p:
                 setattr(o,p,dic[p][idx[i]])
+            if not dic['pix'][idx[i]] in data_shuffled:
+                data_shuffled[dic['pix'][idx[i]]]=[]
+            data_shuffled[dic['pix'][idx[i]]].append(o)
             i += 1
-    return obj
+
+    return data_shuffled
 
 def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     """
