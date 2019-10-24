@@ -1,11 +1,12 @@
 from __future__ import print_function
 import scipy as sp
 import iminuit
-from picca.data import forest,variance
+from picca.data import forest,corrected_weight,variance
 from picca.utils import print
+from picca.constants import absorber_IGM
 
 ## mean continuum
-def mc(data):
+def mc(data, zref, alpha, waveRF=absorber_IGM["LYA"]):
     nmc = int((forest.lmax_rest-forest.lmin_rest)/forest.dll)+1
     mcont = sp.zeros(nmc)
     wcont = sp.zeros(nmc)
@@ -17,7 +18,10 @@ def mc(data):
             eta = forest.eta(d.ll)
             fudge = forest.fudge(d.ll)
             var = 1./d.iv/d.co**2
-            we = 1/variance(var,eta,var_lss,fudge)
+            z = 10.**d.ll/waveRF-1.
+            we = corrected_weight(var,eta,var_lss,fudge, z, zref, alpha)
+            # old stuff
+            #we = 1/variance(var,eta,var_lss,fudge)
             c = sp.bincount(bins,weights=d.fl/d.co*we)
             mcont[:len(c)]+=c
             c = sp.bincount(bins,weights=we)
@@ -123,7 +127,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     return ll,eta,vlss,fudge,nb_pixels,var,var_del.reshape(nlss,-1),var2_del.reshape(nlss,-1),count.reshape(nlss,-1),nqso.reshape(nlss,-1),bin_chi2,err_eta,err_vlss,err_fudge
 
 
-def stack(data,delta=False):
+def stack(data, zref=2.25, alpha=2.9, waveRF=absorber_IGM["LYA"], delta=False):
     nstack = int((forest.lmax-forest.lmin)/forest.dll)+1
     ll = forest.lmin + sp.arange(nstack)*forest.dll
     st = sp.zeros(nstack)
@@ -139,7 +143,8 @@ def stack(data,delta=False):
                 eta = forest.eta(d.ll)
                 fudge = forest.fudge(d.ll)
                 var = 1./d.iv/d.co**2
-                we = 1./variance(var,eta,var_lss,fudge)
+                z = 10.**d.ll/waveRF-1.
+                we = corrected_weight(var,eta,var_lss,fudge, z, zref, alpha)
 
             bins=((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
             c = sp.bincount(bins,weights=de*we)

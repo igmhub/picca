@@ -15,9 +15,9 @@ from picca.data import forest, delta
 from picca import prep_del, io, constants
 from picca.utils import print
 
-def cont_fit(data):
+def cont_fit(data, zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs]):
     for d in data:
-        d.cont_fit()
+        d.cont_fit(zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs])
     return data
 
 
@@ -73,6 +73,15 @@ if __name__ == '__main__':
 
     parser.add_argument('--lambda-rest-max',type=float,default=1200.,required=False,
         help='Upper limit on rest frame wavelength [Angstrom]')
+
+    parser.add_argument('--z-evol', type=float, default=2.9, required=False,
+            help='Exponent of the redshift evolution of the delta field')
+            
+    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+        help='Reference redshift')
+        
+    parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
+    help='Name of the absorption in picca.constants defining the redshift of the delta')
 
     parser.add_argument('--rebin',type=int,default=3,required=False,
         help='Rebin wavelength grid by combining this number of adjacent pixels (ivar weight)')
@@ -343,7 +352,7 @@ if __name__ == '__main__':
         pool.close()
 
         if it < nit-1:
-            ll_rest, mc, wmc = prep_del.mc(data)
+            ll_rest, mc, wmc = prep_del.mc(dat,a, zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs])
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
             if not (args.use_ivar_as_weight or args.use_constant_weight):
                 ll, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
@@ -388,7 +397,7 @@ if __name__ == '__main__':
                 forest.fudge = interp1d(ll, fudge, fill_value='extrapolate', kind='nearest')
 
 
-    ll_st,st,wst = prep_del.stack(data)
+    ll_st,st,wst = prep_del.stack(data, zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs])
 
     ### Save iter_out_prefix
     res = fitsio.FITS(args.iter_out_prefix+".fits.gz",'rw',clobber=True)
@@ -408,7 +417,7 @@ if __name__ == '__main__':
     deltas = {}
     data_bad_cont = []
     for p in sorted(data.keys()):
-        deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
+        deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge, args.use_mock_continuum, zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:

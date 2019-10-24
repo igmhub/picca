@@ -783,7 +783,10 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
 def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False,from_image=None):
     '''
     reads deltas from indir
-    fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
+    fills the fields delta.z
+    previously it multiplied the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
+    but now this is deprecated. Note that the alpha parameter
+    now does nothing. Future versions should remove this
     returns data,zmin_pix
     '''
 
@@ -849,7 +852,10 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         if not cosmo is None:
             d.r_comov = cosmo.r_comoving(z)
             d.rdm_comov = cosmo.dm(z)
-        d.we *= ((1+z)/(1+zref))**(alpha-1)
+            
+        # weight correction, deprecated as now weights are corrected
+        # in the computation of deltas
+        #d.we *= ((1+z)/(1+zref))**(alpha-1)
 
         if not no_project:
             d.project()

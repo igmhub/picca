@@ -9,7 +9,9 @@ import fitsio
 
 def variance(var,eta,var_lss,fudge):
     return eta*var + var_lss + fudge/var
-
+    
+def corrected_weight(var,eta,var_lss,fudge, z, zref, alpha):
+    return ((1+z)/(1+zref))**(alpha-1)/variance(var,eta,var_lss,fudge)
 
 class qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
@@ -310,7 +312,7 @@ class forest(qso):
 
         return
 
-    def cont_fit(self):
+    def cont_fit(self, zref, alpha, waveRF):
         lmax = forest.lmax_rest+sp.log10(1+self.zqso)
         lmin = forest.lmin_rest+sp.log10(1+self.zqso)
         try:
@@ -335,10 +337,11 @@ class forest(qso):
             m = model(p0,p1)
             var_pipe = 1./self.iv/m**2
             ## prep_del.variance is the variance of delta
-            ## we want here the we = ivar(flux)
+            ## we want here the var = ivar(flux)
+            z = 10.**self.ll/waveRF-1.
 
-            var_tot = variance(var_pipe,eta,var_lss,fudge)
-            we = 1/m**2/var_tot
+            we = corrected_weight(var_pipe,eta,var_lss,fudge, z, zref, alpha)
+            we /= m**2
 
             # force we=1 when use-constant-weight
             # TODO: make this condition clearer, maybe pass an option
@@ -391,7 +394,7 @@ class delta(qso):
         self.dll = dll
 
     @classmethod
-    def from_forest(cls,f,st,var_lss,eta,fudge,mc=False):
+    def from_forest(cls,f,st,var_lss,eta,fudge, zref, alpha, waveRF, mc=False):
 
         ll = f.ll
         mst = st(ll)
@@ -404,7 +407,8 @@ class delta(qso):
         else : mef = f.co * mst
         de = f.fl/ mef -1.
         var = 1./f.iv/mef**2
-        we = 1./variance(var,eta,var_lss,fudge)
+        z = 10.**ll/waveRF-1.
+        we = corrected_weight(var,eta,var_lss,fudge, z, zref, alpha)
         diff = f.diff
         if f.diff is not None:
             diff /= mef
