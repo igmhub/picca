@@ -15,7 +15,7 @@ from picca.data import forest, delta
 from picca import prep_del, io, constants
 from picca.utils import print
 
-def cont_fit(data, zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs]):
+def cont_fit(data, zref=2.25, alpha=2.9, waveRF=constants.absorber_IGM['LYA']):
     for d in data:
         d.cont_fit(zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs])
     return data
@@ -417,7 +417,7 @@ if __name__ == '__main__':
     deltas = {}
     data_bad_cont = []
     for p in sorted(data.keys()):
-        deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge, args.use_mock_continuum, zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs) for d in data[p] if d.bad_cont is None]
+        deltas[p] = [delta.from_forest(d,st,forest.var_lss,forest.eta,forest.fudge, args.use_mock_continuum, zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs]) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:
