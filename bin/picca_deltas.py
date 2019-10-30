@@ -352,7 +352,7 @@ if __name__ == '__main__':
         pool.close()
 
         if it < nit-1:
-            ll_rest, mc, wmc = prep_del.mc(dat,a, zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs])
+            ll_rest, mc, wmc = prep_del.mc(data, zref=args.z_ref, alpha=args.z_evol, waveRF=constants.absorber_IGM[args.lambda_abs])
             forest.mean_cont = interp1d(ll_rest[wmc>0.], forest.mean_cont(ll_rest[wmc>0.]) * mc[wmc>0.], fill_value = "extrapolate")
             if not (args.use_ivar_as_weight or args.use_constant_weight):
                 ll, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
