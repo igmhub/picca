@@ -394,7 +394,7 @@ class delta(qso):
         self.dll = dll
 
     @classmethod
-    def from_forest(cls,f,st,var_lss,eta,fudge, zref, alpha, waveRF, mc=False):
+    def from_forest(cls,f,st,var_lss,eta,fudge, zref=2.25, alpha=2.9, waveRF=constants.absorber_IGM['LYA'], mc=False):
 
         ll = f.ll
         mst = st(ll)
