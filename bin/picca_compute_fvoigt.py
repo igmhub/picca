@@ -58,7 +58,7 @@ def fft_profile(profile, dx): # non normalise
 
 def lambda_to_r(lamb, profile_lambda, fidcosmo):
     """ 
-    Converts a profile as a function of wavelength to a profile as a function of r in Mpc/h 
+    Converts a profile as a function of wavelength to a profile as a function of r in Mpc/h
     """
     
     z = lamb/constants.absorber_IGM["LYA"] - 1
@@ -90,7 +90,7 @@ def compute_dla_prob_per_nhi(wavelength,nhi,dla,qso,dnhi):
     ndla,junk = np.histogram(dla_lamb[np.abs(dla_nhi-nhi)<dnhi/2],bins=wbins)
 
     f = np.zeros(wavelength.size)
-    for i,wave in enumerate(wavelength) :        
+    for i,wave in enumerate(wavelength) :
         #n_dla = np.sum( (np.abs(dla_lamb-wave)<dwave[i]/2) & (np.abs(dla_nhi-nhi)<dnhi/2) )
         nqso = np.sum( qso_lamb > wave)
         if nqso>0 :
@@ -100,19 +100,19 @@ def compute_dla_prob_per_nhi(wavelength,nhi,dla,qso,dnhi):
 
 def compute_dla_prob(wavelength, NHI, dla, qso, weight):
     
-    """ 
+    """
     Computes the probability of finding a DLA
-     - wavelength is 1 1D array 
-     - NHI is a 1D array of N(HI) in units of log10(cm^-2) 
+     - wavelength is 1 1D array
+     - NHI is a 1D array of N(HI) in units of log10(cm^-2)
      - dla the DLA catalog (table)
      - qso the QSO catalog (table)
      - weights as a function of wavelength
     """
     dnhi=np.gradient(NHI)
     mean_density = np.zeros(NHI.size)
-    for i in range(len(NHI)):
-        print("compute prob(NHI={}) ({}/{})".format(NHI[i],(i+1),NHI.size))
-        f = compute_dla_prob_per_nhi(wavelength,nhi=NHI[i],dla=dla,qso=qso,dnhi=dnhi[i])
+    for i,nhi in enumerate(NHI):
+        print("compute prob(NHI={}) ({}/{})".format(nhi,(i+1),NHI.size))
+        f = compute_dla_prob_per_nhi(wavelength,nhi=nhi,dla=dla,qso=qso,dnhi=dnhi[i])
         mean_density[i] = np.sum(f*weight)/np.sum(weight)
     return mean_density
 
@@ -144,8 +144,8 @@ def main() :
     if args.debug : print("only keep DLAs in DRQ quasars LOS")
     dla = dla[:][np.in1d(dla['MOCKID'], qso['THING_ID'])]
 
-    nb_dla = dla['Z_DLA_RSD'].size
-    nb_qso = qso['Z'].size #nombre de ligne de visée
+    #nb_dla = dla['Z_DLA_RSD'].size
+    #nb_qso = qso['Z'].size #nombre de ligne de visée
     
     coarse_wavelength = np.arange(3000, 8000, 100)
         
@@ -225,7 +225,5 @@ def main() :
         plt.grid()
         plt.show()
 
-
-        
 main()
 
