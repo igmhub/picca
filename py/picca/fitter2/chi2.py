@@ -6,6 +6,7 @@ import time
 import h5py
 import sys
 from scipy.linalg import cholesky
+from mpi4py import MPI
 
 from . import priors
 
@@ -191,6 +192,7 @@ class chi2:
                         it1*self.dic_chi2scan[par2]['grid'].size+it2+1,
                         self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
+        print(sp.asarray(result).T[-1])
         self.dic_chi2scan_result = {}
         self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
         self.dic_chi2scan_result['values'] = sp.asarray(result)
@@ -206,6 +208,259 @@ class chi2:
                 d.par_error[name] = store_d_par_error[name]
             for name in d.par_fixed.keys():
                 d.par_fixed[name] = store_d_par_fixed[name]
+
+    def mpi_chi2scan(self):
+        if not hasattr(self, "dic_chi2scan"): return
+
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        size = comm.Get_size()
+
+        dim = len(self.dic_chi2scan)
+
+        ### Set all parameters to the minimum and store the current state
+        store_data_pars = {}
+        for d in self.data:
+            store_d_pars_init = {}
+            store_d_par_error = {}
+            store_d_par_fixed = {}
+            for name in d.pars_init.keys():
+                store_d_pars_init[name] = d.pars_init[name]
+                d.pars_init[name] = self.best_fit.values[name]
+            for name in d.par_error.keys():
+                store_d_par_error[name] = d.par_error[name]
+                d.par_error[name] = self.best_fit.errors[name.split('error_')[1]]
+            for name in d.par_fixed.keys():
+                store_d_par_fixed[name] = d.par_fixed[name]
+            store_data_pars[d.name] = {'init':store_d_pars_init, 'error':store_d_par_error, 'fixed':store_d_par_fixed}
+
+        ###
+        for p in self.dic_chi2scan.keys():
+            for d in self.data:
+                if 'error_'+p in d.par_error.keys():
+                    d.par_error['error_'+p] = 0.
+                if 'fix_'+p in d.par_fixed.keys():
+                    d.par_fixed['fix_'+p] = True
+
+        ###
+        def send_one_fit():
+            try:
+                best_fit = self._minimize()
+                chi2_result = best_fit.fval
+            except:
+                chi2_result = sp.nan
+            tresult = []
+            for p in sorted(best_fit.values):
+                tresult += [best_fit.values[p]]
+            tresult += [chi2_result]
+            return tresult
+
+        def mpi_gather_data(send_buff):
+            recv_buff = None
+            if rank == 0:
+                recv_buff = sp.empty([size, len(send_buff)], dtype = sp.float64)
+            comm.barrier()
+            comm.Gather(send_buff, recv_buff, root = 0)
+            return recv_buff
+        
+        def mpi_run_1d_set(num_comp, grid, par):
+            assert num_comp <= size
+            comm.barrier()
+            
+            for i in range(size):
+                if i == rank:
+                    val = grid[i] if rank < num_comp else grid[-1]
+                    for d in self.data:
+                        if par in d.pars_init.keys():
+                            d.pars_init[par] = val
+                    local_result = sp.asarray(send_one_fit())
+            
+            comm.barrier()
+            results = mpi_gather_data(local_result)
+            comm.barrier()
+            if rank == 0 and num_comp < size:
+                results = results[:num_comp]
+            return results
+
+        def mpi_run_2d_set(num_comp, grid, par1, par2):
+            assert num_comp <= size
+            comm.barrier()
+            
+            for i in range(size):
+                if i == rank:
+                    vals = grid[i] if rank < num_comp else grid[-1]
+                    for d in self.data:
+                        if par1 in d.pars_init.keys():
+                            d.pars_init[par1] = vals[0]
+                        if par2 in d.pars_init.keys():
+                            d.pars_init[par2] = vals[1]
+                    local_result = sp.asarray(send_one_fit())
+
+            # assert False
+            comm.barrier()
+            results = mpi_gather_data(local_result)
+            comm.barrier()
+            if rank == 0 and num_comp < size:
+                results = results[:num_comp]
+            return results
+
+        result = []
+        ###
+        if dim==1:
+            par = list(self.dic_chi2scan.keys())[0]
+            grid = self.dic_chi2scan[par]['grid']
+            total_comp = len(grid)
+
+            if total_comp <= size:
+                result = mpi_run_1d_set(total_comp, grid, par)
+            else:
+                j = 0
+                for i in range(total_comp // size):
+                    result += [mpi_run_1d_set(size, grid[j:j+size], par)]
+                    j += size
+                rest = total_comp % size
+                if rest != 0:
+                    result += [mpi_run_1d_set(rest, grid[-rest:], par)]
+                
+        elif dim==2:
+            par1  = list(self.dic_chi2scan.keys())[0]
+            par2  = list(self.dic_chi2scan.keys())[1]
+            vals_1 = self.dic_chi2scan[par1]['grid']
+            vals_2 = self.dic_chi2scan[par2]['grid']
+            grid = []
+            for v1 in vals_1:
+                for v2 in vals_2:
+                    grid += [[v1, v2]]
+            grid = sp.asarray(grid)
+            total_comp = len(grid)
+
+            if total_comp <= size:
+                result = mpi_run_2d_set(total_comp, grid, par1, par2)
+            else:
+                j = 0
+                for i in range(total_comp // size):
+                    result += [mpi_run_2d_set(size, grid[j:j+size], par1, par2)]
+                    j += size
+                rest = total_comp % size
+                if rest != 0:
+                    result += [mpi_run_2d_set(rest, grid[-rest:], par1, par2)]
+
+        if rank == 0 and total_comp > size:
+            temp = result[0]
+            for res in result[1:]:
+                temp = sp.r_[temp,res]
+            result = temp
+                    
+        self.dic_chi2scan_result = {}
+        self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
+        self.dic_chi2scan_result['values'] = sp.asarray(result)
+
+        ### Set all parameters to where they were before
+        for d in self.data:
+            store_d_pars_init = store_data_pars[d.name]['init']
+            store_d_par_error = store_data_pars[d.name]['error']
+            store_d_par_fixed = store_data_pars[d.name]['fixed']
+            for name in d.pars_init.keys():
+                d.pars_init[name] = store_d_pars_init[name]
+            for name in d.par_error.keys():
+                d.par_error[name] = store_d_par_error[name]
+            for name in d.par_fixed.keys():
+                d.par_fixed[name] = store_d_par_fixed[name]
+    
+
+    # def chi2_marginal_scan(self):
+    #     if not hasattr(`self, "dic_chi2scan"): return
+
+    #     dim = len(self.dic_chi2scan)
+
+    #     ### Set all parameters to the minimum and store the current state
+    #     store_data_pars = {}
+    #     for d in self.data:
+    #         store_d_pars_init = {}
+    #         store_d_par_error = {}
+    #         store_d_par_fixed = {}
+    #         for name in d.pars_init.keys():
+    #             store_d_pars_init[name] = d.pars_init[name]
+    #             d.pars_init[name] = self.best_fit.values[name]
+    #         for name in d.par_error.keys():
+    #             store_d_par_error[name] = d.par_error[name]
+    #             d.par_error[name] = self.best_fit.errors[name.split('error_')[1]]
+    #         for name in d.par_fixed.keys():
+    #             store_d_par_fixed[name] = d.par_fixed[name]
+    #         store_data_pars[d.name] = {'init':store_d_pars_init, 'error':store_d_par_error, 'fixed':store_d_par_fixed}
+
+    #     ###
+    #     for p in self.dic_chi2scan.keys():
+    #         for d in self.data:
+    #             if 'error_'+p in d.par_error.keys():
+    #                 d.par_error['error_'+p] = 0.
+    #             if 'fix_'+p in d.par_fixed.keys():
+    #                 d.par_fixed['fix_'+p] = True
+
+    #     ###
+    #     def send_one_fit():
+    #         try:
+    #             best_fit = self._minimize()
+    #             chi2_result = best_fit.fval
+    #         except:
+    #             chi2_result = sp.nan
+    #         tresult = []
+    #         for p in sorted(best_fit.values):
+    #             tresult += [best_fit.values[p]]
+
+    #         cov_vec = []
+    #         for (p1, p2), cov in best_fit.covariance.items():
+    #             cov_vec += [cov]
+    #         size = int(sp.sqrt(len(cov_vec)))
+    #         assert size**2 == len(cov_vec)
+
+    #         cov_mat = sp.array(cov_vec).reshape((size, size))
+    #         cov_det = sp.linalg.det(cov_mat)
+
+    #         tresult += [0.5*size+0.5*sp.log(2*pi)+0.5*sp.log(cov_det)]
+    #         return tresult
+
+    #     result = []
+    #     ###
+    #     if dim==1:
+    #         par = list(self.dic_chi2scan.keys())[0]
+    #         for it, step in enumerate(self.dic_chi2scan[par]['grid']):
+    #             for d in self.data:
+    #                 if par in d.pars_init.keys():
+    #                     d.pars_init[par] = step
+    #             result += [send_one_fit()]
+    #             sys.stderr.write("\nINFO: finished chi2scan iteration {} of {}\n".format(it+1,
+    #                 self.dic_chi2scan[par]['grid'].size))
+    #     elif dim==2:
+    #         par1  = list(self.dic_chi2scan.keys())[0]
+    #         par2  = list(self.dic_chi2scan.keys())[1]
+    #         for it1, step1 in enumerate(self.dic_chi2scan[par1]['grid']):
+    #             for it2, step2 in enumerate(self.dic_chi2scan[par2]['grid']):
+    #                 for d in self.data:
+    #                     if par1 in d.pars_init.keys():
+    #                         d.pars_init[par1] = step1
+    #                     if par2 in d.pars_init.keys():
+    #                         d.pars_init[par2] = step2
+    #                 result += [send_one_fit()]
+    #                 sys.stderr.write("\nINFO: finished chi2scan iteration {} of {}\n".format(
+    #                     it1*self.dic_chi2scan[par2]['grid'].size+it2+1,
+    #                     self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
+
+    #     self.dic_chi2scan_result = {}
+    #     self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
+    #     self.dic_chi2scan_result['values'] = sp.asarray(result)
+
+    #     ### Set all parameters to where they were before
+    #     for d in self.data:
+    #         store_d_pars_init = store_data_pars[d.name]['init']
+    #         store_d_par_error = store_data_pars[d.name]['error']
+    #         store_d_par_fixed = store_data_pars[d.name]['fixed']
+    #         for name in d.pars_init.keys():
+    #             d.pars_init[name] = store_d_pars_init[name]
+    #         for name in d.par_error.keys():
+    #             d.par_error[name] = store_d_par_error[name]
+    #         for name in d.par_fixed.keys():
+    #             d.par_fixed[name] = store_d_par_fixed[name]
 
     def fastMC(self):
         if not hasattr(self,"nfast_mc"): return

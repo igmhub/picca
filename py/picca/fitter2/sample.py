@@ -42,8 +42,12 @@ class sample:
             self.fidfast_mc = dic_init['fast mc']['fiducial']['values']
             self.fixfast_mc = dic_init['fast mc']['fiducial']['fix']
 
+        self.get_local_lik = self.control.getboolean('compute_local_lik', False)
         run_chi2 = self.control.getboolean('chi2', False)
-        if run_chi2:
+        if self.control.getboolean('chi2_parllel', False):
+            run_chi2 = True
+        marginal_scan = self.control.getboolean('marginal_scan', False)
+        if run_chi2 or marginal_scan:
             self.chi = chi2.chi2(dic_init)
 
         run_mock = self.control.getboolean('run_mock', False)
@@ -67,7 +71,7 @@ class sample:
             log_lik += d.log_lik(self.k,self.pk_lin,self.pksb_lin,self.full_shape,pars)
 
         for prior in priors.prior_dic.values():
-            log_lik += prior(pars)
+            log_lik += prior(pars) 
 
         return log_lik
 
@@ -116,6 +120,7 @@ class sample:
 
                 np.savetxt(self.outfile+'/mock_'+d.name+'_'+str(i), mock)
 
+
     def run_sampler(self):
         '''
         Run Polychord
@@ -156,6 +161,19 @@ class sample:
             log_lik = self.log_lik(pars)
             return log_lik, []
 
+        if self.get_local_lik:
+            print(log_lik([-2.16/1000, -0.49/1000, -1.96/1000, -2.55/1000, -5.6/1000, 
+            -0.0302, 0.92, 25.32, 
+            -0.1999, 1.476, 1.033, 0.966, 
+            0.954/100, 31.2, 1.347/100, 33.9]))
+            print(log_lik([-0.231027055935154E-002, -0.700194161461883E-002, 
+            -0.185298594312442E-002, -0.262455678999301E-002, 
+            -0.796660997664536E-002, -0.311194679511803E-001,  
+            0.484192792870210E+000, 0.140585799855970E+002, 
+            -0.206849644231778E+000, 0.175674854093403E+001,  
+            0.104783878659817E+001, 0.955578644407215E+000,  
+            0.901033644799182E-002, 0.335946394807130E+002,  
+            0.140580284347781E-001, 0.329783929780770E+002]))
         # print(log_lik([1.11,1.01]))
         # print(log_lik([1.12,1.02]))
         # print(log_lik([1.13,1.03]))
