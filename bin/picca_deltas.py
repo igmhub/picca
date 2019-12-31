@@ -56,6 +56,9 @@ if __name__ == '__main__':
     parser.add_argument('--zqso-max',type=float,default=None,required=False,
         help='Upper limit on quasar redshift from drq')
 
+    parser.add_argument('--keep-zero-thid',action='store_true',required=False,
+        help='Do not quasars with THING_ID < 1')
+
     parser.add_argument('--keep-bal',action='store_true',required=False,
         help='Do not reject BALs in drq')
 
@@ -213,7 +216,8 @@ if __name__ == '__main__':
     data,ndata,healpy_nside,healpy_pix_ordering = io.read_data(os.path.expandvars(args.in_dir), args.drq, args.mode,\
         zmin=args.zqso_min, zmax=args.zqso_max, nspec=args.nspec, log=log,\
         keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
-        best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format )
+        best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format,\
+        keep_zero_thid=args.keep_zero_thid)
 
     ### Get the lines to veto
     usr_mask_obs    = None

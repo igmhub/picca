@@ -77,7 +77,7 @@ def read_absorbers(file_absorbers):
 
     return absorbers
 
-def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
+def read_drq(drq,zmin,zmax,keep_bal,bi_max=None,keep_zero_thid=False):
     h = fitsio.FITS(drq)
 
     ## Redshift
@@ -99,8 +99,9 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     print('')
     w = sp.ones(ra.size,dtype=bool)
     print(" start               : nb object in cat = {}".format(w.sum()) )
-    w &= thid>0
-    print(" and thid>0          : nb object in cat = {}".format(w.sum()) )
+    if not keep_zero_thid:
+        w &= thid>0
+        print(" and thid>0          : nb object in cat = {}".format(w.sum()) )
     w &= ra!=dec
     print(" and ra!=dec         : nb object in cat = {}".format(w.sum()) )
     w &= ra!=0.
@@ -159,10 +160,10 @@ def read_dust_map(drq, Rv = 3.793):
 target_mobj = 500
 nside_min = 8
 
-def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None):
+def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None,keep_zero_thid=False):
 
     print("mode: "+mode)
-    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
+    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max,keep_zero_thid=keep_zero_thid)
 
     if nspec != None:
         ## choose them in a small number of pixels
@@ -857,9 +858,9 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     return data,ndata,zmin,zmax
 
 
-def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
+def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True,keep_zero_thid=False):
     objs = {}
-    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal=True)
+    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal=keep_bal,keep_zero_thid=keep_zero_thid)
     phi = ra
     th = sp.pi/2.-dec
     pix = healpy.ang2pix(nside,th,phi)
