@@ -247,9 +247,26 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     zqso = h[1][drqzkey][:]
     h.close()
     fromThingid2idx = { el:i for i,el in enumerate(thid) }
-    cat['RA'] = sp.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['DEC'] = sp.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['ZQSO'] = sp.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    # collect information from the quasar catalog (if can find entry)
+    cat_ra=[]
+    cat_dec=[]
+    cat_zqso=[]
+    for el in cat['THING_ID']:
+        if el in fromThingid2idx:
+            idx=fromThingid2idx[el]
+            cat_ra.append(ra[idx])
+            cat_dec.append(dec[idx])
+            cat_zqso.append(zqso[idx])
+        else:
+            # these will be removed later on
+            print('could not find quasar with THING_ID =',el)
+            cat_ra.append(0.0)
+            cat_dec.append(0.0)
+            cat_zqso.append(0.0)
+
+    cat['RA'] = sp.array(cat_ra)
+    cat['DEC'] = sp.array(cat_dec)
+    cat['ZQSO'] = sp.array(cat_zqso)
 
     w = cat['RA']!=cat['DEC']
     print('INFO: Removed {} DLA, because RA==DEC'.format((cat['RA']==cat['DEC']).sum()))
