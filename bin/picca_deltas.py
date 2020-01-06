@@ -57,7 +57,7 @@ if __name__ == '__main__':
         help='Upper limit on quasar redshift from drq')
 
     parser.add_argument('--keep-zero-thid',action='store_true',required=False,
-        help='Do not quasars with THING_ID < 1')
+        help='Do not reject quasars with THING_ID < 1')
 
     parser.add_argument('--keep-bal',action='store_true',required=False,
         help='Do not reject BALs in drq')
