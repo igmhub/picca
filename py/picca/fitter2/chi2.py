@@ -48,7 +48,7 @@ class chi2:
             if 'forecast' in dic_init['fast mc']:
                 self.forecast_mc = dic_init['fast mc']['forecast']
                 if self.nfast_mc is not 1:
-                    raise valueError('Why forecast more than once?')
+                    sys.exit('ERROR: Why forecast more than once?')
             else:
                 self.forecast_mc = False
 
