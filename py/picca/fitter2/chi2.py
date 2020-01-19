@@ -44,6 +44,13 @@ class chi2:
                 self.scalefast_mc = sp.ones(len(self.data))
             self.fidfast_mc = dic_init['fast mc']['fiducial']['values']
             self.fixfast_mc = dic_init['fast mc']['fiducial']['fix']
+            # if set to true, will not add randomness to FastMC mock
+            if 'forecast' in dic_init['fast mc']:
+                self.forecast_mc = dic_init['fast mc']['forecast']
+                if self.nfast_mc is not 1:
+                    raise valueError('Why forecast more than once?')
+            else:
+                self.forecast_mc = False
 
         if 'minos' in dic_init:
             self.minos_para = dic_init['minos']
@@ -246,7 +253,11 @@ class chi2:
         self.fast_mc_data = {}
         for it in range(nfast_mc):
             for d in self.data:
-                g = sp.random.randn(len(d.da))
+                # if computing forecast, do not add randomness
+                if self.forecast_mc:
+                    g = sp.zeros_like(d.da)
+                else:
+                    g = sp.random.randn(len(d.da))
                 d.da = d.cho.dot(g) + d.fiducial_model
                 self.fast_mc_data[d.name+'_'+str(it)] = d.da
                 d.da_cut = d.da[d.mask]
@@ -335,6 +346,7 @@ class chi2:
             g.attrs['niterations'] = self.nfast_mc
             g.attrs['seed'] = self.seedfast_mc
             g.attrs['covscaling'] = self.scalefast_mc
+            g.attrs['forecast'] = self.forecast_mc
             if len(self.fidfast_mc) != 0:
                 fid = []
                 for p in self.fidfast_mc:
