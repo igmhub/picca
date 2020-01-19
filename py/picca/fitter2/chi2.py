@@ -255,10 +255,10 @@ class chi2:
             for d in self.data:
                 # if computing forecast, do not add randomness
                 if self.forecast_mc:
-                    g = sp.zeros_like(d.da)
+                    d.da = d.fiducial_model
                 else:
                     g = sp.random.randn(len(d.da))
-                d.da = d.cho.dot(g) + d.fiducial_model
+                    d.da = d.cho.dot(g) + d.fiducial_model
                 self.fast_mc_data[d.name+'_'+str(it)] = d.da
                 d.da_cut = d.da[d.mask]
 
