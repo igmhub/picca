@@ -223,7 +223,9 @@ class chi2:
         for d, s in zip(self.data, self.scalefast_mc):
             d.co = s*d.co
             d.ico = d.ico/s
-            d.cho = cholesky(d.co)
+            # no need to compute Cholesky when computing forecast
+            if not self.forecast:
+                d.cho = cholesky(d.co)
 
         self.fiducial_values = dict(self.best_fit.values).copy()
         for p in self.fidfast_mc:
