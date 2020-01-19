@@ -224,7 +224,7 @@ class chi2:
             d.co = s*d.co
             d.ico = d.ico/s
             # no need to compute Cholesky when computing forecast
-            if not self.forecast:
+            if not self.forecast_mc:
                 d.cho = cholesky(d.co)
 
         self.fiducial_values = dict(self.best_fit.values).copy()
