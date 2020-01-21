@@ -193,6 +193,7 @@ class sample:
         seed = self.polychord_setup.getint('seed', int(0))
         num_repeats = self.polychord_setup.getint('num_repeats', int(5*npar))
         precision = self.polychord_setup.getfloat('precision', float(0.001))
+        boost_posterior = self.polychord_setup.getfloat('boost_posterior',float(0.0))
         resume = self.polychord_setup.getboolean('resume', True)
         path = self.polychord_setup.get('path')
         filename = self.polychord_setup.get('name')
