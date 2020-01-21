@@ -203,6 +203,7 @@ class sample:
                         nlive = nlive,
                         precision_criterion = precision,
                         num_repeats = num_repeats,
+                        boost_posterior = boost_posterior,
                         cluster_posteriors = False,
                         do_clustering = False,
                         equals = False,
