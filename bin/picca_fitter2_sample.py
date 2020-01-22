@@ -37,7 +37,8 @@ if __name__ == '__main__':
             comm.barrier()
             sampler.chi.mpi_chi2scan()
             comm.barrier()
-            
+            sampler.chi.mpi_fastMC()
+            comm.barrier()
             if rank == 0:
                 sampler.chi.export()
             comm.barrier()
@@ -50,6 +51,7 @@ if __name__ == '__main__':
                 raise ValueError
 
             sampler.chi.chi2scan()
+            sampler.chi.fastMC()
             sampler.chi.export()
         
     

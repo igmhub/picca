@@ -368,100 +368,6 @@ class chi2:
                 d.par_fixed[name] = store_d_par_fixed[name]
     
 
-    # def chi2_marginal_scan(self):
-    #     if not hasattr(`self, "dic_chi2scan"): return
-
-    #     dim = len(self.dic_chi2scan)
-
-    #     ### Set all parameters to the minimum and store the current state
-    #     store_data_pars = {}
-    #     for d in self.data:
-    #         store_d_pars_init = {}
-    #         store_d_par_error = {}
-    #         store_d_par_fixed = {}
-    #         for name in d.pars_init.keys():
-    #             store_d_pars_init[name] = d.pars_init[name]
-    #             d.pars_init[name] = self.best_fit.values[name]
-    #         for name in d.par_error.keys():
-    #             store_d_par_error[name] = d.par_error[name]
-    #             d.par_error[name] = self.best_fit.errors[name.split('error_')[1]]
-    #         for name in d.par_fixed.keys():
-    #             store_d_par_fixed[name] = d.par_fixed[name]
-    #         store_data_pars[d.name] = {'init':store_d_pars_init, 'error':store_d_par_error, 'fixed':store_d_par_fixed}
-
-    #     ###
-    #     for p in self.dic_chi2scan.keys():
-    #         for d in self.data:
-    #             if 'error_'+p in d.par_error.keys():
-    #                 d.par_error['error_'+p] = 0.
-    #             if 'fix_'+p in d.par_fixed.keys():
-    #                 d.par_fixed['fix_'+p] = True
-
-    #     ###
-    #     def send_one_fit():
-    #         try:
-    #             best_fit = self._minimize()
-    #             chi2_result = best_fit.fval
-    #         except:
-    #             chi2_result = sp.nan
-    #         tresult = []
-    #         for p in sorted(best_fit.values):
-    #             tresult += [best_fit.values[p]]
-
-    #         cov_vec = []
-    #         for (p1, p2), cov in best_fit.covariance.items():
-    #             cov_vec += [cov]
-    #         size = int(sp.sqrt(len(cov_vec)))
-    #         assert size**2 == len(cov_vec)
-
-    #         cov_mat = sp.array(cov_vec).reshape((size, size))
-    #         cov_det = sp.linalg.det(cov_mat)
-
-    #         tresult += [0.5*size+0.5*sp.log(2*pi)+0.5*sp.log(cov_det)]
-    #         return tresult
-
-    #     result = []
-    #     ###
-    #     if dim==1:
-    #         par = list(self.dic_chi2scan.keys())[0]
-    #         for it, step in enumerate(self.dic_chi2scan[par]['grid']):
-    #             for d in self.data:
-    #                 if par in d.pars_init.keys():
-    #                     d.pars_init[par] = step
-    #             result += [send_one_fit()]
-    #             sys.stderr.write("\nINFO: finished chi2scan iteration {} of {}\n".format(it+1,
-    #                 self.dic_chi2scan[par]['grid'].size))
-    #     elif dim==2:
-    #         par1  = list(self.dic_chi2scan.keys())[0]
-    #         par2  = list(self.dic_chi2scan.keys())[1]
-    #         for it1, step1 in enumerate(self.dic_chi2scan[par1]['grid']):
-    #             for it2, step2 in enumerate(self.dic_chi2scan[par2]['grid']):
-    #                 for d in self.data:
-    #                     if par1 in d.pars_init.keys():
-    #                         d.pars_init[par1] = step1
-    #                     if par2 in d.pars_init.keys():
-    #                         d.pars_init[par2] = step2
-    #                 result += [send_one_fit()]
-    #                 sys.stderr.write("\nINFO: finished chi2scan iteration {} of {}\n".format(
-    #                     it1*self.dic_chi2scan[par2]['grid'].size+it2+1,
-    #                     self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
-
-    #     self.dic_chi2scan_result = {}
-    #     self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
-    #     self.dic_chi2scan_result['values'] = sp.asarray(result)
-
-    #     ### Set all parameters to where they were before
-    #     for d in self.data:
-    #         store_d_pars_init = store_data_pars[d.name]['init']
-    #         store_d_par_error = store_data_pars[d.name]['error']
-    #         store_d_par_fixed = store_data_pars[d.name]['fixed']
-    #         for name in d.pars_init.keys():
-    #             d.pars_init[name] = store_d_pars_init[name]
-    #         for name in d.par_error.keys():
-    #             d.par_error[name] = store_d_par_error[name]
-    #         for name in d.par_fixed.keys():
-    #             d.par_fixed[name] = store_d_par_fixed[name]
-
     def fastMC(self):
         if not hasattr(self,"nfast_mc"): return
 
@@ -513,6 +419,94 @@ class chi2:
                 self.fast_mc[p].append([v, best_fit.errors[p]])
             self.fast_mc['chi2'].append(best_fit.fval)
             sys.stderr.write("\nINFO: finished fastMC iteration {} of {}\n".format(it+1,nfast_mc))
+
+    def mpi_fastMC(self):
+        if not hasattr(self,"nfast_mc"): return
+
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        size = comm.Get_size()
+        
+        sp.random.seed(self.seedfast_mc)
+        nfast_mc = self.nfast_mc
+
+        for d, s in zip(self.data, self.scalefast_mc):
+            d.co = s*d.co
+            d.ico = d.ico/s
+            d.cho = cholesky(d.co)
+
+        self.fiducial_values = dict(self.best_fit.values).copy()
+        for p in self.fidfast_mc:
+            self.fiducial_values[p] = self.fidfast_mc[p]
+            for d in self.data:
+                if p in d.par_names:
+                    d.pars_init[p] = self.fidfast_mc[p]
+                    d.par_fixed['fix_'+p] = self.fixfast_mc['fix_'+p]
+
+        self.fiducial_values['SB'] = False
+        for d in self.data:
+            d.fiducial_model = self.fiducial_values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, self.fiducial_values)
+
+            self.fiducial_values['SB'] = True
+            snl_per = self.fiducial_values['sigmaNL_per']
+            snl_par = self.fiducial_values['sigmaNL_par']
+            self.fiducial_values['sigmaNL_per'] = 0
+            self.fiducial_values['sigmaNL_par'] = 0
+            d.fiducial_model += d.xi_model(self.k, self.pksb_lin, self.fiducial_values)
+            self.fiducial_values['SB'] = False
+            self.fiducial_values['sigmaNL_per'] = snl_per
+            self.fiducial_values['sigmaNL_par'] = snl_par
+        del self.fiducial_values['SB']
+
+        self.fast_mc = {}
+        self.fast_mc['chi2'] = []
+        self.fast_mc_data = {}
+
+        def mpi_run_set(num_comp, it):
+            assert num_comp <= size
+            comm.barrier()
+
+            for i in range(size):
+                for d in self.data:
+                    g = sp.random.randn(len(d.da))
+                    d.da = d.cho.dot(g) + d.fiducial_model
+                    self.fast_mc_data[d.name+'_'+str(it + i)] = d.da
+                    d.da_cut = d.da[d.mask]
+                if i == rank:
+                    best_fit = self._minimize()
+            
+            local_res = {}
+            for p, v in best_fit.values.items():
+                local_res[p] = [v, best_fit.errors[p]]
+            local_res['chi2'] = best_fit.fval
+
+            comm.barrier()
+            results = None
+            results = comm.gather(local_res, root = 0)
+            comm.barrier()
+            return results
+
+        def write_bestfits(results):
+            for res in results:
+                for p, v in res.items():
+                    if not p in self.fast_mc:
+                        self.fast_mc[p] = []
+                    self.fast_mc[p].append(v)
+
+        it = 0
+        for i in range(nfast_mc // size):
+            results = mpi_run_set(size, it)
+            it += size
+            if rank == 0:
+                write_bestfits(results)
+                sys.stderr.write("\nINFO: finished fastMC iteration {} of {}\n".format(it,nfast_mc))
+            comm.barrier()
+        
+        if (nfast_mc % size) != 0:
+            results = mpi_run_set(size, it)
+            if rank == 0:
+                write_bestfits(results)
+                sys.stderr.write("\nINFO: finished fastMC iteration {} of {}\n".format(it,nfast_mc))
 
     def minos(self):
         if not hasattr(self,"minos_para"): return
