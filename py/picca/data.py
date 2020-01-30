@@ -531,13 +531,18 @@ class delta(qso):
 
 
     def project(self):
-        mde = sp.average(self.de,weights=self.we)
-        res=0
-        if (self.order==1) and self.de.shape[0] > 1:
-            mll = sp.average(self.ll,weights=self.we)
-            mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
-            res = mld * (self.ll-mll)
-        elif self.order==1:
-            res = self.de
-
-        self.de -= mde + res
+        # check that the sum of weights is non-zero (sp.average would crash)
+        sum_we=sp.sum(self.we)
+        if sum_we>0:
+            mde = sp.average(self.de,weights=self.we)
+            res=0
+            if (self.order==1) and self.de.shape[0] > 1:
+                mll = sp.average(self.ll,weights=self.we)
+                mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
+                res = mld * (self.ll-mll)
+            elif self.order==1:
+                res = self.de
+            self.de -= mde + res
+        else:
+            # this should be rare enough that we can print all cases for now
+            print('skip skewer {} with {} weight'.format(self.thid,sum_we))

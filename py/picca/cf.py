@@ -207,8 +207,15 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
     sw1 = w1.sum()
     sw2 = w2.sum()
 
-    ml1 = sp.average(l1,weights=w1)
-    ml2 = sp.average(l2,weights=w2)
+    # if no weights in delta, it shouldn't matter later on
+    if sw1 > 0.:
+        ml1 = sp.average(l1,weights=w1)
+    else:
+        ml1 = sp.average(l1,weights=None)
+    if sw2 > 0.:
+        ml2 = sp.average(l2,weights=w2)
+    else:
+        ml2 = sp.average(l2,weights=None)
 
     dl1 = l1-ml1
     dl2 = l2-ml2
@@ -248,25 +255,51 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
     eta7 = sp.zeros(npm*ntm)
     eta8 = sp.zeros(npm*ntm)
 
-    c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
+    if sw2>0.:
+        c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
+    else:
+        c = sp.bincount(ij%n1+n1*m_bins,weights=None)
     eta1[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    if sw1>0.:
+        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights=(w1[:,None]*sp.ones(n2))[w]/sw1)
+    else:
+        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights=None)
     eta2[:len(c)]+=c
-    c = sp.bincount(m_bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
+    if sw1*sw2>0.:
+        c = sp.bincount(m_bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
+    else:
+        c = sp.bincount(m_bins,weights=None)
     eta5[:len(c)]+=c
 
     if order2==1:
-        c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
+        if slw2>0.:
+            c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
+        else:
+            c = sp.bincount(ij%n1+n1*m_bins,weights=None)
         eta3[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
+        if slw2*sw1>0.:
+            c = sp.bincount(m_bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
+        else:
+            c = sp.bincount(m_bins,weights=None)
         eta6[:len(c)]+=c
+
     if order1==1:
-        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        if slw1>0.:
+            c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights=((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        else:
+            c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights=None)
         eta4[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
+        if slw1*sw2>0.:
+            c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
+        else:
+            c = sp.bincount(m_bins,weights=None)
         eta7[:len(c)]+=c
+
         if order2==1:
-            c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
+            if slw1*slw2>0.:
+                c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
+            else:
+                c = sp.bincount(m_bins,weights=None)
             eta8[:len(c)]+=c
 
     ubb = sp.unique(m_bins)
