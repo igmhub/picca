@@ -3,6 +3,7 @@ import os.path
 import scipy as sp
 import iminuit
 import time
+import copy
 import h5py
 import sys
 from scipy.linalg import cholesky
@@ -371,6 +372,7 @@ class chi2:
     def fastMC(self):
         if not hasattr(self,"nfast_mc"): return
 
+
         sp.random.seed(self.seedfast_mc)
         nfast_mc = self.nfast_mc
 
@@ -426,9 +428,11 @@ class chi2:
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
         size = comm.Get_size()
-        
-        sp.random.seed(self.seedfast_mc)
-        nfast_mc = self.nfast_mc
+
+        sp.random.seed(self.seedfast_mc + rank)
+        nfast_mc = self.nfast_mc // size
+        if self.nfast_mc % size != 0:
+            nfast_mc += 1
 
         for d, s in zip(self.data, self.scalefast_mc):
             d.co = s*d.co
@@ -461,52 +465,33 @@ class chi2:
         self.fast_mc = {}
         self.fast_mc['chi2'] = []
         self.fast_mc_data = {}
-
-        def mpi_run_set(num_comp, it):
-            assert num_comp <= size
-            comm.barrier()
-
-            for i in range(size):
-                for d in self.data:
-                    g = sp.random.randn(len(d.da))
-                    d.da = d.cho.dot(g) + d.fiducial_model
-                    self.fast_mc_data[d.name+'_'+str(it + i)] = d.da
-                    d.da_cut = d.da[d.mask]
-                if i == rank:
-                    best_fit = self._minimize()
-            
-            local_res = {}
-            for p, v in best_fit.values.items():
-                local_res[p] = [v, best_fit.errors[p]]
-            local_res['chi2'] = best_fit.fval
-
-            comm.barrier()
-            results = None
-            results = comm.gather(local_res, root = 0)
-            comm.barrier()
-            return results
-
-        def write_bestfits(results):
-            for res in results:
-                for p, v in res.items():
+        for it in range(nfast_mc):
+            for d in self.data:
+                g = sp.random.randn(len(d.da))
+                d.da = d.cho.dot(g) + d.fiducial_model
+                self.fast_mc_data[d.name+'_'+str(it)] = d.da
+                d.da_cut = d.da[d.mask]
+            try:
+                best_fit = self._minimize()
+                for p, v in best_fit.values.items():
                     if not p in self.fast_mc:
                         self.fast_mc[p] = []
-                    self.fast_mc[p].append(v)
+                    self.fast_mc[p].append([v, best_fit.errors[p]])
+                self.fast_mc['chi2'].append(best_fit.fval)
+                sys.stderr.write("\nINFO: CPU #" + str(rank) + " finished fastMC iteration " + str(it+1) + " of " + str(nfast_mc) + " \n")
+            except ValueError:
+                best_fit = self.best_fit
+                for p, v in best_fit.values.items():
+                    if not p in self.fast_mc:
+                        self.fast_mc[p] = []
+                    self.fast_mc[p].append([-1e100, -1e100])
+                self.fast_mc['chi2'].append(-1e100)
+                sys.stderr.write("\nINFO: CPU #" + str(rank) + " finished fastMC iteration " + str(it+1) + " of " + str(nfast_mc) + " \n")
 
-        it = 0
-        for i in range(nfast_mc // size):
-            results = mpi_run_set(size, it)
-            it += size
-            if rank == 0:
-                write_bestfits(results)
-                sys.stderr.write("\nINFO: finished fastMC iteration {} of {}\n".format(it,nfast_mc))
-            comm.barrier()
-        
-        if (nfast_mc % size) != 0:
-            results = mpi_run_set(size, it)
-            if rank == 0:
-                write_bestfits(results)
-                sys.stderr.write("\nINFO: finished fastMC iteration {} of {}\n".format(it,nfast_mc))
+        save_output = copy.deepcopy(self.outfile)
+        self.outfile = self.outfile[:-3] + '_cpu' + str(rank) + '.h5'
+        self.export()
+        self.outfile = save_output
 
     def minos(self):
         if not hasattr(self,"minos_para"): return
