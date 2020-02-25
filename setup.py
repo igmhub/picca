@@ -19,7 +19,7 @@ setup(name="picca",
     package_dir = {'': 'py'},
     package_data = {'picca': ['fitter2/models/*/*.fits']},
     install_requires=['numpy','scipy','iminuit','healpy','fitsio',
-        'llvmlite','numba','h5py','future','setuptools','mpi4py'],
+        'llvmlite','numba','h5py','future','setuptools'],
     test_suite='picca.test.test_cor',
     scripts = scripts
     )

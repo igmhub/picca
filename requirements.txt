@@ -8,4 +8,3 @@ numba==0.43.1
 h5py>=2.9.0
 future>=0.17.1
 setuptools==27.2.0
-mpi4py>=3.0.3
