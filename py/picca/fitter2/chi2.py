@@ -7,7 +7,6 @@ import copy
 import h5py
 import sys
 from scipy.linalg import cholesky
-from mpi4py import MPI
 
 from . import priors
 
