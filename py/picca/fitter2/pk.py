@@ -1,3 +1,4 @@
+import numpy as np
 import scipy as sp
 from . import utils
 from pkg_resources import resource_filename
@@ -443,7 +444,7 @@ def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     et2 = kwargs['per_exp_smooth']**2
     ep2 = kwargs['par_exp_smooth']**2
 
-    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)*sp.exp(-(sp.absolute(kp)*ep2+sp.absolute(kt)*et2) )
+    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)*sp.exp(-(np.absolute(kp)*ep2+np.absolute(kt)*et2) )
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]

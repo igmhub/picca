@@ -1,4 +1,6 @@
 from __future__ import print_function
+
+import numpy as np
 import scipy as sp
 from healpy import query_disc
 from numba import jit
@@ -639,7 +641,7 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     ### forest-1 x forest-2
     rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
     if not x_correlation:
-        rp = sp.absolute(rp)
+        rp = np.absolute(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
     pix1_12 = (sp.arange(r1.size)[:,None]*sp.ones(r2.size)).astype(int)
     pix2_12 = (sp.ones(r1.size)[:,None]*sp.arange(r2.size)).astype(int)
@@ -659,7 +661,7 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     ### forest-1 x forest-3
     rp = (r1[:,None]-r3)*sp.cos(ang13/2.)
     if not x_correlation:
-        rp = sp.absolute(rp)
+        rp = np.absolute(rp)
     rt = (r1[:,None]+r3)*sp.sin(ang13/2.)
     pix1_13 = (sp.arange(r1.size)[:,None]*sp.ones(r3.size)).astype(int)
     pix3_13 = (sp.ones(r1.size)[:,None]*sp.arange(r3.size)).astype(int)
@@ -679,7 +681,7 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     ### forest-2 x forest-3
     rp = (r2[:,None]-r3)*sp.cos(ang23/2.)
     if not x_correlation:
-        rp = sp.absolute(rp)
+        rp = np.absolute(rp)
     rt = (r2[:,None]+r3)*sp.sin(ang23/2.)
     pix2_23 = (sp.arange(r2.size)[:,None]*sp.ones(r3.size)).astype(int)
     pix3_23 = (sp.ones(r2.size)[:,None]*sp.arange(r3.size)).astype(int)

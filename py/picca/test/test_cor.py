@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 import scipy as sp
 import numpy.random
 import fitsio
@@ -252,7 +253,7 @@ class TestCor(unittest.TestCase):
                     print("WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(nameRun,k))
                     diff = d_m-d_b
                     w = d_m!=0.
-                    diff[w] = sp.absolute( diff[w]/d_m[w] )
+                    diff[w] = np.absolute( diff[w]/d_m[w] )
                     allclose = sp.allclose(d_m,d_b)
                     self.assertTrue(allclose,"{}: Header key is {}, maximum relative difference is {}".format(nameRun,k,diff.max()))
 

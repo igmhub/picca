@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import numpy as np
 import scipy as sp
 from picca import constants
 from picca.utils import print, unred
@@ -48,7 +49,7 @@ class qso:
                 cos[w] = -1.
             angl = sp.arccos(cos)
 
-            w = (sp.absolute(ra-self.ra)<constants.small_angle_cut_off) & (sp.absolute(dec-self.dec)<constants.small_angle_cut_off)
+            w = (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off)
             if w.sum()!=0:
                 angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cosdec*(ra[w]-self.ra))**2 )
         except:
@@ -66,7 +67,7 @@ class qso:
                 print('WARNING: 1 pair has cosinus<=-1.')
                 cos = -1.
             angl = sp.arccos(cos)
-            if (sp.absolute(ra-self.ra)<constants.small_angle_cut_off) & (sp.absolute(dec-self.dec)<constants.small_angle_cut_off):
+            if (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off):
                 angl = sp.sqrt( (dec-self.dec)**2 + (self.cosdec*(ra-self.ra))**2 )
         return angl
 

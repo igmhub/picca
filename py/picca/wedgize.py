@@ -1,3 +1,4 @@
+import numpy as np
 import scipy as sp
 
 class wedge:
@@ -14,7 +15,7 @@ class wedge:
         rmc = sp.sqrt(rtmc**2+rpmc**2)
         mumc = rpmc/rmc
         if absoluteMu:
-            mumc = sp.absolute(mumc)
+            mumc = np.absolute(mumc)
 
         br = (rmc-rmin)/(rmax-rmin)*nr
         br = br.astype(int)

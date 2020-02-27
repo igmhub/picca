@@ -1,4 +1,5 @@
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 from healpy import query_disc
 from numba import jit
@@ -499,7 +500,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     """
 
     ### Pair forest_1 - forest_3
-    rp = sp.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
+    rp = np.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
     rt = (r1+r3[:,None])*sp.sin(ang13/2.)
 
     w = (rp<cfWick_rp_max) & (rt<cfWick_rt_max) & (rp>=cfWick_rp_min)
