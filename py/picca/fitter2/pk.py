@@ -240,7 +240,7 @@ def cached_g2(function):
     Lpar = kwargs["par binsize {}".format(dataset_name)]
     Lper = kwargs["per binsize {}".format(dataset_name)]
 
-    if dataset_name in memo and sp.allclose(memo[dataset_name][0], [Lpar, Lper]):
+    if dataset_name in memo and np.allclose(memo[dataset_name][0], [Lpar, Lper]):
       return memo[dataset_name][1]
     else:
       rv = function(*args, **kwargs)

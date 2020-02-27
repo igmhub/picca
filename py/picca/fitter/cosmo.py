@@ -1,4 +1,5 @@
 import astropy.io.fits as pyfits
+import numpy as np
 import scipy as sp
 import scipy.interpolate
 import sys
@@ -199,7 +200,7 @@ class model:
         return dnl
 
     def valueAuto(self,rp,rt,z,pars):
-        if self.xi_auto_prev is None or not sp.allclose(list(pars.values()),self.pars_auto_prev):
+        if self.xi_auto_prev is None or not np.allclose(list(pars.values()),self.pars_auto_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -332,7 +333,7 @@ class model:
         return fftlog.Pk2XiA(self.k1d,pk_full,arp,art)*evol
 
     def valueCross(self,rp,rt,z,pars):
-        if self.xi_cross_prev is None or not sp.allclose(list(pars.values()),self.pars_cross_prev):
+        if self.xi_cross_prev is None or not np.allclose(list(pars.values()),self.pars_cross_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -430,7 +431,7 @@ class model:
         return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
 
     def valueAutoQSO(self,rp,rt,z,pars):
-        if self.xi_autoQSO_prev is None or not sp.allclose(list(pars.values()),self.pars_autoQSO_prev):
+        if self.xi_autoQSO_prev is None or not np.allclose(list(pars.values()),self.pars_autoQSO_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
