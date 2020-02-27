@@ -66,8 +66,10 @@ def parse_chi2(filename):
         dic_init['fast mc']['fiducial']['values'] = {}
         dic_init['fast mc']['fiducial']['fix'] = {}
         for item, value in cp.items('fast mc'):
-            if item=='niterations' or item=='seed':
+            if item in ['niterations','seed']:
                 dic_init['fast mc'][item] = int(value)
+            elif item=='forecast':
+                dic_init['fast mc'][item] = bool(value)
             elif item=='covscaling':
                 value = value.split()
                 dic_init['fast mc'][item] = sp.array(value).astype(float)
