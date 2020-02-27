@@ -85,7 +85,7 @@ def compute_dla_prob_per_nhi(wavelength,nhi,dla,qso,dnhi):
     wbins[:-1] = wavelength-dwave/2
     wbins[-1] = wavelength[-1]+dwave[-1]/2.
 
-    ndla,junk = npy.histogram(dla_lamb[npy.abs(dla_nhi-nhi)<dnhi/2],bins=wbins)
+    ndla,_ = npy.histogram(dla_lamb[npy.abs(dla_nhi-nhi)<dnhi/2],bins=wbins)
 
     f = npy.zeros(wavelength.size)
     for i,wave in enumerate(wavelength) :
