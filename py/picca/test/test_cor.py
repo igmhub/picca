@@ -1,5 +1,5 @@
 import unittest
-import numpy as np
+import numpy as npy
 import scipy as sp
 import numpy.random
 import fitsio
@@ -249,12 +249,12 @@ class TestCor(unittest.TestCase):
                 if d_b.dtype in ['<U23','S23']: ### for fitsio old version compatibility
                     d_b = sp.char.strip(d_b)
                 self.assertEqual(d_m.size,d_b.size,"{}: Header key is {}".format(nameRun,k))
-                if not np.array_equal(d_m,d_b):
+                if not npy.array_equal(d_m,d_b):
                     print("WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(nameRun,k))
                     diff = d_m-d_b
                     w = d_m!=0.
-                    diff[w] = np.absolute( diff[w]/d_m[w] )
-                    allclose = np.allclose(d_m,d_b)
+                    diff[w] = npy.absolute( diff[w]/d_m[w] )
+                    allclose = npy.allclose(d_m,d_b)
                     self.assertTrue(allclose,"{}: Header key is {}, maximum relative difference is {}".format(nameRun,k,diff.max()))
 
         m.close()
@@ -269,19 +269,19 @@ class TestCor(unittest.TestCase):
             for item in atts1:
                 nequal = True
                 if isinstance(atts1[item],numpy.ndarray):
-                    nequal = np.logical_not(np.array_equal(atts1[item],atts2[item]))
+                    nequal = npy.logical_not(npy.array_equal(atts1[item],atts2[item]))
                 else:
                     nequal = atts1[item]!=atts2[item]
                 if nequal:
                     print("WARNING: {}: not exactly equal, using allclose for {}".format(nameRun,item))
                     print(atts1[item],atts2[item])
-                    allclose = np.allclose(atts1[item],atts2[item])
+                    allclose = npy.allclose(atts1[item],atts2[item])
                     self.assertTrue(allclose,"{}".format(nameRun))
             return
         def compare_values(val1,val2):
-            if not np.array_equal(val1,val2):
+            if not npy.array_equal(val1,val2):
                 print("WARNING: {}: not exactly equal, using allclose".format(nameRun))
-                allclose = np.allclose(val1,val2)
+                allclose = npy.allclose(val1,val2)
                 self.assertTrue(allclose,"{}".format(nameRun))
             return
 

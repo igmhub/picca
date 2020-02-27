@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as npy
 import scipy as sp
 import fitsio
 import sys
@@ -351,7 +351,7 @@ class model:
 
                 recalc = beta_met != self.prev_pmet['beta_'+i] or\
                     growth_rate != self.prev_pmet['growth_rate'] or\
-                    not np.allclose(qso_evol,self.prev_pmet['qso_evol']) or\
+                    not npy.allclose(qso_evol,self.prev_pmet['qso_evol']) or\
                     self.prev_pmet['drp'] != drp
                 if recalc:
                     if self.verbose:

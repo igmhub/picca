@@ -3,7 +3,7 @@
 from __future__ import print_function
 import sys
 import fitsio
-import numpy as np
+import numpy as npy
 import scipy as sp
 import scipy.linalg
 import argparse
@@ -143,7 +143,7 @@ if __name__ == '__main__':
                     print('ERROR: HLPXSCHM are different: {} != {}'.format(data[d1]['HLPXSCHM'],data[d2]['HLPXSCHM']))
                     sys.exit()
 
-                w = np.logical_not( sp.in1d(data[d1]['HEALPID'],data[d2]['HEALPID']) )
+                w = npy.logical_not( sp.in1d(data[d1]['HEALPID'],data[d2]['HEALPID']) )
                 if w.sum()!=0:
                     print('WARNING: HEALPID are different by {} for {}:{} and {}:{}'.format(w.sum(),d1,data[d1]['HEALPID'].size,d2,data[d2]['HEALPID'].size))
                     new_healpix = data[d1]['HEALPID'][w]

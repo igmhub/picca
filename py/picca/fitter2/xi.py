@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as npy
 import scipy as sp
 from . import utils
 from scipy.integrate import quad
@@ -39,7 +39,7 @@ def cache_xi_drp(function):
         pair = (name, tracer1['name'], tracer2['name'], hash(t))
 
         recalc = True
-        if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
+        if pair in cache and npy.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
             recalc = False
 
         if not recalc:
@@ -90,7 +90,7 @@ def cache_kaiser(function):
         pair = (name, tracer1['name'], tracer2['name'], hash(t))
 
         recalc = True
-        if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
+        if pair in cache and npy.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
             recalc = False
 
         if not recalc:
@@ -204,7 +204,7 @@ def cache_growth_factor_de(function):
         Om = kwargs['Om']
         OL = kwargs['OL']
         pair = ('Om', 'OL')
-        if pair not in cache.keys() or not np.allclose(cache[pair], (Om,OL)):
+        if pair not in cache.keys() or not npy.allclose(cache[pair], (Om,OL)):
             cache[pair] = (Om, OL)
             cache[1] = cached_growth_factor_de(*args, **kwargs)
 

@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as npy
 import scipy as sp
 from . import utils
 from pkg_resources import resource_filename
@@ -240,7 +240,7 @@ def cached_g2(function):
     Lpar = kwargs["par binsize {}".format(dataset_name)]
     Lper = kwargs["per binsize {}".format(dataset_name)]
 
-    if dataset_name in memo and np.allclose(memo[dataset_name][0], [Lpar, Lper]):
+    if dataset_name in memo and npy.allclose(memo[dataset_name][0], [Lpar, Lper]):
       return memo[dataset_name][1]
     else:
       rv = function(*args, **kwargs)
@@ -444,7 +444,7 @@ def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     et2 = kwargs['per_exp_smooth']**2
     ep2 = kwargs['par_exp_smooth']**2
 
-    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)*sp.exp(-(np.absolute(kp)*ep2+np.absolute(kt)*et2) )
+    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)*sp.exp(-(npy.absolute(kp)*ep2+npy.absolute(kt)*et2) )
 
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]

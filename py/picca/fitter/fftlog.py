@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as npy
 import sys
 from scipy.special import gamma
 from scipy.interpolate import RegularGridInterpolator
@@ -6,10 +6,10 @@ import numpy.fft as fft
 import time
 
 def extrap(x, xp, yp):
-    """np.interp function with linear extrapolation"""
-    y = np.interp(x, xp, yp)
-    y = np.where(x<xp[0], yp[0]+(x-xp[0])*(yp[0]-yp[1])/(xp[0]-xp[1]), y)
-    y = np.where(x>xp[-1], yp[-1]+(x-xp[-1])*(yp[-1]-yp[-2])/(xp[-1]-xp[-2]), y)
+    """npy.interp function with linear extrapolation"""
+    y = npy.interp(x, xp, yp)
+    y = npy.where(x<xp[0], yp[0]+(x-xp[0])*(yp[0]-yp[1])/(xp[0]-xp[1]), y)
+    y = npy.where(x>xp[-1], yp[-1]+(x-xp[-1])*(yp[-1]-yp[-2])/(xp[-1]-xp[-2]), y)
     return y
 
 def extrapolate_pk_logspace(ko, ki, pki):
@@ -18,10 +18,10 @@ def extrapolate_pk_logspace(ko, ki, pki):
     taking care of extrapolation (also linear in log,log)
     and numerical precision
     """
-    logpk=extrap(np.log(ko),np.log(ki[pki>0]),np.log(pki[pki>0]))
-    pk=np.zeros(logpk.shape)
-    minlogpk=-np.log(np.finfo(np.float64).max)
-    pk[logpk>minlogpk]=np.exp(logpk[logpk>minlogpk])
+    logpk=extrap(npy.log(ko),npy.log(ki[pki>0]),npy.log(pki[pki>0]))
+    pk=npy.zeros(logpk.shape)
+    minlogpk=-npy.log(npy.finfo(npy.float64).max)
+    pk[logpk>minlogpk]=npy.exp(logpk[logpk>minlogpk])
     return pk
 
 def HankelTransform(k,a,q,mu,r0=10.,transformed_axis=0,output_r=None,output_r_power=0,n=None) :
@@ -54,8 +54,8 @@ def HankelTransform(k,a,q,mu,r0=10.,transformed_axis=0,output_r=None,output_r_po
 
     k0 = k[0]
     N  = len(k)
-    L  = np.log(k.max()/k0)* N/(N-1.) ## this is important, need to have the right scale !!
-    emm = N*np.fft.fftfreq(N)
+    L  = npy.log(k.max()/k0)* N/(N-1.) ## this is important, need to have the right scale !!
+    emm = N*npy.fft.fftfreq(N)
 
     # ??? empirically I need n=q
     if n is None :
@@ -63,20 +63,20 @@ def HankelTransform(k,a,q,mu,r0=10.,transformed_axis=0,output_r=None,output_r_po
 
     nout=n+output_r_power
 
-    x=(q-n)+2*np.pi*1j*emm/L # Eq. 174
+    x=(q-n)+2*npy.pi*1j*emm/L # Eq. 174
 
     if 1 : # choose r0 to limit ringing with the condition u(-N/2)=u(N/2), see Hamilton 2000, Eq. 186
-        x0     = (q-n)+np.pi*1j*N/L
-        tmp    = 1./np.pi*np.angle(2**x0*gamma((mu+1+x0)/2.)/gamma((mu+1-x0)/2.))
-        number = int(np.log(k0*r0)*N/L - tmp)
-        lowringing_r0 = np.exp(L/N*(tmp+number))/k0
+        x0     = (q-n)+npy.pi*1j*N/L
+        tmp    = 1./npy.pi*npy.angle(2**x0*gamma((mu+1+x0)/2.)/gamma((mu+1-x0)/2.))
+        number = int(npy.log(k0*r0)*N/L - tmp)
+        lowringing_r0 = npy.exp(L/N*(tmp+number))/k0
         r0  = lowringing_r0
 
-    um=(k0*r0)**(-2*np.pi*1j*emm/L)*2**x*(gamma((mu+1+x)/2.)/gamma((mu+1-x)/2.)) # Eq. 174
+    um=(k0*r0)**(-2*npy.pi*1j*emm/L)*2**x*(gamma((mu+1+x)/2.)/gamma((mu+1-x)/2.)) # Eq. 174
     um[0]=um[0].real
 
-    r=r0*np.exp(-emm*L/N)
-    s=np.argsort(r)
+    r=r0*npy.exp(-emm*L/N)
+    s=npy.argsort(r)
     rs=r[s] # sorted
 
     if len(a.shape)==1 :
@@ -91,20 +91,20 @@ def HankelTransform(k,a,q,mu,r0=10.,transformed_axis=0,output_r=None,output_r_po
 
         if transformed_axis==0 :
             if output_r is  None :
-                transformed=np.zeros_like(a)
+                transformed=npy.zeros_like(a)
                 for i in range(a.shape[1]) : # I don't know how to do this at once
                     transformed[:,i]=(fft.ifft(um*fft.fft(a[:,i]*(k**n)))*(r**nout)).real[s]
             else :
-               transformed=np.zeros(shape=(output_r.size,a.shape[1]),dtype=a.dtype)
+               transformed=npy.zeros(shape=(output_r.size,a.shape[1]),dtype=a.dtype)
                for i in range(a.shape[1]) :
                   transformed[:,i]=extrap(output_r,rs,(fft.ifft(um*fft.fft(a[:,i]*(k**n)))*(r**nout)).real[s])
         else :
             if output_r is  None :
-                transformed=np.zeros_like(a)
+                transformed=npy.zeros_like(a)
                 for i in range(a.shape[0]) :
                     transformed[i,:]=(fft.ifft(um*fft.fft(a[i,:]*(k**n)))*(r**nout)).real[s]
             else :
-                transformed=np.zeros(shape=(a.shape[0],output_r.size),dtype=a.dtype)
+                transformed=npy.zeros(shape=(a.shape[0],output_r.size),dtype=a.dtype)
                 for i in range(a.shape[0]) :
                     transformed[i,:]=extrap(output_r,rs,(fft.ifft(um*fft.fft(a[i,:]*(k**n)))*(r**nout)).real[s])
 
@@ -138,10 +138,10 @@ def Pk2XiR(k,pk2d,rp,rt) :
     junk,pkxi=HankelTransform(k=k,a=pk2d,q=1,mu=0,transformed_axis=1,output_r=rt,output_r_power=-2)
 
     if 1 :  # to avoid aliasing
-        a=np.log(k[1]/k[0])
+        a=npy.log(k[1]/k[0])
         nk=k.size
-        k=np.append(k,k[:nk//2]*np.exp(a*k.size))
-        tmp=np.zeros(shape=(k.size,pkxi.shape[1]),dtype=pkxi.dtype)
+        k=npy.append(k,k[:nk//2]*npy.exp(a*k.size))
+        tmp=npy.zeros(shape=(k.size,pkxi.shape[1]),dtype=pkxi.dtype)
         tmp[:pkxi.shape[0]]=pkxi
         pkxi=tmp
 
@@ -149,7 +149,7 @@ def Pk2XiR(k,pk2d,rp,rt) :
     # pk dk cos(k*r) = int pk dk J_{mu=-1/2}(k*r) * (kr)**(1/2) (pi/2)**(1/2)
     # mu=-1/2, q=1/2 , and I need to multiply the result by r**(-1) * (pi/2)**(1/2)
     junk,xi=HankelTransform(k=k,a=pkxi,q=0.5,mu=-0.5,transformed_axis=0,output_r=rp,output_r_power=-1)
-    xi *= 2*np.sqrt(np.pi/2)/(2*np.pi)**2
+    xi *= 2*npy.sqrt(npy.pi/2)/(2*npy.pi)**2
 
     stop=time.time()
     print("fftlog.Pk2XiR done in %f sec"%(stop-start))
@@ -172,11 +172,11 @@ def Pk2XiA(k,pk2d,rp,rt) :
 
 
     # define a rectangular grid
-    rpr=np.linspace(np.min(rp),np.max(rp),np.sqrt(rp.size))
-    rtr=np.linspace(np.min(rt),np.max(rt),np.sqrt(rp.size))
+    rpr=npy.linspace(npy.min(rp),npy.max(rp),npy.sqrt(rp.size))
+    rtr=npy.linspace(npy.min(rt),npy.max(rt),npy.sqrt(rp.size))
     xi=Pk2XiR(k,pk2d,rpr,rtr)
 
 
     func=RegularGridInterpolator(points=(rpr,rtr),values=xi,method="linear")
-    xia=func(np.array([rp,rt]).T)
+    xia=func(npy.array([rp,rt]).T)
     return xia

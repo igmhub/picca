@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import numpy as np
+import numpy as npy
 import scipy as sp
 from healpy import query_disc
 from numba import jit
@@ -89,7 +89,7 @@ def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
 
     rp  = (r1-r2)*sp.cos(ang/2.)
     if not x_correlation or type_corr in ['DR','RD']:
-        rp = np.absolute(rp)
+        rp = npy.absolute(rp)
     rt  = (rdm1+rdm2)*sp.sin(ang/2.)
     z   = (z1+z2)/2.
     w12 = w1*w2
