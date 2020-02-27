@@ -35,7 +35,7 @@ class wedge:
         w = (mumc>=mumin) & (mumc<=mumax) & (r<rmax) & (r>rmin) & (br<nr)
         bins = bins[w]
 
-        W = sp.zeros(nrp*nrt*nr)
+        W = npy.zeros(nrp*nrt*nr)
         c=sp.bincount(bins.flatten())
         W[:len(c)]+=c
 

@@ -403,7 +403,7 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid, order,mode,log=None
         iv = 1.0/error**2
 
         # compute difference between exposure
-        diff = sp.zeros(len(lamb))
+        diff = npy.zeros(len(lamb))
         # compute spectral resolution
         wdisp =  h["psf"][:]
         reso = spectral_resolution(wdisp)
@@ -759,7 +759,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
                 if not pk1d is None:
                     reso_sum = tspecData['RESO'][wt].sum(axis=0)
                     reso_in_km_per_s = spectral_resolution_desi(reso_sum,tspecData['LL'])
-                    diff = sp.zeros(tspecData['LL'].shape)
+                    diff = npy.zeros(tspecData['LL'].shape)
                 else:
                     reso_in_km_per_s = None
                     diff = None

@@ -516,7 +516,7 @@ class model:
         s=sp.argsort(r)
         r=r[s]
 
-        xi=sp.zeros([ell_max//2+1,len(ar)])
+        xi=npy.zeros([ell_max//2+1,len(ar)])
 
         for ell in range(0,ell_max+1,2):
             pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)

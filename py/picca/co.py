@@ -49,11 +49,11 @@ def fill_neighs_x_correlation(pix):
 
 def co(pix):
 
-    we = sp.zeros(np*nt)
-    rp = sp.zeros(np*nt)
-    rt = sp.zeros(np*nt)
-    z  = sp.zeros(np*nt)
-    nb = sp.zeros(np*nt,dtype=sp.int64)
+    we = npy.zeros(np*nt)
+    rp = npy.zeros(np*nt)
+    rt = npy.zeros(np*nt)
+    z  = npy.zeros(np*nt)
+    nb = npy.zeros(np*nt,dtype=sp.int64)
 
     for ipix in pix:
         for o1 in objs[ipix]:

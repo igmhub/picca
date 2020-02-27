@@ -53,12 +53,12 @@ def fill_neighs(pix):
             d.qneighs = sp.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
 
 def xcf(pix):
-    xi = sp.zeros(np*nt)
-    we = sp.zeros(np*nt)
-    rp = sp.zeros(np*nt)
-    rt = sp.zeros(np*nt)
-    z = sp.zeros(np*nt)
-    nb = sp.zeros(np*nt,dtype=sp.int64)
+    xi = npy.zeros(np*nt)
+    we = npy.zeros(np*nt)
+    rp = npy.zeros(np*nt)
+    rt = npy.zeros(np*nt)
+    z = npy.zeros(np*nt)
+    nb = npy.zeros(np*nt,dtype=sp.int64)
 
     for ipix in pix:
         for d in dels[ipix]:
@@ -127,12 +127,12 @@ def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
 
 def dmat(pix):
 
-    dm = sp.zeros(np*nt*ntm*npm)
-    wdm = sp.zeros(np*nt)
-    rpeff = sp.zeros(ntm*npm)
-    rteff = sp.zeros(ntm*npm)
-    zeff = sp.zeros(ntm*npm)
-    weff = sp.zeros(ntm*npm)
+    dm = npy.zeros(np*nt*ntm*npm)
+    wdm = npy.zeros(np*nt)
+    rpeff = npy.zeros(ntm*npm)
+    rteff = npy.zeros(ntm*npm)
+    zeff = npy.zeros(ntm*npm)
+    weff = npy.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -195,8 +195,8 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     we = we[w]
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
-    eta2 = sp.zeros(npm*ntm*n2)
-    eta4 = sp.zeros(npm*ntm*n2)
+    eta2 = npy.zeros(npm*ntm*n2)
+    eta4 = npy.zeros(npm*ntm*n2)
 
     c = sp.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
@@ -223,12 +223,12 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
 def metal_dmat(pix,abs_igm="SiII(1526)"):
 
-    dm = sp.zeros(np*nt*ntm*npm)
-    wdm = sp.zeros(np*nt)
-    rpeff = sp.zeros(ntm*npm)
-    rteff = sp.zeros(ntm*npm)
-    zeff = sp.zeros(ntm*npm)
-    weff = sp.zeros(ntm*npm)
+    dm = npy.zeros(np*nt*ntm*npm)
+    wdm = npy.zeros(np*nt)
+    rpeff = npy.zeros(ntm*npm)
+    rteff = npy.zeros(ntm*npm)
+    zeff = npy.zeros(ntm*npm)
+    weff = npy.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -323,14 +323,14 @@ def wickT(pix):
         (tuple): results of the Wick computation
 
     """
-    T1 = sp.zeros((np*nt,np*nt))
-    T2 = sp.zeros((np*nt,np*nt))
-    T3 = sp.zeros((np*nt,np*nt))
-    T4 = sp.zeros((np*nt,np*nt))
-    T5 = sp.zeros((np*nt,np*nt))
-    T6 = sp.zeros((np*nt,np*nt))
-    wAll = sp.zeros(np*nt)
-    nb = sp.zeros(np*nt,dtype=sp.int64)
+    T1 = npy.zeros((np*nt,np*nt))
+    T2 = npy.zeros((np*nt,np*nt))
+    T3 = npy.zeros((np*nt,np*nt))
+    T4 = npy.zeros((np*nt,np*nt))
+    T5 = npy.zeros((np*nt,np*nt))
+    T6 = npy.zeros((np*nt,np*nt))
+    wAll = npy.zeros(np*nt)
+    nb = npy.zeros(np*nt,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
 
@@ -593,11 +593,11 @@ def xcf1d(pix):
         z (float array): Mean redshift of pairs
         nb (int array): Number of pairs
     """
-    xi = sp.zeros(np)
-    we = sp.zeros(np)
-    rp = sp.zeros(np)
-    z = sp.zeros(np)
-    nb = sp.zeros(np,dtype=sp.int64)
+    xi = npy.zeros(np)
+    we = npy.zeros(np)
+    rp = npy.zeros(np)
+    z = npy.zeros(np)
+    nb = npy.zeros(np,dtype=sp.int64)
 
     for ipix in pix:
         for d in dels[ipix]:
@@ -608,7 +608,7 @@ def xcf1d(pix):
             zqso = [ q.zqso for q in neighs ]
             we_qso = [ q.we for q in neighs ]
             l_qso = [ 10.**q.ll for q in neighs ]
-            ang = sp.zeros(len(l_qso))
+            ang = npy.zeros(len(l_qso))
 
             cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,zqso,l_qso,l_qso,we_qso,ang)
 

@@ -62,7 +62,7 @@ def rebin_diff_noise(dll,ll,diff):
 
     # rebin regardless of intervening masks
     # nmax = diff.size//crebin
-    # bin2 = sp.zeros(diff.size)
+    # bin2 = npy.zeros(diff.size)
     # for n in range (1,nmax +1):
     #     bin2[n*crebin:] += sp.ones(diff.size-n*crebin)
 
@@ -72,7 +72,7 @@ def rebin_diff_noise(dll,ll,diff):
     if (len(civ2) == 0) :
         print( "Error: diff size = 0 ",diff)
     diff2 = cdiff2[w]/civ2[w]*sp.sqrt(civ2[w])
-    diffout = sp.zeros(diff.size)
+    diffout = npy.zeros(diff.size)
     nmax = len(diff)//len(diff2)
     for n in range (nmax+1) :
         lengthmax = min(len(diff),(n+1)*len(diff2))
@@ -96,14 +96,14 @@ def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
     index_all = range(index[-1]+1)
     index_ok = sp.in1d(index_all, index)
 
-    delta_new = sp.zeros(len(index_all))
+    delta_new = npy.zeros(len(index_all))
     delta_new[index_ok]=delta
 
     ll_new = sp.array(index_all,dtype=float)
     ll_new *= dll
     ll_new += ll[0]
 
-    diff_new = sp.zeros(len(index_all))
+    diff_new = npy.zeros(len(index_all))
     diff_new[index_ok]=diff
 
     iv_new = sp.ones(len(index_all))
@@ -138,14 +138,14 @@ def compute_Pk_noise(dll,iv,diff,ll,run_noise):
     nb_bin_FFT = nb_pixels//2 + 1
 
     nb_noise_exp = 10
-    Pk = sp.zeros(nb_bin_FFT)
-    err = sp.zeros(nb_pixels)
+    Pk = npy.zeros(nb_bin_FFT)
+    err = npy.zeros(nb_pixels)
     w = iv>0
     err[w] = 1.0/sp.sqrt(iv[w])
 
     if (run_noise) :
         for _ in range(nb_noise_exp): #iexp unused, but needed
-            delta_exp= sp.zeros(nb_pixels)
+            delta_exp= npy.zeros(nb_pixels)
             delta_exp[w] = sp.random.normal(0.,err[w])
             _,Pk_exp = compute_Pk_raw(dll,delta_exp,ll) #k_exp unused, but needed
             Pk += Pk_exp

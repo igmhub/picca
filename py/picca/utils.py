@@ -50,7 +50,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
 
     cor = co/sp.sqrt(var*var[:,None])
 
-    cor_smooth = sp.zeros([nda,nda])
+    cor_smooth = npy.zeros([nda,nda])
 
     dcor={}
     dncor={}
@@ -141,7 +141,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     idrp1d = idrp2d.reshape(nbin*nbin)
 
     #### reduced covariance  (50*50)
-    Dcor_red1d = sp.zeros(nbin)
+    Dcor_red1d = npy.zeros(nbin)
     for idr in range(0,nbin):
         print("\rsmoothing {}".format(idr),end="")
         Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
@@ -161,8 +161,8 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
         chi2 = chi2*np*nbin
         return chi2
 
-    Lfit = sp.zeros(np)
-    Afit = sp.zeros(np)
+    Lfit = npy.zeros(np)
+    Afit = npy.zeros(np)
     for idrp in range(np):
         m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),
             A=1.,error_A=0.2,
@@ -333,8 +333,8 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     thid = vac[1]['TARGETID'][:][w]
     zqso = vac[1]['TRUEZ'][:][w]
     vac.close()
-    ra = sp.zeros(thid.size)
-    dec = sp.zeros(thid.size)
+    ra = npy.zeros(thid.size)
+    dec = npy.zeros(thid.size)
     plate = thid
     mjd = thid
     fid = thid
@@ -500,8 +500,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     lmin = sp.log10(lObs_min)
     lmax = sp.log10(lObs_max)
     nstack = int((lmax-lmin)/dll)+1
-    T_stack = sp.zeros(nstack)
-    n_stack = sp.zeros(nstack)
+    T_stack = npy.zeros(nstack)
+    n_stack = npy.zeros(nstack)
 
     deltas = {}
 
@@ -532,7 +532,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         tll = lmin + bins*dll
         lObs = (10**tll)*sp.ones(nObj)[:,None]
         lRF = (10**tll)/(1.+z[:,None])
-        w = sp.zeros_like(trans).astype(int)
+        w = npy.zeros_like(trans).astype(int)
         w[ (lObs>=lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
         nbPixel = sp.sum(w,axis=1)
         cut = nbPixel>=50

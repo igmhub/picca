@@ -166,10 +166,10 @@ if __name__ == '__main__':
         args.zqso_max = max(0.,args.lambda_max/args.lambda_rest_min -1.)
         print(" zqso_max = {}".format(args.zqso_max) )
 
-    forest.var_lss = interp1d(forest.lmin+npy.arange(2)*(forest.lmax-forest.lmin),0.2 + sp.zeros(2),fill_value="extrapolate",kind="nearest")
+    forest.var_lss = interp1d(forest.lmin+npy.arange(2)*(forest.lmax-forest.lmin),0.2 + npy.zeros(2),fill_value="extrapolate",kind="nearest")
     forest.eta = interp1d(forest.lmin+npy.arange(2)*(forest.lmax-forest.lmin), sp.ones(2),fill_value="extrapolate",kind="nearest")
-    forest.fudge = interp1d(forest.lmin+npy.arange(2)*(forest.lmax-forest.lmin), sp.zeros(2),fill_value="extrapolate",kind="nearest")
-    forest.mean_cont = interp1d(forest.lmin_rest+npy.arange(2)*(forest.lmax_rest-forest.lmin_rest),1+sp.zeros(2))
+    forest.fudge = interp1d(forest.lmin+npy.arange(2)*(forest.lmax-forest.lmin), npy.zeros(2),fill_value="extrapolate",kind="nearest")
+    forest.mean_cont = interp1d(forest.lmin_rest+npy.arange(2)*(forest.lmax_rest-forest.lmin_rest),1+npy.zeros(2))
 
     ### Fix the order of the continuum fit, 0 or 1.
     if args.order:
@@ -364,25 +364,25 @@ if __name__ == '__main__':
                 if args.use_ivar_as_weight:
                     print('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
                     eta = sp.ones(nlss)
-                    vlss = sp.zeros(nlss)
-                    fudge = sp.zeros(nlss)
+                    vlss = npy.zeros(nlss)
+                    fudge = npy.zeros(nlss)
                 else :
                     print('INFO: using constant weights, skipping eta, var_lss, fudge fits')
-                    eta = sp.zeros(nlss)
+                    eta = npy.zeros(nlss)
                     vlss = sp.ones(nlss)
-                    fudge=sp.zeros(nlss)
+                    fudge=npy.zeros(nlss)
 
-                err_eta = sp.zeros(nlss)
-                err_vlss = sp.zeros(nlss)
-                err_fudge = sp.zeros(nlss)
-                chi2 = sp.zeros(nlss)
+                err_eta = npy.zeros(nlss)
+                err_vlss = npy.zeros(nlss)
+                err_fudge = npy.zeros(nlss)
+                chi2 = npy.zeros(nlss)
 
-                nb_pixels = sp.zeros(nlss)
-                var = sp.zeros(nlss)
-                var_del = sp.zeros((nlss, nlss))
-                var2_del = sp.zeros((nlss, nlss))
-                count = sp.zeros((nlss, nlss))
-                nqsos=sp.zeros((nlss, nlss))
+                nb_pixels = npy.zeros(nlss)
+                var = npy.zeros(nlss)
+                var_del = npy.zeros((nlss, nlss))
+                var2_del = npy.zeros((nlss, nlss))
+                count = npy.zeros((nlss, nlss))
+                nqsos=npy.zeros((nlss, nlss))
 
                 forest.eta = interp1d(ll, eta, fill_value='extrapolate', kind='nearest')
                 forest.var_lss = interp1d(ll, vlss, fill_value='extrapolate', kind='nearest')

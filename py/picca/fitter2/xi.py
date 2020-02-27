@@ -233,7 +233,7 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     nbins = 100
     zmax = 5.
     z = zmax*npy.arange(nbins, dtype=float)/(nbins-1)
-    D1 = sp.zeros(nbins, dtype=float)
+    D1 = npy.zeros(nbins, dtype=float)
     pars = (Om, OL)
     for i in range(nbins):
         a = 1/(1+z[i])

@@ -174,9 +174,9 @@ if __name__ == '__main__':
     w = norm>0
     cor[w]/=norm[w]
 
-    c1d = sp.zeros(cf.n1d)
-    nc1d = sp.zeros(cf.n1d)
-    nb1d = sp.zeros(cf.n1d,dtype=sp.int64)
+    c1d = npy.zeros(cf.n1d)
+    nc1d = npy.zeros(cf.n1d)
+    nb1d = npy.zeros(cf.n1d,dtype=sp.int64)
     bins = npy.arange(cf.n1d)
 
     dbin = bins-bins[:,None]

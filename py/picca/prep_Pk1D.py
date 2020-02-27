@@ -1,4 +1,5 @@
 from __future__ import print_function
+import numpy as npy
 import scipy as sp
 
 from picca import constants
@@ -8,10 +9,10 @@ from picca.utils import print
 def exp_diff(file,ll) :
 
     nexp_per_col = file[0].read_header()['NEXP']//2
-    fltotodd  = sp.zeros(ll.size)
-    ivtotodd  = sp.zeros(ll.size)
-    fltoteven = sp.zeros(ll.size)
-    ivtoteven = sp.zeros(ll.size)
+    fltotodd  = npy.zeros(ll.size)
+    ivtotodd  = npy.zeros(ll.size)
+    fltoteven = npy.zeros(ll.size)
+    ivtoteven = npy.zeros(ll.size)
 
     if (nexp_per_col)<2 :
         print("DBG : not enough exposures for diff")

@@ -65,12 +65,12 @@ def fill_neighs_x_correlation(pix):
             d1.dneighs = [d for d in neighs if (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
 
 def cf(pix):
-    xi = sp.zeros(np*nt)
-    we = sp.zeros(np*nt)
-    rp = sp.zeros(np*nt)
-    rt = sp.zeros(np*nt)
-    z = sp.zeros(np*nt)
-    nb = sp.zeros(np*nt,dtype=sp.int64)
+    xi = npy.zeros(np*nt)
+    we = npy.zeros(np*nt)
+    rp = npy.zeros(np*nt)
+    rt = npy.zeros(np*nt)
+    z = npy.zeros(np*nt)
+    nb = npy.zeros(np*nt,dtype=sp.int64)
 
     for ipix in pix:
         for d1 in data[ipix]:
@@ -147,12 +147,12 @@ def fast_cf(z1,r1,rdm1,w1,d1, z2,r2,rdm2,w2,d2, ang,same_half_plate):
 
 def dmat(pix):
 
-    dm = sp.zeros(np*nt*ntm*npm)
-    wdm = sp.zeros(np*nt)
-    rpeff = sp.zeros(ntm*npm)
-    rteff = sp.zeros(ntm*npm)
-    zeff = sp.zeros(ntm*npm)
-    weff = sp.zeros(ntm*npm)
+    dm = npy.zeros(np*nt*ntm*npm)
+    wdm = npy.zeros(np*nt)
+    rpeff = npy.zeros(ntm*npm)
+    rteff = npy.zeros(ntm*npm)
+    zeff = npy.zeros(ntm*npm)
+    weff = npy.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -241,14 +241,14 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
 
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
-    eta1 = sp.zeros(npm*ntm*n1)
-    eta2 = sp.zeros(npm*ntm*n2)
-    eta3 = sp.zeros(npm*ntm*n1)
-    eta4 = sp.zeros(npm*ntm*n2)
-    eta5 = sp.zeros(npm*ntm)
-    eta6 = sp.zeros(npm*ntm)
-    eta7 = sp.zeros(npm*ntm)
-    eta8 = sp.zeros(npm*ntm)
+    eta1 = npy.zeros(npm*ntm*n1)
+    eta2 = npy.zeros(npm*ntm*n2)
+    eta3 = npy.zeros(npm*ntm*n1)
+    eta4 = npy.zeros(npm*ntm*n2)
+    eta5 = npy.zeros(npm*ntm)
+    eta6 = npy.zeros(npm*ntm)
+    eta7 = npy.zeros(npm*ntm)
+    eta8 = npy.zeros(npm*ntm)
 
     c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
     eta1[:len(c)]+=c
@@ -282,12 +282,12 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
-    dm = sp.zeros(np*nt*ntm*npm)
-    wdm = sp.zeros(np*nt)
-    rpeff = sp.zeros(ntm*npm)
-    rteff = sp.zeros(ntm*npm)
-    zeff = sp.zeros(ntm*npm)
-    weff = sp.zeros(ntm*npm)
+    dm = npy.zeros(np*nt*ntm*npm)
+    wdm = npy.zeros(np*nt)
+    rpeff = npy.zeros(ntm*npm)
+    rteff = npy.zeros(ntm*npm)
+    zeff = npy.zeros(ntm*npm)
+    weff = npy.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -460,9 +460,9 @@ lmin = None
 lmax = None
 dll = None
 def cf1d(pix):
-    xi1d = sp.zeros(n1d**2)
-    we1d = sp.zeros(n1d**2)
-    nb1d = sp.zeros(n1d**2,dtype=sp.int64)
+    xi1d = npy.zeros(n1d**2)
+    we1d = npy.zeros(n1d**2)
+    nb1d = npy.zeros(n1d**2,dtype=sp.int64)
 
     for d in data[pix]:
         bins = ((d.ll-lmin)/dll+0.5).astype(int)
@@ -478,9 +478,9 @@ def cf1d(pix):
     return we1d,xi1d,nb1d
 
 def x_forest_cf1d(pix):
-    xi1d = sp.zeros(n1d**2)
-    we1d = sp.zeros(n1d**2)
-    nb1d = sp.zeros(n1d**2,dtype=sp.int64)
+    xi1d = npy.zeros(n1d**2)
+    we1d = npy.zeros(n1d**2)
+    nb1d = npy.zeros(n1d**2,dtype=sp.int64)
 
     for d1 in data[pix]:
         bins1 = ((d1.ll-lmin)/dll+0.5).astype(int)
@@ -510,14 +510,14 @@ cfWick = {}
 ## auto
 def wickT(pix):
 
-    T1 = sp.zeros((np*nt,np*nt))
-    T2 = sp.zeros((np*nt,np*nt))
-    T3 = sp.zeros((np*nt,np*nt))
-    T4 = sp.zeros((np*nt,np*nt))
-    T5 = sp.zeros((np*nt,np*nt))
-    T6 = sp.zeros((np*nt,np*nt))
-    wAll = sp.zeros(np*nt)
-    nb = sp.zeros(np*nt,dtype=sp.int64)
+    T1 = npy.zeros((np*nt,np*nt))
+    T2 = npy.zeros((np*nt,np*nt))
+    T3 = npy.zeros((np*nt,np*nt))
+    T4 = npy.zeros((np*nt,np*nt))
+    T5 = npy.zeros((np*nt,np*nt))
+    T6 = npy.zeros((np*nt,np*nt))
+    wAll = npy.zeros(np*nt)
+    nb = npy.zeros(np*nt,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
 

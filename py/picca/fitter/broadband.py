@@ -1,5 +1,6 @@
 
 from picca.fitter.utils import L
+import numpy as npy
 import scipy as sp
 from scipy import linalg
 
@@ -32,7 +33,7 @@ class model:
         r = sp.sqrt(rt**2+rp**2)
         mu = rp/r
 
-        A = sp.zeros([npar,len(r)])
+        A = npy.zeros([npar,len(r)])
 
         for ipar in range(npar):
             i = ipar%ni
@@ -75,7 +76,7 @@ class model:
     def __call__(self,rt,rp,pars):
         r = sp.sqrt(rt**2+rp**2)
         mu = rp/r
-        bb = sp.zeros(len(r))
+        bb = npy.zeros(len(r))
 
 
         for ipar in range(len(pars)):

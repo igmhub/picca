@@ -8,8 +8,8 @@ from picca.utils import print
 ## mean continuum
 def mc(data):
     nmc = int((forest.lmax_rest-forest.lmin_rest)/forest.dll)+1
-    mcont = sp.zeros(nmc)
-    wcont = sp.zeros(nmc)
+    mcont = npy.zeros(nmc)
+    wcont = npy.zeros(nmc)
     ll = forest.lmin_rest + (npy.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
     for p in sorted(list(data.keys())):
         for d in data[p]:
@@ -31,13 +31,13 @@ def mc(data):
 
 def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     nlss = 20
-    eta = sp.zeros(nlss)
-    vlss = sp.zeros(nlss)
-    fudge = sp.zeros(nlss)
-    err_eta = sp.zeros(nlss)
-    err_vlss = sp.zeros(nlss)
-    err_fudge = sp.zeros(nlss)
-    nb_pixels = sp.zeros(nlss)
+    eta = npy.zeros(nlss)
+    vlss = npy.zeros(nlss)
+    fudge = npy.zeros(nlss)
+    err_eta = npy.zeros(nlss)
+    err_vlss = npy.zeros(nlss)
+    err_fudge = npy.zeros(nlss)
+    nb_pixels = npy.zeros(nlss)
     ll = forest.lmin + (npy.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
     nwe = 100
@@ -45,11 +45,11 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     vpmax = sp.log10(2.)
     var = 10**(vpmin + (npy.arange(nwe)+.5)*(vpmax-vpmin)/nwe)
 
-    var_del =sp.zeros(nlss*nwe)
-    mdel =sp.zeros(nlss*nwe)
-    var2_del =sp.zeros(nlss*nwe)
-    count =sp.zeros(nlss*nwe)
-    nqso = sp.zeros(nlss*nwe)
+    var_del =npy.zeros(nlss*nwe)
+    mdel =npy.zeros(nlss*nwe)
+    var2_del =npy.zeros(nlss*nwe)
+    count =npy.zeros(nlss*nwe)
+    nqso = npy.zeros(nlss*nwe)
 
     for p in sorted(list(data.keys())):
         for d in data[p]:
@@ -90,7 +90,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     var2_del -= var_del**2
     var2_del[w]/=count[w]
 
-    bin_chi2 = sp.zeros(nlss)
+    bin_chi2 = npy.zeros(nlss)
     fudge_ref = 1e-7
     for i in range(nlss):
         def chi2(eta,vlss,fudge):
@@ -127,8 +127,8 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 def stack(data,delta=False):
     nstack = int((forest.lmax-forest.lmin)/forest.dll)+1
     ll = forest.lmin + npy.arange(nstack)*forest.dll
-    st = sp.zeros(nstack)
-    wst = sp.zeros(nstack)
+    st = npy.zeros(nstack)
+    wst = npy.zeros(nstack)
     for p in sorted(list(data.keys())):
         for d in data[p]:
             if delta:

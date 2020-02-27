@@ -197,9 +197,9 @@ class TestCor(unittest.TestCase):
             p_thid = thid[(pixs==p)]
             p_fl   = numpy.random.normal(loc=1., scale=1., size=(ll.size,p_thid.size))
             p_iv   = numpy.random.lognormal(mean=0.1, sigma=0.1, size=(ll.size,p_thid.size))
-            p_am   = sp.zeros((ll.size,p_thid.size)).astype(int)
+            p_am   = npy.zeros((ll.size,p_thid.size)).astype(int)
             p_am[ numpy.random.random(size=(ll.size,p_thid.size))>0.90 ] = 1
-            p_om   = sp.zeros((ll.size,p_thid.size)).astype(int)
+            p_om   = npy.zeros((ll.size,p_thid.size)).astype(int)
 
             ###
             p_path = self._branchFiles+"/Products/Spectra/pix_"+str(p)+".fits"

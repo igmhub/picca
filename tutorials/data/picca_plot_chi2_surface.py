@@ -12,7 +12,7 @@ def convert1DTo2D(array1D,nbX,nbY):
         convert a 1D array to a 2D array
     '''
 
-    array2D = sp.zeros((nbX,nbY))
+    array2D = npy.zeros((nbX,nbY))
     for k,el in enumerate(array1D):
         i = k//nbY
         j = k%nbY

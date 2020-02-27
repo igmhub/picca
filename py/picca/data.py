@@ -138,10 +138,10 @@ class forest(qso):
 
         ## rebin
         cll = forest.lmin + npy.arange(bins.max()+1)*forest.dll
-        cfl = sp.zeros(bins.max()+1)
-        civ = sp.zeros(bins.max()+1)
+        cfl = npy.zeros(bins.max()+1)
+        civ = npy.zeros(bins.max()+1)
         if mmef is not None:
-            cmmef = sp.zeros(bins.max()+1)
+            cmmef = npy.zeros(bins.max()+1)
         ccfl = sp.bincount(bins,weights=iv*fl)
         cciv = sp.bincount(bins,weights=iv)
         if mmef is not None:
@@ -188,7 +188,7 @@ class forest(qso):
         self.diff = diff
         self.reso = reso
         #else :
-        #   self.diff = sp.zeros(len(ll))
+        #   self.diff = npy.zeros(len(ll))
         #   self.reso = sp.ones(len(ll))
 
         # compute means
@@ -221,7 +221,7 @@ class forest(qso):
 
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
         cll = forest.lmin + npy.arange(bins.max()+1)*forest.dll
-        civ = sp.zeros(bins.max()+1)
+        civ = npy.zeros(bins.max()+1)
         cciv = sp.bincount(bins,weights=iv)
         civ[:len(cciv)] += cciv
         w = (civ>0.)
@@ -229,7 +229,7 @@ class forest(qso):
         self.iv = civ[w]
 
         for k, v in dic.items():
-            cnew = sp.zeros(bins.max() + 1)
+            cnew = npy.zeros(bins.max() + 1)
             ccnew = sp.bincount(bins, weights=iv * v)
             cnew[:len(ccnew)] += ccnew
             setattr(self, k, cnew[w] / civ[w])

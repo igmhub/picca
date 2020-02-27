@@ -25,7 +25,7 @@ class cosmo:
         z=npy.arange(nbins)*dz
         hubble = H0*sp.sqrt( Ol*(1.+z)**(3.*(1.+wl)) + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
 
-        chi=sp.zeros(nbins)
+        chi=npy.zeros(nbins)
         for i in range(1,nbins):
             chi[i]=chi[i-1]+c*(1./hubble[i-1]+1./hubble[i])/2.*dz
 

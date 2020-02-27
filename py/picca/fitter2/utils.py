@@ -31,7 +31,7 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
     s=sp.argsort(r)
     r=r[s]
 
-    xi=sp.zeros([len(ell_vals),len(ar)])
+    xi=npy.zeros([len(ell_vals),len(ar)])
 
     for ell in ell_vals:
         if tform=="rel":
