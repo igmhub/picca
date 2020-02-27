@@ -212,7 +212,7 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
     eta4[:len(c)]+=c
 
-    ubb = sp.unique(m_bins)
+    ubb = npy.unique(m_bins)
     for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
         dm[m_ba+npm*ntm*ba]+=we[k]
         i = ij[k]%n1

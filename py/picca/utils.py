@@ -224,7 +224,7 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
                         dcat[kk] += [v[i]]
                 dcat[k] += [v]
     f.close()
-    print('INFO: Found {} DLA from {} quasars'.format(len(dcat['ThingID']), sp.unique(dcat['ThingID']).size))
+    print('INFO: Found {} DLA from {} quasars'.format(len(dcat['ThingID']), npy.unique(dcat['ThingID']).size))
 
     fromNoterdaemeKey2Picca = {'ThingID':'THING_ID', 'z_abs':'Z', 'zqso':'ZQSO','NHI':'NHI',
         'plate':'PLATE','MJD':'MJD','fiber':'FIBERID',
@@ -298,7 +298,7 @@ def desi_convert_DLA(inPath,outPath):
     for k,v in fromDESIkey2piccaKey.items():
         cat[k] = h['DLACAT'][v][:]
     h.close()
-    print('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, sp.unique(cat['THING_ID']).size))
+    print('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, npy.unique(cat['THING_ID']).size))
 
     w = sp.argsort(cat['THING_ID'])
     for k in cat.keys():
@@ -491,7 +491,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             endoffile = '.gz'
         else:
             endoffile = ''
-        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in sp.unique(in_pixs)]))
+        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in npy.unique(in_pixs)]))
     else:
         fi = sp.sort(sp.array(infiles))
     print('INFO: Found {} files'.format(fi.size))

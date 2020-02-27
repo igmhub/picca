@@ -191,7 +191,7 @@ class TestCor(unittest.TestCase):
         ll = npy.arange(logl_min, logl_max, logl_step)
 
         ###
-        for p in sp.unique(pixs):
+        for p in npy.unique(pixs):
 
             ###
             p_thid = thid[(pixs==p)]

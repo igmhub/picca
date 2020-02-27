@@ -79,7 +79,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 
             c = sp.bincount(bins)
             count[:len(c)] += c
-            nqso[sp.unique(bins)]+=1
+            nqso[npy.unique(bins)]+=1
 
 
     w = count>0
