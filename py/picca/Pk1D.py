@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import numpy as npy
 import scipy as sp
 from scipy.fftpack import fft
 
@@ -126,7 +127,7 @@ def compute_Pk_raw(dll,delta,ll):
     # compute power spectrum
     fft_a = fft_a[:nb_bin_FFT]
     Pk = (fft_a.real**2+fft_a.imag**2)*length_lambda/nb_pixels**2
-    k = sp.arange(nb_bin_FFT,dtype=float)*2*sp.pi/length_lambda
+    k = npy.arange(nb_bin_FFT,dtype=float)*2*sp.pi/length_lambda
 
     return k,Pk
 

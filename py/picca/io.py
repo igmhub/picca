@@ -1,5 +1,6 @@
 from __future__ import print_function
 import fitsio
+import numpy as npy
 import scipy as sp
 import healpy
 import glob
@@ -660,7 +661,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
         flux = h[0].read()
         ivar = h[1].read()*(h[2].read()==0)
-        llam = coeff0 + coeff1*sp.arange(flux.shape[1])
+        llam = coeff0 + coeff1*npy.arange(flux.shape[1])
 
         ## now convert all those fluxes into forest objects
         for meta in platemjd[pm]:

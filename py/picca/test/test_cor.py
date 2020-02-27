@@ -142,7 +142,7 @@ class TestCor(unittest.TestCase):
         plate = numpy.random.randint(266,   high=10001, size=nObj )
         mjd   = numpy.random.randint(51608, high=57521, size=nObj )
         fid   = numpy.random.randint(1,     high=1001,  size=nObj )
-        thid  = sp.arange(thidoffset+1,thidoffset+nObj+1)
+        thid  = npy.arange(thidoffset+1,thidoffset+nObj+1)
         zqso  = (3.6-2.0)*numpy.random.random_sample(nObj) + 2.0
 
         ### Save
@@ -188,7 +188,7 @@ class TestCor(unittest.TestCase):
         logl_min  = 3.550
         logl_max  = 4.025
         logl_step = 1.e-4
-        ll = sp.arange(logl_min, logl_max, logl_step)
+        ll = npy.arange(logl_min, logl_max, logl_step)
 
         ###
         for p in sp.unique(pixs):

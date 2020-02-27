@@ -1,4 +1,4 @@
-
+import numpy as npy
 import scipy as sp
 from numpy import fft
 from scipy import special
@@ -7,7 +7,7 @@ import scipy.interpolate
 from . import myGamma
 
 nmuk = 1000
-muk=(sp.arange(nmuk)+0.5)/nmuk
+muk=(npy.arange(nmuk)+0.5)/nmuk
 dmuk = 1./nmuk
 muk=muk[:,None]
 

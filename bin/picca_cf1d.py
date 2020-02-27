@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+import numpy as npy
 import scipy as sp
 import fitsio
 import argparse
@@ -176,7 +177,7 @@ if __name__ == '__main__':
     c1d = sp.zeros(cf.n1d)
     nc1d = sp.zeros(cf.n1d)
     nb1d = sp.zeros(cf.n1d,dtype=sp.int64)
-    bins = sp.arange(cf.n1d)
+    bins = npy.arange(cf.n1d)
 
     dbin = bins-bins[:,None]
     w = dbin>=0

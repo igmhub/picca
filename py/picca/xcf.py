@@ -188,7 +188,7 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     n1 = len(l1)
     n2 = len(r2)
-    ij = sp.arange(n1)[:,None]+n1*sp.arange(n2)
+    ij = npy.arange(n1)[:,None]+n1*npy.arange(n2)
     ij = ij[w]
 
     we = w1[:,None]*w2
@@ -429,8 +429,8 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     zw2 = ((1.+z2)/(1.+zref))**(z_evol_obj-1.)
     we = w1[:,None]*w2
     we1 = w1[:,None]*sp.ones(len(r2))
-    idxPix = sp.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
-    idxQso = sp.ones(r1.size,dtype='int')[:,None]*sp.arange(len(r2))
+    idxPix = npy.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
+    idxQso = sp.ones(r1.size,dtype='int')[:,None]*npy.arange(len(r2))
 
     bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
     bt = (rt/rt_max*nt).astype(int)
@@ -516,7 +516,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
     we = w1[:,None]*w2
-    pix = (sp.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
+    pix = (npy.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
     thid = sp.ones_like(w1[:,None]).astype(int)*thid2
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
@@ -534,7 +534,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rp = (r3[:,None]-r4)*sp.cos(ang34/2.)
     rt = (r3[:,None]+r4)*sp.sin(ang34/2.)
     we = w3[:,None]*w4
-    pix = (sp.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
+    pix = (npy.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
     thid = sp.ones_like(w3[:,None]).astype(int)*thid4
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)

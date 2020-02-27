@@ -220,7 +220,7 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
 
     n1 = len(l1)
     n2 = len(l2)
-    ij = sp.arange(n1)[:,None]+n1*sp.arange(n2)
+    ij = npy.arange(n1)[:,None]+n1*npy.arange(n2)
     ij = ij[w]
 
     we = w1[:,None]*w2
@@ -578,8 +578,8 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
 
     n1 = len(r1)
     n2 = len(r2)
-    i1 = sp.arange(n1)
-    i2 = sp.arange(n2)
+    i1 = npy.arange(n1)
+    i2 = npy.arange(n2)
     zw1 = ((1+z1)/(1+zref))**(alpha-1)
     zw2 = ((1+z2)/(1+zref))**(alpha2-1)
 
@@ -643,8 +643,8 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     if not x_correlation:
         rp = npy.absolute(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
-    pix1_12 = (sp.arange(r1.size)[:,None]*sp.ones(r2.size)).astype(int)
-    pix2_12 = (sp.ones(r1.size)[:,None]*sp.arange(r2.size)).astype(int)
+    pix1_12 = (npy.arange(r1.size)[:,None]*sp.ones(r2.size)).astype(int)
+    pix2_12 = (sp.ones(r1.size)[:,None]*npy.arange(r2.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
@@ -663,8 +663,8 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     if not x_correlation:
         rp = npy.absolute(rp)
     rt = (r1[:,None]+r3)*sp.sin(ang13/2.)
-    pix1_13 = (sp.arange(r1.size)[:,None]*sp.ones(r3.size)).astype(int)
-    pix3_13 = (sp.ones(r1.size)[:,None]*sp.arange(r3.size)).astype(int)
+    pix1_13 = (npy.arange(r1.size)[:,None]*sp.ones(r3.size)).astype(int)
+    pix3_13 = (sp.ones(r1.size)[:,None]*npy.arange(r3.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
@@ -683,8 +683,8 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     if not x_correlation:
         rp = npy.absolute(rp)
     rt = (r2[:,None]+r3)*sp.sin(ang23/2.)
-    pix2_23 = (sp.arange(r2.size)[:,None]*sp.ones(r3.size)).astype(int)
-    pix3_23 = (sp.ones(r2.size)[:,None]*sp.arange(r3.size)).astype(int)
+    pix2_23 = (npy.arange(r2.size)[:,None]*sp.ones(r3.size)).astype(int)
+    pix3_23 = (sp.ones(r2.size)[:,None]*npy.arange(r3.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)

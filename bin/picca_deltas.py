@@ -5,6 +5,7 @@ from __future__ import print_function
 import sys
 import os
 import fitsio
+import numpy as npy
 import scipy as sp
 from scipy.interpolate import interp1d
 from multiprocessing import Pool
@@ -165,10 +166,10 @@ if __name__ == '__main__':
         args.zqso_max = max(0.,args.lambda_max/args.lambda_rest_min -1.)
         print(" zqso_max = {}".format(args.zqso_max) )
 
-    forest.var_lss = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin),0.2 + sp.zeros(2),fill_value="extrapolate",kind="nearest")
-    forest.eta = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin), sp.ones(2),fill_value="extrapolate",kind="nearest")
-    forest.fudge = interp1d(forest.lmin+sp.arange(2)*(forest.lmax-forest.lmin), sp.zeros(2),fill_value="extrapolate",kind="nearest")
-    forest.mean_cont = interp1d(forest.lmin_rest+sp.arange(2)*(forest.lmax_rest-forest.lmin_rest),1+sp.zeros(2))
+    forest.var_lss = interp1d(forest.lmin+npy.arange(2)*(forest.lmax-forest.lmin),0.2 + sp.zeros(2),fill_value="extrapolate",kind="nearest")
+    forest.eta = interp1d(forest.lmin+npy.arange(2)*(forest.lmax-forest.lmin), sp.ones(2),fill_value="extrapolate",kind="nearest")
+    forest.fudge = interp1d(forest.lmin+npy.arange(2)*(forest.lmax-forest.lmin), sp.zeros(2),fill_value="extrapolate",kind="nearest")
+    forest.mean_cont = interp1d(forest.lmin_rest+npy.arange(2)*(forest.lmax_rest-forest.lmin_rest),1+sp.zeros(2))
 
     ### Fix the order of the continuum fit, 0 or 1.
     if args.order:
@@ -358,7 +359,7 @@ if __name__ == '__main__':
             else:
 
                 nlss=10 # this value is arbitrary
-                ll = forest.lmin + (sp.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
+                ll = forest.lmin + (npy.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
                 if args.use_ivar_as_weight:
                     print('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')

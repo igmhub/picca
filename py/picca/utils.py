@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+import numpy as npy
 import scipy as sp
 import sys
 import fitsio
@@ -131,7 +132,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     Dcor1d = cor1d - corw1d
 
     #### indices
-    ind = sp.arange(nbin)
+    ind = npy.arange(nbin)
     rtindex = ind%nt
     rpindex = ind//nt
     idrt2d = abs(rtindex-rtindex[:,None])
@@ -268,7 +269,7 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     w = sp.argsort(cat['THING_ID'])
     for k in cat.keys():
         cat[k] = cat[k][w]
-    cat['DLAID'] = sp.arange(1,cat['Z'].size+1,dtype=sp.int64)
+    cat['DLAID'] = npy.arange(1,cat['Z'].size+1,dtype=sp.int64)
 
     for k in ['RA','DEC']:
         cat[k] = cat[k].astype('float64')
@@ -423,7 +424,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
         else:
             select_fraction = downsampling_nb/(cat['Z']>downsampling_z_cut).sum()
             sp.random.seed(0)
-            w = sp.random.choice(sp.arange(cat['RA'].size),size=int(cat['RA'].size*select_fraction),replace=False)
+            w = sp.random.choice(npy.arange(cat['RA'].size),size=int(cat['RA'].size*select_fraction),replace=False)
             for k in cat.keys():
                 cat[k] = cat[k][w]
             print(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(cat['RA'].size, downsampling_z_cut, (zqso>downsampling_z_cut).sum()) )
@@ -555,7 +556,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             ttrans = trans[i,:][w[i,:]>0]
 
             bins = sp.floor((tll-lmin)/dll+0.5).astype(int)
-            cll = lmin + sp.arange(nstack)*dll
+            cll = lmin + npy.arange(nstack)*dll
             cfl = sp.bincount(bins,weights=ttrans,minlength=nstack)
             civ = sp.bincount(bins,minlength=nstack).astype(float)
 
@@ -652,7 +653,7 @@ def shuffle_distrib_forests(obj,seed):
                 dic[p].append(getattr(o, p))
 
     sp.random.seed(seed)
-    idx = sp.arange(len(dic['ra']))
+    idx = npy.arange(len(dic['ra']))
     sp.random.shuffle(idx)
 
     i = 0

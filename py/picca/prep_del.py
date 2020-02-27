@@ -1,4 +1,5 @@
 from __future__ import print_function
+import numpy as npy
 import scipy as sp
 import iminuit
 from picca.data import forest,variance
@@ -9,7 +10,7 @@ def mc(data):
     nmc = int((forest.lmax_rest-forest.lmin_rest)/forest.dll)+1
     mcont = sp.zeros(nmc)
     wcont = sp.zeros(nmc)
-    ll = forest.lmin_rest + (sp.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
+    ll = forest.lmin_rest + (npy.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
     for p in sorted(list(data.keys())):
         for d in data[p]:
             bins=((d.ll-forest.lmin_rest-sp.log10(1+d.zqso))/(forest.lmax_rest-forest.lmin_rest)*nmc).astype(int)
@@ -37,12 +38,12 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     err_vlss = sp.zeros(nlss)
     err_fudge = sp.zeros(nlss)
     nb_pixels = sp.zeros(nlss)
-    ll = forest.lmin + (sp.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
+    ll = forest.lmin + (npy.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
     nwe = 100
     vpmin = sp.log10(1e-5)
     vpmax = sp.log10(2.)
-    var = 10**(vpmin + (sp.arange(nwe)+.5)*(vpmax-vpmin)/nwe)
+    var = 10**(vpmin + (npy.arange(nwe)+.5)*(vpmax-vpmin)/nwe)
 
     var_del =sp.zeros(nlss*nwe)
     mdel =sp.zeros(nlss*nwe)
@@ -125,7 +126,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 
 def stack(data,delta=False):
     nstack = int((forest.lmax-forest.lmin)/forest.dll)+1
-    ll = forest.lmin + sp.arange(nstack)*forest.dll
+    ll = forest.lmin + npy.arange(nstack)*forest.dll
     st = sp.zeros(nstack)
     wst = sp.zeros(nstack)
     for p in sorted(list(data.keys())):

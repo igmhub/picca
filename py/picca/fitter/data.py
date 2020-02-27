@@ -1,4 +1,5 @@
 import astropy.io.fits as pyfits
+import numpy as npy
 import scipy as sp
 from scipy import linalg
 import copy
@@ -34,7 +35,7 @@ class data:
         ### Get the center of the bins from the regular grid
         bin_center_rt = sp.zeros(self.rt.size)
         bin_center_rp = sp.zeros(self.rp.size)
-        for i in sp.arange(-self.rt.size-1,self.rt.size+1,1).astype('int'):
+        for i in npy.arange(-self.rt.size-1,self.rt.size+1,1).astype('int'):
             bin_center_rt[ sp.logical_and( self.rt>=bin_size*i, self.rt<bin_size*(i+1.) ) ] = bin_size*(i+0.5)
             bin_center_rp[ sp.logical_and( self.rp>=bin_size*i, self.rp<bin_size*(i+1.) ) ] = bin_size*(i+0.5)
 

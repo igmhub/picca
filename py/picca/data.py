@@ -137,7 +137,7 @@ class forest(qso):
             reso=reso[w]
 
         ## rebin
-        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
+        cll = forest.lmin + npy.arange(bins.max()+1)*forest.dll
         cfl = sp.zeros(bins.max()+1)
         civ = sp.zeros(bins.max()+1)
         if mmef is not None:
@@ -220,7 +220,7 @@ class forest(qso):
             dic['reso'] = sp.append(self.reso, d.reso)
 
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
+        cll = forest.lmin + npy.arange(bins.max()+1)*forest.dll
         civ = sp.zeros(bins.max()+1)
         cciv = sp.bincount(bins,weights=iv)
         civ[:len(cciv)] += cciv

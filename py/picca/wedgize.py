@@ -7,7 +7,7 @@ class wedge:
         nrtmc = ss*nrt
         nrpmc = ss*nrp
         nss=nrtmc*nrpmc
-        index=sp.arange(nss)
+        index=npy.arange(nss)
         irtmc=index%nrtmc
         irpmc=(index-irtmc)//nrtmc
         rtmc = rtmin+(irtmc+0.5)*(rtmax-rtmin)/nrtmc
@@ -40,7 +40,7 @@ class wedge:
         W[:len(c)]+=c
 
         self.W = W.reshape(nr,nrt*nrp)
-        self.r = rmin + (sp.arange(nr)+0.5)*(rmax-rmin)/nr
+        self.r = rmin + (npy.arange(nr)+0.5)*(rmax-rmin)/nr
 
     def wedge(self,da,co):
         we = 1/sp.diagonal(co)

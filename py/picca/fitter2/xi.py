@@ -232,7 +232,7 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     ## Calculate D1 in 100 values of z between 0 and zmax, then interpolate
     nbins = 100
     zmax = 5.
-    z = zmax*sp.arange(nbins, dtype=float)/(nbins-1)
+    z = zmax*npy.arange(nbins, dtype=float)/(nbins-1)
     D1 = sp.zeros(nbins, dtype=float)
     pars = (Om, OL)
     for i in range(nbins):
@@ -308,8 +308,8 @@ def broadband(r, mu, deg_r_min=None, deg_r_max=None,
         r1 = (r/100)*mu
         r2 = (r/100)*sp.sqrt(1-mu**2)
 
-    r1_pows = sp.arange(deg_r_min, deg_r_max+1, ddeg_r)
-    r2_pows = sp.arange(deg_mu_min, deg_mu_max+1, ddeg_mu)
+    r1_pows = npy.arange(deg_r_min, deg_r_max+1, ddeg_r)
+    r2_pows = npy.arange(deg_mu_min, deg_mu_max+1, ddeg_mu)
     BB = [kwargs['{} ({},{})'.format(name,i,j)] for i in r1_pows
             for j in r2_pows]
     BB = sp.array(BB).reshape(-1,deg_r_max-deg_r_min+1)

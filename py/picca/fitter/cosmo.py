@@ -17,7 +17,7 @@ class model:
     parameters for FFT
     '''
     nmuk = 1000
-    muk=(sp.arange(nmuk)+0.5)/nmuk
+    muk=(npy.arange(nmuk)+0.5)/nmuk
     dmuk = 1./nmuk
     muk=muk[:,None]
 
