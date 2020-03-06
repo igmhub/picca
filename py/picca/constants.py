@@ -1,4 +1,4 @@
-import numpy as npy
+import numpy as np
 import scipy as sp
 from scipy import interpolate
 
@@ -22,10 +22,10 @@ class cosmo:
         nbins = 10000
         zmax  = 10.
         dz    = zmax/nbins
-        z=npy.arange(nbins)*dz
+        z=np.arange(nbins)*dz
         hubble = H0*sp.sqrt( Ol*(1.+z)**(3.*(1.+wl)) + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
 
-        chi=npy.zeros(nbins)
+        chi=np.zeros(nbins)
         for i in range(1,nbins):
             chi[i]=chi[i-1]+c*(1./hubble[i-1]+1./hubble[i])/2.*dz
 

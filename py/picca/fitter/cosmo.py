@@ -1,9 +1,8 @@
 import astropy.io.fits as pyfits
-import numpy as npy
+import numpy as np
 import scipy as sp
 import scipy.interpolate
 import sys
-import numpy as npy
 
 from picca.fitter import myGamma
 from picca.fitter import utils
@@ -17,7 +16,7 @@ class model:
     parameters for FFT
     '''
     nmuk = 1000
-    muk=(npy.arange(nmuk)+0.5)/nmuk
+    muk=(np.arange(nmuk)+0.5)/nmuk
     dmuk = 1./nmuk
     muk=muk[:,None]
 
@@ -116,11 +115,11 @@ class model:
             kmin=1.e-7
             kmax=100.
             nk  = 1024
-            self.k1d  = npy.exp(npy.linspace(npy.log(kmin),npy.log(kmax),nk))
+            self.k1d  = np.exp(np.linspace(np.log(kmin),np.log(kmax),nk))
             # compute Pk
-            self.kp=npy.tile(self.k1d,(nk,1)).T
-            self.kt=npy.tile(self.k1d,(nk,1))
-            kk=npy.sqrt(self.kp**2+self.kt**2)
+            self.kp=np.tile(self.k1d,(nk,1)).T
+            self.kt=np.tile(self.k1d,(nk,1))
+            kk=np.sqrt(self.kp**2+self.kt**2)
             self.muk=self.kp/kk
             self.pk_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pk).reshape(kk.shape)
             self.pkSB_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pkSB).reshape(kk.shape)
@@ -200,7 +199,7 @@ class model:
         return dnl
 
     def valueAuto(self,rp,rt,z,pars):
-        if self.xi_auto_prev is None or not npy.allclose(list(pars.values()),self.pars_auto_prev):
+        if self.xi_auto_prev is None or not np.allclose(list(pars.values()),self.pars_auto_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -333,7 +332,7 @@ class model:
         return fftlog.Pk2XiA(self.k1d,pk_full,arp,art)*evol
 
     def valueCross(self,rp,rt,z,pars):
-        if self.xi_cross_prev is None or not npy.allclose(list(pars.values()),self.pars_cross_prev):
+        if self.xi_cross_prev is None or not np.allclose(list(pars.values()),self.pars_cross_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -431,7 +430,7 @@ class model:
         return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
 
     def valueAutoQSO(self,rp,rt,z,pars):
-        if self.xi_autoQSO_prev is None or not npy.allclose(list(pars.values()),self.pars_autoQSO_prev):
+        if self.xi_autoQSO_prev is None or not np.allclose(list(pars.values()),self.pars_autoQSO_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -510,13 +509,13 @@ class model:
         r0=1.
 
         N=len(k)
-        emm=N*npy.fft.fftfreq(N)
+        emm=N*np.fft.fftfreq(N)
         r=r0*sp.exp(-emm*l/N)
         dr=abs(sp.log(r[1]/r[0]))
         s=sp.argsort(r)
         r=r[s]
 
-        xi=npy.zeros([ell_max//2+1,len(ar)])
+        xi=np.zeros([ell_max//2+1,len(ar)])
 
         for ell in range(0,ell_max+1,2):
             pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)
@@ -529,9 +528,9 @@ class model:
 
             um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
             um[0]=sp.real(um[0])
-            an=npy.fft.fft(pk_ell*k**n/2/sp.pi**2*sp.sqrt(sp.pi/2))
+            an=np.fft.fft(pk_ell*k**n/2/sp.pi**2*sp.sqrt(sp.pi/2))
             an*=um
-            xi_loc=npy.fft.ifft(an)
+            xi_loc=np.fft.ifft(an)
             xi_loc=xi_loc[s]
             xi_loc/=r**(3-n)
             xi_loc[-1]=0

@@ -1,4 +1,4 @@
-import numpy as npy
+import numpy as np
 import scipy as sp
 
 class wedge:
@@ -7,7 +7,7 @@ class wedge:
         nrtmc = ss*nrt
         nrpmc = ss*nrp
         nss=nrtmc*nrpmc
-        index=npy.arange(nss)
+        index=np.arange(nss)
         irtmc=index%nrtmc
         irpmc=(index-irtmc)//nrtmc
         rtmc = rtmin+(irtmc+0.5)*(rtmax-rtmin)/nrtmc
@@ -15,7 +15,7 @@ class wedge:
         rmc = sp.sqrt(rtmc**2+rpmc**2)
         mumc = rpmc/rmc
         if absoluteMu:
-            mumc = npy.absolute(mumc)
+            mumc = np.absolute(mumc)
 
         br = (rmc-rmin)/(rmax-rmin)*nr
         br = br.astype(int)
@@ -35,12 +35,12 @@ class wedge:
         w = (mumc>=mumin) & (mumc<=mumax) & (r<rmax) & (r>rmin) & (br<nr)
         bins = bins[w]
 
-        W = npy.zeros(nrp*nrt*nr)
+        W = np.zeros(nrp*nrt*nr)
         c=sp.bincount(bins.flatten())
         W[:len(c)]+=c
 
         self.W = W.reshape(nr,nrt*nrp)
-        self.r = rmin + (npy.arange(nr)+0.5)*(rmax-rmin)/nr
+        self.r = rmin + (np.arange(nr)+0.5)*(rmax-rmin)/nr
 
     def wedge(self,da,co):
         we = 1/sp.diagonal(co)

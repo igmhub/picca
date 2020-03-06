@@ -1,5 +1,5 @@
 from __future__ import print_function
-import numpy as npy
+import numpy as np
 import scipy as sp
 import iminuit
 from picca.data import forest,variance
@@ -8,9 +8,9 @@ from picca.utils import print
 ## mean continuum
 def mc(data):
     nmc = int((forest.lmax_rest-forest.lmin_rest)/forest.dll)+1
-    mcont = npy.zeros(nmc)
-    wcont = npy.zeros(nmc)
-    ll = forest.lmin_rest + (npy.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
+    mcont = np.zeros(nmc)
+    wcont = np.zeros(nmc)
+    ll = forest.lmin_rest + (np.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
     for p in sorted(list(data.keys())):
         for d in data[p]:
             bins=((d.ll-forest.lmin_rest-sp.log10(1+d.zqso))/(forest.lmax_rest-forest.lmin_rest)*nmc).astype(int)
@@ -31,25 +31,25 @@ def mc(data):
 
 def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     nlss = 20
-    eta = npy.zeros(nlss)
-    vlss = npy.zeros(nlss)
-    fudge = npy.zeros(nlss)
-    err_eta = npy.zeros(nlss)
-    err_vlss = npy.zeros(nlss)
-    err_fudge = npy.zeros(nlss)
-    nb_pixels = npy.zeros(nlss)
-    ll = forest.lmin + (npy.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
+    eta = np.zeros(nlss)
+    vlss = np.zeros(nlss)
+    fudge = np.zeros(nlss)
+    err_eta = np.zeros(nlss)
+    err_vlss = np.zeros(nlss)
+    err_fudge = np.zeros(nlss)
+    nb_pixels = np.zeros(nlss)
+    ll = forest.lmin + (np.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
     nwe = 100
     vpmin = sp.log10(1e-5)
     vpmax = sp.log10(2.)
-    var = 10**(vpmin + (npy.arange(nwe)+.5)*(vpmax-vpmin)/nwe)
+    var = 10**(vpmin + (np.arange(nwe)+.5)*(vpmax-vpmin)/nwe)
 
-    var_del =npy.zeros(nlss*nwe)
-    mdel =npy.zeros(nlss*nwe)
-    var2_del =npy.zeros(nlss*nwe)
-    count =npy.zeros(nlss*nwe)
-    nqso = npy.zeros(nlss*nwe)
+    var_del =np.zeros(nlss*nwe)
+    mdel =np.zeros(nlss*nwe)
+    var2_del =np.zeros(nlss*nwe)
+    count =np.zeros(nlss*nwe)
+    nqso = np.zeros(nlss*nwe)
 
     for p in sorted(list(data.keys())):
         for d in data[p]:
@@ -79,7 +79,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 
             c = sp.bincount(bins)
             count[:len(c)] += c
-            nqso[npy.unique(bins)]+=1
+            nqso[np.unique(bins)]+=1
 
 
     w = count>0
@@ -90,7 +90,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     var2_del -= var_del**2
     var2_del[w]/=count[w]
 
-    bin_chi2 = npy.zeros(nlss)
+    bin_chi2 = np.zeros(nlss)
     fudge_ref = 1e-7
     for i in range(nlss):
         def chi2(eta,vlss,fudge):
@@ -126,9 +126,9 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 
 def stack(data,delta=False):
     nstack = int((forest.lmax-forest.lmin)/forest.dll)+1
-    ll = forest.lmin + npy.arange(nstack)*forest.dll
-    st = npy.zeros(nstack)
-    wst = npy.zeros(nstack)
+    ll = forest.lmin + np.arange(nstack)*forest.dll
+    st = np.zeros(nstack)
+    wst = np.zeros(nstack)
     for p in sorted(list(data.keys())):
         for d in data[p]:
             if delta:

@@ -1,4 +1,4 @@
-import numpy as npy
+import numpy as np
 import scipy as sp
 from numpy import fft
 from scipy import special
@@ -7,7 +7,7 @@ import scipy.interpolate
 from . import myGamma
 
 nmuk = 1000
-muk=(npy.arange(nmuk)+0.5)/nmuk
+muk=(np.arange(nmuk)+0.5)/nmuk
 dmuk = 1./nmuk
 muk=muk[:,None]
 
@@ -31,7 +31,7 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
     s=sp.argsort(r)
     r=r[s]
 
-    xi=npy.zeros([len(ell_vals),len(ar)])
+    xi=np.zeros([len(ell_vals),len(ar)])
 
     for ell in ell_vals:
         if tform=="rel":

@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import numpy as npy
+import numpy as np
 import scipy as sp
 from healpy import query_disc
 from numba import jit
@@ -50,11 +50,11 @@ def fill_neighs_x_correlation(pix):
 
 def co(pix):
 
-    we = npy.zeros(npb*ntb)
-    rp = npy.zeros(npb*ntb)
-    rt = npy.zeros(npb*ntb)
-    z  = npy.zeros(npb*ntb)
-    nb = npy.zeros(npb*ntb,dtype=sp.int64)
+    we = np.zeros(npb*ntb)
+    rp = np.zeros(npb*ntb)
+    rt = np.zeros(npb*ntb)
+    z  = np.zeros(npb*ntb)
+    nb = np.zeros(npb*ntb,dtype=sp.int64)
 
     for ipix in pix:
         for o1 in objs[ipix]:
@@ -90,7 +90,7 @@ def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
 
     rp  = (r1-r2)*sp.cos(ang/2.)
     if not x_correlation or type_corr in ['DR','RD']:
-        rp = npy.absolute(rp)
+        rp = np.absolute(rp)
     rt  = (rdm1+rdm2)*sp.sin(ang/2.)
     z   = (z1+z2)/2.
     w12 = w1*w2

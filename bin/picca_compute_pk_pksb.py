@@ -3,7 +3,7 @@
 import os
 import argparse
 import fitsio
-import numpy as npy
+import numpy as np
 import scipy as sp
 from scipy.constants import speed_of_light
 from scipy.optimize import curve_fit
@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     def f_xiSB(r,am3,am2,am1,a0,a1):
         par = [am3,am2,am1,a0,a1]
-        model = npy.zeros((len(par),r.size))
+        model = np.zeros((len(par),r.size))
         tw = r!=0.
         model[0,tw] = par[0]/r[tw]**3
         model[1,tw] = par[1]/r[tw]**2

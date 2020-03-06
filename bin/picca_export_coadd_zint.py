@@ -4,7 +4,7 @@ from __future__ import print_function
 import os
 import fitsio
 import argparse
-import numpy as npy
+import numpy as np
 import scipy as sp
 import scipy.linalg
 
@@ -44,9 +44,9 @@ if not args.no_dmat:
     h = fitsio.FITS(args.data[0].replace('cf','dmat'))
     dm = h[1]['DM'][:]*0
     try:
-        dmrp = npy.zeros(h[2]['RP'][:].size)
-        dmrt = npy.zeros(h[2]['RT'][:].size)
-        dmz = npy.zeros(h[2]['Z'][:].size)
+        dmrp = np.zeros(h[2]['RP'][:].size)
+        dmrt = np.zeros(h[2]['RT'][:].size)
+        dmz = np.zeros(h[2]['Z'][:].size)
         nbdm = 0.
     except IOError:
         pass

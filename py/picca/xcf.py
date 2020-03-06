@@ -1,5 +1,5 @@
 from __future__ import print_function
-import numpy as npy
+import numpy as np
 import scipy as sp
 from healpy import query_disc
 from numba import jit
@@ -54,12 +54,12 @@ def fill_neighs(pix):
             d.qneighs = sp.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
 
 def xcf(pix):
-    xi = npy.zeros(npb*ntb)
-    we = npy.zeros(npb*ntb)
-    rp = npy.zeros(npb*ntb)
-    rt = npy.zeros(npb*ntb)
-    z = npy.zeros(npb*ntb)
-    nb = npy.zeros(npb*ntb,dtype=sp.int64)
+    xi = np.zeros(npb*ntb)
+    we = np.zeros(npb*ntb)
+    rp = np.zeros(npb*ntb)
+    rt = np.zeros(npb*ntb)
+    z = np.zeros(npb*ntb)
+    nb = np.zeros(npb*ntb,dtype=sp.int64)
 
     for ipix in pix:
         for d in dels[ipix]:
@@ -128,12 +128,12 @@ def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
 
 def dmat(pix):
 
-    dm = npy.zeros(npb*ntb*ntm*npm)
-    wdm = npy.zeros(npb*ntb)
-    rpeff = npy.zeros(ntm*npm)
-    rteff = npy.zeros(ntm*npm)
-    zeff = npy.zeros(ntm*npm)
-    weff = npy.zeros(ntm*npm)
+    dm = np.zeros(npb*ntb*ntm*npm)
+    wdm = np.zeros(npb*ntb)
+    rpeff = np.zeros(ntm*npm)
+    rteff = np.zeros(ntm*npm)
+    zeff = np.zeros(ntm*npm)
+    weff = np.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -189,15 +189,15 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     n1 = len(l1)
     n2 = len(r2)
-    ij = npy.arange(n1)[:,None]+n1*npy.arange(n2)
+    ij = np.arange(n1)[:,None]+n1*np.arange(n2)
     ij = ij[w]
 
     we = w1[:,None]*w2
     we = we[w]
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
-    eta2 = npy.zeros(npm*ntm*n2)
-    eta4 = npy.zeros(npm*ntm*n2)
+    eta2 = np.zeros(npm*ntm*n2)
+    eta4 = np.zeros(npm*ntm*n2)
 
     c = sp.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
@@ -213,7 +213,7 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
     eta4[:len(c)]+=c
 
-    ubb = npy.unique(m_bins)
+    ubb = np.unique(m_bins)
     for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
         dm[m_ba+npm*ntm*ba]+=we[k]
         i = ij[k]%n1
@@ -224,12 +224,12 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
 def metal_dmat(pix,abs_igm="SiII(1526)"):
 
-    dm = npy.zeros(npb*ntb*ntm*npm)
-    wdm = npy.zeros(npb*ntb)
-    rpeff = npy.zeros(ntm*npm)
-    rteff = npy.zeros(ntm*npm)
-    zeff = npy.zeros(ntm*npm)
-    weff = npy.zeros(ntm*npm)
+    dm = np.zeros(npb*ntb*ntm*npm)
+    wdm = np.zeros(npb*ntb)
+    rpeff = np.zeros(ntm*npm)
+    rteff = np.zeros(ntm*npm)
+    zeff = np.zeros(ntm*npm)
+    weff = np.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -324,14 +324,14 @@ def wickT(pix):
         (tuple): results of the Wick computation
 
     """
-    T1 = npy.zeros((npb*ntb,npb*ntb))
-    T2 = npy.zeros((npb*ntb,npb*ntb))
-    T3 = npy.zeros((npb*ntb,npb*ntb))
-    T4 = npy.zeros((npb*ntb,npb*ntb))
-    T5 = npy.zeros((npb*ntb,npb*ntb))
-    T6 = npy.zeros((npb*ntb,npb*ntb))
-    wAll = npy.zeros(npb*ntb)
-    nb = npy.zeros(npb*ntb,dtype=sp.int64)
+    T1 = np.zeros((npb*ntb,npb*ntb))
+    T2 = np.zeros((npb*ntb,npb*ntb))
+    T3 = np.zeros((npb*ntb,npb*ntb))
+    T4 = np.zeros((npb*ntb,npb*ntb))
+    T5 = np.zeros((npb*ntb,npb*ntb))
+    T6 = np.zeros((npb*ntb,npb*ntb))
+    wAll = np.zeros(npb*ntb)
+    nb = np.zeros(npb*ntb,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
 
@@ -430,8 +430,8 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     zw2 = ((1.+z2)/(1.+zref))**(z_evol_obj-1.)
     we = w1[:,None]*w2
     we1 = w1[:,None]*sp.ones(len(r2))
-    idxPix = npy.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
-    idxQso = sp.ones(r1.size,dtype='int')[:,None]*npy.arange(len(r2))
+    idxPix = np.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
+    idxQso = sp.ones(r1.size,dtype='int')[:,None]*np.arange(len(r2))
 
     bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
     bt = (rt/rt_max*ntb).astype(int)
@@ -501,7 +501,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     """
 
     ### Pair forest_1 - forest_3
-    rp = npy.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
+    rp = np.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
     rt = (r1+r3[:,None])*sp.sin(ang13/2.)
 
     w = (rp<cfWick_rp_max) & (rt<cfWick_rt_max) & (rp>=cfWick_rp_min)
@@ -517,7 +517,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
     we = w1[:,None]*w2
-    pix = (npy.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
+    pix = (np.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
     thid = sp.ones_like(w1[:,None]).astype(int)*thid2
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
@@ -535,7 +535,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rp = (r3[:,None]-r4)*sp.cos(ang34/2.)
     rt = (r3[:,None]+r4)*sp.sin(ang34/2.)
     we = w3[:,None]*w4
-    pix = (npy.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
+    pix = (np.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
     thid = sp.ones_like(w3[:,None]).astype(int)*thid4
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
@@ -594,11 +594,11 @@ def xcf1d(pix):
         z (float array): Mean redshift of pairs
         nb (int array): Number of pairs
     """
-    xi = npy.zeros(npb)
-    we = npy.zeros(npb)
-    rp = npy.zeros(npb)
-    z = npy.zeros(npb)
-    nb = npy.zeros(npb,dtype=sp.int64)
+    xi = np.zeros(npb)
+    we = np.zeros(npb)
+    rp = np.zeros(npb)
+    z = np.zeros(npb)
+    nb = np.zeros(npb,dtype=sp.int64)
 
     for ipix in pix:
         for d in dels[ipix]:
@@ -609,7 +609,7 @@ def xcf1d(pix):
             zqso = [ q.zqso for q in neighs ]
             we_qso = [ q.we for q in neighs ]
             l_qso = [ 10.**q.ll for q in neighs ]
-            ang = npy.zeros(len(l_qso))
+            ang = np.zeros(len(l_qso))
 
             cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,zqso,l_qso,l_qso,we_qso,ang)
 

@@ -1,4 +1,4 @@
-import numpy as npy
+import numpy as np
 import scipy as sp
 from . import utils
 from scipy.integrate import quad
@@ -39,7 +39,7 @@ def cache_xi_drp(function):
         pair = (name, tracer1['name'], tracer2['name'], hash(t))
 
         recalc = True
-        if pair in cache and npy.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
+        if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
             recalc = False
 
         if not recalc:
@@ -90,7 +90,7 @@ def cache_kaiser(function):
         pair = (name, tracer1['name'], tracer2['name'], hash(t))
 
         recalc = True
-        if pair in cache and npy.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
+        if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
             recalc = False
 
         if not recalc:
@@ -204,7 +204,7 @@ def cache_growth_factor_de(function):
         Om = kwargs['Om']
         OL = kwargs['OL']
         pair = ('Om', 'OL')
-        if pair not in cache.keys() or not npy.allclose(cache[pair], (Om,OL)):
+        if pair not in cache.keys() or not np.allclose(cache[pair], (Om,OL)):
             cache[pair] = (Om, OL)
             cache[1] = cached_growth_factor_de(*args, **kwargs)
 
@@ -232,8 +232,8 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     ## Calculate D1 in 100 values of z between 0 and zmax, then interpolate
     nbins = 100
     zmax = 5.
-    z = zmax*npy.arange(nbins, dtype=float)/(nbins-1)
-    D1 = npy.zeros(nbins, dtype=float)
+    z = zmax*np.arange(nbins, dtype=float)/(nbins-1)
+    D1 = np.zeros(nbins, dtype=float)
     pars = (Om, OL)
     for i in range(nbins):
         a = 1/(1+z[i])
@@ -308,8 +308,8 @@ def broadband(r, mu, deg_r_min=None, deg_r_max=None,
         r1 = (r/100)*mu
         r2 = (r/100)*sp.sqrt(1-mu**2)
 
-    r1_pows = npy.arange(deg_r_min, deg_r_max+1, ddeg_r)
-    r2_pows = npy.arange(deg_mu_min, deg_mu_max+1, ddeg_mu)
+    r1_pows = np.arange(deg_r_min, deg_r_max+1, ddeg_r)
+    r2_pows = np.arange(deg_mu_min, deg_mu_max+1, ddeg_mu)
     BB = [kwargs['{} ({},{})'.format(name,i,j)] for i in r1_pows
             for j in r2_pows]
     BB = sp.array(BB).reshape(-1,deg_r_max-deg_r_min+1)

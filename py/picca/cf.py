@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import numpy as npy
+import numpy as np
 import scipy as sp
 from healpy import query_disc
 from numba import jit
@@ -66,12 +66,12 @@ def fill_neighs_x_correlation(pix):
             d1.dneighs = [d for d in neighs if (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
 
 def cf(pix):
-    xi = npy.zeros(npb*ntb)
-    we = npy.zeros(npb*ntb)
-    rp = npy.zeros(npb*ntb)
-    rt = npy.zeros(npb*ntb)
-    z = npy.zeros(npb*ntb)
-    nb = npy.zeros(npb*ntb,dtype=sp.int64)
+    xi = np.zeros(npb*ntb)
+    we = np.zeros(npb*ntb)
+    rp = np.zeros(npb*ntb)
+    rt = np.zeros(npb*ntb)
+    z = np.zeros(npb*ntb)
+    nb = np.zeros(npb*ntb,dtype=sp.int64)
 
     for ipix in pix:
         for d1 in data[ipix]:
@@ -148,12 +148,12 @@ def fast_cf(z1,r1,rdm1,w1,d1, z2,r2,rdm2,w2,d2, ang,same_half_plate):
 
 def dmat(pix):
 
-    dm = npy.zeros(npb*ntb*ntm*npm)
-    wdm = npy.zeros(npb*ntb)
-    rpeff = npy.zeros(ntm*npm)
-    rteff = npy.zeros(ntm*npm)
-    zeff = npy.zeros(ntm*npm)
-    weff = npy.zeros(ntm*npm)
+    dm = np.zeros(npb*ntb*ntm*npm)
+    wdm = np.zeros(npb*ntb)
+    rpeff = np.zeros(ntm*npm)
+    rteff = np.zeros(ntm*npm)
+    zeff = np.zeros(ntm*npm)
+    weff = np.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -221,7 +221,7 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
 
     n1 = len(l1)
     n2 = len(l2)
-    ij = npy.arange(n1)[:,None]+n1*npy.arange(n2)
+    ij = np.arange(n1)[:,None]+n1*np.arange(n2)
     ij = ij[w]
 
     we = w1[:,None]*w2
@@ -242,14 +242,14 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
 
     c = sp.bincount(bins,weights=we)
     wdm[:len(c)] += c
-    eta1 = npy.zeros(npm*ntm*n1)
-    eta2 = npy.zeros(npm*ntm*n2)
-    eta3 = npy.zeros(npm*ntm*n1)
-    eta4 = npy.zeros(npm*ntm*n2)
-    eta5 = npy.zeros(npm*ntm)
-    eta6 = npy.zeros(npm*ntm)
-    eta7 = npy.zeros(npm*ntm)
-    eta8 = npy.zeros(npm*ntm)
+    eta1 = np.zeros(npm*ntm*n1)
+    eta2 = np.zeros(npm*ntm*n2)
+    eta3 = np.zeros(npm*ntm*n1)
+    eta4 = np.zeros(npm*ntm*n2)
+    eta5 = np.zeros(npm*ntm)
+    eta6 = np.zeros(npm*ntm)
+    eta7 = np.zeros(npm*ntm)
+    eta8 = np.zeros(npm*ntm)
 
     c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
     eta1[:len(c)]+=c
@@ -272,7 +272,7 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
             c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
             eta8[:len(c)]+=c
 
-    ubb = npy.unique(m_bins)
+    ubb = np.unique(m_bins)
     for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
         dm[m_ba+npm*ntm*ba]+=we[k]
         i = ij[k]%n1
@@ -283,12 +283,12 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
-    dm = npy.zeros(npb*ntb*ntm*npm)
-    wdm = npy.zeros(npb*ntb)
-    rpeff = npy.zeros(ntm*npm)
-    rteff = npy.zeros(ntm*npm)
-    zeff = npy.zeros(ntm*npm)
-    weff = npy.zeros(ntm*npm)
+    dm = np.zeros(npb*ntb*ntm*npm)
+    wdm = np.zeros(npb*ntb)
+    rpeff = np.zeros(ntm*npm)
+    rteff = np.zeros(ntm*npm)
+    zeff = np.zeros(ntm*npm)
+    weff = np.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -461,9 +461,9 @@ lmin = None
 lmax = None
 dll = None
 def cf1d(pix):
-    xi1d = npy.zeros(n1d**2)
-    we1d = npy.zeros(n1d**2)
-    nb1d = npy.zeros(n1d**2,dtype=sp.int64)
+    xi1d = np.zeros(n1d**2)
+    we1d = np.zeros(n1d**2)
+    nb1d = np.zeros(n1d**2,dtype=sp.int64)
 
     for d in data[pix]:
         bins = ((d.ll-lmin)/dll+0.5).astype(int)
@@ -479,9 +479,9 @@ def cf1d(pix):
     return we1d,xi1d,nb1d
 
 def x_forest_cf1d(pix):
-    xi1d = npy.zeros(n1d**2)
-    we1d = npy.zeros(n1d**2)
-    nb1d = npy.zeros(n1d**2,dtype=sp.int64)
+    xi1d = np.zeros(n1d**2)
+    we1d = np.zeros(n1d**2)
+    nb1d = np.zeros(n1d**2,dtype=sp.int64)
 
     for d1 in data[pix]:
         bins1 = ((d1.ll-lmin)/dll+0.5).astype(int)
@@ -511,14 +511,14 @@ cfWick = {}
 ## auto
 def wickT(pix):
 
-    T1 = npy.zeros((npb*ntb,npb*ntb))
-    T2 = npy.zeros((npb*ntb,npb*ntb))
-    T3 = npy.zeros((npb*ntb,npb*ntb))
-    T4 = npy.zeros((npb*ntb,npb*ntb))
-    T5 = npy.zeros((npb*ntb,npb*ntb))
-    T6 = npy.zeros((npb*ntb,npb*ntb))
-    wAll = npy.zeros(npb*ntb)
-    nb = npy.zeros(npb*ntb,dtype=sp.int64)
+    T1 = np.zeros((npb*ntb,npb*ntb))
+    T2 = np.zeros((npb*ntb,npb*ntb))
+    T3 = np.zeros((npb*ntb,npb*ntb))
+    T4 = np.zeros((npb*ntb,npb*ntb))
+    T5 = np.zeros((npb*ntb,npb*ntb))
+    T6 = np.zeros((npb*ntb,npb*ntb))
+    wAll = np.zeros(npb*ntb)
+    nb = np.zeros(npb*ntb,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
 
@@ -579,8 +579,8 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
 
     n1 = len(r1)
     n2 = len(r2)
-    i1 = npy.arange(n1)
-    i2 = npy.arange(n2)
+    i1 = np.arange(n1)
+    i2 = np.arange(n2)
     zw1 = ((1+z1)/(1+zref))**(alpha-1)
     zw2 = ((1+z2)/(1+zref))**(alpha2-1)
 
@@ -642,10 +642,10 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     ### forest-1 x forest-2
     rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
     if not x_correlation:
-        rp = npy.absolute(rp)
+        rp = np.absolute(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
-    pix1_12 = (npy.arange(r1.size)[:,None]*sp.ones(r2.size)).astype(int)
-    pix2_12 = (sp.ones(r1.size)[:,None]*npy.arange(r2.size)).astype(int)
+    pix1_12 = (np.arange(r1.size)[:,None]*sp.ones(r2.size)).astype(int)
+    pix2_12 = (sp.ones(r1.size)[:,None]*np.arange(r2.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
@@ -662,10 +662,10 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     ### forest-1 x forest-3
     rp = (r1[:,None]-r3)*sp.cos(ang13/2.)
     if not x_correlation:
-        rp = npy.absolute(rp)
+        rp = np.absolute(rp)
     rt = (r1[:,None]+r3)*sp.sin(ang13/2.)
-    pix1_13 = (npy.arange(r1.size)[:,None]*sp.ones(r3.size)).astype(int)
-    pix3_13 = (sp.ones(r1.size)[:,None]*npy.arange(r3.size)).astype(int)
+    pix1_13 = (np.arange(r1.size)[:,None]*sp.ones(r3.size)).astype(int)
+    pix3_13 = (sp.ones(r1.size)[:,None]*np.arange(r3.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
@@ -682,10 +682,10 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     ### forest-2 x forest-3
     rp = (r2[:,None]-r3)*sp.cos(ang23/2.)
     if not x_correlation:
-        rp = npy.absolute(rp)
+        rp = np.absolute(rp)
     rt = (r2[:,None]+r3)*sp.sin(ang23/2.)
-    pix2_23 = (npy.arange(r2.size)[:,None]*sp.ones(r3.size)).astype(int)
-    pix3_23 = (sp.ones(r2.size)[:,None]*npy.arange(r3.size)).astype(int)
+    pix2_23 = (np.arange(r2.size)[:,None]*sp.ones(r3.size)).astype(int)
+    pix3_23 = (sp.ones(r2.size)[:,None]*np.arange(r3.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)

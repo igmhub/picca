@@ -1,6 +1,6 @@
 
 from picca.fitter.utils import L
-import numpy as npy
+import numpy as np
 import scipy as sp
 from scipy import linalg
 import sys
@@ -60,7 +60,7 @@ class model:
         r        = sp.sqrt(rt**2 + rp_shift**2)
         mu       = rp_shift/r
 
-        A = npy.zeros([self.npar,len(r)])
+        A = np.zeros([self.npar,len(r)])
 
         for ipar in range(self.npar):
             i   = ipar%self.ni
@@ -91,7 +91,7 @@ class model:
         rp_shift = rp+drp
         r        = sp.sqrt(rt**2 + rp_shift**2)
         mu       = rp_shift/r
-        bb = npy.zeros(len(r))
+        bb = np.zeros(len(r))
 
         for ipar in range(self.npar):
             i   = ipar%self.ni

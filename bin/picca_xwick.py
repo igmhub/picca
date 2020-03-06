@@ -4,7 +4,7 @@ from __future__ import print_function
 import sys
 import argparse
 import fitsio
-import numpy as npy
+import numpy as np
 import scipy as sp
 from scipy.interpolate import interp1d
 from multiprocessing import Pool,Lock,cpu_count,Value
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     dll = head['DLL']
     nv1d = h[1]['nv1d'][:]
     v1d = h[1]['v1d'][:]
-    ll = llmin + dll*npy.arange(v1d.size)
+    ll = llmin + dll*np.arange(v1d.size)
     xcf.v1d['D1'] = interp1d(ll[nv1d>0],v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
 
     nb1d = h[1]['nb1d'][:]

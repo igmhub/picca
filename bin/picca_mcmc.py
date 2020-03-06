@@ -4,7 +4,7 @@ import iminuit
 import types
 import configargparse
 import emcee
-import numpy as npy
+import numpy as np
 from numpy import random
 
 from picca.utils import print
@@ -133,19 +133,19 @@ def lnpriors(p):
             pname = dic_init['limit'][i]
             val=p[chi2.pname.index(pname)]
             p_min = dic_init['limit'][i+1]
-            if p_min=="None":p_min=-npy.inf
+            if p_min=="None":p_min=-np.inf
             p_max = dic_init['limit'][i+2]
-            if p_max=="None":p_max=npy.inf
+            if p_max=="None":p_max=np.inf
             p_min=float(p_min)
             p_max=float(p_max)
             if val<p_min or val>p_max:
-                return -npy.inf
+                return -np.inf
     return 0.
 
 
 
 nwalkers = args.nwalkers
-p=p0+1e-3*npy.array(dp0*random.rand(nwalkers*len(dp0)).reshape(nwalkers,len(dp0)))
+p=p0+1e-3*np.array(dp0*random.rand(nwalkers*len(dp0)).reshape(nwalkers,len(dp0)))
 sampler = emcee.EnsembleSampler(nwalkers, len(chi2.pname), lnprob,threads=args.nthreads)
 pos, prob, state = sampler.run_mcmc(p, args.nburn)
 
