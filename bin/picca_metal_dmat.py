@@ -128,7 +128,7 @@ if __name__ == '__main__':
     cf.z_cut_max = args.z_cut_max
     cf.z_cut_min = args.z_cut_min
     cf.npb = args.npb*args.coef_binning_model
-    cf.ntb = args.nt*args.coef_binning_model
+    cf.ntb = args.ntb*args.coef_binning_model
     cf.npm = args.npb*args.coef_binning_model
     cf.ntm = args.ntb*args.coef_binning_model
     cf.nside = args.nside
