@@ -132,7 +132,7 @@ if __name__ == '__main__':
         {'name':'RPMAX','value':rp_max,'comment':'Maximum r-parallel'},
         {'name':'RTMAX','value':rt_max,'comment':'Maximum r-transverse'},
         {'name':'NP','value':npb,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':nt,'comment':'Number of bins in r-transverse'}
+        {'name':'NT','value':ntb,'comment':'Number of bins in r-transverse'}
     ]
     comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
     h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
