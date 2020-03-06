@@ -43,10 +43,11 @@ if __name__ == '__main__':
     parser.add_argument('--rt-max', type=float, default=200., required=False,
         help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument('--np', type=int, default=50, required=False,
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    parser.add_argument('--npb', type=int, default=50, required=False,
         help='Number of r-parallel bins')
 
-    parser.add_argument('--nt', type=int, default=50, required=False,
+    parser.add_argument('--ntb', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
     parser.add_argument('--z-cut-min', type=float, default=0., required=False,
@@ -133,8 +134,8 @@ if __name__ == '__main__':
     cf.rp_min = args.rp_min
     cf.z_cut_max = args.z_cut_max
     cf.z_cut_min = args.z_cut_min
-    cf.np = args.np
-    cf.nt = args.nt
+    cf.npb = args.npb
+    cf.ntb = args.ntb
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
@@ -190,8 +191,8 @@ if __name__ == '__main__':
             continue
         h = fitsio.FITS(p)
         head = h[1].read_header()
-        assert cf.np == head['NP']
-        assert cf.nt == head['NT']
+        assert cf.npb == head['NP']
+        assert cf.ntb == head['NT']
         assert cf.rp_min == head['RPMIN']
         assert cf.rp_max == head['RPMAX']
         assert cf.rt_max == head['RTMAX']
@@ -277,8 +278,8 @@ if __name__ == '__main__':
         {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
         {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'NP','value':cf.npb,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':cf.ntb,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},

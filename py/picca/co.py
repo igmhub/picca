@@ -7,8 +7,9 @@ from numba import jit
 
 from picca.utils import print
 
-np = None
-nt = None
+# npb = number of parallel bins (to avoid collision with numpy np)
+npb = None
+ntb = None
 rp_min = None
 rp_max = None
 rt_max = None
@@ -49,11 +50,11 @@ def fill_neighs_x_correlation(pix):
 
 def co(pix):
 
-    we = npy.zeros(np*nt)
-    rp = npy.zeros(np*nt)
-    rt = npy.zeros(np*nt)
-    z  = npy.zeros(np*nt)
-    nb = npy.zeros(np*nt,dtype=sp.int64)
+    we = npy.zeros(npb*ntb)
+    rp = npy.zeros(npb*ntb)
+    rt = npy.zeros(npb*ntb)
+    z  = npy.zeros(npb*ntb)
+    nb = npy.zeros(npb*ntb,dtype=sp.int64)
 
     for ipix in pix:
         for o1 in objs[ipix]:
@@ -100,9 +101,9 @@ def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
     z   = z[w]
     w12 = w12[w]
 
-    bp   = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
-    bt   = (rt/rt_max*nt).astype(int)
-    bins = bt + nt*bp
+    bp   = sp.floor((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
+    bt   = (rt/rt_max*ntb).astype(int)
+    bins = bt + ntb*bp
 
     cw  = sp.bincount(bins,weights=w12)
     crp = sp.bincount(bins,weights=rp*w12)

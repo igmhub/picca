@@ -44,10 +44,11 @@ if __name__ == '__main__':
     parser.add_argument('--ang-max', type=float, default=0.02, required=False,
         help='Max angle (rad)')
 
-    parser.add_argument('--np', type=int, default=50, required=False,
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    parser.add_argument('--npb', type=int, default=50, required=False,
         help='Number of wavelength ratio bins')
 
-    parser.add_argument('--nt', type=int, default=50, required=False,
+    parser.add_argument('--ntb', type=int, default=50, required=False,
         help='Number of angular bins')
 
     parser.add_argument('--z-cut-min', type=float, default=0., required=False,
@@ -99,8 +100,8 @@ if __name__ == '__main__':
     cf.rt_max          = args.ang_max
     cf.z_cut_max       = args.z_cut_max
     cf.z_cut_min       = args.z_cut_min
-    cf.np              = args.np
-    cf.nt              = args.nt
+    cf.npb             = args.npb
+    cf.ntb             = args.ntb
     cf.nside           = args.nside
     cf.zref            = args.z_ref
     cf.alpha           = args.z_evol
@@ -172,8 +173,8 @@ if __name__ == '__main__':
     head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum wavelength ratio'},
         {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum wavelength ratio'},
         {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum angle [rad]'},
-        {'name':'NP','value':cf.np,'comment':'Number of bins in wavelength ratio'},
-        {'name':'NT','value':cf.nt,'comment':'Number of bins in angle'},
+        {'name':'NP','value':cf.npb,'comment':'Number of bins in wavelength ratio'},
+        {'name':'NT','value':cf.ntb,'comment':'Number of bins in angle'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':cf.nside,'comment':'Healpix nside'}

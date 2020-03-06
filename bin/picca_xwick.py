@@ -52,10 +52,11 @@ if __name__ == '__main__':
     parser.add_argument('--rt-max', type=float, default=200., required=False,
         help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument('--np', type=int, default=100, required=False,
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    parser.add_argument('--npb', type=int, default=100, required=False,
         help='Number of r-parallel bins')
 
-    parser.add_argument('--nt', type=int, default=50, required=False,
+    parser.add_argument('--ntb', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
     parser.add_argument('--z-min-obj', type=float, default=None, required=False,
@@ -124,8 +125,8 @@ if __name__ == '__main__':
         args.nproc = cpu_count()//2
 
     ### Parameters
-    xcf.np = args.np
-    xcf.nt = args.nt
+    xcf.npb = args.npb
+    xcf.ntb = args.ntb
     xcf.rp_min = args.rp_min
     xcf.rp_max = args.rp_max
     xcf.rt_max = args.rt_max
@@ -277,8 +278,8 @@ if __name__ == '__main__':
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
         {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'NP','value':xcf.npb,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':xcf.ntb,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':xcf.rej,'comment':'Rejection factor'},

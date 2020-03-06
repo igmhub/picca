@@ -39,10 +39,11 @@ if __name__ == '__main__':
     parser.add_argument('--rt-max', type=float, default=200., required=False,
         help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument('--np', type=int, default=50, required=False,
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    parser.add_argument('--npb', type=int, default=50, required=False,
         help='Number of r-parallel bins')
 
-    parser.add_argument('--nt', type=int, default=50, required=False,
+    parser.add_argument('--ntb', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
     parser.add_argument('--z-cut-min', type=float, default=0., required=False,
@@ -98,8 +99,8 @@ if __name__ == '__main__':
     co.rt_max = args.rt_max
     co.z_cut_min = args.z_cut_min
     co.z_cut_max = args.z_cut_max
-    co.np     = args.np
-    co.nt     = args.nt
+    co.npb     = args.npb
+    co.ntb     = args.ntb
     co.nside  = args.nside
     co.type_corr = args.type_corr
     if co.type_corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xR1D2']:
@@ -158,7 +159,7 @@ if __name__ == '__main__':
     head = [ {'name':'RPMIN','value':co.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
         {'name':'RPMAX','value':co.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':co.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':co.np,'comment':'Number of bins in r-parallel'},
+        {'name':'NP','value':co.npb,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':co.nt,'comment':'Number of bins in r-transverse'},
         {'name':'NSIDE','value':co.nside,'comment':'Healpix nside'},
         {'name':'TYPECORR','value':co.type_corr,'comment':'Correlation type'},
