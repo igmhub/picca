@@ -10,6 +10,7 @@ from scipy.interpolate import interp1d
 from multiprocessing import Pool
 from math import isnan
 import argparse
+import bal_tools #functions for  for BAL masking
 
 from picca.data import forest, delta
 from picca import prep_del, io, constants
@@ -58,6 +59,10 @@ if __name__ == '__main__':
 
     parser.add_argument('--keep-bal',action='store_true',required=False,
         help='Do not reject BALs in drq')
+
+    ##Adding in BAL Catalog. --keep-bal should probably be set
+    parser.add_argument('--bal', type = str, default = None, required=False,
+            help = 'BAL file')
 
     parser.add_argument('--bi-max',type=float,required=False,default=None,
         help='Maximum CIV balnicity index in drq (overrides --keep-bal)')
@@ -294,6 +299,21 @@ if __name__ == '__main__':
                         d.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
                         nb_dla_in_forest += 1
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
+
+    ## Correct for BALs
+    if not args.bal is None:
+        print("INFO: Adding BALs")
+        bcat = bal_tools.read_bal(args.bal)
+        nb_bal_in_forest = 0
+        for p in data:
+            for d in data[p]:
+                if d.thid in bcat["THING_ID"]:
+                    BAL_mask_obs = []
+                    BAL_mask_rf = bal_tools.add_bal_rf(bcat,d.thid)
+                    d.mask(mask_obs=BAL_mask_obs , mask_RF=BAL_mask_rf)
+                    nb_bal_in_forest += 1
+        log.write("Found {} BAL quasars in forests\n".format(nb_bal_in_forest))
+                
 
     ## cuts
     log.write("INFO: Input sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
