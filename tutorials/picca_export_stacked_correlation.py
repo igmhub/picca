@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import numpy as npy
+import numpy as np
 import scipy as sp
 import scipy.linalg
 import fitsio
@@ -41,8 +41,8 @@ if __name__ == '__main__':
         h = fitsio.FITS(p)
         head   = h[1].read_header()
         nside  = head['NSIDE']
-        nt     = head['NT']
-        np     = head['NP']
+        ntb     = head['NT']
+        npb     = head['NP']
         rt_max = head['RTMAX']
         rp_min = head['RPMIN']
         rp_max = head['RPMAX']
@@ -57,7 +57,7 @@ if __name__ == '__main__':
         hep = sp.array(h[2]['HEALPID'][:])
         data[i] = {'RP':rp, 'RT':rt, 'Z':z, 'NB':nb, 'DA':da, 'WE':we,'HEALPID':hep,
             'NSIDE':nside, 'HLPXSCHM':scheme,
-            'NP':np, 'NT':nt, 'RTMAX':rt_max, 'RPMIN':rp_min, 'RPMAX':rp_max}
+            'NPB':npb, 'NTB':ntb, 'RTMAX':rt_max, 'RPMIN':rp_min, 'RPMAX':rp_max}
         h.close()
 
     ###
@@ -76,20 +76,20 @@ if __name__ == '__main__':
 
     ### same header
     for i in range(nbData):
-        for k in ['NSIDE','HLPXSCHM','NP','NT','RTMAX','RPMIN','RPMAX']:
+        for k in ['NSIDE','HLPXSCHM','NPB','NTB','RTMAX','RPMIN','RPMAX']:
             assert data[i][k]==data[0][k]
 
     ### Add unshared healpix as empty data
     for i in range(nbData):
         for j in range(nbData):
-            w = npy.logical_not( sp.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
+            w = np.logical_not( sp.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
             if w.sum()>0:
                 new_healpix = data[j]['HEALPID'][w]
                 nb_new_healpix = new_healpix.size
                 nb_bins = data[i]['DA'].shape[1]
                 print("Some healpix are unshared in data {} vs. {}: {}".format(i,j,new_healpix))
-                data[i]['DA']      = sp.append(data[i]['DA'],npy.zeros((nb_new_healpix,nb_bins)),axis=0)
-                data[i]['WE']      = sp.append(data[i]['WE'],npy.zeros((nb_new_healpix,nb_bins)),axis=0)
+                data[i]['DA']      = sp.append(data[i]['DA'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+                data[i]['WE']      = sp.append(data[i]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
                 data[i]['HEALPID'] = sp.append(data[i]['HEALPID'],new_healpix)
 
     ### Sort the data by the healpix values
@@ -130,8 +130,8 @@ if __name__ == '__main__':
         final['CO'] = hh[1]['CO'][:]
         hh.close()
     else:
-        binSizeP = (final['RPMAX']-final['RPMIN']) / final['NP']
-        binSizeT = (final['RTMAX']-0.) / final['NT']
+        binSizeP = (final['RPMAX']-final['RPMIN']) / final['NPB']
+        binSizeT = (final['RTMAX']-0.) / final['NTB']
         if not args.do_not_smooth_cov:
             print('INFO: The covariance will be smoothed')
             final['CO'] = smooth_cov(final['DA'],final['WE'],final['RP'],final['RT'],drt=binSizeT,drp=binSizeP)
@@ -172,7 +172,7 @@ if __name__ == '__main__':
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
-    for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
+    for k in ['NTB','NPB','RTMAX','RPMIN','RPMAX']:
         head[k] = final[k]
     names = ['RP','RT','Z','DA','CO','DM','NB']
     h.write([final[k] for k in names],names=names,header=head,extname='COR')

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-import numpy as npy
+import numpy as np
 import scipy as sp
 import scipy.stats
 import matplotlib.pyplot as plt
@@ -12,7 +12,7 @@ def convert1DTo2D(array1D,nbX,nbY):
         convert a 1D array to a 2D array
     '''
 
-    array2D = npy.zeros((nbX,nbY))
+    array2D = np.zeros((nbX,nbY))
     for k,el in enumerate(array1D):
         i = k//nbY
         j = k%nbY
@@ -95,13 +95,13 @@ if __name__ == '__main__':
         par1 = 'ap'
         min1 = chi2[:,fromkeytoindex[par1]].min()*dhord
         max1 = chi2[:,fromkeytoindex[par1]].max()*dhord
-        nb1 = npy.unique(chi2[:,fromkeytoindex[par1]]).size
+        nb1 = np.unique(chi2[:,fromkeytoindex[par1]]).size
         val1 = chi2_bestfitBAO[fromkeytoindex_bestfitBAO[par1]]*dhord
 
         par2 = 'at'
         min2 = chi2[:,fromkeytoindex[par2]].min()*dmord
         max2 = chi2[:,fromkeytoindex[par2]].max()*dmord
-        nb2 = npy.unique(chi2[:,fromkeytoindex[par2]]).size
+        nb2 = np.unique(chi2[:,fromkeytoindex[par2]]).size
         val2 = chi2_bestfitBAO[fromkeytoindex_bestfitBAO[par2]]*dmord
 
         if 'Dchi2' in fromkeytoindex.keys():
