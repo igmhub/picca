@@ -649,10 +649,10 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
 
         try:
             h = fitsio.FITS(spplate)
+            head0 = h[0].read_header()
         except IOError:
             log.write("error reading {}\n".format(spplate))
             continue
-        head0 = h[0].read_header()
         t0 = time.time()
 
         coeff0 = head0["COEFF0"]
