@@ -49,7 +49,8 @@ def add_bal_rf(bcat,thid): ##LE based on add_dla from picca/py/picca/data.py
             lMax = lin*(1-vmin_AI[i]/ls)
             lMin = lin*(1-vmax_AI[i]/ls)
             ##add a condition where lMin < Ly-A for speed?
-            BAL_mask_rf += [[lMin, lMax]]
+            if (lMin < 1216.1): 
+                BAL_mask_rf += [[lMin, lMax]]
 
     BAL_mask_rf = sp.log10(sp.asarray(BAL_mask_rf))
 
