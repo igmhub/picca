@@ -17,6 +17,7 @@ class cosmo:
         if unblind:
             print("Analysis is not blinded: Om={}".format(Om))
         else:
+            print("WARNING: The analysis is blinded ! The value of Om is not {} !".format(Om))
             Om = 0.3  # prov: this should be read from a file
 
         ### Ignore evolution of neutrinos from matter to radiation
