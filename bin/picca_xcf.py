@@ -51,11 +51,10 @@ if __name__ == '__main__':
     parser.add_argument('--rt-max', type=float, default=200., required=False,
         help='Max r-transverse [h^-1 Mpc]')
 
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    parser.add_argument('--npb', type=int, default=100, required=False,
+    parser.add_argument('--np', type=int, default=100, required=False,
         help='Number of r-parallel bins')
 
-    parser.add_argument('--ntb', type=int, default=50, required=False,
+    parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
     parser.add_argument('--z-min-obj', type=float, default=None, required=False,
@@ -127,8 +126,9 @@ if __name__ == '__main__':
     xcf.z_cut_max = args.z_cut_max
     xcf.z_cut_min = args.z_cut_min
     xcf.rt_max = args.rt_max
-    xcf.npb = args.npb
-    xcf.ntb = args.ntb
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    xcf.npb = args.np
+    xcf.ntb = args.nt
     xcf.nside = args.nside
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
 

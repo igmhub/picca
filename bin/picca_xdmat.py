@@ -37,15 +37,14 @@ if __name__ == '__main__':
     parser.add_argument('--rt-max', type=float, default=200., required=False,
         help='Max r-transverse [h^-1 Mpc]')
 
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    parser.add_argument('--npb', type=int, default=100, required=False,
+    parser.add_argument('--np', type=int, default=100, required=False,
         help='Number of r-parallel bins')
 
-    parser.add_argument('--ntb', type=int, default=50, required=False,
+    parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
     parser.add_argument('--coef-binning-model', type=int, default=1, required=False,
-        help='Coefficient multiplying npb and ntb to get finner binning for the model')
+        help='Coefficient multiplying np and nt to get finner binning for the model')
 
     parser.add_argument('--z-min-obj', type=float, default=None, required=False,
         help='Min redshift for object field')
@@ -110,10 +109,11 @@ if __name__ == '__main__':
     xcf.rt_max = args.rt_max
     xcf.z_cut_max = args.z_cut_max
     xcf.z_cut_min = args.z_cut_min
-    xcf.npb = args.npb
-    xcf.ntb = args.ntb
-    xcf.npm = args.npb*args.coef_binning_model
-    xcf.ntm = args.ntb*args.coef_binning_model
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    xcf.npb = args.np
+    xcf.ntb = args.nt
+    xcf.npm = args.np*args.coef_binning_model
+    xcf.ntm = args.nt*args.coef_binning_model
     xcf.nside = args.nside
     xcf.zref = args.z_ref
     xcf.alpha = args.z_evol_del

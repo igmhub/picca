@@ -42,11 +42,10 @@ if __name__ == '__main__':
     parser.add_argument('--rt-max', type=float, default=200., required=False,
         help='Max r-transverse [h^-1 Mpc]')
 
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    parser.add_argument('--npb', type=int, default=50, required=False,
+    parser.add_argument('--np', type=int, default=50, required=False,
         help='Number of r-parallel bins')
 
-    parser.add_argument('--ntb', type=int, default=50, required=False,
+    parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of r-transverse bins')
 
     parser.add_argument('--z-cut-min', type=float, default=0., required=False,
@@ -115,8 +114,9 @@ if __name__ == '__main__':
     cf.rp_min = args.rp_min
     cf.z_cut_max = args.z_cut_max
     cf.z_cut_min = args.z_cut_min
-    cf.npb = args.npb
-    cf.ntb = args.ntb
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    cf.npb = args.np
+    cf.ntb = args.nt
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol

@@ -37,11 +37,10 @@ if __name__ == '__main__':
     parser.add_argument('--ang-max', type=float, default=0.02, required=False,
         help='Max angle (rad)')
 
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    parser.add_argument('--npb', type=int, default=100, required=False,
+    parser.add_argument('--np', type=int, default=100, required=False,
         help='Number of wavelength ratio bins')
 
-    parser.add_argument('--ntb', type=int, default=50, required=False,
+    parser.add_argument('--nt', type=int, default=50, required=False,
         help='Number of angular bins')
 
     parser.add_argument('--z-min-obj', type=float, default=None, required=False,
@@ -111,8 +110,9 @@ if __name__ == '__main__':
     xcf.rt_max = args.ang_max
     xcf.z_cut_min = args.z_cut_min
     xcf.z_cut_max = args.z_cut_max
-    xcf.npb    = args.npb
-    xcf.ntb    = args.ntb
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    xcf.npb    = args.np
+    xcf.ntb    = args.nt
     xcf.nside  = args.nside
     xcf.ang_correlation = True
     xcf.angmax  = args.ang_max
