@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os.path
+import numpy as np
 import scipy as sp
 import iminuit
 import time
@@ -16,7 +17,7 @@ class chi2:
     def __init__(self,dic_init):
         self.zeff = dic_init['data sets']['zeff']
         self.data = dic_init['data sets']['data']
-        self.par_names = sp.unique([name for d in self.data for name in d.par_names])
+        self.par_names = np.unique([name for d in self.data for name in d.par_names])
         self.outfile = os.path.expandvars(dic_init['outfile'])
 
         self.k = dic_init['fiducial']['k']

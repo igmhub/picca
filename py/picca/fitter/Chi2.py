@@ -1,3 +1,4 @@
+import numpy as np
 import scipy as sp
 from picca.fitter.data import data
 from scipy import stats
@@ -385,7 +386,7 @@ class Chi2:
             sb=sp.dot(self.auto.dm,sb)
 
             ### Other attributes
-            index = sp.arange(len(rp))
+            index = np.arange(len(rp))
             da    = self.auto.da_all
             err   = sp.sqrt(sp.diagonal(self.auto.co_all))
 
@@ -441,7 +442,7 @@ class Chi2:
             sb = sp.dot(self.cross.dm,sb)
 
             ### Other attributes
-            index = sp.arange(len(rp))
+            index = np.arange(len(rp))
             da    = self.cross.da_all
             err   = sp.sqrt(sp.diagonal(self.cross.co_all))
 
@@ -471,7 +472,7 @@ class Chi2:
             z= self.autoQSO.z
 
             ### Save all bins
-            index=sp.arange(len(rp))
+            index=np.arange(len(rp))
             da=self.autoQSO.da_all
             err=sp.sqrt(sp.diagonal(self.autoQSO.co_all))
             fit=self.cosmo.valueAutoQSO(rp,rt,z,{p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pautoQSO})
@@ -480,7 +481,7 @@ class Chi2:
 
             ### Save only fitted bins
             cuts=self.autoQSO.cuts
-            index=sp.arange(len(cuts))[cuts]
+            index=np.arange(len(cuts))[cuts]
             da=self.autoQSO.da
             err=sp.sqrt(sp.diagonal(self.autoQSO.co))
             fit=self.cosmo.valueAutoQSO(rp,rt,z,{p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pautoQSO})

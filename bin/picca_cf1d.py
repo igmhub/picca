@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
@@ -173,10 +174,10 @@ if __name__ == '__main__':
     w = norm>0
     cor[w]/=norm[w]
 
-    c1d = sp.zeros(cf.n1d)
-    nc1d = sp.zeros(cf.n1d)
-    nb1d = sp.zeros(cf.n1d,dtype=sp.int64)
-    bins = sp.arange(cf.n1d)
+    c1d = np.zeros(cf.n1d)
+    nc1d = np.zeros(cf.n1d)
+    nb1d = np.zeros(cf.n1d,dtype=sp.int64)
+    bins = np.arange(cf.n1d)
 
     dbin = bins-bins[:,None]
     w = dbin>=0
