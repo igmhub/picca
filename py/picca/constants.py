@@ -17,7 +17,14 @@ class cosmo:
         if unblind:
             print("Analysis is not blinded: Om={}".format(Om))
         else:
-            Om = 0.3  # prov: this should be read from a file
+            # blind test small
+            file = "fitter2/models/DR16_blind_test_small/DR16_blind_test_small.fits"
+            # blind test large
+            #file = "fitter2/models/DR16_blind_test_small/DR16_blind_test_large.fits"
+            # load Om
+            hdu = fits.open("DR16_om0{}.fits".format(aux))
+            Om = hdu[1].header["OM"]
+            hdu.close()
 
         ### Ignore evolution of neutrinos from matter to radiation
         ### H0 in km/s/Mpc
