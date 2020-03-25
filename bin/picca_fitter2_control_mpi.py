@@ -6,7 +6,7 @@ import argparse
 if __name__ == '__main__':
 
     pars = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Fit the correlation function.')
+        description='Fit the correlation function with parallel functionality.')
 
     pars.add_argument('config', type=str, default=None,
         help='Config file')

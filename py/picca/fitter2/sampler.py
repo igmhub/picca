@@ -91,6 +91,9 @@ class sampler:
         do_clustering = self.polychord_setup.getboolean('do_clustering', False)
         path = self.polychord_setup.get('path')
         filename = self.polychord_setup.get('name')
+        write_live = self.polychord_setup.getboolean('write_live', False)
+        write_dead = self.polychord_setup.getboolean('write_dead', True)
+        write_prior = self.polychord_setup.getboolean('write_prior', False)
 
         # Initialize and run PolyChord
         settings = PolyChordSettings(npar, nder,
@@ -106,7 +109,7 @@ class sampler:
                                      equals=False,
                                      write_resume=resume,
                                      read_resume=resume,
-                                     write_live=False,
-                                     write_dead=True,
-                                     write_prior=False)
+                                     write_live=write_live,
+                                     write_dead=write_dead,
+                                     write_prior=write_prior)
         pypolychord.run_polychord(log_lik, npar, nder, settings, prior, dumper)
