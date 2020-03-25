@@ -2,7 +2,7 @@
 prior_dic = {}
 
 def gaussian(pars, prior_pars=None, name=None):
-    ''' Gaussian prior that return a chi2 '''
+    ''' Gaussian prior that returns a chi2 '''
     mu = prior_pars[0]
     sigma = prior_pars[1]
     par = pars[name]

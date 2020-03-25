@@ -1,7 +1,6 @@
 from __future__ import print_function, division
-import scipy as sp
-
 from . import parser, chi2
+
 
 class fitter2:
     '''
@@ -18,7 +17,7 @@ class fitter2:
         # Initialize the required objects
         if self.run_chi2:
             self.chi2 = chi2.chi2(self.dic_init)
-        
+
     def run(self):
         ''' Run the fitter. This function only runs single core options '''
 
@@ -29,5 +28,5 @@ class fitter2:
             self.chi2.fastMC()
             self.chi2.export()
         else:
-            raise ValueError('You called "fitter.run()" without asking for chi2. Set "chi2 = True" in [control]')
-
+            raise ValueError('You called "fitter.run()" without \
+                asking for chi2. Set "chi2 = True" in [control]')
