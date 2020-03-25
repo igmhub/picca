@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import numpy as np
 import scipy as sp
 import scipy.linalg
 import fitsio
@@ -40,8 +41,8 @@ if __name__ == '__main__':
         h = fitsio.FITS(p)
         head   = h[1].read_header()
         nside  = head['NSIDE']
-        nt     = head['NT']
-        np     = head['NP']
+        ntb     = head['NT']
+        npb     = head['NP']
         rt_max = head['RTMAX']
         rp_min = head['RPMIN']
         rp_max = head['RPMAX']
@@ -56,7 +57,7 @@ if __name__ == '__main__':
         hep = sp.array(h[2]['HEALPID'][:])
         data[i] = {'RP':rp, 'RT':rt, 'Z':z, 'NB':nb, 'DA':da, 'WE':we,'HEALPID':hep,
             'NSIDE':nside, 'HLPXSCHM':scheme,
-            'NP':np, 'NT':nt, 'RTMAX':rt_max, 'RPMIN':rp_min, 'RPMAX':rp_max}
+            'NP':npb, 'NT':ntb, 'RTMAX':rt_max, 'RPMIN':rp_min, 'RPMAX':rp_max}
         h.close()
 
     ###
@@ -81,14 +82,14 @@ if __name__ == '__main__':
     ### Add unshared healpix as empty data
     for i in range(nbData):
         for j in range(nbData):
-            w = sp.logical_not( sp.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
+            w = np.logical_not( sp.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
             if w.sum()>0:
                 new_healpix = data[j]['HEALPID'][w]
                 nb_new_healpix = new_healpix.size
                 nb_bins = data[i]['DA'].shape[1]
                 print("Some healpix are unshared in data {} vs. {}: {}".format(i,j,new_healpix))
-                data[i]['DA']      = sp.append(data[i]['DA'],sp.zeros((nb_new_healpix,nb_bins)),axis=0)
-                data[i]['WE']      = sp.append(data[i]['WE'],sp.zeros((nb_new_healpix,nb_bins)),axis=0)
+                data[i]['DA']      = sp.append(data[i]['DA'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+                data[i]['WE']      = sp.append(data[i]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
                 data[i]['HEALPID'] = sp.append(data[i]['HEALPID'],new_healpix)
 
     ### Sort the data by the healpix values

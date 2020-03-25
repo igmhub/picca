@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
+import os
+import numpy as np
 import scipy as sp
+import scipy.stats
 import matplotlib.pyplot as plt
 import argparse
 
@@ -9,7 +12,7 @@ def convert1DTo2D(array1D,nbX,nbY):
         convert a 1D array to a 2D array
     '''
 
-    array2D = sp.zeros((nbX,nbY))
+    array2D = np.zeros((nbX,nbY))
     for k,el in enumerate(array1D):
         i = k//nbY
         j = k%nbY
@@ -34,7 +37,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     color = ['blue','red','green','orange']
-    levels = [2.29, 6.18, 11.82]
 
     assert len(args.chi2scan)==len(args.label)
 
@@ -64,6 +66,17 @@ if __name__ == '__main__':
         fromkeytoindex_bestfitBAO = { el:i for i,el in enumerate(first_line) }
         chi2_bestfitBAO = sp.loadtxt(path.replace('.ap.at.scan.dat','.save.pars'))
 
+        ### Read the convertion from delta-chi2 to sigma
+        if not os.path.isfile(path.replace('.ap.at.scan.dat','.dchi2.to.sigma')):
+            print("WARNING: did not find .dchi2.to.sigma to convert delta-chi2 to sigma, assuming Linear mapping")
+            levels = [ sp.stats.chi2.ppf( sp.stats.chi2.cdf(sigma**2,1), 2) for sigma in range(1,4)]
+        else:
+            with open(path.replace('.ap.at.scan.dat','.dchi2.to.sigma')) as f:
+                for line in f:
+                    line = line.split()
+                    if line[0]=='ap_at':
+                        levels = [float(lev) for lev in line[1:]]
+
         ### Read the fiducial cosmology
         if args.d_over_rd:
             with open(path.replace('.ap.at.scan.dat','.fiducial')) as f:
@@ -82,13 +95,13 @@ if __name__ == '__main__':
         par1 = 'ap'
         min1 = chi2[:,fromkeytoindex[par1]].min()*dhord
         max1 = chi2[:,fromkeytoindex[par1]].max()*dhord
-        nb1 = sp.unique(chi2[:,fromkeytoindex[par1]]).size
+        nb1 = np.unique(chi2[:,fromkeytoindex[par1]]).size
         val1 = chi2_bestfitBAO[fromkeytoindex_bestfitBAO[par1]]*dhord
 
         par2 = 'at'
         min2 = chi2[:,fromkeytoindex[par2]].min()*dmord
         max2 = chi2[:,fromkeytoindex[par2]].max()*dmord
-        nb2 = sp.unique(chi2[:,fromkeytoindex[par2]]).size
+        nb2 = np.unique(chi2[:,fromkeytoindex[par2]]).size
         val2 = chi2_bestfitBAO[fromkeytoindex_bestfitBAO[par2]]*dmord
 
         if 'Dchi2' in fromkeytoindex.keys():

@@ -4,7 +4,7 @@
 # Masks 1.5 spectral pixels on either side of strong sky lines from the
 # DR12 sky mask (https://trac.sdss3.org/wiki/BOSS/LyaForestsurvey/SkyMask).
 #
-# name  lambda_min (Å)  lambda_max (Å)  frame
+# name  lambda_min (A)  lambda_max (A)  frame
 #
 sky 3499.05126178 3501.46915578 OBS
 sky 3499.85698344 3502.27543421 OBS
