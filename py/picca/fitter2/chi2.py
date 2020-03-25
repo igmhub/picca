@@ -4,7 +4,6 @@ import numpy as np
 import scipy as sp
 import iminuit
 import time
-import copy
 import h5py
 import sys
 from scipy.linalg import cholesky
@@ -200,7 +199,6 @@ class chi2:
                         it1*self.dic_chi2scan[par2]['grid'].size+it2+1,
                         self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
-        print(sp.asarray(result).T[-1])
         self.dic_chi2scan_result = {}
         self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
         self.dic_chi2scan_result['values'] = sp.asarray(result)
@@ -219,7 +217,6 @@ class chi2:
 
     def fastMC(self):
         if not hasattr(self,"nfast_mc"): return
-
 
         sp.random.seed(self.seedfast_mc)
         nfast_mc = self.nfast_mc

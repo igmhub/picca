@@ -101,8 +101,12 @@ class data:
             print('LOG: Reduced matrix is positive definite')
         except sp.linalg.LinAlgError:
             print('WARNING: Reduced matrix is not positive definite')
+
+        # We need the determinant of the cov matrix for the likelihood norm
+        # log |C| = sum log diag D, where C = L D L*
         _, d, __ = linalg.ldl(ico)
-        self.log_co_det = sp.log(d.diagonal()).sum()
+        self.log_co_det = np.log(d.diagonal()).sum()
+
         self.ico = linalg.inv(ico)
         self.dm = dm
 
@@ -390,9 +394,13 @@ class data:
         return dxi.T.dot(self.ico.dot(dxi))
 
     def log_lik(self, k, pk_lin, pksb_lin, full_shape, pars):
+        ''' Function computes the normalized log likelihood
         
+        Uses the chi2 function and computes the normalization
+        '''
+
         chi2 = self.chi2(k, pk_lin, pksb_lin, full_shape, pars)
-        log_lik = - 0.5 * len(self.da_cut) * sp.log(2 * sp.pi) - 0.5 * self.log_co_det
+        log_lik = - 0.5 * len(self.da_cut) * np.log(2 * np.pi) - 0.5 * self.log_co_det
         log_lik -= 0.5 * chi2
 
         return log_lik

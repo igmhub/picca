@@ -2,12 +2,14 @@
 prior_dic = {}
 
 def gaussian(pars, prior_pars=None, name=None):
+    ''' Gaussian prior that return a chi2 '''
     mu = prior_pars[0]
     sigma = prior_pars[1]
     par = pars[name]
     return (par-mu)**2/sigma**2
 
 def gaussian_norm(pars, prior_pars=None, name=None):
+    ''' Gaussian prior that returns a normalized likelihood '''
     from numpy import log, pi
     mu = prior_pars[0]
     sigma = prior_pars[1]

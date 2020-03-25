@@ -3,7 +3,6 @@ import scipy as sp
 from numpy import fft
 from scipy import special
 import scipy.interpolate
-import time
 
 from . import myGamma
 
@@ -147,17 +146,3 @@ def aiso_epsilon(kwargs):
 def convert_instance_to_dictionary(inst):
     dic = dict((name, getattr(inst, name)) for name in dir(inst) if not name.startswith('__'))
     return dic
-
-def timeit(method):
-    def timed(*args, **kw):
-        ts = time.time()
-        result = method(*args, **kw)
-        te = time.time()
-        if 'log_time' in kw:
-            name = kw.get('log_name', method.__name__.upper())
-            kw['log_time'][name] = int((te - ts) * 1000)
-        else:
-            print('%r  %2.2f ms' % \
-                  (method.__name__, (te - ts) * 1000))
-        return result
-    return timed
