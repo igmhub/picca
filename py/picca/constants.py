@@ -1,4 +1,5 @@
 import fitsio
+import os
 import scipy as sp
 from scipy import interpolate
 
@@ -19,12 +20,13 @@ class cosmo:
             print("Analysis is not blinded: Om={}".format(Om))
         else:
             print("WARNING: The analysis is blinded ! The value of Om is not {} !".format(Om))
+            this_folder = os.path.dirname(os.path.realpath(__file__))
             # blind test small
             file = "fitter2/models/DR16_blind_test_small/DR16_blind_test_small.fits"
             # blind test large
             #file = "fitter2/models/DR16_blind_test_small/DR16_blind_test_large.fits"
             # load Om
-            hdu = fitsio.FITS(file)
+            hdu = fitsio.FITS("{}/{}".format(this_folder, file))
             Om = hdu[1].read_header()['OM']
             hdu.close()
 
