@@ -1,3 +1,4 @@
+import fitsio
 import scipy as sp
 from scipy import interpolate
 
@@ -23,8 +24,8 @@ class cosmo:
             # blind test large
             #file = "fitter2/models/DR16_blind_test_small/DR16_blind_test_large.fits"
             # load Om
-            hdu = fits.open("DR16_om0{}.fits".format(file))
-            Om = hdu[1].header["OM"]
+            hdu = fitsio.FITS(file)
+            Om = hdu[1].read_header()['OM']
             hdu.close()
 
         ### Ignore evolution of neutrinos from matter to radiation
