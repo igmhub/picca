@@ -1,5 +1,7 @@
+import fitsio
 import scipy as sp
 from scipy import interpolate
+from pkg_resources import resource_filename
 
 deg = sp.pi/180.
 
@@ -18,7 +20,15 @@ class cosmo:
             print("Analysis is not blinded: Om={}".format(Om))
         else:
             print("WARNING: The analysis is blinded ! The value of Om is not {} !".format(Om))
-            Om = 0.3  # prov: this should be read from a file
+            # blind test small
+            filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
+            # blind test large
+            #filename = "DR16_blind_test_small/DR16_blind_test_large.fits"
+            # load Om
+            filename = resource_filename('picca', 'fitter2')+'/models/{}'.format(filename)
+            hdu = fitsio.FITS(filename)
+            Om = hdu[1].read_header()['OM']
+            hdu.close()
 
         ### Ignore evolution of neutrinos from matter to radiation
         ### H0 in km/s/Mpc
