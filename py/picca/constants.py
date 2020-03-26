@@ -23,7 +23,7 @@ class cosmo:
             # blind test large
             #file = "fitter2/models/DR16_blind_test_small/DR16_blind_test_large.fits"
             # load Om
-            hdu = fits.open("DR16_om0{}.fits".format(aux))
+            hdu = fits.open("DR16_om0{}.fits".format(file))
             Om = hdu[1].header["OM"]
             hdu.close()
 
