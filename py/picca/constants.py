@@ -17,6 +17,7 @@ class cosmo:
         if unblind:
             print("Analysis is not blinded: Om={}".format(Om))
         else:
+            print("WARNING: The analysis is blinded ! The value of Om is not {} !".format(Om))
             # blind test small
             file = "fitter2/models/DR16_blind_test_small/DR16_blind_test_small.fits"
             # blind test large
