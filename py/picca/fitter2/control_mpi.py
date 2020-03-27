@@ -209,7 +209,7 @@ class fitter2_mpi(control.fitter2):
                 result = mpi_run_2d_set(num_runs, grid, par1, par2)
             else:
                 j = 0
-                for i in range(num_runs // num_cpus):
+                for __ in range(num_runs // num_cpus):
                     result += [mpi_run_2d_set(num_cpus, grid[j:j+num_cpus], par1, par2)]
                     j += num_cpus
                 rest = num_runs % num_cpus
