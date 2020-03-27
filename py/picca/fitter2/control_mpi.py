@@ -105,7 +105,7 @@ class fitter2_mpi(control.fitter2):
             try:
                 best_fit = self.chi2._minimize()
                 chi2_result = best_fit.fval
-            except:
+            except ValueError:
                 chi2_result = np.nan
             tresult = []
             for p in sorted(best_fit.values):
@@ -185,7 +185,7 @@ class fitter2_mpi(control.fitter2):
                 result = mpi_run_1d_set(num_runs, grid, par)
             else:
                 j = 0
-                for i in range(num_runs // num_cpus):
+                for __ in range(num_runs // num_cpus):
                     result += [mpi_run_1d_set(num_cpus, grid[j:j+num_cpus], par)]
                     j += num_cpus
                 rest = num_runs % num_cpus

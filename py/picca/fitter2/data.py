@@ -395,7 +395,6 @@ class data:
 
     def log_lik(self, k, pk_lin, pksb_lin, full_shape, pars):
         ''' Function computes the normalized log likelihood
-        
         Uses the chi2 function and computes the normalization
         '''
 
