@@ -27,8 +27,7 @@ data/deSainteAgatheetal2019/combined_stdFit/combined_stdFit.ap.at.scan.dat
 
 ## DR16
 
-### Results of H. du Mas des Bourboux et al. 2020
-[arXiv:<arxiv.number>](https://arxiv.org/abs/<arxiv.number>)<br/>
+### Results of H. du Mas des Bourboux et al. 2020 ([arXiv:<arxiv.number>](https://arxiv.org/abs/<arxiv.number>))
 In `duMasdesBourbouxetal2020/`:
 
 *   `auto\_full\_stdFit`: fit results of the combined:
@@ -44,8 +43,7 @@ In `duMasdesBourbouxetal2020/`:
 
 ## DR14
 
-### Results of V. de Sainte Agathe et al. 2019
-[arXiv:1904.03400](https://arxiv.org/abs/1904.03400)<br/>
+### Results of V. de Sainte Agathe et al. 2019 ([arXiv:1904.03400](https://arxiv.org/abs/1904.03400))
 In `deSainteAgatheetal2019/`:
 
 *   `auto\_alone\_stdFit`: fit results of the combined Lya absorption in Lya region
@@ -55,8 +53,7 @@ In `deSainteAgatheetal2019/`:
 
 *   `combined\_stdFit`: combined with the cross-correlation function from Blomqvist et al. 2019
 
-### Results of M. Blomqvist et al. 2019
-[arXiv:1904.03430](https://arxiv.org/abs/1904.03430)<br/>
+### Results of M. Blomqvist et al. 2019 ([arXiv:1904.03430](https://arxiv.org/abs/1904.03430))
 In `Blomqvistetal2019/`:
 
 *   `cross\_alone\_stdFit`: standard fit results to quasar-(Lya+Lyb) regions cross-correlation
@@ -66,15 +63,13 @@ In `Blomqvistetal2019/`:
 
 ## DR12
 
-### Results of J.E. Bautista et al. 2017
-[arXiv:1702.00176](https://arxiv.org/abs/1702.00176)<br/>
-In `Bautistaetal2017/fits/`:
+### Results of J.E. Bautista et al. 2017 ([arXiv:1702.00176](https://arxiv.org/abs/1702.00176))
+In ![Bautistaetal2017/fits](/data/Bautistaetal2017/fits/):
 
-*   `physical`: fit results to lyman-alpha forest auto-correlation data
+*   ![physical](/data/Bautistaetal2017/fits/physical/): fit results to lyman-alpha forest auto-correlation data
 
-### Results of H. du Mas des Bourboux et al. 2017
-[arXiv:1708.02225](https://arxiv.org/abs/1708.02225)<br/>
-In `duMasdesBourbouxetal2017/fits/`:
+### Results of H. du Mas des Bourboux et al. 2017 ([arXiv:1708.02225](https://arxiv.org/abs/1708.02225))
+In ![duMasdesBourbouxetal2017/fits](/data/duMasdesBourbouxetal2017/fits/):
 
 *   ![cross\_alone\_stdFit](/data/duMasdesBourbouxetal2017/fits/cross_alone_stdFit/): standard fit results to quasar-lyman-alpha forest cross-correlation data
 
