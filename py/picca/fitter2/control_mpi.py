@@ -279,7 +279,7 @@ class fitter2_mpi(control.fitter2):
                     d.pars_init[p] = self.chi2.fidfast_mc[p]
                     d.par_fixed['fix_'+p] = self.chi2.fixfast_mc['fix_'+p]
 
-        # Compute fiducial model 
+        # Compute fiducial model
         # This is copied from the chi2.py which in turn comes from data.py
         # This functionality should be standalone and in one place in the future
         self.chi2.fiducial_values['SB'] = False
