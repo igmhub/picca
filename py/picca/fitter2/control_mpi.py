@@ -258,6 +258,9 @@ class fitter2_mpi(control.fitter2):
         # Seed is incremented from the input value by the CPU #
         np.random.seed(self.chi2.seedfast_mc + cpu_rank)
         nfast_mc = self.chi2.nfast_mc // num_cpus
+        # If the division is not exact we will run one more set
+        # This means that we are actually computing more than requested
+        # This makes the implementation simpler and makes sure no CPU is idle
         if self.chi2.nfast_mc % num_cpus != 0:
             nfast_mc += 1
 
@@ -276,9 +279,12 @@ class fitter2_mpi(control.fitter2):
                     d.pars_init[p] = self.chi2.fidfast_mc[p]
                     d.par_fixed['fix_'+p] = self.chi2.fixfast_mc['fix_'+p]
 
-        # Compute fiducial model
+        # Compute fiducial model 
+        # This is copied from the chi2.py which in turn comes from data.py
+        # This functionality should be standalone and in one place in the future
         self.chi2.fiducial_values['SB'] = False
         for d in self.chi2.data:
+            # Compute Xi Peak
             d.fiducial_model = self.chi2.fiducial_values['bao_amp'] \
                 * d.xi_model(self.chi2.k, self.chi2.pk_lin-self.chi2.pksb_lin, self.chi2.fiducial_values)
 
@@ -287,6 +293,7 @@ class fitter2_mpi(control.fitter2):
             snl_par = self.chi2.fiducial_values['sigmaNL_par']
             self.chi2.fiducial_values['sigmaNL_per'] = 0
             self.chi2.fiducial_values['sigmaNL_par'] = 0
+            # Compute Xi Continuum
             d.fiducial_model += d.xi_model(self.chi2.k, self.chi2.pksb_lin, self.chi2.fiducial_values)
             self.chi2.fiducial_values['SB'] = False
             self.chi2.fiducial_values['sigmaNL_per'] = snl_per

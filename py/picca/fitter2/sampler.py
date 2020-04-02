@@ -12,20 +12,28 @@ class sampler:
     ''' Interface between picca and the nested sampler PolyChord '''
 
     def __init__(self, dic_init):
+        # Setup the data we need and extract the PolyChord config
         self.zeff = dic_init['data sets']['zeff']
         self.data = dic_init['data sets']['data']
         self.par_names = np.unique([name for d in self.data for name in d.par_names])
         self.outfile = os.path.expandvars(dic_init['outfile'])
         self.polychord_setup = dic_init['Polychord']
 
+        # Get the fiducial P(k) for the peak and continuum
         self.k = dic_init['fiducial']['k']
         self.pk_lin = dic_init['fiducial']['pk']
         self.pksb_lin = dic_init['fiducial']['pksb']
+
+        # Flag for running fullshape. Needed by data.py, never tested
         self.full_shape = dic_init['fiducial']['full-shape']
 
     def log_lik(self, pars):
         ''' Compute log likelihood for all datasets and add them '''
+        # data.py assumes this exists, so we need to add it to be sure
+        # This should be in data.py in the future as it makes no sense
+        # for it to be here
         pars['SB'] = False
+
         log_lik = 0
         for d in self.data:
             log_lik += d.log_lik(self.k, self.pk_lin, self.pksb_lin,
@@ -79,7 +87,7 @@ class sampler:
             ''' Dumper function empty for now '''
             pass
 
-        # Get the setting we need and add defaults
+        # Get the settings we need and add defaults
         # These are the same as PolyChord recommends
         nlive = self.polychord_setup.getint('nlive', int(25*npar))
         seed = self.polychord_setup.getint('seed', int(0))
