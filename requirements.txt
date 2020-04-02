@@ -2,7 +2,7 @@ numpy>=1.16.4
 scipy>=1.2.2
 iminuit>=1.3.7
 healpy>=1.12.9
-fitsio>=1.0.5
+fitsio==1.0.5
 llvmlite>=0.29.0
 numba==0.43.1
 h5py>=2.9.0

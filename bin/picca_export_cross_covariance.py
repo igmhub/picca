@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import numpy as np
 import scipy as sp
 import scipy.linalg
 import fitsio
@@ -52,14 +53,14 @@ if __name__ == '__main__':
     ### Add unshared healpix as empty data
     for i in sorted(list(data.keys())):
         j = (i+1)%2
-        w = sp.logical_not( sp.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
+        w = np.logical_not( sp.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
         if w.sum()>0:
             new_healpix = data[j]['HEALPID'][w]
             nb_new_healpix = new_healpix.size
             nb_bins = data[i]['DA'].shape[1]
             print("Some healpix are unshared in data {}: {}".format(i,new_healpix))
-            data[i]['DA']      = sp.append(data[i]['DA'],sp.zeros((nb_new_healpix,nb_bins)),axis=0)
-            data[i]['WE']      = sp.append(data[i]['WE'],sp.zeros((nb_new_healpix,nb_bins)),axis=0)
+            data[i]['DA']      = sp.append(data[i]['DA'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+            data[i]['WE']      = sp.append(data[i]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
             data[i]['HEALPID'] = sp.append(data[i]['HEALPID'],new_healpix)
 
     ### Sort the data by the healpix values
