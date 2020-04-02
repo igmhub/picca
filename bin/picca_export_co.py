@@ -3,6 +3,7 @@
 from __future__ import print_function
 import sys
 import fitsio
+import numpy as np
 import scipy as sp
 import scipy.linalg
 import argparse
@@ -102,7 +103,7 @@ if __name__ == '__main__':
         dr = data['DR']['WE'].sum(axis=0)
         rd = data['RD']['WE'].sum(axis=0)
         w = rr>0.
-        da = sp.zeros(dd.size)
+        da = np.zeros(dd.size)
         da[w] = (dd[w]+rr[w]-rd[w]-dr[w])/rr[w]
     else:
         dd = data['xDD']['WE'].sum(axis=0)
@@ -110,7 +111,7 @@ if __name__ == '__main__':
         d1r2 = data['xD1R2']['WE'].sum(axis=0)
         d2r1 = data['xR1D2']['WE'].sum(axis=0)
         w = rr>0.
-        da = sp.zeros(dd.size)
+        da = np.zeros(dd.size)
         da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
     data['DA'] = da
     data['corr_DD'] = dd
@@ -125,7 +126,7 @@ if __name__ == '__main__':
     elif args.get_cov_from_poisson:
         print('INFO: Compute covariance from Poisson statistics')
         w = data['corr_RR']>0.
-        co = sp.zeros(data['corr_DD'].size)
+        co = np.zeros(data['corr_DD'].size)
         co[w] = (data['COEF']/2.*data['corr_DD'][w])**2/(data['COEF']/2.*data['corr_RR'][w])**3
         data['CO'] = sp.diag(co)
     else:
@@ -142,14 +143,14 @@ if __name__ == '__main__':
                     print('ERROR: HLPXSCHM are different: {} != {}'.format(data[d1]['HLPXSCHM'],data[d2]['HLPXSCHM']))
                     sys.exit()
 
-                w = sp.logical_not( sp.in1d(data[d1]['HEALPID'],data[d2]['HEALPID']) )
+                w = np.logical_not( sp.in1d(data[d1]['HEALPID'],data[d2]['HEALPID']) )
                 if w.sum()!=0:
                     print('WARNING: HEALPID are different by {} for {}:{} and {}:{}'.format(w.sum(),d1,data[d1]['HEALPID'].size,d2,data[d2]['HEALPID'].size))
                     new_healpix = data[d1]['HEALPID'][w]
                     nb_new_healpix = new_healpix.size
                     nb_bins = data[d2]['WE'].shape[1]
                     data[d2]['HEALPID'] = sp.append(data[d2]['HEALPID'],new_healpix)
-                    data[d2]['WE'] = sp.append(data[d2]['WE'],sp.zeros((nb_new_healpix,nb_bins)),axis=0)
+                    data[d2]['WE'] = sp.append(data[d2]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
 
         ### Sort the data by the healpix values
         for d1 in list(lst_file.keys()):
@@ -163,7 +164,7 @@ if __name__ == '__main__':
             dr = data['DR']['WE']
             rd = data['RD']['WE']
             w = rr>0.
-            da = sp.zeros(dd.shape)
+            da = np.zeros(dd.shape)
             da[w] = (dd[w]+rr[w]-dr[w]-rd[w])/rr[w]
             we = data['DD']['WE']
         else:
@@ -172,7 +173,7 @@ if __name__ == '__main__':
             d1r2 = data['xD1R2']['WE']
             d2r1 = data['xR1D2']['WE']
             w = rr>0.
-            da = sp.zeros(dd.shape)
+            da = np.zeros(dd.shape)
             da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
             we = data['xDD']['WE']
         data['HLP_DA'] = da

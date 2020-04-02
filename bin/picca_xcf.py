@@ -126,8 +126,9 @@ if __name__ == '__main__':
     xcf.z_cut_max = args.z_cut_max
     xcf.z_cut_min = args.z_cut_min
     xcf.rt_max = args.rt_max
-    xcf.np = args.np
-    xcf.nt = args.nt
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    xcf.npb = args.np
+    xcf.ntb = args.nt
     xcf.nside = args.nside
     xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
 
@@ -230,8 +231,8 @@ if __name__ == '__main__':
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
         {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'NP','value':xcf.npb,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':xcf.ntb,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}

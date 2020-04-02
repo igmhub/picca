@@ -1,8 +1,8 @@
 import astropy.io.fits as pyfits
+import numpy as np
 import scipy as sp
 import scipy.interpolate
 import sys
-import numpy as np
 
 from picca.fitter import myGamma
 from picca.fitter import utils
@@ -16,7 +16,7 @@ class model:
     parameters for FFT
     '''
     nmuk = 1000
-    muk=(sp.arange(nmuk)+0.5)/nmuk
+    muk=(np.arange(nmuk)+0.5)/nmuk
     dmuk = 1./nmuk
     muk=muk[:,None]
 
@@ -199,7 +199,7 @@ class model:
         return dnl
 
     def valueAuto(self,rp,rt,z,pars):
-        if self.xi_auto_prev is None or not sp.allclose(list(pars.values()),self.pars_auto_prev):
+        if self.xi_auto_prev is None or not np.allclose(list(pars.values()),self.pars_auto_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -332,7 +332,7 @@ class model:
         return fftlog.Pk2XiA(self.k1d,pk_full,arp,art)*evol
 
     def valueCross(self,rp,rt,z,pars):
-        if self.xi_cross_prev is None or not sp.allclose(list(pars.values()),self.pars_cross_prev):
+        if self.xi_cross_prev is None or not np.allclose(list(pars.values()),self.pars_cross_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -430,7 +430,7 @@ class model:
         return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
 
     def valueAutoQSO(self,rp,rt,z,pars):
-        if self.xi_autoQSO_prev is None or not sp.allclose(list(pars.values()),self.pars_autoQSO_prev):
+        if self.xi_autoQSO_prev is None or not np.allclose(list(pars.values()),self.pars_autoQSO_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -515,7 +515,7 @@ class model:
         s=sp.argsort(r)
         r=r[s]
 
-        xi=sp.zeros([ell_max//2+1,len(ar)])
+        xi=np.zeros([ell_max//2+1,len(ar)])
 
         for ell in range(0,ell_max+1,2):
             pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)
