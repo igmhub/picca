@@ -28,7 +28,7 @@ data/duMasdesBourbouxetal2020/combined_stdFit/combined.ap.at.scan.dat \
 ## DR16
 
 ### Results of H. du Mas des Bourboux et al. 2020 ([arXiv:<arxiv.number>](https://arxiv.org/abs/<arxiv.number>))
-In ![duMasdesBourbouxetal2020](/data/duMasdesBourbouxetal2020/):
+In ![duMasdesBourbouxetal2020](/data/duMasdesBourbouxetal2020/) (will be added once on arxiv):
 
 *   ![auto\_full\_stdFit](/data/duMasdesBourbouxetal2020/auto_full_stdFit/): Result of the full auto-correlation with a combined fit of:
     * auto-correlation of Lya absorption in the Lya region (Lya(Lya)xLya(Lya))
