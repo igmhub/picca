@@ -16,11 +16,11 @@ In each folder:
 
 To plot the chi2-scan, you can run for example:
 ```bash
-tutorials/data/picca_plot_chi2_surface.py
---chi2scan data/deSainteAgatheetal2019/auto_alone_stdFit/auto_alone_stdFit.ap.at.scan.dat
-data/Blomqvistetal2019/cross_alone_stdFit/cross_alone_stdFit.ap.at.scan.dat
-data/deSainteAgatheetal2019/combined_stdFit/combined_stdFit.ap.at.scan.dat
---label auto-DR14 cross-DR14 combined-DR14
+tutorials/data/picca_plot_chi2_surface.py --chi2scan \
+data/auto_full_stdFit/autofull.ap.at.scan.dat \
+data/cross_full_stdFit/crossfull.ap.at.scan.dat \
+data/combined_stdFit/combined.ap.at.scan.dat \
+--label auto-DR16 cross-DR16 combined-DR16 \
 ```
 
 ![DR14-chi2scan](/tutorials/data/DR14-chi2-scan-ap-at.png)
@@ -31,12 +31,12 @@ data/deSainteAgatheetal2019/combined_stdFit/combined_stdFit.ap.at.scan.dat
 In ![duMasdesBourbouxetal2020](/data/duMasdesBourbouxetal2020/):
 
 *   ![auto\_full\_stdFit](/data/duMasdesBourbouxetal2020/auto_full_stdFit/): Result of the full auto-correlation with a combined fit of:
-    * auto-correlation of Lya absorption in Lya region (Lya(Lya)xLya(Lya))
+    * auto-correlation of Lya absorption in the Lya region (Lya(Lya)xLya(Lya))
     * auto-correlation of Lya absorption in the Lya region with Lya absorption in the Lyb region (Lya(Lya)xLya(Lya))
 
 *   ![cross\_full\_stdFit](/data/duMasdesBourbouxetal2020/cross_full_stdFit/): Result of the full cross-correlation with a combined fit of:
-    * cross-correlation of Lya absorption in Lya region with quasars (Lya(Lya)xQSO)
-    * cross-correlation of Lya absorption in Lyb region with quasars (Lya(Lyb)xQSO)
+    * cross-correlation of Lya absorption in the Lya region with quasars (Lya(Lya)xQSO)
+    * cross-correlation of Lya absorption in the Lyb region with quasars (Lya(Lyb)xQSO)
 
 *   ![combined\_stdFit](/data/duMasdesBourbouxetal2020/combined_stdFit/): Result of the fit to the four previously defined
     different correlations
