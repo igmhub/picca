@@ -30,15 +30,15 @@ data/deSainteAgatheetal2019/combined_stdFit/combined_stdFit.ap.at.scan.dat
 ### Results of H. du Mas des Bourboux et al. 2020 ([arXiv:<arxiv.number>](https://arxiv.org/abs/<arxiv.number>))
 In ![duMasdesBourbouxetal2020](/data/duMasdesBourbouxetal2020/):
 
-*   ![auto\_full\_stdFit](/data/duMasdesBourbouxetal2020/auto_full_stdFit/): fit results of the combined:
+*   ![auto\_full\_stdFit](/data/duMasdesBourbouxetal2020/auto_full_stdFit/): Result of the full auto-correlation with a combined fit of:
     * auto-correlation of Lya absorption in Lya region (Lya(Lya)xLya(Lya))
     * auto-correlation of Lya absorption in the Lya region with Lya absorption in the Lyb region (Lya(Lya)xLya(Lya))
 
-*   ![cross\_full\_stdFit](/data/duMasdesBourbouxetal2020/cross_full_stdFit/): fit results of the combined:
+*   ![cross\_full\_stdFit](/data/duMasdesBourbouxetal2020/cross_full_stdFit/): Result of the full cross-correlation with a combined fit of:
     * cross-correlation of Lya absorption in Lya region with quasars (Lya(Lya)xQSO)
     * cross-correlation of Lya absorption in Lyb region with quasars (Lya(Lyb)xQSO)
 
-*   ![combined\_stdFit](/data/duMasdesBourbouxetal2020/combined_stdFit/): fit results of the combination to the four previously defined
+*   ![combined\_stdFit](/data/duMasdesBourbouxetal2020/combined_stdFit/): Result of the fit to the four previously defined
     different correlations
 
 ## DR14
