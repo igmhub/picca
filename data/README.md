@@ -9,10 +9,10 @@ In each folder:
 *   `*.at.ap.scan.dat` gives the 2D scan of chi2 allong the
         `(alpha_parallel,alpha_perp)` parameters
 
-*   `*.save.pars` gives the best fit results for alpha_parallel
+*   `*.save.pars` gives the best fit results for alpha\_parallel
     and alpha_perp
 
-*   `*.fiducial` gives the fiducial cosmology D_H/r_d and D_M/r_d
+*   `*.fiducial` gives the fiducial cosmology D\_H/r\_d and D\_M/r\_d
 
 To plot the chi2-scan, you can run for example:
 ```bash
@@ -25,10 +25,27 @@ data/deSainteAgatheetal2019/combined_stdFit/combined_stdFit.ap.at.scan.dat
 
 ![DR14-chi2scan](/tutorials/data/DR14-chi2-scan-ap-at.png)
 
+## DR16
+
+### Results of H. du Mas des Bourboux et al. 2020
+[arXiv:<arxiv.number>](https://arxiv.org/abs/<arxiv.number>)<br/>
+In `duMasdesBourbouxetal2020/`:
+
+*   "auto\_full\_stdFit": fit results of the combined:
+        * auto-correlation of Lya absorption in Lya region (Lya(Lya)xLya(Lya))
+        * auto-correlation of Lya absorption in the Lya region with Lya absorption in the Lyb region (Lya(Lya)xLya(Lya))
+
+*   "cross\_full\_stdFit": fit results of the combined:
+        * cross-correlation of Lya absorption in Lya region with quasars (Lya(Lya)xQSO)
+        * cross-correlation of Lya absorption in Lyb region with quasars (Lya(Lyb)xQSO)
+
+*   "combined\_stdFit": fit results of the combination to the four previously defined
+    different correlations
+
 ## DR14
 
 ### Results of V. de Sainte Agathe et al. 2019
-arXiv:1904.03400<br/>
+[arXiv:1904.03400](https://arxiv.org/abs/1904.03400)<br/>
 In `deSainteAgatheetal2019/`:
 
 *   "auto\_alone\_stdFit": fit results of the combined Lya absorption in Lya region
@@ -39,7 +56,7 @@ In `deSainteAgatheetal2019/`:
 *   "combined\_stdFit": combined with the cross-correlation function from Blomqvist et al. 2019
 
 ### Results of M. Blomqvist et al. 2019
-arXiv:1904.03430<br/>
+[arXiv:1904.03430](https://arxiv.org/abs/1904.03430)<br/>
 In `Blomqvistetal2019/`:
 
 *   "cross\_alone\_stdFit": standard fit results to quasar-(Lya+Lyb) regions cross-correlation
@@ -50,13 +67,13 @@ In `Blomqvistetal2019/`:
 ## DR12
 
 ### Results of J.E. Bautista et al. 2017
-arXiv:1702.00176<br/>
+[arXiv:1702.00176](https://arxiv.org/abs/1702.00176)<br/>
 In `Bautistaetal2017/fits/`:
 
 *   "physical": fit results to lyman-alpha forest auto-correlation data
 
 ### Results of H. du Mas des Bourboux et al. 2017
-arXiv:1708.02225<br/>
+[arXiv:1708.02225](https://arxiv.org/abs/1708.02225)<br/>
 In `duMasdesBourbouxetal2017/fits/`:
 
 *   "cross\_alone\_stdFit": standard fit results to quasar-lyman-alpha forest cross-correlation data
