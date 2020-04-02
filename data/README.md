@@ -17,10 +17,10 @@ In each folder:
 To plot the chi2-scan, you can run for example:
 ```bash
 tutorials/data/picca_plot_chi2_surface.py --chi2scan \
-data/auto_full_stdFit/autofull.ap.at.scan.dat \
-data/cross_full_stdFit/crossfull.ap.at.scan.dat \
-data/combined_stdFit/combined.ap.at.scan.dat \
---label auto-DR16 cross-DR16 combined-DR16 \
+data/duMasdesBourbouxetal2020/auto_full_stdFit/autofull.ap.at.scan.dat \
+data/duMasdesBourbouxetal2020/cross_full_stdFit/crossfull.ap.at.scan.dat \
+data/duMasdesBourbouxetal2020/combined_stdFit/combined.ap.at.scan.dat \
+--label auto-DR16 cross-DR16 combined-DR16
 ```
 
 ![DR14-chi2scan](/tutorials/data/DR14-chi2-scan-ap-at.png)
