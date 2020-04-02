@@ -110,8 +110,9 @@ if __name__ == '__main__':
     xcf.rt_max = args.ang_max
     xcf.z_cut_min = args.z_cut_min
     xcf.z_cut_max = args.z_cut_max
-    xcf.np     = args.np
-    xcf.nt     = args.nt
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    xcf.npb    = args.np
+    xcf.ntb    = args.nt
     xcf.nside  = args.nside
     xcf.ang_correlation = True
     xcf.angmax  = args.ang_max
@@ -193,8 +194,8 @@ if __name__ == '__main__':
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum wavelength ratio'},
         {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum wavelength ratio'},
         {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum angle [rad]'},
-        {'name':'NP','value':xcf.np,'comment':'Number of bins in wavelength ratio'},
-        {'name':'NT','value':xcf.nt,'comment':'Number of bins in angle'},
+        {'name':'NP','value':xcf.npb,'comment':'Number of bins in wavelength ratio'},
+        {'name':'NT','value':xcf.ntb,'comment':'Number of bins in angle'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}

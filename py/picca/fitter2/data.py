@@ -1,5 +1,6 @@
 import fitsio
 from functools import partial
+import numpy as np
 import scipy as sp
 from scipy import linalg
 from scipy.sparse import csr_matrix
@@ -64,13 +65,13 @@ class data:
         mu_max = dic_init['cuts']['mu-max']
 
         bin_size_rp = (head['RPMAX']-head['RPMIN'])/head['NP']
-        bin_center_rp = sp.zeros(rp.size)
+        bin_center_rp = np.zeros(rp.size)
         for i,trp in enumerate(rp):
             idx = ( (trp-head['RPMIN'])/bin_size_rp ).astype(int)
             bin_center_rp[i] = head['RPMIN']+(idx+0.5)*bin_size_rp
 
         bin_size_rt = head['RTMAX']/head['NT']
-        bin_center_rt = sp.zeros(rt.size)
+        bin_center_rt = np.zeros(rt.size)
         for i,trt in enumerate(rt):
             idx = ( trt/bin_size_rt ).astype(int)
             bin_center_rt[i] = (idx+0.5)*bin_size_rt
@@ -86,7 +87,7 @@ class data:
 
         self.mask = mask
         self.da = da
-        self.da_cut = sp.zeros(mask.sum())
+        self.da_cut = np.zeros(mask.sum())
         self.da_cut[:] = da[mask]
         self.co = co
         ico = co[:,mask]
@@ -105,7 +106,7 @@ class data:
         self.dm = dm
 
         self.rsquare = sp.sqrt(rp**2+rt**2)
-        self.musquare = sp.zeros(self.rsquare.size)
+        self.musquare = np.zeros(self.rsquare.size)
         w = self.rsquare>0.
         self.musquare[w] = rp[w]/self.rsquare[w]
 
@@ -113,7 +114,7 @@ class data:
         self.rt = dmrt
         self.z = dmz
         self.r = sp.sqrt(self.rp**2+self.rt**2)
-        self.mu = sp.zeros(self.r.size)
+        self.mu = np.zeros(self.r.size)
         w = self.r>0.
         self.mu[w] = self.rp[w]/self.r[w]
 
