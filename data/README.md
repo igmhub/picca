@@ -31,12 +31,12 @@ data/deSainteAgatheetal2019/combined_stdFit/combined_stdFit.ap.at.scan.dat
 In ![duMasdesBourbouxetal2020](/data/duMasdesBourbouxetal2020/):
 
 *   ![auto\_full\_stdFit](/data/duMasdesBourbouxetal2020/auto_full_stdFit/): fit results of the combined:
-        * auto-correlation of Lya absorption in Lya region (Lya(Lya)xLya(Lya))
-        * auto-correlation of Lya absorption in the Lya region with Lya absorption in the Lyb region (Lya(Lya)xLya(Lya))
+    * auto-correlation of Lya absorption in Lya region (Lya(Lya)xLya(Lya))
+    * auto-correlation of Lya absorption in the Lya region with Lya absorption in the Lyb region (Lya(Lya)xLya(Lya))
 
 *   ![cross\_full\_stdFit](/data/duMasdesBourbouxetal2020/cross_full_stdFit/): fit results of the combined:
-        * cross-correlation of Lya absorption in Lya region with quasars (Lya(Lya)xQSO)
-        * cross-correlation of Lya absorption in Lyb region with quasars (Lya(Lyb)xQSO)
+    * cross-correlation of Lya absorption in Lya region with quasars (Lya(Lya)xQSO)
+    * cross-correlation of Lya absorption in Lyb region with quasars (Lya(Lyb)xQSO)
 
 *   ![combined\_stdFit](/data/duMasdesBourbouxetal2020/combined_stdFit/): fit results of the combination to the four previously defined
     different correlations
