@@ -48,7 +48,7 @@ class chi2:
             # if set to true, will not add randomness to FastMC mock
             if 'forecast' in dic_init['fast mc']:
                 self.forecast_mc = dic_init['fast mc']['forecast']
-                if self.nfast_mc is not 1:
+                if self.nfast_mc != 1:
                     sys.exit('ERROR: Why forecast more than once?')
             else:
                 self.forecast_mc = False
