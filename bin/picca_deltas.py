@@ -8,7 +8,6 @@ Bourboux et al. 2020 (In prep).
 import sys
 import os
 from multiprocessing import Pool
-from math import isnan
 import argparse
 import fitsio
 import numpy as np
@@ -30,6 +29,7 @@ def cont_fit(data):
 
 
 def main():
+    # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes delta field"""
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                      description='Compute the delta field from a list of spectra')
@@ -155,10 +155,10 @@ def main():
 
     ## init forest class
 
-    forest.lmin = sp.log10(args.lambda_min)
-    forest.lmax = sp.log10(args.lambda_max)
-    forest.lmin_rest = sp.log10(args.lambda_rest_min)
-    forest.lmax_rest = sp.log10(args.lambda_rest_max)
+    forest.lmin = np.log10(args.lambda_min)
+    forest.lmax = np.log10(args.lambda_max)
+    forest.lmin_rest = np.log10(args.lambda_rest_min)
+    forest.lmax_rest = np.log10(args.lambda_rest_max)
     forest.rebin = args.rebin
     forest.dll = args.rebin*1e-4
     ## minumum dla transmission
@@ -174,7 +174,7 @@ def main():
         print("zqso_max = {}".format(args.zqso_max))
 
     forest.var_lss = interp1d(forest.lmin + np.arange(2)*(forest.lmax - forest.lmin), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
-    forest.eta = interp1d(forest.lmin + np.arange(2)*(forest.lmax - forest.lmin), sp.ones(2), fill_value="extrapolate", kind="nearest")
+    forest.eta = interp1d(forest.lmin + np.arange(2)*(forest.lmax - forest.lmin), np.ones(2), fill_value="extrapolate", kind="nearest")
     forest.fudge = interp1d(forest.lmin + np.arange(2)*(forest.lmax - forest.lmin), np.zeros(2), fill_value="extrapolate", kind="nearest")
     forest.mean_cont = interp1d(forest.lmin_rest + np.arange(2)*(forest.lmax_rest - forest.lmin_rest), 1 + np.zeros(2))
 
@@ -293,7 +293,7 @@ def main():
     ### Correct for DLAs
     if not args.dla_vac is None:
         print("INFO: Adding DLAs")
-        sp.random.seed(0)
+        np.random.seed(0)
         dlas = io.read_dlas(args.dla_vac)
         nb_dla_in_forest = 0
         for p in data:
@@ -305,7 +305,7 @@ def main():
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## cuts
-    log.write("INFO: Input sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
+    log.write("INFO: Input sample has {} forests\n".format(np.sum([len(p) for p in data.values()])))
     lstKeysToDel = []
     for p in data.keys():
         l = []
@@ -314,7 +314,7 @@ def main():
                 log.write("INFO: Rejected {} due to forest too short\n".format(d.thid))
                 continue
 
-            if isnan((d.fl*d.iv).sum()):
+            if np.isnan((d.fl*d.iv).sum()):
                 log.write("INFO: Rejected {} due to nan found\n".format(d.thid))
                 continue
 
@@ -331,7 +331,7 @@ def main():
     for p in lstKeysToDel:
         del data[p]
 
-    log.write("INFO: Remaining sample has {} forests\n".format(sp.sum([len(p) for p in data.values()])))
+    log.write("INFO: Remaining sample has {} forests\n".format(np.sum([len(p) for p in data.values()])))
 
     for p in data:
         for d in data[p]:
@@ -341,8 +341,8 @@ def main():
         pool = Pool(processes=args.nproc)
         print("iteration: ", it)
         nfit = 0
-        sort = sp.array(list(data.keys())).argsort()
-        data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort])
+        sort = np.array(list(data.keys())).argsort()
+        data_fit_cont = pool.map(cont_fit, np.array(list(data.values()))[sort])
         for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 
@@ -370,13 +370,13 @@ def main():
 
                 if args.use_ivar_as_weight:
                     print('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
-                    eta = sp.ones(nlss)
+                    eta = np.ones(nlss)
                     vlss = np.zeros(nlss)
                     fudge = np.zeros(nlss)
                 else:
                     print('INFO: using constant weights, skipping eta, var_lss, fudge fits')
                     eta = np.zeros(nlss)
-                    vlss = sp.ones(nlss)
+                    vlss = np.ones(nlss)
                     fudge = np.zeros(nlss)
 
                 err_eta = np.zeros(nlss)
@@ -407,7 +407,7 @@ def main():
     res.write([ll_st, st, wst], names=['loglam', 'stack', 'weight'], header=hd, extname='STACK')
     res.write([ll, eta, vlss, fudge, nb_pixels], names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'], extname='WEIGHT')
     res.write([ll_rest, forest.mean_cont(ll_rest), wmc], names=['loglam_rest', 'mean_cont', 'weight'], extname='CONT')
-    var = sp.broadcast_to(var.reshape(1, -1), var_del.shape)
+    var = np.broadcast_to(var.reshape(1, -1), var_del.shape)
     res.write([var, var_del, var2_del, count, nqsos, chi2], names=['var_pipe', 'var_del', 'var2_del', 'count', 'nqsos', 'chi2'], extname='VAR')
     res.close()
 
@@ -422,7 +422,7 @@ def main():
     for d in data_bad_cont:
         log.write("INFO: Rejected {} due to {}\n".format(d.thid, d.bad_cont))
 
-    log.write("INFO: Accepted sample has {} forests\n".format(sp.sum([len(p) for p in deltas.values()])))
+    log.write("INFO: Accepted sample has {} forests\n".format(np.sum([len(p) for p in deltas.values()])))
 
     log.close()
 
