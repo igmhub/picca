@@ -11,7 +11,6 @@ from multiprocessing import Pool
 import argparse
 import fitsio
 import numpy as np
-import scipy as sp
 from scipy.interpolate import interp1d
 
 from picca.data import forest, delta
@@ -193,7 +192,7 @@ def main():
             w = (st != 0.)
             forest.correc_flux = interp1d(ll_st[w], st[w], fill_value="extrapolate", kind="nearest")
             vac.close()
-        except:
+        except (OSError, ValueError):
             print(" Error while reading flux_calib file {}".format(args.flux_calib))
             sys.exit(1)
 
@@ -205,7 +204,7 @@ def main():
             eta = vac[2]['ETA'][:]
             forest.correc_ivar = interp1d(ll, eta, fill_value="extrapolate", kind="nearest")
             vac.close()
-        except:
+        except (OSError, ValueError):
             print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
             sys.exit(1)
 
@@ -246,14 +245,14 @@ def main():
                     elif l[3] == 'RF_DLA':
                         usr_mask_RF_DLA += [[float(l[1]), float(l[2])]]
                     else:
-                        raise
-            usr_mask_obs = sp.log10(sp.asarray(usr_mask_obs))
-            usr_mask_RF = sp.log10(sp.asarray(usr_mask_RF))
-            usr_mask_RF_DLA = sp.log10(sp.asarray(usr_mask_RF_DLA))
+                        raise ValueError("Invalid value found in mask")
+            usr_mask_obs = np.log10(np.asarray(usr_mask_obs))
+            usr_mask_RF = np.log10(np.asarray(usr_mask_RF))
+            usr_mask_RF_DLA = np.log10(np.asarray(usr_mask_RF_DLA))
             if usr_mask_RF_DLA.size == 0:
                 usr_mask_RF_DLA = None
 
-        except:
+        except (OSError, ValueError):
             print(" Error while reading mask_file file {}".format(args.mask_file))
             sys.exit(1)
 
