@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 import os
 import fitsio
 import argparse
@@ -8,7 +7,7 @@ import numpy as np
 import scipy as sp
 import scipy.linalg
 
-from picca.utils import smooth_cov, print
+from picca.utils import smooth_cov, userprint
 
 parser = argparse.ArgumentParser()
 
@@ -68,7 +67,7 @@ for f in args.data:
 
     hid = h[2]['HEALPID'][:]
     for i,p in enumerate(hid):
-        print("\rcoadding healpix {} in file {}".format(p,f),end="")
+        userprint("\rcoadding healpix {} in file {}".format(p,f),end="")
         if p in da:
             da[p] += h[2]["DA"][:][i]*we_aux[i]
             we[p] += we_aux[i,:]
@@ -118,7 +117,7 @@ if ('dmrp' not in locals()) or (dmrp.size==rp.size):
 try:
     scipy.linalg.cholesky(co)
 except scipy.linalg.LinAlgError:
-    print('WARNING: Matrix is not positive definite')
+    userprint('WARNING: Matrix is not positive definite')
 
 
 h = fitsio.FITS(args.out,"rw",clobber=True)

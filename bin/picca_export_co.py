@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 import sys
 import fitsio
 import numpy as np
@@ -8,7 +7,7 @@ import scipy as sp
 import scipy.linalg
 import argparse
 
-from picca.utils import smooth_cov, cov, print
+from picca.utils import smooth_cov, cov, userprint
 
 if __name__ == '__main__':
 
@@ -55,7 +54,7 @@ if __name__ == '__main__':
 
     ### Auto or cross correlation?
     if (args.DD_file is None and args.xDD_file is None) or (not args.DD_file is None and not args.xDD_file is None) or (not args.cov is None and not args.get_cov_from_poisson):
-        print('ERROR: No data files, or both auto and cross data files, or two different method for covariance')
+        userprint('ERROR: No data files, or both auto and cross data files, or two different method for covariance')
         sys.exit()
     elif not args.DD_file is None:
         corr = 'AUTO'
@@ -91,7 +90,7 @@ if __name__ == '__main__':
         data[type_corr]['HLPXSCHM'] = h[2].read_header()['HLPXSCHM']
         w = sp.array(h[2]['WE'][:]).sum(axis=1)>0.
         if w.sum()!=w.size:
-            print('INFO: {} sub-samples were empty'.format(w.size-w.sum()))
+            userprint('INFO: {} sub-samples were empty'.format(w.size-w.sum()))
         data[type_corr]['HEALPID'] = h[2]['HEALPID'][:][w]
         data[type_corr]['WE'] = h[2]['WE'][:][w]/coef
         h.close()
@@ -119,33 +118,33 @@ if __name__ == '__main__':
 
     ### Covariance matrix
     if not args.cov is None:
-        print('INFO: Read covariance from file')
+        userprint('INFO: Read covariance from file')
         h = fitsio.FITS(args.cov)
         data['CO'] = h[1]['CO'][:]
         h.close()
     elif args.get_cov_from_poisson:
-        print('INFO: Compute covariance from Poisson statistics')
+        userprint('INFO: Compute covariance from Poisson statistics')
         w = data['corr_RR']>0.
         co = np.zeros(data['corr_DD'].size)
         co[w] = (data['COEF']/2.*data['corr_DD'][w])**2/(data['COEF']/2.*data['corr_RR'][w])**3
         data['CO'] = sp.diag(co)
     else:
-        print('INFO: Compute covariance from sub-sampling')
+        userprint('INFO: Compute covariance from sub-sampling')
 
         ### To have same number of HEALPix
         for d1 in list(lst_file.keys()):
             for d2 in list(lst_file.keys()):
 
                 if data[d1]['NSIDE']!=data[d2]['NSIDE']:
-                    print('ERROR: NSIDE are different: {} != {}'.format(data[d1]['NSIDE'],data[d2]['NSIDE']))
+                    userprint('ERROR: NSIDE are different: {} != {}'.format(data[d1]['NSIDE'],data[d2]['NSIDE']))
                     sys.exit()
                 if data[d1]['HLPXSCHM']!=data[d2]['HLPXSCHM']:
-                    print('ERROR: HLPXSCHM are different: {} != {}'.format(data[d1]['HLPXSCHM'],data[d2]['HLPXSCHM']))
+                    userprint('ERROR: HLPXSCHM are different: {} != {}'.format(data[d1]['HLPXSCHM'],data[d2]['HLPXSCHM']))
                     sys.exit()
 
                 w = np.logical_not( sp.in1d(data[d1]['HEALPID'],data[d2]['HEALPID']) )
                 if w.sum()!=0:
-                    print('WARNING: HEALPID are different by {} for {}:{} and {}:{}'.format(w.sum(),d1,data[d1]['HEALPID'].size,d2,data[d2]['HEALPID'].size))
+                    userprint('WARNING: HEALPID are different by {} for {}:{} and {}:{}'.format(w.sum(),d1,data[d1]['HEALPID'].size,d2,data[d2]['HEALPID'].size))
                     new_healpix = data[d1]['HEALPID'][w]
                     nb_new_healpix = new_healpix.size
                     nb_bins = data[d2]['WE'].shape[1]
@@ -180,10 +179,10 @@ if __name__ == '__main__':
         data['HLP_WE'] = we
 
         if args.do_not_smooth_cov:
-            print('INFO: The covariance will not be smoothed')
+            userprint('INFO: The covariance will not be smoothed')
             co = cov(da,we)
         else:
-            print('INFO: The covariance will be smoothed')
+            userprint('INFO: The covariance will be smoothed')
             binSizeRP = (data['RPMAX']-data['RPMIN']) / data['NP']
             binSizeRT = (data['RTMAX']-0.) / data['NT']
             co = smooth_cov(da,we,data['RP'],data['RT'],drp=binSizeRP,drt=binSizeRT)
@@ -192,7 +191,7 @@ if __name__ == '__main__':
     try:
         scipy.linalg.cholesky(data['CO'])
     except scipy.linalg.LinAlgError:
-        print('WARNING: Matrix is not positive definite')
+        userprint('WARNING: Matrix is not positive definite')
 
     ### Distortion matrix
     data['DM'] = sp.eye(data['DA'].size)

@@ -4,6 +4,7 @@ import scipy as sp
 import scipy.interpolate
 import sys
 
+from picca.utils import userprint
 from picca.fitter import myGamma
 from picca.fitter import utils
 from . import fftlog
@@ -51,8 +52,8 @@ class model:
         if self.fix_bias_beta_peak:
             self.bias_lya_peak=dic_init['bias_lya_peak']
             self.beta_lya_peak=dic_init['beta_lya_peak']
-            print("Fixing for BAO peak bias=",self.bias_lya_peak)
-            print("Fixing for BAO peak beta=",self.beta_lya_peak)
+            userprint("Fixing for BAO peak bias=",self.bias_lya_peak)
+            userprint("Fixing for BAO peak beta=",self.beta_lya_peak)
 
         self.pall = self.pglob[:]
 
@@ -76,10 +77,10 @@ class model:
         self.bv_dnl = None
         self.kp_dnl = None
         if dic_init['dnl_model'] == "mcdonald":
-            print("with DNL (McDonald 2003)")
+            userprint("with DNL (McDonald 2003)")
             self.dnl_model = "mcdonald"
         elif dic_init['dnl_model'] == "arinyo":
-            print("with DNL (Arinyo et al. 2015)")
+            userprint("with DNL (Arinyo et al. 2015)")
             self.dnl_model = "arinyo"
             z_dnl = [2.2000, 2.4000, 2.6000, 2.8000, 3.0000]
             q1_dnl = [0.8670, 0.8510, 0.7810, 0.7730, 0.7920]
@@ -97,21 +98,21 @@ class model:
             self.av_dnl = av_dnl_interp(self.zref)
             self.bv_dnl = bv_dnl_interp(self.zref)
             self.kp_dnl = kp_dnl_interp(self.zref)
-            print("q1 =", self.q1_dnl)
-            print("kv =", self.kv_dnl)
-            print("av =", self.av_dnl)
-            print("bv =", self.bv_dnl)
-            print("kp =", self.kp_dnl)
+            userprint("q1 =", self.q1_dnl)
+            userprint("kv =", self.kv_dnl)
+            userprint("av =", self.av_dnl)
+            userprint("bv =", self.bv_dnl)
+            userprint("kp =", self.kp_dnl)
         elif (not dic_init['dnl_model'] is None) & (not dic_init['dnl_model'] == "mcdonald") & (not dic_init['dnl_model'] == "arinyo"):
-            print('  Unknown dnl model: ', dic_init['dnl_model'])
-            print('  Exit')
+            userprint('  Unknown dnl model: ', dic_init['dnl_model'])
+            userprint('  Exit')
             sys.exit(0)
         else :
-            print("without DNL")
+            userprint("without DNL")
 
         self.twod = dic_init['2d']
         if self.twod :
-            print("initalize pk2D array for 2D transfo ...")
+            userprint("initalize pk2D array for 2D transfo ...")
             kmin=1.e-7
             kmax=100.
             nk  = 1024
@@ -124,7 +125,7 @@ class model:
             self.pk_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pk).reshape(kk.shape)
             self.pkSB_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pkSB).reshape(kk.shape)
             self.k=kk
-            print("done")
+            userprint("done")
 
     def add_cross(self,dic_init):
 

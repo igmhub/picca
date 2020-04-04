@@ -1,11 +1,10 @@
-from __future__ import print_function
 
 import numpy as np
 import scipy as sp
 from healpy import query_disc
 from numba import jit
 
-from picca.utils import print
+from picca.utils import userprint
 
 # npb = number of parallel bins (to avoid collision with numpy np)
 npb = None
@@ -59,7 +58,7 @@ def co(pix):
     for ipix in pix:
         for o1 in objs[ipix]:
 
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)),end="")
             with lock:
                 counter.value += 1
 

@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, utils, io
-from picca.utils import print
+from picca.utils import userprint
 
 def corr_func(p):
     if args.in_dir2:
@@ -134,8 +133,8 @@ if __name__ == '__main__':
     cf.data = data
     cf.ndata = ndata
     cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix)
-    print("")
-    print("done, npix = {}".format(cf.npix))
+    userprint("")
+    userprint("done, npix = {}".format(cf.npix))
 
     ### Read data 2
     if args.in_dir2 or args.lambda_abs2 :
@@ -155,8 +154,8 @@ if __name__ == '__main__':
         cf.data2 = data2
         cf.ndata2 = ndata2
         cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix,zmin_pix2)
-        print("")
-        print("done, npix = {}".format(len(data2)))
+        userprint("")
+        userprint("done, npix = {}".format(len(data2)))
 
     if not args.shuffle_distrib_forest_seed is None:
         cf.data = utils.shuffle_distrib_forests(cf.data,

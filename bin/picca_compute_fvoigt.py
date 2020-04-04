@@ -9,6 +9,8 @@ from scipy.special import wofz
 import picca.constants as constants
 import argparse
 
+from picca.utils import userprint
+
 def voigt(x, sigma=1, gamma=1):
     return np.real(wofz((x + 1j*gamma)/(sigma*np.sqrt(2))))
 
@@ -109,7 +111,7 @@ def compute_dla_prob(wavelength, NHI, dla, qso, weight):
     dnhi=np.gradient(NHI)
     mean_density = np.zeros(NHI.size)
     for i,nhi in enumerate(NHI):
-        print("compute prob(NHI={}) ({}/{})".format(nhi,(i+1),NHI.size))
+        userprint("compute prob(NHI={}) ({}/{})".format(nhi,(i+1),NHI.size))
         f = compute_dla_prob_per_nhi(wavelength,nhi=nhi,dla=dla,qso=qso,dnhi=dnhi[i])
         mean_density[i] = np.sum(f*weight)/np.sum(weight)
     return mean_density
@@ -133,13 +135,13 @@ def main() :
 
     args = parser.parse_args()
 
-    if args.debug : print("read DLA catalog")
+    if args.debug : userprint("read DLA catalog")
     dla = fits.open(args.dla_catalog)[1].data
 
-    if args.debug : print("read DRQ catalog")
+    if args.debug : userprint("read DRQ catalog")
     qso = fits.open(args.drq_catalog)[1].data
 
-    if args.debug : print("only keep DLAs in DRQ quasars LOS")
+    if args.debug : userprint("only keep DLAs in DRQ quasars LOS")
     dla = dla[:][np.in1d(dla['MOCKID'], qso['THING_ID'])]
 
     #nb_dla = dla['Z_DLA_RSD'].size
@@ -149,11 +151,11 @@ def main() :
 
     if args.weight_vs_wavelength is None :
         filename="/global/common/software/desi/users/jguy/igmhub/code_stage_lbl/build_Fvoigt/data/weight_lambda.txt"
-        print("WARNING: Hardcoded weight vs wavelength file {}".format(filename))
+        userprint("WARNING: Hardcoded weight vs wavelength file {}".format(filename))
         args.weight_vs_wavelength = filename
 
     if args.weight_vs_wavelength is not None :
-        if args.debug : print("read weights vs wave")
+        if args.debug : userprint("read weights vs wave")
         tmp = np.loadtxt(args.weight_vs_wavelength)
         weight = np.interp(coarse_wavelength,tmp[:,0],tmp[:,1])
     else :
@@ -186,7 +188,7 @@ def main() :
 
     for i in range(NHI.size):
 
-        if args.debug : print("compute dF/dNHI for NHI={} ({}/{})".format(NHI[i],(i+1),NHI.size))
+        if args.debug : userprint("compute dF/dNHI for NHI={} ({}/{})".format(NHI[i],(i+1),NHI.size))
         profile   = profile_voigt_lambda(wavelength, zdla, NHI[i])
         profile_r = np.interp(r_lin,r_wave,profile) # interpolation to linear r grid
         # r is in Mpc h^-1 --> k in h*Mpc^-1
@@ -197,7 +199,7 @@ def main() :
         else:
             df = np.concatenate((df, np.array([ft_profile*prob[i]])))
 
-    if args.debug : print("compute F(k)=int dF/dNHI * dNHI")
+    if args.debug : userprint("compute F(k)=int dF/dNHI * dNHI")
     Fvoigt = np.zeros(k.size)
     for i in range(k.size):
         Fvoigt[i] = integrate.trapz(df[:,i], NHI)
@@ -207,7 +209,7 @@ def main() :
     k=k[ii]
     Fvoigt=Fvoigt[ii]
 
-    if args.debug : print("save in {}".format(args.output))
+    if args.debug : userprint("save in {}".format(args.output))
     np.savetxt(args.output, np.array([k,Fvoigt]).T)
 
 

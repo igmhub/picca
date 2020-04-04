@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 import numpy as np
 import scipy as sp
@@ -10,13 +8,14 @@ import healpy
 import scipy.interpolate as interpolate
 import iminuit
 
-try:
-    import __builtin__
-except ImportError:
-    import builtins as __builtin__
+def userprint(*args, **kwds):
+    """Defines an extension of the print function.
 
-def print(*args, **kwds):
-    __builtin__.print(*args,**kwds)
+    Args:
+        *args: arguments passed to print
+        **kwargs: keyword arguments passed to print
+    """
+    print(*args,**kwds)
     sys.stdout.flush()
 
 def cov(da,we):
@@ -28,7 +27,7 @@ def cov(da,we):
 
     wda = we*(da-mda)
 
-    print("Computing cov...")
+    userprint("Computing cov...")
 
     co = wda.T.dot(wda)
     sswe = swe*swe[:,None]
@@ -44,8 +43,8 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
     nda = co.shape[1]
     var = sp.diagonal(co)
     if sp.any(var==0.):
-        print('WARNING: data has some empty bins, impossible to smooth')
-        print('WARNING: returning the unsmoothed covariance')
+        userprint('WARNING: data has some empty bins, impossible to smooth')
+        userprint('WARNING: returning the unsmoothed covariance')
         return co
 
     cor = co/sp.sqrt(var*var[:,None])
@@ -56,7 +55,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
     dncor={}
 
     for i in range(nda):
-        print("\rsmoothing {}".format(i),end="")
+        userprint("\rsmoothing {}".format(i),end="")
         for j in range(i+1,nda):
             idrp = round(abs(rp[j]-rp[i])/drp)
             idrt = round(abs(rt[i]-rt[j])/drt)
@@ -76,7 +75,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
             cor_smooth[j,i]=cor_smooth[i,j]
 
 
-    print("\n")
+    userprint("\n")
     co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
     return co_smooth
 
@@ -110,8 +109,8 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     nbin = da.shape[1]
     var = sp.diagonal(co)
     if sp.any(var==0.):
-        print('WARNING: data has some empty bins, impossible to smooth')
-        print('WARNING: returning the unsmoothed covariance')
+        userprint('WARNING: data has some empty bins, impossible to smooth')
+        userprint('WARNING: returning the unsmoothed covariance')
         return co
 
     cor = co/sp.sqrt(var*var[:,None])
@@ -123,8 +122,8 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
 
     varw = sp.diagonal(cow)
     if sp.any(varw==0.):
-        print('WARNING: Wick covariance has bins with var = 0')
-        print('WARNING: returning the unsmoothed covariance')
+        userprint('WARNING: Wick covariance has bins with var = 0')
+        userprint('WARNING: returning the unsmoothed covariance')
         return co
 
     corw = cow/sp.sqrt(varw*varw[:,None])
@@ -144,10 +143,10 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     #### reduced covariance  (50*50)
     Dcor_red1d = np.zeros(nbin)
     for idr in range(0,nbin):
-        print("\rsmoothing {}".format(idr),end="")
+        userprint("\rsmoothing {}".format(idr),end="")
         Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
     Dcor_red = Dcor_red1d.reshape(npb,ntb)
-    print("")
+    userprint("")
 
     #### fit for L and A at each drp
     def corrfun(idrp,idrt,L,A):
@@ -168,7 +167,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
         m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),
             A=1.,error_A=0.2,
             idrp=idrp,fix_idrp=True,
-            print_level=1,errordef=1.)
+            userprint_level=1,errordef=1.)
         m.migrad()
         Lfit[idrp] = m.values['L']
         Afit[idrp] = m.values['A']
@@ -178,7 +177,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
 
     cor0 = Dcor_red1d[rtindex==0]
     for i in range(nbin):
-        print("\rupdating {}".format(i),end="")
+        userprint("\rupdating {}".format(i),end="")
         for j in range(i+1,nbin):
             idrp = idrp2d[i,j]
             idrt = idrt2d[i,j]
@@ -190,12 +189,12 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
             co_smooth[i,j] *= newcov
             co_smooth[j,i] *= newcov
 
-    print("\n")
+    userprint("\n")
 
     h = fitsio.FITS(outfile,'rw',clobber=True)
     h.write([co_smooth],names=['CO'],extname='COR')
     h.close()
-    print(outfile,' written')
+    userprint(outfile,' written')
 
     return
 
@@ -225,7 +224,7 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
                         dcat[kk] += [v[i]]
                 dcat[k] += [v]
     f.close()
-    print('INFO: Found {} DLA from {} quasars'.format(len(dcat['ThingID']), np.unique(dcat['ThingID']).size))
+    userprint('INFO: Found {} DLA from {} quasars'.format(len(dcat['ThingID']), np.unique(dcat['ThingID']).size))
 
     fromNoterdaemeKey2Picca = {'ThingID':'THING_ID', 'z_abs':'Z', 'zqso':'ZQSO','NHI':'NHI',
         'plate':'PLATE','MJD':'MJD','fiber':'FIBERID',
@@ -236,9 +235,9 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     cat = { v:sp.array(dcat[k],dtype=fromPiccaKey2Type[v]) for k,v in fromNoterdaemeKey2Picca.items() }
 
     w = cat['THING_ID']>0
-    print('INFO: Removed {} DLA, because THING_ID<=0'.format((cat['THING_ID']<=0).sum()))
+    userprint('INFO: Removed {} DLA, because THING_ID<=0'.format((cat['THING_ID']<=0).sum()))
     w &= cat['Z']>0.
-    print('INFO: Removed {} DLA, because Z<=0.'.format((cat['Z']<=0.).sum()))
+    userprint('INFO: Removed {} DLA, because Z<=0.'.format((cat['Z']<=0.).sum()))
     for k in cat.keys():
         cat[k] = cat[k][w]
 
@@ -254,13 +253,13 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     cat['ZQSO'] = sp.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
 
     w = cat['RA']!=cat['DEC']
-    print('INFO: Removed {} DLA, because RA==DEC'.format((cat['RA']==cat['DEC']).sum()))
+    userprint('INFO: Removed {} DLA, because RA==DEC'.format((cat['RA']==cat['DEC']).sum()))
     w &= cat['RA']!=0.
-    print('INFO: Removed {} DLA, because RA==0'.format((cat['RA']==0.).sum()))
+    userprint('INFO: Removed {} DLA, because RA==0'.format((cat['RA']==0.).sum()))
     w &= cat['DEC']!=0.
-    print('INFO: Removed {} DLA, because DEC==0'.format((cat['DEC']==0.).sum()))
+    userprint('INFO: Removed {} DLA, because DEC==0'.format((cat['DEC']==0.).sum()))
     w &= cat['ZQSO']>0.
-    print('INFO: Removed {} DLA, because ZQSO<=0.'.format((cat['ZQSO']<=0.).sum()))
+    userprint('INFO: Removed {} DLA, because ZQSO<=0.'.format((cat['ZQSO']<=0.).sum()))
     for k in cat.keys():
         cat[k] = cat[k][w]
 
@@ -299,7 +298,7 @@ def desi_convert_DLA(inPath,outPath):
     for k,v in fromDESIkey2piccaKey.items():
         cat[k] = h['DLACAT'][v][:]
     h.close()
-    print('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, np.unique(cat['THING_ID']).size))
+    userprint('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, np.unique(cat['THING_ID']).size))
 
     w = sp.argsort(cat['THING_ID'])
     for k in cat.keys():
@@ -327,9 +326,9 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     vac = fitsio.FITS(truth)
 
     w = sp.ones(vac[1]['TARGETID'][:].size).astype(bool)
-    print(" start                 : nb object in cat = {}".format(w.sum()) )
+    userprint(" start                 : nb object in cat = {}".format(w.sum()) )
     w &= sp.char.strip(vac[1]['TRUESPECTYPE'][:].astype(str))==spectype
-    print(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
+    userprint(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
 
     thid = vac[1]['TARGETID'][:][w]
     zqso = vac[1]['TRUEZ'][:][w]
@@ -360,7 +359,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     if (ra==0.).sum()!=0 or (dec==0.).sum()!=0:
         w = ra!=0.
         w &= dec!=0.
-        print(" and RA and DEC        : nb object in cat = {}".format(w.sum()))
+        userprint(" and RA and DEC        : nb object in cat = {}".format(w.sum()))
 
         ra = ra[w]
         dec = dec[w]
@@ -402,11 +401,11 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
     sptype = sp.char.strip(h[1]['SPECTYPE'][:].astype(str))
 
     ## Sanity
-    print(' start               : nb object in cat = {}'.format(sptype.size) )
+    userprint(' start               : nb object in cat = {}'.format(sptype.size) )
     w = h[1]['ZWARN'][:]==0.
-    print(' and zwarn==0        : nb object in cat = {}'.format(w.sum()) )
+    userprint(' and zwarn==0        : nb object in cat = {}'.format(w.sum()) )
     w &= sptype==spectype
-    print(' and spectype=={}    : nb object in cat = {}'.format(spectype,w.sum()) )
+    userprint(' and spectype=={}    : nb object in cat = {}'.format(spectype,w.sum()) )
 
     cat = {}
     lst = {'RA':'RA', 'DEC':'DEC', 'Z':'Z',
@@ -421,14 +420,14 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
     ###
     if not downsampling_z_cut is None and not downsampling_nb is None:
         if cat['RA'].size<downsampling_nb:
-            print('WARNING:: Trying to downsample, when nb cat = {} and nb downsampling = {}'.format(cat['RA'].size,downsampling_nb) )
+            userprint('WARNING:: Trying to downsample, when nb cat = {} and nb downsampling = {}'.format(cat['RA'].size,downsampling_nb) )
         else:
             select_fraction = downsampling_nb/(cat['Z']>downsampling_z_cut).sum()
             sp.random.seed(0)
             w = sp.random.choice(np.arange(cat['RA'].size),size=int(cat['RA'].size*select_fraction),replace=False)
             for k in cat.keys():
                 cat[k] = cat[k][w]
-            print(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(cat['RA'].size, downsampling_z_cut, (zqso>downsampling_z_cut).sum()) )
+            userprint(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(cat['RA'].size, downsampling_z_cut, (zqso>downsampling_z_cut).sum()) )
 
     w = sp.argsort(cat['THING_ID'])
     for k in cat.keys():
@@ -474,11 +473,11 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     zcat_dec = h[1]['DEC'][:][w].astype('float64')*sp.pi/180.
     zcat_thid = zcat_thid[w]
     h.close()
-    print('INFO: Found {} quasars'.format(zcat_ra.size))
+    userprint('INFO: Found {} quasars'.format(zcat_ra.size))
 
     ### List of transmission files
     if (indir is None and infiles is None) or (indir is not None and infiles is not None):
-        print("ERROR: No transmisson input files or both 'indir' and 'infiles' given")
+        userprint("ERROR: No transmisson input files or both 'indir' and 'infiles' given")
         sys.exit()
     elif indir is not None:
         fi = glob.glob(indir+'/*/*/transmission*.fits*')
@@ -495,7 +494,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in np.unique(in_pixs)]))
     else:
         fi = sp.sort(sp.array(infiles))
-    print('INFO: Found {} files'.format(fi.size))
+    userprint('INFO: Found {} files'.format(fi.size))
 
     ### Stack the transmission
     lmin = sp.log10(lObs_min)
@@ -508,7 +507,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     ### Read
     for nf, f in enumerate(fi):
-        print("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in deltas.keys()])), end="")
+        userprint("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in deltas.keys()])), end="")
         h = fitsio.FITS(f)
         thid = h['METADATA']['MOCKID'][:]
         if sp.in1d(thid,zcat_thid).sum()==0:
@@ -571,7 +570,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
         if not nspec is None and sp.sum([ len(deltas[p]) for p in deltas.keys()])>=nspec: break
 
-    print('\n')
+    userprint('\n')
 
     ### Get stacked transmission
     w = n_stack>0.
@@ -580,7 +579,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     ### Transform transmission to delta and store it
     for nf, p in enumerate(sorted(deltas.keys())):
         if len(deltas[p])==0:
-            print('No data in {}'.format(p))
+            userprint('No data in {}'.format(p))
             continue
         out = fitsio.FITS(outdir+'/delta-{}'.format(p)+'.fits.gz','rw',clobber=True)
         for d in deltas[p]:
@@ -603,9 +602,9 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             names = ['LOGLAM','DELTA','WEIGHT','CONT']
             out.write(cols,names=names,header=hd,extname=str(d.thid))
         out.close()
-        print("\rwrite {} of {}: {} quasars".format(nf,len(list(deltas.keys())), len(deltas[p])), end="")
+        userprint("\rwrite {} of {}: {} quasars".format(nf,len(list(deltas.keys())), len(deltas[p])), end="")
 
-    print("")
+    userprint("")
 
     return
 def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
@@ -639,7 +638,7 @@ def shuffle_distrib_forests(obj,seed):
         obj (dic): Catalog of forest
     '''
 
-    print('INFO: Shuffling the forests angular position with seed {}'.format(seed))
+    userprint('INFO: Shuffling the forests angular position with seed {}'.format(seed))
 
     dic = {}
     lst_p = ['ra','dec','xcart','ycart','zcart','cosdec','thid']

@@ -1,4 +1,3 @@
-from __future__ import print_function
 import fitsio
 import numpy as np
 import scipy as sp
@@ -9,7 +8,7 @@ import time
 import os.path
 import copy
 
-from picca.utils import print
+from picca.utils import userprint
 from picca.data import forest, delta, qso
 from picca.prep_Pk1D import exp_diff, spectral_resolution, spectral_resolution_desi
 
@@ -43,10 +42,10 @@ def read_dlas(fdla):
         dlas[t] = [ (z,nhi) for z,nhi in zip(cat['Z'][w],cat['NHI'][w]) ]
     nb_dla = sp.sum([len(d) for d in dlas.values()])
 
-    print('\n')
-    print(' In catalog: {} DLAs'.format(nb_dla) )
-    print(' In catalog: {} forests have a DLA'.format(len(dlas)) )
-    print('\n')
+    userprint('\n')
+    userprint(' In catalog: {} DLAs'.format(nb_dla) )
+    userprint(' In catalog: {} forests have a DLA'.format(len(dlas)) )
+    userprint('\n')
 
     return dlas
 
@@ -71,10 +70,10 @@ def read_absorbers(file_absorbers):
         nb_absorbers += 1
     f.close()
 
-    print("")
-    print(" In catalog: {} absorbers".format(nb_absorbers) )
-    print(" In catalog: {} forests have absorbers".format(len(absorbers)) )
-    print("")
+    userprint("")
+    userprint(" In catalog: {} absorbers".format(nb_absorbers) )
+    userprint(" In catalog: {} forests have absorbers".format(len(absorbers)) )
+    userprint("")
 
     return absorbers
 
@@ -85,7 +84,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     try:
         zqso = h[1]['Z'][:]
     except:
-        print("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
+        userprint("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
         zqso = h[1]['Z_VI'][:]
 
     ## Info of the primary observation
@@ -97,46 +96,46 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     fid = h[1]['FIBERID'][:]
 
     ## Sanity
-    print('')
+    userprint('')
     w = sp.ones(ra.size,dtype=bool)
-    print(" start               : nb object in cat = {}".format(w.sum()) )
+    userprint(" start               : nb object in cat = {}".format(w.sum()) )
     w &= thid>0
-    print(" and thid>0          : nb object in cat = {}".format(w.sum()) )
+    userprint(" and thid>0          : nb object in cat = {}".format(w.sum()) )
     w &= ra!=dec
-    print(" and ra!=dec         : nb object in cat = {}".format(w.sum()) )
+    userprint(" and ra!=dec         : nb object in cat = {}".format(w.sum()) )
     w &= ra!=0.
-    print(" and ra!=0.          : nb object in cat = {}".format(w.sum()) )
+    userprint(" and ra!=0.          : nb object in cat = {}".format(w.sum()) )
     w &= dec!=0.
-    print(" and dec!=0.         : nb object in cat = {}".format(w.sum()) )
+    userprint(" and dec!=0.         : nb object in cat = {}".format(w.sum()) )
     w &= zqso>0.
-    print(" and z>0.            : nb object in cat = {}".format(w.sum()) )
+    userprint(" and z>0.            : nb object in cat = {}".format(w.sum()) )
 
     ## Redshift range
     if not zmin is None:
         w &= zqso>=zmin
-        print(" and z>=zmin         : nb object in cat = {}".format(w.sum()) )
+        userprint(" and z>=zmin         : nb object in cat = {}".format(w.sum()) )
     if not zmax is None:
         w &= zqso<zmax
-        print(" and z<zmax          : nb object in cat = {}".format(w.sum()) )
+        userprint(" and z<zmax          : nb object in cat = {}".format(w.sum()) )
 
     ## BAL visual
     if not keep_bal and bi_max==None:
         try:
             bal_flag = h[1]['BAL_FLAG_VI'][:]
             w &= bal_flag==0
-            print(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
+            userprint(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
         except:
-            print("BAL_FLAG_VI not found\n")
+            userprint("BAL_FLAG_VI not found\n")
     ## BAL CIV
     if bi_max is not None:
         try:
             bi = h[1]['BI_CIV'][:]
             w &= bi<=bi_max
-            print(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
+            userprint(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
         except:
-            print("--bi-max set but no BI_CIV field in h")
+            userprint("--bi-max set but no BI_CIV field in h")
             sys.exit(1)
-    print("")
+    userprint("")
 
     ra = ra[w]*sp.pi/180.
     dec = dec[w]*sp.pi/180.
@@ -162,7 +161,7 @@ nside_min = 8
 
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None):
 
-    print("mode: "+mode)
+    userprint("mode: "+mode)
     ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
 
     if nspec != None:
@@ -190,7 +189,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
                     fin = in_dir + "/../master.fits"
                     h = fitsio.FITS(fin)
                 except:
-                    print("error reading master")
+                    userprint("error reading master")
                     sys.exit(1)
         nside = h[1].read_header()['NSIDE']
         h.close()
@@ -201,23 +200,23 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         mobj = sp.bincount(pixs).sum()/len(np.unique(pixs))
 
         ## determine nside such that there are 1000 objs per pixel on average
-        print("determining nside")
+        userprint("determining nside")
         while mobj<target_mobj and nside >= nside_min:
             nside //= 2
             pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
             mobj = sp.bincount(pixs).sum()/len(np.unique(pixs))
-        print("nside = {} -- mean #obj per pixel = {}".format(nside,mobj))
+        userprint("nside = {} -- mean #obj per pixel = {}".format(nside,mobj))
         if log is not None:
             log.write("nside = {} -- mean #obj per pixel = {}\n".format(nside,mobj))
 
     elif mode=="desi":
         nside = 8
-        print("Found {} qsos".format(len(zqso)))
+        userprint("Found {} qsos".format(len(zqso)))
         data = read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order, pk1d=pk1d)
         return data,len(data),nside,"RING"
 
     else:
-        print("I don't know mode: {}".format(mode))
+        userprint("I don't know mode: {}".format(mode))
         sys.exit(1)
 
     data ={}
@@ -268,7 +267,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
             pix_data = read_from_mock_1D(in_dir,thid[w], ra[w], dec[w], zqso[w], plate[w], mjd[w], fid[w], order, mode=mode,log=log)
             read_time=time.time()-t0
         if not pix_data is None:
-            print("{} read from pix {}, {} {} in {} secs per spectrum".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
+            userprint("{} read from pix {}, {} {} in {} secs per spectrum".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
         if not pix_data is None and len(pix_data)>0:
             data[pix] = pix_data
             ndata += len(pix_data)
@@ -284,18 +283,18 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
     if not best_obs:
         fi = glob.glob(in_dir.replace("spectra/","").replace("lite","").replace("full","")+"/spAll-*.fits")
         if len(fi) > 1:
-            print("ERROR: found multiple spAll files")
-            print("ERROR: try running with --bestobs option (but you will lose reobservations)")
+            userprint("ERROR: found multiple spAll files")
+            userprint("ERROR: try running with --bestobs option (but you will lose reobservations)")
             for f in fi:
-                print("found: ",fi)
+                userprint("found: ",fi)
             sys.exit(1)
         if len(fi) == 0:
-            print("ERROR: can't find required spAll file in {}".format(in_dir))
-            print("ERROR: try runnint with --best-obs option (but you will lose reobservations)")
+            userprint("ERROR: can't find required spAll file in {}".format(in_dir))
+            userprint("ERROR: try runnint with --best-obs option (but you will lose reobservations)")
             sys.exit(1)
 
         spAll = fitsio.FITS(fi[0])
-        print("INFO: reading spAll from {}".format(fi[0]))
+        userprint("INFO: reading spAll from {}".format(fi[0]))
         thid_spall = spAll[1]["THING_ID"][:]
         plate_spall = spAll[1]["PLATE"][:]
         mjd_spall = spAll[1]["MJD"][:]
@@ -309,8 +308,8 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
         ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
         for zwarnbit in [0,1,7,8,9]:
             w &= (zwarn_spall&2**zwarnbit)==0
-        print("INFO: # unique objs: ",len(thid))
-        print("INFO: # spectra: ",w.sum())
+        userprint("INFO: # unique objs: ",len(thid))
+        userprint("INFO: # spectra: ",w.sum())
         thid = thid_spall[w]
         plate = plate_spall[w]
         mjd = mjd_spall[w]
@@ -348,7 +347,7 @@ def read_from_spec(in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,mode,log=None,pk1
             thids[t] = []
         thids[t].append(meta)
 
-    print("reading {} thids".format(len(thids)))
+    userprint("reading {} thids".format(len(thids)))
 
     for t in t_list:
         t_delta = None
@@ -429,7 +428,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
                 fin = in_dir + "/pix_{}.fits".format(pix)
                 h = fitsio.FITS(fin)
             except IOError:
-                print("error reading {}".format(pix))
+                userprint("error reading {}".format(pix))
                 return None
 
         ## fill log
@@ -437,7 +436,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
             for t in thid:
                 if t not in h[0][:]:
                     log.write("{} missing from pixel {}\n".format(t,pix))
-                    print("{} missing from pixel {}".format(t,pix))
+                    userprint("{} missing from pixel {}".format(t,pix))
 
         pix_data=[]
         thid_list=list(h[0][:])
@@ -453,7 +452,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
                 ## fill log
                 if log is not None:
                     log.write("{} missing from pixel {}\n".format(t,pix))
-                print("{} missing from pixel {}".format(t,pix))
+                userprint("{} missing from pixel {}".format(t,pix))
                 continue
             d = forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f,order)
 
@@ -466,8 +465,8 @@ def read_from_pix(in_dir,pix,thid,ra,dec,zqso,plate,mjd,fid,order,log=None):
 def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode=None, log=None, best_obs=False, single_exp = False):
 
     if not best_obs:
-        print("ERROR: multiple observations not (yet) compatible with spframe option")
-        print("ERROR: rerun with the --best-obs option")
+        userprint("ERROR: multiple observations not (yet) compatible with spframe option")
+        userprint("ERROR: rerun with the --best-obs option")
         sys.exit(1)
 
     allmeta = []
@@ -490,13 +489,13 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
         platemjd[pm].append(allmeta[i])
 
     pix_data={}
-    print("reading {} plates".format(len(platemjd)))
+    userprint("reading {} plates".format(len(platemjd)))
 
     for pm in platemjd:
         p,m = pm
         exps = []
         spplate = in_dir+"/{0}/spPlate-{0}-{1}.fits".format(p,m)
-        print("INFO: reading plate {}".format(spplate))
+        userprint("INFO: reading plate {}".format(spplate))
         h=fitsio.FITS(spplate)
         head = h[0].read_header()
         h.close()
@@ -519,7 +518,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                 exps.append(head["EXPID"+str_iexp][:11])
                 iexp += 1
 
-        print("INFO: found {} exposures in plate {}-{}".format(len(exps), p,m))
+        userprint("INFO: found {} exposures in plate {}-{}".format(len(exps), p,m))
 
         if len(exps) == 0:
             continue
@@ -563,7 +562,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, mode
                     log.write("{} read from exp {} and mjd {}\n".format(t, exp, m))
             nread = len(platemjd[pm])
 
-            print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, exp, (time.time()-t0)/(nread+1e-3), len(pix_data), len(thid)))
+            userprint("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, exp, (time.time()-t0)/(nread+1e-3), len(pix_data), len(thid)))
             spcframe.close()
 
     data = list(pix_data.values())
@@ -580,18 +579,18 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
     if not best_obs:
         fi = glob.glob(in_dir+"/spAll-*.fits")
         if len(fi) > 1:
-            print("ERROR: found multiple spAll files")
-            print("ERROR: try running with --bestobs option (but you will lose reobservations)")
+            userprint("ERROR: found multiple spAll files")
+            userprint("ERROR: try running with --bestobs option (but you will lose reobservations)")
             for f in fi:
-                print("found: ",fi)
+                userprint("found: ",fi)
             sys.exit(1)
         if len(fi) == 0:
-            print("ERROR: can't find required spAll file in {}".format(in_dir))
-            print("ERROR: try runnint with --best-obs option (but you will lose reobservations)")
+            userprint("ERROR: can't find required spAll file in {}".format(in_dir))
+            userprint("ERROR: try runnint with --best-obs option (but you will lose reobservations)")
             sys.exit(1)
 
         spAll = fitsio.FITS(fi[0])
-        print("INFO: reading spAll from {}".format(fi[0]))
+        userprint("INFO: reading spAll from {}".format(fi[0]))
         thid_spall = spAll[1]["THING_ID"][:]
         plate_spall = spAll[1]["PLATE"][:]
         mjd_spall = spAll[1]["MJD"][:]
@@ -600,18 +599,18 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
         zwarn_spall = spAll[1]["ZWARNING"][:]
 
         w = sp.in1d(thid_spall, thid)
-        print("INFO: Found {} spectra with required THING_ID".format(w.sum()))
+        userprint("INFO: Found {} spectra with required THING_ID".format(w.sum()))
         w &= qual_spall == "good"
-        print("INFO: Found {} spectra with 'good' plate".format(w.sum()))
+        userprint("INFO: Found {} spectra with 'good' plate".format(w.sum()))
         ## Removing spectra with the following ZWARNING bits set:
         ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
         ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
         bad_zwarnbit = {0:'SKY',1:'LITTLE_COVERAGE',7:'UNPLUGGED',8:'BAD_TARGET',9:'NODATA'}
         for zwarnbit,zwarnbit_str in bad_zwarnbit.items():
             w &= (zwarn_spall&2**zwarnbit)==0
-            print("INFO: Found {} spectra without {} bit set: {}".format(w.sum(), zwarnbit, zwarnbit_str))
-        print("INFO: # unique objs: ",len(thid))
-        print("INFO: # spectra: ",w.sum())
+            userprint("INFO: Found {} spectra without {} bit set: {}".format(w.sum(), zwarnbit, zwarnbit_str))
+        userprint("INFO: # unique objs: ",len(thid))
+        userprint("INFO: # spectra: ",w.sum())
         thid = thid_spall[w]
         plate = plate_spall[w]
         mjd = mjd_spall[w]
@@ -642,7 +641,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
         platemjd[pm].append(meta)
 
 
-    print("reading {} plates".format(len(platemjd)))
+    userprint("reading {} plates".format(len(platemjd)))
 
     for pm in platemjd:
         p,m = pm
@@ -681,7 +680,7 @@ def read_from_spplate(in_dir, thid, ra, dec, zqso, plate, mjd, fid, order, log=N
             if log is not None:
                 log.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
         nread = len(platemjd[pm])
-        print("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, os.path.basename(spplate), (time.time()-t0)/(nread+1e-3), len(pix_data), len(thid)))
+        userprint("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, os.path.basename(spplate), (time.time()-t0)/(nread+1e-3), len(pix_data), len(thid)))
         h.close()
 
     data = list(pix_data.values())
@@ -701,11 +700,11 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
     for i,f in enumerate(fi):
         path = in_dir+"/"+str(int(f/100))+"/"+str(f)+"/spectra-"+str(in_nside)+"-"+str(f)+".fits"
 
-        print("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
+        userprint("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
         try:
             h = fitsio.FITS(path)
         except IOError:
-            print("Error reading pix {}\n".format(f))
+            userprint("Error reading pix {}\n".format(f))
             continue
 
         ## get the quasars
@@ -746,7 +745,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
         for t,p,m,f in zip(tid_qsos,plate_qsos,mjd_qsos,fid_qsos):
             wt = in_tids == t
             if wt.sum()==0:
-                print("\nError reading thingid {}\n".format(t))
+                userprint("\nError reading thingid {}\n".format(t))
                 continue
 
             d = None
@@ -776,7 +775,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
             data[pix].append(d)
             ndata+=1
 
-    print("found {} quasars in input files\n".format(ndata))
+    userprint("found {} quasars in input files\n".format(ndata))
 
     return data
 
@@ -810,7 +809,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     dels = []
     ndata = 0
     for i,f in enumerate(fi):
-        print("\rread {} of {} {}".format(i,len(fi),ndata))
+        userprint("\rread {} of {} {}".format(i,len(fi),ndata))
         if from_image is None:
             hdus = fitsio.FITS(f)
             dels += [delta.from_fitsio(h) for h in hdus[1:]]
@@ -827,7 +826,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         dels = dels[:nspec]
         ndata = len(dels)
 
-    print("\n")
+    userprint("\n")
 
     phi = [d.ra for d in dels]
     th = [sp.pi/2.-d.dec for d in dels]
@@ -866,11 +865,11 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
     pix = healpy.ang2pix(nside,th,phi)
     if pix.size==0:
         raise AssertionError()
-    print("reading qsos")
+    userprint("reading qsos")
 
     upix = np.unique(pix)
     for i,ipix in enumerate(upix):
-        print("\r{} of {}".format(i,len(upix)))
+        userprint("\r{} of {}".format(i,len(upix)))
         w=pix==ipix
         objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
         for q in objs[ipix]:
@@ -879,6 +878,6 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
                 q.r_comov = cosmo.r_comoving(q.zqso)
                 q.rdm_comov = cosmo.dm(q.zqso)
 
-    print("\n")
+    userprint("\n")
 
     return objs,zqso.min()

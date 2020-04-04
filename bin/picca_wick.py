@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import sys
 import fitsio
 import argparse
@@ -9,7 +8,7 @@ from scipy.interpolate import interp1d
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, utils, io
-from picca.utils import print
+from picca.utils import userprint
 
 def calc_wickT(p):
     if args.in_dir2:
@@ -126,7 +125,7 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    print("nproc",args.nproc)
+    userprint("nproc",args.nproc)
 
     cf.rp_max = args.rp_max
     cf.rt_max = args.rt_max
@@ -146,7 +145,7 @@ if __name__ == '__main__':
 
     ### Cosmo
     if (args.fid_Or!=0.) or (args.fid_Ok!=0.) or (args.fid_wl!=-1.):
-        print("ERROR: Cosmology with other than Omega_m set are not yet implemented")
+        userprint("ERROR: Cosmology with other than Omega_m set are not yet implemented")
         sys.exit()
     cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
@@ -162,7 +161,7 @@ if __name__ == '__main__':
     cf.ndata = ndata
     cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix)
     sys.stderr.write("\n")
-    print("done, npix = {}".format(cf.npix))
+    userprint("done, npix = {}".format(cf.npix))
 
     ### Load cf1d
     dic_cf1d = { 'D1':args.cf1d, 'D2':args.cf1d2 }
@@ -227,8 +226,8 @@ if __name__ == '__main__':
         cf.data2 = data2
         cf.ndata2 = ndata2
         cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix,zmin_pix2)
-        print("")
-        print("done, npix = {}".format(len(data2)))
+        userprint("")
+        userprint("done, npix = {}".format(len(data2)))
 
     cf.counter = Value('i',0)
     cf.lock = Lock()
@@ -241,9 +240,9 @@ if __name__ == '__main__':
         cpu_data[ip].append(p)
 
     pool = Pool(processes=min(args.nproc,len(cpu_data.values())))
-    print(" \nStarting\n")
+    userprint(" \nStarting\n")
     wickT = pool.map(calc_wickT,sorted(cpu_data.values()))
-    print(" \nFinished\n")
+    userprint(" \nFinished\n")
     pool.close()
 
     wickT = sp.array(wickT)

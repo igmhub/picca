@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import numpy as np
 import scipy as sp
 import fitsio
@@ -8,7 +7,7 @@ import traceback
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, io
-from picca.utils import print
+from picca.utils import userprint
 
 def cf1d(p):
     try:
@@ -17,10 +16,10 @@ def cf1d(p):
         else :
             tmp = cf.cf1d(p)
     except:
-        traceback.print_exc()
+        traceback.userprint_exc()
     with cf.lock:
         cf.counter.value += 1
-    print("\rcomputing xi: {}%".format(round(cf.counter.value*100./cf.npix,2)),end="")
+    userprint("\rcomputing xi: {}%".format(round(cf.counter.value*100./cf.npix,2)),end="")
     return tmp
 
 if __name__ == '__main__':
@@ -99,8 +98,8 @@ if __name__ == '__main__':
     cf.npix  = len(data)
     cf.data  = data
     cf.ndata = ndata
-    print("")
-    print("done, npix = {}\n".format(cf.npix))
+    userprint("")
+    userprint("done, npix = {}\n".format(cf.npix))
 
     ### Read data 2
     if args.in_dir2:
@@ -108,8 +107,8 @@ if __name__ == '__main__':
         data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
         cf.data2  = data2
         cf.ndata2 = ndata2
-        print("")
-        print("done, npix = {}\n".format(len(data2)))
+        userprint("")
+        userprint("done, npix = {}\n".format(len(data2)))
     elif cf.lambda_abs != cf.lambda_abs2:
         cf.x_correlation = True
         data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
@@ -132,7 +131,7 @@ if __name__ == '__main__':
         keys = sorted(list(cf.data.keys()))
     cfs = pool.map(cf1d,keys)
     pool.close()
-    print('\n')
+    userprint('\n')
 
 
     ###
@@ -144,19 +143,19 @@ if __name__ == '__main__':
     cfs = sp.array(cfs)
     nbs = sp.array(nbs).astype(sp.int64)
 
-    print("multiplying")
+    userprint("multiplying")
     cfs *= wes
     cfs = cfs.sum(axis=0)
     wes = wes.sum(axis=0)
     nbs = nbs.sum(axis=0)
 
-    print("done")
+    userprint("done")
 
     cfs = cfs.reshape(cf.n1d,cf.n1d)
     wes = wes.reshape(cf.n1d,cf.n1d)
     nbs = nbs.reshape(cf.n1d,cf.n1d)
 
-    print("rebinning")
+    userprint("rebinning")
 
     w = wes>0
     cfs[w]/=wes[w]
@@ -197,7 +196,7 @@ if __name__ == '__main__':
 
 
     ###
-    print("writing")
+    userprint("writing")
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'LLMIN','value':cf.lmin,'comment':'Minimum log10 lambda [log Angstrom]'},
@@ -214,4 +213,4 @@ if __name__ == '__main__':
         comment=comment,extname='2DCOR')
     out.close()
 
-    print("all done")
+    userprint("all done")

@@ -1,11 +1,10 @@
-from __future__ import print_function
 import numpy as np
 import scipy as sp
 from healpy import query_disc
 from numba import jit
 
 from picca import constants
-from picca.utils import print
+from picca.utils import userprint
 
 # npb = number of parallel bins (to avoid collision with numpy np)
 npb = None
@@ -65,7 +64,7 @@ def xcf(pix):
         for d in dels[ipix]:
             with lock:
                 counter.value +=1
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
             if (d.qneighs.size != 0):
                 ang = d^d.qneighs
                 zqso = [q.zqso for q in d.qneighs]
@@ -139,7 +138,7 @@ def dmat(pix):
     npairs_used = 0
     for p in pix:
         for d1 in dels[p]:
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
             with lock:
                 counter.value += 1
             r1 = d1.r_comov
@@ -236,7 +235,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
     for p in pix:
         for d in dels[p]:
             with lock:
-                print("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)),end="")
+                userprint("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)),end="")
                 counter.value += 1
 
             r = sp.random.rand(len(d.qneighs))
@@ -344,7 +343,7 @@ def wickT(pix):
         if w.sum()==0: continue
 
         for d1 in [ td for ti,td in enumerate(dels[ipix]) if w[ti] ]:
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels/(1.-rej),3)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndels/(1.-rej),3)),end="")
             with lock:
                 counter.value += 1
             if d1.qneighs.size==0: continue

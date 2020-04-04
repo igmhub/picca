@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
@@ -7,6 +6,7 @@ import sys
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, co, io, utils
+from picca.utils import userprint
 
 def corr_func(p):
     if co.x_correlation:
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     co.nside  = args.nside
     co.type_corr = args.type_corr
     if co.type_corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xR1D2']:
-        print("ERROR: type-corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xR1D2']")
+        userprint("ERROR: type-corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xR1D2']")
         sys.exit()
     if args.drq2 is None:
         co.x_correlation = False
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     ### Read objects 1
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,args.z_evol_obj, args.z_ref, cosmo)
-    print("")
+    userprint("")
     co.objs = objs
     co.ndata = len([o1 for p in co.objs for o1 in co.objs[p]])
     co.angmax = utils.compute_ang_max(cosmo,co.rt_max,zmin_obj)
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     ### Read objects 2
     if co.x_correlation:
         objs2,zmin_obj2 = io.read_objects(args.drq2, args.nside, args.z_min_obj, args.z_max_obj, args.z_evol_obj2, args.z_ref,cosmo)
-        print("")
+        userprint("")
         co.objs2 = objs2
         co.angmax = utils.compute_ang_max(cosmo,co.rt_max,zmin_obj,zmin_obj2)
 
@@ -177,4 +177,4 @@ if __name__ == '__main__':
     out.write([hep,wes,nbs],names=['HEALPID','WE','NB'],header=head2,comment=comment,extname='COR')
     out.close()
 
-    print("\nFinished")
+    userprint("\nFinished")

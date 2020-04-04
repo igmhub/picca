@@ -4,6 +4,8 @@ from . import utils
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
 
+from picca.utils import userprint
+
 def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
 
@@ -220,7 +222,7 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     '''
     Implements eq. 7.77 from S. Dodelson's Modern Cosmology book
     '''
-    print('Calculating growth factor for Om = {}, OL = {}'.format(Om, OL))
+    userprint('Calculating growth factor for Om = {}, OL = {}'.format(Om, OL))
 
     def hubble(z, Om, OL):
         return sp.sqrt(Om*(1+z)**3 + OL + (1-Om-OL)*(1+z)**2)

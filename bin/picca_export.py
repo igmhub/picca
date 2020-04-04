@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+
 import fitsio
 import scipy as sp
 import scipy.linalg
 import argparse
 
 from picca.utils import smooth_cov, cov
-from picca.utils import print
+from picca.utils import userprint
 
 if __name__ == '__main__':
 
@@ -69,17 +69,17 @@ if __name__ == '__main__':
         da -= da_s[:,None]
 
     if args.cov is not None:
-        print('INFO: The covariance-matrix will be read from file: {}'.format(args.cov))
+        userprint('INFO: The covariance-matrix will be read from file: {}'.format(args.cov))
         hh = fitsio.FITS(args.cov)
         co = hh[1]['CO'][:]
         hh.close()
     elif args.cor is not None:
-        print('INFO: The correlation-matrix will be read from file: {}'.format(args.cor))
+        userprint('INFO: The correlation-matrix will be read from file: {}'.format(args.cor))
         hh = fitsio.FITS(args.cor)
         cor = hh[1]['CO'][:]
         hh.close()
         if (cor.min()<-1.) | (cor.min()>1.) | (cor.max()<-1.) | (cor.max()>1.) | sp.any(sp.diag(cor)!=1.):
-            print('WARNING: The correlation-matrix has some incorrect values')
+            userprint('WARNING: The correlation-matrix has some incorrect values')
         tvar = sp.diagonal(cor)
         cor = cor/sp.sqrt(tvar*tvar[:,None])
         co = cov(da,we)
@@ -89,10 +89,10 @@ if __name__ == '__main__':
         binSizeP = (rp_max-rp_min) / npb
         binSizeT = (rt_max-0.) / ntb
         if not args.do_not_smooth_cov:
-            print('INFO: The covariance will be smoothed')
+            userprint('INFO: The covariance will be smoothed')
             co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
         else:
-            print('INFO: The covariance will not be smoothed')
+            userprint('INFO: The covariance will not be smoothed')
             co = cov(da,we)
 
     da = (da*we).sum(axis=0)
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     try:
         scipy.linalg.cholesky(co)
     except scipy.linalg.LinAlgError:
-        print('WARNING: Matrix is not positive definite')
+        userprint('WARNING: Matrix is not positive definite')
 
     if args.dmat is not None:
         h = fitsio.FITS(args.dmat)

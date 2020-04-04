@@ -1,9 +1,8 @@
-from __future__ import print_function
 import numpy as np
 import scipy as sp
 
 from picca import constants
-from picca.utils import print
+from picca.utils import userprint
 
 
 def exp_diff(file,ll) :
@@ -15,7 +14,7 @@ def exp_diff(file,ll) :
     ivtoteven = np.zeros(ll.size)
 
     if (nexp_per_col)<2 :
-        print("DBG : not enough exposures for diff")
+        userprint("DBG : not enough exposures for diff")
 
     for iexp in range (nexp_per_col) :
         for icol in range (2):
@@ -80,5 +79,3 @@ def spectral_resolution_desi(reso_matrix, ll) :
     reso_in_km_per_s = rms_in_pixel*constants.speed_light/1000.*dll*sp.log(10.0)
 
     return reso_in_km_per_s
-
-

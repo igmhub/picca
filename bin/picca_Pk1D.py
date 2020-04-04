@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import division, print_function
+from __future__ import division
 
 import argparse
 import glob
@@ -13,7 +13,7 @@ from picca import constants
 from picca.data import delta
 from picca.Pk1D import (compute_cor_reso, compute_Pk_noise, compute_Pk_raw,
                         fill_masked_pixels, rebin_diff_noise, split_forest)
-from picca.utils import print
+from picca.utils import userprint
 
 
 def make_tree(tree,nb_bin_max):
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     # loop over input files
     for i,f in enumerate(fi):
         if i%1==0:
-            print("\rread {} of {} {}".format(i,len(fi),ndata),end="")
+            userprint("\rread {} of {} {}".format(i,len(fi),ndata),end="")
 
         # read fits or ascii file
         if (args.in_format=='fits') :
@@ -186,7 +186,7 @@ if __name__ == '__main__':
             dels = [delta.from_ascii(line) for line in ascii_file]
 
         ndata+=len(dels)
-        print ("\n ndata =  ",ndata)
+        userprint ("\n ndata =  ",ndata)
         out = None
 
         # loop over deltas
@@ -305,4 +305,4 @@ if __name__ == '__main__':
          storeFile.Write()
 
 
-    print ("all done ")
+    userprint ("all done ")

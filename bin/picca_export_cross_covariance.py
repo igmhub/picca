@@ -7,7 +7,7 @@ import fitsio
 import argparse
 import sys
 
-from picca.utils import cov
+from picca.utils import cov, userprint
 
 if __name__ == '__main__':
 
@@ -43,11 +43,11 @@ if __name__ == '__main__':
 
     ### exit if NSIDE1!=NSIDE2
     if data[0]['NSIDE']!=data[1]['NSIDE']:
-        print("ERROR: NSIDE are different: {} != {}".format(data[0]['NSIDE'],data[1]['NSIDE']))
+        userprint("ERROR: NSIDE are different: {} != {}".format(data[0]['NSIDE'],data[1]['NSIDE']))
         sys.exit()
     ### exit if HLPXSCHM1!=HLPXSCHM2
     if data[0]['HLPXSCHM']!=data[1]['HLPXSCHM']:
-        print("ERROR: HLPXSCHM are different: {} != {}".format(data[0]['HLPXSCHM'],data[1]['HLPXSCHM']))
+        userprint("ERROR: HLPXSCHM are different: {} != {}".format(data[0]['HLPXSCHM'],data[1]['HLPXSCHM']))
         sys.exit()
 
     ### Add unshared healpix as empty data
@@ -58,7 +58,7 @@ if __name__ == '__main__':
             new_healpix = data[j]['HEALPID'][w]
             nb_new_healpix = new_healpix.size
             nb_bins = data[i]['DA'].shape[1]
-            print("Some healpix are unshared in data {}: {}".format(i,new_healpix))
+            userprint("Some healpix are unshared in data {}: {}".format(i,new_healpix))
             data[i]['DA']      = sp.append(data[i]['DA'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
             data[i]['WE']      = sp.append(data[i]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
             data[i]['HEALPID'] = sp.append(data[i]['HEALPID'],new_healpix)
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     try:
         scipy.linalg.cholesky(co)
     except scipy.linalg.LinAlgError:
-        print('WARNING: Matrix is not positive definite')
+        userprint('WARNING: Matrix is not positive definite')
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)

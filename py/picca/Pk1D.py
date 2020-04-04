@@ -1,11 +1,10 @@
-from __future__ import print_function
 
 import numpy as np
 import scipy as sp
 from scipy.fftpack import fft
 
 from picca import constants
-from picca.utils import print
+from picca.utils import userprint
 
 
 def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
@@ -53,7 +52,7 @@ def rebin_diff_noise(dll,ll,diff):
 
     crebin = 3
     if (diff.size < crebin):
-        print("Warning: diff.size too small for rebin")
+        userprint("Warning: diff.size too small for rebin")
         return diff
     dll2 = crebin*dll
 
@@ -70,7 +69,7 @@ def rebin_diff_noise(dll,ll,diff):
     civ2 = sp.bincount(bin2.astype(int))
     w = (civ2>0)
     if (len(civ2) == 0) :
-        print( "Error: diff size = 0 ",diff)
+        userprint( "Error: diff size = 0 ",diff)
     diff2 = cdiff2[w]/civ2[w]*sp.sqrt(civ2[w])
     diffout = np.zeros(diff.size)
     nmax = len(diff)//len(diff2)

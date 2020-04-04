@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, utils, io
-from picca.utils import print
+from picca.utils import userprint
 
 def calc_dmat(p):
     if args.in_dir2:
@@ -111,7 +110,7 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    print("nproc",args.nproc)
+    userprint("nproc",args.nproc)
 
     cf.rp_max = args.rp_max
     cf.rp_min = args.rp_min
@@ -138,8 +137,8 @@ if __name__ == '__main__':
     cf.data = data
     cf.ndata = ndata
     cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix)
-    print("")
-    print("done, npix = {}".format(cf.npix))
+    userprint("")
+    userprint("done, npix = {}".format(cf.npix))
 
     ### Read data 2
     if args.in_dir2 or args.lambda_abs2:
@@ -157,8 +156,8 @@ if __name__ == '__main__':
         cf.data2 = data2
         cf.ndata2 = ndata2
         cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix,zmin_pix2)
-        print("")
-        print("done, npix = {}".format(len(data2)))
+        userprint("")
+        userprint("done, npix = {}".format(len(data2)))
 
 
     cf.counter = Value('i',0)

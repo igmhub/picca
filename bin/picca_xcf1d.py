@@ -8,6 +8,7 @@ from multiprocessing import Pool,cpu_count
 
 from picca import constants, xcf, io, prep_del
 from picca.data import forest
+from picca.utils import userprint
 
 def corr_func(p):
     '''Send the computation for a given list of pixels
@@ -109,7 +110,7 @@ if __name__ == '__main__':
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs, args.z_evol_del, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
     xcf.dels = dels
     sys.stderr.write("\n")
-    print("done, npix = {}".format(len(dels)))
+    userprint("done, npix = {}".format(len(dels)))
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:

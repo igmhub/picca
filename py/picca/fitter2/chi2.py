@@ -1,4 +1,3 @@
-from __future__ import print_function
 import os.path
 import numpy as np
 import scipy as sp
@@ -8,6 +7,7 @@ import h5py
 import sys
 from scipy.linalg import cholesky
 
+from picca.utils import userprint
 from . import priors
 
 def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
@@ -72,10 +72,10 @@ class chi2:
         if self.verbosity == 1:
             del dic['SB']
             for p in sorted(dic.keys()):
-                print(p+" "+str(dic[p]))
+                userprint(p+" "+str(dic[p]))
 
-            print("Chi2: "+str(chi2))
-            print("---\n")
+            userprint("Chi2: "+str(chi2))
+            userprint("---\n")
         return chi2
 
     def _minimize(self):
@@ -94,19 +94,19 @@ class chi2:
             if name[:4] != "bias":
                 kwargs_init["fix_"+name] = True
 
-        mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,print_level=1,**kwargs_init)
+        mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,userprint_level=1,**kwargs_init)
         mig_init.migrad()
-        mig_init.print_param()
+        mig_init.userprint_param()
 
         ## now get the best fit values for the biases and start a full minimization
         for name, value in mig_init.values.items():
             kwargs[name] = value
 
-        mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,print_level=1,**kwargs)
+        mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,userprint_level=1,**kwargs)
         mig.migrad()
-        mig.print_param()
+        mig.userprint_param()
 
-        print("INFO: minimized in {}".format(time.time()-t0))
+        userprint("INFO: minimized in {}".format(time.time()-t0))
         sys.stdout.flush()
         return mig
 
@@ -114,7 +114,7 @@ class chi2:
         self.best_fit = self._minimize()
         if self.hesse:
             self.best_fit.hesse()
-            self.best_fit.print_fmin()
+            self.best_fit.userprint_fmin()
 
         values = dict(self.best_fit.values)
         values['SB'] = False
@@ -285,9 +285,9 @@ class chi2:
                     self.best_fit.minos(var=var,sigma=sigma)
                 else:
                     if var in self.best_fit.list_of_fixed_param():
-                        print('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
+                        userprint('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
                     else:
-                        print('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
+                        userprint('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
 
     def export(self):
         f = h5py.File(self.outfile,"w")

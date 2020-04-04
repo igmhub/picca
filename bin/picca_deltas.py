@@ -15,14 +15,14 @@ from scipy.interpolate import interp1d
 
 from picca.data import forest, delta
 from picca import prep_del, io, constants
-from picca.utils import print
+from picca.utils import userprint
 
 
 def cont_fit(data):
     """ Computes the quasar continua for all the forests in data
 
     Args:
-        data: a list of forests
+        data: a list of forest instances
     Returns:
         the list of forests after having computed their quasar continua
     """
@@ -171,10 +171,10 @@ def main():
     ### Find the redshift range
     if args.zqso_min is None:
         args.zqso_min = max(0., args.lambda_min/args.lambda_rest_max - 1.)
-        print("zqso_min = {}".format(args.zqso_min))
+        userprint("zqso_min = {}".format(args.zqso_min))
     if args.zqso_max is None:
         args.zqso_max = max(0., args.lambda_max/args.lambda_rest_min - 1.)
-        print("zqso_max = {}".format(args.zqso_max))
+        userprint("zqso_max = {}".format(args.zqso_max))
 
     forest.var_lss = interp1d(forest.lmin + np.arange(2)*(forest.lmax - forest.lmin), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
     forest.eta = interp1d(forest.lmin + np.arange(2)*(forest.lmax - forest.lmin), np.ones(2), fill_value="extrapolate", kind="nearest")
@@ -184,7 +184,7 @@ def main():
     ### Fix the order of the continuum fit, 0 or 1.
     if args.order:
         if (args.order != 0) and (args.order != 1):
-            print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(args.order))
+            userprint("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(args.order))
             sys.exit(12)
 
     ### Correct multiplicative pipeline flux calibration
@@ -197,7 +197,7 @@ def main():
             forest.correc_flux = interp1d(ll_st[w], st[w], fill_value="extrapolate", kind="nearest")
             vac.close()
         except (OSError, ValueError):
-            print("ERROR: Error while reading flux_calib file {}".format(args.flux_calib))
+            userprint("ERROR: Error while reading flux_calib file {}".format(args.flux_calib))
             sys.exit(1)
 
     ### Correct multiplicative pipeline inverse variance calibration
@@ -209,12 +209,12 @@ def main():
             forest.correc_ivar = interp1d(ll, eta, fill_value="extrapolate", kind="nearest")
             vac.close()
         except (OSError, ValueError):
-            print("ERROR: Error while reading ivar_calib file {}".format(args.ivar_calib))
+            userprint("ERROR: Error while reading ivar_calib file {}".format(args.ivar_calib))
             sys.exit(1)
 
     ### Apply dust correction
     if not args.dust_map is None:
-        print("applying dust correction")
+        userprint("applying dust correction")
         forest.ebv_map = io.read_dust_map(args.dust_map)
 
     nit = args.nit
@@ -257,7 +257,7 @@ def main():
                 usr_mask_RF_DLA = None
 
         except (OSError, ValueError):
-            print("ERROR: Error while reading mask_file file {}".format(args.mask_file))
+            userprint("ERROR: Error while reading mask_file file {}".format(args.mask_file))
             sys.exit(1)
 
     ### Veto lines
@@ -269,7 +269,7 @@ def main():
 
     ### Veto absorbers
     if not args.absorber_vac is None:
-        print("INFO: Adding absorbers")
+        userprint("INFO: Adding absorbers")
         absorbers = io.read_absorbers(args.absorber_vac)
         nb_absorbers_in_forest = 0
         for p in data:
@@ -282,20 +282,20 @@ def main():
 
     ### Apply optical depth
     if not args.optical_depth is None:
-        print("INFO: Adding {} optical depths".format(len(args.optical_depth)//3))
+        userprint("INFO: Adding {} optical depths".format(len(args.optical_depth)//3))
         assert len(args.optical_depth)%3 == 0
         for idxop in range(len(args.optical_depth)//3):
             tau = float(args.optical_depth[3*idxop])
             gamma = float(args.optical_depth[3*idxop+1])
             waveRF = constants.absorber_IGM[args.optical_depth[3*idxop+2]]
-            print("INFO: Adding optical depth for tau = {}, gamma = {}, waveRF = {} A".format(tau, gamma, waveRF))
+            userprint("INFO: Adding optical depth for tau = {}, gamma = {}, waveRF = {} A".format(tau, gamma, waveRF))
             for p in data:
                 for d in data[p]:
                     d.add_optical_depth(tau, gamma, waveRF)
 
     ### Correct for DLAs
     if not args.dla_vac is None:
-        print("INFO: Adding DLAs")
+        userprint("INFO: Adding DLAs")
         np.random.seed(0)
         dlas = io.read_dlas(args.dla_vac)
         nb_dla_in_forest = 0
@@ -342,14 +342,14 @@ def main():
 
     for it in range(nit):
         pool = Pool(processes=args.nproc)
-        print("iteration: ", it)
+        userprint("iteration: ", it)
         nfit = 0
         sort = np.array(list(data.keys())).argsort()
         data_fit_cont = pool.map(cont_fit, np.array(list(data.values()))[sort])
         for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 
-        print("done")
+        userprint("done")
 
         pool.close()
 
@@ -372,12 +372,12 @@ def main():
                 ll = forest.lmin + (np.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
                 if args.use_ivar_as_weight:
-                    print('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
+                    userprint('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
                     eta = np.ones(nlss)
                     vlss = np.zeros(nlss)
                     fudge = np.zeros(nlss)
                 else:
-                    print('INFO: using constant weights, skipping eta, var_lss, fudge fits')
+                    userprint('INFO: using constant weights, skipping eta, var_lss, fudge fits')
                     eta = np.zeros(nlss)
                     vlss = np.ones(nlss)
                     fudge = np.zeros(nlss)

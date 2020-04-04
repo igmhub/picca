@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import camb
 import nbodykit.cosmology.correlation
 
+from picca.utils import userprint
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -43,7 +45,7 @@ if __name__ == '__main__':
     maxkh = 1.1525e3
     npoints = 814
 
-    print('INFO: running CAMB on {}'.format(args.ini))
+    userprint('INFO: running CAMB on {}'.format(args.ini))
     pars = camb.read_ini(os.path.expandvars(args.ini))
     pars.Transfer.kmax = maxkh
     if not args.z_ref is None:

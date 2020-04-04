@@ -5,6 +5,8 @@ from scipy import stats
 import iminuit
 import types
 import copy
+
+from picca.utils import userprint
 from picca.fitter import broadband
 from picca.fitter import broadband_cross
 import sys
@@ -120,17 +122,17 @@ class Chi2:
                 par_sigma = float(dic_init['gaussian_prior'][i*3+2])
 
                 if (self.verbose):
-                    print("adding prior ",par_name,par_mean,par_sigma)
+                    userprint("adding prior ",par_name,par_mean,par_sigma)
                     sys.stdout.flush()
 
                 chi2+=(pars[par_name]-par_mean)**2/par_sigma**2
 
         if (self.verbose):
-            print("---")
+            userprint("---")
             for pname in self.pname:
-                print(pname,pars[pname])
+                userprint(pname,pars[pname])
 
-            print("Chi2: ",chi2)
+            userprint("Chi2: ",chi2)
             sys.stdout.flush()
 
         return chi2
@@ -161,8 +163,8 @@ class Chi2:
                     mig.values[key] = val
                     kw[key] = val
         except Exception as error :
-            print('  ERROR::picca/py/picca/fitter/Chi2.py:: error in fast Monte-Carlo = ', error)
-            print('  Exit')
+            userprint('  ERROR::picca/py/picca/fitter/Chi2.py:: error in fast Monte-Carlo = ', error)
+            userprint('  Exit')
             sys.exit(0)
 
         ### Get bes fit
@@ -226,7 +228,7 @@ class Chi2:
         ### Get realisation fastMonteCarlo
         for i in range(nb_fMC):
 
-            print('  fastMonteCarlo: ', i, ' over ', nb_fMC)
+            userprint('  fastMonteCarlo: ', i, ' over ', nb_fMC)
             sys.stdout.flush()
 
             ### Get realisation fastMonteCarlo
@@ -238,7 +240,7 @@ class Chi2:
                 self.autoQSO.get_realisation_fastMonteCarlo(bestFit=bestFit_autoQSO)
 
             ### Fit
-            mig_fMC = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,print_level=0,**kw)
+            mig_fMC = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,userprint_level=0,**kw)
             try:
                 mig_fMC.migrad()
                 chi2_result = mig_fMC.get_fmin().fval
@@ -261,7 +263,7 @@ class Chi2:
         dic_init = self.dic_init
 
         if len(dic_init['chi2Scan'])%4 != 0:
-            print('ERROR::bin/fit:: chi2 scan syntax is incorrect')
+            userprint('ERROR::bin/fit:: chi2 scan syntax is incorrect')
             return
 
         ### Get the parameters of the scan
@@ -270,7 +272,7 @@ class Chi2:
         for i in range(nb_param):
             dic_param = {}
             if not any(dic_init['chi2Scan'][i*4+0] in el for el in self.pname):
-                print('  ERROR::bin/fit:: Param not fitted: ', dic_init['chi2Scan'][i*4+0])
+                userprint('  ERROR::bin/fit:: Param not fitted: ', dic_init['chi2Scan'][i*4+0])
                 continue
 
             par_name   = dic_init['chi2Scan'][i*4+0]
@@ -304,7 +306,7 @@ class Chi2:
 
             for i in range(par_nb_bin):
                 kw[par_name] = grid[i]
-                mig = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,print_level=0,**kw)
+                mig = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,userprint_level=0,**kw)
                 try:
                     mig.migrad()
                     chi2_result = mig.get_fmin().fval
@@ -338,7 +340,7 @@ class Chi2:
                 for j in range(par_nb_bin2):
                     kw[par_name1] = grid1[i]
                     kw[par_name2] = grid2[j]
-                    mig = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,print_level=self.verbose,**kw)
+                    mig = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,userprint_level=self.verbose,**kw)
                     try:
                         mig.migrad()
                         chi2_result = mig.get_fmin().fval
@@ -741,11 +743,3 @@ class Chi2:
                     configfile.write(str(i).ljust(max_len) + ' = ' + str_param + '\n')
 
             configfile.write('\n')
-
-
-
-
-
-
-
-

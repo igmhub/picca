@@ -1,4 +1,3 @@
-from __future__ import print_function
 
 import numpy as np
 import scipy as sp
@@ -6,7 +5,7 @@ from healpy import query_disc
 from numba import jit
 
 from picca import constants
-from picca.utils import print
+from picca.utils import userprint
 
 # npb = number of parallel bins (to avoid collision with numpy np)
 npb = None
@@ -75,7 +74,7 @@ def cf(pix):
 
     for ipix in pix:
         for d1 in data[ipix]:
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)),end="")
             with lock:
                 counter.value += 1
             for d2 in d1.dneighs:
@@ -159,7 +158,7 @@ def dmat(pix):
     npairs_used = 0
     for p in pix:
         for d1 in data[p]:
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)),end="")
             with lock:
                 counter.value += 1
             order1 = d1.order
@@ -294,7 +293,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
     npairs_used = 0
     for p in pix:
         for d1 in data[p]:
-            print("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)),end="")
+            userprint("\rcomputing metal dmat {} {}: {}%".format(abs_igm1,abs_igm2,round(counter.value*100./ndata,3)),end="")
             with lock:
                 counter.value += 1
 
@@ -531,7 +530,7 @@ def wickT(pix):
         if w.sum()==0: continue
 
         for d1 in [ td for ti,td in enumerate(data[ipix]) if w[ti] ]:
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata/(1.-rej),3)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndata/(1.-rej),3)),end="")
             with lock:
                 counter.value += 1
             if len(d1.dneighs)==0: continue

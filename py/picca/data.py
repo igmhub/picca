@@ -1,9 +1,8 @@
-from __future__ import print_function
 
 import numpy as np
 import scipy as sp
 from picca import constants
-from picca.utils import print, unred
+from picca.utils import userprint, unred
 import iminuit
 from .dla import dla
 import fitsio
@@ -41,11 +40,11 @@ class qso:
             cos = x*self.xcart+y*self.ycart+z*self.zcart
             w = cos>=1.
             if w.sum()!=0:
-                print('WARNING: {} pairs have cos>=1.'.format(w.sum()))
+                userprint('WARNING: {} pairs have cos>=1.'.format(w.sum()))
                 cos[w] = 1.
             w = cos<=-1.
             if w.sum()!=0:
-                print('WARNING: {} pairs have cos<=-1.'.format(w.sum()))
+                userprint('WARNING: {} pairs have cos<=-1.'.format(w.sum()))
                 cos[w] = -1.
             angl = sp.arccos(cos)
 
@@ -61,10 +60,10 @@ class qso:
 
             cos = x*self.xcart+y*self.ycart+z*self.zcart
             if cos>=1.:
-                print('WARNING: 1 pair has cosinus>=1.')
+                userprint('WARNING: 1 pair has cosinus>=1.')
                 cos = 1.
             elif cos<=-1.:
-                print('WARNING: 1 pair has cosinus<=-1.')
+                userprint('WARNING: 1 pair has cosinus<=-1.')
                 cos = -1.
             angl = sp.arccos(cos)
             if (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off):
@@ -352,7 +351,7 @@ class forest(qso):
         p0 = (self.fl*self.iv).sum()/self.iv.sum()
         p1 = 0
 
-        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p0/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
+        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p0/2.,errordef=1.,userprint_level=0,fix_p1=(self.order==0))
         fmin,_ = mig.migrad()
 
         self.co=model(mig.values["p0"],mig.values["p1"])
@@ -509,7 +508,7 @@ class delta(qso):
         deltas=[]
         for i in range(nspec):
             if i%100==0:
-                print("\rreading deltas {} of {}".format(i,nspec),end="")
+                userprint("\rreading deltas {} of {}".format(i,nspec),end="")
 
             delt = de[:,i]
             ivar = iv[:,i]

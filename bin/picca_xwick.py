@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 import sys
 import argparse
 import fitsio
@@ -10,7 +9,7 @@ from scipy.interpolate import interp1d
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, io, utils, xcf, cf
-from picca.utils import print
+from picca.utils import userprint
 
 def calc_wickT(p):
     """Send the Wick computation for a set of pixels
@@ -142,7 +141,7 @@ if __name__ == '__main__':
 
     ### Cosmo
     if (args.fid_Or!=0.) or (args.fid_Ok!=0.) or (args.fid_wl!=-1.):
-        print("ERROR: Cosmology with other than Omega_m set are not yet implemented")
+        userprint("ERROR: Cosmology with other than Omega_m set are not yet implemented")
         sys.exit()
     cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
@@ -157,7 +156,7 @@ if __name__ == '__main__':
     xcf.dels = dels
     xcf.ndels = ndels
     sys.stderr.write("\n")
-    print("done, npix = {}, ndels = {}".format(xcf.npix,xcf.ndels))
+    userprint("done, npix = {}, ndels = {}".format(xcf.npix,xcf.ndels))
     sys.stderr.write("\n")
 
     ### Find the redshift range
@@ -177,7 +176,7 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     xcf.objs = objs
     sys.stderr.write("\n")
-    print("done, npix = {}".format(len(objs)))
+    userprint("done, npix = {}".format(len(objs)))
     sys.stderr.write("\n")
 
     ### Maximum angle
@@ -242,9 +241,9 @@ if __name__ == '__main__':
             cf.fill_neighs(p)
 
     pool = Pool(processes=min(args.nproc,len(cpu_data.values())))
-    print(" \nStarting\n")
+    userprint(" \nStarting\n")
     wickT = pool.map(calc_wickT,sorted(cpu_data.values()))
-    print(" \nFinished\n")
+    userprint(" \nFinished\n")
     pool.close()
 
     wickT = sp.array(wickT)

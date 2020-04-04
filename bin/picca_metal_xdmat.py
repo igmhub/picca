@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import scipy as sp
 import fitsio
 import argparse
@@ -7,7 +6,7 @@ from functools import partial
 from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, xcf, io, utils
-from picca.utils import print
+from picca.utils import userprint
 
 def calc_metal_xdmat(abs_igm,p):
     xcf.fill_neighs(p)
@@ -148,12 +147,12 @@ if __name__ == '__main__':
         dmin_pix = cosmo.r_comoving(zmin_pix)
         dmin_obj = max(0.,dmin_pix+xcf.rp_min)
         args.z_min_obj = cosmo.r_2_z(dmin_obj)
-        print("\r z_min_obj = {}\r".format(args.z_min_obj),end="")
+        userprint("\r z_min_obj = {}\r".format(args.z_min_obj),end="")
     if (args.z_max_obj is None):
         dmax_pix = cosmo.r_comoving(zmax_pix)
         dmax_obj = max(0.,dmax_pix+xcf.rp_max)
         args.z_max_obj = cosmo.r_2_z(dmax_obj)
-        print("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
+        userprint("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
 
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
                                 args.z_evol_obj, args.z_ref,cosmo)
@@ -184,7 +183,7 @@ if __name__ == '__main__':
     for i,abs_igm in enumerate(args.abs_igm):
         xcf.counter.value=0
         f=partial(calc_metal_xdmat,abs_igm)
-        print("")
+        userprint("")
 
         if args.nproc>1:
             pool = Pool(processes=args.nproc)
