@@ -351,7 +351,7 @@ class forest(qso):
         p0 = (self.fl*self.iv).sum()/self.iv.sum()
         p1 = 0
 
-        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p0/2.,errordef=1.,userprint_level=0,fix_p1=(self.order==0))
+        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p0/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
         fmin,_ = mig.migrad()
 
         self.co=model(mig.values["p0"],mig.values["p1"])

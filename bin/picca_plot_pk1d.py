@@ -91,7 +91,7 @@ if __name__ == '__main__':
     meanPk = sp.where(sum!=0,sumPk/sum,0.0)
     errorPk = sp.where(sum!=0,sp.sqrt(((sumPk2/sum)-meanPk**2)/sum),0.0)
 
-    # userprint figure
+    # print figure
     figure_file = args.out_fig
 
     zbins = [ 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6]

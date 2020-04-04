@@ -16,7 +16,7 @@ def cf1d(p):
         else :
             tmp = cf.cf1d(p)
     except:
-        traceback.userprint_exc()
+        traceback.print_exc()
     with cf.lock:
         cf.counter.value += 1
     userprint("\rcomputing xi: {}%".format(round(cf.counter.value*100./cf.npix,2)),end="")
