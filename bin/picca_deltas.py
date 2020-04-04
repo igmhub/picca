@@ -18,9 +18,13 @@ from picca import prep_del, io, constants
 from picca.utils import print
 
 
-# TODO: update docstring
 def cont_fit(data):
-    """Docstring needs update
+    """ Computes the quasar continua for all the forests in data
+
+    Args:
+        data: a list of forests
+    Returns:
+        the list of forests after having computed their quasar continua
     """
     for d in data:
         d.cont_fit()
@@ -180,7 +184,7 @@ def main():
     ### Fix the order of the continuum fit, 0 or 1.
     if args.order:
         if (args.order != 0) and (args.order != 1):
-            print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(order))
+            print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(args.order))
             sys.exit(12)
 
     ### Correct multiplicative pipeline flux calibration
@@ -193,7 +197,7 @@ def main():
             forest.correc_flux = interp1d(ll_st[w], st[w], fill_value="extrapolate", kind="nearest")
             vac.close()
         except (OSError, ValueError):
-            print(" Error while reading flux_calib file {}".format(args.flux_calib))
+            print("ERROR: Error while reading flux_calib file {}".format(args.flux_calib))
             sys.exit(1)
 
     ### Correct multiplicative pipeline inverse variance calibration
@@ -205,7 +209,7 @@ def main():
             forest.correc_ivar = interp1d(ll, eta, fill_value="extrapolate", kind="nearest")
             vac.close()
         except (OSError, ValueError):
-            print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
+            print("ERROR: Error while reading ivar_calib file {}".format(args.ivar_calib))
             sys.exit(1)
 
     ### Apply dust correction
@@ -253,7 +257,7 @@ def main():
                 usr_mask_RF_DLA = None
 
         except (OSError, ValueError):
-            print(" Error while reading mask_file file {}".format(args.mask_file))
+            print("ERROR: Error while reading mask_file file {}".format(args.mask_file))
             sys.exit(1)
 
     ### Veto lines
@@ -306,7 +310,7 @@ def main():
     ## cuts
     log.write("INFO: Input sample has {} forests\n".format(np.sum([len(p) for p in data.values()])))
     lstKeysToDel = []
-    for p in data.keys():
+    for p in data:
         l = []
         for d in data[p]:
             if not hasattr(d, 'll') or len(d.ll) < args.npix_min:
