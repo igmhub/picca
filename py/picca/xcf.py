@@ -50,7 +50,7 @@ def fill_neighs(pix):
                 w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < rp_max
                 w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > rp_min
             neighs = sp.array(neighs)[w]
-            d.qneighs = sp.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
+            d.qneighs = sp.array([q for q in neighs if (d.z[-1]+q.z_qso)/2.>=z_cut_min and (d.z[-1]+q.z_qso)/2.<z_cut_max])
 
 def xcf(pix):
     xi = np.zeros(npb*ntb)
@@ -67,15 +67,15 @@ def xcf(pix):
             userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
             if (d.qneighs.size != 0):
                 ang = d^d.qneighs
-                zqso = [q.zqso for q in d.qneighs]
+                z_qso = [q.z_qso for q in d.qneighs]
                 we_qso = [q.we for q in d.qneighs]
                 if ang_correlation:
                     l_qso = [10.**q.ll for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,zqso,l_qso,l_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,z_qso,l_qso,l_qso,we_qso,ang)
                 else:
                     rc_qso = [q.r_comov for q in d.qneighs]
                     rdm_qso = [q.rdm_comov for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.rdm_comov,d.we,d.de,zqso,rc_qso,rdm_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.rdm_comov,d.we,d.de,z_qso,rc_qso,rdm_qso,we_qso,ang)
 
                 xi[:len(cd)]+=cd
                 we[:len(cw)]+=cw
@@ -156,7 +156,7 @@ def dmat(pix):
             r2 = [q.r_comov for q in neighs]
             rdm2 = [q.rdm_comov for q in neighs]
             w2 = [q.we for q in neighs]
-            z2 = [q.zqso for q in neighs]
+            z2 = [q.z_qso for q in neighs]
             fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
@@ -250,7 +250,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             rd_abs = cosmo.r_comoving(zd_abs)
             rdm_abs = cosmo.dm(zd_abs)
 
-            wzcut = zd_abs<d.zqso
+            wzcut = zd_abs<d.z_qso
             rd = rd[wzcut]
             rdm = rdm[wzcut]
             wd = wd[wzcut]
@@ -265,7 +265,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 rq = q.r_comov
                 rqm = q.rdm_comov
                 wq = q.we
-                zq = q.zqso
+                zq = q.z_qso
                 rp = (rd-rq)*sp.cos(ang/2)
                 rt = (rdm+rqm)*sp.sin(ang/2)
                 wdq = wd*wq
@@ -357,7 +357,7 @@ def wickT(pix):
             neighs = d1.qneighs
             ang12 = d1^neighs
             r2 = sp.array([q2.r_comov for q2 in neighs])
-            z2 = sp.array([q2.zqso for q2 in neighs])
+            z2 = sp.array([q2.z_qso for q2 in neighs])
             w2 = sp.array([q2.we for q2 in neighs])
 
             fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
@@ -605,12 +605,12 @@ def xcf1d(pix):
             neighs = [q for q in objs[ipix] if q.thid==d.thid]
             if len(neighs)==0: continue
 
-            zqso = [ q.zqso for q in neighs ]
+            z_qso = [ q.z_qso for q in neighs ]
             we_qso = [ q.we for q in neighs ]
             l_qso = [ 10.**q.ll for q in neighs ]
             ang = np.zeros(len(l_qso))
 
-            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,zqso,l_qso,l_qso,we_qso,ang)
+            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,z_qso,l_qso,l_qso,we_qso,ang)
 
             xi[:cd.size] += cd
             we[:cw.size] += cw

@@ -245,12 +245,12 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     thid = h[1]['THING_ID'][:]
     ra = h[1]['RA'][:]
     dec = h[1]['DEC'][:]
-    zqso = h[1][drqzkey][:]
+    z_qso = h[1][drqzkey][:]
     h.close()
     fromThingid2idx = { el:i for i,el in enumerate(thid) }
     cat['RA'] = sp.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
     cat['DEC'] = sp.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['ZQSO'] = sp.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['ZQSO'] = sp.array([ z_qso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
 
     w = cat['RA']!=cat['DEC']
     userprint('INFO: Removed {} DLA, because RA==DEC'.format((cat['RA']==cat['DEC']).sum()))
@@ -331,7 +331,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     userprint(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
 
     thid = vac[1]['TARGETID'][:][w]
-    zqso = vac[1]['TRUEZ'][:][w]
+    z_qso = vac[1]['TRUEZ'][:][w]
     vac.close()
     ra = np.zeros(thid.size)
     dec = np.zeros(thid.size)
@@ -363,7 +363,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
         ra = ra[w]
         dec = dec[w]
-        zqso = zqso[w]
+        z_qso = z_qso[w]
         thid = thid[w]
         plate = plate[w]
         mjd = mjd[w]
@@ -371,7 +371,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
     ### Save
     out = fitsio.FITS(drq,'rw',clobber=True)
-    cols=[ra,dec,thid,plate,mjd,fiberid,zqso]
+    cols=[ra,dec,thid,plate,mjd,fiberid,z_qso]
     names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
     out.write(cols,names=names,extname='CAT')
     out.close()
@@ -427,7 +427,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
             w = sp.random.choice(np.arange(cat['RA'].size),size=int(cat['RA'].size*select_fraction),replace=False)
             for k in cat.keys():
                 cat[k] = cat[k][w]
-            userprint(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(cat['RA'].size, downsampling_z_cut, (zqso>downsampling_z_cut).sum()) )
+            userprint(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(cat['RA'].size, downsampling_z_cut, (z_qso>downsampling_z_cut).sum()) )
 
     w = sp.argsort(cat['THING_ID'])
     for k in cat.keys():
@@ -590,7 +590,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             hd = {}
             hd['RA'] = d.ra
             hd['DEC'] = d.dec
-            hd['Z'] = d.zqso
+            hd['Z'] = d.z_qso
             hd['PMF'] = '{}-{}-{}'.format(d.plate,d.mjd,d.fiberid)
             hd['THING_ID'] = d.thid
             hd['PLATE'] = d.plate

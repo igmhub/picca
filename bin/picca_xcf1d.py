@@ -136,7 +136,7 @@ if __name__ == '__main__':
     xcf.objs = objs
     for objsp in xcf.objs.values():
         for q in objsp:
-            q.ll = sp.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
+            q.ll = sp.log10( (1.+q.z_qso)*constants.absorber_IGM[args.lambda_abs_obj] )
     sys.stderr.write("\n")
 
     ### Send

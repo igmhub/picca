@@ -309,7 +309,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 rdm1_abs1 = cosmo.dm(z1_abs1)
                 w1 = d1.we
 
-                wzcut = z1_abs1<d1.zqso
+                wzcut = z1_abs1<d1.z_qso
                 r1 = r1[wzcut]
                 rdm1 = rdm1[wzcut]
                 w1 = w1[wzcut]
@@ -327,7 +327,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 rdm2_abs2 = cosmo.dm(z2_abs2)
                 w2 = d2.we
 
-                wzcut = z2_abs2<d2.zqso
+                wzcut = z2_abs2<d2.z_qso
                 r2 = r2[wzcut]
                 rdm2 = rdm2[wzcut]
                 w2 = w2[wzcut]
@@ -386,7 +386,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     r1_abs2 = cosmo.r_comoving(z1_abs2)
                     rdm1_abs2 = cosmo.dm(z1_abs2)
 
-                    wzcut = z1_abs2<d1.zqso
+                    wzcut = z1_abs2<d1.z_qso
                     r1 = r1[wzcut]
                     rdm1 = rdm1[wzcut]
                     w1 = w1[wzcut]
@@ -401,7 +401,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     r2_abs1 = cosmo.r_comoving(z2_abs1)
                     rdm2_abs1 = cosmo.dm(z2_abs1)
 
-                    wzcut = z2_abs1<d2.zqso
+                    wzcut = z2_abs1<d2.z_qso
                     r2 = r2[wzcut]
                     rdm2 = rdm2[wzcut]
                     w2 = w2[wzcut]

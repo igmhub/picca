@@ -12,7 +12,7 @@ def variance(var,eta,var_lss,fudge):
 
 
 class Qso:
-    def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
+    def __init__(self,thid,ra,dec,z_qso,plate,mjd,fiberid):
         self.ra = ra
         self.dec = dec
 
@@ -26,7 +26,7 @@ class Qso:
         self.z_cart = sp.sin(dec)
         self.cos_dec = sp.cos(dec)
 
-        self.zqso = zqso
+        self.z_qso = z_qso
         self.thid = thid
 
     def __xor__(self,data):
@@ -103,8 +103,8 @@ class forest(Qso):
     mean_z = None
 
 
-    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fiberid,order, diff=None,reso=None, mmef = None):
-        Qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fiberid)
+    def __init__(self,ll,fl,iv,thid,ra,dec,z_qso,plate,mjd,fiberid,order, diff=None,reso=None, mmef = None):
+        Qso.__init__(self,thid,ra,dec,z_qso,plate,mjd,fiberid)
 
         if not self.ebv_map is None:
             corr = unred(10**ll,self.ebv_map[thid])
@@ -118,8 +118,8 @@ class forest(Qso):
         ll = forest.lmin + bins*forest.dll
         w = (ll>=forest.lmin)
         w = w & (ll<forest.lmax)
-        w = w & (ll-sp.log10(1.+self.zqso)>forest.lmin_rest)
-        w = w & (ll-sp.log10(1.+self.zqso)<forest.lmax_rest)
+        w = w & (ll-sp.log10(1.+self.z_qso)>forest.lmin_rest)
+        w = w & (ll-sp.log10(1.+self.z_qso)<forest.lmax_rest)
         w = w & (iv>0.)
         if w.sum()==0:
             return
@@ -252,7 +252,7 @@ class forest(Qso):
         for l in mask_obs:
             w &= (self.ll<l[0]) | (self.ll>l[1])
         for l in mask_RF:
-            w &= (self.ll-sp.log10(1.+self.zqso)<l[0]) | (self.ll-sp.log10(1.+self.zqso)>l[1])
+            w &= (self.ll-sp.log10(1.+self.z_qso)<l[0]) | (self.ll-sp.log10(1.+self.z_qso)>l[1])
 
         ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -270,7 +270,7 @@ class forest(Qso):
         if self.Fbar is None:
             self.Fbar = sp.ones(self.ll.size)
 
-        w = 10.**self.ll/(1.+self.zqso)<=waveRF
+        w = 10.**self.ll/(1.+self.z_qso)<=waveRF
         z = 10.**self.ll/waveRF-1.
         self.Fbar[w] *= sp.exp(-tau*(1.+z[w])**gamma)
 
@@ -311,10 +311,10 @@ class forest(Qso):
         return
 
     def cont_fit(self):
-        lmax = forest.lmax_rest+sp.log10(1+self.zqso)
-        lmin = forest.lmin_rest+sp.log10(1+self.zqso)
+        lmax = forest.lmax_rest+sp.log10(1+self.z_qso)
+        lmin = forest.lmin_rest+sp.log10(1+self.z_qso)
         try:
-            mc = forest.mean_cont(self.ll-sp.log10(1+self.zqso))
+            mc = forest.mean_cont(self.ll-sp.log10(1+self.z_qso))
         except ValueError:
             raise Exception
 
@@ -375,9 +375,9 @@ class forest(Qso):
 
 class delta(Qso):
 
-    def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
+    def __init__(self,thid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
 
-        Qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fiberid)
+        Qso.__init__(self,thid,ra,dec,z_qso,plate,mjd,fiberid)
         self.ll = ll
         self.we = we
         self.co = co
@@ -410,7 +410,7 @@ class delta(Qso):
             diff /= mef
         iv = f.iv/(eta+(eta==0))*(mef**2)
 
-        return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fiberid,ll,we,f.co,de,f.order,
+        return cls(f.thid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,ll,we,f.co,de,f.order,
                    iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
 
 
@@ -447,7 +447,7 @@ class delta(Qso):
         thid = head['THING_ID']
         ra = head['RA']
         dec = head['DEC']
-        zqso = head['Z']
+        z_qso = head['Z']
         plate = head['PLATE']
         mjd = head['MJD']
         fiberid = head['FIBERID']
@@ -456,7 +456,7 @@ class delta(Qso):
             order = head['ORDER']
         except KeyError:
             order = 1
-        return cls(thid,ra,dec,zqso,plate,mjd,fiberid,ll,we,co,de,order,
+        return cls(thid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,
                    iv,diff,m_SNR,m_reso,m_z,dll)
 
 
@@ -469,7 +469,7 @@ class delta(Qso):
         fiberid = int(a[2])
         ra = float(a[3])
         dec = float(a[4])
-        zqso = float(a[5])
+        z_qso = float(a[5])
         m_z = float(a[6])
         m_SNR = float(a[7])
         m_reso = float(a[8])
@@ -487,7 +487,7 @@ class delta(Qso):
         we = None
         co = None
 
-        return cls(thid,ra,dec,zqso,plate,mjd,fiberid,ll,we,co,de,order,
+        return cls(thid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,
                    iv,diff,m_SNR,m_reso,m_z,dll)
 
     @staticmethod

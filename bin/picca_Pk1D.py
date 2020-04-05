@@ -18,7 +18,7 @@ from picca.utils import userprint
 
 def make_tree(tree,nb_bin_max):
 
-    zqso = array( 'f', [ 0. ] )
+    z_qso = array( 'f', [ 0. ] )
     mean_z = array( 'f', [ 0. ] )
     mean_reso = array( 'f', [ 0. ] )
     mean_SNR = array( 'f', [ 0. ] )
@@ -39,7 +39,7 @@ def make_tree(tree,nb_bin_max):
     Pk_diff_r = array( 'f', nb_bin_max*[ 0. ] )
     cor_reso_r = array( 'f', nb_bin_max*[ 0. ] )
 
-    tree.Branch("zqso",zqso,"zqso/F")
+    tree.Branch("z_qso",z_qso,"z_qso/F")
     tree.Branch("mean_z",mean_z,"mean_z/F")
     tree.Branch("mean_reso",mean_reso,"mean_reso/F")
     tree.Branch("mean_SNR",mean_SNR,"mean_SNR/F")
@@ -59,14 +59,14 @@ def make_tree(tree,nb_bin_max):
     tree.Branch( 'cor_reso', cor_reso_r, 'cor_reso[NbBin]/F' )
     tree.Branch( 'Pk', Pk_r, 'Pk[NbBin]/F' )
 
-    return zqso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
+    return z_qso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
     nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
 
-def compute_mean_delta(ll,delta,iv,zqso):
+def compute_mean_delta(ll,delta,iv,z_qso):
 
     for i, _ in enumerate (ll):
         ll_obs = sp.power(10., ll[i])
-        ll_rf = ll_obs/(1.+zqso)
+        ll_rf = ll_obs/(1.+z_qso)
         hdelta.Fill(ll_obs, ll_rf, delta[i])
         hdelta_RF.Fill(ll_rf, delta[i])
         hdelta_OBS.Fill(ll_obs, delta[i])
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         storeFile = TFile(args.out_dir+"/Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
-        zqso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
+        z_qso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
         nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
 
         # control histograms
@@ -216,7 +216,7 @@ if __name__ == '__main__':
                 # Fill masked pixels with 0.
                 ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f],args.no_apply_filling)
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
-                if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.zqso)
+                if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.z_qso)
 
                 lam_lya = constants.absorber_IGM["LYA"]
                 z_abs =  sp.power(10.,ll_new)/lam_lya - 1.0
@@ -248,7 +248,7 @@ if __name__ == '__main__':
 
                 # save in root format
                 if (args.out_format=='root'):
-                    zqso[0] = d.zqso
+                    z_qso[0] = d.z_qso
                     mean_z[0] = m_z_arr[f]
                     mean_reso[0] = d.mean_reso
                     mean_SNR[0] = d.mean_SNR
@@ -276,7 +276,7 @@ if __name__ == '__main__':
                 if (args.out_format=='fits'):
                     hd = [ {'name':'RA','value':d.ra,'comment':"QSO's Right Ascension [degrees]"},
                         {'name':'DEC','value':d.dec,'comment':"QSO's Declination [degrees]"},
-                        {'name':'Z','value':d.zqso,'comment':"QSO's redshift"},
+                        {'name':'Z','value':d.z_qso,'comment':"QSO's redshift"},
                         {'name':'MEANZ','value':m_z_arr[f],'comment':"Absorbers mean redshift"},
                         {'name':'MEANRESO','value':d.mean_reso,'comment':'Mean resolution [km/s]'},
                         {'name':'MEANSNR','value':d.mean_SNR,'comment':'Mean signal to noise ratio'},

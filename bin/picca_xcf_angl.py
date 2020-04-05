@@ -152,7 +152,7 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     for i,ipix in enumerate(sorted(objs.keys())):
         for q in objs[ipix]:
-            q.ll = sp.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
+            q.ll = sp.log10( (1.+q.z_qso)*constants.absorber_IGM[args.lambda_abs_obj] )
     userprint("")
     xcf.objs = objs
 

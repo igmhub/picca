@@ -33,7 +33,7 @@ def fill_neighs(pix):
             ang = o1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            o1.neighs = sp.array([o2 for o2 in neighs if (o2.zqso+o1.zqso)/2.>=z_cut_min and (o2.zqso+o1.zqso)/2.<z_cut_max])
+            o1.neighs = sp.array([o2 for o2 in neighs if (o2.z_qso+o1.z_qso)/2.>=z_cut_min and (o2.z_qso+o1.z_qso)/2.<z_cut_max])
 
 
 def fill_neighs_x_correlation(pix):
@@ -45,7 +45,7 @@ def fill_neighs_x_correlation(pix):
             ang = o1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
-            o1.neighs = sp.array([o2 for o2 in neighs if (o2.zqso+o1.zqso)/2.>=z_cut_min and (o2.zqso+o1.zqso)/2.<z_cut_max])
+            o1.neighs = sp.array([o2 for o2 in neighs if (o2.z_qso+o1.z_qso)/2.>=z_cut_min and (o2.z_qso+o1.z_qso)/2.<z_cut_max])
 
 def co(pix):
 
@@ -65,12 +65,12 @@ def co(pix):
             if (o1.neighs.size == 0): continue
 
             ang      = o1^o1.neighs
-            zo2      = sp.array([o2.zqso    for o2 in o1.neighs])
+            zo2      = sp.array([o2.z_qso    for o2 in o1.neighs])
             r_comov2 = sp.array([o2.r_comov for o2 in o1.neighs])
             rdm_comov2 = sp.array([o2.rdm_comov for o2 in o1.neighs])
             weo2     = sp.array([o2.we      for o2 in o1.neighs])
 
-            cw,crp,crt,cz,cnb = fast_co(o1.zqso,o1.r_comov,o1.rdm_comov,o1.we,zo2,r_comov2,rdm_comov2,weo2,ang)
+            cw,crp,crt,cz,cnb = fast_co(o1.z_qso,o1.r_comov,o1.rdm_comov,o1.we,zo2,r_comov2,rdm_comov2,weo2,ang)
 
             we[:len(cw)]  += cw
             rp[:len(crp)] += crp

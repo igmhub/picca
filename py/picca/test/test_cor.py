@@ -146,11 +146,11 @@ class TestCor(unittest.TestCase):
         mjd   = numpy.random.randint(51608, high=57521, size=nObj )
         fiberid   = numpy.random.randint(1,     high=1001,  size=nObj )
         thid  = np.arange(thidoffset+1,thidoffset+nObj+1)
-        zqso  = (3.6-2.0)*numpy.random.random_sample(nObj) + 2.0
+        z_qso  = (3.6-2.0)*numpy.random.random_sample(nObj) + 2.0
 
         ### Save
         out = fitsio.FITS(self._branchFiles+"/Products/"+name+".fits",'rw',clobber=True)
-        cols=[ra,dec,thid,plate,mjd,fiberid,zqso]
+        cols=[ra,dec,thid,plate,mjd,fiberid,z_qso]
         names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
         out.write(cols,names=names,extname='CAT')
         out.close()
