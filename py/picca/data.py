@@ -18,7 +18,7 @@ class Qso:
 
         self.plate=plate
         self.mjd=mjd
-        self.fid=fiberid
+        self.fiberid=fiberid
 
         ## cartesian coordinates
         self.xcart = sp.cos(ra)*sp.cos(dec)
@@ -103,8 +103,8 @@ class forest(Qso):
     mean_z = None
 
 
-    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order, diff=None,reso=None, mmef = None):
-        Qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
+    def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fiberid,order, diff=None,reso=None, mmef = None):
+        Qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fiberid)
 
         if not self.ebv_map is None:
             corr = unred(10**ll,self.ebv_map[thid])
@@ -375,9 +375,9 @@ class forest(Qso):
 
 class delta(Qso):
 
-    def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
+    def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
 
-        Qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
+        Qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fiberid)
         self.ll = ll
         self.we = we
         self.co = co
@@ -410,7 +410,7 @@ class delta(Qso):
             diff /= mef
         iv = f.iv/(eta+(eta==0))*(mef**2)
 
-        return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fid,ll,we,f.co,de,f.order,
+        return cls(f.thid,f.ra,f.dec,f.zqso,f.plate,f.mjd,f.fiberid,ll,we,f.co,de,f.order,
                    iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
 
 
@@ -450,13 +450,13 @@ class delta(Qso):
         zqso = head['Z']
         plate = head['PLATE']
         mjd = head['MJD']
-        fid = head['FIBERID']
+        fiberid = head['FIBERID']
 
         try:
             order = head['ORDER']
         except KeyError:
             order = 1
-        return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,
+        return cls(thid,ra,dec,zqso,plate,mjd,fiberid,ll,we,co,de,order,
                    iv,diff,m_SNR,m_reso,m_z,dll)
 
 
@@ -466,7 +466,7 @@ class delta(Qso):
         a = line.split()
         plate = int(a[0])
         mjd = int(a[1])
-        fid = int(a[2])
+        fiberid = int(a[2])
         ra = float(a[3])
         dec = float(a[4])
         zqso = float(a[5])
@@ -487,7 +487,7 @@ class delta(Qso):
         we = None
         co = None
 
-        return cls(thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,
+        return cls(thid,ra,dec,zqso,plate,mjd,fiberid,ll,we,co,de,order,
                    iv,diff,m_SNR,m_reso,m_z,dll)
 
     @staticmethod
@@ -501,7 +501,7 @@ class delta(Qso):
         z = h[3]["Z"][:].astype(sp.float64)
         plate = h[3]["PLATE"][:]
         mjd = h[3]["MJD"][:]
-        fid = h[3]["FIBER"]
+        fiberid = h[3]["FIBER"]
         thid = h[3]["THING_ID"][:]
 
         nspec = h[0].read().shape[1]
@@ -524,7 +524,7 @@ class delta(Qso):
             dll = None
             m_z = None
 
-            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fid[i],lam,ivar,None,delt,order,iv,diff,m_SNR,m_reso,m_z,dll))
+            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,ivar,None,delt,order,iv,diff,m_SNR,m_reso,m_z,dll))
 
         h.close()
         return deltas

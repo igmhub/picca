@@ -326,7 +326,7 @@ def main():
                 continue
 
             l.append(d)
-            log.write("{} {}-{}-{} accepted\n".format(d.thid, d.plate, d.mjd, d.fid))
+            log.write("{} {}-{}-{} accepted\n".format(d.thid, d.plate, d.mjd, d.fiberid))
         data[p][:] = l
         if len(data[p]) == 0:
             lstKeysToDel += [p]
@@ -441,7 +441,7 @@ def main():
                 dll = d.dll
                 if args.mode == 'desi':
                     dll = (d.ll[-1] - d.ll[0])/float(len(d.ll) - 1)
-                line = '{} {} {} '.format(d.plate, d.mjd, d.fid)
+                line = '{} {} {} '.format(d.plate, d.mjd, d.fiberid)
                 line += '{} {} {} '.format(d.ra, d.dec, d.zqso)
                 line += '{} {} {} {} {} '.format(d.mean_z, d.mean_SNR, d.mean_reso, dll, nbpixel)
                 for i in range(nbpixel):
@@ -463,11 +463,11 @@ def main():
                 hd = [{'name':'RA', 'value':d.ra, 'comment':'Right Ascension [rad]'},
                       {'name':'DEC', 'value':d.dec, 'comment':'Declination [rad]'},
                       {'name':'Z', 'value':d.zqso, 'comment':'Redshift'},
-                      {'name':'PMF', 'value':'{}-{}-{}'.format(d.plate, d.mjd, d.fid)},
+                      {'name':'PMF', 'value':'{}-{}-{}'.format(d.plate, d.mjd, d.fiberid)},
                       {'name':'THING_ID', 'value':d.thid, 'comment':'Object identification'},
                       {'name':'PLATE', 'value':d.plate},
                       {'name':'MJD', 'value':d.mjd, 'comment':'Modified Julian date'},
-                      {'name':'FIBERID', 'value':d.fid},
+                      {'name':'FIBERID', 'value':d.fiberid},
                       {'name':'ORDER', 'value':d.order, 'comment':'Order of the continuum fit'},
                       ]
 

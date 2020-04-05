@@ -258,7 +258,7 @@ if __name__ == '__main__':
 
                     plate[0] = d.plate
                     mjd[0] = d.mjd
-                    fiber[0] = d.fid
+                    fiber[0] = d.fiberid
 
                     nb_r[0] = min(len(k),nb_bin_max)
                     for i in range(nb_r[0]) :
@@ -283,7 +283,7 @@ if __name__ == '__main__':
                         {'name':'NBMASKPIX','value':nb_masked_pixel,'comment':'Number of masked pixels in the section'},
                         {'name':'PLATE','value':d.plate,'comment':"Spectrum's plate id"},
                         {'name':'MJD','value':d.mjd,'comment':'Modified Julian Date,date the spectrum was taken'},
-                        {'name':'FIBER','value':d.fid,'comment':"Spectrum's fiber number"}
+                        {'name':'FIBER','value':d.fiberid,'comment':"Spectrum's fiber number"}
                     ]
 
                     cols=[k,Pk_raw,Pk_noise,Pk_diff,cor_reso,Pk]

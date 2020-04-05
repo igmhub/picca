@@ -80,7 +80,7 @@ def cf(pix):
             for d2 in d1.dneighs:
                 ang = d1^d2
                 same_half_plate = (d1.plate == d2.plate) and\
-                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
+                        ( (d1.fiberid<=500 and d2.fiberid<=500) or (d1.fiberid>500 and d2.fiberid>500) )
                 if ang_correlation:
                     cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.ll,10.**d1.ll,d1.we,d1.de,
                         d2.z,10.**d2.ll,10.**d2.ll,d2.we,d2.de,ang,same_half_plate)
@@ -173,7 +173,7 @@ def dmat(pix):
             npairs_used += w.sum()
             for d2 in sp.array(d1.dneighs)[w]:
                 same_half_plate = (d1.plate == d2.plate) and\
-                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
+                        ( (d1.fiberid<=500 and d2.fiberid<=500) or (d1.fiberid>500 and d2.fiberid>500) )
                 order2 = d2.order
                 ang = d1^d2
                 r2 = d2.r_comov
@@ -318,7 +318,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 z1_abs1 = z1_abs1[wzcut]
 
                 same_half_plate = (d1.plate == d2.plate) and\
-                        ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
+                        ( (d1.fiberid<=500 and d2.fiberid<=500) or (d1.fiberid>500 and d2.fiberid>500) )
                 ang = d1^d2
                 r2 = d2.r_comov
                 rdm2 = d2.rdm_comov

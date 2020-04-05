@@ -183,7 +183,7 @@ class Pk1D :
 
         self.plate = plate
         self.mjd = mjd
-        self.fid = fiberid
+        self.fiberid = fiberid
         self.k = k
         self.Pk_raw = Pk_raw
         self.Pk_noise = Pk_noise
@@ -209,7 +209,7 @@ class Pk1D :
         mean_SNR = hdr['MEANSNR']
         plate = hdr['PLATE']
         mjd = hdr['MJD']
-        fid = hdr['FIBER']
+        fiberid = hdr['FIBER']
         nb_mp = hdr['NBMASKPIX']
 
         data = hdu.read()
@@ -220,4 +220,4 @@ class Pk1D :
         cor_reso = data['cor_reso'][:]
         Pk_diff = data['Pk_diff'][:]
 
-        return cls(ra,dec,zqso,mean_z,plate,mjd,fid, mean_SNR, mean_reso,k,Pk_raw,Pk_noise,cor_reso, Pk,nb_mp,Pk_diff)
+        return cls(ra,dec,zqso,mean_z,plate,mjd,fiberid, mean_SNR, mean_reso,k,Pk_raw,Pk_noise,cor_reso, Pk,nb_mp,Pk_diff)

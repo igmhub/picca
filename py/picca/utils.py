@@ -337,7 +337,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     dec = np.zeros(thid.size)
     plate = thid
     mjd = thid
-    fid = thid
+    fiberid = thid
 
     ### Get RA and DEC from targets
     vac = fitsio.FITS(targets)
@@ -367,11 +367,11 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
         thid = thid[w]
         plate = plate[w]
         mjd = mjd[w]
-        fid = fid[w]
+        fiberid = fiberid[w]
 
     ### Save
     out = fitsio.FITS(drq,'rw',clobber=True)
-    cols=[ra,dec,thid,plate,mjd,fid,zqso]
+    cols=[ra,dec,thid,plate,mjd,fiberid,zqso]
     names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
     out.write(cols,names=names,extname='CAT')
     out.close()
@@ -591,11 +591,11 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             hd['RA'] = d.ra
             hd['DEC'] = d.dec
             hd['Z'] = d.zqso
-            hd['PMF'] = '{}-{}-{}'.format(d.plate,d.mjd,d.fid)
+            hd['PMF'] = '{}-{}-{}'.format(d.plate,d.mjd,d.fiberid)
             hd['THING_ID'] = d.thid
             hd['PLATE'] = d.plate
             hd['MJD'] = d.mjd
-            hd['FIBERID'] = d.fid
+            hd['FIBERID'] = d.fiberid
             hd['ORDER'] = d.order
 
             cols = [d.ll,d.de,d.we,sp.ones(d.ll.size)]

@@ -144,13 +144,13 @@ class TestCor(unittest.TestCase):
         dec   = 10.*numpy.random.random_sample(nObj)
         plate = numpy.random.randint(266,   high=10001, size=nObj )
         mjd   = numpy.random.randint(51608, high=57521, size=nObj )
-        fid   = numpy.random.randint(1,     high=1001,  size=nObj )
+        fiberid   = numpy.random.randint(1,     high=1001,  size=nObj )
         thid  = np.arange(thidoffset+1,thidoffset+nObj+1)
         zqso  = (3.6-2.0)*numpy.random.random_sample(nObj) + 2.0
 
         ### Save
         out = fitsio.FITS(self._branchFiles+"/Products/"+name+".fits",'rw',clobber=True)
-        cols=[ra,dec,thid,plate,mjd,fid,zqso]
+        cols=[ra,dec,thid,plate,mjd,fiberid,zqso]
         names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
         out.write(cols,names=names,extname='CAT')
         out.close()
@@ -171,7 +171,7 @@ class TestCor(unittest.TestCase):
         thid  = vac[1]["THING_ID"][:]
         plate = vac[1]["PLATE"][:]
         mjd   = vac[1]["MJD"][:]
-        fid   = vac[1]["FIBERID"][:]
+        fiberid   = vac[1]["FIBERID"][:]
         vac.close()
 
         ### Get Healpy pixels
@@ -181,7 +181,7 @@ class TestCor(unittest.TestCase):
         path = self._branchFiles+"/Products/Spectra/master.fits"
         head = {}
         head['NSIDE'] = nside
-        cols  = [thid,pixs,plate,mjd,fid]
+        cols  = [thid,pixs,plate,mjd,fiberid]
         names = ['THING_ID','PIX','PLATE','MJD','FIBER']
         out = fitsio.FITS(path,'rw',clobber=True)
         out.write(cols,names=names,header=head,extname="MASTER TABLE")
