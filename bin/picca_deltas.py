@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-"""Computes delta field.
+"""Computes delta field from a list of spectra.
 
-Computes the mean transmission fluctuation field (delta field) for the specified
-absorption line. Follow the procedure describe in section 2.4 of du Mas des
-Bourboux et al. 2020 (In prep).
+Computes the mean transmission fluctuation field (delta field) for a list of
+spectra for the specified absorption line. Follow the procedure describe in
+section 2.4 of du Mas des Bourboux et al. 2020 (In prep).
 """
 import sys
 import os
