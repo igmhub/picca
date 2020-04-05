@@ -641,7 +641,7 @@ def shuffle_distrib_forests(obj,seed):
     userprint('INFO: Shuffling the forests angular position with seed {}'.format(seed))
 
     dic = {}
-    lst_p = ['ra','dec','x_cart','y_cart','z_cart','cosdec','thid']
+    lst_p = ['ra','dec','x_cart','y_cart','z_cart','cos_dec','thid']
     dic['pix'] = []
     for p in lst_p:
         dic[p] = []

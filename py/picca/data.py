@@ -24,7 +24,7 @@ class Qso:
         self.x_cart = sp.cos(ra)*sp.cos(dec)
         self.y_cart = sp.sin(ra)*sp.cos(dec)
         self.z_cart = sp.sin(dec)
-        self.cosdec = sp.cos(dec)
+        self.cos_dec = sp.cos(dec)
 
         self.zqso = zqso
         self.thid = thid
@@ -50,7 +50,7 @@ class Qso:
 
             w = (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off)
             if w.sum()!=0:
-                angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cosdec*(ra[w]-self.ra))**2 )
+                angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cos_dec*(ra[w]-self.ra))**2 )
         except:
             x = data.x_cart
             y = data.y_cart
@@ -67,7 +67,7 @@ class Qso:
                 cos = -1.
             angl = sp.arccos(cos)
             if (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off):
-                angl = sp.sqrt( (dec-self.dec)**2 + (self.cosdec*(ra-self.ra))**2 )
+                angl = sp.sqrt( (dec-self.dec)**2 + (self.cos_dec*(ra-self.ra))**2 )
         return angl
 
 class forest(Qso):
