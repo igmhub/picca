@@ -9,7 +9,7 @@ import os.path
 import copy
 
 from picca.utils import userprint
-from picca.data import forest, delta, qso
+from picca.data import forest, delta, Qso
 from picca.prep_Pk1D import exp_diff, spectral_resolution, spectral_resolution_desi
 
 ## use a metadata class to simplify things
@@ -871,7 +871,7 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
     for i,ipix in enumerate(upix):
         userprint("\r{} of {}".format(i,len(upix)))
         w=pix==ipix
-        objs[ipix] = [qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
+        objs[ipix] = [Qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],zqso[w],plate[w],mjd[w],fid[w])]
         for q in objs[ipix]:
             q.we = ((1.+q.zqso)/(1.+zref))**(alpha-1.)
             if not cosmo is None:

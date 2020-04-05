@@ -11,7 +11,7 @@ def variance(var,eta,var_lss,fudge):
     return eta*var + var_lss + fudge/var
 
 
-class qso:
+class Qso:
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fiberid):
         self.ra = ra
         self.dec = dec
@@ -70,7 +70,7 @@ class qso:
                 angl = sp.sqrt( (dec-self.dec)**2 + (self.cosdec*(ra-self.ra))**2 )
         return angl
 
-class forest(qso):
+class forest(Qso):
 
     lmin = None
     lmax = None
@@ -104,7 +104,7 @@ class forest(qso):
 
 
     def __init__(self,ll,fl,iv,thid,ra,dec,zqso,plate,mjd,fid,order, diff=None,reso=None, mmef = None):
-        qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
+        Qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
 
         if not self.ebv_map is None:
             corr = unred(10**ll,self.ebv_map[thid])
@@ -373,11 +373,11 @@ class forest(qso):
             self.p1 = 0.
 
 
-class delta(qso):
+class delta(Qso):
 
     def __init__(self,thid,ra,dec,zqso,plate,mjd,fid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
 
-        qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
+        Qso.__init__(self,thid,ra,dec,zqso,plate,mjd,fid)
         self.ll = ll
         self.we = we
         self.co = co
