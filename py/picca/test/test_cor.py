@@ -11,6 +11,9 @@ import shutil
 import h5py
 from pkg_resources import resource_filename
 import sys
+
+from picca.utils import userprint
+
 if (sys.version_info > (3, 0)):
     # Python 3 code in this block
     import configparser as ConfigParser
@@ -51,7 +54,7 @@ class TestCor(unittest.TestCase):
         self.send_requirements()
         numpy.random.seed(42)
 
-        print("\n")
+        userprint("\n")
         self._test = True
         self._masterFiles = self.picca_base+'/py/picca/test/data/'
         self.produce_folder()
@@ -103,7 +106,7 @@ class TestCor(unittest.TestCase):
             Create the necessary folders
         """
 
-        print("\n")
+        userprint("\n")
         lst_fold = ["/Products/","/Products/Spectra/",
         "/Products/Delta_LYA/","/Products/Delta_LYA/Delta/",
         "/Products/Delta_LYA/Log/","/Products/Correlations/",
@@ -124,7 +127,7 @@ class TestCor(unittest.TestCase):
             Remove the produced folders
         """
 
-        print("\n")
+        userprint("\n")
         shutil.rmtree(self._branchFiles, ignore_errors=True)
 
         return
@@ -133,8 +136,8 @@ class TestCor(unittest.TestCase):
 
         """
 
-        print("\n")
-        print("Create cat with number of object = ", nObj)
+        userprint("\n")
+        userprint("Create cat with number of object = ", nObj)
 
         ### Create random catalog
         ra    = 10.*numpy.random.random_sample(nObj)
@@ -158,7 +161,7 @@ class TestCor(unittest.TestCase):
 
         """
 
-        print("\n")
+        userprint("\n")
         nside = 8
 
         ### Load DRQ
@@ -215,7 +218,7 @@ class TestCor(unittest.TestCase):
         return
     def compare_fits(self,path1,path2,nameRun=""):
 
-        print("\n")
+        userprint("\n")
         m = fitsio.FITS(path1)
         self.assertTrue(os.path.isfile(path2),"{}".format(nameRun))
         b = fitsio.FITS(path2)
@@ -250,7 +253,7 @@ class TestCor(unittest.TestCase):
                     d_b = sp.char.strip(d_b)
                 self.assertEqual(d_m.size,d_b.size,"{}: Header key is {}".format(nameRun,k))
                 if not np.array_equal(d_m,d_b):
-                    print("WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(nameRun,k))
+                    userprint("WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(nameRun,k))
                     diff = d_m-d_b
                     w = d_m!=0.
                     diff[w] = np.absolute( diff[w]/d_m[w] )
@@ -273,19 +276,19 @@ class TestCor(unittest.TestCase):
                 else:
                     nequal = atts1[item]!=atts2[item]
                 if nequal:
-                    print("WARNING: {}: not exactly equal, using allclose for {}".format(nameRun,item))
-                    print(atts1[item],atts2[item])
+                    userprint("WARNING: {}: not exactly equal, using allclose for {}".format(nameRun,item))
+                    userprint(atts1[item],atts2[item])
                     allclose = np.allclose(atts1[item],atts2[item])
                     self.assertTrue(allclose,"{}".format(nameRun))
             return
         def compare_values(val1,val2):
             if not np.array_equal(val1,val2):
-                print("WARNING: {}: not exactly equal, using allclose".format(nameRun))
+                userprint("WARNING: {}: not exactly equal, using allclose".format(nameRun))
                 allclose = np.allclose(val1,val2)
                 self.assertTrue(allclose,"{}".format(nameRun))
             return
 
-        print("\n")
+        userprint("\n")
         m = h5py.File(path1,"r")
         self.assertTrue(os.path.isfile(path2),"{}".format(nameRun))
         b = h5py.File(path2,"r")
@@ -335,22 +338,22 @@ class TestCor(unittest.TestCase):
 
     def send_requirements(self):
 
-        print("\n")
+        userprint("\n")
         req = self.load_requirements()
         for req_lib, req_ver in req.items():
             try:
                 local_ver = __import__(req_lib).__version__
                 if local_ver!=req_ver:
-                    print("WARNING: The local version of {}: {} is different from the required version: {}".format(req_lib,local_ver,req_ver))
+                    userprint("WARNING: The local version of {}: {} is different from the required version: {}".format(req_lib,local_ver,req_ver))
             except ImportError:
-                print("WARNING: Module {} can't be found".format(req_lib))
+                userprint("WARNING: Module {} can't be found".format(req_lib))
 
         return
 
 
     def send_delta(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_deltas.py"
         cmd += " --in-dir "          + self._branchFiles+"/Products/Spectra/"
@@ -372,7 +375,7 @@ class TestCor(unittest.TestCase):
 
     def send_delta_Pk1D(self):
 
-        print("\n")
+        userprint("\n")
         ### Path
         path_to_etc = self.picca_base+'/etc/'
         ### Send
@@ -407,7 +410,7 @@ class TestCor(unittest.TestCase):
 
     def send_Pk1D(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_Pk1D.py"
         cmd += " --in-dir "          + self._masterFiles + "/test_Pk1D/delta_Pk1D/"
@@ -425,7 +428,7 @@ class TestCor(unittest.TestCase):
 
     def send_cf1d(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_cf1d.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -442,7 +445,7 @@ class TestCor(unittest.TestCase):
         return
     def send_cf1d_cross(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_cf1d.py"
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -460,7 +463,7 @@ class TestCor(unittest.TestCase):
         return
     def send_cf_angl(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_cf_angl.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -477,7 +480,7 @@ class TestCor(unittest.TestCase):
         return
     def send_cf(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_cf.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -500,7 +503,7 @@ class TestCor(unittest.TestCase):
         return
     def send_dmat(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_dmat.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -524,7 +527,7 @@ class TestCor(unittest.TestCase):
         return
     def send_metal_dmat(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_metal_dmat.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -549,7 +552,7 @@ class TestCor(unittest.TestCase):
         return
     def send_wick(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_wick.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -573,7 +576,7 @@ class TestCor(unittest.TestCase):
         return
     def send_export_cf(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_export.py"
         cmd += " --data " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
@@ -584,7 +587,7 @@ class TestCor(unittest.TestCase):
         return
     def send_cf_cross(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_cf.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -609,7 +612,7 @@ class TestCor(unittest.TestCase):
         return
     def send_dmat_cross(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_dmat.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -635,7 +638,7 @@ class TestCor(unittest.TestCase):
         return
     def send_metal_dmat_cross(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_metal_dmat.py"
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -663,7 +666,7 @@ class TestCor(unittest.TestCase):
         return
     def send_export_cf_cross(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_export.py"
         cmd += " --data " + self._branchFiles+"/Products/Correlations/cf_cross.fits.gz"
@@ -674,7 +677,7 @@ class TestCor(unittest.TestCase):
         return
     def send_xcf_angl(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_xcf_angl.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -692,7 +695,7 @@ class TestCor(unittest.TestCase):
         return
     def send_xcf(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_xcf.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -715,7 +718,7 @@ class TestCor(unittest.TestCase):
         return
     def send_xdmat(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_xdmat.py"
         cmd += " --in-dir  " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -739,7 +742,7 @@ class TestCor(unittest.TestCase):
         return
     def send_metal_xdmat(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_metal_xdmat.py"
         cmd += " --in-dir "  + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -764,7 +767,7 @@ class TestCor(unittest.TestCase):
         return
     def send_xwick(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_xwick.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
@@ -789,7 +792,7 @@ class TestCor(unittest.TestCase):
         return
     def send_export_xcf(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_export.py"
         cmd += " --data " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
@@ -800,7 +803,7 @@ class TestCor(unittest.TestCase):
         return
     def send_export_cross_covariance_cf_xcf(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_export_cross_covariance.py"
         cmd += " --data1 " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
@@ -811,7 +814,7 @@ class TestCor(unittest.TestCase):
         return
     def send_co(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
@@ -884,7 +887,7 @@ class TestCor(unittest.TestCase):
         return
     def send_export_co(self):
 
-        print("\n")
+        userprint("\n")
         ### Send
         cmd  = " picca_export_co.py"
         cmd += " --DD-file " + self._branchFiles+"/Products/Correlations/co_DD.fits.gz"
@@ -898,7 +901,7 @@ class TestCor(unittest.TestCase):
         return
     def send_fitter2(self):
 
-        print("\n")
+        userprint("\n")
 
         ### copy ini files to branch
         cmd  = 'cp '+self._masterFiles+'/*ini '+self._branchFiles+'/Products/Correlations/Fit/'
