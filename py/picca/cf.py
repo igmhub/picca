@@ -45,7 +45,7 @@ remove_same_half_plate_close_pairs = False
 def fill_neighs(pix):
     for ipix in pix:
         for d1 in data[ipix]:
-            npix = query_disc(nside,[d1.xcart,d1.ycart,d1.zcart],angmax,inclusive = True)
+            npix = query_disc(nside,[d1.x_cart,d1.y_cart,d1.z_cart],angmax,inclusive = True)
             npix = [p for p in npix if p in data]
             neighs = [d for p in npix for d in data[p] if d1.thid != d.thid]
             ang = d1^neighs
@@ -56,7 +56,7 @@ def fill_neighs(pix):
 def fill_neighs_x_correlation(pix):
     for ipix in pix:
         for d1 in data[ipix]:
-            npix = query_disc(nside,[d1.xcart,d1.ycart,d1.zcart],angmax,inclusive = True)
+            npix = query_disc(nside,[d1.x_cart,d1.y_cart,d1.z_cart],angmax,inclusive = True)
             npix = [p for p in npix if p in data2]
             neighs = [d for p in npix for d in data2[p] if d1.thid != d.thid]
             ang = d1^neighs

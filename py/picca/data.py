@@ -21,9 +21,9 @@ class Qso:
         self.fiberid=fiberid
 
         ## cartesian coordinates
-        self.xcart = sp.cos(ra)*sp.cos(dec)
-        self.ycart = sp.sin(ra)*sp.cos(dec)
-        self.zcart = sp.sin(dec)
+        self.x_cart = sp.cos(ra)*sp.cos(dec)
+        self.y_cart = sp.sin(ra)*sp.cos(dec)
+        self.z_cart = sp.sin(dec)
         self.cosdec = sp.cos(dec)
 
         self.zqso = zqso
@@ -31,13 +31,13 @@ class Qso:
 
     def __xor__(self,data):
         try:
-            x = sp.array([d.xcart for d in data])
-            y = sp.array([d.ycart for d in data])
-            z = sp.array([d.zcart for d in data])
+            x = sp.array([d.x_cart for d in data])
+            y = sp.array([d.y_cart for d in data])
+            z = sp.array([d.z_cart for d in data])
             ra = sp.array([d.ra for d in data])
             dec = sp.array([d.dec for d in data])
 
-            cos = x*self.xcart+y*self.ycart+z*self.zcart
+            cos = x*self.x_cart+y*self.y_cart+z*self.z_cart
             w = cos>=1.
             if w.sum()!=0:
                 userprint('WARNING: {} pairs have cos>=1.'.format(w.sum()))
@@ -52,13 +52,13 @@ class Qso:
             if w.sum()!=0:
                 angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cosdec*(ra[w]-self.ra))**2 )
         except:
-            x = data.xcart
-            y = data.ycart
-            z = data.zcart
+            x = data.x_cart
+            y = data.y_cart
+            z = data.z_cart
             ra = data.ra
             dec = data.dec
 
-            cos = x*self.xcart+y*self.ycart+z*self.zcart
+            cos = x*self.x_cart+y*self.y_cart+z*self.z_cart
             if cos>=1.:
                 userprint('WARNING: 1 pair has cosinus>=1.')
                 cos = 1.

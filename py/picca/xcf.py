@@ -40,7 +40,7 @@ ang_correlation = None
 def fill_neighs(pix):
     for ipix in pix:
         for d in dels[ipix]:
-            npix = query_disc(nside,[d.xcart,d.ycart,d.zcart],angmax,inclusive = True)
+            npix = query_disc(nside,[d.x_cart,d.y_cart,d.z_cart],angmax,inclusive = True)
             npix = [p for p in npix if p in objs]
             neighs = [q for p in npix for q in objs[p] if q.thid != d.thid]
             ang = d^neighs
