@@ -62,11 +62,11 @@ def read_absorbers(file_absorbers):
             col_names = l
             continue
         if l[0][0]=="-":continue
-        thid = int(l[col_names.index("ThingID")])
-        if thid not in absorbers:
-            absorbers[thid]=[]
+        thingid = int(l[col_names.index("ThingID")])
+        if thingid not in absorbers:
+            absorbers[thingid]=[]
         lambda_absorber = float(l[col_names.index("lambda")])
-        absorbers[thid].append(lambda_absorber)
+        absorbers[thingid].append(lambda_absorber)
         nb_absorbers += 1
     f.close()
 
@@ -88,7 +88,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
         z_qso = h[1]['Z_VI'][:]
 
     ## Info of the primary observation
-    thid = h[1]['THING_ID'][:]
+    thingid = h[1]['THING_ID'][:]
     ra = h[1]['RA'][:].astype('float64')
     dec = h[1]['DEC'][:].astype('float64')
     plate = h[1]['PLATE'][:]
@@ -99,8 +99,8 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     userprint('')
     w = sp.ones(ra.size,dtype=bool)
     userprint(" start               : nb object in cat = {}".format(w.sum()) )
-    w &= thid>0
-    userprint(" and thid>0          : nb object in cat = {}".format(w.sum()) )
+    w &= thingid>0
+    userprint(" and thingid>0          : nb object in cat = {}".format(w.sum()) )
     w &= ra!=dec
     userprint(" and ra!=dec         : nb object in cat = {}".format(w.sum()) )
     w &= ra!=0.
@@ -140,21 +140,21 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     ra = ra[w]*sp.pi/180.
     dec = dec[w]*sp.pi/180.
     z_qso = z_qso[w]
-    thid = thid[w]
+    thingid = thingid[w]
     plate = plate[w]
     mjd = mjd[w]
     fiberid = fiberid[w]
     h.close()
 
-    return ra,dec,z_qso,thid,plate,mjd,fiberid
+    return ra,dec,z_qso,thingid,plate,mjd,fiberid
 
 def read_dust_map(drq, Rv = 3.793):
     h = fitsio.FITS(drq)
-    thid = h[1]['THING_ID'][:]
+    thingid = h[1]['THING_ID'][:]
     ext  = h[1]['EXTINCTION'][:][:,1]/Rv
     h.close()
 
-    return dict(zip(thid, ext))
+    return dict(zip(thingid, ext))
 
 target_mobj = 500
 nside_min = 8
@@ -162,7 +162,7 @@ nside_min = 8
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None):
 
     userprint("mode: "+mode)
-    ra,dec,z_qso,thid,plate,mjd,fiberid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
+    ra,dec,z_qso,thingid,plate,mjd,fiberid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
 
     if nspec != None:
         ## choose them in a small number of pixels
@@ -171,7 +171,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         ra = ra[s][:nspec]
         dec = dec[s][:nspec]
         z_qso = z_qso[s][:nspec]
-        thid = thid[s][:nspec]
+        thingid = thingid[s][:nspec]
         plate = plate[s][:nspec]
         mjd = mjd[s][:nspec]
         fiberid = fiberid[s][:nspec]
@@ -212,7 +212,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     elif mode=="desi":
         nside = 8
         userprint("Found {} qsos".format(len(z_qso)))
-        data = read_from_desi(nside,in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid,order, pk1d=pk1d)
+        data = read_from_desi(nside,in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order, pk1d=pk1d)
         return data,len(data),nside,"RING"
 
     else:
@@ -223,7 +223,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     ndata = 0
 
     if mode=="spcframe":
-        pix_data = read_from_spcframe(in_dir,thid, ra, dec, z_qso, plate, mjd, fiberid, order, mode=mode, log=log, best_obs=best_obs, single_exp=single_exp)
+        pix_data = read_from_spcframe(in_dir,thingid, ra, dec, z_qso, plate, mjd, fiberid, order, mode=mode, log=log, best_obs=best_obs, single_exp=single_exp)
         ra = [d.ra for d in pix_data]
         ra = sp.array(ra)
         dec = [d.dec for d in pix_data]
@@ -238,9 +238,9 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
     if mode in ["spplate","spec","corrected-spec"]:
         if mode == "spplate":
-            pix_data = read_from_spplate(in_dir,thid, ra, dec, z_qso, plate, mjd, fiberid, order, log=log, best_obs=best_obs)
+            pix_data = read_from_spplate(in_dir,thingid, ra, dec, z_qso, plate, mjd, fiberid, order, log=log, best_obs=best_obs)
         else:
-            pix_data = read_from_spec(in_dir,thid, ra, dec, z_qso, plate, mjd, fiberid, order, mode=mode,log=log, pk1d=pk1d, best_obs=best_obs)
+            pix_data = read_from_spec(in_dir,thingid, ra, dec, z_qso, plate, mjd, fiberid, order, mode=mode,log=log, pk1d=pk1d, best_obs=best_obs)
         ra = [d.ra for d in pix_data]
         ra = sp.array(ra)
         dec = [d.dec for d in pix_data]
@@ -260,11 +260,11 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         ## read all hiz qsos
         if mode == "pix":
             t0 = time.time()
-            pix_data = read_from_pix(in_dir,pix,thid[w], ra[w], dec[w], z_qso[w], plate[w], mjd[w], fiberid[w], order, log=log)
+            pix_data = read_from_pix(in_dir,pix,thingid[w], ra[w], dec[w], z_qso[w], plate[w], mjd[w], fiberid[w], order, log=log)
             read_time=time.time()-t0
         elif mode == "spec-mock-1D":
             t0 = time.time()
-            pix_data = read_from_mock_1D(in_dir,thid[w], ra[w], dec[w], z_qso[w], plate[w], mjd[w], fiberid[w], order, mode=mode,log=log)
+            pix_data = read_from_mock_1D(in_dir,thingid[w], ra[w], dec[w], z_qso[w], plate[w], mjd[w], fiberid[w], order, mode=mode,log=log)
             read_time=time.time()-t0
         if not pix_data is None:
             userprint("{} read from pix {}, {} {} in {} secs per spectrum".format(len(pix_data),pix,i,len(upix),read_time/(len(pix_data)+1e-3)))
@@ -274,11 +274,11 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
 
     return data,ndata,nside,"RING"
 
-def read_from_spec(in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=None,pk1d=None,best_obs=None):
-    drq_dict = {t:(r,d,z) for t,r,d,z in zip(thid,ra,dec,z_qso)}
+def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=None,pk1d=None,best_obs=None):
+    drq_dict = {t:(r,d,z) for t,r,d,z in zip(thingid,ra,dec,z_qso)}
 
     ## if using multiple observations,
-    ## then replace thid, plate, mjd, fiberid
+    ## then replace thingid, plate, mjd, fiberid
     ## by what's available in spAll
     if not best_obs:
         fi = glob.glob(in_dir.replace("spectra/","").replace("lite","").replace("full","")+"/spAll-*.fits")
@@ -295,22 +295,22 @@ def read_from_spec(in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=Non
 
         spAll = fitsio.FITS(fi[0])
         userprint("INFO: reading spAll from {}".format(fi[0]))
-        thid_spall = spAll[1]["THING_ID"][:]
+        thingid_spall = spAll[1]["THING_ID"][:]
         plate_spall = spAll[1]["PLATE"][:]
         mjd_spall = spAll[1]["MJD"][:]
         fiberid_spall = spAll[1]["FIBERID"][:]
         qual_spall = spAll[1]["PLATEQUALITY"][:].astype(str)
         zwarn_spall = spAll[1]["ZWARNING"][:]
 
-        w = sp.in1d(thid_spall, thid) & (qual_spall == "good")
+        w = sp.in1d(thingid_spall, thingid) & (qual_spall == "good")
         ## Removing spectra with the following ZWARNING bits set:
         ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
         ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
         for zwarnbit in [0,1,7,8,9]:
             w &= (zwarn_spall&2**zwarnbit)==0
-        userprint("INFO: # unique objs: ",len(thid))
+        userprint("INFO: # unique objs: ",len(thingid))
         userprint("INFO: # spectra: ",w.sum())
-        thid = thid_spall[w]
+        thingid = thingid_spall[w]
         plate = plate_spall[w]
         mjd = mjd_spall[w]
         fiberid = fiberid_spall[w]
@@ -321,13 +321,13 @@ def read_from_spec(in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=Non
     ## Used to preserve original order and pass unit tests.
     t_list = []
     t_set = set()
-    for t,p,m,f in zip(thid,plate,mjd,fiberid):
+    for t,p,m,f in zip(thingid,plate,mjd,fiberid):
         if t not in t_set:
             t_list.append(t)
             t_set.add(t)
         r,d,z = drq_dict[t]
         meta = metadata()
-        meta.thid = t
+        meta.thingid = t
         meta.ra = r
         meta.dec = d
         meta.z_qso = z
@@ -338,20 +338,20 @@ def read_from_spec(in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=Non
         allmeta.append(meta)
 
     pix_data = []
-    thids = {}
+    thingids = {}
 
 
     for meta in allmeta:
-        t = meta.thid
-        if not t in thids:
-            thids[t] = []
-        thids[t].append(meta)
+        t = meta.thingid
+        if not t in thingids:
+            thingids[t] = []
+        thingids[t].append(meta)
 
-    userprint("reading {} thids".format(len(thids)))
+    userprint("reading {} thingids".format(len(thingids)))
 
     for t in t_list:
         t_delta = None
-        for meta in thids[t]:
+        for meta in thingids[t]:
             r,d,z,p,m,f = meta.ra,meta.dec,meta.z_qso,meta.plate,meta.mjd,meta.fiberid
             try:
                 fin = in_dir + "/{}/{}-{}-{}-{:04d}.fits".format(p,mode,p,m,f)
@@ -383,7 +383,7 @@ def read_from_spec(in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=Non
             pix_data.append(t_delta)
     return pix_data
 
-def read_from_mock_1D(in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,log=None):
+def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,log=None):
     pix_data = []
 
     try:
@@ -392,7 +392,7 @@ def read_from_mock_1D(in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,log
     except IOError:
         log.write("error reading {}\n".format(fin))
 
-    for t,r,d,z,p,m,f in zip(thid,ra,dec,z_qso,plate,mjd,fiberid):
+    for t,r,d,z,p,m,f in zip(thingid,ra,dec,z_qso,plate,mjd,fiberid):
         h = hdu["{}".format(t)]
         log.write("file: {} hdu {} read  \n".format(fin,h))
         lamb = h["wavelength"][:]
@@ -419,7 +419,7 @@ def read_from_mock_1D(in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,log
     return pix_data
 
 
-def read_from_pix(in_dir,pix,thid,ra,dec,z_qso,plate,mjd,fiberid,order,log=None):
+def read_from_pix(in_dir,pix,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,log=None):
         try:
             fin = in_dir + "/pix_{}.fits.gz".format(pix)
             h = fitsio.FITS(fin)
@@ -433,21 +433,21 @@ def read_from_pix(in_dir,pix,thid,ra,dec,z_qso,plate,mjd,fiberid,order,log=None)
 
         ## fill log
         if log is not None:
-            for t in thid:
+            for t in thingid:
                 if t not in h[0][:]:
                     log.write("{} missing from pixel {}\n".format(t,pix))
                     userprint("{} missing from pixel {}".format(t,pix))
 
         pix_data=[]
-        thid_list=list(h[0][:])
-        thid2idx = {t:thid_list.index(t) for t in thid if t in thid_list}
+        thingid_list=list(h[0][:])
+        thingid2idx = {t:thingid_list.index(t) for t in thingid if t in thingid_list}
         loglam  = h[1][:]
         flux = h[2].read()
         ivar = h[3].read()
         andmask = h[4].read()
-        for (t, r, d, z, p, m, f) in zip(thid, ra, dec, z_qso, plate, mjd, fiberid):
+        for (t, r, d, z, p, m, f) in zip(thingid, ra, dec, z_qso, plate, mjd, fiberid):
             try:
-                idx = thid2idx[t]
+                idx = thingid2idx[t]
             except:
                 ## fill log
                 if log is not None:
@@ -462,7 +462,7 @@ def read_from_pix(in_dir,pix,thid,ra,dec,z_qso,plate,mjd,fiberid,order,log=None)
         h.close()
         return pix_data
 
-def read_from_spcframe(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order, mode=None, log=None, best_obs=False, single_exp = False):
+def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order, mode=None, log=None, best_obs=False, single_exp = False):
 
     if not best_obs:
         userprint("ERROR: multiple observations not (yet) compatible with spframe option")
@@ -470,9 +470,9 @@ def read_from_spcframe(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order,
         sys.exit(1)
 
     allmeta = []
-    for t,r,d,z,p,m,f in zip(thid,ra,dec,z_qso,plate,mjd,fiberid):
+    for t,r,d,z,p,m,f in zip(thingid,ra,dec,z_qso,plate,mjd,fiberid):
         meta = metadata()
-        meta.thid = t
+        meta.thingid = t
         meta.ra = r
         meta.dec = d
         meta.z_qso = z
@@ -482,7 +482,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order,
         meta.order = order
         allmeta.append(meta)
     platemjd = {}
-    for i in range(len(thid)):
+    for i in range(len(thingid)):
         pm = (plate[i], mjd[i])
         if not pm in platemjd:
             platemjd[pm] = []
@@ -547,7 +547,7 @@ def read_from_spcframe(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order,
                 if spectro == 1 and meta.fiberid > 500: continue
                 if spectro == 2 and meta.fiberid <= 500: continue
                 index =(meta.fiberid-1)%500
-                t = meta.thid
+                t = meta.thingid
                 r = meta.ra
                 d = meta.dec
                 z = meta.z_qso
@@ -562,18 +562,18 @@ def read_from_spcframe(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order,
                     log.write("{} read from exp {} and mjd {}\n".format(t, exp, m))
             nread = len(platemjd[pm])
 
-            userprint("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, exp, (time.time()-t0)/(nread+1e-3), len(pix_data), len(thid)))
+            userprint("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, exp, (time.time()-t0)/(nread+1e-3), len(pix_data), len(thingid)))
             spcframe.close()
 
     data = list(pix_data.values())
     return data
 
-def read_from_spplate(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order, log=None, best_obs=False):
+def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order, log=None, best_obs=False):
 
-    drq_dict = {t:(r,d,z) for t,r,d,z in zip(thid,ra,dec,z_qso)}
+    drq_dict = {t:(r,d,z) for t,r,d,z in zip(thingid,ra,dec,z_qso)}
 
     ## if using multiple observations,
-    ## then replace thid, plate, mjd, fiberid
+    ## then replace thingid, plate, mjd, fiberid
     ## by what's available in spAll
 
     if not best_obs:
@@ -591,14 +591,14 @@ def read_from_spplate(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order, 
 
         spAll = fitsio.FITS(fi[0])
         userprint("INFO: reading spAll from {}".format(fi[0]))
-        thid_spall = spAll[1]["THING_ID"][:]
+        thingid_spall = spAll[1]["THING_ID"][:]
         plate_spall = spAll[1]["PLATE"][:]
         mjd_spall = spAll[1]["MJD"][:]
         fiberid_spall = spAll[1]["FIBERID"][:]
         qual_spall = spAll[1]["PLATEQUALITY"][:].astype(str)
         zwarn_spall = spAll[1]["ZWARNING"][:]
 
-        w = sp.in1d(thid_spall, thid)
+        w = sp.in1d(thingid_spall, thingid)
         userprint("INFO: Found {} spectra with required THING_ID".format(w.sum()))
         w &= qual_spall == "good"
         userprint("INFO: Found {} spectra with 'good' plate".format(w.sum()))
@@ -609,9 +609,9 @@ def read_from_spplate(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order, 
         for zwarnbit,zwarnbit_str in bad_zwarnbit.items():
             w &= (zwarn_spall&2**zwarnbit)==0
             userprint("INFO: Found {} spectra without {} bit set: {}".format(w.sum(), zwarnbit, zwarnbit_str))
-        userprint("INFO: # unique objs: ",len(thid))
+        userprint("INFO: # unique objs: ",len(thingid))
         userprint("INFO: # spectra: ",w.sum())
-        thid = thid_spall[w]
+        thingid = thingid_spall[w]
         plate = plate_spall[w]
         mjd = mjd_spall[w]
         fiberid = fiberid_spall[w]
@@ -619,10 +619,10 @@ def read_from_spplate(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order, 
 
     ## to simplify, use a list of all metadata
     allmeta = []
-    for t,p,m,f in zip(thid,plate,mjd,fiberid):
+    for t,p,m,f in zip(thingid,plate,mjd,fiberid):
         r,d,z = drq_dict[t]
         meta = metadata()
-        meta.thid = t
+        meta.thingid = t
         meta.ra = r
         meta.dec = d
         meta.z_qso = z
@@ -664,7 +664,7 @@ def read_from_spplate(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order, 
 
         ## now convert all those fluxes into forest objects
         for meta in platemjd[pm]:
-            t = meta.thid
+            t = meta.thingid
             r = meta.ra
             d = meta.dec
             z = meta.z_qso
@@ -680,20 +680,20 @@ def read_from_spplate(in_dir, thid, ra, dec, z_qso, plate, mjd, fiberid, order, 
             if log is not None:
                 log.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
         nread = len(platemjd[pm])
-        userprint("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, os.path.basename(spplate), (time.time()-t0)/(nread+1e-3), len(pix_data), len(thid)))
+        userprint("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, os.path.basename(spplate), (time.time()-t0)/(nread+1e-3), len(pix_data), len(thingid)))
         h.close()
 
     data = list(pix_data.values())
     return data
 
-def read_from_desi(nside,in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1d=None):
+def read_from_desi(nside,in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1d=None):
 
     in_nside = int(in_dir.split('spectra-')[-1].replace('/',''))
     nest = True
     data = {}
     ndata = 0
 
-    ztable = {t:z for t,z in zip(thid,z_qso)}
+    ztable = {t:z for t,z in zip(thingid,z_qso)}
     in_pixs = healpy.ang2pix(in_nside, sp.pi/2.-dec, ra,nest=nest)
     fi = np.unique(in_pixs)
 
@@ -708,7 +708,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1d=N
             continue
 
         ## get the quasars
-        tid_qsos = thid[(in_pixs==f)]
+        tid_qsos = thingid[(in_pixs==f)]
         plate_qsos = plate[(in_pixs==f)]
         mjd_qsos = mjd[(in_pixs==f)]
         fiberid_qsos = fiberid[(in_pixs==f)]
@@ -859,7 +859,7 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
 
 def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
     objs = {}
-    ra,dec,z_qso,thid,plate,mjd,fiberid = read_drq(drq,zmin,zmax,keep_bal=True)
+    ra,dec,z_qso,thingid,plate,mjd,fiberid = read_drq(drq,zmin,zmax,keep_bal=True)
     phi = ra
     th = sp.pi/2.-dec
     pix = healpy.ang2pix(nside,th,phi)
@@ -871,7 +871,7 @@ def read_objects(drq,nside,zmin,zmax,alpha,zref,cosmo,keep_bal=True):
     for i,ipix in enumerate(upix):
         userprint("\r{} of {}".format(i,len(upix)))
         w=pix==ipix
-        objs[ipix] = [Qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thid[w],ra[w],dec[w],z_qso[w],plate[w],mjd[w],fiberid[w])]
+        objs[ipix] = [Qso(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thingid[w],ra[w],dec[w],z_qso[w],plate[w],mjd[w],fiberid[w])]
         for q in objs[ipix]:
             q.we = ((1.+q.z_qso)/(1.+zref))**(alpha-1.)
             if not cosmo is None:

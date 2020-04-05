@@ -42,7 +42,7 @@ def fill_neighs(pix):
         for d in dels[ipix]:
             npix = query_disc(nside,[d.x_cart,d.y_cart,d.z_cart],angmax,inclusive = True)
             npix = [p for p in npix if p in objs]
-            neighs = [q for p in npix for q in objs[p] if q.thid != d.thid]
+            neighs = [q for p in npix for q in objs[p] if q.thingid != d.thingid]
             ang = d^neighs
             w = ang<angmax
             if not ang_correlation:
@@ -364,7 +364,7 @@ def wickT(pix):
 
             ### Higher order diagrams
             if (cfWick is None) or (max_diagram<=4): continue
-            thid2 = sp.array([q2.thid for q2 in neighs])
+            thingid2 = sp.array([q2.thingid for q2 in neighs])
             for d3 in sp.array(d1.dneighs):
                 if d3.qneighs.size==0: continue
 
@@ -377,7 +377,7 @@ def wickT(pix):
                 ang34 = d3^neighs
                 r4 = sp.array([q4.r_comov for q4 in neighs])
                 w4 = sp.array([q4.we for q4 in neighs])
-                thid4 = sp.array([q4.thid for q4 in neighs])
+                thingid4 = sp.array([q4.thingid for q4 in neighs])
 
                 if max_diagram==5:
                     w = sp.in1d(d1.qneighs,d3.qneighs)
@@ -385,16 +385,16 @@ def wickT(pix):
                     t_ang12 = ang12[w]
                     t_r2 = r2[w]
                     t_w2 = w2[w]
-                    t_thid2 = thid2[w]
+                    t_thingid2 = thingid2[w]
 
                     w = sp.in1d(d3.qneighs,d1.qneighs)
                     if w.sum()==0: continue
                     ang34 = ang34[w]
                     r4 = r4[w]
                     w4 = w4[w]
-                    thid4 = thid4[w]
+                    thingid4 = thingid4[w]
 
-                fill_wickT56(t_ang12,ang34,ang13,r1,t_r2,r3,r4,w1,t_w2,w3,w4,t_thid2,thid4,T5,T6)
+                fill_wickT56(t_ang12,ang34,ang13,r1,t_r2,r3,r4,w1,t_w2,w3,w4,t_thingid2,thingid4,T5,T6)
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
@@ -472,7 +472,7 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
 
     return
 @jit
-def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
+def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,T6):
     """Compute the Wick covariance matrix for the object-pixel
         cross-correlation for the T5 and T6 diagrams:
         i.e. the contribution of the 3D auto-correlation to the
@@ -490,8 +490,8 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
         w2 (float array): weight of each object
         w3 (float array): weight of each pixel of another forest
         w4 (float array): weight of each object paired to the other forest
-        thid2 (float array): THING_ID of each object
-        thid4 (float array): THING_ID of each object paired to the other forest
+        thingid2 (float array): THING_ID of each object
+        thingid4 (float array): THING_ID of each object paired to the other forest
         T5 (float 2d array): Contribution of diagram T5
         T6 (float 2d array): Contribution of diagram T6
 
@@ -517,7 +517,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
     we = w1[:,None]*w2
     pix = (np.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
-    thid = sp.ones_like(w1[:,None]).astype(int)*thid2
+    thingid = sp.ones_like(w1[:,None]).astype(int)*thingid2
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
@@ -525,7 +525,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rt = rt[w]
     we12 = we[w]
     pix12 = pix[w]
-    thid12 = thid[w]
+    thingid12 = thingid[w]
     bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
     bt = (rt/rt_max*ntb).astype(int)
     ba12 = bt + ntb*bp
@@ -535,7 +535,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rt = (r3[:,None]+r4)*sp.sin(ang34/2.)
     we = w3[:,None]*w4
     pix = (np.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
-    thid = sp.ones_like(w3[:,None]).astype(int)*thid4
+    thingid = sp.ones_like(w3[:,None]).astype(int)*thingid4
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
@@ -543,7 +543,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rt = rt[w]
     we34 = we[w]
     pix34 = pix[w]
-    thid34 = thid[w]
+    thingid34 = thingid[w]
     bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
     bt = (rt/rt_max*ntb).astype(int)
     ba34 = bt + ntb*bp
@@ -551,13 +551,13 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     ### T5
     for k1, p1 in enumerate(ba12):
         pix1 = pix12[k1]
-        t1 = thid12[k1]
+        t1 = thingid12[k1]
         w1 = we12[k1]
 
-        w = thid34==t1
+        w = thingid34==t1
         for k2, p2 in enumerate(ba34[w]):
             pix2 = pix34[w][k2]
-            t2 = thid34[w][k2]
+            t2 = thingid34[w][k2]
             w2 = we34[w][k2]
             wcorr = cf13[pix2,pix1]*w1*w2
             T5[p1,p2] += wcorr
@@ -567,12 +567,12 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     if max_diagram==5: return
     for k1, p1 in enumerate(ba12):
         pix1 = pix12[k1]
-        t1 = thid12[k1]
+        t1 = thingid12[k1]
         w1 = we12[k1]
 
         for k2, p2 in enumerate(ba34):
             pix2 = pix34[k2]
-            t2 = thid34[k2]
+            t2 = thingid34[k2]
             w2 = we34[k2]
             wcorr = cf13[pix2,pix1]*w1*w2
             if t2==t1: continue
@@ -602,7 +602,7 @@ def xcf1d(pix):
     for ipix in pix:
         for d in dels[ipix]:
 
-            neighs = [q for q in objs[ipix] if q.thid==d.thid]
+            neighs = [q for q in objs[ipix] if q.thingid==d.thingid]
             if len(neighs)==0: continue
 
             z_qso = [ q.z_qso for q in neighs ]

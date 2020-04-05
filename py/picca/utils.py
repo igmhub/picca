@@ -242,12 +242,12 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
         cat[k] = cat[k][w]
 
     h = fitsio.FITS(drq)
-    thid = h[1]['THING_ID'][:]
+    thingid = h[1]['THING_ID'][:]
     ra = h[1]['RA'][:]
     dec = h[1]['DEC'][:]
     z_qso = h[1][drqzkey][:]
     h.close()
-    fromThingid2idx = { el:i for i,el in enumerate(thid) }
+    fromThingid2idx = { el:i for i,el in enumerate(thingid) }
     cat['RA'] = sp.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
     cat['DEC'] = sp.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
     cat['ZQSO'] = sp.array([ z_qso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
@@ -330,28 +330,28 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     w &= sp.char.strip(vac[1]['TRUESPECTYPE'][:].astype(str))==spectype
     userprint(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
 
-    thid = vac[1]['TARGETID'][:][w]
+    thingid = vac[1]['TARGETID'][:][w]
     z_qso = vac[1]['TRUEZ'][:][w]
     vac.close()
-    ra = np.zeros(thid.size)
-    dec = np.zeros(thid.size)
-    plate = thid
-    mjd = thid
-    fiberid = thid
+    ra = np.zeros(thingid.size)
+    dec = np.zeros(thingid.size)
+    plate = thingid
+    mjd = thingid
+    fiberid = thingid
 
     ### Get RA and DEC from targets
     vac = fitsio.FITS(targets)
-    thidTargets = vac[1]['TARGETID'][:]
+    thingidTargets = vac[1]['TARGETID'][:]
     raTargets = vac[1]['RA'][:].astype('float64')
     decTargets = vac[1]['DEC'][:].astype('float64')
     vac.close()
 
     from_TARGETID_to_idx = {}
-    for i,t in enumerate(thidTargets):
+    for i,t in enumerate(thingidTargets):
         from_TARGETID_to_idx[t] = i
     keys_from_TARGETID_to_idx = from_TARGETID_to_idx.keys()
 
-    for i,t in enumerate(thid):
+    for i,t in enumerate(thingid):
         if t not in keys_from_TARGETID_to_idx: continue
         idx = from_TARGETID_to_idx[t]
         ra[i] = raTargets[idx]
@@ -364,14 +364,14 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
         ra = ra[w]
         dec = dec[w]
         z_qso = z_qso[w]
-        thid = thid[w]
+        thingid = thingid[w]
         plate = plate[w]
         mjd = mjd[w]
         fiberid = fiberid[w]
 
     ### Save
     out = fitsio.FITS(drq,'rw',clobber=True)
-    cols=[ra,dec,thid,plate,mjd,fiberid,z_qso]
+    cols=[ra,dec,thingid,plate,mjd,fiberid,z_qso]
     names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
     out.write(cols,names=names,extname='CAT')
     out.close()
@@ -464,14 +464,14 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     h = fitsio.FITS(zcat)
     key_val = sp.char.strip(sp.array([ h[1].read_header()[k] for k in h[1].read_header().keys()]).astype(str))
     if 'TARGETID' in key_val:
-        zcat_thid = h[1]['TARGETID'][:]
+        zcat_thingid = h[1]['TARGETID'][:]
     elif 'THING_ID' in key_val:
-        zcat_thid = h[1]['THING_ID'][:]
+        zcat_thingid = h[1]['THING_ID'][:]
     w = h[1]['Z'][:]>max(0.,lObs_min/lRF_max -1.)
     w &= h[1]['Z'][:]<max(0.,lObs_max/lRF_min -1.)
     zcat_ra = h[1]['RA'][:][w].astype('float64')*sp.pi/180.
     zcat_dec = h[1]['DEC'][:][w].astype('float64')*sp.pi/180.
-    zcat_thid = zcat_thid[w]
+    zcat_thingid = zcat_thingid[w]
     h.close()
     userprint('INFO: Found {} quasars'.format(zcat_ra.size))
 
@@ -509,8 +509,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     for nf, f in enumerate(fi):
         userprint("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in deltas.keys()])), end="")
         h = fitsio.FITS(f)
-        thid = h['METADATA']['MOCKID'][:]
-        if sp.in1d(thid,zcat_thid).sum()==0:
+        thingid = h['METADATA']['MOCKID'][:]
+        if sp.in1d(thingid,zcat_thingid).sum()==0:
             h.close()
             continue
         ra = h['METADATA']['RA'][:].astype(sp.float64)*sp.pi/180.
@@ -536,7 +536,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         w[ (lObs>=lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
         nbPixel = sp.sum(w,axis=1)
         cut = nbPixel>=50
-        cut &= sp.in1d(thid,zcat_thid)
+        cut &= sp.in1d(thingid,zcat_thingid)
         if cut.sum()==0:
             h.close()
             continue
@@ -544,7 +544,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         ra = ra[cut]
         dec = dec[cut]
         z = z[cut]
-        thid = thid[cut]
+        thingid = thingid[cut]
         trans = trans[cut,:]
         w = w[cut,:]
         nObj = z.size
@@ -567,7 +567,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             cll = cll[ww]
             cfl = cfl[ww]/civ[ww]
             civ = civ[ww]
-            deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
+            deltas[pixnum].append(delta(thingid[i],ra[i],dec[i],z[i],thingid[i],thingid[i],thingid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
         if not nspec is None and sp.sum([ len(deltas[p]) for p in deltas.keys()])>=nspec: break
 
     userprint('\n')
@@ -592,7 +592,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             hd['DEC'] = d.dec
             hd['Z'] = d.z_qso
             hd['PMF'] = '{}-{}-{}'.format(d.plate,d.mjd,d.fiberid)
-            hd['THING_ID'] = d.thid
+            hd['THING_ID'] = d.thingid
             hd['PLATE'] = d.plate
             hd['MJD'] = d.mjd
             hd['FIBERID'] = d.fiberid
@@ -600,7 +600,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
             cols = [d.ll,d.de,d.we,sp.ones(d.ll.size)]
             names = ['LOGLAM','DELTA','WEIGHT','CONT']
-            out.write(cols,names=names,header=hd,extname=str(d.thid))
+            out.write(cols,names=names,header=hd,extname=str(d.thingid))
         out.close()
         userprint("\rwrite {} of {}: {} quasars".format(nf,len(list(deltas.keys())), len(deltas[p])), end="")
 
@@ -641,7 +641,7 @@ def shuffle_distrib_forests(obj,seed):
     userprint('INFO: Shuffling the forests angular position with seed {}'.format(seed))
 
     dic = {}
-    lst_p = ['ra','dec','x_cart','y_cart','z_cart','cos_dec','thid']
+    lst_p = ['ra','dec','x_cart','y_cart','z_cart','cos_dec','thingid']
     dic['pix'] = []
     for p in lst_p:
         dic[p] = []

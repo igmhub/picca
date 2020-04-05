@@ -47,7 +47,7 @@ def fill_neighs(pix):
         for d1 in data[ipix]:
             npix = query_disc(nside,[d1.x_cart,d1.y_cart,d1.z_cart],angmax,inclusive = True)
             npix = [p for p in npix if p in data]
-            neighs = [d for p in npix for d in data[p] if d1.thid != d.thid]
+            neighs = [d for p in npix for d in data[p] if d1.thingid != d.thingid]
             ang = d1^neighs
             w = ang<angmax
             neighs = sp.array(neighs)[w]
@@ -58,7 +58,7 @@ def fill_neighs_x_correlation(pix):
         for d1 in data[ipix]:
             npix = query_disc(nside,[d1.x_cart,d1.y_cart,d1.z_cart],angmax,inclusive = True)
             npix = [p for p in npix if p in data2]
-            neighs = [d for p in npix for d in data2[p] if d1.thid != d.thid]
+            neighs = [d for p in npix for d in data2[p] if d1.thingid != d.thingid]
             ang = d1^neighs
             w = (ang<angmax)
             neighs = sp.array(neighs)[w]
@@ -487,8 +487,8 @@ def x_forest_cf1d(pix):
         wde1 = d1.we*d1.de
         we1 = d1.we
 
-        d2thingid = [d2.thid for d2 in data2[pix]]
-        neighs = data2[pix][sp.in1d(d2thingid,[d1.thid])]
+        d2thingid = [d2.thingid for d2 in data2[pix]]
+        neighs = data2[pix][sp.in1d(d2thingid,[d1.thingid])]
         for d2 in neighs:
             bins2 = ((d2.ll-lmin)/dll+0.5).astype(int)
             bins = bins1 + n1d*bins2[:,None]

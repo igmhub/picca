@@ -274,8 +274,8 @@ def main():
         nb_absorbers_in_forest = 0
         for p in data:
             for d in data[p]:
-                if d.thid in absorbers:
-                    for lambda_absorber in absorbers[d.thid]:
+                if d.thingid in absorbers:
+                    for lambda_absorber in absorbers[d.thingid]:
                         d.add_absorber(lambda_absorber)
                         nb_absorbers_in_forest += 1
         log.write("Found {} absorbers in forests\n".format(nb_absorbers_in_forest))
@@ -301,8 +301,8 @@ def main():
         nb_dla_in_forest = 0
         for p in data:
             for d in data[p]:
-                if d.thid in dlas:
-                    for dla in dlas[d.thid]:
+                if d.thingid in dlas:
+                    for dla in dlas[d.thingid]:
                         d.add_dla(dla[0], dla[1], usr_mask_RF_DLA)
                         nb_dla_in_forest += 1
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
@@ -314,19 +314,19 @@ def main():
         l = []
         for d in data[p]:
             if not hasattr(d, 'll') or len(d.ll) < args.npix_min:
-                log.write("INFO: Rejected {} due to forest too short\n".format(d.thid))
+                log.write("INFO: Rejected {} due to forest too short\n".format(d.thingid))
                 continue
 
             if np.isnan((d.fl*d.iv).sum()):
-                log.write("INFO: Rejected {} due to nan found\n".format(d.thid))
+                log.write("INFO: Rejected {} due to nan found\n".format(d.thingid))
                 continue
 
             if(args.use_constant_weight and (d.fl.mean() <= 0.0 or d.mean_SNR <= 1.0)):
-                log.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(d.thid))
+                log.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(d.thingid))
                 continue
 
             l.append(d)
-            log.write("{} {}-{}-{} accepted\n".format(d.thid, d.plate, d.mjd, d.fiberid))
+            log.write("{} {}-{}-{} accepted\n".format(d.thingid, d.plate, d.mjd, d.fiberid))
         data[p][:] = l
         if len(data[p]) == 0:
             lstKeysToDel += [p]
@@ -423,7 +423,7 @@ def main():
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:
-        log.write("INFO: Rejected {} due to {}\n".format(d.thid, d.bad_cont))
+        log.write("INFO: Rejected {} due to {}\n".format(d.thingid, d.bad_cont))
 
     log.write("INFO: Accepted sample has {} forests\n".format(np.sum([len(p) for p in deltas.values()])))
 
@@ -464,7 +464,7 @@ def main():
                       {'name':'DEC', 'value':d.dec, 'comment':'Declination [rad]'},
                       {'name':'Z', 'value':d.z_qso, 'comment':'Redshift'},
                       {'name':'PMF', 'value':'{}-{}-{}'.format(d.plate, d.mjd, d.fiberid)},
-                      {'name':'THING_ID', 'value':d.thid, 'comment':'Object identification'},
+                      {'name':'THING_ID', 'value':d.thingid, 'comment':'Object identification'},
                       {'name':'PLATE', 'value':d.plate},
                       {'name':'MJD', 'value':d.mjd, 'comment':'Modified Julian date'},
                       {'name':'FIBERID', 'value':d.fiberid},
@@ -494,7 +494,7 @@ def main():
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Pixel weights', 'Continuum']
 
-                out.write(cols, names=names, header=hd, comment=comments, units=units, extname=str(d.thid))
+                out.write(cols, names=names, header=hd, comment=comments, units=units, extname=str(d.thingid))
 
             out.close()
 

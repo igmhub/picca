@@ -4,7 +4,7 @@ from picca import constants
 
 class dla:
     def __init__(self,data,zabs,nhi):
-        self.thid = data.thid
+        self.thingid = data.thingid
         self.zabs=zabs
         self.nhi=nhi
 

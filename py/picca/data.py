@@ -12,7 +12,7 @@ def variance(var,eta,var_lss,fudge):
 
 
 class Qso:
-    def __init__(self,thid,ra,dec,z_qso,plate,mjd,fiberid):
+    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid):
         self.ra = ra
         self.dec = dec
 
@@ -27,7 +27,7 @@ class Qso:
         self.cos_dec = sp.cos(dec)
 
         self.z_qso = z_qso
-        self.thid = thid
+        self.thingid = thingid
 
     def __xor__(self,data):
         try:
@@ -84,7 +84,7 @@ class forest(Qso):
     ### Correction function for multiplicative errors in inverse pipeline variance calibration
     correc_ivar = None
 
-    ### map of g-band extinction to thids for dust correction
+    ### map of g-band extinction to thingids for dust correction
     ebv_map = None
 
     ## absorber pixel mask limit
@@ -103,11 +103,11 @@ class forest(Qso):
     mean_z = None
 
 
-    def __init__(self,ll,fl,iv,thid,ra,dec,z_qso,plate,mjd,fiberid,order, diff=None,reso=None, mmef = None):
-        Qso.__init__(self,thid,ra,dec,z_qso,plate,mjd,fiberid)
+    def __init__(self,ll,fl,iv,thingid,ra,dec,z_qso,plate,mjd,fiberid,order, diff=None,reso=None, mmef = None):
+        Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
 
         if not self.ebv_map is None:
-            corr = unred(10**ll,self.ebv_map[thid])
+            corr = unred(10**ll,self.ebv_map[thingid])
             fl /= corr
             iv *= corr**2
             if not diff is None:
@@ -375,9 +375,9 @@ class forest(Qso):
 
 class delta(Qso):
 
-    def __init__(self,thid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
+    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
 
-        Qso.__init__(self,thid,ra,dec,z_qso,plate,mjd,fiberid)
+        Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
         self.ll = ll
         self.we = we
         self.co = co
@@ -410,7 +410,7 @@ class delta(Qso):
             diff /= mef
         iv = f.iv/(eta+(eta==0))*(mef**2)
 
-        return cls(f.thid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,ll,we,f.co,de,f.order,
+        return cls(f.thingid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,ll,we,f.co,de,f.order,
                    iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
 
 
@@ -444,7 +444,7 @@ class delta(Qso):
             co = h['CONT'][:]
 
 
-        thid = head['THING_ID']
+        thingid = head['THING_ID']
         ra = head['RA']
         dec = head['DEC']
         z_qso = head['Z']
@@ -456,7 +456,7 @@ class delta(Qso):
             order = head['ORDER']
         except KeyError:
             order = 1
-        return cls(thid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,
+        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,
                    iv,diff,m_SNR,m_reso,m_z,dll)
 
 
@@ -482,12 +482,12 @@ class delta(Qso):
         diff = sp.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
 
 
-        thid = 0
+        thingid = 0
         order = 0
         we = None
         co = None
 
-        return cls(thid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,
+        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,
                    iv,diff,m_SNR,m_reso,m_z,dll)
 
     @staticmethod
@@ -502,7 +502,7 @@ class delta(Qso):
         plate = h[3]["PLATE"][:]
         mjd = h[3]["MJD"][:]
         fiberid = h[3]["FIBER"]
-        thid = h[3]["THING_ID"][:]
+        thingid = h[3]["THING_ID"][:]
 
         nspec = h[0].read().shape[1]
         deltas=[]
@@ -524,7 +524,7 @@ class delta(Qso):
             dll = None
             m_z = None
 
-            deltas.append(delta(thid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,ivar,None,delt,order,iv,diff,m_SNR,m_reso,m_z,dll))
+            deltas.append(delta(thingid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,ivar,None,delt,order,iv,diff,m_SNR,m_reso,m_z,dll))
 
         h.close()
         return deltas
