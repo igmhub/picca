@@ -42,7 +42,7 @@ if __name__ == '__main__':
         help='Prefix of the iteration file')
 
     parser.add_argument('--mode',type=str,default='pix',required=False,
-        help='Open mode of the spectra files: pix, spec, spcframe, spplate, desi')
+        help='Open mode of the spectra files: pix, spec, spcframe, spplate, desi, eboss')
 
     parser.add_argument('--best-obs',action='store_true', required=False,
         help='If mode == spcframe, then use only the best observation')
@@ -349,6 +349,7 @@ if __name__ == '__main__':
                 ll, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
                     count, nqsos, chi2, err_eta, err_vlss, err_fudge = \
                         prep_del.var_lss(data,(args.eta_min,args.eta_max),(args.vlss_min,args.vlss_max))
+                print(len(ll[nb_pixels>0]),len(eta[nb_pixels>0]))
                 forest.eta = interp1d(ll[nb_pixels>0], eta[nb_pixels>0],
                     fill_value = "extrapolate",kind="nearest")
                 forest.var_lss = interp1d(ll[nb_pixels>0], vlss[nb_pixels>0.],
@@ -427,7 +428,7 @@ if __name__ == '__main__':
             for d in deltas[p]:
                 nbpixel = len(d.de)
                 dll = d.dll
-                if (args.mode=='desi') : dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
+                if (args.mode=='desi') or (args.mode=='eboss'): dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
                 line = '{} {} {} '.format(d.plate,d.mjd,d.fid)
                 line += '{} {} {} '.format(d.ra,d.dec,d.zqso)
                 line += '{} {} {} {} {} '.format(d.mean_z,d.mean_SNR,d.mean_reso,dll,nbpixel)
@@ -460,8 +461,10 @@ if __name__ == '__main__':
                            {'name':'MEANSNR','value':d.mean_SNR,'comment':'Mean SNR'},
                     ]
                     dll = d.dll
+                    print('dll before', dll)
                     if (args.mode=='desi'):
                         dll = (d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
+                    print('dll after', d.ll[-1]-d.ll[0])/float(len(d.ll)-1)
                     hd += [{'name':'DLL','value':dll,'comment':'Loglam bin size [log Angstrom]'}]
                     diff = d.diff
                     if diff is None:
