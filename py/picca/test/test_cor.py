@@ -191,24 +191,24 @@ class TestCor(unittest.TestCase):
         logl_min  = 3.550
         logl_max  = 4.025
         logl_step = 1.e-4
-        ll = np.arange(logl_min, logl_max, logl_step)
+        log_lambda = np.arange(logl_min, logl_max, logl_step)
 
         ###
         for p in np.unique(pixs):
 
             ###
             p_thid = thid[(pixs==p)]
-            p_fl   = numpy.random.normal(loc=1., scale=1., size=(ll.size,p_thid.size))
-            p_iv   = numpy.random.lognormal(mean=0.1, sigma=0.1, size=(ll.size,p_thid.size))
-            p_am   = np.zeros((ll.size,p_thid.size)).astype(int)
-            p_am[ numpy.random.random(size=(ll.size,p_thid.size))>0.90 ] = 1
-            p_om   = np.zeros((ll.size,p_thid.size)).astype(int)
+            p_fl   = numpy.random.normal(loc=1., scale=1., size=(log_lambda.size,p_thid.size))
+            p_iv   = numpy.random.lognormal(mean=0.1, sigma=0.1, size=(log_lambda.size,p_thid.size))
+            p_am   = np.zeros((log_lambda.size,p_thid.size)).astype(int)
+            p_am[ numpy.random.random(size=(log_lambda.size,p_thid.size))>0.90 ] = 1
+            p_om   = np.zeros((log_lambda.size,p_thid.size)).astype(int)
 
             ###
             p_path = self._branchFiles+"/Products/Spectra/pix_"+str(p)+".fits"
             out = fitsio.FITS(p_path, 'rw', clobber=True)
             out.write(p_thid, header={}, extname="THING_ID_MAP")
-            out.write(ll,     header={}, extname="LOGLAM_MAP")
+            out.write(log_lambda,     header={}, extname="LOGLAM_MAP")
             out.write(p_fl,   header={}, extname="FLUX")
             out.write(p_iv,   header={}, extname="IVAR")
             out.write(p_am,   header={}, extname="ANDMASK")

@@ -134,17 +134,17 @@ if __name__ == '__main__':
         forest.dll = None
         for p in xcf.dels:
             for d in xcf.dels[p]:
-                dll = sp.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
+                dll = sp.asarray([d.log_lambda[ii]-d.log_lambda[ii-1] for ii in range(1,d.log_lambda.size)]).min()
                 if forest.dll is None:
                     forest.dll = dll
                 else:
                     forest.dll = min(dll,forest.dll)
         forest.lmin  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
         forest.lmax  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
-        ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
+        log_lambda,st, wst   = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
             for d in xcf.dels[p]:
-                bins = ((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+                bins = ((d.log_lambda-forest.lmin)/forest.dll+0.5).astype(int)
                 d.de -= st[bins]
 
     ### Read objects
@@ -152,7 +152,7 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     for i,ipix in enumerate(sorted(objs.keys())):
         for q in objs[ipix]:
-            q.ll = sp.log10( (1.+q.z_qso)*constants.absorber_IGM[args.lambda_abs_obj] )
+            q.log_lambda = sp.log10( (1.+q.z_qso)*constants.absorber_IGM[args.lambda_abs_obj] )
     userprint("")
     xcf.objs = objs
 

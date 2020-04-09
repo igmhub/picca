@@ -62,21 +62,21 @@ def make_tree(tree,nb_bin_max):
     return z_qso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
     nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
 
-def compute_mean_delta(ll,delta,iv,z_qso):
+def compute_mean_delta(log_lambda,delta,iv,z_qso):
 
-    for i, _ in enumerate (ll):
-        ll_obs = sp.power(10., ll[i])
-        ll_rf = ll_obs/(1.+z_qso)
-        hdelta.Fill(ll_obs, ll_rf, delta[i])
-        hdelta_RF.Fill(ll_rf, delta[i])
-        hdelta_OBS.Fill(ll_obs, delta[i])
+    for i, _ in enumerate (log_lambda):
+        log_lambda_obs = sp.power(10., log_lambda[i])
+        log_lambda_rf = log_lambda_obs/(1.+z_qso)
+        hdelta.Fill(log_lambda_obs, log_lambda_rf, delta[i])
+        hdelta_RF.Fill(log_lambda_rf, delta[i])
+        hdelta_OBS.Fill(log_lambda_obs, delta[i])
         hivar.Fill(iv[i])
         snr_pixel = (delta[i]+1)*sp.sqrt(iv[i])
         hsnr.Fill(snr_pixel)
         hivar.Fill(iv[i])
         if (iv[i] < 1000):
-            hdelta_RF_we.Fill(ll_rf, delta[i], iv[i])
-            hdelta_OBS_we.Fill(ll_obs, delta[i], iv[i])
+            hdelta_RF_we.Fill(log_lambda_rf, delta[i], iv[i])
+            hdelta_OBS_we.Fill(log_lambda_obs, delta[i], iv[i])
 
     return
 
@@ -196,17 +196,17 @@ if __name__ == '__main__':
             if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
 
             # first pixel in forest
-            for first_pixel,first_pixel_ll in enumerate(d.ll):
-                if 10.**first_pixel_ll>args.lambda_obs_min : break
+            for first_pixel,first_pixel_log_lambda in enumerate(d.log_lambda):
+                if 10.**first_pixel_log_lambda>args.lambda_obs_min : break
 
             # minimum number of pixel in forest
             nb_pixel_min = args.nb_pixel_min
-            if ((len(d.ll)-first_pixel)<nb_pixel_min) : continue
+            if ((len(d.log_lambda)-first_pixel)<nb_pixel_min) : continue
 
             # Split in n parts the forest
-            nb_part_max = (len(d.ll)-first_pixel)//nb_pixel_min
+            nb_part_max = (len(d.log_lambda)-first_pixel)//nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
-            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.ll,d.de,d.diff,d.iv,first_pixel)
+            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.log_lambda,d.de,d.diff,d.iv,first_pixel)
             for f in range(nb_part):
 
                 # rebin diff spectrum

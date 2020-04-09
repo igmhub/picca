@@ -204,9 +204,9 @@ def main():
     if args.ivar_calib is not None:
         try:
             vac = fitsio.FITS(args.ivar_calib)
-            ll = vac[2]['LOGLAM'][:]
+            log_lambda = vac[2]['LOGLAM'][:]
             eta = vac[2]['ETA'][:]
-            forest.correc_ivar = interp1d(ll, eta, fill_value="extrapolate", kind="nearest")
+            forest.correc_ivar = interp1d(log_lambda, eta, fill_value="extrapolate", kind="nearest")
             vac.close()
         except (OSError, ValueError):
             userprint("ERROR: Error while reading ivar_calib file {}".format(args.ivar_calib))
@@ -313,7 +313,7 @@ def main():
     for p in data:
         l = []
         for d in data[p]:
-            if not hasattr(d, 'll') or len(d.ll) < args.npix_min:
+            if not hasattr(d, 'log_lambda') or len(d.log_lambda) < args.npix_min:
                 log.write("INFO: Rejected {} due to forest too short\n".format(d.thingid))
                 continue
 
@@ -338,7 +338,7 @@ def main():
 
     for p in data:
         for d in data[p]:
-            assert hasattr(d, 'll')
+            assert hasattr(d, 'log_lambda')
 
     for it in range(nit):
         pool = Pool(processes=args.nproc)
@@ -357,19 +357,19 @@ def main():
             ll_rest, mc, wmc = prep_del.mc(data)
             forest.mean_cont = interp1d(ll_rest[wmc > 0.], forest.mean_cont(ll_rest[wmc > 0.])*mc[wmc > 0.], fill_value="extrapolate")
             if not (args.use_ivar_as_weight or args.use_constant_weight):
-                ll, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
+                log_lambda, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
                     count, nqsos, chi2, err_eta, err_vlss, err_fudge = \
                         prep_del.var_lss(data, (args.eta_min, args.eta_max), (args.vlss_min, args.vlss_max))
-                forest.eta = interp1d(ll[nb_pixels > 0], eta[nb_pixels > 0],
+                forest.eta = interp1d(log_lambda[nb_pixels > 0], eta[nb_pixels > 0],
                                       fill_value="extrapolate", kind="nearest")
-                forest.var_lss = interp1d(ll[nb_pixels > 0], vlss[nb_pixels > 0.],
+                forest.var_lss = interp1d(log_lambda[nb_pixels > 0], vlss[nb_pixels > 0.],
                                           fill_value="extrapolate", kind="nearest")
-                forest.fudge = interp1d(ll[nb_pixels > 0], fudge[nb_pixels > 0],
+                forest.fudge = interp1d(log_lambda[nb_pixels > 0], fudge[nb_pixels > 0],
                                         fill_value="extrapolate", kind="nearest")
             else:
 
                 nlss = 10 # this value is arbitrary
-                ll = forest.lmin + (np.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
+                log_lambda = forest.lmin + (np.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
                 if args.use_ivar_as_weight:
                     userprint('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
@@ -394,9 +394,9 @@ def main():
                 count = np.zeros((nlss, nlss))
                 nqsos = np.zeros((nlss, nlss))
 
-                forest.eta = interp1d(ll, eta, fill_value='extrapolate', kind='nearest')
-                forest.var_lss = interp1d(ll, vlss, fill_value='extrapolate', kind='nearest')
-                forest.fudge = interp1d(ll, fudge, fill_value='extrapolate', kind='nearest')
+                forest.eta = interp1d(log_lambda, eta, fill_value='extrapolate', kind='nearest')
+                forest.var_lss = interp1d(log_lambda, vlss, fill_value='extrapolate', kind='nearest')
+                forest.fudge = interp1d(log_lambda, fudge, fill_value='extrapolate', kind='nearest')
 
 
     ll_st, st, wst = prep_del.stack(data)
@@ -440,14 +440,14 @@ def main():
                 nbpixel = len(d.de)
                 dll = d.dll
                 if args.mode == 'desi':
-                    dll = (d.ll[-1] - d.ll[0])/float(len(d.ll) - 1)
+                    dll = (d.log_lambda[-1] - d.log_lambda[0])/float(len(d.log_lambda) - 1)
                 line = '{} {} {} '.format(d.plate, d.mjd, d.fiberid)
                 line += '{} {} {} '.format(d.ra, d.dec, d.z_qso)
                 line += '{} {} {} {} {} '.format(d.mean_z, d.mean_SNR, d.mean_reso, dll, nbpixel)
                 for i in range(nbpixel):
                     line += '{} '.format(d.de[i])
                 for i in range(nbpixel):
-                    line += '{} '.format(d.ll[i])
+                    line += '{} '.format(d.log_lambda[i])
                 for i in range(nbpixel):
                     line += '{} '.format(d.iv[i])
                 for i in range(nbpixel):
@@ -478,18 +478,18 @@ def main():
                            ]
                     dll = d.dll
                     if args.mode == 'desi':
-                        dll = (d.ll[-1] - d.ll[0])/float(len(d.ll) - 1)
+                        dll = (d.log_lambda[-1] - d.log_lambda[0])/float(len(d.log_lambda) - 1)
                     hd += [{'name':'DLL', 'value':dll, 'comment':'Loglam bin size [log Angstrom]'}]
                     diff = d.diff
                     if diff is None:
-                        diff = d.ll*0
+                        diff = d.log_lambda*0
 
-                    cols = [d.ll, d.de, d.iv, diff]
+                    cols = [d.log_lambda, d.de, d.iv, diff]
                     names = ['LOGLAM', 'DELTA', 'IVAR', 'DIFF']
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Inverse variance', 'Difference']
                 else:
-                    cols = [d.ll, d.de, d.we, d.co]
+                    cols = [d.log_lambda, d.de, d.we, d.co]
                     names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Pixel weights', 'Continuum']

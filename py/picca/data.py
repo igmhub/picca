@@ -103,28 +103,28 @@ class forest(Qso):
     mean_z = None
 
 
-    def __init__(self,ll,fl,iv,thingid,ra,dec,z_qso,plate,mjd,fiberid,order, diff=None,reso=None, mmef = None):
+    def __init__(self,log_lambda,fl,iv,thingid,ra,dec,z_qso,plate,mjd,fiberid,order, diff=None,reso=None, mmef = None):
         Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
 
         if not self.ebv_map is None:
-            corr = unred(10**ll,self.ebv_map[thingid])
+            corr = unred(10**log_lambda,self.ebv_map[thingid])
             fl /= corr
             iv *= corr**2
             if not diff is None:
                 diff /= corr
 
         ## cut to specified range
-        bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        ll = forest.lmin + bins*forest.dll
-        w = (ll>=forest.lmin)
-        w = w & (ll<forest.lmax)
-        w = w & (ll-sp.log10(1.+self.z_qso)>forest.lmin_rest)
-        w = w & (ll-sp.log10(1.+self.z_qso)<forest.lmax_rest)
+        bins = sp.floor((log_lambda-forest.lmin)/forest.dlog_lambda+0.5).astype(int)
+        log_lambda = forest.lmin + bins*forest.dlog_lambda
+        w = (log_lambda>=forest.lmin)
+        w = w & (log_lambda<forest.lmax)
+        w = w & (log_lambda-sp.log10(1.+self.z_qso)>forest.lmin_rest)
+        w = w & (log_lambda-sp.log10(1.+self.z_qso)<forest.lmax_rest)
         w = w & (iv>0.)
         if w.sum()==0:
             return
         bins = bins[w]
-        ll = ll[w]
+        log_lambda = log_lambda[w]
         fl = fl[w]
         iv = iv[w]
         ## mmef is the mean expected flux fraction using the mock continuum
@@ -136,7 +136,7 @@ class forest(Qso):
             reso=reso[w]
 
         ## rebin
-        cll = forest.lmin + np.arange(bins.max()+1)*forest.dll
+        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.dlog_lambda
         cfl = np.zeros(bins.max()+1)
         civ = np.zeros(bins.max()+1)
         if mmef is not None:
@@ -157,7 +157,7 @@ class forest(Qso):
         w = (civ>0.)
         if w.sum()==0:
             return
-        ll = cll[w]
+        log_lambda = rebin_log_lambda[w]
         fl = cfl[w]/civ[w]
         iv = civ[w]
         if mmef is not None:
@@ -169,16 +169,16 @@ class forest(Qso):
 
         ## Flux calibration correction
         if not self.correc_flux is None:
-            correction = self.correc_flux(ll)
+            correction = self.correc_flux(log_lambda)
             fl /= correction
             iv *= correction**2
         if not self.correc_ivar is None:
-            correction = self.correc_ivar(ll)
+            correction = self.correc_ivar(log_lambda)
             iv /= correction
 
         self.Fbar = None
         self.T_dla = None
-        self.ll = ll
+        self.log_lambda = log_lambda
         self.fl = fl
         self.iv = iv
         self.mmef = mmef
@@ -187,8 +187,8 @@ class forest(Qso):
         self.diff = diff
         self.reso = reso
         #else :
-        #   self.diff = np.zeros(len(ll))
-        #   self.reso = sp.ones(len(ll))
+        #   self.diff = np.zeros(len(log_lambda))
+        #   self.reso = sp.ones(len(log_lambda))
 
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
@@ -197,17 +197,17 @@ class forest(Qso):
         SNR = fl/err
         self.mean_SNR = sum(SNR)/float(len(SNR))
         lam_lya = constants.absorber_IGM["LYA"]
-        self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
+        self.mean_z = (sp.power(10.,log_lambda[len(log_lambda)-1])+sp.power(10.,log_lambda[0]))/2./lam_lya -1.0
 
 
     def __add__(self,d):
 
-        if not hasattr(self,'ll') or not hasattr(d,'ll'):
+        if not hasattr(self,'log_lambda') or not hasattr(d,'log_lambda'):
             return self
 
         dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
 
-        ll = sp.append(self.ll,d.ll)
+        log_lambda = sp.append(self.log_lambda,d.log_lambda)
         dic['fl'] = sp.append(self.fl, d.fl)
         iv = sp.append(self.iv,d.iv)
 
@@ -218,13 +218,13 @@ class forest(Qso):
         if self.reso is not None:
             dic['reso'] = sp.append(self.reso, d.reso)
 
-        bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        cll = forest.lmin + np.arange(bins.max()+1)*forest.dll
+        bins = sp.floor((log_lambda-forest.lmin)/forest.dlog_lambda+0.5).astype(int)
+        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.dlog_lambda
         civ = np.zeros(bins.max()+1)
         cciv = sp.bincount(bins,weights=iv)
         civ[:len(cciv)] += cciv
         w = (civ>0.)
-        self.ll = cll[w]
+        self.log_lambda = rebin_log_lambda[w]
         self.iv = civ[w]
 
         for k, v in dic.items():
@@ -240,21 +240,21 @@ class forest(Qso):
         SNR = self.fl/err
         self.mean_SNR = SNR.mean()
         lam_lya = constants.absorber_IGM["LYA"]
-        self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
+        self.mean_z = (sp.power(10.,log_lambda[len(log_lambda)-1])+sp.power(10.,log_lambda[0]))/2./lam_lya -1.0
 
         return self
 
     def mask(self,mask_obs,mask_RF):
-        if not hasattr(self,'ll'):
+        if not hasattr(self,'log_lambda'):
             return
 
-        w = sp.ones(self.ll.size,dtype=bool)
+        w = sp.ones(self.log_lambda.size,dtype=bool)
         for l in mask_obs:
-            w &= (self.ll<l[0]) | (self.ll>l[1])
+            w &= (self.log_lambda<l[0]) | (self.log_lambda>l[1])
         for l in mask_RF:
-            w &= (self.ll-sp.log10(1.+self.z_qso)<l[0]) | (self.ll-sp.log10(1.+self.z_qso)>l[1])
+            w &= (self.log_lambda-sp.log10(1.+self.z_qso)<l[0]) | (self.log_lambda-sp.log10(1.+self.z_qso)>l[1])
 
-        ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
+        ps = ['iv','log_lambda','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -264,32 +264,32 @@ class forest(Qso):
     def add_optical_depth(self,tau,gamma,waveRF):
         """Add mean optical depth
         """
-        if not hasattr(self,'ll'):
+        if not hasattr(self,'log_lambda'):
             return
 
         if self.Fbar is None:
-            self.Fbar = sp.ones(self.ll.size)
+            self.Fbar = sp.ones(self.log_lambda.size)
 
-        w = 10.**self.ll/(1.+self.z_qso)<=waveRF
-        z = 10.**self.ll/waveRF-1.
+        w = 10.**self.log_lambda/(1.+self.z_qso)<=waveRF
+        z = 10.**self.log_lambda/waveRF-1.
         self.Fbar[w] *= sp.exp(-tau*(1.+z[w])**gamma)
 
         return
 
     def add_dla(self,zabs,nhi,mask=None):
-        if not hasattr(self,'ll'):
+        if not hasattr(self,'log_lambda'):
             return
         if self.T_dla is None:
-            self.T_dla = sp.ones(len(self.ll))
+            self.T_dla = sp.ones(len(self.log_lambda))
 
         self.T_dla *= dla(self,zabs,nhi).t
 
         w = self.T_dla>forest.dla_mask
         if not mask is None:
             for l in mask:
-                w &= (self.ll-sp.log10(1.+zabs)<l[0]) | (self.ll-sp.log10(1.+zabs)>l[1])
+                w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
 
-        ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
+        ps = ['iv','log_lambda','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -297,13 +297,13 @@ class forest(Qso):
         return
 
     def add_absorber(self,lambda_absorber):
-        if not hasattr(self,'ll'):
+        if not hasattr(self,'log_lambda'):
             return
 
-        w = sp.ones(self.ll.size, dtype=bool)
-        w &= sp.fabs(1.e4*(self.ll-sp.log10(lambda_absorber)))>forest.absorber_mask
+        w = sp.ones(self.log_lambda.size, dtype=bool)
+        w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>forest.absorber_mask
 
-        ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
+        ps = ['iv','log_lambda','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -314,7 +314,7 @@ class forest(Qso):
         lmax = forest.lmax_rest+sp.log10(1+self.z_qso)
         lmin = forest.lmin_rest+sp.log10(1+self.z_qso)
         try:
-            mc = forest.mean_cont(self.ll-sp.log10(1+self.z_qso))
+            mc = forest.mean_cont(self.log_lambda-sp.log10(1+self.z_qso))
         except ValueError:
             raise Exception
 
@@ -323,12 +323,12 @@ class forest(Qso):
         if not self.T_dla is None:
             mc*=self.T_dla
 
-        var_lss = forest.var_lss(self.ll)
-        eta = forest.eta(self.ll)
-        fudge = forest.fudge(self.ll)
+        var_lss = forest.var_lss(self.log_lambda)
+        eta = forest.eta(self.log_lambda)
+        fudge = forest.fudge(self.log_lambda)
 
         def model(p0,p1):
-            line = p1*(self.ll-lmin)/(lmax-lmin)+p0
+            line = p1*(self.log_lambda-lmin)/(lmax-lmin)+p0
             return line*mc
 
         def chi2(p0,p1):
@@ -375,10 +375,10 @@ class forest(Qso):
 
 class delta(Qso):
 
-    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
+    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
 
         Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
-        self.ll = ll
+        self.log_lambda = log_lambda
         self.we = we
         self.co = co
         self.de = de
@@ -393,11 +393,11 @@ class delta(Qso):
     @classmethod
     def from_forest(cls,f,st,var_lss,eta,fudge,mc=False):
 
-        ll = f.ll
-        mst = st(ll)
-        var_lss = var_lss(ll)
-        eta = eta(ll)
-        fudge = fudge(ll)
+        log_lambda = f.log_lambda
+        mst = st(log_lambda)
+        var_lss = var_lss(log_lambda)
+        eta = eta(log_lambda)
+        fudge = fudge(log_lambda)
 
         #if mc is True use the mock continuum to compute the mean expected flux fraction
         if mc : mef = f.mmef
@@ -410,7 +410,7 @@ class delta(Qso):
             diff /= mef
         iv = f.iv/(eta+(eta==0))*(mef**2)
 
-        return cls(f.thingid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,ll,we,f.co,de,f.order,
+        return cls(f.thingid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,log_lambda,we,f.co,de,f.order,
                    iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
 
 
@@ -421,7 +421,7 @@ class delta(Qso):
         head = h.read_header()
 
         de = h['DELTA'][:]
-        ll = h['LOGLAM'][:]
+        log_lambda = h['LOGLAM'][:]
 
 
         if  Pk1D_type :
@@ -456,7 +456,7 @@ class delta(Qso):
             order = head['ORDER']
         except KeyError:
             order = 1
-        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,
+        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
                    iv,diff,m_SNR,m_reso,m_z,dll)
 
 
@@ -477,7 +477,7 @@ class delta(Qso):
 
         nbpixel = int(a[10])
         de = sp.array(a[11:11+nbpixel]).astype(float)
-        ll = sp.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
+        log_lambda = sp.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
         iv = sp.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
         diff = sp.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
 
@@ -487,7 +487,7 @@ class delta(Qso):
         we = None
         co = None
 
-        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,ll,we,co,de,order,
+        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
                    iv,diff,m_SNR,m_reso,m_z,dll)
 
     @staticmethod
@@ -495,7 +495,7 @@ class delta(Qso):
         h=fitsio.FITS(f)
         de = h[0].read()
         iv = h[1].read()
-        ll = h[2].read()
+        log_lambda = h[2].read()
         ra = h[3]["RA"][:].astype(sp.float64)*sp.pi/180.
         dec = h[3]["DEC"][:].astype(sp.float64)*sp.pi/180.
         z = h[3]["Z"][:].astype(sp.float64)
@@ -515,7 +515,7 @@ class delta(Qso):
             w = ivar>0
             delt = delt[w]
             ivar = ivar[w]
-            lam = ll[w]
+            lam = log_lambda[w]
 
             order = 1
             diff = None
@@ -534,9 +534,9 @@ class delta(Qso):
         mde = sp.average(self.de,weights=self.we)
         res=0
         if (self.order==1) and self.de.shape[0] > 1:
-            mll = sp.average(self.ll,weights=self.we)
-            mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
-            res = mld * (self.ll-mll)
+            mll = sp.average(self.log_lambda,weights=self.we)
+            mld = sp.sum(self.we*self.de*(self.log_lambda-mll))/sp.sum(self.we*(self.log_lambda-mll)**2)
+            res = mld * (self.log_lambda-mll)
         elif self.order==1:
             res = self.de
 

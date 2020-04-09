@@ -7,10 +7,10 @@ from picca import constants
 from picca.utils import userprint
 
 
-def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
+def split_forest(nb_part,dll,log_lambda,de,diff,iv,first_pixel):
 
-    ll_limit=[ll[first_pixel]]
-    nb_bin= (len(ll)-first_pixel)//nb_part
+    ll_limit=[log_lambda[first_pixel]]
+    nb_bin= (len(log_lambda)-first_pixel)//nb_part
 
     m_z_arr = []
     ll_arr = []
@@ -18,15 +18,15 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
     diff_arr = []
     iv_arr = []
 
-    ll_c = ll.copy()
+    ll_c = log_lambda.copy()
     de_c = de.copy()
     diff_c = diff.copy()
     iv_c = iv.copy()
 
     for p in range(1,nb_part) :
-        ll_limit.append(ll[nb_bin*p+first_pixel])
+        ll_limit.append(log_lambda[nb_bin*p+first_pixel])
 
-    ll_limit.append(ll[len(ll)-1]+0.1*dll)
+    ll_limit.append(log_lambda[len(log_lambda)-1]+0.1*dll)
 
     for p in range(nb_part) :
 
@@ -48,7 +48,7 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
 
     return m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
 
-def rebin_diff_noise(dll,ll,diff):
+def rebin_diff_noise(dll,log_lambda,diff):
 
     crebin = 3
     if (diff.size < crebin):
@@ -57,7 +57,7 @@ def rebin_diff_noise(dll,ll,diff):
     dll2 = crebin*dll
 
     # rebin not mixing pixels separated by masks
-    bin2 = sp.floor((ll-ll.min())/dll2+0.5).astype(int)
+    bin2 = sp.floor((log_lambda-log_lambda.min())/dll2+0.5).astype(int)
 
     # rebin regardless of intervening masks
     # nmax = diff.size//crebin
@@ -81,14 +81,14 @@ def rebin_diff_noise(dll,ll,diff):
     return diffout
 
 
-def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
+def fill_masked_pixels(dll,log_lambda,delta,diff,iv,no_apply_filling):
 
 
-    if no_apply_filling : return ll,delta,diff,iv,0
+    if no_apply_filling : return log_lambda,delta,diff,iv,0
 
 
-    ll_idx = ll.copy()
-    ll_idx -= ll[0]
+    ll_idx = log_lambda.copy()
+    ll_idx -= log_lambda[0]
     ll_idx /= dll
     ll_idx += 0.5
     index =sp.array(ll_idx,dtype=int)
@@ -100,7 +100,7 @@ def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
 
     ll_new = sp.array(index_all,dtype=float)
     ll_new *= dll
-    ll_new += ll[0]
+    ll_new += log_lambda[0]
 
     diff_new = np.zeros(len(index_all))
     diff_new[index_ok]=diff
@@ -113,7 +113,7 @@ def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
 
     return ll_new,delta_new,diff_new,iv_new,nb_masked_pixel
 
-def compute_Pk_raw(dll,delta,ll):
+def compute_Pk_raw(dll,delta,log_lambda):
 
     #   Length in km/s
     length_lambda = dll*constants.speed_light/1000.*sp.log(10.)*len(delta)
@@ -131,7 +131,7 @@ def compute_Pk_raw(dll,delta,ll):
     return k,Pk
 
 
-def compute_Pk_noise(dll,iv,diff,ll,run_noise):
+def compute_Pk_noise(dll,iv,diff,log_lambda,run_noise):
 
     nb_pixels = len(iv)
     nb_bin_FFT = nb_pixels//2 + 1
@@ -146,12 +146,12 @@ def compute_Pk_noise(dll,iv,diff,ll,run_noise):
         for _ in range(nb_noise_exp): #iexp unused, but needed
             delta_exp= np.zeros(nb_pixels)
             delta_exp[w] = sp.random.normal(0.,err[w])
-            _,Pk_exp = compute_Pk_raw(dll,delta_exp,ll) #k_exp unused, but needed
+            _,Pk_exp = compute_Pk_raw(dll,delta_exp,log_lambda) #k_exp unused, but needed
             Pk += Pk_exp
 
         Pk /= float(nb_noise_exp)
 
-    _,Pk_diff = compute_Pk_raw(dll,diff,ll) #k_diff unused, but needed
+    _,Pk_diff = compute_Pk_raw(dll,diff,log_lambda) #k_diff unused, but needed
 
     return Pk,Pk_diff
 

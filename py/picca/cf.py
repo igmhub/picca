@@ -82,8 +82,8 @@ def cf(pix):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fiberid<=500 and d2.fiberid<=500) or (d1.fiberid>500 and d2.fiberid>500) )
                 if ang_correlation:
-                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.ll,10.**d1.ll,d1.we,d1.de,
-                        d2.z,10.**d2.ll,10.**d2.ll,d2.we,d2.de,ang,same_half_plate)
+                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.log_lambda,10.**d1.log_lambda,d1.we,d1.de,
+                        d2.z,10.**d2.log_lambda,10.**d2.log_lambda,d2.we,d2.de,ang,same_half_plate)
                 else:
                     cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.rdm_comov,d1.we,d1.de,
                         d2.z,d2.r_comov,d2.rdm_comov,d2.we,d2.de,ang,same_half_plate)
@@ -165,7 +165,7 @@ def dmat(pix):
             r1 = d1.r_comov
             rdm1 = d1.rdm_comov
             w1 = d1.we
-            l1 = d1.ll
+            l1 = d1.log_lambda
             z1 = d1.z
             r = sp.random.rand(len(d1.dneighs))
             w=r>rej
@@ -179,7 +179,7 @@ def dmat(pix):
                 r2 = d2.r_comov
                 rdm2 = d2.rdm_comov
                 w2 = d2.we
-                l2 = d2.ll
+                l2 = d2.log_lambda
                 z2 = d2.z
                 fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
             setattr(d1,"neighs",None)
@@ -304,7 +304,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             for d2 in sp.array(d1.dneighs)[w]:
                 r1 = d1.r_comov
                 rdm1 = d1.rdm_comov
-                z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
+                z1_abs1 = 10**d1.log_lambda/constants.absorber_IGM[abs_igm1]-1
                 r1_abs1 = cosmo.r_comoving(z1_abs1)
                 rdm1_abs1 = cosmo.dm(z1_abs1)
                 w1 = d1.we
@@ -322,7 +322,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 ang = d1^d2
                 r2 = d2.r_comov
                 rdm2 = d2.rdm_comov
-                z2_abs2 = 10**d2.ll/constants.absorber_IGM[abs_igm2]-1
+                z2_abs2 = 10**d2.log_lambda/constants.absorber_IGM[abs_igm2]-1
                 r2_abs2 = cosmo.r_comoving(z2_abs2)
                 rdm2_abs2 = cosmo.dm(z2_abs2)
                 w2 = d2.we
@@ -382,7 +382,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     r1 = d1.r_comov
                     rdm1 = d1.rdm_comov
                     w1 = d1.we
-                    z1_abs2 = 10**d1.ll/constants.absorber_IGM[abs_igm2]-1
+                    z1_abs2 = 10**d1.log_lambda/constants.absorber_IGM[abs_igm2]-1
                     r1_abs2 = cosmo.r_comoving(z1_abs2)
                     rdm1_abs2 = cosmo.dm(z1_abs2)
 
@@ -397,7 +397,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     r2 = d2.r_comov
                     rdm2 = d2.rdm_comov
                     w2 = d2.we
-                    z2_abs1 = 10**d2.ll/constants.absorber_IGM[abs_igm1]-1
+                    z2_abs1 = 10**d2.log_lambda/constants.absorber_IGM[abs_igm1]-1
                     r2_abs1 = cosmo.r_comoving(z2_abs1)
                     rdm2_abs1 = cosmo.dm(z2_abs1)
 
@@ -465,7 +465,7 @@ def cf1d(pix):
     nb1d = np.zeros(n1d**2,dtype=sp.int64)
 
     for d in data[pix]:
-        bins = ((d.ll-lmin)/dll+0.5).astype(int)
+        bins = ((d.log_lambda-lmin)/dll+0.5).astype(int)
         bins = bins + n1d*bins[:,None]
         wde = d.we*d.de
         we = d.we
@@ -483,14 +483,14 @@ def x_forest_cf1d(pix):
     nb1d = np.zeros(n1d**2,dtype=sp.int64)
 
     for d1 in data[pix]:
-        bins1 = ((d1.ll-lmin)/dll+0.5).astype(int)
+        bins1 = ((d1.log_lambda-lmin)/dll+0.5).astype(int)
         wde1 = d1.we*d1.de
         we1 = d1.we
 
         d2thingid = [d2.thingid for d2 in data2[pix]]
         neighs = data2[pix][sp.in1d(d2thingid,[d1.thingid])]
         for d2 in neighs:
-            bins2 = ((d2.ll-lmin)/dll+0.5).astype(int)
+            bins2 = ((d2.log_lambda-lmin)/dll+0.5).astype(int)
             bins = bins1 + n1d*bins2[:,None]
             wde2 = d2.we*d2.de
             we2 = d2.we
@@ -535,18 +535,18 @@ def wickT(pix):
                 counter.value += 1
             if len(d1.dneighs)==0: continue
 
-            v1 = v1d[d1.fname](d1.ll)
+            v1 = v1d[d1.fname](d1.log_lambda)
             w1 = d1.we
-            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
+            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.log_lambda-d1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
 
             for i2,d2 in enumerate(d1.dneighs):
                 ang12 = d1^d2
 
-                v2 = v1d[d2.fname](d2.ll)
+                v2 = v1d[d2.fname](d2.log_lambda)
                 w2 = d2.we
-                c1d_2 = (w2*w2[:,None])*c1d[d2.fname](abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
+                c1d_2 = (w2*w2[:,None])*c1d[d2.fname](abs(d2.log_lambda-d2.log_lambda[:,None]))*sp.sqrt(v2*v2[:,None])
                 r2 = d2.r_comov
                 z2 = d2.z
 
@@ -558,9 +558,9 @@ def wickT(pix):
                     ang13 = d1^d3
                     ang23 = d2^d3
 
-                    v3 = v1d[d3.fname](d3.ll)
+                    v3 = v1d[d3.fname](d3.log_lambda)
                     w3 = d3.we
-                    c1d_3 = (w3*w3[:,None])*c1d[d3.fname](abs(d3.ll-d3.ll[:,None]))*sp.sqrt(v3*v3[:,None])
+                    c1d_3 = (w3*w3[:,None])*c1d[d3.fname](abs(d3.log_lambda-d3.log_lambda[:,None]))*sp.sqrt(v3*v3[:,None])
                     r3 = d3.r_comov
                     z3 = d3.z
 

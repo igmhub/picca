@@ -8,8 +8,8 @@ class dla:
         self.zabs=zabs
         self.nhi=nhi
 
-        self.t = self.p_voigt_a(10**data.ll,zabs,nhi)
-        self.t*= self.p_voigt_b(10**data.ll,zabs,nhi)
+        self.t = self.p_voigt_a(10**data.log_lambda,zabs,nhi)
+        self.t*= self.p_voigt_b(10**data.log_lambda,zabs,nhi)
 
     @staticmethod
     def p_voigt_a(la,zabs,nhi):

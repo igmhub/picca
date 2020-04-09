@@ -5,13 +5,13 @@ from picca import constants
 from picca.utils import userprint
 
 
-def exp_diff(file,ll) :
+def exp_diff(file,log_lambda) :
 
     nexp_per_col = file[0].read_header()['NEXP']//2
-    fltotodd  = np.zeros(ll.size)
-    ivtotodd  = np.zeros(ll.size)
-    fltoteven = np.zeros(ll.size)
-    ivtoteven = np.zeros(ll.size)
+    fltotodd  = np.zeros(log_lambda.size)
+    ivtotodd  = np.zeros(log_lambda.size)
+    fltoteven = np.zeros(log_lambda.size)
+    ivtoteven = np.zeros(log_lambda.size)
 
     if (nexp_per_col)<2 :
         userprint("DBG : not enough exposures for diff")
@@ -22,7 +22,7 @@ def exp_diff(file,ll) :
             flexp = file[4+iexp+icol*nexp_per_col]["flux"][:]
             ivexp = file[4+iexp+icol*nexp_per_col]["ivar"][:]
             mask  = file[4+iexp+icol*nexp_per_col]["mask"][:]
-            bins = sp.searchsorted(ll,llexp)
+            bins = sp.searchsorted(log_lambda,llexp)
 
             # exclude masks 25 (COMBINEREJ), 23 (BRIGHTSKY)?
             if iexp%2 == 1 :
@@ -50,12 +50,12 @@ def exp_diff(file,ll) :
     return diff
 
 
-def spectral_resolution(wdisp,with_correction=None,fiber=None,ll=None) :
+def spectral_resolution(wdisp,with_correction=None,fiber=None,log_lambda=None) :
 
     reso = wdisp*constants.speed_light/1000.*1.0e-4*sp.log(10.)
 
     if (with_correction):
-        wave = sp.power(10.,ll)
+        wave = sp.power(10.,log_lambda)
         corrPlateau = 1.267 - 0.000142716*wave + 1.9068e-08*wave*wave;
         corrPlateau[wave>6000.0] = 1.097
 
@@ -69,9 +69,9 @@ def spectral_resolution(wdisp,with_correction=None,fiber=None,ll=None) :
         reso *= corr
     return reso
 
-def spectral_resolution_desi(reso_matrix, ll) :
+def spectral_resolution_desi(reso_matrix, log_lambda) :
 
-    dll = (ll[-1]-ll[0])/float(len(ll)-1)
+    dll = (log_lambda[-1]-log_lambda[0])/float(len(log_lambda)-1)
     reso= sp.clip(reso_matrix,1.0e-6,1.0e6)
     rms_in_pixel = (sp.sqrt(1.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-1][:]))
                     + sp.sqrt(4.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-2][:])))/2.0

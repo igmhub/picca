@@ -70,8 +70,8 @@ def xcf(pix):
                 z_qso = [q.z_qso for q in d.qneighs]
                 we_qso = [q.we for q in d.qneighs]
                 if ang_correlation:
-                    l_qso = [10.**q.ll for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,z_qso,l_qso,l_qso,we_qso,ang)
+                    l_qso = [10.**q.log_lambda for q in d.qneighs]
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.we,d.de,z_qso,l_qso,l_qso,we_qso,ang)
                 else:
                     rc_qso = [q.r_comov for q in d.qneighs]
                     rdm_qso = [q.rdm_comov for q in d.qneighs]
@@ -144,7 +144,7 @@ def dmat(pix):
             r1 = d1.r_comov
             rdm1 = d1.rdm_comov
             w1 = d1.we
-            l1 = d1.ll
+            l1 = d1.log_lambda
             z1 = d1.z
             r = sp.random.rand(len(d1.qneighs))
             w=r>rej
@@ -246,7 +246,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             rd = d.r_comov
             rdm = d.rdm_comov
             wd = d.we
-            zd_abs = 10**d.ll/constants.absorber_IGM[abs_igm]-1
+            zd_abs = 10**d.log_lambda/constants.absorber_IGM[abs_igm]-1
             rd_abs = cosmo.r_comoving(zd_abs)
             rdm_abs = cosmo.dm(zd_abs)
 
@@ -348,9 +348,9 @@ def wickT(pix):
                 counter.value += 1
             if d1.qneighs.size==0: continue
 
-            v1 = v1d[d1.fname](d1.ll)
+            v1 = v1d[d1.fname](d1.log_lambda)
             w1 = d1.we
-            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
+            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.log_lambda-d1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
 
@@ -607,10 +607,10 @@ def xcf1d(pix):
 
             z_qso = [ q.z_qso for q in neighs ]
             we_qso = [ q.we for q in neighs ]
-            l_qso = [ 10.**q.ll for q in neighs ]
+            l_qso = [ 10.**q.log_lambda for q in neighs ]
             ang = np.zeros(len(l_qso))
 
-            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,z_qso,l_qso,l_qso,we_qso,ang)
+            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.we,d.de,z_qso,l_qso,l_qso,we_qso,ang)
 
             xi[:cd.size] += cd
             we[:cw.size] += cw

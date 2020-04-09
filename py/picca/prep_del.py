@@ -9,13 +9,13 @@ def mc(data):
     nmc = int((forest.lmax_rest-forest.lmin_rest)/forest.dll)+1
     mcont = np.zeros(nmc)
     wcont = np.zeros(nmc)
-    ll = forest.lmin_rest + (np.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
+    log_lambda = forest.lmin_rest + (np.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
     for p in sorted(list(data.keys())):
         for d in data[p]:
-            bins=((d.ll-forest.lmin_rest-sp.log10(1+d.z_qso))/(forest.lmax_rest-forest.lmin_rest)*nmc).astype(int)
-            var_lss = forest.var_lss(d.ll)
-            eta = forest.eta(d.ll)
-            fudge = forest.fudge(d.ll)
+            bins=((d.log_lambda-forest.lmin_rest-sp.log10(1+d.z_qso))/(forest.lmax_rest-forest.lmin_rest)*nmc).astype(int)
+            var_lss = forest.var_lss(d.log_lambda)
+            eta = forest.eta(d.log_lambda)
+            fudge = forest.fudge(d.log_lambda)
             var = 1./d.iv/d.co**2
             we = 1/variance(var,eta,var_lss,fudge)
             c = sp.bincount(bins,weights=d.fl/d.co*we)
@@ -26,7 +26,7 @@ def mc(data):
     w=wcont>0
     mcont[w]/=wcont[w]
     mcont/=mcont.mean()
-    return ll,mcont,wcont
+    return log_lambda,mcont,wcont
 
 def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     nlss = 20
@@ -37,7 +37,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     err_vlss = np.zeros(nlss)
     err_fudge = np.zeros(nlss)
     nb_pixels = np.zeros(nlss)
-    ll = forest.lmin + (np.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
+    log_lambda = forest.lmin + (np.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
     nwe = 100
     vpmin = sp.log10(1e-5)
@@ -56,7 +56,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
             var_pipe = 1/d.iv/d.co**2
             w = (sp.log10(var_pipe) > vpmin) & (sp.log10(var_pipe) < vpmax)
 
-            bll = ((d.ll-forest.lmin)/(forest.lmax-forest.lmin)*nlss).astype(int)
+            bll = ((d.log_lambda-forest.lmin)/(forest.lmax-forest.lmin)*nlss).astype(int)
             bwe = sp.floor((sp.log10(var_pipe)-vpmin)/(vpmax-vpmin)*nwe).astype(int)
 
             bll = bll[w]
@@ -120,12 +120,12 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
         userprint(eta[i],vlss[i],fudge[i],mig.fval, nb_pixels[i],err_eta[i],err_vlss[i],err_fudge[i])
 
 
-    return ll,eta,vlss,fudge,nb_pixels,var,var_del.reshape(nlss,-1),var2_del.reshape(nlss,-1),count.reshape(nlss,-1),nqso.reshape(nlss,-1),bin_chi2,err_eta,err_vlss,err_fudge
+    return log_lambda,eta,vlss,fudge,nb_pixels,var,var_del.reshape(nlss,-1),var2_del.reshape(nlss,-1),count.reshape(nlss,-1),nqso.reshape(nlss,-1),bin_chi2,err_eta,err_vlss,err_fudge
 
 
 def stack(data,delta=False):
     nstack = int((forest.lmax-forest.lmin)/forest.dll)+1
-    ll = forest.lmin + np.arange(nstack)*forest.dll
+    log_lambda = forest.lmin + np.arange(nstack)*forest.dll
     st = np.zeros(nstack)
     wst = np.zeros(nstack)
     for p in sorted(list(data.keys())):
@@ -135,13 +135,13 @@ def stack(data,delta=False):
                 we = d.we
             else:
                 de = d.fl/d.co
-                var_lss = forest.var_lss(d.ll)
-                eta = forest.eta(d.ll)
-                fudge = forest.fudge(d.ll)
+                var_lss = forest.var_lss(d.log_lambda)
+                eta = forest.eta(d.log_lambda)
+                fudge = forest.fudge(d.log_lambda)
                 var = 1./d.iv/d.co**2
                 we = 1./variance(var,eta,var_lss,fudge)
 
-            bins=((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
+            bins=((d.log_lambda-forest.lmin)/forest.dll+0.5).astype(int)
             c = sp.bincount(bins,weights=de*we)
             st[:len(c)]+=c
             c = sp.bincount(bins,weights=we)
@@ -149,4 +149,4 @@ def stack(data,delta=False):
 
     w=wst>0
     st[w]/=wst[w]
-    return ll,st, wst
+    return log_lambda,st, wst

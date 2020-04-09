@@ -175,12 +175,12 @@ if __name__ == '__main__':
         dll = head['DLL']
         nv1d = h[1]['nv1d'][:]
         v1d = h[1]['v1d'][:]
-        ll = llmin + dll*np.arange(len(v1d))
-        cf.v1d[n] = interp1d(ll[nv1d>0],v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
+        log_lambda = llmin + dll*np.arange(len(v1d))
+        cf.v1d[n] = interp1d(log_lambda[nv1d>0],v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
 
         nb1d = h[1]['nb1d'][:]
         c1d = h[1]['c1d'][:]
-        cf.c1d[n] = interp1d((ll-llmin)[nb1d>0],c1d[nb1d>0],kind='nearest',fill_value='extrapolate')
+        cf.c1d[n] = interp1d((log_lambda-llmin)[nb1d>0],c1d[nb1d>0],kind='nearest',fill_value='extrapolate')
         h.close()
 
     ### Load cf

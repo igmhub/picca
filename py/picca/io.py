@@ -360,20 +360,20 @@ def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=
                 log.write("error reading {}\n".format(fin))
                 continue
             log.write("{} read\n".format(fin))
-            ll = h[1]["loglam"][:]
+            log_lambda = h[1]["loglam"][:]
             fl = h[1]["flux"][:]
             iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
 
             if pk1d is not None:
                 # compute difference between exposure
-                diff = exp_diff(h,ll)
+                diff = exp_diff(h,log_lambda)
                 # compute spectral resolution
                 wdisp =  h[1]["wdisp"][:]
-                reso = spectral_resolution(wdisp,True,f,ll)
+                reso = spectral_resolution(wdisp,True,f,log_lambda)
             else:
                 diff = None
                 reso = None
-            deltas = forest(ll,fl,iv, t, r, d, z, p, m, f,order,diff=diff,reso=reso)
+            deltas = forest(log_lambda,fl,iv, t, r, d, z, p, m, f,order,diff=diff,reso=reso)
             if t_delta is None:
                 t_delta = deltas
             else:
@@ -396,7 +396,7 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
         h = hdu["{}".format(t)]
         log.write("file: {} hdu {} read  \n".format(fin,h))
         lamb = h["wavelength"][:]
-        ll = sp.log10(lamb)
+        log_lambda = sp.log10(lamb)
         fl = h["flux"][:]
         error =h["error"][:]
         iv = 1.0/error**2
@@ -411,7 +411,7 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
         f_mean_tr = h.read_header()["MEANFLUX"]
         cont = h["continuum"][:]
         mef = f_mean_tr * cont
-        d = forest(ll,fl,iv, t, r, d, z, p, m, f,order, diff,reso, mef)
+        d = forest(log_lambda,fl,iv, t, r, d, z, p, m, f,order, diff,reso, mef)
         pix_data.append(d)
 
     hdu.close()
@@ -730,7 +730,7 @@ def read_from_desi(nside,in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1
         for spec in ['B','R','Z']:
             dic = {}
             try:
-                dic['LL'] = sp.log10(h['{}_WAVELENGTH'.format(spec)].read())
+                dic['log_lambda'] = sp.log10(h['{}_WAVELENGTH'.format(spec)].read())
                 dic['FL'] = h['{}_FLUX'.format(spec)].read()
                 dic['IV'] = h['{}_IVAR'.format(spec)].read()*(h['{}_MASK'.format(spec)].read()==0)
                 w = sp.isnan(dic['FL']) | sp.isnan(dic['IV'])
@@ -757,12 +757,12 @@ def read_from_desi(nside,in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1
                 fl[w] /= iv[w]
                 if not pk1d is None:
                     reso_sum = tspecData['RESO'][wt].sum(axis=0)
-                    reso_in_km_per_s = spectral_resolution_desi(reso_sum,tspecData['LL'])
-                    diff = np.zeros(tspecData['LL'].shape)
+                    reso_in_km_per_s = spectral_resolution_desi(reso_sum,tspecData['log_lambda'])
+                    diff = np.zeros(tspecData['log_lambda'].shape)
                 else:
                     reso_in_km_per_s = None
                     diff = None
-                td = forest(tspecData['LL'],fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
+                td = forest(tspecData['log_lambda'],fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
                     p,m,f,order,diff,reso_in_km_per_s)
                 if d is None:
                     d = copy.deepcopy(td)
@@ -835,14 +835,14 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         raise AssertionError('ERROR: No data in {}'.format(indir))
 
     data = {}
-    zmin = 10**dels[0].ll[0]/lambda_abs-1.
+    zmin = 10**dels[0].log_lambda[0]/lambda_abs-1.
     zmax = 0.
     for d,p in zip(dels,pix):
         if not p in data:
             data[p]=[]
         data[p].append(d)
 
-        z = 10**d.ll/lambda_abs-1.
+        z = 10**d.log_lambda/lambda_abs-1.
         zmin = min(zmin,z.min())
         zmax = max(zmax,z.max())
         d.z = z
