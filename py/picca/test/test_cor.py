@@ -140,8 +140,8 @@ class TestCor(unittest.TestCase):
         userprint("Create cat with number of object = ", nObj)
 
         ### Create random catalog
-        ra    = 10.*numpy.random.random_sample(nObj)*sp.pi/180.
-        dec   = 10.*numpy.random.random_sample(nObj)*sp.pi/180.
+        ra    = 10.*numpy.random.random_sample(nObj)
+        dec   = 10.*numpy.random.random_sample(nObj)
         plate = numpy.random.randint(266,   high=10001, size=nObj )
         mjd   = numpy.random.randint(51608, high=57521, size=nObj )
         fiberid   = numpy.random.randint(1,     high=1001,  size=nObj )
@@ -166,8 +166,8 @@ class TestCor(unittest.TestCase):
 
         ### Load DRQ
         vac = fitsio.FITS(self._branchFiles+"/Products/cat.fits")
-        ra    = vac[1]["RA"][:]
-        dec   = vac[1]["DEC"][:]
+        ra    = vac[1]["RA"][:]*sp.pi/180.
+        dec   = vac[1]["DEC"][:]*sp.pi/180.
         thid  = vac[1]["THING_ID"][:]
         plate = vac[1]["PLATE"][:]
         mjd   = vac[1]["MJD"][:]
