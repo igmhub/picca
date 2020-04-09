@@ -114,8 +114,8 @@ class forest(Qso):
                 diff /= corr
 
         ## cut to specified range
-        bins = sp.floor((log_lambda-forest.lmin)/forest.dlog_lambda+0.5).astype(int)
-        log_lambda = forest.lmin + bins*forest.dlog_lambda
+        bins = sp.floor((log_lambda-forest.lmin)/forest.dll+0.5).astype(int)
+        log_lambda = forest.lmin + bins*forest.dll
         w = (log_lambda>=forest.lmin)
         w = w & (log_lambda<forest.lmax)
         w = w & (log_lambda-sp.log10(1.+self.z_qso)>forest.lmin_rest)
@@ -136,7 +136,7 @@ class forest(Qso):
             reso=reso[w]
 
         ## rebin
-        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.dlog_lambda
+        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.dll
         cfl = np.zeros(bins.max()+1)
         civ = np.zeros(bins.max()+1)
         if mmef is not None:
@@ -218,8 +218,8 @@ class forest(Qso):
         if self.reso is not None:
             dic['reso'] = sp.append(self.reso, d.reso)
 
-        bins = sp.floor((log_lambda-forest.lmin)/forest.dlog_lambda+0.5).astype(int)
-        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.dlog_lambda
+        bins = sp.floor((log_lambda-forest.lmin)/forest.dll+0.5).astype(int)
+        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.dll
         civ = np.zeros(bins.max()+1)
         cciv = sp.bincount(bins,weights=iv)
         civ[:len(cciv)] += cciv
