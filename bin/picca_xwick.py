@@ -150,7 +150,7 @@ if __name__ == '__main__':
     for p,delsp in dels.items():
         for d in delsp:
             d.fname = 'D1'
-            for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','dll']:
+            for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','delta_log_lambda']:
                 setattr(d,k,None)
     xcf.npix = len(dels)
     xcf.dels = dels
@@ -187,10 +187,10 @@ if __name__ == '__main__':
     head = h[1].read_header()
     llmin = head['LLMIN']
     llmax = head['LLMAX']
-    dll = head['DLL']
+    delta_log_lambda = head['DLL']
     nv1d = h[1]['nv1d'][:]
     v1d = h[1]['v1d'][:]
-    log_lambda = llmin + dll*np.arange(v1d.size)
+    log_lambda = llmin + delta_log_lambda*np.arange(v1d.size)
     xcf.v1d['D1'] = interp1d(log_lambda[nv1d>0],v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
 
     nb1d = h[1]['nb1d'][:]

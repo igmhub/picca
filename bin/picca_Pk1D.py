@@ -206,15 +206,15 @@ if __name__ == '__main__':
             # Split in n parts the forest
             nb_part_max = (len(d.log_lambda)-first_pixel)//nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
-            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.dll,d.log_lambda,d.de,d.diff,d.iv,first_pixel)
+            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.delta_log_lambda,d.log_lambda,d.de,d.diff,d.iv,first_pixel)
             for f in range(nb_part):
 
                 # rebin diff spectrum
                 if (args.noise_estimate=='rebin_diff' or args.noise_estimate=='mean_rebin_diff'):
-                    diff_arr[f]=rebin_diff_noise(d.dll,ll_arr[f],diff_arr[f])
+                    diff_arr[f]=rebin_diff_noise(d.delta_log_lambda,ll_arr[f],diff_arr[f])
 
                 # Fill masked pixels with 0.
-                ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.dll,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f],args.no_apply_filling)
+                ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.delta_log_lambda,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f],args.no_apply_filling)
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
                 if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.z_qso)
 
@@ -223,15 +223,15 @@ if __name__ == '__main__':
                 mean_z_new = sum(z_abs)/float(len(z_abs))
 
                 # Compute Pk_raw
-                k,Pk_raw = compute_Pk_raw(d.dll,delta_new,ll_new)
+                k,Pk_raw = compute_Pk_raw(d.delta_log_lambda,delta_new,ll_new)
 
                 # Compute Pk_noise
                 run_noise = False
                 if (args.noise_estimate=='pipeline'): run_noise=True
-                Pk_noise,Pk_diff = compute_Pk_noise(d.dll,iv_new,diff_new,ll_new,run_noise)
+                Pk_noise,Pk_diff = compute_Pk_noise(d.delta_log_lambda,iv_new,diff_new,ll_new,run_noise)
 
                 # Compute resolution correction
-                delta_pixel = d.dll*sp.log(10.)*constants.speed_light/1000.
+                delta_pixel = d.delta_log_lambda*sp.log(10.)*constants.speed_light/1000.
                 cor_reso = compute_cor_reso(delta_pixel,d.mean_reso,k)
 
                 # Compute 1D Pk

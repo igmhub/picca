@@ -443,7 +443,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
     out.close()
 
     return
-def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,dll=3.e-4,nspec=None):
+def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,delta_log_lambda=3.e-4,nspec=None):
     from picca.data import delta
     """Convert desi transmission files to picca delta files
 
@@ -455,7 +455,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         lObs_max (float) = 5500.: max observed wavelength in Angstrom
         lRF_min (float) = 1040.: min Rest Frame wavelength in Angstrom
         lRF_max (float) = 1200.: max Rest Frame wavelength in Angstrom
-        dll (float) = 3.e-4: size of the bins in log lambda
+        delta_log_lambda (float) = 3.e-4: size of the bins in log lambda
         nspec (int) = None: number of spectra, if 'None' use all
 
     Returns:
@@ -501,7 +501,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     ### Stack the transmission
     lmin = sp.log10(lObs_min)
     lmax = sp.log10(lObs_max)
-    nstack = int((lmax-lmin)/dll)+1
+    nstack = int((lmax-lmin)/delta_log_lambda)+1
     T_stack = np.zeros(nstack)
     n_stack = np.zeros(nstack)
 
@@ -530,8 +530,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         if trans.shape[0]!=nObj:
             trans = trans.transpose()
 
-        bins = sp.floor((log_lambda-lmin)/dll+0.5).astype(int)
-        tll = lmin + bins*dll
+        bins = sp.floor((log_lambda-lmin)/delta_log_lambda+0.5).astype(int)
+        tll = lmin + bins*delta_log_lambda
         lObs = (10**tll)*sp.ones(nObj)[:,None]
         lRF = (10**tll)/(1.+z[:,None])
         w = np.zeros_like(trans).astype(int)
@@ -557,8 +557,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             tll = log_lambda[w[i,:]>0]
             ttrans = trans[i,:][w[i,:]>0]
 
-            bins = sp.floor((tll-lmin)/dll+0.5).astype(int)
-            cll = lmin + np.arange(nstack)*dll
+            bins = sp.floor((tll-lmin)/delta_log_lambda+0.5).astype(int)
+            cll = lmin + np.arange(nstack)*delta_log_lambda
             cfl = sp.bincount(bins,weights=ttrans,minlength=nstack)
             civ = sp.bincount(bins,minlength=nstack).astype(float)
 
@@ -585,7 +585,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             continue
         out = fitsio.FITS(outdir+'/delta-{}'.format(p)+'.fits.gz','rw',clobber=True)
         for d in deltas[p]:
-            bins = sp.floor((d.log_lambda-lmin)/dll+0.5).astype(int)
+            bins = sp.floor((d.log_lambda-lmin)/delta_log_lambda+0.5).astype(int)
             d.de = d.de/T_stack[bins] - 1.
             d.we *= T_stack[bins]**2
 

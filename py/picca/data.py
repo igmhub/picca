@@ -77,7 +77,7 @@ class forest(Qso):
     lmin_rest = None
     lmax_rest = None
     rebin = None
-    dll = None
+    delta_log_lambda = None
 
     ### Correction function for multiplicative errors in pipeline flux calibration
     correc_flux = None
@@ -114,8 +114,8 @@ class forest(Qso):
                 diff /= corr
 
         ## cut to specified range
-        bins = sp.floor((log_lambda-forest.lmin)/forest.dll+0.5).astype(int)
-        log_lambda = forest.lmin + bins*forest.dll
+        bins = sp.floor((log_lambda-forest.lmin)/forest.delta_log_lambda+0.5).astype(int)
+        log_lambda = forest.lmin + bins*forest.delta_log_lambda
         w = (log_lambda>=forest.lmin)
         w = w & (log_lambda<forest.lmax)
         w = w & (log_lambda-sp.log10(1.+self.z_qso)>forest.lmin_rest)
@@ -136,7 +136,7 @@ class forest(Qso):
             reso=reso[w]
 
         ## rebin
-        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.dll
+        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.delta_log_lambda
         cfl = np.zeros(bins.max()+1)
         civ = np.zeros(bins.max()+1)
         if mmef is not None:
@@ -218,8 +218,8 @@ class forest(Qso):
         if self.reso is not None:
             dic['reso'] = sp.append(self.reso, d.reso)
 
-        bins = sp.floor((log_lambda-forest.lmin)/forest.dll+0.5).astype(int)
-        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.dll
+        bins = sp.floor((log_lambda-forest.lmin)/forest.delta_log_lambda+0.5).astype(int)
+        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.delta_log_lambda
         civ = np.zeros(bins.max()+1)
         cciv = sp.bincount(bins,weights=iv)
         civ[:len(cciv)] += cciv
@@ -375,7 +375,7 @@ class forest(Qso):
 
 class delta(Qso):
 
-    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,dll):
+    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,delta_log_lambda):
 
         Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
         self.log_lambda = log_lambda
@@ -388,7 +388,7 @@ class delta(Qso):
         self.mean_SNR = m_SNR
         self.mean_reso = m_reso
         self.mean_z = m_z
-        self.dll = dll
+        self.delta_log_lambda = delta_log_lambda
 
     @classmethod
     def from_forest(cls,f,st,var_lss,eta,fudge,mc=False):
@@ -411,7 +411,7 @@ class delta(Qso):
         iv = f.iv/(eta+(eta==0))*(mef**2)
 
         return cls(f.thingid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,log_lambda,we,f.co,de,f.order,
-                   iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.dll)
+                   iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.delta_log_lambda)
 
 
     @classmethod
@@ -430,7 +430,7 @@ class delta(Qso):
             m_SNR = head['MEANSNR']
             m_reso = head['MEANRESO']
             m_z = head['MEANZ']
-            dll =  head['DLL']
+            delta_log_lambda =  head['DLL']
             we = None
             co = None
         else :
@@ -438,7 +438,7 @@ class delta(Qso):
             diff = None
             m_SNR = None
             m_reso = None
-            dll = None
+            delta_log_lambda = None
             m_z = None
             we = h['WEIGHT'][:]
             co = h['CONT'][:]
@@ -457,7 +457,7 @@ class delta(Qso):
         except KeyError:
             order = 1
         return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
-                   iv,diff,m_SNR,m_reso,m_z,dll)
+                   iv,diff,m_SNR,m_reso,m_z,delta_log_lambda)
 
 
     @classmethod
@@ -473,7 +473,7 @@ class delta(Qso):
         m_z = float(a[6])
         m_SNR = float(a[7])
         m_reso = float(a[8])
-        dll = float(a[9])
+        delta_log_lambda = float(a[9])
 
         nbpixel = int(a[10])
         de = sp.array(a[11:11+nbpixel]).astype(float)
@@ -488,7 +488,7 @@ class delta(Qso):
         co = None
 
         return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
-                   iv,diff,m_SNR,m_reso,m_z,dll)
+                   iv,diff,m_SNR,m_reso,m_z,delta_log_lambda)
 
     @staticmethod
     def from_image(f):
@@ -521,10 +521,10 @@ class delta(Qso):
             diff = None
             m_SNR = None
             m_reso = None
-            dll = None
+            delta_log_lambda = None
             m_z = None
 
-            deltas.append(delta(thingid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,ivar,None,delt,order,iv,diff,m_SNR,m_reso,m_z,dll))
+            deltas.append(delta(thingid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,ivar,None,delt,order,iv,diff,m_SNR,m_reso,m_z,delta_log_lambda))
 
         h.close()
         return deltas

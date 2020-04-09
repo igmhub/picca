@@ -154,7 +154,7 @@ if __name__ == '__main__':
     for p,datap in data.items():
         for d in datap:
             d.fname = 'D1'
-            for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','dll']:
+            for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','delta_log_lambda']:
                 setattr(d,k,None)
     cf.npix = len(data)
     cf.data = data
@@ -172,10 +172,10 @@ if __name__ == '__main__':
         head = h[1].read_header()
         llmin = head['LLMIN']
         llmax = head['LLMAX']
-        dll = head['DLL']
+        delta_log_lambda = head['DLL']
         nv1d = h[1]['nv1d'][:]
         v1d = h[1]['v1d'][:]
-        log_lambda = llmin + dll*np.arange(len(v1d))
+        log_lambda = llmin + delta_log_lambda*np.arange(len(v1d))
         cf.v1d[n] = interp1d(log_lambda[nv1d>0],v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
 
         nb1d = h[1]['nb1d'][:]
@@ -221,7 +221,7 @@ if __name__ == '__main__':
         for p,datap in data2.items():
             for d in datap:
                 d.fname = 'D2'
-                for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','dll']:
+                for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','delta_log_lambda']:
                     setattr(d,k,None)
         cf.data2 = data2
         cf.ndata2 = ndata2

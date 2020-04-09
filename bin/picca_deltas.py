@@ -163,7 +163,7 @@ def main():
     forest.lmin_rest = np.log10(args.lambda_rest_min)
     forest.lmax_rest = np.log10(args.lambda_rest_max)
     forest.rebin = args.rebin
-    forest.dll = args.rebin*1e-4
+    forest.delta_log_lambda = args.rebin*1e-4
     ## minumum dla transmission
     forest.dla_mask = args.dla_mask
     forest.absorber_mask = args.absorber_mask
@@ -438,12 +438,12 @@ def main():
             out_ascii = open(args.out_dir + "/delta-{}".format(p) + ".txt", 'w')
             for d in deltas[p]:
                 nbpixel = len(d.de)
-                dll = d.dll
+                delta_log_lambda = d.delta_log_lambda
                 if args.mode == 'desi':
-                    dll = (d.log_lambda[-1] - d.log_lambda[0])/float(len(d.log_lambda) - 1)
+                    delta_log_lambda = (d.log_lambda[-1] - d.log_lambda[0])/float(len(d.log_lambda) - 1)
                 line = '{} {} {} '.format(d.plate, d.mjd, d.fiberid)
                 line += '{} {} {} '.format(d.ra, d.dec, d.z_qso)
-                line += '{} {} {} {} {} '.format(d.mean_z, d.mean_SNR, d.mean_reso, dll, nbpixel)
+                line += '{} {} {} {} {} '.format(d.mean_z, d.mean_SNR, d.mean_reso, delta_log_lambda, nbpixel)
                 for i in range(nbpixel):
                     line += '{} '.format(d.de[i])
                 for i in range(nbpixel):
@@ -476,10 +476,10 @@ def main():
                            {'name':'MEANRESO', 'value':d.mean_reso, 'comment':'Mean resolution'},
                            {'name':'MEANSNR', 'value':d.mean_SNR, 'comment':'Mean SNR'},
                            ]
-                    dll = d.dll
+                    delta_log_lambda = d.delta_log_lambda
                     if args.mode == 'desi':
-                        dll = (d.log_lambda[-1] - d.log_lambda[0])/float(len(d.log_lambda) - 1)
-                    hd += [{'name':'DLL', 'value':dll, 'comment':'Loglam bin size [log Angstrom]'}]
+                        delta_log_lambda = (d.log_lambda[-1] - d.log_lambda[0])/float(len(d.log_lambda) - 1)
+                    hd += [{'name':'DLL', 'value':delta_log_lambda, 'comment':'Loglam bin size [log Angstrom]'}]
                     diff = d.diff
                     if diff is None:
                         diff = d.log_lambda*0

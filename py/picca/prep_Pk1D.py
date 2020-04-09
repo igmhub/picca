@@ -71,11 +71,11 @@ def spectral_resolution(wdisp,with_correction=None,fiber=None,log_lambda=None) :
 
 def spectral_resolution_desi(reso_matrix, log_lambda) :
 
-    dll = (log_lambda[-1]-log_lambda[0])/float(len(log_lambda)-1)
+    delta_log_lambda = (log_lambda[-1]-log_lambda[0])/float(len(log_lambda)-1)
     reso= sp.clip(reso_matrix,1.0e-6,1.0e6)
     rms_in_pixel = (sp.sqrt(1.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-1][:]))
                     + sp.sqrt(4.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-2][:])))/2.0
 
-    reso_in_km_per_s = rms_in_pixel*constants.speed_light/1000.*dll*sp.log(10.0)
+    reso_in_km_per_s = rms_in_pixel*constants.speed_light/1000.*delta_log_lambda*sp.log(10.0)
 
     return reso_in_km_per_s

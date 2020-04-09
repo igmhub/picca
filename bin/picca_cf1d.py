@@ -82,8 +82,8 @@ if __name__ == '__main__':
     cf.nside = args.nside
     cf.lmin = sp.log10(args.lambda_min)
     cf.lmax = sp.log10(args.lambda_max)
-    cf.dll = args.dll
-    cf.n1d = int((cf.lmax-cf.lmin)/cf.dll+1)
+    cf.delta_log_lambda = args.dll
+    cf.n1d = int((cf.lmax-cf.lmin)/cf.delta_log_lambda+1)
     cf.x_correlation = False
 
     cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
@@ -201,7 +201,7 @@ if __name__ == '__main__':
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'LLMIN','value':cf.lmin,'comment':'Minimum log10 lambda [log Angstrom]'},
              {'name':'LLMAX','value':cf.lmax,'comment':'Maximum log10 lambda [log Angstrom]'},
-             {'name':'DLL','value':cf.dll,'comment':'Loglam bin size [log Angstrom]'},
+             {'name':'DLL','value':cf.delta_log_lambda,'comment':'Loglam bin size [log Angstrom]'},
     ]
     comment = ['Variance','Sum of weight for variance','Sum of pairs for variance',
                'Correlation','Sum of weight for correlation','Sum of pairs for correlation']

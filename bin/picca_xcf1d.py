@@ -114,20 +114,20 @@ if __name__ == '__main__':
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
-        forest.dll = None
+        forest.delta_log_lambda = None
         for p in xcf.dels:
             for d in xcf.dels[p]:
-                dll = sp.asarray([d.log_lambda[ii]-d.log_lambda[ii-1] for ii in range(1,d.log_lambda.size)]).min()
-                if forest.dll is None:
-                    forest.dll = dll
+                delta_log_lambda = sp.asarray([d.log_lambda[ii]-d.log_lambda[ii-1] for ii in range(1,d.log_lambda.size)]).min()
+                if forest.delta_log_lambda is None:
+                    forest.delta_log_lambda = delta_log_lambda
                 else:
-                    forest.dll = min(dll,forest.dll)
-        forest.lmin = sp.log10( (zmin_pix+1.)*lambda_abs )-forest.dll/2.
-        forest.lmax = sp.log10( (zmax_pix+1.)*lambda_abs )+forest.dll/2.
+                    forest.delta_log_lambda = min(delta_log_lambda,forest.delta_log_lambda)
+        forest.lmin = sp.log10( (zmin_pix+1.)*lambda_abs )-forest.delta_log_lambda/2.
+        forest.lmax = sp.log10( (zmax_pix+1.)*lambda_abs )+forest.delta_log_lambda/2.
         log_lambda,st, wst = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
             for d in xcf.dels[p]:
-                bins = ((d.log_lambda-forest.lmin)/forest.dll+0.5).astype(int)
+                bins = ((d.log_lambda-forest.lmin)/forest.delta_log_lambda+0.5).astype(int)
                 d.de -= st[bins]
 
     ### Read objects

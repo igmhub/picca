@@ -6,7 +6,7 @@ from picca.utils import userprint
 
 ## mean continuum
 def mc(data):
-    nmc = int((forest.lmax_rest-forest.lmin_rest)/forest.dll)+1
+    nmc = int((forest.lmax_rest-forest.lmin_rest)/forest.delta_log_lambda)+1
     mcont = np.zeros(nmc)
     wcont = np.zeros(nmc)
     log_lambda = forest.lmin_rest + (np.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
@@ -124,8 +124,8 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 
 
 def stack(data,delta=False):
-    nstack = int((forest.lmax-forest.lmin)/forest.dll)+1
-    log_lambda = forest.lmin + np.arange(nstack)*forest.dll
+    nstack = int((forest.lmax-forest.lmin)/forest.delta_log_lambda)+1
+    log_lambda = forest.lmin + np.arange(nstack)*forest.delta_log_lambda
     st = np.zeros(nstack)
     wst = np.zeros(nstack)
     for p in sorted(list(data.keys())):
@@ -141,7 +141,7 @@ def stack(data,delta=False):
                 var = 1./d.iv/d.co**2
                 we = 1./variance(var,eta,var_lss,fudge)
 
-            bins=((d.log_lambda-forest.lmin)/forest.dll+0.5).astype(int)
+            bins=((d.log_lambda-forest.lmin)/forest.delta_log_lambda+0.5).astype(int)
             c = sp.bincount(bins,weights=de*we)
             st[:len(c)]+=c
             c = sp.bincount(bins,weights=we)

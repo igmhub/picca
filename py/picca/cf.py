@@ -458,14 +458,14 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 n1d = None
 lmin = None
 lmax = None
-dll = None
+delta_log_lambda = None
 def cf1d(pix):
     xi1d = np.zeros(n1d**2)
     we1d = np.zeros(n1d**2)
     nb1d = np.zeros(n1d**2,dtype=sp.int64)
 
     for d in data[pix]:
-        bins = ((d.log_lambda-lmin)/dll+0.5).astype(int)
+        bins = ((d.log_lambda-lmin)/delta_log_lambda+0.5).astype(int)
         bins = bins + n1d*bins[:,None]
         wde = d.we*d.de
         we = d.we
@@ -483,14 +483,14 @@ def x_forest_cf1d(pix):
     nb1d = np.zeros(n1d**2,dtype=sp.int64)
 
     for d1 in data[pix]:
-        bins1 = ((d1.log_lambda-lmin)/dll+0.5).astype(int)
+        bins1 = ((d1.log_lambda-lmin)/delta_log_lambda+0.5).astype(int)
         wde1 = d1.we*d1.de
         we1 = d1.we
 
         d2thingid = [d2.thingid for d2 in data2[pix]]
         neighs = data2[pix][sp.in1d(d2thingid,[d1.thingid])]
         for d2 in neighs:
-            bins2 = ((d2.log_lambda-lmin)/dll+0.5).astype(int)
+            bins2 = ((d2.log_lambda-lmin)/delta_log_lambda+0.5).astype(int)
             bins = bins1 + n1d*bins2[:,None]
             wde2 = d2.we*d2.de
             we2 = d2.we
