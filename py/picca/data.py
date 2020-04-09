@@ -31,13 +31,13 @@ class Qso:
 
     def __xor__(self,data):
         try:
-            x = sp.array([d.x_cart for d in data])
-            y = sp.array([d.y_cart for d in data])
-            z = sp.array([d.z_cart for d in data])
+            x_cart = sp.array([d.x_cart for d in data])
+            y_cart= sp.array([d.y_cart for d in data])
+            z_cart = sp.array([d.z_cart for d in data])
             ra = sp.array([d.ra for d in data])
             dec = sp.array([d.dec for d in data])
 
-            cos = x*self.x_cart+y*self.y_cart+z*self.z_cart
+            cos = x_cart*self.x_cart+y_cart*self.y_cart+z_cart*self.z_cart
             w = cos>=1.
             if w.sum()!=0:
                 userprint('WARNING: {} pairs have cos>=1.'.format(w.sum()))
@@ -52,13 +52,13 @@ class Qso:
             if w.sum()!=0:
                 angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cos_dec*(ra[w]-self.ra))**2 )
         except:
-            x = data.x_cart
-            y = data.y_cart
-            z = data.z_cart
+            x_cart = data.x_cart
+            y_cart = data.y_cart
+            z_cart = data.z_cart
             ra = data.ra
             dec = data.dec
 
-            cos = x*self.x_cart+y*self.y_cart+z*self.z_cart
+            cos = x_cart*self.x_cart+y_cart*self.y_cart+z_cart*self.z_cart
             if cos>=1.:
                 userprint('WARNING: 1 pair has cosinus>=1.')
                 cos = 1.
