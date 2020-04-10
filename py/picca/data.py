@@ -13,6 +13,7 @@ def variance(var,eta,var_lss,fudge):
 
 class Qso:
     def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid):
+        
         self.ra = ra
         self.dec = dec
 
@@ -72,9 +73,9 @@ class Qso:
 
 class Forest(Qso):
 
-    lmin = None
+    log_lambda_min = None
     lmax = None
-    lmin_rest = None
+    log_lambda_min_rest_frame = None
     lmax_rest = None
     rebin = None
     delta_log_lambda = None
@@ -114,11 +115,11 @@ class Forest(Qso):
                 diff /= corr
 
         ## cut to specified range
-        bins = sp.floor((log_lambda-Forest.lmin)/Forest.delta_log_lambda+0.5).astype(int)
-        log_lambda = Forest.lmin + bins*Forest.delta_log_lambda
-        w = (log_lambda>=Forest.lmin)
+        bins = sp.floor((log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
+        log_lambda = Forest.log_lambda_min + bins*Forest.delta_log_lambda
+        w = (log_lambda>=Forest.log_lambda_min)
         w = w & (log_lambda<Forest.lmax)
-        w = w & (log_lambda-sp.log10(1.+self.z_qso)>Forest.lmin_rest)
+        w = w & (log_lambda-sp.log10(1.+self.z_qso)>Forest.log_lambda_min_rest_frame)
         w = w & (log_lambda-sp.log10(1.+self.z_qso)<Forest.lmax_rest)
         w = w & (iv>0.)
         if w.sum()==0:
@@ -136,7 +137,7 @@ class Forest(Qso):
             reso=reso[w]
 
         ## rebin
-        rebin_log_lambda = Forest.lmin + np.arange(bins.max()+1)*Forest.delta_log_lambda
+        rebin_log_lambda = Forest.log_lambda_min + np.arange(bins.max()+1)*Forest.delta_log_lambda
         cfl = np.zeros(bins.max()+1)
         civ = np.zeros(bins.max()+1)
         if mmef is not None:
@@ -218,8 +219,8 @@ class Forest(Qso):
         if self.reso is not None:
             dic['reso'] = sp.append(self.reso, d.reso)
 
-        bins = sp.floor((log_lambda-Forest.lmin)/Forest.delta_log_lambda+0.5).astype(int)
-        rebin_log_lambda = Forest.lmin + np.arange(bins.max()+1)*Forest.delta_log_lambda
+        bins = sp.floor((log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
+        rebin_log_lambda = Forest.log_lambda_min + np.arange(bins.max()+1)*Forest.delta_log_lambda
         civ = np.zeros(bins.max()+1)
         cciv = sp.bincount(bins,weights=iv)
         civ[:len(cciv)] += cciv
@@ -312,7 +313,7 @@ class Forest(Qso):
 
     def cont_fit(self):
         lmax = Forest.lmax_rest+sp.log10(1+self.z_qso)
-        lmin = Forest.lmin_rest+sp.log10(1+self.z_qso)
+        log_lambda_min = Forest.log_lambda_min_rest+sp.log10(1+self.z_qso)
         try:
             mc = Forest.mean_cont(self.log_lambda-sp.log10(1+self.z_qso))
         except ValueError:
@@ -328,7 +329,7 @@ class Forest(Qso):
         fudge = Forest.fudge(self.log_lambda)
 
         def model(p0,p1):
-            line = p1*(self.log_lambda-lmin)/(lmax-lmin)+p0
+            line = p1*(self.log_lambda-log_lambda_min)/(lmax-log_lambda_min)+p0
             return line*mc
 
         def chi2(p0,p1):

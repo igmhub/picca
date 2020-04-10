@@ -158,9 +158,9 @@ def main():
 
     ## init forest class
 
-    Forest.lmin = np.log10(args.lambda_min)
+    Forest.log_lambda_min = np.log10(args.lambda_min)
     Forest.lmax = np.log10(args.lambda_max)
-    Forest.lmin_rest = np.log10(args.lambda_rest_min)
+    Forest.log_lambda_min_rest = np.log10(args.lambda_rest_min)
     Forest.lmax_rest = np.log10(args.lambda_rest_max)
     Forest.rebin = args.rebin
     Forest.delta_log_lambda = args.rebin*1e-4
@@ -176,10 +176,10 @@ def main():
         args.zqso_max = max(0., args.lambda_max/args.lambda_rest_min - 1.)
         userprint("zqso_max = {}".format(args.zqso_max))
 
-    Forest.var_lss = interp1d(Forest.lmin + np.arange(2)*(Forest.lmax - Forest.lmin), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
-    Forest.eta = interp1d(Forest.lmin + np.arange(2)*(Forest.lmax - Forest.lmin), np.ones(2), fill_value="extrapolate", kind="nearest")
-    Forest.fudge = interp1d(Forest.lmin + np.arange(2)*(Forest.lmax - Forest.lmin), np.zeros(2), fill_value="extrapolate", kind="nearest")
-    Forest.mean_cont = interp1d(Forest.lmin_rest + np.arange(2)*(Forest.lmax_rest - Forest.lmin_rest), 1 + np.zeros(2))
+    Forest.var_lss = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.lmax - Forest.log_lambda_min), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
+    Forest.eta = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.lmax - Forest.log_lambda_min), np.ones(2), fill_value="extrapolate", kind="nearest")
+    Forest.fudge = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.lmax - Forest.log_lambda_min), np.zeros(2), fill_value="extrapolate", kind="nearest")
+    Forest.mean_cont = interp1d(Forest.log_lambda_min_rest + np.arange(2)*(Forest.lmax_rest - Forest.log_lambda_min_rest), 1 + np.zeros(2))
 
     ### Fix the order of the continuum fit, 0 or 1.
     if args.order:
@@ -369,7 +369,7 @@ def main():
             else:
 
                 nlss = 10 # this value is arbitrary
-                log_lambda = Forest.lmin + (np.arange(nlss)+.5)*(Forest.lmax-Forest.lmin)/nlss
+                log_lambda = Forest.log_lambda_min + (np.arange(nlss)+.5)*(Forest.lmax-Forest.log_lambda_min)/nlss
 
                 if args.use_ivar_as_weight:
                     userprint('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
