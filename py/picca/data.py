@@ -159,10 +159,12 @@ class Forest(Qso):
         delta_log_lambda: float
             Variation of the logarithm of the wavelength (in Angs) between two
             pixels
-        extinction_bv_map : dict
-            B-V extinction due to dust. Keys contain thingids of objects
-            (integers) and Values are the dust correction for the specified
-            object (array)
+        extinction_bv_map: dict
+            B-V extinction due to dust. Maps thingids (integers) to the dust
+            correction (array)
+        absorber_mask_width: float
+            Mask width on each side of the absorber central observed wavelength
+            in units of 1e4*dlog10(lambda/Angs)
     Methods:
         correct_flux: Corrects for multiplicative errors in pipeline flux
             calibration.
@@ -213,11 +215,11 @@ class Forest(Qso):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    ### map of g-band extinction to thingids for dust correction
+    # map of g-band extinction to thingids for dust correction
     extinction_bv_map = None
 
-    ## absorber pixel mask limit
-    absorber_mask = None
+    # absorber pixel mask limit
+    absorber_mask_width = None
 
     ## minumum dla transmission
     dla_mask = None
@@ -435,7 +437,7 @@ class Forest(Qso):
             return
 
         w = sp.ones(self.log_lambda.size, dtype=bool)
-        w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask
+        w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask_width
 
         ps = ['iv','log_lambda','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
