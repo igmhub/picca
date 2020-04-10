@@ -289,13 +289,18 @@ class Forest(Qso):
             reso = creso[w]/civ[w]
 
         ## Flux calibration correction
-        if not self.correct_flux is None:
+        try:
             correction = Forest.correct_flux(log_lambda)
             fl /= correction
             iv *= correction**2
-        if not self.correct_ivar is None:
+        except NotImplementedError:
+            pass
+        try:
             correction = Forest.correct_ivar(log_lambda)
             iv /= correction
+        except NotImplementedError:
+            pass
+        
 
         self.Fbar = None
         self.T_dla = None
