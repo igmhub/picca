@@ -70,7 +70,7 @@ class Qso:
                 angl = sp.sqrt( (dec-self.dec)**2 + (self.cos_dec*(ra-self.ra))**2 )
         return angl
 
-class forest(Qso):
+class Forest(Qso):
 
     lmin = None
     lmax = None
@@ -114,12 +114,12 @@ class forest(Qso):
                 diff /= corr
 
         ## cut to specified range
-        bins = sp.floor((log_lambda-forest.lmin)/forest.delta_log_lambda+0.5).astype(int)
-        log_lambda = forest.lmin + bins*forest.delta_log_lambda
-        w = (log_lambda>=forest.lmin)
-        w = w & (log_lambda<forest.lmax)
-        w = w & (log_lambda-sp.log10(1.+self.z_qso)>forest.lmin_rest)
-        w = w & (log_lambda-sp.log10(1.+self.z_qso)<forest.lmax_rest)
+        bins = sp.floor((log_lambda-Forest.lmin)/Forest.delta_log_lambda+0.5).astype(int)
+        log_lambda = Forest.lmin + bins*Forest.delta_log_lambda
+        w = (log_lambda>=Forest.lmin)
+        w = w & (log_lambda<Forest.lmax)
+        w = w & (log_lambda-sp.log10(1.+self.z_qso)>Forest.lmin_rest)
+        w = w & (log_lambda-sp.log10(1.+self.z_qso)<Forest.lmax_rest)
         w = w & (iv>0.)
         if w.sum()==0:
             return
@@ -136,7 +136,7 @@ class forest(Qso):
             reso=reso[w]
 
         ## rebin
-        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.delta_log_lambda
+        rebin_log_lambda = Forest.lmin + np.arange(bins.max()+1)*Forest.delta_log_lambda
         cfl = np.zeros(bins.max()+1)
         civ = np.zeros(bins.max()+1)
         if mmef is not None:
@@ -218,8 +218,8 @@ class forest(Qso):
         if self.reso is not None:
             dic['reso'] = sp.append(self.reso, d.reso)
 
-        bins = sp.floor((log_lambda-forest.lmin)/forest.delta_log_lambda+0.5).astype(int)
-        rebin_log_lambda = forest.lmin + np.arange(bins.max()+1)*forest.delta_log_lambda
+        bins = sp.floor((log_lambda-Forest.lmin)/Forest.delta_log_lambda+0.5).astype(int)
+        rebin_log_lambda = Forest.lmin + np.arange(bins.max()+1)*Forest.delta_log_lambda
         civ = np.zeros(bins.max()+1)
         cciv = sp.bincount(bins,weights=iv)
         civ[:len(cciv)] += cciv
@@ -284,7 +284,7 @@ class forest(Qso):
 
         self.T_dla *= dla(self,zabs,nhi).t
 
-        w = self.T_dla>forest.dla_mask
+        w = self.T_dla>Forest.dla_mask
         if not mask is None:
             for l in mask:
                 w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
@@ -301,7 +301,7 @@ class forest(Qso):
             return
 
         w = sp.ones(self.log_lambda.size, dtype=bool)
-        w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>forest.absorber_mask
+        w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask
 
         ps = ['iv','log_lambda','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -311,10 +311,10 @@ class forest(Qso):
         return
 
     def cont_fit(self):
-        lmax = forest.lmax_rest+sp.log10(1+self.z_qso)
-        lmin = forest.lmin_rest+sp.log10(1+self.z_qso)
+        lmax = Forest.lmax_rest+sp.log10(1+self.z_qso)
+        lmin = Forest.lmin_rest+sp.log10(1+self.z_qso)
         try:
-            mc = forest.mean_cont(self.log_lambda-sp.log10(1+self.z_qso))
+            mc = Forest.mean_cont(self.log_lambda-sp.log10(1+self.z_qso))
         except ValueError:
             raise Exception
 
@@ -323,9 +323,9 @@ class forest(Qso):
         if not self.T_dla is None:
             mc*=self.T_dla
 
-        var_lss = forest.var_lss(self.log_lambda)
-        eta = forest.eta(self.log_lambda)
-        fudge = forest.fudge(self.log_lambda)
+        var_lss = Forest.var_lss(self.log_lambda)
+        eta = Forest.eta(self.log_lambda)
+        fudge = Forest.fudge(self.log_lambda)
 
         def model(p0,p1):
             line = p1*(self.log_lambda-lmin)/(lmax-lmin)+p0

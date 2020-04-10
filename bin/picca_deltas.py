@@ -13,7 +13,7 @@ import fitsio
 import numpy as np
 from scipy.interpolate import interp1d
 
-from picca.data import forest, delta
+from picca.data import Forest, delta
 from picca import prep_del, io, constants
 from picca.utils import userprint
 
@@ -158,15 +158,15 @@ def main():
 
     ## init forest class
 
-    forest.lmin = np.log10(args.lambda_min)
-    forest.lmax = np.log10(args.lambda_max)
-    forest.lmin_rest = np.log10(args.lambda_rest_min)
-    forest.lmax_rest = np.log10(args.lambda_rest_max)
-    forest.rebin = args.rebin
-    forest.delta_log_lambda = args.rebin*1e-4
+    Forest.lmin = np.log10(args.lambda_min)
+    Forest.lmax = np.log10(args.lambda_max)
+    Forest.lmin_rest = np.log10(args.lambda_rest_min)
+    Forest.lmax_rest = np.log10(args.lambda_rest_max)
+    Forest.rebin = args.rebin
+    Forest.delta_log_lambda = args.rebin*1e-4
     ## minumum dla transmission
-    forest.dla_mask = args.dla_mask
-    forest.absorber_mask = args.absorber_mask
+    Forest.dla_mask = args.dla_mask
+    Forest.absorber_mask = args.absorber_mask
 
     ### Find the redshift range
     if args.zqso_min is None:
@@ -176,10 +176,10 @@ def main():
         args.zqso_max = max(0., args.lambda_max/args.lambda_rest_min - 1.)
         userprint("zqso_max = {}".format(args.zqso_max))
 
-    forest.var_lss = interp1d(forest.lmin + np.arange(2)*(forest.lmax - forest.lmin), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
-    forest.eta = interp1d(forest.lmin + np.arange(2)*(forest.lmax - forest.lmin), np.ones(2), fill_value="extrapolate", kind="nearest")
-    forest.fudge = interp1d(forest.lmin + np.arange(2)*(forest.lmax - forest.lmin), np.zeros(2), fill_value="extrapolate", kind="nearest")
-    forest.mean_cont = interp1d(forest.lmin_rest + np.arange(2)*(forest.lmax_rest - forest.lmin_rest), 1 + np.zeros(2))
+    Forest.var_lss = interp1d(Forest.lmin + np.arange(2)*(Forest.lmax - Forest.lmin), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
+    Forest.eta = interp1d(Forest.lmin + np.arange(2)*(Forest.lmax - Forest.lmin), np.ones(2), fill_value="extrapolate", kind="nearest")
+    Forest.fudge = interp1d(Forest.lmin + np.arange(2)*(Forest.lmax - Forest.lmin), np.zeros(2), fill_value="extrapolate", kind="nearest")
+    Forest.mean_cont = interp1d(Forest.lmin_rest + np.arange(2)*(Forest.lmax_rest - Forest.lmin_rest), 1 + np.zeros(2))
 
     ### Fix the order of the continuum fit, 0 or 1.
     if args.order:
@@ -194,7 +194,7 @@ def main():
             ll_st = vac[1]['loglam'][:]
             st = vac[1]['stack'][:]
             w = (st != 0.)
-            forest.correc_flux = interp1d(ll_st[w], st[w], fill_value="extrapolate", kind="nearest")
+            Forest.correc_flux = interp1d(ll_st[w], st[w], fill_value="extrapolate", kind="nearest")
             vac.close()
         except (OSError, ValueError):
             userprint("ERROR: Error while reading flux_calib file {}".format(args.flux_calib))
@@ -206,7 +206,7 @@ def main():
             vac = fitsio.FITS(args.ivar_calib)
             log_lambda = vac[2]['LOGLAM'][:]
             eta = vac[2]['ETA'][:]
-            forest.correc_ivar = interp1d(log_lambda, eta, fill_value="extrapolate", kind="nearest")
+            Forest.correc_ivar = interp1d(log_lambda, eta, fill_value="extrapolate", kind="nearest")
             vac.close()
         except (OSError, ValueError):
             userprint("ERROR: Error while reading ivar_calib file {}".format(args.ivar_calib))
@@ -215,7 +215,7 @@ def main():
     ### Apply dust correction
     if not args.dust_map is None:
         userprint("applying dust correction")
-        forest.ebv_map = io.read_dust_map(args.dust_map)
+        Forest.ebv_map = io.read_dust_map(args.dust_map)
 
     nit = args.nit
 
@@ -355,21 +355,21 @@ def main():
 
         if it < nit-1:
             ll_rest, mc, wmc = prep_del.mc(data)
-            forest.mean_cont = interp1d(ll_rest[wmc > 0.], forest.mean_cont(ll_rest[wmc > 0.])*mc[wmc > 0.], fill_value="extrapolate")
+            Forest.mean_cont = interp1d(ll_rest[wmc > 0.], Forest.mean_cont(ll_rest[wmc > 0.])*mc[wmc > 0.], fill_value="extrapolate")
             if not (args.use_ivar_as_weight or args.use_constant_weight):
                 log_lambda, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
                     count, nqsos, chi2, err_eta, err_vlss, err_fudge = \
                         prep_del.var_lss(data, (args.eta_min, args.eta_max), (args.vlss_min, args.vlss_max))
-                forest.eta = interp1d(log_lambda[nb_pixels > 0], eta[nb_pixels > 0],
+                Forest.eta = interp1d(log_lambda[nb_pixels > 0], eta[nb_pixels > 0],
                                       fill_value="extrapolate", kind="nearest")
-                forest.var_lss = interp1d(log_lambda[nb_pixels > 0], vlss[nb_pixels > 0.],
+                Forest.var_lss = interp1d(log_lambda[nb_pixels > 0], vlss[nb_pixels > 0.],
                                           fill_value="extrapolate", kind="nearest")
-                forest.fudge = interp1d(log_lambda[nb_pixels > 0], fudge[nb_pixels > 0],
+                Forest.fudge = interp1d(log_lambda[nb_pixels > 0], fudge[nb_pixels > 0],
                                         fill_value="extrapolate", kind="nearest")
             else:
 
                 nlss = 10 # this value is arbitrary
-                log_lambda = forest.lmin + (np.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
+                log_lambda = Forest.lmin + (np.arange(nlss)+.5)*(Forest.lmax-Forest.lmin)/nlss
 
                 if args.use_ivar_as_weight:
                     userprint('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
@@ -394,9 +394,9 @@ def main():
                 count = np.zeros((nlss, nlss))
                 nqsos = np.zeros((nlss, nlss))
 
-                forest.eta = interp1d(log_lambda, eta, fill_value='extrapolate', kind='nearest')
-                forest.var_lss = interp1d(log_lambda, vlss, fill_value='extrapolate', kind='nearest')
-                forest.fudge = interp1d(log_lambda, fudge, fill_value='extrapolate', kind='nearest')
+                Forest.eta = interp1d(log_lambda, eta, fill_value='extrapolate', kind='nearest')
+                Forest.var_lss = interp1d(log_lambda, vlss, fill_value='extrapolate', kind='nearest')
+                Forest.fudge = interp1d(log_lambda, fudge, fill_value='extrapolate', kind='nearest')
 
 
     ll_st, st, wst = prep_del.stack(data)
@@ -409,7 +409,7 @@ def main():
     hd["FITORDER"] = args.order
     res.write([ll_st, st, wst], names=['loglam', 'stack', 'weight'], header=hd, extname='STACK')
     res.write([log_lambda, eta, vlss, fudge, nb_pixels], names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'], extname='WEIGHT')
-    res.write([ll_rest, forest.mean_cont(ll_rest), wmc], names=['loglam_rest', 'mean_cont', 'weight'], extname='CONT')
+    res.write([ll_rest, Forest.mean_cont(ll_rest), wmc], names=['loglam_rest', 'mean_cont', 'weight'], extname='CONT')
     var = np.broadcast_to(var.reshape(1, -1), var_del.shape)
     res.write([var, var_del, var2_del, count, nqsos, chi2], names=['var_pipe', 'var_del', 'var2_del', 'count', 'nqsos', 'chi2'], extname='VAR')
     res.close()
@@ -419,7 +419,7 @@ def main():
     deltas = {}
     data_bad_cont = []
     for p in sorted(data.keys()):
-        deltas[p] = [delta.from_forest(d, st, forest.var_lss, forest.eta, forest.fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
+        deltas[p] = [delta.from_forest(d, st, Forest.var_lss, Forest.eta, Forest.fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:

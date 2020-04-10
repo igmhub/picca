@@ -9,7 +9,7 @@ import os.path
 import copy
 
 from picca.utils import userprint
-from picca.data import forest, delta, Qso
+from picca.data import Forest, delta, Qso
 from picca.prep_Pk1D import exp_diff, spectral_resolution, spectral_resolution_desi
 
 ## use a metadata class to simplify things
@@ -373,7 +373,7 @@ def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=
             else:
                 diff = None
                 reso = None
-            deltas = forest(log_lambda,fl,iv, t, r, d, z, p, m, f,order,diff=diff,reso=reso)
+            deltas = Forest(log_lambda,fl,iv, t, r, d, z, p, m, f,order,diff=diff,reso=reso)
             if t_delta is None:
                 t_delta = deltas
             else:
@@ -411,7 +411,7 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
         f_mean_tr = h.read_header()["MEANFLUX"]
         cont = h["continuum"][:]
         mef = f_mean_tr * cont
-        d = forest(log_lambda,fl,iv, t, r, d, z, p, m, f,order, diff,reso, mef)
+        d = Forest(log_lambda,fl,iv, t, r, d, z, p, m, f,order, diff,reso, mef)
         pix_data.append(d)
 
     hdu.close()
@@ -454,7 +454,7 @@ def read_from_pix(in_dir,pix,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,log=No
                     log.write("{} missing from pixel {}\n".format(t,pix))
                 userprint("{} missing from pixel {}".format(t,pix))
                 continue
-            d = forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f,order)
+            d = Forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f,order)
 
             if log is not None:
                 log.write("{} read\n".format(t))
@@ -553,7 +553,7 @@ def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, ord
                 z = meta.z_qso
                 f = meta.fiberid
                 order = meta.order
-                d = forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
+                d = Forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
                 if t in pix_data:
                     pix_data[t] += d
                 else:
@@ -672,7 +672,7 @@ def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, orde
             o = meta.order
 
             i = meta.fiberid-1
-            d = forest(llam,flux[i],ivar[i], t, r, d, z, p, m, f, o)
+            d = Forest(llam,flux[i],ivar[i], t, r, d, z, p, m, f, o)
             if t in pix_data:
                 pix_data[t] += d
             else:
@@ -762,7 +762,7 @@ def read_from_desi(nside,in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1
                 else:
                     reso_in_km_per_s = None
                     diff = None
-                td = forest(tspecData['log_lambda'],fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
+                td = Forest(tspecData['log_lambda'],fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
                     p,m,f,order,diff,reso_in_km_per_s)
                 if d is None:
                     d = copy.deepcopy(td)
