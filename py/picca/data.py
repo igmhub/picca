@@ -174,6 +174,8 @@ class Forest(Qso):
         correct_ivar: Corrects for multiplicative errors in pipeline inverse
             variance calibration.
         var_lss: Computes the pixel variance due to the Large Scale Strucure
+        eta: Computes the correction factor to the contribution of the pipeline
+            estimate of the instrumental noise to the variance.
     """
     log_lambda_min = None
     log_lambda_max = None
@@ -246,7 +248,28 @@ class Forest(Qso):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    eta = None
+    @classmethod
+    def eta(cls, lol_lambda):
+        # TODO: update reference to DR16 paper
+        """Computes the correction factor to the contribution of the pipeline
+        estimate of the instrumental noise to the variance.
+
+        See equation 4 of du Mas des Bourboux et al. In prep. for details.
+
+        Empty function to be loaded at run-time.
+
+        Args:
+            log_lambda: float
+                Array containing the logarithm of the wavelengths (in Angs)
+
+        Returns:
+            An array with the correction
+
+        Raises:
+            NotImplementedError: Function was not specified
+        """
+        raise NotImplementedError("Function should be specified at run-time")
+
     mean_cont = None
 
     ## quality variables
