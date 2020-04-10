@@ -180,7 +180,7 @@ class Forest(Qso):
         Raises:
             NotImplementedError: Function was not specified
         """
-        return None
+        raise NotImplementedError("Function should be specified at run-time")
 
     ### Correction function for multiplicative errors in inverse pipeline variance calibration
     correc_ivar = None
