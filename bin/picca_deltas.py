@@ -194,7 +194,7 @@ def main():
             ll_st = vac[1]['loglam'][:]
             st = vac[1]['stack'][:]
             w = (st != 0.)
-            Forest.correc_flux = interp1d(ll_st[w], st[w], fill_value="extrapolate", kind="nearest")
+            Forest.correct_flux = interp1d(ll_st[w], st[w], fill_value="extrapolate", kind="nearest")
             vac.close()
         except (OSError, ValueError):
             userprint("ERROR: Error while reading flux_calib file {}".format(args.flux_calib))

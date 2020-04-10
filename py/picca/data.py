@@ -1,4 +1,9 @@
+"""This module defines data structure to deal with line of sight data.
 
+This module provides with three classes (Qso, Forest, Delta) and one
+function (variance) to manage the line-of-sight data. See the respective
+docstrings for more details
+"""
 import numpy as np
 import scipy as sp
 from picca import constants
@@ -12,8 +17,44 @@ def variance(var,eta,var_lss,fudge):
 
 
 class Qso:
-    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid):
+    """Class to represent quasar objects.
 
+    Attributes:
+        ra: float
+            Right-ascension of the quasar (in radians)
+        dec: float
+            Declination of the quasar (in radians)
+        z_qso: float
+            Redshift of the quasar
+        plate: integer
+            Plate number of the observation
+        fiberid: integer
+            Fiberid of the observation
+        mjd: integer
+            Modified Julian Date of the observation
+        thingid: integer
+            Thingid of the observation
+        x_cart: float
+            The x coordinate when representing ra, dec in a cartesian
+            coordinate system
+        y_cart: float
+            The y coordinate when representing ra, dec in a cartesian
+            coordinate system
+        z_cart: float
+            The z coordinate when representing ra, dec in a cartesian
+            coordinate system
+        cos_dec: float
+            Cosine of the declination angle
+
+    Note that plate-fiberid-mjd is a unique identifier
+    for the quasar.
+
+    Methods:
+        __init__: Initialize class instance.
+        __xor__: Computes the angular separation between two quasars.
+    """
+    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid):
+        """Initialize class instance."""
         self.ra = ra
         self.dec = dec
 
@@ -30,7 +71,20 @@ class Qso:
         self.z_qso = z_qso
         self.thingid = thingid
 
+    # TODO: rename method, update class docstring
     def __xor__(self,data):
+        """Computes the angular separation between two quasars.
+
+        Args:
+            data: Qso or list of Qso
+                Objects with which the angular separation will
+                be computed.
+
+        Returns
+            A float or an array (depending on input data) with the angular
+            separation between this quasar and the object(s) in data
+        """
+        # case 1: data is list-like
         try:
             x_cart = sp.array([d.x_cart for d in data])
             y_cart= sp.array([d.y_cart for d in data])
@@ -52,6 +106,7 @@ class Qso:
             w = (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off)
             if w.sum()!=0:
                 angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cos_dec*(ra[w]-self.ra))**2 )
+        # case 2: data is a Qso
         except:
             x_cart = data.x_cart
             y_cart = data.y_cart
@@ -72,7 +127,37 @@ class Qso:
         return angl
 
 class Forest(Qso):
+    # TODO: revise and complete
+    """Class to represent a Lyman alpha (or other absorption) forest
 
+    This class stores the information of an absorption forest.
+    This includes the information required to extract the delta
+    field from it: flux correction, inverse variance corrections,
+    dlas, absorbers, ...
+
+    Attributes:
+
+    Class attributes:
+        log_lambda_max: float
+            Logarithm of the maximum wavelength (in Angs) to be considered in a
+            forest
+        log_lambda_min: float
+            Logarithm of the minimum wavelength (in Angs) to be considered in a
+            forest
+        log_lambda_max_rest_frame: float
+            As log_lambda_max but for rest-frame wavelength
+        log_lambda_min_rest_frame: float
+            As log_lambda_min but for rest-frame wavelength
+        rebin: integer
+            Rebin wavelength grid by combining this number of adjacent pixels
+            (iverse variance weighting)
+        delta_log_lambda: float
+            Variation of the logarithm of the wavelength (in Angs) between two
+            pixels
+
+    Methods:
+        correct_flux
+    """
     log_lambda_min = None
     log_lambda_max = None
     log_lambda_min_rest_frame = None
@@ -80,8 +165,23 @@ class Forest(Qso):
     rebin = None
     delta_log_lambda = None
 
-    ### Correction function for multiplicative errors in pipeline flux calibration
-    correc_flux = None
+    def correct_flux(lol_lambda):
+        """Correct for multiplicative errors in pipeline flux calibration.
+
+        Empty function to be loaded at run-time.
+
+        Args:
+            log_lambda: float
+                Array containing the logarithm of the wavelengths (in Angs)
+
+        Returns:
+            An array with the correction
+
+        Raises:
+            NotImplementedError: Function was not specified
+        """
+        return None
+
     ### Correction function for multiplicative errors in inverse pipeline variance calibration
     correc_ivar = None
 
@@ -169,8 +269,8 @@ class Forest(Qso):
             reso = creso[w]/civ[w]
 
         ## Flux calibration correction
-        if not self.correc_flux is None:
-            correction = self.correc_flux(log_lambda)
+        if not self.correct_flux is None:
+            correction = self.correct_flux(log_lambda)
             fl /= correction
             iv *= correction**2
         if not self.correc_ivar is None:
