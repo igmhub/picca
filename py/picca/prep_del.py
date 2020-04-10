@@ -6,13 +6,13 @@ from picca.utils import userprint
 
 ## mean continuum
 def mc(data):
-    nmc = int((Forest.lmax_rest-Forest.log_lambda_min_rest_frame)/Forest.delta_log_lambda)+1
+    nmc = int((Forest.log_lambda_max_rest_frame-Forest.log_lambda_min_rest_frame)/Forest.delta_log_lambda)+1
     mcont = np.zeros(nmc)
     wcont = np.zeros(nmc)
-    log_lambda = Forest.log_lambda_min_rest_frame + (np.arange(nmc)+.5)*(Forest.lmax_rest-Forest.log_lambda_min_rest_frame)/nmc
+    log_lambda = Forest.log_lambda_min_rest_frame + (np.arange(nmc)+.5)*(Forest.log_lambda_max_rest_frame-Forest.log_lambda_min_rest_frame)/nmc
     for p in sorted(list(data.keys())):
         for d in data[p]:
-            bins=((d.log_lambda-Forest.log_lambda_min_rest_frame-sp.log10(1+d.z_qso))/(Forest.lmax_rest-Forest.log_lambda_min_rest_frame)*nmc).astype(int)
+            bins=((d.log_lambda-Forest.log_lambda_min_rest_frame-sp.log10(1+d.z_qso))/(Forest.log_lambda_max_rest_frame-Forest.log_lambda_min_rest_frame)*nmc).astype(int)
             var_lss = Forest.var_lss(d.log_lambda)
             eta = Forest.eta(d.log_lambda)
             fudge = Forest.fudge(d.log_lambda)
@@ -37,7 +37,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     err_vlss = np.zeros(nlss)
     err_fudge = np.zeros(nlss)
     nb_pixels = np.zeros(nlss)
-    log_lambda = Forest.log_lambda_min + (np.arange(nlss)+.5)*(Forest.lmax-Forest.log_lambda_min)/nlss
+    log_lambda = Forest.log_lambda_min + (np.arange(nlss)+.5)*(Forest.log_lambda_max-Forest.log_lambda_min)/nlss
 
     nwe = 100
     vpmin = sp.log10(1e-5)
@@ -56,7 +56,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
             var_pipe = 1/d.iv/d.co**2
             w = (sp.log10(var_pipe) > vpmin) & (sp.log10(var_pipe) < vpmax)
 
-            bll = ((d.log_lambda-Forest.log_lambda_min)/(Forest.lmax-Forest.log_lambda_min)*nlss).astype(int)
+            bll = ((d.log_lambda-Forest.log_lambda_min)/(Forest.log_lambda_max-Forest.log_lambda_min)*nlss).astype(int)
             bwe = sp.floor((sp.log10(var_pipe)-vpmin)/(vpmax-vpmin)*nwe).astype(int)
 
             bll = bll[w]
@@ -124,7 +124,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 
 
 def stack(data,delta=False):
-    nstack = int((Forest.lmax-Forest.log_lambda_min)/Forest.delta_log_lambda)+1
+    nstack = int((Forest.log_lambda_max-Forest.log_lambda_min)/Forest.delta_log_lambda)+1
     log_lambda = Forest.log_lambda_min + np.arange(nstack)*Forest.delta_log_lambda
     st = np.zeros(nstack)
     wst = np.zeros(nstack)

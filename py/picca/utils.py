@@ -500,8 +500,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     ### Stack the transmission
     log_lambda_min = sp.log10(lObs_min)
-    lmax = sp.log10(lObs_max)
-    nstack = int((lmax-log_lambda_min)/delta_log_lambda)+1
+    log_lambda_max = sp.log10(lObs_max)
+    nstack = int((log_lambda_max-log_lambda_min)/delta_log_lambda)+1
     T_stack = np.zeros(nstack)
     n_stack = np.zeros(nstack)
 

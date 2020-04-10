@@ -13,7 +13,7 @@ def variance(var,eta,var_lss,fudge):
 
 class Qso:
     def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid):
-        
+
         self.ra = ra
         self.dec = dec
 
@@ -74,9 +74,9 @@ class Qso:
 class Forest(Qso):
 
     log_lambda_min = None
-    lmax = None
+    log_lambda_max = None
     log_lambda_min_rest_frame = None
-    lmax_rest = None
+    log_lambda_max_rest_frame = None
     rebin = None
     delta_log_lambda = None
 
@@ -118,9 +118,9 @@ class Forest(Qso):
         bins = sp.floor((log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
         log_lambda = Forest.log_lambda_min + bins*Forest.delta_log_lambda
         w = (log_lambda>=Forest.log_lambda_min)
-        w = w & (log_lambda<Forest.lmax)
+        w = w & (log_lambda<Forest.log_lambda_max)
         w = w & (log_lambda-sp.log10(1.+self.z_qso)>Forest.log_lambda_min_rest_frame)
-        w = w & (log_lambda-sp.log10(1.+self.z_qso)<Forest.lmax_rest)
+        w = w & (log_lambda-sp.log10(1.+self.z_qso)<Forest.log_lambda_max_rest_frame)
         w = w & (iv>0.)
         if w.sum()==0:
             return
@@ -312,8 +312,8 @@ class Forest(Qso):
         return
 
     def cont_fit(self):
-        lmax = Forest.lmax_rest+sp.log10(1+self.z_qso)
-        log_lambda_min = Forest.log_lambda_min_rest+sp.log10(1+self.z_qso)
+        log_lambda_max = Forest.log_lambda_max_rest_frame+sp.log10(1+self.z_qso)
+        log_lambda_min = Forest.log_lambda_min_rest_frame+sp.log10(1+self.z_qso)
         try:
             mc = Forest.mean_cont(self.log_lambda-sp.log10(1+self.z_qso))
         except ValueError:
@@ -329,7 +329,7 @@ class Forest(Qso):
         fudge = Forest.fudge(self.log_lambda)
 
         def model(p0,p1):
-            line = p1*(self.log_lambda-log_lambda_min)/(lmax-log_lambda_min)+p0
+            line = p1*(self.log_lambda-log_lambda_min)/(log_lambda_max-log_lambda_min)+p0
             return line*mc
 
         def chi2(p0,p1):

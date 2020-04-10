@@ -457,7 +457,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
 n1d = None
 log_lambda_min = None
-lmax = None
+log_lambda_max = None
 delta_log_lambda = None
 def cf1d(pix):
     xi1d = np.zeros(n1d**2)

@@ -123,7 +123,7 @@ if __name__ == '__main__':
                 else:
                     Forest.delta_log_lambda = min(delta_log_lambda,Forest.delta_log_lambda)
         Forest.log_lambda_min = sp.log10( (zmin_pix+1.)*lambda_abs )-Forest.delta_log_lambda/2.
-        Forest.lmax = sp.log10( (zmax_pix+1.)*lambda_abs )+Forest.delta_log_lambda/2.
+        Forest.log_lambda_max = sp.log10( (zmax_pix+1.)*lambda_abs )+Forest.delta_log_lambda/2.
         log_lambda,st, wst = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
             for d in xcf.dels[p]:

@@ -186,7 +186,7 @@ if __name__ == '__main__':
     h = fitsio.FITS(args.cf1d)
     head = h[1].read_header()
     log_lambda_min = head['LLMIN']
-    llmax = head['LLMAX']
+    log_lambda_max = head['LLMAX']
     delta_log_lambda = head['DLL']
     nv1d = h[1]['nv1d'][:]
     v1d = h[1]['v1d'][:]
