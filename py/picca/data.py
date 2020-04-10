@@ -168,7 +168,8 @@ class Forest(Qso):
     rebin = None
     delta_log_lambda = None
 
-    def correct_flux(log_lambda):
+    @classmethod
+    def correct_flux(cls, log_lambda):
         """Corrects for multiplicative errors in pipeline flux calibration.
 
         Empty function to be loaded at run-time.
@@ -185,8 +186,8 @@ class Forest(Qso):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    ### Correction function for multiplicative errors in inverse pipeline variance calibration
-    def correct_ivar(lol_lambda):
+    @classmethod
+    def correct_ivar(cls, lol_lambda):
         """Corrects for multiplicative errors in pipeline inverse variance
            calibration.
 
