@@ -225,7 +225,7 @@ class Forest(Qso):
     absorber_mask_width = None
 
     ## minumum dla transmission
-    dla_mask = None
+    dla_mask_limit = None
 
     var_lss = None
     eta = None
@@ -423,7 +423,7 @@ class Forest(Qso):
 
         self.T_dla *= dla(self,zabs,nhi).t
 
-        w = self.T_dla>Forest.dla_mask
+        w = self.T_dla>Forest.dla_mask_limit
         if not mask is None:
             for l in mask:
                 w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
