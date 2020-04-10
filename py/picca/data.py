@@ -174,8 +174,8 @@ class Forest(Qso):
         correct_ivar: Corrects for multiplicative errors in pipeline inverse
             variance calibration.
         var_lss: Computes the pixel variance due to the Large Scale Strucure
-        eta: Computes the correction factor to the contribution of the pipeline
-            estimate of the instrumental noise to the variance.
+        get_eta: Computes the correction factor to the contribution of the
+            pipeline estimate of the instrumental noise to the variance.
     """
     log_lambda_min = None
     log_lambda_max = None
@@ -249,7 +249,7 @@ class Forest(Qso):
         raise NotImplementedError("Function should be specified at run-time")
 
     @classmethod
-    def eta(cls, lol_lambda):
+    def get_eta(cls, lol_lambda):
         # TODO: update reference to DR16 paper
         """Computes the correction factor to the contribution of the pipeline
         estimate of the instrumental noise to the variance.
@@ -504,7 +504,7 @@ class Forest(Qso):
             mc*=self.T_dla
 
         var_lss = Forest.var_lss(self.log_lambda)
-        eta = Forest.eta(self.log_lambda)
+        eta = Forest.get_eta(self.log_lambda)
         fudge = Forest.fudge(self.log_lambda)
 
         def model(p0,p1):
@@ -571,12 +571,12 @@ class delta(Qso):
         self.delta_log_lambda = delta_log_lambda
 
     @classmethod
-    def from_forest(cls,f,st,var_lss,eta,fudge,mc=False):
+    def from_forest(cls,f,st,var_lss,get_eta,fudge,mc=False):
 
         log_lambda = f.log_lambda
         mst = st(log_lambda)
         var_lss = var_lss(log_lambda)
-        eta = eta(log_lambda)
+        eta = get_eta(log_lambda)
         fudge = fudge(log_lambda)
 
         #if mc is True use the mock continuum to compute the mean expected flux fraction

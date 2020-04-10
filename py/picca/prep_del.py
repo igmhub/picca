@@ -14,7 +14,7 @@ def mc(data):
         for d in data[p]:
             bins=((d.log_lambda-Forest.log_lambda_min_rest_frame-sp.log10(1+d.z_qso))/(Forest.log_lambda_max_rest_frame-Forest.log_lambda_min_rest_frame)*nmc).astype(int)
             var_lss = Forest.var_lss(d.log_lambda)
-            eta = Forest.eta(d.log_lambda)
+            eta = Forest.get_eta(d.log_lambda)
             fudge = Forest.fudge(d.log_lambda)
             var = 1./d.iv/d.co**2
             we = 1/variance(var,eta,var_lss,fudge)
@@ -136,7 +136,7 @@ def stack(data,delta=False):
             else:
                 de = d.fl/d.co
                 var_lss = Forest.var_lss(d.log_lambda)
-                eta = Forest.eta(d.log_lambda)
+                eta = Forest.get_eta(d.log_lambda)
                 fudge = Forest.fudge(d.log_lambda)
                 var = 1./d.iv/d.co**2
                 we = 1./variance(var,eta,var_lss,fudge)
