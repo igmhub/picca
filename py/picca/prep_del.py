@@ -4,29 +4,45 @@ import iminuit
 from picca.data import Forest,variance
 from picca.utils import userprint
 
-## mean continuum
-def mc(data):
-    nmc = int((Forest.log_lambda_max_rest_frame-Forest.log_lambda_min_rest_frame)/Forest.delta_log_lambda)+1
-    mcont = np.zeros(nmc)
-    wcont = np.zeros(nmc)
-    log_lambda = Forest.log_lambda_min_rest_frame + (np.arange(nmc)+.5)*(Forest.log_lambda_max_rest_frame-Forest.log_lambda_min_rest_frame)/nmc
+def compute_mean_cont(data):
+    # TODO: fix docstring
+    """Computes the mean quasar continuum over the whole sample.
+
+    Args:
+        data
+    Returns:
+        log_lambda: array
+            Logarithm of the wavelengths (in Angs).
+        mean_cont: array
+            Mean quasar continuum over the whole sample
+        wcont: array
+
+    """
+    num_bins = (int((Forest.log_lambda_max_rest_frame -
+                    Forest.log_lambda_min_rest_frame)/Forest.delta_log_lambda)
+                + 1)
+    mean_cont = np.zeros(num_bins)
+    wcont = np.zeros(num_bins)
+    log_lambda = (Forest.log_lambda_min_rest_frame + (np.arange(num_bins) + .5)
+                  *(Forest.log_lambda_max_rest_frame -
+                    Forest.log_lambda_min_rest_frame)/num_bins)
     for p in sorted(list(data.keys())):
         for d in data[p]:
-            bins=((d.log_lambda-Forest.log_lambda_min_rest_frame-sp.log10(1+d.z_qso))/(Forest.log_lambda_max_rest_frame-Forest.log_lambda_min_rest_frame)*nmc).astype(int)
+            bins=((d.log_lambda-Forest.log_lambda_min_rest_frame-sp.log10(1+d.z_qso))/(Forest.log_lambda_max_rest_frame-Forest.log_lambda_min_rest_frame)*num_bins).astype(int)
             var_lss = Forest.get_var_lss(d.log_lambda)
             eta = Forest.get_eta(d.log_lambda)
             fudge = Forest.fudge(d.log_lambda)
             var = 1./d.iv/d.co**2
             we = 1/variance(var,eta,var_lss,fudge)
             c = sp.bincount(bins,weights=d.fl/d.co*we)
-            mcont[:len(c)]+=c
+            mean_cont[:len(c)]+=c
             c = sp.bincount(bins,weights=we)
             wcont[:len(c)]+=c
 
     w=wcont>0
-    mcont[w]/=wcont[w]
-    mcont/=mcont.mean()
-    return log_lambda,mcont,wcont
+    mean_cont[w]/=wcont[w]
+    mean_cont/=mean_cont.mean()
+    return log_lambda,mean_cont,wcont
 
 def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     nlss = 20

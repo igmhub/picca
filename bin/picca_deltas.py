@@ -179,7 +179,7 @@ def main():
     Forest.get_var_lss = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
     Forest.get_eta = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), np.ones(2), fill_value="extrapolate", kind="nearest")
     Forest.fudge = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), np.zeros(2), fill_value="extrapolate", kind="nearest")
-    Forest.mean_cont = interp1d(Forest.log_lambda_min_rest_frame + np.arange(2)*(Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame), 1 + np.zeros(2))
+    Forest.get_mean_cont = interp1d(Forest.log_lambda_min_rest_frame + np.arange(2)*(Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame), 1 + np.zeros(2))
 
     ### Fix the order of the continuum fit, 0 or 1.
     if args.order:
@@ -354,8 +354,8 @@ def main():
         pool.close()
 
         if it < nit-1:
-            ll_rest, mc, wmc = prep_del.mc(data)
-            Forest.mean_cont = interp1d(ll_rest[wmc > 0.], Forest.mean_cont(ll_rest[wmc > 0.])*mc[wmc > 0.], fill_value="extrapolate")
+            ll_rest, mean_cont, wmc = prep_del.compute_mean_cont(data)
+            Forest.get_mean_cont = interp1d(ll_rest[wmc > 0.], Forest.get_mean_cont(ll_rest[wmc > 0.])*mean_cont[wmc > 0.], fill_value="extrapolate")
             if not (args.use_ivar_as_weight or args.use_constant_weight):
                 log_lambda, eta, vlss, fudge, nb_pixels, var, var_del, var2_del,\
                     count, nqsos, chi2, err_eta, err_vlss, err_fudge = \
@@ -409,7 +409,7 @@ def main():
     hd["FITORDER"] = args.order
     res.write([ll_st, st, wst], names=['loglam', 'stack', 'weight'], header=hd, extname='STACK')
     res.write([log_lambda, eta, vlss, fudge, nb_pixels], names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'], extname='WEIGHT')
-    res.write([ll_rest, Forest.mean_cont(ll_rest), wmc], names=['loglam_rest', 'mean_cont', 'weight'], extname='CONT')
+    res.write([ll_rest, Forest.get_mean_cont(ll_rest), wmc], names=['loglam_rest', 'mean_cont', 'weight'], extname='CONT')
     var = np.broadcast_to(var.reshape(1, -1), var_del.shape)
     res.write([var, var_del, var2_del, count, nqsos, chi2], names=['var_pipe', 'var_del', 'var2_del', 'count', 'nqsos', 'chi2'], extname='VAR')
     res.close()

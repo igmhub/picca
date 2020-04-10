@@ -21,30 +21,30 @@ class Qso:
 
     Attributes:
         ra: float
-            Right-ascension of the quasar (in radians)
+            Right-ascension of the quasar (in radians).
         dec: float
-            Declination of the quasar (in radians)
+            Declination of the quasar (in radians).
         z_qso: float
-            Redshift of the quasar
+            Redshift of the quasar.
         plate: integer
-            Plate number of the observation
+            Plate number of the observation.
         fiberid: integer
-            Fiberid of the observation
+            Fiberid of the observation.
         mjd: integer
-            Modified Julian Date of the observation
+            Modified Julian Date of the observation.
         thingid: integer
-            Thingid of the observation
+            Thingid of the observation.
         x_cart: float
             The x coordinate when representing ra, dec in a cartesian
-            coordinate system
+            coordinate system.
         y_cart: float
             The y coordinate when representing ra, dec in a cartesian
-            coordinate system
+            coordinate system.
         z_cart: float
             The z coordinate when representing ra, dec in a cartesian
-            coordinate system
+            coordinate system.
         cos_dec: float
-            Cosine of the declination angle
+            Cosine of the declination angle.
 
     Note that plate-fiberid-mjd is a unique identifier
     for the quasar.
@@ -82,7 +82,7 @@ class Qso:
 
         Returns
             A float or an array (depending on input data) with the angular
-            separation between this quasar and the object(s) in data
+            separation between this quasar and the object(s) in data.
         """
         # case 1: data is list-like
         try:
@@ -145,38 +145,40 @@ class Forest(Qso):
     Class attributes:
         log_lambda_max: float
             Logarithm of the maximum wavelength (in Angs) to be considered in a
-            forest
+            forest.
         log_lambda_min: float
             Logarithm of the minimum wavelength (in Angs) to be considered in a
-            forest
+            forest.
         log_lambda_max_rest_frame: float
-            As log_lambda_max but for rest-frame wavelength
+            As log_lambda_max but for rest-frame wavelength.
         log_lambda_min_rest_frame: float
-            As log_lambda_min but for rest-frame wavelength
+            As log_lambda_min but for rest-frame wavelength.
         rebin: integer
             Rebin wavelength grid by combining this number of adjacent pixels
-            (iverse variance weighting)
+            (iverse variance weighting).
         delta_log_lambda: float
             Variation of the logarithm of the wavelength (in Angs) between two
-            pixels
+            pixels.
         extinction_bv_map: dict
             B-V extinction due to dust. Maps thingids (integers) to the dust
-            correction (array)
+            correction (array).
         absorber_mask_width: float
             Mask width on each side of the absorber central observed wavelength
-            in units of 1e4*dlog10(lambda/Angs)
+            in units of 1e4*dlog10(lambda/Angs).
         dla_mask_limit: float
             Lower limit on the DLA transmission. Transmissions below this
-            number are masked
+            number are masked.
     Methods:
         correct_flux: Corrects for multiplicative errors in pipeline flux
             calibration.
         correct_ivar: Corrects for multiplicative errors in pipeline inverse
             variance calibration.
         get_var_lss: Computes the pixel variance due to the Large Scale
-            Strucure
+            Strucure.
         get_eta: Computes the correction factor to the contribution of the
             pipeline estimate of the instrumental noise to the variance.
+        get_mean_cont: Interpolates the mean quasar continuum over the whole
+            sample on the wavelength array.
     """
     log_lambda_min = None
     log_lambda_max = None
@@ -271,7 +273,27 @@ class Forest(Qso):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    mean_cont = None
+    @classmethod
+    def get_mean_cont(cls, lol_lambda):
+        # TODO: update reference to DR16 paper
+        """Interpolates the mean quasar continuum over the whole sample on
+        the wavelength array
+
+        See equation 2 of du Mas des Bourboux et al. In prep. for details.
+
+        Empty function to be loaded at run-time.
+
+        Args:
+            log_lambda: float
+                Array containing the logarithm of the wavelengths (in Angs)
+
+        Returns:
+            An array with the correction
+
+        Raises:
+            NotImplementedError: Function was not specified
+        """
+        raise NotImplementedError("Function should be specified at run-time")
 
     ## quality variables
     mean_SNR = None
@@ -495,14 +517,14 @@ class Forest(Qso):
         log_lambda_max = Forest.log_lambda_max_rest_frame+sp.log10(1+self.z_qso)
         log_lambda_min = Forest.log_lambda_min_rest_frame+sp.log10(1+self.z_qso)
         try:
-            mc = Forest.mean_cont(self.log_lambda-sp.log10(1+self.z_qso))
+            mean_cont = Forest.get_mean_cont(self.log_lambda-sp.log10(1+self.z_qso))
         except ValueError:
             raise Exception
 
         if not self.Fbar is None:
-            mc *= self.Fbar
+            mean_cont *= self.Fbar
         if not self.T_dla is None:
-            mc*=self.T_dla
+            mean_cont*=self.T_dla
 
         var_lss = Forest.get_var_lss(self.log_lambda)
         eta = Forest.get_eta(self.log_lambda)
@@ -510,7 +532,7 @@ class Forest(Qso):
 
         def model(p0,p1):
             line = p1*(self.log_lambda-log_lambda_min)/(log_lambda_max-log_lambda_min)+p0
-            return line*mc
+            return line*mean_cont
 
         def chi2(p0,p1):
             m = model(p0,p1)
