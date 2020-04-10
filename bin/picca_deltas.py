@@ -215,7 +215,7 @@ def main():
     ### Apply dust correction
     if not args.dust_map is None:
         userprint("applying dust correction")
-        Forest.ebv_map = io.read_dust_map(args.dust_map)
+        Forest.extinction_bv_map = io.read_dust_map(args.dust_map)
 
     nit = args.nit
 

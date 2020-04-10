@@ -103,9 +103,11 @@ class Qso:
                 cos[w] = -1.
             angl = sp.arccos(cos)
 
-            w = (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off)
+            w = ((np.absolute(ra-self.ra)<constants.small_angle_cut_off) &
+                (np.absolute(dec-self.dec)<constants.small_angle_cut_off))
             if w.sum()!=0:
-                angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cos_dec*(ra[w]-self.ra))**2 )
+                angl[w] = sp.sqrt((dec[w] - self.dec)**2 +
+                                  (self.cos_dec*(ra[w] - self.ra))**2)
         # case 2: data is a Qso
         except:
             x_cart = data.x_cart
@@ -122,8 +124,10 @@ class Qso:
                 userprint('WARNING: 1 pair has cosinus<=-1.')
                 cos = -1.
             angl = sp.arccos(cos)
-            if (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off):
-                angl = sp.sqrt( (dec-self.dec)**2 + (self.cos_dec*(ra-self.ra))**2 )
+            if ((np.absolute(ra-self.ra)<constants.small_angle_cut_off) &
+                (np.absolute(dec-self.dec)<constants.small_angle_cut_off)):
+                angl = sp.sqrt((dec - self.dec)**2 +
+                               (self.cos_dec*(ra - self.ra))**2)
         return angl
 
 class Forest(Qso):
@@ -136,6 +140,7 @@ class Forest(Qso):
     dlas, absorbers, ...
 
     Attributes:
+        ## Inherits from Qso ##
 
     Class attributes:
         log_lambda_max: float
@@ -154,7 +159,10 @@ class Forest(Qso):
         delta_log_lambda: float
             Variation of the logarithm of the wavelength (in Angs) between two
             pixels
-
+        extinction_bv_map : dict
+            B-V extinction due to dust. Keys contain thingids of objects
+            (integers) and Values are the dust correction for the specified
+            object (array)
     Methods:
         correct_flux: Corrects for multiplicative errors in pipeline flux
             calibration.
@@ -206,7 +214,7 @@ class Forest(Qso):
         raise NotImplementedError("Function should be specified at run-time")
 
     ### map of g-band extinction to thingids for dust correction
-    ebv_map = None
+    extinction_bv_map = None
 
     ## absorber pixel mask limit
     absorber_mask = None
@@ -227,8 +235,8 @@ class Forest(Qso):
     def __init__(self,log_lambda,fl,iv,thingid,ra,dec,z_qso,plate,mjd,fiberid,order, diff=None,reso=None, mmef = None):
         Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
 
-        if not self.ebv_map is None:
-            corr = unred(10**log_lambda,self.ebv_map[thingid])
+        if not Forest.extinction_bv_map is None:
+            corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
             fl /= corr
             iv *= corr**2
             if not diff is None:
@@ -300,7 +308,7 @@ class Forest(Qso):
             iv /= correction
         except NotImplementedError:
             pass
-        
+
 
         self.Fbar = None
         self.T_dla = None
