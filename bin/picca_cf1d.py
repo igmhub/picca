@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     ###
     cf.nside = args.nside
-    cf.log_lambda_min = sp.log10(args.log_lambda_min)
+    cf.log_lambda_min = sp.log10(args.lambda_min)
     cf.log_lambda_max = sp.log10(args.lambda_max)
     cf.delta_log_lambda = args.dll
     cf.n1d = int((cf.log_lambda_max-cf.log_lambda_min)/cf.delta_log_lambda+1)
