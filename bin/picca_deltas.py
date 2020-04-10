@@ -165,7 +165,7 @@ def main():
     Forest.rebin = args.rebin
     Forest.delta_log_lambda = args.rebin*1e-4
     ## minumum dla transmission
-    Forest.dla_mask = args.dla_mask
+    Forest.dla_mask_limit = args.dla_mask
     Forest.absorber_mask_width = args.absorber_mask
 
     ### Find the redshift range

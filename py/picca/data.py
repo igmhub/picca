@@ -165,6 +165,9 @@ class Forest(Qso):
         absorber_mask_width: float
             Mask width on each side of the absorber central observed wavelength
             in units of 1e4*dlog10(lambda/Angs)
+        dla_mask_limit: float
+            Lower limit on the DLA transmission. Transmissions below this
+            number are masked
     Methods:
         correct_flux: Corrects for multiplicative errors in pipeline flux
             calibration.
