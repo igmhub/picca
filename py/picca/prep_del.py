@@ -6,13 +6,13 @@ from picca.utils import userprint
 
 ## mean continuum
 def mc(data):
-    nmc = int((Forest.lmax_rest-Forest.log_lambda_min_rest)/Forest.delta_log_lambda)+1
+    nmc = int((Forest.lmax_rest-Forest.log_lambda_min_rest_frame)/Forest.delta_log_lambda)+1
     mcont = np.zeros(nmc)
     wcont = np.zeros(nmc)
-    log_lambda = Forest.log_lambda_min_rest + (np.arange(nmc)+.5)*(Forest.lmax_rest-Forest.log_lambda_min_rest)/nmc
+    log_lambda = Forest.log_lambda_min_rest_frame + (np.arange(nmc)+.5)*(Forest.lmax_rest-Forest.log_lambda_min_rest_frame)/nmc
     for p in sorted(list(data.keys())):
         for d in data[p]:
-            bins=((d.log_lambda-Forest.log_lambda_min_rest-sp.log10(1+d.z_qso))/(Forest.lmax_rest-Forest.log_lambda_min_rest)*nmc).astype(int)
+            bins=((d.log_lambda-Forest.log_lambda_min_rest_frame-sp.log10(1+d.z_qso))/(Forest.lmax_rest-Forest.log_lambda_min_rest_frame)*nmc).astype(int)
             var_lss = Forest.var_lss(d.log_lambda)
             eta = Forest.eta(d.log_lambda)
             fudge = Forest.fudge(d.log_lambda)
