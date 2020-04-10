@@ -173,7 +173,8 @@ class Forest(Qso):
             calibration.
         correct_ivar: Corrects for multiplicative errors in pipeline inverse
             variance calibration.
-        var_lss: Computes the pixel variance due to the Large Scale Strucure
+        get_var_lss: Computes the pixel variance due to the Large Scale
+            Strucure
         get_eta: Computes the correction factor to the contribution of the
             pipeline estimate of the instrumental noise to the variance.
     """
@@ -231,7 +232,7 @@ class Forest(Qso):
     dla_mask_limit = None
 
     @classmethod
-    def var_lss(cls, lol_lambda):
+    def get_var_lss(cls, lol_lambda):
         """Computes the pixel variance due to the Large Scale Strucure
 
         Empty function to be loaded at run-time.
@@ -503,7 +504,7 @@ class Forest(Qso):
         if not self.T_dla is None:
             mc*=self.T_dla
 
-        var_lss = Forest.var_lss(self.log_lambda)
+        var_lss = Forest.get_var_lss(self.log_lambda)
         eta = Forest.get_eta(self.log_lambda)
         fudge = Forest.fudge(self.log_lambda)
 
@@ -571,11 +572,11 @@ class delta(Qso):
         self.delta_log_lambda = delta_log_lambda
 
     @classmethod
-    def from_forest(cls,f,st,var_lss,get_eta,fudge,mc=False):
+    def from_forest(cls,f,st,get_var_lss,get_eta,fudge,mc=False):
 
         log_lambda = f.log_lambda
         mst = st(log_lambda)
-        var_lss = var_lss(log_lambda)
+        var_lss = get_var_lss(log_lambda)
         eta = get_eta(log_lambda)
         fudge = fudge(log_lambda)
 

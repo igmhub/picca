@@ -176,7 +176,7 @@ def main():
         args.zqso_max = max(0., args.lambda_max/args.lambda_rest_min - 1.)
         userprint("zqso_max = {}".format(args.zqso_max))
 
-    Forest.var_lss = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
+    Forest.get_var_lss = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
     Forest.get_eta = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), np.ones(2), fill_value="extrapolate", kind="nearest")
     Forest.fudge = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), np.zeros(2), fill_value="extrapolate", kind="nearest")
     Forest.mean_cont = interp1d(Forest.log_lambda_min_rest_frame + np.arange(2)*(Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame), 1 + np.zeros(2))
@@ -362,7 +362,7 @@ def main():
                         prep_del.var_lss(data, (args.eta_min, args.eta_max), (args.vlss_min, args.vlss_max))
                 Forest.get_eta = interp1d(log_lambda[nb_pixels > 0], eta[nb_pixels > 0],
                                       fill_value="extrapolate", kind="nearest")
-                Forest.var_lss = interp1d(log_lambda[nb_pixels > 0], vlss[nb_pixels > 0.],
+                Forest.get_var_lss = interp1d(log_lambda[nb_pixels > 0], vlss[nb_pixels > 0.],
                                           fill_value="extrapolate", kind="nearest")
                 Forest.fudge = interp1d(log_lambda[nb_pixels > 0], fudge[nb_pixels > 0],
                                         fill_value="extrapolate", kind="nearest")
@@ -395,7 +395,7 @@ def main():
                 nqsos = np.zeros((nlss, nlss))
 
                 Forest.get_eta = interp1d(log_lambda, eta, fill_value='extrapolate', kind='nearest')
-                Forest.var_lss = interp1d(log_lambda, vlss, fill_value='extrapolate', kind='nearest')
+                Forest.get_var_lss = interp1d(log_lambda, vlss, fill_value='extrapolate', kind='nearest')
                 Forest.fudge = interp1d(log_lambda, fudge, fill_value='extrapolate', kind='nearest')
 
 
@@ -419,7 +419,7 @@ def main():
     deltas = {}
     data_bad_cont = []
     for p in sorted(data.keys()):
-        deltas[p] = [delta.from_forest(d, st, Forest.var_lss, Forest.get_eta, Forest.fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
+        deltas[p] = [delta.from_forest(d, st, Forest.get_var_lss, Forest.get_eta, Forest.fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:
