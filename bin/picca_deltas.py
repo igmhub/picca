@@ -206,7 +206,7 @@ def main():
             vac = fitsio.FITS(args.ivar_calib)
             log_lambda = vac[2]['LOGLAM'][:]
             eta = vac[2]['ETA'][:]
-            Forest.correc_ivar = interp1d(log_lambda, eta, fill_value="extrapolate", kind="nearest")
+            Forest.correct_ivar = interp1d(log_lambda, eta, fill_value="extrapolate", kind="nearest")
             vac.close()
         except (OSError, ValueError):
             userprint("ERROR: Error while reading ivar_calib file {}".format(args.ivar_calib))

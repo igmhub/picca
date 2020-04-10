@@ -156,7 +156,10 @@ class Forest(Qso):
             pixels
 
     Methods:
-        correct_flux
+        correct_flux: Corrects for multiplicative errors in pipeline flux
+            calibration.
+        correct_ivar: Corrects for multiplicative errors in pipeline inverse
+            variance calibration.
     """
     log_lambda_min = None
     log_lambda_max = None
@@ -165,8 +168,8 @@ class Forest(Qso):
     rebin = None
     delta_log_lambda = None
 
-    def correct_flux(lol_lambda):
-        """Correct for multiplicative errors in pipeline flux calibration.
+    def correct_flux(log_lambda):
+        """Corrects for multiplicative errors in pipeline flux calibration.
 
         Empty function to be loaded at run-time.
 
@@ -183,7 +186,23 @@ class Forest(Qso):
         raise NotImplementedError("Function should be specified at run-time")
 
     ### Correction function for multiplicative errors in inverse pipeline variance calibration
-    correc_ivar = None
+    def correct_ivar(lol_lambda):
+        """Corrects for multiplicative errors in pipeline inverse variance
+           calibration.
+
+        Empty function to be loaded at run-time.
+
+        Args:
+            log_lambda: float
+                Array containing the logarithm of the wavelengths (in Angs)
+
+        Returns:
+            An array with the correction
+
+        Raises:
+            NotImplementedError: Function was not specified
+        """
+        raise NotImplementedError("Function should be specified at run-time")
 
     ### map of g-band extinction to thingids for dust correction
     ebv_map = None
@@ -270,11 +289,11 @@ class Forest(Qso):
 
         ## Flux calibration correction
         if not self.correct_flux is None:
-            correction = self.correct_flux(log_lambda)
+            correction = Forest.correct_flux(log_lambda)
             fl /= correction
             iv *= correction**2
-        if not self.correc_ivar is None:
-            correction = self.correc_ivar(log_lambda)
+        if not self.correct_ivar is None:
+            correction = Forest.correct_ivar(log_lambda)
             iv /= correction
 
         self.Fbar = None
