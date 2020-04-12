@@ -7,7 +7,7 @@ from picca import constants
 from picca.utils import userprint
 
 
-def split_forest(nb_part,delta_log_lambda,log_lambda,de,diff,ivar,first_pixel):
+def split_forest(nb_part,delta_log_lambda,log_lambda,de,exposures_diff,ivar,first_pixel):
 
     ll_limit=[log_lambda[first_pixel]]
     nb_bin= (len(log_lambda)-first_pixel)//nb_part
@@ -20,7 +20,7 @@ def split_forest(nb_part,delta_log_lambda,log_lambda,de,diff,ivar,first_pixel):
 
     ll_c = log_lambda.copy()
     de_c = de.copy()
-    diff_c = diff.copy()
+    diff_c = exposures_diff.copy()
     iv_c = ivar.copy()
 
     for p in range(1,nb_part) :
@@ -48,12 +48,12 @@ def split_forest(nb_part,delta_log_lambda,log_lambda,de,diff,ivar,first_pixel):
 
     return m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
 
-def rebin_diff_noise(delta_log_lambda,log_lambda,diff):
+def rebin_diff_noise(delta_log_lambda,log_lambda,exposures_diff):
 
     crebin = 3
-    if (diff.size < crebin):
-        userprint("Warning: diff.size too small for rebin")
-        return diff
+    if (exposures_diff.size < crebin):
+        userprint("Warning: exposures_diff.size too small for rebin")
+        return exposures_diff
     delta_log_lambda2 = crebin*delta_log_lambda
 
     # rebin not mixing pixels separated by masks
@@ -65,26 +65,26 @@ def rebin_diff_noise(delta_log_lambda,log_lambda,diff):
     # for n in range (1,nmax +1):
     #     bin2[n*crebin:] += sp.ones(diff.size-n*crebin)
 
-    cdiff2 = sp.bincount(bin2.astype(int),weights=diff)
+    cdiff2 = sp.bincount(bin2.astype(int),weights=exposures_diff)
     civ2 = sp.bincount(bin2.astype(int))
     w = (civ2>0)
     if (len(civ2) == 0) :
-        userprint( "Error: diff size = 0 ",diff)
+        userprint( "Error: exposures_diff size = 0 ",exposures_diff)
     diff2 = cdiff2[w]/civ2[w]*sp.sqrt(civ2[w])
-    diffout = np.zeros(diff.size)
-    nmax = len(diff)//len(diff2)
+    diffout = np.zeros(exposures_diff.size)
+    nmax = len(exposures_diff)//len(diff2)
     for n in range (nmax+1) :
-        lengthmax = min(len(diff),(n+1)*len(diff2))
+        lengthmax = min(len(exposures_diff),(n+1)*len(diff2))
         diffout[n*len(diff2):lengthmax] = diff2[:lengthmax-n*len(diff2)]
         sp.random.shuffle(diff2)
 
     return diffout
 
 
-def fill_masked_pixels(delta_log_lambda,log_lambda,delta,diff,ivar,no_apply_filling):
+def fill_masked_pixels(delta_log_lambda,log_lambda,delta,exposures_diff,ivar,no_apply_filling):
 
 
-    if no_apply_filling : return log_lambda,delta,diff,ivar,0
+    if no_apply_filling : return log_lambda,delta,exposures_diff,ivar,0
 
 
     ll_idx = log_lambda.copy()
@@ -103,7 +103,7 @@ def fill_masked_pixels(delta_log_lambda,log_lambda,delta,diff,ivar,no_apply_fill
     ll_new += log_lambda[0]
 
     diff_new = np.zeros(len(index_all))
-    diff_new[index_ok]=diff
+    diff_new[index_ok]=exposures_diff
 
     iv_new = sp.ones(len(index_all))
     iv_new *=0.0
@@ -131,7 +131,7 @@ def compute_Pk_raw(delta_log_lambda,delta,log_lambda):
     return k,Pk
 
 
-def compute_Pk_noise(delta_log_lambda,ivar,diff,log_lambda,run_noise):
+def compute_Pk_noise(delta_log_lambda,ivar,exposures_diff,log_lambda,run_noise):
 
     nb_pixels = len(ivar)
     nb_bin_FFT = nb_pixels//2 + 1
@@ -151,7 +151,7 @@ def compute_Pk_noise(delta_log_lambda,ivar,diff,log_lambda,run_noise):
 
         Pk /= float(nb_noise_exp)
 
-    _,Pk_diff = compute_Pk_raw(delta_log_lambda,diff,log_lambda) #k_diff unused, but needed
+    _,Pk_diff = compute_Pk_raw(delta_log_lambda,exposures_diff,log_lambda) #k_diff unused, but needed
 
     return Pk,Pk_diff
 

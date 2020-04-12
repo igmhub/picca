@@ -45,9 +45,9 @@ def exp_diff(file,log_lambda) :
     if (nexp_per_col%2 == 1) :
         n_even = (nexp_per_col-1)//2
         alpha = sp.sqrt(4.*n_even*(n_even+1))/nexp_per_col
-    diff = 0.5 * (fltoteven-fltotodd) * alpha ### CHECK THE * alpha (Nathalie)
+    exposures_diff = 0.5 * (fltoteven-fltotodd) * alpha ### CHECK THE * alpha (Nathalie)
 
-    return diff
+    return exposures_diff
 
 
 def spectral_resolution(wdisp,with_correction=None,fiber=None,log_lambda=None) :

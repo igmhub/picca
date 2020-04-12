@@ -366,14 +366,14 @@ def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=
 
             if pk1d is not None:
                 # compute difference between exposure
-                diff = exp_diff(h,log_lambda)
+                exposures_diff = exp_diff(h,log_lambda)
                 # compute spectral resolution
                 wdisp =  h[1]["wdisp"][:]
                 reso = spectral_resolution(wdisp,True,f,log_lambda)
             else:
-                diff = None
+                exposures_diff = None
                 reso = None
-            deltas = Forest(log_lambda,flux,ivar, t, r, d, z, p, m, f,order,diff=diff,reso=reso)
+            deltas = Forest(log_lambda,flux,ivar, t, r, d, z, p, m, f,order,exposures_diff=exposures_diff,reso=reso)
             if t_delta is None:
                 t_delta = deltas
             else:
@@ -402,7 +402,7 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
         ivar = 1.0/error**2
 
         # compute difference between exposure
-        diff = np.zeros(len(lamb))
+        exposures_diff = np.zeros(len(lamb))
         # compute spectral resolution
         wdisp =  h["psf"][:]
         reso = spectral_resolution(wdisp)
@@ -411,7 +411,7 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
         f_mean_tr = h.read_header()["MEANFLUX"]
         cont = h["continuum"][:]
         mef = f_mean_tr * cont
-        d = Forest(log_lambda,flux,ivar, t, r, d, z, p, m, f,order, diff,reso, mef)
+        d = Forest(log_lambda,flux,ivar, t, r, d, z, p, m, f,order, exposures_diff,reso, mef)
         pix_data.append(d)
 
     hdu.close()
@@ -758,12 +758,12 @@ def read_from_desi(nside,in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1
                 if not pk1d is None:
                     reso_sum = tspecData['RESO'][wt].sum(axis=0)
                     reso_in_km_per_s = spectral_resolution_desi(reso_sum,tspecData['log_lambda'])
-                    diff = np.zeros(tspecData['log_lambda'].shape)
+                    exposures_diff = np.zeros(tspecData['log_lambda'].shape)
                 else:
                     reso_in_km_per_s = None
-                    diff = None
+                    exposures_diff = None
                 td = Forest(tspecData['log_lambda'],flux,ivar,t,ra[wt][0],de[wt][0],ztable[t],
-                    p,m,f,order,diff,reso_in_km_per_s)
+                    p,m,f,order,exposures_diff,reso_in_km_per_s)
                 if d is None:
                     d = copy.deepcopy(td)
                 else:

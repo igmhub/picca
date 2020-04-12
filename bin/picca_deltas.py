@@ -451,7 +451,7 @@ def main():
                 for i in range(nbpixel):
                     line += '{} '.format(d.ivar[i])
                 for i in range(nbpixel):
-                    line += '{} '.format(d.diff[i])
+                    line += '{} '.format(d.exposures_diff[i])
                 line += ' \n'
                 out_ascii.write(line)
 
@@ -480,11 +480,11 @@ def main():
                     if args.mode == 'desi':
                         delta_log_lambda = (d.log_lambda[-1] - d.log_lambda[0])/float(len(d.log_lambda) - 1)
                     hd += [{'name':'DLL', 'value':delta_log_lambda, 'comment':'Loglam bin size [log Angstrom]'}]
-                    diff = d.diff
-                    if diff is None:
-                        diff = d.log_lambda*0
+                    exposures_diff = d.exposures_diff
+                    if exposures_diff is None:
+                        exposures_diff = d.log_lambda*0
 
-                    cols = [d.log_lambda, d.de, d.ivar, diff]
+                    cols = [d.log_lambda, d.de, d.ivar, exposures_diff]
                     names = ['LOGLAM', 'DELTA', 'IVAR', 'DIFF']
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Inverse variance', 'Difference']

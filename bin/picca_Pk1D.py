@@ -206,7 +206,7 @@ if __name__ == '__main__':
             # Split in n parts the forest
             nb_part_max = (len(d.log_lambda)-first_pixel)//nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
-            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.delta_log_lambda,d.log_lambda,d.de,d.diff,d.ivar,first_pixel)
+            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.delta_log_lambda,d.log_lambda,d.de,d.exposures_diff,d.ivar,first_pixel)
             for f in range(nb_part):
 
                 # rebin diff spectrum

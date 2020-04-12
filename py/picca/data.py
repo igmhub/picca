@@ -302,7 +302,7 @@ class Forest(Qso):
         raise NotImplementedError("Function should be specified at run-time")
 
     def __init__(self, log_lambda, flux, ivar, thingid, ra, dec, z_qso, plate,
-                 mjd, fiberid, order, diff=None, reso=None, mmef=None):
+                 mjd, fiberid, order, exposures_diff=None, reso=None, mmef=None):
         """ Initialize class instances.
 
         Args:
@@ -312,16 +312,38 @@ class Forest(Qso):
                 Array containing the flux associated to each wavelength
             ivar : array of floats
                 Array containing the inverse variance associated to each flux
+            thingis : float
+                ThingID of the observation
+            ra: float
+                Right-ascension of the quasar (in radians).
+            dec: float
+                Declination of the quasar (in radians).
+            z_qso: float
+                Redshift of the quasar.
+            plate: integer
+                Plate number of the observation.
+            mjd: integer
+                Modified Julian Date of the observation.
+            fiberid: integer
+                Fiberid of the observation.
+            order: 1 or 0
+                Renamed to make meaning more explicit
+            exposures_diff: array of floats or None - default: None
+                Difference between exposures
+            reso: or None - default: None
+
+            mmef: or None - default: None
 
         """
         Qso.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
 
+        # apply dust extinction correction
         if not Forest.extinction_bv_map is None:
             corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
             flux /= corr
             ivar *= corr**2
-            if not diff is None:
-                diff /= corr
+            if not exposures_diff is None:
+                exposures_diff /= corr
 
         ## cut to specified range
         bins = sp.floor((log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
@@ -340,8 +362,8 @@ class Forest(Qso):
         ## mmef is the mean expected flux fraction using the mock continuum
         if mmef is not None:
             mmef = mmef[w]
-        if diff is not None:
-            diff=diff[w]
+        if exposures_diff is not None:
+            exposures_diff=exposures_diff[w]
         if reso is not None:
             reso=reso[w]
 
@@ -355,8 +377,8 @@ class Forest(Qso):
         cciv = sp.bincount(bins,weights=ivar)
         if mmef is not None:
             ccmmef = sp.bincount(bins, weights=ivar*mmef)
-        if diff is not None:
-            cdiff = sp.bincount(bins,weights=ivar*diff)
+        if exposures_diff is not None:
+            rebin_exposures_diff = sp.bincount(bins,weights=ivar*exposures_diff)
         if reso is not None:
             creso = sp.bincount(bins,weights=ivar*reso)
 
@@ -372,8 +394,8 @@ class Forest(Qso):
         ivar = rebin_ivar[w]
         if mmef is not None:
             mmef = cmmef[w]/rebin_ivar[w]
-        if diff is not None:
-            diff = cdiff[w]/rebin_ivar[w]
+        if exposures_diff is not None:
+            exposures_diff = rebin_exposures_diff[w]/rebin_ivar[w]
         if reso is not None:
             reso = creso[w]/rebin_ivar[w]
 
@@ -398,12 +420,8 @@ class Forest(Qso):
         self.ivar = ivar
         self.mmef = mmef
         self.order = order
-        #if diff is not None :
-        self.diff = diff
+        self.exposures_diff = exposures_diff
         self.reso = reso
-        #else :
-        #   self.diff = np.zeros(len(log_lambda))
-        #   self.reso = sp.ones(len(log_lambda))
 
         # compute mean quality variables
         if reso is not None:
@@ -431,8 +449,8 @@ class Forest(Qso):
 
         if self.mmef is not None:
             dic['mmef'] = sp.append(self.mmef, d.mmef)
-        if self.diff is not None:
-            dic['diff'] = sp.append(self.diff, d.diff)
+        if self.exposures_diff is not None:
+            dic['exposures_diff'] = sp.append(self.exposures_diff, d.exposures_diff)
         if self.reso is not None:
             dic['reso'] = sp.append(self.reso, d.reso)
 
@@ -472,7 +490,7 @@ class Forest(Qso):
         for l in mask_RF:
             w &= (self.log_lambda-sp.log10(1.+self.z_qso)<l[0]) | (self.log_lambda-sp.log10(1.+self.z_qso)>l[1])
 
-        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -507,7 +525,7 @@ class Forest(Qso):
             for l in mask:
                 w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
 
-        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -521,7 +539,7 @@ class Forest(Qso):
         w = sp.ones(self.log_lambda.size, dtype=bool)
         w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask_width
 
-        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -593,7 +611,7 @@ class Forest(Qso):
 
 class delta(Qso):
 
-    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,ivar,diff,m_SNR,m_reso,m_z,delta_log_lambda):
+    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,ivar,exposures_diff,m_SNR,m_reso,m_z,delta_log_lambda):
 
         Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
         self.log_lambda = log_lambda
@@ -602,7 +620,7 @@ class delta(Qso):
         self.de = de
         self.order = order
         self.ivar = ivar
-        self.diff = diff
+        self.exposures_diff = exposures_diff
         self.mean_SNR = m_SNR
         self.mean_reso = m_reso
         self.mean_z = m_z
@@ -623,13 +641,13 @@ class delta(Qso):
         de = f.flux/ mef -1.
         var = 1./f.ivar/mef**2
         we = 1./variance(var,eta,var_lss,fudge)
-        diff = f.diff
-        if f.diff is not None:
-            diff /= mef
+        exposures_diff = f.exposures_diff
+        if f.exposures_diff is not None:
+            exposures_diff /= mef
         ivar = f.ivar/(eta+(eta==0))*(mef**2)
 
         return cls(f.thingid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,log_lambda,we,f.co,de,f.order,
-                   ivar,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.delta_log_lambda)
+                   ivar,exposures_diff,f.mean_SNR,f.mean_reso,f.mean_z,f.delta_log_lambda)
 
 
     @classmethod
@@ -644,7 +662,7 @@ class delta(Qso):
 
         if  Pk1D_type :
             ivar = h['IVAR'][:]
-            diff = h['DIFF'][:]
+            exposures_diff = h['DIFF'][:]
             m_SNR = head['MEANSNR']
             m_reso = head['MEANRESO']
             m_z = head['MEANZ']
@@ -653,7 +671,7 @@ class delta(Qso):
             co = None
         else :
             ivar = None
-            diff = None
+            exposures_diff = None
             m_SNR = None
             m_reso = None
             delta_log_lambda = None
@@ -675,7 +693,7 @@ class delta(Qso):
         except KeyError:
             order = 1
         return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
-                   ivar,diff,m_SNR,m_reso,m_z,delta_log_lambda)
+                   ivar,exposures_diff,m_SNR,m_reso,m_z,delta_log_lambda)
 
 
     @classmethod
@@ -697,7 +715,7 @@ class delta(Qso):
         de = sp.array(a[11:11+nbpixel]).astype(float)
         log_lambda = sp.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
         ivar = sp.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
-        diff = sp.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
+        exposures_diff = sp.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
 
 
         thingid = 0
@@ -706,7 +724,7 @@ class delta(Qso):
         co = None
 
         return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
-                   ivar,diff,m_SNR,m_reso,m_z,delta_log_lambda)
+                   ivar,exposures_diff,m_SNR,m_reso,m_z,delta_log_lambda)
 
     @staticmethod
     def from_image(f):
@@ -736,13 +754,13 @@ class delta(Qso):
             lam = log_lambda[w]
 
             order = 1
-            diff = None
+            exposures_diff = None
             m_SNR = None
             m_reso = None
             delta_log_lambda = None
             m_z = None
 
-            deltas.append(delta(thingid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,aux_ivar,None,delt,order,ivar,diff,m_SNR,m_reso,m_z,delta_log_lambda))
+            deltas.append(delta(thingid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,aux_ivar,None,delt,order,ivar,exposures_diff,m_SNR,m_reso,m_z,delta_log_lambda))
 
         h.close()
         return deltas
