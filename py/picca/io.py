@@ -361,7 +361,7 @@ def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=
                 continue
             log.write("{} read\n".format(fin))
             log_lambda = h[1]["loglam"][:]
-            fl = h[1]["flux"][:]
+            flux = h[1]["flux"][:]
             iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
 
             if pk1d is not None:
@@ -373,7 +373,7 @@ def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=
             else:
                 diff = None
                 reso = None
-            deltas = Forest(log_lambda,fl,iv, t, r, d, z, p, m, f,order,diff=diff,reso=reso)
+            deltas = Forest(log_lambda,flux,iv, t, r, d, z, p, m, f,order,diff=diff,reso=reso)
             if t_delta is None:
                 t_delta = deltas
             else:
@@ -397,7 +397,7 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
         log.write("file: {} hdu {} read  \n".format(fin,h))
         lamb = h["wavelength"][:]
         log_lambda = sp.log10(lamb)
-        fl = h["flux"][:]
+        flux = h["flux"][:]
         error =h["error"][:]
         iv = 1.0/error**2
 
@@ -411,7 +411,7 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
         f_mean_tr = h.read_header()["MEANFLUX"]
         cont = h["continuum"][:]
         mef = f_mean_tr * cont
-        d = Forest(log_lambda,fl,iv, t, r, d, z, p, m, f,order, diff,reso, mef)
+        d = Forest(log_lambda,flux,iv, t, r, d, z, p, m, f,order, diff,reso, mef)
         pix_data.append(d)
 
     hdu.close()

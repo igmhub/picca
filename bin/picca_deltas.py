@@ -317,11 +317,11 @@ def main():
                 log.write("INFO: Rejected {} due to forest too short\n".format(d.thingid))
                 continue
 
-            if np.isnan((d.fl*d.iv).sum()):
+            if np.isnan((d.flux*d.iv).sum()):
                 log.write("INFO: Rejected {} due to nan found\n".format(d.thingid))
                 continue
 
-            if(args.use_constant_weight and (d.fl.mean() <= 0.0 or d.mean_SNR <= 1.0)):
+            if(args.use_constant_weight and (d.flux.mean() <= 0.0 or d.mean_SNR <= 1.0)):
                 log.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(d.thingid))
                 continue
 

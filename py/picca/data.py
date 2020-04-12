@@ -141,6 +141,10 @@ class Forest(Qso):
 
     Attributes:
         ## Inherits from Qso ##
+        log_lambda : array of floats
+            Array containing the logarithm of the wavelengths (in Angs)
+        flux : array of floats
+            Array containing the flux associated to each wavelength
 
     Class attributes:
         log_lambda_max: float
@@ -296,17 +300,26 @@ class Forest(Qso):
         raise NotImplementedError("Function should be specified at run-time")
 
     ## quality variables
-    mean_SNR = None
-    mean_reso = None
-    mean_z = None
+    #mean_SNR = None
+    #mean_reso = None
+    #mean_z = None
 
 
-    def __init__(self,log_lambda,fl,iv,thingid,ra,dec,z_qso,plate,mjd,fiberid,order, diff=None,reso=None, mmef = None):
+    def __init__(self, log_lambda, flux, iv, thingid, ra, dec, z_qso, plate, mjd, fiberid, order, diff=None, reso=None, mmef=None):
+        """ Initialize class instances.
+
+        Args:
+            log_lambda : array of floats
+                Array containing the logarithm of the wavelengths (in Angs)
+            flux : array of floats
+                Array containing the flux associated to each wavelength
+
+        """
         Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
 
         if not Forest.extinction_bv_map is None:
             corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
-            fl /= corr
+            flux /= corr
             iv *= corr**2
             if not diff is None:
                 diff /= corr
@@ -323,7 +336,7 @@ class Forest(Qso):
             return
         bins = bins[w]
         log_lambda = log_lambda[w]
-        fl = fl[w]
+        flux = flux[w]
         iv = iv[w]
         ## mmef is the mean expected flux fraction using the mock continuum
         if mmef is not None:
@@ -335,11 +348,11 @@ class Forest(Qso):
 
         ## rebin
         rebin_log_lambda = Forest.log_lambda_min + np.arange(bins.max()+1)*Forest.delta_log_lambda
-        cfl = np.zeros(bins.max()+1)
+        cflux = np.zeros(bins.max()+1)
         civ = np.zeros(bins.max()+1)
         if mmef is not None:
             cmmef = np.zeros(bins.max()+1)
-        ccfl = sp.bincount(bins,weights=iv*fl)
+        ccfl = sp.bincount(bins,weights=iv*flux)
         cciv = sp.bincount(bins,weights=iv)
         if mmef is not None:
             ccmmef = sp.bincount(bins, weights=iv*mmef)
@@ -348,7 +361,7 @@ class Forest(Qso):
         if reso is not None:
             creso = sp.bincount(bins,weights=iv*reso)
 
-        cfl[:len(ccfl)] += ccfl
+        cflux[:len(ccfl)] += ccfl
         civ[:len(cciv)] += cciv
         if mmef is not None:
             cmmef[:len(ccmmef)] += ccmmef
@@ -356,7 +369,7 @@ class Forest(Qso):
         if w.sum()==0:
             return
         log_lambda = rebin_log_lambda[w]
-        fl = cfl[w]/civ[w]
+        flux = cflux[w]/civ[w]
         iv = civ[w]
         if mmef is not None:
             mmef = cmmef[w]/civ[w]
@@ -368,7 +381,7 @@ class Forest(Qso):
         ## Flux calibration correction
         try:
             correction = Forest.correct_flux(log_lambda)
-            fl /= correction
+            flux /= correction
             iv *= correction**2
         except NotImplementedError:
             pass
@@ -382,7 +395,7 @@ class Forest(Qso):
         self.Fbar = None
         self.T_dla = None
         self.log_lambda = log_lambda
-        self.fl = fl
+        self.flux = flux
         self.iv = iv
         self.mmef = mmef
         self.order = order
@@ -397,7 +410,7 @@ class Forest(Qso):
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
 
         err = 1.0/sp.sqrt(iv)
-        SNR = fl/err
+        SNR = flux/err
         self.mean_SNR = sum(SNR)/float(len(SNR))
         lam_lya = constants.absorber_IGM["LYA"]
         self.mean_z = (sp.power(10.,log_lambda[len(log_lambda)-1])+sp.power(10.,log_lambda[0]))/2./lam_lya -1.0
@@ -411,7 +424,7 @@ class Forest(Qso):
         dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
 
         log_lambda = sp.append(self.log_lambda,d.log_lambda)
-        dic['fl'] = sp.append(self.fl, d.fl)
+        dic['flux'] = sp.append(self.flux, d.flux)
         iv = sp.append(self.iv,d.iv)
 
         if self.mmef is not None:
@@ -440,7 +453,7 @@ class Forest(Qso):
         if self.reso is not None:
             self.mean_reso = self.reso.mean()
         err = 1./sp.sqrt(self.iv)
-        SNR = self.fl/err
+        SNR = self.flux/err
         self.mean_SNR = SNR.mean()
         lam_lya = constants.absorber_IGM["LYA"]
         self.mean_z = (sp.power(10.,log_lambda[len(log_lambda)-1])+sp.power(10.,log_lambda[0]))/2./lam_lya -1.0
@@ -457,7 +470,7 @@ class Forest(Qso):
         for l in mask_RF:
             w &= (self.log_lambda-sp.log10(1.+self.z_qso)<l[0]) | (self.log_lambda-sp.log10(1.+self.z_qso)>l[1])
 
-        ps = ['iv','log_lambda','fl','T_dla','Fbar','mmef','diff','reso']
+        ps = ['iv','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -492,7 +505,7 @@ class Forest(Qso):
             for l in mask:
                 w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
 
-        ps = ['iv','log_lambda','fl','T_dla','Fbar','mmef','diff','reso']
+        ps = ['iv','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -506,7 +519,7 @@ class Forest(Qso):
         w = sp.ones(self.log_lambda.size, dtype=bool)
         w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask_width
 
-        ps = ['iv','log_lambda','fl','T_dla','Fbar','mmef','diff','reso']
+        ps = ['iv','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -548,10 +561,10 @@ class Forest(Qso):
             # use_constant_weights?
             if (eta==0).all() :
                 we=sp.ones(len(we))
-            v = (self.fl-m)**2*we
+            v = (self.flux-m)**2*we
             return v.sum()-sp.log(we).sum()
 
-        p0 = (self.fl*self.iv).sum()/self.iv.sum()
+        p0 = (self.flux*self.iv).sum()/self.iv.sum()
         p1 = 0
 
         mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p0/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
@@ -605,7 +618,7 @@ class delta(Qso):
         #if mc is True use the mock continuum to compute the mean expected flux fraction
         if mc : mef = f.mmef
         else : mef = f.co * mst
-        de = f.fl/ mef -1.
+        de = f.flux/ mef -1.
         var = 1./f.iv/mef**2
         we = 1./variance(var,eta,var_lss,fudge)
         diff = f.diff
