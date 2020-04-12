@@ -301,12 +301,6 @@ class Forest(Qso):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    ## quality variables
-    #mean_SNR = None
-    #mean_reso = None
-    #mean_z = None
-
-
     def __init__(self, log_lambda, flux, ivar, thingid, ra, dec, z_qso, plate,
                  mjd, fiberid, order, diff=None, reso=None, mmef=None):
         """ Initialize class instances.
@@ -411,8 +405,11 @@ class Forest(Qso):
         #   self.diff = np.zeros(len(log_lambda))
         #   self.reso = sp.ones(len(log_lambda))
 
-        # compute means
-        if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
+        # compute mean quality variables
+        if reso is not None:
+            self.mean_reso = sum(reso)/float(len(reso))
+        else:
+            self.mean_reso = None
 
         err = 1.0/sp.sqrt(ivar)
         SNR = flux/err
