@@ -302,18 +302,19 @@ class Forest(Qso):
         raise NotImplementedError("Function should be specified at run-time")
 
     def __init__(self, log_lambda, flux, ivar, thingid, ra, dec, z_qso, plate,
-                 mjd, fiberid, order, exposures_diff=None, reso=None, mmef=None):
+                 mjd, fiberid, order, exposures_diff=None, reso=None,
+                 mean_expected_flux_frac=None):
         """ Initialize class instances.
 
         Args:
             log_lambda : array of floats
-                Array containing the logarithm of the wavelengths (in Angs)
+                Array containing the logarithm of the wavelengths (in Angs).
             flux : array of floats
-                Array containing the flux associated to each wavelength
+                Array containing the flux associated to each wavelength.
             ivar : array of floats
-                Array containing the inverse variance associated to each flux
+                Array containing the inverse variance associated to each flux.
             thingis : float
-                ThingID of the observation
+                ThingID of the observation.
             ra: float
                 Right-ascension of the quasar (in radians).
             dec: float
@@ -327,13 +328,13 @@ class Forest(Qso):
             fiberid: integer
                 Fiberid of the observation.
             order: 1 or 0
-                Renamed to make meaning more explicit
+                Renamed to make meaning more explicit.
             exposures_diff: array of floats or None - default: None
-                Difference between exposures
-            reso: or None - default: None
-
-            mmef: or None - default: None
-
+                Difference between exposures.
+            reso: array of floats or None - default: None
+                Resolution of the forest.
+            mean_expected_flux_frac: or None - default: None
+                Mean expected flux fraction using the mock continuum
         """
         Qso.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
 
@@ -359,9 +360,8 @@ class Forest(Qso):
         log_lambda = log_lambda[w]
         flux = flux[w]
         ivar = ivar[w]
-        ## mmef is the mean expected flux fraction using the mock continuum
-        if mmef is not None:
-            mmef = mmef[w]
+        if mean_expected_flux_frac is not None:
+            mean_expected_flux_frac = mean_expected_flux_frac[w]
         if exposures_diff is not None:
             exposures_diff=exposures_diff[w]
         if reso is not None:
@@ -371,12 +371,12 @@ class Forest(Qso):
         rebin_log_lambda = Forest.log_lambda_min + np.arange(bins.max()+1)*Forest.delta_log_lambda
         rebin_flux = np.zeros(bins.max()+1)
         rebin_ivar = np.zeros(bins.max()+1)
-        if mmef is not None:
-            cmmef = np.zeros(bins.max()+1)
+        if mean_expected_flux_frac is not None:
+            rebin_mean_expected_flux_frac = np.zeros(bins.max()+1)
         ccfl = sp.bincount(bins,weights=ivar*flux)
         cciv = sp.bincount(bins,weights=ivar)
-        if mmef is not None:
-            ccmmef = sp.bincount(bins, weights=ivar*mmef)
+        if mean_expected_flux_frac is not None:
+            ccmmef = sp.bincount(bins, weights=ivar*mean_expected_flux_frac)
         if exposures_diff is not None:
             rebin_exposures_diff = sp.bincount(bins,weights=ivar*exposures_diff)
         if reso is not None:
@@ -384,16 +384,16 @@ class Forest(Qso):
 
         rebin_flux[:len(ccfl)] += ccfl
         rebin_ivar[:len(cciv)] += cciv
-        if mmef is not None:
-            cmmef[:len(ccmmef)] += ccmmef
+        if mean_expected_flux_frac is not None:
+            rebin_mean_expected_flux_frac[:len(ccmmef)] += ccmmef
         w = (rebin_ivar>0.)
         if w.sum()==0:
             return
         log_lambda = rebin_log_lambda[w]
         flux = rebin_flux[w]/rebin_ivar[w]
         ivar = rebin_ivar[w]
-        if mmef is not None:
-            mmef = cmmef[w]/rebin_ivar[w]
+        if mean_expected_flux_frac is not None:
+            mean_expected_flux_frac = rebin_mean_expected_flux_frac[w]/rebin_ivar[w]
         if exposures_diff is not None:
             exposures_diff = rebin_exposures_diff[w]/rebin_ivar[w]
         if reso is not None:
@@ -418,7 +418,7 @@ class Forest(Qso):
         self.log_lambda = log_lambda
         self.flux = flux
         self.ivar = ivar
-        self.mmef = mmef
+        self.mean_expected_flux_frac = mean_expected_flux_frac
         self.order = order
         self.exposures_diff = exposures_diff
         self.reso = reso
@@ -447,8 +447,8 @@ class Forest(Qso):
         dic['flux'] = sp.append(self.flux, d.flux)
         ivar = sp.append(self.ivar,d.ivar)
 
-        if self.mmef is not None:
-            dic['mmef'] = sp.append(self.mmef, d.mmef)
+        if self.mean_expected_flux_frac is not None:
+            dic['mean_expected_flux_frac'] = sp.append(self.mean_expected_flux_frac, d.mean_expected_flux_frac)
         if self.exposures_diff is not None:
             dic['exposures_diff'] = sp.append(self.exposures_diff, d.exposures_diff)
         if self.reso is not None:
@@ -490,7 +490,7 @@ class Forest(Qso):
         for l in mask_RF:
             w &= (self.log_lambda-sp.log10(1.+self.z_qso)<l[0]) | (self.log_lambda-sp.log10(1.+self.z_qso)>l[1])
 
-        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','exposures_diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mean_expected_flux_frac','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -525,7 +525,7 @@ class Forest(Qso):
             for l in mask:
                 w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
 
-        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','exposures_diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mean_expected_flux_frac','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -539,7 +539,7 @@ class Forest(Qso):
         w = sp.ones(self.log_lambda.size, dtype=bool)
         w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask_width
 
-        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','exposures_diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mean_expected_flux_frac','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -636,7 +636,7 @@ class delta(Qso):
         fudge = fudge(log_lambda)
 
         #if mc is True use the mock continuum to compute the mean expected flux fraction
-        if mc : mef = f.mmef
+        if mc : mef = f.mean_expected_flux_frac
         else : mef = f.co * mst
         de = f.flux/ mef -1.
         var = 1./f.ivar/mef**2
