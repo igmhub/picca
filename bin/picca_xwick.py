@@ -150,7 +150,7 @@ if __name__ == '__main__':
     for p,delsp in dels.items():
         for d in delsp:
             d.fname = 'D1'
-            for k in ['co','de','order','iv','diff','m_SNR','m_reso','m_z','delta_log_lambda']:
+            for k in ['co','de','order','ivar','diff','m_SNR','m_reso','m_z','delta_log_lambda']:
                 setattr(d,k,None)
     xcf.npix = len(dels)
     xcf.dels = dels

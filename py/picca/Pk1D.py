@@ -7,7 +7,7 @@ from picca import constants
 from picca.utils import userprint
 
 
-def split_forest(nb_part,delta_log_lambda,log_lambda,de,diff,iv,first_pixel):
+def split_forest(nb_part,delta_log_lambda,log_lambda,de,diff,ivar,first_pixel):
 
     ll_limit=[log_lambda[first_pixel]]
     nb_bin= (len(log_lambda)-first_pixel)//nb_part
@@ -21,7 +21,7 @@ def split_forest(nb_part,delta_log_lambda,log_lambda,de,diff,iv,first_pixel):
     ll_c = log_lambda.copy()
     de_c = de.copy()
     diff_c = diff.copy()
-    iv_c = iv.copy()
+    iv_c = ivar.copy()
 
     for p in range(1,nb_part) :
         ll_limit.append(log_lambda[nb_bin*p+first_pixel])
@@ -81,10 +81,10 @@ def rebin_diff_noise(delta_log_lambda,log_lambda,diff):
     return diffout
 
 
-def fill_masked_pixels(delta_log_lambda,log_lambda,delta,diff,iv,no_apply_filling):
+def fill_masked_pixels(delta_log_lambda,log_lambda,delta,diff,ivar,no_apply_filling):
 
 
-    if no_apply_filling : return log_lambda,delta,diff,iv,0
+    if no_apply_filling : return log_lambda,delta,diff,ivar,0
 
 
     ll_idx = log_lambda.copy()
@@ -107,7 +107,7 @@ def fill_masked_pixels(delta_log_lambda,log_lambda,delta,diff,iv,no_apply_fillin
 
     iv_new = sp.ones(len(index_all))
     iv_new *=0.0
-    iv_new[index_ok]=iv
+    iv_new[index_ok]=ivar
 
     nb_masked_pixel=len(index_all)-len(index)
 
@@ -131,16 +131,16 @@ def compute_Pk_raw(delta_log_lambda,delta,log_lambda):
     return k,Pk
 
 
-def compute_Pk_noise(delta_log_lambda,iv,diff,log_lambda,run_noise):
+def compute_Pk_noise(delta_log_lambda,ivar,diff,log_lambda,run_noise):
 
-    nb_pixels = len(iv)
+    nb_pixels = len(ivar)
     nb_bin_FFT = nb_pixels//2 + 1
 
     nb_noise_exp = 10
     Pk = np.zeros(nb_bin_FFT)
     err = np.zeros(nb_pixels)
-    w = iv>0
-    err[w] = 1.0/sp.sqrt(iv[w])
+    w = ivar>0
+    err[w] = 1.0/sp.sqrt(ivar[w])
 
     if (run_noise) :
         for _ in range(nb_noise_exp): #iexp unused, but needed

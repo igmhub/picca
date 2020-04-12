@@ -145,6 +145,8 @@ class Forest(Qso):
             Array containing the logarithm of the wavelengths (in Angs)
         flux : array of floats
             Array containing the flux associated to each wavelength
+        ivar: array of floats
+            Array containing the inverse variance associated to each flux
 
     Class attributes:
         log_lambda_max: float
@@ -159,7 +161,7 @@ class Forest(Qso):
             As log_lambda_min but for rest-frame wavelength.
         rebin: integer
             Rebin wavelength grid by combining this number of adjacent pixels
-            (iverse variance weighting).
+            (inverse variance weighting).
         delta_log_lambda: float
             Variation of the logarithm of the wavelength (in Angs) between two
             pixels.
@@ -305,7 +307,8 @@ class Forest(Qso):
     #mean_z = None
 
 
-    def __init__(self, log_lambda, flux, iv, thingid, ra, dec, z_qso, plate, mjd, fiberid, order, diff=None, reso=None, mmef=None):
+    def __init__(self, log_lambda, flux, ivar, thingid, ra, dec, z_qso, plate,
+                 mjd, fiberid, order, diff=None, reso=None, mmef=None):
         """ Initialize class instances.
 
         Args:
@@ -313,14 +316,16 @@ class Forest(Qso):
                 Array containing the logarithm of the wavelengths (in Angs)
             flux : array of floats
                 Array containing the flux associated to each wavelength
+            ivar : array of floats
+                Array containing the inverse variance associated to each flux
 
         """
-        Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
+        Qso.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
 
         if not Forest.extinction_bv_map is None:
             corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
             flux /= corr
-            iv *= corr**2
+            ivar *= corr**2
             if not diff is None:
                 diff /= corr
 
@@ -331,13 +336,13 @@ class Forest(Qso):
         w = w & (log_lambda<Forest.log_lambda_max)
         w = w & (log_lambda-sp.log10(1.+self.z_qso)>Forest.log_lambda_min_rest_frame)
         w = w & (log_lambda-sp.log10(1.+self.z_qso)<Forest.log_lambda_max_rest_frame)
-        w = w & (iv>0.)
+        w = w & (ivar>0.)
         if w.sum()==0:
             return
         bins = bins[w]
         log_lambda = log_lambda[w]
         flux = flux[w]
-        iv = iv[w]
+        ivar = ivar[w]
         ## mmef is the mean expected flux fraction using the mock continuum
         if mmef is not None:
             mmef = mmef[w]
@@ -348,46 +353,46 @@ class Forest(Qso):
 
         ## rebin
         rebin_log_lambda = Forest.log_lambda_min + np.arange(bins.max()+1)*Forest.delta_log_lambda
-        cflux = np.zeros(bins.max()+1)
-        civ = np.zeros(bins.max()+1)
+        rebin_flux = np.zeros(bins.max()+1)
+        rebin_ivar = np.zeros(bins.max()+1)
         if mmef is not None:
             cmmef = np.zeros(bins.max()+1)
-        ccfl = sp.bincount(bins,weights=iv*flux)
-        cciv = sp.bincount(bins,weights=iv)
+        ccfl = sp.bincount(bins,weights=ivar*flux)
+        cciv = sp.bincount(bins,weights=ivar)
         if mmef is not None:
-            ccmmef = sp.bincount(bins, weights=iv*mmef)
+            ccmmef = sp.bincount(bins, weights=ivar*mmef)
         if diff is not None:
-            cdiff = sp.bincount(bins,weights=iv*diff)
+            cdiff = sp.bincount(bins,weights=ivar*diff)
         if reso is not None:
-            creso = sp.bincount(bins,weights=iv*reso)
+            creso = sp.bincount(bins,weights=ivar*reso)
 
-        cflux[:len(ccfl)] += ccfl
-        civ[:len(cciv)] += cciv
+        rebin_flux[:len(ccfl)] += ccfl
+        rebin_ivar[:len(cciv)] += cciv
         if mmef is not None:
             cmmef[:len(ccmmef)] += ccmmef
-        w = (civ>0.)
+        w = (rebin_ivar>0.)
         if w.sum()==0:
             return
         log_lambda = rebin_log_lambda[w]
-        flux = cflux[w]/civ[w]
-        iv = civ[w]
+        flux = rebin_flux[w]/rebin_ivar[w]
+        ivar = rebin_ivar[w]
         if mmef is not None:
-            mmef = cmmef[w]/civ[w]
+            mmef = cmmef[w]/rebin_ivar[w]
         if diff is not None:
-            diff = cdiff[w]/civ[w]
+            diff = cdiff[w]/rebin_ivar[w]
         if reso is not None:
-            reso = creso[w]/civ[w]
+            reso = creso[w]/rebin_ivar[w]
 
         ## Flux calibration correction
         try:
             correction = Forest.correct_flux(log_lambda)
             flux /= correction
-            iv *= correction**2
+            ivar *= correction**2
         except NotImplementedError:
             pass
         try:
             correction = Forest.correct_ivar(log_lambda)
-            iv /= correction
+            ivar /= correction
         except NotImplementedError:
             pass
 
@@ -396,7 +401,7 @@ class Forest(Qso):
         self.T_dla = None
         self.log_lambda = log_lambda
         self.flux = flux
-        self.iv = iv
+        self.ivar = ivar
         self.mmef = mmef
         self.order = order
         #if diff is not None :
@@ -409,7 +414,7 @@ class Forest(Qso):
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
 
-        err = 1.0/sp.sqrt(iv)
+        err = 1.0/sp.sqrt(ivar)
         SNR = flux/err
         self.mean_SNR = sum(SNR)/float(len(SNR))
         lam_lya = constants.absorber_IGM["LYA"]
@@ -425,7 +430,7 @@ class Forest(Qso):
 
         log_lambda = sp.append(self.log_lambda,d.log_lambda)
         dic['flux'] = sp.append(self.flux, d.flux)
-        iv = sp.append(self.iv,d.iv)
+        ivar = sp.append(self.ivar,d.ivar)
 
         if self.mmef is not None:
             dic['mmef'] = sp.append(self.mmef, d.mmef)
@@ -436,23 +441,23 @@ class Forest(Qso):
 
         bins = sp.floor((log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
         rebin_log_lambda = Forest.log_lambda_min + np.arange(bins.max()+1)*Forest.delta_log_lambda
-        civ = np.zeros(bins.max()+1)
-        cciv = sp.bincount(bins,weights=iv)
-        civ[:len(cciv)] += cciv
-        w = (civ>0.)
+        rebin_ivar = np.zeros(bins.max()+1)
+        cciv = sp.bincount(bins,weights=ivar)
+        rebin_ivar[:len(cciv)] += cciv
+        w = (rebin_ivar>0.)
         self.log_lambda = rebin_log_lambda[w]
-        self.iv = civ[w]
+        self.ivar = rebin_ivar[w]
 
         for k, v in dic.items():
             cnew = np.zeros(bins.max() + 1)
-            ccnew = sp.bincount(bins, weights=iv * v)
+            ccnew = sp.bincount(bins, weights=ivar * v)
             cnew[:len(ccnew)] += ccnew
-            setattr(self, k, cnew[w] / civ[w])
+            setattr(self, k, cnew[w] / rebin_ivar[w])
 
         # recompute means of quality variables
         if self.reso is not None:
             self.mean_reso = self.reso.mean()
-        err = 1./sp.sqrt(self.iv)
+        err = 1./sp.sqrt(self.ivar)
         SNR = self.flux/err
         self.mean_SNR = SNR.mean()
         lam_lya = constants.absorber_IGM["LYA"]
@@ -470,7 +475,7 @@ class Forest(Qso):
         for l in mask_RF:
             w &= (self.log_lambda-sp.log10(1.+self.z_qso)<l[0]) | (self.log_lambda-sp.log10(1.+self.z_qso)>l[1])
 
-        ps = ['iv','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -505,7 +510,7 @@ class Forest(Qso):
             for l in mask:
                 w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
 
-        ps = ['iv','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -519,7 +524,7 @@ class Forest(Qso):
         w = sp.ones(self.log_lambda.size, dtype=bool)
         w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask_width
 
-        ps = ['iv','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -549,7 +554,7 @@ class Forest(Qso):
 
         def chi2(p0,p1):
             m = model(p0,p1)
-            var_pipe = 1./self.iv/m**2
+            var_pipe = 1./self.ivar/m**2
             ## prep_del.variance is the variance of delta
             ## we want here the we = ivar(flux)
 
@@ -564,7 +569,7 @@ class Forest(Qso):
             v = (self.flux-m)**2*we
             return v.sum()-sp.log(we).sum()
 
-        p0 = (self.flux*self.iv).sum()/self.iv.sum()
+        p0 = (self.flux*self.ivar).sum()/self.ivar.sum()
         p1 = 0
 
         mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p0/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
@@ -591,7 +596,7 @@ class Forest(Qso):
 
 class delta(Qso):
 
-    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,iv,diff,m_SNR,m_reso,m_z,delta_log_lambda):
+    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,ivar,diff,m_SNR,m_reso,m_z,delta_log_lambda):
 
         Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
         self.log_lambda = log_lambda
@@ -599,7 +604,7 @@ class delta(Qso):
         self.co = co
         self.de = de
         self.order = order
-        self.iv = iv
+        self.ivar = ivar
         self.diff = diff
         self.mean_SNR = m_SNR
         self.mean_reso = m_reso
@@ -619,15 +624,15 @@ class delta(Qso):
         if mc : mef = f.mmef
         else : mef = f.co * mst
         de = f.flux/ mef -1.
-        var = 1./f.iv/mef**2
+        var = 1./f.ivar/mef**2
         we = 1./variance(var,eta,var_lss,fudge)
         diff = f.diff
         if f.diff is not None:
             diff /= mef
-        iv = f.iv/(eta+(eta==0))*(mef**2)
+        ivar = f.ivar/(eta+(eta==0))*(mef**2)
 
         return cls(f.thingid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,log_lambda,we,f.co,de,f.order,
-                   iv,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.delta_log_lambda)
+                   ivar,diff,f.mean_SNR,f.mean_reso,f.mean_z,f.delta_log_lambda)
 
 
     @classmethod
@@ -641,7 +646,7 @@ class delta(Qso):
 
 
         if  Pk1D_type :
-            iv = h['IVAR'][:]
+            ivar = h['IVAR'][:]
             diff = h['DIFF'][:]
             m_SNR = head['MEANSNR']
             m_reso = head['MEANRESO']
@@ -650,7 +655,7 @@ class delta(Qso):
             we = None
             co = None
         else :
-            iv = None
+            ivar = None
             diff = None
             m_SNR = None
             m_reso = None
@@ -673,7 +678,7 @@ class delta(Qso):
         except KeyError:
             order = 1
         return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
-                   iv,diff,m_SNR,m_reso,m_z,delta_log_lambda)
+                   ivar,diff,m_SNR,m_reso,m_z,delta_log_lambda)
 
 
     @classmethod
@@ -694,7 +699,7 @@ class delta(Qso):
         nbpixel = int(a[10])
         de = sp.array(a[11:11+nbpixel]).astype(float)
         log_lambda = sp.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
-        iv = sp.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
+        ivar = sp.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
         diff = sp.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
 
 
@@ -704,13 +709,13 @@ class delta(Qso):
         co = None
 
         return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
-                   iv,diff,m_SNR,m_reso,m_z,delta_log_lambda)
+                   ivar,diff,m_SNR,m_reso,m_z,delta_log_lambda)
 
     @staticmethod
     def from_image(f):
         h=fitsio.FITS(f)
         de = h[0].read()
-        iv = h[1].read()
+        ivar = h[1].read()
         log_lambda = h[2].read()
         ra = h[3]["RA"][:].astype(sp.float64)*sp.pi/180.
         dec = h[3]["DEC"][:].astype(sp.float64)*sp.pi/180.
@@ -727,10 +732,10 @@ class delta(Qso):
                 userprint("\rreading deltas {} of {}".format(i,nspec),end="")
 
             delt = de[:,i]
-            ivar = iv[:,i]
-            w = ivar>0
+            aux_ivar = flux[:,i]
+            w = aux_ivar>0
             delt = delt[w]
-            ivar = ivar[w]
+            aux_ivar = aux_ivar[w]
             lam = log_lambda[w]
 
             order = 1
@@ -740,7 +745,7 @@ class delta(Qso):
             delta_log_lambda = None
             m_z = None
 
-            deltas.append(delta(thingid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,ivar,None,delt,order,iv,diff,m_SNR,m_reso,m_z,delta_log_lambda))
+            deltas.append(delta(thingid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,aux_ivar,None,delt,order,ivar,diff,m_SNR,m_reso,m_z,delta_log_lambda))
 
         h.close()
         return deltas

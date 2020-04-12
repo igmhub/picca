@@ -362,7 +362,7 @@ def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=
             log.write("{} read\n".format(fin))
             log_lambda = h[1]["loglam"][:]
             flux = h[1]["flux"][:]
-            iv = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
+            ivar = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
 
             if pk1d is not None:
                 # compute difference between exposure
@@ -373,7 +373,7 @@ def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=
             else:
                 diff = None
                 reso = None
-            deltas = Forest(log_lambda,flux,iv, t, r, d, z, p, m, f,order,diff=diff,reso=reso)
+            deltas = Forest(log_lambda,flux,ivar, t, r, d, z, p, m, f,order,diff=diff,reso=reso)
             if t_delta is None:
                 t_delta = deltas
             else:
@@ -399,7 +399,7 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
         log_lambda = sp.log10(lamb)
         flux = h["flux"][:]
         error =h["error"][:]
-        iv = 1.0/error**2
+        ivar = 1.0/error**2
 
         # compute difference between exposure
         diff = np.zeros(len(lamb))
@@ -411,7 +411,7 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
         f_mean_tr = h.read_header()["MEANFLUX"]
         cont = h["continuum"][:]
         mef = f_mean_tr * cont
-        d = Forest(log_lambda,flux,iv, t, r, d, z, p, m, f,order, diff,reso, mef)
+        d = Forest(log_lambda,flux,ivar, t, r, d, z, p, m, f,order, diff,reso, mef)
         pix_data.append(d)
 
     hdu.close()
@@ -750,11 +750,11 @@ def read_from_desi(nside,in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1
 
             d = None
             for tspecData in specData.values():
-                iv = tspecData['IV'][wt]
-                fl = (iv*tspecData['FL'][wt]).sum(axis=0)
-                iv = iv.sum(axis=0)
-                w = iv>0.
-                fl[w] /= iv[w]
+                ivar = tspecData['IV'][wt]
+                flux = (ivar*tspecData['FL'][wt]).sum(axis=0)
+                ivar = ivar.sum(axis=0)
+                w = ivar>0.
+                flux[w] /= ivar[w]
                 if not pk1d is None:
                     reso_sum = tspecData['RESO'][wt].sum(axis=0)
                     reso_in_km_per_s = spectral_resolution_desi(reso_sum,tspecData['log_lambda'])
@@ -762,7 +762,7 @@ def read_from_desi(nside,in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1
                 else:
                     reso_in_km_per_s = None
                     diff = None
-                td = Forest(tspecData['log_lambda'],fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
+                td = Forest(tspecData['log_lambda'],flux,ivar,t,ra[wt][0],de[wt][0],ztable[t],
                     p,m,f,order,diff,reso_in_km_per_s)
                 if d is None:
                     d = copy.deepcopy(td)

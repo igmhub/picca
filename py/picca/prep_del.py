@@ -32,7 +32,7 @@ def compute_mean_cont(data):
             var_lss = Forest.get_var_lss(d.log_lambda)
             eta = Forest.get_eta(d.log_lambda)
             fudge = Forest.fudge(d.log_lambda)
-            var = 1./d.iv/d.co**2
+            var = 1./d.ivar/d.co**2
             we = 1/variance(var,eta,var_lss,fudge)
             c = sp.bincount(bins,weights=d.flux/d.co*we)
             mean_cont[:len(c)]+=c
@@ -69,7 +69,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     for p in sorted(list(data.keys())):
         for d in data[p]:
 
-            var_pipe = 1/d.iv/d.co**2
+            var_pipe = 1/d.ivar/d.co**2
             w = (sp.log10(var_pipe) > vpmin) & (sp.log10(var_pipe) < vpmax)
 
             bll = ((d.log_lambda-Forest.log_lambda_min)/(Forest.log_lambda_max-Forest.log_lambda_min)*nlss).astype(int)
@@ -154,7 +154,7 @@ def stack(data,delta=False):
                 var_lss = Forest.get_var_lss(d.log_lambda)
                 eta = Forest.get_eta(d.log_lambda)
                 fudge = Forest.fudge(d.log_lambda)
-                var = 1./d.iv/d.co**2
+                var = 1./d.ivar/d.co**2
                 we = 1./variance(var,eta,var_lss,fudge)
 
             bins=((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)

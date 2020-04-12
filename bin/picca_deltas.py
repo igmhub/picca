@@ -317,7 +317,7 @@ def main():
                 log.write("INFO: Rejected {} due to forest too short\n".format(d.thingid))
                 continue
 
-            if np.isnan((d.flux*d.iv).sum()):
+            if np.isnan((d.flux*d.ivar).sum()):
                 log.write("INFO: Rejected {} due to nan found\n".format(d.thingid))
                 continue
 
@@ -449,7 +449,7 @@ def main():
                 for i in range(nbpixel):
                     line += '{} '.format(d.log_lambda[i])
                 for i in range(nbpixel):
-                    line += '{} '.format(d.iv[i])
+                    line += '{} '.format(d.ivar[i])
                 for i in range(nbpixel):
                     line += '{} '.format(d.diff[i])
                 line += ' \n'
@@ -484,7 +484,7 @@ def main():
                     if diff is None:
                         diff = d.log_lambda*0
 
-                    cols = [d.log_lambda, d.de, d.iv, diff]
+                    cols = [d.log_lambda, d.de, d.ivar, diff]
                     names = ['LOGLAM', 'DELTA', 'IVAR', 'DIFF']
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Inverse variance', 'Difference']

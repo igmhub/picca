@@ -62,7 +62,7 @@ def make_tree(tree,nb_bin_max):
     return z_qso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
     nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
 
-def compute_mean_delta(log_lambda,delta,iv,z_qso):
+def compute_mean_delta(log_lambda,delta,ivar,z_qso):
 
     for i, _ in enumerate (log_lambda):
         log_lambda_obs = sp.power(10., log_lambda[i])
@@ -70,13 +70,13 @@ def compute_mean_delta(log_lambda,delta,iv,z_qso):
         hdelta.Fill(log_lambda_obs, log_lambda_rf, delta[i])
         hdelta_RF.Fill(log_lambda_rf, delta[i])
         hdelta_OBS.Fill(log_lambda_obs, delta[i])
-        hivar.Fill(iv[i])
-        snr_pixel = (delta[i]+1)*sp.sqrt(iv[i])
+        hivar.Fill(ivar[i])
+        snr_pixel = (delta[i]+1)*sp.sqrt(ivar[i])
         hsnr.Fill(snr_pixel)
-        hivar.Fill(iv[i])
-        if (iv[i] < 1000):
-            hdelta_RF_we.Fill(log_lambda_rf, delta[i], iv[i])
-            hdelta_OBS_we.Fill(log_lambda_obs, delta[i], iv[i])
+        hivar.Fill(ivar[i])
+        if (ivar[i] < 1000):
+            hdelta_RF_we.Fill(log_lambda_rf, delta[i], ivar[i])
+            hdelta_OBS_we.Fill(log_lambda_obs, delta[i], ivar[i])
 
     return
 
@@ -206,7 +206,7 @@ if __name__ == '__main__':
             # Split in n parts the forest
             nb_part_max = (len(d.log_lambda)-first_pixel)//nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
-            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.delta_log_lambda,d.log_lambda,d.de,d.diff,d.iv,first_pixel)
+            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.delta_log_lambda,d.log_lambda,d.de,d.diff,d.ivar,first_pixel)
             for f in range(nb_part):
 
                 # rebin diff spectrum
