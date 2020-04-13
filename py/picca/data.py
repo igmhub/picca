@@ -311,7 +311,7 @@ class Forest(Qso):
     def __init__(self, log_lambda, flux, ivar, thingid, ra, dec, z_qso, plate,
                  mjd, fiberid, order, exposures_diff=None, reso=None,
                  mean_expected_flux_frac=None, igm_absorption="LYA"):
-        """ Initialize class instances.
+        """Initialize class instances.
 
         Args:
             log_lambda : array of floats
@@ -522,7 +522,7 @@ class Forest(Qso):
             #setattr(self, key, cnew[w] / rebin_ivar[w])
             ## end of old way rebinning
             rebin_value = np.bincount(bins, weights=ivar * value)
-            rebin_value = rebin_value[w]/rebin_ivar[w])
+            rebin_value = rebin_value[w]/rebin_ivar[w]
             setattr(self, key, rebin_value)
 
         # recompute means of quality variables
