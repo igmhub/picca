@@ -118,9 +118,9 @@ if __name__ == '__main__':
         cf.ndata2 = ndata2
 
     ### Convert lists to arrays
-    cf.data = {k:sp.array(v) for k,v in cf.data.items()}
+    cf.data = {k:np.array(v) for k,v in cf.data.items()}
     if cf.x_correlation:
-        cf.data2 = {k:sp.array(v) for k,v in cf.data2.items()}
+        cf.data2 = {k:np.array(v) for k,v in cf.data2.items()}
 
     ###
     cf.counter = Value('i',0)
@@ -137,13 +137,13 @@ if __name__ == '__main__':
 
 
     ###
-    cfs=sp.array(cfs)
+    cfs=np.array(cfs)
     wes=cfs[:,0,:]
     nbs=cfs[:,2,:]
     cfs=cfs[:,1,:]
-    wes = sp.array(wes)
-    cfs = sp.array(cfs)
-    nbs = sp.array(nbs).astype(sp.int64)
+    wes = np.array(wes)
+    cfs = np.array(cfs)
+    nbs = np.array(nbs).astype(sp.int64)
 
     print("multiplying")
     cfs *= wes

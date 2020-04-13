@@ -683,8 +683,8 @@ class Chi2:
 
         path_to_save = param.dic_init['output_prefix']+'save.pars.cor'
 
-        matrix = sp.array(mig.matrix(correlation=True))
-        fitted_parameters = sp.array(mig.list_of_vary_param())
+        matrix = np.array(mig.matrix(correlation=True))
+        fitted_parameters = np.array(mig.list_of_vary_param())
 
         f = open(path_to_save,'w')
         f.write(' --- ')

@@ -97,8 +97,8 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     """
 
     h = fitsio.FITS(infile)
-    da = sp.array(h[2]['DA'][:])
-    we = sp.array(h[2]['WE'][:])
+    da = np.array(h[2]['DA'][:])
+    we = np.array(h[2]['WE'][:])
     head = h[1].read_header()
     # npb = number of parallel bins (to avoid collision with numpy np)
     npb = head['NP']
@@ -118,7 +118,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     cor1d = cor.reshape(nbin*nbin)
 
     h = fitsio.FITS(Wick_infile)
-    cow = sp.array(h[1]['CO'][:])
+    cow = np.array(h[1]['CO'][:])
     h.close()
 
     varw = sp.diagonal(cow)
@@ -233,7 +233,7 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     fromPiccaKey2Type = {'THING_ID':sp.int64, 'Z':sp.float64, 'ZQSO':sp.float64, 'NHI':sp.float64,
         'PLATE':sp.int64,'MJD':sp.int64,'FIBERID':sp.int64,
         'RA':sp.float64, 'DEC':sp.float64}
-    cat = { v:sp.array(dcat[k],dtype=fromPiccaKey2Type[v]) for k,v in fromNoterdaemeKey2Picca.items() }
+    cat = { v:np.array(dcat[k],dtype=fromPiccaKey2Type[v]) for k,v in fromNoterdaemeKey2Picca.items() }
 
     w = cat['THING_ID']>0
     print('INFO: Removed {} DLA, because THING_ID<=0'.format((cat['THING_ID']<=0).sum()))
@@ -249,9 +249,9 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     zqso = h[1][drqzkey][:]
     h.close()
     fromThingid2idx = { el:i for i,el in enumerate(thid) }
-    cat['RA'] = sp.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['DEC'] = sp.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['ZQSO'] = sp.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['RA'] = np.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['DEC'] = np.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['ZQSO'] = np.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
 
     w = cat['RA']!=cat['DEC']
     print('INFO: Removed {} DLA, because RA==DEC'.format((cat['RA']==cat['DEC']).sum()))
@@ -463,7 +463,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     ### Catalog of objects
     h = fitsio.FITS(zcat)
-    key_val = sp.char.strip(sp.array([ h[1].read_header()[k] for k in h[1].read_header().keys()]).astype(str))
+    key_val = sp.char.strip(np.array([ h[1].read_header()[k] for k in h[1].read_header().keys()]).astype(str))
     if 'TARGETID' in key_val:
         zcat_thid = h[1]['TARGETID'][:]
     elif 'THING_ID' in key_val:
@@ -482,7 +482,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         sys.exit()
     elif indir is not None:
         fi = glob.glob(indir+'/*/*/transmission*.fits*')
-        fi = sp.sort(sp.array(fi))
+        fi = sp.sort(np.array(fi))
         h = fitsio.FITS(fi[0])
         in_nside = h['METADATA'].read_header()['HPXNSIDE']
         nest = h['METADATA'].read_header()['HPXNEST']
@@ -492,9 +492,9 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             endoffile = '.gz'
         else:
             endoffile = ''
-        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in np.unique(in_pixs)]))
+        fi = sp.sort(np.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in np.unique(in_pixs)]))
     else:
-        fi = sp.sort(sp.array(infiles))
+        fi = sp.sort(np.array(infiles))
     print('INFO: Found {} files'.format(fi.size))
 
     ### Stack the transmission
@@ -704,8 +704,8 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
 
     # Compute UV portion of A(lambda)/E(B-V) curve using FM fitting function and
     # R-dependent coefficients
-    xcutuv = sp.array([10000.0/2700.0])
-    xspluv = 10000.0/sp.array([2700.0,2600.0])
+    xcutuv = np.array([10000.0/2700.0])
+    xspluv = 10000.0/np.array([2700.0,2600.0])
 
     iuv = sp.where(x >= xcutuv)[0]
     N_UV = iuv.size
@@ -727,9 +727,9 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
 
     # Compute optical portion of A(lambda)/E(B-V) curve
     # using cubic spline anchored in UV, optical, and IR
-    xsplopir = sp.concatenate(([0],10000.0/sp.array([26500.0,12200.0,6000.0,5470.0,4670.0,4110.0])))
-    ysplir = sp.array([0.0,0.26469,0.82925])*R_V/3.1
-    ysplop = sp.array((sp.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1],R_V ),
+    xsplopir = sp.concatenate(([0],10000.0/np.array([26500.0,12200.0,6000.0,5470.0,4670.0,4110.0])))
+    ysplir = np.array([0.0,0.26469,0.82925])*R_V/3.1
+    ysplop = np.array((sp.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1],R_V ),
             sp.polyval([-5.13540e-02, 1.00216, -7.35778e-05][::-1],R_V ),
             sp.polyval([ 7.00127e-01, 1.00184, -3.32598e-05][::-1],R_V ),
             sp.polyval([ 1.19456, 1.01707, -5.46959e-03, 7.97809e-04, -4.45636e-05][::-1],R_V ) ))

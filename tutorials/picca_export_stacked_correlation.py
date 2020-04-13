@@ -48,13 +48,13 @@ if __name__ == '__main__':
         rp_max = head['RPMAX']
         head   = h[2].read_header()
         scheme = head['HLPXSCHM']
-        rp  = sp.array(h[1]['RP'][:])
-        rt  = sp.array(h[1]['RT'][:])
-        z   = sp.array(h[1]['Z'][:])
-        nb  = sp.array(h[1]['NB'][:])
-        da  = sp.array(h[2]['DA'][:])
-        we  = sp.array(h[2]['WE'][:])
-        hep = sp.array(h[2]['HEALPID'][:])
+        rp  = np.array(h[1]['RP'][:])
+        rt  = np.array(h[1]['RT'][:])
+        z   = np.array(h[1]['Z'][:])
+        nb  = np.array(h[1]['NB'][:])
+        da  = np.array(h[2]['DA'][:])
+        we  = np.array(h[2]['WE'][:])
+        hep = np.array(h[2]['HEALPID'][:])
         data[i] = {'RP':rp, 'RT':rt, 'Z':z, 'NB':nb, 'DA':da, 'WE':we,'HEALPID':hep,
             'NSIDE':nside, 'HLPXSCHM':scheme,
             'NP':npb, 'NT':ntb, 'RTMAX':rt_max, 'RPMIN':rp_min, 'RPMAX':rp_max}
@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     ### Sort the data by the healpix values
     for i in range(nbData):
-        sort = sp.array(data[i]['HEALPID']).argsort()
+        sort = np.array(data[i]['HEALPID']).argsort()
         data[i]['DA']      = data[i]['DA'][sort]
         data[i]['WE']      = data[i]['WE'][sort]
         data[i]['HEALPID'] = data[i]['HEALPID'][sort]

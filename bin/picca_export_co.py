@@ -84,12 +84,12 @@ if __name__ == '__main__':
             for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
                 data[k] = head[k]
             for k in ['RP','RT','Z','NB']:
-                data[k] = sp.array(h[1][k][:])
+                data[k] = np.array(h[1][k][:])
 
         data[type_corr] = {}
         data[type_corr]['NSIDE'] = head['NSIDE']
         data[type_corr]['HLPXSCHM'] = h[2].read_header()['HLPXSCHM']
-        w = sp.array(h[2]['WE'][:]).sum(axis=1)>0.
+        w = np.array(h[2]['WE'][:]).sum(axis=1)>0.
         if w.sum()!=w.size:
             print('INFO: {} sub-samples were empty'.format(w.size-w.sum()))
         data[type_corr]['HEALPID'] = h[2]['HEALPID'][:][w]
@@ -154,7 +154,7 @@ if __name__ == '__main__':
 
         ### Sort the data by the healpix values
         for d1 in list(lst_file.keys()):
-            sort = sp.array(data[d1]['HEALPID']).argsort()
+            sort = np.array(data[d1]['HEALPID']).argsort()
             data[d1]['WE'] = data[d1]['WE'][sort]
             data[d1]['HEALPID'] = data[d1]['HEALPID'][sort]
 

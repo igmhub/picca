@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 import fitsio
+import numpy as np
 import scipy as sp
 import scipy.linalg
 import argparse
@@ -44,8 +45,8 @@ if __name__ == '__main__':
             dic[k] += [h[1][k][:]]
 
         if h[1].read_header()['EXTNAME'].strip()=='ATTRI':
-            da = sp.array(h['COR']['DA'][:])
-            we = sp.array(h['COR']['WE'][:])
+            da = np.array(h['COR']['DA'][:])
+            we = np.array(h['COR']['WE'][:])
             da = (da*we).sum(axis=0)
             we = we.sum(axis=0)
             w = we>0

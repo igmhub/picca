@@ -172,8 +172,8 @@ class model:
 
 
         if self.templates:
-            bias_met=sp.array([pars['bias_'+met] for met in self.met_names])
-            beta_met=sp.array([pars['beta_'+met] for met in self.met_names])
+            bias_met=np.array([pars['bias_'+met] for met in self.met_names])
+            beta_met=np.array([pars['beta_'+met] for met in self.met_names])
             amp=np.zeros([self.nmet,3])
             amp[:,0] = bias_met*(1 + (beta_lya+beta_met)/3 + beta_lya*beta_met/5)
             amp[:,1] = bias_met*(2*(beta_lya+beta_met)/3 + 4*beta_lya*beta_met/7)
@@ -298,14 +298,14 @@ class model:
         bias_qso          = pars["bias_qso"]
         growth_rate = pars["growth_rate"]
         beta_qso          = growth_rate/bias_qso
-        bias_met = sp.array([pars['bias_'+met] for met in self.met_names])
-        beta_met = sp.array([pars['beta_'+met] for met in self.met_names])
+        bias_met = np.array([pars['bias_'+met] for met in self.met_names])
+        beta_met = np.array([pars['beta_'+met] for met in self.met_names])
         Lpar = pars["Lpar_cross"]
         Lper = pars["Lper_cross"]
 
         ### Scales
         if (self.different_drp):
-            drp_met = sp.array([pars['drp_'+met]  for met in self.met_names])
+            drp_met = np.array([pars['drp_'+met]  for met in self.met_names])
             drp     = sp.outer(np.ones(self.nd_cross),drp_met)
         else:
             drp = pars["drp"]

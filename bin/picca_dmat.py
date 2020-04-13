@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
@@ -178,7 +180,7 @@ if __name__ == '__main__':
         dm = map(calc_dmat,sorted(cpu_data.values()))
         dm = list(dm)
 
-    dm = sp.array(dm)
+    dm = np.array(dm)
     wdm =dm[:,0].sum(axis=0)
     rp = dm[:,2].sum(axis=0)
     rt = dm[:,3].sum(axis=0)

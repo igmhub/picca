@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from astropy.io import fits
+import numpy as np
 import scipy as sp
 import argparse
 
@@ -43,9 +44,9 @@ if __name__ == '__main__':
 
     pk=sp.loadtxt(args.prefix_pk+'_matterpower.dat')
     pkSB=sp.loadtxt(args.prefix_pk+'SB_matterpower.dat')
-    col1=fits.Column(name='K',format='D',array=sp.array(pk[:,0]))
-    col2=fits.Column(name='PK',format='D',array=sp.array(pk[:,1]))
-    col3=fits.Column(name='PKSB',format='D',array=sp.array(pkSB[:,1]))
+    col1=fits.Column(name='K',format='D',array=np.array(pk[:,0]))
+    col2=fits.Column(name='PK',format='D',array=np.array(pk[:,1]))
+    col3=fits.Column(name='PKSB',format='D',array=np.array(pkSB[:,1]))
     cols=fits.ColDefs([col1,col2,col3])
     head=fits.Header()
     head['ZREF']=args.zref

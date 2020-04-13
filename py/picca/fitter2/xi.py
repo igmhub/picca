@@ -312,7 +312,7 @@ def broadband(r, mu, deg_r_min=None, deg_r_max=None,
     r2_pows = np.arange(deg_mu_min, deg_mu_max+1, ddeg_mu)
     BB = [kwargs['{} ({},{})'.format(name,i,j)] for i in r1_pows
             for j in r2_pows]
-    BB = sp.array(BB).reshape(-1,deg_r_max-deg_r_min+1)
+    BB = np.array(BB).reshape(-1,deg_r_max-deg_r_min+1)
 
     return (BB[:,:,None,None]*r1**r1_pows[:,None,None]*\
             r2**r2_pows[None,:,None]).sum(axis=(0,1,2))

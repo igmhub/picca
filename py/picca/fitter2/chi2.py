@@ -362,7 +362,7 @@ class chi2:
                     fiducial = g.create_dataset("{}_fiducial".format(d.name), d.da.shape, dtype = "f")
                     fiducial[...] = d.fiducial_model
             for p in self.fast_mc:
-                vals = sp.array(self.fast_mc[p])
+                vals = np.array(self.fast_mc[p])
                 if p == 'chi2':
                     d = g.create_dataset("{}".format(p), vals.shape, dtype="f")
                     d[...] = vals

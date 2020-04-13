@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
@@ -194,7 +196,7 @@ if __name__ == '__main__':
             dm = map(f,sorted(cpu_data.values()))
             dm = list(dm)
 
-        dm = sp.array(dm)
+        dm = np.array(dm)
         wdm =dm[:,0].sum(axis=0)
         rp = dm[:,2].sum(axis=0)
         rt = dm[:,3].sum(axis=0)
@@ -232,9 +234,9 @@ if __name__ == '__main__':
         {'name':'REJ','value':xcf.rej,'comment':'Rejection factor'},
     ]
 
-    len_names = sp.array([ len(s) for s in names ]).max()
-    names = sp.array(names, dtype='S'+str(len_names))
-    out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=['NPALL','NPUSED','ABS_IGM'],header=head,
+    len_names = np.array([ len(s) for s in names ]).max()
+    names = np.array(names, dtype='S'+str(len_names))
+    out.write([np.array(npairs_all),np.array(npairs_used_all),np.array(names)],names=['NPALL','NPUSED','ABS_IGM'],header=head,
         comment=['Number of pairs','Number of used pairs','Absorption name'],extname='ATTRI')
 
     names = names.astype(str)

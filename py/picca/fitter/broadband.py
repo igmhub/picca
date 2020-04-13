@@ -65,7 +65,7 @@ class model:
             i   = self.imin + i*self.istep
             ell = self.ellmin + ell*self.ellstep
             self.par_name += ['a_auto_'+str(i)+'_'+str(ell)]
-        self.par_name = sp.array(self.par_name)
+        self.par_name = np.array(self.par_name)
 
     def value(self,data):
         tmp = sp.dot(data,sp.dot(self.ico,self.A.T))

@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 import fitsio
+import numpy as np
 import scipy as sp
 import scipy.linalg
 import argparse
@@ -40,13 +41,13 @@ if __name__ == '__main__':
 
     h = fitsio.FITS(args.data)
 
-    rp = sp.array(h[1]['RP'][:])
-    rt = sp.array(h[1]['RT'][:])
-    z  = sp.array(h[1]['Z'][:])
-    nb = sp.array(h[1]['NB'][:])
-    da = sp.array(h[2]['DA'][:])
-    we = sp.array(h[2]['WE'][:])
-    hep = sp.array(h[2]['HEALPID'][:])
+    rp = np.array(h[1]['RP'][:])
+    rt = np.array(h[1]['RT'][:])
+    z  = np.array(h[1]['Z'][:])
+    nb = np.array(h[1]['NB'][:])
+    da = np.array(h[2]['DA'][:])
+    we = np.array(h[2]['WE'][:])
+    hep = np.array(h[2]['HEALPID'][:])
 
     head = h[1].read_header()
     # npb = number of parallel bins (to avoid collision with numpy np)

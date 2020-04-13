@@ -226,9 +226,9 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     if mode=="spcframe":
         pix_data = read_from_spcframe(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, mode=mode, log=log, best_obs=best_obs, single_exp=single_exp)
         ra = [d.ra for d in pix_data]
-        ra = sp.array(ra)
+        ra = np.array(ra)
         dec = [d.dec for d in pix_data]
-        dec = sp.array(dec)
+        dec = np.array(dec)
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
         for i, p in enumerate(pixs):
             if p not in data:
@@ -243,9 +243,9 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         else:
             pix_data = read_from_spec(in_dir,thid, ra, dec, zqso, plate, mjd, fid, order, mode=mode,log=log, pk1d=pk1d, best_obs=best_obs)
         ra = [d.ra for d in pix_data]
-        ra = sp.array(ra)
+        ra = np.array(ra)
         dec = [d.dec for d in pix_data]
-        dec = sp.array(dec)
+        dec = np.array(dec)
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
         for i, p in enumerate(pixs):
             if p not in data:

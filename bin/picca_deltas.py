@@ -334,8 +334,8 @@ if __name__ == '__main__':
         pool = Pool(processes=args.nproc)
         print("iteration: ", it)
         nfit = 0
-        sort = sp.array(list(data.keys())).argsort()
-        data_fit_cont = pool.map(cont_fit, sp.array(list(data.values()))[sort] )
+        sort = np.array(list(data.keys())).argsort()
+        data_fit_cont = pool.map(cont_fit, np.array(list(data.values()))[sort] )
         for i, p in enumerate(sorted(list(data.keys()))):
             data[p] = data_fit_cont[i]
 

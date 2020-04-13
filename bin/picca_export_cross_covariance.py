@@ -35,9 +35,9 @@ if __name__ == '__main__':
         nside = head['NSIDE']
         head = h[2].read_header()
         scheme = head['HLPXSCHM']
-        da  = sp.array(h[2]['DA'][:])
-        we  = sp.array(h[2]['WE'][:])
-        hep = sp.array(h[2]['HEALPID'][:])
+        da  = np.array(h[2]['DA'][:])
+        we  = np.array(h[2]['WE'][:])
+        hep = np.array(h[2]['HEALPID'][:])
         data[i] = {'DA':da, 'WE':we, 'HEALPID':hep, 'NSIDE':nside, 'HLPXSCHM':scheme}
         h.close()
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     ### Sort the data by the healpix values
     for i in sorted(list(data.keys())):
-        sort = sp.array(data[i]['HEALPID']).argsort()
+        sort = np.array(data[i]['HEALPID']).argsort()
         data[i]['DA']      = data[i]['DA'][sort]
         data[i]['WE']      = data[i]['WE'][sort]
         data[i]['HEALPID'] = data[i]['HEALPID'][sort]

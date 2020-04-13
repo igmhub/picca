@@ -146,13 +146,13 @@ if __name__ == '__main__':
     pool.close()
 
     ### Store
-    cfs = sp.array(cfs)
+    cfs = np.array(cfs)
     wes = cfs[:,0,:]
     rps = cfs[:,2,:]
     zs = cfs[:,3,:]
     nbs = cfs[:,4,:].astype(sp.int64)
     cfs = cfs[:,1,:]
-    hep = sp.array([p for p in sorted(dels.keys()) if p in xcf.objs.keys()])
+    hep = np.array([p for p in sorted(dels.keys()) if p in xcf.objs.keys()])
 
     w = (wes.sum(axis=0)>0.)
     rp = (rps*wes).sum(axis=0)

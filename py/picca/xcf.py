@@ -47,11 +47,11 @@ def fill_neighs(pix):
             ang = d^neighs
             w = ang<angmax
             if not ang_correlation:
-                r_comov = sp.array([q.r_comov for q in neighs])
+                r_comov = np.array([q.r_comov for q in neighs])
                 w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < rp_max
                 w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > rp_min
-            neighs = sp.array(neighs)[w]
-            d.qneighs = sp.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
+            neighs = np.array(neighs)[w]
+            d.qneighs = np.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
 
 def xcf(pix):
     xi = np.zeros(npb*ntb)
@@ -260,7 +260,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             rdm_abs = rdm_abs[wzcut]
             if rd.size==0: continue
 
-            for q in sp.array(d.qneighs)[w]:
+            for q in np.array(d.qneighs)[w]:
                 ang = d^q
 
                 rq = q.r_comov
@@ -357,16 +357,16 @@ def wickT(pix):
 
             neighs = d1.qneighs
             ang12 = d1^neighs
-            r2 = sp.array([q2.r_comov for q2 in neighs])
-            z2 = sp.array([q2.zqso for q2 in neighs])
-            w2 = sp.array([q2.we for q2 in neighs])
+            r2 = np.array([q2.r_comov for q2 in neighs])
+            z2 = np.array([q2.zqso for q2 in neighs])
+            w2 = np.array([q2.we for q2 in neighs])
 
             fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
 
             ### Higher order diagrams
             if (cfWick is None) or (max_diagram<=4): continue
-            thid2 = sp.array([q2.thid for q2 in neighs])
-            for d3 in sp.array(d1.dneighs):
+            thid2 = np.array([q2.thid for q2 in neighs])
+            for d3 in np.array(d1.dneighs):
                 if d3.qneighs.size==0: continue
 
                 ang13 = d1^d3
@@ -376,9 +376,9 @@ def wickT(pix):
 
                 neighs = d3.qneighs
                 ang34 = d3^neighs
-                r4 = sp.array([q4.r_comov for q4 in neighs])
-                w4 = sp.array([q4.we for q4 in neighs])
-                thid4 = sp.array([q4.thid for q4 in neighs])
+                r4 = np.array([q4.r_comov for q4 in neighs])
+                w4 = np.array([q4.we for q4 in neighs])
+                thid4 = np.array([q4.thid for q4 in neighs])
 
                 if max_diagram==5:
                     w = sp.in1d(d1.qneighs,d3.qneighs)

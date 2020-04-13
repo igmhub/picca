@@ -32,11 +32,11 @@ class qso:
 
     def __xor__(self,data):
         try:
-            x = sp.array([d.xcart for d in data])
-            y = sp.array([d.ycart for d in data])
-            z = sp.array([d.zcart for d in data])
-            ra = sp.array([d.ra for d in data])
-            dec = sp.array([d.dec for d in data])
+            x = np.array([d.xcart for d in data])
+            y = np.array([d.ycart for d in data])
+            z = np.array([d.zcart for d in data])
+            ra = np.array([d.ra for d in data])
+            dec = np.array([d.dec for d in data])
 
             cos = x*self.xcart+y*self.ycart+z*self.zcart
             w = cos>=1.
@@ -477,10 +477,10 @@ class delta(qso):
         dll = float(a[9])
 
         nbpixel = int(a[10])
-        de = sp.array(a[11:11+nbpixel]).astype(float)
-        ll = sp.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
-        iv = sp.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
-        diff = sp.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
+        de = np.array(a[11:11+nbpixel]).astype(float)
+        ll = np.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
+        iv = np.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
+        diff = np.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
 
 
         thid = 0

@@ -51,7 +51,7 @@ def fill_neighs(pix):
             neighs = [d for p in npix for d in data[p] if d1.thid != d.thid]
             ang = d1^neighs
             w = ang<angmax
-            neighs = sp.array(neighs)[w]
+            neighs = np.array(neighs)[w]
             d1.dneighs = [d for d in neighs if d1.ra > d.ra and (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
 
 def fill_neighs_x_correlation(pix):
@@ -62,7 +62,7 @@ def fill_neighs_x_correlation(pix):
             neighs = [d for p in npix for d in data2[p] if d1.thid != d.thid]
             ang = d1^neighs
             w = (ang<angmax)
-            neighs = sp.array(neighs)[w]
+            neighs = np.array(neighs)[w]
             d1.dneighs = [d for d in neighs if (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
 
 def cf(pix):
@@ -172,7 +172,7 @@ def dmat(pix):
             w=r>rej
             npairs += len(d1.dneighs)
             npairs_used += w.sum()
-            for d2 in sp.array(d1.dneighs)[w]:
+            for d2 in np.array(d1.dneighs)[w]:
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fid<=500 and d2.fid<=500) or (d1.fid>500 and d2.fid>500) )
                 order2 = d2.order
@@ -302,7 +302,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             w=r>rej
             npairs += len(d1.dneighs)
             npairs_used += w.sum()
-            for d2 in sp.array(d1.dneighs)[w]:
+            for d2 in np.array(d1.dneighs)[w]:
                 r1 = d1.r_comov
                 rdm1 = d1.rdm_comov
                 z1_abs1 = 10**d1.ll/constants.absorber_IGM[abs_igm1]-1
