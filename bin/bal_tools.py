@@ -6,7 +6,7 @@ import fitsio
 import scipy as sp
 
 def read_bal(fbal): ##Based on read_dla from picca/py/picca/io.py
-    lst = ['THING_ID','VMIN_CIV_450','VMAX_CIV_450']
+    lst = ['THING_ID','VMIN_CIV_450','VMAX_CIV_450','VMIN_CIV_2000','VMAX_CIV_2000']
     h = fitsio.FITS(fbal)
     bcat = { k :h[1][k][:] for k in lst }
     h.close()
@@ -14,7 +14,7 @@ def read_bal(fbal): ##Based on read_dla from picca/py/picca/io.py
     return bcat
 
 
-def add_bal_rf(bcat,thid): ##LE based on add_dla from picca/py/picca/data.py
+def add_bal_rf(bcat,thid,BALi): ##LE based on add_dla from picca/py/picca/data.py
     ### Store the line wavelengths in Angstroms
     lines = {
         "lCIV" : 1549, #Used for testing
@@ -22,33 +22,43 @@ def add_bal_rf(bcat,thid): ##LE based on add_dla from picca/py/picca/data.py
         "lLya" : 1216.1,
     }
 
-    vmin_AI = []
-    vmax_AI = []
-
-    ##Match thing_id to BAL catalog index
-    indx = sp.where(bcat['THING_ID']==thid)[0][0]
-
-    #Get all the min/max velocity pairs
-    vminArr = bcat['VMIN_CIV_450'] #velocity in km/s
-    for i in vminArr[indx]:
-        if i > 0:
-            vmin_AI.append(i)
-
-    vmaxArr = bcat['VMAX_CIV_450']
-    for i in vmaxArr[indx]:
-        if i > 0:
-            vmax_AI.append(i)
+    if BALi == 'BI':
+        lst = ['VMIN_CIV_2000','VMAX_CIV_2000']
+    elif BALi == 'BOTH':
+        lst = ['VMIN_CIV_450','VMAX_CIV_450','VMIN_CIV_2000','VMAX_CIV_2000']
+    else: ##Leaving AI as default
+        lst = ['VMIN_CIV_450','VMAX_CIV_450']
 
     BAL_mask_rf = []
 
     ls = sp.constants.c*10**-3 ##Speed of light in km/s
 
+    vMin = []
+    vMax = []
+
+    ##Match thing_id to BAL catalog index
+    indx = sp.where(bcat['THING_ID']==thid)[0][0]
+
+    #Get all the min/max velocity pairs
+    for i in lst:
+        if i.find('VMIN') == 0: ##Feels risky
+            velArr = bcat[i]
+            for j in velArr[indx]:
+                if j > 0:
+                    vMin.append(j)
+        else:
+            velArr = bcat[i]
+            for j in velArr[indx]:
+                if j > 0:
+                    vMax.append(j)
+
+
     ##Calculate mask width for each velocity pair, for each emission line
-    for i in range(len(vmin_AI)): 
+    for i in range(len(vMin)): 
         for lin in lines.values():
-            lMax = lin*(1-vmin_AI[i]/ls)
-            lMin = lin*(1-vmax_AI[i]/ls)
-            ##add a condition where lMin < Ly-A for speed?
+            lMax = lin*(1-vMin[i]/ls)
+            lMin = lin*(1-vMax[i]/ls)
+            ##Only bother if actually in the forest
             if (lMin < 1216.1): 
                 BAL_mask_rf += [[lMin, lMax]]
 

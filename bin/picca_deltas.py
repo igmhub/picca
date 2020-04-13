@@ -64,6 +64,10 @@ if __name__ == '__main__':
     parser.add_argument('--bal', type = str, default = None, required=False,
             help = 'BAL file')
 
+    ##New arg for using just BI or AI velocities
+    parser.add_argument('--BALi', type = str, default = 'AI', required=False,
+            help = 'BAL index type.')
+
     parser.add_argument('--bi-max',type=float,required=False,default=None,
         help='Maximum CIV balnicity index in drq (overrides --keep-bal)')
 
@@ -309,7 +313,7 @@ if __name__ == '__main__':
             for d in data[p]:
                 if d.thid in bcat["THING_ID"]:
                     BAL_mask_obs = []
-                    BAL_mask_rf = bal_tools.add_bal_rf(bcat,d.thid)
+                    BAL_mask_rf = bal_tools.add_bal_rf(bcat,d.thid,args.BALi)
                     d.mask(mask_obs=BAL_mask_obs , mask_RF=BAL_mask_rf)
                     nb_bal_in_forest += 1
         log.write("Found {} BAL quasars in forests\n".format(nb_bal_in_forest))
