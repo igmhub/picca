@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 from picca.fitter2.control import fitter2
 import argparse
