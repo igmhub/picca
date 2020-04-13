@@ -149,8 +149,8 @@ if __name__ == '__main__':
                     new_healpix = data[d1]['HEALPID'][w]
                     nb_new_healpix = new_healpix.size
                     nb_bins = data[d2]['WE'].shape[1]
-                    data[d2]['HEALPID'] = sp.append(data[d2]['HEALPID'],new_healpix)
-                    data[d2]['WE'] = sp.append(data[d2]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+                    data[d2]['HEALPID'] = np.append(data[d2]['HEALPID'],new_healpix)
+                    data[d2]['WE'] = np.append(data[d2]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
 
         ### Sort the data by the healpix values
         for d1 in list(lst_file.keys()):

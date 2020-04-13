@@ -208,16 +208,16 @@ class forest(qso):
 
         dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
 
-        ll = sp.append(self.ll,d.ll)
-        dic['fl'] = sp.append(self.fl, d.fl)
-        iv = sp.append(self.iv,d.iv)
+        ll = np.append(self.ll,d.ll)
+        dic['fl'] = np.append(self.fl, d.fl)
+        iv = np.append(self.iv,d.iv)
 
         if self.mmef is not None:
-            dic['mmef'] = sp.append(self.mmef, d.mmef)
+            dic['mmef'] = np.append(self.mmef, d.mmef)
         if self.diff is not None:
-            dic['diff'] = sp.append(self.diff, d.diff)
+            dic['diff'] = np.append(self.diff, d.diff)
         if self.reso is not None:
-            dic['reso'] = sp.append(self.reso, d.reso)
+            dic['reso'] = np.append(self.reso, d.reso)
 
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
         cll = forest.lmin + np.arange(bins.max()+1)*forest.dll

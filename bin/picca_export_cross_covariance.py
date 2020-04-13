@@ -59,9 +59,9 @@ if __name__ == '__main__':
             nb_new_healpix = new_healpix.size
             nb_bins = data[i]['DA'].shape[1]
             print("Some healpix are unshared in data {}: {}".format(i,new_healpix))
-            data[i]['DA']      = sp.append(data[i]['DA'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
-            data[i]['WE']      = sp.append(data[i]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
-            data[i]['HEALPID'] = sp.append(data[i]['HEALPID'],new_healpix)
+            data[i]['DA']      = np.append(data[i]['DA'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+            data[i]['WE']      = np.append(data[i]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+            data[i]['HEALPID'] = np.append(data[i]['HEALPID'],new_healpix)
 
     ### Sort the data by the healpix values
     for i in sorted(list(data.keys())):
@@ -71,8 +71,8 @@ if __name__ == '__main__':
         data[i]['HEALPID'] = data[i]['HEALPID'][sort]
 
     ### Append the data
-    da  = sp.append(data[0]['DA'],data[1]['DA'],axis=1)
-    we  = sp.append(data[0]['WE'],data[1]['WE'],axis=1)
+    da  = np.append(data[0]['DA'],data[1]['DA'],axis=1)
+    we  = np.append(data[0]['WE'],data[1]['WE'],axis=1)
 
     ### Compute the covariance
     co = cov(da,we)
