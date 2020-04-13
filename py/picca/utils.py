@@ -42,13 +42,13 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
         co = cov(da,we)
 
     nda = co.shape[1]
-    var = sp.diagonal(co)
+    var = np.diagonal(co)
     if sp.any(var==0.):
         print('WARNING: data has some empty bins, impossible to smooth')
         print('WARNING: returning the unsmoothed covariance')
         return co
 
-    cor = co/sp.sqrt(var*var[:,None])
+    cor = co/np.sqrt(var*var[:,None])
 
     cor_smooth = np.zeros([nda,nda])
 
@@ -77,7 +77,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
 
 
     print("\n")
-    co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
+    co_smooth = cor_smooth * np.sqrt(var*var[:,None])
     return co_smooth
 
 def smooth_cov_wick(infile,Wick_infile,outfile):
@@ -97,8 +97,8 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     """
 
     h = fitsio.FITS(infile)
-    da = sp.array(h[2]['DA'][:])
-    we = sp.array(h[2]['WE'][:])
+    da = np.array(h[2]['DA'][:])
+    we = np.array(h[2]['WE'][:])
     head = h[1].read_header()
     # npb = number of parallel bins (to avoid collision with numpy np)
     npb = head['NP']
@@ -108,26 +108,26 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     co = cov(da,we)
 
     nbin = da.shape[1]
-    var = sp.diagonal(co)
+    var = np.diagonal(co)
     if sp.any(var==0.):
         print('WARNING: data has some empty bins, impossible to smooth')
         print('WARNING: returning the unsmoothed covariance')
         return co
 
-    cor = co/sp.sqrt(var*var[:,None])
+    cor = co/np.sqrt(var*var[:,None])
     cor1d = cor.reshape(nbin*nbin)
 
     h = fitsio.FITS(Wick_infile)
-    cow = sp.array(h[1]['CO'][:])
+    cow = np.array(h[1]['CO'][:])
     h.close()
 
-    varw = sp.diagonal(cow)
+    varw = np.diagonal(cow)
     if sp.any(varw==0.):
         print('WARNING: Wick covariance has bins with var = 0')
         print('WARNING: returning the unsmoothed covariance')
         return co
 
-    corw = cow/sp.sqrt(varw*varw[:,None])
+    corw = cow/np.sqrt(varw*varw[:,None])
     corw1d = corw.reshape(nbin*nbin)
 
     Dcor1d = cor1d - corw1d
@@ -151,7 +151,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
 
     #### fit for L and A at each drp
     def corrfun(idrp,idrt,L,A):
-        r = sp.sqrt(float(idrt)**2+float(idrp)**2) - float(idrp)
+        r = np.sqrt(float(idrt)**2+float(idrp)**2) - float(idrp)
         return A*sp.exp(-r/L)
     def chisq(L,A,idrp):
         chi2 = 0.
@@ -174,7 +174,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
         Afit[idrp] = m.values['A']
 
     #### hybrid covariance from wick + fit
-    co_smooth = sp.sqrt(var*var[:,None])
+    co_smooth = np.sqrt(var*var[:,None])
 
     cor0 = Dcor_red1d[rtindex==0]
     for i in range(nbin):
@@ -233,7 +233,7 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     fromPiccaKey2Type = {'THING_ID':sp.int64, 'Z':sp.float64, 'ZQSO':sp.float64, 'NHI':sp.float64,
         'PLATE':sp.int64,'MJD':sp.int64,'FIBERID':sp.int64,
         'RA':sp.float64, 'DEC':sp.float64}
-    cat = { v:sp.array(dcat[k],dtype=fromPiccaKey2Type[v]) for k,v in fromNoterdaemeKey2Picca.items() }
+    cat = { v:np.array(dcat[k],dtype=fromPiccaKey2Type[v]) for k,v in fromNoterdaemeKey2Picca.items() }
 
     w = cat['THING_ID']>0
     print('INFO: Removed {} DLA, because THING_ID<=0'.format((cat['THING_ID']<=0).sum()))
@@ -249,9 +249,9 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     zqso = h[1][drqzkey][:]
     h.close()
     fromThingid2idx = { el:i for i,el in enumerate(thid) }
-    cat['RA'] = sp.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['DEC'] = sp.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['ZQSO'] = sp.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['RA'] = np.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['DEC'] = np.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['ZQSO'] = np.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
 
     w = cat['RA']!=cat['DEC']
     print('INFO: Removed {} DLA, because RA==DEC'.format((cat['RA']==cat['DEC']).sum()))
@@ -326,7 +326,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     ## Truth table
     vac = fitsio.FITS(truth)
 
-    w = sp.ones(vac[1]['TARGETID'][:].size).astype(bool)
+    w = np.ones(vac[1]['TARGETID'][:].size).astype(bool)
     print(" start                 : nb object in cat = {}".format(w.sum()) )
     w &= sp.char.strip(vac[1]['TRUESPECTYPE'][:].astype(str))==spectype
     print(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
@@ -463,7 +463,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     ### Catalog of objects
     h = fitsio.FITS(zcat)
-    key_val = sp.char.strip(sp.array([ h[1].read_header()[k] for k in h[1].read_header().keys()]).astype(str))
+    key_val = sp.char.strip(np.array([ h[1].read_header()[k] for k in h[1].read_header().keys()]).astype(str))
     if 'TARGETID' in key_val:
         zcat_thid = h[1]['TARGETID'][:]
     elif 'THING_ID' in key_val:
@@ -482,7 +482,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         sys.exit()
     elif indir is not None:
         fi = glob.glob(indir+'/*/*/transmission*.fits*')
-        fi = sp.sort(sp.array(fi))
+        fi = sp.sort(np.array(fi))
         h = fitsio.FITS(fi[0])
         in_nside = h['METADATA'].read_header()['HPXNSIDE']
         nest = h['METADATA'].read_header()['HPXNEST']
@@ -492,14 +492,14 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             endoffile = '.gz'
         else:
             endoffile = ''
-        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in np.unique(in_pixs)]))
+        fi = sp.sort(np.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in np.unique(in_pixs)]))
     else:
-        fi = sp.sort(sp.array(infiles))
+        fi = sp.sort(np.array(infiles))
     print('INFO: Found {} files'.format(fi.size))
 
     ### Stack the transmission
-    lmin = sp.log10(lObs_min)
-    lmax = sp.log10(lObs_max)
+    lmin = np.log10(lObs_min)
+    lmax = np.log10(lObs_max)
     nstack = int((lmax-lmin)/dll)+1
     T_stack = np.zeros(nstack)
     n_stack = np.zeros(nstack)
@@ -508,16 +508,16 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     ### Read
     for nf, f in enumerate(fi):
-        print("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in deltas.keys()])), end="")
+        print("\rread {} of {} {}".format(nf,fi.size,np.sum([ len(deltas[p]) for p in deltas.keys()])), end="")
         h = fitsio.FITS(f)
         thid = h['METADATA']['MOCKID'][:]
-        if sp.in1d(thid,zcat_thid).sum()==0:
+        if np.in1d(thid,zcat_thid).sum()==0:
             h.close()
             continue
         ra = h['METADATA']['RA'][:].astype(sp.float64)*sp.pi/180.
         dec = h['METADATA']['DEC'][:].astype(sp.float64)*sp.pi/180.
         z = h['METADATA']['Z'][:]
-        ll = sp.log10(h['WAVELENGTH'].read())
+        ll = np.log10(h['WAVELENGTH'].read())
         if 'F_LYA' in h :
             trans = h['F_LYA'].read()
         else:
@@ -531,13 +531,13 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
         bins = sp.floor((ll-lmin)/dll+0.5).astype(int)
         tll = lmin + bins*dll
-        lObs = (10**tll)*sp.ones(nObj)[:,None]
+        lObs = (10**tll)*np.ones(nObj)[:,None]
         lRF = (10**tll)/(1.+z[:,None])
         w = np.zeros_like(trans).astype(int)
         w[ (lObs>=lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
-        nbPixel = sp.sum(w,axis=1)
+        nbPixel = np.sum(w,axis=1)
         cut = nbPixel>=50
-        cut &= sp.in1d(thid,zcat_thid)
+        cut &= np.in1d(thid,zcat_thid)
         if cut.sum()==0:
             h.close()
             continue
@@ -558,8 +558,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
             bins = sp.floor((tll-lmin)/dll+0.5).astype(int)
             cll = lmin + np.arange(nstack)*dll
-            cfl = sp.bincount(bins,weights=ttrans,minlength=nstack)
-            civ = sp.bincount(bins,minlength=nstack).astype(float)
+            cfl = np.bincount(bins,weights=ttrans,minlength=nstack)
+            civ = np.bincount(bins,minlength=nstack).astype(float)
 
             ww = civ>0.
             if ww.sum()<50: continue
@@ -569,7 +569,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             cfl = cfl[ww]/civ[ww]
             civ = civ[ww]
             deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
-        if not nspec is None and sp.sum([ len(deltas[p]) for p in deltas.keys()])>=nspec: break
+        if not nspec is None and np.sum([ len(deltas[p]) for p in deltas.keys()])>=nspec: break
 
     print('\n')
 
@@ -599,7 +599,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             hd['FIBERID'] = d.fid
             hd['ORDER'] = d.order
 
-            cols = [d.ll,d.de,d.we,sp.ones(d.ll.size)]
+            cols = [d.ll,d.de,d.we,np.ones(d.ll.size)]
             names = ['LOGLAM','DELTA','WEIGHT','CONT']
             out.write(cols,names=names,header=hd,extname=str(d.thid))
         out.close()
@@ -704,8 +704,8 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
 
     # Compute UV portion of A(lambda)/E(B-V) curve using FM fitting function and
     # R-dependent coefficients
-    xcutuv = sp.array([10000.0/2700.0])
-    xspluv = 10000.0/sp.array([2700.0,2600.0])
+    xcutuv = np.array([10000.0/2700.0])
+    xspluv = 10000.0/np.array([2700.0,2600.0])
 
     iuv = sp.where(x >= xcutuv)[0]
     N_UV = iuv.size
@@ -727,9 +727,9 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
 
     # Compute optical portion of A(lambda)/E(B-V) curve
     # using cubic spline anchored in UV, optical, and IR
-    xsplopir = sp.concatenate(([0],10000.0/sp.array([26500.0,12200.0,6000.0,5470.0,4670.0,4110.0])))
-    ysplir = sp.array([0.0,0.26469,0.82925])*R_V/3.1
-    ysplop = sp.array((sp.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1],R_V ),
+    xsplopir = sp.concatenate(([0],10000.0/np.array([26500.0,12200.0,6000.0,5470.0,4670.0,4110.0])))
+    ysplir = np.array([0.0,0.26469,0.82925])*R_V/3.1
+    ysplop = np.array((sp.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1],R_V ),
             sp.polyval([-5.13540e-02, 1.00216, -7.35778e-05][::-1],R_V ),
             sp.polyval([ 7.00127e-01, 1.00184, -3.32598e-05][::-1],R_V ),
             sp.polyval([ 1.19456, 1.01707, -5.46959e-03, 7.97809e-04, -4.45636e-05][::-1],R_V ) ))
