@@ -1,4 +1,4 @@
-
+import numpy as np
 import scipy as sp
 from picca import constants
 
@@ -60,6 +60,6 @@ class dla:
     @staticmethod
     def voigt(a,u):
         nmc = 1000
-        y = sp.random.normal(size=nmc)*sp.sqrt(2)
+        y = sp.random.normal(size=nmc)*np.sqrt(2)
         m = sp.mean(1/(a**2+(y[:,None]-u)**2),axis=0)
-        return m*a/sp.sqrt(sp.pi)
+        return m*a/np.sqrt(sp.pi)

@@ -7,6 +7,7 @@ import copy
 import functools
 import argparse
 import h5py
+import numpy as np
 import scipy as sp
 from scipy import linalg
 import matplotlib.pyplot as plt
@@ -174,7 +175,7 @@ if __name__ == '__main__':
     free_pars, fixed_pars, best_fit_pars, err_best_fit_pars = extract_h5file(dic_init['outfile'])
     if 'all' in args.params:
         args.params = free_pars.copy()
-    if sp.any(~sp.in1d(args.params,free_pars)):
+    if sp.any(~np.in1d(args.params,free_pars)):
         print('ERROR: Some parameters are not fitted {}, the list is {}'.format(args.params,free_pars))
         sys.exit(12)
 
@@ -199,8 +200,8 @@ if __name__ == '__main__':
             print('{}, <z> = {}/{} = {}'.format(data.name,tres,tden,tres/tden))
 
         if len(dic_init['data sets']['data'])>1:
-            res = sp.array(res).sum()
-            den = sp.array(den).sum()
+            res = np.array(res).sum()
+            den = np.array(den).sum()
             print('Combined')
             print('<z> = {}/{} = {}'.format(res,den,res/den))
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
@@ -116,13 +117,13 @@ if __name__ == '__main__':
         forest.dll = None
         for p in xcf.dels:
             for d in xcf.dels[p]:
-                dll = sp.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
+                dll = np.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
                 if forest.dll is None:
                     forest.dll = dll
                 else:
                     forest.dll = min(dll,forest.dll)
-        forest.lmin = sp.log10( (zmin_pix+1.)*lambda_abs )-forest.dll/2.
-        forest.lmax = sp.log10( (zmax_pix+1.)*lambda_abs )+forest.dll/2.
+        forest.lmin = np.log10( (zmin_pix+1.)*lambda_abs )-forest.dll/2.
+        forest.lmax = np.log10( (zmax_pix+1.)*lambda_abs )+forest.dll/2.
         ll,st, wst = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
             for d in xcf.dels[p]:
@@ -135,7 +136,7 @@ if __name__ == '__main__':
     xcf.objs = objs
     for objsp in xcf.objs.values():
         for q in objsp:
-            q.ll = sp.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
+            q.ll = np.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
     sys.stderr.write("\n")
 
     ### Send
@@ -145,13 +146,13 @@ if __name__ == '__main__':
     pool.close()
 
     ### Store
-    cfs = sp.array(cfs)
+    cfs = np.array(cfs)
     wes = cfs[:,0,:]
     rps = cfs[:,2,:]
     zs = cfs[:,3,:]
     nbs = cfs[:,4,:].astype(sp.int64)
     cfs = cfs[:,1,:]
-    hep = sp.array([p for p in sorted(dels.keys()) if p in xcf.objs.keys()])
+    hep = np.array([p for p in sorted(dels.keys()) if p in xcf.objs.keys()])
 
     w = (wes.sum(axis=0)>0.)
     rp = (rps*wes).sum(axis=0)

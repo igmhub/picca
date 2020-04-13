@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
@@ -138,13 +140,13 @@ if __name__ == '__main__':
     cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
-    cfs = sp.array(cfs)
+    cfs = np.array(cfs)
     wes = cfs[:,0,:]
     rps = cfs[:,1,:]
     rts = cfs[:,2,:]
     zs  = cfs[:,3,:]
     nbs = cfs[:,4,:].astype(sp.int64)
-    hep = sp.array(sorted(list(cpu_data.keys())))
+    hep = np.array(sorted(list(cpu_data.keys())))
 
     cut      = (wes.sum(axis=0)>0.)
     rp       = (rps*wes).sum(axis=0)

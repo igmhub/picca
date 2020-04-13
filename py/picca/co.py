@@ -105,10 +105,10 @@ def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
     bt   = (rt/rt_max*ntb).astype(int)
     bins = bt + ntb*bp
 
-    cw  = sp.bincount(bins,weights=w12)
-    crp = sp.bincount(bins,weights=rp*w12)
-    crt = sp.bincount(bins,weights=rt*w12)
-    cz  = sp.bincount(bins,weights=z*w12)
-    cnb = sp.bincount(bins)
+    cw  = np.bincount(bins,weights=w12)
+    crp = np.bincount(bins,weights=rp*w12)
+    crt = np.bincount(bins,weights=rt*w12)
+    cz  = np.bincount(bins,weights=z*w12)
+    cnb = np.bincount(bins)
 
     return cw,crp,crt,cz,cnb

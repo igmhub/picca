@@ -12,7 +12,7 @@ class wedge:
         irpmc=(index-irtmc)//nrtmc
         rtmc = rtmin+(irtmc+0.5)*(rtmax-rtmin)/nrtmc
         rpmc = rpmin+(irpmc+0.5)*(rpmax-rpmin)/nrpmc
-        rmc = sp.sqrt(rtmc**2+rpmc**2)
+        rmc = np.sqrt(rtmc**2+rpmc**2)
         mumc = rpmc/rmc
         if absoluteMu:
             mumc = np.absolute(mumc)
@@ -28,7 +28,7 @@ class wedge:
 
         rp = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
         rt = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
-        r=sp.sqrt(rp**2+rt**2)
+        r=np.sqrt(rp**2+rt**2)
 
         bins = bt+nrt*bp + nrp*nrt*br
 
@@ -36,14 +36,14 @@ class wedge:
         bins = bins[w]
 
         W = np.zeros(nrp*nrt*nr)
-        c=sp.bincount(bins.flatten())
+        c=np.bincount(bins.flatten())
         W[:len(c)]+=c
 
         self.W = W.reshape(nr,nrt*nrp)
         self.r = rmin + (np.arange(nr)+0.5)*(rmax-rmin)/nr
 
     def wedge(self,da,co):
-        we = 1/sp.diagonal(co)
+        we = 1/np.diagonal(co)
         w = self.W.dot(we)
         Wwe = self.W*we
         mask = w>0

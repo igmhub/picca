@@ -47,11 +47,11 @@ def fill_neighs(pix):
             ang = d^neighs
             w = ang<angmax
             if not ang_correlation:
-                r_comov = sp.array([q.r_comov for q in neighs])
+                r_comov = np.array([q.r_comov for q in neighs])
                 w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < rp_max
                 w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > rp_min
-            neighs = sp.array(neighs)[w]
-            d.qneighs = sp.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
+            neighs = np.array(neighs)[w]
+            d.qneighs = np.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
 
 def xcf(pix):
 
@@ -102,7 +102,7 @@ def xcf(pix):
 def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     if ang_correlation:
         rp = r1[:,None]/r2
-        rt = ang*sp.ones_like(rp)
+        rt = ang*np.ones_like(rp)
     else:
         rp = (r1[:,None]-r2)*sp.cos(ang/2)
         rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
@@ -122,13 +122,12 @@ def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     bt = (rt/rt_max*ntb).astype(int)
     bins = bt + ntb*bp
 
-
-    cd = sp.bincount(bins,weights=wde)
-    cw = sp.bincount(bins,weights=we)
-    crp = sp.bincount(bins,weights=rp*we)
-    crt = sp.bincount(bins,weights=rt*we)
-    cz = sp.bincount(bins,weights=z*we)
-    cnb = sp.bincount(bins,weights=(we>0.))
+    cd = np.bincount(bins,weights=wde)
+    cw = np.bincount(bins,weights=we)
+    crp = np.bincount(bins,weights=rp*we)
+    crt = np.bincount(bins,weights=rt*we)
+    cz = np.bincount(bins,weights=z*we)
+    cnb = np.bincount(bins,weights=(we>0.))
 
     r = sp.sqrt(rp**2+rt**2)
     w = (r>80.) & (r<120.)
@@ -206,23 +205,23 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     we = w1[:,None]*w2
     we = we[w]
-    c = sp.bincount(bins,weights=we)
+    c = np.bincount(bins,weights=we)
     wdm[:len(c)] += c
     eta2 = np.zeros(npm*ntm*n2)
     eta4 = np.zeros(npm*ntm*n2)
 
-    c = sp.bincount(m_bins,weights=we*rp[w])
+    c = np.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*rt[w])
+    c = np.bincount(m_bins,weights=we*rt[w])
     rteff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*z[w])
+    c = np.bincount(m_bins,weights=we*z[w])
     zeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we)
+    c = np.bincount(m_bins,weights=we)
     weff[:c.size] += c
 
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = np.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*np.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+    c = np.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*np.ones(n2))[w]/slw1)
     eta4[:len(c)]+=c
 
     ubb = np.unique(m_bins)
@@ -272,7 +271,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             rdm_abs = rdm_abs[wzcut]
             if rd.size==0: continue
 
-            for q in sp.array(d.qneighs)[w]:
+            for q in np.array(d.qneighs)[w]:
                 ang = d^q
 
                 rq = q.r_comov
@@ -287,7 +286,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
                 bt = (rt/rt_max*ntb).astype(int)
                 bA = bt + ntb*bp
-                c = sp.bincount(bA[wA],weights=wdq[wA])
+                c = np.bincount(bA[wA],weights=wdq[wA])
                 wdm[:len(c)]+=c
 
                 rp_abs = (rd_abs-rq)*sp.cos(ang/2)
@@ -299,16 +298,16 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 bBma = bt_abs + ntm*bp_abs
                 wBma = (rp_abs>rp_min) & (rp_abs<rp_max) & (rt_abs<rt_max)
                 wAB = wA&wBma
-                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=wdq[wAB]*zwe[wAB])
                 dm[:len(c)]+=c
 
-                c = sp.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
                 rpeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB]*zwe[wAB])
                 rteff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB]*zwe[wAB])
                 zeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
                 weff[:len(c)]+=c
             setattr(d,"qneighs",None)
 
@@ -363,22 +362,22 @@ def wickT(pix):
 
             v1 = v1d[d1.fname](d1.ll)
             w1 = d1.we
-            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
+            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*np.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
 
             neighs = d1.qneighs
             ang12 = d1^neighs
-            r2 = sp.array([q2.r_comov for q2 in neighs])
-            z2 = sp.array([q2.zqso for q2 in neighs])
-            w2 = sp.array([q2.we for q2 in neighs])
+            r2 = np.array([q2.r_comov for q2 in neighs])
+            z2 = np.array([q2.zqso for q2 in neighs])
+            w2 = np.array([q2.we for q2 in neighs])
 
             fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
 
             ### Higher order diagrams
             if (cfWick is None) or (max_diagram<=4): continue
-            thid2 = sp.array([q2.thid for q2 in neighs])
-            for d3 in sp.array(d1.dneighs):
+            thid2 = np.array([q2.thid for q2 in neighs])
+            for d3 in np.array(d1.dneighs):
                 if d3.qneighs.size==0: continue
 
                 ang13 = d1^d3
@@ -388,19 +387,19 @@ def wickT(pix):
 
                 neighs = d3.qneighs
                 ang34 = d3^neighs
-                r4 = sp.array([q4.r_comov for q4 in neighs])
-                w4 = sp.array([q4.we for q4 in neighs])
-                thid4 = sp.array([q4.thid for q4 in neighs])
+                r4 = np.array([q4.r_comov for q4 in neighs])
+                w4 = np.array([q4.we for q4 in neighs])
+                thid4 = np.array([q4.thid for q4 in neighs])
 
                 if max_diagram==5:
-                    w = sp.in1d(d1.qneighs,d3.qneighs)
+                    w = np.in1d(d1.qneighs,d3.qneighs)
                     if w.sum()==0: continue
                     t_ang12 = ang12[w]
                     t_r2 = r2[w]
                     t_w2 = w2[w]
                     t_thid2 = thid2[w]
 
-                    w = sp.in1d(d3.qneighs,d1.qneighs)
+                    w = np.in1d(d3.qneighs,d1.qneighs)
                     if w.sum()==0: continue
                     ang34 = ang34[w]
                     r4 = r4[w]
@@ -441,9 +440,9 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     zw1 = ((1.+z1)/(1.+zref))**(z_evol_del-1.)
     zw2 = ((1.+z2)/(1.+zref))**(z_evol_obj-1.)
     we = w1[:,None]*w2
-    we1 = w1[:,None]*sp.ones(len(r2))
-    idxPix = np.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
-    idxQso = sp.ones(r1.size,dtype='int')[:,None]*np.arange(len(r2))
+    we1 = w1[:,None]*np.ones(len(r2))
+    idxPix = np.arange(r1.size)[:,None]*np.ones(len(r2),dtype='int')
+    idxQso = np.ones(r1.size,dtype='int')[:,None]*np.arange(len(r2))
 
     bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
     bt = (rt/rt_max*ntb).astype(int)
@@ -529,8 +528,8 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
     we = w1[:,None]*w2
-    pix = (np.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
-    thid = sp.ones_like(w1[:,None]).astype(int)*thid2
+    pix = (np.arange(r1.size)[:,None]*np.ones_like(r2)).astype(int)
+    thid = np.ones_like(w1[:,None]).astype(int)*thid2
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
@@ -547,8 +546,8 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rp = (r3[:,None]-r4)*sp.cos(ang34/2.)
     rt = (r3[:,None]+r4)*sp.sin(ang34/2.)
     we = w3[:,None]*w4
-    pix = (np.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
-    thid = sp.ones_like(w3[:,None]).astype(int)*thid4
+    pix = (np.arange(r3.size)[:,None]*np.ones_like(r4)).astype(int)
+    thid = np.ones_like(w3[:,None]).astype(int)*thid4
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
