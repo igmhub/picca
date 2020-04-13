@@ -6,6 +6,7 @@ import argparse
 import glob
 from array import array
 
+import numpy as np
 import scipy as sp
 
 import fitsio
@@ -71,7 +72,7 @@ def compute_mean_delta(ll,delta,iv,zqso):
         hdelta_RF.Fill(ll_rf, delta[i])
         hdelta_OBS.Fill(ll_obs, delta[i])
         hivar.Fill(iv[i])
-        snr_pixel = (delta[i]+1)*sp.sqrt(iv[i])
+        snr_pixel = (delta[i]+1)*np.sqrt(iv[i])
         hsnr.Fill(snr_pixel)
         hivar.Fill(iv[i])
         if (iv[i] < 1000):

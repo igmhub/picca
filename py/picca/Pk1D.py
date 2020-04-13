@@ -71,7 +71,7 @@ def rebin_diff_noise(dll,ll,diff):
     w = (civ2>0)
     if (len(civ2) == 0) :
         print( "Error: diff size = 0 ",diff)
-    diff2 = cdiff2[w]/civ2[w]*sp.sqrt(civ2[w])
+    diff2 = cdiff2[w]/civ2[w]*np.sqrt(civ2[w])
     diffout = np.zeros(diff.size)
     nmax = len(diff)//len(diff2)
     for n in range (nmax+1) :
@@ -141,7 +141,7 @@ def compute_Pk_noise(dll,iv,diff,ll,run_noise):
     Pk = np.zeros(nb_bin_FFT)
     err = np.zeros(nb_pixels)
     w = iv>0
-    err[w] = 1.0/sp.sqrt(iv[w])
+    err[w] = 1.0/np.sqrt(iv[w])
 
     if (run_noise) :
         for _ in range(nb_noise_exp): #iexp unused, but needed

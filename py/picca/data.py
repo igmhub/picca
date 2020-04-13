@@ -51,7 +51,7 @@ class qso:
 
             w = (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off)
             if w.sum()!=0:
-                angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cosdec*(ra[w]-self.ra))**2 )
+                angl[w] = np.sqrt( (dec[w]-self.dec)**2 + (self.cosdec*(ra[w]-self.ra))**2 )
         except:
             x = data.xcart
             y = data.ycart
@@ -68,7 +68,7 @@ class qso:
                 cos = -1.
             angl = sp.arccos(cos)
             if (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off):
-                angl = sp.sqrt( (dec-self.dec)**2 + (self.cosdec*(ra-self.ra))**2 )
+                angl = np.sqrt( (dec-self.dec)**2 + (self.cosdec*(ra-self.ra))**2 )
         return angl
 
 class forest(qso):
@@ -194,7 +194,7 @@ class forest(qso):
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
 
-        err = 1.0/sp.sqrt(iv)
+        err = 1.0/np.sqrt(iv)
         SNR = fl/err
         self.mean_SNR = sum(SNR)/float(len(SNR))
         lam_lya = constants.absorber_IGM["LYA"]
@@ -237,7 +237,7 @@ class forest(qso):
         # recompute means of quality variables
         if self.reso is not None:
             self.mean_reso = self.reso.mean()
-        err = 1./sp.sqrt(self.iv)
+        err = 1./np.sqrt(self.iv)
         SNR = self.fl/err
         self.mean_SNR = SNR.mean()
         lam_lya = constants.absorber_IGM["LYA"]

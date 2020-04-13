@@ -233,12 +233,12 @@ class model:
             ap=pars["aiso"]*pars["1+epsilon"]*pars["1+epsilon"]
             at=pars["aiso"]/pars["1+epsilon"]
 
-        ar=sp.sqrt(rt**2*at**2+rp**2*ap**2)
+        ar=np.sqrt(rt**2*at**2+rp**2*ap**2)
         mur=rp*ap/ar
 
         muk = model.muk
         kp = k * muk
-        kt = k * sp.sqrt(1-muk**2)
+        kt = k * np.sqrt(1-muk**2)
 
         bias_lya = pars["bias_lya*(1+beta_lya)"]/(1.+pars["beta_lya"])
         beta_lya = pars["beta_lya"]
@@ -371,12 +371,12 @@ class model:
         Lper=pars["Lper_cross"]
         qso_evol = [pars['qso_evol_0'],pars['qso_evol_1']]
         rp_shift=rp+drp
-        ar=sp.sqrt(rt**2*at**2+rp_shift**2*ap**2)
+        ar=np.sqrt(rt**2*at**2+rp_shift**2*ap**2)
         mur=rp_shift*ap/ar
 
         muk = model.muk
         kp = k * muk
-        kt = k * sp.sqrt(1-muk**2)
+        kt = k * np.sqrt(1-muk**2)
 
         bias_lya = pars["bias_lya*(1+beta_lya)"]/(1.+pars["beta_lya"])
         beta_lya = pars["beta_lya"]
@@ -408,7 +408,7 @@ class model:
         if (self.velo_gauss):
             pk_full *= sp.exp( -0.25*(kp*pars['sigma_velo_gauss'])**2 )
         if (self.velo_lorentz):
-            pk_full /= sp.sqrt(1.+(kp*pars['sigma_velo_lorentz'])**2)
+            pk_full /= np.sqrt(1.+(kp*pars['sigma_velo_lorentz'])**2)
 
         ### Peak broadening
         sigmaNLper = pars["SigmaNL_perp"]
@@ -420,7 +420,7 @@ class model:
         pk_full *= sp.sinc(kt*Lper/2./sp.pi)**2
 
         ### Non-linear correction
-        pk_full *= sp.sqrt(self.DNL(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model))
+        pk_full *= np.sqrt(self.DNL(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model))
 
         ### Redshift evolution
         evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
@@ -457,12 +457,12 @@ class model:
         else:
             ap = pars["aiso"]*pars["1+epsilon"]*pars["1+epsilon"]
             at = pars["aiso"]/pars["1+epsilon"]
-        ar  = sp.sqrt(rt**2*at**2+rp**2*ap**2)
+        ar  = np.sqrt(rt**2*at**2+rp**2*ap**2)
         mur = rp*ap/ar
 
         muk = model.muk
         kp = k * muk
-        kt = k * sp.sqrt(1-muk**2)
+        kt = k * np.sqrt(1-muk**2)
 
         ### QSO-QSO auto correlation
         bias_qso = pars["bias_qso"]
@@ -528,7 +528,7 @@ class model:
 
             um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
             um[0]=sp.real(um[0])
-            an=np.fft.fft(pk_ell*k**n/2/sp.pi**2*sp.sqrt(sp.pi/2))
+            an=np.fft.fft(pk_ell*k**n/2/sp.pi**2*np.sqrt(sp.pi/2))
             an*=um
             xi_loc=np.fft.ifft(an)
             xi_loc=xi_loc[s]

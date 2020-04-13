@@ -23,7 +23,7 @@ class cosmo:
         zmax  = 10.
         dz    = zmax/nbins
         z=np.arange(nbins)*dz
-        hubble = H0*sp.sqrt( Ol*(1.+z)**(3.*(1.+wl)) + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
+        hubble = H0*np.sqrt( Ol*(1.+z)**(3.*(1.+wl)) + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
 
         chi=np.zeros(nbins)
         for i in range(1,nbins):
@@ -35,9 +35,9 @@ class cosmo:
         if Ok==0.:
             dm = chi
         elif Ok<0.:
-            dm = sp.sin(H0*sp.sqrt(-Ok)/c*chi)/(H0*sp.sqrt(-Ok)/c)
+            dm = sp.sin(H0*np.sqrt(-Ok)/c*chi)/(H0*np.sqrt(-Ok)/c)
         elif Ok>0.:
-            dm = sp.sinh(H0*sp.sqrt(Ok)/c*chi)/(H0*sp.sqrt(Ok)/c)
+            dm = sp.sinh(H0*np.sqrt(Ok)/c*chi)/(H0*np.sqrt(Ok)/c)
 
         self.hubble = interpolate.interp1d(z,hubble)
         self.r_2_z = interpolate.interp1d(chi,z)

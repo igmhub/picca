@@ -538,7 +538,7 @@ def wickT(pix):
 
             v1 = v1d[d1.fname](d1.ll)
             w1 = d1.we
-            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
+            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*np.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
 
@@ -547,7 +547,7 @@ def wickT(pix):
 
                 v2 = v1d[d2.fname](d2.ll)
                 w2 = d2.we
-                c1d_2 = (w2*w2[:,None])*c1d[d2.fname](abs(d2.ll-d2.ll[:,None]))*sp.sqrt(v2*v2[:,None])
+                c1d_2 = (w2*w2[:,None])*c1d[d2.fname](abs(d2.ll-d2.ll[:,None]))*np.sqrt(v2*v2[:,None])
                 r2 = d2.r_comov
                 z2 = d2.z
 
@@ -561,7 +561,7 @@ def wickT(pix):
 
                     v3 = v1d[d3.fname](d3.ll)
                     w3 = d3.we
-                    c1d_3 = (w3*w3[:,None])*c1d[d3.fname](abs(d3.ll-d3.ll[:,None]))*sp.sqrt(v3*v3[:,None])
+                    c1d_3 = (w3*w3[:,None])*c1d[d3.fname](abs(d3.ll-d3.ll[:,None]))*np.sqrt(v3*v3[:,None])
                     r3 = d3.r_comov
                     z3 = d3.z
 

@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
     # compute mean and error on Pk
     meanPk = sp.where(sum!=0,sumPk/sum,0.0)
-    errorPk = sp.where(sum!=0,sp.sqrt(((sumPk2/sum)-meanPk**2)/sum),0.0)
+    errorPk = sp.where(sum!=0,np.sqrt(((sumPk2/sum)-meanPk**2)/sum),0.0)
 
     # Print figure
     figure_file = args.out_fig

@@ -48,7 +48,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
         print('WARNING: returning the unsmoothed covariance')
         return co
 
-    cor = co/sp.sqrt(var*var[:,None])
+    cor = co/np.sqrt(var*var[:,None])
 
     cor_smooth = np.zeros([nda,nda])
 
@@ -77,7 +77,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
 
 
     print("\n")
-    co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
+    co_smooth = cor_smooth * np.sqrt(var*var[:,None])
     return co_smooth
 
 def smooth_cov_wick(infile,Wick_infile,outfile):
@@ -114,7 +114,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
         print('WARNING: returning the unsmoothed covariance')
         return co
 
-    cor = co/sp.sqrt(var*var[:,None])
+    cor = co/np.sqrt(var*var[:,None])
     cor1d = cor.reshape(nbin*nbin)
 
     h = fitsio.FITS(Wick_infile)
@@ -127,7 +127,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
         print('WARNING: returning the unsmoothed covariance')
         return co
 
-    corw = cow/sp.sqrt(varw*varw[:,None])
+    corw = cow/np.sqrt(varw*varw[:,None])
     corw1d = corw.reshape(nbin*nbin)
 
     Dcor1d = cor1d - corw1d
@@ -151,7 +151,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
 
     #### fit for L and A at each drp
     def corrfun(idrp,idrt,L,A):
-        r = sp.sqrt(float(idrt)**2+float(idrp)**2) - float(idrp)
+        r = np.sqrt(float(idrt)**2+float(idrp)**2) - float(idrp)
         return A*sp.exp(-r/L)
     def chisq(L,A,idrp):
         chi2 = 0.
@@ -174,7 +174,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
         Afit[idrp] = m.values['A']
 
     #### hybrid covariance from wick + fit
-    co_smooth = sp.sqrt(var*var[:,None])
+    co_smooth = np.sqrt(var*var[:,None])
 
     cor0 = Dcor_red1d[rtindex==0]
     for i in range(nbin):

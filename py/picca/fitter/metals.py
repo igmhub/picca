@@ -199,7 +199,7 @@ class model:
             muk = cosmo_model.muk
             k = self.k
             kp = k*muk
-            kt = k*sp.sqrt(1-muk**2)
+            kt = k*np.sqrt(1-muk**2)
             nbins = self.dmat["LYA_"+self.met_names[0]].shape[0]
 
             if self.hcds_mets:
@@ -229,7 +229,7 @@ class model:
                 rt = self.auto_rt["LYA_"+met]
                 rp = self.auto_rp["LYA_"+met]
                 zeff  = self.auto_zeff["LYA_"+met]
-                r = sp.sqrt(rt**2+rp**2)
+                r = np.sqrt(rt**2+rp**2)
                 w = (r==0)
                 r[w] = 1e-6
                 mur = rp/r
@@ -276,7 +276,7 @@ class model:
                     if recalc:
                         if self.verbose:
                             print("recalculating ",met1,met2)
-                        r = sp.sqrt(rt**2+rp**2)
+                        r = np.sqrt(rt**2+rp**2)
                         w=r==0
                         r[w]=1e-6
                         mur = rp/r
@@ -321,12 +321,12 @@ class model:
 
             rp_shift = self.grid_qso_met[:,:,0]+drp
             rt       = self.grid_qso_met[:,:,1]
-            r        = sp.sqrt(rp_shift**2 + rt**2)
+            r        = np.sqrt(rp_shift**2 + rt**2)
             mur      = rp_shift/r
 
         muk      = cosmo_model.muk
         kp       = self.k * muk
-        kt       = self.k * sp.sqrt(1.-muk**2)
+        kt       = self.k * np.sqrt(1.-muk**2)
 
         ### Correction to linear power-spectrum
         pk_corr = (1.+0.*muk)*self.pk
@@ -368,7 +368,7 @@ class model:
 
                     rp = self.xrp[i] + drp
                     rt = self.xrt[i]
-                    r = sp.sqrt(rp**2+rt**2)
+                    r = np.sqrt(rp**2+rt**2)
                     w=r==0
                     r[w]=1e-6
                     mur = rp/r

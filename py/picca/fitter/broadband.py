@@ -30,7 +30,7 @@ class model:
         r0 = 100.
         self.r0 = r0
 
-        r = sp.sqrt(rt**2+rp**2)
+        r = np.sqrt(rt**2+rp**2)
         mu = rp/r
 
         A = np.zeros([npar,len(r)])
@@ -74,7 +74,7 @@ class model:
         return p,d
 
     def __call__(self,rt,rp,pars):
-        r = sp.sqrt(rt**2+rp**2)
+        r = np.sqrt(rt**2+rp**2)
         mu = rp/r
         bb = np.zeros(len(r))
 

@@ -351,7 +351,7 @@ def wickT(pix):
 
             v1 = v1d[d1.fname](d1.ll)
             w1 = d1.we
-            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
+            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*np.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
 

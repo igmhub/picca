@@ -171,7 +171,7 @@ if __name__ == '__main__':
     wv1d = np.diag(wes).copy()
     nv1d = np.diag(nbs).copy()
     cor = cfs
-    norm = sp.sqrt(v1d*v1d[:,None])
+    norm = np.sqrt(v1d*v1d[:,None])
     w = norm>0
     cor[w]/=norm[w]
 

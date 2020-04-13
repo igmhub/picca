@@ -51,7 +51,7 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
 
         um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
         um[0]=sp.real(um[0])
-        an=fft.fft(pk_ell*k**n*sp.sqrt(sp.pi/2))
+        an=fft.fft(pk_ell*k**n*np.sqrt(sp.pi/2))
         an*=um
         xi_loc=fft.ifft(an)
         xi_loc=xi_loc[s]

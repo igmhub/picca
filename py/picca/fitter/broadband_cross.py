@@ -57,7 +57,7 @@ class model:
 
         rt       = self.rt
         rp_shift = self.rp+drp
-        r        = sp.sqrt(rt**2 + rp_shift**2)
+        r        = np.sqrt(rt**2 + rp_shift**2)
         mu       = rp_shift/r
 
         A = np.zeros([self.npar,len(r)])
@@ -89,7 +89,7 @@ class model:
 
         self.pars = pars
         rp_shift = rp+drp
-        r        = sp.sqrt(rt**2 + rp_shift**2)
+        r        = np.sqrt(rt**2 + rp_shift**2)
         mu       = rp_shift/r
         bb = np.zeros(len(r))
 

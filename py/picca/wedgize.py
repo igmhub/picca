@@ -12,7 +12,7 @@ class wedge:
         irpmc=(index-irtmc)//nrtmc
         rtmc = rtmin+(irtmc+0.5)*(rtmax-rtmin)/nrtmc
         rpmc = rpmin+(irpmc+0.5)*(rpmax-rpmin)/nrpmc
-        rmc = sp.sqrt(rtmc**2+rpmc**2)
+        rmc = np.sqrt(rtmc**2+rpmc**2)
         mumc = rpmc/rmc
         if absoluteMu:
             mumc = np.absolute(mumc)
@@ -28,7 +28,7 @@ class wedge:
 
         rp = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
         rt = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
-        r=sp.sqrt(rp**2+rt**2)
+        r=np.sqrt(rp**2+rt**2)
 
         bins = bt+nrt*bp + nrp*nrt*br
 

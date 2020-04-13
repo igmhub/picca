@@ -45,7 +45,7 @@ def exp_diff(file,ll) :
     alpha = 1
     if (nexp_per_col%2 == 1) :
         n_even = (nexp_per_col-1)//2
-        alpha = sp.sqrt(4.*n_even*(n_even+1))/nexp_per_col
+        alpha = np.sqrt(4.*n_even*(n_even+1))/nexp_per_col
     diff = 0.5 * (fltoteven-fltotodd) * alpha ### CHECK THE * alpha (Nathalie)
 
     return diff
@@ -74,8 +74,8 @@ def spectral_resolution_desi(reso_matrix, ll) :
 
     dll = (ll[-1]-ll[0])/float(len(ll)-1)
     reso= sp.clip(reso_matrix,1.0e-6,1.0e6)
-    rms_in_pixel = (sp.sqrt(1.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-1][:]))
-                    + sp.sqrt(4.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-2][:])))/2.0
+    rms_in_pixel = (np.sqrt(1.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-1][:]))
+                    + np.sqrt(4.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-2][:])))/2.0
 
     reso_in_km_per_s = rms_in_pixel*constants.speed_light/1000.*dll*sp.log(10.0)
 

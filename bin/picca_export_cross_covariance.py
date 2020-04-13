@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     ### Get the cross-correlation
     var = np.diagonal(co)
-    cor = co/sp.sqrt(var*var[:,None])
+    cor = co/np.sqrt(var*var[:,None])
     cross_cor = cor.copy()
     cross_cor = cross_cor[:,size1:]
     cross_cor = cross_cor[:size1,:]

@@ -388,7 +388,7 @@ class Chi2:
             ### Other attributes
             index = np.arange(len(rp))
             da    = self.auto.da_all
-            err   = sp.sqrt(np.diagonal(self.auto.co_all))
+            err   = np.sqrt(np.diagonal(self.auto.co_all))
 
             ### Save all bins
             self._exp_res(prefix+"auto_all",index,rp,rt,z,da,err,fit,met=met,bb=bb,sb=sb)
@@ -400,7 +400,7 @@ class Chi2:
             rt    = rt[cuts]
             z     = z[cuts]
             da    = da[cuts]
-            err   = sp.sqrt(np.diagonal(self.auto.co))
+            err   = np.sqrt(np.diagonal(self.auto.co))
             fit   = fit[cuts]
             if not met is None:
                 met = met[cuts]
@@ -444,7 +444,7 @@ class Chi2:
             ### Other attributes
             index = np.arange(len(rp))
             da    = self.cross.da_all
-            err   = sp.sqrt(np.diagonal(self.cross.co_all))
+            err   = np.sqrt(np.diagonal(self.cross.co_all))
 
             ### Save all bins
             self._exp_res(prefix+"cross_all",index,rp,rt,z,da,err,fit,met=met,bb=bb,sb=sb)
@@ -456,7 +456,7 @@ class Chi2:
             rt    = rt[cuts]
             z     = z[cuts]
             da    = da[cuts]
-            err   = sp.sqrt(np.diagonal(self.cross.co))
+            err   = np.sqrt(np.diagonal(self.cross.co))
             fit   = fit[cuts]
             if not met is None:
                 met = met[cuts]
@@ -474,7 +474,7 @@ class Chi2:
             ### Save all bins
             index=np.arange(len(rp))
             da=self.autoQSO.da_all
-            err=sp.sqrt(np.diagonal(self.autoQSO.co_all))
+            err=np.sqrt(np.diagonal(self.autoQSO.co_all))
             fit=self.cosmo.valueAutoQSO(rp,rt,z,{p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pautoQSO})
             fit=sp.dot(self.autoQSO.dm,fit)
             self._exp_res(prefix+"autoQSO_all",index,rp,rt,z,da,err,fit)
@@ -483,7 +483,7 @@ class Chi2:
             cuts=self.autoQSO.cuts
             index=np.arange(len(cuts))[cuts]
             da=self.autoQSO.da
-            err=sp.sqrt(np.diagonal(self.autoQSO.co))
+            err=np.sqrt(np.diagonal(self.autoQSO.co))
             fit=self.cosmo.valueAutoQSO(rp,rt,z,{p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pautoQSO})
             fit=sp.dot(self.autoQSO.dm,fit)
             rp=rp[cuts]
@@ -589,7 +589,7 @@ class Chi2:
         f=open(prefix+"_residuals.dat","w")
         nbins=len(da)
 
-        r=sp.sqrt(rp**2+rt**2)
+        r=np.sqrt(rp**2+rt**2)
         mu = rp/r
 
         for i in range(nbins):

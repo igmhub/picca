@@ -82,10 +82,10 @@ if __name__ == '__main__':
         if (cor.min()<-1.) | (cor.min()>1.) | (cor.max()<-1.) | (cor.max()>1.) | sp.any(np.diag(cor)!=1.):
             print('WARNING: The correlation-matrix has some incorrect values')
         tvar = np.diagonal(cor)
-        cor = cor/sp.sqrt(tvar*tvar[:,None])
+        cor = cor/np.sqrt(tvar*tvar[:,None])
         co = cov(da,we)
         var = np.diagonal(co)
-        co = cor * sp.sqrt(var*var[:,None])
+        co = cor * np.sqrt(var*var[:,None])
     else:
         binSizeP = (rp_max-rp_min) / npb
         binSizeT = (rt_max-0.) / ntb
