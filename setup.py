@@ -4,7 +4,7 @@ import glob
 
 from setuptools import setup
 
-scripts = glob.glob('scripts/*')
+scripts = glob.glob('bin/*')
 
 description = "Package for Igm Cosmological-Correlations Analyses"
 
