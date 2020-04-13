@@ -8,4 +8,4 @@ install:
     - python setup.py install
 
 script:
-    - pytest py/picca/test/test_cor.py
+    - pytest py/picca/test/test_cor.py -s
