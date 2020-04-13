@@ -128,7 +128,7 @@ if __name__ == '__main__':
         w = data['corr_RR']>0.
         co = np.zeros(data['corr_DD'].size)
         co[w] = (data['COEF']/2.*data['corr_DD'][w])**2/(data['COEF']/2.*data['corr_RR'][w])**3
-        data['CO'] = sp.diag(co)
+        data['CO'] = np.diag(co)
     else:
         print('INFO: Compute covariance from sub-sampling')
 

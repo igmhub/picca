@@ -167,9 +167,9 @@ if __name__ == '__main__':
     wes_2d = wes.copy()
     nbs_2d = nbs.copy()
 
-    v1d = sp.diag(cfs).copy()
-    wv1d = sp.diag(wes).copy()
-    nv1d = sp.diag(nbs).copy()
+    v1d = np.diag(cfs).copy()
+    wv1d = np.diag(wes).copy()
+    nv1d = np.diag(nbs).copy()
     cor = cfs
     norm = sp.sqrt(v1d*v1d[:,None])
     w = norm>0

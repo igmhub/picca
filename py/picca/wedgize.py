@@ -43,7 +43,7 @@ class wedge:
         self.r = rmin + (np.arange(nr)+0.5)*(rmax-rmin)/nr
 
     def wedge(self,da,co):
-        we = 1/sp.diagonal(co)
+        we = 1/np.diagonal(co)
         w = self.W.dot(we)
         Wwe = self.W*we
         mask = w>0

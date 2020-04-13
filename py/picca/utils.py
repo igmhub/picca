@@ -42,7 +42,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
         co = cov(da,we)
 
     nda = co.shape[1]
-    var = sp.diagonal(co)
+    var = np.diagonal(co)
     if sp.any(var==0.):
         print('WARNING: data has some empty bins, impossible to smooth')
         print('WARNING: returning the unsmoothed covariance')
@@ -108,7 +108,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     co = cov(da,we)
 
     nbin = da.shape[1]
-    var = sp.diagonal(co)
+    var = np.diagonal(co)
     if sp.any(var==0.):
         print('WARNING: data has some empty bins, impossible to smooth')
         print('WARNING: returning the unsmoothed covariance')
@@ -121,7 +121,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     cow = np.array(h[1]['CO'][:])
     h.close()
 
-    varw = sp.diagonal(cow)
+    varw = np.diagonal(cow)
     if sp.any(varw==0.):
         print('WARNING: Wick covariance has bins with var = 0')
         print('WARNING: returning the unsmoothed covariance')
