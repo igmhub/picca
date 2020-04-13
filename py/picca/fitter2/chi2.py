@@ -200,8 +200,8 @@ class chi2:
                         self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
         self.dic_chi2scan_result = {}
-        self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
-        self.dic_chi2scan_result['values'] = sp.asarray(result)
+        self.dic_chi2scan_result['params'] = np.asarray(sp.append(sorted(self.best_fit.values),['fval']))
+        self.dic_chi2scan_result['values'] = np.asarray(result)
 
         ### Set all parameters to where they were before
         for d in self.data:

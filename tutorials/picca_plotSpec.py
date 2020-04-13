@@ -168,9 +168,9 @@ if __name__ == '__main__':
                         usr_mask_RF_DLA += [ [float(l[1]),float(l[2])] ]
                     else:
                         raise
-            usr_mask_obs    = np.log10(sp.asarray(usr_mask_obs))
-            usr_mask_RF     = np.log10(sp.asarray(usr_mask_RF))
-            usr_mask_RF_DLA = np.log10(sp.asarray(usr_mask_RF_DLA))
+            usr_mask_obs    = np.log10(np.asarray(usr_mask_obs))
+            usr_mask_RF     = np.log10(np.asarray(usr_mask_RF))
+            usr_mask_RF_DLA = np.log10(np.asarray(usr_mask_RF_DLA))
             if usr_mask_RF_DLA.size==0:
                 usr_mask_RF_DLA = None
 

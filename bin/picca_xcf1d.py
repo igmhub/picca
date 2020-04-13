@@ -117,7 +117,7 @@ if __name__ == '__main__':
         forest.dll = None
         for p in xcf.dels:
             for d in xcf.dels[p]:
-                dll = sp.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
+                dll = np.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
                 if forest.dll is None:
                     forest.dll = dll
                 else:
