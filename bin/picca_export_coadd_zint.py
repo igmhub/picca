@@ -52,7 +52,7 @@ if not args.no_dmat:
         pass
     h.close()
 else:
-    dm = sp.eye(nb.shape[0])
+    dm = np.eye(nb.shape[0])
 
 for f in args.data:
     if not (os.path.isfile(f.replace('cf','dmat')) or args.no_dmat):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import numpy as np
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         first_line = first_line.replace('#','')
         first_line = first_line.split()
         fromkeytoindex = { el:i for i,el in enumerate(first_line) }
-        chi2 = sp.loadtxt(path)
+        chi2 = np.loadtxt(path)
 
         ### Read the best-fit chi2
         with open(path.replace('.ap.at.scan.dat','.chisq')) as f:
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         first_line = first_line.replace('#','')
         first_line = first_line.split()
         fromkeytoindex_bestfit = { el:i for i,el in enumerate(first_line) }
-        chi2_bestfit = sp.loadtxt(path.replace('.ap.at.scan.dat','.chisq'))
+        chi2_bestfit = np.loadtxt(path.replace('.ap.at.scan.dat','.chisq'))
 
         ### Read the best fit BAO
         with open(path.replace('.ap.at.scan.dat','.save.pars')) as f:
@@ -64,7 +64,7 @@ if __name__ == '__main__':
         first_line = first_line.replace('#','')
         first_line = first_line.split()
         fromkeytoindex_bestfitBAO = { el:i for i,el in enumerate(first_line) }
-        chi2_bestfitBAO = sp.loadtxt(path.replace('.ap.at.scan.dat','.save.pars'))
+        chi2_bestfitBAO = np.loadtxt(path.replace('.ap.at.scan.dat','.save.pars'))
 
         ### Read the convertion from delta-chi2 to sigma
         if not os.path.isfile(path.replace('.ap.at.scan.dat','.dchi2.to.sigma')):

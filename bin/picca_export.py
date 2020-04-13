@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 import fitsio
+import numpy as np
 import scipy as sp
 import scipy.linalg
 import argparse
@@ -40,13 +41,13 @@ if __name__ == '__main__':
 
     h = fitsio.FITS(args.data)
 
-    rp = sp.array(h[1]['RP'][:])
-    rt = sp.array(h[1]['RT'][:])
-    z  = sp.array(h[1]['Z'][:])
-    nb = sp.array(h[1]['NB'][:])
-    da = sp.array(h[2]['DA'][:])
-    we = sp.array(h[2]['WE'][:])
-    hep = sp.array(h[2]['HEALPID'][:])
+    rp = np.array(h[1]['RP'][:])
+    rt = np.array(h[1]['RT'][:])
+    z  = np.array(h[1]['Z'][:])
+    nb = np.array(h[1]['NB'][:])
+    da = np.array(h[2]['DA'][:])
+    we = np.array(h[2]['WE'][:])
+    hep = np.array(h[2]['HEALPID'][:])
 
     head = h[1].read_header()
     # npb = number of parallel bins (to avoid collision with numpy np)
@@ -78,13 +79,13 @@ if __name__ == '__main__':
         hh = fitsio.FITS(args.cor)
         cor = hh[1]['CO'][:]
         hh.close()
-        if (cor.min()<-1.) | (cor.min()>1.) | (cor.max()<-1.) | (cor.max()>1.) | sp.any(sp.diag(cor)!=1.):
+        if (cor.min()<-1.) | (cor.min()>1.) | (cor.max()<-1.) | (cor.max()>1.) | sp.any(np.diag(cor)!=1.):
             print('WARNING: The correlation-matrix has some incorrect values')
-        tvar = sp.diagonal(cor)
-        cor = cor/sp.sqrt(tvar*tvar[:,None])
+        tvar = np.diagonal(cor)
+        cor = cor/np.sqrt(tvar*tvar[:,None])
         co = cov(da,we)
-        var = sp.diagonal(co)
-        co = cor * sp.sqrt(var*var[:,None])
+        var = np.diagonal(co)
+        co = cor * np.sqrt(var*var[:,None])
     else:
         binSizeP = (rp_max-rp_min) / npb
         binSizeT = (rt_max-0.) / ntb
@@ -122,7 +123,7 @@ if __name__ == '__main__':
             dmz = z.copy()
         h.close()
     else:
-        dm = sp.eye(len(da))
+        dm = np.eye(len(da))
         dmrp = rp.copy()
         dmrt = rt.copy()
         dmz = z.copy()
