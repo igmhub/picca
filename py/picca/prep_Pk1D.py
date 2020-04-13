@@ -53,7 +53,7 @@ def exp_diff(file,ll) :
 
 def spectral_resolution(wdisp,with_correction=None,fiber=None,ll=None) :
 
-    reso = wdisp*constants.speed_light/1000.*1.0e-4*sp.log(10.)
+    reso = wdisp*constants.speed_light/1000.*1.0e-4*np.log(10.)
 
     if (with_correction):
         wave = np.power(10.,ll)
@@ -74,10 +74,10 @@ def spectral_resolution_desi(reso_matrix, ll) :
 
     dll = (ll[-1]-ll[0])/float(len(ll)-1)
     reso= sp.clip(reso_matrix,1.0e-6,1.0e6)
-    rms_in_pixel = (np.sqrt(1.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-1][:]))
-                    + np.sqrt(4.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-2][:])))/2.0
+    rms_in_pixel = (np.sqrt(1.0/2.0/np.log(reso[len(reso)//2][:]/reso[len(reso)//2-1][:]))
+                    + np.sqrt(4.0/2.0/np.log(reso[len(reso)//2][:]/reso[len(reso)//2-2][:])))/2.0
 
-    reso_in_km_per_s = rms_in_pixel*constants.speed_light/1000.*dll*sp.log(10.0)
+    reso_in_km_per_s = rms_in_pixel*constants.speed_light/1000.*dll*np.log(10.0)
 
     return reso_in_km_per_s
 

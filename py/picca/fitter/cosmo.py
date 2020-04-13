@@ -505,13 +505,13 @@ class model:
         dmuk = model.dmuk
 
         k0 = k[0]
-        l=sp.log(k.max()/k0)
+        l=np.log(k.max()/k0)
         r0=1.
 
         N=len(k)
         emm=N*np.fft.fftfreq(N)
         r=r0*sp.exp(-emm*l/N)
-        dr=abs(sp.log(r[1]/r[0]))
+        dr=abs(np.log(r[1]/r[0]))
         s=sp.argsort(r)
         r=r[s]
 
@@ -534,8 +534,8 @@ class model:
             xi_loc=xi_loc[s]
             xi_loc/=r**(3-n)
             xi_loc[-1]=0
-            spline=sp.interpolate.splrep(sp.log(r)-dr/2,sp.real(xi_loc),k=3,s=0)
-            xi[ell//2,:]=sp.interpolate.splev(sp.log(ar),spline)
+            spline=sp.interpolate.splrep(np.log(r)-dr/2,sp.real(xi_loc),k=3,s=0)
+            xi[ell//2,:]=sp.interpolate.splev(np.log(ar),spline)
 
         return xi
 

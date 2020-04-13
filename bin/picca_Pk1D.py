@@ -232,7 +232,7 @@ if __name__ == '__main__':
                 Pk_noise,Pk_diff = compute_Pk_noise(d.dll,iv_new,diff_new,ll_new,run_noise)
 
                 # Compute resolution correction
-                delta_pixel = d.dll*sp.log(10.)*constants.speed_light/1000.
+                delta_pixel = d.dll*np.log(10.)*constants.speed_light/1000.
                 cor_reso = compute_cor_reso(delta_pixel,d.mean_reso,k)
 
                 # Compute 1D Pk

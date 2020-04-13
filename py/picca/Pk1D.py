@@ -117,7 +117,7 @@ def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
 def compute_Pk_raw(dll,delta,ll):
 
     #   Length in km/s
-    length_lambda = dll*constants.speed_light/1000.*sp.log(10.)*len(delta)
+    length_lambda = dll*constants.speed_light/1000.*np.log(10.)*len(delta)
 
     # make 1D FFT
     nb_pixels = len(delta)

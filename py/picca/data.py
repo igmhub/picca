@@ -347,7 +347,7 @@ class forest(qso):
             if (eta==0).all() :
                 we=np.ones(len(we))
             v = (self.fl-m)**2*we
-            return v.sum()-sp.log(we).sum()
+            return v.sum()-np.log(we).sum()
 
         p0 = (self.fl*self.iv).sum()/self.iv.sum()
         p1 = 0
