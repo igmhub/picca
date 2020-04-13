@@ -536,7 +536,7 @@ class delta(qso):
         res=0
         if (self.order==1) and self.de.shape[0] > 1:
             mll = sp.average(self.ll,weights=self.we)
-            mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
+            mld = np.sum(self.we*self.de*(self.ll-mll))/np.sum(self.we*(self.ll-mll)**2)
             res = mld * (self.ll-mll)
         elif self.order==1:
             res = self.de

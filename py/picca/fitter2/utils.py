@@ -41,7 +41,7 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
             pk_ell=pk
             n=2.
         else:
-            pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)/2/sp.pi**2
+            pk_ell=np.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)/2/sp.pi**2
             n=2.
         mu=ell+0.5
         q=2-n-0.5
@@ -67,7 +67,7 @@ def Pk2Xi(ar,mur,k,pk,ell_max=None):
     xi=Pk2Mp(ar,k,pk,ell_vals)
     for ell in ell_vals:
         xi[ell//2,:]*=L(mur,ell)
-    return sp.sum(xi,axis=0)
+    return np.sum(xi,axis=0)
 
 def Pk2XiRel(ar,mur,k,pk,kwargs):
     """Calculate the cross-correlation contribution from relativistic effects (Bonvin et al. 2014).

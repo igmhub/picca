@@ -508,7 +508,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     ### Read
     for nf, f in enumerate(fi):
-        print("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in deltas.keys()])), end="")
+        print("\rread {} of {} {}".format(nf,fi.size,np.sum([ len(deltas[p]) for p in deltas.keys()])), end="")
         h = fitsio.FITS(f)
         thid = h['METADATA']['MOCKID'][:]
         if sp.in1d(thid,zcat_thid).sum()==0:
@@ -535,7 +535,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         lRF = (10**tll)/(1.+z[:,None])
         w = np.zeros_like(trans).astype(int)
         w[ (lObs>=lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
-        nbPixel = sp.sum(w,axis=1)
+        nbPixel = np.sum(w,axis=1)
         cut = nbPixel>=50
         cut &= sp.in1d(thid,zcat_thid)
         if cut.sum()==0:
@@ -569,7 +569,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             cfl = cfl[ww]/civ[ww]
             civ = civ[ww]
             deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
-        if not nspec is None and sp.sum([ len(deltas[p]) for p in deltas.keys()])>=nspec: break
+        if not nspec is None and np.sum([ len(deltas[p]) for p in deltas.keys()])>=nspec: break
 
     print('\n')
 

@@ -41,7 +41,7 @@ def read_dlas(fdla):
     for t in np.unique(cat['THING_ID']):
         w = t==cat['THING_ID']
         dlas[t] = [ (z,nhi) for z,nhi in zip(cat['Z'][w],cat['NHI'][w]) ]
-    nb_dla = sp.sum([len(d) for d in dlas.values()])
+    nb_dla = np.sum([len(d) for d in dlas.values()])
 
     print('\n')
     print(' In catalog: {} DLAs'.format(nb_dla) )

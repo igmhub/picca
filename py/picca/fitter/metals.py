@@ -182,7 +182,7 @@ class model:
             amp*=bias_lya
 
             xi_lya_met=amp*self.temp_lya_met
-            xi_lya_met=sp.sum(xi_lya_met,axis=(1,2))
+            xi_lya_met=np.sum(xi_lya_met,axis=(1,2))
 
             amp=np.zeros([self.nmet,self.nmet,3])
 
@@ -193,7 +193,7 @@ class model:
             amp[:,:,2] = bias_met2*8*beta_met*beta_met[None,:]/35
 
             xi_met_met=amp*self.temp_met_met
-            xi_met_met=sp.sum(xi_met_met,axis=(1,2,3))
+            xi_met_met=np.sum(xi_met_met,axis=(1,2,3))
 
         else:
             muk = cosmo_model.muk

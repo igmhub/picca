@@ -518,7 +518,7 @@ class model:
         xi=np.zeros([ell_max//2+1,len(ar)])
 
         for ell in range(0,ell_max+1,2):
-            pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)
+            pk_ell=np.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)
             mu=ell+0.5
             n=2.
             q=2-n-0.5
@@ -544,4 +544,4 @@ class model:
         xi=model.Pk2Mp(ar,k,pk,ell_max)
         for ell in range(0,ell_max+1,2):
             xi[ell//2,:]*=L(mur,ell)
-        return sp.sum(xi,axis=0)
+        return np.sum(xi,axis=0)
