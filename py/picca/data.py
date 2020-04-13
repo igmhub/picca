@@ -347,14 +347,17 @@ class Forest(Qso):
                 exposures_diff /= corr
 
         ## cut to specified range
-        bins = sp.floor((log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
+        bins = (np.floor((log_lambda - Forest.log_lambda_min)
+                /Forest.delta_log_lambda + 0.5).astype(int))
         log_lambda = Forest.log_lambda_min + bins*Forest.delta_log_lambda
-        w = (log_lambda>=Forest.log_lambda_min)
-        w = w & (log_lambda<Forest.log_lambda_max)
-        w = w & (log_lambda-sp.log10(1.+self.z_qso)>Forest.log_lambda_min_rest_frame)
-        w = w & (log_lambda-sp.log10(1.+self.z_qso)<Forest.log_lambda_max_rest_frame)
-        w = w & (ivar>0.)
-        if w.sum()==0:
+        w = (log_lambda >= Forest.log_lambda_min)
+        w = w & (log_lambda < Forest.log_lambda_max)
+        w = w & (log_lambda - sp.log10(1.+self.z_qso) >
+                 Forest.log_lambda_min_rest_frame)
+        w = w & (log_lambda - sp.log10(1.+self.z_qso) <
+                 Forest.log_lambda_max_rest_frame)
+        w = w & (ivar > 0.)
+        if w.sum() == 0:
             return
         bins = bins[w]
         log_lambda = log_lambda[w]
@@ -363,41 +366,48 @@ class Forest(Qso):
         if mean_expected_flux_frac is not None:
             mean_expected_flux_frac = mean_expected_flux_frac[w]
         if exposures_diff is not None:
-            exposures_diff=exposures_diff[w]
+            exposures_diff = exposures_diff[w]
         if reso is not None:
-            reso=reso[w]
+            reso = reso[w]
 
-        ## rebin
-        rebin_log_lambda = Forest.log_lambda_min + np.arange(bins.max()+1)*Forest.delta_log_lambda
+        # rebin arrays
+        rebin_log_lambda = (Forest.log_lambda_min + np.arange(bins.max()+1)
+                            *Forest.delta_log_lambda)
         rebin_flux = np.zeros(bins.max()+1)
         rebin_ivar = np.zeros(bins.max()+1)
         if mean_expected_flux_frac is not None:
             rebin_mean_expected_flux_frac = np.zeros(bins.max()+1)
-        ccfl = sp.bincount(bins,weights=ivar*flux)
-        cciv = sp.bincount(bins,weights=ivar)
+        #ccfl = np.bincount(bins, weights=ivar*flux)
+        #cciv = np.bincount(bins, weights=ivar)
+        #if mean_expected_flux_frac is not None:
+        #    ccmmef = sp.bincount(bins, weights=ivar*mean_expected_flux_frac)
+        rebin_flux = np.bincount(bins, weights=ivar*flux)
+        rebin_ivar = np.bincount(bins, weights=ivar)
         if mean_expected_flux_frac is not None:
-            ccmmef = sp.bincount(bins, weights=ivar*mean_expected_flux_frac)
+            rebin_mean_expected_flux_frac = np.bincount(bins, weights=ivar*
+                                                        mean_expected_flux_frac)
         if exposures_diff is not None:
-            rebin_exposures_diff = sp.bincount(bins,weights=ivar*exposures_diff)
+            rebin_exposures_diff = np.bincount(bins,
+                                               weights=ivar*exposures_diff)
         if reso is not None:
-            creso = sp.bincount(bins,weights=ivar*reso)
-
-        rebin_flux[:len(ccfl)] += ccfl
-        rebin_ivar[:len(cciv)] += cciv
-        if mean_expected_flux_frac is not None:
-            rebin_mean_expected_flux_frac[:len(ccmmef)] += ccmmef
-        w = (rebin_ivar>0.)
-        if w.sum()==0:
+            rebin_reso = sp.bincount(bins, weights=ivar*reso)
+        #rebin_flux[:len(ccfl)] += ccfl
+        #rebin_ivar[:len(cciv)] += cciv
+        #if mean_expected_flux_frac is not None:
+        #    rebin_mean_expected_flux_frac[:len(ccmmef)] += ccmmef
+        w = (rebin_ivar > 0.)
+        if w.sum() == 0:
             return
         log_lambda = rebin_log_lambda[w]
         flux = rebin_flux[w]/rebin_ivar[w]
         ivar = rebin_ivar[w]
         if mean_expected_flux_frac is not None:
-            mean_expected_flux_frac = rebin_mean_expected_flux_frac[w]/rebin_ivar[w]
+            mean_expected_flux_frac = (rebin_mean_expected_flux_frac[w]
+                                       /rebin_ivar[w])
         if exposures_diff is not None:
             exposures_diff = rebin_exposures_diff[w]/rebin_ivar[w]
         if reso is not None:
-            reso = creso[w]/rebin_ivar[w]
+            reso = rebin_reso[w]/rebin_ivar[w]
 
         ## Flux calibration correction
         try:
