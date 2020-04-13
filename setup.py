@@ -21,5 +21,11 @@ setup(name="picca",
     install_requires=['numpy','scipy','iminuit','healpy','fitsio',
         'llvmlite','numba','h5py','future','setuptools'],
     test_suite='picca.test.test_cor',
-    scripts = scripts
+    #scripts = scripts
+    entry_points={  # Optional
+        'console_scripts': [
+            'picca_deltas=bin.picca_deltas:main',
+        ],
+    },
+
     )
