@@ -198,7 +198,7 @@ class forest(qso):
         SNR = fl/err
         self.mean_SNR = sum(SNR)/float(len(SNR))
         lam_lya = constants.absorber_IGM["LYA"]
-        self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
+        self.mean_z = (np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))/2./lam_lya -1.0
 
 
     def __add__(self,d):
@@ -241,7 +241,7 @@ class forest(qso):
         SNR = self.fl/err
         self.mean_SNR = SNR.mean()
         lam_lya = constants.absorber_IGM["LYA"]
-        self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
+        self.mean_z = (np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))/2./lam_lya -1.0
 
         return self
 

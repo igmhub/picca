@@ -227,7 +227,7 @@ def dnl_arinyo(k, pk_lin, tracer1, tracer2, pk_fid, **kwargs):
     kp = kwargs["dnl_arinyo_kp"]
 
     growth = q1*k*k*k*pk_fid/(2*sp.pi*sp.pi)
-    pecvelocity = sp.power(k/kv,av)*sp.power(sp.fabs(muk),bv)
+    pecvelocity = np.power(k/kv,av)*np.power(sp.fabs(muk),bv)
     pressure = (k/kp)*(k/kp)
     dnl = sp.exp(growth*(1-pecvelocity)-pressure)
     return dnl

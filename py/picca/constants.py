@@ -47,7 +47,7 @@ class cosmo:
         ### D_M
         self.dm = interpolate.interp1d(z,dm)
         ### D_V
-        y = sp.power(z*self.dm(z)**2*self.dist_hubble(z),1./3.)
+        y = np.power(z*self.dm(z)**2*self.dist_hubble(z),1./3.)
         self.dist_v = interpolate.interp1d(z,y)
 
 ### Absorber names and wavelengths [Angstrom]

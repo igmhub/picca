@@ -66,7 +66,7 @@ def make_tree(tree,nb_bin_max):
 def compute_mean_delta(ll,delta,iv,zqso):
 
     for i, _ in enumerate (ll):
-        ll_obs = sp.power(10., ll[i])
+        ll_obs = np.power(10., ll[i])
         ll_rf = ll_obs/(1.+zqso)
         hdelta.Fill(ll_obs, ll_rf, delta[i])
         hdelta_RF.Fill(ll_rf, delta[i])
@@ -220,7 +220,7 @@ if __name__ == '__main__':
                 if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.zqso)
 
                 lam_lya = constants.absorber_IGM["LYA"]
-                z_abs =  sp.power(10.,ll_new)/lam_lya - 1.0
+                z_abs =  np.power(10.,ll_new)/lam_lya - 1.0
                 mean_z_new = sum(z_abs)/float(len(z_abs))
 
                 # Compute Pk_raw
@@ -253,8 +253,8 @@ if __name__ == '__main__':
                     mean_z[0] = m_z_arr[f]
                     mean_reso[0] = d.mean_reso
                     mean_SNR[0] = d.mean_SNR
-                    lambda_min[0] =  sp.power(10.,ll_new[0])
-                    lambda_max[0] =  sp.power(10.,ll_new[-1])
+                    lambda_min[0] =  np.power(10.,ll_new[0])
+                    lambda_max[0] =  np.power(10.,ll_new[-1])
                     nb_mask_pix[0] = nb_masked_pixel
 
                     plate[0] = d.plate

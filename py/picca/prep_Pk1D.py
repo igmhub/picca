@@ -56,7 +56,7 @@ def spectral_resolution(wdisp,with_correction=None,fiber=None,ll=None) :
     reso = wdisp*constants.speed_light/1000.*1.0e-4*sp.log(10.)
 
     if (with_correction):
-        wave = sp.power(10.,ll)
+        wave = np.power(10.,ll)
         corrPlateau = 1.267 - 0.000142716*wave + 1.9068e-08*wave*wave;
         corrPlateau[wave>6000.0] = 1.097
 

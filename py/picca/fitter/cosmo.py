@@ -193,7 +193,7 @@ class model:
             dnl = sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kvel)**1.5)
         elif model == "arinyo":
             growth = q1*k*k*k*pk/(2*sp.pi*sp.pi)
-            pecvelocity = sp.power(k/kv,av)*sp.power(sp.fabs(muk),bv)
+            pecvelocity = np.power(k/kv,av)*np.power(sp.fabs(muk),bv)
             pressure = (k/kp)*(k/kp)
             dnl = sp.exp(growth*(1-pecvelocity)-pressure)
         return dnl
@@ -423,7 +423,7 @@ class model:
         pk_full *= np.sqrt(self.DNL(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model))
 
         ### Redshift evolution
-        evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+        evol  = np.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
         evol *= self.evolution_Lya_bias(z,[pars["alpha_lya"]])/self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])
         evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
 
@@ -488,8 +488,8 @@ class model:
 
         ### Redshift evolution
         qso_evol = [pars['qso_evol_0'],pars['qso_evol_1']]
-        evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
-        evol *= sp.power( self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol),2. )
+        evol  = np.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+        evol *= np.power( self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol),2. )
 
         return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
 

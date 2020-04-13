@@ -314,7 +314,7 @@ class model:
 
             ### Redshift evolution
             z     = self.grid_qso_met[:,:,2]
-            evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+            evol  = np.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
             evol *= self.evolution_Lya_bias(z,[pars["alpha_lya"]])/self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])
             evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
 
@@ -362,7 +362,7 @@ class model:
                     self.prev_pmet['drp'] = drp
 
                     z = self.xzeff[i]
-                    evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+                    evol  = np.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
                     evol *= self.evolution_Lya_bias(z,[pars["alpha_"+i]])/self.evolution_Lya_bias(self.zref,[pars["alpha_"+i]])
                     evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
 

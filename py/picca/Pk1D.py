@@ -39,7 +39,7 @@ def split_forest(nb_part,dll,ll,de,diff,iv,first_pixel):
         iv_part = iv_c[selection]
 
         lam_lya = constants.absorber_IGM["LYA"]
-        m_z = (sp.power(10.,ll_part[len(ll_part)-1])+sp.power(10.,ll_part[0]))/2./lam_lya -1.0
+        m_z = (np.power(10.,ll_part[len(ll_part)-1])+np.power(10.,ll_part[0]))/2./lam_lya -1.0
 
         m_z_arr.append(m_z)
         ll_arr.append(ll_part)
