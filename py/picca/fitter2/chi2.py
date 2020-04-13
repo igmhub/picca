@@ -42,7 +42,7 @@ class chi2:
             if 'covscaling' in dic_init['fast mc']:
                 self.scalefast_mc = dic_init['fast mc']['covscaling']
             else:
-                self.scalefast_mc = sp.ones(len(self.data))
+                self.scalefast_mc = np.ones(len(self.data))
             self.fidfast_mc = dic_init['fast mc']['fiducial']['values']
             self.fixfast_mc = dic_init['fast mc']['fiducial']['fix']
             # if set to true, will not add randomness to FastMC mock

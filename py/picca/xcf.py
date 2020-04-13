@@ -97,7 +97,7 @@ def xcf(pix):
 def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     if ang_correlation:
         rp = r1[:,None]/r2
-        rt = ang*sp.ones_like(rp)
+        rt = ang*np.ones_like(rp)
     else:
         rp = (r1[:,None]-r2)*sp.cos(ang/2)
         rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
@@ -208,9 +208,9 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     c = sp.bincount(m_bins,weights=we)
     weff[:c.size] += c
 
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*np.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*np.ones(n2))[w]/slw1)
     eta4[:len(c)]+=c
 
     ubb = np.unique(m_bins)
@@ -429,9 +429,9 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     zw1 = ((1.+z1)/(1.+zref))**(z_evol_del-1.)
     zw2 = ((1.+z2)/(1.+zref))**(z_evol_obj-1.)
     we = w1[:,None]*w2
-    we1 = w1[:,None]*sp.ones(len(r2))
-    idxPix = np.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
-    idxQso = sp.ones(r1.size,dtype='int')[:,None]*np.arange(len(r2))
+    we1 = w1[:,None]*np.ones(len(r2))
+    idxPix = np.arange(r1.size)[:,None]*np.ones(len(r2),dtype='int')
+    idxQso = np.ones(r1.size,dtype='int')[:,None]*np.arange(len(r2))
 
     bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
     bt = (rt/rt_max*ntb).astype(int)
@@ -517,8 +517,8 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
     we = w1[:,None]*w2
-    pix = (np.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
-    thid = sp.ones_like(w1[:,None]).astype(int)*thid2
+    pix = (np.arange(r1.size)[:,None]*np.ones_like(r2)).astype(int)
+    thid = np.ones_like(w1[:,None]).astype(int)*thid2
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
@@ -535,8 +535,8 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rp = (r3[:,None]-r4)*sp.cos(ang34/2.)
     rt = (r3[:,None]+r4)*sp.sin(ang34/2.)
     we = w3[:,None]*w4
-    pix = (np.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
-    thid = sp.ones_like(w3[:,None]).astype(int)*thid4
+    pix = (np.arange(r3.size)[:,None]*np.ones_like(r4)).astype(int)
+    thid = np.ones_like(w3[:,None]).astype(int)*thid4
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return

@@ -13,7 +13,7 @@ def mc(data):
     ll = forest.lmin_rest + (np.arange(nmc)+.5)*(forest.lmax_rest-forest.lmin_rest)/nmc
     for p in sorted(list(data.keys())):
         for d in data[p]:
-            bins=((d.ll-forest.lmin_rest-sp.log10(1+d.zqso))/(forest.lmax_rest-forest.lmin_rest)*nmc).astype(int)
+            bins=((d.ll-forest.lmin_rest-np.lib.scimath.log10(1+d.zqso))/(forest.lmax_rest-forest.lmin_rest)*nmc).astype(int)
             var_lss = forest.var_lss(d.ll)
             eta = forest.eta(d.ll)
             fudge = forest.fudge(d.ll)
@@ -41,8 +41,8 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     ll = forest.lmin + (np.arange(nlss)+.5)*(forest.lmax-forest.lmin)/nlss
 
     nwe = 100
-    vpmin = sp.log10(1e-5)
-    vpmax = sp.log10(2.)
+    vpmin = np.lib.scimath.log10(1e-5)
+    vpmax = np.lib.scimath.log10(2.)
     var = 10**(vpmin + (np.arange(nwe)+.5)*(vpmax-vpmin)/nwe)
 
     var_del =np.zeros(nlss*nwe)
@@ -55,10 +55,10 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
         for d in data[p]:
 
             var_pipe = 1/d.iv/d.co**2
-            w = (sp.log10(var_pipe) > vpmin) & (sp.log10(var_pipe) < vpmax)
+            w = (np.lib.scimath.log10(var_pipe) > vpmin) & (np.lib.scimath.log10(var_pipe) < vpmax)
 
             bll = ((d.ll-forest.lmin)/(forest.lmax-forest.lmin)*nlss).astype(int)
-            bwe = sp.floor((sp.log10(var_pipe)-vpmin)/(vpmax-vpmin)*nwe).astype(int)
+            bwe = sp.floor((np.lib.scimath.log10(var_pipe)-vpmin)/(vpmax-vpmin)*nwe).astype(int)
 
             bll = bll[w]
             bwe = bwe[w]

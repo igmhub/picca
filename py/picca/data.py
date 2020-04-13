@@ -119,8 +119,8 @@ class forest(qso):
         ll = forest.lmin + bins*forest.dll
         w = (ll>=forest.lmin)
         w = w & (ll<forest.lmax)
-        w = w & (ll-sp.log10(1.+self.zqso)>forest.lmin_rest)
-        w = w & (ll-sp.log10(1.+self.zqso)<forest.lmax_rest)
+        w = w & (ll-np.lib.scimath.log10(1.+self.zqso)>forest.lmin_rest)
+        w = w & (ll-np.lib.scimath.log10(1.+self.zqso)<forest.lmax_rest)
         w = w & (iv>0.)
         if w.sum()==0:
             return
@@ -189,7 +189,7 @@ class forest(qso):
         self.reso = reso
         #else :
         #   self.diff = np.zeros(len(ll))
-        #   self.reso = sp.ones(len(ll))
+        #   self.reso = np.ones(len(ll))
 
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
@@ -249,11 +249,11 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
 
-        w = sp.ones(self.ll.size,dtype=bool)
+        w = np.ones(self.ll.size,dtype=bool)
         for l in mask_obs:
             w &= (self.ll<l[0]) | (self.ll>l[1])
         for l in mask_RF:
-            w &= (self.ll-sp.log10(1.+self.zqso)<l[0]) | (self.ll-sp.log10(1.+self.zqso)>l[1])
+            w &= (self.ll-np.lib.scimath.log10(1.+self.zqso)<l[0]) | (self.ll-np.lib.scimath.log10(1.+self.zqso)>l[1])
 
         ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -269,7 +269,7 @@ class forest(qso):
             return
 
         if self.Fbar is None:
-            self.Fbar = sp.ones(self.ll.size)
+            self.Fbar = np.ones(self.ll.size)
 
         w = 10.**self.ll/(1.+self.zqso)<=waveRF
         z = 10.**self.ll/waveRF-1.
@@ -281,14 +281,14 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
         if self.T_dla is None:
-            self.T_dla = sp.ones(len(self.ll))
+            self.T_dla = np.ones(len(self.ll))
 
         self.T_dla *= dla(self,zabs,nhi).t
 
         w = self.T_dla>forest.dla_mask
         if not mask is None:
             for l in mask:
-                w &= (self.ll-sp.log10(1.+zabs)<l[0]) | (self.ll-sp.log10(1.+zabs)>l[1])
+                w &= (self.ll-np.lib.scimath.log10(1.+zabs)<l[0]) | (self.ll-np.lib.scimath.log10(1.+zabs)>l[1])
 
         ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -301,8 +301,8 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
 
-        w = sp.ones(self.ll.size, dtype=bool)
-        w &= sp.fabs(1.e4*(self.ll-sp.log10(lambda_absorber)))>forest.absorber_mask
+        w = np.ones(self.ll.size, dtype=bool)
+        w &= sp.fabs(1.e4*(self.ll-np.lib.scimath.log10(lambda_absorber)))>forest.absorber_mask
 
         ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -312,10 +312,10 @@ class forest(qso):
         return
 
     def cont_fit(self):
-        lmax = forest.lmax_rest+sp.log10(1+self.zqso)
-        lmin = forest.lmin_rest+sp.log10(1+self.zqso)
+        lmax = forest.lmax_rest+np.lib.scimath.log10(1+self.zqso)
+        lmin = forest.lmin_rest+np.lib.scimath.log10(1+self.zqso)
         try:
-            mc = forest.mean_cont(self.ll-sp.log10(1+self.zqso))
+            mc = forest.mean_cont(self.ll-np.lib.scimath.log10(1+self.zqso))
         except ValueError:
             raise Exception
 
@@ -345,7 +345,7 @@ class forest(qso):
             # TODO: make this condition clearer, maybe pass an option
             # use_constant_weights?
             if (eta==0).all() :
-                we=sp.ones(len(we))
+                we=np.ones(len(we))
             v = (self.fl-m)**2*we
             return v.sum()-sp.log(we).sum()
 

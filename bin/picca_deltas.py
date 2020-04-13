@@ -148,10 +148,10 @@ if __name__ == '__main__':
 
     ## init forest class
 
-    forest.lmin = sp.log10(args.lambda_min)
-    forest.lmax = sp.log10(args.lambda_max)
-    forest.lmin_rest = sp.log10(args.lambda_rest_min)
-    forest.lmax_rest = sp.log10(args.lambda_rest_max)
+    forest.lmin = np.lib.scimath.log10(args.lambda_min)
+    forest.lmax = np.lib.scimath.log10(args.lambda_max)
+    forest.lmin_rest = np.lib.scimath.log10(args.lambda_rest_min)
+    forest.lmax_rest = np.lib.scimath.log10(args.lambda_rest_max)
     forest.rebin = args.rebin
     forest.dll = args.rebin*1e-4
     ## minumum dla transmission
@@ -167,7 +167,7 @@ if __name__ == '__main__':
         print(" zqso_max = {}".format(args.zqso_max) )
 
     forest.var_lss = interp1d(forest.lmin+np.arange(2)*(forest.lmax-forest.lmin),0.2 + np.zeros(2),fill_value="extrapolate",kind="nearest")
-    forest.eta = interp1d(forest.lmin+np.arange(2)*(forest.lmax-forest.lmin), sp.ones(2),fill_value="extrapolate",kind="nearest")
+    forest.eta = interp1d(forest.lmin+np.arange(2)*(forest.lmax-forest.lmin), np.ones(2),fill_value="extrapolate",kind="nearest")
     forest.fudge = interp1d(forest.lmin+np.arange(2)*(forest.lmax-forest.lmin), np.zeros(2),fill_value="extrapolate",kind="nearest")
     forest.mean_cont = interp1d(forest.lmin_rest+np.arange(2)*(forest.lmax_rest-forest.lmin_rest),1+np.zeros(2))
 
@@ -239,9 +239,9 @@ if __name__ == '__main__':
                         usr_mask_RF_DLA += [ [float(l[1]),float(l[2])] ]
                     else:
                         raise
-            usr_mask_obs    = sp.log10(sp.asarray(usr_mask_obs))
-            usr_mask_RF     = sp.log10(sp.asarray(usr_mask_RF))
-            usr_mask_RF_DLA = sp.log10(sp.asarray(usr_mask_RF_DLA))
+            usr_mask_obs    = np.lib.scimath.log10(sp.asarray(usr_mask_obs))
+            usr_mask_RF     = np.lib.scimath.log10(sp.asarray(usr_mask_RF))
+            usr_mask_RF_DLA = np.lib.scimath.log10(sp.asarray(usr_mask_RF_DLA))
             if usr_mask_RF_DLA.size==0:
                 usr_mask_RF_DLA = None
 
@@ -363,13 +363,13 @@ if __name__ == '__main__':
 
                 if args.use_ivar_as_weight:
                     print('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
-                    eta = sp.ones(nlss)
+                    eta = np.ones(nlss)
                     vlss = np.zeros(nlss)
                     fudge = np.zeros(nlss)
                 else :
                     print('INFO: using constant weights, skipping eta, var_lss, fudge fits')
                     eta = np.zeros(nlss)
-                    vlss = sp.ones(nlss)
+                    vlss = np.ones(nlss)
                     fudge=np.zeros(nlss)
 
                 err_eta = np.zeros(nlss)

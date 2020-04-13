@@ -111,7 +111,7 @@ def fast_cf(z1,r1,rdm1,w1,d1, z2,r2,rdm2,w2,d2, ang,same_half_plate):
         rp = r1/r2[:,None]
         if not x_correlation:
             rp[(rp<1.)] = 1./rp[(rp<1.)]
-        rt = ang*sp.ones_like(rp)
+        rt = ang*np.ones_like(rp)
     else:
         rp = (r1-r2[:,None])*sp.cos(ang/2)
         if not x_correlation :
@@ -251,20 +251,20 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
     eta7 = np.zeros(npm*ntm)
     eta8 = np.zeros(npm*ntm)
 
-    c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
+    c = sp.bincount(ij%n1+n1*m_bins,weights=(np.ones(n1)[:,None]*w2)[w]/sw2)
     eta1[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*np.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
     c = sp.bincount(m_bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
 
     if order2==1:
-        c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
+        c = sp.bincount(ij%n1+n1*m_bins,weights=(np.ones(n1)[:,None]*w2*dl2)[w]/slw2)
         eta3[:len(c)]+=c
         c = sp.bincount(m_bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
         eta6[:len(c)]+=c
     if order1==1:
-        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*np.ones(n2))[w]/slw1)
         eta4[:len(c)]+=c
         c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
         eta7[:len(c)]+=c
@@ -593,8 +593,8 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
     bt = (rt/rt_max*ntb).astype(int)
     ba = bt + ntb*bp
     we = w1[:,None]*w2
-    we1 = w1[:,None]*sp.ones(w2.size)
-    we2 = sp.ones(w1.size)[:,None]*w2
+    we1 = w1[:,None]*np.ones(w2.size)
+    we2 = np.ones(w1.size)[:,None]*w2
     zw = zw1[:,None]*zw2
 
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
@@ -644,8 +644,8 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     if not x_correlation:
         rp = np.absolute(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
-    pix1_12 = (np.arange(r1.size)[:,None]*sp.ones(r2.size)).astype(int)
-    pix2_12 = (sp.ones(r1.size)[:,None]*np.arange(r2.size)).astype(int)
+    pix1_12 = (np.arange(r1.size)[:,None]*np.ones(r2.size)).astype(int)
+    pix2_12 = (np.ones(r1.size)[:,None]*np.arange(r2.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
@@ -664,8 +664,8 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     if not x_correlation:
         rp = np.absolute(rp)
     rt = (r1[:,None]+r3)*sp.sin(ang13/2.)
-    pix1_13 = (np.arange(r1.size)[:,None]*sp.ones(r3.size)).astype(int)
-    pix3_13 = (sp.ones(r1.size)[:,None]*np.arange(r3.size)).astype(int)
+    pix1_13 = (np.arange(r1.size)[:,None]*np.ones(r3.size)).astype(int)
+    pix3_13 = (np.ones(r1.size)[:,None]*np.arange(r3.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
@@ -684,8 +684,8 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     if not x_correlation:
         rp = np.absolute(rp)
     rt = (r2[:,None]+r3)*sp.sin(ang23/2.)
-    pix2_23 = (np.arange(r2.size)[:,None]*sp.ones(r3.size)).astype(int)
-    pix3_23 = (sp.ones(r2.size)[:,None]*np.arange(r3.size)).astype(int)
+    pix2_23 = (np.arange(r2.size)[:,None]*np.ones(r3.size)).astype(int)
+    pix3_23 = (np.ones(r2.size)[:,None]*np.arange(r3.size)).astype(int)
     w = (rp<rp_max) & (rt<rt_max) & (rp>=rp_min)
     if w.sum()==0: return
     bp = sp.floor((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)

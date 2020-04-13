@@ -1,3 +1,4 @@
+import numpy as np
 import scipy as sp
 import copy
 import sys
@@ -257,7 +258,7 @@ class parameters:
 
         try:
             path_to_save = self.dic_init['output_prefix']+'test_if_output_possible'
-            sp.savetxt(path_to_save,sp.ones(10))
+            sp.savetxt(path_to_save,np.ones(10))
             command = 'rm '+path_to_save
             subprocess.call(command, shell=True)
         except:

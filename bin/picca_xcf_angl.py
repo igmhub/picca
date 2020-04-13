@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
@@ -140,8 +142,8 @@ if __name__ == '__main__':
                     forest.dll = dll
                 else:
                     forest.dll = min(dll,forest.dll)
-        forest.lmin  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
-        forest.lmax  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
+        forest.lmin  = np.lib.scimath.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
+        forest.lmax  = np.lib.scimath.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
         ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
             for d in xcf.dels[p]:
@@ -153,7 +155,7 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     for i,ipix in enumerate(sorted(objs.keys())):
         for q in objs[ipix]:
-            q.ll = sp.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
+            q.ll = np.lib.scimath.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
     print("")
     xcf.objs = objs
 

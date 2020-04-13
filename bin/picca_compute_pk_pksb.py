@@ -115,7 +115,7 @@ if __name__ == '__main__':
         return model.sum(axis=0)
 
     w = ((r>=sb1_rmin) & (r<sb1_rmax)) | ((r>=sb2_rmin) & (r<sb2_rmax))
-    sigma = 0.1*sp.ones(xi.size)
+    sigma = 0.1*np.ones(xi.size)
     sigma[(r>=sb1_rmin-2.) & (r<sb1_rmin+2.)] = 1.e-6
     sigma[(r>=sb2_rmax-2.) & (r<sb2_rmax+2.)] = 1.e-6
     popt, pcov = curve_fit(f_xiSB, r[w], xi[w], sigma=sigma[w])

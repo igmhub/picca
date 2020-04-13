@@ -329,7 +329,7 @@ class Chi2:
 
             idx1 = []
             for i in range(par_nb_bin1):
-                idx1 = sp.append(idx1,(par_min1+(i+0.5)*par_step1)*sp.ones(par_nb_bin2))
+                idx1 = sp.append(idx1,(par_min1+(i+0.5)*par_step1)*np.ones(par_nb_bin2))
             idx2 = []
             for i in range(par_nb_bin1):
                 idx2 = sp.append(idx2,grid2)

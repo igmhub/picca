@@ -306,7 +306,7 @@ class model:
         ### Scales
         if (self.different_drp):
             drp_met = sp.array([pars['drp_'+met]  for met in self.met_names])
-            drp     = sp.outer(sp.ones(self.nd_cross),drp_met)
+            drp     = sp.outer(np.ones(self.nd_cross),drp_met)
         else:
             drp = pars["drp"]
 

@@ -64,7 +64,7 @@ def rebin_diff_noise(dll,ll,diff):
     # nmax = diff.size//crebin
     # bin2 = np.zeros(diff.size)
     # for n in range (1,nmax +1):
-    #     bin2[n*crebin:] += sp.ones(diff.size-n*crebin)
+    #     bin2[n*crebin:] += np.ones(diff.size-n*crebin)
 
     cdiff2 = sp.bincount(bin2.astype(int),weights=diff)
     civ2 = sp.bincount(bin2.astype(int))
@@ -106,7 +106,7 @@ def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
     diff_new = np.zeros(len(index_all))
     diff_new[index_ok]=diff
 
-    iv_new = sp.ones(len(index_all))
+    iv_new = np.ones(len(index_all))
     iv_new *=0.0
     iv_new[index_ok]=iv
 
@@ -159,9 +159,9 @@ def compute_Pk_noise(dll,iv,diff,ll,run_noise):
 def compute_cor_reso(delta_pixel,mean_reso,k):
 
     nb_bin_FFT = len(k)
-    cor = sp.ones(nb_bin_FFT)
+    cor = np.ones(nb_bin_FFT)
 
-    sinc = sp.ones(nb_bin_FFT)
+    sinc = np.ones(nb_bin_FFT)
     sinc[k>0.] =  (sp.sin(k[k>0.]*delta_pixel/2.0)/(k[k>0.]*delta_pixel/2.0))**2
 
     cor *= sp.exp(-(k*mean_reso)**2)

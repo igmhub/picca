@@ -326,7 +326,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     ## Truth table
     vac = fitsio.FITS(truth)
 
-    w = sp.ones(vac[1]['TARGETID'][:].size).astype(bool)
+    w = np.ones(vac[1]['TARGETID'][:].size).astype(bool)
     print(" start                 : nb object in cat = {}".format(w.sum()) )
     w &= sp.char.strip(vac[1]['TRUESPECTYPE'][:].astype(str))==spectype
     print(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
@@ -498,8 +498,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     print('INFO: Found {} files'.format(fi.size))
 
     ### Stack the transmission
-    lmin = sp.log10(lObs_min)
-    lmax = sp.log10(lObs_max)
+    lmin = np.lib.scimath.log10(lObs_min)
+    lmax = np.lib.scimath.log10(lObs_max)
     nstack = int((lmax-lmin)/dll)+1
     T_stack = np.zeros(nstack)
     n_stack = np.zeros(nstack)
@@ -517,7 +517,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         ra = h['METADATA']['RA'][:].astype(sp.float64)*sp.pi/180.
         dec = h['METADATA']['DEC'][:].astype(sp.float64)*sp.pi/180.
         z = h['METADATA']['Z'][:]
-        ll = sp.log10(h['WAVELENGTH'].read())
+        ll = np.lib.scimath.log10(h['WAVELENGTH'].read())
         if 'F_LYA' in h :
             trans = h['F_LYA'].read()
         else:
@@ -531,7 +531,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
         bins = sp.floor((ll-lmin)/dll+0.5).astype(int)
         tll = lmin + bins*dll
-        lObs = (10**tll)*sp.ones(nObj)[:,None]
+        lObs = (10**tll)*np.ones(nObj)[:,None]
         lRF = (10**tll)/(1.+z[:,None])
         w = np.zeros_like(trans).astype(int)
         w[ (lObs>=lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
@@ -599,7 +599,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             hd['FIBERID'] = d.fid
             hd['ORDER'] = d.order
 
-            cols = [d.ll,d.de,d.we,sp.ones(d.ll.size)]
+            cols = [d.ll,d.de,d.we,np.ones(d.ll.size)]
             names = ['LOGLAM','DELTA','WEIGHT','CONT']
             out.write(cols,names=names,header=hd,extname=str(d.thid))
         out.close()

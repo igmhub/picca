@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from __future__ import print_function
 import numpy as np
 import scipy as sp
@@ -81,8 +82,8 @@ if __name__ == '__main__':
 
     ###
     cf.nside = args.nside
-    cf.lmin = sp.log10(args.lambda_min)
-    cf.lmax = sp.log10(args.lambda_max)
+    cf.lmin = np.lib.scimath.log10(args.lambda_min)
+    cf.lmax = np.lib.scimath.log10(args.lambda_max)
     cf.dll = args.dll
     cf.n1d = int((cf.lmax-cf.lmin)/cf.dll+1)
     cf.x_correlation = False
