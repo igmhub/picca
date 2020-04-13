@@ -32,6 +32,7 @@ setup(
     author='Nicolas Busca, Helion du Mas des Bourboux et al',
     author_email='nbusca@lpnhe.in2p3.fr',
     description='Package for Igm Cosmological-Correlations Analyses',
-    packages=find_packages(),    
+    packages=find_packages(),
     install_requires=['numpy','scipy','iminuit','healpy','fitsio','llvmlite','numba','h5py','future','setuptools'],
+    test_suite='picca.test.test_cor',
 )
