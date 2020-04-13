@@ -154,7 +154,7 @@ if __name__ == '__main__':
     for p,datap in data.items():
         for d in datap:
             d.fname = 'D1'
-            for k in ['co','de','order','ivar','exposures_diff','m_SNR','m_reso','m_z','delta_log_lambda']:
+            for k in ['co','de','order','ivar','exposures_diff','mean_snr','m_reso','m_z','delta_log_lambda']:
                 setattr(d,k,None)
     cf.npix = len(data)
     cf.data = data
@@ -221,7 +221,7 @@ if __name__ == '__main__':
         for p,datap in data2.items():
             for d in datap:
                 d.fname = 'D2'
-                for k in ['co','de','order','ivar','exposures_diff','m_SNR','m_reso','m_z','delta_log_lambda']:
+                for k in ['co','de','order','ivar','exposures_diff','mean_snr','m_reso','m_z','delta_log_lambda']:
                     setattr(d,k,None)
         cf.data2 = data2
         cf.ndata2 = ndata2

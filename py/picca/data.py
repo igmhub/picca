@@ -447,8 +447,8 @@ class Forest(Qso):
             self.mean_reso = None
 
         err = 1.0/sp.sqrt(ivar)
-        SNR = flux/err
-        self.mean_SNR = sum(SNR)/float(len(SNR))
+        snr = flux/err
+        self.mean_snr = sum(snr)/float(len(snr))
         lam_lya = constants.absorber_IGM["LYA"]
         self.mean_z = (sp.power(10.,log_lambda[len(log_lambda)-1])+sp.power(10.,log_lambda[0]))/2./lam_lya -1.0
 
@@ -490,8 +490,8 @@ class Forest(Qso):
         if self.reso is not None:
             self.mean_reso = self.reso.mean()
         err = 1./sp.sqrt(self.ivar)
-        SNR = self.flux/err
-        self.mean_SNR = SNR.mean()
+        snr = self.flux/err
+        self.mean_snr = snr.mean()
         lam_lya = constants.absorber_IGM["LYA"]
         self.mean_z = (sp.power(10.,log_lambda[len(log_lambda)-1])+sp.power(10.,log_lambda[0]))/2./lam_lya -1.0
 
@@ -628,7 +628,7 @@ class Forest(Qso):
 
 class delta(Qso):
 
-    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,ivar,exposures_diff,m_SNR,m_reso,m_z,delta_log_lambda):
+    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,ivar,exposures_diff,mean_snr,m_reso,m_z,delta_log_lambda):
 
         Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
         self.log_lambda = log_lambda
@@ -638,7 +638,7 @@ class delta(Qso):
         self.order = order
         self.ivar = ivar
         self.exposures_diff = exposures_diff
-        self.mean_SNR = m_SNR
+        self.mean_snr = mean_snr
         self.mean_reso = m_reso
         self.mean_z = m_z
         self.delta_log_lambda = delta_log_lambda
@@ -664,7 +664,7 @@ class delta(Qso):
         ivar = f.ivar/(eta+(eta==0))*(mef**2)
 
         return cls(f.thingid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,log_lambda,we,f.co,de,f.order,
-                   ivar,exposures_diff,f.mean_SNR,f.mean_reso,f.mean_z,f.delta_log_lambda)
+                   ivar,exposures_diff,f.mean_snr,f.mean_reso,f.mean_z,f.delta_log_lambda)
 
 
     @classmethod
@@ -680,7 +680,7 @@ class delta(Qso):
         if  Pk1D_type :
             ivar = h['IVAR'][:]
             exposures_diff = h['DIFF'][:]
-            m_SNR = head['MEANSNR']
+            mean_snr = head['MEANSNR']
             m_reso = head['MEANRESO']
             m_z = head['MEANZ']
             delta_log_lambda =  head['DLL']
@@ -689,7 +689,7 @@ class delta(Qso):
         else :
             ivar = None
             exposures_diff = None
-            m_SNR = None
+            mean_snr = None
             m_reso = None
             delta_log_lambda = None
             m_z = None
@@ -710,7 +710,7 @@ class delta(Qso):
         except KeyError:
             order = 1
         return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
-                   ivar,exposures_diff,m_SNR,m_reso,m_z,delta_log_lambda)
+                   ivar,exposures_diff,mean_snr,m_reso,m_z,delta_log_lambda)
 
 
     @classmethod
@@ -724,7 +724,7 @@ class delta(Qso):
         dec = float(a[4])
         z_qso = float(a[5])
         m_z = float(a[6])
-        m_SNR = float(a[7])
+        mean_snr = float(a[7])
         m_reso = float(a[8])
         delta_log_lambda = float(a[9])
 
@@ -741,7 +741,7 @@ class delta(Qso):
         co = None
 
         return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
-                   ivar,exposures_diff,m_SNR,m_reso,m_z,delta_log_lambda)
+                   ivar,exposures_diff,mean_snr,m_reso,m_z,delta_log_lambda)
 
     @staticmethod
     def from_image(f):
@@ -772,12 +772,12 @@ class delta(Qso):
 
             order = 1
             exposures_diff = None
-            m_SNR = None
+            mean_snr = None
             m_reso = None
             delta_log_lambda = None
             m_z = None
 
-            deltas.append(delta(thingid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,aux_ivar,None,delt,order,ivar,exposures_diff,m_SNR,m_reso,m_z,delta_log_lambda))
+            deltas.append(delta(thingid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,aux_ivar,None,delt,order,ivar,exposures_diff,mean_snr,m_reso,m_z,delta_log_lambda))
 
         h.close()
         return deltas

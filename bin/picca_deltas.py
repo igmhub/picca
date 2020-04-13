@@ -321,7 +321,7 @@ def main():
                 log.write("INFO: Rejected {} due to nan found\n".format(d.thingid))
                 continue
 
-            if(args.use_constant_weight and (d.flux.mean() <= 0.0 or d.mean_SNR <= 1.0)):
+            if(args.use_constant_weight and (d.flux.mean() <= 0.0 or d.mean_snr <= 1.0)):
                 log.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(d.thingid))
                 continue
 
@@ -443,7 +443,7 @@ def main():
                     delta_log_lambda = (d.log_lambda[-1] - d.log_lambda[0])/float(len(d.log_lambda) - 1)
                 line = '{} {} {} '.format(d.plate, d.mjd, d.fiberid)
                 line += '{} {} {} '.format(d.ra, d.dec, d.z_qso)
-                line += '{} {} {} {} {} '.format(d.mean_z, d.mean_SNR, d.mean_reso, delta_log_lambda, nbpixel)
+                line += '{} {} {} {} {} '.format(d.mean_z, d.mean_snr, d.mean_reso, delta_log_lambda, nbpixel)
                 for i in range(nbpixel):
                     line += '{} '.format(d.de[i])
                 for i in range(nbpixel):
@@ -474,7 +474,7 @@ def main():
                 if args.delta_format == 'Pk1D':
                     hd += [{'name':'MEANZ', 'value':d.mean_z, 'comment':'Mean redshift'},
                            {'name':'MEANRESO', 'value':d.mean_reso, 'comment':'Mean resolution'},
-                           {'name':'MEANSNR', 'value':d.mean_SNR, 'comment':'Mean SNR'},
+                           {'name':'MEANSNR', 'value':d.mean_snr, 'comment':'Mean SNR'},
                            ]
                     delta_log_lambda = d.delta_log_lambda
                     if args.mode == 'desi':

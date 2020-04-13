@@ -206,7 +206,7 @@ class Pk1D :
         z_qso = hdr['Z']
         mean_z = hdr['MEANZ']
         mean_reso = hdr['MEANRESO']
-        mean_SNR = hdr['MEANSNR']
+        mean_snr = hdr['MEANSNR']
         plate = hdr['PLATE']
         mjd = hdr['MJD']
         fiberid = hdr['FIBER']
@@ -220,4 +220,4 @@ class Pk1D :
         cor_reso = data['cor_reso'][:]
         Pk_diff = data['Pk_diff'][:]
 
-        return cls(ra,dec,z_qso,mean_z,plate,mjd,fiberid, mean_SNR, mean_reso,k,Pk_raw,Pk_noise,cor_reso, Pk,nb_mp,Pk_diff)
+        return cls(ra,dec,z_qso,mean_z,plate,mjd,fiberid, mean_snr, mean_reso,k,Pk_raw,Pk_noise,cor_reso, Pk,nb_mp,Pk_diff)

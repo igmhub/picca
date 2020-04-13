@@ -21,7 +21,7 @@ def make_tree(tree,nb_bin_max):
     z_qso = array( 'f', [ 0. ] )
     mean_z = array( 'f', [ 0. ] )
     mean_reso = array( 'f', [ 0. ] )
-    mean_SNR = array( 'f', [ 0. ] )
+    mean_snr = array( 'f', [ 0. ] )
     nb_mask_pix = array( 'f', [ 0. ] )
 
     lambda_min = array( 'f', [ 0. ] )
@@ -42,7 +42,7 @@ def make_tree(tree,nb_bin_max):
     tree.Branch("z_qso",z_qso,"z_qso/F")
     tree.Branch("mean_z",mean_z,"mean_z/F")
     tree.Branch("mean_reso",mean_reso,"mean_reso/F")
-    tree.Branch("mean_SNR",mean_SNR,"mean_SNR/F")
+    tree.Branch("mean_snr",mean_snr,"mean_snr/F")
     tree.Branch("lambda_min",lambda_min,"lambda_min/F")
     tree.Branch("lambda_max",lambda_max,"lambda_max/F")
     tree.Branch("nb_masked_pixel",nb_mask_pix,"nb_mask_pixel/F")
@@ -59,7 +59,7 @@ def make_tree(tree,nb_bin_max):
     tree.Branch( 'cor_reso', cor_reso_r, 'cor_reso[NbBin]/F' )
     tree.Branch( 'Pk', Pk_r, 'Pk[NbBin]/F' )
 
-    return z_qso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
+    return z_qso,mean_z,mean_reso,mean_snr,lambda_min,lambda_max,plate,mjd,fiber,\
     nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r
 
 def compute_mean_delta(log_lambda,delta,ivar,z_qso):
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         storeFile = TFile(args.out_dir+"/Testpicca.root","RECREATE","PK 1D studies studies");
         nb_bin_max = 700
         tree = TTree("Pk1D","SDSS 1D Power spectrum Ly-a");
-        z_qso,mean_z,mean_reso,mean_SNR,lambda_min,lambda_max,plate,mjd,fiber,\
+        z_qso,mean_z,mean_reso,mean_snr,lambda_min,lambda_max,plate,mjd,fiber,\
         nb_mask_pix,nb_r,k_r,Pk_r,Pk_raw_r,Pk_noise_r,cor_reso_r,Pk_diff_r = make_tree(tree,nb_bin_max)
 
         # control histograms
@@ -193,7 +193,7 @@ if __name__ == '__main__':
         for d in dels:
 
             # Selection over the SNR and the resolution
-            if (d.mean_SNR<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
+            if (d.mean_snr<=args.SNR_min or d.mean_reso>=args.reso_max) : continue
 
             # first pixel in forest
             for first_pixel,first_pixel_log_lambda in enumerate(d.log_lambda):
@@ -251,7 +251,7 @@ if __name__ == '__main__':
                     z_qso[0] = d.z_qso
                     mean_z[0] = m_z_arr[f]
                     mean_reso[0] = d.mean_reso
-                    mean_SNR[0] = d.mean_SNR
+                    mean_snr[0] = d.mean_snr
                     lambda_min[0] =  sp.power(10.,ll_new[0])
                     lambda_max[0] =  sp.power(10.,ll_new[-1])
                     nb_mask_pix[0] = nb_masked_pixel
@@ -279,7 +279,7 @@ if __name__ == '__main__':
                         {'name':'Z','value':d.z_qso,'comment':"QSO's redshift"},
                         {'name':'MEANZ','value':m_z_arr[f],'comment':"Absorbers mean redshift"},
                         {'name':'MEANRESO','value':d.mean_reso,'comment':'Mean resolution [km/s]'},
-                        {'name':'MEANSNR','value':d.mean_SNR,'comment':'Mean signal to noise ratio'},
+                        {'name':'MEANSNR','value':d.mean_snr,'comment':'Mean signal to noise ratio'},
                         {'name':'NBMASKPIX','value':nb_masked_pixel,'comment':'Number of masked pixels in the section'},
                         {'name':'PLATE','value':d.plate,'comment':"Spectrum's plate id"},
                         {'name':'MJD','value':d.mjd,'comment':'Modified Julian Date,date the spectrum was taken'},
