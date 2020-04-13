@@ -147,6 +147,8 @@ class Forest(Qso):
             Array containing the flux associated to each wavelength
         ivar: array of floats
             Array containing the inverse variance associated to each flux
+        mean_optical_depth: array of floats or None
+            Mean optical depth at the redshift of each pixel in the forest
 
     Class attributes:
         log_lambda_max: float
@@ -428,8 +430,8 @@ class Forest(Qso):
             pass
 
         # keep the results so far in this instance
-        self.mean_optical_depth = None
-        self.T_dla = None
+        self._mean_optical_depth = None
+        self._dla_transmission = None
         self.log_lambda = log_lambda
         self.flux = flux
         self.ivar = ivar
@@ -505,7 +507,7 @@ class Forest(Qso):
         for l in mask_RF:
             w &= (self.log_lambda-sp.log10(1.+self.z_qso)<l[0]) | (self.log_lambda-sp.log10(1.+self.z_qso)>l[1])
 
-        ps = ['ivar','log_lambda','flux','T_dla','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
+        ps = ['ivar','log_lambda','flux','dla_transmission','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -518,29 +520,29 @@ class Forest(Qso):
         if not hasattr(self,'log_lambda'):
             return
 
-        if self.mean_optical_depth is None:
-            self.mean_optical_depth = sp.ones(self.log_lambda.size)
+        if self._mean_optical_depth is None:
+            self._mean_optical_depth = sp.ones(self.log_lambda.size)
 
         w = 10.**self.log_lambda/(1.+self.z_qso)<=waveRF
         z = 10.**self.log_lambda/waveRF-1.
-        self.mean_optical_depth[w] *= sp.exp(-tau*(1.+z[w])**gamma)
+        self._mean_optical_depth[w] *= sp.exp(-tau*(1.+z[w])**gamma)
 
         return
 
     def add_dla(self,zabs,nhi,mask=None):
         if not hasattr(self,'log_lambda'):
             return
-        if self.T_dla is None:
-            self.T_dla = sp.ones(len(self.log_lambda))
+        if self._dla_transmission is None:
+            self._dla_transmission = sp.ones(len(self.log_lambda))
 
-        self.T_dla *= dla(self,zabs,nhi).t
+        self._dla_transmission *= dla(self,zabs,nhi).t
 
-        w = self.T_dla>Forest.dla_mask_limit
+        w = self._dla_transmission>Forest.dla_mask_limit
         if not mask is None:
             for l in mask:
                 w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
 
-        ps = ['ivar','log_lambda','flux','T_dla','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
+        ps = ['ivar','log_lambda','flux','dla_transmission','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -554,7 +556,7 @@ class Forest(Qso):
         w = sp.ones(self.log_lambda.size, dtype=bool)
         w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask_width
 
-        ps = ['ivar','log_lambda','flux','T_dla','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
+        ps = ['ivar','log_lambda','flux','dla_transmission','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -569,10 +571,10 @@ class Forest(Qso):
         except ValueError:
             raise Exception
 
-        if not self.mean_optical_depth is None:
-            mean_cont *= self.mean_optical_depth
-        if not self.T_dla is None:
-            mean_cont*=self.T_dla
+        if not self._mean_optical_depth is None:
+            mean_cont *= self._mean_optical_depth
+        if not self._dla_transmission is None:
+            mean_cont*=self._dla_transmission
 
         var_lss = Forest.get_var_lss(self.log_lambda)
         eta = Forest.get_eta(self.log_lambda)
