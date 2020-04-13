@@ -12,6 +12,7 @@ import iminuit
 from .dla import dla
 import fitsio
 
+
 def variance(var,eta,var_lss,fudge):
     return eta*var + var_lss + fudge/var
 
@@ -149,6 +150,9 @@ class Forest(Qso):
             Array containing the inverse variance associated to each flux
         mean_optical_depth: array of floats or None
             Mean optical depth at the redshift of each pixel in the forest
+        dla_transmission: array of floats or None
+            Decrease of the transmitted flux due to the presence of a Damped
+            Lyman alpha absorbers
 
     Class attributes:
         log_lambda_max: float
@@ -306,7 +310,7 @@ class Forest(Qso):
 
     def __init__(self, log_lambda, flux, ivar, thingid, ra, dec, z_qso, plate,
                  mjd, fiberid, order, exposures_diff=None, reso=None,
-                 mean_expected_flux_frac=None):
+                 mean_expected_flux_frac=None, igm_absorption="LYA"):
         """ Initialize class instances.
 
         Args:
@@ -336,8 +340,11 @@ class Forest(Qso):
                 Difference between exposures.
             reso: array of floats or None - default: None
                 Resolution of the forest.
-            mean_expected_flux_frac: or None - default: None
+            mean_expected_flux_frac: array of floats or None - default: None
                 Mean expected flux fraction using the mock continuum
+            igm_absorption: string - default: "LYA"
+                Name of the absorption in picca.constants defining the
+                redshift of the forest pixels
         """
         Qso.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
 
@@ -430,8 +437,8 @@ class Forest(Qso):
             pass
 
         # keep the results so far in this instance
-        self._mean_optical_depth = None
-        self._dla_transmission = None
+        self.mean_optical_depth = None
+        self.dla_transmission = None
         self.log_lambda = log_lambda
         self.flux = flux
         self.ivar = ivar
@@ -439,6 +446,7 @@ class Forest(Qso):
         self.order = order
         self.exposures_diff = exposures_diff
         self.reso = reso
+        self.igm_absorption = igm_absorption
 
         # compute mean quality variables
         if reso is not None:
@@ -449,9 +457,10 @@ class Forest(Qso):
         err = 1.0/sp.sqrt(ivar)
         snr = flux/err
         self.mean_snr = sum(snr)/float(len(snr))
-        lam_lya = constants.absorber_IGM["LYA"]
-        self.mean_z = (sp.power(10.,log_lambda[len(log_lambda)-1])+sp.power(10.,log_lambda[0]))/2./lam_lya -1.0
-
+        lambda_igm_absorption = constants.absorber_IGM[self.igm_absorption]
+        self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
+                        np.power(10., log_lambda[0]))/2./lambda_igm_absorption
+                        - 1.0)
 
     def __add__(self,d):
 
@@ -492,8 +501,8 @@ class Forest(Qso):
         err = 1./sp.sqrt(self.ivar)
         snr = self.flux/err
         self.mean_snr = snr.mean()
-        lam_lya = constants.absorber_IGM["LYA"]
-        self.mean_z = (sp.power(10.,log_lambda[len(log_lambda)-1])+sp.power(10.,log_lambda[0]))/2./lam_lya -1.0
+        lambda_igm_absorption = constants.absorber_IGM[self.igm_absorption]
+        self.mean_z = (sp.power(10.,log_lambda[len(log_lambda)-1])+sp.power(10.,log_lambda[0]))/2./lambda_igm_absorption -1.0
 
         return self
 
@@ -520,24 +529,24 @@ class Forest(Qso):
         if not hasattr(self,'log_lambda'):
             return
 
-        if self._mean_optical_depth is None:
-            self._mean_optical_depth = sp.ones(self.log_lambda.size)
+        if self.mean_optical_depth is None:
+            self.mean_optical_depth = sp.ones(self.log_lambda.size)
 
         w = 10.**self.log_lambda/(1.+self.z_qso)<=waveRF
         z = 10.**self.log_lambda/waveRF-1.
-        self._mean_optical_depth[w] *= sp.exp(-tau*(1.+z[w])**gamma)
+        self.mean_optical_depth[w] *= sp.exp(-tau*(1.+z[w])**gamma)
 
         return
 
     def add_dla(self,zabs,nhi,mask=None):
         if not hasattr(self,'log_lambda'):
             return
-        if self._dla_transmission is None:
-            self._dla_transmission = sp.ones(len(self.log_lambda))
+        if self.dla_transmission is None:
+            self.dla_transmission = sp.ones(len(self.log_lambda))
 
-        self._dla_transmission *= dla(self,zabs,nhi).t
+        self.dla_transmission *= dla(self,zabs,nhi).t
 
-        w = self._dla_transmission>Forest.dla_mask_limit
+        w = self.dla_transmission>Forest.dla_mask_limit
         if not mask is None:
             for l in mask:
                 w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
@@ -571,10 +580,10 @@ class Forest(Qso):
         except ValueError:
             raise Exception
 
-        if not self._mean_optical_depth is None:
-            mean_cont *= self._mean_optical_depth
-        if not self._dla_transmission is None:
-            mean_cont*=self._dla_transmission
+        if not self.mean_optical_depth is None:
+            mean_cont *= self.mean_optical_depth
+        if not self.dla_transmission is None:
+            mean_cont*=self.dla_transmission
 
         var_lss = Forest.get_var_lss(self.log_lambda)
         eta = Forest.get_eta(self.log_lambda)
