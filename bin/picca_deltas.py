@@ -400,7 +400,7 @@ if __name__ == '__main__':
     res.write([ll_st,st,wst],names=['loglam','stack','weight'],header=hd,extname='STACK')
     res.write([ll,eta,vlss,fudge,nb_pixels],names=['loglam','eta','var_lss','fudge','nb_pixels'],extname='WEIGHT')
     res.write([ll_rest,forest.mean_cont(ll_rest),wmc],names=['loglam_rest','mean_cont','weight'],extname='CONT')
-    var = sp.broadcast_to(var.reshape(1,-1),var_del.shape)
+    var = np.broadcast_to(var.reshape(1,-1),var_del.shape)
     res.write([var,var_del,var2_del,count,nqsos,chi2],names=['var_pipe','var_del','var2_del','count','nqsos','chi2'],extname='VAR')
     res.close()
 
