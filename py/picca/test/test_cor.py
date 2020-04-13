@@ -254,7 +254,7 @@ class TestCor(unittest.TestCase):
                     diff = d_m-d_b
                     w = d_m!=0.
                     diff[w] = np.absolute( diff[w]/d_m[w] )
-                    allclose = np.allclose(d_m,d_b)
+                    allclose = np.allclose(d_m,d_b,0.01)
                     self.assertTrue(allclose,"{}: Header key is {}, maximum relative difference is {}".format(nameRun,k,diff.max()))
 
         m.close()
