@@ -174,6 +174,7 @@ class Forest(Qso):
         dla_mask_limit: float
             Lower limit on the DLA transmission. Transmissions below this
             number are masked.
+
     Methods:
         correct_flux: Corrects for multiplicative errors in pipeline flux
             calibration.
@@ -373,14 +374,20 @@ class Forest(Qso):
         # rebin arrays
         rebin_log_lambda = (Forest.log_lambda_min + np.arange(bins.max()+1)
                             *Forest.delta_log_lambda)
-        rebin_flux = np.zeros(bins.max()+1)
-        rebin_ivar = np.zeros(bins.max()+1)
-        if mean_expected_flux_frac is not None:
-            rebin_mean_expected_flux_frac = np.zeros(bins.max()+1)
+        #### old way rebinning was made
+        #rebin_flux = np.zeros(bins.max()+1)
+        #rebin_ivar = np.zeros(bins.max()+1)
+        #if mean_expected_flux_frac is not None:
+        #    rebin_mean_expected_flux_frac = np.zeros(bins.max()+1)
         #ccfl = np.bincount(bins, weights=ivar*flux)
         #cciv = np.bincount(bins, weights=ivar)
         #if mean_expected_flux_frac is not None:
         #    ccmmef = sp.bincount(bins, weights=ivar*mean_expected_flux_frac)
+        #rebin_flux[:len(ccfl)] += ccfl
+        #rebin_ivar[:len(cciv)] += cciv
+        #if mean_expected_flux_frac is not None:
+        #    rebin_mean_expected_flux_frac[:len(ccmmef)] += ccmmef
+        #### end of old rebin
         rebin_flux = np.bincount(bins, weights=ivar*flux)
         rebin_ivar = np.bincount(bins, weights=ivar)
         if mean_expected_flux_frac is not None:
@@ -391,10 +398,7 @@ class Forest(Qso):
                                                weights=ivar*exposures_diff)
         if reso is not None:
             rebin_reso = sp.bincount(bins, weights=ivar*reso)
-        #rebin_flux[:len(ccfl)] += ccfl
-        #rebin_ivar[:len(cciv)] += cciv
-        #if mean_expected_flux_frac is not None:
-        #    rebin_mean_expected_flux_frac[:len(ccmmef)] += ccmmef
+
         w = (rebin_ivar > 0.)
         if w.sum() == 0:
             return
@@ -409,21 +413,22 @@ class Forest(Qso):
         if reso is not None:
             reso = rebin_reso[w]/rebin_ivar[w]
 
-        ## Flux calibration correction
+        # Flux calibration correction
         try:
             correction = Forest.correct_flux(log_lambda)
             flux /= correction
             ivar *= correction**2
         except NotImplementedError:
             pass
+        # Inverse variance correction
         try:
             correction = Forest.correct_ivar(log_lambda)
             ivar /= correction
         except NotImplementedError:
             pass
 
-
-        self.Fbar = None
+        # keep the results so far in this instance
+        self.mean_optical_depth = None
         self.T_dla = None
         self.log_lambda = log_lambda
         self.flux = flux
@@ -500,7 +505,7 @@ class Forest(Qso):
         for l in mask_RF:
             w &= (self.log_lambda-sp.log10(1.+self.z_qso)<l[0]) | (self.log_lambda-sp.log10(1.+self.z_qso)>l[1])
 
-        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mean_expected_flux_frac','exposures_diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -513,12 +518,12 @@ class Forest(Qso):
         if not hasattr(self,'log_lambda'):
             return
 
-        if self.Fbar is None:
-            self.Fbar = sp.ones(self.log_lambda.size)
+        if self.mean_optical_depth is None:
+            self.mean_optical_depth = sp.ones(self.log_lambda.size)
 
         w = 10.**self.log_lambda/(1.+self.z_qso)<=waveRF
         z = 10.**self.log_lambda/waveRF-1.
-        self.Fbar[w] *= sp.exp(-tau*(1.+z[w])**gamma)
+        self.mean_optical_depth[w] *= sp.exp(-tau*(1.+z[w])**gamma)
 
         return
 
@@ -535,7 +540,7 @@ class Forest(Qso):
             for l in mask:
                 w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
 
-        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mean_expected_flux_frac','exposures_diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -549,7 +554,7 @@ class Forest(Qso):
         w = sp.ones(self.log_lambda.size, dtype=bool)
         w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask_width
 
-        ps = ['ivar','log_lambda','flux','T_dla','Fbar','mean_expected_flux_frac','exposures_diff','reso']
+        ps = ['ivar','log_lambda','flux','T_dla','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
         for p in ps:
             if hasattr(self,p) and (getattr(self,p) is not None):
                 setattr(self,p,getattr(self,p)[w])
@@ -564,8 +569,8 @@ class Forest(Qso):
         except ValueError:
             raise Exception
 
-        if not self.Fbar is None:
-            mean_cont *= self.Fbar
+        if not self.mean_optical_depth is None:
+            mean_cont *= self.mean_optical_depth
         if not self.T_dla is None:
             mean_cont*=self.T_dla
 
