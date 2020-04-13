@@ -79,10 +79,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ### forest args
-    forest.lmin = np.lib.scimath.log10(args.lambda_min)
-    forest.lmax = np.lib.scimath.log10(args.lambda_max)
-    forest.lmin_rest = np.lib.scimath.log10(args.lambda_rest_min)
-    forest.lmax_rest = np.lib.scimath.log10(args.lambda_rest_max)
+    forest.lmin = np.log10(args.lambda_min)
+    forest.lmax = np.log10(args.lambda_max)
+    forest.lmin_rest = np.log10(args.lambda_rest_min)
+    forest.lmax_rest = np.log10(args.lambda_rest_max)
     forest.rebin = args.rebin
     forest.dll = args.rebin*1e-4
     forest.dla_mask = args.dla_mask
@@ -168,9 +168,9 @@ if __name__ == '__main__':
                         usr_mask_RF_DLA += [ [float(l[1]),float(l[2])] ]
                     else:
                         raise
-            usr_mask_obs    = np.lib.scimath.log10(sp.asarray(usr_mask_obs))
-            usr_mask_RF     = np.lib.scimath.log10(sp.asarray(usr_mask_RF))
-            usr_mask_RF_DLA = np.lib.scimath.log10(sp.asarray(usr_mask_RF_DLA))
+            usr_mask_obs    = np.log10(sp.asarray(usr_mask_obs))
+            usr_mask_RF     = np.log10(sp.asarray(usr_mask_RF))
+            usr_mask_RF_DLA = np.log10(sp.asarray(usr_mask_RF_DLA))
             if usr_mask_RF_DLA.size==0:
                 usr_mask_RF_DLA = None
 
