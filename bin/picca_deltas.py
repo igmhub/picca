@@ -227,14 +227,14 @@ def main():
         best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format)
 
     ### Get the lines to veto
-    usr_mask_obs = None
-    usr_mask_RF = None
+    mask_obs_frame = None
+    mask_rest_frame = None
     usr_mask_RF_DLA = None
     if args.mask_file is not None:
         args.mask_file = os.path.expandvars(args.mask_file)
         try:
-            usr_mask_obs = []
-            usr_mask_RF = []
+            mask_obs_frame = []
+            mask_rest_frame = []
             usr_mask_RF_DLA = []
             with open(args.mask_file, 'r') as f:
                 loop = True
@@ -243,15 +243,15 @@ def main():
                         continue
                     l = l.split()
                     if l[3] == 'OBS':
-                        usr_mask_obs += [[float(l[1]), float(l[2])]]
+                        mask_obs_frame += [[float(l[1]), float(l[2])]]
                     elif l[3] == 'RF':
-                        usr_mask_RF += [[float(l[1]), float(l[2])]]
+                        mask_rest_frame += [[float(l[1]), float(l[2])]]
                     elif l[3] == 'RF_DLA':
                         usr_mask_RF_DLA += [[float(l[1]), float(l[2])]]
                     else:
                         raise ValueError("Invalid value found in mask")
-            usr_mask_obs = np.log10(np.asarray(usr_mask_obs))
-            usr_mask_RF = np.log10(np.asarray(usr_mask_RF))
+            mask_obs_frame = np.log10(np.asarray(mask_obs_frame))
+            mask_rest_frame = np.log10(np.asarray(mask_rest_frame))
             usr_mask_RF_DLA = np.log10(np.asarray(usr_mask_RF_DLA))
             if usr_mask_RF_DLA.size == 0:
                 usr_mask_RF_DLA = None
@@ -261,11 +261,11 @@ def main():
             sys.exit(1)
 
     ### Veto lines
-    if not usr_mask_obs is None:
-        if usr_mask_obs.size + usr_mask_RF.size != 0:
+    if not mask_obs_frame is None:
+        if mask_obs_frame.size + mask_rest_frame.size != 0:
             for p in data:
                 for d in data[p]:
-                    d.mask(mask_obs=usr_mask_obs, mask_RF=usr_mask_RF)
+                    d.mask(mask_obs_frame, mask_rest_frame)
 
     ### Veto absorbers
     if not args.absorber_vac is None:

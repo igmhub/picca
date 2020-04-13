@@ -311,7 +311,7 @@ class Forest(Qso):
     def __init__(self, log_lambda, flux, ivar, thingid, ra, dec, z_qso, plate,
                  mjd, fiberid, order, exposures_diff=None, reso=None,
                  mean_expected_flux_frac=None, igm_absorption="LYA"):
-        """Initialize class instances.
+        """Initializes class instances.
 
         Args:
             log_lambda : array of floats
@@ -463,7 +463,7 @@ class Forest(Qso):
                         - 1.0)
 
     def __add__(self, other):
-        """Add the information of another forest.
+        """Adds the information of another forest.
 
         Forests are coadded by using inverse variance weighting.
 
@@ -538,20 +538,42 @@ class Forest(Qso):
 
         return self
 
-    def mask(self,mask_obs,mask_RF):
+    def mask(self, mask_obs_frame, mask_rest_frame):
+        """Applies wavelength masking.
+
+        Pixels are masked according to a set of lines both in observed frame
+        and in the rest-frame. Masking is done by simply removing the pixels
+        from the arrays. Does nothing if the forest doesn't have the attribute
+        log_lambda set.
+
+        Args:
+            mask_obs_frame: array of arrays
+                Each element of the array must contain an array of two floats
+                that specify the range of wavelength to mask. Values given are
+                the logarithm of the wavelength in Angstroms, and both values
+                are included in the masking. These wavelengths are given at the
+                obseved frame.
+            mask_rest_frame: array of arrays
+                Same as mask_obs_frame but for rest-frame wavelengths.
+        """
         if not hasattr(self,'log_lambda'):
             return
 
-        w = sp.ones(self.log_lambda.size,dtype=bool)
-        for l in mask_obs:
-            w &= (self.log_lambda<l[0]) | (self.log_lambda>l[1])
-        for l in mask_RF:
-            w &= (self.log_lambda-sp.log10(1.+self.z_qso)<l[0]) | (self.log_lambda-sp.log10(1.+self.z_qso)>l[1])
+        w = np.ones(self.log_lambda.size, dtype=bool)
+        for mask_range in mask_obs_frame:
+            w &= ((self.log_lambda < mask_range[0]) |
+                  (self.log_lambda > mask_range[1]))
+        for mask_range in mask_rest_frame:
+            rest_frame_log_lambda = self.log_lambda - np.log10(1. + self.z_qso)
+            w &= ((rest_frame_log_lambda < mask_range[0]) |
+                  (rest_frame_log_lambda > mask_range[1]))
 
-        ps = ['ivar','log_lambda','flux','dla_transmission','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
-        for p in ps:
-            if hasattr(self,p) and (getattr(self,p) is not None):
-                setattr(self,p,getattr(self,p)[w])
+        parameters = ['ivar', 'log_lambda', 'flux', 'dla_transmission',
+                      'mean_optical_depth','mean_expected_flux_frac',
+                      'exposures_diff', 'reso']
+        for param in parameters:
+            if hasattr(self, param) and (getattr(self, param) is not None):
+                setattr(self, param, getattr(self, param)[w])
 
         return
 
@@ -583,10 +605,10 @@ class Forest(Qso):
             for l in mask:
                 w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
 
-        ps = ['ivar','log_lambda','flux','dla_transmission','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
-        for p in ps:
-            if hasattr(self,p) and (getattr(self,p) is not None):
-                setattr(self,p,getattr(self,p)[w])
+        parameters = ['ivar','log_lambda','flux','dla_transmission','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
+        for param in parameters:
+            if hasattr(self, param) and (getattr(self, param) is not None):
+                setattr(self, param, getattr(self, param)[w])
 
         return
 
@@ -597,10 +619,10 @@ class Forest(Qso):
         w = sp.ones(self.log_lambda.size, dtype=bool)
         w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask_width
 
-        ps = ['ivar','log_lambda','flux','dla_transmission','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
-        for p in ps:
-            if hasattr(self,p) and (getattr(self,p) is not None):
-                setattr(self,p,getattr(self,p)[w])
+        parameters = ['ivar','log_lambda','flux','dla_transmission','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
+        for param in parameters:
+            if hasattr(self, param) and (getattr(self, param) is not None):
+                setattr(self, param, getattr(self, param)[w])
 
         return
 
