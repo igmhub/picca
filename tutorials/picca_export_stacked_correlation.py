@@ -82,7 +82,7 @@ if __name__ == '__main__':
     ### Add unshared healpix as empty data
     for i in range(nbData):
         for j in range(nbData):
-            w = np.logical_not( sp.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
+            w = np.logical_not( np.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
             if w.sum()>0:
                 new_healpix = data[j]['HEALPID'][w]
                 nb_new_healpix = new_healpix.size

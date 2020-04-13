@@ -381,14 +381,14 @@ def wickT(pix):
                 thid4 = np.array([q4.thid for q4 in neighs])
 
                 if max_diagram==5:
-                    w = sp.in1d(d1.qneighs,d3.qneighs)
+                    w = np.in1d(d1.qneighs,d3.qneighs)
                     if w.sum()==0: continue
                     t_ang12 = ang12[w]
                     t_r2 = r2[w]
                     t_w2 = w2[w]
                     t_thid2 = thid2[w]
 
-                    w = sp.in1d(d3.qneighs,d1.qneighs)
+                    w = np.in1d(d3.qneighs,d1.qneighs)
                     if w.sum()==0: continue
                     ang34 = ang34[w]
                     r4 = r4[w]

@@ -94,7 +94,7 @@ def fill_masked_pixels(dll,ll,delta,diff,iv,no_apply_filling):
     ll_idx += 0.5
     index =np.array(ll_idx,dtype=int)
     index_all = range(index[-1]+1)
-    index_ok = sp.in1d(index_all, index)
+    index_ok = np.in1d(index_all, index)
 
     delta_new = np.zeros(len(index_all))
     delta_new[index_ok]=delta

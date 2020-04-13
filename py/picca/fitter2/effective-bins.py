@@ -175,7 +175,7 @@ if __name__ == '__main__':
     free_pars, fixed_pars, best_fit_pars, err_best_fit_pars = extract_h5file(dic_init['outfile'])
     if 'all' in args.params:
         args.params = free_pars.copy()
-    if sp.any(~sp.in1d(args.params,free_pars)):
+    if sp.any(~np.in1d(args.params,free_pars)):
         print('ERROR: Some parameters are not fitted {}, the list is {}'.format(args.params,free_pars))
         sys.exit(12)
 

@@ -489,7 +489,7 @@ def x_forest_cf1d(pix):
         we1 = d1.we
 
         d2thingid = [d2.thid for d2 in data2[pix]]
-        neighs = data2[pix][sp.in1d(d2thingid,[d1.thid])]
+        neighs = data2[pix][np.in1d(d2thingid,[d1.thid])]
         for d2 in neighs:
             bins2 = ((d2.ll-lmin)/dll+0.5).astype(int)
             bins = bins1 + n1d*bins2[:,None]
