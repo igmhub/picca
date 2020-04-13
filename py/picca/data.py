@@ -119,8 +119,8 @@ class forest(qso):
         ll = forest.lmin + bins*forest.dll
         w = (ll>=forest.lmin)
         w = w & (ll<forest.lmax)
-        w = w & (ll-np.lib.scimath.log10(1.+self.zqso)>forest.lmin_rest)
-        w = w & (ll-np.lib.scimath.log10(1.+self.zqso)<forest.lmax_rest)
+        w = w & (ll-np.log10(1.+self.zqso)>forest.lmin_rest)
+        w = w & (ll-np.log10(1.+self.zqso)<forest.lmax_rest)
         w = w & (iv>0.)
         if w.sum()==0:
             return
@@ -253,7 +253,7 @@ class forest(qso):
         for l in mask_obs:
             w &= (self.ll<l[0]) | (self.ll>l[1])
         for l in mask_RF:
-            w &= (self.ll-np.lib.scimath.log10(1.+self.zqso)<l[0]) | (self.ll-np.lib.scimath.log10(1.+self.zqso)>l[1])
+            w &= (self.ll-np.log10(1.+self.zqso)<l[0]) | (self.ll-np.log10(1.+self.zqso)>l[1])
 
         ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -288,7 +288,7 @@ class forest(qso):
         w = self.T_dla>forest.dla_mask
         if not mask is None:
             for l in mask:
-                w &= (self.ll-np.lib.scimath.log10(1.+zabs)<l[0]) | (self.ll-np.lib.scimath.log10(1.+zabs)>l[1])
+                w &= (self.ll-np.log10(1.+zabs)<l[0]) | (self.ll-np.log10(1.+zabs)>l[1])
 
         ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -302,7 +302,7 @@ class forest(qso):
             return
 
         w = np.ones(self.ll.size, dtype=bool)
-        w &= sp.fabs(1.e4*(self.ll-np.lib.scimath.log10(lambda_absorber)))>forest.absorber_mask
+        w &= sp.fabs(1.e4*(self.ll-np.log10(lambda_absorber)))>forest.absorber_mask
 
         ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -312,10 +312,10 @@ class forest(qso):
         return
 
     def cont_fit(self):
-        lmax = forest.lmax_rest+np.lib.scimath.log10(1+self.zqso)
-        lmin = forest.lmin_rest+np.lib.scimath.log10(1+self.zqso)
+        lmax = forest.lmax_rest+np.log10(1+self.zqso)
+        lmin = forest.lmin_rest+np.log10(1+self.zqso)
         try:
-            mc = forest.mean_cont(self.ll-np.lib.scimath.log10(1+self.zqso))
+            mc = forest.mean_cont(self.ll-np.log10(1+self.zqso))
         except ValueError:
             raise Exception
 

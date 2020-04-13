@@ -142,8 +142,8 @@ if __name__ == '__main__':
                     forest.dll = dll
                 else:
                     forest.dll = min(dll,forest.dll)
-        forest.lmin  = np.lib.scimath.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
-        forest.lmax  = np.lib.scimath.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
+        forest.lmin  = np.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
+        forest.lmax  = np.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
         ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
             for d in xcf.dels[p]:
@@ -155,7 +155,7 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     for i,ipix in enumerate(sorted(objs.keys())):
         for q in objs[ipix]:
-            q.ll = np.lib.scimath.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
+            q.ll = np.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
     print("")
     xcf.objs = objs
 

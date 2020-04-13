@@ -397,7 +397,7 @@ def read_from_mock_1D(in_dir,thid,ra,dec,zqso,plate,mjd,fid, order,mode,log=None
         h = hdu["{}".format(t)]
         log.write("file: {} hdu {} read  \n".format(fin,h))
         lamb = h["wavelength"][:]
-        ll = np.lib.scimath.log10(lamb)
+        ll = np.log10(lamb)
         fl = h["flux"][:]
         error =h["error"][:]
         iv = 1.0/error**2
@@ -731,7 +731,7 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
         for spec in ['B','R','Z']:
             dic = {}
             try:
-                dic['LL'] = np.lib.scimath.log10(h['{}_WAVELENGTH'.format(spec)].read())
+                dic['LL'] = np.log10(h['{}_WAVELENGTH'.format(spec)].read())
                 dic['FL'] = h['{}_FLUX'.format(spec)].read()
                 dic['IV'] = h['{}_IVAR'.format(spec)].read()*(h['{}_MASK'.format(spec)].read()==0)
                 w = sp.isnan(dic['FL']) | sp.isnan(dic['IV'])

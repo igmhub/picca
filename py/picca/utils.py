@@ -498,8 +498,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     print('INFO: Found {} files'.format(fi.size))
 
     ### Stack the transmission
-    lmin = np.lib.scimath.log10(lObs_min)
-    lmax = np.lib.scimath.log10(lObs_max)
+    lmin = np.log10(lObs_min)
+    lmax = np.log10(lObs_max)
     nstack = int((lmax-lmin)/dll)+1
     T_stack = np.zeros(nstack)
     n_stack = np.zeros(nstack)
@@ -517,7 +517,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         ra = h['METADATA']['RA'][:].astype(sp.float64)*sp.pi/180.
         dec = h['METADATA']['DEC'][:].astype(sp.float64)*sp.pi/180.
         z = h['METADATA']['Z'][:]
-        ll = np.lib.scimath.log10(h['WAVELENGTH'].read())
+        ll = np.log10(h['WAVELENGTH'].read())
         if 'F_LYA' in h :
             trans = h['F_LYA'].read()
         else:

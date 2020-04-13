@@ -82,8 +82,8 @@ if __name__ == '__main__':
 
     ###
     cf.nside = args.nside
-    cf.lmin = np.lib.scimath.log10(args.lambda_min)
-    cf.lmax = np.lib.scimath.log10(args.lambda_max)
+    cf.lmin = np.log10(args.lambda_min)
+    cf.lmax = np.log10(args.lambda_max)
     cf.dll = args.dll
     cf.n1d = int((cf.lmax-cf.lmin)/cf.dll+1)
     cf.x_correlation = False

@@ -156,8 +156,8 @@ if __name__ == '__main__':
                     forest.dll = dll
                 else:
                     forest.dll = min(dll,forest.dll)
-        forest.lmin  = np.lib.scimath.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
-        forest.lmax  = np.lib.scimath.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
+        forest.lmin  = np.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
+        forest.lmax  = np.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
         ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
             for d in xcf.dels[p]:
