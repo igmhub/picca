@@ -84,12 +84,12 @@ if __name__ == '__main__':
             for k in ['NT','NP','RTMAX','RPMIN','RPMAX']:
                 data[k] = head[k]
             for k in ['RP','RT','Z','NB']:
-                data[k] = sp.array(h[1][k][:])
+                data[k] = np.array(h[1][k][:])
 
         data[type_corr] = {}
         data[type_corr]['NSIDE'] = head['NSIDE']
         data[type_corr]['HLPXSCHM'] = h[2].read_header()['HLPXSCHM']
-        w = sp.array(h[2]['WE'][:]).sum(axis=1)>0.
+        w = np.array(h[2]['WE'][:]).sum(axis=1)>0.
         if w.sum()!=w.size:
             print('INFO: {} sub-samples were empty'.format(w.size-w.sum()))
         data[type_corr]['HEALPID'] = h[2]['HEALPID'][:][w]
@@ -128,7 +128,7 @@ if __name__ == '__main__':
         w = data['corr_RR']>0.
         co = np.zeros(data['corr_DD'].size)
         co[w] = (data['COEF']/2.*data['corr_DD'][w])**2/(data['COEF']/2.*data['corr_RR'][w])**3
-        data['CO'] = sp.diag(co)
+        data['CO'] = np.diag(co)
     else:
         print('INFO: Compute covariance from sub-sampling')
 
@@ -143,18 +143,18 @@ if __name__ == '__main__':
                     print('ERROR: HLPXSCHM are different: {} != {}'.format(data[d1]['HLPXSCHM'],data[d2]['HLPXSCHM']))
                     sys.exit()
 
-                w = np.logical_not( sp.in1d(data[d1]['HEALPID'],data[d2]['HEALPID']) )
+                w = np.logical_not( np.in1d(data[d1]['HEALPID'],data[d2]['HEALPID']) )
                 if w.sum()!=0:
                     print('WARNING: HEALPID are different by {} for {}:{} and {}:{}'.format(w.sum(),d1,data[d1]['HEALPID'].size,d2,data[d2]['HEALPID'].size))
                     new_healpix = data[d1]['HEALPID'][w]
                     nb_new_healpix = new_healpix.size
                     nb_bins = data[d2]['WE'].shape[1]
-                    data[d2]['HEALPID'] = sp.append(data[d2]['HEALPID'],new_healpix)
-                    data[d2]['WE'] = sp.append(data[d2]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+                    data[d2]['HEALPID'] = np.append(data[d2]['HEALPID'],new_healpix)
+                    data[d2]['WE'] = np.append(data[d2]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
 
         ### Sort the data by the healpix values
         for d1 in list(lst_file.keys()):
-            sort = sp.array(data[d1]['HEALPID']).argsort()
+            sort = np.array(data[d1]['HEALPID']).argsort()
             data[d1]['WE'] = data[d1]['WE'][sort]
             data[d1]['HEALPID'] = data[d1]['HEALPID'][sort]
 
@@ -195,7 +195,7 @@ if __name__ == '__main__':
         print('WARNING: Matrix is not positive definite')
 
     ### Distortion matrix
-    data['DM'] = sp.eye(data['DA'].size)
+    data['DM'] = np.eye(data['DA'].size)
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)

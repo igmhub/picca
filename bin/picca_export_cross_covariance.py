@@ -35,9 +35,9 @@ if __name__ == '__main__':
         nside = head['NSIDE']
         head = h[2].read_header()
         scheme = head['HLPXSCHM']
-        da  = sp.array(h[2]['DA'][:])
-        we  = sp.array(h[2]['WE'][:])
-        hep = sp.array(h[2]['HEALPID'][:])
+        da  = np.array(h[2]['DA'][:])
+        we  = np.array(h[2]['WE'][:])
+        hep = np.array(h[2]['HEALPID'][:])
         data[i] = {'DA':da, 'WE':we, 'HEALPID':hep, 'NSIDE':nside, 'HLPXSCHM':scheme}
         h.close()
 
@@ -53,26 +53,26 @@ if __name__ == '__main__':
     ### Add unshared healpix as empty data
     for i in sorted(list(data.keys())):
         j = (i+1)%2
-        w = np.logical_not( sp.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
+        w = np.logical_not( np.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
         if w.sum()>0:
             new_healpix = data[j]['HEALPID'][w]
             nb_new_healpix = new_healpix.size
             nb_bins = data[i]['DA'].shape[1]
             print("Some healpix are unshared in data {}: {}".format(i,new_healpix))
-            data[i]['DA']      = sp.append(data[i]['DA'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
-            data[i]['WE']      = sp.append(data[i]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
-            data[i]['HEALPID'] = sp.append(data[i]['HEALPID'],new_healpix)
+            data[i]['DA']      = np.append(data[i]['DA'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+            data[i]['WE']      = np.append(data[i]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+            data[i]['HEALPID'] = np.append(data[i]['HEALPID'],new_healpix)
 
     ### Sort the data by the healpix values
     for i in sorted(list(data.keys())):
-        sort = sp.array(data[i]['HEALPID']).argsort()
+        sort = np.array(data[i]['HEALPID']).argsort()
         data[i]['DA']      = data[i]['DA'][sort]
         data[i]['WE']      = data[i]['WE'][sort]
         data[i]['HEALPID'] = data[i]['HEALPID'][sort]
 
     ### Append the data
-    da  = sp.append(data[0]['DA'],data[1]['DA'],axis=1)
-    we  = sp.append(data[0]['WE'],data[1]['WE'],axis=1)
+    da  = np.append(data[0]['DA'],data[1]['DA'],axis=1)
+    we  = np.append(data[0]['WE'],data[1]['WE'],axis=1)
 
     ### Compute the covariance
     co = cov(da,we)
@@ -84,8 +84,8 @@ if __name__ == '__main__':
     cross_co = cross_co[:size1,:]
 
     ### Get the cross-correlation
-    var = sp.diagonal(co)
-    cor = co/sp.sqrt(var*var[:,None])
+    var = np.diagonal(co)
+    cor = co/np.sqrt(var*var[:,None])
     cross_cor = cor.copy()
     cross_cor = cross_cor[:,size1:]
     cross_cor = cross_cor[:size1,:]

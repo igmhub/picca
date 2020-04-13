@@ -1,4 +1,4 @@
-
+import numpy as np
 import scipy as sp
 from scipy import special
 
@@ -25,7 +25,7 @@ def qso_radiation_model(rp,rt,pars):
 
     ###
     rp_shift = rp+pars['drp']
-    r        = sp.sqrt( rp_shift**2. + rt**2.)
+    r        = np.sqrt( rp_shift**2. + rt**2.)
     mur      = rp_shift/r
 
     ###

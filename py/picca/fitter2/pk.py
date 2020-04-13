@@ -27,7 +27,7 @@ class pk:
 
 def pk_NL(k, pk_lin, tracer1, tracer2, **kwargs):
     kp = k*muk
-    kt = k*sp.sqrt(1-muk**2)
+    kt = k*np.sqrt(1-muk**2)
     st2 = kwargs['sigmaNL_per']**2
     sp2 = kwargs['sigmaNL_par']**2
     return sp.exp(-(kp**2*sp2+kt**2*st2)/2)
@@ -227,7 +227,7 @@ def dnl_arinyo(k, pk_lin, tracer1, tracer2, pk_fid, **kwargs):
     kp = kwargs["dnl_arinyo_kp"]
 
     growth = q1*k*k*k*pk_fid/(2*sp.pi*sp.pi)
-    pecvelocity = sp.power(k/kv,av)*sp.power(sp.fabs(muk),bv)
+    pecvelocity = np.power(k/kv,av)*np.power(sp.fabs(muk),bv)
     pressure = (k/kp)*(k/kp)
     dnl = sp.exp(growth*(1-pecvelocity)-pressure)
     return dnl
@@ -254,7 +254,7 @@ def G2(k, pk_lin, tracer1, tracer2, dataset_name = None, **kwargs):
     Lper = kwargs["per binsize {}".format(dataset_name)]
 
     kp = k*muk
-    kt = k*sp.sqrt(1-muk**2)
+    kt = k*np.sqrt(1-muk**2)
     return utils.sinc(kp*Lpar/2)*utils.sinc(kt*Lper/2)
 
 def pk_hcd_cross(k, pk_lin, tracer1, tracer2, **kwargs):
@@ -426,7 +426,7 @@ def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
 
     """
     kp  = k*muk
-    kt  = k*sp.sqrt(1.-muk**2)
+    kt  = k*np.sqrt(1.-muk**2)
     st2 = kwargs['per_sigma_smooth']**2
     sp2 = kwargs['par_sigma_smooth']**2
     return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)
@@ -437,7 +437,7 @@ def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
 
     """
     kp  = k*muk
-    kt  = k*sp.sqrt(1.-muk**2)
+    kt  = k*np.sqrt(1.-muk**2)
     st2 = kwargs['per_sigma_smooth']**2
     sp2 = kwargs['par_sigma_smooth']**2
 
@@ -449,7 +449,7 @@ def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
 def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]
     kp = k*muk
-    smooth = sp.ones(kp.shape)
+    smooth = np.ones(kp.shape)
     if tracer1['type']=='discrete':
         smooth *= sp.exp( -0.25*(kp*kwargs['sigma_velo_gaus_'+tracer1['name']])**2)
     if tracer2['type']=='discrete':
@@ -459,9 +459,9 @@ def pk_velo_gaus(k, pk_lin, tracer1, tracer2, **kwargs):
 def pk_velo_lorentz(k, pk_lin, tracer1, tracer2, **kwargs):
     assert 'discrete' in [tracer1['type'],tracer2['type']]
     kp = k*muk
-    smooth = sp.ones(kp.shape)
+    smooth = np.ones(kp.shape)
     if tracer1['type']=='discrete':
-        smooth *= 1./sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz_'+tracer1['name']])**2)
+        smooth *= 1./np.sqrt(1.+(kp*kwargs['sigma_velo_lorentz_'+tracer1['name']])**2)
     if tracer2['type']=='discrete':
-        smooth *= 1./sp.sqrt(1.+(kp*kwargs['sigma_velo_lorentz_'+tracer2['name']])**2)
+        smooth *= 1./np.sqrt(1.+(kp*kwargs['sigma_velo_lorentz_'+tracer2['name']])**2)
     return smooth
