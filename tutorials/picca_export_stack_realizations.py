@@ -81,7 +81,7 @@ if __name__ == '__main__':
         print('WARNING: Matrix is not positive definite')
 
     ###
-    dic['DM'] = sp.eye(dic['DA'].size)
+    dic['DM'] = np.eye(dic['DA'].size)
     dic['DMRP'] = dic['RP'].copy()
     dic['DMRT'] = dic['RT'].copy()
     dic['DMZ'] = dic['Z'].copy()

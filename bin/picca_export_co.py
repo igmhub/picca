@@ -195,7 +195,7 @@ if __name__ == '__main__':
         print('WARNING: Matrix is not positive definite')
 
     ### Distortion matrix
-    data['DM'] = sp.eye(data['DA'].size)
+    data['DM'] = np.eye(data['DA'].size)
 
     ### Save
     h = fitsio.FITS(args.out,'rw',clobber=True)

@@ -123,7 +123,7 @@ if __name__ == '__main__':
             dmz = z.copy()
         h.close()
     else:
-        dm = sp.eye(len(da))
+        dm = np.eye(len(da))
         dmrp = rp.copy()
         dmrt = rt.copy()
         dmz = z.copy()

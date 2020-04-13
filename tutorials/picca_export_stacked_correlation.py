@@ -168,7 +168,7 @@ if __name__ == '__main__':
             h2.close()
         final['DM'] = dm/wdm[:,None]
     else:
-        final['DM'] = sp.eye(len(final['DA']))
+        final['DM'] = np.eye(len(final['DA']))
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}
