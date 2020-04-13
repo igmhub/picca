@@ -198,14 +198,14 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     elif mode in ["spec","corrected-spec","spcframe","spplate","spec-mock-1D"]:
         nside = 256
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
-        mobj = sp.bincount(pixs).sum()/len(np.unique(pixs))
+        mobj = np.bincount(pixs).sum()/len(np.unique(pixs))
 
         ## determine nside such that there are 1000 objs per pixel on average
         print("determining nside")
         while mobj<target_mobj and nside >= nside_min:
             nside //= 2
             pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
-            mobj = sp.bincount(pixs).sum()/len(np.unique(pixs))
+            mobj = np.bincount(pixs).sum()/len(np.unique(pixs))
         print("nside = {} -- mean #obj per pixel = {}".format(nside,mobj))
         if log is not None:
             log.write("nside = {} -- mean #obj per pixel = {}\n".format(nside,mobj))

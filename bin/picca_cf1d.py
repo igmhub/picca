@@ -186,11 +186,11 @@ if __name__ == '__main__':
     cor = cor[w]
     wes = wes[w]
     nbs = nbs[w]
-    c = sp.bincount(dbin,weights = cor*wes)
+    c = np.bincount(dbin,weights = cor*wes)
     c1d[:len(c)] = c
-    c = sp.bincount(dbin,weights=wes)
+    c = np.bincount(dbin,weights=wes)
     nc1d[:len(c)] = c
-    c = sp.bincount(dbin,weights=nbs)
+    c = np.bincount(dbin,weights=nbs)
     nb1d[:len(c)] = c
 
     w=nc1d>0

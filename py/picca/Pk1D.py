@@ -66,8 +66,8 @@ def rebin_diff_noise(dll,ll,diff):
     # for n in range (1,nmax +1):
     #     bin2[n*crebin:] += np.ones(diff.size-n*crebin)
 
-    cdiff2 = sp.bincount(bin2.astype(int),weights=diff)
-    civ2 = sp.bincount(bin2.astype(int))
+    cdiff2 = np.bincount(bin2.astype(int),weights=diff)
+    civ2 = np.bincount(bin2.astype(int))
     w = (civ2>0)
     if (len(civ2) == 0) :
         print( "Error: diff size = 0 ",diff)

@@ -117,12 +117,12 @@ def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     bt = (rt/rt_max*ntb).astype(int)
     bins = bt + ntb*bp
 
-    cd = sp.bincount(bins,weights=wde)
-    cw = sp.bincount(bins,weights=we)
-    crp = sp.bincount(bins,weights=rp*we)
-    crt = sp.bincount(bins,weights=rt*we)
-    cz = sp.bincount(bins,weights=z*we)
-    cnb = sp.bincount(bins,weights=(we>0.))
+    cd = np.bincount(bins,weights=wde)
+    cw = np.bincount(bins,weights=we)
+    crp = np.bincount(bins,weights=rp*we)
+    crt = np.bincount(bins,weights=rt*we)
+    cz = np.bincount(bins,weights=z*we)
+    cnb = np.bincount(bins,weights=(we>0.))
 
     return cw,cd,crp,crt,cz,cnb
 
@@ -194,23 +194,23 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     we = w1[:,None]*w2
     we = we[w]
-    c = sp.bincount(bins,weights=we)
+    c = np.bincount(bins,weights=we)
     wdm[:len(c)] += c
     eta2 = np.zeros(npm*ntm*n2)
     eta4 = np.zeros(npm*ntm*n2)
 
-    c = sp.bincount(m_bins,weights=we*rp[w])
+    c = np.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*rt[w])
+    c = np.bincount(m_bins,weights=we*rt[w])
     rteff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*z[w])
+    c = np.bincount(m_bins,weights=we*z[w])
     zeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we)
+    c = np.bincount(m_bins,weights=we)
     weff[:c.size] += c
 
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*np.ones(n2))[w]/sw1)
+    c = np.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*np.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*np.ones(n2))[w]/slw1)
+    c = np.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*np.ones(n2))[w]/slw1)
     eta4[:len(c)]+=c
 
     ubb = np.unique(m_bins)
@@ -275,7 +275,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
                 bt = (rt/rt_max*ntb).astype(int)
                 bA = bt + ntb*bp
-                c = sp.bincount(bA[wA],weights=wdq[wA])
+                c = np.bincount(bA[wA],weights=wdq[wA])
                 wdm[:len(c)]+=c
 
                 rp_abs = (rd_abs-rq)*sp.cos(ang/2)
@@ -287,16 +287,16 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 bBma = bt_abs + ntm*bp_abs
                 wBma = (rp_abs>rp_min) & (rp_abs<rp_max) & (rt_abs<rt_max)
                 wAB = wA&wBma
-                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=wdq[wAB]*zwe[wAB])
                 dm[:len(c)]+=c
 
-                c = sp.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
                 rpeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB]*zwe[wAB])
                 rteff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB]*zwe[wAB])
                 zeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
                 weff[:len(c)]+=c
             setattr(d,"qneighs",None)
 

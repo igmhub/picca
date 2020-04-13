@@ -36,7 +36,7 @@ class wedge:
         bins = bins[w]
 
         W = np.zeros(nrp*nrt*nr)
-        c=sp.bincount(bins.flatten())
+        c=np.bincount(bins.flatten())
         W[:len(c)]+=c
 
         self.W = W.reshape(nr,nrt*nrp)

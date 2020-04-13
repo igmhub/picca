@@ -27,13 +27,13 @@ def exp_diff(file,ll) :
 
             # exclude masks 25 (COMBINEREJ), 23 (BRIGHTSKY)?
             if iexp%2 == 1 :
-                civodd=sp.bincount(bins,weights=ivexp*(mask&2**25==0))
-                cflodd=sp.bincount(bins,weights=ivexp*flexp*(mask&2**25==0))
+                civodd=np.bincount(bins,weights=ivexp*(mask&2**25==0))
+                cflodd=np.bincount(bins,weights=ivexp*flexp*(mask&2**25==0))
                 fltotodd[:civodd.size-1] += cflodd[:-1]
                 ivtotodd[:civodd.size-1] += civodd[:-1]
             else :
-                civeven=sp.bincount(bins,weights=ivexp*(mask&2**25==0))
-                cfleven=sp.bincount(bins,weights=ivexp*flexp*(mask&2**25==0))
+                civeven=np.bincount(bins,weights=ivexp*(mask&2**25==0))
+                cfleven=np.bincount(bins,weights=ivexp*flexp*(mask&2**25==0))
                 fltoteven[:civeven.size-1] += cfleven[:-1]
                 ivtoteven[:civeven.size-1] += civeven[:-1]
 

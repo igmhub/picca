@@ -19,9 +19,9 @@ def mc(data):
             fudge = forest.fudge(d.ll)
             var = 1./d.iv/d.co**2
             we = 1/variance(var,eta,var_lss,fudge)
-            c = sp.bincount(bins,weights=d.fl/d.co*we)
+            c = np.bincount(bins,weights=d.fl/d.co*we)
             mcont[:len(c)]+=c
-            c = sp.bincount(bins,weights=we)
+            c = np.bincount(bins,weights=we)
             wcont[:len(c)]+=c
 
     w=wcont>0
@@ -68,16 +68,16 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 
             bins = bwe + nwe*bll
 
-            c = sp.bincount(bins,weights=de)
+            c = np.bincount(bins,weights=de)
             mdel[:len(c)] += c
 
-            c = sp.bincount(bins,weights=de**2)
+            c = np.bincount(bins,weights=de**2)
             var_del[:len(c)] += c
 
-            c = sp.bincount(bins,weights=de**4)
+            c = np.bincount(bins,weights=de**4)
             var2_del[:len(c)] += c
 
-            c = sp.bincount(bins)
+            c = np.bincount(bins)
             count[:len(c)] += c
             nqso[np.unique(bins)]+=1
 
@@ -143,9 +143,9 @@ def stack(data,delta=False):
                 we = 1./variance(var,eta,var_lss,fudge)
 
             bins=((d.ll-forest.lmin)/forest.dll+0.5).astype(int)
-            c = sp.bincount(bins,weights=de*we)
+            c = np.bincount(bins,weights=de*we)
             st[:len(c)]+=c
-            c = sp.bincount(bins,weights=we)
+            c = np.bincount(bins,weights=we)
             wst[:len(c)]+=c
 
     w=wst>0

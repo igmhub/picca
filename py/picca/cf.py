@@ -137,12 +137,12 @@ def fast_cf(z1,r1,rdm1,w1,d1, z2,r2,rdm2,w2,d2, ang,same_half_plate):
         wd12[w] = 0.
         w12[w] = 0.
 
-    cd = sp.bincount(bins,weights=wd12)
-    cw = sp.bincount(bins,weights=w12)
-    crp = sp.bincount(bins,weights=rp*w12)
-    crt = sp.bincount(bins,weights=rt*w12)
-    cz = sp.bincount(bins,weights=z*w12)
-    cnb = sp.bincount(bins,weights=(w12>0.))
+    cd = np.bincount(bins,weights=wd12)
+    cw = np.bincount(bins,weights=w12)
+    crp = np.bincount(bins,weights=rp*w12)
+    crt = np.bincount(bins,weights=rt*w12)
+    cz = np.bincount(bins,weights=z*w12)
+    cnb = np.bincount(bins,weights=(w12>0.))
 
     return cw,cd,crp,crt,cz,cnb
 
@@ -231,16 +231,16 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
         wsame = abs(rp[w])<(rp_max-rp_min)/npb
         we[wsame] = 0.
 
-    c = sp.bincount(m_bins,weights=we*rp[w])
+    c = np.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*rt[w])
+    c = np.bincount(m_bins,weights=we*rt[w])
     rteff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*z[w])
+    c = np.bincount(m_bins,weights=we*z[w])
     zeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we)
+    c = np.bincount(m_bins,weights=we)
     weff[:c.size] += c
 
-    c = sp.bincount(bins,weights=we)
+    c = np.bincount(bins,weights=we)
     wdm[:len(c)] += c
     eta1 = np.zeros(npm*ntm*n1)
     eta2 = np.zeros(npm*ntm*n2)
@@ -251,25 +251,25 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
     eta7 = np.zeros(npm*ntm)
     eta8 = np.zeros(npm*ntm)
 
-    c = sp.bincount(ij%n1+n1*m_bins,weights=(np.ones(n1)[:,None]*w2)[w]/sw2)
+    c = np.bincount(ij%n1+n1*m_bins,weights=(np.ones(n1)[:,None]*w2)[w]/sw2)
     eta1[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*np.ones(n2))[w]/sw1)
+    c = np.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*np.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount(m_bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
+    c = np.bincount(m_bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
 
     if order2==1:
-        c = sp.bincount(ij%n1+n1*m_bins,weights=(np.ones(n1)[:,None]*w2*dl2)[w]/slw2)
+        c = np.bincount(ij%n1+n1*m_bins,weights=(np.ones(n1)[:,None]*w2*dl2)[w]/slw2)
         eta3[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
+        c = np.bincount(m_bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
         eta6[:len(c)]+=c
     if order1==1:
-        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*np.ones(n2))[w]/slw1)
+        c = np.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*np.ones(n2))[w]/slw1)
         eta4[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
+        c = np.bincount(m_bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
         eta7[:len(c)]+=c
         if order2==1:
-            c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
+            c = np.bincount(m_bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
             eta8[:len(c)]+=c
 
     ubb = np.unique(m_bins)
@@ -352,7 +352,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 bA = bt + ntb*bp
                 wA = (bp<npb) & (bt<ntb) & (bp >=0)
-                c = sp.bincount(bA[wA],weights=w12[wA])
+                c = np.bincount(bA[wA],weights=w12[wA])
                 wdm[:len(c)]+=c
 
                 rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
@@ -368,15 +368,15 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
                 wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm) & (bp_abs1_abs2>=0)
                 wAB = wA & wBma
-                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe12[wAB])
+                c = np.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe12[wAB])
                 dm[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
+                c = np.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
                 rpeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
+                c = np.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
                 rteff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe12[wAB])
+                c = np.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe12[wAB])
                 zeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
+                c = np.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
                 weff[:len(c)]+=c
 
                 if ((not x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
@@ -424,7 +424,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                         w12[wp] = 0.
                     bA = bt + ntb*bp
                     wA = (bp<npb) & (bt<ntb) & (bp >=0)
-                    c = sp.bincount(bA[wA],weights=w12[wA])
+                    c = np.bincount(bA[wA],weights=w12[wA])
                     wdm[:len(c)]+=c
                     rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     if not x_correlation:
@@ -439,16 +439,16 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm) & (bp_abs2_abs1>=0)
                     wAB = wA & wBam
 
-                    c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
+                    c = np.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
                     rpeff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=rt_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
+                    c = np.bincount(bBam[wAB],weights=rt_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
                     rteff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=(z1_abs2[:,None]+z2_abs1)[wAB]/2*w12[wAB]*zwe21[wAB])
+                    c = np.bincount(bBam[wAB],weights=(z1_abs2[:,None]+z2_abs1)[wAB]/2*w12[wAB]*zwe21[wAB])
                     zeff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
+                    c = np.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
                     weff[:len(c)]+=c
 
-                    c = sp.bincount(bBam[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe21[wAB])
+                    c = np.bincount(bBam[wAB]+npm*ntm*bA[wAB],weights=w12[wAB]*zwe21[wAB])
                     dm[:len(c)]+=c
             setattr(d1,"neighs",None)
 

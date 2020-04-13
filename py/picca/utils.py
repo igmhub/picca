@@ -558,8 +558,8 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
             bins = sp.floor((tll-lmin)/dll+0.5).astype(int)
             cll = lmin + np.arange(nstack)*dll
-            cfl = sp.bincount(bins,weights=ttrans,minlength=nstack)
-            civ = sp.bincount(bins,minlength=nstack).astype(float)
+            cfl = np.bincount(bins,weights=ttrans,minlength=nstack)
+            civ = np.bincount(bins,minlength=nstack).astype(float)
 
             ww = civ>0.
             if ww.sum()<50: continue
