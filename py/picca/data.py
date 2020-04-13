@@ -383,7 +383,7 @@ class Forest(Qso):
         # rebin arrays
         rebin_log_lambda = (Forest.log_lambda_min + np.arange(bins.max()+1)
                             *Forest.delta_log_lambda)
-        #### old way rebinning was made
+        #### old way rebinning
         #rebin_flux = np.zeros(bins.max()+1)
         #rebin_ivar = np.zeros(bins.max()+1)
         #if mean_expected_flux_frac is not None:
@@ -396,7 +396,7 @@ class Forest(Qso):
         #rebin_ivar[:len(cciv)] += cciv
         #if mean_expected_flux_frac is not None:
         #    rebin_mean_expected_flux_frac[:len(ccmmef)] += ccmmef
-        #### end of old rebin
+        #### end of old way rebinning
         rebin_flux = np.bincount(bins, weights=ivar*flux)
         rebin_ivar = np.bincount(bins, weights=ivar)
         if mean_expected_flux_frac is not None:
@@ -450,7 +450,7 @@ class Forest(Qso):
 
         # compute mean quality variables
         if reso is not None:
-            self.mean_reso = sum(reso)/float(len(reso))
+            self.mean_reso = reso.mean()
         else:
             self.mean_reso = None
 
@@ -462,38 +462,68 @@ class Forest(Qso):
                         np.power(10., log_lambda[0]))/2./lambda_igm_absorption
                         - 1.0)
 
-    def __add__(self,d):
+    def __add__(self, other):
+        """Add the information of another forest.
 
-        if not hasattr(self,'log_lambda') or not hasattr(d,'log_lambda'):
+        Forests are coadded by using inverse variance weighting.
+
+        Args:
+            other: Forest
+                The forest instance to be coadded. If other does not have the
+                attribute log_lambda, then the method returns without doing
+                anything.
+
+        Returns:
+            The coadded forest.
+        """
+        if not hasattr(self,'log_lambda') or not hasattr(other,'log_lambda'):
             return self
 
-        dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
+        # this should contain all quantities that are to be coadded using
+        # ivar weighting
+        ivar_coadd_data = {}
 
-        log_lambda = sp.append(self.log_lambda,d.log_lambda)
-        dic['flux'] = sp.append(self.flux, d.flux)
-        ivar = sp.append(self.ivar,d.ivar)
+        log_lambda = np.append(self.log_lambda, other.log_lambda)
+        ivar_coadd_data['flux'] = np.append(self.flux, other.flux)
+        ivar = np.append(self.ivar, other.ivar)
 
         if self.mean_expected_flux_frac is not None:
-            dic['mean_expected_flux_frac'] = sp.append(self.mean_expected_flux_frac, d.mean_expected_flux_frac)
-        if self.exposures_diff is not None:
-            dic['exposures_diff'] = sp.append(self.exposures_diff, d.exposures_diff)
-        if self.reso is not None:
-            dic['reso'] = sp.append(self.reso, d.reso)
+            mean_expected_flux_frac = np.append(self.mean_expected_flux_frac,
+                                                other.mean_expected_flux_frac)
+            ivar_coadd_data['mean_expected_flux_frac'] = mean_expected_flux_frac
 
-        bins = sp.floor((log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
-        rebin_log_lambda = Forest.log_lambda_min + np.arange(bins.max()+1)*Forest.delta_log_lambda
-        rebin_ivar = np.zeros(bins.max()+1)
-        cciv = sp.bincount(bins,weights=ivar)
-        rebin_ivar[:len(cciv)] += cciv
+        if self.exposures_diff is not None:
+            ivar_coadd_data['exposures_diff'] = np.append(self.exposures_diff,
+                                                          other.exposures_diff)
+        if self.reso is not None:
+            ivar_coadd_data['reso'] = np.append(self.reso, other.reso)
+
+        # coadd the deltas by rebinning
+        bins = np.floor((log_lambda - Forest.log_lambda_min)
+                        /Forest.delta_log_lambda + 0.5).astype(int)
+        rebin_log_lambda = Forest.log_lambda_min + (np.arange(bins.max() + 1)
+                                                    *Forest.delta_log_lambda)
+        ## old way rebinning
+        #rebin_ivar = np.zeros(bins.max() + 1)
+        #cciv = np.bincount(bins,weights=ivar)
+        #rebin_ivar[:len(cciv)] += cciv
+        ## end of old way rebinning
+        rebin_ivar = np.bincount(bins,weights=ivar)
         w = (rebin_ivar>0.)
         self.log_lambda = rebin_log_lambda[w]
         self.ivar = rebin_ivar[w]
 
-        for k, v in dic.items():
-            cnew = np.zeros(bins.max() + 1)
-            ccnew = sp.bincount(bins, weights=ivar * v)
-            cnew[:len(ccnew)] += ccnew
-            setattr(self, k, cnew[w] / rebin_ivar[w])
+        # rebin using inverse variance weighting
+        for key, value in ivar_coadd_data.items():
+            ## old way rebinning
+            #cnew = np.zeros(bins.max() + 1)
+            #ccnew = np.bincount(bins, weights=ivar * value)
+            #cnew[:len(ccnew)] += ccnew
+            #setattr(self, key, cnew[w] / rebin_ivar[w])
+            ## end of old way rebinning
+            rebin_value = np.bincount(bins, weights=ivar * value)
+            rebin_value = rebin_value[w]/rebin_ivar[w])
+            setattr(self, key, rebin_value)
 
         # recompute means of quality variables
         if self.reso is not None:
@@ -502,7 +532,9 @@ class Forest(Qso):
         snr = self.flux/err
         self.mean_snr = snr.mean()
         lambda_igm_absorption = constants.absorber_IGM[self.igm_absorption]
-        self.mean_z = (sp.power(10.,log_lambda[len(log_lambda)-1])+sp.power(10.,log_lambda[0]))/2./lambda_igm_absorption -1.0
+        self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
+                        bp.power(10.,log_lambda[0]))/2./lambda_igm_absorption
+                        - 1.0)
 
         return self
 
