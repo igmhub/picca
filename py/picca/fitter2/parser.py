@@ -2,6 +2,7 @@ from __future__ import print_function
 
 from functools import partial
 import sys
+import numpy as np
 import scipy as sp
 import os.path
 from pkg_resources import resource_filename
@@ -72,7 +73,7 @@ def parse_chi2(filename):
                 dic_init['fast mc'][item] = bool(value)
             elif item=='covscaling':
                 value = value.split()
-                dic_init['fast mc'][item] = sp.array(value).astype(float)
+                dic_init['fast mc'][item] = np.array(value).astype(float)
                 if not len(dic_init['fast mc'][item])==len(dic_init['data sets']['data']):
                     raise AssertionError()
             else:
@@ -200,7 +201,7 @@ def parse_data(filename,zeff,fiducial):
             if item in priors.prior_dic.keys():
                 print("WARNING: prior on {} will be overwritten".format(item))
             value = value.split()
-            priors.prior_dic[item] = partial(getattr(priors, value[0]), prior_pars=sp.array(value[1:]).astype(float), name=item)
+            priors.prior_dic[item] = partial(getattr(priors, value[0]), prior_pars=np.array(value[1:]).astype(float), name=item)
 
     return dic_init
 

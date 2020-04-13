@@ -42,7 +42,7 @@ class chi2:
             if 'covscaling' in dic_init['fast mc']:
                 self.scalefast_mc = dic_init['fast mc']['covscaling']
             else:
-                self.scalefast_mc = sp.ones(len(self.data))
+                self.scalefast_mc = np.ones(len(self.data))
             self.fidfast_mc = dic_init['fast mc']['fiducial']['values']
             self.fixfast_mc = dic_init['fast mc']['fiducial']['fix']
             # if set to true, will not add randomness to FastMC mock
@@ -200,8 +200,8 @@ class chi2:
                         self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
         self.dic_chi2scan_result = {}
-        self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
-        self.dic_chi2scan_result['values'] = sp.asarray(result)
+        self.dic_chi2scan_result['params'] = np.asarray(np.append(sorted(self.best_fit.values),['fval']))
+        self.dic_chi2scan_result['values'] = np.asarray(result)
 
         ### Set all parameters to where they were before
         for d in self.data:
@@ -362,7 +362,7 @@ class chi2:
                     fiducial = g.create_dataset("{}_fiducial".format(d.name), d.da.shape, dtype = "f")
                     fiducial[...] = d.fiducial_model
             for p in self.fast_mc:
-                vals = sp.array(self.fast_mc[p])
+                vals = np.array(self.fast_mc[p])
                 if p == 'chi2':
                     d = g.create_dataset("{}".format(p), vals.shape, dtype="f")
                     d[...] = vals

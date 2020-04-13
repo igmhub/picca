@@ -30,7 +30,7 @@ class model:
         r0 = 100.
         self.r0 = r0
 
-        r = sp.sqrt(rt**2+rp**2)
+        r = np.sqrt(rt**2+rp**2)
         mu = rp/r
 
         A = np.zeros([npar,len(r)])
@@ -65,7 +65,7 @@ class model:
             i   = self.imin + i*self.istep
             ell = self.ellmin + ell*self.ellstep
             self.par_name += ['a_auto_'+str(i)+'_'+str(ell)]
-        self.par_name = sp.array(self.par_name)
+        self.par_name = np.array(self.par_name)
 
     def value(self,data):
         tmp = sp.dot(data,sp.dot(self.ico,self.A.T))
@@ -74,7 +74,7 @@ class model:
         return p,d
 
     def __call__(self,rt,rp,pars):
-        r = sp.sqrt(rt**2+rp**2)
+        r = np.sqrt(rt**2+rp**2)
         mu = rp/r
         bb = np.zeros(len(r))
 

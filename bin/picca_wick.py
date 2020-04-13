@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
 import sys
 import fitsio
@@ -246,7 +247,7 @@ if __name__ == '__main__':
     print(" \nFinished\n")
     pool.close()
 
-    wickT = sp.array(wickT)
+    wickT = np.array(wickT)
     wAll = wickT[:,0].sum(axis=0)
     nb = wickT[:,1].sum(axis=0)
     npairs = wickT[:,2].sum(axis=0)

@@ -39,7 +39,7 @@ class data:
             bin_center_rt[ sp.logical_and( self.rt>=bin_size*i, self.rt<bin_size*(i+1.) ) ] = bin_size*(i+0.5)
             bin_center_rp[ sp.logical_and( self.rp>=bin_size*i, self.rp<bin_size*(i+1.) ) ] = bin_size*(i+0.5)
 
-        r = sp.sqrt(bin_center_rt**2 + bin_center_rp**2)
+        r = np.sqrt(bin_center_rt**2 + bin_center_rp**2)
         mu=bin_center_rp/r
 
         cuts = (r>rmin) & (r<rmax) & (mu>=mumin) & (mu<=mumax)
