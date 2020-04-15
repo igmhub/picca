@@ -129,6 +129,9 @@ if __name__ == '__main__':
     parser.add_argument('--use-constant-weight', action='store_true', default=False,
         help='Set all the delta weights to one (implemented as eta = 0, sigma_lss = 1, fudge = 0)')
 
+    parser.add_argument('--min-snr-cut',type=float,default=1,required=False,
+        help='Set the cut in SNR if --use-constant-weight is activated')
+
     parser.add_argument('--order',type=int,default=1,required=False,
         help='Order of the log10(lambda) polynomial for the continuum fit, by default 1.')
 
@@ -310,7 +313,7 @@ if __name__ == '__main__':
                 log.write("INFO: Rejected {} due to nan found\n".format(d.thid))
                 continue
 
-            if(args.use_constant_weight and (d.fl.mean()<=0.0 or d.mean_SNR<=1.0 )):
+            if(args.use_constant_weight and (d.fl.mean()<=0.0 or d.mean_SNR<=args.min_snr_cut)):
                 log.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(d.thid))
                 continue
 

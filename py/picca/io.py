@@ -216,6 +216,12 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         data = read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order, pk1d=pk1d)
         return data,len(data),nside,"RING"
 
+    elif mode=="desiminisv":
+        nside = 8
+        print("Found {} qsos".format(len(zqso)))
+        data = read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order, pk1d=pk1d)
+        return data,len(data),nside,"RING"    
+
     else:
         print("I don't know mode: {}".format(mode))
         sys.exit(1)
@@ -779,6 +785,93 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
     print("found {} quasars in input files\n".format(ndata))
 
     return data
+
+def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
+    """ Unlike DESI routine, store deltas by "tile" + "spectro number". 
+    Routine used to treat the DESI mini-SV data. 
+    The spectra must be in the format "spectra directory"/"tile numbers"/coadd-* """
+    
+    
+    spectra = glob.glob(os.path.join(in_dir,"*/coadd-*.fits"))
+    tiles = [spectra[i].split("/")[-2].strip() for i in range(len(spectra))]
+    petals = []
+    data = {}
+    ztable = {t:z for t,z in zip(thid,zqso)}
+    ndata = 0
+
+    for i,spec in enumerate(spectra):
+        print("\rread tile {} of {}. ndata: {}".format(i,len(spectra),ndata))
+        try:
+            h = fitsio.FITS(spec)
+        except IOError:
+            print("Error reading pix {}\n".format(spec))
+            continue
+
+        if 'TARGET_RA' in h["FIBERMAP"].get_colnames():
+            ra = h["FIBERMAP"]["TARGET_RA"][:]*sp.pi/180.
+            de = h["FIBERMAP"]["TARGET_DEC"][:]*sp.pi/180.
+        elif 'RA_TARGET' in h["FIBERMAP"].get_colnames():
+            ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
+            de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
+            
+        petals.append(h["FIBERMAP"]["PETAL_LOC"][:][0])
+
+        in_tids = h["FIBERMAP"]["TARGETID"][:]
+
+        specData = {}
+        try:
+            str_band= "BRZ"
+            specData['LL'] = sp.log10(h['{}_WAVELENGTH'.format(str_band)].read())
+            specData['FL'] = h['{}_FLUX'.format(str_band)].read()
+            specData['IV'] = h['{}_IVAR'.format(str_band)].read()*(h['{}_MASK'.format(str_band)].read()==0)
+            w = sp.isnan(specData['FL']) | sp.isnan(specData['IV'])
+            for k in ['FL','IV']:
+                specData[k][w] = 0.
+            specData['RESO'] = h['{}_RESOLUTION'.format(str_band)].read()
+        except OSError:
+            pass
+        h.close()
+        
+        plate_spec = int(str(tiles[i]) + str(petals[i]))
+        tid_qsos = thid[(plate==plate_spec)]
+        plate_qsos = plate[(plate==plate_spec)]
+        mjd_qsos = mjd[(plate==plate_spec)]
+        fid_qsos = fid[(plate==plate_spec)]
+
+        for t,p,m,f in zip(tid_qsos,plate_qsos,mjd_qsos,fid_qsos):
+            wt = in_tids == t
+            if wt.sum()==0:
+                print("\nError reading thingid {}\n".format(t))
+                print("catalog thid : {}".format( tid_qsos))
+                print("spectra : {}".format(spec))
+                print("plate_spec : {}".format(plate_spec))
+                continue
+            iv = specData['IV'][wt]
+            fl = (iv*specData['FL'][wt]).sum(axis=0)
+            iv = iv.sum(axis=0)
+            w = iv>0.
+            fl[w] /= iv[w]
+                
+                
+            if pk1d is not None:
+                reso_sum = specData['RESO'][wt].sum(axis=0)
+                reso_in_km_per_s = sp.real(spectral_resolution_desi(reso_sum,specData['LL']))
+                diff = sp.zeros(specData['LL'].shape)
+            else:
+                reso_in_km_per_s = None
+                diff = None
+            td = forest(specData['LL'],fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
+                p,m,f,order,diff,reso_in_km_per_s)
+            d = copy.deepcopy(td)
+
+            if plate_spec not in data:
+                data[plate_spec]=[]
+            data[plate_spec].append(d)
+            ndata+=1
+    print("found {} quasars in input files\n".format(ndata))
+
+    return data
+
 
 
 def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False,from_image=None):
