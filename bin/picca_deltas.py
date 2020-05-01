@@ -174,7 +174,7 @@ if __name__ == '__main__':
     ### Fix the order of the continuum fit, 0 or 1.
     if args.order:
         if (args.order != 0) and (args.order != 1):
-            print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(order))
+            print("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(args.order))
             sys.exit(12)
 
     ### Correct multiplicative pipeline flux calibration
