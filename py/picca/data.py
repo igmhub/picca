@@ -609,8 +609,7 @@ class Forest(QSO):
         return
 
     def add_dla(self, z_abs, nhi, mask=None):
-        """Adds DLA information to forest. Masks it by removing the efffected
-        pixels.
+        """Adds DLA to forest. Masks it by removing the afffected pixels.
 
         Args:
             z_abs: float
@@ -645,14 +644,23 @@ class Forest(QSO):
 
         return
 
-    def add_absorber(self,lambda_absorber):
-        if not hasattr(self,'log_lambda'):
+    def add_absorber(self, lambda_absorber):
+        """Adds absorber to forest. Masks it by removing the afffected pixels.
+
+        Args:
+            lambda_absorber: float
+                Wavelength of the absorber
+        """
+        if not hasattr(self, 'log_lambda'):
             return
 
-        w = sp.ones(self.log_lambda.size, dtype=bool)
-        w &= sp.fabs(1.e4*(self.log_lambda-sp.log10(lambda_absorber)))>Forest.absorber_mask_width
+        w = np.ones(self.log_lambda.size, dtype=bool)
+        w &= (np.fabs(1.e4*(self.log_lambda - np.log10(lambda_absorber)))
+              > Forest.absorber_mask_width)
 
-        parameters = ['ivar','log_lambda','flux','dla_transmission','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
+        parameters = ['ivar', 'log_lambda', 'flux', 'dla_transmission',
+                      'mean_optical_depth', 'mean_expected_flux_frac',
+                      'exposures_diff', 'reso']
         for param in parameters:
             if hasattr(self, param) and (getattr(self, param) is not None):
                 setattr(self, param, getattr(self, param)[w])
