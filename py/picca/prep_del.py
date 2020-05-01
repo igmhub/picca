@@ -1,7 +1,7 @@
 import numpy as np
 import scipy as sp
 import iminuit
-from picca.data import Forest,variance
+from picca.data import Forest,get_variance
 from picca.utils import userprint
 
 def compute_mean_cont(data):
@@ -33,7 +33,7 @@ def compute_mean_cont(data):
             eta = Forest.get_eta(d.log_lambda)
             fudge = Forest.get_fudge(d.log_lambda)
             var = 1./d.ivar/d.continuum**2
-            weights = 1/variance(var,eta,var_lss,fudge)
+            weights = 1/get_variance(var,eta,var_lss,fudge)
             c = sp.bincount(bins,weights=d.flux/d.continuum*weights)
             mean_cont[:len(c)]+=c
             c = sp.bincount(bins,weights=weights)
@@ -109,7 +109,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     fudge_ref = 1e-7
     for i in range(nlss):
         def chi2(eta,vlss,fudge):
-            v = var_del[i*nwe:(i+1)*nwe]-variance(var,eta,vlss,fudge*fudge_ref)
+            v = var_del[i*nwe:(i+1)*nwe]-get_variance(var,eta,vlss,fudge*fudge_ref)
             dv2 = var2_del[i*nwe:(i+1)*nwe]
             w=nqso[i*nwe:(i+1)*nwe]>100
             return sp.sum(v[w]**2/dv2[w])
@@ -155,7 +155,7 @@ def stack(data,delta=False):
                 eta = Forest.get_eta(d.log_lambda)
                 fudge = Forest.get_fudge(d.log_lambda)
                 var = 1./d.ivar/d.continuum**2
-                weights = 1./variance(var,eta,var_lss,fudge)
+                weights = 1./get_variance(var,eta,var_lss,fudge)
 
             bins=((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
             c = sp.bincount(bins,weights=de*weights)

@@ -173,7 +173,31 @@ class Forest(QSO):
         dla_transmission: array of floats or None
             Decrease of the transmitted flux due to the presence of a Damped
             Lyman alpha absorbers
-
+        mean_expected_flux_frac: array of floats or None
+            Mean expected flux fraction using the mock continuum
+        order: 0 or 1
+            Order of the log10(lambda) polynomial for the continuum fit
+        exposures_diff: array of floats or None
+            Difference between exposures
+        reso: array of floats or None
+            Resolution of the forest
+        mean_snr: float or None
+            Mean signal-to-noise ratio in the forest
+        mean_reso: float or None
+            Mean resolution of the forest
+        mean_z: float or None
+            Mean redshift of the forest
+        continuum: array of floats or None
+            Quasar continuum
+        p0: float or None
+            Zero point of the linear function (flux mean)
+        p1: float or None
+            Slope of the linear function (evolution of the flux)
+        bad_cont: string or None
+            Reason as to why the continuum fit is not acceptable
+        igm_absorption: string
+            Name of the absorption line in picca.constants defining the
+            redshift of the forest pixels
     Class attributes:
         log_lambda_max: float
             Logarithm of the maximum wavelength (in Angs) to be considered in a
