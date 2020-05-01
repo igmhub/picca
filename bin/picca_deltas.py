@@ -181,7 +181,7 @@ def main():
     Forest.fudge = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), np.zeros(2), fill_value="extrapolate", kind="nearest")
     Forest.get_mean_cont = interp1d(Forest.log_lambda_min_rest_frame + np.arange(2)*(Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame), 1 + np.zeros(2))
 
-    ### Fix the order of the continuum fit, 0 or 1.
+    ### check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
         if (args.order != 0) and (args.order != 1):
             userprint("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(args.order))
@@ -287,11 +287,11 @@ def main():
         for idxop in range(len(args.optical_depth)//3):
             tau = float(args.optical_depth[3*idxop])
             gamma = float(args.optical_depth[3*idxop+1])
-            waveRF = constants.absorber_IGM[args.optical_depth[3*idxop+2]]
-            userprint("INFO: Adding optical depth for tau = {}, gamma = {}, waveRF = {} A".format(tau, gamma, waveRF))
+            lambda_rest_frame = constants.absorber_IGM[args.optical_depth[3*idxop+2]]
+            userprint("INFO: Adding optical depth for tau = {}, gamma = {}, lambda_rest_frame = {} A".format(tau, gamma, lambda_rest_frame))
             for p in data:
                 for d in data[p]:
-                    d.add_optical_depth(tau, gamma, waveRF)
+                    d.add_optical_depth(tau, gamma, lambda_rest_frame)
 
     ### Correct for DLAs
     if not args.dla_vac is None:

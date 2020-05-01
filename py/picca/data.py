@@ -577,18 +577,34 @@ class Forest(Qso):
 
         return
 
-    def add_optical_depth(self,tau,gamma,waveRF):
-        """Add mean optical depth
+    def add_optical_depth(self, tau, gamma, lambda_rest_frame):
+        """Adds the contribution of a given species to the mean optical depth.
+
+        Flux will be corrected by the mean optical depth. This correction is
+        governed by the optical depth-flux relation:
+            `F = exp(tau(1+z)^gamma)`
+
+        Args:
+            tau: float
+            Mean optical depth
+
+            gamma: float
+            Optical depth redshift evolution. Optical depth evolves as
+            `(1+z)^gamma`
+
+            lambda_rest_frame: float
+            Restframe wavelength of the element responsible for the absorption.
+            In Angstroms
         """
         if not hasattr(self,'log_lambda'):
             return
 
         if self.mean_optical_depth is None:
-            self.mean_optical_depth = sp.ones(self.log_lambda.size)
+            self.mean_optical_depth = np.ones(self.log_lambda.size)
 
-        w = 10.**self.log_lambda/(1.+self.z_qso)<=waveRF
-        z = 10.**self.log_lambda/waveRF-1.
-        self.mean_optical_depth[w] *= sp.exp(-tau*(1.+z[w])**gamma)
+        w = 10.**self.log_lambda/(1. + self.z_qso) <= waveRF
+        z = 10.**self.log_lambda/lambda_rest_frame - 1.
+        self.mean_optical_depth[w] *= sp.exp(-tau*(1. + z[w])**gamma)
 
         return
 
