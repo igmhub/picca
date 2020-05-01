@@ -87,11 +87,11 @@ def xcf(pix):
                 setattr(d,el,None)
 
     w = weights>0
-    xi[w]/=we[w]
-    rp[w]/=we[w]
-    rt[w]/=we[w]
-    z[w]/=we[w]
-    return we,xi,rp,rt,z,nb
+    xi[w]/=weights[w]
+    rp[w]/=weights[w]
+    rt[w]/=weights[w]
+    z[w]/=weights[w]
+    return weights,xi,rp,rt,z,nb
 @jit
 def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     if ang_correlation:

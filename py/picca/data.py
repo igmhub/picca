@@ -234,8 +234,16 @@ class Forest(QSO):
             Strucure.
         get_eta: Computes the correction factor to the contribution of the
             pipeline estimate of the instrumental noise to the variance.
+        get_fudge: Computes the fudge contribution to the variance.
         get_mean_cont: Interpolates the mean quasar continuum over the whole
             sample on the wavelength array.
+        mask: Applies wavelength masking.
+        add_optical_depth: Adds the contribution of a given species to the mean
+            optical depth.
+        add_dla: Adds DLA to forest. Masks it by removing the afffected pixels.
+        add_absorber: Adds absorber to forest. Masks it by removing the
+            afffected pixels.
+        cont_fit: Computes the forest continuum.
     """
     log_lambda_min = None
     log_lambda_max = None
@@ -355,7 +363,7 @@ class Forest(QSO):
     @classmethod
     def get_fudge(cls, lol_lambda):
         # TODO: update reference to DR16 paper
-        """Computes the fudge contribution to the variance
+        """Computes the fudge contribution to the variance.
 
         See function epsilon in equation 4 of du Mas des Bourboux et al.
         In prep. for details.
