@@ -602,7 +602,7 @@ class Forest(Qso):
         if self.mean_optical_depth is None:
             self.mean_optical_depth = np.ones(self.log_lambda.size)
 
-        w = 10.**self.log_lambda/(1. + self.z_qso) <= waveRF
+        w = 10.**self.log_lambda/(1. + self.z_qso) <= lambda_rest_frame
         z = 10.**self.log_lambda/lambda_rest_frame - 1.
         self.mean_optical_depth[w] *= sp.exp(-tau*(1. + z[w])**gamma)
 
