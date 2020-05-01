@@ -1,7 +1,7 @@
 """This module defines data structure to deal with line of sight data.
 
 This module provides with three classes (QSO, Forest, Delta) and one
-function (variance) to manage the line-of-sight data. See the respective
+function (get_variance) to manage the line-of-sight data. See the respective
 docstrings for more details
 """
 import numpy as np
@@ -13,8 +13,27 @@ from picca.dla import DLA
 import fitsio
 
 
-def variance(var,eta,var_lss,fudge):
-    return eta*var + var_lss + fudge/var
+def get_variance(var_pipe, eta, var_lss, fudge):
+    """Computes the total variance.
+
+    This includes contributions from pipeline noise, Large Scale Structure
+    variance, and a fudge contribution.
+
+    Args:
+        var_pipe: array
+            Pipeline variance
+        eta: array
+            Correction factor to the contribution of the pipeline estimate of
+            the instrumental noise to the variance.
+        var_lss: array
+            Pixel variance due to the Large Scale Strucure
+        fudge: array
+            Fudge contribution to the pixel variance
+
+    Returns:
+        The total variance
+    """
+    return eta*var_pipe + var_lss + fudge/var_pipe
 
 
 class QSO:
@@ -130,6 +149,7 @@ class QSO:
                 angl = sp.sqrt((dec - self.dec)**2 +
                                (self.cos_dec*(ra - self.ra))**2)
         return angl
+
 
 class Forest(QSO):
     # TODO: revise and complete
@@ -295,6 +315,26 @@ class Forest(QSO):
         See equation 2 of du Mas des Bourboux et al. In prep. for details.
 
         Empty function to be loaded at run-time.
+
+        Args:
+            log_lambda: float
+                Array containing the logarithm of the wavelengths (in Angs)
+
+        Returns:
+            An array with the correction
+
+        Raises:
+            NotImplementedError: Function was not specified
+        """
+        raise NotImplementedError("Function should be specified at run-time")
+
+    @classmethod
+    def get_fudge(cls, lol_lambda):
+        # TODO: update reference to DR16 paper
+        """Computes the fudge contribution to the variance
+
+        See function epsilon in equation 4 of du Mas des Bourboux et al.
+        In prep. for details.
 
         Args:
             log_lambda: float
@@ -668,76 +708,131 @@ class Forest(QSO):
         return
 
     def cont_fit(self):
-        log_lambda_max = Forest.log_lambda_max_rest_frame+sp.log10(1+self.z_qso)
-        log_lambda_min = Forest.log_lambda_min_rest_frame+sp.log10(1+self.z_qso)
-        try:
-            mean_cont = Forest.get_mean_cont(self.log_lambda-sp.log10(1+self.z_qso))
-        except ValueError:
-            raise Exception
+        # TODO: update reference to DR16 paper
+        """Computes the forest continuum.
 
+        Fits a model based on the mean quasar continuum and linear function
+        (see equation 2 of du Mas des Bourboux et al. In prep)
+        Flags the forest with bad_cont if the computation fails.
+        """
+        log_lambda_max = (Forest.log_lambda_max_rest_frame +
+                          np.log10(1 + self.z_qso))
+        log_lambda_min = (Forest.log_lambda_min_rest_frame +
+                          np.log10(1 + self.z_qso))
+        # get mean continuum
+        try:
+            mean_cont = Forest.get_mean_cont(self.log_lambda -
+                                             np.log10(1+self.z_qso))
+        except ValueError:
+            raise Exception("Problem found when loading get_mean_cont")
+
+        # add the optical depth correction
+        # (previously computed using method add_optical_depth)
         if not self.mean_optical_depth is None:
             mean_cont *= self.mean_optical_depth
+        # add the dla transmission correction
+        # (previously computed using method add_dla)
         if not self.dla_transmission is None:
-            mean_cont*=self.dla_transmission
+            mean_cont *= self.dla_transmission
 
+        # pixel variance due to the Large Scale Strucure
         var_lss = Forest.get_var_lss(self.log_lambda)
+        # correction factor to the contribution of the pipeline
+        # estimate of the instrumental noise to the variance.
         eta = Forest.get_eta(self.log_lambda)
-        fudge = Forest.fudge(self.log_lambda)
+        # fudge contribution to the variance
+        fudge = Forest.get_fudge(self.log_lambda)
 
-        def model(p0,p1):
-            line = p1*(self.log_lambda-log_lambda_min)/(log_lambda_max-log_lambda_min)+p0
+        def get_continuum_model(p0, p1):
+            """Models the flux continuum by multiplying the mean_continuum
+            by a linear function
+
+            Args:
+                p0: float
+                    Zero point of the linear function (flux mean)
+                p1: float
+                    Slope of the linear function (evolution of the flux)
+
+            Global args (defined only in the scope of function cont_fit)
+                log_lambda_min: float
+                    Minimum logarithm of the wavelength (in Angs)
+                log_lambda_max: float
+                    Minimum logarithm of the wavelength (in Angs)
+                mean_cont: array
+                    Mean continuum
+            """
+            line = (p1*(self.log_lambda - log_lambda_min)/
+                    (log_lambda_max - log_lambda_min) + p0)
             return line*mean_cont
 
         def chi2(p0,p1):
-            m = model(p0,p1)
-            var_pipe = 1./self.ivar/m**2
+            """Copmputes the chi2 of a given model (see function model above).
+
+            Args:
+                p1: float
+                    Slope of the linear function (see function model above)
+
+                p1: float
+                    Zero point of the linear function (see function model above)
+
+            Global args (defined only in the scope of function cont_fit)
+                eta: array
+                    Correction factor to the contribution of the pipeline
+                    estimate of the instrumental noise to the variance.
+
+            """
+            continuum_model = get_continuum_model(p0,p1)
+            var_pipe = 1./self.ivar/continuum_model**2
             ## prep_del.variance is the variance of delta
-            ## we want here the we = ivar(flux)
+            ## we want here the weights = ivar(flux)
 
-            var_tot = variance(var_pipe,eta,var_lss,fudge)
-            we = 1/m**2/var_tot
+            variance = get_variance(var_pipe, eta, var_lss, fudge)
+            weights = 1.0/continuum_model**2/variance
 
-            # force we=1 when use-constant-weight
+            # force weights=1 when use-constant-weight
             # TODO: make this condition clearer, maybe pass an option
             # use_constant_weights?
-            if (eta==0).all() :
-                we=sp.ones(len(we))
-            v = (self.flux-m)**2*we
-            return v.sum()-sp.log(we).sum()
+            if (eta == 0).all() :
+                weights = np.ones(len(weights))
+            chi2_contribution = (self.flux - continuum_model)**2*weights
+            return chi2_contribution.sum() - np.log(weights).sum()
 
         p0 = (self.flux*self.ivar).sum()/self.ivar.sum()
-        p1 = 0
+        p1 = 0.0
 
-        mig = iminuit.Minuit(chi2,p0=p0,p1=p1,error_p0=p0/2.,error_p1=p0/2.,errordef=1.,print_level=0,fix_p1=(self.order==0))
-        fmin,_ = mig.migrad()
+        minimizer = iminuit.Minuit(chi2, p0=p0, p1=p1, error_p0=p0/2.,
+                                   error_p1=p0/2., errordef=1., print_level=0,
+                                   fix_p1=(self.order==0))
+        minimizer_result, _ = minimizer.migrad()
 
-        self.co=model(mig.values["p0"],mig.values["p1"])
-        self.p0 = mig.values["p0"]
-        self.p1 = mig.values["p1"]
+        self.continuum = get_continuum_model(minimizer.values["p0"],
+                                      minimizer.values["p1"])
+        self.p0 = minimizer.values["p0"]
+        self.p1 = minimizer.values["p1"]
 
         self.bad_cont = None
-        if not fmin.is_valid:
+        if not minimizer_result.is_valid:
             self.bad_cont = "minuit didn't converge"
-        if sp.any(self.co <= 0):
+        if np.any(self.continuum <= 0):
             self.bad_cont = "negative continuum"
 
 
         ## if the continuum is negative, then set it to a very small number
         ## so that this forest is ignored
         if self.bad_cont is not None:
-            self.co = self.co*0+1e-10
+            self.continuum = self.continuum*0 + 1e-10
             self.p0 = 0.
             self.p1 = 0.
 
 
 class delta(QSO):
 
-    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,ivar,exposures_diff,mean_snr,m_reso,m_z,delta_log_lambda):
+    def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,weights,continuum,de,order,ivar,exposures_diff,mean_snr,m_reso,m_z,delta_log_lambda):
 
         QSO.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
         self.log_lambda = log_lambda
-        self.we = we
-        self.co = co
+        self.weights = weights
+        self.continuum = continuum
         self.de = de
         self.order = order
         self.ivar = ivar
@@ -758,16 +853,16 @@ class delta(QSO):
 
         #if mc is True use the mock continuum to compute the mean expected flux fraction
         if mc : mef = f.mean_expected_flux_frac
-        else : mef = f.co * mst
+        else : mef = f.continuum * mst
         de = f.flux/ mef -1.
         var = 1./f.ivar/mef**2
-        we = 1./variance(var,eta,var_lss,fudge)
+        weights = 1./get_variance(var,eta,var_lss,fudge)
         exposures_diff = f.exposures_diff
         if f.exposures_diff is not None:
             exposures_diff /= mef
         ivar = f.ivar/(eta+(eta==0))*(mef**2)
 
-        return cls(f.thingid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,log_lambda,we,f.co,de,f.order,
+        return cls(f.thingid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,log_lambda,weights,f.continuum,de,f.order,
                    ivar,exposures_diff,f.mean_snr,f.mean_reso,f.mean_z,f.delta_log_lambda)
 
 
@@ -788,8 +883,8 @@ class delta(QSO):
             m_reso = head['MEANRESO']
             m_z = head['MEANZ']
             delta_log_lambda =  head['DLL']
-            we = None
-            co = None
+            weights = None
+            continuum = None
         else :
             ivar = None
             exposures_diff = None
@@ -797,8 +892,8 @@ class delta(QSO):
             m_reso = None
             delta_log_lambda = None
             m_z = None
-            we = h['WEIGHT'][:]
-            co = h['CONT'][:]
+            weights = h['WEIGHT'][:]
+            continuum = h['CONT'][:]
 
 
         thingid = head['THING_ID']
@@ -813,7 +908,7 @@ class delta(QSO):
             order = head['ORDER']
         except KeyError:
             order = 1
-        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
+        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,weights,continuum,de,order,
                    ivar,exposures_diff,mean_snr,m_reso,m_z,delta_log_lambda)
 
 
@@ -841,10 +936,10 @@ class delta(QSO):
 
         thingid = 0
         order = 0
-        we = None
-        co = None
+        weights = None
+        continuum = None
 
-        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,
+        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,weights,continuum,de,order,
                    ivar,exposures_diff,mean_snr,m_reso,m_z,delta_log_lambda)
 
     @staticmethod
@@ -888,11 +983,11 @@ class delta(QSO):
 
 
     def project(self):
-        mde = sp.average(self.de,weights=self.we)
+        mde = sp.average(self.de,weights=self.weights)
         res=0
         if (self.order==1) and self.de.shape[0] > 1:
-            mll = sp.average(self.log_lambda,weights=self.we)
-            mld = sp.sum(self.we*self.de*(self.log_lambda-mll))/sp.sum(self.we*(self.log_lambda-mll)**2)
+            mll = sp.average(self.log_lambda,weights=self.weights)
+            mld = sp.sum(self.weights*self.de*(self.log_lambda-mll))/sp.sum(self.weights*(self.log_lambda-mll)**2)
             res = mld * (self.log_lambda-mll)
         elif self.order==1:
             res = self.de

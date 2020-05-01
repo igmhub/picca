@@ -49,7 +49,7 @@ def fill_neighs_x_correlation(pix):
 
 def co(pix):
 
-    we = np.zeros(npb*ntb)
+    weights = np.zeros(npb*ntb)
     rp = np.zeros(npb*ntb)
     rt = np.zeros(npb*ntb)
     z  = np.zeros(npb*ntb)
@@ -68,22 +68,22 @@ def co(pix):
             zo2      = sp.array([o2.z_qso    for o2 in o1.neighs])
             r_comov2 = sp.array([o2.r_comov for o2 in o1.neighs])
             rdm_comov2 = sp.array([o2.rdm_comov for o2 in o1.neighs])
-            weo2     = sp.array([o2.we      for o2 in o1.neighs])
+            weo2     = sp.array([o2.weights      for o2 in o1.neighs])
 
-            cw,crp,crt,cz,cnb = fast_co(o1.z_qso,o1.r_comov,o1.rdm_comov,o1.we,zo2,r_comov2,rdm_comov2,weo2,ang)
+            cw,crp,crt,cz,cnb = fast_co(o1.z_qso,o1.r_comov,o1.rdm_comov,o1.weights,zo2,r_comov2,rdm_comov2,weo2,ang)
 
-            we[:len(cw)]  += cw
+            weights[:len(cw)]  += cw
             rp[:len(crp)] += crp
             rt[:len(crp)] += crt
             z[:len(crp)]  += cz
             nb[:len(cnb)] += cnb
             setattr(o1,"neighs",None)
 
-    w = we>0.
-    rp[w] /= we[w]
-    rt[w] /= we[w]
-    z[w]  /= we[w]
-    return we,rp,rt,z,nb
+    w = weights>0.
+    rp[w] /= weights[w]
+    rt[w] /= weights[w]
+    z[w]  /= weights[w]
+    return weights,rp,rt,z,nb
 @jit
 def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
 

@@ -156,19 +156,18 @@ def main():
 
     args = parser.parse_args()
 
-    ## init forest class
-
+    # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
     Forest.log_lambda_max = np.log10(args.lambda_max)
     Forest.log_lambda_min_rest_frame = np.log10(args.lambda_rest_min)
     Forest.log_lambda_max_rest_frame = np.log10(args.lambda_rest_max)
     Forest.rebin = args.rebin
     Forest.delta_log_lambda = args.rebin*1e-4
-    ## minumum dla transmission
+    # minumum dla transmission
     Forest.dla_mask_limit = args.dla_mask
     Forest.absorber_mask_width = args.absorber_mask
 
-    ### Find the redshift range
+    # Find the redshift range
     if args.zqso_min is None:
         args.zqso_min = max(0., args.lambda_min/args.lambda_rest_max - 1.)
         userprint("zqso_min = {}".format(args.zqso_min))
@@ -178,14 +177,17 @@ def main():
 
     Forest.get_var_lss = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
     Forest.get_eta = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), np.ones(2), fill_value="extrapolate", kind="nearest")
-    Forest.fudge = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), np.zeros(2), fill_value="extrapolate", kind="nearest")
+    Forest.get_fudge = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), np.zeros(2), fill_value="extrapolate", kind="nearest")
     Forest.get_mean_cont = interp1d(Forest.log_lambda_min_rest_frame + np.arange(2)*(Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame), 1 + np.zeros(2))
+    # end of setup forest class variables
 
     ### check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
         if (args.order != 0) and (args.order != 1):
             userprint("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(args.order))
             sys.exit(12)
+
+
 
     ### Correct multiplicative pipeline flux calibration
     if args.flux_calib is not None:
@@ -364,7 +366,7 @@ def main():
                                       fill_value="extrapolate", kind="nearest")
                 Forest.get_var_lss = interp1d(log_lambda[nb_pixels > 0], vlss[nb_pixels > 0.],
                                           fill_value="extrapolate", kind="nearest")
-                Forest.fudge = interp1d(log_lambda[nb_pixels > 0], fudge[nb_pixels > 0],
+                Forest.get_fudge = interp1d(log_lambda[nb_pixels > 0], fudge[nb_pixels > 0],
                                         fill_value="extrapolate", kind="nearest")
             else:
 
@@ -396,7 +398,7 @@ def main():
 
                 Forest.get_eta = interp1d(log_lambda, eta, fill_value='extrapolate', kind='nearest')
                 Forest.get_var_lss = interp1d(log_lambda, vlss, fill_value='extrapolate', kind='nearest')
-                Forest.fudge = interp1d(log_lambda, fudge, fill_value='extrapolate', kind='nearest')
+                Forest.get_fudge = interp1d(log_lambda, fudge, fill_value='extrapolate', kind='nearest')
 
 
     ll_st, st, wst = prep_del.stack(data)
@@ -419,7 +421,7 @@ def main():
     deltas = {}
     data_bad_cont = []
     for p in sorted(data.keys()):
-        deltas[p] = [delta.from_forest(d, st, Forest.get_var_lss, Forest.get_eta, Forest.fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
+        deltas[p] = [delta.from_forest(d, st, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:
@@ -489,7 +491,7 @@ def main():
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Inverse variance', 'Difference']
                 else:
-                    cols = [d.log_lambda, d.de, d.we, d.co]
+                    cols = [d.log_lambda, d.de, d.weights, d.continuum]
                     names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Pixel weights', 'Continuum']

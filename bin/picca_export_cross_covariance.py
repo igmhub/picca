@@ -36,9 +36,9 @@ if __name__ == '__main__':
         head = h[2].read_header()
         scheme = head['HLPXSCHM']
         da  = sp.array(h[2]['DA'][:])
-        we  = sp.array(h[2]['WE'][:])
+        weights  = sp.array(h[2]['WE'][:])
         hep = sp.array(h[2]['HEALPID'][:])
-        data[i] = {'DA':da, 'WE':we, 'HEALPID':hep, 'NSIDE':nside, 'HLPXSCHM':scheme}
+        data[i] = {'DA':da, 'WE':weights, 'HEALPID':hep, 'NSIDE':nside, 'HLPXSCHM':scheme}
         h.close()
 
     ### exit if NSIDE1!=NSIDE2
@@ -72,10 +72,10 @@ if __name__ == '__main__':
 
     ### Append the data
     da  = sp.append(data[0]['DA'],data[1]['DA'],axis=1)
-    we  = sp.append(data[0]['WE'],data[1]['WE'],axis=1)
+    weights  = sp.append(data[0]['WE'],data[1]['WE'],axis=1)
 
     ### Compute the covariance
-    co = cov(da,we)
+    co = cov(da,weights)
 
     ### Get the cross-covariance
     size1 = data[0]['DA'].shape[1]

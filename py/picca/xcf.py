@@ -54,7 +54,7 @@ def fill_neighs(pix):
 
 def xcf(pix):
     xi = np.zeros(npb*ntb)
-    we = np.zeros(npb*ntb)
+    weights = np.zeros(npb*ntb)
     rp = np.zeros(npb*ntb)
     rt = np.zeros(npb*ntb)
     z = np.zeros(npb*ntb)
@@ -68,17 +68,17 @@ def xcf(pix):
             if (d.qneighs.size != 0):
                 ang = d^d.qneighs
                 z_qso = [q.z_qso for q in d.qneighs]
-                we_qso = [q.we for q in d.qneighs]
+                we_qso = [q.weights for q in d.qneighs]
                 if ang_correlation:
                     l_qso = [10.**q.log_lambda for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.we,d.de,z_qso,l_qso,l_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.de,z_qso,l_qso,l_qso,we_qso,ang)
                 else:
                     rc_qso = [q.r_comov for q in d.qneighs]
                     rdm_qso = [q.rdm_comov for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.rdm_comov,d.we,d.de,z_qso,rc_qso,rdm_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.rdm_comov,d.weights,d.de,z_qso,rc_qso,rdm_qso,we_qso,ang)
 
                 xi[:len(cd)]+=cd
-                we[:len(cw)]+=cw
+                weights[:len(cw)]+=cw
                 rp[:len(crp)]+=crp
                 rt[:len(crt)]+=crt
                 z[:len(cz)]+=cz
@@ -86,7 +86,7 @@ def xcf(pix):
             for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
 
-    w = we>0
+    w = weights>0
     xi[w]/=we[w]
     rp[w]/=we[w]
     rt[w]/=we[w]
@@ -102,14 +102,14 @@ def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
         rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2
 
-    we = w1[:,None]*w2
+    weights = w1[:,None]*w2
     wde = (w1*d1)[:,None]*w2
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     rp = rp[w]
     rt = rt[w]
     z  = z[w]
-    we = we[w]
+    weights = weights[w]
     wde = wde[w]
 
     bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
@@ -117,11 +117,11 @@ def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     bins = bt + ntb*bp
 
     cd = sp.bincount(bins,weights=wde)
-    cw = sp.bincount(bins,weights=we)
-    crp = sp.bincount(bins,weights=rp*we)
-    crt = sp.bincount(bins,weights=rt*we)
-    cz = sp.bincount(bins,weights=z*we)
-    cnb = sp.bincount(bins,weights=(we>0.))
+    cw = sp.bincount(bins,weights=weights)
+    crp = sp.bincount(bins,weights=rp*weights)
+    crt = sp.bincount(bins,weights=rt*weights)
+    cz = sp.bincount(bins,weights=z*weights)
+    cnb = sp.bincount(bins,weights=(weights>0.))
 
     return cw,cd,crp,crt,cz,cnb
 
@@ -143,7 +143,7 @@ def dmat(pix):
                 counter.value += 1
             r1 = d1.r_comov
             rdm1 = d1.rdm_comov
-            w1 = d1.we
+            w1 = d1.weights
             l1 = d1.log_lambda
             z1 = d1.z
             r = sp.random.rand(len(d1.qneighs))
@@ -155,7 +155,7 @@ def dmat(pix):
             ang = d1^neighs
             r2 = [q.r_comov for q in neighs]
             rdm2 = [q.rdm_comov for q in neighs]
-            w2 = [q.we for q in neighs]
+            w2 = [q.weights for q in neighs]
             z2 = [q.z_qso for q in neighs]
             fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
             for el in list(d1.__dict__.keys()):
@@ -191,20 +191,20 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     ij = np.arange(n1)[:,None]+n1*np.arange(n2)
     ij = ij[w]
 
-    we = w1[:,None]*w2
-    we = we[w]
-    c = sp.bincount(bins,weights=we)
+    weights = w1[:,None]*w2
+    weights = weights[w]
+    c = sp.bincount(bins,weights=weights)
     wdm[:len(c)] += c
     eta2 = np.zeros(npm*ntm*n2)
     eta4 = np.zeros(npm*ntm*n2)
 
-    c = sp.bincount(m_bins,weights=we*rp[w])
+    c = sp.bincount(m_bins,weights=weights*rp[w])
     rpeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*rt[w])
+    c = sp.bincount(m_bins,weights=weights*rt[w])
     rteff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*z[w])
+    c = sp.bincount(m_bins,weights=weights*z[w])
     zeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we)
+    c = sp.bincount(m_bins,weights=weights)
     weff[:c.size] += c
 
     c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
@@ -214,11 +214,11 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     ubb = np.unique(m_bins)
     for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
-        dm[m_ba+npm*ntm*ba]+=we[k]
+        dm[m_ba+npm*ntm*ba]+=weights[k]
         i = ij[k]%n1
         j = (ij[k]-i)//n1
         for bb in ubb:
-            dm[bb+npm*ntm*ba] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+            dm[bb+npm*ntm*ba] -= weights[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 
 def metal_dmat(pix,abs_igm="SiII(1526)"):
@@ -245,7 +245,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
             rd = d.r_comov
             rdm = d.rdm_comov
-            wd = d.we
+            wd = d.weights
             zd_abs = 10**d.log_lambda/constants.absorber_IGM[abs_igm]-1
             rd_abs = cosmo.r_comoving(zd_abs)
             rdm_abs = cosmo.dm(zd_abs)
@@ -264,7 +264,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
                 rq = q.r_comov
                 rqm = q.rdm_comov
-                wq = q.we
+                wq = q.weights
                 zq = q.z_qso
                 rp = (rd-rq)*sp.cos(ang/2)
                 rt = (rdm+rqm)*sp.sin(ang/2)
@@ -349,7 +349,7 @@ def wickT(pix):
             if d1.qneighs.size==0: continue
 
             v1 = v1d[d1.fname](d1.log_lambda)
-            w1 = d1.we
+            w1 = d1.weights
             c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.log_lambda-d1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
@@ -358,7 +358,7 @@ def wickT(pix):
             ang12 = d1^neighs
             r2 = sp.array([q2.r_comov for q2 in neighs])
             z2 = sp.array([q2.z_qso for q2 in neighs])
-            w2 = sp.array([q2.we for q2 in neighs])
+            w2 = sp.array([q2.weights for q2 in neighs])
 
             fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
 
@@ -371,12 +371,12 @@ def wickT(pix):
                 ang13 = d1^d3
 
                 r3 = d3.r_comov
-                w3 = d3.we
+                w3 = d3.weights
 
                 neighs = d3.qneighs
                 ang34 = d3^neighs
                 r4 = sp.array([q4.r_comov for q4 in neighs])
-                w4 = sp.array([q4.we for q4 in neighs])
+                w4 = sp.array([q4.weights for q4 in neighs])
                 thingid4 = sp.array([q4.thingid for q4 in neighs])
 
                 if max_diagram==5:
@@ -427,7 +427,7 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     rt = (r1[:,None]+r2)*sp.sin(ang/2.)
     zw1 = ((1.+z1)/(1.+zref))**(z_evol_del-1.)
     zw2 = ((1.+z2)/(1.+zref))**(z_evol_obj-1.)
-    we = w1[:,None]*w2
+    weights = w1[:,None]*w2
     we1 = w1[:,None]*sp.ones(len(r2))
     idxPix = np.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
     idxQso = sp.ones(r1.size,dtype='int')[:,None]*np.arange(len(r2))
@@ -440,7 +440,7 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     if w.sum()==0: return
 
     ba = ba[w]
-    we = we[w]
+    weights = weights[w]
     we1 = we1[w]
     idxPix = idxPix[w]
     idxQso = idxQso[w]
@@ -449,9 +449,9 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
         p1 = ba[k1]
         i1 = idxPix[k1]
         q1 = idxQso[k1]
-        wAll[p1] += we[k1]
+        wAll[p1] += weights[k1]
         nb[p1] += 1
-        T1[p1,p1] += (we[k1]**2)/we1[k1]*zw1[i1]
+        T1[p1,p1] += (weights[k1]**2)/we1[k1]*zw1[i1]
 
         for k2 in range(k1+1,ba.size):
             p2 = ba[k2]
@@ -462,7 +462,7 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
                 T2[p1,p2] += wcorr
                 T2[p2,p1] += wcorr
             elif i1==i2:
-                wcorr = (we[k1]*we[k2])/we1[k1]*zw1[i1]
+                wcorr = (weights[k1]*weights[k2])/we1[k1]*zw1[i1]
                 T3[p1,p2] += wcorr
                 T3[p2,p1] += wcorr
             else:
@@ -515,7 +515,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
     ### Pair forest_1 - object_2
     rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
-    we = w1[:,None]*w2
+    weights = w1[:,None]*w2
     pix = (np.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
     thingid = sp.ones_like(w1[:,None]).astype(int)*thingid2
 
@@ -523,7 +523,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
     if w.sum()==0: return
     rp = rp[w]
     rt = rt[w]
-    we12 = we[w]
+    we12 = weights[w]
     pix12 = pix[w]
     thingid12 = thingid[w]
     bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
@@ -533,7 +533,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
     ### Pair forest_3 - object_4
     rp = (r3[:,None]-r4)*sp.cos(ang34/2.)
     rt = (r3[:,None]+r4)*sp.sin(ang34/2.)
-    we = w3[:,None]*w4
+    weights = w3[:,None]*w4
     pix = (np.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
     thingid = sp.ones_like(w3[:,None]).astype(int)*thingid4
 
@@ -541,7 +541,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
     if w.sum()==0: return
     rp = rp[w]
     rt = rt[w]
-    we34 = we[w]
+    we34 = weights[w]
     pix34 = pix[w]
     thingid34 = thingid[w]
     bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
@@ -587,14 +587,14 @@ def xcf1d(pix):
         pix (list): List of HEALpix to compute
 
     Returns:
-        we (float array): weight
+        weights (float array): weights
         xi (float array): correlation
         rp (float array): wavelenght ratio
         z (float array): Mean redshift of pairs
         nb (int array): Number of pairs
     """
     xi = np.zeros(npb)
-    we = np.zeros(npb)
+    weights = np.zeros(npb)
     rp = np.zeros(npb)
     z = np.zeros(npb)
     nb = np.zeros(npb,dtype=sp.int64)
@@ -606,14 +606,14 @@ def xcf1d(pix):
             if len(neighs)==0: continue
 
             z_qso = [ q.z_qso for q in neighs ]
-            we_qso = [ q.we for q in neighs ]
+            we_qso = [ q.weights for q in neighs ]
             l_qso = [ 10.**q.log_lambda for q in neighs ]
             ang = np.zeros(len(l_qso))
 
-            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.we,d.de,z_qso,l_qso,l_qso,we_qso,ang)
+            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.de,z_qso,l_qso,l_qso,we_qso,ang)
 
             xi[:cd.size] += cd
-            we[:cw.size] += cw
+            weights[:cw.size] += cw
             rp[:crp.size] += crp
             z[:cz.size] += cz
             nb[:cnb.size] += cnb.astype(int)
@@ -621,9 +621,9 @@ def xcf1d(pix):
             for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
 
-    w = we>0.
-    xi[w] /= we[w]
-    rp[w] /= we[w]
-    z[w] /= we[w]
+    w = weights>0.
+    xi[w] /= weights[w]
+    rp[w] /= weights[w]
+    z[w] /= weights[w]
 
-    return we,xi,rp,z,nb
+    return weights,xi,rp,z,nb

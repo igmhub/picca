@@ -45,7 +45,7 @@ if __name__ == '__main__':
     z  = sp.array(h[1]['Z'][:])
     nb = sp.array(h[1]['NB'][:])
     da = sp.array(h[2]['DA'][:])
-    we = sp.array(h[2]['WE'][:])
+    weights = sp.array(h[2]['WE'][:])
     hep = sp.array(h[2]['HEALPID'][:])
 
     head = h[1].read_header()
@@ -82,7 +82,7 @@ if __name__ == '__main__':
             userprint('WARNING: The correlation-matrix has some incorrect values')
         tvar = sp.diagonal(cor)
         cor = cor/sp.sqrt(tvar*tvar[:,None])
-        co = cov(da,we)
+        co = cov(da,weights)
         var = sp.diagonal(co)
         co = cor * sp.sqrt(var*var[:,None])
     else:
@@ -90,15 +90,15 @@ if __name__ == '__main__':
         binSizeT = (rt_max-0.) / ntb
         if not args.do_not_smooth_cov:
             userprint('INFO: The covariance will be smoothed')
-            co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
+            co = smooth_cov(da,weights,rp,rt,drt=binSizeT,drp=binSizeP)
         else:
             userprint('INFO: The covariance will not be smoothed')
-            co = cov(da,we)
+            co = cov(da,weights)
 
-    da = (da*we).sum(axis=0)
-    we = we.sum(axis=0)
-    w = we>0
-    da[w]/=we[w]
+    da = (da*weights).sum(axis=0)
+    weights = weights.sum(axis=0)
+    w = weights>0
+    da[w]/=weights[w]
 
     try:
         scipy.linalg.cholesky(co)

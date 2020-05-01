@@ -31,12 +31,12 @@ def compute_mean_cont(data):
             bins=((d.log_lambda-Forest.log_lambda_min_rest_frame-sp.log10(1+d.z_qso))/(Forest.log_lambda_max_rest_frame-Forest.log_lambda_min_rest_frame)*num_bins).astype(int)
             var_lss = Forest.get_var_lss(d.log_lambda)
             eta = Forest.get_eta(d.log_lambda)
-            fudge = Forest.fudge(d.log_lambda)
-            var = 1./d.ivar/d.co**2
-            we = 1/variance(var,eta,var_lss,fudge)
-            c = sp.bincount(bins,weights=d.flux/d.co*we)
+            fudge = Forest.get_fudge(d.log_lambda)
+            var = 1./d.ivar/d.continuum**2
+            weights = 1/variance(var,eta,var_lss,fudge)
+            c = sp.bincount(bins,weights=d.flux/d.continuum*weights)
             mean_cont[:len(c)]+=c
-            c = sp.bincount(bins,weights=we)
+            c = sp.bincount(bins,weights=weights)
             wcont[:len(c)]+=c
 
     w=wcont>0
@@ -69,7 +69,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     for p in sorted(list(data.keys())):
         for d in data[p]:
 
-            var_pipe = 1/d.ivar/d.co**2
+            var_pipe = 1/d.ivar/d.continuum**2
             w = (sp.log10(var_pipe) > vpmin) & (sp.log10(var_pipe) < vpmax)
 
             bll = ((d.log_lambda-Forest.log_lambda_min)/(Forest.log_lambda_max-Forest.log_lambda_min)*nlss).astype(int)
@@ -78,7 +78,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
             bll = bll[w]
             bwe = bwe[w]
 
-            de = (d.flux/d.co-1)
+            de = (d.flux/d.continuum-1)
             de = de[w]
 
             bins = bwe + nwe*bll
@@ -148,19 +148,19 @@ def stack(data,delta=False):
         for d in data[p]:
             if delta:
                 de = d.de
-                we = d.we
+                weights = d.weights
             else:
-                de = d.flux/d.co
+                de = d.flux/d.continuum
                 var_lss = Forest.get_var_lss(d.log_lambda)
                 eta = Forest.get_eta(d.log_lambda)
-                fudge = Forest.fudge(d.log_lambda)
-                var = 1./d.ivar/d.co**2
-                we = 1./variance(var,eta,var_lss,fudge)
+                fudge = Forest.get_fudge(d.log_lambda)
+                var = 1./d.ivar/d.continuum**2
+                weights = 1./variance(var,eta,var_lss,fudge)
 
             bins=((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
-            c = sp.bincount(bins,weights=de*we)
+            c = sp.bincount(bins,weights=de*weights)
             st[:len(c)]+=c
-            c = sp.bincount(bins,weights=we)
+            c = sp.bincount(bins,weights=weights)
             wst[:len(c)]+=c
 
     w=wst>0

@@ -178,15 +178,15 @@ if __name__ == '__main__':
     rp = dm[:,2].sum(axis=0)
     rt = dm[:,3].sum(axis=0)
     z = dm[:,4].sum(axis=0)
-    we = dm[:,5].sum(axis=0)
+    weights = dm[:,5].sum(axis=0)
     npairs = dm[:,6].sum(axis=0)
     npairs_used = dm[:,7].sum(axis=0)
     dm=dm[:,1].sum(axis=0)
 
-    w = we>0.
-    rp[w] /= we[w]
-    rt[w] /= we[w]
-    z[w] /= we[w]
+    w = weights>0.
+    rp[w] /= weights[w]
+    rt[w] /= weights[w]
+    z[w] /= weights[w]
     w = wdm>0.
     dm[w,:] /= wdm[w,None]
 

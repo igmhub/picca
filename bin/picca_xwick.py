@@ -150,7 +150,7 @@ if __name__ == '__main__':
     for p,delsp in dels.items():
         for d in delsp:
             d.fname = 'D1'
-            for k in ['co','de','order','ivar','exposures_diff','mean_snr','m_reso','m_z','delta_log_lambda']:
+            for k in ['continuum','de','order','ivar','exposures_diff','mean_snr','m_reso','m_z','delta_log_lambda']:
                 setattr(d,k,None)
     xcf.npix = len(dels)
     xcf.dels = dels
@@ -209,11 +209,11 @@ if __name__ == '__main__':
         xcf.cfWick_rt_max = head['RTMAX']
         xcf.cfWick_angmax = utils.compute_ang_max(cosmo,xcf.cfWick_rt_max,zmin_pix)
         da = h[2]['DA'][:]
-        we = h[2]['WE'][:]
-        da = (da*we).sum(axis=0)
-        we = we.sum(axis=0)
-        w = we>0.
-        da[w] /= we[w]
+        weights = h[2]['WE'][:]
+        da = (da*weights).sum(axis=0)
+        weights = weights.sum(axis=0)
+        w = weights>0.
+        da[w] /= weights[w]
         xcf.cfWick = da.copy()
         h.close()
 
@@ -257,14 +257,14 @@ if __name__ == '__main__':
     T4 = wickT[:,7].sum(axis=0)
     T5 = wickT[:,8].sum(axis=0)
     T6 = wickT[:,9].sum(axis=0)
-    we = wAll*wAll[:,None]
-    w = we>0.
-    T1[w] /= we[w]
-    T2[w] /= we[w]
-    T3[w] /= we[w]
-    T4[w] /= we[w]
-    T5[w] /= we[w]
-    T6[w] /= we[w]
+    weights = wAll*wAll[:,None]
+    w = weights>0.
+    T1[w] /= weights[w]
+    T2[w] /= weights[w]
+    T3[w] /= weights[w]
+    T4[w] /= weights[w]
+    T5[w] /= weights[w]
+    T6[w] /= weights[w]
     T1 *= 1.*npairs_used/npairs
     T2 *= 1.*npairs_used/npairs
     T3 *= 1.*npairs_used/npairs

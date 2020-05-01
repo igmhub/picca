@@ -18,14 +18,14 @@ def userprint(*args, **kwds):
     print(*args,**kwds)
     sys.stdout.flush()
 
-def cov(da,we):
+def cov(da,weights):
 
-    mda = (da*we).sum(axis=0)
-    swe = we.sum(axis=0)
+    mda = (da*weights).sum(axis=0)
+    swe = weights.sum(axis=0)
     w = swe>0.
     mda[w] /= swe[w]
 
-    wda = we*(da-mda)
+    wda = weights*(da-mda)
 
     userprint("Computing cov...")
 
@@ -35,10 +35,10 @@ def cov(da,we):
     co[w] /= sswe[w]
 
     return co
-def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
+def smooth_cov(da,weights,rp,rt,drt=4,drp=4,co=None):
 
     if co is None:
-        co = cov(da,we)
+        co = cov(da,weights)
 
     nda = co.shape[1]
     var = sp.diagonal(co)
@@ -97,14 +97,14 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
 
     h = fitsio.FITS(infile)
     da = sp.array(h[2]['DA'][:])
-    we = sp.array(h[2]['WE'][:])
+    weights = sp.array(h[2]['WE'][:])
     head = h[1].read_header()
     # npb = number of parallel bins (to avoid collision with numpy np)
     npb = head['NP']
     ntb = head['NT']
     h.close()
 
-    co = cov(da,we)
+    co = cov(da,weights)
 
     nbin = da.shape[1]
     var = sp.diagonal(co)
@@ -585,7 +585,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         for d in deltas[p]:
             bins = sp.floor((d.log_lambda-log_lambda_min)/delta_log_lambda+0.5).astype(int)
             d.de = d.de/T_stack[bins] - 1.
-            d.we *= T_stack[bins]**2
+            d.weights *= T_stack[bins]**2
 
             hd = {}
             hd['RA'] = d.ra
@@ -598,7 +598,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             hd['FIBERID'] = d.fiberid
             hd['ORDER'] = d.order
 
-            cols = [d.log_lambda,d.de,d.we,sp.ones(d.log_lambda.size)]
+            cols = [d.log_lambda,d.de,d.weights,sp.ones(d.log_lambda.size)]
             names = ['LOGLAM','DELTA','WEIGHT','CONT']
             out.write(cols,names=names,header=hd,extname=str(d.thingid))
         out.close()

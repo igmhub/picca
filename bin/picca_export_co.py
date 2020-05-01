@@ -165,7 +165,7 @@ if __name__ == '__main__':
             w = rr>0.
             da = np.zeros(dd.shape)
             da[w] = (dd[w]+rr[w]-dr[w]-rd[w])/rr[w]
-            we = data['DD']['WE']
+            weights = data['DD']['WE']
         else:
             dd = data['xDD']['WE']
             rr = data['xRR']['WE']
@@ -174,18 +174,18 @@ if __name__ == '__main__':
             w = rr>0.
             da = np.zeros(dd.shape)
             da[w] = (dd[w]+rr[w]-d1r2[w]-d2r1[w])/rr[w]
-            we = data['xDD']['WE']
+            weights = data['xDD']['WE']
         data['HLP_DA'] = da
-        data['HLP_WE'] = we
+        data['HLP_WE'] = weights
 
         if args.do_not_smooth_cov:
             userprint('INFO: The covariance will not be smoothed')
-            co = cov(da,we)
+            co = cov(da,weights)
         else:
             userprint('INFO: The covariance will be smoothed')
             binSizeRP = (data['RPMAX']-data['RPMIN']) / data['NP']
             binSizeRT = (data['RTMAX']-0.) / data['NT']
-            co = smooth_cov(da,we,data['RP'],data['RT'],drp=binSizeRP,drt=binSizeRT)
+            co = smooth_cov(da,weights,data['RP'],data['RT'],drp=binSizeRP,drt=binSizeRT)
         data['CO'] = co
 
     try:
