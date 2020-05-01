@@ -82,11 +82,11 @@ def cf(pix):
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fiberid<=500 and d2.fiberid<=500) or (d1.fiberid>500 and d2.fiberid>500) )
                 if ang_correlation:
-                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.log_lambda,10.**d1.log_lambda,d1.weights,d1.de,
-                        d2.z,10.**d2.log_lambda,10.**d2.log_lambda,d2.weights,d2.de,ang,same_half_plate)
+                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.log_lambda,10.**d1.log_lambda,d1.weights,d1.delta,
+                        d2.z,10.**d2.log_lambda,10.**d2.log_lambda,d2.weights,d2.delta,ang,same_half_plate)
                 else:
-                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.rdm_comov,d1.weights,d1.de,
-                        d2.z,d2.r_comov,d2.rdm_comov,d2.weights,d2.de,ang,same_half_plate)
+                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.rdm_comov,d1.weights,d1.delta,
+                        d2.z,d2.r_comov,d2.rdm_comov,d2.weights,d2.delta,ang,same_half_plate)
 
                 xi[:len(cd)]+=cd
                 weights[:len(cw)]+=cw
@@ -467,7 +467,7 @@ def cf1d(pix):
     for d in data[pix]:
         bins = ((d.log_lambda-log_lambda_min)/delta_log_lambda+0.5).astype(int)
         bins = bins + n1d*bins[:,None]
-        wde = d.weights*d.de
+        wde = d.weights*d.delta
         weights = d.weights
         xi1d[bins] += wde * wde[:,None]
         we1d[bins] += weights*weights[:,None]
@@ -484,7 +484,7 @@ def x_forest_cf1d(pix):
 
     for d1 in data[pix]:
         bins1 = ((d1.log_lambda-log_lambda_min)/delta_log_lambda+0.5).astype(int)
-        wde1 = d1.weights*d1.de
+        wde1 = d1.weights*d1.delta
         we1 = d1.weights
 
         d2thingid = [d2.thingid for d2 in data2[pix]]
@@ -492,7 +492,7 @@ def x_forest_cf1d(pix):
         for d2 in neighs:
             bins2 = ((d2.log_lambda-log_lambda_min)/delta_log_lambda+0.5).astype(int)
             bins = bins1 + n1d*bins2[:,None]
-            wde2 = d2.weights*d2.de
+            wde2 = d2.weights*d2.delta
             we2 = d2.weights
             xi1d[bins] += wde1 * wde2[:,None]
             we1d[bins] += we1*we2[:,None]

@@ -71,11 +71,11 @@ def xcf(pix):
                 we_qso = [q.weights for q in d.qneighs]
                 if ang_correlation:
                     l_qso = [10.**q.log_lambda for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.de,z_qso,l_qso,l_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.delta,z_qso,l_qso,l_qso,we_qso,ang)
                 else:
                     rc_qso = [q.r_comov for q in d.qneighs]
                     rdm_qso = [q.rdm_comov for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.rdm_comov,d.weights,d.de,z_qso,rc_qso,rdm_qso,we_qso,ang)
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.rdm_comov,d.weights,d.delta,z_qso,rc_qso,rdm_qso,we_qso,ang)
 
                 xi[:len(cd)]+=cd
                 weights[:len(cw)]+=cw
@@ -610,7 +610,7 @@ def xcf1d(pix):
             l_qso = [ 10.**q.log_lambda for q in neighs ]
             ang = np.zeros(len(l_qso))
 
-            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.de,z_qso,l_qso,l_qso,we_qso,ang)
+            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.delta,z_qso,l_qso,l_qso,we_qso,ang)
 
             xi[:cd.size] += cd
             weights[:cw.size] += cw

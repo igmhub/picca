@@ -145,7 +145,7 @@ if __name__ == '__main__':
         for p in xcf.dels:
             for d in xcf.dels[p]:
                 bins = ((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
-                d.de -= st[bins]
+                d.delta -= st[bins]
 
     ### Read objects
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\

@@ -7,7 +7,7 @@ from picca import constants
 from picca.utils import userprint
 
 
-def split_forest(nb_part,delta_log_lambda,log_lambda,de,exposures_diff,ivar,first_pixel):
+def split_forest(nb_part,delta_log_lambda,log_lambda,delta,exposures_diff,ivar,first_pixel):
 
     ll_limit=[log_lambda[first_pixel]]
     nb_bin= (len(log_lambda)-first_pixel)//nb_part
@@ -19,7 +19,7 @@ def split_forest(nb_part,delta_log_lambda,log_lambda,de,exposures_diff,ivar,firs
     iv_arr = []
 
     ll_c = log_lambda.copy()
-    de_c = de.copy()
+    de_c = delta.copy()
     diff_c = exposures_diff.copy()
     iv_c = ivar.copy()
 

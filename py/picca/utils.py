@@ -442,7 +442,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
 
     return
 def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,delta_log_lambda=3.e-4,nspec=None):
-    from picca.data import delta
+    from picca.data import Delta
     """Convert desi transmission files to picca delta files
 
     Args:
@@ -584,7 +584,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         out = fitsio.FITS(outdir+'/delta-{}'.format(p)+'.fits.gz','rw',clobber=True)
         for d in deltas[p]:
             bins = sp.floor((d.log_lambda-log_lambda_min)/delta_log_lambda+0.5).astype(int)
-            d.de = d.de/T_stack[bins] - 1.
+            d.delta = d.delta/T_stack[bins] - 1.
             d.weights *= T_stack[bins]**2
 
             hd = {}
@@ -598,7 +598,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             hd['FIBERID'] = d.fiberid
             hd['ORDER'] = d.order
 
-            cols = [d.log_lambda,d.de,d.weights,sp.ones(d.log_lambda.size)]
+            cols = [d.log_lambda,d.delta,d.weights,sp.ones(d.log_lambda.size)]
             names = ['LOGLAM','DELTA','WEIGHT','CONT']
             out.write(cols,names=names,header=hd,extname=str(d.thingid))
         out.close()

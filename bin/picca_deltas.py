@@ -13,7 +13,7 @@ import fitsio
 import numpy as np
 from scipy.interpolate import interp1d
 
-from picca.data import Forest, delta
+from picca.data import Forest, Delta
 from picca import prep_del, io, constants
 from picca.utils import userprint
 
@@ -421,7 +421,7 @@ def main():
     deltas = {}
     data_bad_cont = []
     for p in sorted(data.keys()):
-        deltas[p] = [delta.from_forest(d, st, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
+        deltas[p] = [Delta.from_forest(d, st, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:
@@ -439,7 +439,7 @@ def main():
         if args.delta_format == 'Pk1D_ascii':
             out_ascii = open(args.out_dir + "/delta-{}".format(p) + ".txt", 'w')
             for d in deltas[p]:
-                nbpixel = len(d.de)
+                nbpixel = len(d.delta)
                 delta_log_lambda = d.delta_log_lambda
                 if args.mode == 'desi':
                     delta_log_lambda = (d.log_lambda[-1] - d.log_lambda[0])/float(len(d.log_lambda) - 1)
@@ -447,7 +447,7 @@ def main():
                 line += '{} {} {} '.format(d.ra, d.dec, d.z_qso)
                 line += '{} {} {} {} {} '.format(d.mean_z, d.mean_snr, d.mean_reso, delta_log_lambda, nbpixel)
                 for i in range(nbpixel):
-                    line += '{} '.format(d.de[i])
+                    line += '{} '.format(d.delta[i])
                 for i in range(nbpixel):
                     line += '{} '.format(d.log_lambda[i])
                 for i in range(nbpixel):
@@ -486,12 +486,12 @@ def main():
                     if exposures_diff is None:
                         exposures_diff = d.log_lambda*0
 
-                    cols = [d.log_lambda, d.de, d.ivar, exposures_diff]
+                    cols = [d.log_lambda, d.delta, d.ivar, exposures_diff]
                     names = ['LOGLAM', 'DELTA', 'IVAR', 'DIFF']
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Inverse variance', 'Difference']
                 else:
-                    cols = [d.log_lambda, d.de, d.weights, d.continuum]
+                    cols = [d.log_lambda, d.delta, d.weights, d.continuum]
                     names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Pixel weights', 'Continuum']

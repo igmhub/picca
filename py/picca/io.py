@@ -9,7 +9,7 @@ import os.path
 import copy
 
 from picca.utils import userprint
-from picca.data import Forest, delta, QSO
+from picca.data import Forest, Delta, QSO
 from picca.prep_Pk1D import exp_diff, spectral_resolution, spectral_resolution_desi
 
 ## use a metadata class to simplify things
@@ -812,10 +812,10 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
         userprint("\rread {} of {} {}".format(i,len(fi),ndata))
         if from_image is None:
             hdus = fitsio.FITS(f)
-            dels += [delta.from_fitsio(h) for h in hdus[1:]]
+            dels += [Delta.from_fitsio(h) for h in hdus[1:]]
             hdus.close()
         else:
-            dels += delta.from_image(f)
+            dels += Delta.from_image(f)
 
         ndata = len(dels)
         if not nspec is None:

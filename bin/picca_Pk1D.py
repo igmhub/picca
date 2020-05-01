@@ -10,7 +10,7 @@ import scipy as sp
 
 import fitsio
 from picca import constants
-from picca.data import delta
+from picca.data import Delta
 from picca.Pk1D import (compute_cor_reso, compute_Pk_noise, compute_Pk_raw,
                         fill_masked_pixels, rebin_diff_noise, split_forest)
 from picca.utils import userprint
@@ -180,10 +180,10 @@ if __name__ == '__main__':
         # read fits or ascii file
         if (args.in_format=='fits') :
             hdus = fitsio.FITS(f)
-            dels = [delta.from_fitsio(h,Pk1D_type=True) for h in hdus[1:]]
+            dels = [Delta.from_fitsio(h,Pk1D_type=True) for h in hdus[1:]]
         elif (args.in_format=='ascii') :
             ascii_file = open(f,'r')
-            dels = [delta.from_ascii(line) for line in ascii_file]
+            dels = [Delta.from_ascii(line) for line in ascii_file]
 
         ndata+=len(dels)
         userprint ("\n ndata =  ",ndata)
@@ -206,7 +206,7 @@ if __name__ == '__main__':
             # Split in n parts the forest
             nb_part_max = (len(d.log_lambda)-first_pixel)//nb_pixel_min
             nb_part = min(args.nb_part,nb_part_max)
-            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.delta_log_lambda,d.log_lambda,d.de,d.exposures_diff,d.ivar,first_pixel)
+            m_z_arr,ll_arr,de_arr,diff_arr,iv_arr = split_forest(nb_part,d.delta_log_lambda,d.log_lambda,d.delta,d.exposures_diff,d.ivar,first_pixel)
             for f in range(nb_part):
 
                 # rebin diff spectrum
