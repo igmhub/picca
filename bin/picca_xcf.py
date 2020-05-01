@@ -155,7 +155,7 @@ if __name__ == '__main__':
                     Forest.delta_log_lambda = min(delta_log_lambda,Forest.delta_log_lambda)
         Forest.log_lambda_min  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-Forest.delta_log_lambda/2.
         Forest.log_lambda_max  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+Forest.delta_log_lambda/2.
-        log_lambda,st, wst   = prep_del.stack(xcf.dels,delta=True)
+        log_lambda,st, wst   = prep_del.stack(xcf.dels,stack_delta=True)
         for p in xcf.dels:
             for d in xcf.dels[p]:
                 bins = ((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
