@@ -1,6 +1,6 @@
 """This module defines data structure to deal with line of sight data.
 
-This module provides with three classes (Qso, Forest, Delta) and one
+This module provides with three classes (QSO, Forest, Delta) and one
 function (variance) to manage the line-of-sight data. See the respective
 docstrings for more details
 """
@@ -9,7 +9,7 @@ import scipy as sp
 from picca import constants
 from picca.utils import userprint, unred
 import iminuit
-from .dla import dla
+from picca.dla import DLA
 import fitsio
 
 
@@ -17,7 +17,7 @@ def variance(var,eta,var_lss,fudge):
     return eta*var + var_lss + fudge/var
 
 
-class Qso:
+class QSO:
     """Class to represent quasar objects.
 
     Attributes:
@@ -55,7 +55,7 @@ class Qso:
         __xor__: Computes the angular separation between two quasars.
     """
     def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid):
-        """Initialize class instance."""
+        """Initializes class instance."""
         self.ra = ra
         self.dec = dec
 
@@ -77,7 +77,7 @@ class Qso:
         """Computes the angular separation between two quasars.
 
         Args:
-            data: Qso or list of Qso
+            data: QSO or list of QSO
                 Objects with which the angular separation will
                 be computed.
 
@@ -109,7 +109,7 @@ class Qso:
             if w.sum()!=0:
                 angl[w] = sp.sqrt((dec[w] - self.dec)**2 +
                                   (self.cos_dec*(ra[w] - self.ra))**2)
-        # case 2: data is a Qso
+        # case 2: data is a QSO
         except:
             x_cart = data.x_cart
             y_cart = data.y_cart
@@ -131,7 +131,7 @@ class Qso:
                                (self.cos_dec*(ra - self.ra))**2)
         return angl
 
-class Forest(Qso):
+class Forest(QSO):
     # TODO: revise and complete
     """Class to represent a Lyman alpha (or other absorption) forest
 
@@ -141,7 +141,7 @@ class Forest(Qso):
     dlas, absorbers, ...
 
     Attributes:
-        ## Inherits from Qso ##
+        ## Inherits from QSO ##
         log_lambda : array of floats
             Array containing the logarithm of the wavelengths (in Angs)
         flux : array of floats
@@ -346,7 +346,7 @@ class Forest(Qso):
                 Name of the absorption in picca.constants defining the
                 redshift of the forest pixels
         """
-        Qso.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
+        QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
 
         # apply dust extinction correction
         if not Forest.extinction_bv_map is None:
@@ -608,20 +608,37 @@ class Forest(Qso):
 
         return
 
-    def add_dla(self,zabs,nhi,mask=None):
+    def add_dla(self, z_abs, nhi, mask=None):
+        """Adds DLA information to forest. Masks it by removing the efffected
+        pixels.
+
+        Args:
+            z_abs: float
+            Redshift of the DLA absorption
+
+            nhi : float
+            DLA column density in log10(cm^-2)
+
+            mask : list or None - Default None
+            Wavelengths to be masked in DLA rest-frame wavelength
+        """
         if not hasattr(self,'log_lambda'):
             return
         if self.dla_transmission is None:
-            self.dla_transmission = sp.ones(len(self.log_lambda))
+            self.dla_transmission = np.ones(len(self.log_lambda))
 
-        self.dla_transmission *= dla(self,zabs,nhi).t
+        self.dla_transmission *= DLA(self, z_abs, nhi).transmission
 
-        w = self.dla_transmission>Forest.dla_mask_limit
+        w = self.dla_transmission > Forest.dla_mask_limit
         if not mask is None:
-            for l in mask:
-                w &= (self.log_lambda-sp.log10(1.+zabs)<l[0]) | (self.log_lambda-sp.log10(1.+zabs)>l[1])
+            for mask_range in mask:
+                w &= ((self.log_lambda - np.log10(1. + z_abs) < mask_range[0]) |
+                      (self.log_lambda - np.log10(1. + z_abs) > mask_range[1]))
 
-        parameters = ['ivar','log_lambda','flux','dla_transmission','mean_optical_depth','mean_expected_flux_frac','exposures_diff','reso']
+        # do the actual masking
+        parameters = ['ivar','log_lambda','flux','dla_transmission',
+                      'mean_optical_depth','mean_expected_flux_frac',
+                      'exposures_diff','reso']
         for param in parameters:
             if hasattr(self, param) and (getattr(self, param) is not None):
                 setattr(self, param, getattr(self, param)[w])
@@ -705,11 +722,11 @@ class Forest(Qso):
             self.p1 = 0.
 
 
-class delta(Qso):
+class delta(QSO):
 
     def __init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,we,co,de,order,ivar,exposures_diff,mean_snr,m_reso,m_z,delta_log_lambda):
 
-        Qso.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
+        QSO.__init__(self,thingid,ra,dec,z_qso,plate,mjd,fiberid)
         self.log_lambda = log_lambda
         self.we = we
         self.co = co
