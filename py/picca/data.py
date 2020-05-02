@@ -1169,13 +1169,25 @@ class Delta(QSO):
 
 
     def project(self):
-        mde = sp.average(self.delta,weights=self.weights)
-        res=0
-        if (self.order==1) and self.delta.shape[0] > 1:
-            mll = sp.average(self.log_lambda,weights=self.weights)
-            mld = sp.sum(self.weights*self.delta*(self.log_lambda-mll))/sp.sum(self.weights*(self.log_lambda-mll)**2)
-            res = mld * (self.log_lambda-mll)
-        elif self.order==1:
+        """Project the delta field.
+
+        The projection gets rid of the distortion caused by the continuum
+        fitiing. See equations 5 and 6 of du Mas des Bourboux et al. 2020
+        """
+        # 2nd term in equation 6
+        mean_delta = np.average(self.delta, weights=self.weights)
+
+        # 3rd term in equation 6
+        res = 0
+        if (self.order == 1) and self.delta.shape[0] > 1:
+            mean_log_lambda = np.average(self.log_lambda, weights=self.weights)
+            meanless_log_lambda = self.log_lambda - mean_log_lambda
+            mean_delta_log_lambda = (np.sum(self.weights*self.delta*
+                                            meanless_log_lambda)
+                                     /sp.sum(self.weights*
+                                             meanless_log_lambda**2))
+            res = mean_delta_log_lambda * meanless_log_lambda
+        elif self.order == 1:
             res = self.delta
 
-        self.delta -= mde + res
+        self.delta -= mean_delta + res
