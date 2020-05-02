@@ -113,7 +113,7 @@ class QSO:
         self.p0 = None
         self.p1 = None
         self.bad_cont = None
-    # TODO: rename method, update class docstring
+
     def __xor__(self, data):
         """Computes the angular separation between two quasars.
 
@@ -151,7 +151,7 @@ class QSO:
                 angl[w] = np.sqrt((dec[w] - self.dec)**2 +
                                   (self.cos_dec*(ra[w] - self.ra))**2)
         # case 2: data is a QSO
-        except IndexError:
+        except TypeError:
             x_cart = data.x_cart
             y_cart = data.y_cart
             z_cart = data.z_cart
