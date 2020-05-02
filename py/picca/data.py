@@ -1079,39 +1079,42 @@ class Delta(QSO):
 
         Args:
             line: string
-
-
+                A line of the ascii file containing information from a line
+                of sight
 
         Returns:
             a Delta instance
         """
 
-        a = line.split()
-        plate = int(a[0])
-        mjd = int(a[1])
-        fiberid = int(a[2])
-        ra = float(a[3])
-        dec = float(a[4])
-        z_qso = float(a[5])
-        mean_z = float(a[6])
-        mean_snr = float(a[7])
-        mean_reso = float(a[8])
-        delta_log_lambda = float(a[9])
+        cols = line.split()
+        plate = int(cols[0])
+        mjd = int(cols[1])
+        fiberid = int(cols[2])
+        ra = float(cols[3])
+        dec = float(cols[4])
+        z_qso = float(cols[5])
+        mean_z = float(cols[6])
+        mean_snr = float(cols[7])
+        mean_reso = float(cols[8])
+        delta_log_lambda = float(cols[9])
 
-        nbpixel = int(a[10])
-        delta = sp.array(a[11:11+nbpixel]).astype(float)
-        log_lambda = sp.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
-        ivar = sp.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
-        exposures_diff = sp.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
-
+        array_size = int(cols[10])
+        delta = np.array(cols[11:11 + array_size]).astype(float)
+        log_lambda = np.array(cols[11 + array_size:
+                                   11 + 2*array_size]).astype(float)
+        ivar = np.array(cols[11 + 2*array_size:
+                             11 + 3*array_size]).astype(float)
+        exposures_diff = np.array(cols[11 + 3*array_size:
+                                       11 + 4*array_size]).astype(float)
 
         thingid = 0
         order = 0
         weights = None
         continuum = None
 
-        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,weights,continuum,delta,order,
-                   ivar,exposures_diff,mean_snr,mean_reso,mean_z,delta_log_lambda)
+        return cls(thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
+                   weights, continuum, delta, order, ivar, exposures_diff,
+                   mean_snr, mean_reso, mean_z, delta_log_lambda)
 
     @staticmethod
     def from_image(f):
