@@ -1019,7 +1019,7 @@ class Delta(QSO):
 
 
     @classmethod
-    def from_fitsio(cls,h, pk1d_type=False):
+    def from_fitsio(cls, hdu, pk1d_type=False):
         """Initialize instance from a fits file
 
         Args:
@@ -1075,6 +1075,16 @@ class Delta(QSO):
 
     @classmethod
     def from_ascii(cls,line):
+        """Initialize instance from an ascii file
+
+        Args:
+            line: string
+
+
+
+        Returns:
+            a Delta instance
+        """
 
         a = line.split()
         plate = int(a[0])
