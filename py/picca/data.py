@@ -250,11 +250,13 @@ class Forest(QSO):
             calibration.
         correct_ivar: Corrects for multiplicative errors in pipeline inverse
             variance calibration.
-        get_var_lss: Computes the pixel variance due to the Large Scale
-            Strucure.
-        get_eta: Computes the correction factor to the contribution of the
-            pipeline estimate of the instrumental noise to the variance.
-        get_fudge: Computes the fudge contribution to the variance.
+        get_var_lss: Interpolates the pixel variance due to the Large Scale
+            Strucure on the wavelength array.
+        get_eta: Interpolates the correction factor to the contribution of the
+            pipeline estimate of the instrumental noise to the variance on the
+            wavelength array.
+        get_fudge: Interpolates the fudge contribution to the variance on the
+            wavelength array.
         get_mean_cont: Interpolates the mean quasar continuum over the whole
             sample on the wavelength array.
         mask: Applies wavelength masking.
@@ -320,7 +322,8 @@ class Forest(QSO):
 
     @classmethod
     def get_var_lss(cls, lol_lambda):
-        """Computes the pixel variance due to the Large Scale Strucure
+        """Interpolates the pixel variance due to the Large Scale Strucure on
+        the wavelength array.
 
         Empty function to be loaded at run-time.
 
@@ -338,8 +341,9 @@ class Forest(QSO):
 
     @classmethod
     def get_eta(cls, lol_lambda):
-        """Computes the correction factor to the contribution of the pipeline
-        estimate of the instrumental noise to the variance.
+        """Interpolates the correction factor to the contribution of the
+        pipeline estimate of the instrumental noise to the variance on the
+        wavelength array.
 
         See equation 4 of du Mas des Bourboux et al. 2020 for details.
 
@@ -359,8 +363,8 @@ class Forest(QSO):
 
     @classmethod
     def get_mean_cont(cls, lol_lambda):
-        """Interpolates the mean quasar continuum over the whole sample on
-        the wavelength array
+        """Interpolates the mean quasar continuum over the whole
+        sample on the wavelength array.
 
         See equation 2 of du Mas des Bourboux et al. 2020 for details.
 
@@ -380,7 +384,8 @@ class Forest(QSO):
 
     @classmethod
     def get_fudge(cls, lol_lambda):
-        """Computes the fudge contribution to the variance.
+        """Interpolates the fudge contribution to the variance on the
+        wavelength array.
 
         See function epsilon in equation 4 of du Mas des Bourboux et al.
         2020 for details.
@@ -962,27 +967,52 @@ class Delta(QSO):
         self.delta_log_lambda = delta_log_lambda
 
     @classmethod
-    def from_forest(cls,f,st,get_var_lss,get_eta,get_fudge,mc=False):
+    def from_forest(cls, forest, get_mean_delta, get_var_lss, get_eta,
+                    get_fudge, use_mock_continuum=False):
+        """Initialize instance from Forest data.
 
-        log_lambda = f.log_lambda
-        mst = st(log_lambda)
+        Args:
+            forest: Forest
+                A forest instance from which to initialize the deltas
+            get_mean_delta: function
+                Interpolates the mean value of the delta field on the wavelength
+                array.
+            get_var_lss: Interpolates the pixel variance due to the Large Scale
+                Strucure on the wavelength array.
+            get_eta: Interpolates the correction factor to the contribution of the
+                pipeline estimate of the instrumental noise to the variance on the
+                wavelength array.
+            get_fudge: Interpolates the fudge contribution to the variance on the
+                wavelength array.
+            use_mock_continuum: bool - Default: False
+                Flag to use the mock continuum to compute the mean expected
+                flux fraction
+        """
+        log_lambda = forest.log_lambda
+        mean_delta = get_mean_delta(log_lambda)
         var_lss = get_var_lss(log_lambda)
         eta = get_eta(log_lambda)
         fudge = get_fudge(log_lambda)
 
-        #if mc is True use the mock continuum to compute the mean expected flux fraction
-        if mc : mef = f.mean_expected_flux_frac
-        else : mef = f.continuum * mst
-        delta = f.flux/ mef -1.
-        var = 1./f.ivar/mef**2
-        weights = 1./get_variance(var,eta,var_lss,fudge)
-        exposures_diff = f.exposures_diff
-        if f.exposures_diff is not None:
-            exposures_diff /= mef
-        ivar = f.ivar/(eta+(eta==0))*(mef**2)
+        #if mc is True use the mock continuum to compute the mean
+        # expected flux fraction
+        if use_mock_continuum:
+            mean_expected_flux_frac = forest.mean_expected_flux_frac
+        else:
+            mean_expected_flux_frac = forest.continuum*mean_delta
+        delta = forest.flux/mean_expected_flux_frac - 1.
+        var_pipe = 1./forest.ivar/mean_expected_flux_frac**2
+        weights = 1./get_variance(var_pipe, eta, var_lss, fudge)
+        exposures_diff = forest.exposures_diff
+        if forest.exposures_diff is not None:
+            exposures_diff /= mean_expected_flux_frac
+        ivar = forest.ivar/(eta + (eta == 0))*(mean_expected_flux_frac**2)
 
-        return cls(f.thingid,f.ra,f.dec,f.z_qso,f.plate,f.mjd,f.fiberid,log_lambda,weights,f.continuum,delta,f.order,
-                   ivar,exposures_diff,f.mean_snr,f.mean_reso,f.mean_z,f.delta_log_lambda)
+        return cls(forest.thingid, forest.ra, forest.dec, forest.z_qso,
+                   forest.plate, forest.mjd, forest.fiberid, log_lambda,
+                   weights, forest.continuum, delta, forest.order, ivar,
+                   exposures_diff, forest.mean_snr, forest.mean_reso,
+                   forest.mean_z, forest.delta_log_lambda)
 
 
     @classmethod
