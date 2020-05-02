@@ -180,7 +180,7 @@ if __name__ == '__main__':
         # read fits or ascii file
         if (args.in_format=='fits') :
             hdus = fitsio.FITS(f)
-            dels = [Delta.from_fitsio(h,Pk1D_type=True) for h in hdus[1:]]
+            dels = [Delta.from_fitsio(h,pk1d_type=True) for h in hdus[1:]]
         elif (args.in_format=='ascii') :
             ascii_file = open(f,'r')
             dels = [Delta.from_ascii(line) for line in ascii_file]

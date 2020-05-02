@@ -984,9 +984,12 @@ class Delta(QSO):
                 wavelength array.
             get_fudge: Interpolates the fudge contribution to the variance on the
                 wavelength array.
-            use_mock_continuum: bool - Default: False
+            use_mock_continuum: bool - default: False
                 Flag to use the mock continuum to compute the mean expected
                 flux fraction
+
+        Returns:
+            a Delta instance
         """
         log_lambda = forest.log_lambda
         mean_delta = get_mean_delta(log_lambda)
@@ -1016,49 +1019,58 @@ class Delta(QSO):
 
 
     @classmethod
-    def from_fitsio(cls,h,Pk1D_type=False):
+    def from_fitsio(cls,h, pk1d_type=False):
+        """Initialize instance from a fits file
+
+        Args:
+            hdu: fitsio.hdu.table.TableHDU
+                A Header Data Unit opened with fitsio
+            pk1d_type: bool - default: False
+                Specifies if the fits file is formatted for the 1D Power
+                Spectrum analysis
+        Returns:
+            a Delta instance
+        """
+        header = hdu.read_header()
+
+        delta = hdu['DELTA'][:]
+        log_lambda = hdu['LOGLAM'][:]
 
 
-        head = h.read_header()
-
-        delta = h['DELTA'][:]
-        log_lambda = h['LOGLAM'][:]
-
-
-        if  Pk1D_type :
-            ivar = h['IVAR'][:]
-            exposures_diff = h['DIFF'][:]
-            mean_snr = head['MEANSNR']
-            mean_reso = head['MEANRESO']
-            mean_z = head['MEANZ']
-            delta_log_lambda =  head['DLL']
+        if pk1d_type:
+            ivar = hdu['IVAR'][:]
+            exposures_diff = hdu['DIFF'][:]
+            mean_snr = header['MEANSNR']
+            mean_reso = header['MEANRESO']
+            mean_z = header['MEANZ']
+            delta_log_lambda = header['DLL']
             weights = None
             continuum = None
-        else :
+        else:
             ivar = None
             exposures_diff = None
             mean_snr = None
             mean_reso = None
             delta_log_lambda = None
             mean_z = None
-            weights = h['WEIGHT'][:]
-            continuum = h['CONT'][:]
+            weights = hdu['WEIGHT'][:]
+            continuum = hdu['CONT'][:]
 
-
-        thingid = head['THING_ID']
-        ra = head['RA']
-        dec = head['DEC']
-        z_qso = head['Z']
-        plate = head['PLATE']
-        mjd = head['MJD']
-        fiberid = head['FIBERID']
-
+        thingid = header['THING_ID']
+        ra = header['RA']
+        dec = header['DEC']
+        z_qso = header['Z']
+        plate = header['PLATE']
+        mjd = header['MJD']
+        fiberid = header['FIBERID']
         try:
-            order = head['ORDER']
+            order = header['ORDER']
         except KeyError:
             order = 1
-        return cls(thingid,ra,dec,z_qso,plate,mjd,fiberid,log_lambda,weights,continuum,delta,order,
-                   ivar,exposures_diff,mean_snr,mean_reso,mean_z,delta_log_lambda)
+
+        return cls(thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
+                   weights,continuum,delta,order, ivar, exposures_diff,
+                   mean_snr, mean_reso, mean_z, delta_log_lambda)
 
 
     @classmethod
