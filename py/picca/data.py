@@ -1117,31 +1117,40 @@ class Delta(QSO):
                    mean_snr, mean_reso, mean_z, delta_log_lambda)
 
     @staticmethod
-    def from_image(f):
-        h=fitsio.FITS(f)
-        deltas_image = h[0].read()
-        ivar = h[1].read()
-        log_lambda = h[2].read()
-        ra = h[3]["RA"][:].astype(sp.float64)*sp.pi/180.
-        dec = h[3]["DEC"][:].astype(sp.float64)*sp.pi/180.
-        z = h[3]["Z"][:].astype(sp.float64)
-        plate = h[3]["PLATE"][:]
-        mjd = h[3]["MJD"][:]
-        fiberid = h[3]["FIBER"]
-        thingid = h[3]["THING_ID"][:]
+    def from_image(file):
+        """Initialize instance from an ascii file
 
-        nspec = h[0].read().shape[1]
+        Args:
+            file: string
+                Name of the fits file containing the image data
+
+        Returns:
+            a list of Delta instances
+        """
+        hdu = fitsio.FITS(file)
+        deltas_image = hdu[0].read()
+        ivar_image = hdu[1].read()
+        log_lambda_image = hdu[2].read()
+        ra = hdu[3]["RA"][:].astype(np.float64)*np.pi/180.
+        dec = hdu[3]["DEC"][:].astype(np.float64)*np.pi/180.
+        z = hdu[3]["Z"][:].astype(sp.float64)
+        plate = hdu[3]["PLATE"][:]
+        mjd = hdu[3]["MJD"][:]
+        fiberid = hdu[3]["FIBER"]
+        thingid = hdu[3]["THING_ID"][:]
+
+        nspec = hdu[0].read().shape[1]
         deltas=[]
         for i in range(nspec):
             if i%100==0:
-                userprint("\rreading deltas {} of {}".format(i,nspec),end="")
+                userprint("\rreading deltas {} of {}".format(i, nspec), end="")
 
             delta = deltas_image[:,i]
-            aux_ivar = flux[:,i]
-            w = aux_ivar>0
+            ivar = ivar_image[:,i]
+            w = ivar>0
             delta = delta[w]
-            aux_ivar = aux_ivar[w]
-            lam = log_lambda[w]
+            aux_ivar = ivar[w]
+            log_lambda = log_lambda_image[w]
 
             order = 1
             exposures_diff = None
@@ -1150,9 +1159,12 @@ class Delta(QSO):
             delta_log_lambda = None
             mean_z = None
 
-            deltas.append(Delta(thingid[i],ra[i],dec[i],z[i],plate[i],mjd[i],fiberid[i],lam,aux_ivar,None,delta,order,ivar,exposures_diff,mean_snr,mean_reso,mean_z,delta_log_lambda))
+            deltas.append(Delta(thingid[i], ra[i], dec[i], z[i], plate[i],
+                                mjd[i], fiberid[i], log_lambda, aux_ivar, None,
+                                delta, order, ivar, exposures_diff, mean_snr,
+                                mean_reso, mean_z, delta_log_lambda))
 
-        h.close()
+        hdu.close()
         return deltas
 
 
