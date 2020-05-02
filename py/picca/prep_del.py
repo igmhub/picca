@@ -142,7 +142,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
 def stack(data,stack_delta=False):
     nstack = int((Forest.log_lambda_max-Forest.log_lambda_min)/Forest.delta_log_lambda)+1
     log_lambda = Forest.log_lambda_min + np.arange(nstack)*Forest.delta_log_lambda
-    st = np.zeros(nstack)
+    mean_delta = np.zeros(nstack)
     wst = np.zeros(nstack)
     for p in sorted(list(data.keys())):
         for d in data[p]:
@@ -159,10 +159,10 @@ def stack(data,stack_delta=False):
 
             bins=((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
             c = sp.bincount(bins,weights=delta*weights)
-            st[:len(c)]+=c
+            mean_delta[:len(c)]+=c
             c = sp.bincount(bins,weights=weights)
             wst[:len(c)]+=c
 
     w=wst>0
-    st[w]/=wst[w]
-    return log_lambda,st, wst
+    mean_delta[w]/=wst[w]
+    return log_lambda, mean_delta, wst
