@@ -5,12 +5,12 @@ function (get_variance) to manage the line-of-sight data. See the respective
 docstrings for more details
 """
 import numpy as np
-import scipy as sp
+import iminuit
+import fitsio
+
 from picca import constants
 from picca.utils import userprint, unred
-import iminuit
 from picca.dla import DLA
-import fitsio
 
 
 def get_variance(var_pipe, eta, var_lss, fudge):
@@ -100,14 +100,19 @@ class QSO:
         self.fiberid = fiberid
 
         ## cartesian coordinates
-        self.x_cart = sp.cos(ra)*sp.cos(dec)
-        self.y_cart = sp.sin(ra)*sp.cos(dec)
-        self.z_cart = sp.sin(dec)
-        self.cos_dec = sp.cos(dec)
+        self.x_cart = np.cos(ra)*np.cos(dec)
+        self.y_cart = np.sin(ra)*np.cos(dec)
+        self.z_cart = np.sin(dec)
+        self.cos_dec = np.cos(dec)
 
         self.z_qso = z_qso
         self.thingid = thingid
 
+        # continuum-related variables
+        self.continuum = None
+        self.p0 = None
+        self.p1 = None
+        self.bad_cont = None
     # TODO: rename method, update class docstring
     def __xor__(self, data):
         """Computes the angular separation between two quasars.
@@ -123,11 +128,11 @@ class QSO:
         """
         # case 1: data is list-like
         try:
-            x_cart = sp.array([d.x_cart for d in data])
-            y_cart = sp.array([d.y_cart for d in data])
-            z_cart = sp.array([d.z_cart for d in data])
-            ra = sp.array([d.ra for d in data])
-            dec = sp.array([d.dec for d in data])
+            x_cart = np.array([d.x_cart for d in data])
+            y_cart = np.array([d.y_cart for d in data])
+            z_cart = np.array([d.z_cart for d in data])
+            ra = np.array([d.ra for d in data])
+            dec = np.array([d.dec for d in data])
 
             cos = x_cart*self.x_cart + y_cart*self.y_cart + z_cart*self.z_cart
             w = cos >= 1.
@@ -138,15 +143,15 @@ class QSO:
             if w.sum() != 0:
                 userprint('WARNING: {} pairs have cos<=-1.'.format(w.sum()))
                 cos[w] = -1.
-            angl = sp.arccos(cos)
+            angl = np.arccos(cos)
 
             w = ((np.absolute(ra - self.ra) < constants.small_angle_cut_off) &
                  (np.absolute(dec - self.dec) < constants.small_angle_cut_off))
             if w.sum() != 0:
-                angl[w] = sp.sqrt((dec[w] - self.dec)**2 +
+                angl[w] = np.sqrt((dec[w] - self.dec)**2 +
                                   (self.cos_dec*(ra[w] - self.ra))**2)
         # case 2: data is a QSO
-        except:
+        except IndexError:
             x_cart = data.x_cart
             y_cart = data.y_cart
             z_cart = data.z_cart
@@ -160,11 +165,11 @@ class QSO:
             elif cos <= -1.:
                 userprint('WARNING: 1 pair has cosinus<=-1.')
                 cos = -1.
-            angl = sp.arccos(cos)
+            angl = np.arccos(cos)
             if ((np.absolute(ra - self.ra) < constants.small_angle_cut_off) &
                     (np.absolute(dec - self.dec) <
                      constants.small_angle_cut_off)):
-                angl = sp.sqrt((dec - self.dec)**2 +
+                angl = np.sqrt((dec - self.dec)**2 +
                                (self.cos_dec*(ra - self.ra))**2)
         return angl
 
@@ -456,9 +461,9 @@ class Forest(QSO):
         log_lambda = Forest.log_lambda_min + bins*Forest.delta_log_lambda
         w = (log_lambda >= Forest.log_lambda_min)
         w = w & (log_lambda < Forest.log_lambda_max)
-        w = w & (log_lambda - sp.log10(1.+self.z_qso) >
+        w = w & (log_lambda - np.log10(1.+self.z_qso) >
                  Forest.log_lambda_min_rest_frame)
-        w = w & (log_lambda - sp.log10(1.+self.z_qso) <
+        w = w & (log_lambda - np.log10(1.+self.z_qso) <
                  Forest.log_lambda_max_rest_frame)
         w = w & (ivar > 0.)
         if w.sum() == 0:
@@ -485,7 +490,7 @@ class Forest(QSO):
         #ccfl = np.bincount(bins, weights=ivar*flux)
         #cciv = np.bincount(bins, weights=ivar)
         #if mean_expected_flux_frac is not None:
-        #    ccmmef = sp.bincount(bins, weights=ivar*mean_expected_flux_frac)
+        #    ccmmef = np.bincount(bins, weights=ivar*mean_expected_flux_frac)
         #rebin_flux[:len(ccfl)] += ccfl
         #rebin_ivar[:len(cciv)] += cciv
         #if mean_expected_flux_frac is not None:
@@ -500,7 +505,7 @@ class Forest(QSO):
             rebin_exposures_diff = np.bincount(bins,
                                                weights=ivar*exposures_diff)
         if reso is not None:
-            rebin_reso = sp.bincount(bins, weights=ivar*reso)
+            rebin_reso = np.bincount(bins, weights=ivar*reso)
 
         w = (rebin_ivar > 0.)
         if w.sum() == 0:
@@ -548,7 +553,7 @@ class Forest(QSO):
         else:
             self.mean_reso = None
 
-        err = 1.0/sp.sqrt(ivar)
+        err = 1.0/np.sqrt(ivar)
         snr = flux/err
         self.mean_snr = sum(snr)/float(len(snr))
         lambda_igm_absorption = constants.absorber_IGM[self.igm_absorption]
@@ -622,12 +627,12 @@ class Forest(QSO):
         # recompute means of quality variables
         if self.reso is not None:
             self.mean_reso = self.reso.mean()
-        err = 1./sp.sqrt(self.ivar)
+        err = 1./np.sqrt(self.ivar)
         snr = self.flux/err
         self.mean_snr = snr.mean()
         lambda_igm_absorption = constants.absorber_IGM[self.igm_absorption]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
-                        bp.power(10., log_lambda[0]))/2./lambda_igm_absorption
+                        np.power(10., log_lambda[0]))/2./lambda_igm_absorption
                        - 1.0)
 
         return self
@@ -698,7 +703,7 @@ class Forest(QSO):
 
         w = 10.**self.log_lambda/(1. + self.z_qso) <= lambda_rest_frame
         z = 10.**self.log_lambda/lambda_rest_frame - 1.
-        self.mean_optical_depth[w] *= sp.exp(-tau*(1. + z[w])**gamma)
+        self.mean_optical_depth[w] *= np.exp(-tau*(1. + z[w])**gamma)
 
         return
 
@@ -863,7 +868,6 @@ class Forest(QSO):
         self.p0 = minimizer.values["p0"]
         self.p1 = minimizer.values["p1"]
 
-        self.bad_cont = None
         if not minimizer_result.is_valid:
             self.bad_cont = "minuit didn't converge"
         if np.any(self.continuum <= 0):
@@ -879,7 +883,6 @@ class Forest(QSO):
 
 
 class Delta(QSO):
-    #TODO: revise and update docstring
     """Class to represent the mean transimission fluctuation field (delta)
 
     This class stores the information for the deltas for a given line of sight
@@ -909,6 +912,12 @@ class Delta(QSO):
 
     Methods:
         __init__: Initializes class instances.
+        from_forest: Initialize instance from Forest data.
+        from_fitsio: Initialize instance from a fits file.
+        from_ascii: Initialize instance from an ascii file.
+        from_image: Initialize instance from an ascii file.
+        project: Project the delta field.
+
     """
     def __init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                  weights, continuum, delta, order, ivar, exposures_diff, mean_snr,
@@ -1020,7 +1029,7 @@ class Delta(QSO):
 
     @classmethod
     def from_fitsio(cls, hdu, pk1d_type=False):
-        """Initialize instance from a fits file
+        """Initialize instance from a fits file.
 
         Args:
             hdu: fitsio.hdu.table.TableHDU
@@ -1069,13 +1078,13 @@ class Delta(QSO):
             order = 1
 
         return cls(thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
-                   weights,continuum,delta,order, ivar, exposures_diff,
+                   weights, continuum, delta, order, ivar, exposures_diff,
                    mean_snr, mean_reso, mean_z, delta_log_lambda)
 
 
     @classmethod
-    def from_ascii(cls,line):
-        """Initialize instance from an ascii file
+    def from_ascii(cls, line):
+        """Initialize instance from an ascii file.
 
         Args:
             line: string
@@ -1118,7 +1127,7 @@ class Delta(QSO):
 
     @staticmethod
     def from_image(file):
-        """Initialize instance from an ascii file
+        """Initialize instance from an ascii file.
 
         Args:
             file: string
@@ -1133,21 +1142,21 @@ class Delta(QSO):
         log_lambda_image = hdu[2].read()
         ra = hdu[3]["RA"][:].astype(np.float64)*np.pi/180.
         dec = hdu[3]["DEC"][:].astype(np.float64)*np.pi/180.
-        z = hdu[3]["Z"][:].astype(sp.float64)
+        z = hdu[3]["Z"][:].astype(np.float64)
         plate = hdu[3]["PLATE"][:]
         mjd = hdu[3]["MJD"][:]
         fiberid = hdu[3]["FIBER"]
         thingid = hdu[3]["THING_ID"][:]
 
         nspec = hdu[0].read().shape[1]
-        deltas=[]
+        deltas = []
         for i in range(nspec):
-            if i%100==0:
+            if i%100 == 0:
                 userprint("\rreading deltas {} of {}".format(i, nspec), end="")
 
-            delta = deltas_image[:,i]
-            ivar = ivar_image[:,i]
-            w = ivar>0
+            delta = deltas_image[:, i]
+            ivar = ivar_image[:, i]
+            w = ivar > 0
             delta = delta[w]
             aux_ivar = ivar[w]
             log_lambda = log_lambda_image[w]
@@ -1184,7 +1193,7 @@ class Delta(QSO):
             meanless_log_lambda = self.log_lambda - mean_log_lambda
             mean_delta_log_lambda = (np.sum(self.weights*self.delta*
                                             meanless_log_lambda)
-                                     /sp.sum(self.weights*
+                                     /np.sum(self.weights*
                                              meanless_log_lambda**2))
             res = mean_delta_log_lambda * meanless_log_lambda
         elif self.order == 1:
