@@ -139,10 +139,10 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     return log_lambda,eta,vlss,fudge,nb_pixels,var,var_del.reshape(nlss,-1),var2_del.reshape(nlss,-1),count.reshape(nlss,-1),nqso.reshape(nlss,-1),bin_chi2,err_eta,err_vlss,err_fudge
 
 
-def stack(data,stack_delta=False):
+def stack(data, stack_from_deltas=False):
     nstack = int((Forest.log_lambda_max-Forest.log_lambda_min)/Forest.delta_log_lambda)+1
-    log_lambda = Forest.log_lambda_min + np.arange(nstack)*Forest.delta_log_lambda
-    mean_delta = np.zeros(nstack)
+    stack_log_lambda = Forest.log_lambda_min + np.arange(nstack)*Forest.delta_log_lambda
+    stack_delta = np.zeros(nstack)
     wst = np.zeros(nstack)
     for p in sorted(list(data.keys())):
         for d in data[p]:
@@ -159,10 +159,10 @@ def stack(data,stack_delta=False):
 
             bins=((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
             c = sp.bincount(bins,weights=delta*weights)
-            mean_delta[:len(c)]+=c
+            stack_delta[:len(c)]+=c
             c = sp.bincount(bins,weights=weights)
             wst[:len(c)]+=c
 
     w=wst>0
-    mean_delta[w]/=wst[w]
-    return log_lambda, mean_delta, wst
+    stack_delta[w]/=wst[w]
+    return stack_log_lambda, stack_delta, wst

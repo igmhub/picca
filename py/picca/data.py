@@ -976,16 +976,15 @@ class Delta(QSO):
         self.delta_log_lambda = delta_log_lambda
 
     @classmethod
-    def from_forest(cls, forest, get_mean_delta, get_var_lss, get_eta,
+    def from_forest(cls, forest, get_stack_delta, get_var_lss, get_eta,
                     get_fudge, use_mock_continuum=False):
         """Initialize instance from Forest data.
 
         Args:
             forest: Forest
                 A forest instance from which to initialize the deltas
-            get_mean_delta: function
-                Interpolates the mean value of the delta field on the wavelength
-                array.
+            get_stack_delta: function
+                Interpolates the stacked delta field for a given redshift.
             get_var_lss: Interpolates the pixel variance due to the Large Scale
                 Strucure on the wavelength array.
             get_eta: Interpolates the correction factor to the contribution of the
@@ -1001,7 +1000,7 @@ class Delta(QSO):
             a Delta instance
         """
         log_lambda = forest.log_lambda
-        mean_delta = get_mean_delta(log_lambda)
+        stack_delta = get_stack_delta(log_lambda)
         var_lss = get_var_lss(log_lambda)
         eta = get_eta(log_lambda)
         fudge = get_fudge(log_lambda)
@@ -1011,7 +1010,7 @@ class Delta(QSO):
         if use_mock_continuum:
             mean_expected_flux_frac = forest.mean_expected_flux_frac
         else:
-            mean_expected_flux_frac = forest.continuum*mean_delta
+            mean_expected_flux_frac = forest.continuum*stack_delta
         delta = forest.flux/mean_expected_flux_frac - 1.
         var_pipe = 1./forest.ivar/mean_expected_flux_frac**2
         weights = 1./get_variance(var_pipe, eta, var_lss, fudge)

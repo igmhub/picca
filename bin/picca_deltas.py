@@ -191,13 +191,16 @@ def main():
     if args.flux_calib is not None:
         try:
             hdul = fitsio.FITS(args.flux_calib)
-            ll_st = hdul[1]['loglam'][:]
-            mean_delta = hdul[1]['stack'][:]
-            w = (mean_delta != 0.)
-            Forest.correct_flux = interp1d(ll_st[w], mean_delta[w], fill_value="extrapolate", kind="nearest")
+            stack_log_lambda = hdul[1]['loglam'][:]
+            stack_delta = hdul[1]['stack'][:]
+            w = (stack_delta != 0.)
+            Forest.correct_flux = interp1d(stack_log_lambda[w], stack_delta[w],
+                                           fill_value="extrapolate",
+                                           kind="nearest")
             hdul.close()
         except (OSError, ValueError):
-            userprint("ERROR: Error while reading flux_calib file {}".format(args.flux_calib))
+            userprint(("ERROR: Error while reading flux_calib"
+                       "file {}".format(args.flux_calib)))
             sys.exit(1)
 
     ### Correct multiplicative pipeline inverse variance calibration
@@ -206,10 +209,13 @@ def main():
             hdul = fitsio.FITS(args.ivar_calib)
             log_lambda = hdul[2]['LOGLAM'][:]
             eta = hdul[2]['ETA'][:]
-            Forest.correct_ivar = interp1d(log_lambda, eta, fill_value="extrapolate", kind="nearest")
+            Forest.correct_ivar = interp1d(log_lambda, eta,
+                                           fill_value="extrapolate",
+                                           kind="nearest")
             hdul.close()
         except (OSError, ValueError):
-            userprint("ERROR: Error while reading ivar_calib file {}".format(args.ivar_calib))
+            userprint(("ERROR: Error while reading ivar_calib"
+                       "file {}".format(args.ivar_calib)))
             sys.exit(1)
 
     ### Apply dust correction
@@ -399,7 +405,7 @@ def main():
                 Forest.get_fudge = interp1d(log_lambda, fudge, fill_value='extrapolate', kind='nearest')
 
 
-    ll_st, mean_delta, wst = prep_del.stack(data)
+    stack_log_lambda, stack_delta, wst = prep_del.stack(data)
 
     ### Save iter_out_prefix
     res = fitsio.FITS(args.iter_out_prefix + ".fits.gz", 'rw', clobber=True)
@@ -407,7 +413,7 @@ def main():
     hd["NSIDE"] = healpy_nside
     hd["PIXORDER"] = healpy_pix_ordering
     hd["FITORDER"] = args.order
-    res.write([ll_st, mean_delta, wst], names=['loglam', 'stack', 'weight'], header=hd, extname='STACK')
+    res.write([stack_log_lambda, stack_delta, wst], names=['loglam', 'stack', 'weight'], header=hd, extname='STACK')
     res.write([log_lambda, eta, vlss, fudge, nb_pixels], names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'], extname='WEIGHT')
     res.write([ll_rest, Forest.get_mean_cont(ll_rest), wmc], names=['loglam_rest', 'mean_cont', 'weight'], extname='CONT')
     var = np.broadcast_to(var.reshape(1, -1), var_del.shape)
@@ -415,11 +421,11 @@ def main():
     res.close()
 
     ### Save delta
-    get_mean_delta = interp1d(ll_st[wst > 0.], mean_delta[wst > 0.], kind="nearest", fill_value="extrapolate")
+    get_stack_delta = interp1d(stack_log_lambda[wst > 0.], stack_delta[wst > 0.], kind="nearest", fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
     for p in sorted(data.keys()):
-        deltas[p] = [Delta.from_forest(d, get_mean_delta, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
+        deltas[p] = [Delta.from_forest(d, get_stack_delta, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:
