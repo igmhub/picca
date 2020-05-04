@@ -146,7 +146,7 @@ def stack(data, stack_from_deltas=False):
     wst = np.zeros(nstack)
     for p in sorted(list(data.keys())):
         for d in data[p]:
-            if stack_delta:
+            if stack_from_deltas:
                 delta = d.delta
                 weights = d.weights
             else:
