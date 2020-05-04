@@ -32,7 +32,7 @@ from picca.prep_Pk1D import exp_diff, spectral_resolution
 from picca.prep_Pk1D import spectral_resolution_desi
 
 ## use a metadata class to simplify things
-class Metadata(Object):
+class Metadata(object):
     """Class defined to organize the storage of metadata.
 
     Attributes:
