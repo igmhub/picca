@@ -1,3 +1,21 @@
+"""This module defines a set of functions to manage reading of data.
+
+This module provides a class (Metadata) and several functions:
+    - read_dlas
+    - read_absorbers
+    - read_drq
+    - read_dust_map
+    - read_data
+    - read_from_spec
+    - read_from_mock_1D
+    - read_from_pix
+    - read_from_spcframe
+    - read_from_spplate
+    - read_from_desi
+    - read_deltas
+    - read_objects
+See the respective documentation for details
+"""
 import fitsio
 import numpy as np
 import scipy as sp
@@ -10,24 +28,66 @@ import copy
 
 from picca.utils import userprint
 from picca.data import Forest, Delta, QSO
-from picca.prep_Pk1D import exp_diff, spectral_resolution, spectral_resolution_desi
+from picca.prep_Pk1D import exp_diff, spectral_resolution,
+from picca.prep_Pk1D import spectral_resolution_desi
 
 ## use a metadata class to simplify things
-class metadata:
-    pass
+class Metadata(Object):
+    """Class defined to organize the storage of metadata.
 
-def read_dlas(fdla):
+    Attributes:
+        thingid: integer or None
+            Thingid of the observation.
+        ra: float or None
+            Right-ascension of the quasar (in radians).
+        dec: float or None
+            Declination of the quasar (in radians).
+        z_qso: float or None
+            Redshift of the quasar.
+        plate: integer or None
+            Plate number of the observation.
+        mjd: integer or None
+            Modified Julian Date of the observation.
+        fiberid: integer or None
+            Fiberid of the observation.
+        order: 0 or 1 or None
+            Order of the log10(lambda) polynomial for the continuum fit
+
+    Methods:
+        __init__
     """
-    Read the DLA catalog from a fits file.
+    def __init__(self):
+        """Initialize instance."""
+        meta.thingid = None
+        meta.ra = None
+        meta.dec = None
+        meta.z_qso = None
+        meta.plate = None
+        meta.mjd = None
+        meta.fiberid = None
+        meta.order = None
+
+def read_dlas(filename):
+    """Read the DLA catalog from a fits file.
+
     ASCII or DESI files can be converted using:
         utils.eBOSS_convert_DLA()
         utils.desi_convert_DLA()
+
+    Args:
+        filename: str
+            File containing the DLAs
+
+    Returns:
+        A dictionary with the DLA's information. Keys are the THING_ID
+        associated with the DLA. Values is a tuple with its redshift and
+        column density.
     """
 
     lst = ['THING_ID','Z','NHI']
-    h = fitsio.FITS(fdla)
-    cat = { k:h['DLACAT'][k][:] for k in lst }
-    h.close()
+    hdul = fitsio.FITS(filename)
+    cat = { k: hdul['DLACAT'][k][:] for k in lst }
+    hdul.close()
 
     w = sp.argsort(cat['Z'])
     for k in cat.keys():
@@ -78,22 +138,22 @@ def read_absorbers(file_absorbers):
     return absorbers
 
 def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
-    h = fitsio.FITS(drq)
+    hdul = fitsio.FITS(drq)
 
     ## Redshift
     try:
-        z_qso = h[1]['Z'][:]
+        z_qso = hdul[1]['Z'][:]
     except:
         userprint("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
-        z_qso = h[1]['Z_VI'][:]
+        z_qso = hdul[1]['Z_VI'][:]
 
     ## Info of the primary observation
-    thingid = h[1]['THING_ID'][:]
-    ra = h[1]['RA'][:].astype('float64')
-    dec = h[1]['DEC'][:].astype('float64')
-    plate = h[1]['PLATE'][:]
-    mjd = h[1]['MJD'][:]
-    fiberid = h[1]['FIBERID'][:]
+    thingid = hdul[1]['THING_ID'][:]
+    ra = hdul[1]['RA'][:].astype('float64')
+    dec = hdul[1]['DEC'][:].astype('float64')
+    plate = hdul[1]['PLATE'][:]
+    mjd = hdul[1]['MJD'][:]
+    fiberid = hdul[1]['FIBERID'][:]
 
     ## Sanity
     userprint('')
@@ -121,7 +181,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     ## BAL visual
     if not keep_bal and bi_max==None:
         try:
-            bal_flag = h[1]['BAL_FLAG_VI'][:]
+            bal_flag = hdul[1]['BAL_FLAG_VI'][:]
             w &= bal_flag==0
             userprint(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
         except:
@@ -129,11 +189,11 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     ## BAL CIV
     if bi_max is not None:
         try:
-            bi = h[1]['BI_CIV'][:]
+            bi = hdul[1]['BI_CIV'][:]
             w &= bi<=bi_max
             userprint(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
         except:
-            userprint("--bi-max set but no BI_CIV field in h")
+            userprint("--bi-max set but no BI_CIV field in HDU")
             sys.exit(1)
     userprint("")
 
@@ -144,15 +204,15 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     plate = plate[w]
     mjd = mjd[w]
     fiberid = fiberid[w]
-    h.close()
+    hdul.close()
 
     return ra,dec,z_qso,thingid,plate,mjd,fiberid
 
 def read_dust_map(drq, Rv = 3.793):
-    h = fitsio.FITS(drq)
-    thingid = h[1]['THING_ID'][:]
-    ext  = h[1]['EXTINCTION'][:][:,1]/Rv
-    h.close()
+    hdul = fitsio.FITS(drq)
+    thingid = hdul[1]['THING_ID'][:]
+    ext  = hdul[1]['EXTINCTION'][:][:,1]/Rv
+    hdul.close()
 
     return dict(zip(thingid, ext))
 
@@ -179,20 +239,20 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     if mode == "pix":
         try:
             fin = in_dir + "/master.fits.gz"
-            h = fitsio.FITS(fin)
+            hdul = fitsio.FITS(fin)
         except IOError:
             try:
                 fin = in_dir + "/master.fits"
-                h = fitsio.FITS(fin)
+                hdul = fitsio.FITS(fin)
             except IOError:
                 try:
                     fin = in_dir + "/../master.fits"
-                    h = fitsio.FITS(fin)
+                    hdul = fitsio.FITS(fin)
                 except:
                     userprint("error reading master")
                     sys.exit(1)
-        nside = h[1].read_header()['NSIDE']
-        h.close()
+        nside = hdul[1].read_header()['NSIDE']
+        hdul.close()
         pixs = healpy.ang2pix(nside, sp.pi / 2 - dec, ra)
     elif mode in ["spec","corrected-spec","spcframe","spplate","spec-mock-1D"]:
         nside = 256
@@ -326,7 +386,7 @@ def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=
             t_list.append(t)
             t_set.add(t)
         r,d,z = drq_dict[t]
-        meta = metadata()
+        meta = Metadata()
         meta.thingid = t
         meta.ra = r
         meta.dec = d
@@ -355,20 +415,20 @@ def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=
             r,d,z,p,m,f = meta.ra,meta.dec,meta.z_qso,meta.plate,meta.mjd,meta.fiberid
             try:
                 fin = in_dir + "/{}/{}-{}-{}-{:04d}.fits".format(p,mode,p,m,f)
-                h = fitsio.FITS(fin)
+                hdul = fitsio.FITS(fin)
             except IOError:
                 log.write("error reading {}\n".format(fin))
                 continue
             log.write("{} read\n".format(fin))
-            log_lambda = h[1]["loglam"][:]
-            flux = h[1]["flux"][:]
-            ivar = h[1]["ivar"][:]*(h[1]["and_mask"][:]==0)
+            log_lambda = hdul[1]["loglam"][:]
+            flux = hdul[1]["flux"][:]
+            ivar = hdul[1]["ivar"][:]*(hdul[1]["and_mask"][:]==0)
 
             if pk1d is not None:
                 # compute difference between exposure
-                exposures_diff = exp_diff(h,log_lambda)
+                exposures_diff = exp_diff(hdul,log_lambda)
                 # compute spectral resolution
-                wdisp =  h[1]["wdisp"][:]
+                wdisp =  hdul[1]["wdisp"][:]
                 reso = spectral_resolution(wdisp,True,f,log_lambda)
             else:
                 exposures_diff = None
@@ -378,7 +438,7 @@ def read_from_spec(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,mode,log=
                 t_delta = deltas
             else:
                 t_delta += deltas
-            h.close()
+            hdul.close()
         if t_delta is not None:
             pix_data.append(t_delta)
     return pix_data
@@ -388,33 +448,33 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
 
     try:
         fin = in_dir
-        hdu = fitsio.FITS(fin)
+        hdul = fitsio.FITS(fin)
     except IOError:
         log.write("error reading {}\n".format(fin))
 
     for t,r,d,z,p,m,f in zip(thingid,ra,dec,z_qso,plate,mjd,fiberid):
-        h = hdu["{}".format(t)]
-        log.write("file: {} hdu {} read  \n".format(fin,h))
-        lamb = h["wavelength"][:]
+        hdu = hdul["{}".format(t)]
+        log.write("file: {} hdus {} read  \n".format(fin, hdu))
+        lamb = hdu["wavelength"][:]
         log_lambda = sp.log10(lamb)
-        flux = h["flux"][:]
-        error =h["error"][:]
+        flux = hdu["flux"][:]
+        error =hdu["error"][:]
         ivar = 1.0/error**2
 
         # compute difference between exposure
         exposures_diff = np.zeros(len(lamb))
         # compute spectral resolution
-        wdisp =  h["psf"][:]
+        wdisp =  hdu["psf"][:]
         reso = spectral_resolution(wdisp)
 
         # compute the mean expected flux
-        f_mean_tr = h.read_header()["MEANFLUX"]
-        cont = h["continuum"][:]
+        f_mean_tr = hdu.read_header()["MEANFLUX"]
+        cont = hdu["continuum"][:]
         mef = f_mean_tr * cont
         d = Forest(log_lambda,flux,ivar, t, r, d, z, p, m, f,order, exposures_diff,reso, mef)
         pix_data.append(d)
 
-    hdu.close()
+    hdul.close()
 
     return pix_data
 
@@ -422,11 +482,11 @@ def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,
 def read_from_pix(in_dir,pix,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,log=None):
         try:
             fin = in_dir + "/pix_{}.fits.gz".format(pix)
-            h = fitsio.FITS(fin)
+            hdul = fitsio.FITS(fin)
         except IOError:
             try:
                 fin = in_dir + "/pix_{}.fits".format(pix)
-                h = fitsio.FITS(fin)
+                hdul = fitsio.FITS(fin)
             except IOError:
                 userprint("error reading {}".format(pix))
                 return None
@@ -434,17 +494,17 @@ def read_from_pix(in_dir,pix,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,log=No
         ## fill log
         if log is not None:
             for t in thingid:
-                if t not in h[0][:]:
+                if t not in hdul[0][:]:
                     log.write("{} missing from pixel {}\n".format(t,pix))
                     userprint("{} missing from pixel {}".format(t,pix))
 
         pix_data=[]
-        thingid_list=list(h[0][:])
+        thingid_list=list(hdul[0][:])
         thingid2idx = {t:thingid_list.index(t) for t in thingid if t in thingid_list}
-        loglam  = h[1][:]
-        flux = h[2].read()
-        ivar = h[3].read()
-        andmask = h[4].read()
+        loglam  = hdul[1][:]
+        flux = hdul[2].read()
+        ivar = hdul[3].read()
+        andmask = hdul[4].read()
         for (t, r, d, z, p, m, f) in zip(thingid, ra, dec, z_qso, plate, mjd, fiberid):
             try:
                 idx = thingid2idx[t]
@@ -459,7 +519,7 @@ def read_from_pix(in_dir,pix,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,log=No
             if log is not None:
                 log.write("{} read\n".format(t))
             pix_data.append(d)
-        h.close()
+        hdul.close()
         return pix_data
 
 def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order, mode=None, log=None, best_obs=False, single_exp = False):
@@ -471,7 +531,7 @@ def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, ord
 
     allmeta = []
     for t,r,d,z,p,m,f in zip(thingid,ra,dec,z_qso,plate,mjd,fiberid):
-        meta = metadata()
+        meta = Metadata()
         meta.thingid = t
         meta.ra = r
         meta.dec = d
@@ -496,9 +556,9 @@ def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, ord
         exps = []
         spplate = in_dir+"/{0}/spPlate-{0}-{1}.fits".format(p,m)
         userprint("INFO: reading plate {}".format(spplate))
-        h=fitsio.FITS(spplate)
-        head = h[0].read_header()
-        h.close()
+        hdul=fitsio.FITS(spplate)
+        head = hdul[0].read_header()
+        hdul.close()
         iexp = 1
         for c in ["B1", "B2", "R1", "R2"]:
             card = "NEXP_{}".format(c)
@@ -621,7 +681,7 @@ def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, orde
     allmeta = []
     for t,p,m,f in zip(thingid,plate,mjd,fiberid):
         r,d,z = drq_dict[t]
-        meta = metadata()
+        meta = Metadata()
         meta.thingid = t
         meta.ra = r
         meta.dec = d
@@ -648,8 +708,8 @@ def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, orde
         spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(str(p).zfill(4),m)
 
         try:
-            h = fitsio.FITS(spplate)
-            head0 = h[0].read_header()
+            hdul = fitsio.FITS(spplate)
+            head0 = hdul[0].read_header()
         except IOError:
             log.write("error reading {}\n".format(spplate))
             continue
@@ -658,8 +718,8 @@ def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, orde
         coeff0 = head0["COEFF0"]
         coeff1 = head0["COEFF1"]
 
-        flux = h[0].read()
-        ivar = h[1].read()*(h[2].read()==0)
+        flux = hdul[0].read()
+        ivar = hdul[1].read()*(hdul[2].read()==0)
         llam = coeff0 + coeff1*np.arange(flux.shape[1])
 
         ## now convert all those fluxes into forest objects
@@ -681,7 +741,7 @@ def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, orde
                 log.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
         nread = len(platemjd[pm])
         userprint("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, os.path.basename(spplate), (time.time()-t0)/(nread+1e-3), len(pix_data), len(thingid)))
-        h.close()
+        hdul.close()
 
     data = list(pix_data.values())
     return data
@@ -702,7 +762,7 @@ def read_from_desi(nside,in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1
 
         userprint("\rread {} of {}. ndata: {}".format(i,len(fi),ndata))
         try:
-            h = fitsio.FITS(path)
+            hdul = fitsio.FITS(path)
         except IOError:
             userprint("Error reading pix {}\n".format(f))
             continue
@@ -712,35 +772,35 @@ def read_from_desi(nside,in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,pk1
         plate_qsos = plate[(in_pixs==f)]
         mjd_qsos = mjd[(in_pixs==f)]
         fiberid_qsos = fiberid[(in_pixs==f)]
-        if 'TARGET_RA' in h["FIBERMAP"].get_colnames():
-            ra = h["FIBERMAP"]["TARGET_RA"][:]*sp.pi/180.
-            de = h["FIBERMAP"]["TARGET_DEC"][:]*sp.pi/180.
-        elif 'RA_TARGET' in h["FIBERMAP"].get_colnames():
+        if 'TARGET_RA' in hdul["FIBERMAP"].get_colnames():
+            ra = hdul["FIBERMAP"]["TARGET_RA"][:]*sp.pi/180.
+            de = hdul["FIBERMAP"]["TARGET_DEC"][:]*sp.pi/180.
+        elif 'RA_TARGET' in hdul["FIBERMAP"].get_colnames():
             ## TODO: These lines are for backward compatibility
             ## Should be removed at some point
-            ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
-            de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
+            ra = hdul["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
+            de = hdul["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
         pixs = healpy.ang2pix(nside, sp.pi / 2 - de, ra)
         #exp = h["FIBERMAP"]["EXPID"][:]
         #night = h["FIBERMAP"]["NIGHT"][:]
         #fib = h["FIBERMAP"]["FIBER"][:]
-        in_tids = h["FIBERMAP"]["TARGETID"][:]
+        in_tids = hdul["FIBERMAP"]["TARGETID"][:]
 
         specData = {}
         for spec in ['B','R','Z']:
             dic = {}
             try:
-                dic['log_lambda'] = sp.log10(h['{}_WAVELENGTH'.format(spec)].read())
-                dic['FL'] = h['{}_FLUX'.format(spec)].read()
-                dic['IV'] = h['{}_IVAR'.format(spec)].read()*(h['{}_MASK'.format(spec)].read()==0)
+                dic['log_lambda'] = sp.log10(hdul['{}_WAVELENGTH'.format(spec)].read())
+                dic['FL'] = hdul['{}_FLUX'.format(spec)].read()
+                dic['IV'] = hdul['{}_IVAR'.format(spec)].read()*(hdul['{}_MASK'.format(spec)].read()==0)
                 w = sp.isnan(dic['FL']) | sp.isnan(dic['IV'])
                 for k in ['FL','IV']:
                     dic[k][w] = 0.
-                dic['RESO'] = h['{}_RESOLUTION'.format(spec)].read()
+                dic['RESO'] = hdul['{}_RESOLUTION'.format(spec)].read()
                 specData[spec] = dic
             except OSError:
                 pass
-        h.close()
+        hdul.close()
 
         for t,p,m,f in zip(tid_qsos,plate_qsos,mjd_qsos,fiberid_qsos):
             wt = in_tids == t
@@ -811,9 +871,9 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
     for i,f in enumerate(fi):
         userprint("\rread {} of {} {}".format(i,len(fi),ndata))
         if from_image is None:
-            hdus = fitsio.FITS(f)
-            dels += [Delta.from_fitsio(h) for h in hdus[1:]]
-            hdus.close()
+            hdul = fitsio.FITS(f)
+            dels += [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
+            hdul.close()
         else:
             dels += Delta.from_image(f)
 
