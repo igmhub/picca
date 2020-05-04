@@ -58,14 +58,14 @@ class Metadata(object):
     """
     def __init__(self):
         """Initialize instance."""
-        meta.thingid = None
-        meta.ra = None
-        meta.dec = None
-        meta.z_qso = None
-        meta.plate = None
-        meta.mjd = None
-        meta.fiberid = None
-        meta.order = None
+        self.thingid = None
+        self.ra = None
+        self.dec = None
+        self.z_qso = None
+        self.plate = None
+        self.mjd = None
+        self.fiberid = None
+        self.order = None
 
 def read_dlas(filename):
     """Read the DLA catalog from a fits file.
