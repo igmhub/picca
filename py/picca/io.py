@@ -28,7 +28,7 @@ import copy
 
 from picca.utils import userprint
 from picca.data import Forest, Delta, QSO
-from picca.prep_Pk1D import exp_diff, spectral_resolution,
+from picca.prep_Pk1D import exp_diff, spectral_resolution
 from picca.prep_Pk1D import spectral_resolution_desi
 
 ## use a metadata class to simplify things
@@ -83,28 +83,30 @@ def read_dlas(filename):
         associated with the DLA. Values is a tuple with its redshift and
         column density.
     """
-
-    lst = ['THING_ID','Z','NHI']
+    columns_list = ['THING_ID', 'Z', 'NHI']
     hdul = fitsio.FITS(filename)
-    cat = { k: hdul['DLACAT'][k][:] for k in lst }
+    cat = {col: hdul['DLACAT'][col][:] for col in columns_list}
     hdul.close()
 
-    w = sp.argsort(cat['Z'])
-    for k in cat.keys():
-        cat[k] = cat[k][w]
-    w = sp.argsort(cat['THING_ID'])
-    for k in cat.keys():
-        cat[k] = cat[k][w]
+    # sort the items in the dictionary according to THING_ID and redshift
+    w = np.argsort(cat['Z'])
+    for key in cat.keys():
+        cat[key] = cat[key][w]
+    w = np.argsort(cat['THING_ID'])
+    for key in cat.keys():
+        cat[key] = cat[key][w]
 
+    # group DLAs on the same line of sight together
     dlas = {}
-    for t in np.unique(cat['THING_ID']):
-        w = t==cat['THING_ID']
-        dlas[t] = [ (z,nhi) for z,nhi in zip(cat['Z'][w],cat['NHI'][w]) ]
-    nb_dla = sp.sum([len(d) for d in dlas.values()])
+    for thingid in np.unique(cat['THING_ID']):
+        w = (thingid == cat['THING_ID'])
+        dlas[thingid] = [(zabs, nhi)
+                         for zabs, nhi in zip(cat['Z'][w], cat['NHI'][w])]
+    number_dlas = np.sum([len(dla) for dla in dlas.values()])
 
     userprint('\n')
-    userprint(' In catalog: {} DLAs'.format(nb_dla) )
-    userprint(' In catalog: {} forests have a DLA'.format(len(dlas)) )
+    userprint(' In catalog: {} DLAs'.format(number_dlas))
+    userprint(' In catalog: {} forests have a DLA'.format(len(dlas)))
     userprint('\n')
 
     return dlas
