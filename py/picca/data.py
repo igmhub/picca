@@ -37,6 +37,7 @@ def get_variance(var_pipe, eta, var_lss, fudge):
 
 
 class QSO(object):
+class QSO:
     """Class to represent quasar objects.
 
     Attributes:
@@ -1106,14 +1107,14 @@ class Delta(QSO):
         mean_reso = float(cols[8])
         delta_log_lambda = float(cols[9])
 
-        array_size = int(cols[10])
-        delta = np.array(cols[11:11 + array_size]).astype(float)
-        log_lambda = np.array(cols[11 + array_size:
-                                   11 + 2*array_size]).astype(float)
-        ivar = np.array(cols[11 + 2*array_size:
-                             11 + 3*array_size]).astype(float)
-        exposures_diff = np.array(cols[11 + 3*array_size:
-                                       11 + 4*array_size]).astype(float)
+        num_pixel = int(cols[10])
+        delta = np.array(cols[11:11 + num_pixel]).astype(float)
+        log_lambda = np.array(cols[11 + num_pixel:
+                                   11 + 2*num_pixel]).astype(float)
+        ivar = np.array(cols[11 + 2*num_pixel:
+                             11 + 3*num_pixel]).astype(float)
+        exposures_diff = np.array(cols[11 + 3*num_pixel:
+                                       11 + 4*num_pixel]).astype(float)
 
         thingid = 0
         order = 0
