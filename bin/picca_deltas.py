@@ -228,7 +228,7 @@ def main():
     log_file = open(os.path.expandvars(args.log), 'w')
 
     data, ndata, healpy_nside, healpy_pix_ordering = io.read_data(os.path.expandvars(args.in_dir), args.drq, args.mode,\
-        z_min=args.zqso_min, z_max=args.zqso_max, nspec=args.nspec, log_file=log_file,\
+        z_min=args.zqso_min, z_max=args.zqso_max, max_num_spec=args.nspec, log_file=log_file,\
         keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
         best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format)
 
