@@ -284,7 +284,7 @@ def main():
                     for lambda_absorber in absorbers[d.thingid]:
                         d.add_absorber(lambda_absorber)
                         nb_absorbers_in_forest += 1
-        log.write("Found {} absorbers in forests\n".format(nb_absorbers_in_forest))
+        log_file.write("Found {} absorbers in forests\n".format(nb_absorbers_in_forest))
 
     ### Apply optical depth
     if not args.optical_depth is None:
@@ -311,28 +311,28 @@ def main():
                     for dla in dlas[d.thingid]:
                         d.add_dla(dla[0], dla[1], usr_mask_RF_DLA)
                         nb_dla_in_forest += 1
-        log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
+        log_file.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## cuts
-    log.write("INFO: Input sample has {} forests\n".format(np.sum([len(p) for p in data.values()])))
+    log_file.write("INFO: Input sample has {} forests\n".format(np.sum([len(p) for p in data.values()])))
     lstKeysToDel = []
     for p in data:
         l = []
         for d in data[p]:
             if not hasattr(d, 'log_lambda') or len(d.log_lambda) < args.npix_min:
-                log.write("INFO: Rejected {} due to forest too short\n".format(d.thingid))
+                log_file.write("INFO: Rejected {} due to forest too short\n".format(d.thingid))
                 continue
 
             if np.isnan((d.flux*d.ivar).sum()):
-                log.write("INFO: Rejected {} due to nan found\n".format(d.thingid))
+                log_file.write("INFO: Rejected {} due to nan found\n".format(d.thingid))
                 continue
 
             if(args.use_constant_weight and (d.flux.mean() <= 0.0 or d.mean_snr <= 1.0)):
-                log.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(d.thingid))
+                log_file.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(d.thingid))
                 continue
 
             l.append(d)
-            log.write("{} {}-{}-{} accepted\n".format(d.thingid, d.plate, d.mjd, d.fiberid))
+            log_file.write("{} {}-{}-{} accepted\n".format(d.thingid, d.plate, d.mjd, d.fiberid))
         data[p][:] = l
         if len(data[p]) == 0:
             lstKeysToDel += [p]
@@ -340,7 +340,7 @@ def main():
     for p in lstKeysToDel:
         del data[p]
 
-    log.write("INFO: Remaining sample has {} forests\n".format(np.sum([len(p) for p in data.values()])))
+    log_file.write("INFO: Remaining sample has {} forests\n".format(np.sum([len(p) for p in data.values()])))
 
     for p in data:
         for d in data[p]:
@@ -429,11 +429,11 @@ def main():
         data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
 
     for d in data_bad_cont:
-        log.write("INFO: Rejected {} due to {}\n".format(d.thingid, d.bad_cont))
+        log_file.write("INFO: Rejected {} due to {}\n".format(d.thingid, d.bad_cont))
 
-    log.write("INFO: Accepted sample has {} forests\n".format(np.sum([len(p) for p in deltas.values()])))
+    log_file.write("INFO: Accepted sample has {} forests\n".format(np.sum([len(p) for p in deltas.values()])))
 
-    log.close()
+    log_file.close()
 
     ###
     for p in sorted(deltas.keys()):
