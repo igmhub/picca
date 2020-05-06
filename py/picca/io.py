@@ -80,7 +80,7 @@ def read_dlas(filename):
 
     Returns:
         A dictionary with the DLA's information. Keys are the THING_ID
-        associated with the DLA. Values is a tuple with its redshift and
+        associated with the DLA. Values are a tuple with its redshift and
         column density.
     """
     columns_list = ['THING_ID', 'Z', 'NHI']
@@ -120,7 +120,7 @@ def read_absorbers(filename):
 
     Returns:
         A dictionary with the absorbers's information. Keys are the THING_ID
-        associated with the DLA. Values is a tuple with its redshift and
+        associated with the DLA. Values are a tuple with its redshift and
         column density.
     """
     file = open(filename)
@@ -158,7 +158,7 @@ def read_drq(filename, z_min, z_max, keep_bal, bi_max=None):
 
     Args:
         filename: str
-            File containing the absorbers
+            Filename of the DRQ catalogue
         z_min: float
             Minimum redshift. Quasars with redshifts lower than z_min will be
             discarded
@@ -255,18 +255,32 @@ def read_drq(filename, z_min, z_max, keep_bal, bi_max=None):
 
     return ra, dec, z_qso, thingid, plate, mjd, fiberid
 
-def read_dust_map(drq, Rv = 3.793):
-    hdul = fitsio.FITS(drq)
+def read_dust_map(filename, extinction_conversion_r=3.793):
+    """Read the dust map.
+
+    Args:
+        filename: str
+            Filename of the DRQ catalogue
+        extinction_conversion_r: float
+            Conversion from E(B-V) to total extinction for band r.
+            Note that the EXTINCTION values given in DRQ are in fact E(B-V)
+
+    Returns:
+        A dictionary with the extinction map. Keys are the THING_ID
+        associated with the observation. Values are the extinction for that
+        line of sight.
+    """
+    hdul = fitsio.FITS(filename)
     thingid = hdul[1]['THING_ID'][:]
-    ext  = hdul[1]['EXTINCTION'][:][:,1]/Rv
+    ext = hdul[1]['EXTINCTION'][:][:, 1]/extinction_conversion_r
     hdul.close()
 
     return dict(zip(thingid, ext))
 
-target_mobj = 500
-nside_min = 8
-
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None):
+
+    target_mobj = 500
+    nside_min = 8
 
     userprint("mode: "+mode)
     ra,dec,z_qso,thingid,plate,mjd,fiberid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
