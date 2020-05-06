@@ -153,8 +153,35 @@ def read_absorbers(filename):
 
     return absorbers
 
-def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
-    hdul = fitsio.FITS(drq)
+def read_drq(filename, z_min, z_max, keep_bal, bi_max=None):
+    """Read the quasars in the DRQ quasar catalog.
+
+    Args:
+        filename: str
+            File containing the absorbers
+        z_min: float
+            Minimum redshift. Quasars with redshifts lower than z_min will be
+            discarded
+        z_max: float
+            Maximum redshift. Quasars with redshifts higher than or equal to
+            z_max will be discarded
+        keep_bal: bool
+            If False, remove the quasars flagged as having a Broad Absorption
+            Line. Ignored if bi_max is not None
+        bi_max: float or None - default: None
+            Maximum value allowed for the Balnicity Index to keep the quasar
+
+    Returns:
+        The arrays containing
+            ra: the right ascension of the quasars (in radians)
+            dec: the declination of the quasars (in radians)
+            z_qso: the redshift of the quasars
+            thingid: the thingid of the observations
+            plate: the plates of the observations
+            mjd: the Modified Julian Date of the observation
+            fiberid: the fiberid of the observations
+    """
+    hdul = fitsio.FITS(filename)
 
     ## Redshift
     try:
@@ -173,48 +200,52 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     ## Sanity
     userprint('')
-    w = sp.ones(ra.size,dtype=bool)
-    userprint(" start               : nb object in cat = {}".format(w.sum()) )
-    w &= thingid>0
-    userprint(" and thingid>0          : nb object in cat = {}".format(w.sum()) )
-    w &= ra!=dec
-    userprint(" and ra!=dec         : nb object in cat = {}".format(w.sum()) )
-    w &= ra!=0.
-    userprint(" and ra!=0.          : nb object in cat = {}".format(w.sum()) )
-    w &= dec!=0.
-    userprint(" and dec!=0.         : nb object in cat = {}".format(w.sum()) )
-    w &= z_qso>0.
-    userprint(" and z>0.            : nb object in cat = {}".format(w.sum()) )
+    w = np.ones(ra.size, dtype=bool)
+    userprint(" start                 : nb object in cat = {}".format(w.sum()))
+    w &= thingid > 0
+    userprint(" and thingid > 0       : nb object in cat = {}".format(w.sum()))
+    w &= ra != dec
+    userprint(" and ra != dec         : nb object in cat = {}".format(w.sum()))
+    w &= ra != 0.
+    userprint(" and ra != 0.          : nb object in cat = {}".format(w.sum()))
+    w &= dec != 0.
+    userprint(" and dec != 0.         : nb object in cat = {}".format(w.sum()))
+    w &= z_qso > 0.
+    userprint(" and z > 0.            : nb object in cat = {}".format(w.sum()))
 
     ## Redshift range
-    if not zmin is None:
-        w &= z_qso>=zmin
-        userprint(" and z>=zmin         : nb object in cat = {}".format(w.sum()) )
-    if not zmax is None:
-        w &= z_qso<zmax
-        userprint(" and z<zmax          : nb object in cat = {}".format(w.sum()) )
+    if not z_min is None:
+        w &= z_qso >= z_min
+        userprint((" and z >= z_min        : nb object in cat"
+                   "= {}".format(w.sum())))
+    if not z_max is None:
+        w &= z_qso < z_max
+        userprint((" and z < zmax          : nb object in cat"
+                   "= {}".format(w.sum())))
 
     ## BAL visual
-    if not keep_bal and bi_max==None:
+    if not keep_bal and bi_max == None:
         try:
             bal_flag = hdul[1]['BAL_FLAG_VI'][:]
-            w &= bal_flag==0
-            userprint(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
+            w &= bal_flag == 0
+            userprint((" and BAL_FLAG_VI == 0  : nb object in cat"
+                       "= {}".format(ra[w].size)))
         except:
             userprint("BAL_FLAG_VI not found\n")
     ## BAL CIV
     if bi_max is not None:
         try:
             bi = hdul[1]['BI_CIV'][:]
-            w &= bi<=bi_max
-            userprint(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
+            w &= bi <= bi_max
+            userprint((" and BI_CIV <= bi_max  : nb object in cat"
+                       "= {}".format(ra[w].size)))
         except:
             userprint("--bi-max set but no BI_CIV field in HDU")
             sys.exit(1)
     userprint("")
 
-    ra = ra[w]*sp.pi/180.
-    dec = dec[w]*sp.pi/180.
+    ra = ra[w]*np.pi/180.
+    dec = dec[w]*np.pi/180.
     z_qso = z_qso[w]
     thingid = thingid[w]
     plate = plate[w]
@@ -222,7 +253,7 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     fiberid = fiberid[w]
     hdul.close()
 
-    return ra,dec,z_qso,thingid,plate,mjd,fiberid
+    return ra, dec, z_qso, thingid, plate, mjd, fiberid
 
 def read_dust_map(drq, Rv = 3.793):
     hdul = fitsio.FITS(drq)
