@@ -111,30 +111,44 @@ def read_dlas(filename):
 
     return dlas
 
-def read_absorbers(file_absorbers):
-    f=open(file_absorbers)
-    absorbers={}
-    nb_absorbers = 0
-    col_names=None
-    for l in f:
-        l = l.split()
-        if len(l)==0:continue
-        if l[0][0]=="#":continue
-        if l[0]=="ThingID":
-            col_names = l
+def read_absorbers(filename):
+    """Read the absorbers catalog from an ascii file.
+
+    Args:
+        filename: str
+            File containing the absorbers
+
+    Returns:
+        A dictionary with the absorbers's information. Keys are the THING_ID
+        associated with the DLA. Values is a tuple with its redshift and
+        column density.
+    """
+    file = open(filename)
+    absorbers = {}
+    number_absorbers = 0
+    col_names = None
+    for line in file.readlines():
+        cols = line.split()
+        if len(cols) == 0:
             continue
-        if l[0][0]=="-":continue
-        thingid = int(l[col_names.index("ThingID")])
+        if cols[0][0] == "#":
+            continue
+        if cols[0] == "ThingID":
+            col_names = cols
+            continue
+        if cols[0][0] == "-":
+            continue
+        thingid = int(cols[col_names.index("ThingID")])
         if thingid not in absorbers:
-            absorbers[thingid]=[]
-        lambda_absorber = float(l[col_names.index("lambda")])
+            absorbers[thingid] = []
+        lambda_absorber = float(cols[col_names.index("lambda")])
         absorbers[thingid].append(lambda_absorber)
-        nb_absorbers += 1
-    f.close()
+        number_absorbers += 1
+    file.close()
 
     userprint("")
-    userprint(" In catalog: {} absorbers".format(nb_absorbers) )
-    userprint(" In catalog: {} forests have absorbers".format(len(absorbers)) )
+    userprint(" In catalog: {} absorbers".format(number_absorbers))
+    userprint(" In catalog: {} forests have absorbers".format(len(absorbers)))
     userprint("")
 
     return absorbers
