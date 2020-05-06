@@ -37,7 +37,6 @@ def get_variance(var_pipe, eta, var_lss, fudge):
 
 
 class QSO(object):
-class QSO:
     """Class to represent quasar objects.
 
     Attributes:
