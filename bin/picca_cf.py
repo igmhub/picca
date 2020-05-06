@@ -127,7 +127,7 @@ if __name__ == '__main__':
 
     ### Read data 1
     data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside,
-        cf.lambda_abs, cf.alpha, cf.zref, cosmo, nspec=args.nspec,
+        cf.lambda_abs, cf.alpha, cf.zref, cosmo, max_num_spec=args.nspec,
         no_project=args.no_project, from_image=args.from_image)
     cf.npix = len(data)
     cf.data = data
@@ -149,7 +149,7 @@ if __name__ == '__main__':
             cf.lambda_abs2 = cf.lambda_abs
 
         data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2,
-            cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, nspec=args.nspec,
+            cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, max_num_spec=args.nspec,
             no_project=args.no_project, from_image=args.from_image)
         cf.data2 = data2
         cf.ndata2 = ndata2

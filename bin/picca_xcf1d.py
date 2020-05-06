@@ -107,7 +107,7 @@ if __name__ == '__main__':
     lambda_abs = constants.absorber_IGM[args.lambda_abs]
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs, args.z_evol_del, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs, args.z_evol_del, args.z_ref, cosmo=None,max_num_spec=args.nspec,no_project=args.no_project)
     xcf.dels = dels
     sys.stderr.write("\n")
     userprint("done, npix = {}".format(len(dels)))

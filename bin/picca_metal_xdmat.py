@@ -135,7 +135,7 @@ if __name__ == '__main__':
     xcf.cosmo=cosmo
 
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,\
-                            args.z_evol_del, args.z_ref, cosmo,nspec=args.nspec)
+                            args.z_evol_del, args.z_ref, cosmo,max_num_spec=args.nspec)
 
     xcf.npix = len(dels)
     xcf.dels = dels

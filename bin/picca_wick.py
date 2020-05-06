@@ -150,7 +150,7 @@ if __name__ == '__main__':
     cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read data
-    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.zref, cosmo, nspec=args.nspec)
+    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.zref, cosmo, max_num_spec=args.nspec)
     for p,datap in data.items():
         for d in datap:
             d.fname = 'D1'
@@ -217,7 +217,7 @@ if __name__ == '__main__':
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, nspec=args.nspec)
+        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, max_num_spec=args.nspec)
         for p,datap in data2.items():
             for d in datap:
                 d.fname = 'D2'
