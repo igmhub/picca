@@ -264,7 +264,11 @@ def do_ini(outdir, cf_file,fidPk):
     fout.write("mu-max = 1\n")
 
     fout.write("[model]\n")
-    fout.write("model-pk = pk_kaiser\n")
+    
+    if "0.2" in outdir or "0.3" in outdir:
+        fout.write("model-pk = pk_hcd_Rogers2018\n")
+    else:
+        fout.write("model-pk = pk_kaiser\n")
     fout.write("z evol LYA = bias_vs_z_std\n")
     fout.write("growth function = growth_factor_de\n")
     if "xcf" in cf_file:
@@ -299,8 +303,42 @@ def do_ini(outdir, cf_file,fidPk):
     if "xcf" in cf_file:
         fout.write("drp_QSO = 0. 0.1 None None free\n")
         fout.write("sigma_velo_lorentz_QSO = 5. 0.1 None None free\n")
-    fout.close()
+    
+    if "0.2" in outdir or "0.3" in outdir:
+        fout.write("bias_hcd = -1.68E-2 0.1 None 0. free\n")
+        fout.write("beta_hcd = 0.67 0.1 None None free\n")
+        fout.write("L0_hcd = 10.0 1 None None fixed\n")
+    
+    if "0.1" in outdir or "0.3" in outdir:
+        
+        fout.write("bias_eta_SiII(1260) = -0.60E-3 0.01 None None free\n")
+        fout.write("beta_SiII(1260) = 0.5 0. None None fixed\n")
+        fout.write("alpha_SiII(1260) = 1.0 0. None None fixed\n")
+        fout.write("bias_eta_SiIII(1207) = -1.74E-3 0.01 None None free\n")
+        fout.write("beta_SiIII(1207) = 0.5 0. None None fixed\n")
+        fout.write("alpha_SiIII(1207) = 1.0 0. None None fixed\n")
+        fout.write("bias_eta_SiII(1193) = -1.08E-3 0.01 None None free\n")
+        fout.write("beta_SiII(1193) = 0.5 0. None None fixed\n")
+        fout.write("alpha_SiII(1193) = 1.0 0. None None fixed\n")
+        fout.write("bias_eta_SiII(1190) = -0.95E-3 0.01 None None free\n")
+        fout.write("beta_SiII(1190) = 0.5 0. None None fixed\n")
+        fout.write("alpha_SiII(1190) = 1.0 0. None None fixed\n")
+        fout.write("bias_eta_CIV(eff) = -0.00513 0.001 None 0. free\n")
+        fout.write("beta_CIV(eff) = 0.27 0.01 None 1. fixed\n")
+        fout.write("alpha_CIV(eff) = 1. 0.01 None None fixed\n")
+        
+        fout.write("[metals]\n")
+        
+        fout.write("filename = {}\n".format(outdir+'/'+cf_file).replace('cf', 'metal_dmat').replace('-exp',''))
+        fout.write("model-pk-met = pk_kaiser\n")
+        fout.write("model-xi-met = xi\n")
+        fout.write("z evol = bias_vs_z_std\n")
+        fout.write("in tracer1 = CIV(eff) SiII(1260) SiIII(1207) SiII(1193) SiII(1190)\n")
+        fout.write("in tracer2 = CIV(eff) SiII(1260) SiIII(1207) SiII(1193) SiII(1190)\n")
 
+    
+    fout.close()
+    
     chi2_ini = outdir+"/chi2_{}".format(cf_file.replace(".fits",".ini"))
     fout = open(chi2_ini,"w")
     fout.write("[data sets]\n")
@@ -441,7 +479,7 @@ if "cf" in args.to_do:
     cf(b,time, args.zint, args.out_dir,
             email=args.email,fidOm=args.fid_Om,fidPk=args.fid_Pk, fidOr=args.fid_Or)
 
-    time = "00:01:00"
+    time = "01:00:00"
     if args.debug:
         time = time_debug
     dmat(b,time, args.zint, args.out_dir,
@@ -454,7 +492,7 @@ if "xcf" in args.to_do:
     xcf(b,time, args.drq, args.zint, args.out_dir,
             email=args.email,fidOm=args.fid_Om, fidPk=args.fid_Pk, fidOr=args.fid_Or)
 
-    time = "00:01:00"
+    time = "01:00:00"
     if args.debug:
         time = time_debug
     xdmat(b,time, args.drq, args.zint, args.out_dir,
