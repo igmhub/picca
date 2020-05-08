@@ -523,7 +523,7 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
             userprint(("ERROR: try running with --bestobs option (but you will "
                        "lose reobservations)"))
             for filename in filenames:
-                userprint("found: ",filename)
+                userprint("found: ", filename)
             sys.exit(1)
         if len(filenames) == 0:
             userprint(("ERROR: can't find required spAll file in "
@@ -532,14 +532,14 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
                        "will lose reobservations)"))
             sys.exit(1)
 
-        spAll = fitsio.FITS(filenames[0])
+        spall = fitsio.FITS(filenames[0])
         userprint("INFO: reading spAll from {}".format(filenames[0]))
-        thingid_spall = spAll[1]["THING_ID"][:]
-        plate_spall = spAll[1]["PLATE"][:]
-        mjd_spall = spAll[1]["MJD"][:]
-        fiberid_spall = spAll[1]["FIBERID"][:]
-        quality_spall = spAll[1]["PLATEQUALITY"][:].astype(str)
-        z_warn_spall = spAll[1]["ZWARNING"][:]
+        thingid_spall = spall[1]["THING_ID"][:]
+        plate_spall = spall[1]["PLATE"][:]
+        mjd_spall = spall[1]["MJD"][:]
+        fiberid_spall = spall[1]["FIBERID"][:]
+        quality_spall = spall[1]["PLATEQUALITY"][:].astype(str)
+        z_warn_spall = spall[1]["ZWARNING"][:]
 
         w = np.in1d(thingid_spall, thingid) & (quality_spall == "good")
         ## Removing spectra with the following ZWARNING bits set:
@@ -547,13 +547,13 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
         ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
         for z_warn_bit in [0, 1, 7, 8, 9]:
             w &= (z_warn_spall & 2**z_warn_bit) == 0
-        userprint("INFO: # unique objs: ",len(thingid))
-        userprint("INFO: # spectra: ",w.sum())
+        userprint("INFO: # unique objs: ", len(thingid))
+        userprint("INFO: # spectra: ", w.sum())
         thingid = thingid_spall[w]
         plate = plate_spall[w]
         mjd = mjd_spall[w]
         fiberid = fiberid_spall[w]
-        spAll.close()
+        spall.close()
 
     ## to simplify, use a list of all metadata
     all_metadata = []
@@ -589,14 +589,12 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
 
     for t in t_list:
         deltas = None
-        for meta in thingids[t]:
-            r,d,z,p,m,f = meta.ra,meta.dec,meta.z_qso,meta.plate,meta.mjd,meta.fiberid
+        for metadata in thingids[t]:
+            filename = in_dir + ("/{}/{}-{}-{}-{:04d}"
+                                 ".fits").format(metadata.plate, mode,
+                                                 metadata.plate, metadata.mjd,
+                                                 metadata.fiberid)
             try:
-                filename = in_dir + ("/{}/{}-{}-{}-{:04d}"
-                                     ".fits").format(metadata.plate, mode,
-                                                     metadata.plate,
-                                                     metadata.mjd,
-                                                     metadata.fiberid,)
                 hdul = fitsio.FITS(filename)
             except IOError:
                 log_file.write("error reading {}\n".format(filename))
@@ -604,13 +602,13 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
             log_file.write("{} read\n".format(filename))
             log_lambda = hdul[1]["loglam"][:]
             flux = hdul[1]["flux"][:]
-            ivar = hdul[1]["ivar"][:]*(hdul[1]["and_mask"][:]==0)
+            ivar = hdul[1]["ivar"][:]*(hdul[1]["and_mask"][:] == 0)
 
             if pk1d is not None:
                 # compute difference between exposure
                 exposures_diff = exp_diff(hdul, log_lambda)
                 # compute spectral resolution
-                wdisp =  hdul[1]["wdisp"][:]
+                wdisp = hdul[1]["wdisp"][:]
                 reso = spectral_resolution(wdisp, True, metadata.fiberid,
                                            log_lambda)
             else:
