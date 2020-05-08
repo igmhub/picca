@@ -5,7 +5,7 @@ from picca import constants
 from picca.utils import userprint
 
 
-def exp_diff(file,log_lambda) :
+def exp_diff(file, log_lambda):
 
     nexp_per_col = file[0].read_header()['NEXP']//2
     fltotodd  = np.zeros(log_lambda.size)

@@ -599,9 +599,9 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
                                                      metadata.fiberid,)
                 hdul = fitsio.FITS(filename)
             except IOError:
-                log_file.write("error reading {}\n".format(fin))
+                log_file.write("error reading {}\n".format(filename))
                 continue
-            log_file.write("{} read\n".format(fin))
+            log_file.write("{} read\n".format(filename))
             log_lambda = hdul[1]["loglam"][:]
             flux = hdul[1]["flux"][:]
             ivar = hdul[1]["ivar"][:]*(hdul[1]["and_mask"][:]==0)
