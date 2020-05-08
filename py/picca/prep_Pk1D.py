@@ -80,23 +80,44 @@ def exp_diff(hdul, log_lambda):
     return exposures_diff
 
 
-def spectral_resolution(wdisp,with_correction=None,fiber=None,log_lambda=None) :
+def spectral_resolution(wdisp, with_correction=False, fiberid=None,
+                        log_lambda=None):
+    # TODO: fix docstring
+    """Computes the spectral resolution
 
-    reso = wdisp*constants.speed_light/1000.*1.0e-4*sp.log(10.)
+    Args:
+        wdisp: array of floats
+            ?
+        with_correction: bool - default: False
+            If True, applies the correction to the pipeline noise described
+            in section 2.4.3 of Palanque-Delabrouille et al. 2013
+        fiberid: int or None - default: None
+            Fiberid of the observations
+        log_lambda: array or None - default: None
+            Logarithm of the wavelength (in Angstroms)
+    Returns:
+        The spectral resolution
+    """
+    reso = wdisp*constants.speed_light/1000.*1.0e-4*np.log(10.)
 
-    if (with_correction):
-        wave = sp.power(10.,log_lambda)
-        corrPlateau = 1.267 - 0.000142716*wave + 1.9068e-08*wave*wave;
-        corrPlateau[wave>6000.0] = 1.097
+    if with_correction:
+        lambda_ = np.power(10., log_lambda)
+        # compute the wavelength correction
+        correction = 1.267 - 0.000142716*lambda_ + 1.9068e-08*lambda_*lambda_
+        correction[lambda_ > 6000.0] = 1.097
 
-        fibnum = fiber%500
-        if(fibnum<100):
-            corr = 1. + (corrPlateau-1)*.25 + (corrPlateau-1)*.75*(fibnum)/100.
-        elif (fibnum>400):
-            corr = 1. + (corrPlateau-1)*.25 + (corrPlateau-1)*.75*(500-fibnum)/100.
-        else:
-            corr = corrPlateau
-        reso *= corr
+        # add the fiberid correction
+        fiberid = fiberid%500
+        if fiberid < 100:
+            correction = (1. + (correction-1)*.25 +
+                          (correction-1)*.75*(fiberid)/100.)
+        elif fiberid > 400:
+            correction = (1. + (correction-1)*.25 +
+                          (correction-1)*.75*(500-fiberid)/100.)
+
+        # apply the correction
+        reso *= correction
+
     return reso
 
 def spectral_resolution_desi(reso_matrix, log_lambda) :
