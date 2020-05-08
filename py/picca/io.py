@@ -515,46 +515,7 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
     ## then replace thingid, plate, mjd, fiberid
     ## by what's available in spAll
     if not best_obs:
-        folder = in_dir.replace("spectra/", "")
-        folder = folder.replace("lite", "").replace("full", "")
-        filenames = glob.glob(folder + "/spAll-*.fits")
-
-        if len(filenames) > 1:
-            userprint("ERROR: found multiple spAll files")
-            userprint(("ERROR: try running with --bestobs option (but you will "
-                       "lose reobservations)"))
-            for filename in filenames:
-                userprint("found: ", filename)
-            sys.exit(1)
-        if len(filenames) == 0:
-            userprint(("ERROR: can't find required spAll file in "
-                       "{}").format(in_dir))
-            userprint(("ERROR: try runnint with --best-obs option (but you "
-                       "will lose reobservations)"))
-            sys.exit(1)
-
-        spall = fitsio.FITS(filenames[0])
-        userprint("INFO: reading spAll from {}".format(filenames[0]))
-        thingid_spall = spall[1]["THING_ID"][:]
-        plate_spall = spall[1]["PLATE"][:]
-        mjd_spall = spall[1]["MJD"][:]
-        fiberid_spall = spall[1]["FIBERID"][:]
-        quality_spall = spall[1]["PLATEQUALITY"][:].astype(str)
-        z_warn_spall = spall[1]["ZWARNING"][:]
-
-        w = np.in1d(thingid_spall, thingid) & (quality_spall == "good")
-        ## Removing spectra with the following ZWARNING bits set:
-        ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
-        ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
-        for z_warn_bit in [0, 1, 7, 8, 9]:
-            w &= (z_warn_spall & 2**z_warn_bit) == 0
-        userprint("INFO: # unique objs: ", len(thingid))
-        userprint("INFO: # spectra: ", w.sum())
-        thingid = thingid_spall[w]
-        plate = plate_spall[w]
-        mjd = mjd_spall[w]
-        fiberid = fiberid_spall[w]
-        spall.close()
+        thingid, plate, mjd, fiberid = read_spall(in_dir, thingid)
 
     ## to simplify, use a list of all metadata
     all_metadata = []
@@ -929,59 +890,50 @@ def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
 
     return data
 
-def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order, log_file=None, best_obs=False):
+def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
+                      order, log_file=None, best_obs=False):
+    """Reads the spectra and formats its data as Forest instances.
 
-    drq_dict = {t:(r,d,z) for t,r,d,z in zip(thingid,ra,dec,z_qso)}
+    Args:
+        in_dir: str
+            Directory to spectra files
+        thingid: array of int
+            Thingid of the observations
+        ra: array of float
+            Right-ascension of the quasars (in radians)
+        dec: array of float
+            Declination of the quasars (in radians)
+        z_qso: array of float
+            Redshift of the quasars
+        plate: array of integer
+            Plate number of the observations
+        mjd: array of integer
+            Modified Julian Date of the observations
+        fiberid: array of integer
+            Fiberid of the observations
+        order: 0 or 1 - default: 1
+            Order of the log10(lambda) polynomial for the continuum fit
+        log_file: _io.TextIOWrapper or None - default: None
+            Opened file to print log
+        best_obs: bool - default: False
+            If set, reads only the best observation for objects with repeated
+            observations
+
+    Returns:
+        List of read spectra for all the healpixs
+    """
+    drq_dict = {t: (r, d, z) for t, r, d, z in zip(thingid, ra, dec, z_qso)}
 
     ## if using multiple observations,
     ## then replace thingid, plate, mjd, fiberid
     ## by what's available in spAll
-
     if not best_obs:
-        fi = glob.glob(in_dir+"/spAll-*.fits")
-        if len(fi) > 1:
-            userprint("ERROR: found multiple spAll files")
-            userprint("ERROR: try running with --bestobs option (but you will lose reobservations)")
-            for f in fi:
-                userprint("found: ",fi)
-            sys.exit(1)
-        if len(fi) == 0:
-            userprint("ERROR: can't find required spAll file in {}".format(in_dir))
-            userprint("ERROR: try runnint with --best-obs option (but you will lose reobservations)")
-            sys.exit(1)
-
-        spAll = fitsio.FITS(fi[0])
-        userprint("INFO: reading spAll from {}".format(fi[0]))
-        thingid_spall = spAll[1]["THING_ID"][:]
-        plate_spall = spAll[1]["PLATE"][:]
-        mjd_spall = spAll[1]["MJD"][:]
-        fiberid_spall = spAll[1]["FIBERID"][:]
-        qual_spall = spAll[1]["PLATEQUALITY"][:].astype(str)
-        zwarn_spall = spAll[1]["ZWARNING"][:]
-
-        w = sp.in1d(thingid_spall, thingid)
-        userprint("INFO: Found {} spectra with required THING_ID".format(w.sum()))
-        w &= qual_spall == "good"
-        userprint("INFO: Found {} spectra with 'good' plate".format(w.sum()))
-        ## Removing spectra with the following ZWARNING bits set:
-        ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
-        ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
-        bad_zwarnbit = {0:'SKY',1:'LITTLE_COVERAGE',7:'UNPLUGGED',8:'BAD_TARGET',9:'NODATA'}
-        for zwarnbit,zwarnbit_str in bad_zwarnbit.items():
-            w &= (zwarn_spall&2**zwarnbit)==0
-            userprint("INFO: Found {} spectra without {} bit set: {}".format(w.sum(), zwarnbit, zwarnbit_str))
-        userprint("INFO: # unique objs: ",len(thingid))
-        userprint("INFO: # spectra: ",w.sum())
-        thingid = thingid_spall[w]
-        plate = plate_spall[w]
-        mjd = mjd_spall[w]
-        fiberid = fiberid_spall[w]
-        spAll.close()
+        thingid, plate, mjd, fiberid = read_spall(in_dir, thingid)
 
     ## to simplify, use a list of all metadata
-    allmeta = []
-    for t,p,m,f in zip(thingid,plate,mjd,fiberid):
-        r,d,z = drq_dict[t]
+    all_metadata = []
+    for t, p, m, f in zip(thingid, plate, mjd, fiberid):
+        r, d, z = drq_dict[t]
         meta = Metadata()
         meta.thingid = t
         meta.ra = r
@@ -991,57 +943,61 @@ def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, orde
         meta.mjd = m
         meta.fiberid = f
         meta.order = order
-        allmeta.append(meta)
+        all_metadata.append(meta)
 
     pix_data = {}
     platemjd = {}
-    for p,m,meta in zip(plate,mjd,allmeta):
-        pm = (p,m)
-        if not pm in platemjd:
-            platemjd[pm] = []
-        platemjd[pm].append(meta)
-
+    for p, m, metadata in zip(plate, mjd, all_metadata):
+        if (p, m) not in platemjd:
+            platemjd[(p, m)] = []
+        platemjd[(p, m)].append(metadata)
 
     userprint("reading {} plates".format(len(platemjd)))
 
-    for pm in platemjd:
-        p,m = pm
-        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(str(p).zfill(4),m)
+    for key in platemjd:
+        p, m = key
+        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(str(p).zfill(4),
+                                                              m)
 
         try:
             hdul = fitsio.FITS(spplate)
-            head0 = hdul[0].read_header()
+            header = hdul[0].read_header()
         except IOError:
             log_file.write("error reading {}\n".format(spplate))
             continue
-        t0 = time.time()
 
-        coeff0 = head0["COEFF0"]
-        coeff1 = head0["COEFF1"]
+        coeff0 = header["COEFF0"]
+        coeff1 = header["COEFF1"]
 
         flux = hdul[0].read()
-        ivar = hdul[1].read()*(hdul[2].read()==0)
-        llam = coeff0 + coeff1*np.arange(flux.shape[1])
+        ivar = hdul[1].read()*(hdul[2].read() == 0)
+        log_lambda = coeff0 + coeff1*np.arange(flux.shape[1])
 
         ## now convert all those fluxes into forest objects
-        for meta in platemjd[pm]:
-            t = meta.thingid
-            r = meta.ra
-            d = meta.dec
-            z = meta.z_qso
-            f = meta.fiberid
-            o = meta.order
+        for metadata in platemjd[(p, m)]:
+            t = metadata.thingid
+            r = metadata.ra
+            d = metadata.dec
+            z = metadata.z_qso
+            f = metadata.fiberid
+            order = metadata.order
 
-            i = meta.fiberid-1
-            d = Forest(llam,flux[i],ivar[i], t, r, d, z, p, m, f, o)
+            i = metadata.fiberid-1
             if t in pix_data:
-                pix_data[t] += d
+                pix_data[t] += Forest(log_lambda, flux[i], ivar[i], t, r, d, z,
+                                      p, m, f, order)
             else:
-                pix_data[t] = d
+                pix_data[t] = Forest(log_lambda, flux[i], ivar[i], t, r, d, z,
+                                     p, m, f, order)
             if log_file is not None:
                 log_file.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
-        nread = len(platemjd[pm])
-        userprint("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, os.path.basename(spplate), (time.time()-t0)/(nread+1e-3), len(pix_data), len(thingid)))
+        num_read = len(platemjd[(p, m)])
+        userprint(("INFO: read {} from {} in {} per spec. Progress: {} "
+                   "of {} \n").format(num_read,
+                                      os.path.basename(spplate),
+                                      (time.time() - 0)/(num_read + 1e-3),
+                                      len(pix_data),
+                                      len(thingid)))
         hdul.close()
 
     data = list(pix_data.values())
@@ -1242,3 +1198,63 @@ def read_objects(drq,nside,z_min,z_max,alpha,zref,cosmo,keep_bal=True):
     userprint("\n")
 
     return objs,z_qso.min()
+
+def read_spall(in_dir, thingid):
+    """Loads thingid, plate, mjd, and fiberid from spAll file
+
+    Args:
+        in_dir: str
+            Directory to spectra files
+        thingid: array of int
+            Thingid of the observations
+    Returns:
+        Arrays with thingid, plate, mjd, and fiberid
+    """
+    folder = in_dir.replace("spectra/", "")
+    folder = folder.replace("lite", "").replace("full", "")
+    filenames = glob.glob(folder + "/spAll-*.fits")
+
+    if len(filenames) > 1:
+        userprint("ERROR: found multiple spAll files")
+        userprint(("ERROR: try running with --bestobs option (but you will "
+                   "lose reobservations)"))
+        for filename in filenames:
+            userprint("found: ", filename)
+        sys.exit(1)
+    if len(filenames) == 0:
+        userprint(("ERROR: can't find required spAll file in "
+                   "{}").format(in_dir))
+        userprint(("ERROR: try runnint with --best-obs option (but you "
+                   "will lose reobservations)"))
+        sys.exit(1)
+
+    spall = fitsio.FITS(filenames[0])
+    userprint("INFO: reading spAll from {}".format(filenames[0]))
+    thingid_spall = spall[1]["THING_ID"][:]
+    plate_spall = spall[1]["PLATE"][:]
+    mjd_spall = spall[1]["MJD"][:]
+    fiberid_spall = spall[1]["FIBERID"][:]
+    quality_spall = spall[1]["PLATEQUALITY"][:].astype(str)
+    z_warn_spall = spall[1]["ZWARNING"][:]
+
+    w = np.in1d(thingid_spall, thingid)
+    userprint("INFO: Found {} spectra with required THING_ID".format(w.sum()))
+    w &= quality_spall == "good"
+    userprint("INFO: Found {} spectra with 'good' plate".format(w.sum()))
+    ## Removing spectra with the following ZWARNING bits set:
+    ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
+    ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
+    bad_z_warn_bit = {0: 'SKY',
+                      1: 'LITTLE_COVERAGE',
+                      7: 'UNPLUGGED',
+                      8: 'BAD_TARGET',
+                      9: 'NODATA'}
+    for z_warn_bit, z_warn_bit_name in bad_z_warn_bit.items():
+        w &= z_warn_spall & 2**z_warn_bit
+        userprint(("INFO: Found {} spectra without {} bit set: "
+                   "{}").format(w.sum(), z_warn_bit, z_warn_bit_name))
+    userprint("INFO: # unique objs: ", len(thingid))
+    userprint("INFO: # spectra: ", w.sum())
+    spall.close()
+
+    return thingid_spall[w], plate_spall[w], mjd_spall[w], fiberid_spall[w]
