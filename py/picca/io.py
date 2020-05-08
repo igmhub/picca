@@ -358,9 +358,8 @@ def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
 
         if mode == "spcframe":
             pix_data = read_from_spcframe(in_dir, thingid, ra, dec, z_qso,
-                                          plate, mjd, fiberid, order, mode=mode,
+                                          plate, mjd, fiberid, order,
                                           log_file=log_file,
-                                          best_obs=best_obs,
                                           single_exp=single_exp)
         elif mode == "spplate":
             pix_data = read_from_spplate(in_dir, thingid, ra, dec, z_qso,
@@ -722,8 +721,6 @@ def read_from_pix(in_dir, healpix, thingid, ra, dec, z_qso, plate, mjd, fiberid,
             Fiberid of the observations
         order: 0 or 1 - default: 1
             Order of the log10(lambda) polynomial for the continuum fit
-        mode: str
-            One of 'spec' or 'corrected-spec'. Open mode of the spectra files
         log_file: _io.TextIOWrapper or None - default: None
             Opened file to print log
         pk1d: str or None - default: None
@@ -782,110 +779,154 @@ def read_from_pix(in_dir, healpix, thingid, ra, dec, z_qso, plate, mjd, fiberid,
 
     return pix_data
 
-def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order, mode=None, log_file=None, best_obs=False, single_exp = False):
+def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
+                       order, log_file=None, single_exp=False):
+    """Reads the spectra and formats its data as Forest instances.
 
-    if not best_obs:
-        userprint("ERROR: multiple observations not (yet) compatible with spframe option")
-        userprint("ERROR: rerun with the --best-obs option")
+    Args:
+        in_dir: str
+            Directory to spectra files
+        thingid: array of int
+            Thingid of the observations
+        ra: array of float
+            Right-ascension of the quasars (in radians)
+        dec: array of float
+            Declination of the quasars (in radians)
+        z_qso: array of float
+            Redshift of the quasars
+        plate: array of integer
+            Plate number of the observations
+        mjd: array of integer
+            Modified Julian Date of the observations
+        fiberid: array of integer
+            Fiberid of the observations
+        order: 0 or 1 - default: 1
+            Order of the log10(lambda) polynomial for the continuum fit
+        log_file: _io.TextIOWrapper or None - default: None
+            Opened file to print log
+        single_exp: bool - default: False
+            If set, reads only one observation for objects with repeated
+            observations (chosen randomly)
+
+    Returns:
+        List of read spectra for all the healpixs
+    """
+    if not single_exp:
+        userprint(("ERROR: multiple observations not (yet) compatible with "
+                   "spframe option"))
+        userprint("ERROR: rerun with the --single-exp option")
         sys.exit(1)
 
-    allmeta = []
-    for t,r,d,z,p,m,f in zip(thingid,ra,dec,z_qso,plate,mjd,fiberid):
-        meta = Metadata()
-        meta.thingid = t
-        meta.ra = r
-        meta.dec = d
-        meta.z_qso = z
-        meta.plate = p
-        meta.mjd = m
-        meta.fiberid = f
-        meta.order = order
-        allmeta.append(meta)
-    platemjd = {}
-    for i in range(len(thingid)):
-        pm = (plate[i], mjd[i])
-        if not pm in platemjd:
-            platemjd[pm] = []
-        platemjd[pm].append(allmeta[i])
+    # store all the metadata in a single variable
+    all_metadata = []
+    for t, r, d, z, p, m, f in zip(thingid, ra, dec, z_qso, plate, mjd,
+                                   fiberid):
+        metadata = Metadata()
+        metadata.thingid = t
+        metadata.ra = r
+        metadata.dec = d
+        metadata.z_qso = z
+        metadata.plate = p
+        metadata.mjd = m
+        metadata.fiberid = f
+        metadata.order = order
+        all_metadata.append(metadata)
 
-    pix_data={}
+    # group the metadata with respect to their plate and mjd
+    platemjd = {}
+    for index in range(len(thingid)):
+        if (plate[index], mjd[index]) not in platemjd:
+            platemjd[(plate[index], mjd[index])] = []
+        platemjd[(plate[index], mjd[index])].append(all_metadata[index])
+
+    pix_data = {}
     userprint("reading {} plates".format(len(platemjd)))
 
-    for pm in platemjd:
-        p,m = pm
+    for key in platemjd:
+        p, m = key
+        # list all the exposures
         exps = []
-        spplate = in_dir+"/{0}/spPlate-{0}-{1}.fits".format(p,m)
-        userprint("INFO: reading plate {}".format(spplate))
-        hdul=fitsio.FITS(spplate)
-        head = hdul[0].read_header()
+        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(p, m)
+        userprint("INFO: reading file {}".format(spplate))
+        hdul = fitsio.FITS(spplate)
+        header = hdul[0].read_header()
         hdul.close()
-        iexp = 1
-        for c in ["B1", "B2", "R1", "R2"]:
-            card = "NEXP_{}".format(c)
-            if card in head:
-                nexp = head["NEXP_{}".format(c)]
+
+        for card_suffix in ["B1", "B2", "R1", "R2"]:
+            card = "NEXP_{}".format(card_suffix)
+            if card in header:
+                num_exp = header["NEXP_{}".format(card_suffix)]
             else:
                 continue
-            for _ in range(nexp):
-                str_iexp = str(iexp)
-                if iexp<10:
-                    str_iexp = '0'+str_iexp
-
-                card = "EXPID"+str_iexp
-                if not card in head:
+            for index_exp in range(1, num_exp + 1):
+                card = "EXPID{:02d}".format(index_exp)
+                if not card in header:
                     continue
+                exps.append(header[card][:11])
 
-                exps.append(head["EXPID"+str_iexp][:11])
-                iexp += 1
-
-        userprint("INFO: found {} exposures in plate {}-{}".format(len(exps), p,m))
+        userprint("INFO: found {} exposures in plate {}-{}".format(len(exps),
+                                                                   p, m))
 
         if len(exps) == 0:
             continue
 
-        exp_num = [e[3:] for e in exps]
-        exp_num = np.unique(exp_num)
-        sp.random.shuffle(exp_num)
-        exp_num = exp_num[0]
+        # select a single exposure randomly
+        selected_exps = [exp[3:] for exp in exps]
+        selected_exps = np.unique(selected_exps)
+        np.random.shuffle(selected_exps)
+        selected_exps = selected_exps[0]
+
         for exp in exps:
             if single_exp:
-                if not exp_num in exp:
+                # if the exposure is not selected, ignore it
+                if not selected_exps in exp:
                     continue
             t0 = time.time()
-            ## find the spectrograph number:
+            # find the spectrograph number
             spectro = int(exp[1])
-            assert spectro == 1 or spectro == 2
+            assert spectro in [1, 2]
 
-            spcframe = fitsio.FITS(in_dir+"/{}/spCFrame-{}.fits".format(p, exp))
+            spcframe = fitsio.FITS(in_dir +
+                                   "/{}/spCFrame-{}.fits".format(p, exp))
 
             flux = spcframe[0].read()
-            ivar = spcframe[1].read()*(spcframe[2].read()==0)
-            llam = spcframe[3].read()
+            ivar = spcframe[1].read()*(spcframe[2].read() == 0)
+            log_lambda = spcframe[3].read()
 
             ## now convert all those fluxes into forest objects
-            for meta in platemjd[pm]:
-                if spectro == 1 and meta.fiberid > 500: continue
-                if spectro == 2 and meta.fiberid <= 500: continue
-                index =(meta.fiberid-1)%500
-                t = meta.thingid
-                r = meta.ra
-                d = meta.dec
-                z = meta.z_qso
-                f = meta.fiberid
-                order = meta.order
-                d = Forest(llam[index],flux[index],ivar[index], t, r, d, z, p, m, f, order)
+            for metadata in platemjd[key]:
+                if spectro == 1 and metadata.fiberid > 500:
+                    continue
+                if spectro == 2 and metadata.fiberid <= 500:
+                    continue
+                index = (metadata.fiberid - 1) % 500
+                t = metadata.thingid
+                r = metadata.ra
+                d = metadata.dec
+                z = metadata.z_qso
+                f = metadata.fiberid
+                order = metadata.order
                 if t in pix_data:
-                    pix_data[t] += d
+                    pix_data[t] += Forest(log_lambda[index], flux[index],
+                                          ivar[index], t, r, d, z, p, m, f,
+                                          order)
                 else:
-                    pix_data[t] = d
+                    pix_data[t] = Forest(log_lambda[index], flux[index],
+                                         ivar[index], t, r, d, z, p, m, f,
+                                         order)
                 if log_file is not None:
-                    log_file.write("{} read from exp {} and mjd {}\n".format(t, exp, m))
-            nread = len(platemjd[pm])
+                    log_file.write(("{} read from exp {} and"
+                                    " mjd {}\n").format(t, exp, m))
+            num_read = len(platemjd[key])
 
-            userprint("INFO: read {} from {} in {} per spec. Progress: {} of {} \n".format(nread, exp, (time.time()-t0)/(nread+1e-3), len(pix_data), len(thingid)))
+            userprint(("INFO: read {} from {} in {} per spec. Progress: "
+                       "{} of {} \n").format(num_read, exp,
+                                             (time.time()-t0)/(num_read+1e-3),
+                                             len(pix_data), len(thingid)))
             spcframe.close()
 
     data = list(pix_data.values())
+
     return data
 
 def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order, log_file=None, best_obs=False):
