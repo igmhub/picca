@@ -1,3 +1,12 @@
+"""This module defines a set of functions to manage specifics of Pk1D analysis
+when computing the deltas.
+
+This module provides three functions:
+    - exp_diff
+    - spectral_resolution
+    - spectral_resolution_desi
+See the respective documentation for details
+"""
 import numpy as np
 import scipy as sp
 
@@ -5,9 +14,19 @@ from picca import constants
 from picca.utils import userprint
 
 
-def exp_diff(file, log_lambda):
+def exp_diff(hdul, log_lambda):
+    """Computes the difference between exposures.
 
-    nexp_per_col = file[0].read_header()['NEXP']//2
+    Args:
+        hdul: fitsio.fitslib.FITS
+            Header Data Unit List opened by fitsio
+        log_lambda: array of floats
+            Array containing the logarithm of the wavelengths (in Angs)
+
+    Returns:
+        The difference between exposures
+    """
+    nexp_per_col = hdul[0].read_header()['NEXP']//2
     fltotodd  = np.zeros(log_lambda.size)
     ivtotodd  = np.zeros(log_lambda.size)
     fltoteven = np.zeros(log_lambda.size)
@@ -18,34 +37,37 @@ def exp_diff(file, log_lambda):
 
     for iexp in range (nexp_per_col) :
         for icol in range (2):
-            llexp = file[4+iexp+icol*nexp_per_col]["loglam"][:]
-            flexp = file[4+iexp+icol*nexp_per_col]["flux"][:]
-            ivexp = file[4+iexp+icol*nexp_per_col]["ivar"][:]
-            mask  = file[4+iexp+icol*nexp_per_col]["mask"][:]
-            bins = sp.searchsorted(log_lambda,llexp)
+            llexp = hdul[4 + iexp + icol*nexp_per_col]["loglam"][:]
+            flexp = hdul[4 + iexp + icol*nexp_per_col]["flux"][:]
+            ivexp = hdul[4 + iexp + icol*nexp_per_col]["ivar"][:]
+            mask  = hdul[4 + iexp + icol*nexp_per_col]["mask"][:]
+            bins = np.searchsorted(log_lambda, llexp)
 
             # exclude masks 25 (COMBINEREJ), 23 (BRIGHTSKY)?
             if iexp%2 == 1 :
-                civodd=sp.bincount(bins,weights=ivexp*(mask&2**25==0))
-                cflodd=sp.bincount(bins,weights=ivexp*flexp*(mask&2**25==0))
+                civodd = np.bincount(bins, weights=ivexp*(mask & 2**25 == 0))
+                cflodd = np.bincount(bins,
+                                     weights=ivexp*flexp*(mask & 2**25 == 0))
                 fltotodd[:civodd.size-1] += cflodd[:-1]
                 ivtotodd[:civodd.size-1] += civodd[:-1]
             else :
-                civeven=sp.bincount(bins,weights=ivexp*(mask&2**25==0))
-                cfleven=sp.bincount(bins,weights=ivexp*flexp*(mask&2**25==0))
+                civeven = np.bincount(bins, weights=ivexp*(mask & 2**25 == 0))
+                cfleven = np.bincount(bins,
+                                      weights=ivexp*flexp*(mask & 2**25 == 0))
                 fltoteven[:civeven.size-1] += cfleven[:-1]
                 ivtoteven[:civeven.size-1] += civeven[:-1]
 
-    w=ivtotodd>0
-    fltotodd[w]/=ivtotodd[w]
-    w=ivtoteven>0
-    fltoteven[w]/=ivtoteven[w]
+    w = ivtotodd > 0
+    fltotodd[w] /= ivtotodd[w]
+    w = ivtoteven > 0
+    fltoteven[w] /= ivtoteven[w]
 
     alpha = 1
     if (nexp_per_col%2 == 1) :
-        n_even = (nexp_per_col-1)//2
-        alpha = sp.sqrt(4.*n_even*(n_even+1))/nexp_per_col
-    exposures_diff = 0.5 * (fltoteven-fltotodd) * alpha ### CHECK THE * alpha (Nathalie)
+        n_even = (nexp_per_col - 1)//2
+        alpha = np.sqrt(4.*n_even*(n_even + 1))/nexp_per_col
+    # TODO: CHECK THE * alpha (Nathalie)
+    exposures_diff = 0.5 * (fltoteven - fltotodd) * alpha
 
     return exposures_diff
 

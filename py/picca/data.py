@@ -20,14 +20,14 @@ def get_variance(var_pipe, eta, var_lss, fudge):
     variance, and a fudge contribution.
 
     Args:
-        var_pipe: array
+        var_pipe: array of floats
             Pipeline variance
-        eta: array
+        eta: array of floats
             Correction factor to the contribution of the pipeline estimate of
             the instrumental noise to the variance.
-        var_lss: array
+        var_lss: array of floats
             Pixel variance due to the Large Scale Strucure
-        fudge: array
+        fudge: array of floats
             Fudge contribution to the pixel variance
 
     Returns:
@@ -816,7 +816,7 @@ class Forest(QSO):
                     Minimum logarithm of the wavelength (in Angs)
                 log_lambda_max: float
                     Minimum logarithm of the wavelength (in Angs)
-                mean_cont: array
+                mean_cont: array of floats
                     Mean continuum
             """
             line = (p1*(self.log_lambda - log_lambda_min)/
@@ -834,7 +834,7 @@ class Forest(QSO):
                     Zero point of the linear function (see function model above)
 
             Global args (defined only in the scope of function cont_fit)
-                eta: array
+                eta: array of floats
                     Correction factor to the contribution of the pipeline
                     estimate of the instrumental noise to the variance.
 

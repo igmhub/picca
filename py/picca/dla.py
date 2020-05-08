@@ -17,7 +17,7 @@ class DLA:
             Redshift of the absorption
         nhi: float
             DLA column density in log10(cm^-2)
-        transmission: array
+        transmission: array of floats
             Decrease of the transmitted flux due to the presence of a DLA
 
     Methods:
@@ -44,7 +44,7 @@ class DLA:
         """Computes the absorption profile for Lyman-alpha absorption.
 
         Args:
-            lambda_: array
+            lambda_: array of floats
                 Wavelength (in Angs)
             z_abs: float
                 Redshift of the absorption
@@ -63,7 +63,7 @@ class DLA:
         """Computes the optical depth for Lyman-alpha absorption.
 
         Args:
-            lambda_: array
+            lambda_: array of floats
                 Wavelength (in Angs)
             z_abs: float
                 Redshift of the absorption
@@ -103,7 +103,7 @@ class DLA:
         """Computes the absorption profile for Lyman-beta absorption.
 
         Args:
-            lambda_: array
+            lambda_: array of floats
                 Wavelength (in Angs)
             z_abs: float
                 Redshift of the absorption
@@ -120,7 +120,7 @@ class DLA:
         """Computes the optical depth for Lyman-beta absorption.
 
         Args:
-            lambda_: array
+            lambda_: array of floats
                 Wavelength (in Angs)
             z_abs: float
                 Redshift of the absorption
@@ -152,10 +152,10 @@ class DLA:
         """ Computes the classical Voigt function
 
         Args:
-            a_voight: array
+            a_voight: array of floats
             Voigt damping parameter.
 
-            u_voight: array
+            u_voight: array of floats
             Dimensionless frequency offset in Doppler widths.
 
         Returns:

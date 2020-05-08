@@ -442,9 +442,9 @@ def find_nside(ra, dec, log_file):
     """Determines nside such that there are 1000 objs per pixel on average.
 
     Args:
-        ra: array
+        ra: array of floats
             The right ascension of the quasars (in radians)
-        dec: array
+        dec: array of floats
             The declination of the quasars (in radians)
         log_file: _io.TextIOWrapper or None - default: None
             Opened file to print log
