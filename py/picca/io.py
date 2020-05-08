@@ -7,7 +7,7 @@ This module provides a class (Metadata) and several functions:
     - read_dust_map
     - read_data
     - read_from_spec
-    - read_from_mock_1D
+    - read_from_mock_1d
     - read_from_pix
     - read_from_spcframe
     - read_from_spplate
@@ -419,9 +419,9 @@ def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
                 read_time = time.time() - t0
             elif mode == "spec-mock-1D":
                 t0 = time.time()
-                pix_data = read_from_mock_1D(in_dir, thingid[w], ra[w], dec[w],
+                pix_data = read_from_mock_1d(in_dir, thingid[w], ra[w], dec[w],
                                              z_qso[w], plate[w], mjd[w],
-                                             fiberid[w], order, mode=mode,
+                                             fiberid[w], order,
                                              log_file=log_file)
                 read_time = time.time() - t0
 
@@ -560,12 +560,12 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
     ## to simplify, use a list of all metadata
     all_metadata = []
     ## Used to preserve original order and pass unit tests.
-    t_list = []
-    t_set = set()
+    thingid_list = []
+    thingid_set = set()
     for t, p, m, f in zip(thingid, plate, mjd, fiberid):
-        if t not in t_set:
-            t_list.append(t)
-            t_set.add(t)
+        if t not in thingid_set:
+            thingid_list.append(t)
+            thingid_set.add(t)
         r, d, z = drq_dict[t]
         metadata = Metadata()
         metadata.thingid = t
@@ -589,7 +589,7 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
 
     userprint("reading {} thingids".format(len(thingids)))
 
-    for t in t_list:
+    for t in thingid_list:
         deltas = None
         for metadata in thingids[t]:
             filename = in_dir + ("/{}/{}-{}-{}-{:04d}"
@@ -633,8 +633,8 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
 
     return pix_data
 
-def read_from_mock_1D(filename, thingid, ra, dec, z_qso, plate, mjd, fiberid,
-                      order, mode, log_file=None):
+def read_from_mock_1d(filename, thingid, ra, dec, z_qso, plate, mjd, fiberid,
+                      order, log_file=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -656,8 +656,6 @@ def read_from_mock_1D(filename, thingid, ra, dec, z_qso, plate, mjd, fiberid,
             Fiberid of the observations
         order: 0 or 1 - default: 1
             Order of the log10(lambda) polynomial for the continuum fit
-        mode: str
-            One of 'spec' or 'corrected-spec'. Open mode of the spectra files
         log_file: _io.TextIOWrapper or None - default: None
             Opened file to print log
 
@@ -699,48 +697,90 @@ def read_from_mock_1D(filename, thingid, ra, dec, z_qso, plate, mjd, fiberid,
     return pix_data
 
 
-def read_from_pix(in_dir,pix,thingid,ra,dec,z_qso,plate,mjd,fiberid,order,log_file=None):
+def read_from_pix(in_dir, healpix, thingid, ra, dec, z_qso, plate, mjd, fiberid,
+                  order, log_file=None):
+    """Reads the spectra and formats its data as Forest instances.
+
+    Args:
+        in_dir: str
+            Directory to spectra files
+        healpix: int
+            The pixel number of a particular healpix
+        thingid: array of int
+            Thingid of the observations
+        ra: array of float
+            Right-ascension of the quasars (in radians)
+        dec: array of float
+            Declination of the quasars (in radians)
+        z_qso: array of float
+            Redshift of the quasars
+        plate: array of integer
+            Plate number of the observations
+        mjd: array of integer
+            Modified Julian Date of the observations
+        fiberid: array of integer
+            Fiberid of the observations
+        order: 0 or 1 - default: 1
+            Order of the log10(lambda) polynomial for the continuum fit
+        mode: str
+            One of 'spec' or 'corrected-spec'. Open mode of the spectra files
+        log_file: _io.TextIOWrapper or None - default: None
+            Opened file to print log
+        pk1d: str or None - default: None
+            Format for Pk 1D: Pk1D
+        best_obs: bool - default: False
+            If set, reads only the best observation for objects with repeated
+            observations
+
+    Returns:
+        List of read spectra for all the healpixs
+    """
+    try:
+        filename = in_dir + "/pix_{}.fits.gz".format(healpix)
+        hdul = fitsio.FITS(filename)
+    except IOError:
         try:
-            fin = in_dir + "/pix_{}.fits.gz".format(pix)
-            hdul = fitsio.FITS(fin)
+            filename = in_dir + "/pix_{}.fits".format(healpix)
+            hdul = fitsio.FITS(filename)
         except IOError:
-            try:
-                fin = in_dir + "/pix_{}.fits".format(pix)
-                hdul = fitsio.FITS(fin)
-            except IOError:
-                userprint("error reading {}".format(pix))
-                return None
+            userprint("error reading {}".format(healpix))
+            return None
 
-        ## fill log
-        if log_file is not None:
-            for t in thingid:
-                if t not in hdul[0][:]:
-                    log_file.write("{} missing from pixel {}\n".format(t,pix))
-                    userprint("{} missing from pixel {}".format(t,pix))
+    ## fill log
+    if log_file is not None:
+        for t in thingid:
+            if t not in hdul[0][:]:
+                log_file.write("{} missing from pixel {}\n".format(t, healpix))
+                userprint("{} missing from pixel {}".format(t, healpix))
 
-        pix_data=[]
-        thingid_list=list(hdul[0][:])
-        thingid2idx = {t:thingid_list.index(t) for t in thingid if t in thingid_list}
-        loglam  = hdul[1][:]
-        flux = hdul[2].read()
-        ivar = hdul[3].read()
-        andmask = hdul[4].read()
-        for (t, r, d, z, p, m, f) in zip(thingid, ra, dec, z_qso, plate, mjd, fiberid):
-            try:
-                idx = thingid2idx[t]
-            except:
-                ## fill log
-                if log_file is not None:
-                    log_file.write("{} missing from pixel {}\n".format(t,pix))
-                userprint("{} missing from pixel {}".format(t,pix))
-                continue
-            d = Forest(loglam,flux[:,idx],ivar[:,idx]*(andmask[:,idx]==0), t, r, d, z, p, m, f,order)
-
+    pix_data = []
+    thingid_list = list(hdul[0][:])
+    thingid2index = {t: thingid_list.index(t)
+                     for t in thingid if t in thingid_list}
+    log_lambda = hdul[1][:]
+    flux = hdul[2].read()
+    ivar = hdul[3].read()
+    mask = hdul[4].read()
+    for (t, r, d, z, p, m, f) in zip(thingid, ra, dec, z_qso, plate, mjd,
+                                     fiberid):
+        try:
+            index = thingid2index[t]
+        except KeyError:
+            ## fill log
             if log_file is not None:
-                log_file.write("{} read\n".format(t))
-            pix_data.append(d)
-        hdul.close()
-        return pix_data
+                log_file.write("{} missing from pixel {}\n".format(t, healpix))
+            userprint("{} missing from pixel {}".format(t, healpix))
+            continue
+        pix_data.append(Forest(log_lambda, flux[:, index],
+                               ivar[:, index]*(mask[:, index] == 0),
+                               t, r, d, z, p, m, f, order))
+
+        if log_file is not None:
+            log_file.write("{} read\n".format(t))
+
+    hdul.close()
+
+    return pix_data
 
 def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order, mode=None, log_file=None, best_obs=False, single_exp = False):
 
