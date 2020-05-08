@@ -28,8 +28,8 @@ import copy
 
 from picca.utils import userprint
 from picca.data import Forest, Delta, QSO
-from picca.prep_Pk1D import exp_diff, spectral_resolution
-from picca.prep_Pk1D import spectral_resolution_desi
+from picca.prep_pk1d import exp_diff, spectral_resolution
+from picca.prep_pk1d import spectral_resolution_desi
 
 ## use a metadata class to simplify things
 class Metadata(object):
