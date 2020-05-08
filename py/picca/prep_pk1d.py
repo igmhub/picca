@@ -106,6 +106,7 @@ def spectral_resolution(wdisp, with_correction=False, fiberid=None,
         correction[lambda_ > 6000.0] = 1.097
 
         # add the fiberid correction
+        # fiberids greater than 500 corresponds to the second spectrograph
         fiberid = fiberid%500
         if fiberid < 100:
             correction = (1. + (correction-1)*.25 +
