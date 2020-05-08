@@ -8,7 +8,6 @@ This module provides three functions:
 See the respective documentation for details
 """
 import numpy as np
-import scipy as sp
 
 from picca import constants
 from picca.utils import userprint
@@ -120,13 +119,27 @@ def spectral_resolution(wdisp, with_correction=False, fiberid=None,
 
     return reso
 
-def spectral_resolution_desi(reso_matrix, log_lambda) :
+def spectral_resolution_desi(reso_matrix, log_lambda):
+    """Computes the spectral resolution for DESI spectra
 
-    delta_log_lambda = (log_lambda[-1]-log_lambda[0])/float(len(log_lambda)-1)
-    reso= sp.clip(reso_matrix,1.0e-6,1.0e6)
-    rms_in_pixel = (sp.sqrt(1.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-1][:]))
-                    + sp.sqrt(4.0/2.0/sp.log(reso[len(reso)//2][:]/reso[len(reso)//2-2][:])))/2.0
+    Args:
+        reso_matrix: array
+            Resolution matrix
+        log_lambda: array or None - default: None
+            Logarithm of the wavelength (in Angstroms)
+    Returns:
+        The spectral resolution
+    """
 
-    reso_in_km_per_s = rms_in_pixel*constants.speed_light/1000.*delta_log_lambda*sp.log(10.0)
+    delta_log_lambda = ((log_lambda[-1] - log_lambda[0])
+                        /float(len(log_lambda) - 1))
+    reso = np.clip(reso_matrix, 1.0e-6, 1.0e6)
+    rms_in_pixel = (np.sqrt(1.0/2.0/np.log(reso[len(reso)//2][:]
+                                           /reso[len(reso)//2-1][:]))
+                    + np.sqrt(4.0/2.0/np.log(reso[len(reso)//2][:]
+                                             /reso[len(reso)//2-2][:])))/2.0
+
+    reso_in_km_per_s = (rms_in_pixel*constants.speed_light/1000.*
+                        delta_log_lambda*np.log(10.0))
 
     return reso_in_km_per_s
