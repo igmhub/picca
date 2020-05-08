@@ -280,11 +280,13 @@ def read_dust_map(drq_filename, extinction_conversion_r=3.793):
 def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
               max_num_spec=None, log_file=None, keep_bal=False, bi_max=None,
               order=1, best_obs=False, single_exp=False, pk1d=None):
+    # TODO: fix docstring
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
         in_dir: str
-            Directory to spectra files
+            Directory to spectra files. If mode is "spec-mock-1D", then it is
+            the filename of the fits file contianing the mock spectra
         drq_filename: str
             Filename of the DRQ catalogue
         mode: str
@@ -631,36 +633,66 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
 
     return pix_data
 
-def read_from_mock_1D(in_dir,thingid,ra,dec,z_qso,plate,mjd,fiberid, order,mode,log_file=None):
+def read_from_mock_1D(filename, thingid, ra, dec, z_qso, plate, mjd, fiberid,
+                      order, mode, log_file=None):
+    """Reads the spectra and formats its data as Forest instances.
+
+    Args:
+        filename: str
+            Filename of the fits file contianing the mock spectra
+        thingid: array of int
+            Thingid of the observations
+        ra: array of float
+            Right-ascension of the quasars (in radians)
+        dec: array of float
+            Declination of the quasars (in radians)
+        z_qso: array of float
+            Redshift of the quasars
+        plate: array of integer
+            Plate number of the observations
+        mjd: array of integer
+            Modified Julian Date of the observations
+        fiberid: array of integer
+            Fiberid of the observations
+        order: 0 or 1 - default: 1
+            Order of the log10(lambda) polynomial for the continuum fit
+        mode: str
+            One of 'spec' or 'corrected-spec'. Open mode of the spectra files
+        log_file: _io.TextIOWrapper or None - default: None
+            Opened file to print log
+
+    Returns:
+        List of read spectra for all the healpixs
+    """
     pix_data = []
 
     try:
-        fin = in_dir
-        hdul = fitsio.FITS(fin)
+        hdul = fitsio.FITS(filename)
     except IOError:
-        log_file.write("error reading {}\n".format(fin))
+        log_file.write("error reading {}\n".format(filename))
 
-    for t,r,d,z,p,m,f in zip(thingid,ra,dec,z_qso,plate,mjd,fiberid):
+    for t, r, d, z, p, m, f in zip(thingid, ra, dec, z_qso, plate, mjd,
+                                   fiberid):
         hdu = hdul["{}".format(t)]
-        log_file.write("file: {} hdus {} read  \n".format(fin, hdu))
-        lamb = hdu["wavelength"][:]
-        log_lambda = sp.log10(lamb)
+        log_file.write("file: {} hdus {} read  \n".format(filename, hdu))
+        lambda_ = hdu["wavelength"][:]
+        log_lambda = np.log10(lambda_)
         flux = hdu["flux"][:]
-        error =hdu["error"][:]
+        error = hdu["error"][:]
         ivar = 1.0/error**2
 
         # compute difference between exposure
-        exposures_diff = np.zeros(len(lamb))
+        exposures_diff = np.zeros(len(lambda_))
         # compute spectral resolution
-        wdisp =  hdu["psf"][:]
+        wdisp = hdu["psf"][:]
         reso = spectral_resolution(wdisp)
 
         # compute the mean expected flux
-        f_mean_tr = hdu.read_header()["MEANFLUX"]
-        cont = hdu["continuum"][:]
-        mef = f_mean_tr * cont
-        d = Forest(log_lambda,flux,ivar, t, r, d, z, p, m, f,order, exposures_diff,reso, mef)
-        pix_data.append(d)
+        mean_flux_transmission = hdu.read_header()["MEANFLUX"]
+        continuum = hdu["continuum"][:]
+        mef = mean_flux_transmission * continuum
+        pix_data.append(Forest(log_lambda, flux, ivar, t, r, d, z, p, m, f,
+                               order, exposures_diff, reso, mef))
 
     hdul.close()
 

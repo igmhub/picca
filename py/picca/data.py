@@ -553,8 +553,8 @@ class Forest(QSO):
         else:
             self.mean_reso = None
 
-        err = 1.0/np.sqrt(ivar)
-        snr = flux/err
+        error = 1.0/np.sqrt(ivar)
+        snr = flux/error
         self.mean_snr = sum(snr)/float(len(snr))
         lambda_igm_absorption = constants.absorber_IGM[self.igm_absorption]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
@@ -627,8 +627,8 @@ class Forest(QSO):
         # recompute means of quality variables
         if self.reso is not None:
             self.mean_reso = self.reso.mean()
-        err = 1./np.sqrt(self.ivar)
-        snr = self.flux/err
+        error = 1./np.sqrt(self.ivar)
+        snr = self.flux/error
         self.mean_snr = snr.mean()
         lambda_igm_absorption = constants.absorber_IGM[self.igm_absorption]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
