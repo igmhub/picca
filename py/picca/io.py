@@ -1041,7 +1041,7 @@ def read_from_desi(nside, in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
     data = {}
     num_data = 0
 
-    z_table = dic(zip(thingid, z_qso))
+    z_table = dict(zip(thingid, z_qso))
     in_healpixs = healpy.ang2pix(in_nside, np.pi/2. - dec, ra, nest=nest)
     unique_in_healpixs = np.unique(in_healpixs)
 
@@ -1217,7 +1217,7 @@ def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
     # truncate the deltas if we load too many lines of sight
     if max_num_spec is not None:
         deltas = deltas[:max_num_spec]
-        num_data = len(dels)
+        num_data = len(deltas)
 
     userprint("\n")
 
