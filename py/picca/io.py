@@ -1238,7 +1238,7 @@ def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
         delta.z = z
         if not cosmo is None:
             delta.r_comov = cosmo.get_r_comov(z)
-            delta.rdm_comov = cosmo.dm(z)
+            delta.dist_m = cosmo.get_dist_m(z)
         delta.weights *= ((1 + z)/(1 + z_ref))**(alpha - 1)
 
         if not no_project:
@@ -1270,7 +1270,7 @@ def read_objects(drq,nside,z_min,z_max,alpha,z_ref,cosmo,keep_bal=True):
             q.weights = ((1.+q.z_qso)/(1.+z_ref))**(alpha-1.)
             if not cosmo is None:
                 q.r_comov = cosmo.get_r_comov(q.z_qso)
-                q.rdm_comov = cosmo.dm(q.z_qso)
+                q.dist_m = cosmo.dm(q.z_qso)
 
     userprint("\n")
 

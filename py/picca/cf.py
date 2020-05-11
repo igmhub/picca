@@ -85,8 +85,8 @@ def cf(pix):
                     cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,10.**d1.log_lambda,10.**d1.log_lambda,d1.weights,d1.delta,
                         d2.z,10.**d2.log_lambda,10.**d2.log_lambda,d2.weights,d2.delta,ang,same_half_plate)
                 else:
-                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.rdm_comov,d1.weights,d1.delta,
-                        d2.z,d2.r_comov,d2.rdm_comov,d2.weights,d2.delta,ang,same_half_plate)
+                    cw,cd,crp,crt,cz,cnb = fast_cf(d1.z,d1.r_comov,d1.dist_m,d1.weights,d1.delta,
+                        d2.z,d2.r_comov,d2.dist_m,d2.weights,d2.delta,ang,same_half_plate)
 
                 xi[:len(cd)]+=cd
                 weights[:len(cw)]+=cw
@@ -163,7 +163,7 @@ def dmat(pix):
                 counter.value += 1
             order1 = d1.order
             r1 = d1.r_comov
-            rdm1 = d1.rdm_comov
+            rdm1 = d1.dist_m
             w1 = d1.weights
             l1 = d1.log_lambda
             z1 = d1.z
@@ -177,7 +177,7 @@ def dmat(pix):
                 order2 = d2.order
                 ang = d1^d2
                 r2 = d2.r_comov
-                rdm2 = d2.rdm_comov
+                rdm2 = d2.dist_m
                 w2 = d2.weights
                 l2 = d2.log_lambda
                 z2 = d2.z
@@ -303,7 +303,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             npairs_used += w.sum()
             for d2 in sp.array(d1.dneighs)[w]:
                 r1 = d1.r_comov
-                rdm1 = d1.rdm_comov
+                rdm1 = d1.dist_m
                 z1_abs1 = 10**d1.log_lambda/constants.ABSORBER_IGM[abs_igm1]-1
                 r1_abs1 = cosmo.get_r_comov(z1_abs1)
                 rdm1_abs1 = cosmo.get_dist_m(z1_abs1)
@@ -321,7 +321,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                         ( (d1.fiberid<=500 and d2.fiberid<=500) or (d1.fiberid>500 and d2.fiberid>500) )
                 ang = d1^d2
                 r2 = d2.r_comov
-                rdm2 = d2.rdm_comov
+                rdm2 = d2.dist_m
                 z2_abs2 = 10**d2.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
                 r2_abs2 = cosmo.get_r_comov(z2_abs2)
                 rdm2_abs2 = cosmo.get_dist_m(z2_abs2)
@@ -380,7 +380,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 if ((not x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
                     r1 = d1.r_comov
-                    rdm1 = d1.rdm_comov
+                    rdm1 = d1.dist_m
                     w1 = d1.weights
                     z1_abs2 = 10**d1.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
                     r1_abs2 = cosmo.get_r_comov(z1_abs2)
@@ -395,7 +395,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     rdm1_abs2 = rdm1_abs2[wzcut]
 
                     r2 = d2.r_comov
-                    rdm2 = d2.rdm_comov
+                    rdm2 = d2.dist_m
                     w2 = d2.weights
                     z2_abs1 = 10**d2.log_lambda/constants.ABSORBER_IGM[abs_igm1]-1
                     r2_abs1 = cosmo.get_r_comov(z2_abs1)

@@ -67,10 +67,10 @@ def co(pix):
             ang      = o1^o1.neighs
             zo2      = sp.array([o2.z_qso    for o2 in o1.neighs])
             r_comov2 = sp.array([o2.r_comov for o2 in o1.neighs])
-            rdm_comov2 = sp.array([o2.rdm_comov for o2 in o1.neighs])
+            dist_m2 = sp.array([o2.dist_m for o2 in o1.neighs])
             weo2     = sp.array([o2.weights      for o2 in o1.neighs])
 
-            cw,crp,crt,cz,cnb = fast_co(o1.z_qso,o1.r_comov,o1.rdm_comov,o1.weights,zo2,r_comov2,rdm_comov2,weo2,ang)
+            cw,crp,crt,cz,cnb = fast_co(o1.z_qso,o1.r_comov,o1.dist_m,o1.weights,zo2,r_comov2,dist_m2,weo2,ang)
 
             weights[:len(cw)]  += cw
             rp[:len(crp)] += crp

@@ -65,6 +65,10 @@ class QSO(object):
             coordinate system.
         cos_dec: float
             Cosine of the declination angle.
+        r_comov: float or None
+            Comoving distance to the object
+        dist_m: float or None
+            Angular diameter distance to object
 
     Note that plate-fiberid-mjd is a unique identifier
     for the quasar.
@@ -108,11 +112,9 @@ class QSO(object):
         self.z_qso = z_qso
         self.thingid = thingid
 
-        # continuum-related variables
-        self.continuum = None
-        self.p0 = None
-        self.p1 = None
-        self.bad_cont = None
+        # variables computed in function io.read_deltas
+        self.r_comov = None
+        self.dist_m = None
 
     def __xor__(self, data):
         """Computes the angular separation between two quasars.
@@ -561,6 +563,12 @@ class Forest(QSO):
                         np.power(10., log_lambda[0]))/2./lambda_igm_absorption
                        - 1.0)
 
+        # continuum-related variables
+        self.continuum = None
+        self.p0 = None
+        self.p1 = None
+        self.bad_cont = None
+
     def __add__(self, other):
         """Adds the information of another forest.
 
@@ -909,6 +917,8 @@ class Delta(QSO):
             Mean redshift of the forest
         delta_log_lambda: float
             Variation of the logarithm of the wavelength between two pixels
+        z: array of floats or None
+            Redshift of the abosrption
 
     Methods:
         __init__: Initializes class instances.
@@ -961,6 +971,13 @@ class Delta(QSO):
                 Mean redshift of the forest
             delta_log_lambda: float
                 Variation of the logarithm of the wavelength between two pixels
+            z: array of floats or None
+                Redhift of the absorption
+            r_comov: array of floats or None
+                Comoving distance to the object. Overloaded from parent class
+            dist_m: array of floats or None
+                Angular diameter distance to object. Overloaded from parent
+                class
         """
         QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
         self.log_lambda = log_lambda
@@ -978,8 +995,7 @@ class Delta(QSO):
         # variables computed in function io.read_deltas
         self.z = None
         self.r_comov = None
-        self.rdm_comov = None
-
+        self.dist_m = None
 
     @classmethod
     def from_forest(cls, forest, get_stack_delta, get_var_lss, get_eta,

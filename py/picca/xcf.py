@@ -74,8 +74,8 @@ def xcf(pix):
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.delta,z_qso,l_qso,l_qso,we_qso,ang)
                 else:
                     rc_qso = [q.r_comov for q in d.qneighs]
-                    rdm_qso = [q.rdm_comov for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.rdm_comov,d.weights,d.delta,z_qso,rc_qso,rdm_qso,we_qso,ang)
+                    rdm_qso = [q.dist_m for q in d.qneighs]
+                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.dist_m,d.weights,d.delta,z_qso,rc_qso,rdm_qso,we_qso,ang)
 
                 xi[:len(cd)]+=cd
                 weights[:len(cw)]+=cw
@@ -142,7 +142,7 @@ def dmat(pix):
             with lock:
                 counter.value += 1
             r1 = d1.r_comov
-            rdm1 = d1.rdm_comov
+            rdm1 = d1.dist_m
             w1 = d1.weights
             l1 = d1.log_lambda
             z1 = d1.z
@@ -154,7 +154,7 @@ def dmat(pix):
             neighs = d1.qneighs[w]
             ang = d1^neighs
             r2 = [q.r_comov for q in neighs]
-            rdm2 = [q.rdm_comov for q in neighs]
+            rdm2 = [q.dist_m for q in neighs]
             w2 = [q.weights for q in neighs]
             z2 = [q.z_qso for q in neighs]
             fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
@@ -244,7 +244,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             npairs_used += w.sum()
 
             rd = d.r_comov
-            rdm = d.rdm_comov
+            rdm = d.dist_m
             wd = d.weights
             zd_abs = 10**d.log_lambda/constants.ABSORBER_IGM[abs_igm]-1
             rd_abs = cosmo.get_r_comov(zd_abs)
@@ -263,7 +263,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 ang = d^q
 
                 rq = q.r_comov
-                rqm = q.rdm_comov
+                rqm = q.dist_m
                 wq = q.weights
                 zq = q.z_qso
                 rp = (rd-rq)*sp.cos(ang/2)
