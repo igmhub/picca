@@ -9,7 +9,7 @@ See the respective documentation for details
 """
 import numpy as np
 
-from picca import constants
+from picca.constants import SPEED_LIGHT
 from picca.utils import userprint
 
 
