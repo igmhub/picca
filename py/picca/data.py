@@ -326,7 +326,7 @@ class Forest(QSO):
     dla_mask_limit = None
 
     @classmethod
-    def get_var_lss(cls, lol_lambda):
+    def get_var_lss(cls, log_lambda):
         """Interpolates the pixel variance due to the Large Scale Strucure on
         the wavelength array.
 
@@ -345,7 +345,7 @@ class Forest(QSO):
         raise NotImplementedError("Function should be specified at run-time")
 
     @classmethod
-    def get_eta(cls, lol_lambda):
+    def get_eta(cls, log_lambda):
         """Interpolates the correction factor to the contribution of the
         pipeline estimate of the instrumental noise to the variance on the
         wavelength array.
@@ -367,7 +367,7 @@ class Forest(QSO):
         raise NotImplementedError("Function should be specified at run-time")
 
     @classmethod
-    def get_mean_cont(cls, lol_lambda):
+    def get_mean_cont(cls, log_lambda):
         """Interpolates the mean quasar continuum over the whole
         sample on the wavelength array.
 
@@ -388,7 +388,7 @@ class Forest(QSO):
         raise NotImplementedError("Function should be specified at run-time")
 
     @classmethod
-    def get_fudge(cls, lol_lambda):
+    def get_fudge(cls, log_lambda):
         """Interpolates the fudge contribution to the variance on the
         wavelength array.
 
