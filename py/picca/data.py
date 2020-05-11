@@ -65,6 +65,8 @@ class QSO(object):
             coordinate system.
         cos_dec: float
             Cosine of the declination angle.
+        weights: float
+            Weight assigned to object
         r_comov: float or None
             Comoving distance to the object
         dist_m: float or None
@@ -112,7 +114,8 @@ class QSO(object):
         self.z_qso = z_qso
         self.thingid = thingid
 
-        # variables computed in function io.read_deltas
+        # variables computed in function io.read_objects
+        self.weight = None
         self.r_comov = None
         self.dist_m = None
 
@@ -899,6 +902,8 @@ class Delta(QSO):
         ## Inherits from QSO ##
         log_lambda : array of floats
             Array containing the logarithm of the wavelengths (in Angs)
+        weights : array of floats
+            Weights associated to pixel. Overloaded from parent class
         continuum: array of floats
             Quasar continuum
         delta: array of floats
@@ -919,6 +924,11 @@ class Delta(QSO):
             Variation of the logarithm of the wavelength between two pixels
         z: array of floats or None
             Redshift of the abosrption
+        r_comov: array of floats or None
+            Comoving distance to the object. Overloaded from parent class
+        dist_m: array of floats or None
+            Angular diameter distance to object. Overloaded from parent
+            class
 
     Methods:
         __init__: Initializes class instances.
@@ -971,13 +981,6 @@ class Delta(QSO):
                 Mean redshift of the forest
             delta_log_lambda: float
                 Variation of the logarithm of the wavelength between two pixels
-            z: array of floats or None
-                Redhift of the absorption
-            r_comov: array of floats or None
-                Comoving distance to the object. Overloaded from parent class
-            dist_m: array of floats or None
-                Angular diameter distance to object. Overloaded from parent
-                class
         """
         QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
         self.log_lambda = log_lambda
