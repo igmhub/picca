@@ -116,13 +116,13 @@ if __name__ == '__main__':
     xcf.ang_correlation = True
     xcf.angmax  = args.ang_max
 
-    lambda_abs  = constants.absorber_IGM[args.lambda_abs]
+    lambda_abs  = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.lambda_abs = lambda_abs
 
-    cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
+    cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, constants.absorber_IGM[args.lambda_abs],args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec,no_project=args.no_project)
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, constants.ABSORBER_IGM[args.lambda_abs],args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec,no_project=args.no_project)
     xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
@@ -152,7 +152,7 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     for i,ipix in enumerate(sorted(objs.keys())):
         for q in objs[ipix]:
-            q.log_lambda = sp.log10( (1.+q.z_qso)*constants.absorber_IGM[args.lambda_abs_obj] )
+            q.log_lambda = sp.log10( (1.+q.z_qso)*constants.ABSORBER_IGM[args.lambda_abs_obj] )
     userprint("")
     xcf.objs = objs
 

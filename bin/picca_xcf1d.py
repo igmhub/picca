@@ -104,7 +104,7 @@ if __name__ == '__main__':
     xcf.nside = args.nside
     xcf.ang_correlation = True
 
-    lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
 
     ### Read deltas
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs, args.z_evol_del, args.z_ref, cosmo=None,max_num_spec=args.nspec,no_project=args.no_project)
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     xcf.objs = objs
     for objsp in xcf.objs.values():
         for q in objsp:
-            q.log_lambda = sp.log10( (1.+q.z_qso)*constants.absorber_IGM[args.lambda_abs_obj] )
+            q.log_lambda = sp.log10( (1.+q.z_qso)*constants.ABSORBER_IGM[args.lambda_abs_obj] )
     sys.stderr.write("\n")
 
     ### Send

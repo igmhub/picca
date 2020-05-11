@@ -304,9 +304,9 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             for d2 in sp.array(d1.dneighs)[w]:
                 r1 = d1.r_comov
                 rdm1 = d1.rdm_comov
-                z1_abs1 = 10**d1.log_lambda/constants.absorber_IGM[abs_igm1]-1
-                r1_abs1 = cosmo.r_comoving(z1_abs1)
-                rdm1_abs1 = cosmo.dm(z1_abs1)
+                z1_abs1 = 10**d1.log_lambda/constants.ABSORBER_IGM[abs_igm1]-1
+                r1_abs1 = cosmo.get_r_comov(z1_abs1)
+                rdm1_abs1 = cosmo.get_dist_m(z1_abs1)
                 w1 = d1.weights
 
                 wzcut = z1_abs1<d1.z_qso
@@ -322,9 +322,9 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 ang = d1^d2
                 r2 = d2.r_comov
                 rdm2 = d2.rdm_comov
-                z2_abs2 = 10**d2.log_lambda/constants.absorber_IGM[abs_igm2]-1
-                r2_abs2 = cosmo.r_comoving(z2_abs2)
-                rdm2_abs2 = cosmo.dm(z2_abs2)
+                z2_abs2 = 10**d2.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
+                r2_abs2 = cosmo.get_r_comov(z2_abs2)
+                rdm2_abs2 = cosmo.get_dist_m(z2_abs2)
                 w2 = d2.weights
 
                 wzcut = z2_abs2<d2.z_qso
@@ -382,9 +382,9 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     r1 = d1.r_comov
                     rdm1 = d1.rdm_comov
                     w1 = d1.weights
-                    z1_abs2 = 10**d1.log_lambda/constants.absorber_IGM[abs_igm2]-1
-                    r1_abs2 = cosmo.r_comoving(z1_abs2)
-                    rdm1_abs2 = cosmo.dm(z1_abs2)
+                    z1_abs2 = 10**d1.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
+                    r1_abs2 = cosmo.get_r_comov(z1_abs2)
+                    rdm1_abs2 = cosmo.get_dist_m(z1_abs2)
 
                     wzcut = z1_abs2<d1.z_qso
                     r1 = r1[wzcut]
@@ -397,9 +397,9 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     r2 = d2.r_comov
                     rdm2 = d2.rdm_comov
                     w2 = d2.weights
-                    z2_abs1 = 10**d2.log_lambda/constants.absorber_IGM[abs_igm1]-1
-                    r2_abs1 = cosmo.r_comoving(z2_abs1)
-                    rdm2_abs1 = cosmo.dm(z2_abs1)
+                    z2_abs1 = 10**d2.log_lambda/constants.ABSORBER_IGM[abs_igm1]-1
+                    r2_abs1 = cosmo.get_r_comov(z2_abs1)
+                    rdm2_abs1 = cosmo.get_dist_m(z2_abs1)
 
                     wzcut = z2_abs1<d2.z_qso
                     r2 = r2[wzcut]

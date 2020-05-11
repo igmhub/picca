@@ -5,13 +5,13 @@ import argparse
 import fitsio
 import numpy as np
 import scipy as sp
-from scipy.constants import speed_of_light
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 import camb
 import nbodykit.cosmology.correlation
 
 from picca.utils import userprint
+from picca.constants import SPEED_LIGHT
 
 if __name__ == '__main__':
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     cat['ZDRAG'] = pars2['zdrag']
     cat['RDRAG'] = pars2['rdrag']
 
-    c = speed_of_light/1000. ## km/s
+    c = SPEED_LIGHT/1000. ## km/s
     h = cat['H0']/100.
     dh = c/(results.hubble_parameter(cat['ZREF'])/h)
     dm = (1.+cat['ZREF'])*results.angular_diameter_distance(cat['ZREF'])*h

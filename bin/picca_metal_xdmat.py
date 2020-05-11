@@ -123,7 +123,7 @@ if __name__ == '__main__':
     xcf.ntm = args.nt*args.coef_binning_model
     xcf.nside = args.nside
     xcf.zref = args.z_ref
-    xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.rej = args.rej
 
     xcf.alpha_abs = {}
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     for m in args.abs_igm:
         xcf.alpha_abs[m] = args.metal_alpha
 
-    cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
+    cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
     xcf.cosmo=cosmo
 
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,\
@@ -144,14 +144,14 @@ if __name__ == '__main__':
 
     ### Find the redshift range
     if (args.z_min_obj is None):
-        dmin_pix = cosmo.r_comoving(zmin_pix)
+        dmin_pix = cosmo.get_r_comov(zmin_pix)
         dmin_obj = max(0.,dmin_pix+xcf.rp_min)
-        args.z_min_obj = cosmo.r_2_z(dmin_obj)
+        args.z_min_obj = cosmo.distance_to_redshift(dmin_obj)
         userprint("\r z_min_obj = {}\r".format(args.z_min_obj),end="")
     if (args.z_max_obj is None):
-        dmax_pix = cosmo.r_comoving(zmax_pix)
+        dmax_pix = cosmo.get_r_comov(zmax_pix)
         dmax_obj = max(0.,dmax_pix+xcf.rp_max)
-        args.z_max_obj = cosmo.r_2_z(dmax_obj)
+        args.z_max_obj = cosmo.distance_to_redshift(dmax_obj)
         userprint("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
 
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\

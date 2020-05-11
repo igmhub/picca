@@ -86,11 +86,11 @@ if __name__ == '__main__':
     cf.n1d = int((cf.log_lambda_max-cf.log_lambda_min)/cf.delta_log_lambda+1)
     cf.x_correlation = False
 
-    cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     if args.lambda_abs2:
-        cf.lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
+        cf.lambda_abs2 = constants.ABSORBER_IGM[args.lambda_abs2]
     else:
-        cf.lambda_abs2 = constants.absorber_IGM[args.lambda_abs]
+        cf.lambda_abs2 = constants.ABSORBER_IGM[args.lambda_abs]
 
 
     ### Read data 1

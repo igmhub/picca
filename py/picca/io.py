@@ -1237,7 +1237,7 @@ def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
         z_max = max(z_max, z.max())
         delta.z = z
         if not cosmo is None:
-            delta.r_comov = cosmo.r_comoving(z)
+            delta.r_comov = cosmo.get_r_comov(z)
             delta.rdm_comov = cosmo.dm(z)
         delta.weights *= ((1 + z)/(1 + z_ref))**(alpha - 1)
 
@@ -1269,7 +1269,7 @@ def read_objects(drq,nside,z_min,z_max,alpha,z_ref,cosmo,keep_bal=True):
         for q in objs[ipix]:
             q.weights = ((1.+q.z_qso)/(1.+z_ref))**(alpha-1.)
             if not cosmo is None:
-                q.r_comov = cosmo.r_comoving(q.z_qso)
+                q.r_comov = cosmo.get_r_comov(q.z_qso)
                 q.rdm_comov = cosmo.dm(q.z_qso)
 
     userprint("\n")

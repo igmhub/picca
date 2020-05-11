@@ -246,9 +246,9 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             rd = d.r_comov
             rdm = d.rdm_comov
             wd = d.weights
-            zd_abs = 10**d.log_lambda/constants.absorber_IGM[abs_igm]-1
-            rd_abs = cosmo.r_comoving(zd_abs)
-            rdm_abs = cosmo.dm(zd_abs)
+            zd_abs = 10**d.log_lambda/constants.ABSORBER_IGM[abs_igm]-1
+            rd_abs = cosmo.get_r_comov(zd_abs)
+            rdm_abs = cosmo.get_dist_m(zd_abs)
 
             wzcut = zd_abs<d.z_qso
             rd = rd[wzcut]

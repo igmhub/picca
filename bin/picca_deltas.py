@@ -293,7 +293,7 @@ def main():
         for idxop in range(len(args.optical_depth)//3):
             tau = float(args.optical_depth[3*idxop])
             gamma = float(args.optical_depth[3*idxop+1])
-            lambda_rest_frame = constants.absorber_IGM[args.optical_depth[3*idxop+2]]
+            lambda_rest_frame = constants.ABSORBER_IGM[args.optical_depth[3*idxop+2]]
             userprint("INFO: Adding optical depth for tau = {}, gamma = {}, lambda_rest_frame = {} A".format(tau, gamma, lambda_rest_frame))
             for p in data:
                 for d in data[p]:

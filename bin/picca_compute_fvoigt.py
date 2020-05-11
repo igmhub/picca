@@ -27,7 +27,7 @@ def tau(lamb, z, N_hi):
     k = 1.3806e-23 #m^2.kg.s^-2.K-1
     T = 1e4 #K
     gamma = 6.265e8 #s^-1
-    lamb_alpha = constants.absorber_IGM["LYA"] #A
+    lamb_alpha = constants.ABSORBER_IGM["LYA"] #A
     Deltat_lamb = lamb_alpha/c*np.sqrt(2*k*T/mp) #A
 
     a = gamma/(4*np.pi*Deltat_lamb)*lamb_alpha**2/c*1e-10
@@ -43,8 +43,8 @@ def profile_voigt_lambda(x, z, N_hi):
     return np.exp(-t)
 
 def profile_lambda_to_r(lamb, profile_lambda, fidcosmo): #pour Lyman_alpha --> sinon mettre une autre raie
-    z = lamb/constants.absorber_IGM["LYA"] - 1
-    r = fidcosmo.r_comoving(z)
+    z = lamb/constants.ABSORBER_IGM["LYA"] - 1
+    r = fidcosmo.get_r_comov(z)
     rr = np.linspace(r[0], r[-1], r.size)
     profile_r = np.interp(rr,r,profile_lambda) #pour reavoir un echantillonage lineaire
     return rr, profile_r
@@ -61,10 +61,10 @@ def lambda_to_r(lamb, profile_lambda, fidcosmo):
     Converts a profile as a function of wavelength to a profile as a function of r in Mpc/h
     """
 
-    z = lamb/constants.absorber_IGM["LYA"] - 1
-    r = fidcosmo.r_comoving(z)
+    z = lamb/constants.ABSORBER_IGM["LYA"] - 1
+    r = fidcosmo.get_r_comov(z)
     rr = np.linspace(r[0], r[-1], r.size)
-    profile_lambda = profile_lambda*fidcosmo.hubble(z)*constants.absorber_IGM["LYA"]/3e5
+    profile_lambda = profile_lambda*fidcosmo.get_hubble(z)*constants.ABSORBER_IGM["LYA"]/3e5
     profile_r = np.interp(rr,r,profile_lambda)
     return rr, profile_r
 
@@ -78,9 +78,9 @@ def compute_dla_prob_per_nhi(wavelength,nhi,dla,qso,dnhi):
     - dnhi bin width log10(cm-2)
     """
 
-    dla_lamb = (1 + dla['Z_DLA_RSD'])*constants.absorber_IGM["LYA"]
+    dla_lamb = (1 + dla['Z_DLA_RSD'])*constants.ABSORBER_IGM["LYA"]
     dla_nhi  = dla['N_HI_DLA']
-    qso_lamb = (1 + qso['Z'])*constants.absorber_IGM["LYA"]
+    qso_lamb = (1 + qso['Z'])*constants.ABSORBER_IGM["LYA"]
     dwave=np.gradient(wavelength)
 
     wbins = np.zeros(wavelength.size+1)
@@ -181,8 +181,8 @@ def main() :
     # now use a finer wavelength grid
     wavelength = np.arange(3000, 8000, 1.)
     # conversion A -> Mpc/h
-    fidcosmo = constants.cosmo(Om=0.3)
-    r_wave   = fidcosmo.r_comoving(wavelength/constants.absorber_IGM["LYA"] - 1)
+    fidcosmo = constants.Cosmo(Om=0.3)
+    r_wave   = fidcosmo.get_r_comov(wavelength/constants.ABSORBER_IGM["LYA"] - 1)
     # linear grid of Mpc/h (need to convert to linear grid for the FFT)
     r_lin    = np.linspace(r_wave[0],r_wave[-1],r_wave.size)
 

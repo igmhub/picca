@@ -136,14 +136,14 @@ if __name__ == '__main__':
     xcf.zref = args.z_ref
     xcf.z_evol_del = args.z_evol_del
     xcf.z_evol_obj = args.z_evol_obj
-    xcf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.max_diagram = args.max_diagram
 
     ### Cosmo
     if (args.fid_Or!=0.) or (args.fid_Ok!=0.) or (args.fid_wl!=-1.):
         userprint("ERROR: Cosmology with other than Omega_m set are not yet implemented")
         sys.exit()
-    cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
+    cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read deltas
     dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs, args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec)
@@ -161,14 +161,14 @@ if __name__ == '__main__':
 
     ### Find the redshift range
     if (args.z_min_obj is None):
-        dmin_pix = cosmo.r_comoving(zmin_pix)
+        dmin_pix = cosmo.get_r_comov(zmin_pix)
         dmin_obj = max(0.,dmin_pix+xcf.rp_min)
-        args.z_min_obj = cosmo.r_2_z(dmin_obj)
+        args.z_min_obj = cosmo.distance_to_redshift(dmin_obj)
         sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
     if (args.z_max_obj is None):
-        dmax_pix = cosmo.r_comoving(zmax_pix)
+        dmax_pix = cosmo.get_r_comov(zmax_pix)
         dmax_obj = max(0.,dmax_pix+xcf.rp_max)
-        args.z_max_obj = cosmo.r_2_z(dmax_obj)
+        args.z_max_obj = cosmo.distance_to_redshift(dmax_obj)
         sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
 
     ### Read objects

@@ -107,7 +107,7 @@ if __name__ == '__main__':
     cf.x_correlation   = False
     cf.ang_correlation = True
     cf.angmax          = args.ang_max
-    cf.lambda_abs = constants.absorber_IGM[args.lambda_abs]
+    cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
 
@@ -126,7 +126,7 @@ if __name__ == '__main__':
         if args.in_dir2 is None:
             args.in_dir2 = args.in_dir
         if args.lambda_abs2:
-            cf.lambda_abs2 = constants.absorber_IGM[args.lambda_abs2]
+            cf.lambda_abs2 = constants.ABSORBER_IGM[args.lambda_abs2]
         else:
             cf.lambda_abs2 = cf.lambda_abs
 

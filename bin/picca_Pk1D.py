@@ -218,7 +218,7 @@ if __name__ == '__main__':
                 if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
                 if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.z_qso)
 
-                lam_lya = constants.absorber_IGM["LYA"]
+                lam_lya = constants.ABSORBER_IGM["LYA"]
                 z_abs =  sp.power(10.,ll_new)/lam_lya - 1.0
                 mean_z_new = sum(z_abs)/float(len(z_abs))
 

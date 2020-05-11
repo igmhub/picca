@@ -145,8 +145,8 @@ class QSO(object):
                 cos[w] = -1.
             angl = np.arccos(cos)
 
-            w = ((np.absolute(ra - self.ra) < constants.small_angle_cut_off) &
-                 (np.absolute(dec - self.dec) < constants.small_angle_cut_off))
+            w = ((np.absolute(ra - self.ra) < constants.SMALL_ANGLE_CUT_OFF) &
+                 (np.absolute(dec - self.dec) < constants.SMALL_ANGLE_CUT_OFF))
             if w.sum() != 0:
                 angl[w] = np.sqrt((dec[w] - self.dec)**2 +
                                   (self.cos_dec*(ra[w] - self.ra))**2)
@@ -166,9 +166,9 @@ class QSO(object):
                 userprint('WARNING: 1 pair has cosinus<=-1.')
                 cos = -1.
             angl = np.arccos(cos)
-            if ((np.absolute(ra - self.ra) < constants.small_angle_cut_off) &
+            if ((np.absolute(ra - self.ra) < constants.SMALL_ANGLE_CUT_OFF) &
                     (np.absolute(dec - self.dec) <
-                     constants.small_angle_cut_off)):
+                     constants.SMALL_ANGLE_CUT_OFF)):
                 angl = np.sqrt((dec - self.dec)**2 +
                                (self.cos_dec*(ra - self.ra))**2)
         return angl
@@ -556,7 +556,7 @@ class Forest(QSO):
         error = 1.0/np.sqrt(ivar)
         snr = flux/error
         self.mean_snr = sum(snr)/float(len(snr))
-        lambda_igm_absorption = constants.absorber_IGM[self.igm_absorption]
+        lambda_igm_absorption = constants.ABSORBER_IGM[self.igm_absorption]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
                         np.power(10., log_lambda[0]))/2./lambda_igm_absorption
                        - 1.0)
@@ -630,7 +630,7 @@ class Forest(QSO):
         error = 1./np.sqrt(self.ivar)
         snr = self.flux/error
         self.mean_snr = snr.mean()
-        lambda_igm_absorption = constants.absorber_IGM[self.igm_absorption]
+        lambda_igm_absorption = constants.ABSORBER_IGM[self.igm_absorption]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
                         np.power(10., log_lambda[0]))/2./lambda_igm_absorption
                        - 1.0)

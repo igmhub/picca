@@ -73,7 +73,7 @@ class DLA:
         Returns:
             The optical depth.
         """
-        lambda_lya = constants.absorber_IGM["LYA"] ## Lya wavelength [A]
+        lambda_lya = constants.ABSORBER_IGM["LYA"] ## Lya wavelength [A]
         gamma = 6.625e8 ## damping constant of the transition [s^-1]
         osc_strength = 0.4164 ## oscillator strength of the atomic transition
         speed_light = 3e8 ## speed of light [m/s]
@@ -130,7 +130,7 @@ class DLA:
         Returns:
             The optical depth.
         """
-        lam_lyb = constants.absorber_IGM["LYB"]
+        lam_lyb = constants.ABSORBER_IGM["LYB"]
         gamma = 0.079120
         osc_strength = 1.897e8
         speed_light = 3e8 ## speed of light m/s

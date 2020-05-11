@@ -37,7 +37,7 @@ def split_forest(nb_part,delta_log_lambda,log_lambda,delta,exposures_diff,ivar,f
         diff_part = diff_c[selection]
         iv_part = iv_c[selection]
 
-        lam_lya = constants.absorber_IGM["LYA"]
+        lam_lya = constants.ABSORBER_IGM["LYA"]
         m_z = (sp.power(10.,ll_part[len(ll_part)-1])+sp.power(10.,ll_part[0]))/2./lam_lya -1.0
 
         m_z_arr.append(m_z)
@@ -116,7 +116,7 @@ def fill_masked_pixels(delta_log_lambda,log_lambda,delta,exposures_diff,ivar,no_
 def compute_Pk_raw(delta_log_lambda,delta,log_lambda):
 
     #   Length in km/s
-    length_lambda = delta_log_lambda*constants.speed_light/1000.*sp.log(10.)*len(delta)
+    length_lambda = delta_log_lambda*constants.SPEED_LIGHT*sp.log(10.)*len(delta)
 
     # make 1D FFT
     nb_pixels = len(delta)
