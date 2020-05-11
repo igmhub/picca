@@ -16,15 +16,14 @@ This module provides a class (Metadata) and several functions:
     - read_objects
 See the respective documentation for details
 """
-import fitsio
-import numpy as np
-import scipy as sp
-import healpy
 import glob
 import sys
 import time
 import os.path
 import copy
+import numpy as np
+import healpy
+import fitsio
 
 from picca.utils import userprint
 from picca.data import Forest, Delta, QSO
@@ -1178,6 +1177,9 @@ def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
             num_data: Number of spectra in data.
             z_min: Minimum redshift of the loaded deltas.
             z_max: Maximum redshift of the loaded deltas.
+
+    Raises:
+        AssertionError: if no healpix numbers are found
     """
     files = []
     in_dir = os.path.expandvars(in_dir)
@@ -1251,30 +1253,74 @@ def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
     return data, num_data, z_min, z_max
 
 
-def read_objects(drq,nside,z_min,z_max,alpha,z_ref,cosmo,keep_bal=True):
+def read_objects(filename, nside, z_min, z_max, alpha, z_ref, cosmo,
+                 keep_bal=True):
+    """Reads objects and computes their redshifts.
+
+    Fills the fields delta.z and multiplies the weights by
+        `(1+z)^(alpha-1)/(1+z_ref)^(alpha-1)`
+    (equation 7 of du Mas des Bourboux et al. 2020)
+
+    Args:
+        filename: str
+            Filename of the objects catalogue (must follow DRQ catalogue
+            structure)
+        nside: int
+            The healpix nside parameter
+        z_min: float
+            Minimum redshift. Quasars with redshifts lower than z_min will be
+            discarded
+        z_max: float
+            Maximum redshift. Quasars with redshifts higher than or equal to
+            z_max will be discarded
+        alpha: float
+            Redshift evolution coefficient (see equation 7 of du Mas des
+            Bourboux et al. 2020)
+        z_ref: float
+            Redshift of reference
+        cosmo: constants.Cosmo
+            The fiducial cosmology
+        keep_bal: bool
+            If False, remove the quasars flagged as having a Broad Absorption
+            Line. Ignored if bi_max is not None
+
+    Returns:
+        The following variables:
+            objects: A list of QSO instances
+            z_min: Minimum redshift of the loaded objects.
+
+    Raises:
+        AssertionError: if no healpix numbers are found
+    """
     objs = {}
-    ra,dec,z_qso,thingid,plate,mjd,fiberid = read_drq(drq,z_min,z_max,keep_bal=True)
+    ra, dec, z_qso, thingid, plate, mjd, fiberid = read_drq(filename, z_min,
+                                                            z_max,
+                                                            keep_bal=keep_bal)
     phi = ra
-    th = sp.pi/2.-dec
-    pix = healpy.ang2pix(nside,th,phi)
-    if pix.size==0:
+    theta = np.pi/2. - dec
+    healpixs = healpy.ang2pix(nside, theta, phi)
+    if healpixs.size == 0:
         raise AssertionError()
     userprint("reading qsos")
 
-    upix = np.unique(pix)
-    for i,ipix in enumerate(upix):
-        userprint("\r{} of {}".format(i,len(upix)))
-        w=pix==ipix
-        objs[ipix] = [QSO(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thingid[w],ra[w],dec[w],z_qso[w],plate[w],mjd[w],fiberid[w])]
-        for q in objs[ipix]:
-            q.weights = ((1.+q.z_qso)/(1.+z_ref))**(alpha-1.)
+    unique_healpix = np.unique(healpixs)
+    for index, healpix in enumerate(unique_healpix):
+        userprint("\r{} of {}".format(index, len(unique_healpix)))
+        w = healpixs == healpix
+        objs[healpix] = [QSO(t, r, d, z, p, m, f)
+                         for t, r, d, z, p, m, f in zip(thingid[w], ra[w],
+                                                        dec[w], z_qso[w],
+                                                        plate[w], mjd[w],
+                                                        fiberid[w])]
+        for obj in objs[healpix]:
+            obj.weights = ((1. + obj.z_qso)/(1. + z_ref))**(alpha - 1.)
             if not cosmo is None:
-                q.r_comov = cosmo.get_r_comov(q.z_qso)
-                q.dist_m = cosmo.get_dist_m(q.z_qso)
+                obj.r_comov = cosmo.get_r_comov(obj.z_qso)
+                obj.dist_m = cosmo.get_dist_m(obj.z_qso)
 
     userprint("\n")
 
-    return objs,z_qso.min()
+    return object, z_qso.min()
 
 def read_spall(in_dir, thingid):
     """Loads thingid, plate, mjd, and fiberid from spAll file
