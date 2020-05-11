@@ -140,8 +140,8 @@ def read_absorbers(filename):
         thingid = int(cols[col_names.index("ThingID")])
         if thingid not in absorbers:
             absorbers[thingid] = []
-        lambda_absorber = float(cols[col_names.index("lambda")])
-        absorbers[thingid].append(lambda_absorber)
+        lambda_abs = float(cols[col_names.index("lambda")])
+        absorbers[thingid].append(lambda_abs)
         num_absorbers += 1
     file.close()
 
@@ -279,7 +279,6 @@ def read_dust_map(drq_filename, extinction_conversion_r=3.793):
 def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
               max_num_spec=None, log_file=None, keep_bal=False, bi_max=None,
               order=1, best_obs=False, single_exp=False, pk1d=None):
-    # TODO: fix docstring
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -312,14 +311,18 @@ def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
             If set, reads only the best observation for objects with repeated
             observations
         single_exp: bool - default: False
-            ?
+            If set, reads only one observation for objects with repeated
+            observations (chosen randomly)
         pk1d: str or None - default: None
             Format for Pk 1D: Pk1D
 
     Returns:
-        A tuple with:
+        The following variables:
             data: A dictionary with the data. Keys are the healpix numbers of
                 each spectrum. Values are lists of Forest instances.
+            num_data: Number of spectra in data.
+            nside: The healpix nside parameter.
+            "RING": The mode used to compute the healpix numbers.
     """
     userprint("mode: " + mode)
     # read quasar characteristics from DRQ catalogue
@@ -1136,84 +1139,119 @@ def read_from_desi(nside, in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
     return data, num_data
 
 
-def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,max_num_spec=None,no_project=False,from_image=None):
-    '''
-    reads deltas from indir
-    fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
-    returns data,zmin_pix
-    '''
+def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
+                max_num_spec=None, no_project=False, from_image=None):
+    """Reads deltas and computes their redshifts.
 
-    fi = []
-    indir = os.path.expandvars(indir)
-    if from_image is None or len(from_image)==0:
-        if len(indir)>8 and indir[-8:]=='.fits.gz':
-            fi += glob.glob(indir)
-        elif len(indir)>5 and indir[-5:]=='.fits':
-            fi += glob.glob(indir)
+    Fills the fields delta.z and multiplies the weights by
+        `(1+z)^(alpha-1)/(1+z_ref)^(alpha-1)`
+    (equation 7 of du Mas des Bourboux et al. 2020)
+
+    Args:
+        in_dir: str
+            Directory to spectra files. If mode is "spec-mock-1D", then it is
+            the filename of the fits file contianing the mock spectra
+        nside: int
+            The healpix nside parameter
+        lambda_abs: float
+            Wavelength of the absorption (in Angstroms)
+        alpha: float
+            Redshift evolution coefficient (see equation 7 of du Mas des
+            Bourboux et al. 2020)
+        z_ref: float
+            Redshift of reference
+        cosmo: constants.Cosmo
+            The fiducial cosmology
+        max_num_spec: int or None - default: None
+            Maximum number of spectra to read
+        no_project: bool - default: False
+            If True, project the deltas (see equation 5 of du Mas des Bourboux
+            et al. 2020)
+        from_image: list or None - default: None
+            If not None, read the deltas from image files. The list of
+            filenname for the image files should be paassed in from_image
+
+    Returns:
+        The following variables:
+            data: A dictionary with the data. Keys are the healpix numbers of
+                each spectrum. Values are lists of delta instances.
+            num_data: Number of spectra in data.
+            z_min: Minimum redshift of the loaded deltas.
+            z_max: Maximum redshift of the loaded deltas.
+    """
+    files = []
+    in_dir = os.path.expandvars(in_dir)
+    if from_image is None or len(from_image) == 0:
+        if len(in_dir) > 8 and in_dir[-8:] == '.fits.gz':
+            files += glob.glob(in_dir)
+        elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
+            files += glob.glob(in_dir)
         else:
-            fi += glob.glob(indir+'/*.fits') + glob.glob(indir+'/*.fits.gz')
+            files += glob.glob(in_dir+'/*.fits') + glob.glob(in_dir+'/*.fits.gz')
     else:
         for arg in from_image:
-            if len(arg)>8 and arg[-8:]=='.fits.gz':
-                fi += glob.glob(arg)
-            elif len(arg)>5 and arg[-5:]=='.fits':
-                fi += glob.glob(arg)
+            if len(arg) > 8 and arg[-8:] == '.fits.gz':
+                files += glob.glob(arg)
+            elif len(arg) > 5 and arg[-5:] == '.fits':
+                files += glob.glob(arg)
             else:
-                fi += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
-    fi = sorted(fi)
+                files += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
+    files = sorted(files)
 
-    dels = []
+    deltas = []
     num_data = 0
-    for i,f in enumerate(fi):
-        userprint("\rread {} of {} {}".format(i,len(fi),num_data))
+    for index, filename in enumerate(files):
+        userprint("\rread {} of {} {}".format(index, len(files), num_data))
         if from_image is None:
-            hdul = fitsio.FITS(f)
-            dels += [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
+            hdul = fitsio.FITS(filename)
+            deltas += [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
             hdul.close()
         else:
-            dels += Delta.from_image(f)
+            deltas += Delta.from_image(filename)
 
-        num_data = len(dels)
-        if not max_num_spec is None:
-            if num_data>max_num_spec:break
+        num_data = len(deltas)
+        if max_num_spec is not None:
+            if num_data > max_num_spec:
+                break
 
-    ###
-    if not max_num_spec is None:
-        dels = dels[:max_num_spec]
+    # truncate the deltas if we load too many lines of sight
+    if max_num_spec is not None:
+        deltas = deltas[:max_num_spec]
         num_data = len(dels)
 
     userprint("\n")
 
-    phi = [d.ra for d in dels]
-    th = [sp.pi/2.-d.dec for d in dels]
-    pix = healpy.ang2pix(nside,th,phi)
-    if pix.size==0:
-        raise AssertionError('ERROR: No data in {}'.format(indir))
+    # compute healpix numbers
+    phi = [delta.ra for delta in deltas]
+    theta = [np.pi/2. - delta.dec for delta in deltas]
+    healpixs = healpy.ang2pix(nside, theta, phi)
+    if healpixs.size == 0:
+        raise AssertionError('ERROR: No data in {}'.format(in_dir))
 
     data = {}
-    z_min = 10**dels[0].log_lambda[0]/lambda_abs-1.
+    z_min = 10**deltas[0].log_lambda[0]/lambda_abs - 1.
     z_max = 0.
-    for d,p in zip(dels,pix):
-        if not p in data:
-            data[p]=[]
-        data[p].append(d)
-
-        z = 10**d.log_lambda/lambda_abs-1.
-        z_min = min(z_min,z.min())
-        z_max = max(z_max,z.max())
-        d.z = z
+    for delta, healpix in zip(deltas, healpixs):
+        z = 10**delta.log_lambda/lambda_abs - 1.
+        z_min = min(z_min, z.min())
+        z_max = max(z_max, z.max())
+        delta.z = z
         if not cosmo is None:
-            d.r_comov = cosmo.r_comoving(z)
-            d.rdm_comov = cosmo.dm(z)
-        d.weights *= ((1+z)/(1+zref))**(alpha-1)
+            delta.r_comov = cosmo.r_comoving(z)
+            delta.rdm_comov = cosmo.dm(z)
+        delta.weights *= ((1 + z)/(1 + z_ref))**(alpha - 1)
 
         if not no_project:
-            d.project()
+            delta.project()
 
-    return data,num_data,z_min,z_max
+        if not healpix in data:
+            data[healpix] = []
+        data[healpix].append(delta)
+
+    return data, num_data, z_min, z_max
 
 
-def read_objects(drq,nside,z_min,z_max,alpha,zref,cosmo,keep_bal=True):
+def read_objects(drq,nside,z_min,z_max,alpha,z_ref,cosmo,keep_bal=True):
     objs = {}
     ra,dec,z_qso,thingid,plate,mjd,fiberid = read_drq(drq,z_min,z_max,keep_bal=True)
     phi = ra
@@ -1229,7 +1267,7 @@ def read_objects(drq,nside,z_min,z_max,alpha,zref,cosmo,keep_bal=True):
         w=pix==ipix
         objs[ipix] = [QSO(t,r,d,z,p,m,f) for t,r,d,z,p,m,f in zip(thingid[w],ra[w],dec[w],z_qso[w],plate[w],mjd[w],fiberid[w])]
         for q in objs[ipix]:
-            q.weights = ((1.+q.z_qso)/(1.+zref))**(alpha-1.)
+            q.weights = ((1.+q.z_qso)/(1.+z_ref))**(alpha-1.)
             if not cosmo is None:
                 q.r_comov = cosmo.r_comoving(q.z_qso)
                 q.rdm_comov = cosmo.dm(q.z_qso)

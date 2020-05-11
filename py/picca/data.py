@@ -975,6 +975,12 @@ class Delta(QSO):
         self.mean_z = mean_z
         self.delta_log_lambda = delta_log_lambda
 
+        # variables computed in function io.read_deltas
+        self.z = None
+        self.r_comov = None
+        self.rdm_comov = None
+
+
     @classmethod
     def from_forest(cls, forest, get_stack_delta, get_var_lss, get_eta,
                     get_fudge, use_mock_continuum=False):
