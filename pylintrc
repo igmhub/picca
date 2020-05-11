@@ -436,7 +436,9 @@ good-names=i,
      r,
      p,
      m,
-     f
+     f,
+     Ol,
+     dm
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
