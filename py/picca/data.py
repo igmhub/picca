@@ -286,7 +286,7 @@ class Forest(QSO):
         Empty function to be loaded at run-time.
 
         Args:
-            log_lambda: float
+            log_lambda: array of float
                 Array containing the logarithm of the wavelengths (in Angs)
 
         Returns:
@@ -298,14 +298,14 @@ class Forest(QSO):
         raise NotImplementedError("Function should be specified at run-time")
 
     @classmethod
-    def correct_ivar(cls, lol_lambda):
+    def correct_ivar(cls, log_lambda):
         """Corrects for multiplicative errors in pipeline inverse variance
            calibration.
 
         Empty function to be loaded at run-time.
 
         Args:
-            log_lambda: float
+            log_lambda: array of float
                 Array containing the logarithm of the wavelengths (in Angs)
 
         Returns:
@@ -333,7 +333,7 @@ class Forest(QSO):
         Empty function to be loaded at run-time.
 
         Args:
-            log_lambda: float
+            log_lambda: array of float
                 Array containing the logarithm of the wavelengths (in Angs)
 
         Returns:
@@ -355,7 +355,7 @@ class Forest(QSO):
         Empty function to be loaded at run-time.
 
         Args:
-            log_lambda: float
+            log_lambda: array of float
                 Array containing the logarithm of the wavelengths (in Angs)
 
         Returns:
@@ -376,7 +376,7 @@ class Forest(QSO):
         Empty function to be loaded at run-time.
 
         Args:
-            log_lambda: float
+            log_lambda: array of float
                 Array containing the logarithm of the wavelengths (in Angs)
 
         Returns:
@@ -396,7 +396,7 @@ class Forest(QSO):
         2020 for details.
 
         Args:
-            log_lambda: float
+            log_lambda: array of float
                 Array containing the logarithm of the wavelengths (in Angs)
 
         Returns:
