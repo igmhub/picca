@@ -305,7 +305,7 @@ def do_ini(outdir, cf_file,fidPk):
         fout.write("sigma_velo_lorentz_QSO = 5. 0.1 None None free\n")
     
     if "0.2" in outdir or "0.3" in outdir:
-        fout.write("bias_hcd = -1.68E-2 0.1 None 0. free\n")
+        fout.write("bias_hcd = -1.68E-2 0.1 None None free\n")
         fout.write("beta_hcd = 0.67 0.1 None None free\n")
         fout.write("L0_hcd = 10.0 1 None None fixed\n")
     
