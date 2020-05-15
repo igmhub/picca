@@ -4,6 +4,7 @@ from __future__ import print_function
 import sys
 import argparse
 import fitsio
+import numpy as np
 import scipy as sp
 from scipy.interpolate import interp1d
 from multiprocessing import Pool,Lock,cpu_count,Value
@@ -123,13 +124,14 @@ if __name__ == '__main__':
         args.nproc = cpu_count()//2
 
     ### Parameters
-    xcf.np = args.np
-    xcf.nt = args.nt
     xcf.rp_min = args.rp_min
     xcf.rp_max = args.rp_max
     xcf.rt_max = args.rt_max
     xcf.z_cut_min = args.z_cut_min
     xcf.z_cut_max = args.z_cut_max
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    xcf.npb = args.np
+    xcf.ntb = args.nt
     xcf.nside = args.nside
     xcf.rej = args.rej
     xcf.zref = args.z_ref
@@ -189,7 +191,7 @@ if __name__ == '__main__':
     dll = head['DLL']
     nv1d = h[1]['nv1d'][:]
     v1d = h[1]['v1d'][:]
-    ll = llmin + dll*sp.arange(v1d.size)
+    ll = llmin + dll*np.arange(v1d.size)
     xcf.v1d['D1'] = interp1d(ll[nv1d>0],v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
 
     nb1d = h[1]['nb1d'][:]
@@ -245,7 +247,7 @@ if __name__ == '__main__':
     print(" \nFinished\n")
     pool.close()
 
-    wickT = sp.array(wickT)
+    wickT = np.array(wickT)
     wAll = wickT[:,0].sum(axis=0)
     nb = wickT[:,1].sum(axis=0)
     npairs = wickT[:,2].sum(axis=0)
@@ -276,8 +278,8 @@ if __name__ == '__main__':
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
         {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':xcf.np,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':xcf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'NP','value':xcf.npb,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':xcf.ntb,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':xcf.rej,'comment':'Rejection factor'},

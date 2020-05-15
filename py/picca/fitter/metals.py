@@ -1,3 +1,4 @@
+import numpy as np
 import scipy as sp
 import fitsio
 import sys
@@ -56,8 +57,8 @@ class model:
             to = sp.loadtxt(met_prefix+"_Lya_"+met_names[0]+".0.dat")
             nd = len(to[:,0])
 
-            self.temp_lya_met=sp.zeros([nd,nmet,3])
-            self.temp_met_met=sp.zeros([nd,nmet,nmet,3])
+            self.temp_lya_met=np.zeros([nd,nmet,3])
+            self.temp_met_met=np.zeros([nd,nmet,nmet,3])
 
             for i in range(nmet):
                 for mp in range(3):
@@ -91,8 +92,8 @@ class model:
                 self.dmat["LYA_"+m1] = h[2]["DM_LYA_"+m1][:]
                 self.prev_pmet["beta_"+m1]=0.
                 self.prev_pmet["alpha_"+m1]=0.
-                self.prev_xi_lya_met["LYA_"+m1] = sp.zeros(self.dmat["LYA_"+m1].shape[0])
-                self.prev_xi_dla_met[m1] = sp.zeros(self.dmat["LYA_"+m1].shape[0])
+                self.prev_xi_lya_met["LYA_"+m1] = np.zeros(self.dmat["LYA_"+m1].shape[0])
+                self.prev_xi_dla_met[m1] = np.zeros(self.dmat["LYA_"+m1].shape[0])
 
                 self.auto_rt["LYA_"+m1] = h[2]["RT_LYA_"+m1][:]
                 self.auto_rp["LYA_"+m1] = h[2]["RP_LYA_"+m1][:]
@@ -101,7 +102,7 @@ class model:
                 for m2 in met_names[i:]:
                     sys.stdout.write("reading {} {}\n".format(m1,m2))
                     self.dmat[m1+"_"+m2] = h[2]["DM_"+m1+"_"+m2][:]
-                    self.prev_xi_met_met[m1+"_"+m2] = sp.zeros(self.dmat[m1+"_"+m2].shape[0])
+                    self.prev_xi_met_met[m1+"_"+m2] = np.zeros(self.dmat[m1+"_"+m2].shape[0])
 
                     self.auto_rt[m1+"_"+m2] = h[2]["RT_"+m1+"_"+m2][:]
                     self.auto_rp[m1+"_"+m2] = h[2]["RP_"+m1+"_"+m2][:]
@@ -131,7 +132,7 @@ class model:
             self.nd_cross = to[:,0].size
 
             ### Get the grid of the metals
-            self.grid_qso_met=sp.zeros([self.nd_cross,nmet,3])
+            self.grid_qso_met=np.zeros([self.nd_cross,nmet,3])
             for i in range(nmet):
                 fmet = met_prefix + '_QSO_' + met_names[i] + '.grid'
                 print('  Reading cross correlation metal grid : ')
@@ -160,7 +161,7 @@ class model:
 
                 self.prev_pmet['beta_'+i]=0.
                 self.prev_pmet['alpha_'+i]=0.
-                self.prev_xi_qso_met[i] = sp.zeros(self.xdmat[i].shape[0])
+                self.prev_xi_qso_met[i] = np.zeros(self.xdmat[i].shape[0])
 
     def valueAuto(self,pars):
 
@@ -171,9 +172,9 @@ class model:
 
 
         if self.templates:
-            bias_met=sp.array([pars['bias_'+met] for met in self.met_names])
-            beta_met=sp.array([pars['beta_'+met] for met in self.met_names])
-            amp=sp.zeros([self.nmet,3])
+            bias_met=np.array([pars['bias_'+met] for met in self.met_names])
+            beta_met=np.array([pars['beta_'+met] for met in self.met_names])
+            amp=np.zeros([self.nmet,3])
             amp[:,0] = bias_met*(1 + (beta_lya+beta_met)/3 + beta_lya*beta_met/5)
             amp[:,1] = bias_met*(2*(beta_lya+beta_met)/3 + 4*beta_lya*beta_met/7)
             amp[:,2] = bias_met*8*beta_met*beta_lya/35
@@ -181,9 +182,9 @@ class model:
             amp*=bias_lya
 
             xi_lya_met=amp*self.temp_lya_met
-            xi_lya_met=sp.sum(xi_lya_met,axis=(1,2))
+            xi_lya_met=np.sum(xi_lya_met,axis=(1,2))
 
-            amp=sp.zeros([self.nmet,self.nmet,3])
+            amp=np.zeros([self.nmet,self.nmet,3])
 
             bias_met2 = bias_met*bias_met[None,:]
 
@@ -192,13 +193,13 @@ class model:
             amp[:,:,2] = bias_met2*8*beta_met*beta_met[None,:]/35
 
             xi_met_met=amp*self.temp_met_met
-            xi_met_met=sp.sum(xi_met_met,axis=(1,2,3))
+            xi_met_met=np.sum(xi_met_met,axis=(1,2,3))
 
         else:
             muk = cosmo_model.muk
             k = self.k
             kp = k*muk
-            kt = k*sp.sqrt(1-muk**2)
+            kt = k*np.sqrt(1-muk**2)
             nbins = self.dmat["LYA_"+self.met_names[0]].shape[0]
 
             if self.hcds_mets:
@@ -214,7 +215,7 @@ class model:
             Gpar = sp.sinc(kp*Lpar_auto/2/sp.pi)**2
             Gper = sp.sinc(kt*Lper_auto/2/sp.pi)**2
 
-            xi_lya_met = sp.zeros(nbins)
+            xi_lya_met = np.zeros(nbins)
             for met in self.met_names:
                 bias_met = pars['bias_'+met]
                 beta_met = pars['beta_'+met]
@@ -228,7 +229,7 @@ class model:
                 rt = self.auto_rt["LYA_"+met]
                 rp = self.auto_rp["LYA_"+met]
                 zeff  = self.auto_zeff["LYA_"+met]
-                r = sp.sqrt(rt**2+rp**2)
+                r = np.sqrt(rt**2+rp**2)
                 w = (r==0)
                 r[w] = 1e-6
                 mur = rp/r
@@ -256,7 +257,7 @@ class model:
                 if self.hcds_mets:
                     xi_lya_met += bias_lls*bias_met*self.prev_xi_dla_met[met]
 
-            xi_met_met = sp.zeros(nbins)
+            xi_met_met = np.zeros(nbins)
             for i,met1 in enumerate(self.met_names):
                 bias_met1 = pars['bias_'+met1]
                 beta_met1 = pars['beta_'+met1]
@@ -275,7 +276,7 @@ class model:
                     if recalc:
                         if self.verbose:
                             print("recalculating ",met1,met2)
-                        r = sp.sqrt(rt**2+rp**2)
+                        r = np.sqrt(rt**2+rp**2)
                         w=r==0
                         r[w]=1e-6
                         mur = rp/r
@@ -297,15 +298,15 @@ class model:
         bias_qso          = pars["bias_qso"]
         growth_rate = pars["growth_rate"]
         beta_qso          = growth_rate/bias_qso
-        bias_met = sp.array([pars['bias_'+met] for met in self.met_names])
-        beta_met = sp.array([pars['beta_'+met] for met in self.met_names])
+        bias_met = np.array([pars['bias_'+met] for met in self.met_names])
+        beta_met = np.array([pars['beta_'+met] for met in self.met_names])
         Lpar = pars["Lpar_cross"]
         Lper = pars["Lper_cross"]
 
         ### Scales
         if (self.different_drp):
-            drp_met = sp.array([pars['drp_'+met]  for met in self.met_names])
-            drp     = sp.outer(sp.ones(self.nd_cross),drp_met)
+            drp_met = np.array([pars['drp_'+met]  for met in self.met_names])
+            drp     = sp.outer(np.ones(self.nd_cross),drp_met)
         else:
             drp = pars["drp"]
 
@@ -313,19 +314,19 @@ class model:
 
             ### Redshift evolution
             z     = self.grid_qso_met[:,:,2]
-            evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+            evol  = np.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
             evol *= self.evolution_Lya_bias(z,[pars["alpha_lya"]])/self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])
             evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
 
 
             rp_shift = self.grid_qso_met[:,:,0]+drp
             rt       = self.grid_qso_met[:,:,1]
-            r        = sp.sqrt(rp_shift**2 + rt**2)
+            r        = np.sqrt(rp_shift**2 + rt**2)
             mur      = rp_shift/r
 
         muk      = cosmo_model.muk
         kp       = self.k * muk
-        kt       = self.k * sp.sqrt(1.-muk**2)
+        kt       = self.k * np.sqrt(1.-muk**2)
 
         ### Correction to linear power-spectrum
         pk_corr = (1.+0.*muk)*self.pk
@@ -336,21 +337,21 @@ class model:
         b1b2 = qso_boost*bias_qso*bias_met
 
         if self.grid:
-            xi_qso_met = sp.zeros(self.grid_qso_met[:,0,0].size)
+            xi_qso_met = np.zeros(self.grid_qso_met[:,0,0].size)
             for i in range(self.nmet):
                 pk_full  = b1b2[i]*(1. + beta_met[i]*muk**2)*(1. + beta_qso*muk**2)*pk_corr
                 xi_qso_met += cosmo_model.Pk2Xi(r[:,i],mur[:,i],self.k,pk_full,ell_max=self.ell_max)*evol[:,i]
 
         else:
             nbins = list(self.xdmat.values())[0].shape[0]
-            xi_qso_met = sp.zeros(nbins)
+            xi_qso_met = np.zeros(nbins)
             for i in self.met_names:
                 bias_met = pars["bias_"+i]
                 beta_met = pars["beta_"+i]
 
                 recalc = beta_met != self.prev_pmet['beta_'+i] or\
                     growth_rate != self.prev_pmet['growth_rate'] or\
-                    not sp.allclose(qso_evol,self.prev_pmet['qso_evol']) or\
+                    not np.allclose(qso_evol,self.prev_pmet['qso_evol']) or\
                     self.prev_pmet['drp'] != drp
                 if recalc:
                     if self.verbose:
@@ -361,13 +362,13 @@ class model:
                     self.prev_pmet['drp'] = drp
 
                     z = self.xzeff[i]
-                    evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+                    evol  = np.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
                     evol *= self.evolution_Lya_bias(z,[pars["alpha_"+i]])/self.evolution_Lya_bias(self.zref,[pars["alpha_"+i]])
                     evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
 
                     rp = self.xrp[i] + drp
                     rt = self.xrt[i]
-                    r = sp.sqrt(rp**2+rt**2)
+                    r = np.sqrt(rp**2+rt**2)
                     w=r==0
                     r[w]=1e-6
                     mur = rp/r

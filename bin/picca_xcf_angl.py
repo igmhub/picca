@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
@@ -110,8 +112,9 @@ if __name__ == '__main__':
     xcf.rt_max = args.ang_max
     xcf.z_cut_min = args.z_cut_min
     xcf.z_cut_max = args.z_cut_max
-    xcf.np     = args.np
-    xcf.nt     = args.nt
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    xcf.npb    = args.np
+    xcf.ntb    = args.nt
     xcf.nside  = args.nside
     xcf.ang_correlation = True
     xcf.angmax  = args.ang_max
@@ -134,13 +137,13 @@ if __name__ == '__main__':
         forest.dll = None
         for p in xcf.dels:
             for d in xcf.dels[p]:
-                dll = sp.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
+                dll = np.asarray([d.ll[ii]-d.ll[ii-1] for ii in range(1,d.ll.size)]).min()
                 if forest.dll is None:
                     forest.dll = dll
                 else:
                     forest.dll = min(dll,forest.dll)
-        forest.lmin  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
-        forest.lmax  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
+        forest.lmin  = np.log10( (zmin_pix+1.)*xcf.lambda_abs )-forest.dll/2.
+        forest.lmax  = np.log10( (zmax_pix+1.)*xcf.lambda_abs )+forest.dll/2.
         ll,st, wst   = prep_del.stack(xcf.dels,delta=True)
         for p in xcf.dels:
             for d in xcf.dels[p]:
@@ -152,7 +155,7 @@ if __name__ == '__main__':
                                 args.z_evol_obj, args.z_ref,cosmo)
     for i,ipix in enumerate(sorted(objs.keys())):
         for q in objs[ipix]:
-            q.ll = sp.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
+            q.ll = np.log10( (1.+q.zqso)*constants.absorber_IGM[args.lambda_abs_obj] )
     print("")
     xcf.objs = objs
 
@@ -170,14 +173,14 @@ if __name__ == '__main__':
 
 
     ### Store
-    cfs=sp.array(cfs)
+    cfs=np.array(cfs)
     wes=cfs[:,0,:]
     rps=cfs[:,2,:]
     rts=cfs[:,3,:]
     zs=cfs[:,4,:]
     nbs=cfs[:,5,:].astype(sp.int64)
     cfs=cfs[:,1,:]
-    hep=sp.array(sorted(list(cpu_data.keys())))
+    hep=np.array(sorted(list(cpu_data.keys())))
 
     cut      = (wes.sum(axis=0)>0.)
     rp       = (rps*wes).sum(axis=0)
@@ -193,8 +196,8 @@ if __name__ == '__main__':
     head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum wavelength ratio'},
         {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum wavelength ratio'},
         {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum angle [rad]'},
-        {'name':'NP','value':xcf.np,'comment':'Number of bins in wavelength ratio'},
-        {'name':'NT','value':xcf.nt,'comment':'Number of bins in angle'},
+        {'name':'NP','value':xcf.npb,'comment':'Number of bins in wavelength ratio'},
+        {'name':'NT','value':xcf.ntb,'comment':'Number of bins in angle'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}

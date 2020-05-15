@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
@@ -80,8 +82,8 @@ if __name__ == '__main__':
 
     ###
     cf.nside = args.nside
-    cf.lmin = sp.log10(args.lambda_min)
-    cf.lmax = sp.log10(args.lambda_max)
+    cf.lmin = np.log10(args.lambda_min)
+    cf.lmax = np.log10(args.lambda_max)
     cf.dll = args.dll
     cf.n1d = int((cf.lmax-cf.lmin)/cf.dll+1)
     cf.x_correlation = False
@@ -116,9 +118,9 @@ if __name__ == '__main__':
         cf.ndata2 = ndata2
 
     ### Convert lists to arrays
-    cf.data = {k:sp.array(v) for k,v in cf.data.items()}
+    cf.data = {k:np.array(v) for k,v in cf.data.items()}
     if cf.x_correlation:
-        cf.data2 = {k:sp.array(v) for k,v in cf.data2.items()}
+        cf.data2 = {k:np.array(v) for k,v in cf.data2.items()}
 
     ###
     cf.counter = Value('i',0)
@@ -135,13 +137,13 @@ if __name__ == '__main__':
 
 
     ###
-    cfs=sp.array(cfs)
+    cfs=np.array(cfs)
     wes=cfs[:,0,:]
     nbs=cfs[:,2,:]
     cfs=cfs[:,1,:]
-    wes = sp.array(wes)
-    cfs = sp.array(cfs)
-    nbs = sp.array(nbs).astype(sp.int64)
+    wes = np.array(wes)
+    cfs = np.array(cfs)
+    nbs = np.array(nbs).astype(sp.int64)
 
     print("multiplying")
     cfs *= wes
@@ -165,18 +167,18 @@ if __name__ == '__main__':
     wes_2d = wes.copy()
     nbs_2d = nbs.copy()
 
-    v1d = sp.diag(cfs).copy()
-    wv1d = sp.diag(wes).copy()
-    nv1d = sp.diag(nbs).copy()
+    v1d = np.diag(cfs).copy()
+    wv1d = np.diag(wes).copy()
+    nv1d = np.diag(nbs).copy()
     cor = cfs
-    norm = sp.sqrt(v1d*v1d[:,None])
+    norm = np.sqrt(v1d*v1d[:,None])
     w = norm>0
     cor[w]/=norm[w]
 
-    c1d = sp.zeros(cf.n1d)
-    nc1d = sp.zeros(cf.n1d)
-    nb1d = sp.zeros(cf.n1d,dtype=sp.int64)
-    bins = sp.arange(cf.n1d)
+    c1d = np.zeros(cf.n1d)
+    nc1d = np.zeros(cf.n1d)
+    nb1d = np.zeros(cf.n1d,dtype=sp.int64)
+    bins = np.arange(cf.n1d)
 
     dbin = bins-bins[:,None]
     w = dbin>=0
@@ -184,11 +186,11 @@ if __name__ == '__main__':
     cor = cor[w]
     wes = wes[w]
     nbs = nbs[w]
-    c = sp.bincount(dbin,weights = cor*wes)
+    c = np.bincount(dbin,weights = cor*wes)
     c1d[:len(c)] = c
-    c = sp.bincount(dbin,weights=wes)
+    c = np.bincount(dbin,weights=wes)
     nc1d[:len(c)] = c
-    c = sp.bincount(dbin,weights=nbs)
+    c = np.bincount(dbin,weights=nbs)
     nb1d[:len(c)] = c
 
     w=nc1d>0

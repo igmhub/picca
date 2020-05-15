@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import numpy as np
 import scipy as sp
 from picca import constants
 from picca.utils import print, unred
@@ -31,11 +32,11 @@ class qso:
 
     def __xor__(self,data):
         try:
-            x = sp.array([d.xcart for d in data])
-            y = sp.array([d.ycart for d in data])
-            z = sp.array([d.zcart for d in data])
-            ra = sp.array([d.ra for d in data])
-            dec = sp.array([d.dec for d in data])
+            x = np.array([d.xcart for d in data])
+            y = np.array([d.ycart for d in data])
+            z = np.array([d.zcart for d in data])
+            ra = np.array([d.ra for d in data])
+            dec = np.array([d.dec for d in data])
 
             cos = x*self.xcart+y*self.ycart+z*self.zcart
             w = cos>=1.
@@ -48,9 +49,9 @@ class qso:
                 cos[w] = -1.
             angl = sp.arccos(cos)
 
-            w = (sp.absolute(ra-self.ra)<constants.small_angle_cut_off) & (sp.absolute(dec-self.dec)<constants.small_angle_cut_off)
+            w = (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off)
             if w.sum()!=0:
-                angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cosdec*(ra[w]-self.ra))**2 )
+                angl[w] = np.sqrt( (dec[w]-self.dec)**2 + (self.cosdec*(ra[w]-self.ra))**2 )
         except:
             x = data.xcart
             y = data.ycart
@@ -66,8 +67,8 @@ class qso:
                 print('WARNING: 1 pair has cosinus<=-1.')
                 cos = -1.
             angl = sp.arccos(cos)
-            if (sp.absolute(ra-self.ra)<constants.small_angle_cut_off) & (sp.absolute(dec-self.dec)<constants.small_angle_cut_off):
-                angl = sp.sqrt( (dec-self.dec)**2 + (self.cosdec*(ra-self.ra))**2 )
+            if (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off):
+                angl = np.sqrt( (dec-self.dec)**2 + (self.cosdec*(ra-self.ra))**2 )
         return angl
 
 class forest(qso):
@@ -118,8 +119,8 @@ class forest(qso):
         ll = forest.lmin + bins*forest.dll
         w = (ll>=forest.lmin)
         w = w & (ll<forest.lmax)
-        w = w & (ll-sp.log10(1.+self.zqso)>forest.lmin_rest)
-        w = w & (ll-sp.log10(1.+self.zqso)<forest.lmax_rest)
+        w = w & (ll-np.log10(1.+self.zqso)>forest.lmin_rest)
+        w = w & (ll-np.log10(1.+self.zqso)<forest.lmax_rest)
         w = w & (iv>0.)
         if w.sum()==0:
             return
@@ -136,19 +137,19 @@ class forest(qso):
             reso=reso[w]
 
         ## rebin
-        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
-        cfl = sp.zeros(bins.max()+1)
-        civ = sp.zeros(bins.max()+1)
+        cll = forest.lmin + np.arange(bins.max()+1)*forest.dll
+        cfl = np.zeros(bins.max()+1)
+        civ = np.zeros(bins.max()+1)
         if mmef is not None:
-            cmmef = sp.zeros(bins.max()+1)
-        ccfl = sp.bincount(bins,weights=iv*fl)
-        cciv = sp.bincount(bins,weights=iv)
+            cmmef = np.zeros(bins.max()+1)
+        ccfl = np.bincount(bins,weights=iv*fl)
+        cciv = np.bincount(bins,weights=iv)
         if mmef is not None:
-            ccmmef = sp.bincount(bins, weights=iv*mmef)
+            ccmmef = np.bincount(bins, weights=iv*mmef)
         if diff is not None:
-            cdiff = sp.bincount(bins,weights=iv*diff)
+            cdiff = np.bincount(bins,weights=iv*diff)
         if reso is not None:
-            creso = sp.bincount(bins,weights=iv*reso)
+            creso = np.bincount(bins,weights=iv*reso)
 
         cfl[:len(ccfl)] += ccfl
         civ[:len(cciv)] += cciv
@@ -187,17 +188,17 @@ class forest(qso):
         self.diff = diff
         self.reso = reso
         #else :
-        #   self.diff = sp.zeros(len(ll))
-        #   self.reso = sp.ones(len(ll))
+        #   self.diff = np.zeros(len(ll))
+        #   self.reso = np.ones(len(ll))
 
         # compute means
         if reso is not None : self.mean_reso = sum(reso)/float(len(reso))
 
-        err = 1.0/sp.sqrt(iv)
+        err = 1.0/np.sqrt(iv)
         SNR = fl/err
         self.mean_SNR = sum(SNR)/float(len(SNR))
         lam_lya = constants.absorber_IGM["LYA"]
-        self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
+        self.mean_z = (np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))/2./lam_lya -1.0
 
 
     def __add__(self,d):
@@ -207,40 +208,40 @@ class forest(qso):
 
         dic = {}  # this should contain all quantities that are to be coadded with ivar weighting
 
-        ll = sp.append(self.ll,d.ll)
-        dic['fl'] = sp.append(self.fl, d.fl)
-        iv = sp.append(self.iv,d.iv)
+        ll = np.append(self.ll,d.ll)
+        dic['fl'] = np.append(self.fl, d.fl)
+        iv = np.append(self.iv,d.iv)
 
         if self.mmef is not None:
-            dic['mmef'] = sp.append(self.mmef, d.mmef)
+            dic['mmef'] = np.append(self.mmef, d.mmef)
         if self.diff is not None:
-            dic['diff'] = sp.append(self.diff, d.diff)
+            dic['diff'] = np.append(self.diff, d.diff)
         if self.reso is not None:
-            dic['reso'] = sp.append(self.reso, d.reso)
+            dic['reso'] = np.append(self.reso, d.reso)
 
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
-        civ = sp.zeros(bins.max()+1)
-        cciv = sp.bincount(bins,weights=iv)
+        cll = forest.lmin + np.arange(bins.max()+1)*forest.dll
+        civ = np.zeros(bins.max()+1)
+        cciv = np.bincount(bins,weights=iv)
         civ[:len(cciv)] += cciv
         w = (civ>0.)
         self.ll = cll[w]
         self.iv = civ[w]
 
         for k, v in dic.items():
-            cnew = sp.zeros(bins.max() + 1)
-            ccnew = sp.bincount(bins, weights=iv * v)
+            cnew = np.zeros(bins.max() + 1)
+            ccnew = np.bincount(bins, weights=iv * v)
             cnew[:len(ccnew)] += ccnew
             setattr(self, k, cnew[w] / civ[w])
 
         # recompute means of quality variables
         if self.reso is not None:
             self.mean_reso = self.reso.mean()
-        err = 1./sp.sqrt(self.iv)
+        err = 1./np.sqrt(self.iv)
         SNR = self.fl/err
         self.mean_SNR = SNR.mean()
         lam_lya = constants.absorber_IGM["LYA"]
-        self.mean_z = (sp.power(10.,ll[len(ll)-1])+sp.power(10.,ll[0]))/2./lam_lya -1.0
+        self.mean_z = (np.power(10.,ll[len(ll)-1])+np.power(10.,ll[0]))/2./lam_lya -1.0
 
         return self
 
@@ -248,11 +249,11 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
 
-        w = sp.ones(self.ll.size,dtype=bool)
+        w = np.ones(self.ll.size,dtype=bool)
         for l in mask_obs:
             w &= (self.ll<l[0]) | (self.ll>l[1])
         for l in mask_RF:
-            w &= (self.ll-sp.log10(1.+self.zqso)<l[0]) | (self.ll-sp.log10(1.+self.zqso)>l[1])
+            w &= (self.ll-np.log10(1.+self.zqso)<l[0]) | (self.ll-np.log10(1.+self.zqso)>l[1])
 
         ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -268,7 +269,7 @@ class forest(qso):
             return
 
         if self.Fbar is None:
-            self.Fbar = sp.ones(self.ll.size)
+            self.Fbar = np.ones(self.ll.size)
 
         w = 10.**self.ll/(1.+self.zqso)<=waveRF
         z = 10.**self.ll/waveRF-1.
@@ -280,14 +281,14 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
         if self.T_dla is None:
-            self.T_dla = sp.ones(len(self.ll))
+            self.T_dla = np.ones(len(self.ll))
 
         self.T_dla *= dla(self,zabs,nhi).t
 
         w = self.T_dla>forest.dla_mask
         if not mask is None:
             for l in mask:
-                w &= (self.ll-sp.log10(1.+zabs)<l[0]) | (self.ll-sp.log10(1.+zabs)>l[1])
+                w &= (self.ll-np.log10(1.+zabs)<l[0]) | (self.ll-np.log10(1.+zabs)>l[1])
 
         ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -300,8 +301,8 @@ class forest(qso):
         if not hasattr(self,'ll'):
             return
 
-        w = sp.ones(self.ll.size, dtype=bool)
-        w &= sp.fabs(1.e4*(self.ll-sp.log10(lambda_absorber)))>forest.absorber_mask
+        w = np.ones(self.ll.size, dtype=bool)
+        w &= sp.fabs(1.e4*(self.ll-np.log10(lambda_absorber)))>forest.absorber_mask
 
         ps = ['iv','ll','fl','T_dla','Fbar','mmef','diff','reso']
         for p in ps:
@@ -311,10 +312,10 @@ class forest(qso):
         return
 
     def cont_fit(self):
-        lmax = forest.lmax_rest+sp.log10(1+self.zqso)
-        lmin = forest.lmin_rest+sp.log10(1+self.zqso)
+        lmax = forest.lmax_rest+np.log10(1+self.zqso)
+        lmin = forest.lmin_rest+np.log10(1+self.zqso)
         try:
-            mc = forest.mean_cont(self.ll-sp.log10(1+self.zqso))
+            mc = forest.mean_cont(self.ll-np.log10(1+self.zqso))
         except ValueError:
             raise Exception
 
@@ -344,9 +345,9 @@ class forest(qso):
             # TODO: make this condition clearer, maybe pass an option
             # use_constant_weights?
             if (eta==0).all() :
-                we=sp.ones(len(we))
+                we=np.ones(len(we))
             v = (self.fl-m)**2*we
-            return v.sum()-sp.log(we).sum()
+            return v.sum()-np.log(we).sum()
 
         p0 = (self.fl*self.iv).sum()/self.iv.sum()
         p1 = 0
@@ -476,10 +477,10 @@ class delta(qso):
         dll = float(a[9])
 
         nbpixel = int(a[10])
-        de = sp.array(a[11:11+nbpixel]).astype(float)
-        ll = sp.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
-        iv = sp.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
-        diff = sp.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
+        de = np.array(a[11:11+nbpixel]).astype(float)
+        ll = np.array(a[11+nbpixel:11+2*nbpixel]).astype(float)
+        iv = np.array(a[11+2*nbpixel:11+3*nbpixel]).astype(float)
+        diff = np.array(a[11+3*nbpixel:11+4*nbpixel]).astype(float)
 
 
         thid = 0
@@ -535,7 +536,7 @@ class delta(qso):
         res=0
         if (self.order==1) and self.de.shape[0] > 1:
             mll = sp.average(self.ll,weights=self.we)
-            mld = sp.sum(self.we*self.de*(self.ll-mll))/sp.sum(self.we*(self.ll-mll)**2)
+            mld = np.sum(self.we*self.de*(self.ll-mll))/np.sum(self.we*(self.ll-mll)**2)
             res = mld * (self.ll-mll)
         elif self.order==1:
             res = self.de

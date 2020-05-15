@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+import numpy as np
 import scipy as sp
 import sys
 import fitsio
@@ -41,15 +42,15 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
         co = cov(da,we)
 
     nda = co.shape[1]
-    var = sp.diagonal(co)
+    var = np.diagonal(co)
     if sp.any(var==0.):
         print('WARNING: data has some empty bins, impossible to smooth')
         print('WARNING: returning the unsmoothed covariance')
         return co
 
-    cor = co/sp.sqrt(var*var[:,None])
+    cor = co/np.sqrt(var*var[:,None])
 
-    cor_smooth = sp.zeros([nda,nda])
+    cor_smooth = np.zeros([nda,nda])
 
     dcor={}
     dncor={}
@@ -76,7 +77,7 @@ def smooth_cov(da,we,rp,rt,drt=4,drp=4,co=None):
 
 
     print("\n")
-    co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
+    co_smooth = cor_smooth * np.sqrt(var*var[:,None])
     return co_smooth
 
 def smooth_cov_wick(infile,Wick_infile,outfile):
@@ -96,73 +97,74 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     """
 
     h = fitsio.FITS(infile)
-    da = sp.array(h[2]['DA'][:])
-    we = sp.array(h[2]['WE'][:])
+    da = np.array(h[2]['DA'][:])
+    we = np.array(h[2]['WE'][:])
     head = h[1].read_header()
-    nt = head['NT']
-    np = head['NP']
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    npb = head['NP']
+    ntb = head['NT']
     h.close()
 
     co = cov(da,we)
 
     nbin = da.shape[1]
-    var = sp.diagonal(co)
+    var = np.diagonal(co)
     if sp.any(var==0.):
         print('WARNING: data has some empty bins, impossible to smooth')
         print('WARNING: returning the unsmoothed covariance')
         return co
 
-    cor = co/sp.sqrt(var*var[:,None])
+    cor = co/np.sqrt(var*var[:,None])
     cor1d = cor.reshape(nbin*nbin)
 
     h = fitsio.FITS(Wick_infile)
-    cow = sp.array(h[1]['CO'][:])
+    cow = np.array(h[1]['CO'][:])
     h.close()
 
-    varw = sp.diagonal(cow)
+    varw = np.diagonal(cow)
     if sp.any(varw==0.):
         print('WARNING: Wick covariance has bins with var = 0')
         print('WARNING: returning the unsmoothed covariance')
         return co
 
-    corw = cow/sp.sqrt(varw*varw[:,None])
+    corw = cow/np.sqrt(varw*varw[:,None])
     corw1d = corw.reshape(nbin*nbin)
 
     Dcor1d = cor1d - corw1d
 
     #### indices
-    ind = sp.arange(nbin)
-    rtindex = ind%nt
-    rpindex = ind//nt
+    ind = np.arange(nbin)
+    rtindex = ind%ntb
+    rpindex = ind//ntb
     idrt2d = abs(rtindex-rtindex[:,None])
     idrp2d = abs(rpindex-rpindex[:,None])
     idrt1d = idrt2d.reshape(nbin*nbin)
     idrp1d = idrp2d.reshape(nbin*nbin)
 
     #### reduced covariance  (50*50)
-    Dcor_red1d = sp.zeros(nbin)
+    Dcor_red1d = np.zeros(nbin)
     for idr in range(0,nbin):
         print("\rsmoothing {}".format(idr),end="")
         Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
-    Dcor_red = Dcor_red1d.reshape(np,nt)
+    Dcor_red = Dcor_red1d.reshape(npb,ntb)
     print("")
 
     #### fit for L and A at each drp
     def corrfun(idrp,idrt,L,A):
-        r = sp.sqrt(float(idrt)**2+float(idrp)**2) - float(idrp)
+        r = np.sqrt(float(idrt)**2+float(idrp)**2) - float(idrp)
         return A*sp.exp(-r/L)
     def chisq(L,A,idrp):
         chi2 = 0.
         idrp = int(idrp)
-        for idrt in range(1,nt):
+        for idrt in range(1,ntb):
             chi = Dcor_red[idrp,idrt]-corrfun(idrp,idrt,L,A)
             chi2 += chi**2
-        chi2 = chi2*np*nbin
+        chi2 = chi2*npb*nbin
         return chi2
 
-    Lfit = sp.zeros(np)
-    Afit = sp.zeros(np)
-    for idrp in range(np):
+    Lfit = np.zeros(npb)
+    Afit = np.zeros(npb)
+    for idrp in range(npb):
         m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),
             A=1.,error_A=0.2,
             idrp=idrp,fix_idrp=True,
@@ -172,7 +174,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
         Afit[idrp] = m.values['A']
 
     #### hybrid covariance from wick + fit
-    co_smooth = sp.sqrt(var*var[:,None])
+    co_smooth = np.sqrt(var*var[:,None])
 
     cor0 = Dcor_red1d[rtindex==0]
     for i in range(nbin):
@@ -223,7 +225,7 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
                         dcat[kk] += [v[i]]
                 dcat[k] += [v]
     f.close()
-    print('INFO: Found {} DLA from {} quasars'.format(len(dcat['ThingID']), sp.unique(dcat['ThingID']).size))
+    print('INFO: Found {} DLA from {} quasars'.format(len(dcat['ThingID']), np.unique(dcat['ThingID']).size))
 
     fromNoterdaemeKey2Picca = {'ThingID':'THING_ID', 'z_abs':'Z', 'zqso':'ZQSO','NHI':'NHI',
         'plate':'PLATE','MJD':'MJD','fiber':'FIBERID',
@@ -231,7 +233,7 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     fromPiccaKey2Type = {'THING_ID':sp.int64, 'Z':sp.float64, 'ZQSO':sp.float64, 'NHI':sp.float64,
         'PLATE':sp.int64,'MJD':sp.int64,'FIBERID':sp.int64,
         'RA':sp.float64, 'DEC':sp.float64}
-    cat = { v:sp.array(dcat[k],dtype=fromPiccaKey2Type[v]) for k,v in fromNoterdaemeKey2Picca.items() }
+    cat = { v:np.array(dcat[k],dtype=fromPiccaKey2Type[v]) for k,v in fromNoterdaemeKey2Picca.items() }
 
     w = cat['THING_ID']>0
     print('INFO: Removed {} DLA, because THING_ID<=0'.format((cat['THING_ID']<=0).sum()))
@@ -247,9 +249,9 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     zqso = h[1][drqzkey][:]
     h.close()
     fromThingid2idx = { el:i for i,el in enumerate(thid) }
-    cat['RA'] = sp.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['DEC'] = sp.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['ZQSO'] = sp.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['RA'] = np.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['DEC'] = np.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    cat['ZQSO'] = np.array([ zqso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
 
     w = cat['RA']!=cat['DEC']
     print('INFO: Removed {} DLA, because RA==DEC'.format((cat['RA']==cat['DEC']).sum()))
@@ -268,7 +270,7 @@ def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
     w = sp.argsort(cat['THING_ID'])
     for k in cat.keys():
         cat[k] = cat[k][w]
-    cat['DLAID'] = sp.arange(1,cat['Z'].size+1,dtype=sp.int64)
+    cat['DLAID'] = np.arange(1,cat['Z'].size+1,dtype=sp.int64)
 
     for k in ['RA','DEC']:
         cat[k] = cat[k].astype('float64')
@@ -297,7 +299,7 @@ def desi_convert_DLA(inPath,outPath):
     for k,v in fromDESIkey2piccaKey.items():
         cat[k] = h['DLACAT'][v][:]
     h.close()
-    print('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, sp.unique(cat['THING_ID']).size))
+    print('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, np.unique(cat['THING_ID']).size))
 
     w = sp.argsort(cat['THING_ID'])
     for k in cat.keys():
@@ -324,7 +326,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     ## Truth table
     vac = fitsio.FITS(truth)
 
-    w = sp.ones(vac[1]['TARGETID'][:].size).astype(bool)
+    w = np.ones(vac[1]['TARGETID'][:].size).astype(bool)
     print(" start                 : nb object in cat = {}".format(w.sum()) )
     w &= sp.char.strip(vac[1]['TRUESPECTYPE'][:].astype(str))==spectype
     print(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
@@ -332,8 +334,8 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
     thid = vac[1]['TARGETID'][:][w]
     zqso = vac[1]['TRUEZ'][:][w]
     vac.close()
-    ra = sp.zeros(thid.size)
-    dec = sp.zeros(thid.size)
+    ra = np.zeros(thid.size)
+    dec = np.zeros(thid.size)
     plate = thid
     mjd = thid
     fid = thid
@@ -423,7 +425,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
         else:
             select_fraction = downsampling_nb/(cat['Z']>downsampling_z_cut).sum()
             sp.random.seed(0)
-            w = sp.random.choice(sp.arange(cat['RA'].size),size=int(cat['RA'].size*select_fraction),replace=False)
+            w = sp.random.choice(np.arange(cat['RA'].size),size=int(cat['RA'].size*select_fraction),replace=False)
             for k in cat.keys():
                 cat[k] = cat[k][w]
             print(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(cat['RA'].size, downsampling_z_cut, (zqso>downsampling_z_cut).sum()) )
@@ -461,7 +463,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
     ### Catalog of objects
     h = fitsio.FITS(zcat)
-    key_val = sp.char.strip(sp.array([ h[1].read_header()[k] for k in h[1].read_header().keys()]).astype(str))
+    key_val = sp.char.strip(np.array([ h[1].read_header()[k] for k in h[1].read_header().keys()]).astype(str))
     if 'TARGETID' in key_val:
         zcat_thid = h[1]['TARGETID'][:]
     elif 'THING_ID' in key_val:
@@ -480,7 +482,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
         sys.exit()
     elif indir is not None:
         fi = glob.glob(indir+'/*/*/transmission*.fits*')
-        fi = sp.sort(sp.array(fi))
+        fi = sp.sort(np.array(fi))
         h = fitsio.FITS(fi[0])
         in_nside = h['METADATA'].read_header()['HPXNSIDE']
         nest = h['METADATA'].read_header()['HPXNEST']
@@ -490,32 +492,32 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             endoffile = '.gz'
         else:
             endoffile = ''
-        fi = sp.sort(sp.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in sp.unique(in_pixs)]))
+        fi = sp.sort(np.array(['{}/{}/{}/transmission-{}-{}.fits{}'.format(indir,int(f//100),f,in_nside,f,endoffile) for f in np.unique(in_pixs)]))
     else:
-        fi = sp.sort(sp.array(infiles))
+        fi = sp.sort(np.array(infiles))
     print('INFO: Found {} files'.format(fi.size))
 
     ### Stack the transmission
-    lmin = sp.log10(lObs_min)
-    lmax = sp.log10(lObs_max)
+    lmin = np.log10(lObs_min)
+    lmax = np.log10(lObs_max)
     nstack = int((lmax-lmin)/dll)+1
-    T_stack = sp.zeros(nstack)
-    n_stack = sp.zeros(nstack)
+    T_stack = np.zeros(nstack)
+    n_stack = np.zeros(nstack)
 
     deltas = {}
 
     ### Read
     for nf, f in enumerate(fi):
-        print("\rread {} of {} {}".format(nf,fi.size,sp.sum([ len(deltas[p]) for p in deltas.keys()])), end="")
+        print("\rread {} of {} {}".format(nf,fi.size,np.sum([ len(deltas[p]) for p in deltas.keys()])), end="")
         h = fitsio.FITS(f)
         thid = h['METADATA']['MOCKID'][:]
-        if sp.in1d(thid,zcat_thid).sum()==0:
+        if np.in1d(thid,zcat_thid).sum()==0:
             h.close()
             continue
         ra = h['METADATA']['RA'][:].astype(sp.float64)*sp.pi/180.
         dec = h['METADATA']['DEC'][:].astype(sp.float64)*sp.pi/180.
         z = h['METADATA']['Z'][:]
-        ll = sp.log10(h['WAVELENGTH'].read())
+        ll = np.log10(h['WAVELENGTH'].read())
         if 'F_LYA' in h :
             trans = h['F_LYA'].read()
         else:
@@ -529,13 +531,13 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
 
         bins = sp.floor((ll-lmin)/dll+0.5).astype(int)
         tll = lmin + bins*dll
-        lObs = (10**tll)*sp.ones(nObj)[:,None]
+        lObs = (10**tll)*np.ones(nObj)[:,None]
         lRF = (10**tll)/(1.+z[:,None])
-        w = sp.zeros_like(trans).astype(int)
+        w = np.zeros_like(trans).astype(int)
         w[ (lObs>=lObs_min) & (lObs<lObs_max) & (lRF>lRF_min) & (lRF<lRF_max) ] = 1
-        nbPixel = sp.sum(w,axis=1)
+        nbPixel = np.sum(w,axis=1)
         cut = nbPixel>=50
-        cut &= sp.in1d(thid,zcat_thid)
+        cut &= np.in1d(thid,zcat_thid)
         if cut.sum()==0:
             h.close()
             continue
@@ -555,9 +557,9 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             ttrans = trans[i,:][w[i,:]>0]
 
             bins = sp.floor((tll-lmin)/dll+0.5).astype(int)
-            cll = lmin + sp.arange(nstack)*dll
-            cfl = sp.bincount(bins,weights=ttrans,minlength=nstack)
-            civ = sp.bincount(bins,minlength=nstack).astype(float)
+            cll = lmin + np.arange(nstack)*dll
+            cfl = np.bincount(bins,weights=ttrans,minlength=nstack)
+            civ = np.bincount(bins,minlength=nstack).astype(float)
 
             ww = civ>0.
             if ww.sum()<50: continue
@@ -567,7 +569,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             cfl = cfl[ww]/civ[ww]
             civ = civ[ww]
             deltas[pixnum].append(delta(thid[i],ra[i],dec[i],z[i],thid[i],thid[i],thid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
-        if not nspec is None and sp.sum([ len(deltas[p]) for p in deltas.keys()])>=nspec: break
+        if not nspec is None and np.sum([ len(deltas[p]) for p in deltas.keys()])>=nspec: break
 
     print('\n')
 
@@ -597,7 +599,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             hd['FIBERID'] = d.fid
             hd['ORDER'] = d.order
 
-            cols = [d.ll,d.de,d.we,sp.ones(d.ll.size)]
+            cols = [d.ll,d.de,d.we,np.ones(d.ll.size)]
             names = ['LOGLAM','DELTA','WEIGHT','CONT']
             out.write(cols,names=names,header=hd,extname=str(d.thid))
         out.close()
@@ -652,7 +654,7 @@ def shuffle_distrib_forests(obj,seed):
                 dic[p].append(getattr(o, p))
 
     sp.random.seed(seed)
-    idx = sp.arange(len(dic['ra']))
+    idx = np.arange(len(dic['ra']))
     sp.random.shuffle(idx)
 
     i = 0
@@ -702,8 +704,8 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
 
     # Compute UV portion of A(lambda)/E(B-V) curve using FM fitting function and
     # R-dependent coefficients
-    xcutuv = sp.array([10000.0/2700.0])
-    xspluv = 10000.0/sp.array([2700.0,2600.0])
+    xcutuv = np.array([10000.0/2700.0])
+    xspluv = 10000.0/np.array([2700.0,2600.0])
 
     iuv = sp.where(x >= xcutuv)[0]
     N_UV = iuv.size
@@ -725,9 +727,9 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
 
     # Compute optical portion of A(lambda)/E(B-V) curve
     # using cubic spline anchored in UV, optical, and IR
-    xsplopir = sp.concatenate(([0],10000.0/sp.array([26500.0,12200.0,6000.0,5470.0,4670.0,4110.0])))
-    ysplir = sp.array([0.0,0.26469,0.82925])*R_V/3.1
-    ysplop = sp.array((sp.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1],R_V ),
+    xsplopir = sp.concatenate(([0],10000.0/np.array([26500.0,12200.0,6000.0,5470.0,4670.0,4110.0])))
+    ysplir = np.array([0.0,0.26469,0.82925])*R_V/3.1
+    ysplop = np.array((sp.polyval([-4.22809e-01, 1.00270, 2.13572e-04][::-1],R_V ),
             sp.polyval([-5.13540e-02, 1.00216, -7.35778e-05][::-1],R_V ),
             sp.polyval([ 7.00127e-01, 1.00184, -3.32598e-05][::-1],R_V ),
             sp.polyval([ 1.19456, 1.01707, -5.46959e-03, 7.97809e-04, -4.45636e-05][::-1],R_V ) ))

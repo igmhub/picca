@@ -1,3 +1,4 @@
+import numpy as np
 import scipy as sp
 from picca.fitter.data import data
 from scipy import stats
@@ -328,10 +329,10 @@ class Chi2:
 
             idx1 = []
             for i in range(par_nb_bin1):
-                idx1 = sp.append(idx1,(par_min1+(i+0.5)*par_step1)*sp.ones(par_nb_bin2))
+                idx1 = np.append(idx1,(par_min1+(i+0.5)*par_step1)*np.ones(par_nb_bin2))
             idx2 = []
             for i in range(par_nb_bin1):
-                idx2 = sp.append(idx2,grid2)
+                idx2 = np.append(idx2,grid2)
 
             for i in range(par_nb_bin1):
                 for j in range(par_nb_bin2):
@@ -385,9 +386,9 @@ class Chi2:
             sb=sp.dot(self.auto.dm,sb)
 
             ### Other attributes
-            index = sp.arange(len(rp))
+            index = np.arange(len(rp))
             da    = self.auto.da_all
-            err   = sp.sqrt(sp.diagonal(self.auto.co_all))
+            err   = np.sqrt(np.diagonal(self.auto.co_all))
 
             ### Save all bins
             self._exp_res(prefix+"auto_all",index,rp,rt,z,da,err,fit,met=met,bb=bb,sb=sb)
@@ -399,7 +400,7 @@ class Chi2:
             rt    = rt[cuts]
             z     = z[cuts]
             da    = da[cuts]
-            err   = sp.sqrt(sp.diagonal(self.auto.co))
+            err   = np.sqrt(np.diagonal(self.auto.co))
             fit   = fit[cuts]
             if not met is None:
                 met = met[cuts]
@@ -441,9 +442,9 @@ class Chi2:
             sb = sp.dot(self.cross.dm,sb)
 
             ### Other attributes
-            index = sp.arange(len(rp))
+            index = np.arange(len(rp))
             da    = self.cross.da_all
-            err   = sp.sqrt(sp.diagonal(self.cross.co_all))
+            err   = np.sqrt(np.diagonal(self.cross.co_all))
 
             ### Save all bins
             self._exp_res(prefix+"cross_all",index,rp,rt,z,da,err,fit,met=met,bb=bb,sb=sb)
@@ -455,7 +456,7 @@ class Chi2:
             rt    = rt[cuts]
             z     = z[cuts]
             da    = da[cuts]
-            err   = sp.sqrt(sp.diagonal(self.cross.co))
+            err   = np.sqrt(np.diagonal(self.cross.co))
             fit   = fit[cuts]
             if not met is None:
                 met = met[cuts]
@@ -471,18 +472,18 @@ class Chi2:
             z= self.autoQSO.z
 
             ### Save all bins
-            index=sp.arange(len(rp))
+            index=np.arange(len(rp))
             da=self.autoQSO.da_all
-            err=sp.sqrt(sp.diagonal(self.autoQSO.co_all))
+            err=np.sqrt(np.diagonal(self.autoQSO.co_all))
             fit=self.cosmo.valueAutoQSO(rp,rt,z,{p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pautoQSO})
             fit=sp.dot(self.autoQSO.dm,fit)
             self._exp_res(prefix+"autoQSO_all",index,rp,rt,z,da,err,fit)
 
             ### Save only fitted bins
             cuts=self.autoQSO.cuts
-            index=sp.arange(len(cuts))[cuts]
+            index=np.arange(len(cuts))[cuts]
             da=self.autoQSO.da
-            err=sp.sqrt(sp.diagonal(self.autoQSO.co))
+            err=np.sqrt(np.diagonal(self.autoQSO.co))
             fit=self.cosmo.valueAutoQSO(rp,rt,z,{p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pautoQSO})
             fit=sp.dot(self.autoQSO.dm,fit)
             rp=rp[cuts]
@@ -588,7 +589,7 @@ class Chi2:
         f=open(prefix+"_residuals.dat","w")
         nbins=len(da)
 
-        r=sp.sqrt(rp**2+rt**2)
+        r=np.sqrt(rp**2+rt**2)
         mu = rp/r
 
         for i in range(nbins):
@@ -682,8 +683,8 @@ class Chi2:
 
         path_to_save = param.dic_init['output_prefix']+'save.pars.cor'
 
-        matrix = sp.array(mig.matrix(correlation=True))
-        fitted_parameters = sp.array(mig.list_of_vary_param())
+        matrix = np.array(mig.matrix(correlation=True))
+        fitted_parameters = np.array(mig.list_of_vary_param())
 
         f = open(path_to_save,'w')
         f.write(' --- ')

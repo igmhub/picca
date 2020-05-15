@@ -5,6 +5,7 @@ import fitsio
 import argparse
 import glob
 import sys
+import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 
@@ -44,11 +45,11 @@ if __name__ == '__main__':
     k_inf=0.000813
     k_sup=k_inf + nb_k_bin*0.000542
 
-    sumPk = sp.zeros([nb_z_bin,nb_k_bin],dtype=sp.float64)
-    sumPk2 = sp.zeros([nb_z_bin,nb_k_bin],dtype=sp.float64)
-    sum = sp.zeros([nb_z_bin,nb_k_bin],dtype=sp.float64)
-    k = sp.zeros([nb_k_bin],dtype=sp.float64)
-    ek = sp.zeros([nb_k_bin],dtype=sp.float64)
+    sumPk = np.zeros([nb_z_bin,nb_k_bin],dtype=sp.float64)
+    sumPk2 = np.zeros([nb_z_bin,nb_k_bin],dtype=sp.float64)
+    sum = np.zeros([nb_z_bin,nb_k_bin],dtype=sp.float64)
+    k = np.zeros([nb_k_bin],dtype=sp.float64)
+    ek = np.zeros([nb_k_bin],dtype=sp.float64)
     for ik in range (nb_k_bin) :
         k[ik] = k_inf + (ik+0.5)*0.000542
 
@@ -89,7 +90,7 @@ if __name__ == '__main__':
 
     # compute mean and error on Pk
     meanPk = sp.where(sum!=0,sumPk/sum,0.0)
-    errorPk = sp.where(sum!=0,sp.sqrt(((sumPk2/sum)-meanPk**2)/sum),0.0)
+    errorPk = sp.where(sum!=0,np.sqrt(((sumPk2/sum)-meanPk**2)/sum),0.0)
 
     # Print figure
     figure_file = args.out_fig

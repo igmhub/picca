@@ -2,6 +2,7 @@ from __future__ import print_function
 
 from functools import partial
 import sys
+import numpy as np
 import scipy as sp
 import os.path
 from pkg_resources import resource_filename
@@ -66,11 +67,13 @@ def parse_chi2(filename):
         dic_init['fast mc']['fiducial']['values'] = {}
         dic_init['fast mc']['fiducial']['fix'] = {}
         for item, value in cp.items('fast mc'):
-            if item=='niterations' or item=='seed':
+            if item in ['niterations','seed']:
                 dic_init['fast mc'][item] = int(value)
+            elif item=='forecast':
+                dic_init['fast mc'][item] = bool(value)
             elif item=='covscaling':
                 value = value.split()
-                dic_init['fast mc'][item] = sp.array(value).astype(float)
+                dic_init['fast mc'][item] = np.array(value).astype(float)
                 if not len(dic_init['fast mc'][item])==len(dic_init['data sets']['data']):
                     raise AssertionError()
             else:
@@ -91,6 +94,15 @@ def parse_chi2(filename):
 
     if cp.has_section('chi2 scan'):
         dic_init['chi2 scan'] = parse_chi2scan(cp.items('chi2 scan'))
+
+    # Extract the settings for the sampler
+    # These are just passed to PolyChord
+    if cp.has_section('Polychord'):
+        dic_init['Polychord'] = cp['Polychord']
+
+    # Extract control settings. Used by the control classes
+    if cp.has_section('control'):
+        dic_init['control'] = cp['control']
 
     return dic_init
 
@@ -189,7 +201,7 @@ def parse_data(filename,zeff,fiducial):
             if item in priors.prior_dic.keys():
                 print("WARNING: prior on {} will be overwritten".format(item))
             value = value.split()
-            priors.prior_dic[item] = partial(getattr(priors, value[0]), prior_pars=sp.array(value[1:]).astype(float), name=item)
+            priors.prior_dic[item] = partial(getattr(priors, value[0]), prior_pars=np.array(value[1:]).astype(float), name=item)
 
     return dic_init
 

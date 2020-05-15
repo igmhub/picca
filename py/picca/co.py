@@ -1,13 +1,15 @@
 from __future__ import print_function
 
+import numpy as np
 import scipy as sp
 from healpy import query_disc
 from numba import jit
 
 from picca.utils import print
 
-np = None
-nt = None
+# npb = number of parallel bins (to avoid collision with numpy np)
+npb = None
+ntb = None
 rp_min = None
 rp_max = None
 rt_max = None
@@ -48,11 +50,11 @@ def fill_neighs_x_correlation(pix):
 
 def co(pix):
 
-    we = sp.zeros(np*nt)
-    rp = sp.zeros(np*nt)
-    rt = sp.zeros(np*nt)
-    z  = sp.zeros(np*nt)
-    nb = sp.zeros(np*nt,dtype=sp.int64)
+    we = np.zeros(npb*ntb)
+    rp = np.zeros(npb*ntb)
+    rt = np.zeros(npb*ntb)
+    z  = np.zeros(npb*ntb)
+    nb = np.zeros(npb*ntb,dtype=sp.int64)
 
     for ipix in pix:
         for o1 in objs[ipix]:
@@ -88,7 +90,7 @@ def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
 
     rp  = (r1-r2)*sp.cos(ang/2.)
     if not x_correlation or type_corr in ['DR','RD']:
-        rp = sp.absolute(rp)
+        rp = np.absolute(rp)
     rt  = (rdm1+rdm2)*sp.sin(ang/2.)
     z   = (z1+z2)/2.
     w12 = w1*w2
@@ -99,14 +101,14 @@ def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
     z   = z[w]
     w12 = w12[w]
 
-    bp   = sp.floor((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
-    bt   = (rt/rt_max*nt).astype(int)
-    bins = bt + nt*bp
+    bp   = sp.floor((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
+    bt   = (rt/rt_max*ntb).astype(int)
+    bins = bt + ntb*bp
 
-    cw  = sp.bincount(bins,weights=w12)
-    crp = sp.bincount(bins,weights=rp*w12)
-    crt = sp.bincount(bins,weights=rt*w12)
-    cz  = sp.bincount(bins,weights=z*w12)
-    cnb = sp.bincount(bins)
+    cw  = np.bincount(bins,weights=w12)
+    crp = np.bincount(bins,weights=rp*w12)
+    crt = np.bincount(bins,weights=rt*w12)
+    cz  = np.bincount(bins,weights=z*w12)
+    cnb = np.bincount(bins)
 
     return cw,crp,crt,cz,cnb

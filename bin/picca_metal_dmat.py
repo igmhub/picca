@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
@@ -126,8 +128,9 @@ if __name__ == '__main__':
     cf.rp_min = args.rp_min
     cf.z_cut_max = args.z_cut_max
     cf.z_cut_min = args.z_cut_min
-    cf.np = args.np*args.coef_binning_model
-    cf.nt = args.nt*args.coef_binning_model
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    cf.npb = args.np*args.coef_binning_model
+    cf.ntb = args.nt*args.coef_binning_model
     cf.npm = args.np*args.coef_binning_model
     cf.ntm = args.nt*args.coef_binning_model
     cf.nside = args.nside
@@ -226,7 +229,7 @@ if __name__ == '__main__':
                 dm = map(f,sorted(cpu_data.values()))
                 dm = list(dm)
 
-            dm = sp.array(dm)
+            dm = np.array(dm)
             wdm =dm[:,0].sum(axis=0)
             rp = dm[:,2].sum(axis=0)
             rt = dm[:,3].sum(axis=0)
@@ -256,8 +259,8 @@ if __name__ == '__main__':
     head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
         {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':cf.np,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':cf.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'NP','value':cf.npb,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':cf.ntb,'comment':'Number of bins in r-transverse'},
         {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
@@ -265,9 +268,9 @@ if __name__ == '__main__':
         {'name':'ALPHAMET','value':args.metal_alpha,'comment':'Evolution of metal bias'},
     ]
 
-    len_names = sp.array([ len(s) for s in names ]).max()
-    names = sp.array(names, dtype='S'+str(len_names))
-    out.write([sp.array(npairs_all),sp.array(npairs_used_all),sp.array(names)],names=['NPALL','NPUSED','ABS_IGM'],header=head,
+    len_names = np.array([ len(s) for s in names ]).max()
+    names = np.array(names, dtype='S'+str(len_names))
+    out.write([np.array(npairs_all),np.array(npairs_used_all),np.array(names)],names=['NPALL','NPUSED','ABS_IGM'],header=head,
         comment=['Number of pairs','Number of used pairs','Absorption name'],extname='ATTRI')
 
     names = names.astype(str)

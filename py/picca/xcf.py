@@ -1,4 +1,5 @@
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 from healpy import query_disc
 from numba import jit
@@ -6,8 +7,9 @@ from numba import jit
 from picca import constants
 from picca.utils import print
 
-np = None
-nt = None
+# npb = number of parallel bins (to avoid collision with numpy np)
+npb = None
+ntb = None
 npm = None
 ntm = None
 rp_max = None
@@ -45,19 +47,19 @@ def fill_neighs(pix):
             ang = d^neighs
             w = ang<angmax
             if not ang_correlation:
-                r_comov = sp.array([q.r_comov for q in neighs])
+                r_comov = np.array([q.r_comov for q in neighs])
                 w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < rp_max
                 w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > rp_min
-            neighs = sp.array(neighs)[w]
-            d.qneighs = sp.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
+            neighs = np.array(neighs)[w]
+            d.qneighs = np.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
 
 def xcf(pix):
-    xi = sp.zeros(np*nt)
-    we = sp.zeros(np*nt)
-    rp = sp.zeros(np*nt)
-    rt = sp.zeros(np*nt)
-    z = sp.zeros(np*nt)
-    nb = sp.zeros(np*nt,dtype=sp.int64)
+    xi = np.zeros(npb*ntb)
+    we = np.zeros(npb*ntb)
+    rp = np.zeros(npb*ntb)
+    rt = np.zeros(npb*ntb)
+    z = np.zeros(npb*ntb)
+    nb = np.zeros(npb*ntb,dtype=sp.int64)
 
     for ipix in pix:
         for d in dels[ipix]:
@@ -95,7 +97,7 @@ def xcf(pix):
 def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     if ang_correlation:
         rp = r1[:,None]/r2
-        rt = ang*sp.ones_like(rp)
+        rt = ang*np.ones_like(rp)
     else:
         rp = (r1[:,None]-r2)*sp.cos(ang/2)
         rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
@@ -111,27 +113,27 @@ def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     we = we[w]
     wde = wde[w]
 
-    bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
-    bt = (rt/rt_max*nt).astype(int)
-    bins = bt + nt*bp
+    bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
+    bt = (rt/rt_max*ntb).astype(int)
+    bins = bt + ntb*bp
 
-    cd = sp.bincount(bins,weights=wde)
-    cw = sp.bincount(bins,weights=we)
-    crp = sp.bincount(bins,weights=rp*we)
-    crt = sp.bincount(bins,weights=rt*we)
-    cz = sp.bincount(bins,weights=z*we)
-    cnb = sp.bincount(bins,weights=(we>0.))
+    cd = np.bincount(bins,weights=wde)
+    cw = np.bincount(bins,weights=we)
+    crp = np.bincount(bins,weights=rp*we)
+    crt = np.bincount(bins,weights=rt*we)
+    cz = np.bincount(bins,weights=z*we)
+    cnb = np.bincount(bins,weights=(we>0.))
 
     return cw,cd,crp,crt,cz,cnb
 
 def dmat(pix):
 
-    dm = sp.zeros(np*nt*ntm*npm)
-    wdm = sp.zeros(np*nt)
-    rpeff = sp.zeros(ntm*npm)
-    rteff = sp.zeros(ntm*npm)
-    zeff = sp.zeros(ntm*npm)
-    weff = sp.zeros(ntm*npm)
+    dm = np.zeros(npb*ntb*ntm*npm)
+    wdm = np.zeros(npb*ntb)
+    rpeff = np.zeros(ntm*npm)
+    rteff = np.zeros(ntm*npm)
+    zeff = np.zeros(ntm*npm)
+    weff = np.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -160,7 +162,7 @@ def dmat(pix):
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
-    return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return wdm,dm.reshape(npb*ntb,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
 def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     rp = (r1[:,None]-r2)*sp.cos(ang/2)
@@ -168,9 +170,9 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     z = (z1[:,None]+z2)/2.
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
 
-    bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
-    bt = (rt/rt_max*nt).astype(int)
-    bins = bt + nt*bp
+    bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
+    bt = (rt/rt_max*ntb).astype(int)
+    bins = bt + ntb*bp
     bins = bins[w]
 
     m_bp = ((rp-rp_min)/(rp_max-rp_min)*npm).astype(int)
@@ -187,31 +189,31 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     n1 = len(l1)
     n2 = len(r2)
-    ij = sp.arange(n1)[:,None]+n1*sp.arange(n2)
+    ij = np.arange(n1)[:,None]+n1*np.arange(n2)
     ij = ij[w]
 
     we = w1[:,None]*w2
     we = we[w]
-    c = sp.bincount(bins,weights=we)
+    c = np.bincount(bins,weights=we)
     wdm[:len(c)] += c
-    eta2 = sp.zeros(npm*ntm*n2)
-    eta4 = sp.zeros(npm*ntm*n2)
+    eta2 = np.zeros(npm*ntm*n2)
+    eta4 = np.zeros(npm*ntm*n2)
 
-    c = sp.bincount(m_bins,weights=we*rp[w])
+    c = np.bincount(m_bins,weights=we*rp[w])
     rpeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*rt[w])
+    c = np.bincount(m_bins,weights=we*rt[w])
     rteff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*z[w])
+    c = np.bincount(m_bins,weights=we*z[w])
     zeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we)
+    c = np.bincount(m_bins,weights=we)
     weff[:c.size] += c
 
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = np.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*np.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+    c = np.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*np.ones(n2))[w]/slw1)
     eta4[:len(c)]+=c
 
-    ubb = sp.unique(m_bins)
+    ubb = np.unique(m_bins)
     for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
         dm[m_ba+npm*ntm*ba]+=we[k]
         i = ij[k]%n1
@@ -222,12 +224,12 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
 def metal_dmat(pix,abs_igm="SiII(1526)"):
 
-    dm = sp.zeros(np*nt*ntm*npm)
-    wdm = sp.zeros(np*nt)
-    rpeff = sp.zeros(ntm*npm)
-    rteff = sp.zeros(ntm*npm)
-    zeff = sp.zeros(ntm*npm)
-    weff = sp.zeros(ntm*npm)
+    dm = np.zeros(npb*ntb*ntm*npm)
+    wdm = np.zeros(npb*ntb)
+    rpeff = np.zeros(ntm*npm)
+    rteff = np.zeros(ntm*npm)
+    zeff = np.zeros(ntm*npm)
+    weff = np.zeros(ntm*npm)
 
     npairs = 0
     npairs_used = 0
@@ -258,7 +260,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             rdm_abs = rdm_abs[wzcut]
             if rd.size==0: continue
 
-            for q in sp.array(d.qneighs)[w]:
+            for q in np.array(d.qneighs)[w]:
                 ang = d^q
 
                 rq = q.r_comov
@@ -270,10 +272,10 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 wdq = wd*wq
 
                 wA = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
-                bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
-                bt = (rt/rt_max*nt).astype(int)
-                bA = bt + nt*bp
-                c = sp.bincount(bA[wA],weights=wdq[wA])
+                bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
+                bt = (rt/rt_max*ntb).astype(int)
+                bA = bt + ntb*bp
+                c = np.bincount(bA[wA],weights=wdq[wA])
                 wdm[:len(c)]+=c
 
                 rp_abs = (rd_abs-rq)*sp.cos(ang/2)
@@ -285,20 +287,20 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 bBma = bt_abs + ntm*bp_abs
                 wBma = (rp_abs>rp_min) & (rp_abs<rp_max) & (rt_abs<rt_max)
                 wAB = wA&wBma
-                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=wdq[wAB]*zwe[wAB])
                 dm[:len(c)]+=c
 
-                c = sp.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
                 rpeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB]*zwe[wAB])
                 rteff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB]*zwe[wAB])
                 zeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
+                c = np.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
                 weff[:len(c)]+=c
             setattr(d,"qneighs",None)
 
-    return wdm,dm.reshape(np*nt,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return wdm,dm.reshape(npb*ntb,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 v1d = {}
 c1d = {}
@@ -322,14 +324,14 @@ def wickT(pix):
         (tuple): results of the Wick computation
 
     """
-    T1 = sp.zeros((np*nt,np*nt))
-    T2 = sp.zeros((np*nt,np*nt))
-    T3 = sp.zeros((np*nt,np*nt))
-    T4 = sp.zeros((np*nt,np*nt))
-    T5 = sp.zeros((np*nt,np*nt))
-    T6 = sp.zeros((np*nt,np*nt))
-    wAll = sp.zeros(np*nt)
-    nb = sp.zeros(np*nt,dtype=sp.int64)
+    T1 = np.zeros((npb*ntb,npb*ntb))
+    T2 = np.zeros((npb*ntb,npb*ntb))
+    T3 = np.zeros((npb*ntb,npb*ntb))
+    T4 = np.zeros((npb*ntb,npb*ntb))
+    T5 = np.zeros((npb*ntb,npb*ntb))
+    T6 = np.zeros((npb*ntb,npb*ntb))
+    wAll = np.zeros(npb*ntb)
+    nb = np.zeros(npb*ntb,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
 
@@ -349,22 +351,22 @@ def wickT(pix):
 
             v1 = v1d[d1.fname](d1.ll)
             w1 = d1.we
-            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
+            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*np.sqrt(v1*v1[:,None])
             r1 = d1.r_comov
             z1 = d1.z
 
             neighs = d1.qneighs
             ang12 = d1^neighs
-            r2 = sp.array([q2.r_comov for q2 in neighs])
-            z2 = sp.array([q2.zqso for q2 in neighs])
-            w2 = sp.array([q2.we for q2 in neighs])
+            r2 = np.array([q2.r_comov for q2 in neighs])
+            z2 = np.array([q2.zqso for q2 in neighs])
+            w2 = np.array([q2.we for q2 in neighs])
 
             fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
 
             ### Higher order diagrams
             if (cfWick is None) or (max_diagram<=4): continue
-            thid2 = sp.array([q2.thid for q2 in neighs])
-            for d3 in sp.array(d1.dneighs):
+            thid2 = np.array([q2.thid for q2 in neighs])
+            for d3 in np.array(d1.dneighs):
                 if d3.qneighs.size==0: continue
 
                 ang13 = d1^d3
@@ -374,19 +376,19 @@ def wickT(pix):
 
                 neighs = d3.qneighs
                 ang34 = d3^neighs
-                r4 = sp.array([q4.r_comov for q4 in neighs])
-                w4 = sp.array([q4.we for q4 in neighs])
-                thid4 = sp.array([q4.thid for q4 in neighs])
+                r4 = np.array([q4.r_comov for q4 in neighs])
+                w4 = np.array([q4.we for q4 in neighs])
+                thid4 = np.array([q4.thid for q4 in neighs])
 
                 if max_diagram==5:
-                    w = sp.in1d(d1.qneighs,d3.qneighs)
+                    w = np.in1d(d1.qneighs,d3.qneighs)
                     if w.sum()==0: continue
                     t_ang12 = ang12[w]
                     t_r2 = r2[w]
                     t_w2 = w2[w]
                     t_thid2 = thid2[w]
 
-                    w = sp.in1d(d3.qneighs,d1.qneighs)
+                    w = np.in1d(d3.qneighs,d1.qneighs)
                     if w.sum()==0: continue
                     ang34 = ang34[w]
                     r4 = r4[w]
@@ -427,13 +429,13 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     zw1 = ((1.+z1)/(1.+zref))**(z_evol_del-1.)
     zw2 = ((1.+z2)/(1.+zref))**(z_evol_obj-1.)
     we = w1[:,None]*w2
-    we1 = w1[:,None]*sp.ones(len(r2))
-    idxPix = sp.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
-    idxQso = sp.ones(r1.size,dtype='int')[:,None]*sp.arange(len(r2))
+    we1 = w1[:,None]*np.ones(len(r2))
+    idxPix = np.arange(r1.size)[:,None]*np.ones(len(r2),dtype='int')
+    idxQso = np.ones(r1.size,dtype='int')[:,None]*np.arange(len(r2))
 
-    bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
-    bt = (rt/rt_max*nt).astype(int)
-    ba = bt + nt*bp
+    bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
+    bt = (rt/rt_max*ntb).astype(int)
+    ba = bt + ntb*bp
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
@@ -499,7 +501,7 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     """
 
     ### Pair forest_1 - forest_3
-    rp = sp.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
+    rp = np.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
     rt = (r1+r3[:,None])*sp.sin(ang13/2.)
 
     w = (rp<cfWick_rp_max) & (rt<cfWick_rt_max) & (rp>=cfWick_rp_min)
@@ -515,8 +517,8 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
     we = w1[:,None]*w2
-    pix = (sp.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
-    thid = sp.ones_like(w1[:,None]).astype(int)*thid2
+    pix = (np.arange(r1.size)[:,None]*np.ones_like(r2)).astype(int)
+    thid = np.ones_like(w1[:,None]).astype(int)*thid2
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
@@ -525,16 +527,16 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     we12 = we[w]
     pix12 = pix[w]
     thid12 = thid[w]
-    bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
-    bt = (rt/rt_max*nt).astype(int)
-    ba12 = bt + nt*bp
+    bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
+    bt = (rt/rt_max*ntb).astype(int)
+    ba12 = bt + ntb*bp
 
     ### Pair forest_3 - object_4
     rp = (r3[:,None]-r4)*sp.cos(ang34/2.)
     rt = (r3[:,None]+r4)*sp.sin(ang34/2.)
     we = w3[:,None]*w4
-    pix = (sp.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
-    thid = sp.ones_like(w3[:,None]).astype(int)*thid4
+    pix = (np.arange(r3.size)[:,None]*np.ones_like(r4)).astype(int)
+    thid = np.ones_like(w3[:,None]).astype(int)*thid4
 
     w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
     if w.sum()==0: return
@@ -543,9 +545,9 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
     we34 = we[w]
     pix34 = pix[w]
     thid34 = thid[w]
-    bp = ((rp-rp_min)/(rp_max-rp_min)*np).astype(int)
-    bt = (rt/rt_max*nt).astype(int)
-    ba34 = bt + nt*bp
+    bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
+    bt = (rt/rt_max*ntb).astype(int)
+    ba34 = bt + ntb*bp
 
     ### T5
     for k1, p1 in enumerate(ba12):
@@ -592,11 +594,11 @@ def xcf1d(pix):
         z (float array): Mean redshift of pairs
         nb (int array): Number of pairs
     """
-    xi = sp.zeros(np)
-    we = sp.zeros(np)
-    rp = sp.zeros(np)
-    z = sp.zeros(np)
-    nb = sp.zeros(np,dtype=sp.int64)
+    xi = np.zeros(npb)
+    we = np.zeros(npb)
+    rp = np.zeros(npb)
+    z = np.zeros(npb)
+    nb = np.zeros(npb,dtype=sp.int64)
 
     for ipix in pix:
         for d in dels[ipix]:
@@ -607,7 +609,7 @@ def xcf1d(pix):
             zqso = [ q.zqso for q in neighs ]
             we_qso = [ q.we for q in neighs ]
             l_qso = [ 10.**q.ll for q in neighs ]
-            ang = sp.zeros(len(l_qso))
+            ang = np.zeros(len(l_qso))
 
             cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,zqso,l_qso,l_qso,we_qso,ang)
 

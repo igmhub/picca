@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
@@ -98,8 +100,9 @@ if __name__ == '__main__':
     co.rt_max = args.rt_max
     co.z_cut_min = args.z_cut_min
     co.z_cut_max = args.z_cut_max
-    co.np     = args.np
-    co.nt     = args.nt
+    # npb = number of parallel bins (to avoid collision with numpy np)
+    co.npb     = args.np
+    co.ntb     = args.nt
     co.nside  = args.nside
     co.type_corr = args.type_corr
     if co.type_corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xR1D2']:
@@ -137,13 +140,13 @@ if __name__ == '__main__':
     cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
-    cfs = sp.array(cfs)
+    cfs = np.array(cfs)
     wes = cfs[:,0,:]
     rps = cfs[:,1,:]
     rts = cfs[:,2,:]
     zs  = cfs[:,3,:]
     nbs = cfs[:,4,:].astype(sp.int64)
-    hep = sp.array(sorted(list(cpu_data.keys())))
+    hep = np.array(sorted(list(cpu_data.keys())))
 
     cut      = (wes.sum(axis=0)>0.)
     rp       = (rps*wes).sum(axis=0)
@@ -158,8 +161,8 @@ if __name__ == '__main__':
     head = [ {'name':'RPMIN','value':co.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
         {'name':'RPMAX','value':co.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':co.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':co.np,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':co.nt,'comment':'Number of bins in r-transverse'},
+        {'name':'NP','value':co.npb,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':co.ntb,'comment':'Number of bins in r-transverse'},
         {'name':'NSIDE','value':co.nside,'comment':'Healpix nside'},
         {'name':'TYPECORR','value':co.type_corr,'comment':'Correlation type'},
         {'name':'NOBJ','value':len([o1 for p in co.objs for o1 in co.objs[p]]),'comment':'Number of objects'},

@@ -1,3 +1,4 @@
+import numpy as np
 import scipy as sp
 from scipy import interpolate
 
@@ -21,10 +22,10 @@ class cosmo:
         nbins = 10000
         zmax  = 10.
         dz    = zmax/nbins
-        z=sp.arange(nbins)*dz
-        hubble = H0*sp.sqrt( Ol*(1.+z)**(3.*(1.+wl)) + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
+        z=np.arange(nbins)*dz
+        hubble = H0*np.sqrt( Ol*(1.+z)**(3.*(1.+wl)) + Ok*(1.+z)**2 + Om*(1.+z)**3 + Or*(1.+z)**4 )
 
-        chi=sp.zeros(nbins)
+        chi=np.zeros(nbins)
         for i in range(1,nbins):
             chi[i]=chi[i-1]+c*(1./hubble[i-1]+1./hubble[i])/2.*dz
 
@@ -34,9 +35,9 @@ class cosmo:
         if Ok==0.:
             dm = chi
         elif Ok<0.:
-            dm = sp.sin(H0*sp.sqrt(-Ok)/c*chi)/(H0*sp.sqrt(-Ok)/c)
+            dm = sp.sin(H0*np.sqrt(-Ok)/c*chi)/(H0*np.sqrt(-Ok)/c)
         elif Ok>0.:
-            dm = sp.sinh(H0*sp.sqrt(Ok)/c*chi)/(H0*sp.sqrt(Ok)/c)
+            dm = sp.sinh(H0*np.sqrt(Ok)/c*chi)/(H0*np.sqrt(Ok)/c)
 
         self.hubble = interpolate.interp1d(z,hubble)
         self.r_2_z = interpolate.interp1d(chi,z)
@@ -46,7 +47,7 @@ class cosmo:
         ### D_M
         self.dm = interpolate.interp1d(z,dm)
         ### D_V
-        y = sp.power(z*self.dm(z)**2*self.dist_hubble(z),1./3.)
+        y = np.power(z*self.dm(z)**2*self.dist_hubble(z),1./3.)
         self.dist_v = interpolate.interp1d(z,y)
 
 ### Absorber names and wavelengths [Angstrom]
