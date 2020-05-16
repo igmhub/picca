@@ -470,7 +470,7 @@ def main():
     deltas = {}
     data_bad_cont = []
     for healpix in sorted(data.keys()):
-        deltas[healpix] = [Delta.from_forest(forest, get_stack_delta, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_cont) for forest in data[healpix] if forest.bad_cont is None]
+        deltas[healpix] = [Delta.from_forest(forest, get_stack_delta, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_continuum) for forest in data[healpix] if forest.bad_cont is None]
         data_bad_cont = data_bad_cont + [forest for forest in data[healpix] if forest.bad_cont is not None]
 
     for forest in data_bad_cont:
