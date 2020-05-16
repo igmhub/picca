@@ -175,16 +175,33 @@ def main():
         args.zqso_max = max(0., args.lambda_max/args.lambda_rest_min - 1.)
         userprint("zqso_max = {}".format(args.zqso_max))
 
-    Forest.get_var_lss = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), 0.2 + np.zeros(2), fill_value="extrapolate", kind="nearest")
-    Forest.get_eta = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), np.ones(2), fill_value="extrapolate", kind="nearest")
-    Forest.get_fudge = interp1d(Forest.log_lambda_min + np.arange(2)*(Forest.log_lambda_max - Forest.log_lambda_min), np.zeros(2), fill_value="extrapolate", kind="nearest")
-    Forest.get_mean_cont = interp1d(Forest.log_lambda_min_rest_frame + np.arange(2)*(Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame), 1 + np.zeros(2))
+    Forest.get_var_lss = interp1d((Forest.log_lambda_min + np.arange(2)*
+                                   (Forest.log_lambda_max -
+                                    Forest.log_lambda_min)),
+                                  0.2 + np.zeros(2), fill_value="extrapolate",
+                                  kind="nearest")
+    Forest.get_eta = interp1d((Forest.log_lambda_min + np.arange(2)*
+                               (Forest.log_lambda_max - Forest.log_lambda_min)),
+                              np.ones(2), fill_value="extrapolate",
+                              kind="nearest")
+    Forest.get_fudge = interp1d((Forest.log_lambda_min + np.arange(2)*
+                                 (Forest.log_lambda_max -
+                                  Forest.log_lambda_min)),
+                                np.zeros(2),
+                                fill_value="extrapolate",
+                                kind="nearest")
+    Forest.get_mean_cont = interp1d((Forest.log_lambda_min_rest_frame +
+                                     np.arange(2)*
+                                     (Forest.log_lambda_max_rest_frame -
+                                      Forest.log_lambda_min_rest_frame)),
+                                    1 + np.zeros(2))
     # end of setup forest class variables
 
     ### check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
         if (args.order != 0) and (args.order != 1):
-            userprint("ERROR : invalid value for order, must be eqal to 0 or 1. Here order = %i"%(args.order))
+            userprint(("ERROR : invalid value for order, must be eqal to 0 or"
+                       "1. Here order = {:d}").format(args.order))
             sys.exit(12)
 
     ### Correct multiplicative pipeline flux calibration
@@ -227,124 +244,137 @@ def main():
 
     log_file = open(os.path.expandvars(args.log), 'w')
 
-    data, ndata, healpy_nside, healpy_pix_ordering = io.read_data(os.path.expandvars(args.in_dir), args.drq, args.mode,\
-        z_min=args.zqso_min, z_max=args.zqso_max, max_num_spec=args.nspec, log_file=log_file,\
-        keep_bal=args.keep_bal, bi_max=args.bi_max, order=args.order,\
-        best_obs=args.best_obs, single_exp=args.single_exp, pk1d=args.delta_format)
+    (data, num_data, nside,
+     healpy_pix_ordering) = io.read_data(os.path.expandvars(args.in_dir),
+                                         args.drq, args.mode,
+                                         z_min=args.zqso_min,
+                                         z_max=args.zqso_max,
+                                         max_num_spec=args.nspec,
+                                         log_file=log_file,
+                                         keep_bal=args.keep_bal,
+                                         bi_max=args.bi_max,
+                                         order=args.order,
+                                         best_obs=args.best_obs,
+                                         single_exp=args.single_exp,
+                                         pk1d=args.delta_format)
 
-    ### Get the lines to veto
+    ### Read masks
     mask_obs_frame = None
     mask_rest_frame = None
-    usr_mask_RF_DLA = None
+    mask_rest_frame_dla = None
     if args.mask_file is not None:
         args.mask_file = os.path.expandvars(args.mask_file)
         try:
             mask_obs_frame = []
             mask_rest_frame = []
-            usr_mask_RF_DLA = []
-            with open(args.mask_file, 'r') as f:
+            mask_rest_frame_dla = []
+            with open(args.mask_file, 'r') as file:
                 loop = True
-                for l in f:
-                    if l[0] == '#':
+                for line in file:
+                    if line[0] == '#':
                         continue
-                    l = l.split()
-                    if l[3] == 'OBS':
-                        mask_obs_frame += [[float(l[1]), float(l[2])]]
-                    elif l[3] == 'RF':
-                        mask_rest_frame += [[float(l[1]), float(l[2])]]
-                    elif l[3] == 'RF_DLA':
-                        usr_mask_RF_DLA += [[float(l[1]), float(l[2])]]
+                    cols = line.split()
+                    if cols[3] == 'OBS':
+                        mask_obs_frame += [[float(cols[1]), float(cols[2])]]
+                    elif cols[3] == 'RF':
+                        mask_rest_frame += [[float(cols[1]), float(cols[2])]]
+                    elif cols[3] == 'RF_DLA':
+                        mask_rest_frame_dla += [[float(cols[1]), float(cols[2])]]
                     else:
                         raise ValueError("Invalid value found in mask")
             mask_obs_frame = np.log10(np.asarray(mask_obs_frame))
             mask_rest_frame = np.log10(np.asarray(mask_rest_frame))
-            usr_mask_RF_DLA = np.log10(np.asarray(usr_mask_RF_DLA))
-            if usr_mask_RF_DLA.size == 0:
-                usr_mask_RF_DLA = None
+            mask_rest_frame_dla = np.log10(np.asarray(mask_rest_frame_dla))
+            if mask_rest_frame_dla.size == 0:
+                mask_rest_frame_dla = None
 
         except (OSError, ValueError):
-            userprint("ERROR: Error while reading mask_file file {}".format(args.mask_file))
+            userprint(("ERROR: Error while reading mask_file "
+                       "file {}").format(args.mask_file))
             sys.exit(1)
 
-    ### Veto lines
+    ### Mask lines
     if not mask_obs_frame is None:
         if mask_obs_frame.size + mask_rest_frame.size != 0:
-            for p in data:
-                for d in data[p]:
-                    d.mask(mask_obs_frame, mask_rest_frame)
+            for healpix in data:
+                for forest in data[healpix]:
+                    forest.mask(mask_obs_frame, mask_rest_frame)
 
-    ### Veto absorbers
+    ### Mask absorbers
     if not args.absorber_vac is None:
         userprint("INFO: Adding absorbers")
         absorbers = io.read_absorbers(args.absorber_vac)
-        nb_absorbers_in_forest = 0
-        for p in data:
-            for d in data[p]:
-                if d.thingid in absorbers:
-                    for lambda_absorber in absorbers[d.thingid]:
-                        d.add_absorber(lambda_absorber)
-                        nb_absorbers_in_forest += 1
-        log_file.write("Found {} absorbers in forests\n".format(nb_absorbers_in_forest))
+        num_absorbers = 0
+        for healpix in data:
+            for forest in data[healpix]:
+                if forest.thingid in absorbers:
+                    for lambda_absorber in absorbers[forest.thingid]:
+                        forest.add_absorber(lambda_absorber)
+                        num_absorbers += 1
+        log_file.write("Found {} absorbers in forests\n".format(num_absorbers))
 
-    ### Apply optical depth
+    ### Add optical depth contribution
     if not args.optical_depth is None:
-        userprint("INFO: Adding {} optical depths".format(len(args.optical_depth)//3))
+        userprint(("INFO: Adding {} optical"
+                   "depths").format(len(args.optical_depth)//3))
         assert len(args.optical_depth)%3 == 0
-        for idxop in range(len(args.optical_depth)//3):
-            tau = float(args.optical_depth[3*idxop])
-            gamma = float(args.optical_depth[3*idxop+1])
-            lambda_rest_frame = constants.ABSORBER_IGM[args.optical_depth[3*idxop+2]]
-            userprint("INFO: Adding optical depth for tau = {}, gamma = {}, lambda_rest_frame = {} A".format(tau, gamma, lambda_rest_frame))
-            for p in data:
-                for d in data[p]:
-                    d.add_optical_depth(tau, gamma, lambda_rest_frame)
+        for index in range(len(args.optical_depth)//3):
+            tau = float(args.optical_depth[3*index])
+            gamma = float(args.optical_depth[3*index+1])
+            lambda_rest_frame = constants.ABSORBER_IGM[args.optical_depth[3*index + 2]]
+            userprint(("INFO: Adding optical depth for tau = {}, gamma = {}, "
+                       "lambda_rest_frame = {} A").format(tau, gamma,
+                                                          lambda_rest_frame))
+            for healpix in data:
+                for forest in data[healpix]:
+                    forest.add_optical_depth(tau, gamma, lambda_rest_frame)
 
-    ### Correct for DLAs
+    ### Mask DLAs
     if not args.dla_vac is None:
         userprint("INFO: Adding DLAs")
         np.random.seed(0)
         dlas = io.read_dlas(args.dla_vac)
-        nb_dla_in_forest = 0
-        for p in data:
-            for d in data[p]:
-                if d.thingid in dlas:
-                    for dla in dlas[d.thingid]:
-                        d.add_dla(dla[0], dla[1], usr_mask_RF_DLA)
-                        nb_dla_in_forest += 1
-        log_file.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
+        num_dlas = 0
+        for healpix in data:
+            for forest in data[healpix]:
+                if forest.thingid in dlas:
+                    for dla in dlas[forest.thingid]:
+                        forest.add_dla(dla[0], dla[1], mask_rest_frame_dla)
+                        num_dlas += 1
+        log_file.write("Found {} DLAs in forests\n".format(num_dlas))
 
     ## cuts
-    log_file.write("INFO: Input sample has {} forests\n".format(np.sum([len(p) for p in data.values()])))
+    log_file.write("INFO: Input sample has {} forests\n".format(np.sum([len(forest) for forest in data.values()])))
     lstKeysToDel = []
-    for p in data:
+    for healpix in data:
         l = []
-        for d in data[p]:
-            if not hasattr(d, 'log_lambda') or len(d.log_lambda) < args.npix_min:
-                log_file.write("INFO: Rejected {} due to forest too short\n".format(d.thingid))
+        for forest in data[healpix]:
+            if not hasattr(forest, 'log_lambda') or len(forest.log_lambda) < args.npix_min:
+                log_file.write("INFO: Rejected {} due to forest too short\n".format(forest.thingid))
                 continue
 
-            if np.isnan((d.flux*d.ivar).sum()):
-                log_file.write("INFO: Rejected {} due to nan found\n".format(d.thingid))
+            if np.isnan((forest.flux*forest.ivar).sum()):
+                log_file.write("INFO: Rejected {} due to nan found\n".format(forest.thingid))
                 continue
 
-            if(args.use_constant_weight and (d.flux.mean() <= 0.0 or d.mean_snr <= 1.0)):
-                log_file.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(d.thingid))
+            if(args.use_constant_weight and (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
+                log_file.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(forest.thingid))
                 continue
 
-            l.append(d)
-            log_file.write("{} {}-{}-{} accepted\n".format(d.thingid, d.plate, d.mjd, d.fiberid))
-        data[p][:] = l
-        if len(data[p]) == 0:
-            lstKeysToDel += [p]
+            l.append(forest)
+            log_file.write("{} {}-{}-{} accepted\n".format(forest.thingid, forest.plate, forest.mjd, forest.fiberid))
+        data[healpix][:] = l
+        if len(data[healpix]) == 0:
+            lstKeysToDel += [healpix]
 
-    for p in lstKeysToDel:
-        del data[p]
+    for healpix in lstKeysToDel:
+        del data[healpix]
 
-    log_file.write("INFO: Remaining sample has {} forests\n".format(np.sum([len(p) for p in data.values()])))
+    log_file.write("INFO: Remaining sample has {} forests\n".format(np.sum([len(forest) for forest in data.values()])))
 
-    for p in data:
-        for d in data[p]:
-            assert hasattr(d, 'log_lambda')
+    for healpix in data:
+        for forest in data[healpix]:
+            assert hasattr(forest, 'log_lambda')
 
     for it in range(nit):
         pool = Pool(processes=args.nproc)
@@ -352,8 +382,8 @@ def main():
         nfit = 0
         sort = np.array(list(data.keys())).argsort()
         data_fit_cont = pool.map(cont_fit, np.array(list(data.values()))[sort])
-        for i, p in enumerate(sorted(list(data.keys()))):
-            data[p] = data_fit_cont[i]
+        for i, healpix in enumerate(sorted(list(data.keys()))):
+            data[healpix] = data_fit_cont[i]
 
         userprint("done")
 
@@ -410,7 +440,7 @@ def main():
     ### Save iter_out_prefix
     res = fitsio.FITS(args.iter_out_prefix + ".fits.gz", 'rw', clobber=True)
     hd = {}
-    hd["NSIDE"] = healpy_nside
+    hd["NSIDE"] = nside
     hd["PIXORDER"] = healpy_pix_ordering
     hd["FITORDER"] = args.order
     res.write([stack_log_lambda, stack_delta, wst], names=['loglam', 'stack', 'weight'], header=hd, extname='STACK')
@@ -424,25 +454,25 @@ def main():
     get_stack_delta = interp1d(stack_log_lambda[wst > 0.], stack_delta[wst > 0.], kind="nearest", fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
-    for p in sorted(data.keys()):
-        deltas[p] = [Delta.from_forest(d, get_stack_delta, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_continuum) for d in data[p] if d.bad_cont is None]
-        data_bad_cont = data_bad_cont + [d for d in data[p] if d.bad_cont is not None]
+    for healpix in sorted(data.keys()):
+        deltas[healpix] = [Delta.from_forest(forest, get_stack_delta, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_continuum) for forest in data[healpix] if forest.bad_cont is None]
+        data_bad_cont = data_bad_cont + [forest for forest in data[healpix] if forest.bad_cont is not None]
 
-    for d in data_bad_cont:
-        log_file.write("INFO: Rejected {} due to {}\n".format(d.thingid, d.bad_cont))
+    for forest in data_bad_cont:
+        log_file.write("INFO: Rejected {} due to {}\n".format(forest.thingid, forest.bad_cont))
 
     log_file.write("INFO: Accepted sample has {} forests\n".format(np.sum([len(p) for p in deltas.values()])))
 
     log_file.close()
 
     ###
-    for p in sorted(deltas.keys()):
+    for healpix in sorted(deltas.keys()):
 
-        if len(deltas[p]) == 0:
+        if len(deltas[healpix]) == 0:
             continue
         if args.delta_format == 'Pk1D_ascii':
-            out_ascii = open(args.out_dir + "/delta-{}".format(p) + ".txt", 'w')
-            for d in deltas[p]:
+            out_ascii = open(args.out_dir + "/delta-{}".format(healpix) + ".txt", 'w')
+            for d in deltas[healpix]:
                 nbpixel = len(d.delta)
                 delta_log_lambda = d.delta_log_lambda
                 if args.mode == 'desi':
@@ -464,8 +494,8 @@ def main():
             out_ascii.close()
 
         else:
-            out = fitsio.FITS(args.out_dir + "/delta-{}".format(p) + ".fits.gz", 'rw', clobber=True)
-            for d in deltas[p]:
+            out = fitsio.FITS(args.out_dir + "/delta-{}".format(healpix) + ".fits.gz", 'rw', clobber=True)
+            for d in deltas[healpix]:
                 hd = [{'name':'RA', 'value':d.ra, 'comment':'Right Ascension [rad]'},
                       {'name':'DEC', 'value':d.dec, 'comment':'Declination [rad]'},
                       {'name':'Z', 'value':d.z_qso, 'comment':'Redshift'},
