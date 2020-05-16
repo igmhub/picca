@@ -1286,7 +1286,7 @@ def read_objects(filename, nside, z_min, z_max, alpha, z_ref, cosmo,
 
     Returns:
         The following variables:
-            objects: A list of QSO instances
+            objs: A list of QSO instances
             z_min: Minimum redshift of the loaded objects.
 
     Raises:
@@ -1320,7 +1320,7 @@ def read_objects(filename, nside, z_min, z_max, alpha, z_ref, cosmo,
 
     userprint("\n")
 
-    return object, z_qso.min()
+    return objs, z_qso.min()
 
 def read_spall(in_dir, thingid):
     """Loads thingid, plate, mjd, and fiberid from spAll file
