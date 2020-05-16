@@ -1,48 +1,61 @@
+"""This module defines a set of functions to compute the deltas.
+
+This module provides three functions:
+    - compute_mean_cont
+    - var_lss
+    - stack
+See the respective documentation for details
+"""
 import numpy as np
 import scipy as sp
 import iminuit
-from picca.data import Forest,get_variance
+from picca.data import Forest, get_variance
 from picca.utils import userprint
 
+
 def compute_mean_cont(data):
-    # TODO: fix docstring
     """Computes the mean quasar continuum over the whole sample.
 
     Args:
-        data
+        data: dict
+            A dictionary with the read forests in each healpix
+
     Returns:
         log_lambda: array
             Logarithm of the wavelengths (in Angs).
         mean_cont: array
             Mean quasar continuum over the whole sample
-        wcont: array
-
+        mean_cont_weight: array
+            Total weight on the mean quasar continuum
     """
     num_bins = (int((Forest.log_lambda_max_rest_frame -
                     Forest.log_lambda_min_rest_frame)/Forest.delta_log_lambda)
                 + 1)
     mean_cont = np.zeros(num_bins)
-    wcont = np.zeros(num_bins)
+    mean_cont_weight = np.zeros(num_bins)
     log_lambda = (Forest.log_lambda_min_rest_frame + (np.arange(num_bins) + .5)
                   *(Forest.log_lambda_max_rest_frame -
                     Forest.log_lambda_min_rest_frame)/num_bins)
-    for p in sorted(list(data.keys())):
-        for d in data[p]:
-            bins=((d.log_lambda-Forest.log_lambda_min_rest_frame-sp.log10(1+d.z_qso))/(Forest.log_lambda_max_rest_frame-Forest.log_lambda_min_rest_frame)*num_bins).astype(int)
-            var_lss = Forest.get_var_lss(d.log_lambda)
-            eta = Forest.get_eta(d.log_lambda)
-            fudge = Forest.get_fudge(d.log_lambda)
-            var = 1./d.ivar/d.continuum**2
-            weights = 1/get_variance(var,eta,var_lss,fudge)
-            c = sp.bincount(bins,weights=d.flux/d.continuum*weights)
-            mean_cont[:len(c)]+=c
-            c = sp.bincount(bins,weights=weights)
-            wcont[:len(c)]+=c
+    for healpix in sorted(list(data.keys())):
+        for forest in data[healpix]:
+            bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
+                     np.log10(1 + forest.z_qso))/
+                    (Forest.log_lambda_max_rest_frame -
+                     Forest.log_lambda_min_rest_frame)*num_bins).astype(int)
+            var_lss = Forest.get_var_lss(forest.log_lambda)
+            eta = Forest.get_eta(forest.log_lambda)
+            fudge = Forest.get_fudge(forest.log_lambda)
+            var_pipe = 1./forest.ivar/forest.cont**2
+            weights = 1/get_variance(var_pipe, eta, var_lss, fudge)
+            cont = np.bincount(bins, weights=forest.flux/forest.cont*weights)
+            mean_cont[:len(cont)]+=cont
+            cont = np.bincount(bins, weights=weights)
+            mean_cont_weight[:len(cont)] += cont
 
-    w=wcont>0
-    mean_cont[w]/=wcont[w]
-    mean_cont/=mean_cont.mean()
-    return log_lambda,mean_cont,wcont
+    w = mean_cont_weight > 0
+    mean_cont[w] /= mean_cont_weight[w]
+    mean_cont /= mean_cont.mean()
+    return log_lambda, mean_cont, mean_cont_weight
 
 def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     nlss = 20
@@ -69,7 +82,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
     for p in sorted(list(data.keys())):
         for d in data[p]:
 
-            var_pipe = 1/d.ivar/d.continuum**2
+            var_pipe = 1/d.ivar/d.cont**2
             w = (sp.log10(var_pipe) > vpmin) & (sp.log10(var_pipe) < vpmax)
 
             bll = ((d.log_lambda-Forest.log_lambda_min)/(Forest.log_lambda_max-Forest.log_lambda_min)*nlss).astype(int)
@@ -78,7 +91,7 @@ def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
             bll = bll[w]
             bwe = bwe[w]
 
-            delta = (d.flux/d.continuum-1)
+            delta = (d.flux/d.cont-1)
             delta = delta[w]
 
             bins = bwe + nwe*bll
@@ -150,11 +163,11 @@ def stack(data, stack_from_deltas=False):
                 delta = d.delta
                 weights = d.weights
             else:
-                delta = d.flux/d.continuum
+                delta = d.flux/d.cont
                 var_lss = Forest.get_var_lss(d.log_lambda)
                 eta = Forest.get_eta(d.log_lambda)
                 fudge = Forest.get_fudge(d.log_lambda)
-                var = 1./d.ivar/d.continuum**2
+                var = 1./d.ivar/d.cont**2
                 weights = 1./get_variance(var,eta,var_lss,fudge)
 
             bins=((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)

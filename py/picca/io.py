@@ -648,8 +648,8 @@ def read_from_mock_1d(filename, thingid, ra, dec, z_qso, plate, mjd, fiberid,
 
         # compute the mean expected flux
         mean_flux_transmission = hdu.read_header()["MEANFLUX"]
-        continuum = hdu["continuum"][:]
-        mef = mean_flux_transmission * continuum
+        cont = hdu["continuum"][:]
+        mef = mean_flux_transmission*remove_keys
         pix_data.append(Forest(log_lambda, flux, ivar, t, r, d, z, p, m, f,
                                order, exposures_diff, reso, mef))
 

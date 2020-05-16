@@ -214,7 +214,7 @@ class Forest(QSO):
             Mean resolution of the forest
         mean_z: float or None
             Mean redshift of the forest
-        continuum: array of floats or None
+        cont: array of floats or None
             Quasar continuum
         p0: float or None
             Zero point of the linear function (flux mean)
@@ -567,7 +567,7 @@ class Forest(QSO):
                        - 1.0)
 
         # continuum-related variables
-        self.continuum = None
+        self.cont = None
         self.p0 = None
         self.p1 = None
         self.bad_cont = None
@@ -812,7 +812,7 @@ class Forest(QSO):
         # fudge contribution to the variance
         fudge = Forest.get_fudge(self.log_lambda)
 
-        def get_continuum_model(p0, p1):
+        def get_cont_model(p0, p1):
             """Models the flux continuum by multiplying the mean_continuum
             by a linear function
 
@@ -850,20 +850,20 @@ class Forest(QSO):
                     estimate of the instrumental noise to the variance.
 
             """
-            continuum_model = get_continuum_model(p0, p1)
-            var_pipe = 1./self.ivar/continuum_model**2
+            cont_model = get_cont_model(p0, p1)
+            var_pipe = 1./self.ivar/cont_model**2
             ## prep_del.variance is the variance of delta
             ## we want here the weights = ivar(flux)
 
             variance = get_variance(var_pipe, eta, var_lss, fudge)
-            weights = 1.0/continuum_model**2/variance
+            weights = 1.0/cont_model**2/variance
 
             # force weights=1 when use-constant-weight
             # TODO: make this condition clearer, maybe pass an option
             # use_constant_weights?
             if (eta == 0).all():
                 weights = np.ones(len(weights))
-            chi2_contribution = (self.flux - continuum_model)**2*weights
+            chi2_contribution = (self.flux - cont_model)**2*weights
             return chi2_contribution.sum() - np.log(weights).sum()
 
         p0 = (self.flux*self.ivar).sum()/self.ivar.sum()
@@ -874,21 +874,21 @@ class Forest(QSO):
                                    fix_p1=(self.order == 0))
         minimizer_result, _ = minimizer.migrad()
 
-        self.continuum = get_continuum_model(minimizer.values["p0"],
+        self.cont = get_cont_model(minimizer.values["p0"],
                                              minimizer.values["p1"])
         self.p0 = minimizer.values["p0"]
         self.p1 = minimizer.values["p1"]
 
         if not minimizer_result.is_valid:
             self.bad_cont = "minuit didn't converge"
-        if np.any(self.continuum <= 0):
+        if np.any(self.cont <= 0):
             self.bad_cont = "negative continuum"
 
 
         ## if the continuum is negative, then set it to a very small number
         ## so that this forest is ignored
         if self.bad_cont is not None:
-            self.continuum = self.continuum*0 + 1e-10
+            self.cont = self.cont*0 + 1e-10
             self.p0 = 0.
             self.p1 = 0.
 
@@ -904,7 +904,7 @@ class Delta(QSO):
             Array containing the logarithm of the wavelengths (in Angs)
         weights : array of floats
             Weights associated to pixel. Overloaded from parent class
-        continuum: array of floats
+        cont: array of floats
             Quasar continuum
         delta: array of floats
             Mean transmission fluctuation (delta field)
@@ -940,7 +940,7 @@ class Delta(QSO):
 
     """
     def __init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
-                 weights, continuum, delta, order, ivar, exposures_diff, mean_snr,
+                 weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                  mean_reso, mean_z, delta_log_lambda):
         """Initializes class instances.
 
@@ -963,7 +963,7 @@ class Delta(QSO):
                 Logarithm of the wavelengths (in Angs)
             weights: array of floats
                 Pixel weights
-            continuum: array of floats
+            cont: array of floats
                 Quasar continuum
             delta: array of floats
                 Mean transmission fluctuation (delta field)
@@ -985,7 +985,7 @@ class Delta(QSO):
         QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
         self.log_lambda = log_lambda
         self.weights = weights
-        self.continuum = continuum
+        self.cont = cont
         self.delta = delta
         self.order = order
         self.ivar = ivar
@@ -1002,7 +1002,7 @@ class Delta(QSO):
 
     @classmethod
     def from_forest(cls, forest, get_stack_delta, get_var_lss, get_eta,
-                    get_fudge, use_mock_continuum=False):
+                    get_fudge, use_mock_cont=False):
         """Initialize instance from Forest data.
 
         Args:
@@ -1017,7 +1017,7 @@ class Delta(QSO):
                 wavelength array.
             get_fudge: Interpolates the fudge contribution to the variance on the
                 wavelength array.
-            use_mock_continuum: bool - default: False
+            use_mock_cont: bool - default: False
                 Flag to use the mock continuum to compute the mean expected
                 flux fraction
 
@@ -1032,10 +1032,10 @@ class Delta(QSO):
 
         #if mc is True use the mock continuum to compute the mean
         # expected flux fraction
-        if use_mock_continuum:
+        if use_mock_cont:
             mean_expected_flux_frac = forest.mean_expected_flux_frac
         else:
-            mean_expected_flux_frac = forest.continuum*stack_delta
+            mean_expected_flux_frac = forest.cont*stack_delta
         delta = forest.flux/mean_expected_flux_frac - 1.
         var_pipe = 1./forest.ivar/mean_expected_flux_frac**2
         weights = 1./get_variance(var_pipe, eta, var_lss, fudge)
@@ -1046,7 +1046,7 @@ class Delta(QSO):
 
         return cls(forest.thingid, forest.ra, forest.dec, forest.z_qso,
                    forest.plate, forest.mjd, forest.fiberid, log_lambda,
-                   weights, forest.continuum, delta, forest.order, ivar,
+                   weights, forest.cont, delta, forest.order, ivar,
                    exposures_diff, forest.mean_snr, forest.mean_reso,
                    forest.mean_z, forest.delta_log_lambda)
 
@@ -1078,7 +1078,7 @@ class Delta(QSO):
             mean_z = header['MEANZ']
             delta_log_lambda = header['DLL']
             weights = None
-            continuum = None
+            cont = None
         else:
             ivar = None
             exposures_diff = None
@@ -1087,7 +1087,7 @@ class Delta(QSO):
             delta_log_lambda = None
             mean_z = None
             weights = hdu['WEIGHT'][:]
-            continuum = hdu['CONT'][:]
+            cont = hdu['CONT'][:]
 
         thingid = header['THING_ID']
         ra = header['RA']
@@ -1102,7 +1102,7 @@ class Delta(QSO):
             order = 1
 
         return cls(thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
-                   weights, continuum, delta, order, ivar, exposures_diff,
+                   weights, cont, delta, order, ivar, exposures_diff,
                    mean_snr, mean_reso, mean_z, delta_log_lambda)
 
 
@@ -1143,10 +1143,10 @@ class Delta(QSO):
         thingid = 0
         order = 0
         weights = None
-        continuum = None
+        cont = None
 
         return cls(thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
-                   weights, continuum, delta, order, ivar, exposures_diff,
+                   weights, cont, delta, order, ivar, exposures_diff,
                    mean_snr, mean_reso, mean_z, delta_log_lambda)
 
     @staticmethod

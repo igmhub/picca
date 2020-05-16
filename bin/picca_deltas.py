@@ -343,42 +343,57 @@ def main():
                         num_dlas += 1
         log_file.write("Found {} DLAs in forests\n".format(num_dlas))
 
-    ## cuts
-    log_file.write("INFO: Input sample has {} forests\n".format(np.sum([len(forest) for forest in data.values()])))
-    lstKeysToDel = []
+    ## Apply cuts
+    log_file.write(("INFO: Input sample has {} "
+                    "forests\n").format(np.sum([len(forest)
+                                                for forest in data.values()])))
+    remove_keys = []
     for healpix in data:
-        l = []
+        forests = []
         for forest in data[healpix]:
-            if not hasattr(forest, 'log_lambda') or len(forest.log_lambda) < args.npix_min:
-                log_file.write("INFO: Rejected {} due to forest too short\n".format(forest.thingid))
+            if (not hasattr(forest, 'log_lambda') or
+                len(forest.log_lambda) < args.npix_min):
+                log_file.write(("INFO: Rejected {} due to forest too "
+                                "short\n").format(forest.thingid))
                 continue
 
             if np.isnan((forest.flux*forest.ivar).sum()):
-                log_file.write("INFO: Rejected {} due to nan found\n".format(forest.thingid))
+                log_file.write(("INFO: Rejected {} due to nan "
+                                "found\n").format(forest.thingid))
                 continue
 
-            if(args.use_constant_weight and (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
-                log_file.write("INFO: Rejected {} due to negative mean or too low SNR found\n".format(forest.thingid))
+            if (args.use_constant_weight and
+                (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
+                log_file.write(("INFO: Rejected {} due to negative mean or "
+                                "too low SNR found\n").format(forest.thingid))
                 continue
 
-            l.append(forest)
-            log_file.write("{} {}-{}-{} accepted\n".format(forest.thingid, forest.plate, forest.mjd, forest.fiberid))
-        data[healpix][:] = l
+            forests.append(forest)
+            log_file.write("{} {}-{}-{} accepted\n".format(forest.thingid,
+                                                           forest.plate,
+                                                           forest.mjd,
+                                                           forest.fiberid))
+        data[healpix][:] = forests
         if len(data[healpix]) == 0:
-            lstKeysToDel += [healpix]
+            remove_keys += [healpix]
 
-    for healpix in lstKeysToDel:
+    for healpix in remove_keys:
         del data[healpix]
 
-    log_file.write("INFO: Remaining sample has {} forests\n".format(np.sum([len(forest) for forest in data.values()])))
+    log_file.write(("INFO: Remaining sample has {} "
+                    "forests\n").format(np.sum([len(forest)
+                                                for forest in data.values()])))
 
+    # Sanity check: all forests must have the attribute log_lambda
     for healpix in data:
         for forest in data[healpix]:
             assert hasattr(forest, 'log_lambda')
 
-    for it in range(nit):
+    # compute fits to the forests iteratively
+    # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
+    for iteration in range(num_iterations):
         pool = Pool(processes=args.nproc)
-        userprint("iteration: ", it)
+        userprint("iteration: ", iteration)
         nfit = 0
         sort = np.array(list(data.keys())).argsort()
         data_fit_cont = pool.map(cont_fit, np.array(list(data.values()))[sort])
@@ -389,7 +404,7 @@ def main():
 
         pool.close()
 
-        if it < nit-1:
+        if iteration < num_iterations - 1:
             ll_rest, mean_cont, wmc = prep_del.compute_mean_cont(data)
             Forest.get_mean_cont = interp1d(ll_rest[wmc > 0.], Forest.get_mean_cont(ll_rest[wmc > 0.])*mean_cont[wmc > 0.], fill_value="extrapolate")
             if not (args.use_ivar_as_weight or args.use_constant_weight):
@@ -455,7 +470,7 @@ def main():
     deltas = {}
     data_bad_cont = []
     for healpix in sorted(data.keys()):
-        deltas[healpix] = [Delta.from_forest(forest, get_stack_delta, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_continuum) for forest in data[healpix] if forest.bad_cont is None]
+        deltas[healpix] = [Delta.from_forest(forest, get_stack_delta, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_cont) for forest in data[healpix] if forest.bad_cont is None]
         data_bad_cont = data_bad_cont + [forest for forest in data[healpix] if forest.bad_cont is not None]
 
     for forest in data_bad_cont:
@@ -525,7 +540,7 @@ def main():
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Inverse variance', 'Difference']
                 else:
-                    cols = [d.log_lambda, d.delta, d.weights, d.continuum]
+                    cols = [d.log_lambda, d.delta, d.weights, d.cont]
                     names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
                     units = ['log Angstrom', '', '', '']
                     comments = ['Log lambda', 'Delta field', 'Pixel weights', 'Continuum']
