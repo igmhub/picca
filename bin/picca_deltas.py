@@ -240,10 +240,9 @@ def main():
         userprint("applying dust correction")
         Forest.extinction_bv_map = io.read_dust_map(args.dust_map)
 
-    nit = args.nit
-
     log_file = open(os.path.expandvars(args.log), 'w')
 
+    # Read data
     (data, num_data, nside,
      healpy_pix_ordering) = io.read_data(os.path.expandvars(args.in_dir),
                                          args.drq, args.mode,
@@ -391,6 +390,7 @@ def main():
 
     # compute fits to the forests iteratively
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
+    num_iterations = args.nit
     for iteration in range(num_iterations):
         pool = Pool(processes=args.nproc)
         userprint("iteration: ", iteration)
