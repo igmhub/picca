@@ -321,7 +321,7 @@ def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
                 each spectrum. Values are lists of Forest instances.
             num_data: Number of spectra in data.
             nside: The healpix nside parameter.
-            "RING": The mode used to compute the healpix numbers.
+            "RING": The healpix pixel ordering used.
     """
     userprint("mode: " + mode)
     # read quasar characteristics from DRQ catalogue
