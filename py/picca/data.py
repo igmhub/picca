@@ -835,7 +835,7 @@ class Forest(QSO):
             return line*mean_cont
 
         def chi2(p0, p1):
-            """Copmputes the chi2 of a given model (see function model above).
+            """Computes the chi2 of a given model (see function model above).
 
             Args:
                 p1: float
@@ -849,6 +849,8 @@ class Forest(QSO):
                     Correction factor to the contribution of the pipeline
                     estimate of the instrumental noise to the variance.
 
+            Returns:
+                The obtained chi2
             """
             cont_model = get_cont_model(p0, p1)
             var_pipe = 1./self.ivar/cont_model**2
