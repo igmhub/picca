@@ -48,12 +48,12 @@ def exp_diff(hdul, log_lambda):
             ivar_exp = hdul[(4 + index_exp +
                              index_col*num_exp_per_col)]["ivar"][:]
             mask = hdul[4 + index_exp + index_col*num_exp_per_col]["mask"][:]
-            bins = np.searchsorted(log_lambda, log_lambda_exp)
+            log_lambda_bins = np.searchsorted(log_lambda, log_lambda_exp)
 
             # exclude masks 25 (COMBINEREJ), 23 (BRIGHTSKY)?
-            rebin_ivar_exp = np.bincount(bins,
+            rebin_ivar_exp = np.bincount(log_lambda_bins,
                                          weights=ivar_exp*(mask & 2**25 == 0))
-            rebin_flux_exp = np.bincount(bins,
+            rebin_flux_exp = np.bincount(log_lambda_bins,
                                          weights=(ivar_exp*flux_exp*
                                                   (mask & 2**25 == 0)))
 

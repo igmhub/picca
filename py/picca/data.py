@@ -1132,14 +1132,14 @@ class Delta(QSO):
         mean_reso = float(cols[8])
         delta_log_lambda = float(cols[9])
 
-        num_pixel = int(cols[10])
-        delta = np.array(cols[11:11 + num_pixel]).astype(float)
-        log_lambda = np.array(cols[11 + num_pixel:
-                                   11 + 2*num_pixel]).astype(float)
-        ivar = np.array(cols[11 + 2*num_pixel:
-                             11 + 3*num_pixel]).astype(float)
-        exposures_diff = np.array(cols[11 + 3*num_pixel:
-                                       11 + 4*num_pixel]).astype(float)
+        num_pixels = int(cols[10])
+        delta = np.array(cols[11:11 + num_pixels]).astype(float)
+        log_lambda = np.array(cols[11 + num_pixels:
+                                   11 + 2*num_pixels]).astype(float)
+        ivar = np.array(cols[11 + 2*num_pixels:
+                             11 + 3*num_pixels]).astype(float)
+        exposures_diff = np.array(cols[11 + 3*num_pixels:
+                                       11 + 4*num_pixels]).astype(float)
 
         thingid = 0
         order = 0

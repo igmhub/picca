@@ -21,21 +21,21 @@ def compute_mean_cont(data):
             A dictionary with the read forests in each healpix
 
     Returns:
-        log_lambda: array
-            Logarithm of the wavelengths (in Angs).
-        mean_cont: array
-            Mean quasar continuum over the whole sample
-        mean_cont_weight: array
-            Total weight on the mean quasar continuum
+        The following variables:
+            log_lambda_rest_frame: Logarithm of the wavelengths at rest-frame
+                (in Angs).
+            mean_cont: Mean quasar continuum over the whole sample
+            mean_cont_weight: Total weight on the mean quasar continuum
     """
     num_bins = (int((Forest.log_lambda_max_rest_frame -
-                    Forest.log_lambda_min_rest_frame)/Forest.delta_log_lambda)
+                     Forest.log_lambda_min_rest_frame)/Forest.delta_log_lambda)
                 + 1)
     mean_cont = np.zeros(num_bins)
     mean_cont_weight = np.zeros(num_bins)
-    log_lambda = (Forest.log_lambda_min_rest_frame + (np.arange(num_bins) + .5)
-                  *(Forest.log_lambda_max_rest_frame -
-                    Forest.log_lambda_min_rest_frame)/num_bins)
+    log_lambda_rest_frame = (Forest.log_lambda_min_rest_frame +
+                             (np.arange(num_bins) + .5)
+                             *(Forest.log_lambda_max_rest_frame -
+                               Forest.log_lambda_min_rest_frame)/num_bins)
     for healpix in sorted(list(data.keys())):
         for forest in data[healpix]:
             bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
@@ -48,108 +48,214 @@ def compute_mean_cont(data):
             var_pipe = 1./forest.ivar/forest.cont**2
             weights = 1/get_variance(var_pipe, eta, var_lss, fudge)
             cont = np.bincount(bins, weights=forest.flux/forest.cont*weights)
-            mean_cont[:len(cont)]+=cont
-            cont = np.bincount(bins, weights=weights)
+            mean_cont[:len(cont)] += cont
+            cont = np.bincount(bins, wenights=weights)
             mean_cont_weight[:len(cont)] += cont
 
     w = mean_cont_weight > 0
     mean_cont[w] /= mean_cont_weight[w]
     mean_cont /= mean_cont.mean()
-    return log_lambda, mean_cont, mean_cont_weight
+    return log_lambda_rest_frame, mean_cont, mean_cont_weight
 
-def var_lss(data,eta_lim=(0.5,1.5),vlss_lim=(0.,0.3)):
-    nlss = 20
-    eta = np.zeros(nlss)
-    vlss = np.zeros(nlss)
-    fudge = np.zeros(nlss)
-    err_eta = np.zeros(nlss)
-    err_vlss = np.zeros(nlss)
-    err_fudge = np.zeros(nlss)
-    nb_pixels = np.zeros(nlss)
-    log_lambda = Forest.log_lambda_min + (np.arange(nlss)+.5)*(Forest.log_lambda_max-Forest.log_lambda_min)/nlss
 
-    nwe = 100
-    vpmin = sp.log10(1e-5)
-    vpmax = sp.log10(2.)
-    var = 10**(vpmin + (np.arange(nwe)+.5)*(vpmax-vpmin)/nwe)
+def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
+    """Computes variance functions and statistics
 
-    var_del =np.zeros(nlss*nwe)
-    mdel =np.zeros(nlss*nwe)
-    var2_del =np.zeros(nlss*nwe)
-    count =np.zeros(nlss*nwe)
-    nqso = np.zeros(nlss*nwe)
+    This function computes the statistics required to fit the mapping functions
+    eta, var_lss, and fudge. It also computes the functions themselves. See
+    equation 4 of du Mas des Bourboux et al. 2020 for details.
 
-    for p in sorted(list(data.keys())):
-        for d in data[p]:
+    Args:
+        data: dict
+            A dictionary with the read forests in each healpix
+        limit_eta: tuple of floats
+            Limits on the correction factor to the contribution of the pipeline
+            estimate of the instrumental noise to the variance.
+        limit_var_lss: tuple of floats
+            Limits on the pixel variance due to Large Scale Structure
+    Returns:
+        The following variables:
+            log_lambda: Logarithm of the wavelengths (in Angs).
+            eta: Correction factor to the contribution of the pipeline
+                estimate of the instrumental noise to the variance.
+            var_lss: Pixel variance due to the Large Scale Strucure.
+            fudge: Fudge contribution to the pixel variance.
+            num_pixels: Number of pixels contributing to the array.
+            var:
+            var_delta: Variance of the delta field. Binned according to var.
+            var2_delta: Square of the variance of the delta field. Binned
+                according to var.
+            count: Number of pixels in each pipeline variance bin.
+            num_qs: Number of quasars in each pipeline variance bin.
+            chi2_in_bin: chi2 value obtained when fitting the functions eta,
+                var_lss, and fudge for each of the wavelengths
+            error_eta: Error on the correction factor to the contribution of the
+                pipeline  estimate of the instrumental noise to the variance.
+            error_var_lss: Error on the pixel variance due to the Large Scale
+                Strucure.
+            error_fudge: Error on the fudge contribution to the pixel variance.
+    """
+    # initialize arrays
+    num_bins = 20
+    eta = np.zeros(num_bins)
+    var_lss = np.zeros(num_bins)
+    fudge = np.zeros(num_bins)
+    error_eta = np.zeros(num_bins)
+    error_var_lss = np.zeros(num_bins)
+    error_fudge = np.zeros(num_bins)
+    num_pixels = np.zeros(num_bins)
+    log_lambda = (Forest.log_lambda_min + (np.arange(num_bins)+.5)*
+                  (Forest.log_lambda_max-Forest.log_lambda_min)/num_bins)
 
-            var_pipe = 1/d.ivar/d.cont**2
-            w = (sp.log10(var_pipe) > vpmin) & (sp.log10(var_pipe) < vpmax)
+    # define an array to contain the possible values of pipeline variances
+    # the measured pipeline variance of the deltas will be averaged using the
+    # same binning, and the two arrays will be compared to fit the functions
+    # eta, var_lss, and fudge
+    num_var_bins = 100
+    var_pipe_min = np.log10(1e-5)
+    var_pipe_max = np.log10(2.)
+    var_pipe_values = 10**(var_pipe_min + ((np.arange(num_var_bins) + .5)*
+                                           (var_pipe_max - var_pipe_min)/
+                                           num_var_bins))
 
-            bll = ((d.log_lambda-Forest.log_lambda_min)/(Forest.log_lambda_max-Forest.log_lambda_min)*nlss).astype(int)
-            bwe = sp.floor((sp.log10(var_pipe)-vpmin)/(vpmax-vpmin)*nwe).astype(int)
+    # initialize arrays to compute the statistics of deltas
+    var_delta = np.zeros(num_bins*num_var_bins)
+    mean_delta = np.zeros(num_bins*num_var_bins)
+    var2_delta = np.zeros(num_bins*num_var_bins)
+    count = np.zeros(num_bins*num_var_bins)
+    num_qso = np.zeros(num_bins*num_var_bins)
 
-            bll = bll[w]
-            bwe = bwe[w]
+    # compute delta statistics, binning the variance according to 'var'
+    for healpix in sorted(list(data.keys())):
+        for forest in data[healpix]:
 
-            delta = (d.flux/d.cont-1)
+            var_pipe = 1/forest.ivar/forest.cont**2
+            w = ((np.log10(var_pipe) > var_pipe_min) &
+                 (np.log10(var_pipe) < var_pipe_max))
+
+            # select the wavelength and the pipeline variance bins
+            log_lambda_bins = ((forest.log_lambda - Forest.log_lambda_min)/
+                               (Forest.log_lambda_max - Forest.log_lambda_min)*
+                               num_bins).astype(int)
+            var_pipe_bins = np.floor((np.log10(var_pipe) - var_pipe_min)/
+                                     (var_pipe_max - var_pipe_min)*
+                                     num_var_bins).astype(int)
+            bins = var_pipe_bins + num_var_bins*log_lambda_bins
+
+            # filter the values with a pipeline variance out of range
+            log_lambda_bins = log_lambda_bins[w]
+            var_pipe_bins = var_pipe_bins[w]
+
+            # compute deltas
+            delta = (faorest.flux/forest.cont - 1)
             delta = delta[w]
 
-            bins = bwe + nwe*bll
+            # add contributions to delta statistics
+            rebin = np.bincount(bins, weights=delta)
+            mean_delta[:len(rebin)] += rebin
 
-            c = sp.bincount(bins,weights=delta)
-            mdel[:len(c)] += c
+            rebin = np.bincount(bins, weights=delta**2)
+            var_delta[:len(rebin)] += rebin
 
-            c = sp.bincount(bins,weights=delta**2)
-            var_del[:len(c)] += c
+            rebin = np.bincount(bins, weights=delta**4)
+            var2_delta[:len(rebin)] += rebin
 
-            c = sp.bincount(bins,weights=delta**4)
-            var2_del[:len(c)] += c
+            rebin = np.bincount(bins)
+            count[:len(rebin)] += rebin
+            num_qso[np.unique(bins)] += 1
 
-            c = sp.bincount(bins)
-            count[:len(c)] += c
-            nqso[np.unique(bins)]+=1
+    # normalise and finish the computation of delta statistics
+    w = count > 0
+    var_delta[w] /= count[w]
+    mean_delta[w] /= count[w]
+    var_delta -= mean_delta**2
+    var2_delta[w] /= count[w]
+    var2_delta -= var_delta**2
+    var2_delta[w] /= count[w]
 
-
-    w = count>0
-    var_del[w]/=count[w]
-    mdel[w]/=count[w]
-    var_del -= mdel**2
-    var2_del[w]/=count[w]
-    var2_del -= var_del**2
-    var2_del[w]/=count[w]
-
-    bin_chi2 = np.zeros(nlss)
+    # fit the functions eta, var_lss, and fudge
+    chi2_in_bin = np.zeros(num_bins)
     fudge_ref = 1e-7
-    for i in range(nlss):
-        def chi2(eta,vlss,fudge):
-            v = var_del[i*nwe:(i+1)*nwe]-get_variance(var,eta,vlss,fudge*fudge_ref)
-            dv2 = var2_del[i*nwe:(i+1)*nwe]
-            w=nqso[i*nwe:(i+1)*nwe]>100
-            return sp.sum(v[w]**2/dv2[w])
-        mig = iminuit.Minuit(chi2,forced_parameters=("eta","vlss","fudge"),eta=1.,vlss=0.1,fudge=1.,error_eta=0.05,error_vlss=0.05,error_fudge=0.05,errordef=1.,print_level=0,limit_eta=eta_lim,limit_vlss=vlss_lim, limit_fudge=(0,None))
-        mig.migrad()
+    for index in range(num_bins):
+        def chi2(eta, var_lss, fudge):
+            """Computes the chi2 of the fit of eta, var_lss, and fudge for a
+            wavelength bin
 
-        if mig.migrad_ok():
-            mig.hesse()
-            eta[i] = mig.values["eta"]
-            vlss[i] = mig.values["vlss"]
-            fudge[i] = mig.values["fudge"]*fudge_ref
-            err_eta[i] = mig.errors["eta"]
-            err_vlss[i] = mig.errors["vlss"]
-            err_fudge[i] = mig.errors["fudge"]*fudge_ref
+            Args:
+                eta: float
+                    Correction factor to the contribution of the pipeline
+                    estimate of the instrumental noise to the variance.
+                var_lss: float
+                    Pixel variance due to the Large Scale Strucure
+                fudge: float
+                    Fudge contribution to the pixel variance
+
+            Global args (defined only in the scope of function
+            compute_var_stats):
+                var_delta: array of floats
+                    Variance of the delta field
+                var2_delta: array of floats
+                    Square of the variance of the delta field
+                index: int
+                    Index with the selected wavelength bin
+                num_bins: int
+                    Number of wavelength bins
+                num_var_bins: int
+                    Number of bins in which the pipeline variance values are
+                    split
+                var_pipe_values: array of floats
+                    Value of the pipeline variance in pipeline variance bins
+                num_qso: array of ints
+                    Number of quasars in each pipeline variance bin
+
+            Returns:
+                The obtained chi2
+            """
+            chi2_contribution = (var_delta[index*num_var_bins:
+                                           (index + 1)*num_var_bins] -
+                                 get_variance(var_pipe_values, eta, var_lss,
+                                              fudge*fudge_ref))
+            weights = var2_delta[index*num_var_bins: (index + 1)*num_var_bins]
+            w = num_qso[index*num_var_bins: (index + 1)*num_var_bins] > 100
+            return np.sum(chi2_contribution[w]**2/weights[w])
+
+        minimizer = iminuit.Minuit(chi2, forced_parameters=("eta", "var_lss",
+                                                            "fudge"),
+                                   eta=1., var_lss=0.1, fudge=1.,
+                                   error_eta=0.05,
+                                   error_var_lss=0.05, error_fudge=0.05,
+                                   errordef=1., print_level=0,
+                                   limit_eta=eta_lim,
+                                   limit_var_lss=limit_var_lss,
+                                   limit_fudge=(0, None))
+        minimizer.migrad()
+
+        if minimizer.migrad_ok():
+            minimizer.hesse()
+            eta[index] = minimizer.values["eta"]
+            var_lss[index] = minimizer.values["var_lss"]
+            fudge[index] = minimizer.values["fudge"]*fudge_ref
+            error_eta[index] = minimizer.errors["eta"]
+            error_var_lss[index] = minimizer.errors["var_lss"]
+            error_fudge[index] = minimizer.errors["fudge"]*fudge_ref
         else:
-            eta[i] = 1.
-            vlss[i] = 0.1
-            fudge[i] = 1.*fudge_ref
-            err_eta[i] = 0.
-            err_vlss[i] = 0.
-            err_fudge[i] = 0.
-        nb_pixels[i] = count[i*nwe:(i+1)*nwe].sum()
-        bin_chi2[i] = mig.fval
-        userprint(eta[i],vlss[i],fudge[i],mig.fval, nb_pixels[i],err_eta[i],err_vlss[i],err_fudge[i])
+            eta[index] = 1.
+            var_lss[index] = 0.1
+            fudge[index] = 1.*fudge_ref
+            error_eta[index] = 0.
+            error_var_lss[index] = 0.
+            error_fudge[index] = 0.
+        num_pixels[index] = count[index*num_var_bins:
+                                  (index + 1)*num_var_bins].sum()
+        chi2_in_bin[index] = minimizer.fval
+        userprint(eta[index], var_lss[index], fudge[index], mig.fval,
+                  num_pixels[index], error_eta[index], error_var_lss[index],
+                  error_fudge[index])
 
-
-    return log_lambda,eta,vlss,fudge,nb_pixels,var,var_del.reshape(nlss,-1),var2_del.reshape(nlss,-1),count.reshape(nlss,-1),nqso.reshape(nlss,-1),bin_chi2,err_eta,err_vlss,err_fudge
+    return (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
+            var_delta.reshape(num_bins, -1), var2_delta.reshape(num_bins, -1),
+            count.reshape(num_bins, -1), num_qso.reshape(num_bins, -1),
+            chi2_in_bin, error_eta, error_var_lss, error_fudge)
 
 
 def stack(data, stack_from_deltas=False):
@@ -168,7 +274,7 @@ def stack(data, stack_from_deltas=False):
                 eta = Forest.get_eta(d.log_lambda)
                 fudge = Forest.get_fudge(d.log_lambda)
                 var = 1./d.ivar/d.cont**2
-                weights = 1./get_variance(var,eta,var_lss,fudge)
+                weights = 1./get_variance(var, eta, var_lss, fudge)
 
             bins=((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
             c = sp.bincount(bins,weights=delta*weights)
