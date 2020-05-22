@@ -49,7 +49,7 @@ def compute_mean_cont(data):
             weights = 1/get_variance(var_pipe, eta, var_lss, fudge)
             cont = np.bincount(bins, weights=forest.flux/forest.cont*weights)
             mean_cont[:len(cont)] += cont
-            cont = np.bincount(bins, wenights=weights)
+            cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont
 
     w = mean_cont_weight > 0
@@ -259,6 +259,8 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
 
 
 def stack(data, stack_from_deltas=False):
+    """
+    """
     nstack = int((Forest.log_lambda_max-Forest.log_lambda_min)/Forest.delta_log_lambda)+1
     stack_log_lambda = Forest.log_lambda_min + np.arange(nstack)*Forest.delta_log_lambda
     stack_delta = np.zeros(nstack)
