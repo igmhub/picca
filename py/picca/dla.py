@@ -22,11 +22,13 @@ class DLA:
 
     Methods:
         __init__: Initialize class instance.
-        p_voigt_a: ?
-        tau_a: ?
-        p_voigt_b: ?
-        tau_b: ?
-        voigt: ?
+        profile_lya_absorption: Computes the absorption profile for Lyman-alpha
+            absorption.
+        tau_lya: Computes the optical depth for Lyman-alpha absorption.
+        profile_lyb_absorption: Computes the absorption profile for Lyman-beta
+            absorption.
+        tau_lyb: Computes the optical depth for Lyman-beta absorption.
+        voigt: Computes the classical Voigt function
     """
     def __init__(self, data, z_abs, nhi):
         """Initializes class instance."""
@@ -149,7 +151,7 @@ class DLA:
 
     @staticmethod
     def voigt(a_voight, u_voight):
-        """ Computes the classical Voigt function
+        """Computes the classical Voigt function
 
         Args:
             a_voight: array of floats
