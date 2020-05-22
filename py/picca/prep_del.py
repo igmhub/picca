@@ -227,7 +227,7 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
                                    error_eta=0.05,
                                    error_var_lss=0.05, error_fudge=0.05,
                                    errordef=1., print_level=0,
-                                   limit_eta=eta_lim,
+                                   limit_eta=limit_eta,
                                    limit_var_lss=limit_var_lss,
                                    limit_fudge=(0, None))
         minimizer.migrad()
