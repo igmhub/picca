@@ -140,11 +140,13 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
             var_pipe_bins = np.floor((np.log10(var_pipe) - var_pipe_min)/
                                      (var_pipe_max - var_pipe_min)*
                                      num_var_bins).astype(int)
-            bins = var_pipe_bins + num_var_bins*log_lambda_bins
 
             # filter the values with a pipeline variance out of range
             log_lambda_bins = log_lambda_bins[w]
             var_pipe_bins = var_pipe_bins[w]
+
+            # compute overall bin
+            bins = var_pipe_bins + num_var_bins*log_lambda_bins
 
             # compute deltas
             delta = (forest.flux/forest.cont - 1)
