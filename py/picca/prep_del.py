@@ -250,7 +250,7 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
         num_pixels[index] = count[index*num_var_bins:
                                   (index + 1)*num_var_bins].sum()
         chi2_in_bin[index] = minimizer.fval
-        userprint(eta[index], var_lss[index], fudge[index], mig.fval,
+        userprint(eta[index], var_lss[index], fudge[index], chi2_in_bin[index],
                   num_pixels[index], error_eta[index], error_var_lss[index],
                   error_fudge[index])
 
