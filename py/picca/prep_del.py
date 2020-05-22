@@ -7,7 +7,6 @@ This module provides three functions:
 See the respective documentation for details
 """
 import numpy as np
-import scipy as sp
 import iminuit
 from picca.data import Forest, get_variance
 from picca.utils import userprint
@@ -81,12 +80,13 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
             var_lss: Pixel variance due to the Large Scale Strucure.
             fudge: Fudge contribution to the pixel variance.
             num_pixels: Number of pixels contributing to the array.
-            var:
+            var_pipe_values: Value of the pipeline variance in pipeline
+                variance bins
             var_delta: Variance of the delta field. Binned according to var.
             var2_delta: Square of the variance of the delta field. Binned
                 according to var.
             count: Number of pixels in each pipeline variance bin.
-            num_qs: Number of quasars in each pipeline variance bin.
+            num_qso: Number of quasars in each pipeline variance bin.
             chi2_in_bin: chi2 value obtained when fitting the functions eta,
                 var_lss, and fudge for each of the wavelengths
             error_eta: Error on the correction factor to the contribution of the
@@ -179,6 +179,8 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
     chi2_in_bin = np.zeros(num_bins)
     fudge_ref = 1e-7
     for index in range(num_bins):
+        # pylint: disable-msg=cell-var-from-loop
+        # this function is defined differntly at each step of the loop
         def chi2(eta, var_lss, fudge):
             """Computes the chi2 of the fit of eta, var_lss, and fudge for a
             wavelength bin
@@ -261,31 +263,49 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
 
 
 def stack(data, stack_from_deltas=False):
+    """Computes a stack of the delta field as a function of wavelength
+
+    Args:
+        data: dict
+            A dictionary with the forests in each healpix. If stack_from_deltas
+            is passed, then the dictionary must contain the deltas in each
+            healpix
+        stack_from_deltas: bool - default: False
+            Flag to determine whether to stack from deltas or compute them
+
+    Returns:
+        The following variables:
+            stack_log_lambda: Logarithm of the wavelengths (in Angs).
+            stack_delta: The stacked delta field.
+            stack_weight: Total weight on the delta_stack
     """
-    """
-    nstack = int((Forest.log_lambda_max-Forest.log_lambda_min)/Forest.delta_log_lambda)+1
-    stack_log_lambda = Forest.log_lambda_min + np.arange(nstack)*Forest.delta_log_lambda
-    stack_delta = np.zeros(nstack)
-    wst = np.zeros(nstack)
-    for p in sorted(list(data.keys())):
-        for d in data[p]:
+    num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min)/
+                   Forest.delta_log_lambda) + 1
+    stack_log_lambda = (Forest.log_lambda_min +
+                        np.arange(num_bins)*Forest.delta_log_lambda)
+    stack_delta = np.zeros(num_bins)
+    stack_weight = np.zeros(num_bins)
+    for healpix in sorted(list(data.keys())):
+        for forest in data[healpix]:
             if stack_from_deltas:
-                delta = d.delta
-                weights = d.weights
+                delta = forest.delta
+                weights = forest.weights
             else:
-                delta = d.flux/d.cont
-                var_lss = Forest.get_var_lss(d.log_lambda)
-                eta = Forest.get_eta(d.log_lambda)
-                fudge = Forest.get_fudge(d.log_lambda)
-                var = 1./d.ivar/d.cont**2
+                delta = forest.flux/forest.cont
+                var_lss = Forest.get_var_lss(forest.log_lambda)
+                eta = Forest.get_eta(forest.log_lambda)
+                fudge = Forest.get_fudge(forest.log_lambda)
+                var = 1./forest.ivar/forest.cont**2
                 weights = 1./get_variance(var, eta, var_lss, fudge)
 
-            bins=((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
-            c = sp.bincount(bins,weights=delta*weights)
-            stack_delta[:len(c)]+=c
-            c = sp.bincount(bins,weights=weights)
-            wst[:len(c)]+=c
+            bins = ((forest.log_lambda - Forest.log_lambda_min)/
+                    Forest.delta_log_lambda + 0.5).astype(int)
+            rebin = np.bincount(bins, weights=delta*weights)
+            stack_delta[:len(rebin)] += rebin
+            rebin = np.bincount(bins, weights=weights)
+            stack_weight[:len(rebin)] += rebin
 
-    w=wst>0
-    stack_delta[w]/=wst[w]
-    return stack_log_lambda, stack_delta, wst
+    w = stack_weight > 0
+    stack_delta[w] /= stack_weight[w]
+
+    return stack_log_lambda, stack_delta, stack_weight

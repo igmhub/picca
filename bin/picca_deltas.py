@@ -411,53 +411,68 @@ def main():
                                             Forest.get_mean_cont(log_lambda_rest_frame[mean_cont_weight > 0.])*mean_cont[mean_cont_weight > 0.],
                                             fill_value="extrapolate")
             if not (args.use_ivar_as_weight or args.use_constant_weight):
-                (log_lambda, eta, var_lss, fudge, num_pixels, var, var_del,
-                 var2_del, count, nqsos, chi2, error_eta, error_var_lss,
+                (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
+                 var_delta, var2_delta, count, num_qso, chi2_in_bin,
+                 error_eta, error_var_lss,
                  err_fudge) = prep_del.compute_var_stats(data,
                                                          (args.eta_min,
                                                           args.eta_max),
                                                          (args.vlss_min,
                                                           args.vlss_max))
-                Forest.get_eta = interp1d(log_lambda[num_pixels > 0], eta[num_pixels > 0],
-                                      fill_value="extrapolate", kind="nearest")
-                Forest.get_var_lss = interp1d(log_lambda[num_pixels > 0], var_lss[num_pixels > 0.],
-                                          fill_value="extrapolate", kind="nearest")
-                Forest.get_fudge = interp1d(log_lambda[num_pixels > 0], fudge[num_pixels > 0],
-                                        fill_value="extrapolate", kind="nearest")
+                Forest.get_eta = interp1d(log_lambda[num_pixels > 0],
+                                          eta[num_pixels > 0],
+                                          fill_value="extrapolate",
+                                          kind="nearest")
+                Forest.get_var_lss = interp1d(log_lambda[num_pixels > 0],
+                                              var_lss[num_pixels > 0.],
+                                              fill_value="extrapolate",
+                                              kind="nearest")
+                Forest.get_fudge = interp1d(log_lambda[num_pixels > 0],
+                                            fudge[num_pixels > 0],
+                                            fill_value="extrapolate",
+                                            kind="nearest")
             else:
-
-                nlss = 10 # this value is arbitrary
-                log_lambda = Forest.log_lambda_min + (np.arange(nlss)+.5)*(Forest.log_lambda_max-Forest.log_lambda_min)/nlss
+                num_bins = 10 # this value is arbitrary
+                log_lambda = (Forest.log_lambda_min + (np.arange(num_bins) + .5)
+                              *(Forest.log_lambda_max - Forest.log_lambda_min)
+                              /num_bins
 
                 if args.use_ivar_as_weight:
-                    userprint('INFO: using ivar as weights, skipping eta, var_lss, fudge fits')
-                    eta = np.ones(nlss)
-                    var_lss = np.zeros(nlss)
-                    fudge = np.zeros(nlss)
+                    userprint(("INFO: using ivar as weights, skipping eta, "
+                               "var_lss, fudge fits"))
+                    eta = np.ones(num_bins)
+                    var_lss = np.zeros(num_bins)
+                    fudge = np.zeros(num_bins)
                 else:
-                    userprint('INFO: using constant weights, skipping eta, var_lss, fudge fits')
-                    eta = np.zeros(nlss)
-                    var_lss = np.ones(nlss)
-                    fudge = np.zeros(nlss)
+                    userprint(("INFO: using constant weights, skipping eta, "
+                               "var_lss, fudge fits"))
+                    eta = np.zeros(num_bins)
+                    var_lss = np.ones(num_bins)
+                    fudge = np.zeros(num_bins)
 
-                error_eta = np.zeros(nlss)
-                error_var_lss = np.zeros(nlss)
-                err_fudge = np.zeros(nlss)
-                chi2 = np.zeros(nlss)
+                error_eta = np.zeros(num_bins)
+                error_var_lss = np.zeros(num_bins)
+                err_fudge = np.zeros(num_bins)
+                chi2_in_bin = np.zeros(num_bins)
 
-                num_pixels = np.zeros(nlss)
-                var = np.zeros(nlss)
-                var_del = np.zeros((nlss, nlss))
-                var2_del = np.zeros((nlss, nlss))
-                count = np.zeros((nlss, nlss))
-                nqsos = np.zeros((nlss, nlss))
+                num_pixels = np.zeros(num_bins)
+                var_pipe_values = np.zeros(num_bins)
+                var_delta = np.zeros((num_bins, num_bins))
+                var2_delta = np.zeros((num_bins, num_bins))
+                count = np.zeros((num_bins, num_bins))
+                num_qso = np.zeros((num_bins, num_bins))
 
-                Forest.get_eta = interp1d(log_lambda, eta, fill_value='extrapolate', kind='nearest')
-                Forest.get_var_lss = interp1d(log_lambda, var_lss, fill_value='extrapolate', kind='nearest')
-                Forest.get_fudge = interp1d(log_lambda, fudge, fill_value='extrapolate', kind='nearest')
+                Forest.get_eta = interp1d(log_lambda, eta,
+                                          fill_value='extrapolate',
+                                          kind='nearest')
+                Forest.get_var_lss = interp1d(log_lambda, var_lss,
+                                              fill_value='extrapolate',
+                                              kind='nearest')
+                Forest.get_fudge = interp1d(log_lambda, fudge,
+                                            fill_value='extrapolate',
+                                            kind='nearest')
 
-
-    stack_log_lambda, stack_delta, wst = prep_del.stack(data)
+    stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
 
     ### Save iter_out_prefix
     res = fitsio.FITS(args.iter_out_prefix + ".fits.gz", 'rw', clobber=True)
@@ -465,15 +480,15 @@ def main():
     hd["NSIDE"] = nside
     hd["PIXORDER"] = healpy_pix_ordering
     hd["FITORDER"] = args.order
-    res.write([stack_log_lambda, stack_delta, wst], names=['loglam', 'stack', 'weight'], header=hd, extname='STACK')
+    res.write([stack_log_lambda, stack_delta, stack_weight], names=['loglam', 'stack', 'weight'], header=hd, extname='STACK')
     res.write([log_lambda, eta, var_lss, fudge, num_pixels], names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'], extname='WEIGHT')
     res.write([log_lambda_rest_frame, Forest.get_mean_cont(log_lambda_rest_frame), mean_cont_weight], names=['loglam_rest', 'mean_cont', 'weight'], extname='CONT')
-    var = np.broadcast_to(var.reshape(1, -1), var_del.shape)
-    res.write([var, var_del, var2_del, count, nqsos, chi2], names=['var_pipe', 'var_del', 'var2_del', 'count', 'nqsos', 'chi2'], extname='VAR')
+    var_pipe_values = np.broadcast_to(var_pipe_values.reshape(1, -1), var_delta.shape)
+    res.write([var_pipe_values, var_delta, var2_delta, count, num_qso, chi2_in_bin], names=['var_pipe', 'var_del', 'var2_del', 'count', 'nqsos', 'chi2'], extname='VAR')
     res.close()
 
     ### Save delta
-    get_stack_delta = interp1d(stack_log_lambda[wst > 0.], stack_delta[wst > 0.], kind="nearest", fill_value="extrapolate")
+    get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.], stack_delta[stack_weight > 0.], kind="nearest", fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
     for healpix in sorted(data.keys()):
