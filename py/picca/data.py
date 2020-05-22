@@ -838,11 +838,10 @@ class Forest(QSO):
             """Computes the chi2 of a given model (see function model above).
 
             Args:
+                p0: float
+                    Zero point of the linear function (see function model above)
                 p1: float
                     Slope of the linear function (see function model above)
-
-                p1: float
-                    Zero point of the linear function (see function model above)
 
             Global args (defined only in the scope of function cont_fit)
                 eta: array of floats
