@@ -267,7 +267,7 @@ def main():
     for p in data.keys():
         cpu_data[p] = [p]
     pool = Pool(processes=args.nproc)
-    cfs = pool.map(corr_func,sorted(cpu_data.values()), args)
+    cfs = pool.map(corr_func,sorted(cpu_data.values()))
     pool.close()
 
 
