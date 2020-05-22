@@ -435,7 +435,7 @@ def main():
                 num_bins = 10 # this value is arbitrary
                 log_lambda = (Forest.log_lambda_min + (np.arange(num_bins) + .5)
                               *(Forest.log_lambda_max - Forest.log_lambda_min)
-                              /num_bins
+                              /num_bins)
 
                 if args.use_ivar_as_weight:
                     userprint(("INFO: using ivar as weights, skipping eta, "
