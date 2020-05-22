@@ -351,7 +351,7 @@ def main():
         forests = []
         for forest in data[healpix]:
             if (not hasattr(forest, 'log_lambda') or
-                len(forest.log_lambda) < args.npix_min):
+                    len(forest.log_lambda) < args.npix_min):
                 log_file.write(("INFO: Rejected {} due to forest too "
                                 "short\n").format(forest.thingid))
                 continue
@@ -362,7 +362,7 @@ def main():
                 continue
 
             if (args.use_constant_weight and
-                (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
+                    (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
                 log_file.write(("INFO: Rejected {} due to negative mean or "
                                 "too low SNR found\n").format(forest.thingid))
                 continue
@@ -475,34 +475,56 @@ def main():
     stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
 
     ### Save iter_out_prefix
-    res = fitsio.FITS(args.iter_out_prefix + ".fits.gz", 'rw', clobber=True)
-    hd = {}
-    hd["NSIDE"] = nside
-    hd["PIXORDER"] = healpy_pix_ordering
-    hd["FITORDER"] = args.order
-    res.write([stack_log_lambda, stack_delta, stack_weight], names=['loglam', 'stack', 'weight'], header=hd, extname='STACK')
-    res.write([log_lambda, eta, var_lss, fudge, num_pixels], names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'], extname='WEIGHT')
-    res.write([log_lambda_rest_frame, Forest.get_mean_cont(log_lambda_rest_frame), mean_cont_weight], names=['loglam_rest', 'mean_cont', 'weight'], extname='CONT')
-    var_pipe_values = np.broadcast_to(var_pipe_values.reshape(1, -1), var_delta.shape)
-    res.write([var_pipe_values, var_delta, var2_delta, count, num_qso, chi2_in_bin], names=['var_pipe', 'var_del', 'var2_del', 'count', 'nqsos', 'chi2'], extname='VAR')
-    res.close()
+    results = fitsio.FITS(args.iter_out_prefix + ".fits.gz", 'rw', clobber=True)
+    header = {}
+    header["NSIDE"] = nside
+    header["PIXORDER"] = healpy_pix_ordering
+    header["FITORDER"] = args.order
+    results.write([stack_log_lambda, stack_delta, stack_weight],
+                  names=['loglam', 'stack', 'weight'], header=header,
+                  extname='STACK')
+    results.write([log_lambda, eta, var_lss, fudge, num_pixels],
+                  names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'],
+                  extname='WEIGHT')
+    results.write([log_lambda_rest_frame,
+                   Forest.get_mean_cont(log_lambda_rest_frame),
+                   mean_cont_weight],
+                  names=['loglam_rest', 'mean_cont', 'weight'], extname='CONT')
+    var_pipe_values = np.broadcast_to(var_pipe_values.reshape(1, -1),
+                                      var_delta.shape)
+    results.write([var_pipe_values, var_delta, var2_delta, count,
+                   num_qso, chi2_in_bin],
+                  names=['var_pipe', 'var_del', 'var2_del', 'count',
+                         'nqsos', 'chi2'], extname='VAR')
+    results.close()
 
-    ### Save delta
-    get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.], stack_delta[stack_weight > 0.], kind="nearest", fill_value="extrapolate")
+    ### Compute deltas and format them
+    get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
+                               stack_delta[stack_weight > 0.],
+                               kind="nearest", fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
     for healpix in sorted(data.keys()):
-        deltas[healpix] = [Delta.from_forest(forest, get_stack_delta, Forest.get_var_lss, Forest.get_eta, Forest.get_fudge, args.use_mock_continuum) for forest in data[healpix] if forest.bad_cont is None]
-        data_bad_cont = data_bad_cont + [forest for forest in data[healpix] if forest.bad_cont is not None]
+        deltas[healpix] = [Delta.from_forest(forest, get_stack_delta,
+                                             Forest.get_var_lss, Forest.get_eta,
+                                             Forest.get_fudge,
+                                             args.use_mock_continuum)
+                           for forest in data[healpix]
+                           if forest.bad_cont is None]
+        data_bad_cont = data_bad_cont + [forest for forest in data[healpix]
+                                         if forest.bad_cont is not None]
 
     for forest in data_bad_cont:
-        log_file.write("INFO: Rejected {} due to {}\n".format(forest.thingid, forest.bad_cont))
+        log_file.write("INFO: Rejected {} due to {}\n".format(forest.thingid,
+                                                              forest.bad_cont))
 
-    log_file.write("INFO: Accepted sample has {} forests\n".format(np.sum([len(p) for p in deltas.values()])))
+    log_file.write(("INFO: Accepted sample has {}"
+                    "forests\n").format(np.sum([len(p)
+                                                for p in deltas.values()])))
 
     log_file.close()
 
-    ###
+    ### Save delta
     for healpix in sorted(deltas.keys()):
 
         if len(deltas[healpix]) == 0:
