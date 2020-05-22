@@ -147,7 +147,7 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
             var_pipe_bins = var_pipe_bins[w]
 
             # compute deltas
-            delta = (faorest.flux/forest.cont - 1)
+            delta = (forest.flux/forest.cont - 1)
             delta = delta[w]
 
             # add contributions to delta statistics
