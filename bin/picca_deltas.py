@@ -407,9 +407,9 @@ def main():
         if iteration < num_iterations - 1:
             (log_lambda_rest_frame, mean_cont,
              mean_cont_weight) = prep_del.compute_mean_cont(data)
-            Forest.get_meacn_cont = interp1d(log_lambda_rest_frame[mean_cont_weight > 0.],
-                                             Forest.get_mean_cont(log_lambda_rest_frame[mean_cont_weight > 0.])*mean_cont[mean_cont_weight > 0.],
-                                             fill_value="extrapolate")
+            Forest.get_mean_cont = interp1d(log_lambda_rest_frame[mean_cont_weight > 0.],
+                                            Forest.get_mean_cont(log_lambda_rest_frame[mean_cont_weight > 0.])*mean_cont[mean_cont_weight > 0.],
+                                            fill_value="extrapolate")
             if not (args.use_ivar_as_weight or args.use_constant_weight):
                 (log_lambda, eta, var_lss, fudge, num_pixels, var, var_del,
                  var2_del, count, nqsos, chi2, error_eta, error_var_lss,
