@@ -12,14 +12,6 @@ from multiprocessing import Pool, Lock, cpu_count, Value
 from picca import constants, cf, utils, io
 from picca.utils import userprint
 
-def corr_func(p):
-    if args.in_dir2:
-        cf.fill_neighs_x_correlation(p)
-    else:
-        cf.fill_neighs(p)
-    tmp = cf.cf(p)
-    return tmp
-
 def main():
     """Computes the Lyman alpha 3D autocorrelation"""
     parser = argparse.ArgumentParser(
@@ -262,13 +254,20 @@ def main():
             args.shuffle_distrib_forest_seed)
 
 
+    def corr_func(p):
+        if args.in_dir2:
+            cf.fill_neighs_x_correlation(p)
+        else:
+            cf.fill_neighs(p)
+        tmp = cf.cf(p)
+        return tmp
     cf.counter = Value('i',0)
     cf.lock = Lock()
     cpu_data = {}
     for p in data.keys():
         cpu_data[p] = [p]
     pool = Pool(processes=args.nproc)
-    cfs = pool.map(corr_func,sorted(cpu_data.values()))
+    cfs = pool.map(corr_func,sorted(cpu_data.values()), args)
     pool.close()
 
 
