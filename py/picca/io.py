@@ -30,6 +30,7 @@ from picca.data import Forest, Delta, QSO
 from picca.prep_pk1d import exp_diff, spectral_resolution
 from picca.prep_pk1d import spectral_resolution_desi
 
+
 ## use a metadata class to simplify things
 class Metadata(object):
     """Class defined to organize the storage of metadata.
@@ -55,6 +56,7 @@ class Metadata(object):
     Methods:
         __init__
     """
+
     def __init__(self):
         """Initialize instance."""
         self.thingid = None
@@ -65,6 +67,7 @@ class Metadata(object):
         self.mjd = None
         self.fiberid = None
         self.order = None
+
 
 def read_dlas(filename):
     """Reads the DLA catalog from a fits file.
@@ -109,6 +112,7 @@ def read_dlas(filename):
 
     return dlas
 
+
 def read_absorbers(filename):
     """Reads the absorbers catalog from an ascii file.
 
@@ -151,6 +155,7 @@ def read_absorbers(filename):
 
     return absorbers
 
+
 def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
     """Reads the quasars in the DRQ quasar catalog.
 
@@ -185,7 +190,8 @@ def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
     try:
         z_qso = hdul[1]['Z'][:]
     except ValueError:
-        userprint("Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
+        userprint(
+            "Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
         z_qso = hdul[1]['Z_VI'][:]
 
     ## Info of the primary observation
@@ -242,8 +248,8 @@ def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
             sys.exit(1)
     userprint("")
 
-    ra = ra[w]*np.pi/180.
-    dec = dec[w]*np.pi/180.
+    ra = ra[w] * np.pi / 180.
+    dec = dec[w] * np.pi / 180.
     z_qso = z_qso[w]
     thingid = thingid[w]
     plate = plate[w]
@@ -252,6 +258,7 @@ def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
     hdul.close()
 
     return ra, dec, z_qso, thingid, plate, mjd, fiberid
+
 
 def read_dust_map(drq_filename, extinction_conversion_r=3.793):
     """Reads the dust map.
@@ -270,14 +277,25 @@ def read_dust_map(drq_filename, extinction_conversion_r=3.793):
     """
     hdul = fitsio.FITS(drq_filename)
     thingid = hdul[1]['THING_ID'][:]
-    ext = hdul[1]['EXTINCTION'][:][:, 1]/extinction_conversion_r
+    ext = hdul[1]['EXTINCTION'][:][:, 1] / extinction_conversion_r
     hdul.close()
 
     return dict(zip(thingid, ext))
 
-def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
-              max_num_spec=None, log_file=None, keep_bal=False, bi_max=None,
-              order=1, best_obs=False, single_exp=False, pk1d=None):
+
+def read_data(in_dir,
+              drq_filename,
+              mode,
+              z_min=2.1,
+              z_max=3.5,
+              max_num_spec=None,
+              log_file=None,
+              keep_bal=False,
+              bi_max=None,
+              order=1,
+              best_obs=False,
+              single_exp=False,
+              pk1d=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -326,7 +344,8 @@ def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
     userprint("mode: " + mode)
     # read quasar characteristics from DRQ catalogue
     ra, dec, z_qso, thingid, plate, mjd, fiberid = read_drq(drq_filename,
-                                                            z_min, z_max,
+                                                            z_min,
+                                                            z_max,
                                                             keep_bal,
                                                             bi_max=bi_max)
 
@@ -334,7 +353,7 @@ def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
     # in a contiguous regions
     if max_num_spec is not None:
         ## choose them in a small number of pixels
-        healpixs = healpy.ang2pix(16, np.pi/2 - dec, ra)
+        healpixs = healpy.ang2pix(16, np.pi / 2 - dec, ra)
         sorted_healpixs = np.argsort(healpixs)
         ra = ra[sorted_healpixs][:max_num_spec]
         dec = dec[sorted_healpixs][:max_num_spec]
@@ -351,27 +370,59 @@ def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
     if mode == "desi":
         nside = 8
         userprint("Found {} qsos".format(len(z_qso)))
-        data, num_data = read_from_desi(nside, in_dir, thingid, ra, dec, z_qso,
-                                        plate, mjd, fiberid, order, pk1d=pk1d)
+        data, num_data = read_from_desi(nside,
+                                        in_dir,
+                                        thingid,
+                                        ra,
+                                        dec,
+                                        z_qso,
+                                        plate,
+                                        mjd,
+                                        fiberid,
+                                        order,
+                                        pk1d=pk1d)
 
     elif mode in ["spcframe", "spplate", "spec", "corrected-spec"]:
         nside, healpixs = find_nside(ra, dec, log_file)
 
         if mode == "spcframe":
-            pix_data = read_from_spcframe(in_dir, thingid, ra, dec, z_qso,
-                                          plate, mjd, fiberid, order,
+            pix_data = read_from_spcframe(in_dir,
+                                          thingid,
+                                          ra,
+                                          dec,
+                                          z_qso,
+                                          plate,
+                                          mjd,
+                                          fiberid,
+                                          order,
                                           log_file=log_file,
                                           single_exp=single_exp)
         elif mode == "spplate":
-            pix_data = read_from_spplate(in_dir, thingid, ra, dec, z_qso,
-                                         plate, mjd, fiberid, order,
+            pix_data = read_from_spplate(in_dir,
+                                         thingid,
+                                         ra,
+                                         dec,
+                                         z_qso,
+                                         plate,
+                                         mjd,
+                                         fiberid,
+                                         order,
                                          log_file=log_file,
                                          best_obs=best_obs)
         else:
-            pix_data = read_from_spec(in_dir, thingid, ra, dec, z_qso, plate,
-                                      mjd, fiberid, order, mode=mode,
+            pix_data = read_from_spec(in_dir,
+                                      thingid,
+                                      ra,
+                                      dec,
+                                      z_qso,
+                                      plate,
+                                      mjd,
+                                      fiberid,
+                                      order,
+                                      mode=mode,
                                       log_file=log_file,
-                                      pk1d=pk1d, best_obs=best_obs)
+                                      pk1d=pk1d,
+                                      best_obs=best_obs)
         ra = np.array([d.ra for d in pix_data])
         dec = np.array([d.dec for d in pix_data])
         healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
@@ -402,7 +453,7 @@ def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
                         sys.exit(1)
             nside = hdul[1].read_header()['NSIDE']
             hdul.close()
-            healpixs = healpy.ang2pix(nside, np.pi/2 - dec, ra)
+            healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
         else:
             nside, healpixs = find_nside(ra, dec, log_file)
 
@@ -413,23 +464,38 @@ def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
             ## read all hiz qsos
             if mode == "pix":
                 t0 = time.time()
-                pix_data = read_from_pix(in_dir, healpix, thingid[w], ra[w],
-                                         dec[w], z_qso[w], plate[w], mjd[w],
-                                         fiberid[w], order, log_file=log_file)
+                pix_data = read_from_pix(in_dir,
+                                         healpix,
+                                         thingid[w],
+                                         ra[w],
+                                         dec[w],
+                                         z_qso[w],
+                                         plate[w],
+                                         mjd[w],
+                                         fiberid[w],
+                                         order,
+                                         log_file=log_file)
                 read_time = time.time() - t0
             elif mode == "spec-mock-1D":
                 t0 = time.time()
-                pix_data = read_from_mock_1d(in_dir, thingid[w], ra[w], dec[w],
-                                             z_qso[w], plate[w], mjd[w],
-                                             fiberid[w], order,
+                pix_data = read_from_mock_1d(in_dir,
+                                             thingid[w],
+                                             ra[w],
+                                             dec[w],
+                                             z_qso[w],
+                                             plate[w],
+                                             mjd[w],
+                                             fiberid[w],
+                                             order,
                                              log_file=log_file)
                 read_time = time.time() - t0
 
             if not pix_data is None:
-                userprint(("{} read from pix {}, {} {} in {} secs per"
-                           "spectrum").format(len(pix_data), healpix, index,
-                                              len(unique_healpix),
-                                              read_time/(len(pix_data) + 1e-3)))
+                userprint(
+                    ("{} read from pix {}, {} {} in {} secs per"
+                     "spectrum").format(len(pix_data), healpix, index,
+                                        len(unique_healpix),
+                                        read_time / (len(pix_data) + 1e-3)))
             if not pix_data is None and len(pix_data) > 0:
                 data[healpix] = pix_data
                 num_data += len(pix_data)
@@ -439,6 +505,7 @@ def read_data(in_dir, drq_filename, mode, z_min=2.1, z_max=3.5,
         sys.exit(1)
 
     return data, num_data, nside, "RING"
+
 
 def find_nside(ra, dec, log_file):
     """Determines nside such that there are 1000 objs per pixel on average.
@@ -457,24 +524,36 @@ def find_nside(ra, dec, log_file):
     ## determine nside such that there are 1000 objs per pixel on average
     userprint("determining nside")
     nside = 256
-    healpixs = healpy.ang2pix(nside, np.pi/2 - dec, ra)
-    mean_num_obj = len(healpixs)/len(np.unique(healpixs))
+    healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
+    mean_num_obj = len(healpixs) / len(np.unique(healpixs))
     target_mean_num_obj = 500
     nside_min = 8
     while mean_num_obj < target_mean_num_obj and nside >= nside_min:
         nside //= 2
-        healpixs = healpy.ang2pix(nside, np.pi/2 - dec, ra)
-        mean_num_obj = len(healpixs)/len(np.unique(healpixs))
-    userprint("nside = {} -- mean #obj per pixel = {}".format(nside,
-                                                              mean_num_obj))
+        healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
+        mean_num_obj = len(healpixs) / len(np.unique(healpixs))
+    userprint("nside = {} -- mean #obj per pixel = {}".format(
+        nside, mean_num_obj))
     if log_file is not None:
         log_file.write(("nside = {} -- mean #obj per pixel"
                         " = {}\n").format(nside, mean_num_obj))
 
     return nside, healpixs
 
-def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
-                   mode, log_file=None, pk1d=None, best_obs=None):
+
+def read_from_spec(in_dir,
+                   thingid,
+                   ra,
+                   dec,
+                   z_qso,
+                   plate,
+                   mjd,
+                   fiberid,
+                   order,
+                   mode,
+                   log_file=None,
+                   pk1d=None,
+                   best_obs=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -565,7 +644,7 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
             log_file.write("{} read\n".format(filename))
             log_lambda = hdul[1]["loglam"][:]
             flux = hdul[1]["flux"][:]
-            ivar = hdul[1]["ivar"][:]*(hdul[1]["and_mask"][:] == 0)
+            ivar = hdul[1]["ivar"][:] * (hdul[1]["and_mask"][:] == 0)
 
             if pk1d is not None:
                 # compute difference between exposure
@@ -578,15 +657,32 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
                 exposures_diff = None
                 reso = None
             if deltas is None:
-                deltas = Forest(log_lambda, flux, ivar, metadata.thingid,
-                                metadata.ra, metadata.dec, metadata.z_qso,
-                                metadata.plate, metadata.mjd, metadata.fiberid,
-                                order, exposures_diff=exposures_diff, reso=reso)
+                deltas = Forest(log_lambda,
+                                flux,
+                                ivar,
+                                metadata.thingid,
+                                metadata.ra,
+                                metadata.dec,
+                                metadata.z_qso,
+                                metadata.plate,
+                                metadata.mjd,
+                                metadata.fiberid,
+                                order,
+                                exposures_diff=exposures_diff,
+                                reso=reso)
             else:
-                deltas += Forest(log_lambda, flux, ivar, metadata.thingid,
-                                 metadata.ra, metadata.dec, metadata.z_qso,
-                                 metadata.plate, metadata.mjd, metadata.fiberid,
-                                 order, exposures_diff=exposures_diff,
+                deltas += Forest(log_lambda,
+                                 flux,
+                                 ivar,
+                                 metadata.thingid,
+                                 metadata.ra,
+                                 metadata.dec,
+                                 metadata.z_qso,
+                                 metadata.plate,
+                                 metadata.mjd,
+                                 metadata.fiberid,
+                                 order,
+                                 exposures_diff=exposures_diff,
                                  reso=reso)
             hdul.close()
         if deltas is not None:
@@ -594,8 +690,17 @@ def read_from_spec(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid, order,
 
     return pix_data
 
-def read_from_mock_1d(filename, thingid, ra, dec, z_qso, plate, mjd, fiberid,
-                      order, log_file=None):
+
+def read_from_mock_1d(filename,
+                      thingid,
+                      ra,
+                      dec,
+                      z_qso,
+                      plate,
+                      mjd,
+                      fiberid,
+                      order,
+                      log_file=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -638,7 +743,7 @@ def read_from_mock_1d(filename, thingid, ra, dec, z_qso, plate, mjd, fiberid,
         log_lambda = np.log10(lambda_)
         flux = hdu["flux"][:]
         error = hdu["error"][:]
-        ivar = 1.0/error**2
+        ivar = 1.0 / error**2
 
         # compute difference between exposure
         exposures_diff = np.zeros(len(lambda_))
@@ -649,17 +754,27 @@ def read_from_mock_1d(filename, thingid, ra, dec, z_qso, plate, mjd, fiberid,
         # compute the mean expected flux
         mean_flux_transmission = hdu.read_header()["MEANFLUX"]
         cont = hdu["continuum"][:]
-        mef = mean_flux_transmission*remove_keys
-        pix_data.append(Forest(log_lambda, flux, ivar, t, r, d, z, p, m, f,
-                               order, exposures_diff, reso, mef))
+        mef = mean_flux_transmission * cont
+        pix_data.append(
+            Forest(log_lambda, flux, ivar, t, r, d, z, p, m, f, order,
+                   exposures_diff, reso, mef))
 
     hdul.close()
 
     return pix_data
 
 
-def read_from_pix(in_dir, healpix, thingid, ra, dec, z_qso, plate, mjd, fiberid,
-                  order, log_file=None):
+def read_from_pix(in_dir,
+                  healpix,
+                  thingid,
+                  ra,
+                  dec,
+                  z_qso,
+                  plate,
+                  mjd,
+                  fiberid,
+                  order,
+                  log_file=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -714,8 +829,9 @@ def read_from_pix(in_dir, healpix, thingid, ra, dec, z_qso, plate, mjd, fiberid,
 
     pix_data = []
     thingid_list = list(hdul[0][:])
-    thingid2index = {t: thingid_list.index(t)
-                     for t in thingid if t in thingid_list}
+    thingid2index = {
+        t: thingid_list.index(t) for t in thingid if t in thingid_list
+    }
     log_lambda = hdul[1][:]
     flux = hdul[2].read()
     ivar = hdul[3].read()
@@ -730,9 +846,10 @@ def read_from_pix(in_dir, healpix, thingid, ra, dec, z_qso, plate, mjd, fiberid,
                 log_file.write("{} missing from pixel {}\n".format(t, healpix))
             userprint("{} missing from pixel {}".format(t, healpix))
             continue
-        pix_data.append(Forest(log_lambda, flux[:, index],
-                               ivar[:, index]*(mask[:, index] == 0),
-                               t, r, d, z, p, m, f, order))
+        pix_data.append(
+            Forest(log_lambda, flux[:, index],
+                   ivar[:, index] * (mask[:, index] == 0), t, r, d, z, p, m, f,
+                   order))
 
         if log_file is not None:
             log_file.write("{} read\n".format(t))
@@ -741,8 +858,18 @@ def read_from_pix(in_dir, healpix, thingid, ra, dec, z_qso, plate, mjd, fiberid,
 
     return pix_data
 
-def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
-                       order, log_file=None, single_exp=False):
+
+def read_from_spcframe(in_dir,
+                       thingid,
+                       ra,
+                       dec,
+                       z_qso,
+                       plate,
+                       mjd,
+                       fiberid,
+                       order,
+                       log_file=None,
+                       single_exp=False):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -826,8 +953,8 @@ def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
                     continue
                 exps.append(header[card][:11])
 
-        userprint("INFO: found {} exposures in plate {}-{}".format(len(exps),
-                                                                   p, m))
+        userprint("INFO: found {} exposures in plate {}-{}".format(
+            len(exps), p, m))
 
         if len(exps) == 0:
             continue
@@ -852,7 +979,7 @@ def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
                                    "/{}/spCFrame-{}.fits".format(p, exp))
 
             flux = spcframe[0].read()
-            ivar = spcframe[1].read()*(spcframe[2].read() == 0)
+            ivar = spcframe[1].read() * (spcframe[2].read() == 0)
             log_lambda = spcframe[3].read()
 
             ## now convert all those fluxes into forest objects
@@ -881,18 +1008,29 @@ def read_from_spcframe(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
                                     " mjd {}\n").format(t, exp, m))
             num_read = len(platemjd[key])
 
-            userprint(("INFO: read {} from {} in {} per spec. Progress: "
-                       "{} of {} \n").format(num_read, exp,
-                                             (time.time()-t0)/(num_read+1e-3),
-                                             len(pix_data), len(thingid)))
+            userprint(
+                ("INFO: read {} from {} in {} per spec. Progress: "
+                 "{} of {} \n").format(num_read, exp,
+                                       (time.time() - t0) / (num_read + 1e-3),
+                                       len(pix_data), len(thingid)))
             spcframe.close()
 
     data = list(pix_data.values())
 
     return data
 
-def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
-                      order, log_file=None, best_obs=False):
+
+def read_from_spplate(in_dir,
+                      thingid,
+                      ra,
+                      dec,
+                      z_qso,
+                      plate,
+                      mjd,
+                      fiberid,
+                      order,
+                      log_file=None,
+                      best_obs=False):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -957,8 +1095,8 @@ def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
 
     for key in platemjd:
         p, m = key
-        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(str(p).zfill(4),
-                                                              m)
+        spplate = in_dir + "/{0}/spPlate-{0}-{1}.fits".format(
+            str(p).zfill(4), m)
 
         try:
             hdul = fitsio.FITS(spplate)
@@ -971,8 +1109,8 @@ def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
         coeff1 = header["COEFF1"]
 
         flux = hdul[0].read()
-        ivar = hdul[1].read()*(hdul[2].read() == 0)
-        log_lambda = coeff0 + coeff1*np.arange(flux.shape[1])
+        ivar = hdul[1].read() * (hdul[2].read() == 0)
+        log_lambda = coeff0 + coeff1 * np.arange(flux.shape[1])
 
         ## now convert all those fluxes into forest objects
         for metadata in platemjd[(p, m)]:
@@ -983,7 +1121,7 @@ def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
             f = metadata.fiberid
             order = metadata.order
 
-            i = metadata.fiberid-1
+            i = metadata.fiberid - 1
             if t in pix_data:
                 pix_data[t] += Forest(log_lambda, flux[i], ivar[i], t, r, d, z,
                                       p, m, f, order)
@@ -991,21 +1129,30 @@ def read_from_spplate(in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
                 pix_data[t] = Forest(log_lambda, flux[i], ivar[i], t, r, d, z,
                                      p, m, f, order)
             if log_file is not None:
-                log_file.write("{} read from file {} and mjd {}\n".format(t, spplate, m))
+                log_file.write("{} read from file {} and mjd {}\n".format(
+                    t, spplate, m))
         num_read = len(platemjd[(p, m)])
         userprint(("INFO: read {} from {} in {} per spec. Progress: {} "
-                   "of {} \n").format(num_read,
-                                      os.path.basename(spplate),
-                                      (time.time() - 0)/(num_read + 1e-3),
-                                      len(pix_data),
-                                      len(thingid)))
+                   "of {} \n").format(num_read, os.path.basename(spplate),
+                                      (time.time() - 0) / (num_read + 1e-3),
+                                      len(pix_data), len(thingid)))
         hdul.close()
 
     data = list(pix_data.values())
     return data
 
-def read_from_desi(nside, in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
-                   order, pk1d=None):
+
+def read_from_desi(nside,
+                   in_dir,
+                   thingid,
+                   ra,
+                   dec,
+                   z_qso,
+                   plate,
+                   mjd,
+                   fiberid,
+                   order,
+                   pk1d=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -1041,12 +1188,13 @@ def read_from_desi(nside, in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
     num_data = 0
 
     z_table = dict(zip(thingid, z_qso))
-    in_healpixs = healpy.ang2pix(in_nside, np.pi/2. - dec, ra, nest=nest)
+    in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=nest)
     unique_in_healpixs = np.unique(in_healpixs)
 
     for index, healpix in enumerate(unique_in_healpixs):
-        filename = (in_dir + "/" + str(int(healpix/100)) + "/" + str(healpix) +
-                    "/spectra-" + str(in_nside) + "-" + str(healpix) + ".fits")
+        filename = (in_dir + "/" + str(int(healpix / 100)) + "/" +
+                    str(healpix) + "/spectra-" + str(in_nside) + "-" +
+                    str(healpix) + ".fits")
 
         userprint(("\rread {} of {}. "
                    "num_data: {}").format(index, len(unique_in_healpixs),
@@ -1063,13 +1211,13 @@ def read_from_desi(nside, in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
         mjd_qsos = mjd[(in_healpixs == healpix)]
         fiberid_qsos = fiberid[(in_healpixs == healpix)]
         if 'TARGET_RA' in hdul["FIBERMAP"].get_colnames():
-            ra = hdul["FIBERMAP"]["TARGET_RA"][:]*np.pi/180.
-            dec = hdul["FIBERMAP"]["TARGET_DEC"][:]*np.pi/180.
+            ra = hdul["FIBERMAP"]["TARGET_RA"][:] * np.pi / 180.
+            dec = hdul["FIBERMAP"]["TARGET_DEC"][:] * np.pi / 180.
         elif 'RA_TARGET' in hdul["FIBERMAP"].get_colnames():
             ## TODO: These lines are for backward compatibility
             ## Should be removed at some point
-            ra = hdul["FIBERMAP"]["RA_TARGET"][:]*np.pi/180.
-            dec = hdul["FIBERMAP"]["DEC_TARGET"][:]*np.pi/180.
+            ra = hdul["FIBERMAP"]["RA_TARGET"][:] * np.pi / 180.
+            dec = hdul["FIBERMAP"]["DEC_TARGET"][:] * np.pi / 180.
         healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
         #exp = h["FIBERMAP"]["EXPID"][:]
         #night = h["FIBERMAP"]["NIGHT"][:]
@@ -1083,8 +1231,9 @@ def read_from_desi(nside, in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
                 lambda_ = hdul["{}_WAVELENGTH".format(spectrogrpah)].read()
                 spec["log_lambda"] = np.log10(lambda_)
                 spec["FL"] = hdul["{}_FLUX".format(spectrogrpah)].read()
-                spec["IV"] = (hdul["{}_IVAR".format(spectrogrpah)].read()*
-                              (hdul["{}_MASK".format(spectrogrpah)].read() == 0))
+                spec["IV"] = (
+                    hdul["{}_IVAR".format(spectrogrpah)].read() *
+                    (hdul["{}_MASK".format(spectrogrpah)].read() == 0))
                 w = np.isnan(spec["FL"]) | np.isnan(spec["IV"])
                 for key in ["FL", "IV"]:
                     spec[key][w] = 0.
@@ -1103,25 +1252,24 @@ def read_from_desi(nside, in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
             forest = None
             for spec in spec_data.values():
                 ivar = spec['IV'][w_t]
-                flux = (ivar*spec['FL'][w_t]).sum(axis=0)
+                flux = (ivar * spec['FL'][w_t]).sum(axis=0)
                 ivar = ivar.sum(axis=0)
                 w = ivar > 0.
                 flux[w] /= ivar[w]
                 if not pk1d is None:
                     reso_sum = spec['RESO'][w_t].sum(axis=0)
-                    reso_in_km_per_s = spectral_resolution_desi(reso_sum,
-                                                                spec['log_lambda'])
+                    reso_in_km_per_s = spectral_resolution_desi(
+                        reso_sum, spec['log_lambda'])
                     exposures_diff = np.zeros(spec['log_lambda'].shape)
                 else:
                     reso_in_km_per_s = None
                     exposures_diff = None
 
                 if forest is None:
-                    forest = copy.deepcopy(Forest(spec['log_lambda'], flux,
-                                                  ivar, t, ra[w_t][0],
-                                                  dec[w_t][0], z_table[t], p, m,
-                                                  f, order, exposures_diff,
-                                                  reso_in_km_per_s))
+                    forest = copy.deepcopy(
+                        Forest(spec['log_lambda'], flux, ivar, t, ra[w_t][0],
+                               dec[w_t][0], z_table[t], p, m, f, order,
+                               exposures_diff, reso_in_km_per_s))
                 else:
                     forest += Forest(spec['log_lambda'], flux, ivar, t,
                                      ra[w_t][0], dec[w_t][0], z_table[t], p, m,
@@ -1138,8 +1286,15 @@ def read_from_desi(nside, in_dir, thingid, ra, dec, z_qso, plate, mjd, fiberid,
     return data, num_data
 
 
-def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
-                max_num_spec=None, no_project=False, from_image=None):
+def read_deltas(in_dir,
+                nside,
+                lambda_abs,
+                alpha,
+                z_ref,
+                cosmo,
+                max_num_spec=None,
+                no_project=False,
+                from_image=None):
     """Reads deltas and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -1189,7 +1344,8 @@ def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
         elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
             files += glob.glob(in_dir)
         else:
-            files += glob.glob(in_dir+'/*.fits') + glob.glob(in_dir+'/*.fits.gz')
+            files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
+                                                               '/*.fits.gz')
     else:
         for arg in from_image:
             if len(arg) > 8 and arg[-8:] == '.fits.gz':
@@ -1197,7 +1353,8 @@ def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
             elif len(arg) > 5 and arg[-5:] == '.fits':
                 files += glob.glob(arg)
             else:
-                files += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
+                files += glob.glob(arg + '/*.fits') + glob.glob(arg +
+                                                                '/*.fits.gz')
     files = sorted(files)
 
     deltas = []
@@ -1225,23 +1382,23 @@ def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
 
     # compute healpix numbers
     phi = [delta.ra for delta in deltas]
-    theta = [np.pi/2. - delta.dec for delta in deltas]
+    theta = [np.pi / 2. - delta.dec for delta in deltas]
     healpixs = healpy.ang2pix(nside, theta, phi)
     if healpixs.size == 0:
         raise AssertionError('ERROR: No data in {}'.format(in_dir))
 
     data = {}
-    z_min = 10**deltas[0].log_lambda[0]/lambda_abs - 1.
+    z_min = 10**deltas[0].log_lambda[0] / lambda_abs - 1.
     z_max = 0.
     for delta, healpix in zip(deltas, healpixs):
-        z = 10**delta.log_lambda/lambda_abs - 1.
+        z = 10**delta.log_lambda / lambda_abs - 1.
         z_min = min(z_min, z.min())
         z_max = max(z_max, z.max())
         delta.z = z
         if not cosmo is None:
             delta.r_comov = cosmo.get_r_comov(z)
             delta.dist_m = cosmo.get_dist_m(z)
-        delta.weights *= ((1 + z)/(1 + z_ref))**(alpha - 1)
+        delta.weights *= ((1 + z) / (1 + z_ref))**(alpha - 1)
 
         if not no_project:
             delta.project()
@@ -1253,7 +1410,13 @@ def read_deltas(in_dir, nside, lambda_abs, alpha, z_ref, cosmo,
     return data, num_data, z_min, z_max
 
 
-def read_objects(filename, nside, z_min, z_max, alpha, z_ref, cosmo,
+def read_objects(filename,
+                 nside,
+                 z_min,
+                 z_max,
+                 alpha,
+                 z_ref,
+                 cosmo,
                  keep_bal=True):
     """Reads objects and computes their redshifts.
 
@@ -1293,11 +1456,12 @@ def read_objects(filename, nside, z_min, z_max, alpha, z_ref, cosmo,
         AssertionError: if no healpix numbers are found
     """
     objs = {}
-    ra, dec, z_qso, thingid, plate, mjd, fiberid = read_drq(filename, z_min,
+    ra, dec, z_qso, thingid, plate, mjd, fiberid = read_drq(filename,
+                                                            z_min,
                                                             z_max,
                                                             keep_bal=keep_bal)
     phi = ra
-    theta = np.pi/2. - dec
+    theta = np.pi / 2. - dec
     healpixs = healpy.ang2pix(nside, theta, phi)
     if healpixs.size == 0:
         raise AssertionError()
@@ -1307,13 +1471,13 @@ def read_objects(filename, nside, z_min, z_max, alpha, z_ref, cosmo,
     for index, healpix in enumerate(unique_healpix):
         userprint("\r{} of {}".format(index, len(unique_healpix)))
         w = healpixs == healpix
-        objs[healpix] = [QSO(t, r, d, z, p, m, f)
-                         for t, r, d, z, p, m, f in zip(thingid[w], ra[w],
-                                                        dec[w], z_qso[w],
-                                                        plate[w], mjd[w],
-                                                        fiberid[w])]
+        objs[healpix] = [
+            QSO(t, r, d, z, p, m, f)
+            for t, r, d, z, p, m, f in zip(thingid[w], ra[w], dec[w], z_qso[w],
+                                           plate[w], mjd[w], fiberid[w])
+        ]
         for obj in objs[healpix]:
-            obj.weights = ((1. + obj.z_qso)/(1. + z_ref))**(alpha - 1.)
+            obj.weights = ((1. + obj.z_qso) / (1. + z_ref))**(alpha - 1.)
             if not cosmo is None:
                 obj.r_comov = cosmo.get_r_comov(obj.z_qso)
                 obj.dist_m = cosmo.get_dist_m(obj.z_qso)
@@ -1321,6 +1485,7 @@ def read_objects(filename, nside, z_min, z_max, alpha, z_ref, cosmo,
     userprint("\n")
 
     return objs, z_qso.min()
+
 
 def read_spall(in_dir, thingid):
     """Loads thingid, plate, mjd, and fiberid from spAll file
@@ -1367,11 +1532,13 @@ def read_spall(in_dir, thingid):
     ## Removing spectra with the following ZWARNING bits set:
     ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
     ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
-    bad_z_warn_bit = {0: 'SKY',
-                      1: 'LITTLE_COVERAGE',
-                      7: 'UNPLUGGED',
-                      8: 'BAD_TARGET',
-                      9: 'NODATA'}
+    bad_z_warn_bit = {
+        0: 'SKY',
+        1: 'LITTLE_COVERAGE',
+        7: 'UNPLUGGED',
+        8: 'BAD_TARGET',
+        9: 'NODATA'
+    }
     for z_warn_bit, z_warn_bit_name in bad_z_warn_bit.items():
         w &= z_warn_spall & 2**z_warn_bit
         userprint(("INFO: Found {} spectra without {} bit set: "
