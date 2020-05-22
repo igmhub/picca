@@ -36,8 +36,7 @@ def main():
     """Computes delta field"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Compute the delta field '
-                     'from a list of spectra'))
+        description=('Compute the delta field from a list of spectra'))
 
     parser.add_argument('--out-dir',
                         type=str,
