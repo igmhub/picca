@@ -2,7 +2,7 @@
 """Computes delta field from a list of spectra.
 
 Computes the mean transmission fluctuation field (delta field) for a list of
-spectra for the specified absorption line. Follow the procedure describe in
+spectra for the specified absorption line. Follow the procedure described in
 section 2.4 of du Mas des Bourboux et al. 2020 (In prep).
 """
 import sys
@@ -36,7 +36,8 @@ def main():
     """Computes delta field"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=('Compute the delta field from a list of spectra'))
+        description=('Compute the delta field '
+                     'from a list of spectra'))
 
     parser.add_argument('--out-dir',
                         type=str,
