@@ -93,14 +93,13 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    cf.r_parallel_min          = args.wr_min
-    cf.r_parallel_max          = args.wr_max
+    cf.r_par_min          = args.wr_min
+    cf.r_par_max          = args.wr_max
     cf.r_trans_max          = args.ang_max
     cf.z_cut_max       = args.z_cut_max
     cf.z_cut_min       = args.z_cut_min
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    cf.npb             = args.np
-    cf.ntb             = args.nt
+    cf.num_bins_r_par             = args.np
+    cf.num_bins_r_trans             = args.nt
     cf.nside           = args.nside
     cf.zref            = args.z_ref
     cf.alpha           = args.z_evol
@@ -169,11 +168,11 @@ if __name__ == '__main__':
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':cf.r_parallel_min,'comment':'Minimum wavelength ratio'},
-        {'name':'RPMAX','value':cf.r_parallel_max,'comment':'Maximum wavelength ratio'},
+    head = [ {'name':'RPMIN','value':cf.r_par_min,'comment':'Minimum wavelength ratio'},
+        {'name':'RPMAX','value':cf.r_par_max,'comment':'Maximum wavelength ratio'},
         {'name':'RTMAX','value':cf.r_trans_max,'comment':'Maximum angle [rad]'},
-        {'name':'NP','value':cf.npb,'comment':'Number of bins in wavelength ratio'},
-        {'name':'NT','value':cf.ntb,'comment':'Number of bins in angle'},
+        {'name':'NP','value':cf.num_bins_r_par,'comment':'Number of bins in wavelength ratio'},
+        {'name':'NT','value':cf.num_bins_r_trans,'comment':'Number of bins in angle'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':cf.nside,'comment':'Healpix nside'}

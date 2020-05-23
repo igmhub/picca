@@ -24,13 +24,12 @@ from numba import jit
 from picca import constants
 from picca.utils import userprint
 
-# npb = number of parallel bins (to avoid collision with numpy np)
-npb = None
-ntb = None
+num_bins_r_par = None
+num_bins_r_trans = None
 ntm = None
 npm = None
-r_parallel_max = None
-r_parallel_min = None
+r_par_max = None
+r_par_min = None
 z_cut_max = None
 z_cut_min = None
 r_trans_max = None
@@ -82,12 +81,12 @@ def fill_neighs_x_correlation(pix):
             d1.dneighs = [d for d in neighs if (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
 
 def cf(pix):
-    xi = np.zeros(npb*ntb)
-    weights = np.zeros(npb*ntb)
-    rp = np.zeros(npb*ntb)
-    rt = np.zeros(npb*ntb)
-    z = np.zeros(npb*ntb)
-    nb = np.zeros(npb*ntb,dtype=sp.int64)
+    xi = np.zeros(num_bins_r_par*num_bins_r_trans)
+    weights = np.zeros(num_bins_r_par*num_bins_r_trans)
+    rp = np.zeros(num_bins_r_par*num_bins_r_trans)
+    rt = np.zeros(num_bins_r_par*num_bins_r_trans)
+    z = np.zeros(num_bins_r_par*num_bins_r_trans)
+    nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
 
     for ipix in pix:
         for d1 in data[ipix]:
@@ -137,19 +136,19 @@ def fast_cf(z1,r1,rdm1,w1,d1, z2,r2,rdm2,w2,d2, ang,same_half_plate):
     w12 = w1*w2[:,None]
     z = (z1+z2[:,None])/2
 
-    w = (rp<r_parallel_max) & (rt<r_trans_max) & (rp>=r_parallel_min)
+    w = (rp<r_par_max) & (rt<r_trans_max) & (rp>=r_par_min)
 
     rp = rp[w]
     rt = rt[w]
     z  = z[w]
     wd12 = wd12[w]
     w12 = w12[w]
-    bp = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npb).astype(int)
-    bt = (rt/r_trans_max*ntb).astype(int)
-    bins = bt + ntb*bp
+    bp = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bins = bt + num_bins_r_trans*bp
 
     if remove_same_half_plate_close_pairs and same_half_plate:
-        w = abs(rp)<(r_parallel_max-r_parallel_min)/npb
+        w = abs(rp)<(r_par_max-r_par_min)/num_bins_r_par
         wd12[w] = 0.
         w12[w] = 0.
 
@@ -164,8 +163,8 @@ def fast_cf(z1,r1,rdm1,w1,d1, z2,r2,rdm2,w2,d2, ang,same_half_plate):
 
 def dmat(pix):
 
-    dm = np.zeros(npb*ntb*ntm*npm)
-    wdm = np.zeros(npb*ntb)
+    dm = np.zeros(num_bins_r_par*num_bins_r_trans*ntm*npm)
+    wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
     rpeff = np.zeros(ntm*npm)
     rteff = np.zeros(ntm*npm)
     zeff = np.zeros(ntm*npm)
@@ -201,7 +200,7 @@ def dmat(pix):
                 fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
             setattr(d1,"neighs",None)
 
-    return wdm,dm.reshape(npb*ntb,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
 def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 
@@ -211,14 +210,14 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
     rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
 
-    w = (rp<r_parallel_max) & (rt<r_trans_max) & (rp>=r_parallel_min)
+    w = (rp<r_par_max) & (rt<r_trans_max) & (rp>=r_par_min)
 
-    bp = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npb).astype(int)
-    bt = (rt/r_trans_max*ntb).astype(int)
-    bins = bt + ntb*bp
+    bp = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bins = bt + num_bins_r_trans*bp
     bins = bins[w]
 
-    m_bp = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npm).astype(int)
+    m_bp = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*npm).astype(int)
     m_bt = (rt/r_trans_max*ntm).astype(int)
     m_bins = m_bt + ntm*m_bp
     m_bins = m_bins[w]
@@ -244,7 +243,7 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
     weights = weights[w]
 
     if remove_same_half_plate_close_pairs and same_half_plate:
-        wsame = abs(rp[w])<(r_parallel_max-r_parallel_min)/npb
+        wsame = abs(rp[w])<(r_par_max-r_par_min)/num_bins_r_par
         weights[wsame] = 0.
 
     c = sp.bincount(m_bins,weights=weights*rp[w])
@@ -299,8 +298,8 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
-    dm = np.zeros(npb*ntb*ntm*npm)
-    wdm = np.zeros(npb*ntb)
+    dm = np.zeros(num_bins_r_par*num_bins_r_trans*ntm*npm)
+    wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
     rpeff = np.zeros(ntm*npm)
     rteff = np.zeros(ntm*npm)
     zeff = np.zeros(ntm*npm)
@@ -359,15 +358,15 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
                 w12 = w1[:,None]*w2
 
-                bp = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npb).astype(int)
-                bt = (rt/r_trans_max*ntb).astype(int)
+                bp = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+                bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
 
                 if remove_same_half_plate_close_pairs and same_half_plate:
-                    wp = abs(rp) < (r_parallel_max-r_parallel_min)/npb
+                    wp = abs(rp) < (r_par_max-r_par_min)/num_bins_r_par
                     w12[wp] = 0.
 
-                bA = bt + ntb*bp
-                wA = (bp<npb) & (bt<ntb) & (bp >=0)
+                bA = bt + num_bins_r_trans*bp
+                wA = (bp<num_bins_r_par) & (bt<num_bins_r_trans) & (bp >=0)
                 c = sp.bincount(bA[wA],weights=w12[wA])
                 wdm[:len(c)]+=c
 
@@ -379,7 +378,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 rt_abs1_abs2 = (rdm1_abs1[:,None]+rdm2_abs2)*sp.sin(ang/2)
                 zwe12 = (1+z1_abs1[:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2)**(alpha_abs[abs_igm2]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
-                bp_abs1_abs2 = sp.floor((rp_abs1_abs2-r_parallel_min)/(r_parallel_max-r_parallel_min)*npm).astype(int)
+                bp_abs1_abs2 = sp.floor((rp_abs1_abs2-r_par_min)/(r_par_max-r_par_min)*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/r_trans_max*ntm).astype(int)
                 bBma = bt_abs1_abs2 + ntm*bp_abs1_abs2
                 wBma = (bp_abs1_abs2<npm) & (bt_abs1_abs2<ntm) & (bp_abs1_abs2>=0)
@@ -433,13 +432,13 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
                     w12 = w1[:,None]*w2
 
-                    bp = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npb).astype(int)
-                    bt = (rt/r_trans_max*ntb).astype(int)
+                    bp = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+                    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
                     if remove_same_half_plate_close_pairs and same_half_plate:
-                        wp = abs(rp) < (r_parallel_max-r_parallel_min)/npb
+                        wp = abs(rp) < (r_par_max-r_par_min)/num_bins_r_par
                         w12[wp] = 0.
-                    bA = bt + ntb*bp
-                    wA = (bp<npb) & (bt<ntb) & (bp >=0)
+                    bA = bt + num_bins_r_trans*bp
+                    wA = (bp<num_bins_r_par) & (bt<num_bins_r_trans) & (bp >=0)
                     c = sp.bincount(bA[wA],weights=w12[wA])
                     wdm[:len(c)]+=c
                     rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
@@ -449,7 +448,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     rt_abs2_abs1 = (rdm1_abs2[:,None]+rdm2_abs1)*sp.sin(ang/2)
                     zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
-                    bp_abs2_abs1 = sp.floor((rp_abs2_abs1-r_parallel_min)/(r_parallel_max-r_parallel_min)*npm).astype(int)
+                    bp_abs2_abs1 = sp.floor((rp_abs2_abs1-r_par_min)/(r_par_max-r_par_min)*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/r_trans_max*ntm).astype(int)
                     bBam = bt_abs2_abs1 + ntm*bp_abs2_abs1
                     wBam = (bp_abs2_abs1<npm) & (bt_abs2_abs1<ntm) & (bp_abs2_abs1>=0)
@@ -468,7 +467,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     dm[:len(c)]+=c
             setattr(d1,"neighs",None)
 
-    return wdm,dm.reshape(npb*ntb,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 
 
@@ -527,14 +526,14 @@ cfWick = {}
 ## auto
 def wickT(pix):
 
-    T1 = np.zeros((npb*ntb,npb*ntb))
-    T2 = np.zeros((npb*ntb,npb*ntb))
-    T3 = np.zeros((npb*ntb,npb*ntb))
-    T4 = np.zeros((npb*ntb,npb*ntb))
-    T5 = np.zeros((npb*ntb,npb*ntb))
-    T6 = np.zeros((npb*ntb,npb*ntb))
-    wAll = np.zeros(npb*ntb)
-    nb = np.zeros(npb*ntb,dtype=sp.int64)
+    T1 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
+    T2 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
+    T3 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
+    T4 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
+    T5 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
+    T6 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
+    wAll = np.zeros(num_bins_r_par*num_bins_r_trans)
+    nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
 
@@ -605,15 +604,15 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
     if not x_correlation:
         rp = abs(rp)
     rt = (r1[:,None]+r2)*sp.sin(ang/2)
-    bp = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npb).astype(int)
-    bt = (rt/r_trans_max*ntb).astype(int)
-    ba = bt + ntb*bp
+    bp = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    ba = bt + num_bins_r_trans*bp
     weights = w1[:,None]*w2
     we1 = w1[:,None]*sp.ones(w2.size)
     we2 = sp.ones(w1.size)[:,None]*w2
     zw = zw1[:,None]*zw2
 
-    w = (rp<r_parallel_max) & (rt<r_trans_max) & (rp>=r_parallel_min)
+    w = (rp<r_par_max) & (rt<r_trans_max) & (rp>=r_par_min)
     if w.sum()==0: return
 
     bins = bins[w]
@@ -662,11 +661,11 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
     pix1_12 = (np.arange(r1.size)[:,None]*sp.ones(r2.size)).astype(int)
     pix2_12 = (sp.ones(r1.size)[:,None]*np.arange(r2.size)).astype(int)
-    w = (rp<r_parallel_max) & (rt<r_trans_max) & (rp>=r_parallel_min)
+    w = (rp<r_par_max) & (rt<r_trans_max) & (rp>=r_par_min)
     if w.sum()==0: return
-    bp = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npb).astype(int)
-    bt = (rt/r_trans_max*ntb).astype(int)
-    ba12 = bt + ntb*bp
+    bp = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    ba12 = bt + num_bins_r_trans*bp
     ba12[~w] = 0
     cf12 = cfWick['{}_{}'.format(fname1,fname2)][ba12]
     cf12[~w] = 0.
@@ -682,11 +681,11 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     rt = (r1[:,None]+r3)*sp.sin(ang13/2.)
     pix1_13 = (np.arange(r1.size)[:,None]*sp.ones(r3.size)).astype(int)
     pix3_13 = (sp.ones(r1.size)[:,None]*np.arange(r3.size)).astype(int)
-    w = (rp<r_parallel_max) & (rt<r_trans_max) & (rp>=r_parallel_min)
+    w = (rp<r_par_max) & (rt<r_trans_max) & (rp>=r_par_min)
     if w.sum()==0: return
-    bp = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npb).astype(int)
-    bt = (rt/r_trans_max*ntb).astype(int)
-    ba13 = bt + ntb*bp
+    bp = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    ba13 = bt + num_bins_r_trans*bp
     ba13[~w] = 0
     cf13 = cfWick['{}_{}'.format(fname1,fname3)][ba13]
     cf13[~w] = 0.
@@ -702,11 +701,11 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     rt = (r2[:,None]+r3)*sp.sin(ang23/2.)
     pix2_23 = (np.arange(r2.size)[:,None]*sp.ones(r3.size)).astype(int)
     pix3_23 = (sp.ones(r2.size)[:,None]*np.arange(r3.size)).astype(int)
-    w = (rp<r_parallel_max) & (rt<r_trans_max) & (rp>=r_parallel_min)
+    w = (rp<r_par_max) & (rt<r_trans_max) & (rp>=r_par_min)
     if w.sum()==0: return
-    bp = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npb).astype(int)
-    bt = (rt/r_trans_max*ntb).astype(int)
-    ba23 = bt + ntb*bp
+    bp = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    ba23 = bt + num_bins_r_trans*bp
     ba23[~w] = 0
     cf23 = cfWick['{}_{}'.format(fname2,fname3)][ba23]
     cf23[~w] = 0.

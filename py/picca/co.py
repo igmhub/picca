@@ -6,11 +6,10 @@ from numba import jit
 
 from picca.utils import userprint
 
-# npb = number of parallel bins (to avoid collision with numpy np)
-npb = None
-ntb = None
-r_parallel_min = None
-r_parallel_max = None
+num_bins_r_par = None
+num_bins_r_trans = None
+r_par_min = None
+r_par_max = None
 r_trans_max = None
 angmax = None
 nside = None
@@ -49,11 +48,11 @@ def fill_neighs_x_correlation(pix):
 
 def co(pix):
 
-    weights = np.zeros(npb*ntb)
-    rp = np.zeros(npb*ntb)
-    rt = np.zeros(npb*ntb)
-    z  = np.zeros(npb*ntb)
-    nb = np.zeros(npb*ntb,dtype=sp.int64)
+    weights = np.zeros(num_bins_r_par*num_bins_r_trans)
+    rp = np.zeros(num_bins_r_par*num_bins_r_trans)
+    rt = np.zeros(num_bins_r_par*num_bins_r_trans)
+    z  = np.zeros(num_bins_r_par*num_bins_r_trans)
+    nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
 
     for ipix in pix:
         for o1 in objs[ipix]:
@@ -94,15 +93,15 @@ def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
     z   = (z1+z2)/2.
     w12 = w1*w2
 
-    w   = (rp>=r_parallel_min) & (rp<r_parallel_max) & (rt<r_trans_max) & (w12>0.)
+    w   = (rp>=r_par_min) & (rp<r_par_max) & (rt<r_trans_max) & (w12>0.)
     rp  = rp[w]
     rt  = rt[w]
     z   = z[w]
     w12 = w12[w]
 
-    bp   = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npb).astype(int)
-    bt   = (rt/r_trans_max*ntb).astype(int)
-    bins = bt + ntb*bp
+    bp   = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bt   = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bins = bt + num_bins_r_trans*bp
 
     cw  = sp.bincount(bins,weights=w12)
     crp = sp.bincount(bins,weights=rp*w12)

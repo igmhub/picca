@@ -112,14 +112,13 @@ if __name__ == '__main__':
 
     userprint("nproc",args.nproc)
 
-    cf.r_parallel_max = args.rp_max
-    cf.r_parallel_min = args.rp_min
+    cf.r_par_max = args.rp_max
+    cf.r_par_min = args.rp_min
     cf.r_trans_max = args.rt_max
     cf.z_cut_max = args.z_cut_max
     cf.z_cut_min = args.z_cut_min
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    cf.npb = args.np
-    cf.ntb = args.nt
+    cf.num_bins_r_par = args.np
+    cf.num_bins_r_trans = args.nt
     cf.npm = args.np*args.coef_binning_model
     cf.ntm = args.nt*args.coef_binning_model
     cf.nside = args.nside
@@ -196,11 +195,11 @@ if __name__ == '__main__':
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':cf.r_parallel_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
-        {'name':'RPMAX','value':cf.r_parallel_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+    head = [ {'name':'RPMIN','value':cf.r_par_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':cf.r_par_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':cf.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':cf.npb,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':cf.ntb,'comment':'Number of bins in r-transverse'},
+        {'name':'NP','value':cf.num_bins_r_par,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':cf.num_bins_r_trans,'comment':'Number of bins in r-transverse'},
         {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},

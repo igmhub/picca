@@ -93,13 +93,12 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    xcf.r_parallel_min = args.wr_min
-    xcf.r_parallel_max = args.wr_max
+    xcf.r_par_min = args.wr_min
+    xcf.r_par_max = args.wr_max
     xcf.r_trans_max = 1.e-6
     xcf.z_cut_min = args.z_cut_min
     xcf.z_cut_max = args.z_cut_max
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    xcf.npb = args.np
+    xcf.num_bins_r_par = args.np
     xcf.nt = 1
     xcf.nside = args.nside
     xcf.ang_correlation = True
@@ -162,9 +161,9 @@ if __name__ == '__main__':
     nb = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':xcf.r_parallel_min,'comment':'Minimum wavelength ratio'},
-        {'name':'RPMAX','value':xcf.r_parallel_max,'comment':'Maximum wavelength ratio'},
-        {'name':'NP','value':xcf.npb,'comment':'Number of bins in wavelength ratio'},
+    head = [ {'name':'RPMIN','value':xcf.r_par_min,'comment':'Minimum wavelength ratio'},
+        {'name':'RPMAX','value':xcf.r_par_max,'comment':'Maximum wavelength ratio'},
+        {'name':'NP','value':xcf.num_bins_r_par,'comment':'Number of bins in wavelength ratio'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}

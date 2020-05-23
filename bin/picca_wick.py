@@ -127,14 +127,13 @@ if __name__ == '__main__':
 
     userprint("nproc",args.nproc)
 
-    cf.r_parallel_max = args.rp_max
+    cf.r_par_max = args.rp_max
     cf.r_trans_max = args.rt_max
-    cf.r_parallel_min = args.rp_min
+    cf.r_par_min = args.rp_min
     cf.z_cut_max = args.z_cut_max
     cf.z_cut_min = args.z_cut_min
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    cf.npb = args.np
-    cf.ntb = args.nt
+    cf.num_bins_r_par = args.np
+    cf.num_bins_r_trans = args.nt
     cf.nside = args.nside
     cf.zref = args.z_ref
     cf.alpha = args.z_evol
@@ -190,10 +189,10 @@ if __name__ == '__main__':
             continue
         h = fitsio.FITS(p)
         head = h[1].read_header()
-        assert cf.npb == head['NP']
-        assert cf.ntb == head['NT']
-        assert cf.r_parallel_min == head['RPMIN']
-        assert cf.r_parallel_max == head['RPMAX']
+        assert cf.num_bins_r_par == head['NP']
+        assert cf.num_bins_r_trans == head['NT']
+        assert cf.r_par_min == head['RPMIN']
+        assert cf.r_par_max == head['RPMAX']
         assert cf.r_trans_max == head['RTMAX']
         da = h[2]['DA'][:]
         weights = h[2]['WE'][:]
@@ -274,11 +273,11 @@ if __name__ == '__main__':
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [
-        {'name':'RPMIN','value':cf.r_parallel_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
-        {'name':'RPMAX','value':cf.r_parallel_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMIN','value':cf.r_par_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':cf.r_par_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':cf.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':cf.npb,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':cf.ntb,'comment':'Number of bins in r-transverse'},
+        {'name':'NP','value':cf.num_bins_r_par,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':cf.num_bins_r_trans,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},

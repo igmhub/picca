@@ -93,14 +93,13 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    co.r_parallel_max = args.rp_max
-    co.r_parallel_min = args.rp_min
+    co.r_par_max = args.rp_max
+    co.r_par_min = args.rp_min
     co.r_trans_max = args.rt_max
     co.z_cut_min = args.z_cut_min
     co.z_cut_max = args.z_cut_max
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    co.npb     = args.np
-    co.ntb     = args.nt
+    co.num_bins_r_par     = args.np
+    co.num_bins_r_trans     = args.nt
     co.nside  = args.nside
     co.type_corr = args.type_corr
     if co.type_corr not in ['DD', 'RR', 'DR', 'RD', 'xDD', 'xRR', 'xD1R2', 'xR1D2']:
@@ -156,11 +155,11 @@ if __name__ == '__main__':
     nb = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':co.r_parallel_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
-        {'name':'RPMAX','value':co.r_parallel_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+    head = [ {'name':'RPMIN','value':co.r_par_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':co.r_par_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':co.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':co.npb,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':co.ntb,'comment':'Number of bins in r-transverse'},
+        {'name':'NP','value':co.num_bins_r_par,'comment':'Number of bins in r-parallel'},
+        {'name':'NT','value':co.num_bins_r_trans,'comment':'Number of bins in r-transverse'},
         {'name':'NSIDE','value':co.nside,'comment':'Healpix nside'},
         {'name':'TYPECORR','value':co.type_corr,'comment':'Correlation type'},
         {'name':'NOBJ','value':len([o1 for p in co.objs for o1 in co.objs[p]]),'comment':'Number of objects'},

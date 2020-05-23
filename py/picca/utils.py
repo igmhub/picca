@@ -99,9 +99,8 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     da = sp.array(h[2]['DA'][:])
     weights = sp.array(h[2]['WE'][:])
     head = h[1].read_header()
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    npb = head['NP']
-    ntb = head['NT']
+    num_bins_r_par = head['NP']
+    num_bins_r_trans = head['NT']
     h.close()
 
     co = cov(da,weights)
@@ -133,8 +132,8 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
 
     #### indices
     ind = np.arange(nbin)
-    rtindex = ind%ntb
-    rpindex = ind//ntb
+    rtindex = ind%num_bins_r_trans
+    rpindex = ind//num_bins_r_trans
     idrt2d = abs(rtindex-rtindex[:,None])
     idrp2d = abs(rpindex-rpindex[:,None])
     idrt1d = idrt2d.reshape(nbin*nbin)
@@ -145,7 +144,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     for idr in range(0,nbin):
         userprint("\rsmoothing {}".format(idr),end="")
         Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
-    Dcor_red = Dcor_red1d.reshape(npb,ntb)
+    Dcor_red = Dcor_red1d.reshape(num_bins_r_par,num_bins_r_trans)
     userprint("")
 
     #### fit for L and A at each drp
@@ -155,15 +154,15 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     def chisq(L,A,idrp):
         chi2 = 0.
         idrp = int(idrp)
-        for idrt in range(1,ntb):
+        for idrt in range(1,num_bins_r_trans):
             chi = Dcor_red[idrp,idrt]-corrfun(idrp,idrt,L,A)
             chi2 += chi**2
-        chi2 = chi2*npb*nbin
+        chi2 = chi2*num_bins_r_par*nbin
         return chi2
 
-    Lfit = np.zeros(npb)
-    Afit = np.zeros(npb)
-    for idrp in range(npb):
+    Lfit = np.zeros(num_bins_r_par)
+    Afit = np.zeros(num_bins_r_par)
+    for idrp in range(num_bins_r_par):
         m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),
             A=1.,error_A=0.2,
             idrp=idrp,fix_idrp=True,
