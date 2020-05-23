@@ -94,26 +94,26 @@ if __name__ == '__main__':
 
 
     ### Read data 1
-    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs,args.z_evol, args.z_ref, cosmo=None,max_num_spec=args.nspec,no_project=args.no_project)
+    data, num_data, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs,args.z_evol, args.z_ref, cosmo=None,max_num_spec=args.nspec,no_project=args.no_project)
     cf.npix  = len(data)
     cf.data  = data
-    cf.ndata = ndata
+    cf.num_data = num_data
     userprint("")
     userprint("done, npix = {}\n".format(cf.npix))
 
     ### Read data 2
     if args.in_dir2:
         cf.x_correlation = True
-        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,max_num_spec=args.nspec,no_project=args.no_project)
+        data2, num_data2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,max_num_spec=args.nspec,no_project=args.no_project)
         cf.data2  = data2
-        cf.ndata2 = ndata2
+        cf.num_data2 = num_data2
         userprint("")
         userprint("done, npix = {}\n".format(len(data2)))
     elif cf.lambda_abs != cf.lambda_abs2:
         cf.x_correlation = True
-        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,max_num_spec=args.nspec,no_project=args.no_project)
+        data2, num_data2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,max_num_spec=args.nspec,no_project=args.no_project)
         cf.data2  = data2
-        cf.ndata2 = ndata2
+        cf.num_data2 = num_data2
 
     ### Convert lists to arrays
     cf.data = {k:sp.array(v) for k,v in cf.data.items()}

@@ -225,12 +225,12 @@ def main():
         Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read data 1
-    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside,
+    data, num_data, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside,
         cf.lambda_abs, cf.alpha, cf.zref, cosmo, max_num_spec=args.nspec,
         no_project=args.no_project, from_image=args.from_image)
     cf.npix = len(data)
     cf.data = data
-    cf.ndata = ndata
+    cf.num_data = num_data
     cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix)
     userprint("")
     userprint("done, npix = {}".format(cf.npix))
@@ -247,11 +247,11 @@ def main():
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2,
+        data2, num_data2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2,
             cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, max_num_spec=args.nspec,
             no_project=args.no_project, from_image=args.from_image)
         cf.data2 = data2
-        cf.ndata2 = ndata2
+        cf.num_data2 = num_data2
         cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix,zmin_pix2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))

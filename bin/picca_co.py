@@ -116,7 +116,7 @@ if __name__ == '__main__':
     objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,args.z_evol_obj, args.z_ref, cosmo)
     userprint("")
     co.objs = objs
-    co.ndata = len([o1 for p in co.objs for o1 in co.objs[p]])
+    co.num_data = len([o1 for p in co.objs for o1 in co.objs[p]])
     co.ang_max = utils.compute_ang_max(cosmo,co.r_trans_max,zmin_obj)
 
     ### Read objects 2

@@ -56,18 +56,18 @@ if __name__ == '__main__':
     fi = glob.glob(args.in_dir+"/*.fits.gz")
 
     data = {}
-    ndata = 0
+    num_data = 0
 
     # loop over input files
     for i,f in enumerate(fi):
         if i%1==0:
-            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),ndata))
+            sys.stderr.write("\rread {} of {} {}".format(i,len(fi),num_data))
 
         # read fits files
         hdus = fitsio.FITS(f)
         pk1ds = [Pk1D.from_fitsio(h) for h in hdus[1:]]
-        ndata+=len(pk1ds)
-        userprint ("\n ndata =  ",ndata)
+        num_data+=len(pk1ds)
+        userprint ("\n ndata =  ",num_data)
 
         # loop over pk1ds
         for pk in pk1ds:

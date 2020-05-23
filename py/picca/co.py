@@ -57,7 +57,7 @@ def co(pix):
     for ipix in pix:
         for o1 in objs[ipix]:
 
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data,2)),end="")
             with lock:
                 counter.value += 1
 

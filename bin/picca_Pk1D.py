@@ -167,7 +167,7 @@ if __name__ == '__main__':
         fi = glob.glob(args.in_dir+"/*.txt")
 
     data = {}
-    ndata = 0
+    num_data = 0
 
     # initialize randoms
     sp.random.seed(4)
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     # loop over input files
     for i,f in enumerate(fi):
         if i%1==0:
-            userprint("\rread {} of {} {}".format(i,len(fi),ndata),end="")
+            userprint("\rread {} of {} {}".format(i,len(fi),num_data),end="")
 
         # read fits or ascii file
         if (args.in_format=='fits') :
@@ -185,8 +185,8 @@ if __name__ == '__main__':
             ascii_file = open(f,'r')
             dels = [Delta.from_ascii(line) for line in ascii_file]
 
-        ndata+=len(dels)
-        userprint ("\n ndata =  ",ndata)
+        num_data+=len(dels)
+        userprint ("\n ndata =  ",num_data)
         out = None
 
         # loop over deltas
