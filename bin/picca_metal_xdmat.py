@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
     xcf.r_parallel_max = args.rp_max
     xcf.r_parallel_min = args.rp_min
-    xcf.r_trans_max = args.r_trans_max
+    xcf.r_trans_max = args.rt_max
     xcf.z_cut_max = args.z_cut_max
     xcf.z_cut_min = args.z_cut_min
     # npb = number of parallel bins (to avoid collision with numpy np)
