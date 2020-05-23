@@ -2,7 +2,7 @@
 
 This module provides three functions:
     - compute_mean_cont
-    - var_lss
+    - compute_var_stats
     - stack
 See the respective documentation for details
 """
