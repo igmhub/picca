@@ -11,7 +11,7 @@ num_bins_r_trans = None
 r_par_min = None
 r_par_max = None
 r_trans_max = None
-angmax = None
+ang_max = None
 nside = None
 
 objs = None
@@ -26,11 +26,11 @@ lock = None
 def fill_neighs(pix):
     for ipix in pix:
         for o1 in objs[ipix]:
-            npix = query_disc(nside,[o1.x_cart,o1.y_cart,o1.z_cart],angmax,inclusive = True)
+            npix = query_disc(nside,[o1.x_cart,o1.y_cart,o1.z_cart],ang_max,inclusive = True)
             npix = [p for p in npix if p in objs]
             neighs = [o2 for p in npix for o2 in objs[p] if o1.thingid != o2.thingid]
             ang = o1^neighs
-            w = ang<angmax
+            w = ang<ang_max
             neighs = sp.array(neighs)[w]
             o1.neighs = sp.array([o2 for o2 in neighs if (o2.z_qso+o1.z_qso)/2.>=z_cut_min and (o2.z_qso+o1.z_qso)/2.<z_cut_max])
 
@@ -38,11 +38,11 @@ def fill_neighs(pix):
 def fill_neighs_x_correlation(pix):
     for ipix in pix:
         for o1 in objs[ipix]:
-            npix = query_disc(nside,[o1.x_cart,o1.y_cart,o1.z_cart],angmax,inclusive = True)
+            npix = query_disc(nside,[o1.x_cart,o1.y_cart,o1.z_cart],ang_max,inclusive = True)
             npix = [p for p in npix if p in objs2]
             neighs = [o2 for p in npix for o2 in objs2[p] if o1.thingid != o2.thingid]
             ang = o1^neighs
-            w = ang<angmax
+            w = ang<ang_max
             neighs = sp.array(neighs)[w]
             o1.neighs = sp.array([o2 for o2 in neighs if (o2.z_qso+o1.z_qso)/2.>=z_cut_min and (o2.z_qso+o1.z_qso)/2.<z_cut_max])
 

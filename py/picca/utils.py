@@ -619,11 +619,11 @@ def compute_ang_max(cosmo,r_trans_max,zmin,zmin2=None):
     rmin2 = cosmo.get_dist_m(zmin2)
 
     if rmin1+rmin2<r_trans_max:
-        angmax = sp.pi
+        ang_max = sp.pi
     else:
-        angmax = 2.*sp.arcsin(r_trans_max/(rmin1+rmin2))
+        ang_max = 2.*sp.arcsin(r_trans_max/(rmin1+rmin2))
 
-    return angmax
+    return ang_max
 
 def shuffle_distrib_forests(obj,seed):
     '''Shuffle the distribution of forests by assiging the angular

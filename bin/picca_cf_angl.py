@@ -105,7 +105,7 @@ if __name__ == '__main__':
     cf.alpha           = args.z_evol
     cf.x_correlation   = False
     cf.ang_correlation = True
-    cf.angmax          = args.ang_max
+    cf.ang_max          = args.ang_max
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 

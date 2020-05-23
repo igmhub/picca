@@ -15,7 +15,7 @@ r_par_min = None
 r_trans_max = None
 z_cut_max = None
 z_cut_min = None
-angmax = None
+ang_max = None
 nside = None
 
 counter = None
@@ -39,11 +39,11 @@ ang_correlation = None
 def fill_neighs(pix):
     for ipix in pix:
         for d in dels[ipix]:
-            npix = query_disc(nside,[d.x_cart,d.y_cart,d.z_cart],angmax,inclusive = True)
+            npix = query_disc(nside,[d.x_cart,d.y_cart,d.z_cart],ang_max,inclusive = True)
             npix = [p for p in npix if p in objs]
             neighs = [q for p in npix for q in objs[p] if q.thingid != d.thingid]
             ang = d^neighs
-            w = ang<angmax
+            w = ang<ang_max
             if not ang_correlation:
                 r_comov = sp.array([q.r_comov for q in neighs])
                 w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < r_par_max

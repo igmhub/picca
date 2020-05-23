@@ -231,7 +231,7 @@ def main():
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
-    cf.angmax = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix)
+    cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix)
     userprint("")
     userprint("done, npix = {}".format(cf.npix))
 
@@ -252,7 +252,7 @@ def main():
             no_project=args.no_project, from_image=args.from_image)
         cf.data2 = data2
         cf.ndata2 = ndata2
-        cf.angmax = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix,zmin_pix2)
+        cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix,zmin_pix2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 

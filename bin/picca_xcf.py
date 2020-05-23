@@ -186,7 +186,7 @@ if __name__ == '__main__':
     xcf.objs = objs
 
     ###
-    xcf.angmax = utils.compute_ang_max(cosmo,xcf.r_trans_max,zmin_pix,zmin_obj)
+    xcf.ang_max = utils.compute_ang_max(cosmo,xcf.r_trans_max,zmin_pix,zmin_obj)
 
 
 

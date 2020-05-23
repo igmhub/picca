@@ -179,7 +179,7 @@ if __name__ == '__main__':
     sys.stderr.write("\n")
 
     ### Maximum angle
-    xcf.angmax = utils.compute_ang_max(cosmo,xcf.r_trans_max,zmin_pix,zmin_obj)
+    xcf.ang_max = utils.compute_ang_max(cosmo,xcf.r_trans_max,zmin_pix,zmin_obj)
 
     ### Load cf1d
     h = fitsio.FITS(args.cf1d)
@@ -217,7 +217,7 @@ if __name__ == '__main__':
         h.close()
 
         cf.data = xcf.dels
-        cf.angmax = xcf.cfWick_angmax
+        cf.ang_max = xcf.cfWick_angmax
         cf.nside = xcf.nside
         cf.z_cut_max = xcf.z_cut_max
         cf.z_cut_min = xcf.z_cut_min

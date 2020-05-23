@@ -117,14 +117,14 @@ if __name__ == '__main__':
     userprint("")
     co.objs = objs
     co.ndata = len([o1 for p in co.objs for o1 in co.objs[p]])
-    co.angmax = utils.compute_ang_max(cosmo,co.r_trans_max,zmin_obj)
+    co.ang_max = utils.compute_ang_max(cosmo,co.r_trans_max,zmin_obj)
 
     ### Read objects 2
     if co.x_correlation:
         objs2,zmin_obj2 = io.read_objects(args.drq2, args.nside, args.z_min_obj, args.z_max_obj, args.z_evol_obj2, args.z_ref,cosmo)
         userprint("")
         co.objs2 = objs2
-        co.angmax = utils.compute_ang_max(cosmo,co.r_trans_max,zmin_obj,zmin_obj2)
+        co.ang_max = utils.compute_ang_max(cosmo,co.r_trans_max,zmin_obj,zmin_obj2)
 
     co.counter = Value('i',0)
 

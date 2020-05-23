@@ -113,7 +113,7 @@ if __name__ == '__main__':
     xcf.num_bins_r_trans    = args.nt
     xcf.nside  = args.nside
     xcf.ang_correlation = True
-    xcf.angmax  = args.ang_max
+    xcf.ang_max  = args.ang_max
 
     lambda_abs  = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.lambda_abs = lambda_abs

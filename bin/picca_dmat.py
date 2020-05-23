@@ -135,7 +135,7 @@ if __name__ == '__main__':
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
-    cf.angmax = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix)
+    cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix)
     userprint("")
     userprint("done, npix = {}".format(cf.npix))
 
@@ -154,7 +154,7 @@ if __name__ == '__main__':
         data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, max_num_spec=args.nspec, no_project=args.no_project)
         cf.data2 = data2
         cf.ndata2 = ndata2
-        cf.angmax = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix,zmin_pix2)
+        cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix,zmin_pix2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 
