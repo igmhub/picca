@@ -52,9 +52,9 @@ if __name__ == '__main__':
     # npb = number of parallel bins (to avoid collision with numpy np)
     npb = head['NP']
     ntb = head['NT']
-    rt_max = head['RTMAX']
-    rp_min = head['RPMIN']
-    rp_max = head['RPMAX']
+    r_trans_max = head['RTMAX']
+    r_parallel_min = head['RPMIN']
+    r_parallel_max = head['RPMAX']
     h.close()
 
     if not args.remove_shuffled_correlation is None:
@@ -86,8 +86,8 @@ if __name__ == '__main__':
         var = sp.diagonal(co)
         co = cor * sp.sqrt(var*var[:,None])
     else:
-        binSizeP = (rp_max-rp_min) / npb
-        binSizeT = (rt_max-0.) / ntb
+        binSizeP = (r_parallel_max-r_parallel_min) / npb
+        binSizeT = (r_trans_max-0.) / ntb
         if not args.do_not_smooth_cov:
             userprint('INFO: The covariance will be smoothed')
             co = smooth_cov(da,weights,rp,rt,drt=binSizeT,drp=binSizeP)
@@ -128,9 +128,9 @@ if __name__ == '__main__':
         dmz = z.copy()
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':rp_min,'comment':'Minimum r-parallel'},
-        {'name':'RPMAX','value':rp_max,'comment':'Maximum r-parallel'},
-        {'name':'RTMAX','value':rt_max,'comment':'Maximum r-transverse'},
+    head = [ {'name':'RPMIN','value':r_parallel_min,'comment':'Minimum r-parallel'},
+        {'name':'RPMAX','value':r_parallel_max,'comment':'Maximum r-parallel'},
+        {'name':'RTMAX','value':r_trans_max,'comment':'Maximum r-transverse'},
         {'name':'NP','value':npb,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':ntb,'comment':'Number of bins in r-transverse'}
     ]

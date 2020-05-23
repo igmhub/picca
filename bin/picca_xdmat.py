@@ -103,9 +103,9 @@ if __name__ == '__main__':
 
     userprint("nproc",args.nproc)
 
-    xcf.rp_max = args.rp_max
-    xcf.rp_min = args.rp_min
-    xcf.rt_max = args.rt_max
+    xcf.r_parallel_max = args.rp_max
+    xcf.r_parallel_min = args.rp_min
+    xcf.r_trans_max = args.rt_max
     xcf.z_cut_max = args.z_cut_max
     xcf.z_cut_min = args.z_cut_min
     # npb = number of parallel bins (to avoid collision with numpy np)
@@ -133,12 +133,12 @@ if __name__ == '__main__':
     ### Find the redshift range
     if (args.z_min_obj is None):
         dmin_pix = cosmo.get_r_comov(zmin_pix)
-        dmin_obj = max(0.,dmin_pix+xcf.rp_min)
+        dmin_obj = max(0.,dmin_pix+xcf.r_parallel_min)
         args.z_min_obj = cosmo.distance_to_redshift(dmin_obj)
         userprint("\r z_min_obj = {}\r".format(args.z_min_obj),end="")
     if (args.z_max_obj is None):
         dmax_pix = cosmo.get_r_comov(zmax_pix)
-        dmax_obj = max(0.,dmax_pix+xcf.rp_max)
+        dmax_obj = max(0.,dmax_pix+xcf.r_parallel_max)
         args.z_max_obj = cosmo.distance_to_redshift(dmax_obj)
         userprint("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
 
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     xcf.objs = objs
 
     ###
-    xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
+    xcf.angmax = utils.compute_ang_max(cosmo,xcf.r_trans_max,zmin_pix,zmin_obj)
 
 
 
@@ -191,9 +191,9 @@ if __name__ == '__main__':
     dm[w,:] /= wdm[w,None]
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':xcf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
-        {'name':'RPMAX','value':xcf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
-        {'name':'RTMAX','value':xcf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
+    head = [ {'name':'RPMIN','value':xcf.r_parallel_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':xcf.r_parallel_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':xcf.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':xcf.npb,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':xcf.ntb,'comment':'Number of bins in r-transverse'},
         {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},

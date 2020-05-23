@@ -9,9 +9,9 @@ from picca.utils import userprint
 # npb = number of parallel bins (to avoid collision with numpy np)
 npb = None
 ntb = None
-rp_min = None
-rp_max = None
-rt_max = None
+r_parallel_min = None
+r_parallel_max = None
+r_trans_max = None
 angmax = None
 nside = None
 
@@ -94,14 +94,14 @@ def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
     z   = (z1+z2)/2.
     w12 = w1*w2
 
-    w   = (rp>=rp_min) & (rp<rp_max) & (rt<rt_max) & (w12>0.)
+    w   = (rp>=r_parallel_min) & (rp<r_parallel_max) & (rt<r_trans_max) & (w12>0.)
     rp  = rp[w]
     rt  = rt[w]
     z   = z[w]
     w12 = w12[w]
 
-    bp   = sp.floor((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
-    bt   = (rt/rt_max*ntb).astype(int)
+    bp   = sp.floor((rp-r_parallel_min)/(r_parallel_max-r_parallel_min)*npb).astype(int)
+    bt   = (rt/r_trans_max*ntb).astype(int)
     bins = bt + ntb*bp
 
     cw  = sp.bincount(bins,weights=w12)

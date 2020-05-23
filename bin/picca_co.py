@@ -93,9 +93,9 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    co.rp_max = args.rp_max
-    co.rp_min = args.rp_min
-    co.rt_max = args.rt_max
+    co.r_parallel_max = args.rp_max
+    co.r_parallel_min = args.rp_min
+    co.r_trans_max = args.rt_max
     co.z_cut_min = args.z_cut_min
     co.z_cut_max = args.z_cut_max
     # npb = number of parallel bins (to avoid collision with numpy np)
@@ -118,14 +118,14 @@ if __name__ == '__main__':
     userprint("")
     co.objs = objs
     co.ndata = len([o1 for p in co.objs for o1 in co.objs[p]])
-    co.angmax = utils.compute_ang_max(cosmo,co.rt_max,zmin_obj)
+    co.angmax = utils.compute_ang_max(cosmo,co.r_trans_max,zmin_obj)
 
     ### Read objects 2
     if co.x_correlation:
         objs2,zmin_obj2 = io.read_objects(args.drq2, args.nside, args.z_min_obj, args.z_max_obj, args.z_evol_obj2, args.z_ref,cosmo)
         userprint("")
         co.objs2 = objs2
-        co.angmax = utils.compute_ang_max(cosmo,co.rt_max,zmin_obj,zmin_obj2)
+        co.angmax = utils.compute_ang_max(cosmo,co.r_trans_max,zmin_obj,zmin_obj2)
 
     co.counter = Value('i',0)
 
@@ -156,9 +156,9 @@ if __name__ == '__main__':
     nb = nbs.sum(axis=0)
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':co.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
-        {'name':'RPMAX','value':co.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
-        {'name':'RTMAX','value':co.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
+    head = [ {'name':'RPMIN','value':co.r_parallel_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':co.r_parallel_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':co.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':co.npb,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':co.ntb,'comment':'Number of bins in r-transverse'},
         {'name':'NSIDE','value':co.nside,'comment':'Healpix nside'},

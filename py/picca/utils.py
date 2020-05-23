@@ -607,7 +607,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     userprint("")
 
     return
-def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
+def compute_ang_max(cosmo,r_trans_max,zmin,zmin2=None):
     '''
     Compute the maximum angle given by the maximum transverse
     separation the correlation should be calculated to
@@ -619,10 +619,10 @@ def compute_ang_max(cosmo,rt_max,zmin,zmin2=None):
     rmin1 = cosmo.get_dist_m(zmin)
     rmin2 = cosmo.get_dist_m(zmin2)
 
-    if rmin1+rmin2<rt_max:
+    if rmin1+rmin2<r_trans_max:
         angmax = sp.pi
     else:
-        angmax = 2.*sp.arcsin(rt_max/(rmin1+rmin2))
+        angmax = 2.*sp.arcsin(r_trans_max/(rmin1+rmin2))
 
     return angmax
 

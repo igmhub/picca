@@ -1,8 +1,8 @@
 #!/usr/bin/python3
-"""Computes Lyman alpha 3D autocorrelation
+"""Computes the 3D correlation function between two delta fields.
 
-Follow the procedure described in sections 3.1 and 3.2 of du Mas des Bourboux
-et al. 2020 (In prep).
+This module follow the procedure described in sections 3.1 and 3.2 of du Mas des Bourboux
+et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
 import scipy as sp
 import fitsio
@@ -208,9 +208,9 @@ def main():
         args.nproc = cpu_count()//2
 
     # setup variables in module cf
-    cf.rp_max = args.rp_max
-    cf.rt_max = args.rt_max
-    cf.rp_min = args.rp_min
+    cf.r_parallel_max = args.rp_max
+    cf.r_trans_max = args.rt_max
+    cf.r_parallel_min = args.rp_min
     cf.z_cut_max = args.z_cut_max
     cf.z_cut_min = args.z_cut_min
     # npb = number of parallel bins (to avoid collision with numpy np)
@@ -232,7 +232,7 @@ def main():
     cf.npix = len(data)
     cf.data = data
     cf.ndata = ndata
-    cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix)
+    cf.angmax = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix)
     userprint("")
     userprint("done, npix = {}".format(cf.npix))
 
@@ -253,7 +253,7 @@ def main():
             no_project=args.no_project, from_image=args.from_image)
         cf.data2 = data2
         cf.ndata2 = ndata2
-        cf.angmax = utils.compute_ang_max(cosmo,cf.rt_max,zmin_pix,zmin_pix2)
+        cf.angmax = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix,zmin_pix2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 
@@ -291,9 +291,9 @@ def main():
 
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':cf.rp_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
-        {'name':'RPMAX','value':cf.rp_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
-        {'name':'RTMAX','value':cf.rt_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
+    head = [ {'name':'RPMIN','value':cf.r_parallel_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
+        {'name':'RPMAX','value':cf.r_parallel_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
+        {'name':'RTMAX','value':cf.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
         {'name':'NP','value':cf.npb,'comment':'Number of bins in r-parallel'},
         {'name':'NT','value':cf.ntb,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
