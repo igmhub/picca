@@ -122,7 +122,7 @@ if __name__ == '__main__':
     cf.npm = args.np*args.coef_binning_model
     cf.ntm = args.nt*args.coef_binning_model
     cf.nside = args.nside
-    cf.zref = args.z_ref
+    cf.z_ref = args.z_ref
     cf.alpha = args.z_evol
     cf.rej = args.rej
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read data 1
-    data, num_data, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.zref, cosmo, max_num_spec=args.nspec, no_project=args.no_project)
+    data, num_data, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.z_ref, cosmo, max_num_spec=args.nspec, no_project=args.no_project)
     cf.npix = len(data)
     cf.data = data
     cf.num_data = num_data
@@ -151,7 +151,7 @@ if __name__ == '__main__':
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, num_data2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, max_num_spec=args.nspec, no_project=args.no_project)
+        data2, num_data2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.z_ref, cosmo, max_num_spec=args.nspec, no_project=args.no_project)
         cf.data2 = data2
         cf.num_data2 = num_data2
         cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix,zmin_pix2)

@@ -21,7 +21,7 @@ nside = None
 counter = None
 ndels = None
 
-zref = None
+z_ref = None
 z_evol_del = None
 z_evol_obj = None
 lambda_abs = None
@@ -278,7 +278,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
                 rp_abs = (rd_abs-rq)*sp.cos(ang/2)
                 rt_abs = (rdm_abs+rqm)*sp.sin(ang/2)
-                zwe = ((1.+zd_abs)/(1.+zref))**(alpha_abs[abs_igm]-1.)
+                zwe = ((1.+zd_abs)/(1.+z_ref))**(alpha_abs[abs_igm]-1.)
 
                 bp_abs = ((rp_abs-r_par_min)/(r_par_max-r_par_min)*npm).astype(int)
                 bt_abs = (rt_abs/r_trans_max*ntm).astype(int)
@@ -424,8 +424,8 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     """
     rp = (r1[:,None]-r2)*sp.cos(ang/2.)
     rt = (r1[:,None]+r2)*sp.sin(ang/2.)
-    zw1 = ((1.+z1)/(1.+zref))**(z_evol_del-1.)
-    zw2 = ((1.+z2)/(1.+zref))**(z_evol_obj-1.)
+    zw1 = ((1.+z1)/(1.+z_ref))**(z_evol_del-1.)
+    zw2 = ((1.+z2)/(1.+z_ref))**(z_evol_obj-1.)
     weights = w1[:,None]*w2
     we1 = w1[:,None]*sp.ones(len(r2))
     idxPix = np.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')

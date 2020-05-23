@@ -216,7 +216,7 @@ def main():
     cf.num_bins_r_par = args.np
     cf.num_bins_r_trans = args.nt
     cf.nside = args.nside
-    cf.zref = args.z_ref
+    cf.z_ref = args.z_ref
     cf.alpha = args.z_evol
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
@@ -226,7 +226,7 @@ def main():
 
     ### Read data 1
     data, num_data, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside,
-        cf.lambda_abs, cf.alpha, cf.zref, cosmo, max_num_spec=args.nspec,
+        cf.lambda_abs, cf.alpha, cf.z_ref, cosmo, max_num_spec=args.nspec,
         no_project=args.no_project, from_image=args.from_image)
     cf.npix = len(data)
     cf.data = data
@@ -248,7 +248,7 @@ def main():
             cf.lambda_abs2 = cf.lambda_abs
 
         data2, num_data2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2,
-            cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo, max_num_spec=args.nspec,
+            cf.nside, cf.lambda_abs2, cf.alpha2, cf.z_ref, cosmo, max_num_spec=args.nspec,
             no_project=args.no_project, from_image=args.from_image)
         cf.data2 = data2
         cf.num_data2 = num_data2

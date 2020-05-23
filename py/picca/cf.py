@@ -40,7 +40,7 @@ counter = None
 num_data = None
 num_data2 = None
 
-zref = None
+z_ref = None
 alpha= None
 alpha2= None
 alpha_abs= None
@@ -376,7 +376,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     rp_abs1_abs2 = abs(rp_abs1_abs2)
 
                 rt_abs1_abs2 = (rdm1_abs1[:,None]+rdm2_abs2)*sp.sin(ang/2)
-                zwe12 = (1+z1_abs1[:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2)**(alpha_abs[abs_igm2]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
+                zwe12 = (1+z1_abs1[:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2)**(alpha_abs[abs_igm2]-1)/(1+z_ref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                 bp_abs1_abs2 = sp.floor((rp_abs1_abs2-r_par_min)/(r_par_max-r_par_min)*npm).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/r_trans_max*ntm).astype(int)
@@ -446,7 +446,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                         rp_abs2_abs1 = abs(rp_abs2_abs1)
 
                     rt_abs2_abs1 = (rdm1_abs2[:,None]+rdm2_abs1)*sp.sin(ang/2)
-                    zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+zref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
+                    zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+z_ref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                     bp_abs2_abs1 = sp.floor((rp_abs2_abs1-r_par_min)/(r_par_max-r_par_min)*npm).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/r_trans_max*ntm).astype(int)
@@ -596,8 +596,8 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
     n2 = len(r2)
     i1 = np.arange(n1)
     i2 = np.arange(n2)
-    zw1 = ((1+z1)/(1+zref))**(alpha-1)
-    zw2 = ((1+z2)/(1+zref))**(alpha2-1)
+    zw1 = ((1+z1)/(1+z_ref))**(alpha-1)
+    zw2 = ((1+z2)/(1+z_ref))**(alpha2-1)
 
     bins = i1[:,None]+n1*i2
     rp = (r1[:,None]-r2)*sp.cos(ang/2)

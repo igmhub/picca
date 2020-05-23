@@ -101,7 +101,7 @@ if __name__ == '__main__':
     cf.num_bins_r_par             = args.np
     cf.num_bins_r_trans             = args.nt
     cf.nside           = args.nside
-    cf.zref            = args.z_ref
+    cf.z_ref            = args.z_ref
     cf.alpha           = args.z_evol
     cf.x_correlation   = False
     cf.ang_correlation = True
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
 
     ### Read data 1
-    data, num_data, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.zref, cosmo=None, max_num_spec=args.nspec, no_project=args.no_project)
+    data, num_data, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.z_ref, cosmo=None, max_num_spec=args.nspec, no_project=args.no_project)
     cf.npix = len(data)
     cf.data = data
     cf.num_data = num_data
@@ -129,7 +129,7 @@ if __name__ == '__main__':
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, num_data2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.zref, cosmo=None, max_num_spec=args.nspec, no_project=args.no_project)
+        data2, num_data2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.z_ref, cosmo=None, max_num_spec=args.nspec, no_project=args.no_project)
         cf.data2 = data2
         cf.num_data2 = num_data2
         userprint("")

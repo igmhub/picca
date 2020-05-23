@@ -132,7 +132,7 @@ if __name__ == '__main__':
     xcf.num_bins_r_trans = args.nt
     xcf.nside = args.nside
     xcf.rej = args.rej
-    xcf.zref = args.z_ref
+    xcf.z_ref = args.z_ref
     xcf.z_evol_del = args.z_evol_del
     xcf.z_evol_obj = args.z_evol_obj
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]

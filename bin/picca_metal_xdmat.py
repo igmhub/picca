@@ -121,7 +121,7 @@ if __name__ == '__main__':
     xcf.npm = args.np*args.coef_binning_model
     xcf.ntm = args.nt*args.coef_binning_model
     xcf.nside = args.nside
-    xcf.zref = args.z_ref
+    xcf.z_ref = args.z_ref
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.rej = args.rej
 
