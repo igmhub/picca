@@ -120,7 +120,7 @@ if __name__ == '__main__':
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    xcf.r_parallel_max = args.r_parallel_max
+    xcf.r_parallel_max = args.rp_max
     xcf.r_parallel_min = args.rp_min
     xcf.z_cut_max = args.z_cut_max
     xcf.z_cut_min = args.z_cut_min
