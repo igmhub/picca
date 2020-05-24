@@ -54,31 +54,53 @@ cosmo = None
 
 reject = None
 lock = None
-x_correlation = None
-ang_correlation = None
+x_correlation = False
+ang_correlation = False
 remove_same_half_plate_close_pairs = False
 
-def fill_neighs(pix):
-    for ipix in pix:
-        for d1 in data[ipix]:
-            npix = query_disc(nside,[d1.x_cart,d1.y_cart,d1.z_cart],ang_max,inclusive = True)
-            npix = [p for p in npix if p in data]
-            neighs = [d for p in npix for d in data[p] if d1.thingid != d.thingid]
-            ang = d1^neighs
-            w = ang<ang_max
-            neighs = sp.array(neighs)[w]
-            d1.dneighs = [d for d in neighs if d1.ra > d.ra and (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
+def fill_neighs(healpixs):
+    """Create and store a list of neighbours for each of the healpix.
 
-def fill_neighs_x_correlation(pix):
-    for ipix in pix:
-        for d1 in data[ipix]:
-            npix = query_disc(nside,[d1.x_cart,d1.y_cart,d1.z_cart],ang_max,inclusive = True)
-            npix = [p for p in npix if p in data2]
-            neighs = [d for p in npix for d in data2[p] if d1.thingid != d.thingid]
-            ang = d1^neighs
-            w = (ang<ang_max)
-            neighs = sp.array(neighs)[w]
-            d1.dneighs = [d for d in neighs if (d.z[-1]+d1.z[-1])/2.>=z_cut_min and (d.z[-1]+d1.z[-1])/2.<z_cut_max ]
+    Neighbours
+
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+    """
+    for healpix in healpixs:
+        for delta in data[healpix]:
+            healpix_neighbours = query_disc(nside,
+                                            [delta.x_cart,
+                                             delta.y_cart,
+                                             delta1.z_cart],
+                                            ang_max,
+                                            inclusive=True)
+            if x_correlation:
+                healpix_neighbours = [other_healpix
+                                      for other_healpix in healpix_neighbours
+                                      if other_healpix in data2]
+                neighbours = [other_delta
+                              for other_healpix in healpix_neighbours
+                              for other_delta in data2[other_healpix]
+                              if delta.thingid != other_delta.thingid]
+            else:
+                healpix_neighbours = [other_healpix
+                                      for other_healpix in healpix_neighbours
+                                      if other_healpix in data]
+                neighbours = [other_delta
+                              for other_healpix in healpix_neighbours
+                              for other_delta in data[other_healpix]
+                              if delta.thingid != other_delta.thingid]
+            ang = delta^neighbours
+            w = ang < ang_max
+            neighbours = np.array(neighbours)[w]
+            delta.dneighs = [
+                other_delta
+                for other_delta in neighbours
+                if (delta.ra > other_delta.ra and
+                    (other_delta.z[-1] + delta.z[-1])/2. >= z_cut_min and
+                    (other_delta.z[-1] + delta.z[-1])/2. < z_cut_max)
+            ]
 
 def cf(pix):
     xi = np.zeros(num_bins_r_par*num_bins_r_trans)

@@ -9,10 +9,7 @@ from picca.utils import userprint
 
 
 def corr_func(p):
-    if cf.x_correlation:
-        cf.fill_neighs_x_correlation(p)
-    else:
-        cf.fill_neighs(p)
+    cf.fill_neighs(p)
     tmp = cf.cf(p)
     return tmp
 

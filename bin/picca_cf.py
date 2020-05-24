@@ -12,11 +12,8 @@ from multiprocessing import Pool, Lock, cpu_count, Value
 from picca import constants, cf, utils, io
 from picca.utils import userprint
 
-def corr_func(p, in_dir2):
-    if in_dir2:
-        cf.fill_neighs_x_correlation(p)
-    else:
-        cf.fill_neighs(p)
+def corr_func(p):
+    cf.fill_neighs(p)
     tmp = cf.cf(p)
     return tmp
 
@@ -221,19 +218,26 @@ def main():
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
-    cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,
-        Ok=args.fid_Ok,wl=args.fid_wl)
+    cosmo = constants.Cosmo(Om=args.fid_Om,
+                            Or=args.fid_Or,
+                            Ok=args.fid_Ok,
+                            wl=args.fid_wl)
 
     ### Read data 1
-    data, num_data, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside,
-        cf.lambda_abs, cf.alpha, cf.z_ref, cosmo, max_num_spec=args.nspec,
-        no_project=args.no_project, from_image=args.from_image)
-    cf.npix = len(data)
+    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
+                                                  cf.nside,
+                                                  cf.lambda_abs,
+                                                  cf.alpha,
+                                                  cf.z_ref,
+                                                  cosmo,
+                                                  max_num_spec=args.nspec,
+                                                  no_project=args.no_project,
+                                                  from_image=args.from_image)
     cf.data = data
     cf.num_data = num_data
-    cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix)
+    cf.ang_max = utils.compute_ang_max(cosmo, cf.r_trans_max, z_min)
     userprint("")
-    userprint("done, npix = {}".format(cf.npix))
+    userprint("done, npix = {}".format(len(data)))
 
     ### Read data 2
     if args.in_dir2 or args.lambda_abs2 :
@@ -247,26 +251,32 @@ def main():
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, num_data2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2,
-            cf.nside, cf.lambda_abs2, cf.alpha2, cf.z_ref, cosmo, max_num_spec=args.nspec,
-            no_project=args.no_project, from_image=args.from_image)
+        data2, num_data2, z_min2, z_max2 = io.read_deltas(args.in_dir2,
+                                                          cf.nside,
+                                                          cf.lambda_abs2,
+                                                          cf.alpha2,
+                                                          cf.z_ref,
+                                                          cosmo,
+                                                          max_num_spec=args.nspec,
+                                                          no_project=args.no_project,
+                                                          from_image=args.from_image)
         cf.data2 = data2
         cf.num_data2 = num_data2
-        cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix,zmin_pix2)
+        cf.ang_max = utils.compute_ang_max(cosmo, cf.r_trans_max, z_min, z_min2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 
-    if not args.shuffle_distrib_forest_seed is None:
+    if args.shuffle_distrib_forest_seed is not None:
         cf.data = utils.shuffle_distrib_forests(cf.data,
-            args.shuffle_distrib_forest_seed)
+                                                args.shuffle_distrib_forest_seed)
 
-    cf.counter = Value('i',0)
+    cf.counter = Value('i', 0)
     cf.lock = Lock()
     cpu_data = {}
     for p in data.keys():
         cpu_data[p] = [p]
     pool = Pool(processes=args.nproc)
-    cfs = pool.starmap(corr_func, [(p, args.in_dir2) for p in sorted(cpu_data.values())])
+    cfs = pool.map(corr_func, sorted(cpu_data.values()))
     pool.close()
 
 

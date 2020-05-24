@@ -8,10 +8,7 @@ from picca import constants, cf, utils, io
 from picca.utils import userprint
 
 def calc_dmat(p):
-    if args.in_dir2:
-        cf.fill_neighs_x_correlation(p)
-    else:
-        cf.fill_neighs(p)
+    cf.fill_neighs(p)
     sp.random.seed(p[0])
     tmp = cf.dmat(p)
     return tmp
