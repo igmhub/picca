@@ -606,22 +606,38 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
     userprint("")
 
     return
-def compute_ang_max(cosmo,r_trans_max,zmin,zmin2=None):
-    '''
-    Compute the maximum angle given by the maximum transverse
-    separation the correlation should be calculated to
-    '''
 
-    if zmin2 is None:
-        zmin2 = zmin
 
-    rmin1 = cosmo.get_dist_m(zmin)
-    rmin2 = cosmo.get_dist_m(zmin2)
+def compute_ang_max(cosmo, r_trans_max, z_min, z_min2=None):
+    """Computes the maximum anglular separation the correlation should be
+    calculated to.
 
-    if rmin1+rmin2<r_trans_max:
-        ang_max = sp.pi
+    This angle is given by the maximum transverse separation and the fiducial
+    cosmology
+
+    Args:
+        comso: constants.Cosmo
+            Fiducial cosmology
+        r_trans_max: float
+            Maximum transverse separation
+        z_min: float
+            Minimum redshift of the first set of data
+        z_min2: float or None - default: None
+            Minimum redshift of the second set of data. If None, use z_min
+
+    Returns:
+        The maximum anglular separation
+    """
+    if z_min2 is None:
+        z_min2 = z_min
+
+    r_min = cosmo.get_dist_m(z_min)
+    r_min2 = cosmo.get_dist_m(z_min2)
+
+    if r_min + r_min2 < r_trans_max:
+        ang_max = np.pi
     else:
-        ang_max = 2.*sp.arcsin(r_trans_max/(rmin1+rmin2))
+        ang_max = 2.*np.arcsin(r_trans_max/(r_min + r_min2))
 
     return ang_max
 
