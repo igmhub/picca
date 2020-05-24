@@ -116,7 +116,7 @@ if __name__ == '__main__':
     xcf.z_ref = args.z_ref
     xcf.alpha = args.z_evol_del
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
-    xcf.rej = args.rej
+    xcf.reject = args.rej
 
     cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
@@ -198,7 +198,7 @@ if __name__ == '__main__':
         {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
-        {'name':'REJ','value':xcf.rej,'comment':'Rejection factor'},
+        {'name':'REJ','value':xcf.reject,'comment':'Rejection factor'},
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]

@@ -139,7 +139,7 @@ if __name__ == '__main__':
     cf.alpha = args.z_evol
     cf.alpha2 = args.z_evol
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
-    cf.rej = args.rej
+    cf.reject = args.rej
     cf.max_diagram = args.max_diagram
 
     ### Cosmo
@@ -280,7 +280,7 @@ if __name__ == '__main__':
         {'name':'NT','value':cf.num_bins_r_trans,'comment':'Number of bins in r-transverse'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
-        {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
+        {'name':'REJ','value':cf.reject,'comment':'Rejection factor'},
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]

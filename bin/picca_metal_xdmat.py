@@ -123,7 +123,7 @@ if __name__ == '__main__':
     xcf.nside = args.nside
     xcf.z_ref = args.z_ref
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
-    xcf.rej = args.rej
+    xcf.reject = args.rej
 
     xcf.alpha_abs = {}
     xcf.alpha_abs[args.lambda_abs] = args.z_evol_del
@@ -227,7 +227,7 @@ if __name__ == '__main__':
         {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
         {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
-        {'name':'REJ','value':xcf.rej,'comment':'Rejection factor'},
+        {'name':'REJ','value':xcf.reject,'comment':'Rejection factor'},
     ]
 
     len_names = sp.array([ len(s) for s in names ]).max()

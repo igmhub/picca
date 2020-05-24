@@ -41,8 +41,8 @@ num_data = None
 num_data2 = None
 
 z_ref = None
-alpha= None
-alpha2= None
+alpha = None
+alpha2 = None
 alpha_abs= None
 lambda_abs = None
 lambda_abs2 = None
@@ -50,9 +50,9 @@ lambda_abs2 = None
 data = None
 data2 = None
 
-cosmo=None
+cosmo = None
 
-rej = None
+reject = None
 lock = None
 x_correlation = None
 ang_correlation = None
@@ -184,7 +184,7 @@ def dmat(pix):
             l1 = d1.log_lambda
             z1 = d1.z
             r = sp.random.rand(len(d1.dneighs))
-            w=r>rej
+            w=r>reject
             npairs += len(d1.dneighs)
             npairs_used += w.sum()
             for d2 in sp.array(d1.dneighs)[w]:
@@ -314,7 +314,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 counter.value += 1
 
             r = sp.random.rand(len(d1.dneighs))
-            w=r>rej
+            w=r>reject
             npairs += len(d1.dneighs)
             npairs_used += w.sum()
             for d2 in sp.array(d1.dneighs)[w]:
@@ -540,13 +540,13 @@ def wickT(pix):
     for ipix in pix:
 
         r = sp.random.rand(len(data[ipix]))
-        w = r>rej
+        w = r>reject
         npairs += len(data[ipix])
         npairs_used += w.sum()
         if w.sum()==0: continue
 
         for d1 in [ td for ti,td in enumerate(data[ipix]) if w[ti] ]:
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data/(1.-rej),3)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data/(1.-reject),3)),end="")
             with lock:
                 counter.value += 1
             if len(d1.dneighs)==0: continue

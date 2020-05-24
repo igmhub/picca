@@ -132,7 +132,7 @@ if __name__ == '__main__':
     cf.nside = args.nside
     cf.z_ref = args.z_ref
     cf.alpha = args.z_evol
-    cf.rej = args.rej
+    cf.reject = args.rej
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
@@ -260,7 +260,7 @@ if __name__ == '__main__':
         {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
         {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
-        {'name':'REJ','value':cf.rej,'comment':'Rejection factor'},
+        {'name':'REJ','value':cf.reject,'comment':'Rejection factor'},
         {'name':'ALPHAMET','value':args.metal_alpha,'comment':'Evolution of metal bias'},
     ]
 

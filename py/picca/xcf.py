@@ -30,7 +30,7 @@ alpha_abs= None
 dels = None
 objs = None
 
-rej = None
+reject = None
 lock = None
 
 cosmo=None
@@ -146,7 +146,7 @@ def dmat(pix):
             l1 = d1.log_lambda
             z1 = d1.z
             r = sp.random.rand(len(d1.qneighs))
-            w=r>rej
+            w=r>reject
             if w.sum()==0:continue
             npairs += len(d1.qneighs)
             npairs_used += w.sum()
@@ -238,7 +238,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 counter.value += 1
 
             r = sp.random.rand(len(d.qneighs))
-            w=r>rej
+            w=r>reject
             npairs += len(d.qneighs)
             npairs_used += w.sum()
 
@@ -337,12 +337,12 @@ def wickT(pix):
 
         npairs += len(dels[ipix])
         r = sp.random.rand(len(dels[ipix]))
-        w = r>rej
+        w = r>reject
         npairs_used += w.sum()
         if w.sum()==0: continue
 
         for d1 in [ td for ti,td in enumerate(dels[ipix]) if w[ti] ]:
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndels/(1.-rej),3)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndels/(1.-reject),3)),end="")
             with lock:
                 counter.value += 1
             if d1.qneighs.size==0: continue

@@ -116,7 +116,7 @@ def cf(b,time, zint, outdir, email=None, fidOm = None, fidPk = None, fidOr = Non
         fout.write(srun)
         fout.close()
 
-def dmat(b,time, zint, outdir, email=None, rej=0.99, fidOm=None, fidOr = None):
+def dmat(b,time, zint, outdir, email=None, reject=0.99, fidOm=None, fidOr = None):
     '''
     Writes the .batch files to submit the picca_dmat.py script
     and adds them to the b.dmat script
@@ -134,7 +134,7 @@ def dmat(b,time, zint, outdir, email=None, rej=0.99, fidOm=None, fidOr = None):
         header = get_header(time, name=out, email=email)
         srun = header + "srun -n 1 -c 64 picca_dmat.py --in-dir {}/deltas/ ".format(outdir) +\
                 "--z-cut-min {} --z-cut-max {} ".format(zmin,zmax) +\
-                "--out {}/{} --rej {} --nproc 32 --fid-Om {} --fid-Or {}\n".format(outdir,out,rej,fidOm,fidOr)
+                "--out {}/{} --rej {} --nproc 32 --fid-Om {} --fid-Or {}\n".format(outdir,out,reject,fidOm,fidOr)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.dmat.append(basename(fbatch))
 
@@ -176,7 +176,7 @@ def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None, fidOr = No
         fout.write(srun)
         fout.close()
 
-def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None, fidOr = None):
+def xdmat(b,time, drq, zint, outdir, email=None, reject=0.95,fidOm=None, fidOr = None):
     '''
     Writes the .batch files to submit the picca_xdmat.py script
     and adds if to the b.xdmat list
@@ -195,7 +195,7 @@ def xdmat(b,time, drq, zint, outdir, email=None, rej=0.95,fidOm=None, fidOr = No
         srun = header + "srun -n 1 -c 64 picca_xdmat.py " +\
             "--drq {} --in-dir {}/deltas/ ".format(drq,outdir) +\
             "--z-evol-obj 1.44 --z-cut-min {} --z-cut-max {} ".format(zmin, zmax) +\
-            "--out {}/{} --rej {} --nproc 32 --fid-Om {} --fid-Or {}\n".format(outdir,out,rej,fidOm,fidOr)
+            "--out {}/{} --rej {} --nproc 32 --fid-Om {} --fid-Or {}\n".format(outdir,out,reject,fidOm,fidOr)
         fbatch = outdir+"/"+out.replace(".fits",".batch")
         b.xdmat.append(basename(fbatch))
 
