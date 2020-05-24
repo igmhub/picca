@@ -72,7 +72,7 @@ def fill_neighs(healpixs):
             healpix_neighbours = query_disc(nside,
                                             [delta.x_cart,
                                              delta.y_cart,
-                                             delta1.z_cart],
+                                             delta.z_cart],
                                             ang_max,
                                             inclusive=True)
             if x_correlation:
@@ -94,7 +94,7 @@ def fill_neighs(healpixs):
             ang = delta^neighbours
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
-            delta.dneighs = [
+            delta.neighbours = [
                 other_delta
                 for other_delta in neighbours
                 if (delta.ra > other_delta.ra and
@@ -115,7 +115,7 @@ def cf(pix):
             userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data,2)),end="")
             with lock:
                 counter.value += 1
-            for d2 in d1.dneighs:
+            for d2 in d1.neighbours:
                 ang = d1^d2
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fiberid<=500 and d2.fiberid<=500) or (d1.fiberid>500 and d2.fiberid>500) )
@@ -205,11 +205,11 @@ def dmat(pix):
             w1 = d1.weights
             l1 = d1.log_lambda
             z1 = d1.z
-            r = sp.random.rand(len(d1.dneighs))
+            r = sp.random.rand(len(d1.neighbours))
             w=r>reject
-            npairs += len(d1.dneighs)
+            npairs += len(d1.neighbours)
             npairs_used += w.sum()
-            for d2 in sp.array(d1.dneighs)[w]:
+            for d2 in sp.array(d1.neighbours)[w]:
                 same_half_plate = (d1.plate == d2.plate) and\
                         ( (d1.fiberid<=500 and d2.fiberid<=500) or (d1.fiberid>500 and d2.fiberid>500) )
                 order2 = d2.order
@@ -335,11 +335,11 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
             with lock:
                 counter.value += 1
 
-            r = sp.random.rand(len(d1.dneighs))
+            r = sp.random.rand(len(d1.neighbours))
             w=r>reject
-            npairs += len(d1.dneighs)
+            npairs += len(d1.neighbours)
             npairs_used += w.sum()
-            for d2 in sp.array(d1.dneighs)[w]:
+            for d2 in sp.array(d1.neighbours)[w]:
                 r1 = d1.r_comov
                 rdm1 = d1.dist_m
                 z1_abs1 = 10**d1.log_lambda/constants.ABSORBER_IGM[abs_igm1]-1
@@ -571,7 +571,7 @@ def wickT(pix):
             userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data/(1.-reject),3)),end="")
             with lock:
                 counter.value += 1
-            if len(d1.dneighs)==0: continue
+            if len(d1.neighbours)==0: continue
 
             v1 = v1d[d1.fname](d1.log_lambda)
             w1 = d1.weights
@@ -579,7 +579,7 @@ def wickT(pix):
             r1 = d1.r_comov
             z1 = d1.z
 
-            for i2,d2 in enumerate(d1.dneighs):
+            for i2,d2 in enumerate(d1.neighbours):
                 ang12 = d1^d2
 
                 v2 = v1d[d2.fname](d2.log_lambda)
@@ -592,7 +592,7 @@ def wickT(pix):
                 if max_diagram<=3: continue
 
                 ### d3 and d2 have the same 'fname'
-                for d3 in d1.dneighs[:i2]:
+                for d3 in d1.neighbours[:i2]:
                     ang13 = d1^d3
                     ang23 = d2^d3
 

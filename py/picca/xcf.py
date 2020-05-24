@@ -49,7 +49,7 @@ def fill_neighs(pix):
                 w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < r_par_max
                 w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > r_par_min
             neighs = sp.array(neighs)[w]
-            d.qneighs = sp.array([q for q in neighs if (d.z[-1]+q.z_qso)/2.>=z_cut_min and (d.z[-1]+q.z_qso)/2.<z_cut_max])
+            d.neighbours = sp.array([q for q in neighs if (d.z[-1]+q.z_qso)/2.>=z_cut_min and (d.z[-1]+q.z_qso)/2.<z_cut_max])
 
 def xcf(pix):
     xi = np.zeros(num_bins_r_par*num_bins_r_trans)
@@ -64,16 +64,16 @@ def xcf(pix):
             with lock:
                 counter.value +=1
             userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
-            if (d.qneighs.size != 0):
-                ang = d^d.qneighs
-                z_qso = [q.z_qso for q in d.qneighs]
-                we_qso = [q.weights for q in d.qneighs]
+            if (d.neighbours.size != 0):
+                ang = d^d.neighbours
+                z_qso = [q.z_qso for q in d.neighbours]
+                we_qso = [q.weights for q in d.neighbours]
                 if ang_correlation:
-                    l_qso = [10.**q.log_lambda for q in d.qneighs]
+                    l_qso = [10.**q.log_lambda for q in d.neighbours]
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.delta,z_qso,l_qso,l_qso,we_qso,ang)
                 else:
-                    rc_qso = [q.r_comov for q in d.qneighs]
-                    rdm_qso = [q.dist_m for q in d.qneighs]
+                    rc_qso = [q.r_comov for q in d.neighbours]
+                    rdm_qso = [q.dist_m for q in d.neighbours]
                     cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.dist_m,d.weights,d.delta,z_qso,rc_qso,rdm_qso,we_qso,ang)
 
                 xi[:len(cd)]+=cd
@@ -145,12 +145,12 @@ def dmat(pix):
             w1 = d1.weights
             l1 = d1.log_lambda
             z1 = d1.z
-            r = sp.random.rand(len(d1.qneighs))
+            r = sp.random.rand(len(d1.neighbours))
             w=r>reject
             if w.sum()==0:continue
-            npairs += len(d1.qneighs)
+            npairs += len(d1.neighbours)
             npairs_used += w.sum()
-            neighs = d1.qneighs[w]
+            neighs = d1.neighbours[w]
             ang = d1^neighs
             r2 = [q.r_comov for q in neighs]
             rdm2 = [q.dist_m for q in neighs]
@@ -237,9 +237,9 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 userprint("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)),end="")
                 counter.value += 1
 
-            r = sp.random.rand(len(d.qneighs))
+            r = sp.random.rand(len(d.neighbours))
             w=r>reject
-            npairs += len(d.qneighs)
+            npairs += len(d.neighbours)
             npairs_used += w.sum()
 
             rd = d.r_comov
@@ -258,7 +258,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
             rdm_abs = rdm_abs[wzcut]
             if rd.size==0: continue
 
-            for q in sp.array(d.qneighs)[w]:
+            for q in sp.array(d.neighbours)[w]:
                 ang = d^q
 
                 rq = q.r_comov
@@ -296,7 +296,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 zeff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
                 weff[:len(c)]+=c
-            setattr(d,"qneighs",None)
+            setattr(d,"neighbours",None)
 
     return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 
@@ -345,7 +345,7 @@ def wickT(pix):
             userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndels/(1.-reject),3)),end="")
             with lock:
                 counter.value += 1
-            if d1.qneighs.size==0: continue
+            if d1.neighbours.size==0: continue
 
             v1 = v1d[d1.fname](d1.log_lambda)
             w1 = d1.weights
@@ -353,7 +353,7 @@ def wickT(pix):
             r1 = d1.r_comov
             z1 = d1.z
 
-            neighs = d1.qneighs
+            neighs = d1.neighbours
             ang12 = d1^neighs
             r2 = sp.array([q2.r_comov for q2 in neighs])
             z2 = sp.array([q2.z_qso for q2 in neighs])
@@ -365,28 +365,28 @@ def wickT(pix):
             if (cfWick is None) or (max_diagram<=4): continue
             thingid2 = sp.array([q2.thingid for q2 in neighs])
             for d3 in sp.array(d1.dneighs):
-                if d3.qneighs.size==0: continue
+                if d3.neighbours.size==0: continue
 
                 ang13 = d1^d3
 
                 r3 = d3.r_comov
                 w3 = d3.weights
 
-                neighs = d3.qneighs
+                neighs = d3.neighbours
                 ang34 = d3^neighs
                 r4 = sp.array([q4.r_comov for q4 in neighs])
                 w4 = sp.array([q4.weights for q4 in neighs])
                 thingid4 = sp.array([q4.thingid for q4 in neighs])
 
                 if max_diagram==5:
-                    w = sp.in1d(d1.qneighs,d3.qneighs)
+                    w = sp.in1d(d1.neighbours,d3.neighbours)
                     if w.sum()==0: continue
                     t_ang12 = ang12[w]
                     t_r2 = r2[w]
                     t_w2 = w2[w]
                     t_thingid2 = thingid2[w]
 
-                    w = sp.in1d(d3.qneighs,d1.qneighs)
+                    w = sp.in1d(d3.neighbours,d1.neighbours)
                     if w.sum()==0: continue
                     ang34 = ang34[w]
                     r4 = r4[w]

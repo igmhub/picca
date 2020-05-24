@@ -954,6 +954,8 @@ class Delta(QSO):
         dist_m: array of floats or None
             Angular diameter distance to object. Overloaded from parent
             class
+        neighbours: list of Delta or QSO or None
+            Neighbouring deltas/quasars
 
     Methods:
         __init__: Initializes class instances.
@@ -1025,6 +1027,9 @@ class Delta(QSO):
         self.z = None
         self.r_comov = None
         self.dist_m = None
+
+        # variables computed in function cf.fill_neighs
+        self.neighbours = None
 
     @classmethod
     def from_forest(cls,
