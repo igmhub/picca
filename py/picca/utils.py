@@ -8,6 +8,8 @@ import healpy
 import scipy.interpolate as interpolate
 import iminuit
 
+from picca.data import Delta
+
 def userprint(*args, **kwds):
     """Defines an extension of the print function.
 
@@ -441,7 +443,6 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
 
     return
 def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,delta_log_lambda=3.e-4,nspec=None):
-    from picca.data import Delta
     """Convert desi transmission files to picca delta files
 
     Args:
@@ -641,46 +642,51 @@ def compute_ang_max(cosmo, r_trans_max, z_min, z_min2=None):
 
     return ang_max
 
-def shuffle_distrib_forests(obj,seed):
-    '''Shuffle the distribution of forests by assiging the angular
+def shuffle_distrib_forests(data, seed):
+    """Shuffles the distribution of forests by assiging the angular
         positions from another forest
 
     Args:
-        obj (dic): Catalog of forests
-        seed (int): seed for the given realization of the shuffle
+        data: dict
+            A dictionary with the data. Keys are the healpix numbers of each
+            spectrum. Values are lists of delta instances.
+        seed: int
+            Seed for the given realization of the shuffle
 
     Returns:
-        obj (dic): Catalog of forest
-    '''
+        The shuffled catalogue
+    """
 
-    userprint('INFO: Shuffling the forests angular position with seed {}'.format(seed))
+    userprint(("INFO: Shuffling the forests angular position with seed "
+               "{}").format(seed))
 
-    dic = {}
-    lst_p = ['ra','dec','x_cart','y_cart','z_cart','cos_dec','thingid']
-    dic['pix'] = []
-    for p in lst_p:
-        dic[p] = []
+    data_info = {}
+    param_list = ['ra', 'dec', 'x_cart', 'y_cart', 'z_cart', 'cos_dec',
+                  'thingid']
+    data_info['healpix'] = []
+    for param in param_list:
+        data_info[param] = []
 
-    for pix, oss in obj.items():
-        for o in oss:
-            dic['pix'].append(pix)
-            for p in lst_p:
-                dic[p].append(getattr(o, p))
+    for healpix, deltas in data.items():
+        for delta in deltas:
+            data_info['healpix'].append(healpix)
+            for param in param_list:
+                data_info[param].append(getattr(delta, param))
 
-    sp.random.seed(seed)
-    idx = np.arange(len(dic['ra']))
-    sp.random.shuffle(idx)
+    np.random.seed(seed)
+    new_index = np.arange(len(data_info['ra']))
+    np.random.shuffle(new_index)
 
-    i = 0
+    index = 0
     data_shuffled = {}
-    for oss in obj.values():
-        for o in oss:
-            for p in lst_p:
-                setattr(o,p,dic[p][idx[i]])
-            if not dic['pix'][idx[i]] in data_shuffled:
-                data_shuffled[dic['pix'][idx[i]]]=[]
-            data_shuffled[dic['pix'][idx[i]]].append(o)
-            i += 1
+    for deltas in data.values():
+        for delta in deltas:
+            for param in param_list:
+                setattr(delta, param, data_info[param][new_index[index]])
+            if not data_info['healpix'][new_index[index]] in data_shuffled:
+                data_shuffled[data_info['healpix'][new_index[index]]] = []
+            data_shuffled[data_info['healpix'][new_index[index]]].append(delta)
+            index += 1
 
     return data_shuffled
 
