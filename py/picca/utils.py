@@ -8,7 +8,6 @@ import healpy
 import scipy.interpolate as interpolate
 import iminuit
 
-from picca.data import Delta
 
 def userprint(*args, **kwds):
     """Defines an extension of the print function.
@@ -20,7 +19,18 @@ def userprint(*args, **kwds):
     print(*args,**kwds)
     sys.stdout.flush()
 
-def cov(da,weights):
+
+def cov(da, weights):
+    """Computes the covariance matrix
+
+    Args:
+        da:
+
+        weights:
+
+    Returns:
+        The covariance matrix
+    """
 
     mda = (da*weights).sum(axis=0)
     swe = weights.sum(axis=0)
@@ -443,6 +453,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
 
     return
 def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,delta_log_lambda=3.e-4,nspec=None):
+    from picca.data import Delta
     """Convert desi transmission files to picca delta files
 
     Args:
@@ -567,7 +578,7 @@ def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None
             cll = cll[ww]
             cfl = cfl[ww]/civ[ww]
             civ = civ[ww]
-            deltas[pixnum].append(delta(thingid[i],ra[i],dec[i],z[i],thingid[i],thingid[i],thingid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
+            deltas[pixnum].append(Delta(thingid[i],ra[i],dec[i],z[i],thingid[i],thingid[i],thingid[i],cll,civ,None,cfl,1,None,None,None,None,None,None))
         if not nspec is None and sp.sum([ len(deltas[p]) for p in deltas.keys()])>=nspec: break
 
     userprint('\n')
@@ -641,6 +652,7 @@ def compute_ang_max(cosmo, r_trans_max, z_min, z_min2=None):
         ang_max = 2.*np.arcsin(r_trans_max/(r_min + r_min2))
 
     return ang_max
+
 
 def shuffle_distrib_forests(data, seed):
     """Shuffles the distribution of forests by assiging the angular
