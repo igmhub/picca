@@ -142,7 +142,7 @@ def cf(healpixs):
             with lock:
                 counter.value += 1
             for delta2 in delta1.neighbours:
-                ang = delta^delta2
+                ang = delta1^delta2
                 same_half_plate = ((delta1.plate == delta2.plate) and
                                    ((delta1.fiberid <= 500 and
                                      delta2.fiberid <= 500) or
