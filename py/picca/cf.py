@@ -111,7 +111,7 @@ def fill_neighs(healpixs):
                         (other_delta.z[-1] + delta.z[-1])/2. < z_cut_max)
                 ]
 
-def cf(healpixs):
+def compute_xi(healpixs):
     """Computes the correlation function for each of the healpix.
 
     Args:
@@ -125,7 +125,7 @@ def cf(healpixs):
             r_par: Parallel distance of the correlation function pixels
             r_trans: Transverse distance of the correlation function pixels
             z: Redshift of the correlation function pixels
-            nb:
+            num_pairs: Number of pairs in the correlation function pixels
     """
     xi = np.zeros(num_bins_r_par*num_bins_r_trans)
     weights = np.zeros(num_bins_r_par*num_bins_r_trans)
@@ -156,37 +156,37 @@ def cf(healpixs):
                      rebin_r_par,
                      rebin_r_trans,
                      rebin_z,
-                     rebin_num_pairs) = fast_cf(delta1.z,
-                                                10.**delta1.log_lambda,
-                                                10.**delta1.log_lambda,
-                                                delta1.weights,
-                                                delta1.delta,
-                                                delta2.z,
-                                                10.**delta2.
-                                                log_lambda,
-                                                10.**delta2.log_lambda,
-                                                delta2.weights,
-                                                delta2.delta,
-                                                ang,
-                                                same_half_plate)
+                     rebin_num_pairs) = compute_xi_forest_pairs(delta1.z,
+                                                                10.**delta1.log_lambda,
+                                                                10.**delta1.log_lambda,
+                                                                delta1.weights,
+                                                                delta1.delta,
+                                                                delta2.z,
+                                                                10.**delta2.
+                                                                log_lambda,
+                                                                10.**delta2.log_lambda,
+                                                                delta2.weights,
+                                                                delta2.delta,
+                                                                ang,
+                                                                same_half_plate)
                 else:
                     (rebin_weight,
                      rebin_xi,
                      rebin_r_par,
                      rebin_r_trans,
                      rebin_z,
-                     rebin_num_pairs) = fast_cf(delta1.z,
-                                                delta1.r_comov,
-                                                delta1.dist_m,
-                                                delta1.weights,
-                                                delta1.delta,
-                                                delta2.z,
-                                                delta2.r_comov,
-                                                delta2.dist_m,
-                                                delta2.weights,
-                                                delta2.delta,
-                                                ang,
-                                                same_half_plate)
+                     rebin_num_pairs) = compute_xi_forest_pairs(delta1.z,
+                                                                delta1.r_comov,
+                                                                delta1.dist_m,
+                                                                delta1.weights,
+                                                                delta1.delta,
+                                                                delta2.z,
+                                                                delta2.r_comov,
+                                                                delta2.dist_m,
+                                                                delta2.weights,
+                                                                delta2.delta,
+                                                                ang,
+                                                                same_half_plate)
 
                 xi[:len(rebin_xi)] += rebin_xi
                 weights[:len(rebin_weight)] += rebin_weight
@@ -205,8 +205,9 @@ def cf(healpixs):
 
 
 @jit
-def fast_cf(z1, r_comov1, dist_m1, weights1, delta1, z2, r_comov2, dist_m2,
-            weights2, delta2, ang, same_half_plate):
+def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
+                            r_comov2, dist_m2, weights2, delta2, ang,
+                            same_half_plate):
     """Computes the contribution of a given pair of forests to the correlation
     function.
 
@@ -295,7 +296,21 @@ def fast_cf(z1, r_comov1, dist_m1, weights1, delta1, z2, r_comov2, dist_m2,
 
 
 def dmat(pix):
+    """Computes the correlation function for each of the healpix.
 
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+
+    Returns:
+        The following variables:
+            weights: Total weights in the correlation function pixels
+            xi: The correlation function
+            r_par: Parallel distance of the correlation function pixels
+            r_trans: Transverse distance of the correlation function pixels
+            z: Redshift of the correlation function pixels
+            num_pairs: Number of pairs in the correlation function pixels
+    """
     dm = np.zeros(num_bins_r_par*num_bins_r_trans*ntm*npm)
     wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
     rpeff = np.zeros(ntm*npm)
@@ -333,7 +348,7 @@ def dmat(pix):
                 fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
             setattr(d1,"neighs",None)
 
-    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return wdm, dm.reshape(num_bins_r_par*num_bins_r_trans, npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
 def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 

@@ -10,7 +10,7 @@ from picca.utils import userprint
 
 def corr_func(p):
     cf.fill_neighs(p)
-    tmp = cf.cf(p)
+    tmp = cf.compute_xi(p)
     return tmp
 
 if __name__ == '__main__':

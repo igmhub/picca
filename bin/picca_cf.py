@@ -14,7 +14,7 @@ from picca.utils import userprint
 
 def corr_func(p):
     cf.fill_neighs(p)
-    tmp = cf.cf(p)
+    tmp = cf.compute_xi_forest_pairs(p)
     return tmp
 
 def main():
