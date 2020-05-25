@@ -132,23 +132,29 @@ def cf(healpixs):
     r_par = np.zeros(num_bins_r_par*num_bins_r_trans)
     r_trans = np.zeros(num_bins_r_par*num_bins_r_trans)
     z = np.zeros(num_bins_r_par*num_bins_r_trans)
-    nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
+    nb = np.zeros(num_bins_r_par*num_bins_r_trans, dtype=np.int64)
 
     for healpix in healpixs:
         for delta in data[healpix]:
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data,2)),end="")
+            userprint(("\rcomputing xi: "
+                       "{}%").format(round(counter.value*100./num_data, 2)),
+                      end="")
             with lock:
                 counter.value += 1
-            for d2 in delta.neighbours:
-                ang = delta^d2
-                same_half_plate = (delta.plate == d2.plate) and\
-                        ( (delta.fiberid<=500 and d2.fiberid<=500) or (delta.fiberid>500 and d2.fiberid>500) )
+            for delta2 in delta.neighbours:
+                ang = delta^delta2
+                same_half_plate = ((delta.plate == delta2.plate) and
+                                   ((delta.fiberid <= 500 and
+                                     delta2.fiberid <= 500) or
+                                    (delta.fiberid > 500 and delta2.fiberid>500)
+                                   )
+                                  )
                 if ang_correlation:
                     cw,cd,crp,crt,cz,cnb = fast_cf(delta.z,10.**delta.log_lambda,10.**delta.log_lambda,delta.weights,delta.delta,
-                        d2.z,10.**d2.log_lambda,10.**d2.log_lambda,d2.weights,d2.delta,ang,same_half_plate)
+                        delta2.z,10.**delta2.log_lambda,10.**delta2.log_lambda,delta2.weights,delta2.delta,ang,same_half_plate)
                 else:
                     cw,cd,crp,crt,cz,cnb = fast_cf(delta.z,delta.r_comov,delta.dist_m,delta.weights,delta.delta,
-                        d2.z,d2.r_comov,d2.dist_m,d2.weights,d2.delta,ang,same_half_plate)
+                        delta2.z,delta2.r_comov,delta2.dist_m,delta2.weights,delta2.delta,ang,same_half_plate)
 
                 xi[:len(cd)]+=cd
                 weights[:len(cw)]+=cw
@@ -156,20 +162,20 @@ def cf(healpixs):
                 r_trans[:len(crp)]+=crt
                 z[:len(crp)]+=cz
                 nb[:len(cnb)]+=cnb.astype(int)
-            setattr(delta,"neighbours",None)
+            setattr(delta, "neighbours", None)
 
-    w = weights>0
-    xi[w]/=weights[w]
-    r_par[w]/=weights[w]
-    r_trans[w]/=weights[w]
-    z[w]/=weights[w]
-    return weights,xi,r_par,r_trans,z,nb
+    w = weights > 0
+    xi[w] /= weights[w]
+    r_par[w] /= weights[w]
+    r_trans[w] /= weights[w]
+    z[w] /= weights[w]
+    return weights, xi, r_par, r_trans, z, nb
 
 
 @jit
-def fast_cf(z1,r1,rdm1,w1,delta, z2,r2,rdm2,w2,d2, ang,same_half_plate):
+def fast_cf(z1,r1,rdm1,w1,delta, z2,r2,rdm2,w2,delta2, ang,same_half_plate):
     wd1 = delta*w1
-    wd2 = d2*w2
+    wd2 = delta2*w2
     if ang_correlation:
         r_par = r1/r2[:,None]
         if not x_correlation:
