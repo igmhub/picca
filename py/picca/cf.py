@@ -194,7 +194,7 @@ def cf(healpixs):
                 r_trans[:len(rebin_r_trans)] += rebin_r_trans
                 z[:len(rebin_z)] += rebin_z
                 num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs.astype(int)
-            setattr(delta, "neighbours", None)
+            setattr(delta1, "neighbours", None)
 
     w = weights > 0
     xi[w] /= weights[w]
