@@ -58,6 +58,7 @@ x_correlation = False
 ang_correlation = False
 remove_same_half_plate_close_pairs = False
 
+
 def fill_neighs(healpixs):
     """Create and store a list of neighbours for each of the healpix.
 
@@ -98,18 +99,17 @@ def fill_neighs(healpixs):
                 delta.neighbours = [
                     other_delta
                     for other_delta in neighbours
-                    if (delta.ra > other_delta.ra and
-                        (other_delta.z[-1] + delta.z[-1])/2. >= z_cut_min and
+                    if ((other_delta.z[-1] + delta.z[-1])/2. >= z_cut_min and
                         (other_delta.z[-1] + delta.z[-1])/2. < z_cut_max)
                 ]
             else:
                 delta.neighbours = [
                     other_delta
                     for other_delta in neighbours
-                    if ((other_delta.z[-1] + delta.z[-1])/2. >= z_cut_min and
+                    if (delta.ra > other_delta.ra and
+                        (other_delta.z[-1] + delta.z[-1])/2. >= z_cut_min and
                         (other_delta.z[-1] + delta.z[-1])/2. < z_cut_max)
                 ]
-
 
 def cf(pix):
     xi = np.zeros(num_bins_r_par*num_bins_r_trans)
