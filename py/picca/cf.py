@@ -205,8 +205,8 @@ def cf(healpixs):
 
 
 @jit
-def fast_cf(z1, r_comov1, dist_m1, weights1, delta1, z2, r_comov2, dist_m2, w2,
-            delta2, ang, same_half_plate):
+def fast_cf(z1, r_comov1, dist_m1, weights1, delta1, z2, r_comov2, dist_m2,
+            weights2, delta2, ang, same_half_plate):
     """Computes the contribution of a given pair of forests to the correlation
     function.
 
