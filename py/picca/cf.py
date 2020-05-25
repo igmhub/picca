@@ -94,13 +94,22 @@ def fill_neighs(healpixs):
             ang = delta^neighbours
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
-            delta.neighbours = [
-                other_delta
-                for other_delta in neighbours
-                if (delta.ra > other_delta.ra and
-                    (other_delta.z[-1] + delta.z[-1])/2. >= z_cut_min and
-                    (other_delta.z[-1] + delta.z[-1])/2. < z_cut_max)
-            ]
+            if x_correlation:
+                delta.neighbours = [
+                    other_delta
+                    for other_delta in neighbours
+                    if (delta.ra > other_delta.ra and
+                        (other_delta.z[-1] + delta.z[-1])/2. >= z_cut_min and
+                        (other_delta.z[-1] + delta.z[-1])/2. < z_cut_max)
+                ]
+            else:
+                delta.neighbours = [
+                    other_delta
+                    for other_delta in neighbours
+                    if ((other_delta.z[-1] + delta.z[-1])/2. >= z_cut_min and
+                        (other_delta.z[-1] + delta.z[-1])/2. < z_cut_max)
+                ]
+
 
 def cf(pix):
     xi = np.zeros(num_bins_r_par*num_bins_r_trans)
