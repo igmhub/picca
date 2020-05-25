@@ -211,7 +211,7 @@ if __name__ == '__main__':
         dm_all.append(dm)
         wdm_all.append(wdm)
         rp_all.append(r_par)
-        r_trans_all.append(r_trans)
+        rt_all.append(r_trans)
         z_all.append(z)
         names.append(abs_igm)
 
