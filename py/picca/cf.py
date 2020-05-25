@@ -262,7 +262,7 @@ def fast_cf(z1, r_comov1, dist_m1, weights1, delta1, z2, r_comov2, dist_m2,
         if not x_correlation:
             r_par = abs(r_par)
         r_trans = (dist_m1 + dist_m2[:, None])*np.sin(ang/2)
-    delta_times_weight12 = delta_times_weight*delta_times_weight[:, None]
+    delta_times_weight12 = delta_times_weight1*delta_times_weight2[:, None]
     weights12 = weights1*weights2[:, None]
     z = (z1 + z2[:, None])/2
 
@@ -292,6 +292,7 @@ def fast_cf(z1, r_comov1, dist_m1, weights1, delta1, z2, r_comov2, dist_m2,
 
     return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
             rebin_num_pairs)
+
 
 def dmat(pix):
 
