@@ -273,8 +273,8 @@ def fast_cf(z1, r_comov1, dist_m1, weights1, delta1, z2, r_comov2, dist_m2,
     z = z[w]
     delta_times_weight12 = delta_times_weight12[w]
     weights12 = weights12[w]
-    bin_r_par = np.floor((r_par - r_par_min)/
-                         (r_par_max - r_par_min)*num_bins_r_par).astype(int)
+    bins_r_par = np.floor((r_par - r_par_min)/
+                          (r_par_max - r_par_min)*num_bins_r_par).astype(int)
     bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     bins = bins_r_trans + num_bins_r_trans*bins_r_par
 
