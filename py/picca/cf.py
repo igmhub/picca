@@ -43,7 +43,7 @@ num_data2 = None
 z_ref = None
 alpha = None
 alpha2 = None
-alpha_abs= None
+alpha_abs = None
 lambda_abs = None
 lambda_abs2 = None
 
@@ -132,10 +132,10 @@ def cf(healpixs):
     r_par = np.zeros(num_bins_r_par*num_bins_r_trans)
     r_trans = np.zeros(num_bins_r_par*num_bins_r_trans)
     z = np.zeros(num_bins_r_par*num_bins_r_trans)
-    nb = np.zeros(num_bins_r_par*num_bins_r_trans, dtype=np.int64)
+    num_pairs = np.zeros(num_bins_r_par*num_bins_r_trans, dtype=np.int64)
 
     for healpix in healpixs:
-        for delta in data[healpix]:
+        for delta1 in data[healpix]:
             userprint(("\rcomputing xi: "
                        "{}%").format(round(counter.value*100./num_data, 2)),
                       end="")
@@ -143,25 +143,57 @@ def cf(healpixs):
                 counter.value += 1
             for delta2 in delta.neighbours:
                 ang = delta^delta2
-                same_half_plate = ((delta.plate == delta2.plate) and
-                                   ((delta.fiberid <= 500 and
+                same_half_plate = ((delta1.plate == delta2.plate) and
+                                   ((delta1.fiberid <= 500 and
                                      delta2.fiberid <= 500) or
-                                    (delta.fiberid > 500 and delta2.fiberid>500)
+                                    (delta1.fiberid > 500 and
+                                     delta2.fiberid > 500)
                                    )
                                   )
                 if ang_correlation:
-                    cw,cd,crp,crt,cz,cnb = fast_cf(delta.z,10.**delta.log_lambda,10.**delta.log_lambda,delta.weights,delta.delta,
-                        delta2.z,10.**delta2.log_lambda,10.**delta2.log_lambda,delta2.weights,delta2.delta,ang,same_half_plate)
+                    (rebin_weight,
+                     rebin_xi,
+                     rebin_r_par,
+                     rebin_r_trans,
+                     rebin_z,
+                     rebin_num_pairs) = fast_cf(delta1.z,
+                                                10.**delta1.log_lambda,
+                                                10.**delta1.log_lambda,
+                                                delta1.weights,
+                                                delta1.delta,
+                                                delta2.z,
+                                                10.**delta2.
+                                                log_lambda,
+                                                10.**delta2.log_lambda,
+                                                delta2.weights,
+                                                delta2.delta,
+                                                ang,
+                                                same_half_plate)
                 else:
-                    cw,cd,crp,crt,cz,cnb = fast_cf(delta.z,delta.r_comov,delta.dist_m,delta.weights,delta.delta,
-                        delta2.z,delta2.r_comov,delta2.dist_m,delta2.weights,delta2.delta,ang,same_half_plate)
+                    (rebin_weight,
+                     rebin_xi,
+                     rebin_r_par,
+                     rebin_r_trans,
+                     rebin_z,
+                     rebin_num_pairs) = fast_cf(delta1.z,
+                                                delta1.r_comov,
+                                                delta1.dist_m,
+                                                delta1.weights,
+                                                delta1.delta,
+                                                delta2.z,
+                                                delta2.r_comov,
+                                                delta2.dist_m,
+                                                delta2.weights,
+                                                delta2.delta,
+                                                ang,
+                                                same_half_plate)
 
-                xi[:len(cd)]+=cd
-                weights[:len(cw)]+=cw
-                r_par[:len(crp)]+=crp
-                r_trans[:len(crp)]+=crt
-                z[:len(crp)]+=cz
-                nb[:len(cnb)]+=cnb.astype(int)
+                xi[:len(rebin_xi)] += rebin_xi
+                weights[:len(rebin_weight)] += rebin_weight
+                r_par[:len(rebin_r_par)] += rebin_r_par
+                r_trans[:len(rebin_r_trans)] += rebin_r_trans
+                z[:len(rebin_z)] += rebin_z
+                num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs.astype(int)
             setattr(delta, "neighbours", None)
 
     w = weights > 0
@@ -169,51 +201,97 @@ def cf(healpixs):
     r_par[w] /= weights[w]
     r_trans[w] /= weights[w]
     z[w] /= weights[w]
-    return weights, xi, r_par, r_trans, z, nb
+    return weights, xi, r_par, r_trans, z, num_pairs
 
 
 @jit
-def fast_cf(z1,r1,rdm1,w1,delta, z2,r2,rdm2,w2,delta2, ang,same_half_plate):
-    wd1 = delta*w1
-    wd2 = delta2*w2
-    if ang_correlation:
-        r_par = r1/r2[:,None]
-        if not x_correlation:
-            r_par[(r_par<1.)] = 1./r_par[(r_par<1.)]
-        r_trans = ang*sp.ones_like(r_par)
-    else:
-        r_par = (r1-r2[:,None])*sp.cos(ang/2)
-        if not x_correlation :
-            r_par = abs(r_par)
-        r_trans = (rdm1+rdm2[:,None])*sp.sin(ang/2)
-    wd12 = wd1*wd2[:,None]
-    w12 = w1*w2[:,None]
-    z = (z1+z2[:,None])/2
+def fast_cf(z1, r_comov1, dist_m1, weights1, delta1, z2, r_comov2, dist_m2, w2,
+            delta2, ang, same_half_plate):
+    """Computes the contribution of a given pair of forests to the correlation
+    function.
 
-    w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
+    Args:
+        z1: array of float
+            Redshift of pixel 1
+        r_comov1: array of float
+            Comoving distance for forest 1 (in Mpc/h)
+        dist_m1: array of float
+            Comoving angular distance for forest 1 (in Mpc/h)
+        weights1: array of float
+            Pixel weights for forest 1
+        delta1: array of float
+            Delta field for forest 1
+        z2: array of float
+            Redshift of pixel 2
+        r_comov2: array of float
+            Comoving distance for forest 2 (in Mpc/h)
+        dist_m2: array of float
+            Comoving angular distance for forest 2 (in Mpc/h)
+        weights2: array of float
+            Pixel weights for forest 2
+        delta2: array of float
+            Delta field for forest 2
+        ang: array of float
+            Angular separation between pixels in forests 1 and 2
+        same_half_plate: bool
+            Flag to determine if the two forests are on the same half plate
+
+    Returns:
+        The following variables:
+            rebin_weight: The weight of the correlation function pixels
+                properly rebinned
+            rebin_xi: The correlation function properly rebinned
+            rebin_r_par: The parallel distance of the correlation function
+                pixels properly rebinned
+            rebin_r_trans: The transverse distance of the correlation function
+                pixels properly rebinned
+            rebin_z: The redshift of the correlation function pixels properly
+                rebinned
+            rebin_num_pairs: The number of pairs of the correlation function
+                pixels properly rebinned
+    """
+    delta_times_weight1 = delta1*weights1
+    delta_times_weight2 = delta2*weights2
+    if ang_correlation:
+        r_par = r_comov1/r_comov2[:, None]
+        if not x_correlation:
+            r_par[r_par < 1.] = 1./r_par[r_par < 1.]
+        r_trans = ang*np.ones_like(r_par)
+    else:
+        r_par = (r_comov1 - r_comov2[:, None])*np.cos(ang/2)
+        if not x_correlation:
+            r_par = abs(r_par)
+        r_trans = (dist_m1 + dist_m2[:, None])*np.sin(ang/2)
+    delta_times_weight12 = delta_times_weight*delta_times_weight[:, None]
+    weights12 = weights1*weights2[:, None]
+    z = (z1 + z2[:, None])/2
+
+    w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
 
     r_par = r_par[w]
     r_trans = r_trans[w]
-    z  = z[w]
-    wd12 = wd12[w]
-    w12 = w12[w]
-    bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    bins = bt + num_bins_r_trans*bp
+    z = z[w]
+    delta_times_weight12 = delta_times_weight12[w]
+    weights12 = weights12[w]
+    bin_r_par = np.floor((r_par - r_par_min)/
+                         (r_par_max - r_par_min)*num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    bins = bins_r_trans + num_bins_r_trans*bins_r_par
 
     if remove_same_half_plate_close_pairs and same_half_plate:
-        w = abs(r_par)<(r_par_max-r_par_min)/num_bins_r_par
-        wd12[w] = 0.
-        w12[w] = 0.
+        w = abs(r_par) < (r_par_max - r_par_min)/num_bins_r_par
+        delta_times_weight12[w] = 0.
+        weights12[w] = 0.
 
-    cd = sp.bincount(bins,weights=wd12)
-    cw = sp.bincount(bins,weights=w12)
-    crp = sp.bincount(bins,weights=r_par*w12)
-    crt = sp.bincount(bins,weights=r_trans*w12)
-    cz = sp.bincount(bins,weights=z*w12)
-    cnb = sp.bincount(bins,weights=(w12>0.))
+    rebin_xi = np.bincount(bins, weights=delta_times_weight12)
+    rebin_weight = np.bincount(bins, weights=weights12)
+    rebin_r_par = np.bincount(bins, weights=r_par*weights12)
+    rebin_r_trans = np.bincount(bins, weights=r_trans*weights12)
+    rebin_z = np.bincount(bins, weights=z*weights12)
+    rebin_num_pairs = np.bincount(bins, weights=(weights12 > 0.))
 
-    return cw,cd,crp,crt,cz,cnb
+    return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
+            rebin_num_pairs)
 
 def dmat(pix):
 
