@@ -111,7 +111,7 @@ def fill_neighs(healpixs):
                         (other_delta.z[-1] + delta.z[-1])/2. < z_cut_max)
                 ]
 
-def cf(pix):
+def cf(healpixs):
     """Computes the correlation function for each of the healpix.
 
     Args:
@@ -124,7 +124,7 @@ def cf(pix):
     xi = np.zeros(num_bins_r_par*num_bins_r_trans)
     weights = np.zeros(num_bins_r_par*num_bins_r_trans)
     r_par = np.zeros(num_bins_r_par*num_bins_r_trans)
-    rt = np.zeros(num_bins_r_par*num_bins_r_trans)
+    r_trans = np.zeros(num_bins_r_par*num_bins_r_trans)
     z = np.zeros(num_bins_r_par*num_bins_r_trans)
     nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
 
@@ -147,7 +147,7 @@ def cf(pix):
                 xi[:len(cd)]+=cd
                 weights[:len(cw)]+=cw
                 r_par[:len(crp)]+=crp
-                rt[:len(crp)]+=crt
+                r_trans[:len(crp)]+=crt
                 z[:len(crp)]+=cz
                 nb[:len(cnb)]+=cnb.astype(int)
             setattr(d1,"neighs",None)
@@ -155,9 +155,9 @@ def cf(pix):
     w = weights>0
     xi[w]/=weights[w]
     r_par[w]/=weights[w]
-    rt[w]/=weights[w]
+    r_trans[w]/=weights[w]
     z[w]/=weights[w]
-    return weights,xi,r_par,rt,z,nb
+    return weights,xi,r_par,r_trans,z,nb
 
 
 @jit
@@ -168,25 +168,25 @@ def fast_cf(z1,r1,rdm1,w1,d1, z2,r2,rdm2,w2,d2, ang,same_half_plate):
         r_par = r1/r2[:,None]
         if not x_correlation:
             r_par[(r_par<1.)] = 1./r_par[(r_par<1.)]
-        rt = ang*sp.ones_like(r_par)
+        r_trans = ang*sp.ones_like(r_par)
     else:
         r_par = (r1-r2[:,None])*sp.cos(ang/2)
         if not x_correlation :
             r_par = abs(r_par)
-        rt = (rdm1+rdm2[:,None])*sp.sin(ang/2)
+        r_trans = (rdm1+rdm2[:,None])*sp.sin(ang/2)
     wd12 = wd1*wd2[:,None]
     w12 = w1*w2[:,None]
     z = (z1+z2[:,None])/2
 
-    w = (r_par<r_par_max) & (rt<r_trans_max) & (r_par>=r_par_min)
+    w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
 
     r_par = r_par[w]
-    rt = rt[w]
+    r_trans = r_trans[w]
     z  = z[w]
     wd12 = wd12[w]
     w12 = w12[w]
     bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     bins = bt + num_bins_r_trans*bp
 
     if remove_same_half_plate_close_pairs and same_half_plate:
@@ -197,7 +197,7 @@ def fast_cf(z1,r1,rdm1,w1,d1, z2,r2,rdm2,w2,d2, ang,same_half_plate):
     cd = sp.bincount(bins,weights=wd12)
     cw = sp.bincount(bins,weights=w12)
     crp = sp.bincount(bins,weights=r_par*w12)
-    crt = sp.bincount(bins,weights=rt*w12)
+    crt = sp.bincount(bins,weights=r_trans*w12)
     cz = sp.bincount(bins,weights=z*w12)
     cnb = sp.bincount(bins,weights=(w12>0.))
 
@@ -249,18 +249,18 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
     r_par = (r1[:,None]-r2)*sp.cos(ang/2)
     if  not x_correlation:
         r_par = abs(r_par)
-    rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
+    r_trans = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
 
-    w = (r_par<r_par_max) & (rt<r_trans_max) & (r_par>=r_par_min)
+    w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
 
     bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     bins = bt + num_bins_r_trans*bp
     bins = bins[w]
 
     m_bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*npm).astype(int)
-    m_bt = (rt/r_trans_max*ntm).astype(int)
+    m_bt = (r_trans/r_trans_max*ntm).astype(int)
     m_bins = m_bt + ntm*m_bp
     m_bins = m_bins[w]
 
@@ -290,7 +290,7 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
 
     c = sp.bincount(m_bins,weights=weights*r_par[w])
     rpeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=weights*rt[w])
+    c = sp.bincount(m_bins,weights=weights*r_trans[w])
     rteff[:c.size] += c
     c = sp.bincount(m_bins,weights=weights*z[w])
     zeff[:c.size] += c
@@ -397,11 +397,11 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 if not x_correlation:
                     r_par = abs(r_par)
 
-                rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
+                r_trans = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
                 w12 = w1[:,None]*w2
 
                 bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-                bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+                bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
 
                 if remove_same_half_plate_close_pairs and same_half_plate:
                     wp = abs(r_par) < (r_par_max-r_par_min)/num_bins_r_par
@@ -471,11 +471,11 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     if not x_correlation:
                         r_par = abs(r_par)
 
-                    rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
+                    r_trans = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
                     w12 = w1[:,None]*w2
 
                     bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-                    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+                    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
                     if remove_same_half_plate_close_pairs and same_half_plate:
                         wp = abs(r_par) < (r_par_max-r_par_min)/num_bins_r_par
                         w12[wp] = 0.
@@ -645,16 +645,16 @@ def fill_wickT123(r1,r2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
     r_par = (r1[:,None]-r2)*sp.cos(ang/2)
     if not x_correlation:
         r_par = abs(r_par)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2)
+    r_trans = (r1[:,None]+r2)*sp.sin(ang/2)
     bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     ba = bt + num_bins_r_trans*bp
     weights = w1[:,None]*w2
     we1 = w1[:,None]*sp.ones(w2.size)
     we2 = sp.ones(w1.size)[:,None]*w2
     zw = zw1[:,None]*zw2
 
-    w = (r_par<r_par_max) & (rt<r_trans_max) & (r_par>=r_par_min)
+    w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
 
     bins = bins[w]
@@ -700,13 +700,13 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     r_par = (r1[:,None]-r2)*sp.cos(ang12/2.)
     if not x_correlation:
         r_par = np.absolute(r_par)
-    rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
+    r_trans = (r1[:,None]+r2)*sp.sin(ang12/2.)
     pix1_12 = (np.arange(r1.size)[:,None]*sp.ones(r2.size)).astype(int)
     pix2_12 = (sp.ones(r1.size)[:,None]*np.arange(r2.size)).astype(int)
-    w = (r_par<r_par_max) & (rt<r_trans_max) & (r_par>=r_par_min)
+    w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
     bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     ba12 = bt + num_bins_r_trans*bp
     ba12[~w] = 0
     cf12 = cfWick['{}_{}'.format(fname1,fname2)][ba12]
@@ -720,13 +720,13 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     r_par = (r1[:,None]-r3)*sp.cos(ang13/2.)
     if not x_correlation:
         r_par = np.absolute(r_par)
-    rt = (r1[:,None]+r3)*sp.sin(ang13/2.)
+    r_trans = (r1[:,None]+r3)*sp.sin(ang13/2.)
     pix1_13 = (np.arange(r1.size)[:,None]*sp.ones(r3.size)).astype(int)
     pix3_13 = (sp.ones(r1.size)[:,None]*np.arange(r3.size)).astype(int)
-    w = (r_par<r_par_max) & (rt<r_trans_max) & (r_par>=r_par_min)
+    w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
     bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     ba13 = bt + num_bins_r_trans*bp
     ba13[~w] = 0
     cf13 = cfWick['{}_{}'.format(fname1,fname3)][ba13]
@@ -740,13 +740,13 @@ def fill_wickT45(r1,r2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1
     r_par = (r2[:,None]-r3)*sp.cos(ang23/2.)
     if not x_correlation:
         r_par = np.absolute(r_par)
-    rt = (r2[:,None]+r3)*sp.sin(ang23/2.)
+    r_trans = (r2[:,None]+r3)*sp.sin(ang23/2.)
     pix2_23 = (np.arange(r2.size)[:,None]*sp.ones(r3.size)).astype(int)
     pix3_23 = (sp.ones(r2.size)[:,None]*np.arange(r3.size)).astype(int)
-    w = (r_par<r_par_max) & (rt<r_trans_max) & (r_par>=r_par_min)
+    w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
     bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     ba23 = bt + num_bins_r_trans*bp
     ba23[~w] = 0
     cf23 = cfWick['{}_{}'.format(fname2,fname3)][ba23]

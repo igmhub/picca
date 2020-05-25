@@ -225,12 +225,12 @@ if __name__ == '__main__':
             dm = sp.array(dm)
             wdm =dm[:,0].sum(axis=0)
             r_par = dm[:,2].sum(axis=0)
-            rt = dm[:,3].sum(axis=0)
+            r_trans = dm[:,3].sum(axis=0)
             z = dm[:,4].sum(axis=0)
             weights = dm[:,5].sum(axis=0)
             w=weights>0
             r_par[w]/=weights[w]
-            rt[w]/=weights[w]
+            r_trans[w]/=weights[w]
             z[w]/=weights[w]
             npairs=dm[:,6].sum(axis=0)
             npairs_used=dm[:,7].sum(axis=0)
@@ -241,7 +241,7 @@ if __name__ == '__main__':
             dm_all.append(dm)
             wdm_all.append(wdm)
             rp_all.append(r_par)
-            rt_all.append(rt)
+            rt_all.append(r_trans)
             z_all.append(z)
             names.append(abs_igm1+"_"+abs_igm2)
 

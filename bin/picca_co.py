@@ -148,8 +148,8 @@ if __name__ == '__main__':
     cut      = (wes.sum(axis=0)>0.)
     r_par       = (rps*wes).sum(axis=0)
     r_par[cut] /= wes.sum(axis=0)[cut]
-    rt       = (rts*wes).sum(axis=0)
-    rt[cut] /= wes.sum(axis=0)[cut]
+    r_trans       = (rts*wes).sum(axis=0)
+    r_trans[cut] /= wes.sum(axis=0)[cut]
     z        = (zs*wes).sum(axis=0)
     z[cut]  /= wes.sum(axis=0)[cut]
     nb = nbs.sum(axis=0)
@@ -169,7 +169,7 @@ if __name__ == '__main__':
 
     comment = ['R-parallel','R-transverse','Redshift','Number of pairs']
     units=['h^-1 Mpc','h^-1 Mpc','','']
-    out.write([r_par,rt,z,nb],names=['RP','RT','Z','NB'],header=head,comment=comment,units=units,extname='ATTRI')
+    out.write([r_par,r_trans,z,nb],names=['RP','RT','Z','NB'],header=head,comment=comment,units=units,extname='ATTRI')
 
     comment = ['Healpix index', 'Sum of weight', 'Number of pairs']
     head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]

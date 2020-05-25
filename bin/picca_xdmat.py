@@ -175,7 +175,7 @@ if __name__ == '__main__':
     dm = sp.array(dm)
     wdm =dm[:,0].sum(axis=0)
     r_par = dm[:,2].sum(axis=0)
-    rt = dm[:,3].sum(axis=0)
+    r_trans = dm[:,3].sum(axis=0)
     z = dm[:,4].sum(axis=0)
     weights = dm[:,5].sum(axis=0)
     npairs = dm[:,6].sum(axis=0)
@@ -184,7 +184,7 @@ if __name__ == '__main__':
 
     w = weights>0.
     r_par[w] /= weights[w]
-    rt[w] /= weights[w]
+    r_trans[w] /= weights[w]
     z[w] /= weights[w]
     w = wdm>0.
     dm[w,:] /= wdm[w,None]
@@ -207,7 +207,7 @@ if __name__ == '__main__':
         comment=['Sum of weight','Distortion matrix'],
         units=['',''],
         header=head,extname='DMAT')
-    out.write([r_par,rt,z],
+    out.write([r_par,r_trans,z],
         names=['RP','RT','Z'],
         comment=['R-parallel','R-transverse','Redshift'],
         units=['h^-1 Mpc','h^-1 Mpc','',],

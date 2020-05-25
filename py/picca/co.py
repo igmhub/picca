@@ -50,7 +50,7 @@ def co(pix):
 
     weights = np.zeros(num_bins_r_par*num_bins_r_trans)
     r_par = np.zeros(num_bins_r_par*num_bins_r_trans)
-    rt = np.zeros(num_bins_r_par*num_bins_r_trans)
+    r_trans = np.zeros(num_bins_r_par*num_bins_r_trans)
     z  = np.zeros(num_bins_r_par*num_bins_r_trans)
     nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
 
@@ -73,39 +73,39 @@ def co(pix):
 
             weights[:len(cw)]  += cw
             r_par[:len(crp)] += crp
-            rt[:len(crp)] += crt
+            r_trans[:len(crp)] += crt
             z[:len(crp)]  += cz
             nb[:len(cnb)] += cnb
             setattr(o1,"neighs",None)
 
     w = weights>0.
     r_par[w] /= weights[w]
-    rt[w] /= weights[w]
+    r_trans[w] /= weights[w]
     z[w]  /= weights[w]
-    return weights,r_par,rt,z,nb
+    return weights,r_par,r_trans,z,nb
 @jit
 def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
 
     r_par  = (r1-r2)*sp.cos(ang/2.)
     if not x_correlation or type_corr in ['DR','RD']:
         r_par = np.absolute(r_par)
-    rt  = (rdm1+rdm2)*sp.sin(ang/2.)
+    r_trans  = (rdm1+rdm2)*sp.sin(ang/2.)
     z   = (z1+z2)/2.
     w12 = w1*w2
 
-    w   = (r_par>=r_par_min) & (r_par<r_par_max) & (rt<r_trans_max) & (w12>0.)
+    w   = (r_par>=r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max) & (w12>0.)
     r_par  = r_par[w]
-    rt  = rt[w]
+    r_trans  = r_trans[w]
     z   = z[w]
     w12 = w12[w]
 
     bp   = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt   = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt   = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     bins = bt + num_bins_r_trans*bp
 
     cw  = sp.bincount(bins,weights=w12)
     crp = sp.bincount(bins,weights=r_par*w12)
-    crt = sp.bincount(bins,weights=rt*w12)
+    crt = sp.bincount(bins,weights=r_trans*w12)
     cz  = sp.bincount(bins,weights=z*w12)
     cnb = sp.bincount(bins)
 

@@ -55,7 +55,7 @@ def xcf(pix):
     xi = np.zeros(num_bins_r_par*num_bins_r_trans)
     weights = np.zeros(num_bins_r_par*num_bins_r_trans)
     r_par = np.zeros(num_bins_r_par*num_bins_r_trans)
-    rt = np.zeros(num_bins_r_par*num_bins_r_trans)
+    r_trans = np.zeros(num_bins_r_par*num_bins_r_trans)
     z = np.zeros(num_bins_r_par*num_bins_r_trans)
     nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
 
@@ -79,7 +79,7 @@ def xcf(pix):
                 xi[:len(cd)]+=cd
                 weights[:len(cw)]+=cw
                 r_par[:len(crp)]+=crp
-                rt[:len(crt)]+=crt
+                r_trans[:len(crt)]+=crt
                 z[:len(cz)]+=cz
                 nb[:len(cnb)]+=cnb.astype(int)
             for el in list(d.__dict__.keys()):
@@ -88,37 +88,37 @@ def xcf(pix):
     w = weights>0
     xi[w]/=weights[w]
     r_par[w]/=weights[w]
-    rt[w]/=weights[w]
+    r_trans[w]/=weights[w]
     z[w]/=weights[w]
-    return weights,xi,r_par,rt,z,nb
+    return weights,xi,r_par,r_trans,z,nb
 @jit
 def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     if ang_correlation:
         r_par = r1[:,None]/r2
-        rt = ang*sp.ones_like(r_par)
+        r_trans = ang*sp.ones_like(r_par)
     else:
         r_par = (r1[:,None]-r2)*sp.cos(ang/2)
-        rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
+        r_trans = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2
 
     weights = w1[:,None]*w2
     wde = (w1*d1)[:,None]*w2
 
-    w = (r_par>r_par_min) & (r_par<r_par_max) & (rt<r_trans_max)
+    w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
     r_par = r_par[w]
-    rt = rt[w]
+    r_trans = r_trans[w]
     z  = z[w]
     weights = weights[w]
     wde = wde[w]
 
     bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     bins = bt + num_bins_r_trans*bp
 
     cd = sp.bincount(bins,weights=wde)
     cw = sp.bincount(bins,weights=weights)
     crp = sp.bincount(bins,weights=r_par*weights)
-    crt = sp.bincount(bins,weights=rt*weights)
+    crt = sp.bincount(bins,weights=r_trans*weights)
     cz = sp.bincount(bins,weights=z*weights)
     cnb = sp.bincount(bins,weights=(weights>0.))
 
@@ -164,17 +164,17 @@ def dmat(pix):
 @jit
 def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     r_par = (r1[:,None]-r2)*sp.cos(ang/2)
-    rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
+    r_trans = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
-    w = (r_par>r_par_min) & (r_par<r_par_max) & (rt<r_trans_max)
+    w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
 
     bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     bins = bt + num_bins_r_trans*bp
     bins = bins[w]
 
     m_bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*npm).astype(int)
-    m_bt = (rt/r_trans_max*ntm).astype(int)
+    m_bt = (r_trans/r_trans_max*ntm).astype(int)
     m_bins = m_bt + ntm*m_bp
     m_bins = m_bins[w]
 
@@ -199,7 +199,7 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     c = sp.bincount(m_bins,weights=weights*r_par[w])
     rpeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=weights*rt[w])
+    c = sp.bincount(m_bins,weights=weights*r_trans[w])
     rteff[:c.size] += c
     c = sp.bincount(m_bins,weights=weights*z[w])
     zeff[:c.size] += c
@@ -266,12 +266,12 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 wq = q.weights
                 zq = q.z_qso
                 r_par = (rd-rq)*sp.cos(ang/2)
-                rt = (rdm+rqm)*sp.sin(ang/2)
+                r_trans = (rdm+rqm)*sp.sin(ang/2)
                 wdq = wd*wq
 
-                wA = (r_par>r_par_min) & (r_par<r_par_max) & (rt<r_trans_max)
+                wA = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
                 bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-                bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+                bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
                 bA = bt + num_bins_r_trans*bp
                 c = sp.bincount(bA[wA],weights=wdq[wA])
                 wdm[:len(c)]+=c
@@ -423,7 +423,7 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
 
     """
     r_par = (r1[:,None]-r2)*sp.cos(ang/2.)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2.)
+    r_trans = (r1[:,None]+r2)*sp.sin(ang/2.)
     zw1 = ((1.+z1)/(1.+z_ref))**(z_evol_del-1.)
     zw2 = ((1.+z2)/(1.+z_ref))**(z_evol_obj-1.)
     weights = w1[:,None]*w2
@@ -432,10 +432,10 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
     idxQso = sp.ones(r1.size,dtype='int')[:,None]*np.arange(len(r2))
 
     bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     ba = bt + num_bins_r_trans*bp
 
-    w = (r_par>r_par_min) & (r_par<r_par_max) & (rt<r_trans_max)
+    w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
     if w.sum()==0: return
 
     ba = ba[w]
@@ -500,12 +500,12 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
 
     ### Pair forest_1 - forest_3
     r_par = np.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
-    rt = (r1+r3[:,None])*sp.sin(ang13/2.)
+    r_trans = (r1+r3[:,None])*sp.sin(ang13/2.)
 
-    w = (r_par<cfWick_rp_max) & (rt<cfWick_rt_max) & (r_par>=cfWick_rp_min)
+    w = (r_par<cfWick_rp_max) & (r_trans<cfWick_rt_max) & (r_par>=cfWick_rp_min)
     if w.sum()==0: return
     bp = sp.floor((r_par-cfWick_rp_min)/(cfWick_rp_max-cfWick_rp_min)*cfWick_np).astype(int)
-    bt = (rt/cfWick_rt_max*cfWick_nt).astype(int)
+    bt = (r_trans/cfWick_rt_max*cfWick_nt).astype(int)
     ba13 = bt + cfWick_nt*bp
     ba13[~w] = 0
     cf13 = cfWick[ba13]
@@ -513,38 +513,38 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
 
     ### Pair forest_1 - object_2
     r_par = (r1[:,None]-r2)*sp.cos(ang12/2.)
-    rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
+    r_trans = (r1[:,None]+r2)*sp.sin(ang12/2.)
     weights = w1[:,None]*w2
     pix = (np.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
     thingid = sp.ones_like(w1[:,None]).astype(int)*thingid2
 
-    w = (r_par>r_par_min) & (r_par<r_par_max) & (rt<r_trans_max)
+    w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
     if w.sum()==0: return
     r_par = r_par[w]
-    rt = rt[w]
+    r_trans = r_trans[w]
     we12 = weights[w]
     pix12 = pix[w]
     thingid12 = thingid[w]
     bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     ba12 = bt + num_bins_r_trans*bp
 
     ### Pair forest_3 - object_4
     r_par = (r3[:,None]-r4)*sp.cos(ang34/2.)
-    rt = (r3[:,None]+r4)*sp.sin(ang34/2.)
+    r_trans = (r3[:,None]+r4)*sp.sin(ang34/2.)
     weights = w3[:,None]*w4
     pix = (np.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
     thingid = sp.ones_like(w3[:,None]).astype(int)*thingid4
 
-    w = (r_par>r_par_min) & (r_par<r_par_max) & (rt<r_trans_max)
+    w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
     if w.sum()==0: return
     r_par = r_par[w]
-    rt = rt[w]
+    r_trans = r_trans[w]
     we34 = weights[w]
     pix34 = pix[w]
     thingid34 = thingid[w]
     bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (rt/r_trans_max*num_bins_r_trans).astype(int)
+    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     ba34 = bt + num_bins_r_trans*bp
 
     ### T5

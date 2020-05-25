@@ -27,8 +27,8 @@ class wedge:
         bp = bp.astype(int)
 
         r_par = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
-        rt = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
-        r=sp.sqrt(rp**2+rt**2)
+        r_trans = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
+        r=sp.sqrt(r_par**2+r_trans**2)
 
         bins = bt+nrt*bp + nrp*nrt*br
 
