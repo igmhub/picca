@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     h = fitsio.FITS(args.data)
 
-    rp = sp.array(h[1]['RP'][:])
+    r_par = sp.array(h[1]['RP'][:])
     rt = sp.array(h[1]['RT'][:])
     z  = sp.array(h[1]['Z'][:])
     nb = sp.array(h[1]['NB'][:])
@@ -89,7 +89,7 @@ if __name__ == '__main__':
         binSizeT = (r_trans_max-0.) / num_bins_r_trans
         if not args.do_not_smooth_cov:
             userprint('INFO: The covariance will be smoothed')
-            co = smooth_cov(da,weights,rp,rt,drt=binSizeT,drp=binSizeP)
+            co = smooth_cov(da,weights,r_par,rt,drt=binSizeT,drp=binSizeP)
         else:
             userprint('INFO: The covariance will not be smoothed')
             co = cov(da,weights)
@@ -112,17 +112,17 @@ if __name__ == '__main__':
             dmrt = h[2]['RT'][:]
             dmz = h[2]['Z'][:]
         except IOError:
-            dmrp = rp.copy()
+            dmrp = r_par.copy()
             dmrt = rt.copy()
             dmz = z.copy()
         if dm.shape==(da.size,da.size):
-            dmrp = rp.copy()
+            dmrp = r_par.copy()
             dmrt = rt.copy()
             dmz = z.copy()
         h.close()
     else:
         dm = sp.eye(len(da))
-        dmrp = rp.copy()
+        dmrp = r_par.copy()
         dmrt = rt.copy()
         dmz = z.copy()
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
         {'name':'NT','value':num_bins_r_trans,'comment':'Number of bins in r-transverse'}
     ]
     comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
-    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
+    h.write([r_par,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
     comment = ['R-parallel model','R-transverse model','Redshift model']
     h.write([dmrp,dmrt,dmz],names=['DMRP','DMRT','DMZ'],comment=comment,extname='DMATTRI')
     h.close()

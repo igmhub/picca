@@ -29,11 +29,11 @@ for f in args.data:
 h=fitsio.FITS(args.data[0])
 
 head = h[1].read_header()
-rp = h[1]['RP'][:]*0
+r_par = h[1]['RP'][:]*0
 rt = h[1]['RT'][:]*0
 nb = h[1]['NB'][:]*0
 z = h[1]['Z'][:]*0
-wet = rp*0
+wet = r_par*0
 h.close()
 
 da = {}
@@ -59,7 +59,7 @@ for f in args.data:
     h = fitsio.FITS(f)
     we_aux = h[2]["WE"][:]
     wet_aux = we_aux.sum(axis=0)
-    rp += h[1]['RP'][:]*wet_aux
+    r_par += h[1]['RP'][:]*wet_aux
     rt += h[1]['RT'][:]*wet_aux
     z  += h[1]['Z'][:]*wet_aux
     nb += h[1]['NB'][:]
@@ -91,7 +91,7 @@ for p in da:
     w=we[p]>0
     da[p][w]/=we[p][w]
 
-rp /= wet
+r_par /= wet
 rt /= wet
 z /= wet
 if not args.no_dmat:
@@ -100,7 +100,7 @@ if not args.no_dmat:
 da = sp.vstack(list(da.values()))
 we = sp.vstack(list(we.values()))
 
-co = smooth_cov(da,we,rp,rt)
+co = smooth_cov(da,we,r_par,rt)
 da = (da*we).sum(axis=0)
 da /= wet
 
@@ -109,8 +109,8 @@ if 'dmrp' in locals():
     dmrp /= nbdm
     dmrt /= nbdm
     dmz /= nbdm
-if ('dmrp' not in locals()) or (dmrp.size==rp.size):
-    dmrp = rp.copy()
+if ('dmrp' not in locals()) or (dmrp.size==r_par.size):
+    dmrp = r_par.copy()
     dmrt = rt.copy()
     dmz = z.copy()
 
@@ -122,7 +122,7 @@ except scipy.linalg.LinAlgError:
 
 h = fitsio.FITS(args.out,"rw",clobber=True)
 comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
-h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
+h.write([r_par,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
 comment = ['R-parallel model','R-transverse model','Redshift model']
 h.write([dmrp,dmrt,dmz],names=['DMRP','DMRT','DMZ'],comment=comment,extname='DMATTRI')
 h.close()

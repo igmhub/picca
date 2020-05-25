@@ -155,8 +155,8 @@ if __name__ == '__main__':
     hep=sp.array(sorted(list(cpu_data.keys())))
 
     cut      = (wes.sum(axis=0)>0.)
-    rp       = (rps*wes).sum(axis=0)
-    rp[cut] /= wes.sum(axis=0)[cut]
+    r_par       = (rps*wes).sum(axis=0)
+    r_par[cut] /= wes.sum(axis=0)[cut]
     rt       = (rts*wes).sum(axis=0)
     rt[cut] /= wes.sum(axis=0)[cut]
     z        = (zs*wes).sum(axis=0)
@@ -174,7 +174,7 @@ if __name__ == '__main__':
         {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':cf.nside,'comment':'Healpix nside'}
     ]
-    out.write([rp,rt,z,nb],names=['RP','RT','Z','NB'],
+    out.write([r_par,rt,z,nb],names=['RP','RT','Z','NB'],
         units=['','rad','',''],
         comment=['Wavelength ratio','Angle','Redshift','Number of pairs'],
         header=head,extname='ATTRI')

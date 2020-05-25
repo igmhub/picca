@@ -26,7 +26,7 @@ class wedge:
         bp = (rpmc-rpmin)/(rpmax-rpmin)*nrp
         bp = bp.astype(int)
 
-        rp = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
+        r_par = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
         rt = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
         r=sp.sqrt(rp**2+rt**2)
 
@@ -50,5 +50,3 @@ class wedge:
         Wwe[mask,:]/=w[mask,None]
         d = Wwe.dot(da)
         return self.r,d,Wwe.dot(co).dot(Wwe.T)
-
-

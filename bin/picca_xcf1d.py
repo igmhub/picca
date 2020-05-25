@@ -154,8 +154,8 @@ if __name__ == '__main__':
     hep = sp.array([p for p in sorted(dels.keys()) if p in xcf.objs.keys()])
 
     w = (wes.sum(axis=0)>0.)
-    rp = (rps*wes).sum(axis=0)
-    rp[w] /= wes.sum(axis=0)[w]
+    r_par = (rps*wes).sum(axis=0)
+    r_par[w] /= wes.sum(axis=0)[w]
     z = (zs*wes).sum(axis=0)
     z[w] /= wes.sum(axis=0)[w]
     nb = nbs.sum(axis=0)
@@ -168,7 +168,7 @@ if __name__ == '__main__':
         {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
         {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}
     ]
-    out.write([rp,z,nb],names=['RP','Z','NB'],
+    out.write([r_par,z,nb],names=['RP','Z','NB'],
         units=['','',''],
         comment=['Wavelength ratio','Redshift','Number of pairs'],
         header=head,extname='ATTRI')

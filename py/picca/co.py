@@ -49,7 +49,7 @@ def fill_neighs_x_correlation(pix):
 def co(pix):
 
     weights = np.zeros(num_bins_r_par*num_bins_r_trans)
-    rp = np.zeros(num_bins_r_par*num_bins_r_trans)
+    r_par = np.zeros(num_bins_r_par*num_bins_r_trans)
     rt = np.zeros(num_bins_r_par*num_bins_r_trans)
     z  = np.zeros(num_bins_r_par*num_bins_r_trans)
     nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
@@ -72,39 +72,39 @@ def co(pix):
             cw,crp,crt,cz,cnb = fast_co(o1.z_qso,o1.r_comov,o1.dist_m,o1.weights,zo2,r_comov2,dist_m2,weo2,ang)
 
             weights[:len(cw)]  += cw
-            rp[:len(crp)] += crp
+            r_par[:len(crp)] += crp
             rt[:len(crp)] += crt
             z[:len(crp)]  += cz
             nb[:len(cnb)] += cnb
             setattr(o1,"neighs",None)
 
     w = weights>0.
-    rp[w] /= weights[w]
+    r_par[w] /= weights[w]
     rt[w] /= weights[w]
     z[w]  /= weights[w]
-    return weights,rp,rt,z,nb
+    return weights,r_par,rt,z,nb
 @jit
 def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
 
-    rp  = (r1-r2)*sp.cos(ang/2.)
+    r_par  = (r1-r2)*sp.cos(ang/2.)
     if not x_correlation or type_corr in ['DR','RD']:
-        rp = np.absolute(rp)
+        r_par = np.absolute(r_par)
     rt  = (rdm1+rdm2)*sp.sin(ang/2.)
     z   = (z1+z2)/2.
     w12 = w1*w2
 
-    w   = (rp>=r_par_min) & (rp<r_par_max) & (rt<r_trans_max) & (w12>0.)
-    rp  = rp[w]
+    w   = (r_par>=r_par_min) & (r_par<r_par_max) & (rt<r_trans_max) & (w12>0.)
+    r_par  = r_par[w]
     rt  = rt[w]
     z   = z[w]
     w12 = w12[w]
 
-    bp   = sp.floor((rp-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bp   = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
     bt   = (rt/r_trans_max*num_bins_r_trans).astype(int)
     bins = bt + num_bins_r_trans*bp
 
     cw  = sp.bincount(bins,weights=w12)
-    crp = sp.bincount(bins,weights=rp*w12)
+    crp = sp.bincount(bins,weights=r_par*w12)
     crt = sp.bincount(bins,weights=rt*w12)
     cz  = sp.bincount(bins,weights=z*w12)
     cnb = sp.bincount(bins)

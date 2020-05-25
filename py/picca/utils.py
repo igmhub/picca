@@ -47,7 +47,7 @@ def cov(da, weights):
     co[w] /= sswe[w]
 
     return co
-def smooth_cov(da,weights,rp,rt,drt=4,drp=4,co=None):
+def smooth_cov(da,weights,r_par,rt,drt=4,drp=4,co=None):
 
     if co is None:
         co = cov(da,weights)
@@ -69,7 +69,7 @@ def smooth_cov(da,weights,rp,rt,drt=4,drp=4,co=None):
     for i in range(nda):
         userprint("\rsmoothing {}".format(i),end="")
         for j in range(i+1,nda):
-            idrp = round(abs(rp[j]-rp[i])/drp)
+            idrp = round(abs(r_par[j]-r_par[i])/drp)
             idrt = round(abs(rt[i]-rt[j])/drt)
             if not (idrp,idrt) in dcor:
                 dcor[(idrp,idrt)]=0.
@@ -81,7 +81,7 @@ def smooth_cov(da,weights,rp,rt,drt=4,drp=4,co=None):
     for i in range(nda):
         cor_smooth[i,i]=1.
         for j in range(i+1,nda):
-            idrp = round(abs(rp[j]-rp[i])/drp)
+            idrp = round(abs(r_par[j]-r_par[i])/drp)
             idrt = round(abs(rt[i]-rt[j])/drt)
             cor_smooth[i,j]=dcor[(idrp,idrt)]/dncor[(idrp,idrt)]
             cor_smooth[j,i]=cor_smooth[i,j]
