@@ -1028,7 +1028,7 @@ class Delta(QSO):
         self.r_comov = None
         self.dist_m = None
 
-        # variables computed in function cf.fill_neighs
+        # variables computed in function cf.fill_neighs or xcf.fill_neighs
         self.neighbours = None
 
     @classmethod
