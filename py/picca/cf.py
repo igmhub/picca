@@ -839,7 +839,7 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll
     weights = weights1[:,None]*weights2
     we1 = weights1[:,None]*sp.ones(weights2.size)
     we2 = sp.ones(weights1.size)[:,None]*weights2
-    zw = zw1[:,None]*zweights2
+    zw = zw1[:,None]*zw2
 
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
