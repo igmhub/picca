@@ -338,16 +338,16 @@ def dmat(healpixs):
             w=r>reject
             npairs += len(delta1.neighbours)
             npairs_used += w.sum()
-            for d2 in sp.array(d1.neighbours)[w]:
-                same_half_plate = (delta1.plate == d2.plate) and\
-                        ( (delta1.fiberid<=500 and d2.fiberid<=500) or (delta1.fiberid>500 and d2.fiberid>500) )
-                order2 = d2.order
-                ang = delta1^d2
-                r2 = d2.r_comov
-                rdm2 = d2.dist_m
-                w2 = d2.weights
-                l2 = d2.log_lambda
-                z2 = d2.z
+            for delta2 in sp.array(delta1.neighbours)[w]:
+                same_half_plate = (delta1.plate == delta2.plate) and\
+                        ( (delta1.fiberid<=500 and delta2.fiberid<=500) or (delta1.fiberid>500 and delta2.fiberid>500) )
+                order2 = delta2.order
+                ang = delta1^delta2
+                r2 = delta2.r_comov
+                rdm2 = delta2.dist_m
+                w2 = delta2.weights
+                l2 = delta2.log_lambda
+                z2 = delta2.z
                 fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
             setattr(d1,"neighs",None)
 
