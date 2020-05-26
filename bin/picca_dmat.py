@@ -305,42 +305,42 @@ def main():
         userprint("done, npix = {}".format(len(data2)))
 
 
-    cf.counter = Value('i',0)
+    cf.counter = Value('i', 0)
     cf.lock = Lock()
     cpu_data = {}
-    for i,p in enumerate(sorted(data.keys())):
-        ip = i%args.nproc
-        if not ip in cpu_data:
-            cpu_data[ip] = []
-        cpu_data[ip].append(p)
+    for index, healpix in enumerate(sorted(data)):
+        num_processor = index%args.nproc
+        if not num_processor in cpu_data:
+            cpu_data[num_processor] = []
+        cpu_data[num_processor].append(healpix)
 
-    if args.nproc>1:
+    if args.nproc > 1:
         pool = Pool(processes=args.nproc)
-        dm = pool.map(calc_dmat,sorted(cpu_data.values()))
+        dmat_data = pool.map(calc_dmat, sorted(cpu_data.values()))
         pool.close()
-    elif args.nproc==1:
-        dm = map(calc_dmat,sorted(cpu_data.values()))
-        dm = list(dm)
+    elif args.nproc == 1:
+        dmat_data = map(calc_dmat, sorted(cpu_data.values()))
+        dmat_data = list(dmat_data)
 
-    dm = np.array(dm)
-    wdm =dm[:,0].sum(axis=0)
-    r_par = dm[:,2].sum(axis=0)
-    r_trans = dm[:,3].sum(axis=0)
-    z = dm[:,4].sum(axis=0)
-    weights = dm[:,5].sum(axis=0)
-    npairs = dm[:,6].sum(axis=0)
-    npairs_used = dm[:,7].sum(axis=0)
-    dm=dm[:,1].sum(axis=0)
+    dmat_data = np.array(dmat_data)
+    wdm = dmat_data[:, 0].sum(axis=0)
+    dm = dmat_data[:, 1].sum(axis=0)
+    r_par = dmat_data[:, 2].sum(axis=0)
+    r_trans = dmat_data[:, 3].sum(axis=0)
+    z = dmat_data[:, 4].sum(axis=0)
+    weights = dmat_data[:, 5].sum(axis=0)
+    npairs = dmat_data[:, 6].sum(axis=0)
+    npairs_used = dmat_data[:, 7].sum(axis=0)
 
     w = weights>0.
     r_par[w] /= weights[w]
     r_trans[w] /= weights[w]
     z[w] /= weights[w]
-    w = wdm>0
-    dm[w]/=wdm[w,None]
+    w = wdm > 0
+    dm[w] /= wdm[w,None]
 
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
+    out = fitsio.FITS(args.out, 'rw', clobber=True)
     head = [ {'name':'RPMIN','value':cf.r_par_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
         {'name':'RPMAX','value':cf.r_par_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
         {'name':'RTMAX','value':cf.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
