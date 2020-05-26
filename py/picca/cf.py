@@ -339,13 +339,17 @@ def compute_dmat(healpixs):
             weights1 = delta1.weights
             log_lambda1 = delta1.log_lambda
             z1 = delta1.z
-            r = np.random.rand(len(delta1.neighbours))
-            w = r > reject
+            w = np.random.rand(len(delta1.neighbours)) > reject
             num_pairs += len(delta1.neighbours)
             num_pairs_used += w.sum()
-            for delta2 in sp.array(delta1.neighbours)[w]:
-                same_half_plate = (delta1.plate == delta2.plate) and\
-                        ( (delta1.fiberid<=500 and delta2.fiberid<=500) or (delta1.fiberid>500 and delta2.fiberid>500) )
+            for delta2 in np.array(delta1.neighbours)[w]:
+                same_half_plate = ((delta1.plate == delta2.plate) and
+                                   ((delta1.fiberid<=500 and
+                                     delta2.fiberid<=500) or
+                                    (delta1.fiberid>500 and
+                                     delta2.fiberid>500)
+                                    )
+                                   )
                 order2 = delta2.order
                 ang = delta1^delta2
                 r_comov2 = delta2.r_comov
@@ -353,7 +357,10 @@ def compute_dmat(healpixs):
                 weights2 = delta2.weights
                 log_lambda2 = delta2.log_lambda
                 z2 = delta2.z
-                fill_dmat(log_lambda1,log_lambda2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,weights1,weights2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2)
+                fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1,
+                          dist_m2, z1, z2, weights1, weights2, ang, wdm, dmat,
+                          r_par_eff, r_trans_eff, z_eff, weff, same_half_plate,
+                          order1, order2)
             setattr(delta1, "neighbours", None)
 
     dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
@@ -362,19 +369,73 @@ def compute_dmat(healpixs):
     return (wdm, dmat, r_par_eff, r_trans_eff, z_eff, weff, num_pairs,
             num_pairs_used)
 @jit
-def fill_dmat(log_lambda1,log_lambda2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,weights1,weights2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2):
+def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
+              z1, z2, weights1, weights2, ang, wdm, dmat, r_par_eff,
+              r_trans_eff, z_eff, weff, same_half_plate, order1, order2):
+    """Computes the contribution of a given pair of forests to the distortion
+    matrix.
 
-    r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
+    Args:
+        log_lambda1: array of float
+            Logarithm of the wavelength (in Angs) for forest 1
+        log_lambda2: array of float
+            Logarithm of the wavelength (in Angs) for forest 2
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for forest 2
+        dist_m1: array of floats
+            Angular distance for forest 1
+        dist_m2: array of floats
+            Angular distance for forest 2
+        z1: array of floats
+            Redshifts for forest 1
+        z2: array of floats
+            Redshifts for forest 2
+        weights1: array of floats
+            Weights for forest 1
+        weights2: array of floats
+            Weights for forest 2
+        ang: array of floats
+            Angular separation between pixels in forests 1 and 2
+        wdm:
+
+        dmat: array of floats
+            The distortion matrix
+        r_par_eff: array of floats
+            Effective parallel distance for the distortion matrix bins
+        r_trans_eff: array of floats
+            Effective transverse distance for the distortion matrix bins
+        z_eff: array of floats
+            Effective redshift for the distortion matrix bins
+        weff:
+
+        same_half_plate: bool
+            Flag to determine if the two forests are on the same half plate
+        order1: 0 or 1
+            Order of the log10(lambda) polynomial for the continuum fit in
+            forest 1
+        order 2: 0 or 1
+            Order of the log10(lambda) polynomial for the continuum fit in
+            forest 2
+
+    Returns:
+
+    """
+    # find distances between pixels
+    r_par = (r_comov1[:, None] - r_comov2)*np.cos(ang/2)
     if  not x_correlation:
         r_par = abs(r_par)
-    r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
-    z = (z1[:,None]+z2)/2.
+    r_trans = (dist_m1[:, None] + dist_m2)*np.sin(ang/2)
+    z = (z1[:, None] + z2)/2.
 
-    w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
+    w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
 
-    bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    # locate bins they are contributing to
+    bins_r_par = np.floor((r_par - r_par_min)/(r_par_max - r_par_min)*
+                          num_bins_r_par).astype(int)
     bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    bins = bt + num_bins_r_trans*bp
+    bins = bt + num_bins_r_trans*bins_r_par
     bins = bins[w]
 
     m_bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par_dmat).astype(int)
@@ -518,15 +579,15 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
                 w12 = weights1[:,None]*weights2
 
-                bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+                bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
                 bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
 
                 if remove_same_half_plate_close_pairs and same_half_plate:
                     wp = abs(r_par) < (r_par_max-r_par_min)/num_bins_r_par
                     w12[wp] = 0.
 
-                bA = bt + num_bins_r_trans*bp
-                wA = (bp<num_bins_r_par) & (bt<num_bins_r_trans) & (bp >=0)
+                bA = bt + num_bins_r_trans*bins_r_par
+                wA = (bins_r_par<num_bins_r_par) & (bt<num_bins_r_trans) & (bins_r_par >=0)
                 c = sp.bincount(bA[wA],weights=w12[wA])
                 wdm[:len(c)]+=c
 
@@ -592,13 +653,13 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
                     w12 = weights1[:,None]*weights2
 
-                    bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+                    bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
                     bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
                     if remove_same_half_plate_close_pairs and same_half_plate:
                         wp = abs(r_par) < (r_par_max-r_par_min)/num_bins_r_par
                         w12[wp] = 0.
-                    bA = bt + num_bins_r_trans*bp
-                    wA = (bp<num_bins_r_par) & (bt<num_bins_r_trans) & (bp >=0)
+                    bA = bt + num_bins_r_trans*bins_r_par
+                    wA = (bins_r_par<num_bins_r_par) & (bt<num_bins_r_trans) & (bins_r_par >=0)
                     c = sp.bincount(bA[wA],weights=w12[wA])
                     wdm[:len(c)]+=c
                     rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
@@ -764,9 +825,9 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll
     if not x_correlation:
         r_par = abs(r_par)
     r_trans = (r_comov1[:,None]+r_comov2)*sp.sin(ang/2)
-    bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
     bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba = bt + num_bins_r_trans*bp
+    ba = bt + num_bins_r_trans*bins_r_par
     weights = weights1[:,None]*weights2
     we1 = weights1[:,None]*sp.ones(weights2.size)
     we2 = sp.ones(weights1.size)[:,None]*weights2
@@ -823,9 +884,9 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
     pix2_12 = (sp.ones(r_comov1.size)[:,None]*np.arange(r_comov2.size)).astype(int)
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
-    bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
     bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba12 = bt + num_bins_r_trans*bp
+    ba12 = bt + num_bins_r_trans*bins_r_par
     ba12[~w] = 0
     cf12 = cfWick['{}_{}'.format(fname1,fname2)][ba12]
     cf12[~w] = 0.
@@ -843,9 +904,9 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
     pix3_13 = (sp.ones(r_comov1.size)[:,None]*np.arange(r3.size)).astype(int)
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
-    bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
     bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba13 = bt + num_bins_r_trans*bp
+    ba13 = bt + num_bins_r_trans*bins_r_par
     ba13[~w] = 0
     cf13 = cfWick['{}_{}'.format(fname1,fname3)][ba13]
     cf13[~w] = 0.
@@ -863,9 +924,9 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
     pix3_23 = (sp.ones(r_comov2.size)[:,None]*np.arange(r3.size)).astype(int)
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
-    bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
+    bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
     bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba23 = bt + num_bins_r_trans*bp
+    ba23 = bt + num_bins_r_trans*bins_r_par
     ba23[~w] = 0
     cf23 = cfWick['{}_{}'.format(fname2,fname3)][ba23]
     cf23[~w] = 0.
