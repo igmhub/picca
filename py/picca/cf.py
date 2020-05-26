@@ -6,7 +6,7 @@ This module provides several functions:
     - fill_neighs_x_correlation
     - compute_xi
     - compute_xi_forest_pairs
-    - dmat
+    - compute_dmat
     - fill_dmat
     - metal_dmat
     - cf1d
@@ -295,7 +295,7 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
             rebin_num_pairs)
 
 
-def dmat(healpixs):
+def compute_dmat(healpixs):
     """Computes the distortion matrix for each of the healpixs.
 
     Args:
@@ -349,7 +349,7 @@ def dmat(healpixs):
                 l2 = delta2.log_lambda
                 z2 = delta2.z
                 fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
-            setattr(d1,"neighs",None)
+            setattr(delta1, "neighbours", None)
 
     return wdm, dm.reshape(num_bins_r_par*num_bins_r_trans, num_bins_r_par_dmat*num_bins_r_trans_dmat),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
