@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 """Computes the 3D correlation function between two delta fields.
 
-This module follow the procedure described in sections 3.1 and 3.2 of du Mas des Bourboux
-et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
+This module follow the procedure described in sections 3.1 and 3.2 of du Mas des
+Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
 import argparse
 from multiprocessing import Pool, Lock, cpu_count, Value
@@ -11,6 +11,7 @@ import fitsio
 
 from picca import constants, cf, utils, io
 from picca.utils import userprint
+
 
 def corr_func(healpixs):
     """Computes the correlation function.
@@ -29,6 +30,7 @@ def corr_func(healpixs):
     cf.fill_neighs(healpixs)
     correlation_function_data = cf.compute_xi(healpixs)
     return correlation_function_data
+
 
 def main():
     """Computes the Lyman alpha 3D autocorrelation"""
@@ -215,7 +217,7 @@ def main():
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()//2
+        args.nproc = cpu_count() // 2
 
     # setup variables in module cf
     cf.r_par_max = args.rp_max
@@ -265,15 +267,16 @@ def main():
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, num_data2, z_min2, z_max2 = io.read_deltas(args.in_dir2,
-                                                          cf.nside,
-                                                          cf.lambda_abs2,
-                                                          cf.alpha2,
-                                                          cf.z_ref,
-                                                          cosmo,
-                                                          max_num_spec=args.nspec,
-                                                          no_project=args.no_project,
-                                                          from_image=args.from_image)
+        data2, num_data2, z_min2, z_max2 = io.read_deltas(
+            args.in_dir2,
+            cf.nside,
+            cf.lambda_abs2,
+            cf.alpha2,
+            cf.z_ref,
+            cosmo,
+            max_num_spec=args.nspec,
+            no_project=args.no_project,
+            from_image=args.from_image)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
@@ -281,10 +284,12 @@ def main():
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 
+    # shuffle forests
     if args.shuffle_distrib_forest_seed is not None:
-        cf.data = utils.shuffle_distrib_forests(cf.data,
-                                                args.shuffle_distrib_forest_seed)
+        cf.data = utils.shuffle_distrib_forests(
+            cf.data, args.shuffle_distrib_forest_seed)
 
+    # compute correlation function, use pool to parallelize
     cf.counter = Value('i', 0)
     cf.lock = Lock()
     cpu_data = {healpix: [healpix] for healpix in data}
@@ -292,7 +297,7 @@ def main():
     correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
     pool.close()
 
-
+    # group data from parallelisation
     correlation_function_data = np.array(correlation_function_data)
     weights_list = correlation_function_data[:, 0, :]
     xi_list = correlation_function_data[:, 1, :]
@@ -303,49 +308,70 @@ def main():
     hep = np.array(sorted(list(cpu_data.keys())))
 
     cut = (weights_list.sum(axis=0) > 0.)
-    r_par = (r_par_list*weights_list).sum(axis=0)
+    r_par = (r_par_list * weights_list).sum(axis=0)
     r_par[cut] /= weights_list.sum(axis=0)[cut]
-    r_trans = (r_trans_list*weights_list).sum(axis=0)
+    r_trans = (r_trans_list * weights_list).sum(axis=0)
     r_trans[cut] /= weights_list.sum(axis=0)[cut]
-    z = (z_list*weights_list).sum(axis=0)
+    z = (z_list * weights_list).sum(axis=0)
     z[cut] /= weights_list.sum(axis=0)[cut]
     num_pairs = num_pairs_list.sum(axis=0)
 
-
+    # save data
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [
-        {'name': 'RPMIN', 'value': cf.r_par_min,
-         'comment': 'Minimum r-parallel [h^-1 Mpc]'},
-        {'name': 'RPMAX', 'value': cf.r_par_max,
-         'comment': 'Maximum r-parallel [h^-1 Mpc]'},
-        {'name': 'RTMAX', 'value': cf.r_trans_max,
-         'comment': 'Maximum r-transverse [h^-1 Mpc]'},
-        {'name': 'NP', 'value': cf.num_bins_r_par,
-         'comment': 'Number of bins in r-parallel'},
-        {'name': 'NT', 'value': cf.num_bins_r_trans,
-         'comment': 'Number of bins in r-transverse'},
-        {'name': 'ZCUTMIN', 'value': cf.z_cut_min,
-         'comment':'Minimum redshift of pairs'},
-        {'name': 'ZCUTMAX', 'value': cf.z_cut_max,
-         'comment': 'Maximum redshift of pairs'},
-        {'name': 'NSIDE', 'value': cf.nside,
-         'comment': 'Healpix nside'}
-    ]
-    results.write([r_par, r_trans, z, num_pairs],
-                  names=['RP', 'RT', 'Z', 'NB'],
-                  comment=['R-parallel', 'R-transverse', 'Redshift',
-                           'Number of pairs'],
-                  units=['h^-1 Mpc', 'h^-1 Mpc', '', ''],
-                  header=header, extname='ATTRI')
+    header = [{
+        'name': 'RPMIN',
+        'value': cf.r_par_min,
+        'comment': 'Minimum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RPMAX',
+        'value': cf.r_par_max,
+        'comment': 'Maximum r-parallel [h^-1 Mpc]'
+    }, {
+        'name': 'RTMAX',
+        'value': cf.r_trans_max,
+        'comment': 'Maximum r-transverse [h^-1 Mpc]'
+    }, {
+        'name': 'NP',
+        'value': cf.num_bins_r_par,
+        'comment': 'Number of bins in r-parallel'
+    }, {
+        'name': 'NT',
+        'value': cf.num_bins_r_trans,
+        'comment': 'Number of bins in r-transverse'
+    }, {
+        'name': 'ZCUTMIN',
+        'value': cf.z_cut_min,
+        'comment': 'Minimum redshift of pairs'
+    }, {
+        'name': 'ZCUTMAX',
+        'value': cf.z_cut_max,
+        'comment': 'Maximum redshift of pairs'
+    }, {
+        'name': 'NSIDE',
+        'value': cf.nside,
+        'comment': 'Healpix nside'
+    }]
+    results.write(
+        [r_par, r_trans, z, num_pairs],
+        names=['RP', 'RT', 'Z', 'NB'],
+        comment=['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs'],
+        units=['h^-1 Mpc', 'h^-1 Mpc', '', ''],
+        header=header,
+        extname='ATTRI')
 
-    header2 = [{'name': 'HLPXSCHM', 'value': 'RING',
-                'comment': 'Healpix scheme'}]
+    header2 = [{
+        'name': 'HLPXSCHM',
+        'value': 'RING',
+        'comment': 'Healpix scheme'
+    }]
     results.write([hep, weights_list, xi_list],
                   names=['HEALPID', 'WE', 'DA'],
                   comment=['Healpix index', 'Sum of weight', 'Correlation'],
-                  header=header2, extname='COR')
+                  header=header2,
+                  extname='COR')
 
     results.close()
+
 
 if __name__ == '__main__':
     main()
