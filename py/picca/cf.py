@@ -336,7 +336,7 @@ def compute_dmat(healpixs):
             order1 = delta1.order
             r_comov1 = delta1.r_comov
             dist_m1 = delta1.dist_m
-            w1 = delta1.weights
+            weights1 = delta1.weights
             l1 = delta1.log_lambda
             z1 = delta1.z
             r = np.random.rand(len(delta1.neighbours))
@@ -353,7 +353,7 @@ def compute_dmat(healpixs):
                 w2 = delta2.weights
                 l2 = delta2.log_lambda
                 z2 = delta2.z
-                fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,w1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2)
+                fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,weights1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2)
             setattr(delta1, "neighbours", None)
 
     dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
@@ -362,7 +362,7 @@ def compute_dmat(healpixs):
     return (wdm, dmat, r_par_eff, r_trans_eff, z_eff, weff, num_pairs,
             num_pairs_used)
 @jit
-def fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,w1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2):
+def fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,weights1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2):
 
     r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
     if  not x_correlation:
@@ -382,16 +382,16 @@ def fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,w1,w2,ang,wdm,dmat,r
     m_bins = m_bt + num_bins_r_trans_dmat*m_bp
     m_bins = m_bins[w]
 
-    sw1 = w1.sum()
+    sw1 = weights1.sum()
     sw2 = w2.sum()
 
-    ml1 = sp.average(l1,weights=w1)
+    ml1 = sp.average(l1,weights=weights1)
     ml2 = sp.average(l2,weights=w2)
 
     dl1 = l1-ml1
     dl2 = l2-ml2
 
-    slw1 = (w1*dl1**2).sum()
+    slw1 = (weights1*dl1**2).sum()
     slw2 = (w2*dl2**2).sum()
 
     n1 = len(l1)
@@ -399,7 +399,7 @@ def fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,w1,w2,ang,wdm,dmat,r
     ij = np.arange(n1)[:,None]+n1*np.arange(n2)
     ij = ij[w]
 
-    weights = w1[:,None]*w2
+    weights = weights1[:,None]*w2
     weights = weights[w]
 
     if remove_same_half_plate_close_pairs and same_half_plate:
@@ -428,23 +428,23 @@ def fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,w1,w2,ang,wdm,dmat,r
 
     c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2)[w]/sw2)
     eta1[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (weights1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount(m_bins,weights=(w1[:,None]*w2)[w]/sw1/sw2)
+    c = sp.bincount(m_bins,weights=(weights1[:,None]*w2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
 
     if order2==1:
         c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*w2*dl2)[w]/slw2)
         eta3[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=(w1[:,None]*(w2*dl2))[w]/sw1/slw2)
+        c = sp.bincount(m_bins,weights=(weights1[:,None]*(w2*dl2))[w]/sw1/slw2)
         eta6[:len(c)]+=c
     if order1==1:
-        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((weights1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
         eta4[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*w2)[w]/slw1/sw2)
+        c = sp.bincount(m_bins,weights=((weights1*dl1)[:,None]*w2)[w]/slw1/sw2)
         eta7[:len(c)]+=c
         if order2==1:
-            c = sp.bincount(m_bins,weights=((w1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
+            c = sp.bincount(m_bins,weights=((weights1*dl1)[:,None]*(w2*dl2))[w]/slw1/slw2)
             eta8[:len(c)]+=c
 
     ubb = np.unique(m_bins)
@@ -483,12 +483,12 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 z1_abs1 = 10**d1.log_lambda/constants.ABSORBER_IGM[abs_igm1]-1
                 r1_abs1 = cosmo.get_r_comov(z1_abs1)
                 rdm1_abs1 = cosmo.get_dist_m(z1_abs1)
-                w1 = d1.weights
+                weights1 = d1.weights
 
                 wzcut = z1_abs1<d1.z_qso
                 r_comov1 = r_comov1[wzcut]
                 dist_m1 = dist_m1[wzcut]
-                w1 = w1[wzcut]
+                weights1 = weights1[wzcut]
                 r1_abs1 = r1_abs1[wzcut]
                 rdm1_abs1 = rdm1_abs1[wzcut]
                 z1_abs1 = z1_abs1[wzcut]
@@ -516,7 +516,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     r_par = abs(r_par)
 
                 r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
-                w12 = w1[:,None]*w2
+                w12 = weights1[:,None]*w2
 
                 bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
                 bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
@@ -557,7 +557,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 if ((not x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
                     r_comov1 = d1.r_comov
                     dist_m1 = d1.dist_m
-                    w1 = d1.weights
+                    weights1 = d1.weights
                     z1_abs2 = 10**d1.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
                     r1_abs2 = cosmo.get_r_comov(z1_abs2)
                     rdm1_abs2 = cosmo.get_dist_m(z1_abs2)
@@ -565,7 +565,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     wzcut = z1_abs2<d1.z_qso
                     r_comov1 = r_comov1[wzcut]
                     dist_m1 = dist_m1[wzcut]
-                    w1 = w1[wzcut]
+                    weights1 = weights1[wzcut]
                     z1_abs2 = z1_abs2[wzcut]
                     r1_abs2 = r1_abs2[wzcut]
                     rdm1_abs2 = rdm1_abs2[wzcut]
@@ -590,7 +590,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                         r_par = abs(r_par)
 
                     r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
-                    w12 = w1[:,None]*w2
+                    w12 = weights1[:,None]*w2
 
                     bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
                     bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
@@ -712,8 +712,8 @@ def wickT(pix):
             if len(d1.neighbours)==0: continue
 
             v1 = v1d[d1.fname](d1.log_lambda)
-            w1 = d1.weights
-            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.log_lambda-d1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
+            weights1 = d1.weights
+            c1d_1 = (weights1*weights1[:,None])*c1d[d1.fname](abs(d1.log_lambda-d1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
             r_comov1 = d1.r_comov
             z1 = d1.z
 
@@ -726,7 +726,7 @@ def wickT(pix):
                 r_comov2 = d2.r_comov
                 z2 = d2.z
 
-                fill_wickT123(r_comov1,r_comov2,ang12,w1,d2.weights,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3)
+                fill_wickT123(r_comov1,r_comov2,ang12,weights1,d2.weights,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3)
                 if max_diagram<=3: continue
 
                 ### d3 and d2 have the same 'fname'
@@ -740,7 +740,7 @@ def wickT(pix):
                     r3 = d3.r_comov
                     z3 = d3.z
 
-                    fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, w1,w2,w3,
+                    fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,w2,w3,
                         z1,z2,z3, c1d_1,c1d_2,c1d_3,
                         d1.fname,d2.fname,d3.fname,
                         T4,T5)
@@ -750,7 +750,7 @@ def wickT(pix):
 
     return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
-def fill_wickT123(r_comov1,r_comov2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
+def fill_wickT123(r_comov1,r_comov2,ang,weights1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
 
     n1 = len(r_comov1)
     n2 = len(r_comov2)
@@ -767,9 +767,9 @@ def fill_wickT123(r_comov1,r_comov2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3
     bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
     bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     ba = bt + num_bins_r_trans*bp
-    weights = w1[:,None]*w2
-    we1 = w1[:,None]*sp.ones(w2.size)
-    we2 = sp.ones(w1.size)[:,None]*w2
+    weights = weights1[:,None]*w2
+    we1 = weights1[:,None]*sp.ones(w2.size)
+    we2 = sp.ones(weights1.size)[:,None]*w2
     zw = zw1[:,None]*zw2
 
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
@@ -809,7 +809,7 @@ def fill_wickT123(r_comov1,r_comov2,ang,w1,w2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3
 
     return
 @jit
-def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1d_3, fname1,fname2,fname3, T4,T5):
+def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,w2,w3, z1,z2,z3, c1d_1,c1d_2,c1d_3, fname1,fname2,fname3, T4,T5):
     """
 
     """
@@ -885,7 +885,7 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, w1,w2,w3, z1,z2,z3, c1
 
             tcf23 = cf23[tpix2_12,tpix3_13]
             if tpix1_12==tpix1_13:
-                wcorr = w1[tpix1_12]*tcf23 ### TODO work on the good formula
+                wcorr = weights1[tpix1_12]*tcf23 ### TODO work on the good formula
                 T4[p1,p2] += wcorr
                 T4[p2,p1] += wcorr
             else:
