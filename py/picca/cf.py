@@ -442,15 +442,22 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     m_bins = m_bt + num_bins_r_trans_dmat*m_bp
     m_bins = m_bins[w]
 
-    sw1 = weights1.sum()
-    sw2 = weights2.sum()
+    # compute useful auxiliar variables to speed up computation of eta
+    # (equation 6 of du Mas des Bourboux et al. 2020)
 
+    # denominator second term in equation 6 of du Mas des Bourboux et al. 2020
+    sum_weights1 = weights1.sum()
+    sum_weights2 = weights2.sum()
+
+    # mean of log_lambda
     mean_log_lambda1 = np.average(log_lambda1, weights=weights1)
     mean_log_lambda2 = np.average(log_lambda2, weights=weights2)
 
-    dl1 = log_lambda1-mean_log_lambda1
-    dl2 = log_lambda2-mean_log_lambda2
+    # log_lambda minus its mean
+    dl1 = log_lambda1 - mean_log_lambda1
+    dl2 = log_lambda2 - mean_log_lambda2
 
+    # denominator third term in equation 6 of du Mas des Bourboux et al. 2020
     slw1 = (weights1*dl1**2).sum()
     slw2 = (weights2*dl2**2).sum()
 
@@ -486,22 +493,22 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     eta7 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat)
     eta8 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat)
 
-    c = sp.bincount(ij%n1+n1*m_bins, weights=(sp.ones(n1)[:,None]*weights2)[w]/sw2)
+    c = sp.bincount(ij%n1+n1*m_bins, weights=(sp.ones(n1)[:,None]*weights2)[w]/sum_weights2)
     eta1[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (weights1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (weights1[:,None]*sp.ones(n2))[w]/sum_weights1)
     eta2[:len(c)]+=c
-    c = sp.bincount(m_bins,weights=(weights1[:,None]*weights2)[w]/sw1/sw2)
+    c = sp.bincount(m_bins,weights=(weights1[:,None]*weights2)[w]/sum_weights1/sum_weights2)
     eta5[:len(c)]+=c
 
     if order2 == 1:
         c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*weights2*dl2)[w]/slw2)
         eta3[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=(weights1[:,None]*(weights2*dl2))[w]/sw1/slw2)
+        c = sp.bincount(m_bins,weights=(weights1[:,None]*(weights2*dl2))[w]/sum_weights1/slw2)
         eta6[:len(c)]+=c
     if order1 == 1:
         c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((weights1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
         eta4[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=((weights1*dl1)[:,None]*weights2)[w]/slw1/sw2)
+        c = sp.bincount(m_bins,weights=((weights1*dl1)[:,None]*weights2)[w]/slw1/sum_weights2)
         eta7[:len(c)]+=c
         if order2 == 1:
             c = sp.bincount(m_bins,weights=((weights1*dl1)[:,None]*(weights2*dl2))[w]/slw1/slw2)
