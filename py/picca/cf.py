@@ -337,7 +337,7 @@ def compute_dmat(healpixs):
             r_comov1 = delta1.r_comov
             dist_m1 = delta1.dist_m
             weights1 = delta1.weights
-            l1 = delta1.log_lambda
+            log_lambda1 = delta1.log_lambda
             z1 = delta1.z
             r = np.random.rand(len(delta1.neighbours))
             w = r > reject
@@ -353,7 +353,7 @@ def compute_dmat(healpixs):
                 weights2 = delta2.weights
                 l2 = delta2.log_lambda
                 z2 = delta2.z
-                fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,weights1,weights2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2)
+                fill_dmat(log_lambda1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,weights1,weights2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2)
             setattr(delta1, "neighbours", None)
 
     dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
@@ -362,7 +362,7 @@ def compute_dmat(healpixs):
     return (wdm, dmat, r_par_eff, r_trans_eff, z_eff, weff, num_pairs,
             num_pairs_used)
 @jit
-def fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,weights1,weights2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2):
+def fill_dmat(log_lambda1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,weights1,weights2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2):
 
     r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
     if  not x_correlation:
@@ -385,16 +385,16 @@ def fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,weights1,weights2,an
     sw1 = weights1.sum()
     sw2 = weights2.sum()
 
-    ml1 = sp.average(l1,weights=weights1)
+    ml1 = sp.average(log_lambda1,weights=weights1)
     ml2 = sp.average(l2,weights=weights2)
 
-    dl1 = l1-ml1
+    dl1 = log_lambda1-ml1
     dl2 = l2-ml2
 
     slw1 = (weights1*dl1**2).sum()
     slw2 = (weights2*dl2**2).sum()
 
-    n1 = len(l1)
+    n1 = len(log_lambda1)
     n2 = len(l2)
     ij = np.arange(n1)[:,None]+n1*np.arange(n2)
     ij = ij[w]
