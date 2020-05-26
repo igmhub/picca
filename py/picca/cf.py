@@ -434,8 +434,8 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     # locate bins they are contributing to
     bins_r_par = np.floor((r_par - r_par_min)/(r_par_max - r_par_min)*
                           num_bins_r_par).astype(int)
-    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    bins = bt + num_bins_r_trans*bins_r_par
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    bins = bins_r_trans + num_bins_r_trans*bins_r_par
     bins = bins[w]
 
     m_bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par_dmat).astype(int)
@@ -580,14 +580,14 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 w12 = weights1[:,None]*weights2
 
                 bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-                bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+                bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
 
                 if remove_same_half_plate_close_pairs and same_half_plate:
                     wp = abs(r_par) < (r_par_max-r_par_min)/num_bins_r_par
                     w12[wp] = 0.
 
-                bA = bt + num_bins_r_trans*bins_r_par
-                wA = (bins_r_par<num_bins_r_par) & (bt<num_bins_r_trans) & (bins_r_par >=0)
+                bA = bins_r_trans + num_bins_r_trans*bins_r_par
+                wA = (bins_r_par<num_bins_r_par) & (bins_r_trans<num_bins_r_trans) & (bins_r_par >=0)
                 c = sp.bincount(bA[wA],weights=w12[wA])
                 wdm[:len(c)]+=c
 
@@ -654,12 +654,12 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     w12 = weights1[:,None]*weights2
 
                     bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-                    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+                    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
                     if remove_same_half_plate_close_pairs and same_half_plate:
                         wp = abs(r_par) < (r_par_max-r_par_min)/num_bins_r_par
                         w12[wp] = 0.
-                    bA = bt + num_bins_r_trans*bins_r_par
-                    wA = (bins_r_par<num_bins_r_par) & (bt<num_bins_r_trans) & (bins_r_par >=0)
+                    bA = bins_r_trans + num_bins_r_trans*bins_r_par
+                    wA = (bins_r_par<num_bins_r_par) & (bins_r_trans<num_bins_r_trans) & (bins_r_par >=0)
                     c = sp.bincount(bA[wA],weights=w12[wA])
                     wdm[:len(c)]+=c
                     rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
@@ -826,8 +826,8 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll
         r_par = abs(r_par)
     r_trans = (r_comov1[:,None]+r_comov2)*sp.sin(ang/2)
     bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba = bt + num_bins_r_trans*bins_r_par
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    ba = bins_r_trans + num_bins_r_trans*bins_r_par
     weights = weights1[:,None]*weights2
     we1 = weights1[:,None]*sp.ones(weights2.size)
     we2 = sp.ones(weights1.size)[:,None]*weights2
@@ -885,8 +885,8 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
     bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba12 = bt + num_bins_r_trans*bins_r_par
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    ba12 = bins_r_trans + num_bins_r_trans*bins_r_par
     ba12[~w] = 0
     cf12 = cfWick['{}_{}'.format(fname1,fname2)][ba12]
     cf12[~w] = 0.
@@ -905,8 +905,8 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
     bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba13 = bt + num_bins_r_trans*bins_r_par
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    ba13 = bins_r_trans + num_bins_r_trans*bins_r_par
     ba13[~w] = 0
     cf13 = cfWick['{}_{}'.format(fname1,fname3)][ba13]
     cf13[~w] = 0.
@@ -925,8 +925,8 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
     bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba23 = bt + num_bins_r_trans*bins_r_par
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    ba23 = bins_r_trans + num_bins_r_trans*bins_r_par
     ba23[~w] = 0
     cf23 = cfWick['{}_{}'.format(fname2,fname3)][ba23]
     cf23[~w] = 0.
