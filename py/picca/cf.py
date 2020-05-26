@@ -454,19 +454,21 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     mean_log_lambda2 = np.average(log_lambda2, weights=weights2)
 
     # log_lambda minus its mean
-    dl1 = log_lambda1 - mean_log_lambda1
-    dl2 = log_lambda2 - mean_log_lambda2
+    log_lambda_minus_mean1 = log_lambda1 - mean_log_lambda1
+    log_lambda_minus_mean2 = log_lambda2 - mean_log_lambda2
 
     # denominator third term in equation 6 of du Mas des Bourboux et al. 2020
-    slw1 = (weights1*dl1**2).sum()
-    slw2 = (weights2*dl2**2).sum()
+    sum_weights_squara_log_lambda_minus_mean1 = (weights1*
+                                                 log_lambda_minus_mean1**2).sum()
+    sum_weights_squara_log_lambda_minus_mean2 = (weights2*
+                                                 log_lambda_minus_mean2**2).sum()
 
     n1 = len(log_lambda1)
     n2 = len(log_lambda2)
-    ij = np.arange(n1)[:,None]+n1*np.arange(n2)
+    ij = np.arange(n1)[:, None] + n1*np.arange(n2)
     ij = ij[w]
 
-    weights = weights1[:,None]*weights2
+    weights = weights1[:, None]*weights2
     weights = weights[w]
 
     if remove_same_half_plate_close_pairs and same_half_plate:
@@ -501,17 +503,17 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     eta5[:len(c)]+=c
 
     if order2 == 1:
-        c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*weights2*dl2)[w]/slw2)
+        c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*weights2*log_lambda_minus_mean2)[w]/sum_weights_squara_log_lambda_minus_mean2)
         eta3[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=(weights1[:,None]*(weights2*dl2))[w]/sum_weights1/slw2)
+        c = sp.bincount(m_bins,weights=(weights1[:,None]*(weights2*log_lambda_minus_mean2))[w]/sum_weights1/sum_weights_squara_log_lambda_minus_mean2)
         eta6[:len(c)]+=c
     if order1 == 1:
-        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((weights1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((weights1*log_lambda_minus_mean1)[:,None]*sp.ones(n2))[w]/sum_weights_squara_log_lambda_minus_mean1)
         eta4[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=((weights1*dl1)[:,None]*weights2)[w]/slw1/sum_weights2)
+        c = sp.bincount(m_bins,weights=((weights1*log_lambda_minus_mean1)[:,None]*weights2)[w]/sum_weights_squara_log_lambda_minus_mean1/sum_weights2)
         eta7[:len(c)]+=c
         if order2 == 1:
-            c = sp.bincount(m_bins,weights=((weights1*dl1)[:,None]*(weights2*dl2))[w]/slw1/slw2)
+            c = sp.bincount(m_bins,weights=((weights1*log_lambda_minus_mean1)[:,None]*(weights2*log_lambda_minus_mean2))[w]/sum_weights_squara_log_lambda_minus_mean1/sum_weights_squara_log_lambda_minus_mean2)
             eta8[:len(c)]+=c
 
     ubb = np.unique(m_bins)
@@ -520,8 +522,8 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
         i = ij[k]%n1
         j = (ij[k]-i)//n1
         for bb in ubb:
-            dmat[bb+num_bins_r_par_dmat*num_bins_r_trans_dmat*ba] += weights[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
-             - weights[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+            dmat[bb+num_bins_r_par_dmat*num_bins_r_trans_dmat*ba] += weights[k]*(eta5[bb]+eta6[bb]*log_lambda_minus_mean2[j]+eta7[bb]*log_lambda_minus_mean1[i]+eta8[bb]*log_lambda_minus_mean1[i]*log_lambda_minus_mean2[j])\
+             - weights[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*log_lambda_minus_mean2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*log_lambda_minus_mean1[i])
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
