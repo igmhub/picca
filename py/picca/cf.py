@@ -349,11 +349,11 @@ def compute_dmat(healpixs):
                 order2 = delta2.order
                 ang = delta1^delta2
                 r_comov2 = delta2.r_comov
-                rdm2 = delta2.dist_m
+                dist_m2 = delta2.dist_m
                 w2 = delta2.weights
                 l2 = delta2.log_lambda
                 z2 = delta2.z
-                fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2)
+                fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,w1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2)
             setattr(delta1, "neighbours", None)
 
     dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
@@ -362,12 +362,12 @@ def compute_dmat(healpixs):
     return (wdm, dmat, r_par_eff, r_trans_eff, z_eff, weff, num_pairs,
             num_pairs_used)
 @jit
-def fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2):
+def fill_dmat(l1,l2,r_comov1,r_comov2,dist_m1,dist_m2,z1,z2,w1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2):
 
     r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
     if  not x_correlation:
         r_par = abs(r_par)
-    r_trans = (dist_m1[:,None]+rdm2)*sp.sin(ang/2)
+    r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
 
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
@@ -497,7 +497,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                         ( (d1.fiberid<=500 and d2.fiberid<=500) or (d1.fiberid>500 and d2.fiberid>500) )
                 ang = d1^d2
                 r_comov2 = d2.r_comov
-                rdm2 = d2.dist_m
+                dist_m2 = d2.dist_m
                 z2_abs2 = 10**d2.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
                 r2_abs2 = cosmo.get_r_comov(z2_abs2)
                 rdm2_abs2 = cosmo.get_dist_m(z2_abs2)
@@ -505,7 +505,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                 wzcut = z2_abs2<d2.z_qso
                 r_comov2 = r_comov2[wzcut]
-                rdm2 = rdm2[wzcut]
+                dist_m2 = dist_m2[wzcut]
                 w2 = w2[wzcut]
                 r2_abs2 = r2_abs2[wzcut]
                 rdm2_abs2 = rdm2_abs2[wzcut]
@@ -515,7 +515,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 if not x_correlation:
                     r_par = abs(r_par)
 
-                r_trans = (dist_m1[:,None]+rdm2)*sp.sin(ang/2)
+                r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
                 w12 = w1[:,None]*w2
 
                 bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
@@ -571,7 +571,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     rdm1_abs2 = rdm1_abs2[wzcut]
 
                     r_comov2 = d2.r_comov
-                    rdm2 = d2.dist_m
+                    dist_m2 = d2.dist_m
                     w2 = d2.weights
                     z2_abs1 = 10**d2.log_lambda/constants.ABSORBER_IGM[abs_igm1]-1
                     r2_abs1 = cosmo.get_r_comov(z2_abs1)
@@ -579,7 +579,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
                     wzcut = z2_abs1<d2.z_qso
                     r_comov2 = r_comov2[wzcut]
-                    rdm2 = rdm2[wzcut]
+                    dist_m2 = dist_m2[wzcut]
                     w2 = w2[wzcut]
                     z2_abs1 = z2_abs1[wzcut]
                     r2_abs1 = r2_abs1[wzcut]
@@ -589,7 +589,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     if not x_correlation:
                         r_par = abs(r_par)
 
-                    r_trans = (dist_m1[:,None]+rdm2)*sp.sin(ang/2)
+                    r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
                     w12 = w1[:,None]*w2
 
                     bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
