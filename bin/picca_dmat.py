@@ -5,8 +5,8 @@ This module follow the procedure described in sections 3.5 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
 import argparse
-from multiprocessing import Pool,Lock,cpu_count,Value
-import scipy as sp
+from multiprocessing import Pool, Lock, cpu_count, Value
+import numpy as np
 import fitsio
 
 from picca import constants, cf, utils, io
@@ -322,7 +322,7 @@ def main():
         dm = map(calc_dmat,sorted(cpu_data.values()))
         dm = list(dm)
 
-    dm = sp.array(dm)
+    dm = np.array(dm)
     wdm =dm[:,0].sum(axis=0)
     r_par = dm[:,2].sum(axis=0)
     r_trans = dm[:,3].sum(axis=0)
