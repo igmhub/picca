@@ -262,13 +262,20 @@ def main():
                             wl=args.fid_wl)
 
     ### Read data 1
-    data, num_data, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs, cf.alpha, cf.z_ref, cosmo, max_num_spec=args.nspec, no_project=args.no_project)
-    cf.npix = len(data)
+    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
+                                                  cf.nside,
+                                                  cf.lambda_abs,
+                                                  cf.alpha,
+                                                  cf.z_ref,
+                                                  cosmo,
+                                                  max_num_spec=args.nspec,
+                                                  no_project=args.no_project)
+    del z_max
     cf.data = data
     cf.num_data = num_data
-    cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix)
+    cf.ang_max = utils.compute_ang_max(cosmo, cf.r_trans_max, z_min)
     userprint("")
-    userprint("done, npix = {}".format(cf.npix))
+    userprint("done, npix = {}".format(len(data)))
 
     ### Read data 2
     if args.in_dir2 or args.lambda_abs2:
@@ -282,10 +289,18 @@ def main():
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, num_data2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2, cf.alpha2, cf.z_ref, cosmo, max_num_spec=args.nspec, no_project=args.no_project)
+        data2, num_data2, z_min2, z_max2 = io.read_deltas(args.in_dir2,
+                                                          cf.nside,
+                                                          cf.lambda_abs2,
+                                                          cf.alpha2,
+                                                          cf.z_ref,
+                                                          cosmo,
+                                                          max_num_spec=args.nspec,
+                                                          no_project=args.no_project)
+        del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
-        cf.ang_max = utils.compute_ang_max(cosmo,cf.r_trans_max,zmin_pix,zmin_pix2)
+        cf.ang_max = utils.compute_ang_max(cosmo, cf.r_trans_max, z_min, z_min2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 
