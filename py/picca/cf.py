@@ -351,7 +351,7 @@ def compute_dmat(healpixs):
                 fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
             setattr(delta1, "neighbours", None)
 
-    return wdm, dm.reshape(num_bins_r_par*num_bins_r_trans, num_bins_r_par_dmat*num_bins_r_trans_dmat),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return wdm, dmat.reshape(num_bins_r_par*num_bins_r_trans, num_bins_r_par_dmat*num_bins_r_trans_dmat),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
 def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 
