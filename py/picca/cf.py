@@ -418,9 +418,6 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
         order 2: 0 or 1
             Order of the log10(lambda) polynomial for the continuum fit in
             forest 2
-
-    Returns:
-
     """
     # find distances between pixels
     r_par = (r_comov1[:, None] - r_comov2)*np.cos(ang/2)
@@ -431,14 +428,16 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
 
     w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
 
-    # locate bins they are contributing to
+    # locate bins pixels are contributing to (correlation bins)
     bins_r_par = np.floor((r_par - r_par_min)/(r_par_max - r_par_min)*
                           num_bins_r_par).astype(int)
     bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     bins = bins_r_trans + num_bins_r_trans*bins_r_par
     bins = bins[w]
 
-    m_bp = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par_dmat).astype(int)
+    # locate bins pixels are contributing to (model bins)
+    m_bp = np.floor((r_par - r_par_min)/(r_par_max - r_par_min)*
+                    num_bins_r_par_dmat).astype(int)
     m_bt = (r_trans/r_trans_max*num_bins_r_trans_dmat).astype(int)
     m_bins = m_bt + num_bins_r_trans_dmat*m_bp
     m_bins = m_bins[w]
@@ -446,11 +445,11 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     sw1 = weights1.sum()
     sw2 = weights2.sum()
 
-    ml1 = sp.average(log_lambda1,weights=weights1)
-    ml2 = sp.average(log_lambda2,weights=weights2)
+    mean_log_lambda1 = np.average(log_lambda1, weights=weights1)
+    mean_log_lambda2 = np.average(log_lambda2, weights=weights2)
 
-    dl1 = log_lambda1-ml1
-    dl2 = log_lambda2-ml2
+    dl1 = log_lambda1-mean_log_lambda1
+    dl2 = log_lambda2-mean_log_lambda2
 
     slw1 = (weights1*dl1**2).sum()
     slw2 = (weights2*dl2**2).sum()
@@ -487,24 +486,24 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     eta7 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat)
     eta8 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat)
 
-    c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*weights2)[w]/sw2)
+    c = sp.bincount(ij%n1+n1*m_bins, weights=(sp.ones(n1)[:,None]*weights2)[w]/sw2)
     eta1[:len(c)]+=c
     c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (weights1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
     c = sp.bincount(m_bins,weights=(weights1[:,None]*weights2)[w]/sw1/sw2)
     eta5[:len(c)]+=c
 
-    if order2==1:
+    if order2 == 1:
         c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*weights2*dl2)[w]/slw2)
         eta3[:len(c)]+=c
         c = sp.bincount(m_bins,weights=(weights1[:,None]*(weights2*dl2))[w]/sw1/slw2)
         eta6[:len(c)]+=c
-    if order1==1:
+    if order1 == 1:
         c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((weights1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
         eta4[:len(c)]+=c
         c = sp.bincount(m_bins,weights=((weights1*dl1)[:,None]*weights2)[w]/slw1/sw2)
         eta7[:len(c)]+=c
-        if order2==1:
+        if order2 == 1:
             c = sp.bincount(m_bins,weights=((weights1*dl1)[:,None]*(weights2*dl2))[w]/slw1/slw2)
             eta8[:len(c)]+=c
 
