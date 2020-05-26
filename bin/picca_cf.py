@@ -4,18 +4,31 @@
 This module follow the procedure described in sections 3.1 and 3.2 of du Mas des Bourboux
 et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
-import scipy as sp
-import fitsio
 import argparse
 from multiprocessing import Pool, Lock, cpu_count, Value
+import numpy as np
+import fitsio
 
 from picca import constants, cf, utils, io
 from picca.utils import userprint
 
-def corr_func(p):
-    cf.fill_neighs(p)
-    tmp = cf.compute_xi(p)
-    return tmp
+def corr_func(healpixs):
+    """Computes the correlation function.
+
+    To optimize the computation, first compute a list of neighbours for each of
+    the healpix. This is an auxiliar function to split the computational load
+    using several CPUs.
+
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+
+    Returns:
+        The correlation function data
+    """
+    cf.fill_neighs(healpixs)
+    correlation_function_data = cf.compute_xi(healpixs)
+    return correlation_function_data
 
 def main():
     """Computes the Lyman alpha 3D autocorrelation"""
@@ -233,6 +246,7 @@ def main():
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project,
                                                   from_image=args.from_image)
+    del z_max
     cf.data = data
     cf.num_data = num_data
     cf.ang_max = utils.compute_ang_max(cosmo, cf.r_trans_max, z_min)
@@ -240,7 +254,7 @@ def main():
     userprint("done, npix = {}".format(len(data)))
 
     ### Read data 2
-    if args.in_dir2 or args.lambda_abs2 :
+    if args.in_dir2 or args.lambda_abs2:
         if args.lambda_abs2 or args.unfold_cf:
             cf.x_correlation = True
         cf.alpha2 = args.z_evol2
@@ -260,6 +274,7 @@ def main():
                                                           max_num_spec=args.nspec,
                                                           no_project=args.no_project,
                                                           from_image=args.from_image)
+        del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
         cf.ang_max = utils.compute_ang_max(cosmo, cf.r_trans_max, z_min, z_min2)
@@ -272,54 +287,65 @@ def main():
 
     cf.counter = Value('i', 0)
     cf.lock = Lock()
-    cpu_data = {}
-    for p in data.keys():
-        cpu_data[p] = [p]
+    cpu_data = {healpix: [healpix] for healpix in data}
     pool = Pool(processes=args.nproc)
-    cfs = pool.map(corr_func, sorted(cpu_data.values()))
+    correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
     pool.close()
 
 
-    cfs=sp.array(cfs)
-    wes=cfs[:,0,:]
-    rps=cfs[:,2,:]
-    rts=cfs[:,3,:]
-    zs=cfs[:,4,:]
-    nbs=cfs[:,5,:].astype(sp.int64)
-    cfs=cfs[:,1,:]
-    hep=sp.array(sorted(list(cpu_data.keys())))
+    correlation_function_data = np.array(correlation_function_data)
+    weights_list = correlation_function_data[:, 0, :]
+    xi_list = correlation_function_data[:, 1, :]
+    r_par_list = correlation_function_data[:, 2, :]
+    r_trans_list = correlation_function_data[:, 3, :]
+    z_list = correlation_function_data[:, 4, :]
+    num_pairs_list = correlation_function_data[:, 5, :].astype(np.int64)
+    hep = np.array(sorted(list(cpu_data.keys())))
 
-    cut      = (wes.sum(axis=0)>0.)
-    r_par       = (rps*wes).sum(axis=0)
-    r_par[cut] /= wes.sum(axis=0)[cut]
-    r_trans       = (rts*wes).sum(axis=0)
-    r_trans[cut] /= wes.sum(axis=0)[cut]
-    z        = (zs*wes).sum(axis=0)
-    z[cut]  /= wes.sum(axis=0)[cut]
-    nb       = nbs.sum(axis=0)
+    cut = (weights_list.sum(axis=0) > 0.)
+    r_par = (r_par_list*weights_list).sum(axis=0)
+    r_par[cut] /= weights_list.sum(axis=0)[cut]
+    r_trans = (r_trans_list*weights_list).sum(axis=0)
+    r_trans[cut] /= weights_list.sum(axis=0)[cut]
+    z = (z_list*weights_list).sum(axis=0)
+    z[cut] /= weights_list.sum(axis=0)[cut]
+    num_pairs = num_pairs_list.sum(axis=0)
 
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':cf.r_par_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
-        {'name':'RPMAX','value':cf.r_par_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
-        {'name':'RTMAX','value':cf.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':cf.num_bins_r_par,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':cf.num_bins_r_trans,'comment':'Number of bins in r-transverse'},
-        {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
-        {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
-        {'name':'NSIDE','value':cf.nside,'comment':'Healpix nside'}
+    results = fitsio.FITS(args.out, 'rw', clobber=True)
+    header = [
+        {'name': 'RPMIN', 'value': cf.r_par_min,
+         'comment': 'Minimum r-parallel [h^-1 Mpc]'},
+        {'name': 'RPMAX', 'value': cf.r_par_max,
+         'comment': 'Maximum r-parallel [h^-1 Mpc]'},
+        {'name': 'RTMAX', 'value': cf.r_trans_max,
+         'comment': 'Maximum r-transverse [h^-1 Mpc]'},
+        {'name': 'NP', 'value': cf.num_bins_r_par,
+         'comment': 'Number of bins in r-parallel'},
+        {'name': 'NT', 'value': cf.num_bins_r_trans,
+         'comment': 'Number of bins in r-transverse'},
+        {'name': 'ZCUTMIN', 'value': cf.z_cut_min,
+         'comment':'Minimum redshift of pairs'},
+        {'name': 'ZCUTMAX', 'value': cf.z_cut_max,
+         'comment': 'Maximum redshift of pairs'},
+        {'name': 'NSIDE', 'value': cf.nside,
+         'comment': 'Healpix nside'}
     ]
-    out.write([r_par,r_trans,z,nb],names=['RP','RT','Z','NB'],
-        comment=['R-parallel','R-transverse','Redshift','Number of pairs'],
-        units=['h^-1 Mpc','h^-1 Mpc','',''],
-        header=head,extname='ATTRI')
+    results.write([r_par, r_trans, z, num_pairs],
+                  names=['RP', 'RT', 'Z', 'NB'],
+                  comment=['R-parallel', 'R-transverse', 'Redshift',
+                           'Number of pairs'],
+                  units=['h^-1 Mpc', 'h^-1 Mpc', '', ''],
+                  header=header, extname='ATTRI')
 
-    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]
-    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],
-        comment=['Healpix index', 'Sum of weight', 'Correlation'],
-        header=head2,extname='COR')
+    header2 = [{'name': 'HLPXSCHM', 'value': 'RING',
+                'comment': 'Healpix scheme'}]
+    results.write([hep, weights_list, xi_list],
+                  names=['HEALPID', 'WE', 'DA'],
+                  comment=['Healpix index', 'Sum of weight', 'Correlation'],
+                  header=header2, extname='COR')
 
-    out.close()
+    results.close()
 
 if __name__ == '__main__':
     main()
