@@ -324,7 +324,7 @@ def main():
 
     dmat_data = np.array(dmat_data)
     wdm = dmat_data[:, 0].sum(axis=0)
-    dm = dmat_data[:, 1].sum(axis=0)
+    dmat = dmat_data[:, 1].sum(axis=0)
     r_par = dmat_data[:, 2].sum(axis=0)
     r_trans = dmat_data[:, 3].sum(axis=0)
     z = dmat_data[:, 4].sum(axis=0)
@@ -337,7 +337,7 @@ def main():
     r_trans[w] /= weights[w]
     z[w] /= weights[w]
     w = wdm > 0
-    dm[w] /= wdm[w,None]
+    dmat[w] /= wdm[w,None]
 
 
     out = fitsio.FITS(args.out, 'rw', clobber=True)
@@ -353,15 +353,15 @@ def main():
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
-    out.write([wdm,dm],
-        names=['WDM','DM'],
-        comment=['Sum of weight','Distortion matrix'],
-        units=['',''],
-        header=head,extname='DMAT')
-    out.write([r_par,r_trans,z],
-        names=['RP','RT','Z'],
-        comment=['R-parallel','R-transverse','Redshift'],
-        units=['h^-1 Mpc','h^-1 Mpc','',],
+    out.write([wdm, dmat],
+        names=['WDM', 'DM'],
+        comment=['Sum of weight', 'Distortion matrix'],
+        units=['', ''],
+        header=head, extname='DMAT')
+    out.write([r_par, r_trans,z],
+        names=['RP', 'RT', 'Z'],
+        comment=['R-parallel', 'R-transverse', 'Redshift'],
+        units=['h^-1 Mpc', 'h^-1 Mpc', ''],
         extname='ATTRI')
     out.close()
 

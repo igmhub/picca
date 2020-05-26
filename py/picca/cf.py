@@ -112,7 +112,7 @@ def fill_neighs(healpixs):
                 ]
 
 def compute_xi(healpixs):
-    """Computes the correlation function for each of the healpix.
+    """Computes the correlation function for each of the healpixs.
 
     Args:
         healpixs: array of ints
@@ -295,8 +295,8 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
             rebin_num_pairs)
 
 
-def dmat(pix):
-    """Computes the correlation function for each of the healpix.
+def dmat(healpixs):
+    """Computes the distortion matrix for each of the healpixs.
 
     Args:
         healpixs: array of ints
@@ -311,7 +311,8 @@ def dmat(pix):
             z: Redshift of the correlation function pixels
             num_pairs: Number of pairs in the correlation function pixels
     """
-    dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    dmat = np.zeros(num_bins_r_par*num_bins_r_trans*
+                    num_bins_r_trans_dmat*num_bins_r_par_dmat)
     wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
     rpeff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
     rteff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
@@ -320,37 +321,39 @@ def dmat(pix):
 
     npairs = 0
     npairs_used = 0
-    for p in pix:
-        for d1 in data[p]:
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data,3)),end="")
+    for healpix in healpixs:
+        for delta1 in data[healpix]:
+            userprint(("\rcomputing xi: "
+                       "{}%").format(round(counter.value*100./num_data, 3)),
+                      end="")
             with lock:
                 counter.value += 1
-            order1 = d1.order
-            r1 = d1.r_comov
-            rdm1 = d1.dist_m
-            w1 = d1.weights
-            l1 = d1.log_lambda
-            z1 = d1.z
-            r = sp.random.rand(len(d1.neighbours))
+            order1 = delta1.order
+            r1 = delta1.r_comov
+            rdm1 = delta1.dist_m
+            w1 = delta1.weights
+            l1 = delta1.log_lambda
+            z1 = delta1.z
+            r = np.random.rand(len(delta1.neighbours))
             w=r>reject
-            npairs += len(d1.neighbours)
+            npairs += len(delta1.neighbours)
             npairs_used += w.sum()
             for d2 in sp.array(d1.neighbours)[w]:
-                same_half_plate = (d1.plate == d2.plate) and\
-                        ( (d1.fiberid<=500 and d2.fiberid<=500) or (d1.fiberid>500 and d2.fiberid>500) )
+                same_half_plate = (delta1.plate == d2.plate) and\
+                        ( (delta1.fiberid<=500 and d2.fiberid<=500) or (delta1.fiberid>500 and d2.fiberid>500) )
                 order2 = d2.order
-                ang = d1^d2
+                ang = delta1^d2
                 r2 = d2.r_comov
                 rdm2 = d2.dist_m
                 w2 = d2.weights
                 l2 = d2.log_lambda
                 z2 = d2.z
-                fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
+                fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
             setattr(d1,"neighs",None)
 
     return wdm, dm.reshape(num_bins_r_par*num_bins_r_trans, num_bins_r_par_dmat*num_bins_r_trans_dmat),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
-def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
+def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
 
     r_par = (r1[:,None]-r2)*sp.cos(ang/2)
     if  not x_correlation:
@@ -437,11 +440,11 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dm,rpeff,rteff,zeff,weff
 
     ubb = np.unique(m_bins)
     for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
-        dm[m_ba+num_bins_r_par_dmat*num_bins_r_trans_dmat*ba]+=weights[k]
+        dmat[m_ba+num_bins_r_par_dmat*num_bins_r_trans_dmat*ba]+=weights[k]
         i = ij[k]%n1
         j = (ij[k]-i)//n1
         for bb in ubb:
-            dm[bb+num_bins_r_par_dmat*num_bins_r_trans_dmat*ba] += weights[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
+            dmat[bb+num_bins_r_par_dmat*num_bins_r_trans_dmat*ba] += weights[k]*(eta5[bb]+eta6[bb]*dl2[j]+eta7[bb]*dl1[i]+eta8[bb]*dl1[i]*dl2[j])\
              - weights[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*dl2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
