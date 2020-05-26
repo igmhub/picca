@@ -304,14 +304,15 @@ def compute_dmat(healpixs):
 
     Returns:
         The following variables:
-            wdm, weff,
-            weights: Total weights in the correlation function pixels
+            wdm: 
+            #weights: Total weights in the correlation function pixels
             dmat: The distortion matrix
             r_par_eff: Effective parallel distance of the distortion matrix
                 pixels
             r_trans_eff: Effective transverse distance of the distortion matrix
                 pixels
             z_eff: Effective redshift of the distortion matrix pixels
+            weff:
             num_pairs: Total number of pairs
             num_pairs_used: Number of used pairs
     """
@@ -355,7 +356,11 @@ def compute_dmat(healpixs):
                 fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2)
             setattr(delta1, "neighbours", None)
 
-    return wdm, dmat.reshape(num_bins_r_par*num_bins_r_trans, num_bins_r_par_dmat*num_bins_r_trans_dmat),r_par_eff,r_trans_eff,z_eff,weff,num_pairs,num_pairs_used
+    dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
+                        num_bins_r_par_dmat*num_bins_r_trans_dmat)
+
+    return (wdm, dmat, r_par_eff, r_trans_eff, z_eff, weff, num_pairs,
+            num_pairs_used)
 @jit
 def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2):
 
