@@ -304,23 +304,27 @@ def compute_dmat(healpixs):
 
     Returns:
         The following variables:
+            wdm, weff,
             weights: Total weights in the correlation function pixels
-            xi: The correlation function
-            r_par: Parallel distance of the correlation function pixels
-            r_trans: Transverse distance of the correlation function pixels
-            z: Redshift of the correlation function pixels
-            num_pairs: Number of pairs in the correlation function pixels
+            dmat: The distortion matrix
+            r_par_eff: Effective parallel distance of the distortion matrix
+                pixels
+            r_trans_eff: Effective transverse distance of the distortion matrix
+                pixels
+            z_eff: Effective redshift of the distortion matrix pixels
+            num_pairs: Total number of pairs
+            num_pairs_used: Number of used pairs
     """
     dmat = np.zeros(num_bins_r_par*num_bins_r_trans*
                     num_bins_r_trans_dmat*num_bins_r_par_dmat)
     wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
-    rpeff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    rteff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    zeff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    r_par_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    r_trans_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    z_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
     weff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
 
-    npairs = 0
-    npairs_used = 0
+    num_pairs = 0
+    num_pairs_used = 0
     for healpix in healpixs:
         for delta1 in data[healpix]:
             userprint(("\rcomputing xi: "
@@ -335,9 +339,9 @@ def compute_dmat(healpixs):
             l1 = delta1.log_lambda
             z1 = delta1.z
             r = np.random.rand(len(delta1.neighbours))
-            w=r>reject
-            npairs += len(delta1.neighbours)
-            npairs_used += w.sum()
+            w = r > reject
+            num_pairs += len(delta1.neighbours)
+            num_pairs_used += w.sum()
             for delta2 in sp.array(delta1.neighbours)[w]:
                 same_half_plate = (delta1.plate == delta2.plate) and\
                         ( (delta1.fiberid<=500 and delta2.fiberid<=500) or (delta1.fiberid>500 and delta2.fiberid>500) )
@@ -348,12 +352,12 @@ def compute_dmat(healpixs):
                 w2 = delta2.weights
                 l2 = delta2.log_lambda
                 z2 = delta2.z
-                fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,rpeff,rteff,zeff,weff,same_half_plate,order1,order2)
+                fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2)
             setattr(delta1, "neighbours", None)
 
-    return wdm, dmat.reshape(num_bins_r_par*num_bins_r_trans, num_bins_r_par_dmat*num_bins_r_trans_dmat),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return wdm, dmat.reshape(num_bins_r_par*num_bins_r_trans, num_bins_r_par_dmat*num_bins_r_trans_dmat),r_par_eff,r_trans_eff,z_eff,weff,num_pairs,num_pairs_used
 @jit
-def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,rpeff,rteff,zeff,weff,same_half_plate,order1,order2):
+def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,r_par_eff,r_trans_eff,z_eff,weff,same_half_plate,order1,order2):
 
     r_par = (r1[:,None]-r2)*sp.cos(ang/2)
     if  not x_correlation:
@@ -398,11 +402,11 @@ def fill_dmat(l1,l2,r1,r2,rdm1,rdm2,z1,z2,w1,w2,ang,wdm,dmat,rpeff,rteff,zeff,we
         weights[wsame] = 0.
 
     c = sp.bincount(m_bins,weights=weights*r_par[w])
-    rpeff[:c.size] += c
+    r_par_eff[:c.size] += c
     c = sp.bincount(m_bins,weights=weights*r_trans[w])
-    rteff[:c.size] += c
+    r_trans_eff[:c.size] += c
     c = sp.bincount(m_bins,weights=weights*z[w])
-    zeff[:c.size] += c
+    z_eff[:c.size] += c
     c = sp.bincount(m_bins,weights=weights)
     weff[:c.size] += c
 
@@ -451,9 +455,9 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
 
     dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_bins_r_trans_dmat*num_bins_r_par_dmat)
     wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
-    rpeff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    rteff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    zeff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    r_par_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    r_trans_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    z_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
     weff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
 
     npairs = 0
@@ -537,11 +541,11 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 c = sp.bincount(bBma[wAB]+num_bins_r_par_dmat*num_bins_r_trans_dmat*bA[wAB],weights=w12[wAB]*zwe12[wAB])
                 dm[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
-                rpeff[:len(c)]+=c
+                r_par_eff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
-                rteff[:len(c)]+=c
+                r_trans_eff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe12[wAB])
-                zeff[:len(c)]+=c
+                z_eff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
                 weff[:len(c)]+=c
 
@@ -606,11 +610,11 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     wAB = wA & wBam
 
                     c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
-                    rpeff[:len(c)]+=c
+                    r_par_eff[:len(c)]+=c
                     c = sp.bincount(bBam[wAB],weights=rt_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
-                    rteff[:len(c)]+=c
+                    r_trans_eff[:len(c)]+=c
                     c = sp.bincount(bBam[wAB],weights=(z1_abs2[:,None]+z2_abs1)[wAB]/2*w12[wAB]*zwe21[wAB])
-                    zeff[:len(c)]+=c
+                    z_eff[:len(c)]+=c
                     c = sp.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
                     weff[:len(c)]+=c
 
@@ -618,7 +622,7 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     dm[:len(c)]+=c
             setattr(d1,"neighs",None)
 
-    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_bins_r_par_dmat*num_bins_r_trans_dmat),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_bins_r_par_dmat*num_bins_r_trans_dmat),r_par_eff,r_trans_eff,z_eff,weff,npairs,npairs_used
 
 
 
