@@ -124,8 +124,8 @@ if __name__ == '__main__':
     cf.z_cut_min = args.z_cut_min
     cf.num_bins_r_par = args.np*args.coef_binning_model
     cf.num_bins_r_trans = args.nt*args.coef_binning_model
-    cf.npm = args.np*args.coef_binning_model
-    cf.ntm = args.nt*args.coef_binning_model
+    cf.num_bins_r_par_dmat = args.np*args.coef_binning_model
+    cf.num_bins_r_trans_dmat = args.nt*args.coef_binning_model
     cf.nside = args.nside
     cf.z_ref = args.z_ref
     cf.alpha = args.z_evol

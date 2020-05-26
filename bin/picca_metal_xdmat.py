@@ -118,8 +118,8 @@ if __name__ == '__main__':
     xcf.z_cut_min = args.z_cut_min
     xcf.num_bins_r_par = args.np*args.coef_binning_model
     xcf.num_bins_r_trans = args.nt*args.coef_binning_model
-    xcf.npm = args.np*args.coef_binning_model
-    xcf.ntm = args.nt*args.coef_binning_model
+    xcf.num_bins_r_par_dmat = args.np*args.coef_binning_model
+    xcf.num_bins_r_trans_dmat = args.nt*args.coef_binning_model
     xcf.nside = args.nside
     xcf.z_ref = args.z_ref
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
