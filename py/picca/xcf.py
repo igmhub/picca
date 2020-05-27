@@ -8,8 +8,8 @@ from picca.utils import userprint
 
 num_bins_r_par = None
 num_bins_r_trans = None
-num_bins_r_par_dmat = None
-num_bins_r_trans_dmat = None
+num_model_bins_r_par = None
+num_model_bins_r_trans = None
 r_par_max = None
 r_par_min = None
 r_trans_max = None
@@ -126,12 +126,12 @@ def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
 
 def dmat(pix):
 
-    dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*num_model_bins_r_par)
     wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
-    rpeff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    rteff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    zeff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    weff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    rpeff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    rteff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    zeff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    weff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
 
     npairs = 0
     npairs_used = 0
@@ -160,7 +160,7 @@ def dmat(pix):
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
-    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_bins_r_par_dmat*num_bins_r_trans_dmat),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),rpeff,rteff,zeff,weff,npairs,npairs_used
 @jit
 def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     r_par = (r1[:,None]-r2)*sp.cos(ang/2)
@@ -173,9 +173,9 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     bins = bt + num_bins_r_trans*bp
     bins = bins[w]
 
-    m_bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par_dmat).astype(int)
-    m_bt = (r_trans/r_trans_max*num_bins_r_trans_dmat).astype(int)
-    m_bins = m_bt + num_bins_r_trans_dmat*m_bp
+    m_bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
+    m_bt = (r_trans/r_trans_max*num_model_bins_r_trans).astype(int)
+    m_bins = m_bt + num_model_bins_r_trans*m_bp
     m_bins = m_bins[w]
 
     sw1 = w1.sum()
@@ -194,8 +194,8 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     weights = weights[w]
     c = sp.bincount(bins,weights=weights)
     wdm[:len(c)] += c
-    eta2 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat*n2)
-    eta4 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat*n2)
+    eta2 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n2)
+    eta4 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n2)
 
     c = sp.bincount(m_bins,weights=weights*r_par[w])
     rpeff[:c.size] += c
@@ -213,21 +213,21 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     ubb = np.unique(m_bins)
     for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
-        dm[m_ba+num_bins_r_par_dmat*num_bins_r_trans_dmat*ba]+=weights[k]
+        dm[m_ba+num_model_bins_r_par*num_model_bins_r_trans*ba]+=weights[k]
         i = ij[k]%n1
         j = (ij[k]-i)//n1
         for bb in ubb:
-            dm[bb+num_bins_r_par_dmat*num_bins_r_trans_dmat*ba] -= weights[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+            dm[bb+num_model_bins_r_par*num_model_bins_r_trans*ba] -= weights[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 
 def metal_dmat(pix,abs_igm="SiII(1526)"):
 
-    dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*num_model_bins_r_par)
     wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
-    rpeff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    rteff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    zeff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    weff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    rpeff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    rteff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    zeff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    weff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
 
     npairs = 0
     npairs_used = 0
@@ -280,12 +280,12 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 rt_abs = (rdm_abs+rqm)*sp.sin(ang/2)
                 zwe = ((1.+zd_abs)/(1.+z_ref))**(alpha_abs[abs_igm]-1.)
 
-                bp_abs = ((rp_abs-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par_dmat).astype(int)
-                bt_abs = (rt_abs/r_trans_max*num_bins_r_trans_dmat).astype(int)
-                bBma = bt_abs + num_bins_r_trans_dmat*bp_abs
+                bp_abs = ((rp_abs-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
+                bt_abs = (rt_abs/r_trans_max*num_model_bins_r_trans).astype(int)
+                bBma = bt_abs + num_model_bins_r_trans*bp_abs
                 wBma = (rp_abs>r_par_min) & (rp_abs<r_par_max) & (rt_abs<r_trans_max)
                 wAB = wA&wBma
-                c = sp.bincount(bBma[wAB]+num_bins_r_par_dmat*num_bins_r_trans_dmat*bA[wAB],weights=wdq[wAB]*zwe[wAB])
+                c = sp.bincount(bBma[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=wdq[wAB]*zwe[wAB])
                 dm[:len(c)]+=c
 
                 c = sp.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
@@ -298,7 +298,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 weff[:len(c)]+=c
             setattr(d,"neighbours",None)
 
-    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_bins_r_par_dmat*num_bins_r_trans_dmat),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),rpeff,rteff,zeff,weff,npairs,npairs_used
 
 v1d = {}
 c1d = {}

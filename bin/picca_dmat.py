@@ -247,8 +247,8 @@ def main():
     cf.z_cut_min = args.z_cut_min
     cf.num_bins_r_par = args.np
     cf.num_bins_r_trans = args.nt
-    cf.num_bins_r_par_dmat = args.np*args.coef_binning_model
-    cf.num_bins_r_trans_dmat = args.nt*args.coef_binning_model
+    cf.num_model_bins_r_par = args.np*args.coef_binning_model
+    cf.num_model_bins_r_trans = args.nt*args.coef_binning_model
     cf.nside = args.nside
     cf.z_ref = args.z_ref
     cf.alpha = args.z_evol
@@ -337,7 +337,7 @@ def main():
     r_trans[w] /= weights[w]
     z[w] /= weights[w]
     w = wdm > 0
-    dmat[w] /= wdm[w,None]
+    dmat[w] /= wdm[w, None]
 
 
     out = fitsio.FITS(args.out, 'rw', clobber=True)

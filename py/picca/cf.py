@@ -26,8 +26,8 @@ from picca.utils import userprint
 
 num_bins_r_par = None
 num_bins_r_trans = None
-num_bins_r_trans_dmat = None
-num_bins_r_par_dmat = None
+num_model_bins_r_trans = None
+num_model_bins_r_par = None
 r_par_max = None
 r_par_min = None
 z_cut_max = None
@@ -317,12 +317,12 @@ def compute_dmat(healpixs):
             num_pairs_used: Number of used pairs
     """
     dmat = np.zeros(num_bins_r_par*num_bins_r_trans*
-                    num_bins_r_trans_dmat*num_bins_r_par_dmat)
+                    num_model_bins_r_trans*num_model_bins_r_par)
     wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
-    r_par_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    r_trans_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    z_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    weff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    r_par_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    r_trans_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    z_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    weff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
 
     num_pairs = 0
     num_pairs_used = 0
@@ -344,10 +344,10 @@ def compute_dmat(healpixs):
             num_pairs_used += w.sum()
             for delta2 in np.array(delta1.neighbours)[w]:
                 same_half_plate = ((delta1.plate == delta2.plate) and
-                                   ((delta1.fiberid<=500 and
-                                     delta2.fiberid<=500) or
-                                    (delta1.fiberid>500 and
-                                     delta2.fiberid>500)
+                                   ((delta1.fiberid <= 500 and
+                                     delta2.fiberid <= 500) or
+                                    (delta1.fiberid > 500 and
+                                     delta2.fiberid > 500)
                                     )
                                    )
                 order2 = delta2.order
@@ -364,7 +364,7 @@ def compute_dmat(healpixs):
             setattr(delta1, "neighbours", None)
 
     dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
-                        num_bins_r_par_dmat*num_bins_r_trans_dmat)
+                        num_model_bins_r_par*num_model_bins_r_trans)
 
     return (wdm, dmat, r_par_eff, r_trans_eff, z_eff, weff, num_pairs,
             num_pairs_used)
@@ -437,9 +437,9 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
 
     # locate bins pixels are contributing to (model bins)
     m_bp = np.floor((r_par - r_par_min)/(r_par_max - r_par_min)*
-                    num_bins_r_par_dmat).astype(int)
-    m_bt = (r_trans/r_trans_max*num_bins_r_trans_dmat).astype(int)
-    m_bins = m_bt + num_bins_r_trans_dmat*m_bp
+                    num_model_bins_r_par).astype(int)
+    m_bt = (r_trans/r_trans_max*num_model_bins_r_trans).astype(int)
+    m_bins = m_bt + num_model_bins_r_trans*m_bp
     m_bins = m_bins[w]
 
     # compute useful auxiliar variables to speed up computation of eta
@@ -458,9 +458,9 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     log_lambda_minus_mean2 = log_lambda2 - mean_log_lambda2
 
     # denominator third term in equation 6 of du Mas des Bourboux et al. 2020
-    sum_weights_squara_log_lambda_minus_mean1 = (weights1*
+    sum_weights_square_log_lambda_minus_mean1 = (weights1*
                                                  log_lambda_minus_mean1**2).sum()
-    sum_weights_squara_log_lambda_minus_mean2 = (weights2*
+    sum_weights_square_log_lambda_minus_mean2 = (weights2*
                                                  log_lambda_minus_mean2**2).sum()
 
     n1 = len(log_lambda1)
@@ -468,71 +468,136 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     ij = np.arange(n1)[:, None] + n1*np.arange(n2)
     ij = ij[w]
 
-    weights = weights1[:, None]*weights2
-    weights = weights[w]
+    weights12 = weights1[:, None]*weights2
+    weights12 = weights12[w]
 
     if remove_same_half_plate_close_pairs and same_half_plate:
-        wsame = abs(r_par[w])<(r_par_max-r_par_min)/num_bins_r_par
-        weights[wsame] = 0.
+        weights12[abs(r_par[w]) < (r_par_max - r_par_min)/num_bins_r_par] = 0.
 
-    c = sp.bincount(m_bins,weights=weights*r_par[w])
+    c = sp.bincount(m_bins, weights=weights12*r_par[w])
     r_par_eff[:c.size] += c
-    c = sp.bincount(m_bins,weights=weights*r_trans[w])
+    c = sp.bincount(m_bins, weights=weights12*r_trans[w])
     r_trans_eff[:c.size] += c
-    c = sp.bincount(m_bins,weights=weights*z[w])
+    c = sp.bincount(m_bins, weights=weights12*z[w])
     z_eff[:c.size] += c
-    c = sp.bincount(m_bins,weights=weights)
+    c = sp.bincount(m_bins, weights=weights12)
     weff[:c.size] += c
 
-    c = sp.bincount(bins,weights=weights)
+    c = sp.bincount(bins, weights=weights12)
     wdm[:len(c)] += c
-    eta1 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat*n1)
-    eta2 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat*n2)
-    eta3 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat*n1)
-    eta4 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat*n2)
-    eta5 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat)
-    eta6 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat)
-    eta7 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat)
-    eta8 = np.zeros(num_bins_r_par_dmat*num_bins_r_trans_dmat)
 
-    c = sp.bincount(ij%n1+n1*m_bins, weights=(sp.ones(n1)[:,None]*weights2)[w]/sum_weights2)
-    eta1[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (weights1[:,None]*sp.ones(n2))[w]/sum_weights1)
-    eta2[:len(c)]+=c
-    c = sp.bincount(m_bins,weights=(weights1[:,None]*weights2)[w]/sum_weights1/sum_weights2)
-    eta5[:len(c)]+=c
+    # Combining equation 21 and equation 6 of du Mas des Bourboux et al. 2020
+    # we find an equation with 9 terms comming from the product of two eta
+    # The variables below stand for 8 of these 9 terms (the first one is
+    # pretty trivial)
+
+    # first eta, first term: kronecker delta
+    # second eta, second term: weight/sum(weights)
+    eta1 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n1)
+
+    # first eta, second term: weight/sum(weights)
+    # second eta, first term: kronecker delta
+    eta2 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n2)
+
+    # first eta, first term: kronecker delta
+    # second eta, third term: (non-zero only for order=1)
+    #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+    #   sum(weight*(Lambda-bar(Lambda)**2))
+    eta3 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n1)
+
+    # first eta, third term: (non-zero only for order=1)
+    #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+    #   sum(weight*(Lambda-bar(Lambda)**2))
+    # second eta, first term: kronecker delta
+    eta4 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n2)
+
+    # first eta, second term: weight/sum(weights)
+    # second eta, second term: weight/sum(weights)
+    eta5 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans)
+
+    # first eta, second term: weight/sum(weights)
+    # second eta, third term: (non-zero only for order=1)
+    #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+    #   sum(weight*(Lambda-bar(Lambda)**2))
+    eta6 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans)
+
+    # first eta, third term: (non-zero only for order=1)
+    #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+    #   sum(weight*(Lambda-bar(Lambda)**2))
+    # second eta, second term: weight/sum(weights)
+    eta7 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans)
+
+    # first eta, third term: (non-zero only for order=1)
+    #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+    #   sum(weight*(Lambda-bar(Lambda)**2))
+    # second eta, third term: (non-zero only for order=1)
+    #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+    #   sum(weight*(Lambda-bar(Lambda)**2))
+    eta8 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans)
+
+    # compute the contributions to the distortion matrix
+    c = np.bincount(ij%n1 + n1*m_bins,
+                    weights=(np.ones(n1)[:, None]*weights2)[w]/sum_weights2)
+    eta1[:len(c)] += c
+    c = np.bincount((ij - ij%n1)//n1 + n2*m_bins,
+                    weights = (weights1[:, None]*np.ones(n2))[w]/sum_weights1)
+    eta2[:len(c)] += c
+    c = np.bincount(m_bins,
+                    weights=(weights1[:, None]*weights2)[w]/sum_weights1/sum_weights2)
+    eta5[:len(c)] += c
 
     if order2 == 1:
-        c = sp.bincount(ij%n1+n1*m_bins,weights=(sp.ones(n1)[:,None]*weights2*log_lambda_minus_mean2)[w]/sum_weights_squara_log_lambda_minus_mean2)
-        eta3[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=(weights1[:,None]*(weights2*log_lambda_minus_mean2))[w]/sum_weights1/sum_weights_squara_log_lambda_minus_mean2)
-        eta6[:len(c)]+=c
+        c = np.bincount(ij%n1 + n1*m_bins,
+                        weights=((np.ones(n1)[:, None]*weights2*
+                                  log_lambda_minus_mean2)[w]/
+                                 sum_weights_square_log_lambda_minus_mean2))
+        eta3[:len(c)] += c
+        c = np.bincount(m_bins,
+                        weights=((weights1[:, None]*
+                                  (weights2*log_lambda_minus_mean2))[w]/
+                                 sum_weights1/sum_weights_square_log_lambda_minus_mean2))
+        eta6[:len(c)] += c
     if order1 == 1:
-        c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((weights1*log_lambda_minus_mean1)[:,None]*sp.ones(n2))[w]/sum_weights_squara_log_lambda_minus_mean1)
-        eta4[:len(c)]+=c
-        c = sp.bincount(m_bins,weights=((weights1*log_lambda_minus_mean1)[:,None]*weights2)[w]/sum_weights_squara_log_lambda_minus_mean1/sum_weights2)
-        eta7[:len(c)]+=c
+        c = np.bincount((ij - ij%n1)//n1 + n2*m_bins,
+                        weights = ((weights1*log_lambda_minus_mean1)[:, None]*np.ones(n2))[w]/sum_weights_square_log_lambda_minus_mean1)
+        eta4[:len(c)] += c
+        c = np.bincount(m_bins,
+                        weights=((weights1*log_lambda_minus_mean1)[:, None]*weights2)[w]/sum_weights_square_log_lambda_minus_mean1/sum_weights2)
+        eta7[:len(c)] += c
         if order2 == 1:
-            c = sp.bincount(m_bins,weights=((weights1*log_lambda_minus_mean1)[:,None]*(weights2*log_lambda_minus_mean2))[w]/sum_weights_squara_log_lambda_minus_mean1/sum_weights_squara_log_lambda_minus_mean2)
-            eta8[:len(c)]+=c
+            c = np.bincount(m_bins,
+                            weights=((weights1*log_lambda_minus_mean1)[:, None]*(weights2*log_lambda_minus_mean2))[w]/sum_weights_square_log_lambda_minus_mean1/sum_weights_square_log_lambda_minus_mean2)
+            eta8[:len(c)] += c
 
+    # Now add all the contributions together
     ubb = np.unique(m_bins)
-    for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
-        dmat[m_ba+num_bins_r_par_dmat*num_bins_r_trans_dmat*ba]+=weights[k]
+    for k, (ba, m_ba) in enumerate(zip(bins,m_bins)):
+        # first eta, first term: kronecker delta
+        # second eta, first term: kronecker delta
+        dmat[m_ba+num_model_bins_r_par*num_model_bins_r_trans*ba] += weights12[k]
         i = ij[k]%n1
         j = (ij[k]-i)//n1
+        # rest of the terms
         for bb in ubb:
-            dmat[bb+num_bins_r_par_dmat*num_bins_r_trans_dmat*ba] += weights[k]*(eta5[bb]+eta6[bb]*log_lambda_minus_mean2[j]+eta7[bb]*log_lambda_minus_mean1[i]+eta8[bb]*log_lambda_minus_mean1[i]*log_lambda_minus_mean2[j])\
-             - weights[k]*(eta1[i+n1*bb]+eta3[i+n1*bb]*log_lambda_minus_mean2[j]+eta2[j+n2*bb]+eta4[j+n2*bb]*log_lambda_minus_mean1[i])
+            dmat[(bb + num_model_bins_r_par*num_model_bins_r_trans*
+                  ba)] += (weights12[k]*(eta5[bb] +
+                                         eta6[bb]*log_lambda_minus_mean2[j] +
+                                         eta7[bb]*log_lambda_minus_mean1[i] +
+                                         (eta8[bb]*log_lambda_minus_mean1[i]*
+                                          log_lambda_minus_mean2[j])) -
+                           weights12[k]*(eta1[i+n1*bb] +
+                                         eta2[j+n2*bb] +
+                                         eta3[i+n1*bb]*log_lambda_minus_mean2[j] +
+                                         eta4[j+n2*bb]*log_lambda_minus_mean1[i]))
 
-def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
+def metal_dmat(pix, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
 
-    dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*num_model_bins_r_par)
     wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
-    r_par_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    r_trans_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    z_eff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
-    weff = np.zeros(num_bins_r_trans_dmat*num_bins_r_par_dmat)
+    r_par_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    r_trans_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    z_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    weff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
 
     npairs = 0
     npairs_used = 0
@@ -607,12 +672,12 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                 rt_abs1_abs2 = (rdm1_abs1[:,None]+rdm2_abs2)*sp.sin(ang/2)
                 zwe12 = (1+z1_abs1[:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2)**(alpha_abs[abs_igm2]-1)/(1+z_ref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
-                bp_abs1_abs2 = sp.floor((rp_abs1_abs2-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par_dmat).astype(int)
-                bt_abs1_abs2 = (rt_abs1_abs2/r_trans_max*num_bins_r_trans_dmat).astype(int)
-                bBma = bt_abs1_abs2 + num_bins_r_trans_dmat*bp_abs1_abs2
-                wBma = (bp_abs1_abs2<num_bins_r_par_dmat) & (bt_abs1_abs2<num_bins_r_trans_dmat) & (bp_abs1_abs2>=0)
+                bp_abs1_abs2 = sp.floor((rp_abs1_abs2-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
+                bt_abs1_abs2 = (rt_abs1_abs2/r_trans_max*num_model_bins_r_trans).astype(int)
+                bBma = bt_abs1_abs2 + num_model_bins_r_trans*bp_abs1_abs2
+                wBma = (bp_abs1_abs2<num_model_bins_r_par) & (bt_abs1_abs2<num_model_bins_r_trans) & (bp_abs1_abs2>=0)
                 wAB = wA & wBma
-                c = sp.bincount(bBma[wAB]+num_bins_r_par_dmat*num_bins_r_trans_dmat*bA[wAB],weights=w12[wAB]*zwe12[wAB])
+                c = sp.bincount(bBma[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=w12[wAB]*zwe12[wAB])
                 dm[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
                 r_par_eff[:len(c)]+=c
@@ -677,10 +742,10 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     rt_abs2_abs1 = (rdm1_abs2[:,None]+rdm2_abs1)*sp.sin(ang/2)
                     zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+z_ref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
-                    bp_abs2_abs1 = sp.floor((rp_abs2_abs1-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par_dmat).astype(int)
-                    bt_abs2_abs1 = (rt_abs2_abs1/r_trans_max*num_bins_r_trans_dmat).astype(int)
-                    bBam = bt_abs2_abs1 + num_bins_r_trans_dmat*bp_abs2_abs1
-                    wBam = (bp_abs2_abs1<num_bins_r_par_dmat) & (bt_abs2_abs1<num_bins_r_trans_dmat) & (bp_abs2_abs1>=0)
+                    bp_abs2_abs1 = sp.floor((rp_abs2_abs1-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
+                    bt_abs2_abs1 = (rt_abs2_abs1/r_trans_max*num_model_bins_r_trans).astype(int)
+                    bBam = bt_abs2_abs1 + num_model_bins_r_trans*bp_abs2_abs1
+                    wBam = (bp_abs2_abs1<num_model_bins_r_par) & (bt_abs2_abs1<num_model_bins_r_trans) & (bp_abs2_abs1>=0)
                     wAB = wA & wBam
 
                     c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*w12[wAB]*zwe21[wAB])
@@ -692,11 +757,11 @@ def metal_dmat(pix,abs_igm1="LYA",abs_igm2="SiIII(1207)"):
                     c = sp.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
                     weff[:len(c)]+=c
 
-                    c = sp.bincount(bBam[wAB]+num_bins_r_par_dmat*num_bins_r_trans_dmat*bA[wAB],weights=w12[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=w12[wAB]*zwe21[wAB])
                     dm[:len(c)]+=c
             setattr(d1,"neighs",None)
 
-    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_bins_r_par_dmat*num_bins_r_trans_dmat),r_par_eff,r_trans_eff,z_eff,weff,npairs,npairs_used
+    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),r_par_eff,r_trans_eff,z_eff,weff,npairs,npairs_used
 
 
 
