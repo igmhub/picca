@@ -547,8 +547,8 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
     eta1[:len(rebin)] += rebin
     rebin = np.bincount(((ij - ij%num_pixels1)//num_pixels1 +
                          num_pixels2*model_bins),
-                        weights = ((weights1[:, None]*np.ones(num_pixels2))[w]/
-                                   sum_weights1)
+                        weights=((weights1[:, None]*np.ones(num_pixels2))[w]/
+                                 sum_weights1)
                        )
     eta2[:len(rebin)] += rebin
     rebin = np.bincount(model_bins,
@@ -559,21 +559,21 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
     if order2 == 1:
         rebin = np.bincount(ij%num_pixels1 + num_pixels1*model_bins,
                             weights=((np.ones(num_pixels1)[:, None]*weights2*
-                                     log_lambda_minus_mean2)[w]/
+                                      log_lambda_minus_mean2)[w]/
                                      sum_weights_square_log_lambda_minus_mean2))
         eta3[:len(rebin)] += rebin
         rebin = np.bincount(model_bins,
                             weights=(((weights1[:, None]*
-                                     (weights2*log_lambda_minus_mean2))[w]/
-                                     sum_weights1/
-                                     sum_weights_square_log_lambda_minus_mean2)))
+                                       (weights2*log_lambda_minus_mean2))[w]/
+                                      sum_weights1/
+                                      sum_weights_square_log_lambda_minus_mean2)))
         eta6[:len(rebin)] += rebin
     if order1 == 1:
         rebin = np.bincount(((ij - ij%num_pixels1)//num_pixels1 +
                              num_pixels2*model_bins),
-                            weights = (((weights1*log_lambda_minus_mean1)[:, None]*
-                                        np.ones(num_pixels2))[w]/
-                                       sum_weights_square_log_lambda_minus_mean1))
+                            weights=(((weights1*log_lambda_minus_mean1)[:, None]*
+                                      np.ones(num_pixels2))[w]/
+                                     sum_weights_square_log_lambda_minus_mean1))
         eta4[:len(rebin)] += rebin
         rebin = np.bincount(model_bins,
                             weights=(((weights1*log_lambda_minus_mean1)[:, None]*

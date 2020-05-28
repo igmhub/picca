@@ -166,11 +166,11 @@ if __name__ == '__main__':
 
     if args.nproc>1:
         pool = Pool(processes=args.nproc)
-        dmat = pool.map(calc_dmat,sorted(list(cpu_data.values())))
+        dmat_data = pool.map(calc_dmat,sorted(list(cpu_data.values())))
         pool.close()
     elif args.nproc==1:
-        dmat = map(calc_dmat,sorted(list(cpu_data.values())))
-        dmat = list(dmat)
+        dmat_data = map(calc_dmat,sorted(list(cpu_data.values())))
+        dmat_data = list(dmat_data)
 
     dmat_data = sp.array(dmat_data)
     weights_dmat = dmat_data[:,0].sum(axis=0)
