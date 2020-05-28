@@ -7,7 +7,7 @@ This module provides several functions:
     - compute_xi
     - compute_xi_forest_pairs
     - compute_dmat
-    - fill_dmat
+    - compute_dmat_forest_pairs
     - metal_dmat
     - cf1d
     - x_forest_cf1d
@@ -357,10 +357,11 @@ def compute_dmat(healpixs):
                 weights2 = delta2.weights
                 log_lambda2 = delta2.log_lambda
                 z2 = delta2.z
-                fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1,
-                          dist_m2, z1, z2, weights1, weights2, ang, wdm, dmat,
-                          r_par_eff, r_trans_eff, z_eff, weff, same_half_plate,
-                          order1, order2)
+                compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1,
+                                          r_comov2, dist_m1, dist_m2, z1, z2,
+                                          weights1, weights2, ang, wdm, dmat,
+                                          r_par_eff, r_trans_eff, z_eff, weff,
+                                          same_half_plate, order1, order2)
             setattr(delta1, "neighbours", None)
 
     dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
@@ -369,9 +370,10 @@ def compute_dmat(healpixs):
     return (wdm, dmat, r_par_eff, r_trans_eff, z_eff, weff, num_pairs,
             num_pairs_used)
 @jit
-def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
-              z1, z2, weights1, weights2, ang, wdm, dmat, r_par_eff,
-              r_trans_eff, z_eff, weff, same_half_plate, order1, order2):
+def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
+                              dist_m1, dist_m2, z1, z2, weights1, weights2, ang,
+                              wdm, dmat, r_par_eff, r_trans_eff, z_eff, weff,
+                              same_half_plate, order1, order2):
     """Computes the contribution of a given pair of forests to the distortion
     matrix.
 
