@@ -464,9 +464,10 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     sum_weights_square_log_lambda_minus_mean2 = (weights2*
                                                  log_lambda_minus_mean2**2).sum()
 
-    n1 = len(log_lambda1)
-    n2 = len(log_lambda2)
-    ij = np.arange(n1)[:, None] + n1*np.arange(n2)
+    # auxiliar variables to loop over distortion matrix bins
+    num_pixels1 = len(log_lambda1)
+    num_pixels2 = len(log_lambda2)
+    ij = np.arange(num_pixels1)[:, None] + num_pixels1*np.arange(num_pixels2)
     ij = ij[w]
 
     weights12 = weights1[:, None]*weights2
@@ -475,17 +476,17 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     if remove_same_half_plate_close_pairs and same_half_plate:
         weights12[abs(r_par[w]) < (r_par_max - r_par_min)/num_bins_r_par] = 0.
 
-    c = sp.bincount(model_bins, weights=weights12*r_par[w])
-    r_par_eff[:c.size] += c
-    c = sp.bincount(model_bins, weights=weights12*r_trans[w])
-    r_trans_eff[:c.size] += c
-    c = sp.bincount(model_bins, weights=weights12*z[w])
-    z_eff[:c.size] += c
-    c = sp.bincount(model_bins, weights=weights12)
-    weff[:c.size] += c
+    rebin = np.bincount(model_bins, weights=weights12*r_par[w])
+    r_par_eff[:rebin.size] += rebin
+    rebin = np.bincount(model_bins, weights=weights12*r_trans[w])
+    r_trans_eff[:rebin.size] += rebin
+    rebin = np.bincount(model_bins, weights=weights12*z[w])
+    z_eff[:rebin.size] += rebin
+    rebin = np.bincount(model_bins, weights=weights12)
+    weff[:rebin.size] += rebin
 
-    c = sp.bincount(bins, weights=weights12)
-    wdm[:len(c)] += c
+    rebin = np.bincount(bins, weights=weights12)
+    wdm[:len(rebin)] += rebin
 
     # Combining equation 21 and equation 6 of du Mas des Bourboux et al. 2020
     # we find an equation with 9 terms comming from the product of two eta
@@ -494,23 +495,23 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
 
     # first eta, first term: kronecker delta
     # second eta, second term: weight/sum(weights)
-    eta1 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n1)
+    eta1 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*num_pixels1)
 
     # first eta, second term: weight/sum(weights)
     # second eta, first term: kronecker delta
-    eta2 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n2)
+    eta2 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*num_pixels2)
 
     # first eta, first term: kronecker delta
     # second eta, third term: (non-zero only for order=1)
     #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
     #   sum(weight*(Lambda-bar(Lambda)**2))
-    eta3 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n1)
+    eta3 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*num_pixels1)
 
     # first eta, third term: (non-zero only for order=1)
     #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
     #   sum(weight*(Lambda-bar(Lambda)**2))
     # second eta, first term: kronecker delta
-    eta4 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n2)
+    eta4 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*num_pixels2)
 
     # first eta, second term: weight/sum(weights)
     # second eta, second term: weight/sum(weights)
@@ -537,59 +538,81 @@ def fill_dmat(log_lambda1, log_lambda2, r_comov1, r_comov2, dist_m1, dist_m2,
     eta8 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans)
 
     # compute the contributions to the distortion matrix
-    c = np.bincount(ij%n1 + n1*model_bins,
-                    weights=(np.ones(n1)[:, None]*weights2)[w]/sum_weights2)
-    eta1[:len(c)] += c
-    c = np.bincount((ij - ij%n1)//n1 + n2*model_bins,
-                    weights = (weights1[:, None]*np.ones(n2))[w]/sum_weights1)
-    eta2[:len(c)] += c
-    c = np.bincount(model_bins,
-                    weights=(weights1[:, None]*weights2)[w]/sum_weights1/sum_weights2)
-    eta5[:len(c)] += c
+    rebin = np.bincount(ij%num_pixels1 + num_pixels1*model_bins,
+                        weights=((np.ones(num_pixels1)[:, None]*weights2)[w]/
+                                 sum_weights2)
+                       )
+    eta1[:len(rebin)] += rebin
+    rebin = np.bincount(((ij - ij%num_pixels1)//num_pixels1 +
+                         num_pixels2*model_bins),
+                        weights = ((weights1[:, None]*np.ones(num_pixels2))[w]/
+                                   sum_weights1)
+                       )
+    eta2[:len(rebin)] += rebin
+    rebin = np.bincount(model_bins,
+                        weights=((weights1[:, None]*weights2)[w]/sum_weights1/
+                                 sum_weights2))
+    eta5[:len(rebin)] += rebin
 
     if order2 == 1:
-        c = np.bincount(ij%n1 + n1*model_bins,
-                        weights=((np.ones(n1)[:, None]*weights2*
-                                  log_lambda_minus_mean2)[w]/
-                                 sum_weights_square_log_lambda_minus_mean2))
-        eta3[:len(c)] += c
-        c = np.bincount(model_bins,
-                        weights=((weights1[:, None]*
-                                  (weights2*log_lambda_minus_mean2))[w]/
-                                 sum_weights1/sum_weights_square_log_lambda_minus_mean2))
-        eta6[:len(c)] += c
+        rebin = np.bincount(ij%num_pixels1 + num_pixels1*model_bins,
+                            weights=((np.ones(num_pixels1)[:, None]*weights2*
+                                     log_lambda_minus_mean2)[w]/
+                                     sum_weights_square_log_lambda_minus_mean2))
+        eta3[:len(rebin)] += rebin
+        rebin = np.bincount(model_bins,
+                            weights=(((weights1[:, None]*
+                                     (weights2*log_lambda_minus_mean2))[w]/
+                                     sum_weights1/
+                                     sum_weights_square_log_lambda_minus_mean2)))
+        eta6[:len(rebin)] += rebin
     if order1 == 1:
-        c = np.bincount((ij - ij%n1)//n1 + n2*model_bins,
-                        weights = ((weights1*log_lambda_minus_mean1)[:, None]*np.ones(n2))[w]/sum_weights_square_log_lambda_minus_mean1)
-        eta4[:len(c)] += c
-        c = np.bincount(model_bins,
-                        weights=((weights1*log_lambda_minus_mean1)[:, None]*weights2)[w]/sum_weights_square_log_lambda_minus_mean1/sum_weights2)
-        eta7[:len(c)] += c
+        rebin = np.bincount(((ij - ij%num_pixels1)//num_pixels1 +
+                             num_pixels2*model_bins),
+                            weights = (((weights1*log_lambda_minus_mean1)[:, None]*
+                                        np.ones(num_pixels2))[w]/
+                                       sum_weights_square_log_lambda_minus_mean1))
+        eta4[:len(rebin)] += rebin
+        rebin = np.bincount(model_bins,
+                            weights=(((weights1*log_lambda_minus_mean1)[:, None]*
+                                      weights2)[w]/
+                                     sum_weights_square_log_lambda_minus_mean1/
+                                     sum_weights2))
+        eta7[:len(rebin)] += rebin
         if order2 == 1:
-            c = np.bincount(model_bins,
-                            weights=((weights1*log_lambda_minus_mean1)[:, None]*(weights2*log_lambda_minus_mean2))[w]/sum_weights_square_log_lambda_minus_mean1/sum_weights_square_log_lambda_minus_mean2)
-            eta8[:len(c)] += c
+            rebin = np.bincount(model_bins,
+                                weights=(((weights1*log_lambda_minus_mean1)[:, None]*
+                                          (weights2*log_lambda_minus_mean2))[w]/
+                                         sum_weights_square_log_lambda_minus_mean1/
+                                         sum_weights_square_log_lambda_minus_mean2)
+            eta8[:len(rebin)] += rebin
 
     # Now add all the contributions together
-    ubb = np.unique(model_bins)
-    for k, (ba, m_ba) in enumerate(zip(bins,model_bins)):
+    unique_model_bins = np.unique(model_bins)
+    for index, (bin, model_bin) in enumerate(zip(bins, model_bins)):
         # first eta, first term: kronecker delta
         # second eta, first term: kronecker delta
-        dmat[m_ba+num_model_bins_r_par*num_model_bins_r_trans*ba] += weights12[k]
-        i = ij[k]%n1
-        j = (ij[k]-i)//n1
+        dmat[model_bin +
+             num_model_bins_r_par*num_model_bins_r_trans*bin] += weights12[index]
+        i = ij[index]%num_pixels1
+        j = (ij[index]-i)//num_pixels1
         # rest of the terms
-        for bb in ubb:
-            dmat[(bb + num_model_bins_r_par*num_model_bins_r_trans*
-                  ba)] += (weights12[k]*(eta5[bb] +
-                                         eta6[bb]*log_lambda_minus_mean2[j] +
-                                         eta7[bb]*log_lambda_minus_mean1[i] +
-                                         (eta8[bb]*log_lambda_minus_mean1[i]*
-                                          log_lambda_minus_mean2[j])) -
-                           weights12[k]*(eta1[i+n1*bb] +
-                                         eta2[j+n2*bb] +
-                                         eta3[i+n1*bb]*log_lambda_minus_mean2[j] +
-                                         eta4[j+n2*bb]*log_lambda_minus_mean1[i]))
+        for unique_model_bin in unique_model_bins:
+            dmat[unique_model_bin + num_model_bins_r_par*num_model_bins_r_trans*
+                 bin] += (weights12[index]*
+                          (eta5[unique_model_bin] +
+                           eta6[unique_model_bin]*log_lambda_minus_mean2[j] +
+                           eta7[unique_model_bin]*log_lambda_minus_mean1[i] +
+                           eta8[unique_model_bin]*log_lambda_minus_mean1[i]*
+                           log_lambda_minus_mean2[j]) -
+                          (weights12[index]*
+                           (eta1[i+num_pixels1*unique_model_bin] +
+                            eta2[j+num_pixels2*unique_model_bin] +
+                            eta3[i+num_pixels1*unique_model_bin]*
+                            log_lambda_minus_mean2[j] +
+                            eta4[j+num_pixels2*unique_model_bin]*
+                            log_lambda_minus_mean1[i]))
+                         )
 
 def metal_dmat(pix, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
 
