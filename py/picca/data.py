@@ -222,7 +222,7 @@ class Forest(QSO):
             Slope of the linear function (evolution of the flux)
         bad_cont: string or None
             Reason as to why the continuum fit is not acceptable
-        igm_absorption: string
+        abs_igm: string
             Name of the absorption line in picca.constants defining the
             redshift of the forest pixels
 
@@ -427,7 +427,7 @@ class Forest(QSO):
                  exposures_diff=None,
                  reso=None,
                  mean_expected_flux_frac=None,
-                 igm_absorption="LYA"):
+                 abs_igm="LYA"):
         """Initializes class instances.
 
         Args:
@@ -459,7 +459,7 @@ class Forest(QSO):
                 Resolution of the forest.
             mean_expected_flux_frac: array of floats or None - default: None
                 Mean expected flux fraction using the mock continuum
-            igm_absorption: string - default: "LYA"
+            abs_igm: string - default: "LYA"
                 Name of the absorption in picca.constants defining the
                 redshift of the forest pixels
         """
@@ -564,7 +564,7 @@ class Forest(QSO):
         self.order = order
         self.exposures_diff = exposures_diff
         self.reso = reso
-        self.igm_absorption = igm_absorption
+        self.abs_igm = abs_igm
 
         # compute mean quality variables
         if reso is not None:
@@ -575,10 +575,10 @@ class Forest(QSO):
         error = 1.0 / np.sqrt(ivar)
         snr = flux / error
         self.mean_snr = sum(snr) / float(len(snr))
-        lambda_igm_absorption = constants.ABSORBER_IGM[self.igm_absorption]
+        lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
         self.mean_z = (
             (np.power(10., log_lambda[len(log_lambda) - 1]) +
-             np.power(10., log_lambda[0])) / 2. / lambda_igm_absorption - 1.0)
+             np.power(10., log_lambda[0])) / 2. / lambda_abs_igm - 1.0)
 
         # continuum-related variables
         self.cont = None
@@ -655,10 +655,10 @@ class Forest(QSO):
         error = 1. / np.sqrt(self.ivar)
         snr = self.flux / error
         self.mean_snr = snr.mean()
-        lambda_igm_absorption = constants.ABSORBER_IGM[self.igm_absorption]
+        lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
         self.mean_z = (
             (np.power(10., log_lambda[len(log_lambda) - 1]) +
-             np.power(10., log_lambda[0])) / 2. / lambda_igm_absorption - 1.0)
+             np.power(10., log_lambda[0])) / 2. / lambda_abs_igm - 1.0)
 
         return self
 

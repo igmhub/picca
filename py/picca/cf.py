@@ -616,16 +616,16 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
                             log_lambda_minus_mean1[i]))
                          )
 
-def metal_dmat(healpixs, igm_absorption1="LYA", igm_absorption2="SiIII(1207)"):
+def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
     """Computes the metal distortion matrix for each of the healpixs.
 
     Args:
         healpixs: array of ints
             List of healpix numbers
-        igm_absorption1: string - default: "LYA"
+        abs_igm1: string - default: "LYA"
             Name of the absorption in picca.constants defining the
             redshift of the forest pixels
-        igm_absorption2: string - default: "SiIII(1207)"
+        abs_igm2: string - default: "SiIII(1207)"
             Name of the second absorption in picca.constants defining the
             redshift of the forest pixels
 
@@ -656,8 +656,8 @@ def metal_dmat(healpixs, igm_absorption1="LYA", igm_absorption2="SiIII(1207)"):
     for healpix in healpixs:
         for delta1 in data[healpix]:
             userprint(("\rcomputing metal dmat {} {}: "
-                       "{}%").format(igm_absorption1,
-                                     igm_absorption2,
+                       "{}%").format(abs_igm1,
+                                     abs_igm2,
                                      round(counter.value*100./num_data, 3)),
                       end="")
             with lock:
@@ -670,7 +670,7 @@ def metal_dmat(healpixs, igm_absorption1="LYA", igm_absorption2="SiIII(1207)"):
                 r_comov1 = delta1.r_comov
                 dist_m1 = delta1.dist_m
                 z1_abs1 = (10**delta1.log_lambda/
-                           constants.ABSORBER_IGM[igm_absorption1] - 1)
+                           constants.ABSORBER_IGM[abs_igm1] - 1)
                 r1_abs1 = cosmo.get_r_comov(z1_abs1)
                 rdm1_abs1 = cosmo.get_dist_m(z1_abs1)
                 weights1 = delta1.weights
@@ -688,7 +688,7 @@ def metal_dmat(healpixs, igm_absorption1="LYA", igm_absorption2="SiIII(1207)"):
                 ang = delta1^delta2
                 r_comov2 = delta2.r_comov
                 dist_m2 = delta2.dist_m
-                z2_abs2 = 10**delta2.log_lambda/constants.ABSORBER_IGM[igm_absorption2]-1
+                z2_abs2 = 10**delta2.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
                 r2_abs2 = cosmo.get_r_comov(z2_abs2)
                 rdm2_abs2 = cosmo.get_dist_m(z2_abs2)
                 weights2 = delta2.weights
@@ -726,7 +726,7 @@ def metal_dmat(healpixs, igm_absorption1="LYA", igm_absorption2="SiIII(1207)"):
                     rp_abs1_abs2 = abs(rp_abs1_abs2)
 
                 rt_abs1_abs2 = (rdm1_abs1[:,None]+rdm2_abs2)*sp.sin(ang/2)
-                zwe12 = (1+z1_abs1[:,None])**(alpha_abs[igm_absorption1]-1)*(1+z2_abs2)**(alpha_abs[igm_absorption2]-1)/(1+z_ref)**(alpha_abs[igm_absorption1]+alpha_abs[igm_absorption2]-2)
+                zwe12 = (1+z1_abs1[:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2)**(alpha_abs[abs_igm2]-1)/(1+z_ref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                 bp_abs1_abs2 = sp.floor((rp_abs1_abs2-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
                 bt_abs1_abs2 = (rt_abs1_abs2/r_trans_max*num_model_bins_r_trans).astype(int)
@@ -744,11 +744,11 @@ def metal_dmat(healpixs, igm_absorption1="LYA", igm_absorption2="SiIII(1207)"):
                 c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
                 weight_eff[:len(c)]+=c
 
-                if ((not x_correlation) and (igm_absorption1 != igm_absorption2)) or (x_correlation and (lambda_abs == lambda_abs2)):
+                if ((not x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
                     r_comov1 = delta1.r_comov
                     dist_m1 = delta1.dist_m
                     weights1 = delta1.weights
-                    z1_abs2 = 10**delta1.log_lambda/constants.ABSORBER_IGM[igm_absorption2]-1
+                    z1_abs2 = 10**delta1.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
                     r1_abs2 = cosmo.get_r_comov(z1_abs2)
                     rdm1_abs2 = cosmo.get_dist_m(z1_abs2)
 
@@ -763,7 +763,7 @@ def metal_dmat(healpixs, igm_absorption1="LYA", igm_absorption2="SiIII(1207)"):
                     r_comov2 = delta2.r_comov
                     dist_m2 = delta2.dist_m
                     weights2 = delta2.weights
-                    z2_abs1 = 10**delta2.log_lambda/constants.ABSORBER_IGM[igm_absorption1]-1
+                    z2_abs1 = 10**delta2.log_lambda/constants.ABSORBER_IGM[abs_igm1]-1
                     r2_abs1 = cosmo.get_r_comov(z2_abs1)
                     rdm2_abs1 = cosmo.get_dist_m(z2_abs1)
 
@@ -796,7 +796,7 @@ def metal_dmat(healpixs, igm_absorption1="LYA", igm_absorption2="SiIII(1207)"):
                         rp_abs2_abs1 = abs(rp_abs2_abs1)
 
                     rt_abs2_abs1 = (rdm1_abs2[:,None]+rdm2_abs1)*sp.sin(ang/2)
-                    zwe21 = (1+z1_abs2[:,None])**(alpha_abs[igm_absorption2]-1)*(1+z2_abs1)**(alpha_abs[igm_absorption1]-1)/(1+z_ref)**(alpha_abs[igm_absorption1]+alpha_abs[igm_absorption2]-2)
+                    zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+z_ref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                     bp_abs2_abs1 = sp.floor((rp_abs2_abs1-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
                     bt_abs2_abs1 = (rt_abs2_abs1/r_trans_max*num_model_bins_r_trans).astype(int)
