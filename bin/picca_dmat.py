@@ -340,30 +340,41 @@ def main():
     dmat[w] /= weights_dmat[w, None]
 
 
-    out = fitsio.FITS(args.out, 'rw', clobber=True)
-    head = [ {'name':'RPMIN','value':cf.r_par_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
-        {'name':'RPMAX','value':cf.r_par_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
-        {'name':'RTMAX','value':cf.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':cf.num_bins_r_par,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':cf.num_bins_r_trans,'comment':'Number of bins in r-transverse'},
-        {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
-        {'name':'ZCUTMIN','value':cf.z_cut_min,'comment':'Minimum redshift of pairs'},
-        {'name':'ZCUTMAX','value':cf.z_cut_max,'comment':'Maximum redshift of pairs'},
-        {'name':'REJ','value':cf.reject,'comment':'Rejection factor'},
-        {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
-        {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
+    results = fitsio.FITS(args.out, 'rw', clobber=True)
+    header = [{'name': 'RPMIN', 'value': cf.r_par_min,
+               'comment': 'Minimum r-parallel [h^-1 Mpc]'},
+              {'name': 'RPMAX', 'value': cf.r_par_max,
+               'comment': 'Maximum r-parallel [h^-1 Mpc]'},
+              {'name': 'RTMAX', 'value': cf.r_trans_max,
+               'comment': 'Maximum r-transverse [h^-1 Mpc]'},
+              {'name': 'NP', 'value': cf.num_bins_r_par,
+               'comment': 'Number of bins in r-parallel'},
+              {'name': 'NT', 'value': cf.num_bins_r_trans,
+               'comment': 'Number of bins in r-transverse'},
+              {'name': 'COEFMOD', 'value': args.coef_binning_model,
+               'comment': 'Coefficient for model binning'},
+              {'name': 'ZCUTMIN', 'value': cf.z_cut_min,
+               'comment': 'Minimum redshift of pairs'},
+              {'name': 'ZCUTMAX', 'value': cf.z_cut_max,
+               'comment': 'Maximum redshift of pairs'},
+              {'name': 'REJ', 'value': cf.reject,
+               'comment': 'Rejection factor'},
+              {'name': 'NPALL', 'value': npairs,
+               'comment': 'Number of pairs'},
+              {'name': 'NPUSED', 'value': npairs_used,
+               'comment': 'Number of used pairs'},
     ]
-    out.write([weights_dmat, dmat],
-        names=['WDM', 'DM'],
-        comment=['Sum of weight', 'Distortion matrix'],
-        units=['', ''],
-        header=head, extname='DMAT')
-    out.write([r_par, r_trans,z],
-        names=['RP', 'RT', 'Z'],
-        comment=['R-parallel', 'R-transverse', 'Redshift'],
-        units=['h^-1 Mpc', 'h^-1 Mpc', ''],
-        extname='ATTRI')
-    out.close()
+    results.write([weights_dmat, dmat],
+                  names=['WDM', 'DM'],
+                  comment=['Sum of weight', 'Distortion matrix'],
+                  units=['', ''],
+                  header=head, extname='DMAT')
+    results.write([r_par, r_trans,z],
+                  names=['RP', 'RT', 'Z'],
+                  comment=['R-parallel', 'R-transverse', 'Redshift'],
+                  units=['h^-1 Mpc', 'h^-1 Mpc', ''],
+                  extname='ATTRI')
+    results.close()
 
 if __name__ == '__main__':
     main()

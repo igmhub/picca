@@ -586,7 +586,7 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
                                 weights=(((weights1*log_lambda_minus_mean1)[:, None]*
                                           (weights2*log_lambda_minus_mean2))[w]/
                                          sum_weights_square_log_lambda_minus_mean1/
-                                         sum_weights_square_log_lambda_minus_mean2)
+                                         sum_weights_square_log_lambda_minus_mean2))
             eta8[:len(rebin)] += rebin
 
     # Now add all the contributions together
