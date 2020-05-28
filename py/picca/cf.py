@@ -663,7 +663,7 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
             with lock:
                 counter.value += 1
 
-            w= np.random.rand(len(delta1.neighbours)) > reject
+            w = np.random.rand(len(delta1.neighbours)) > reject
             num_pairs += len(delta1.neighbours)
             num_pairs_used += w.sum()
             for delta2 in np.array(delta1.neighbours)[w]:
@@ -671,16 +671,16 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 dist_m1 = delta1.dist_m
                 z1_abs1 = (10**delta1.log_lambda/
                            constants.ABSORBER_IGM[abs_igm1] - 1)
-                r1_abs1 = cosmo.get_r_comov(z1_abs1)
-                rdm1_abs1 = cosmo.get_dist_m(z1_abs1)
+                r_comov1_abs1 = cosmo.get_r_comov(z1_abs1)
+                dist_m1_abs1 = cosmo.get_dist_m(z1_abs1)
                 weights1 = delta1.weights
 
-                wzcut = z1_abs1<delta1.z_qso
+                wzcut = z1_abs1 < delta1.z_qso
                 r_comov1 = r_comov1[wzcut]
                 dist_m1 = dist_m1[wzcut]
                 weights1 = weights1[wzcut]
-                r1_abs1 = r1_abs1[wzcut]
-                rdm1_abs1 = rdm1_abs1[wzcut]
+                r_comov1_abs1 = r_comov1_abs1[wzcut]
+                dist_m1_abs1 = dist_m1_abs1[wzcut]
                 z1_abs1 = z1_abs1[wzcut]
 
                 same_half_plate = (delta1.plate == delta2.plate) and\
@@ -689,16 +689,16 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 r_comov2 = delta2.r_comov
                 dist_m2 = delta2.dist_m
                 z2_abs2 = 10**delta2.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
-                r2_abs2 = cosmo.get_r_comov(z2_abs2)
-                rdm2_abs2 = cosmo.get_dist_m(z2_abs2)
+                r_comov2_abs2 = cosmo.get_r_comov(z2_abs2)
+                dist_m2_abs2 = cosmo.get_dist_m(z2_abs2)
                 weights2 = delta2.weights
 
                 wzcut = z2_abs2<delta2.z_qso
                 r_comov2 = r_comov2[wzcut]
                 dist_m2 = dist_m2[wzcut]
                 weights2 = weights2[wzcut]
-                r2_abs2 = r2_abs2[wzcut]
-                rdm2_abs2 = rdm2_abs2[wzcut]
+                r_comov2_abs2 = r_comov2_abs2[wzcut]
+                dist_m2_abs2 = dist_m2_abs2[wzcut]
                 z2_abs2 = z2_abs2[wzcut]
 
                 r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
@@ -720,12 +720,12 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 c = sp.bincount(bA[wA],weights=w12[wA])
                 weights_dmat[:len(c)]+=c
 
-                rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
+                rp_abs1_abs2 = (r_comov1_abs1[:,None]-r_comov2_abs2)*sp.cos(ang/2)
 
                 if not x_correlation:
                     rp_abs1_abs2 = abs(rp_abs1_abs2)
 
-                rt_abs1_abs2 = (rdm1_abs1[:,None]+rdm2_abs2)*sp.sin(ang/2)
+                rt_abs1_abs2 = (dist_m1_abs1[:,None]+dist_m2_abs2)*sp.sin(ang/2)
                 zwe12 = (1+z1_abs1[:,None])**(alpha_abs[abs_igm1]-1)*(1+z2_abs2)**(alpha_abs[abs_igm2]-1)/(1+z_ref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                 bp_abs1_abs2 = sp.floor((rp_abs1_abs2-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
@@ -749,31 +749,31 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     dist_m1 = delta1.dist_m
                     weights1 = delta1.weights
                     z1_abs2 = 10**delta1.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
-                    r1_abs2 = cosmo.get_r_comov(z1_abs2)
-                    rdm1_abs2 = cosmo.get_dist_m(z1_abs2)
+                    r_comov1_abs2 = cosmo.get_r_comov(z1_abs2)
+                    dist_m1_abs2 = cosmo.get_dist_m(z1_abs2)
 
                     wzcut = z1_abs2<delta1.z_qso
                     r_comov1 = r_comov1[wzcut]
                     dist_m1 = dist_m1[wzcut]
                     weights1 = weights1[wzcut]
                     z1_abs2 = z1_abs2[wzcut]
-                    r1_abs2 = r1_abs2[wzcut]
-                    rdm1_abs2 = rdm1_abs2[wzcut]
+                    r_comov1_abs2 = r_comov1_abs2[wzcut]
+                    dist_m1_abs2 = dist_m1_abs2[wzcut]
 
                     r_comov2 = delta2.r_comov
                     dist_m2 = delta2.dist_m
                     weights2 = delta2.weights
                     z2_abs1 = 10**delta2.log_lambda/constants.ABSORBER_IGM[abs_igm1]-1
-                    r2_abs1 = cosmo.get_r_comov(z2_abs1)
-                    rdm2_abs1 = cosmo.get_dist_m(z2_abs1)
+                    r_comov2_abs1 = cosmo.get_r_comov(z2_abs1)
+                    dist_m2_abs1 = cosmo.get_dist_m(z2_abs1)
 
                     wzcut = z2_abs1<delta2.z_qso
                     r_comov2 = r_comov2[wzcut]
                     dist_m2 = dist_m2[wzcut]
                     weights2 = weights2[wzcut]
                     z2_abs1 = z2_abs1[wzcut]
-                    r2_abs1 = r2_abs1[wzcut]
-                    rdm2_abs1 = rdm2_abs1[wzcut]
+                    r_comov2_abs1 = r_comov2_abs1[wzcut]
+                    dist_m2_abs1 = dist_m2_abs1[wzcut]
 
                     r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
                     if not x_correlation:
@@ -791,11 +791,11 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     wA = (bins_r_par<num_bins_r_par) & (bins_r_trans<num_bins_r_trans) & (bins_r_par >=0)
                     c = sp.bincount(bA[wA],weights=w12[wA])
                     weights_dmat[:len(c)]+=c
-                    rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
+                    rp_abs2_abs1 = (r_comov1_abs2[:,None]-r_comov2_abs1)*sp.cos(ang/2)
                     if not x_correlation:
                         rp_abs2_abs1 = abs(rp_abs2_abs1)
 
-                    rt_abs2_abs1 = (rdm1_abs2[:,None]+rdm2_abs1)*sp.sin(ang/2)
+                    rt_abs2_abs1 = (dist_m1_abs2[:,None]+dist_m2_abs1)*sp.sin(ang/2)
                     zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+z_ref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
                     bp_abs2_abs1 = sp.floor((rp_abs2_abs1-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
