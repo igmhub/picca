@@ -166,28 +166,28 @@ if __name__ == '__main__':
 
     if args.nproc>1:
         pool = Pool(processes=args.nproc)
-        dm = pool.map(calc_dmat,sorted(list(cpu_data.values())))
+        dmat = pool.map(calc_dmat,sorted(list(cpu_data.values())))
         pool.close()
     elif args.nproc==1:
-        dm = map(calc_dmat,sorted(list(cpu_data.values())))
-        dm = list(dm)
+        dmat = map(calc_dmat,sorted(list(cpu_data.values())))
+        dmat = list(dmat)
 
-    dm = sp.array(dm)
-    wdm =dm[:,0].sum(axis=0)
-    r_par = dm[:,2].sum(axis=0)
-    r_trans = dm[:,3].sum(axis=0)
-    z = dm[:,4].sum(axis=0)
-    weights = dm[:,5].sum(axis=0)
-    npairs = dm[:,6].sum(axis=0)
-    npairs_used = dm[:,7].sum(axis=0)
-    dm=dm[:,1].sum(axis=0)
+    dmat_data = sp.array(dmat_data)
+    weights_dmat = dmat_data[:,0].sum(axis=0)
+    r_par = dmat_data[:,2].sum(axis=0)
+    r_trans = dmat_data[:,3].sum(axis=0)
+    z = dmat_data[:,4].sum(axis=0)
+    weights = dmat_data[:,5].sum(axis=0)
+    npairs = dmat_data[:,6].sum(axis=0)
+    npairs_used = dmat_data[:,7].sum(axis=0)
+    dmat = dmat_data[:,1].sum(axis=0)
 
     w = weights>0.
     r_par[w] /= weights[w]
     r_trans[w] /= weights[w]
     z[w] /= weights[w]
-    w = wdm>0.
-    dm[w,:] /= wdm[w,None]
+    w = weights_dmat>0.
+    dmat[w,:] /= weights_dmat[w,None]
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [ {'name':'RPMIN','value':xcf.r_par_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
@@ -202,7 +202,7 @@ if __name__ == '__main__':
         {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
-    out.write([wdm,dm],
+    out.write([weights_dmat,dmat],
         names=['WDM','DM'],
         comment=['Sum of weight','Distortion matrix'],
         units=['',''],

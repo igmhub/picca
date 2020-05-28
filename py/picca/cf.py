@@ -304,25 +304,24 @@ def compute_dmat(healpixs):
 
     Returns:
         The following variables:
-            wdm:
-            #weights: Total weights in the correlation function pixels
+            weights_dmat: Total weight in the distortion matrix pixels
             dmat: The distortion matrix
             r_par_eff: Effective parallel distance of the distortion matrix
                 pixels
             r_trans_eff: Effective transverse distance of the distortion matrix
                 pixels
             z_eff: Effective redshift of the distortion matrix pixels
-            weff:
+            weight_eff: Effective weight of the distortion matrix pixels
             num_pairs: Total number of pairs
             num_pairs_used: Number of used pairs
     """
     dmat = np.zeros(num_bins_r_par*num_bins_r_trans*
                     num_model_bins_r_trans*num_model_bins_r_par)
-    wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
+    weights_dmat = np.zeros(num_bins_r_par*num_bins_r_trans)
     r_par_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
     r_trans_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
     z_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
-    weff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    weight_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
 
     num_pairs = 0
     num_pairs_used = 0
@@ -359,21 +358,22 @@ def compute_dmat(healpixs):
                 z2 = delta2.z
                 compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1,
                                           r_comov2, dist_m1, dist_m2, z1, z2,
-                                          weights1, weights2, ang, wdm, dmat,
-                                          r_par_eff, r_trans_eff, z_eff, weff,
-                                          same_half_plate, order1, order2)
+                                          weights1, weights2, ang, weights_dmat,
+                                          dmat, r_par_eff, r_trans_eff, z_eff,
+                                          weight_eff, same_half_plate, order1,
+                                          order2)
             setattr(delta1, "neighbours", None)
 
     dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
                         num_model_bins_r_par*num_model_bins_r_trans)
 
-    return (wdm, dmat, r_par_eff, r_trans_eff, z_eff, weff, num_pairs,
-            num_pairs_used)
+    return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
+            num_pairs, num_pairs_used)
 @jit
 def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
                               dist_m1, dist_m2, z1, z2, weights1, weights2, ang,
-                              wdm, dmat, r_par_eff, r_trans_eff, z_eff, weff,
-                              same_half_plate, order1, order2):
+                              weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff,
+                              weight_eff, same_half_plate, order1, order2):
     """Computes the contribution of a given pair of forests to the distortion
     matrix.
 
@@ -400,8 +400,8 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
             Weights for forest 2
         ang: array of floats
             Angular separation between pixels in forests 1 and 2
-        wdm:
-
+        weights_dmat: array of floats
+            Total weight in the distortion matrix pixels
         dmat: array of floats
             The distortion matrix
         r_par_eff: array of floats
@@ -410,8 +410,8 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
             Effective transverse distance for the distortion matrix bins
         z_eff: array of floats
             Effective redshift for the distortion matrix bins
-        weff:
-
+        weight_eff: array of floats
+            Effective weight of the distortion matrix pixels
         same_half_plate: bool
             Flag to determine if the two forests are on the same half plate
         order1: 0 or 1
@@ -485,10 +485,10 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
     rebin = np.bincount(model_bins, weights=weights12*z[w])
     z_eff[:rebin.size] += rebin
     rebin = np.bincount(model_bins, weights=weights12)
-    weff[:rebin.size] += rebin
+    weight_eff[:rebin.size] += rebin
 
     rebin = np.bincount(bins, weights=weights12)
-    wdm[:len(rebin)] += rebin
+    weights_dmat[:len(rebin)] += rebin
 
     # Combining equation 21 and equation 6 of du Mas des Bourboux et al. 2020
     # we find an equation with 9 terms comming from the product of two eta
@@ -619,11 +619,11 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
 def metal_dmat(pix, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
 
     dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*num_model_bins_r_par)
-    wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
+    weights_dmat = np.zeros(num_bins_r_par*num_bins_r_trans)
     r_par_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
     r_trans_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
     z_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
-    weff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    weight_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
 
     npairs = 0
     npairs_used = 0
@@ -688,7 +688,7 @@ def metal_dmat(pix, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 bA = bins_r_trans + num_bins_r_trans*bins_r_par
                 wA = (bins_r_par<num_bins_r_par) & (bins_r_trans<num_bins_r_trans) & (bins_r_par >=0)
                 c = sp.bincount(bA[wA],weights=w12[wA])
-                wdm[:len(c)]+=c
+                weights_dmat[:len(c)]+=c
 
                 rp_abs1_abs2 = (r1_abs1[:,None]-r2_abs2)*sp.cos(ang/2)
 
@@ -712,7 +712,7 @@ def metal_dmat(pix, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 c = sp.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*w12[wAB]*zwe12[wAB])
                 z_eff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=w12[wAB]*zwe12[wAB])
-                weff[:len(c)]+=c
+                weight_eff[:len(c)]+=c
 
                 if ((not x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
                     r_comov1 = d1.r_comov
@@ -760,7 +760,7 @@ def metal_dmat(pix, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     bA = bins_r_trans + num_bins_r_trans*bins_r_par
                     wA = (bins_r_par<num_bins_r_par) & (bins_r_trans<num_bins_r_trans) & (bins_r_par >=0)
                     c = sp.bincount(bA[wA],weights=w12[wA])
-                    wdm[:len(c)]+=c
+                    weights_dmat[:len(c)]+=c
                     rp_abs2_abs1 = (r1_abs2[:,None]-r2_abs1)*sp.cos(ang/2)
                     if not x_correlation:
                         rp_abs2_abs1 = abs(rp_abs2_abs1)
@@ -781,13 +781,13 @@ def metal_dmat(pix, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     c = sp.bincount(bBam[wAB],weights=(z1_abs2[:,None]+z2_abs1)[wAB]/2*w12[wAB]*zwe21[wAB])
                     z_eff[:len(c)]+=c
                     c = sp.bincount(bBam[wAB],weights=w12[wAB]*zwe21[wAB])
-                    weff[:len(c)]+=c
+                    weight_eff[:len(c)]+=c
 
                     c = sp.bincount(bBam[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=w12[wAB]*zwe21[wAB])
                     dm[:len(c)]+=c
             setattr(d1,"neighs",None)
 
-    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),r_par_eff,r_trans_eff,z_eff,weff,npairs,npairs_used
+    return weights_dmat,dm.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),r_par_eff,r_trans_eff,z_eff,weight_eff,npairs,npairs_used
 
 
 
