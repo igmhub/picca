@@ -734,7 +734,7 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 wBma = (bp_abs1_abs2<num_model_bins_r_par) & (bt_abs1_abs2<num_model_bins_r_trans) & (bp_abs1_abs2>=0)
                 wAB = wA & wBma
                 c = sp.bincount(bBma[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=w12[wAB]*zwe12[wAB])
-                dm[:len(c)]+=c
+                dmat[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
                 r_par_eff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*w12[wAB]*zwe12[wAB])
