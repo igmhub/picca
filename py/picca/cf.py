@@ -814,10 +814,10 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     weight_eff[:len(c)]+=c
 
                     c = sp.bincount(bBam[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=w12[wAB]*zwe21[wAB])
-                    dm[:len(c)]+=c
+                    dmat[:len(c)]+=c
             setattr(delta1, "neighbours", None)
 
-    return weights_dmat,dm.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),r_par_eff,r_trans_eff,z_eff,weight_eff,num_pairs,num_pairs_used
+    return weights_dmat,dmat.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),r_par_eff,r_trans_eff,z_eff,weight_eff,num_pairs,num_pairs_used
 
 
 
