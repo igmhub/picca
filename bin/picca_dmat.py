@@ -12,7 +12,9 @@ import fitsio
 from picca import constants, cf, utils, io
 from picca.utils import userprint
 
+
 def calc_dmat(healpixs):
+    # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes the distortion matrix.
 
     To optimize the computation, first compute a list of neighbours for each of
@@ -31,6 +33,7 @@ def calc_dmat(healpixs):
     tmp = cf.compute_dmat(healpixs)
     return tmp
 
+
 def main():
     """Computes the distortion matrix"""
     parser = argparse.ArgumentParser(
@@ -38,61 +41,53 @@ def main():
         description=('Compute the distortion matrix of the auto and '
                      'cross-correlation of delta fields'))
 
-    parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
-    parser.add_argument(
-        '--in-dir',
-        type=str,
-        default=None,
-        required=True,
-        help='Directory to delta files')
+    parser.add_argument('--in-dir',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Directory to delta files')
 
-    parser.add_argument(
-        '--in-dir2',
-        type=str,
-        default=None,
-        required=False,
-        help='Directory to 2nd delta files')
+    parser.add_argument('--in-dir2',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='Directory to 2nd delta files')
 
-    parser.add_argument(
-        '--rp-min',
-        type=float,
-        default=0.,
-        required=False,
-        help='Min r-parallel [h^-1 Mpc]')
+    parser.add_argument('--rp-min',
+                        type=float,
+                        default=0.,
+                        required=False,
+                        help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--rp-max',
-        type=float,
-        default=200.,
-        required=False,
-        help='Max r-parallel [h^-1 Mpc]')
+    parser.add_argument('--rp-max',
+                        type=float,
+                        default=200.,
+                        required=False,
+                        help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--rt-max',
-        type=float,
-        default=200.,
-        required=False,
-        help='Max r-transverse [h^-1 Mpc]')
+    parser.add_argument('--rt-max',
+                        type=float,
+                        default=200.,
+                        required=False,
+                        help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--np',
-        type=int,
-        default=50,
-        required=False,
-        help='Number of r-parallel bins')
+    parser.add_argument('--np',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of r-parallel bins')
 
-    parser.add_argument(
-        '--nt',
-        type=int,
-        default=50,
-        required=False,
-        help='Number of r-transverse bins')
+    parser.add_argument('--nt',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of r-transverse bins')
 
     parser.add_argument(
         '--coef-binning-model',
@@ -136,12 +131,11 @@ def main():
         help=('Name of the absorption in picca.constants defining the redshift '
               'of the 2nd delta'))
 
-    parser.add_argument(
-        '--z-ref',
-        type=float,
-        default=2.25,
-        required=False,
-        help='Reference redshift')
+    parser.add_argument('--z-ref',
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help='Reference redshift')
 
     parser.add_argument(
         '--z-evol',
@@ -171,12 +165,11 @@ def main():
         required=False,
         help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument(
-        '--fid-Ok',
-        type=float,
-        default=0.,
-        required=False,
-        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+    parser.add_argument('--fid-Ok',
+                        type=float,
+                        default=0.,
+                        required=False,
+                        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
 
     parser.add_argument(
         '--fid-wl',
@@ -185,11 +178,10 @@ def main():
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
-    parser.add_argument(
-        '--no-project',
-        action='store_true',
-        required=False,
-        help='Do not project out continuum fitting modes')
+    parser.add_argument('--no-project',
+                        action='store_true',
+                        required=False,
+                        help='Do not project out continuum fitting modes')
 
     parser.add_argument(
         '--remove-same-half-plate-close-pairs',
@@ -205,25 +197,23 @@ def main():
         help=('Fraction of rejected forest-forest pairs: -1=no rejection, '
               '1=all rejection'))
 
-    parser.add_argument(
-        '--nside',
-        type=int,
-        default=16,
-        required=False,
-        help='Healpix nside')
+    parser.add_argument('--nside',
+                        type=int,
+                        default=16,
+                        required=False,
+                        help='Healpix nside')
 
     parser.add_argument('--nproc',
-        type=int,
-        default=None,
-        required=False,
-        help='Number of processors')
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Number of processors')
 
-    parser.add_argument(
-        '--nspec',
-        type=int,
-        default=None,
-        required=False,
-        help='Maximum number of spectra to read')
+    parser.add_argument('--nspec',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Maximum number of spectra to read')
 
     parser.add_argument(
         '--unfold-cf',
@@ -235,7 +225,7 @@ def main():
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()//2
+        args.nproc = cpu_count() // 2
 
     userprint("nproc", args.nproc)
 
@@ -247,8 +237,8 @@ def main():
     cf.z_cut_min = args.z_cut_min
     cf.num_bins_r_par = args.np
     cf.num_bins_r_trans = args.nt
-    cf.num_model_bins_r_par = args.np*args.coef_binning_model
-    cf.num_model_bins_r_trans = args.nt*args.coef_binning_model
+    cf.num_model_bins_r_par = args.np * args.coef_binning_model
+    cf.num_model_bins_r_trans = args.nt * args.coef_binning_model
     cf.nside = args.nside
     cf.z_ref = args.z_ref
     cf.alpha = args.z_evol
@@ -289,14 +279,15 @@ def main():
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, num_data2, z_min2, z_max2 = io.read_deltas(args.in_dir2,
-                                                          cf.nside,
-                                                          cf.lambda_abs2,
-                                                          cf.alpha2,
-                                                          cf.z_ref,
-                                                          cosmo,
-                                                          max_num_spec=args.nspec,
-                                                          no_project=args.no_project)
+        data2, num_data2, z_min2, z_max2 = io.read_deltas(
+            args.in_dir2,
+            cf.nside,
+            cf.lambda_abs2,
+            cf.alpha2,
+            cf.z_ref,
+            cosmo,
+            max_num_spec=args.nspec,
+            no_project=args.no_project)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
@@ -304,12 +295,11 @@ def main():
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 
-
     cf.counter = Value('i', 0)
     cf.lock = Lock()
     cpu_data = {}
     for index, healpix in enumerate(sorted(data)):
-        num_processor = index%args.nproc
+        num_processor = index % args.nproc
         if not num_processor in cpu_data:
             cpu_data[num_processor] = []
         cpu_data[num_processor].append(healpix)
@@ -332,49 +322,84 @@ def main():
     npairs = dmat_data[:, 6].sum(axis=0)
     npairs_used = dmat_data[:, 7].sum(axis=0)
 
-    w = weights>0.
+    w = weights > 0.
     r_par[w] /= weights[w]
     r_trans[w] /= weights[w]
     z[w] /= weights[w]
     w = weights_dmat > 0
     dmat[w] /= weights_dmat[w, None]
 
-
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [{'name': 'RPMIN', 'value': cf.r_par_min,
-               'comment': 'Minimum r-parallel [h^-1 Mpc]'},
-              {'name': 'RPMAX', 'value': cf.r_par_max,
-               'comment': 'Maximum r-parallel [h^-1 Mpc]'},
-              {'name': 'RTMAX', 'value': cf.r_trans_max,
-               'comment': 'Maximum r-transverse [h^-1 Mpc]'},
-              {'name': 'NP', 'value': cf.num_bins_r_par,
-               'comment': 'Number of bins in r-parallel'},
-              {'name': 'NT', 'value': cf.num_bins_r_trans,
-               'comment': 'Number of bins in r-transverse'},
-              {'name': 'COEFMOD', 'value': args.coef_binning_model,
-               'comment': 'Coefficient for model binning'},
-              {'name': 'ZCUTMIN', 'value': cf.z_cut_min,
-               'comment': 'Minimum redshift of pairs'},
-              {'name': 'ZCUTMAX', 'value': cf.z_cut_max,
-               'comment': 'Maximum redshift of pairs'},
-              {'name': 'REJ', 'value': cf.reject,
-               'comment': 'Rejection factor'},
-              {'name': 'NPALL', 'value': npairs,
-               'comment': 'Number of pairs'},
-              {'name': 'NPUSED', 'value': npairs_used,
-               'comment': 'Number of used pairs'},
+    header = [
+        {
+            'name': 'RPMIN',
+            'value': cf.r_par_min,
+            'comment': 'Minimum r-parallel [h^-1 Mpc]'
+        },
+        {
+            'name': 'RPMAX',
+            'value': cf.r_par_max,
+            'comment': 'Maximum r-parallel [h^-1 Mpc]'
+        },
+        {
+            'name': 'RTMAX',
+            'value': cf.r_trans_max,
+            'comment': 'Maximum r-transverse [h^-1 Mpc]'
+        },
+        {
+            'name': 'NP',
+            'value': cf.num_bins_r_par,
+            'comment': 'Number of bins in r-parallel'
+        },
+        {
+            'name': 'NT',
+            'value': cf.num_bins_r_trans,
+            'comment': 'Number of bins in r-transverse'
+        },
+        {
+            'name': 'COEFMOD',
+            'value': args.coef_binning_model,
+            'comment': 'Coefficient for model binning'
+        },
+        {
+            'name': 'ZCUTMIN',
+            'value': cf.z_cut_min,
+            'comment': 'Minimum redshift of pairs'
+        },
+        {
+            'name': 'ZCUTMAX',
+            'value': cf.z_cut_max,
+            'comment': 'Maximum redshift of pairs'
+        },
+        {
+            'name': 'REJ',
+            'value': cf.reject,
+            'comment': 'Rejection factor'
+        },
+        {
+            'name': 'NPALL',
+            'value': npairs,
+            'comment': 'Number of pairs'
+        },
+        {
+            'name': 'NPUSED',
+            'value': npairs_used,
+            'comment': 'Number of used pairs'
+        },
     ]
     results.write([weights_dmat, dmat],
                   names=['WDM', 'DM'],
                   comment=['Sum of weight', 'Distortion matrix'],
                   units=['', ''],
-                  header=head, extname='DMAT')
-    results.write([r_par, r_trans,z],
+                  header=header,
+                  extname='DMAT')
+    results.write([r_par, r_trans, z],
                   names=['RP', 'RT', 'Z'],
                   comment=['R-parallel', 'R-transverse', 'Redshift'],
                   units=['h^-1 Mpc', 'h^-1 Mpc', ''],
                   extname='ATTRI')
     results.close()
+
 
 if __name__ == '__main__':
     main()
