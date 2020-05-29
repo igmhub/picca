@@ -783,11 +783,12 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     r_comov1 = delta1.r_comov
                     dist_m1 = delta1.dist_m
                     weights1 = delta1.weights
-                    z1_abs2 = 10**delta1.log_lambda/constants.ABSORBER_IGM[abs_igm2]-1
+                    z1_abs2 = (10**delta1.log_lambda/
+                               constants.ABSORBER_IGM[abs_igm2] - 1)
                     r_comov1_abs2 = cosmo.get_r_comov(z1_abs2)
                     dist_m1_abs2 = cosmo.get_dist_m(z1_abs2)
 
-                    w = z1_abs2<delta1.z_qso
+                    w = z1_abs2 < delta1.z_qso
                     r_comov1 = r_comov1[w]
                     dist_m1 = dist_m1[w]
                     weights1 = weights1[w]
@@ -798,11 +799,12 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     r_comov2 = delta2.r_comov
                     dist_m2 = delta2.dist_m
                     weights2 = delta2.weights
-                    z2_abs1 = 10**delta2.log_lambda/constants.ABSORBER_IGM[abs_igm1]-1
+                    z2_abs1 = (10**delta2.log_lambda/
+                               constants.ABSORBER_IGM[abs_igm1] - 1)
                     r_comov2_abs1 = cosmo.get_r_comov(z2_abs1)
                     dist_m2_abs1 = cosmo.get_dist_m(z2_abs1)
 
-                    w = z2_abs1<delta2.z_qso
+                    w = z2_abs1 < delta2.z_qso
                     r_comov2 = r_comov2[w]
                     dist_m2 = dist_m2[w]
                     weights2 = weights2[w]
@@ -810,37 +812,44 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     r_comov2_abs1 = r_comov2_abs1[w]
                     dist_m2_abs1 = dist_m2_abs1[w]
 
-                    r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
+                    r_par = (r_comov1[:, None] - r_comov2)*np.cos(ang/2)
                     if not x_correlation:
                         r_par = abs(r_par)
 
-                    r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
-                    weights12 = weights1[:,None]*weights2
+                    r_trans = (dist_m1[:, None] + dist_m2)*np.sin(ang/2)
+                    weights12 = weights1[:, None]*weights2
 
-                    bins_r_par = np.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-                    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+                    bins_r_par = np.floor((r_par - r_par_min)/
+                                          (r_par_max - r_par_min)*
+                                          num_bins_r_par).astype(int)
+                    bins_r_trans = (r_trans/r_trans_max*
+                                    num_bins_r_trans).astype(int)
                     if remove_same_half_plate_close_pairs and same_half_plate:
-                        wp = abs(r_par) < (r_par_max-r_par_min)/num_bins_r_par
-                        weights12[wp] = 0.
+                        weights12[abs(r_par) <
+                                  (r_par_max-r_par_min)/num_bins_r_par] = 0.
                     bins = bins_r_trans + num_bins_r_trans*bins_r_par
-                    w = (bins_r_par<num_bins_r_par) & (bins_r_trans<num_bins_r_trans) & (bins_r_par >=0)
-                    rebin = np.bincount(bins[w],weights=weights12[w])
+                    w = ((bins_r_par < num_bins_r_par) &
+                         (bins_r_trans < num_bins_r_trans) &
+                         (bins_r_par >= 0))
+                    rebin = np.bincount(bins[w], weights=weights12[w])
                     weights_dmat[:len(rebin)] += rebin
-                    rp_abs2_abs1 = (r_comov1_abs2[:,None]-r_comov2_abs1)*sp.cos(ang/2)
+                    r_par_abs2_abs1 = (r_comov1_abs2[:, None]-
+                                       r_comov2_abs1)*np.cos(ang/2)
                     if not x_correlation:
-                        rp_abs2_abs1 = abs(rp_abs2_abs1)
+                        r_par_abs2_abs1 = abs(r_par_abs2_abs1)
 
-                    rt_abs2_abs1 = (dist_m1_abs2[:,None]+dist_m2_abs1)*sp.sin(ang/2)
+                    r_trans_abs2_abs1 = (dist_m1_abs2[:, None] +
+                                         dist_m2_abs1)*np.sin(ang/2)
                     zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+z_ref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
 
-                    bp_abs2_abs1 = sp.floor((rp_abs2_abs1-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
-                    bt_abs2_abs1 = (rt_abs2_abs1/r_trans_max*num_model_bins_r_trans).astype(int)
+                    bp_abs2_abs1 = sp.floor((r_par_abs2_abs1-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
+                    bt_abs2_abs1 = (r_trans_abs2_abs1/r_trans_max*num_model_bins_r_trans).astype(int)
                     bBam = bt_abs2_abs1 + num_model_bins_r_trans*bp_abs2_abs1
                     w &= (bp_abs2_abs1<num_model_bins_r_par) & (bt_abs2_abs1<num_model_bins_r_trans) & (bp_abs2_abs1>=0)
 
-                    rebin = np.bincount(bBam[w],weights=rp_abs2_abs1[w]*weights12[w]*zwe21[w])
+                    rebin = np.bincount(bBam[w],weights=r_par_abs2_abs1[w]*weights12[w]*zwe21[w])
                     r_par_eff[:len(rebin)] += rebin
-                    rebin = np.bincount(bBam[w],weights=rt_abs2_abs1[w]*weights12[w]*zwe21[w])
+                    rebin = np.bincount(bBam[w],weights=r_trans_abs2_abs1[w]*weights12[w]*zwe21[w])
                     r_trans_eff[:len(rebin)] += rebin
                     rebin = np.bincount(bBam[w],weights=(z1_abs2[:,None]+z2_abs1)[w]/2*weights12[w]*zwe21[w])
                     z_eff[:len(rebin)] += rebin
