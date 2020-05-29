@@ -29,8 +29,8 @@ def calc_dmat(healpixs):
     """
     cf.fill_neighs(healpixs)
     np.random.seed(healpixs[0])
-    tmp = cf.compute_dmat(healpixs)
-    return tmp
+    dmat_data = cf.compute_dmat(healpixs)
+    return dmat_data
 
 
 def main():
