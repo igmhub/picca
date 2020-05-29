@@ -39,69 +39,60 @@ def main():
         description=('Compute the auto and cross-correlation of delta fields '
                      'as a function of angle and wavelength ratio'))
 
-    parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
-    parser.add_argument(
-        '--in-dir',
-        type=str,
-        default=None,
-        required=True,
-        help='Directory to delta files')
+    parser.add_argument('--in-dir',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Directory to delta files')
 
-    parser.add_argument(
-        '--from-image',
-        type=str,
-        default=None,
-        required=False,
-        help='Read delta from image format',
-        nargs='*')
+    parser.add_argument('--from-image',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='Read delta from image format',
+                        nargs='*')
 
-    parser.add_argument(
-        '--in-dir2',
-        type=str,
-        default=None,
-        required=False,
-        help='Directory to 2nd delta files')
+    parser.add_argument('--in-dir2',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='Directory to 2nd delta files')
 
-    parser.add_argument(
-        '--wr-min',
-        type=float,
-        default=1.,
-        required=False,
-        help='Min of wavelength ratio')
+    parser.add_argument('--wr-min',
+                        type=float,
+                        default=1.,
+                        required=False,
+                        help='Min of wavelength ratio')
 
-    parser.add_argument(
-        '--wr-max',
-        type=float,
-        default=1.1,
-        required=False,
-        help='Max of wavelength ratio')
+    parser.add_argument('--wr-max',
+                        type=float,
+                        default=1.1,
+                        required=False,
+                        help='Max of wavelength ratio')
 
-    parser.add_argument(
-        '--ang-max',
-        type=float,
-        default=0.02,
-        required=False,
-        help='Max angle (rad)')
+    parser.add_argument('--ang-max',
+                        type=float,
+                        default=0.02,
+                        required=False,
+                        help='Max angle (rad)')
 
-    parser.add_argument(
-        '--np',
-        type=int,
-        default=50,
-        required=False,
-        help='Number of wavelength ratio bins')
+    parser.add_argument('--np',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of wavelength ratio bins')
 
-    parser.add_argument(
-        '--nt',
-        type=int,
-        default=50,
-        required=False,
-        help='Number of angular bins')
+    parser.add_argument('--nt',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of angular bins')
 
     parser.add_argument(
         '--z-cut-min',
@@ -137,12 +128,11 @@ def main():
         help=('Name of the absorption in picca.constants defining the redshift '
               'of the 2nd delta'))
 
-    parser.add_argument(
-        '--z-ref',
-        type=float,
-        default=2.25,
-        required=False,
-        help='Reference redshift')
+    parser.add_argument('--z-ref',
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help='Reference redshift')
 
     parser.add_argument(
         '--z-evol',
@@ -158,11 +148,10 @@ def main():
         required=False,
         help='Exponent of the redshift evolution of the 2nd delta field')
 
-    parser.add_argument(
-        '--no-project',
-        action='store_true',
-        required=False,
-        help='Do not project out continuum fitting modes')
+    parser.add_argument('--no-project',
+                        action='store_true',
+                        required=False,
+                        help='Do not project out continuum fitting modes')
 
     parser.add_argument(
         '--remove-same-half-plate-close-pairs',
@@ -170,31 +159,28 @@ def main():
         required=False,
         help='Reject pairs in the first bin in r-parallel from same half plate')
 
-    parser.add_argument(
-        '--nside',
-        type=int,
-        default=16,
-        required=False,
-        help='Healpix nside')
+    parser.add_argument('--nside',
+                        type=int,
+                        default=16,
+                        required=False,
+                        help='Healpix nside')
 
-    parser.add_argument(
-        '--nproc',
-        type=int,
-        default=None,
-        required=False,
-        help='Number of processors')
+    parser.add_argument('--nproc',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Number of processors')
 
-    parser.add_argument(
-        '--nspec',
-        type=int,
-        default=None,
-        required=False,
-        help='Maximum number of spectra to read')
+    parser.add_argument('--nspec',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Maximum number of spectra to read')
 
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()//2
+        args.nproc = cpu_count() // 2
 
     # setup variables in module cf
     cf.r_par_min = args.wr_min
@@ -212,7 +198,6 @@ def main():
     cf.ang_max = args.ang_max
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
-
 
     ### Read data 1
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
@@ -240,20 +225,20 @@ def main():
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, num_data2, z_min2, z_max2 = io.read_deltas(args.in_dir2,
-                                                          cf.nside,
-                                                          cf.lambda_abs2,
-                                                          cf.alpha2,
-                                                          cf.z_ref,
-                                                          cosmo=None,
-                                                          max_num_spec=args.nspec,
-                                                          no_project=args.no_project)
+        data2, num_data2, z_min2, z_max2 = io.read_deltas(
+            args.in_dir2,
+            cf.nside,
+            cf.lambda_abs2,
+            cf.alpha2,
+            cf.z_ref,
+            cosmo=None,
+            max_num_spec=args.nspec,
+            no_project=args.no_project)
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
-
 
     # compute correlation function, use pool to parallelize
     cf.counter = Value('i', 0)
@@ -283,26 +268,40 @@ def main():
     z[cut] /= weights_list.sum(axis=0)[cut]
     num_pairs = num_pairs_list.sum(axis=0)
 
-
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [
-        {'name': 'RPMIN', 'value': cf.r_par_min,
-         'comment': 'Minimum wavelength ratio'},
-        {'name': 'RPMAX', 'value': cf.r_par_max,
-         'comment': 'Maximum wavelength ratio'},
-        {'name': 'RTMAX', 'value': cf.r_trans_max,
-         'comment': 'Maximum angle [rad]'},
-        {'name': 'NP', 'value': cf.num_bins_r_par,
-         'comment': 'Number of bins in wavelength ratio'},
-        {'name': 'NT', 'value': cf.num_bins_r_trans,
-         'comment': 'Number of bins in angle'},
-        {'name': 'ZCUTMIN', 'value': cf.z_cut_min,
-         'comment': 'Minimum redshift of pairs'},
-        {'name': 'ZCUTMAX', 'value': cf.z_cut_max,
-         'comment': 'Maximum redshift of pairs'},
-        {'name': 'NSIDE', 'value': cf.nside,
-         'comment': 'Healpix nside'}
-    ]
+    header = [{
+        'name': 'RPMIN',
+        'value': cf.r_par_min,
+        'comment': 'Minimum wavelength ratio'
+    }, {
+        'name': 'RPMAX',
+        'value': cf.r_par_max,
+        'comment': 'Maximum wavelength ratio'
+    }, {
+        'name': 'RTMAX',
+        'value': cf.r_trans_max,
+        'comment': 'Maximum angle [rad]'
+    }, {
+        'name': 'NP',
+        'value': cf.num_bins_r_par,
+        'comment': 'Number of bins in wavelength ratio'
+    }, {
+        'name': 'NT',
+        'value': cf.num_bins_r_trans,
+        'comment': 'Number of bins in angle'
+    }, {
+        'name': 'ZCUTMIN',
+        'value': cf.z_cut_min,
+        'comment': 'Minimum redshift of pairs'
+    }, {
+        'name': 'ZCUTMAX',
+        'value': cf.z_cut_max,
+        'comment': 'Maximum redshift of pairs'
+    }, {
+        'name': 'NSIDE',
+        'value': cf.nside,
+        'comment': 'Healpix nside'
+    }]
     results.write(
         [r_par, r_trans, z, num_pairs],
         names=['RP', 'RT', 'Z', 'NB'],
@@ -315,15 +314,15 @@ def main():
         'name': 'HLPXSCHM',
         'value': 'RING',
         'comment': 'Healpix scheme'
-        }]
-    results.write(
-        [healpix_list, weights_list, xi_list],
-        names=['HEALPID', 'WE', 'DA'],
-        comment=['Healpix index', 'Sum of weight', 'Correlation'],
-        header=header2,
-        extname='COR')
+    }]
+    results.write([healpix_list, weights_list, xi_list],
+                  names=['HEALPID', 'WE', 'DA'],
+                  comment=['Healpix index', 'Sum of weight', 'Correlation'],
+                  header=header2,
+                  extname='COR')
 
     results.close()
+
 
 if __name__ == '__main__':
     main()
