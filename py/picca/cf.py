@@ -885,7 +885,6 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
             num_pairs, num_pairs_used)
 
 
-
 n1d = None
 log_lambda_min = None
 log_lambda_max = None
