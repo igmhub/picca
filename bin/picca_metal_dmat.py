@@ -14,7 +14,7 @@ from picca import constants, cf, utils, io
 from picca.utils import userprint
 
 
-def calc_metal_dmat(abs_igm1, abs_igm2, healpix):
+def calc_metal_dmat(abs_igm1, abs_igm2, healpixs):
     """Computes the metal distortion matrix.
 
     To optimize the computation, first compute a list of neighbours for each of
@@ -28,8 +28,8 @@ def calc_metal_dmat(abs_igm1, abs_igm2, healpix):
     Returns:
         The distortion matri data
     """
-    cf.fill_neighs(healpix)
-    np.random.seed(healpix[0])
+    cf.fill_neighs(healpixs)
+    np.random.seed(healpixs[0])
     dmat_data = cf.compute_metal_dmat(healpix,
                                       abs_igm1=abs_igm1,
                                       abs_igm2=abs_igm2)
