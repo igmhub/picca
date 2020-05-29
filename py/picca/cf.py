@@ -840,23 +840,27 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
 
                     r_trans_abs2_abs1 = (dist_m1_abs2[:, None] +
                                          dist_m2_abs1)*np.sin(ang/2)
-                    zwe21 = (1+z1_abs2[:,None])**(alpha_abs[abs_igm2]-1)*(1+z2_abs1)**(alpha_abs[abs_igm1]-1)/(1+z_ref)**(alpha_abs[abs_igm1]+alpha_abs[abs_igm2]-2)
+                    z_weight_evol = ((1 + z1_abs2[:,None])**
+                                     (alpha_abs[abs_igm2] - 1)*
+                                     (1 + z2_abs1)**(alpha_abs[abs_igm1] - 1)/
+                                     (1 + z_ref)**(alpha_abs[abs_igm1] +
+                                                   alpha_abs[abs_igm2] - 2))
 
                     bp_abs2_abs1 = sp.floor((r_par_abs2_abs1-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
                     bt_abs2_abs1 = (r_trans_abs2_abs1/r_trans_max*num_model_bins_r_trans).astype(int)
                     bBam = bt_abs2_abs1 + num_model_bins_r_trans*bp_abs2_abs1
                     w &= (bp_abs2_abs1<num_model_bins_r_par) & (bt_abs2_abs1<num_model_bins_r_trans) & (bp_abs2_abs1>=0)
 
-                    rebin = np.bincount(bBam[w],weights=r_par_abs2_abs1[w]*weights12[w]*zwe21[w])
+                    rebin = np.bincount(bBam[w],weights=r_par_abs2_abs1[w]*weights12[w]*z_weight_evol[w])
                     r_par_eff[:len(rebin)] += rebin
-                    rebin = np.bincount(bBam[w],weights=r_trans_abs2_abs1[w]*weights12[w]*zwe21[w])
+                    rebin = np.bincount(bBam[w],weights=r_trans_abs2_abs1[w]*weights12[w]*z_weight_evol[w])
                     r_trans_eff[:len(rebin)] += rebin
-                    rebin = np.bincount(bBam[w],weights=(z1_abs2[:,None]+z2_abs1)[w]/2*weights12[w]*zwe21[w])
+                    rebin = np.bincount(bBam[w],weights=(z1_abs2[:,None]+z2_abs1)[w]/2*weights12[w]*z_weight_evol[w])
                     z_eff[:len(rebin)] += rebin
-                    rebin = np.bincount(bBam[w],weights=weights12[w]*zwe21[w])
+                    rebin = np.bincount(bBam[w],weights=weights12[w]*z_weight_evol[w])
                     weight_eff[:len(rebin)] += rebin
 
-                    rebin = np.bincount(bBam[w]+num_model_bins_r_par*num_model_bins_r_trans*bins[w],weights=weights12[w]*zwe21[w])
+                    rebin = np.bincount(bBam[w]+num_model_bins_r_par*num_model_bins_r_trans*bins[w],weights=weights12[w]*z_weight_evol[w])
                     dmat[:len(rebin)] += rebin
             setattr(delta1, "neighbours", None)
 
