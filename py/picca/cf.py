@@ -616,7 +616,7 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
                             log_lambda_minus_mean1[i]))
                          )
 
-def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
+def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
     """Computes the metal distortion matrix for each of the healpixs.
 
     Args:
@@ -846,25 +846,43 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                                      (1 + z_ref)**(alpha_abs[abs_igm1] +
                                                    alpha_abs[abs_igm2] - 2))
 
-                    bp_abs2_abs1 = sp.floor((r_par_abs2_abs1-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
-                    bt_abs2_abs1 = (r_trans_abs2_abs1/r_trans_max*num_model_bins_r_trans).astype(int)
-                    bBam = bt_abs2_abs1 + num_model_bins_r_trans*bp_abs2_abs1
-                    w &= (bp_abs2_abs1<num_model_bins_r_par) & (bt_abs2_abs1<num_model_bins_r_trans) & (bp_abs2_abs1>=0)
+                    model_bins_r_par = np.floor((r_par_abs2_abs1 - r_par_min)/
+                                                (r_par_max-r_par_min)*
+                                                num_model_bins_r_par).astype(int)
+                    model_bins_r_trans = (r_trans_abs2_abs1/r_trans_max*
+                                          num_model_bins_r_trans).astype(int)
+                    model_bins = (model_bins_r_trans +
+                                  num_model_bins_r_trans*model_bins_r_par)
+                    w &= ((model_bins_r_par < num_model_bins_r_par) &
+                          (model_bins_r_trans < num_model_bins_r_trans) &
+                          (model_bins_r_par >= 0))
 
-                    rebin = np.bincount(bBam[w],weights=r_par_abs2_abs1[w]*weights12[w]*z_weight_evol[w])
+                    rebin = np.bincount(model_bins[w],
+                                        weights=(r_par_abs2_abs1[w]*
+                                                 weights12[w]*z_weight_evol[w]))
                     r_par_eff[:len(rebin)] += rebin
-                    rebin = np.bincount(bBam[w],weights=r_trans_abs2_abs1[w]*weights12[w]*z_weight_evol[w])
+                    rebin = np.bincount(model_bins[w],
+                                        weights=(r_trans_abs2_abs1[w]*
+                                                 weights12[w]*z_weight_evol[w]))
                     r_trans_eff[:len(rebin)] += rebin
-                    rebin = np.bincount(bBam[w],weights=(z1_abs2[:,None]+z2_abs1)[w]/2*weights12[w]*z_weight_evol[w])
+                    rebin = np.bincount(model_bins[w],
+                                        weights=((z1_abs2[:,None]+z2_abs1)[w]/2*
+                                                 weights12[w]*z_weight_evol[w]))
                     z_eff[:len(rebin)] += rebin
-                    rebin = np.bincount(bBam[w],weights=weights12[w]*z_weight_evol[w])
+                    rebin = np.bincount(model_bins[w],
+                                        weights=weights12[w]*z_weight_evol[w])
                     weight_eff[:len(rebin)] += rebin
 
-                    rebin = np.bincount(bBam[w]+num_model_bins_r_par*num_model_bins_r_trans*bins[w],weights=weights12[w]*z_weight_evol[w])
+                    rebin = np.bincount((model_bins[w] + num_model_bins_r_par*
+                                         num_model_bins_r_trans*bins[w]),
+                                        weights=weights12[w]*z_weight_evol[w])
                     dmat[:len(rebin)] += rebin
             setattr(delta1, "neighbours", None)
 
-    return weights_dmat,dmat.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),r_par_eff,r_trans_eff,z_eff,weight_eff,num_pairs,num_pairs_used
+    dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
+                        num_model_bins_r_par*num_model_bins_r_trans)
+    return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
+            num_pairs, num_pairs_used)
 
 
 

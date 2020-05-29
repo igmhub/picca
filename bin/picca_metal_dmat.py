@@ -11,7 +11,7 @@ from picca.utils import userprint
 def calc_metal_dmat(abs_igm1,abs_igm2,p):
     cf.fill_neighs(p)
     sp.random.seed(p[0])
-    tmp = cf.metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
+    tmp = cf.compute_metal_dmat(p,abs_igm1=abs_igm1,abs_igm2=abs_igm2)
     return tmp
 
 if __name__ == '__main__':
