@@ -305,8 +305,9 @@ def main():
     r_trans_list = correlation_function_data[:, 3, :]
     z_list = correlation_function_data[:, 4, :]
     num_pairs_list = correlation_function_data[:, 5, :].astype(np.int64)
-    hep = np.array(sorted(list(cpu_data.keys())))
+    healpix_list = np.array(sorted(list(cpu_data.keys())))
 
+    # normalize values
     cut = (weights_list.sum(axis=0) > 0.)
     r_par = (r_par_list * weights_list).sum(axis=0)
     r_par[cut] /= weights_list.sum(axis=0)[cut]
@@ -364,7 +365,7 @@ def main():
         'value': 'RING',
         'comment': 'Healpix scheme'
     }]
-    results.write([hep, weights_list, xi_list],
+    results.write([healpix_list, weights_list, xi_list],
                   names=['HEALPID', 'WE', 'DA'],
                   comment=['Healpix index', 'Sum of weight', 'Correlation'],
                   header=header2,
