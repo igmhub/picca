@@ -724,14 +724,14 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                                 num_bins_r_trans).astype(int)
 
                 if remove_same_half_plate_close_pairs and same_half_plate:
-                    dist_m1_abs2[abs(r_par) <
-                                 (r_par_max - r_par_min)/num_bins_r_par] = 0.
+                    weights12[abs(r_par) <
+                              (r_par_max - r_par_min)/num_bins_r_par] = 0.
 
                 bA = bins_r_trans + num_bins_r_trans*bins_r_par
                 wA = ((bins_r_par < num_bins_r_par) &
                       (bins_r_trans < num_bins_r_trans) &
                       (bins_r_par >= 0))
-                c = np.bincount(bA[wA], weights=dist_m1_abs2[wA])
+                c = np.bincount(bA[wA], weights=weights12[wA])
                 weights_dmat[:len(c)]+=c
 
                 rp_abs1_abs2 = (r_comov1_abs1[:,None]-r_comov2_abs2)*sp.cos(ang/2)
@@ -747,15 +747,15 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 bBma = bt_abs1_abs2 + num_model_bins_r_trans*bp_abs1_abs2
                 wBma = (bp_abs1_abs2<num_model_bins_r_par) & (bt_abs1_abs2<num_model_bins_r_trans) & (bp_abs1_abs2>=0)
                 wAB = wA & wBma
-                c = sp.bincount(bBma[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=dist_m1_abs2[wAB]*zwe12[wAB])
+                c = sp.bincount(bBma[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=weights12[wAB]*zwe12[wAB])
                 dmat[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*dist_m1_abs2[wAB]*zwe12[wAB])
+                c = sp.bincount(bBma[wAB],weights=rp_abs1_abs2[wAB]*weights12[wAB]*zwe12[wAB])
                 r_par_eff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*dist_m1_abs2[wAB]*zwe12[wAB])
+                c = sp.bincount(bBma[wAB],weights=rt_abs1_abs2[wAB]*weights12[wAB]*zwe12[wAB])
                 r_trans_eff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*dist_m1_abs2[wAB]*zwe12[wAB])
+                c = sp.bincount(bBma[wAB],weights=(z1_abs1[:,None]+z2_abs2)[wAB]/2*weights12[wAB]*zwe12[wAB])
                 z_eff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=dist_m1_abs2[wAB]*zwe12[wAB])
+                c = sp.bincount(bBma[wAB],weights=weights12[wAB]*zwe12[wAB])
                 weight_eff[:len(c)]+=c
 
                 if ((not x_correlation) and (abs_igm1 != abs_igm2)) or (x_correlation and (lambda_abs == lambda_abs2)):
@@ -794,16 +794,16 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                         r_par = abs(r_par)
 
                     r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
-                    dist_m1_abs2 = weights1[:,None]*weights2
+                    weights12 = weights1[:,None]*weights2
 
                     bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
                     bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
                     if remove_same_half_plate_close_pairs and same_half_plate:
                         wp = abs(r_par) < (r_par_max-r_par_min)/num_bins_r_par
-                        dist_m1_abs2[wp] = 0.
+                        weights12[wp] = 0.
                     bA = bins_r_trans + num_bins_r_trans*bins_r_par
                     wA = (bins_r_par<num_bins_r_par) & (bins_r_trans<num_bins_r_trans) & (bins_r_par >=0)
-                    c = sp.bincount(bA[wA],weights=dist_m1_abs2[wA])
+                    c = sp.bincount(bA[wA],weights=weights12[wA])
                     weights_dmat[:len(c)]+=c
                     rp_abs2_abs1 = (r_comov1_abs2[:,None]-r_comov2_abs1)*sp.cos(ang/2)
                     if not x_correlation:
@@ -818,16 +818,16 @@ def metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                     wBam = (bp_abs2_abs1<num_model_bins_r_par) & (bt_abs2_abs1<num_model_bins_r_trans) & (bp_abs2_abs1>=0)
                     wAB = wA & wBam
 
-                    c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*dist_m1_abs2[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB],weights=rp_abs2_abs1[wAB]*weights12[wAB]*zwe21[wAB])
                     r_par_eff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=rt_abs2_abs1[wAB]*dist_m1_abs2[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB],weights=rt_abs2_abs1[wAB]*weights12[wAB]*zwe21[wAB])
                     r_trans_eff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=(z1_abs2[:,None]+z2_abs1)[wAB]/2*dist_m1_abs2[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB],weights=(z1_abs2[:,None]+z2_abs1)[wAB]/2*weights12[wAB]*zwe21[wAB])
                     z_eff[:len(c)]+=c
-                    c = sp.bincount(bBam[wAB],weights=dist_m1_abs2[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB],weights=weights12[wAB]*zwe21[wAB])
                     weight_eff[:len(c)]+=c
 
-                    c = sp.bincount(bBam[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=dist_m1_abs2[wAB]*zwe21[wAB])
+                    c = sp.bincount(bBam[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=weights12[wAB]*zwe21[wAB])
                     dmat[:len(c)]+=c
             setattr(delta1, "neighbours", None)
 
