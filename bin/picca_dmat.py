@@ -14,7 +14,6 @@ from picca.utils import userprint
 
 
 def calc_dmat(healpixs):
-    # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes the distortion matrix.
 
     To optimize the computation, first compute a list of neighbours for each of
@@ -26,7 +25,7 @@ def calc_dmat(healpixs):
             List of healpix numbers
 
     Returns:
-        The distortion matri data
+        The distortion matrix data
     """
     cf.fill_neighs(healpixs)
     np.random.seed(healpixs[0])
@@ -35,6 +34,7 @@ def calc_dmat(healpixs):
 
 
 def main():
+    # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes the distortion matrix"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
