@@ -13,6 +13,7 @@ import fitsio
 from picca import constants, cf, utils, io
 from picca.utils import userprint
 
+
 def calc_metal_dmat(abs_igm1, abs_igm2, healpix):
     """Computes the metal distortion matrix.
 
@@ -29,8 +30,11 @@ def calc_metal_dmat(abs_igm1, abs_igm2, healpix):
     """
     cf.fill_neighs(healpix)
     np.random.seed(healpix[0])
-    dmat_data = cf.compute_metal_dmat(healpix, abs_igm1=abs_igm1, abs_igm2=abs_igm2)
+    dmat_data = cf.compute_metal_dmat(healpix,
+                                      abs_igm1=abs_igm1,
+                                      abs_igm2=abs_igm2)
     return dmat_data
+
 
 def main():
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
@@ -40,61 +44,53 @@ def main():
         description=('Compute the auto and cross-correlation of delta fields '
                      'for a list of IGM absorption.'))
 
-    parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
-    parser.add_argument(
-        '--in-dir',
-        type=str,
-        default=None,
-        required=True,
-        help='Directory to delta files')
+    parser.add_argument('--in-dir',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Directory to delta files')
 
-    parser.add_argument(
-        '--in-dir2',
-        type=str,
-        default=None,
-        required=False,
-        help='Directory to 2nd delta files')
+    parser.add_argument('--in-dir2',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='Directory to 2nd delta files')
 
-    parser.add_argument(
-        '--rp-min',
-        type=float,
-        default=0.,
-        required=False,
-        help='Min r-parallel [h^-1 Mpc]')
+    parser.add_argument('--rp-min',
+                        type=float,
+                        default=0.,
+                        required=False,
+                        help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--rp-max',
-        type=float,
-        default=200.,
-        required=False,
-        help='Max r-parallel [h^-1 Mpc]')
+    parser.add_argument('--rp-max',
+                        type=float,
+                        default=200.,
+                        required=False,
+                        help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--rt-max',
-        type=float,
-        default=200.,
-        required=False,
-        help='Max r-transverse [h^-1 Mpc]')
+    parser.add_argument('--rt-max',
+                        type=float,
+                        default=200.,
+                        required=False,
+                        help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--np',
-        type=int,
-        default=50,
-        required=False,
-        help='Number of r-parallel bins')
+    parser.add_argument('--np',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of r-parallel bins')
 
-    parser.add_argument(
-        '--nt',
-        type=int,
-        default=50,
-        required=False,
-        help='Number of r-transverse bins')
+    parser.add_argument('--nt',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of r-transverse bins')
 
     parser.add_argument(
         '--coef-binning-model',
@@ -156,12 +152,11 @@ def main():
         help=('List of names of metal absorption in picca.constants present in '
               '2nd forest'))
 
-    parser.add_argument(
-        '--z-ref',
-        type=float,
-        default=2.25,
-        required=False,
-        help='Reference redshift')
+    parser.add_argument('--z-ref',
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help='Reference redshift')
 
     parser.add_argument(
         '--z-evol',
@@ -198,12 +193,11 @@ def main():
         required=False,
         help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument(
-        '--fid-Ok',
-        type=float,
-        default=0.,
-        required=False,
-        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+    parser.add_argument('--fid-Ok',
+                        type=float,
+                        default=0.,
+                        required=False,
+                        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
 
     parser.add_argument(
         '--fid-wl',
@@ -226,26 +220,23 @@ def main():
         help=('Fraction of rejected forest-forest pairs: -1=no rejection, '
               '1=all rejection'))
 
-    parser.add_argument(
-        '--nside',
-        type=int,
-        default=16,
-        required=False,
-        help='Healpix nside')
+    parser.add_argument('--nside',
+                        type=int,
+                        default=16,
+                        required=False,
+                        help='Healpix nside')
 
-    parser.add_argument(
-        '--nproc',
-        type=int,
-        default=None,
-        required=False,
-        help='Number of processors')
+    parser.add_argument('--nproc',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Number of processors')
 
-    parser.add_argument(
-        '--nspec',
-        type=int,
-        default=None,
-        required=False,
-        help='Maximum number of spectra to read')
+    parser.add_argument('--nspec',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Maximum number of spectra to read')
 
     parser.add_argument(
         '--unfold-cf',
@@ -257,7 +248,7 @@ def main():
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()//2
+        args.nproc = cpu_count() // 2
 
     userprint("nproc", args.nproc)
 
@@ -267,10 +258,10 @@ def main():
     cf.r_par_min = args.rp_min
     cf.z_cut_max = args.z_cut_max
     cf.z_cut_min = args.z_cut_min
-    cf.num_bins_r_par = args.np*args.coef_binning_model
-    cf.num_bins_r_trans = args.nt*args.coef_binning_model
-    cf.num_model_bins_r_par = args.np*args.coef_binning_model
-    cf.num_model_bins_r_trans = args.nt*args.coef_binning_model
+    cf.num_bins_r_par = args.np * args.coef_binning_model
+    cf.num_bins_r_trans = args.nt * args.coef_binning_model
+    cf.num_model_bins_r_par = args.np * args.coef_binning_model
+    cf.num_model_bins_r_trans = args.nt * args.coef_binning_model
     cf.nside = args.nside
     cf.z_ref = args.z_ref
     cf.alpha = args.z_evol
@@ -318,23 +309,21 @@ def main():
         for m in args.abs_igm2:
             cf.alpha_abs[m] = args.metal_alpha
 
-        data2, num_data2, z_min2, z_max2 = io.read_deltas(args.in_dir2,
-                                                          cf.nside,
-                                                          cf.lambda_abs2,
-                                                          cf.alpha2,
-                                                          cf.z_ref,
-                                                          cf.cosmo,
-                                                          max_num_spec=args.nspec)
+        data2, num_data2, z_min2, z_max2 = io.read_deltas(
+            args.in_dir2,
+            cf.nside,
+            cf.lambda_abs2,
+            cf.alpha2,
+            cf.z_ref,
+            cf.cosmo,
+            max_num_spec=args.nspec)
         del z_max2
         cf.data2 = data2
         cf.num_data2 = num_data2
-        cf.ang_max = utils.compute_ang_max(cf.cosmo,
-                                           cf.r_trans_max,
-                                           z_min,
+        cf.ang_max = utils.compute_ang_max(cf.cosmo, cf.r_trans_max, z_min,
                                            z_min2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
-
 
     cf.counter = Value('i', 0)
     cf.lock = Lock()
@@ -376,8 +365,7 @@ def main():
             if index1 == 0 and index2 == 0:
                 continue
             cf.counter.value = 0
-            calc_metal_dmat_wrapper = partial(calc_metal_dmat,
-                                              abs_igm1,
+            calc_metal_dmat_wrapper = partial(calc_metal_dmat, abs_igm1,
                                               abs_igm2)
             userprint("")
 
@@ -417,46 +405,77 @@ def main():
             r_par_all.append(r_par)
             r_trans_all.append(r_trans)
             z_all.append(z)
-            names.append(abs_igm1+"_"+abs_igm2)
+            names.append(abs_igm1 + "_" + abs_igm2)
             num_pairs_all.append(num_pairs)
             num_pairs_used_all.append(num_pairs_used)
 
     # save the results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
-        {'name': 'RPMIN', 'value': cf.r_par_min,
-         'comment': 'Minimum r-parallel [h^-1 Mpc]'},
-        {'name': 'RPMAX', 'value': cf.r_par_max,
-         'comment': 'Maximum r-parallel [h^-1 Mpc]'},
-        {'name': 'RTMAX', 'value': cf.r_trans_max,
-         'comment': 'Maximum r-transverse [h^-1 Mpc]'},
-        {'name': 'NP', 'value': cf.num_bins_r_par,
-         'comment': 'Number of bins in r-parallel'},
-        {'name': 'NT', 'value': cf.num_bins_r_trans,
-         'comment':' Number of bins in r-transverse'},
-        {'name': 'COEFMOD', 'value': args.coef_binning_model,
-         'comment': 'Coefficient for model binning'},
-        {'name': 'ZCUTMIN', 'value': cf.z_cut_min,
-         'comment': 'Minimum redshift of pairs'},
-        {'name': 'ZCUTMAX', 'value': cf.z_cut_max,
-         'comment': 'Maximum redshift of pairs'},
-        {'name': 'REJ', 'value': cf.reject,
-         'comment': 'Rejection factor'},
-        {'name': 'ALPHAMET', 'value': args.metal_alpha,
-         'comment': 'Evolution of metal bias'},
+        {
+            'name': 'RPMIN',
+            'value': cf.r_par_min,
+            'comment': 'Minimum r-parallel [h^-1 Mpc]'
+        },
+        {
+            'name': 'RPMAX',
+            'value': cf.r_par_max,
+            'comment': 'Maximum r-parallel [h^-1 Mpc]'
+        },
+        {
+            'name': 'RTMAX',
+            'value': cf.r_trans_max,
+            'comment': 'Maximum r-transverse [h^-1 Mpc]'
+        },
+        {
+            'name': 'NP',
+            'value': cf.num_bins_r_par,
+            'comment': 'Number of bins in r-parallel'
+        },
+        {
+            'name': 'NT',
+            'value': cf.num_bins_r_trans,
+            'comment': ' Number of bins in r-transverse'
+        },
+        {
+            'name': 'COEFMOD',
+            'value': args.coef_binning_model,
+            'comment': 'Coefficient for model binning'
+        },
+        {
+            'name': 'ZCUTMIN',
+            'value': cf.z_cut_min,
+            'comment': 'Minimum redshift of pairs'
+        },
+        {
+            'name': 'ZCUTMAX',
+            'value': cf.z_cut_max,
+            'comment': 'Maximum redshift of pairs'
+        },
+        {
+            'name': 'REJ',
+            'value': cf.reject,
+            'comment': 'Rejection factor'
+        },
+        {
+            'name': 'ALPHAMET',
+            'value': args.metal_alpha,
+            'comment': 'Evolution of metal bias'
+        },
     ]
 
     len_names = np.array([len(name) for name in names]).max()
-    names = np.array(names, dtype='S'+str(len_names))
-    results.write([np.array(num_pairs_all),
-                   np.array(num_pairs_used_all),
-                   np.array(names)],
-                  names=['NPALL', 'NPUSED', 'ABS_IGM'],
-                  header=header,
-                  comment=['Number of pairs',
-                           'Number of used pairs',
-                           'Absorption name'],
-                  extname='ATTRI')
+    names = np.array(names, dtype='S' + str(len_names))
+    results.write(
+        [
+            np.array(num_pairs_all),
+            np.array(num_pairs_used_all),
+            np.array(names)
+        ],
+        names=['NPALL', 'NPUSED', 'ABS_IGM'],
+        header=header,
+        comment=['Number of pairs', 'Number of used pairs', 'Absorption name'],
+        extname='ATTRI')
 
     names = names.astype(str)
     out_list = []
