@@ -304,6 +304,7 @@ def main():
             cpu_data[num_processor] = []
         cpu_data[num_processor].append(healpix)
 
+    # compute the distortion matrix
     if args.nproc > 1:
         pool = Pool(processes=args.nproc)
         dmat_data = pool.map(calc_dmat, sorted(cpu_data.values()))
@@ -312,6 +313,7 @@ def main():
         dmat_data = map(calc_dmat, sorted(cpu_data.values()))
         dmat_data = list(dmat_data)
 
+    # merge the results from different CPUs
     dmat_data = np.array(dmat_data)
     weights_dmat = dmat_data[:, 0].sum(axis=0)
     dmat = dmat_data[:, 1].sum(axis=0)
@@ -319,9 +321,10 @@ def main():
     r_trans = dmat_data[:, 3].sum(axis=0)
     z = dmat_data[:, 4].sum(axis=0)
     weights = dmat_data[:, 5].sum(axis=0)
-    npairs = dmat_data[:, 6].sum(axis=0)
-    npairs_used = dmat_data[:, 7].sum(axis=0)
+    num_pairs = dmat_data[:, 6].sum(axis=0)
+    num_pairs_used = dmat_data[:, 7].sum(axis=0)
 
+    # normalize values
     w = weights > 0.
     r_par[w] /= weights[w]
     r_trans[w] /= weights[w]
@@ -378,12 +381,12 @@ def main():
         },
         {
             'name': 'NPALL',
-            'value': npairs,
+            'value': num_pairs,
             'comment': 'Number of pairs'
         },
         {
             'name': 'NPUSED',
-            'value': npairs_used,
+            'value': num_pairs_used,
             'comment': 'Number of used pairs'
         },
     ]
