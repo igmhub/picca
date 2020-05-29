@@ -30,7 +30,7 @@ def calc_metal_dmat(abs_igm1, abs_igm2, healpixs):
     """
     cf.fill_neighs(healpixs)
     np.random.seed(healpixs[0])
-    dmat_data = cf.compute_metal_dmat(healpix,
+    dmat_data = cf.compute_metal_dmat(healpixs,
                                       abs_igm1=abs_igm1,
                                       abs_igm2=abs_igm2)
     return dmat_data
