@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Computes the 3D correlation function between two delta fields.
+"""Compute the auto and cross-correlation of delta fields.
 
 This module follow the procedure described in sections 3.1 and 3.2 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
@@ -33,7 +33,7 @@ def corr_func(healpixs):
 
 
 def main():
-    """Computes the Lyman alpha 3D autocorrelation"""
+    """Compute the auto and cross-correlation of delta fields"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Compute the auto and cross-correlation of delta fields')
