@@ -58,6 +58,12 @@ x_correlation = False
 ang_correlation = False
 remove_same_half_plate_close_pairs = False
 
+# variables used in the 1D correlation function analysis
+num_pixels = None
+log_lambda_min = None
+log_lambda_max = None
+delta_log_lambda = None
+
 
 def fill_neighs(healpixs):
     """Create and store a list of neighbours for each of the healpix.
@@ -729,8 +735,8 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
 
                 bins = bins_r_trans + num_bins_r_trans*bins_r_par
                 w = ((bins_r_par < num_bins_r_par) &
-                      (bins_r_trans < num_bins_r_trans) &
-                      (bins_r_par >= 0))
+                     (bins_r_trans < num_bins_r_trans) &
+                     (bins_r_par >= 0))
                 rebin = np.bincount(bins[w], weights=weights12[w])
                 weights_dmat[:len(rebin)] += rebin
 
@@ -754,7 +760,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 model_bins_r_trans = (r_trans_abs1_abs2/r_trans_max*
                                       num_model_bins_r_trans).astype(int)
                 model_bins = (model_bins_r_trans +
-                        num_model_bins_r_trans*model_bins_r_par)
+                              num_model_bins_r_trans*model_bins_r_par)
                 w &= ((model_bins_r_par < num_model_bins_r_par) &
                       (model_bins_r_trans < num_model_bins_r_trans) &
                       (model_bins_r_par >= 0))
@@ -779,7 +785,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 weight_eff[:len(rebin)] += rebin
 
                 if (((not x_correlation) and (abs_igm1 != abs_igm2)) or
-                    (x_correlation and (lambda_abs == lambda_abs2))):
+                        (x_correlation and (lambda_abs == lambda_abs2))):
                     r_comov1 = delta1.r_comov
                     dist_m1 = delta1.dist_m
                     weights1 = delta1.weights
@@ -840,7 +846,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
 
                     r_trans_abs2_abs1 = (dist_m1_abs2[:, None] +
                                          dist_m2_abs1)*np.sin(ang/2)
-                    z_weight_evol = ((1 + z1_abs2[:,None])**
+                    z_weight_evol = ((1 + z1_abs2[:, None])**
                                      (alpha_abs[abs_igm2] - 1)*
                                      (1 + z2_abs1)**(alpha_abs[abs_igm1] - 1)/
                                      (1 + z_ref)**(alpha_abs[abs_igm1] +
@@ -866,7 +872,8 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                                                  weights12[w]*z_weight_evol[w]))
                     r_trans_eff[:len(rebin)] += rebin
                     rebin = np.bincount(model_bins[w],
-                                        weights=((z1_abs2[:,None]+z2_abs1)[w]/2*
+                                        weights=((z1_abs2[:, None] +
+                                                  z2_abs1)[w]/2*
                                                  weights12[w]*z_weight_evol[w]))
                     z_eff[:len(rebin)] += rebin
                     rebin = np.bincount(model_bins[w],
@@ -885,32 +892,41 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
             num_pairs, num_pairs_used)
 
 
-n1d = None
-log_lambda_min = None
-log_lambda_max = None
-delta_log_lambda = None
-def cf1d(pix):
-    xi1d = np.zeros(n1d**2)
-    we1d = np.zeros(n1d**2)
-    nb1d = np.zeros(n1d**2,dtype=sp.int64)
+def cf1d(healpix):
+    """Computes the 1D autocorrelation from deltas from the same forest
 
-    for d in data[pix]:
-        bins = ((d.log_lambda-log_lambda_min)/delta_log_lambda+0.5).astype(int)
-        bins = bins + n1d*bins[:,None]
-        wde = d.weights*d.delta
-        weights = d.weights
-        xi1d[bins] += wde * wde[:,None]
-        we1d[bins] += weights*weights[:,None]
-        nb1d[bins] += (weights*weights[:,None]>0.).astype(int)
+    Args:
+        healpix: ints
+            A healpix number
 
-    w = we1d>0
-    xi1d[w]/=we1d[w]
-    return we1d,xi1d,nb1d
+    Returns:
+        The following variables:
+            weights1d: Total weights for the 1d correlation function
+            xi1d: The 1d correlation function
+            num_pairs1d: Number of pairs for the 1d correlation function
+    """
+    xi1d = np.zeros(num_pixels**2)
+    weights1d = np.zeros(num_pixels**2)
+    num_pairs1d = np.zeros(num_pixels**2, dtype=np.int64)
+
+    for delta in data[healpix]:
+        bins = ((delta.log_lambda - log_lambda_min)/
+                delta_log_lambda + 0.5).astype(int)
+        bins = bins + num_pixels*bins[:, None]
+        delta_times_weight = delta.weights*delta.delta
+        weights = delta.weights
+        xi1d[bins] += delta_times_weight * delta_times_weight[:, None]
+        weights1d[bins] += weights*weights[:, None]
+        num_pairs1d[bins] += (weights*weights[:, None] > 0.).astype(int)
+
+    w = weights1d > 0
+    xi1d[w] /= weights1d[w]
+    return weights1d, xi1d, num_pairs1d
 
 def x_forest_cf1d(pix):
-    xi1d = np.zeros(n1d**2)
-    we1d = np.zeros(n1d**2)
-    nb1d = np.zeros(n1d**2,dtype=sp.int64)
+    xi1d = np.zeros(num_pixels**2)
+    we1d = np.zeros(num_pixels**2)
+    nb1d = np.zeros(num_pixels**2,dtype=sp.int64)
 
     for delta1 in data[pix]:
         bins1 = ((delta1.log_lambda-log_lambda_min)/delta_log_lambda+0.5).astype(int)
@@ -921,7 +937,7 @@ def x_forest_cf1d(pix):
         neighs = data2[pix][sp.in1d(d2thingid,[delta1.thingid])]
         for delta2 in neighs:
             bins2 = ((delta2.log_lambda-log_lambda_min)/delta_log_lambda+0.5).astype(int)
-            bins = bins1 + n1d*bins2[:,None]
+            bins = bins1 + num_pixels*bins2[:,None]
             wde2 = delta2.weights*delta2.delta
             we2 = delta2.weights
             xi1d[bins] += wde1 * wde2[:,None]

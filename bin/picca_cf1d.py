@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+"""Compute the 1D auto or cross-correlation between delta field from the same
+forest.
+"""
+import argparse
+from multiprocessing import Pool,Lock,cpu_count,Value
 import numpy as np
 import scipy as sp
 import fitsio
-import argparse
 import traceback
-from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca import constants, cf, io
 from picca.utils import userprint
@@ -22,68 +25,133 @@ def cf1d(p):
     userprint("\rcomputing xi: {}%".format(round(cf.counter.value*100./cf.npix,2)),end="")
     return tmp
 
-if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Compute the 1D auto or cross-correlation between delta field from the same forest.')
+def main():
+    """Compute the 1D auto or cross-correlation between delta field from the same
+    forest."""
 
-    parser.add_argument('--out', type=str, default=None, required=True,
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description=('Compute the 1D auto or cross-correlation between delta '
+                     'field from the same forest.'))
+
+    parser.add_argument(
+        '--out',
+        type=str,
+        default=None,
+        required=True,
         help='Output file name')
 
-    parser.add_argument('--in-dir', type=str, default=None, required=True,
+    parser.add_argument(
+        '--in-dir',
+        type=str,
+        default=None,
+        required=True,
         help='Directory to delta files')
 
-    parser.add_argument('--in-dir2', type=str, default=None, required=False,
+    parser.add_argument(
+        '--in-dir2',
+        type=str,
+        default=None,
+        required=False,
         help='Directory to 2nd delta files')
 
-    parser.add_argument('--lambda-min', type=float, default=3600., required=False,
+    parser.add_argument(
+        '--lambda-min',
+        type=float,
+        default=3600.,
+        required=False,
         help='Lower limit on observed wavelength [Angstrom]')
 
-    parser.add_argument('--lambda-max', type=float, default=5500., required=False,
+    parser.add_argument(
+        '--lambda-max',
+        type=float,
+        default=5500.,
+        required=False,
         help='Upper limit on observed wavelength [Angstrom]')
 
-    parser.add_argument('--dll', type=float, default=3.e-4, required=False,
+    parser.add_argument(
+        '--dll',
+        type=float,
+        default=3.e-4,
+        required=False,
         help='Loglam bin size')
 
-    parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
-        help='Name of the absorption in picca.constants defining the redshift of the delta')
+    parser.add_argument(
+        '--lambda-abs',
+        type=str,
+        default='LYA',
+        required=False,
+        help=('Name of the absorption in picca.constants defining the redshift '
+              'of the delta'))
 
-    parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
-        help='Name of the absorption in picca.constants defining the redshift of the 2nd delta (if not give, same as 1st delta)')
+    parser.add_argument(
+        '--lambda-abs2',
+        type=str,
+        default=None,
+        required=False,
+        help=('Name of the absorption in picca.constants defining the redshift '
+              'of the 2nd delta (if not give, same as 1st delta)'))
 
-    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+    parser.add_argument(
+        '--z-ref',
+        type=float,
+        default=2.25,
+        required=False,
         help='Reference redshift')
 
-    parser.add_argument('--z-evol', type=float, default=1., required=False,
+    parser.add_argument(
+        '--z-evol',
+        type=float,
+        default=1.,
+        required=False,
         help='Exponent of the redshift evolution of the delta field')
 
-    parser.add_argument('--z-evol2', type=float, default=1., required=False,
+    parser.add_argument(
+        '--z-evol2',
+        type=float,
+        default=1.,
+        required=False,
         help='Exponent of the redshift evolution of the 2nd delta field')
 
-    parser.add_argument('--no-project', action='store_true', required=False,
+    parser.add_argument(
+        '--no-project',
+        action='store_true',
+        required=False,
         help='Do not project out continuum fitting modes')
 
-    parser.add_argument('--nside', type=int, default=16, required=False,
+    parser.add_argument(
+        '--nside',
+        type=int,
+        default=16,
+        required=False,
         help='Healpix nside')
 
-    parser.add_argument('--nproc', type=int, default=None, required=False,
+    parser.add_argument(
+        '--nproc',
+        type=int,
+        default=None,
+        required=False,
         help='Number of processors')
 
-    parser.add_argument('--nspec', type=int, default=None, required=False,
+    parser.add_argument(
+        '--nspec',
+        type=int,
+        default=None,
+        required=False,
         help='Maximum number of spectra to read')
-
 
     args = parser.parse_args()
 
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    ###
+    # setup variables in cf
     cf.nside = args.nside
     cf.log_lambda_min = sp.log10(args.lambda_min)
     cf.log_lambda_max = sp.log10(args.lambda_max)
     cf.delta_log_lambda = args.dll
-    cf.n1d = int((cf.log_lambda_max-cf.log_lambda_min)/cf.delta_log_lambda+1)
+    cf.num_pixels = int((cf.log_lambda_max-cf.log_lambda_min)/cf.delta_log_lambda+1)
     cf.x_correlation = False
 
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
@@ -151,9 +219,9 @@ if __name__ == '__main__':
 
     userprint("done")
 
-    cfs = cfs.reshape(cf.n1d,cf.n1d)
-    wes = wes.reshape(cf.n1d,cf.n1d)
-    nbs = nbs.reshape(cf.n1d,cf.n1d)
+    cfs = cfs.reshape(cf.num_pixels,cf.num_pixels)
+    wes = wes.reshape(cf.num_pixels,cf.num_pixels)
+    nbs = nbs.reshape(cf.num_pixels,cf.num_pixels)
 
     userprint("rebinning")
 
@@ -173,10 +241,10 @@ if __name__ == '__main__':
     w = norm>0
     cor[w]/=norm[w]
 
-    c1d = np.zeros(cf.n1d)
-    nc1d = np.zeros(cf.n1d)
-    nb1d = np.zeros(cf.n1d,dtype=sp.int64)
-    bins = np.arange(cf.n1d)
+    c1d = np.zeros(cf.num_pixels)
+    nc1d = np.zeros(cf.num_pixels)
+    nb1d = np.zeros(cf.num_pixels,dtype=sp.int64)
+    bins = np.arange(cf.num_pixels)
 
     dbin = bins-bins[:,None]
     w = dbin>=0
@@ -214,3 +282,7 @@ if __name__ == '__main__':
     out.close()
 
     userprint("all done")
+
+if __name__ == '__main__':
+    main()
+num_pixels
