@@ -3,7 +3,6 @@ analysis of two delta fields
 
 This module provides several functions:
     - fill_neighs
-    - fill_neighs_x_correlation
     - compute_xi
     - compute_xi_forest_pairs
     - compute_dmat
@@ -923,30 +922,44 @@ def cf1d(healpix):
     xi1d[w] /= weights1d[w]
     return weights1d, xi1d, num_pairs1d
 
-def x_forest_cf1d(pix):
+def x_forest_cf1d(healpix):
+    """Computes the 1D cross-correlation from deltas from the same forest
+
+    Args:
+        healpix: ints
+            A healpix number
+
+    Returns:
+        The following variables:
+            weights1d: Total weights for the 1d correlation function
+            xi1d: The 1d correlation function
+            num_pairs1d: Number of pairs for the 1d correlation function
+    """
     xi1d = np.zeros(num_pixels**2)
-    we1d = np.zeros(num_pixels**2)
-    nb1d = np.zeros(num_pixels**2,dtype=sp.int64)
+    weights1d = np.zeros(num_pixels**2)
+    num_pairs1d = np.zeros(num_pixels**2, dtype=np.int64)
 
-    for delta1 in data[pix]:
-        bins1 = ((delta1.log_lambda-log_lambda_min)/delta_log_lambda+0.5).astype(int)
-        wde1 = delta1.weights*delta1.delta
-        we1 = delta1.weights
+    for delta1 in data[healpix]:
+        bins1 = ((delta1.log_lambda - log_lambda_min)/
+                 delta_log_lambda + 0.5).astype(int)
+        delta_times_weight1 = delta1.weights*delta1.delta
+        weight1 = delta1.weights
 
-        d2thingid = [delta2.thingid for delta2 in data2[pix]]
-        neighs = data2[pix][sp.in1d(d2thingid,[delta1.thingid])]
-        for delta2 in neighs:
-            bins2 = ((delta2.log_lambda-log_lambda_min)/delta_log_lambda+0.5).astype(int)
-            bins = bins1 + num_pixels*bins2[:,None]
-            wde2 = delta2.weights*delta2.delta
-            we2 = delta2.weights
-            xi1d[bins] += wde1 * wde2[:,None]
-            we1d[bins] += we1*we2[:,None]
-            nb1d[bins] += (we1*we2[:,None]>0.).astype(int)
+        thingids = [delta2.thingid for delta2 in data2[healpix]]
+        neighbours = data2[healpix][np.in1d(thingids, [delta1.thingid])]
+        for delta2 in neighbours:
+            bins2 = ((delta2.log_lambda - log_lambda_min)/
+                     delta_log_lambda + 0.5).astype(int)
+            bins = bins1 + num_pixels*bins2[:, None]
+            delta_times_weight2 = delta2.weights*delta2.delta
+            weight2 = delta2.weights
+            xi1d[bins] += delta_times_weight1 * delta_times_weight2[:, None]
+            weights1d[bins] += weight1*weight2[:, None]
+            num_pairs1d[bins] += (weight1*weight2[:, None] > 0.).astype(int)
 
-    w = we1d>0
-    xi1d[w]/=we1d[w]
-    return we1d,xi1d,nb1d
+    w = weights1d > 0
+    xi1d[w] /= weights1d[w]
+    return weights1d, xi1d, num_pairs1d
 
 v1d = {}
 c1d = {}
@@ -1038,8 +1051,8 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll
     bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     ba = bins_r_trans + num_bins_r_trans*bins_r_par
     weights = weights1[:,None]*weights2
-    we1 = weights1[:,None]*sp.ones(weights2.size)
-    we2 = sp.ones(weights1.size)[:,None]*weights2
+    weight1 = weights1[:,None]*sp.ones(weights2.size)
+    weight2 = sp.ones(weights1.size)[:,None]*weights2
     zw = zw1[:,None]*zw2
 
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
@@ -1048,8 +1061,8 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll
     bins = bins[w]
     ba = ba[w]
     weights = weights[w]
-    we1 = we1[w]
-    we2 = we2[w]
+    weight1 = weight1[w]
+    weight2 = weight2[w]
     zw = zw[w]
 
     for k1 in range(ba.size):
@@ -1065,11 +1078,11 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll
             i2 = bins[k2]%n1
             j2 = (bins[k2]-i2)//n1
             if i1==i2:
-                prod = c1d_2[j1,j2]*we1[k1]*zw1[i1]
+                prod = c1d_2[j1,j2]*weight1[k1]*zw1[i1]
                 T2[p1,p2] += prod
                 T2[p2,p1] += prod
             elif j1==j2:
-                prod = c1d_1[i1,i2]*we2[k2]*zw2[j1]
+                prod = c1d_1[i1,i2]*weight2[k2]*zw2[j1]
                 T2[p1,p2] += prod
                 T2[p2,p1] += prod
             else:
