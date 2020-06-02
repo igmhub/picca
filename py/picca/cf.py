@@ -891,7 +891,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
             num_pairs, num_pairs_used)
 
 
-def cf1d(healpix):
+def compute_xi_1d(healpix):
     """Computes the 1D autocorrelation from deltas from the same forest
 
     Args:
@@ -925,7 +925,7 @@ def cf1d(healpix):
     xi1d[w] /= weights1d[w]
     return weights1d, xi1d, num_pairs1d
 
-def x_forest_cf1d(healpix):
+def compute_xi_1d_cross(healpix):
     """Computes the 1D cross-correlation from deltas from the same forest
 
     Args:

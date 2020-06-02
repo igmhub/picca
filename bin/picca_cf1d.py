@@ -11,7 +11,7 @@ from picca import constants, cf, io
 from picca.utils import userprint
 
 
-def cf1d(p):
+def corr_func(p):
     """Compute the 1D auto- or the cross-correlation for a given healpix
 
     Args:
@@ -22,9 +22,9 @@ def cf1d(p):
         The correlation function
     """
     if cf.x_correlation:
-        correlation_function_data = cf.x_forest_cf1d(p)
+        correlation_function_data = cf.compute_xi_1d_cross(p)
     else:
-        correlation_function_data = cf.cf1d(p)
+        correlation_function_data = cf.compute_xi_1d(p)
     with cf.lock:
         cf.counter.value += 1
     return correlation_function_data
@@ -217,7 +217,7 @@ def main():
         ])
     else:
         healpixs = sorted(list(cf.data.keys()))
-    correlation_function_data = pool.map(cf1d, healpixs)
+    correlation_function_data = pool.map(corr_func, healpixs)
     pool.close()
     userprint('\n')
 
