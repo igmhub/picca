@@ -820,16 +820,25 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d
 
         specData = {}
         try:
-            str_band= "BRZ"
-            specData['LL'] = sp.log10(h['{}_WAVELENGTH'.format(str_band)].read())
-            specData['FL'] = h['{}_FLUX'.format(str_band)].read()
-            specData['IV'] = h['{}_IVAR'.format(str_band)].read()*(h['{}_MASK'.format(str_band)].read()==0)
-            w = sp.isnan(specData['FL']) | sp.isnan(specData['IV'])
+            bands=['BRZ']
+            h['{}_WAVELENGTH'.format(bands[0])]
+            if i==0:
+                print("reading all-band coadd as in minisv dataset")
+        except (KeyError,IOError):
+            if i==0:
+                print("couldn't read the all band-coadd, trying single band as introduced in Andes reduction")
+            bands=['B','R','Z']
+
+        for str_band in bands:
+            dic={}
+            dic['LL'] = sp.log10(h['{}_WAVELENGTH'.format(str_band)].read())
+            dic['FL'] = h['{}_FLUX'.format(str_band)].read()
+            dic['IV'] = h['{}_IVAR'.format(str_band)].read()*(h['{}_MASK'.format(str_band)].read()==0)
+            w = sp.isnan(dic['FL']) | sp.isnan(dic['IV'])
             for k in ['FL','IV']:
-                specData[k][w] = 0.
-            specData['RESO'] = h['{}_RESOLUTION'.format(str_band)].read()
-        except OSError:
-            pass
+                dic[k][w] = 0.
+            dic['RESO'] = h['{}_RESOLUTION'.format(str_band)].read()
+            specData[str_band]=dic
         h.close()
         
         plate_spec = int(str(tiles[i]) + str(petals[i]))
@@ -846,23 +855,28 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d
                 print("spectra : {}".format(spec))
                 print("plate_spec : {}".format(plate_spec))
                 continue
-            iv = specData['IV'][wt]
-            fl = (iv*specData['FL'][wt]).sum(axis=0)
-            iv = iv.sum(axis=0)
-            w = iv>0.
-            fl[w] /= iv[w]
-                
-                
-            if pk1d is not None:
-                reso_sum = specData['RESO'][wt].sum(axis=0)
-                reso_in_km_per_s = sp.real(spectral_resolution_desi(reso_sum,specData['LL']))
-                diff = sp.zeros(specData['LL'].shape)
-            else:
-                reso_in_km_per_s = None
-                diff = None
-            td = forest(specData['LL'],fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
-                p,m,f,order,diff,reso_in_km_per_s)
-            d = copy.deepcopy(td)
+            
+            d=None
+            for key,tdata in specData.items():
+                iv = tdata['IV'][wt]
+                fl = (iv*tdata['FL'][wt]).sum(axis=0)
+                iv = iv.sum(axis=0)
+                w = iv>0.
+                fl[w] /= iv[w]
+                    
+                if pk1d is not None:
+                    reso_sum = tdata['RESO'][wt].sum(axis=0)
+                    reso_in_km_per_s = sp.real(spectral_resolution_desi(reso_sum,tdata['LL']))
+                    diff = sp.zeros(tdata['LL'].shape)
+                else:
+                    reso_in_km_per_s = None
+                    diff = None
+                td = forest(tdata['LL'],fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
+                    p,m,f,order,diff,reso_in_km_per_s)
+                if d is None:
+                    d = copy.deepcopy(td)
+                else:
+                    d += td
 
             if plate_spec not in data:
                 data[plate_spec]=[]
