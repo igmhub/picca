@@ -63,6 +63,11 @@ log_lambda_min = None
 log_lambda_max = None
 delta_log_lambda = None
 
+# variables used in the wick covariance matrix computation
+variance_1d = {}
+xi_1d = {}
+max_diagram = None
+cfWick = {}
 
 def fill_neighs(healpixs):
     """Create and store a list of neighbours for each of the healpix.
@@ -967,14 +972,26 @@ def compute_xi_1d_cross(healpix):
     xi1d[w] /= weights1d[w]
     return weights1d, xi1d, num_pairs1d
 
-v1d = {}
-c1d = {}
-max_diagram = None
-cfWick = {}
-
 ## auto
 def wickT(pix):
+    """
+    Computes the Wick expansion terms for the covariance matrix.
 
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
+
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+
+    Returns:
+        The following variables:
+            wAll, nb, num_pairs, num_pairs_used, T1, T2, T3, T4, T5, T6
+
+            weights1d: Total weights for the 1d correlation function
+            xi1d: The 1d correlation function
+            num_pairs1d: Number of pairs for the 1d correlation function
+    """
     T1 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
     T2 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
     T3 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
@@ -1000,18 +1017,18 @@ def wickT(pix):
                 counter.value += 1
             if len(delta1.neighbours)==0: continue
 
-            v1 = v1d[delta1.fname](delta1.log_lambda)
+            v1 = variance_1d[delta1.fname](delta1.log_lambda)
             weights1 = delta1.weights
-            c1d_1 = (weights1*weights1[:,None])*c1d[delta1.fname](abs(delta1.log_lambda-delta1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
+            c1d_1 = (weights1*weights1[:,None])*xi_1d[delta1.fname](abs(delta1.log_lambda-delta1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
             r_comov1 = delta1.r_comov
             z1 = delta1.z
 
             for i2,delta2 in enumerate(delta1.neighbours):
                 ang12 = delta1^delta2
 
-                v2 = v1d[delta2.fname](delta2.log_lambda)
+                v2 = variance_1d[delta2.fname](delta2.log_lambda)
                 weights2 = delta2.weights
-                c1d_2 = (weights2*weights2[:,None])*c1d[delta2.fname](abs(delta2.log_lambda-delta2.log_lambda[:,None]))*sp.sqrt(v2*v2[:,None])
+                c1d_2 = (weights2*weights2[:,None])*xi_1d[delta2.fname](abs(delta2.log_lambda-delta2.log_lambda[:,None]))*sp.sqrt(v2*v2[:,None])
                 r_comov2 = delta2.r_comov
                 z2 = delta2.z
 
@@ -1023,9 +1040,9 @@ def wickT(pix):
                     ang13 = delta1^d3
                     ang23 = delta2^d3
 
-                    v3 = v1d[d3.fname](d3.log_lambda)
+                    v3 = variance_1d[d3.fname](d3.log_lambda)
                     w3 = d3.weights
-                    c1d_3 = (w3*w3[:,None])*c1d[d3.fname](abs(d3.log_lambda-d3.log_lambda[:,None]))*sp.sqrt(v3*v3[:,None])
+                    c1d_3 = (w3*w3[:,None])*xi_1d[d3.fname](abs(d3.log_lambda-d3.log_lambda[:,None]))*sp.sqrt(v3*v3[:,None])
                     r3 = d3.r_comov
                     z3 = d3.z
 
