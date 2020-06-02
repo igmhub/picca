@@ -16,7 +16,6 @@ This module provides several functions:
 See the respective docstrings for more details
 """
 import numpy as np
-import scipy as sp
 from healpy import query_disc
 from numba import jit
 
@@ -1302,23 +1301,24 @@ def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
 
     ### Wick t4 and t5
     for index1, p1 in enumerate(bins_forest12):
-        tpix1_12 = bins1_12[index1]
-        tpix2_12 = bins2_12[index1]
+        selected_bin1_12 = bins1_12[index1]
+        selected_bin2_12 = bins2_12[index1]
 
         for index2, p2 in enumerate(bins_forest12):
-            tpix1_13 = bins1_13[index2]
-            tpix3_13 = bins3_13[index2]
+            selected_bin1_13 = bins1_13[index2]
+            selected_bin3_13 = bins3_13[index2]
 
-            tcf23 = xi23[tpix2_12, tpix3_13]
-            if tpix1_12 == tpix1_13:
+            select_xi23 = xi23[selected_bin2_12, selected_bin3_13]
+            if selected_bin1_12 == selected_bin1_13:
                 # TODO: work on the good formula
-                wcorr = weights1[tpix1_12]*tcf23
-                t4[p1, p2] += wcorr
-                t4[p2, p1] += wcorr
+                prod = weights1[selected_bin1_12]*select_xi23
+                t4[p1, p2] += prod
+                t4[p2, p1] += prod
             else:
                 # TODO: work on the good formula
-                wcorr = weighted_xi_1d_1[tpix1_12, tpix1_13]*tcf23
-                t5[p1, p2] += wcorr
-                t5[p2, p1] += wcorr
+                prod = weighted_xi_1d_1[selected_bin1_12,
+                                        selected_bin1_13]*select_xi23
+                t5[p1, p2] += prod
+                t5[p2, p1] += prod
 
     return
