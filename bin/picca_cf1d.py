@@ -282,7 +282,7 @@ def main():
     rebin = np.bincount(dbin, weights=weights_list)
     weights_1d[:len(rebin)] = rebin
     rebin = np.bincount(dbin, weights=num_pairs_list)
-    num_pairs1d[:len(userprint("rebinning"))] = rebin
+    num_pairs1d[:len(rebin)] = rebin
 
     w = weights_1d > 0
     xi_1d[w] /= weights_1d[w]
