@@ -909,6 +909,9 @@ def cf1d(healpix):
     num_pairs1d = np.zeros(num_pixels**2, dtype=np.int64)
 
     for delta in data[healpix]:
+        userprint(("\rcomputing xi: "
+                   "{}%").format(round(counter.value*100./num_data, 2)),
+                  end="")
         bins = ((delta.log_lambda - log_lambda_min)/
                 delta_log_lambda + 0.5).astype(int)
         bins = bins + num_pixels*bins[:, None]
@@ -940,6 +943,9 @@ def x_forest_cf1d(healpix):
     num_pairs1d = np.zeros(num_pixels**2, dtype=np.int64)
 
     for delta1 in data[healpix]:
+        userprint(("\rcomputing xi: "
+                   "{}%").format(round(counter.value*100./num_data, 2)),
+                  end="")
         bins1 = ((delta1.log_lambda - log_lambda_min)/
                  delta_log_lambda + 0.5).astype(int)
         delta_times_weight1 = delta1.weights*delta1.delta
