@@ -383,27 +383,27 @@ def main():
     nb = wickT[:,1].sum(axis=0)
     npairs = wickT[:,2].sum(axis=0)
     npairs_used = wickT[:,3].sum(axis=0)
-    T1 = wickT[:,4].sum(axis=0)
-    T2 = wickT[:,5].sum(axis=0)
-    T3 = wickT[:,6].sum(axis=0)
-    T4 = wickT[:,7].sum(axis=0)
-    T5 = wickT[:,8].sum(axis=0)
-    T6 = wickT[:,9].sum(axis=0)
+    t1 = wickT[:,4].sum(axis=0)
+    t2 = wickT[:,5].sum(axis=0)
+    t3 = wickT[:,6].sum(axis=0)
+    t4 = wickT[:,7].sum(axis=0)
+    t5 = wickT[:,8].sum(axis=0)
+    t6 = wickT[:,9].sum(axis=0)
     weights = wAll*wAll[:,None]
     w = weights>0.
-    T1[w] /= weights[w]
-    T2[w] /= weights[w]
-    T3[w] /= weights[w]
-    T4[w] /= weights[w]
-    T5[w] /= weights[w]
-    T6[w] /= weights[w]
-    T1 *= 1.*npairs_used/npairs
-    T2 *= 1.*npairs_used/npairs
-    T3 *= 1.*npairs_used/npairs
-    T4 *= 1.*npairs_used/npairs
-    T5 *= 1.*npairs_used/npairs
-    T6 *= 1.*npairs_used/npairs
-    Ttot = T1+T2+T3+T4+T5+T6
+    t1[w] /= weights[w]
+    t2[w] /= weights[w]
+    t3[w] /= weights[w]
+    t4[w] /= weights[w]
+    t5[w] /= weights[w]
+    t6[w] /= weights[w]
+    t1 *= 1.*npairs_used/npairs
+    t2 *= 1.*npairs_used/npairs
+    t3 *= 1.*npairs_used/npairs
+    t4 *= 1.*npairs_used/npairs
+    t5 *= 1.*npairs_used/npairs
+    t6 *= 1.*npairs_used/npairs
+    Ttot = t1+t2+t3+t4+t5+t6
 
     out = fitsio.FITS(args.out,'rw',clobber=True)
     head = [
@@ -419,7 +419,7 @@ def main():
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
     comment = ['Sum of weight','Covariance','Nomber of pairs','T1','T2','T3','T4','T5','T6']
-    out.write([Ttot,wAll,nb,T1,T2,T3,T4,T5,T6],names=['CO','WALL','NB','T1','T2','T3','T4','T5','T6'],comment=comment,header=head,extname='COV')
+    out.write([Ttot,wAll,nb,t1,t2,t3,t4,t5,t6],names=['CO','WALL','NB','T1','T2','T3','T4','T5','T6'],comment=comment,header=head,extname='COV')
     out.close()
 
 

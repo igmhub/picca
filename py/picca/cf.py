@@ -972,10 +972,11 @@ def compute_xi_1d_cross(healpix):
     xi1d[w] /= weights1d[w]
     return weights1d, xi1d, num_pairs1d
 
-## auto
-def wickT(pix):
+
+def wickT(healpixs):
     """
-    Computes the Wick expansion terms for the covariance matrix.
+    Computes the Wick expansion terms of the covariance matrix for the auto-
+    correlation analysis
 
     Each of the terms represents the contribution of different type of pairs as
     illustrated in figure A.1 from Delubac et al. 2015
@@ -986,24 +987,30 @@ def wickT(pix):
 
     Returns:
         The following variables:
-            wAll, nb, num_pairs, num_pairs_used, T1, T2, T3, T4, T5, T6
+            wAll, nb, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
 
             weights1d: Total weights for the 1d correlation function
             xi1d: The 1d correlation function
             num_pairs1d: Number of pairs for the 1d correlation function
     """
-    T1 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    T2 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    T3 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    T4 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    T5 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    T6 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
+    t1 = np.zeros((num_bins_r_par*num_bins_r_trans,
+                   num_bins_r_par*num_bins_r_trans))
+    t2 = np.zeros((num_bins_r_par*num_bins_r_trans,
+                   num_bins_r_par*num_bins_r_trans))
+    t3 = np.zeros((num_bins_r_par*num_bins_r_trans,
+                   num_bins_r_par*num_bins_r_trans))
+    t4 = np.zeros((num_bins_r_par*num_bins_r_trans,
+                   num_bins_r_par*num_bins_r_trans))
+    t5 = np.zeros((num_bins_r_par*num_bins_r_trans,
+                   num_bins_r_par*num_bins_r_trans))
+    t6 = np.zeros((num_bins_r_par*num_bins_r_trans,
+                   num_bins_r_par*num_bins_r_trans))
     wAll = np.zeros(num_bins_r_par*num_bins_r_trans)
-    nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
+    nb = np.zeros(num_bins_r_par*num_bins_r_trans, dtype=np.int64)
     num_pairs = 0
     num_pairs_used = 0
 
-    for ipix in pix:
+    for ipix in healpixs:
 
         r = sp.random.rand(len(data[ipix]))
         w = r>reject
@@ -1032,7 +1039,7 @@ def wickT(pix):
                 r_comov2 = delta2.r_comov
                 z2 = delta2.z
 
-                fill_wickT123(r_comov1,r_comov2,ang12,weights1,delta2.weights,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3)
+                fill_wickT123(r_comov1,r_comov2,ang12,weights1,delta2.weights,z1,z2,c1d_1,c1d_2,wAll,nb,t1,t2,t3)
                 if max_diagram<=3: continue
 
                 ### d3 and delta2 have the same 'fname'
@@ -1049,14 +1056,14 @@ def wickT(pix):
                     fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3,
                         z1,z2,z3, c1d_1,c1d_2,c1d_3,
                         delta1.fname,delta2.fname,d3.fname,
-                        T4,T5)
+                        t4,t5)
 
                 ### TODO: when there is two different catalogs
                 ### d3 and delta1 have the same 'fname'
 
-    return wAll, nb, num_pairs, num_pairs_used, T1, T2, T3, T4, T5, T6
+    return wAll, nb, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
 @jit
-def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll,nb,T1,T2,T3):
+def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll,nb,t1,t2,t3):
 
     n1 = len(r_comov1)
     n2 = len(r_comov2)
@@ -1094,7 +1101,7 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll
         j1 = (bins[k1]-i1)//n1
         wAll[p1] += weights[k1]
         nb[p1] += 1
-        T1[p1,p1] += weights[k1]*zw[k1]
+        t1[p1,p1] += weights[k1]*zw[k1]
 
         for k2 in range(k1+1,ba.size):
             p2 = ba[k2]
@@ -1102,20 +1109,20 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll
             j2 = (bins[k2]-i2)//n1
             if i1==i2:
                 prod = c1d_2[j1,j2]*weight1[k1]*zw1[i1]
-                T2[p1,p2] += prod
-                T2[p2,p1] += prod
+                t2[p1,p2] += prod
+                t2[p2,p1] += prod
             elif j1==j2:
                 prod = c1d_1[i1,i2]*weight2[k2]*zw2[j1]
-                T2[p1,p2] += prod
-                T2[p2,p1] += prod
+                t2[p1,p2] += prod
+                t2[p2,p1] += prod
             else:
                 prod = c1d_1[i1,i2]*c1d_2[j1,j2]
-                T3[p1,p2] += prod
-                T3[p2,p1] += prod
+                t3[p1,p2] += prod
+                t3[p2,p1] += prod
 
     return
 @jit
-def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, z1,z2,z3, c1d_1,c1d_2,c1d_3, fname1,fname2,fname3, T4,T5):
+def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, z1,z2,z3, c1d_1,c1d_2,c1d_3, fname1,fname2,fname3, t4,t5):
     """
 
     """
@@ -1180,7 +1187,7 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
     pix2_23 = pix2_23[w]
     pix3_23 = pix3_23[w]
 
-    ### Wick T4 and T5
+    ### Wick t4 and t5
     for k1,p1 in enumerate(ba12):
         tpix1_12 = pix1_12[k1]
         tpix2_12 = pix2_12[k1]
@@ -1192,11 +1199,11 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
             tcf23 = cf23[tpix2_12,tpix3_13]
             if tpix1_12==tpix1_13:
                 wcorr = weights1[tpix1_12]*tcf23 ### TODO work on the good formula
-                T4[p1,p2] += wcorr
-                T4[p2,p1] += wcorr
+                t4[p1,p2] += wcorr
+                t4[p2,p1] += wcorr
             else:
                 wcorr = c1d_1[tpix1_12,tpix1_13]*tcf23 ### TODO work on the good formula
-                T5[p1,p2] += wcorr
-                T5[p2,p1] += wcorr
+                t5[p1,p2] += wcorr
+                t5[p2,p1] += wcorr
 
     return
