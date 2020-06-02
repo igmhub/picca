@@ -150,82 +150,115 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
     return ra,dec,zqso,thid,plate,mjd,fid
 
 
-def read_zbest(zbestfile,zmin,zmax,keep_bal,bi_max=None):
+def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
     
     #probably add a way to allow this being a list of files????
-    h = fitsio.FITS(zbestfile)
+    if isinstance(zbestfiles, str):
+        zbestfile=[zbestfiles]
+        numfiles=1
 
-    #selection of quasars with good redshifts only, the exact definition here should be decided, could in principle be moved to later
-    select=(h[1]['SPECTYPE'][:]=='QSO')&(h[1]['ZWARN'][:]==0)
-    ## Redshift
-    zqso = h[1]['Z'][:][select]
-
-
-    ## Info of the primary observation
+    else:
+        numfiles=len(zbestfiles)
     
+    ra_arr=[]
+    dec_arr=[]
+    mjd_arr=[]
+    petal_arr=[]
+    fiber_arr=[]
+    tid_arr=[]
+    z_arr=[]
+    for zbest in zbestfiles:
+        h = fitsio.FITS(zbest)
 
-    thid = h[1]['TARGETID'][:][select]
-    tid2=h[2]['TARGETID'][:]
-    ra=np.zeros(len(thid),dtype='float64')
-    dec=np.zeros(len(thid),dtype='float64')
-    plate=np.zeros(len(thid),dtype='int64')
-    mjd=np.zeros(len(thid),dtype='float64')
-    fid=np.zeros(len(thid),dtype='int64')
 
-    for i,tid in enumerate(thid):
-        #if multiple entries in fibermap take the first here
-        select2=(tid==tid2)
-        ra[i] = h[2]['TARGET_RA'][:][select2][0]
-        dec[i] = h[2]['TARGET_DEC'][:][select2][0]
-        plate[i]=int('{}{}'.format(h[2]['TILEID'][:][select2][0], h[2]['PETAL_LOC'][:][select2][0]))
-        mjd[i]= float(h[2]['MJD'][:][select2][0])
-        fid[i]=int( h[2]['FIBER'][:][select2][0])
+        #selection of quasars with good redshifts only, the exact definition here should be decided, could in principle be moved to later
+        select=(h[1]['SPECTYPE'][:]=='QSO')&(h[1]['ZWARN'][:]==0)
+        ## Redshift
+        zqso = h[1]['Z'][:][select]
 
-    ## Sanity
-    print('')
-    w = np.ones(ra.size,dtype=bool)
-    print(" start               : nb object in cat = {}".format(w.sum()) )
-    #need to have reasonable output lines for this
-    w &= zqso>0.
-    print(" and z>0.            : nb object in cat = {}".format(w.sum()) )
 
-    ## Redshift range
-    if not zmin is None:
-        w &= zqso>=zmin
-        print(" and z>=zmin         : nb object in cat = {}".format(w.sum()) )
-    if not zmax is None:
-        w &= zqso<zmax
-        print(" and z<zmax          : nb object in cat = {}".format(w.sum()) )
+        ## Info of the primary observation
+        
 
-    ## BAL visual
-    # if not keep_bal and bi_max==None:
-    #     try:
-    #         bal_flag = h[1]['BAL_FLAG_VI'][:]
-    #         w &= bal_flag==0
-    #         print(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
-    #     except:
-    #         print("BAL_FLAG_VI not found\n")
-    # ## BAL CIV
-    # if bi_max is not None:
-    #     try:
-    #         bi = h[1]['BI_CIV'][:]
-    #         w &= bi<=bi_max
-    #         print(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
-    #     except:
-    #         print("--bi-max set but no BI_CIV field in h")
-    #         sys.exit(1)
-    # print("")
+        thid = h[1]['TARGETID'][:][select]
+        tid2=h[2]['TARGETID'][:]
+        ra=np.zeros(len(thid),dtype='float64')
+        dec=np.zeros(len(thid),dtype='float64')
+        plate=np.zeros(len(thid),dtype='int64')
+        mjd=np.zeros(len(thid),dtype='float64')
+        fid=np.zeros(len(thid),dtype='int64')
 
-    ra = ra[w]*sp.pi/180.
-    dec = dec[w]*sp.pi/180.
-    zqso = zqso[w]
-    thid = thid[w]
-    plate = plate[w]
-    mjd = mjd[w]
-    fid = fid[w]
-    h.close()
+        for i,tid in enumerate(thid):
+            #if multiple entries in fibermap take the first here
+            select2=(tid==tid2)
+            ra[i] = h[2]['TARGET_RA'][:][select2][0]
+            dec[i] = h[2]['TARGET_DEC'][:][select2][0]
+            plate[i]=int('{}{}'.format(h[2]['TILEID'][:][select2][0], h[2]['PETAL_LOC'][:][select2][0]))
+            mjd[i]= float(h[2]['MJD'][:][select2][0])
+            fid[i]=int( h[2]['FIBER'][:][select2][0])
 
-    return ra,dec,zqso,thid,plate,mjd,fid
+        h.close()
+
+
+        ## Sanity
+        print('')
+        w = np.ones(ra.size,dtype=bool)
+        print("Tile {}, Plate {}".format(str(plate[0])[:-1],str(plate[0])[-1]))
+        print(" start               : nb object in cat = {}".format(w.sum()) )
+        #need to have reasonable output lines for this
+        w &= zqso>0.
+        print(" and z>0.            : nb object in cat = {}".format(w.sum()) )
+
+        ## Redshift range
+        if not zmin is None:
+            w &= zqso>=zmin
+            print(" and z>=zmin         : nb object in cat = {}".format(w.sum()) )
+        if not zmax is None:
+            w &= zqso<zmax
+            print(" and z<zmax          : nb object in cat = {}".format(w.sum()) )
+
+        ## BAL visual
+        # if not keep_bal and bi_max==None:
+        #     try:
+        #         bal_flag = h[1]['BAL_FLAG_VI'][:]
+        #         w &= bal_flag==0
+        #         print(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
+        #     except:
+        #         print("BAL_FLAG_VI not found\n")
+        # ## BAL CIV
+        # if bi_max is not None:
+        #     try:
+        #         bi = h[1]['BI_CIV'][:]
+        #         w &= bi<=bi_max
+        #         print(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
+        #     except:
+        #         print("--bi-max set but no BI_CIV field in h")
+        #         sys.exit(1)
+        # print("")
+
+        ra = ra[w]*sp.pi/180.
+        dec = dec[w]*sp.pi/180.
+        zqso = zqso[w]
+        thid = thid[w]
+        plate = plate[w]
+        mjd = mjd[w]
+        fid = fid[w]
+
+        ra_arr.extend(ra)
+        dec_arr.extend(dec)
+        fiber_arr.extend(fid)
+        mjd_arr.extend(mjd)
+        petal_arr.extend(plate)
+        tid_arr.extend(thid)
+        z_arr.extend(zqso)
+    ra_arr=np.array(ra_arr)
+    dec_arr=np.array(dec_arr)
+    fiber_arr=np.array(fiber_arr)
+    mjd_arr=np.array(mjd_arr)
+    petal_arr=np.array(petal_arr)
+    tid_arr=np.array(tid_arr)
+    z_arr=np.array(z_arr)
+    return ra_arr,dec_arr,z_arr,tid_arr,petal_arr,mjd_arr,fiber_arr
 
 
 def read_dust_map(drq, Rv = 3.793):
@@ -244,7 +277,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
     print("mode: "+mode)
     try:
         ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
-    except ValueError:
+    except (ValueError,OSError):
         ra,dec,zqso,thid,plate,mjd,fid = read_zbest(drq,zmin,zmax,keep_bal,bi_max=bi_max)
 
     if nspec != None:

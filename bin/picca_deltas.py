@@ -30,8 +30,8 @@ if __name__ == '__main__':
     parser.add_argument('--out-dir',type=str,default=None,required=True,
         help='Output directory')
 
-    parser.add_argument('--drq', type=str, default=None, required=True,
-        help='Catalog of objects in DRQ format or zbest format')
+    parser.add_argument('--drq', type=str, default=None, nargs='+', required=True,
+        help='Catalog(s) of objects in DRQ format or zbest format')
 
     parser.add_argument('--in-dir', type=str, default=None, required=True,
         help='Directory to spectra files')
@@ -145,6 +145,8 @@ if __name__ == '__main__':
         help='use the mock continuum for computing the deltas')
 
     args = parser.parse_args()
+    if len(args.drq)==1:
+        args.drq=args.drq[0]
 
     ## init forest class
 
