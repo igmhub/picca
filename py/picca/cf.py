@@ -1069,9 +1069,9 @@ def wickT(healpixs):
                     variance_1d_3 = get_variance_1d[delta3.fname](delta3.log_lambda)
                     weights3 = delta3.weights
                     weighted_xi_1d_3 = ((weights3*weights3[:, None])*
-                             xi_1d[delta3.fname](abs(delta3.log_lambda -
-                                                     delta3.log_lambda[:, None]))*
-                             np.sqrt(variance_1d_3*variance_1d_3[:, None]))
+                                        xi_1d[delta3.fname](abs(delta3.log_lambda -
+                                                                delta3.log_lambda[:, None]))*
+                                        np.sqrt(variance_1d_3*variance_1d_3[:, None]))
                     r_comov3 = delta3.r_comov
                     z3 = delta3.z
 
@@ -1141,8 +1141,8 @@ def fill_wickT123(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
     bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     bins_forest = bins_r_trans + num_bins_r_trans*bins_r_par
     weights12 = weights1[:, None]*weights2
-    weights1 = weights1[:, None]*np.ones(weights2.size)
-    weights2 = np.ones(weights1.size)[:, None]*weights2
+    weight1 = weights1[:, None]*np.ones(weights2.size)
+    weight2 = np.ones(weights1.size)[:, None]*weights2
     z_weight_evol = z_weight_evol1[:, None]*z_weight_evol2
 
     w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
@@ -1152,14 +1152,14 @@ def fill_wickT123(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
     bins = bins[w]
     bins_forest = bins_forest[w]
     weights12 = weights12[w]
-    weights1 = weights1[w]
-    weights2 = weights2[w]
+    weight1 = weight1[w]
+    weight2 = weight2[w]
     z_weight_evol = z_weight_evol[w]
 
     for index1 in range(bins_forest.size):
         p1 = bins_forest[index1]
         i1 = bins[index1]%num_pixels1
-        j1 = (bins[index1] - i1)//num_pixels1
+        j1 = (bins[index1]-i1)//num_pixels1
         weights_wick[p1] += weights12[index1]
         num_pairs_wick[p1] += 1
         t1[p1, p1] += weights12[index1]*z_weight_evol[index1]
@@ -1169,11 +1169,11 @@ def fill_wickT123(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
             i2 = bins[index2]%num_pixels1
             j2 = (bins[index2] - i2)//num_pixels1
             if i1 == i2:
-                prod = weighted_xi_1d_2[j1, j2]*weights2[index1]*z_weight_evol1[i1]
+                prod = weighted_xi_1d_2[j1, j2]*weight1[index1]*z_weight_evol1[i1]
                 t2[p1, p2] += prod
                 t2[p2, p1] += prod
             elif j1 == j2:
-                prod = weighted_xi_1d_1[i1, i2]*weights2[index2]*z_weight_evol2[j1]
+                prod = weighted_xi_1d_1[i1, i2]*weight2[index2]*z_weight_evol2[j1]
                 t2[p1, p2] += prod
                 t2[p2, p1] += prod
             else:
@@ -1257,8 +1257,8 @@ def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
     if not x_correlation:
         r_par = np.absolute(r_par)
     r_trans = (r_comov1[:, None] + r_comov3)*np.sin(ang13/2.)
-    pix1_13 = (np.arange(r_comov1.size)[:, None]*np.ones(r_comov3.size)).astype(int)
-    pix3_13 = (np.ones(r_comov1.size)[:, None]*np.arange(r_comov3.size)).astype(int)
+    bins1_13 = (np.arange(r_comov1.size)[:, None]*np.ones(r_comov3.size)).astype(int)
+    bins3_13 = (np.ones(r_comov1.size)[:, None]*np.arange(r_comov3.size)).astype(int)
     w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
     if w.sum() == 0:
         return
@@ -1271,16 +1271,16 @@ def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
     cf13[~w] = 0.
 
     bins_forest12 = bins_forest12[w]
-    pix1_13 = pix1_13[w]
-    pix3_13 = pix3_13[w]
+    bins1_13 = bins1_13[w]
+    bins3_13 = bins3_13[w]
 
     ### forest-2 x forest-3
     r_par = (r_comov2[:, None] - r_comov3)*np.cos(ang23/2.)
     if not x_correlation:
         r_par = np.absolute(r_par)
     r_trans = (r_comov2[:, None] + r_comov3)*np.sin(ang23/2.)
-    pix2_23 = (np.arange(r_comov2.size)[:, None]*np.ones(r_comov3.size)).astype(int)
-    pix3_23 = (np.ones(r_comov2.size)[:, None]*np.arange(r_comov3.size)).astype(int)
+    bins2_23 = (np.arange(r_comov2.size)[:, None]*np.ones(r_comov3.size)).astype(int)
+    bins3_23 = (np.ones(r_comov2.size)[:, None]*np.arange(r_comov3.size)).astype(int)
     w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
     if w.sum() == 0:
         return
@@ -1293,8 +1293,8 @@ def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
     cf23[~w] = 0.
 
     bins_forest23 = bins_forest23[w]
-    pix2_23 = pix2_23[w]
-    pix3_23 = pix3_23[w]
+    bins2_23 = bins2_23[w]
+    bins3_23 = bins3_23[w]
 
     ### Wick t4 and t5
     for index1, p1 in enumerate(bins_forest12):
@@ -1302,8 +1302,8 @@ def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
         tpix2_12 = bins2_12[index1]
 
         for index2, p2 in enumerate(bins_forest12):
-            tpix1_13 = pix1_13[index2]
-            tpix3_13 = pix3_13[index2]
+            tpix1_13 = bins1_13[index2]
+            tpix3_13 = bins3_13[index2]
 
             tcf23 = cf23[tpix2_12, tpix3_13]
             if tpix1_12 == tpix1_13:
