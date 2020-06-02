@@ -31,7 +31,7 @@ if __name__ == '__main__':
         help='Output directory')
 
     parser.add_argument('--drq', type=str, default=None, required=True,
-        help='Catalog of objects in DRQ format')
+        help='Catalog of objects in DRQ format or zbest format')
 
     parser.add_argument('--in-dir', type=str, default=None, required=True,
         help='Directory to spectra files')

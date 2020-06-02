@@ -149,6 +149,85 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
 
     return ra,dec,zqso,thid,plate,mjd,fid
 
+
+def read_zbest(zbestfile,zmin,zmax,keep_bal,bi_max=None):
+    
+    #probably add a way to allow this being a list of files????
+    h = fitsio.FITS(zbestfile)
+
+    #selection of quasars with good redshifts only, the exact definition here should be decided, could in principle be moved to later
+    select=(h[1]['SPECTYPE'][:]=='QSO')&(h[1]['ZWARN'][:]==0)
+    ## Redshift
+    zqso = h[1]['Z'][:][select]
+
+
+    ## Info of the primary observation
+    
+
+    thid = h[1]['TARGETID'][:][select]
+    tid2=h[2]['TARGETID'][:]
+    ra=np.zeros(len(thid),dtype='float64')
+    dec=np.zeros(len(thid),dtype='float64')
+    plate=np.zeros(len(thid),dtype='int64')
+    mjd=np.zeros(len(thid),dtype='float64')
+    fid=np.zeros(len(thid),dtype='int64')
+
+    for i,tid in enumerate(thid):
+        #if multiple entries in fibermap take the first here
+        select2=(tid==tid2)
+        ra[i] = h[2]['TARGET_RA'][:][select2][0]
+        dec[i] = h[2]['TARGET_DEC'][:][select2][0]
+        plate[i]=int('{}{}'.format(h[2]['TILEID'][:][select2][0], h[2]['PETAL_LOC'][:][select2][0]))
+        mjd[i]= float(h[2]['MJD'][:][select2][0])
+        fid[i]=int( h[2]['FIBER'][:][select2][0])
+
+    ## Sanity
+    print('')
+    w = np.ones(ra.size,dtype=bool)
+    print(" start               : nb object in cat = {}".format(w.sum()) )
+    #need to have reasonable output lines for this
+    w &= zqso>0.
+    print(" and z>0.            : nb object in cat = {}".format(w.sum()) )
+
+    ## Redshift range
+    if not zmin is None:
+        w &= zqso>=zmin
+        print(" and z>=zmin         : nb object in cat = {}".format(w.sum()) )
+    if not zmax is None:
+        w &= zqso<zmax
+        print(" and z<zmax          : nb object in cat = {}".format(w.sum()) )
+
+    ## BAL visual
+    # if not keep_bal and bi_max==None:
+    #     try:
+    #         bal_flag = h[1]['BAL_FLAG_VI'][:]
+    #         w &= bal_flag==0
+    #         print(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
+    #     except:
+    #         print("BAL_FLAG_VI not found\n")
+    # ## BAL CIV
+    # if bi_max is not None:
+    #     try:
+    #         bi = h[1]['BI_CIV'][:]
+    #         w &= bi<=bi_max
+    #         print(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
+    #     except:
+    #         print("--bi-max set but no BI_CIV field in h")
+    #         sys.exit(1)
+    # print("")
+
+    ra = ra[w]*sp.pi/180.
+    dec = dec[w]*sp.pi/180.
+    zqso = zqso[w]
+    thid = thid[w]
+    plate = plate[w]
+    mjd = mjd[w]
+    fid = fid[w]
+    h.close()
+
+    return ra,dec,zqso,thid,plate,mjd,fid
+
+
 def read_dust_map(drq, Rv = 3.793):
     h = fitsio.FITS(drq)
     thid = h[1]['THING_ID'][:]
@@ -163,7 +242,10 @@ nside_min = 8
 def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal=False,bi_max=None,order=1, best_obs=False, single_exp=False, pk1d=None):
 
     print("mode: "+mode)
-    ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
+    try:
+        ra,dec,zqso,thid,plate,mjd,fid = read_drq(drq,zmin,zmax,keep_bal,bi_max=bi_max)
+    except ValueError:
+        ra,dec,zqso,thid,plate,mjd,fid = read_zbest(drq,zmin,zmax,keep_bal,bi_max=bi_max)
 
     if nspec != None:
         ## choose them in a small number of pixels
@@ -842,6 +924,7 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d
         h.close()
         
         plate_spec = int(str(tiles[i]) + str(petals[i]))
+        print('\nThis is tile {}, petal {}'.format(str(plate_spec)[:-1],str(plate_spec)[-1]))
         tid_qsos = thid[(plate==plate_spec)]
         plate_qsos = plate[(plate==plate_spec)]
         mjd_qsos = mjd[(plate==plate_spec)]
