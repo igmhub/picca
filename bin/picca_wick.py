@@ -277,7 +277,7 @@ def main():
     cf.max_diagram = args.max_diagram
 
     ### Cosmo
-    if (args.fid_Or!=0.) or (args.fid_Ok!=0.) or (args.fid_wl!=-1.):
+    if (args.fid_Or != 0.) or (args.fid_Ok != 0.) or (args.fid_wl != -1.):
         userprint("ERROR: Cosmology with other than Omega_m set are not yet implemented")
         sys.exit()
     cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
@@ -309,7 +309,7 @@ def main():
         num_pairs_variance_1d = h[1]['nv1d'][:]
         variance_1d = h[1]['v1d'][:]
         log_lambda = log_lambda_min + delta_log_lambda*np.arange(len(variance_1d))
-        cf.variance_1d[n] = interp1d(log_lambda[num_pairs_variance_1d>0],variance_1d[num_pairs_variance_1d>0],kind='nearest',fill_value='extrapolate')
+        cf.get_variance_1d[n] = interp1d(log_lambda[num_pairs_variance_1d>0],variance_1d[num_pairs_variance_1d>0],kind='nearest',fill_value='extrapolate')
 
         num_pairs1d = h[1]['nb1d'][:]
         xi_1d = h[1]['c1d'][:]

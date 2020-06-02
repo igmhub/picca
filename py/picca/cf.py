@@ -64,7 +64,7 @@ log_lambda_max = None
 delta_log_lambda = None
 
 # variables used in the wick covariance matrix computation
-variance_1d = {}
+get_variance_1d = {}
 xi_1d = {}
 max_diagram = None
 cfWick = {}
@@ -213,7 +213,6 @@ def compute_xi(healpixs):
     z[w] /= weights[w]
     return weights, xi, r_par, r_trans, z, num_pairs
 
-
 @jit
 def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             r_comov2, dist_m2, weights2, delta2, ang,
@@ -304,7 +303,6 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
             rebin_num_pairs)
 
-
 def compute_dmat(healpixs):
     """Computes the distortion matrix for each of the healpixs.
 
@@ -379,6 +377,7 @@ def compute_dmat(healpixs):
 
     return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
             num_pairs, num_pairs_used)
+
 @jit
 def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
                               dist_m1, dist_m2, z1, z2, weights1, weights2, ang,
@@ -895,7 +894,6 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
     return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
             num_pairs, num_pairs_used)
 
-
 def compute_xi_1d(healpix):
     """Computes the 1D autocorrelation from deltas from the same forest
 
@@ -972,7 +970,6 @@ def compute_xi_1d_cross(healpix):
     xi1d[w] /= weights1d[w]
     return weights1d, xi1d, num_pairs1d
 
-
 def wickT(healpixs):
     """
     Computes the Wick expansion terms of the covariance matrix for the auto-
@@ -1016,60 +1013,80 @@ def wickT(healpixs):
     num_pairs = 0
     num_pairs_used = 0
 
-    for ipix in healpixs:
-
-        r = sp.random.rand(len(data[ipix]))
-        w = r>reject
-        num_pairs += len(data[ipix])
+    for healpix in healpixs:
+        w = np.random.rand(len(data[healpix])) > reject
+        num_pairs += len(data[healpix])
         num_pairs_used += w.sum()
-        if w.sum()==0: continue
+        if w.sum() == 0:
+            continue
 
-        for delta1 in [ td for ti,td in enumerate(data[ipix]) if w[ti] ]:
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data/(1.-reject),3)),end="")
+        for delta1 in [delta
+                       for index, delta in enumerate(data[healpix])
+                       if w[index]]:
+            userprint(("\rcomputing xi: "
+                       "{}%").format(round(counter.value*100./num_data/(1. -
+                                                                        reject),
+                                           3)),
+                      end="")
             with lock:
                 counter.value += 1
-            if len(delta1.neighbours)==0: continue
+            if len(delta1.neighbours) == 0:
+                continue
 
-            v1 = variance_1d[delta1.fname](delta1.log_lambda)
+            variance_1d_1 = get_variance_1d[delta1.fname](delta1.log_lambda)
             weights1 = delta1.weights
-            c1d_1 = (weights1*weights1[:,None])*xi_1d[delta1.fname](abs(delta1.log_lambda-delta1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
+            xi_1d_1 = ((weights1*weights1[:, None])*
+                       xi_1d[delta1.fname](abs(delta1.log_lambda -
+                                               delta1.log_lambda[:, None]))*
+                       np.sqrt(variance_1d_1*variance_1d_1[:, None]))
             r_comov1 = delta1.r_comov
             z1 = delta1.z
 
-            for i2,delta2 in enumerate(delta1.neighbours):
+            for index2, delta2 in enumerate(delta1.neighbours):
                 ang12 = delta1^delta2
 
-                v2 = variance_1d[delta2.fname](delta2.log_lambda)
+                variance_1d_2 = get_variance_1d[delta2.fname](delta2.log_lambda)
                 weights2 = delta2.weights
-                c1d_2 = (weights2*weights2[:,None])*xi_1d[delta2.fname](abs(delta2.log_lambda-delta2.log_lambda[:,None]))*sp.sqrt(v2*v2[:,None])
+                xi_1d_2 = ((weights2*weights2[:,None])*
+                           xi_1d[delta2.fname](abs(delta2.log_lambda -
+                                                   delta2.log_lambda[:, None]))*
+                           np.sqrt(variance_1d_2*variance_1d_2[:, None]))
                 r_comov2 = delta2.r_comov
                 z2 = delta2.z
 
-                fill_wickT123(r_comov1,r_comov2,ang12,weights1,delta2.weights,z1,z2,c1d_1,c1d_2,weights_wick,num_pairs_wick,t1,t2,t3)
-                if max_diagram<=3: continue
+                fill_wickT123(r_comov1, r_comov2, ang12, weights1,
+                              delta2.weights, z1, z2, xi_1d_1, xi_1d_2,
+                              weights_wick, num_pairs_wick, t1, t2, t3)
+                if max_diagram <= 3:
+                    continue
 
-                ### d3 and delta2 have the same 'fname'
-                for d3 in delta1.neighbours[:i2]:
-                    ang13 = delta1^d3
-                    ang23 = delta2^d3
+                ### delta3 and delta2 have the same 'fname'
+                for delta3 in delta1.neighbours[:index2]:
+                    ang13 = delta1^delta3
+                    ang23 = delta2^delta3
 
-                    v3 = variance_1d[d3.fname](d3.log_lambda)
-                    w3 = d3.weights
-                    c1d_3 = (w3*w3[:,None])*xi_1d[d3.fname](abs(d3.log_lambda-d3.log_lambda[:,None]))*sp.sqrt(v3*v3[:,None])
-                    r3 = d3.r_comov
-                    z3 = d3.z
+                    variance_1d_3 = get_variance_1d[delta3.fname](delta3.log_lambda)
+                    weights3 = delta3.weights
+                    c1d_3 = ((weights3*weights3[:, None])*
+                             xi_1d[delta3.fname](abs(delta3.log_lambda -
+                                                     delta3.log_lambda[:, None]))*
+                             np.sqrt(variance_1d_3*variance_1d_3[:, None]))
+                    r_comov3 = delta3.r_comov
+                    z3 = delta3.z
 
-                    fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3,
-                        z1,z2,z3, c1d_1,c1d_2,c1d_3,
-                        delta1.fname,delta2.fname,d3.fname,
-                        t4,t5)
+                    fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13,
+                                 ang23, weights1, weights2, weights3, z1, z2,
+                                 z3, xi_1d_1, xi_1d_2, c1d_3, delta1.fname,
+                                 delta2.fname, delta3.fname, t4, t5)
 
                 ### TODO: when there is two different catalogs
-                ### d3 and delta1 have the same 'fname'
+                ### delta3 and delta1 have the same 'fname'
 
-    return weights_wick, num_pairs_wick, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
+    return (weights_wick, num_pairs_wick, num_pairs, num_pairs_used, t1, t2,
+            t3, t4, t5, t6)
+
 @jit
-def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,weights_wick,num_pairs_wick,t1,t2,t3):
+def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,xi_1d_1,xi_1d_2,weights_wick,num_pairs_wick,t1,t2,t3):
 
     n1 = len(r_comov1)
     n2 = len(r_comov2)
@@ -1114,15 +1131,15 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,weig
             i2 = bins[k2]%n1
             j2 = (bins[k2]-i2)//n1
             if i1==i2:
-                prod = c1d_2[j1,j2]*weight1[k1]*zw1[i1]
+                prod = xi_1d_2[j1,j2]*weight1[k1]*zw1[i1]
                 t2[p1,p2] += prod
                 t2[p2,p1] += prod
             elif j1==j2:
-                prod = c1d_1[i1,i2]*weight2[k2]*zw2[j1]
+                prod = xi_1d_1[i1,i2]*weight2[k2]*zw2[j1]
                 t2[p1,p2] += prod
                 t2[p2,p1] += prod
             else:
-                prod = c1d_1[i1,i2]*c1d_2[j1,j2]
+                prod = xi_1d_1[i1,i2]*xi_1d_2[j1,j2]
                 t3[p1,p2] += prod
                 t3[p2,p1] += prod
 
@@ -1130,7 +1147,7 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,weig
 
 
 @jit
-def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, z1,z2,z3, c1d_1,c1d_2,c1d_3, fname1,fname2,fname3, t4,t5):
+def fill_wickT45(r_comov1,r_comov2,r_comov3, ang12,ang13,ang23, weights1,weights2,weights3, z1,z2,z3, xi_1d_1,xi_1d_2,c1d_3, fname1,fname2,fname3, t4,t5):
     """
 
     """
@@ -1156,12 +1173,12 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
     pix2_12 = pix2_12[w]
 
     ### forest-1 x forest-3
-    r_par = (r_comov1[:,None]-r3)*sp.cos(ang13/2.)
+    r_par = (r_comov1[:,None]-r_comov3)*sp.cos(ang13/2.)
     if not x_correlation:
         r_par = np.absolute(r_par)
-    r_trans = (r_comov1[:,None]+r3)*sp.sin(ang13/2.)
-    pix1_13 = (np.arange(r_comov1.size)[:,None]*sp.ones(r3.size)).astype(int)
-    pix3_13 = (sp.ones(r_comov1.size)[:,None]*np.arange(r3.size)).astype(int)
+    r_trans = (r_comov1[:,None]+r_comov3)*sp.sin(ang13/2.)
+    pix1_13 = (np.arange(r_comov1.size)[:,None]*sp.ones(r_comov3.size)).astype(int)
+    pix3_13 = (sp.ones(r_comov1.size)[:,None]*np.arange(r_comov3.size)).astype(int)
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
     bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
@@ -1176,12 +1193,12 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
     pix3_13 = pix3_13[w]
 
     ### forest-2 x forest-3
-    r_par = (r_comov2[:,None]-r3)*sp.cos(ang23/2.)
+    r_par = (r_comov2[:,None]-r_comov3)*sp.cos(ang23/2.)
     if not x_correlation:
         r_par = np.absolute(r_par)
-    r_trans = (r_comov2[:,None]+r3)*sp.sin(ang23/2.)
-    pix2_23 = (np.arange(r_comov2.size)[:,None]*sp.ones(r3.size)).astype(int)
-    pix3_23 = (sp.ones(r_comov2.size)[:,None]*np.arange(r3.size)).astype(int)
+    r_trans = (r_comov2[:,None]+r_comov3)*sp.sin(ang23/2.)
+    pix2_23 = (np.arange(r_comov2.size)[:,None]*sp.ones(r_comov3.size)).astype(int)
+    pix3_23 = (sp.ones(r_comov2.size)[:,None]*np.arange(r_comov3.size)).astype(int)
     w = (r_par<r_par_max) & (r_trans<r_trans_max) & (r_par>=r_par_min)
     if w.sum()==0: return
     bins_r_par = sp.floor((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
@@ -1210,7 +1227,7 @@ def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, 
                 t4[p1,p2] += wcorr
                 t4[p2,p1] += wcorr
             else:
-                wcorr = c1d_1[tpix1_12,tpix1_13]*tcf23 ### TODO work on the good formula
+                wcorr = xi_1d_1[tpix1_12,tpix1_13]*tcf23 ### TODO work on the good formula
                 t5[p1,p2] += wcorr
                 t5[p2,p1] += wcorr
 
