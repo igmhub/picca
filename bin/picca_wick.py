@@ -379,8 +379,8 @@ def main():
     pool.close()
 
     wickT = sp.array(wickT)
-    wAll = wickT[:,0].sum(axis=0)
-    nb = wickT[:,1].sum(axis=0)
+    weights_wick = wickT[:,0].sum(axis=0)
+    num_pairs_wick = wickT[:,1].sum(axis=0)
     npairs = wickT[:,2].sum(axis=0)
     npairs_used = wickT[:,3].sum(axis=0)
     t1 = wickT[:,4].sum(axis=0)
@@ -389,7 +389,7 @@ def main():
     t4 = wickT[:,7].sum(axis=0)
     t5 = wickT[:,8].sum(axis=0)
     t6 = wickT[:,9].sum(axis=0)
-    weights = wAll*wAll[:,None]
+    weights = weights_wick*weights_wick[:,None]
     w = weights>0.
     t1[w] /= weights[w]
     t2[w] /= weights[w]
@@ -419,7 +419,7 @@ def main():
         {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
     ]
     comment = ['Sum of weight','Covariance','Nomber of pairs','T1','T2','T3','T4','T5','T6']
-    out.write([Ttot,wAll,nb,t1,t2,t3,t4,t5,t6],names=['CO','WALL','NB','T1','T2','T3','T4','T5','T6'],comment=comment,header=head,extname='COV')
+    out.write([Ttot,weights_wick,num_pairs_wick,t1,t2,t3,t4,t5,t6],names=['CO','WALL','NB','T1','T2','T3','T4','T5','T6'],comment=comment,header=head,extname='COV')
     out.close()
 
 

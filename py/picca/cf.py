@@ -987,11 +987,17 @@ def wickT(healpixs):
 
     Returns:
         The following variables:
-            wAll, nb, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
-
-            weights1d: Total weights for the 1d correlation function
-            xi1d: The 1d correlation function
-            num_pairs1d: Number of pairs for the 1d correlation function
+            weights_wick: Total weight from all Wick terms
+            num_pairs_wick: Number of pairs in each of the pixels of Wick
+                covariance matrix
+            num_pairs: Total number of pairs
+            num_pairs_used: Total number of used pairs
+            t1: Wick expansion, term 1
+            t2: Wick expansion, term 2
+            t3: Wick expansion, term 3
+            t4: Wick expansion, term 4
+            t5: Wick expansion, term 5
+            t6: Wick expansion, term 6
     """
     t1 = np.zeros((num_bins_r_par*num_bins_r_trans,
                    num_bins_r_par*num_bins_r_trans))
@@ -1005,8 +1011,8 @@ def wickT(healpixs):
                    num_bins_r_par*num_bins_r_trans))
     t6 = np.zeros((num_bins_r_par*num_bins_r_trans,
                    num_bins_r_par*num_bins_r_trans))
-    wAll = np.zeros(num_bins_r_par*num_bins_r_trans)
-    nb = np.zeros(num_bins_r_par*num_bins_r_trans, dtype=np.int64)
+    weights_wick = np.zeros(num_bins_r_par*num_bins_r_trans)
+    num_pairs_wick = np.zeros(num_bins_r_par*num_bins_r_trans, dtype=np.int64)
     num_pairs = 0
     num_pairs_used = 0
 
@@ -1039,7 +1045,7 @@ def wickT(healpixs):
                 r_comov2 = delta2.r_comov
                 z2 = delta2.z
 
-                fill_wickT123(r_comov1,r_comov2,ang12,weights1,delta2.weights,z1,z2,c1d_1,c1d_2,wAll,nb,t1,t2,t3)
+                fill_wickT123(r_comov1,r_comov2,ang12,weights1,delta2.weights,z1,z2,c1d_1,c1d_2,weights_wick,num_pairs_wick,t1,t2,t3)
                 if max_diagram<=3: continue
 
                 ### d3 and delta2 have the same 'fname'
@@ -1061,9 +1067,9 @@ def wickT(healpixs):
                 ### TODO: when there is two different catalogs
                 ### d3 and delta1 have the same 'fname'
 
-    return wAll, nb, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
+    return weights_wick, num_pairs_wick, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
 @jit
-def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll,nb,t1,t2,t3):
+def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,weights_wick,num_pairs_wick,t1,t2,t3):
 
     n1 = len(r_comov1)
     n2 = len(r_comov2)
@@ -1099,8 +1105,8 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll
         p1 = ba[k1]
         i1 = bins[k1]%n1
         j1 = (bins[k1]-i1)//n1
-        wAll[p1] += weights[k1]
-        nb[p1] += 1
+        weights_wick[p1] += weights[k1]
+        num_pairs_wick[p1] += 1
         t1[p1,p1] += weights[k1]*zw[k1]
 
         for k2 in range(k1+1,ba.size):
@@ -1121,6 +1127,8 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,c1d_1,c1d_2,wAll
                 t3[p2,p1] += prod
 
     return
+
+
 @jit
 def fill_wickT45(r_comov1,r_comov2,r3, ang12,ang13,ang23, weights1,weights2,w3, z1,z2,z3, c1d_1,c1d_2,c1d_3, fname1,fname2,fname3, t4,t5):
     """
