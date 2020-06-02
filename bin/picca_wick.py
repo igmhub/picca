@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
+"""Compute the wick covariance for the auto-correlation of forests
+
+The wick covariance is computed as explained in Delubac et al. 2015
+"""
 import sys
 import fitsio
 import argparse
@@ -12,110 +16,242 @@ from picca.utils import userprint
 
 def calc_wickT(p):
     cf.fill_neighs(p)
-    sp.random.seed(p[0])
+    np.random.seed(p[0])
     tmp = cf.wickT(p)
     return tmp
 
-if __name__ == '__main__':
+def main():
+    """Computes the wick covariance for the auto-correlation of forests"""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description=('Compute the wick covariance for the auto-correlation of '
+                     'forests'))
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Compute the wick covariance for the auto-correlation of forests')
-
-    parser.add_argument('--out', type=str, default=None, required=True,
+    parser.add_argument(
+        '--out',
+        type=str,
+        default=None,
+        required=True,
         help='Output file name')
 
-    parser.add_argument('--in-dir', type=str, default=None, required=True,
+    parser.add_argument(
+        '--in-dir',
+        type=str,
+        default=None,
+        required=True,
         help='Directory to delta files')
 
-    parser.add_argument('--in-dir2', type=str, default=None, required=False,
+    parser.add_argument(
+        '--in-dir2',
+        type=str,
+        default=None,
+        required=False,
         help='Directory to 2nd delta files')
 
-    parser.add_argument('--rp-min', type=float, default=0., required=False,
+    parser.add_argument(
+        '--rp-min',
+        type=float,
+        default=0.,
+        required=False,
         help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--rp-max', type=float, default=200., required=False,
+    parser.add_argument(
+        '--rp-max',
+        type=float,
+        default=200.,
+        required=False,
         help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--rt-max', type=float, default=200., required=False,
+    parser.add_argument(
+        '--rt-max',
+        type=float,
+        default=200.,
+        required=False,
         help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument('--np', type=int, default=50, required=False,
+    parser.add_argument(
+        '--np',
+        type=int,
+        default=50,
+        required=False,
         help='Number of r-parallel bins')
 
-    parser.add_argument('--nt', type=int, default=50, required=False,
+    parser.add_argument(
+        '--nt',
+        type=int,
+        default=50,
+        required=False,
         help='Number of r-transverse bins')
 
-    parser.add_argument('--z-cut-min', type=float, default=0., required=False,
-        help='Use only pairs of forest x object with the mean of the last absorber \
-        redshift and the object redshift larger than z-cut-min')
+    parser.add_argument(
+        '--z-cut-min',
+        type=float,
+        default=0.,
+        required=False,
+        help=('Use only pairs of forest x object with the mean of the last '
+              'absorber redshift and the object redshift larger than '
+              'z-cut-min'))
 
-    parser.add_argument('--z-cut-max', type=float, default=10., required=False,
-        help='Use only pairs of forest x object with the mean of the last absorber \
-        redshift and the object redshift smaller than z-cut-max')
+    parser.add_argument(
+        '--z-cut-max',
+        type=float,
+        default=10.,
+        required=False,
+        help=('Use only pairs of forest x object with the mean of the last '
+              'absorber redshift and the object redshift smaller than '
+              'z-cut-max'))
 
-    parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
-        help='Name of the absorption in picca.constants defining the redshift of the delta')
+    parser.add_argument(
+        '--lambda-abs',
+        type=str,
+        default='LYA',
+        required=False,
+        help=('Name of the absorption in picca.constants defining the redshift '
+              'of the delta'))
 
-    parser.add_argument('--lambda-abs2', type=str, default=None, required=False,
-        help='Name of the absorption in picca.constants defining the redshift of the 2nd delta')
+    parser.add_argument(
+        '--lambda-abs2',
+        type=str,
+        default=None,
+        required=False,
+        help=('Name of the absorption in picca.constants defining the redshift '
+              'of the 2nd delta'))
 
-    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+    parser.add_argument(
+        '--z-ref',
+        type=float,
+        default=2.25,
+        required=False,
         help='Reference redshift')
 
-    parser.add_argument('--z-evol', type=float, default=2.9, required=False,
+    parser.add_argument(
+        '--z-evol',
+        type=float,
+        default=2.9,
+        required=False,
         help='Exponent of the redshift evolution of the delta field')
 
-    parser.add_argument('--z-evol2', type=float, default=2.9, required=False,
+    parser.add_argument(
+        '--z-evol2',
+        type=float,
+        default=2.9,
+        required=False,
         help='Exponent of the redshift evolution of the 2nd delta field')
 
-    parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
+    parser.add_argument(
+        '--fid-Om',
+        type=float,
+        default=0.315,
+        required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--fid-Or', type=float, default=0., required=False,
+    parser.add_argument(
+        '--fid-Or',
+        type=float,
+        default=0.,
+        required=False,
         help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--fid-Ok', type=float, default=0., required=False,
+    parser.add_argument(
+        '--fid-Ok',
+        type=float,
+        default=0.,
+        required=False,
         help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--fid-wl', type=float, default=-1., required=False,
+    parser.add_argument(
+        '--fid-wl',
+        type=float,
+        default=-1.,
+        required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--no-project', action='store_true', required=False,
+    parser.add_argument(
+        '--no-project',
+        action='store_true',
+        required=False,
         help='Do not project out continuum fitting modes')
 
-    parser.add_argument('--max-diagram', type=int, default=3, required=False,
+    parser.add_argument(
+        '--max-diagram',
+        type=int,
+        default=3,
+        required=False,
         help='Maximum diagram to compute')
 
-    parser.add_argument('--cf1d', type=str, required=True,
-        help='1D auto-correlation of pixels from the same forest file: picca_cf1d.py')
+    parser.add_argument(
+        '--cf1d',
+        type=str,
+        required=True,
+        help=('1D auto-correlation of pixels from the same forest file: '
+              'picca_cf1d.py'))
 
-    parser.add_argument('--cf1d2', type=str, default=None, required=False,
-        help='1D auto-correlation of pixels from the same forest file of the 2nd delta field: picca_cf1d.py')
+    parser.add_argument(
+        '--cf1d2',
+        type=str,
+        default=None,
+        required=False,
+        help=('1D auto-correlation of pixels from the same forest file of the '
+              '2nd delta field: picca_cf1d.py'))
 
-    parser.add_argument('--cf', type=str, default=None, required=False,
-        help='3D auto-correlation of pixels from different forests: picca_cf.py')
+    parser.add_argument(
+        '--cf',
+        type=str,
+        default=None,
+        required=False,
+        help=('3D auto-correlation of pixels from different forests: '
+              'picca_cf.py'))
 
-    parser.add_argument('--cf2', type=str, default=None, required=False,
-        help='3D auto-correlation of pixels from different forests for 2nd catalog: picca_cf.py')
+    parser.add_argument(
+        '--cf2',
+        type=str,
+        default=None,
+        required=False,
+        help=('3D auto-correlation of pixels from different forests for 2nd '
+              'catalog: picca_cf.py'))
 
-    parser.add_argument('--cf12', type=str, default=None, required=False,
-        help='3D auto-correlation of pixels from different forests for cross 1st and 2nd catalog: picca_cf.py')
+    parser.add_argument(
+        '--cf12',
+        type=str,
+        default=None,
+        required=False,
+        help=('3D auto-correlation of pixels from different forests for cross '
+              '1st and 2nd catalog: picca_cf.py'))
 
-    parser.add_argument('--unfold-cf', action='store_true', required=False,
-        help='rp can be positive or negative depending on the relative position between absorber1 and absorber2')
+    parser.add_argument(
+        '--unfold-cf',
+        action='store_true',
+        required=False,
+        help=('rp can be positive or negative depending on the relative '
+              'position between absorber1 and absorber2'))
 
-    parser.add_argument('--rej', type=float, default=1., required=False,
+    parser.add_argument(
+        '--rej',
+        type=float,
+        default=1.,
+        required=False,
         help='Fraction of rejected pairs: -1=no rejection, 1=all rejection')
 
-    parser.add_argument('--nside', type=int, default=16, required=False,
+    parser.add_argument(
+        '--nside',
+        type=int,
+        default=16,
+        required=False,
         help='Healpix nside')
 
-    parser.add_argument('--nproc', type=int, default=None, required=False,
+    parser.add_argument(
+        '--nproc',
+        type=int,
+        default=None,
+        required=False,
         help='Number of processors')
 
-    parser.add_argument('--nspec', type=int, default=None, required=False,
+    parser.add_argument(
+        '--nspec',
+        type=int,
+        default=None,
+        required=False,
         help='Maximum number of spectra to read')
-
 
     args = parser.parse_args()
 
@@ -284,3 +420,7 @@ if __name__ == '__main__':
     comment = ['Sum of weight','Covariance','Nomber of pairs','T1','T2','T3','T4','T5','T6']
     out.write([Ttot,wAll,nb,T1,T2,T3,T4,T5,T6],names=['CO','WALL','NB','T1','T2','T3','T4','T5','T6'],comment=comment,header=head,extname='COV')
     out.close()
+
+
+if __name__ == '__main__':
+    main()
