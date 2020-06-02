@@ -334,7 +334,7 @@ def main():
         weights = weights.sum(axis=0)
         w = weights>0.
         da[w] /= weights[w]
-        cf.cfWick[n] = da.copy()
+        cf.xi_wick[n] = da.copy()
         h.close()
 
     ### Read data 2

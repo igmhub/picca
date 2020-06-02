@@ -67,7 +67,7 @@ delta_log_lambda = None
 get_variance_1d = {}
 xi_1d = {}
 max_diagram = None
-cfWick = {}
+xi_wick = {}
 
 def fill_neighs(healpixs):
     """Create and store a list of neighbours for each of the healpix.
@@ -1245,8 +1245,8 @@ def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
     bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     bins_forest12 = bins_r_trans + num_bins_r_trans*bins_r_par
     bins_forest12[~w] = 0
-    cf12 = cfWick['{}_{}'.format(fname1, fname2)][bins_forest12]
-    cf12[~w] = 0.
+    xi12 = xi_wick['{}_{}'.format(fname1, fname2)][bins_forest12]
+    xi12[~w] = 0.
 
     bins_forest12 = bins_forest12[w]
     bins1_12 = bins1_12[w]
@@ -1257,18 +1257,20 @@ def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
     if not x_correlation:
         r_par = np.absolute(r_par)
     r_trans = (r_comov1[:, None] + r_comov3)*np.sin(ang13/2.)
-    bins1_13 = (np.arange(r_comov1.size)[:, None]*np.ones(r_comov3.size)).astype(int)
-    bins3_13 = (np.ones(r_comov1.size)[:, None]*np.arange(r_comov3.size)).astype(int)
+    bins1_13 = (np.arange(r_comov1.size)[:, None]*
+                np.ones(r_comov3.size)).astype(int)
+    bins3_13 = (np.ones(r_comov1.size)[:, None]*
+                np.arange(r_comov3.size)).astype(int)
     w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
     if w.sum() == 0:
         return
     bins_r_par = np.floor((r_par - r_par_min)/(r_par_max - r_par_min)*
                           num_bins_r_par).astype(int)
     bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    bins_forest12 = bins_r_trans + num_bins_r_trans*bins_r_par
-    bins_forest12[~w] = 0
-    cf13 = cfWick['{}_{}'.format(fname1, fname3)][bins_forest12]
-    cf13[~w] = 0.
+    bins_forest13 = bins_r_trans + num_bins_r_trans*bins_r_par
+    bins_forest13[~w] = 0
+    xi13 = xi_wick['{}_{}'.format(fname1, fname3)][bins_forest12]
+    xi13[~w] = 0.
 
     bins_forest12 = bins_forest12[w]
     bins1_13 = bins1_13[w]
@@ -1279,8 +1281,10 @@ def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
     if not x_correlation:
         r_par = np.absolute(r_par)
     r_trans = (r_comov2[:, None] + r_comov3)*np.sin(ang23/2.)
-    bins2_23 = (np.arange(r_comov2.size)[:, None]*np.ones(r_comov3.size)).astype(int)
-    bins3_23 = (np.ones(r_comov2.size)[:, None]*np.arange(r_comov3.size)).astype(int)
+    bins2_23 = (np.arange(r_comov2.size)[:, None]*
+                np.ones(r_comov3.size)).astype(int)
+    bins3_23 = (np.ones(r_comov2.size)[:, None]*
+                np.arange(r_comov3.size)).astype(int)
     w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
     if w.sum() == 0:
         return
@@ -1289,8 +1293,8 @@ def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
     bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     bins_forest23 = bins_r_trans + num_bins_r_trans*bins_r_par
     bins_forest23[~w] = 0
-    cf23 = cfWick['{}_{}'.format(fname2, fname3)][bins_forest23]
-    cf23[~w] = 0.
+    xi23 = xi_wick['{}_{}'.format(fname2, fname3)][bins_forest23]
+    xi23[~w] = 0.
 
     bins_forest23 = bins_forest23[w]
     bins2_23 = bins2_23[w]
@@ -1305,7 +1309,7 @@ def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
             tpix1_13 = bins1_13[index2]
             tpix3_13 = bins3_13[index2]
 
-            tcf23 = cf23[tpix2_12, tpix3_13]
+            tcf23 = xi23[tpix2_12, tpix3_13]
             if tpix1_12 == tpix1_13:
                 # TODO: work on the good formula
                 wcorr = weights1[tpix1_12]*tcf23
