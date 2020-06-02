@@ -984,9 +984,9 @@ def wickT(healpixs):
 
     Returns:
         The following variables:
-            weights_wick: Total weight from all Wick terms
-            num_pairs_wick: Number of pairs in each of the pixels of Wick
-                covariance matrix
+            weights_wick: Total weight in the covariance matrix pixels from all
+                terms in the Wick expansion
+            num_pairs_wick: Number of pairs in the covariance matrix pixels
             num_pairs: Total number of pairs
             num_pairs_used: Total number of used pairs
             t1: Wick expansion, term 1
@@ -1086,16 +1086,49 @@ def wickT(healpixs):
             t3, t4, t5, t6)
 
 @jit
-def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,xi_1d_1,xi_1d_2,weights_wick,num_pairs_wick,t1,t2,t3):
+def fill_wickT123(r_comov1, r_comov2, ang, weights1, weights2, z1, z2, xi_1d_1,
+                  xi_1d_2, weights_wick, num_pairs_wick, t1, t2, t3):
+    """
+    Computes the Wick expansion terms 1, 2, and 3 of a given pair of forests
 
-    n1 = len(r_comov1)
-    n2 = len(r_comov2)
-    i1 = np.arange(n1)
-    i2 = np.arange(n2)
-    zw1 = ((1+z1)/(1+z_ref))**(alpha-1)
-    zw2 = ((1+z2)/(1+z_ref))**(alpha2-1)
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
 
-    bins = i1[:,None]+n1*i2
+    Args:
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for forest 2
+        ang: array of floats
+            Angular separation between pixels in forests 1 and 2
+        weights1: array of floats
+            Weights for forest 1
+        weights2: array of floats
+            Weights for forest 2
+        z1: array of floats
+            Redshifts for forest 1
+        z2: array of floats
+            Redshifts for forest 2
+        xi_1d_1: array of floats
+
+        xi_1d_1: array of floats
+
+        weights_wick: array of floats
+            Total weight in the covariance matrix pixels
+        num_pairs_wick: array of floats
+            Total number of pairs in the covariance matrix pixels
+        t1: Wick expansion, term 1
+        t2: Wick expansion, term 2
+        t3: Wick expansion, term 3
+    """
+    num_pixels1 = len(r_comov1)
+    num_pixels2 = len(r_comov2)
+    index1 = np.arange(num_pixels1)
+    index2 = np.arange(num_pixels2)
+    zw1 = ((1 + z1)/(1 + z_ref))**(alpha - 1)
+    zw2 = ((1 + z2)/(1 + z_ref))**(alpha2 - 1)
+
+    bins = index1[:,None]+num_pixels1*index2
     r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
     if not x_correlation:
         r_par = abs(r_par)
@@ -1120,26 +1153,26 @@ def fill_wickT123(r_comov1,r_comov2,ang,weights1,weights2,z1,z2,xi_1d_1,xi_1d_2,
 
     for k1 in range(ba.size):
         p1 = ba[k1]
-        i1 = bins[k1]%n1
-        j1 = (bins[k1]-i1)//n1
+        index1 = bins[k1]%num_pixels1
+        j1 = (bins[k1]-index1)//num_pixels1
         weights_wick[p1] += weights[k1]
         num_pairs_wick[p1] += 1
         t1[p1,p1] += weights[k1]*zw[k1]
 
         for k2 in range(k1+1,ba.size):
             p2 = ba[k2]
-            i2 = bins[k2]%n1
-            j2 = (bins[k2]-i2)//n1
-            if i1==i2:
-                prod = xi_1d_2[j1,j2]*weight1[k1]*zw1[i1]
+            index2 = bins[k2]%num_pixels1
+            j2 = (bins[k2]-index2)//num_pixels1
+            if index1==index2:
+                prod = xi_1d_2[j1,j2]*weight1[k1]*zw1[index1]
                 t2[p1,p2] += prod
                 t2[p2,p1] += prod
             elif j1==j2:
-                prod = xi_1d_1[i1,i2]*weight2[k2]*zw2[j1]
+                prod = xi_1d_1[index1,index2]*weight2[k2]*zw2[j1]
                 t2[p1,p2] += prod
                 t2[p2,p1] += prod
             else:
-                prod = xi_1d_1[i1,i2]*xi_1d_2[j1,j2]
+                prod = xi_1d_1[index1,index2]*xi_1d_2[j1,j2]
                 t3[p1,p2] += prod
                 t3[p2,p1] += prod
 
