@@ -259,13 +259,13 @@ def main():
     healpix_list = np.array(sorted(list(cpu_data.keys())))
 
     # normalize values
-    cut = (weights_list.sum(axis=0) > 0.)
+    w = (weights_list.sum(axis=0) > 0.)
     r_par = (r_par_list * weights_list).sum(axis=0)
-    r_par[cut] /= weights_list.sum(axis=0)[cut]
+    r_par[w] /= weights_list.sum(axis=0)[w]
     r_trans = (r_trans_list * weights_list).sum(axis=0)
-    r_trans[cut] /= weights_list.sum(axis=0)[cut]
+    r_trans[w] /= weights_list.sum(axis=0)[w]
     z = (z_list * weights_list).sum(axis=0)
-    z[cut] /= weights_list.sum(axis=0)[cut]
+    z[w] /= weights_list.sum(axis=0)[w]
     num_pairs = num_pairs_list.sum(axis=0)
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
