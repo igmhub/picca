@@ -201,7 +201,7 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
             try:
                 plate[i]=int('{}{}'.format(h[2]['TILEID'][:][select2][0], h[2]['PETAL_LOC'][:][select2][0]))
             except ValueError:
-                plate[i]=int('{}{}'.format(zbest.split['-'][-2], h[2]['PETAL_LOC'][:][select2][0]))   #this is to allow minisv to be read in just the same even without TILEID entries
+                plate[i]=int('{}{}'.format(zbest.split('-')[-2], h[2]['PETAL_LOC'][:][select2][0]))   #this is to allow minisv to be read in just the same even without TILEID entries
             mjd[i]= float(h[2]['MJD'][:][select2][0])
             fid[i]=int( h[2]['FIBER'][:][select2][0])
 
