@@ -354,13 +354,13 @@ def main():
         assert cf.r_par_min == header['RPMIN']
         assert cf.r_par_max == header['RPMAX']
         assert cf.r_trans_max == header['RTMAX']
-        da = hdul[2]['DA'][:]
+        xi = hdul[2]['DA'][:]
         weights = hdul[2]['WE'][:]
-        da = (da * weights).sum(axis=0)
+        xi = (xi * weights).sum(axis=0)
         weights = weights.sum(axis=0)
         w = weights > 0.
-        da[w] /= weights[w]
-        cf.xi_wick[fname] = da.copy()
+        xi[w] /= weights[w]
+        cf.xi_wick[fname] = xi.copy()
         hdul.close()
 
     ### Read data 2
