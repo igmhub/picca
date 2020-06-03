@@ -17,7 +17,7 @@ from picca.utils import userprint
 def calc_wickT(p):
     cf.fill_neighs(p)
     np.random.seed(p[0])
-    tmp = cf.wickT(p)
+    tmp = cf.compute_wick_terms(p)
     return tmp
 
 def main():

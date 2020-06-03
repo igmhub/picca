@@ -969,7 +969,7 @@ def compute_xi_1d_cross(healpix):
     xi1d[w] /= weights1d[w]
     return weights1d, xi1d, num_pairs1d
 
-def wickT(healpixs):
+def compute_wick_terms(healpixs):
     """
     Computes the Wick expansion terms of the covariance matrix for the auto-
     correlation analysis
@@ -1053,10 +1053,10 @@ def wickT(healpixs):
                 r_comov2 = delta2.r_comov
                 z2 = delta2.z
 
-                fill_wickT123(r_comov1, r_comov2, ang12, weights1,
-                              delta2.weights, z1, z2, weighted_xi_1d_1,
-                              weighted_xi_1d_2, weights_wick, num_pairs_wick,
-                              t1, t2, t3)
+                compute_wickT123_pairs(r_comov1, r_comov2, ang12, weights1,
+                                       delta2.weights, z1, z2, weighted_xi_1d_1,
+                                       weighted_xi_1d_2, weights_wick,
+                                       num_pairs_wick, t1, t2, t3)
                 if max_diagram <= 3:
                     continue
 
@@ -1074,11 +1074,12 @@ def wickT(healpixs):
                     r_comov3 = delta3.r_comov
                     z3 = delta3.z
 
-                    fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13,
-                                 ang23, weights1, weights2, weights3, z1, z2,
-                                 z3, weighted_xi_1d_1, weighted_xi_1d_2, weighted_xi_1d_3,
-                                 delta1.fname, delta2.fname, delta3.fname, t4,
-                                 t5)
+                    compute_wickT45_pairs(r_comov1, r_comov2, r_comov3, ang12,
+                                          ang13, ang23, weights1, weights2,
+                                          weights3, z1, z2, z3,
+                                          weighted_xi_1d_1, weighted_xi_1d_2,
+                                          weighted_xi_1d_3, delta1.fname,
+                                          delta2.fname, delta3.fname, t4, t5)
 
                 ### TODO: when there is two different catalogs
                 ### delta3 and delta1 have the same 'fname'
@@ -1087,9 +1088,9 @@ def wickT(healpixs):
             t3, t4, t5, t6)
 
 @jit
-def fill_wickT123(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
-                  weighted_xi_1d_1, weighted_xi_1d_2, weights_wick,
-                  num_pairs_wick, t1, t2, t3):
+def compute_wickT123_pairs(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
+                           weighted_xi_1d_1, weighted_xi_1d_2, weights_wick,
+                           num_pairs_wick, t1, t2, t3):
     """
     Computes the Wick expansion terms 1, 2, and 3 of a given pair of forests
 
@@ -1184,9 +1185,10 @@ def fill_wickT123(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
 
 
 @jit
-def fill_wickT45(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23, weights1,
-                 weights2, weights3, weighted_xi_1d_1, weighted_xi_1d_2,
-                 weighted_xi_1d_3, fname1, fname2, fname3, t4, t5):
+def compute_wickT45_pairs(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23,
+                          weights1, weights2, weights3, weighted_xi_1d_1,
+                          weighted_xi_1d_2, weighted_xi_1d_3, fname1, fname2,
+                          fname3, t4, t5):
     """
     Computes the Wick expansion terms 4 and 5 of a given set of 3 forests
 
