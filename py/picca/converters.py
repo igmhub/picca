@@ -19,96 +19,137 @@ import scipy.interpolate as interpolate
 import iminuit
 
 from picca.data import Delta
+from picca.utils import userprint
 
 
-def eBOSS_convert_DLA(inPath,drq,outPath,drqzkey='Z'):
+def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
     """Converts Pasquier Noterdaeme ASCII DLA catalog to a fits file
 
     Args:
-
+        in_path: string
+            Full path filename containing the ASCII DLA catalogue
+        drq_filename: string
+            Filename of the DRQ catalogue
+        out_path: string
+            Full path filename where the fits DLA catalogue will be written to
+        drq_z_key: string
+            Name of the column of DRQ containing the quasrs redshift
     """
-
-    f = open(os.path.expandvars(inPath),'r')
-    for l in f:
-        l = l.split()
-        if (len(l)==0) or (l[0][0]=='#') or (l[0][0]=='-'):
+    # Read catalogue
+    filename = open(os.path.expandvars(in_path), 'r')
+    for line in filename:
+        cols = line.split()
+        if (len(cols) == 0) or (cols[0][0] == '#') or (cols[0][0] == '-'):
             continue
-        elif l[0]=='ThingID':
-            fromkeytoindex = { el:i for i,el in enumerate(l) }
-            dcat = { el:[] for el in fromkeytoindex.keys() }
-            for kk in 'MJD-plate-fiber'.split('-'):
-                dcat[kk] = []
+        if cols[0] == 'ThingID':
+            from_key_to_index = {key: index for index, key in enumerate(cols)}
+            dla_cat = {key:[] for key in from_key_to_index}
+            for key in 'MJD-plate-fiber'.split('-'):
+                dla_cat[key] = []
             continue
-        else:
-            for k in fromkeytoindex.keys():
-                v = l[fromkeytoindex[k]]
-                if k=='MJD-plate-fiber':
-                    v = v.split('-')
-                    for i,kk in enumerate('MJD-plate-fiber'.split('-')):
-                        dcat[kk] += [v[i]]
-                dcat[k] += [v]
-    f.close()
-    userprint('INFO: Found {} DLA from {} quasars'.format(len(dcat['ThingID']), np.unique(dcat['ThingID']).size))
+        for key in from_key_to_index.keys():
+            value = cols[from_key_to_index[key]]
+            if key == 'MJD-plate-fiber':
+                for key2, value2 in zip('MJD-plate-fiber'.split('-'),
+                                        value.split('-')):
+                    dla_cat[key2] += [value2]
+            dla_cat[key] += [value]
+    filename.close()
+    userprint(("INFO: Found {} DLA from {} "
+               "quasars").format(len(dla_cat['ThingID']),
+                                 np.unique(dla_cat['ThingID']).size))
 
-    fromNoterdaemeKey2Picca = {'ThingID':'THING_ID', 'z_abs':'Z', 'zqso':'ZQSO','NHI':'NHI',
-        'plate':'PLATE','MJD':'MJD','fiber':'FIBERID',
-        'RA':'RA', 'Dec':'DEC'}
-    fromPiccaKey2Type = {'THING_ID':sp.int64, 'Z':sp.float64, 'ZQSO':sp.float64, 'NHI':sp.float64,
-        'PLATE':sp.int64,'MJD':sp.int64,'FIBERID':sp.int64,
-        'RA':sp.float64, 'DEC':sp.float64}
-    cat = { v:sp.array(dcat[k],dtype=fromPiccaKey2Type[v]) for k,v in fromNoterdaemeKey2Picca.items() }
+    # convert Noterdaemem keys to picca keys
+    from_noterdaeme_key_to_picca_key = {
+        'ThingID': 'THING_ID',
+        'z_abs': 'Z',
+        'zqso': 'ZQSO',
+        'NHI': 'NHI',
+        'plate': 'PLATE',
+        'MJD': 'MJD',
+        'fiber': 'FIBERID',
+        'RA': 'RA',
+        'Dec': 'DEC'}
+    # define types
+    from_picca_key_to_type = {
+        'THING_ID': np.int64,
+        'Z': np.float64,
+        'ZQSO': np.float64,
+        'NHI': np.float64,
+        'PLATE': np.int64,
+        'MJD': np.int64,
+        'FIBERID': np.int64,
+        'RA': np.float64,
+        'DEC': np.float64}
 
-    w = cat['THING_ID']>0
-    userprint('INFO: Removed {} DLA, because THING_ID<=0'.format((cat['THING_ID']<=0).sum()))
-    w &= cat['Z']>0.
-    userprint('INFO: Removed {} DLA, because Z<=0.'.format((cat['Z']<=0.).sum()))
-    for k in cat.keys():
-        cat[k] = cat[k][w]
+    # format catalogue
+    cat = {value: np.array(dla_cat[key], dtype=from_picca_key_to_type[value])
+           for key, value in from_noterdaeme_key_to_picca_key.items()}
 
-    h = fitsio.FITS(drq)
-    thingid = h[1]['THING_ID'][:]
-    ra = h[1]['RA'][:]
-    dec = h[1]['DEC'][:]
-    z_qso = h[1][drqzkey][:]
-    h.close()
-    fromThingid2idx = { el:i for i,el in enumerate(thingid) }
-    cat['RA'] = sp.array([ ra[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['DEC'] = sp.array([ dec[fromThingid2idx[el]] for el in cat['THING_ID'] ])
-    cat['ZQSO'] = sp.array([ z_qso[fromThingid2idx[el]] for el in cat['THING_ID'] ])
+    # apply cuts
+    w = cat['THING_ID'] > 0
+    userprint(("INFO: Removed {} DLA, because "
+               "THING_ID<=0").format((cat['THING_ID'] <= 0).sum()))
+    w &= cat['Z'] > 0.
+    userprint(("INFO: Removed {} DLA, because "
+               "Z<=0.").format((cat['Z'] <= 0.).sum()))
+    for key in cat:
+        cat[key] = cat[key][w]
 
-    w = cat['RA']!=cat['DEC']
-    userprint('INFO: Removed {} DLA, because RA==DEC'.format((cat['RA']==cat['DEC']).sum()))
-    w &= cat['RA']!=0.
-    userprint('INFO: Removed {} DLA, because RA==0'.format((cat['RA']==0.).sum()))
-    w &= cat['DEC']!=0.
-    userprint('INFO: Removed {} DLA, because DEC==0'.format((cat['DEC']==0.).sum()))
-    w &= cat['ZQSO']>0.
-    userprint('INFO: Removed {} DLA, because ZQSO<=0.'.format((cat['ZQSO']<=0.).sum()))
-    for k in cat.keys():
-        cat[k] = cat[k][w]
+    # update RA, DEC, and Z_QSO from DRQ catalogue
+    hdul = fitsio.FITS(drq_filename)
+    thingid = hdul[1]['THING_ID'][:]
+    ra = hdul[1]['RA'][:]
+    dec = hdul[1]['DEC'][:]
+    z_qso = hdul[1][drq_z_key][:]
+    hdul.close()
+    from_thingid_to_index = {t: index for index, t in enumerate(thingid)}
+    cat['RA'] = np.array([ra[from_thingid_to_index[t]]
+                          for t in cat['THING_ID']])
+    cat['DEC'] = np.array([dec[from_thingid_to_index[t]]
+                           for t in cat['THING_ID']])
+    cat['ZQSO'] = np.array([z_qso[from_thingid_to_index[t]]
+                            for t in cat['THING_ID']])
 
-    w = sp.argsort(cat['Z'])
-    for k in cat.keys():
-        cat[k] = cat[k][w]
-    w = sp.argsort(cat['THING_ID'])
-    for k in cat.keys():
-        cat[k] = cat[k][w]
-    cat['DLAID'] = np.arange(1,cat['Z'].size+1,dtype=sp.int64)
+    # apply cuts
+    w = cat['RA'] != cat['DEC']
+    userprint(("INFO: Removed {} DLA, because "
+               "RA==DEC").format((cat['RA'] == cat['DEC']).sum()))
+    w &= cat['RA'] != 0.
+    userprint(("INFO: Removed {} DLA, because "
+               "RA==0").format((cat['RA'] == 0.).sum()))
+    w &= cat['DEC'] != 0.
+    userprint(("INFO: Removed {} DLA, because "
+               "DEC==0").format((cat['DEC'] == 0.).sum()))
+    w &= cat['ZQSO'] > 0.
+    userprint(("INFO: Removed {} DLA, because "
+               "ZQSO<=0.").format((cat['ZQSO'] <= 0.).sum()))
+    for key in cat:
+        cat[key] = cat[key][w]
 
-    for k in ['RA','DEC']:
-        cat[k] = cat[k].astype('float64')
+    # sort first by redshift
+    w = np.argsort(cat['Z'])
+    for key in cat.keys():
+        cat[key] = cat[key][w]
+    # then by thingid
+    w = np.argsort(cat['THING_ID'])
+    for key in cat:
+        cat[key] = cat[key][w]
+    # add DLA ID
+    cat['DLAID'] = np.arange(1, cat['Z'].size + 1, dtype=np.int64)
 
-    ### Save
-    out = fitsio.FITS(outPath,'rw',clobber=True)
-    cols = [ v for v in cat.values() ]
-    names = [ k for k in cat.keys() ]
-    out.write(cols,names=names,extname='DLACAT')
-    out.close()
+    for key in ['RA', 'DEC']:
+        cat[key] = cat[key].astype('float64')
 
-    return
+    # Save catalogue
+    results = fitsio.FITS(out_path, 'rw', clobber=True)
+    cols = list(cat.values())
+    names = list(cat)
+    results.write(cols, names=names, extname='DLACAT')
+    results.close()
 
 
-def desi_convert_DLA(inPath,outPath):
+def desi_convert_DLA(in_path,out_path):
     """
     Convert a catalog of DLA from a DESI format to
     the format used by picca
@@ -120,7 +161,7 @@ def desi_convert_DLA(inPath,outPath):
         'PLATE':'MOCKID', 'MJD':'MOCKID', 'FIBERID':'MOCKID' }
 
     cat = {}
-    h = fitsio.FITS(inPath)
+    h = fitsio.FITS(in_path)
     for k,v in fromDESIkey2piccaKey.items():
         cat[k] = h['DLACAT'][v][:]
     h.close()
@@ -134,14 +175,14 @@ def desi_convert_DLA(inPath,outPath):
         cat[k] = cat[k].astype('float64')
 
     ### Save
-    out = fitsio.FITS(outPath,'rw',clobber=True)
+    out = fitsio.FITS(out_path,'rw',clobber=True)
     cols = [ v for v in cat.values() ]
     names = [ k for k in cat.keys() ]
     out.write(cols,names=names,extname='DLACAT')
     out.close()
 
     return
-def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
+def desi_from_truth_to_drq(truth,targets,drq_filename,spectype="QSO"):
     '''
     Transform a desi truth.fits file and a
     desi targets.fits into a drq like file
@@ -196,7 +237,7 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
         fiberid = fiberid[w]
 
     ### Save
-    out = fitsio.FITS(drq,'rw',clobber=True)
+    out = fitsio.FITS(drq_filename,'rw',clobber=True)
     cols=[ra,dec,thingid,plate,mjd,fiberid,z_qso]
     names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
     out.write(cols,names=names,extname='CAT')
@@ -204,12 +245,12 @@ def desi_from_truth_to_drq(truth,targets,drq,spectype="QSO"):
 
     return
 
-def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None, downsampling_nb=None):
+def desi_from_ztarget_to_drq(ztarget,drq_filename,spectype='QSO',downsampling_z_cut=None, downsampling_nb=None):
     """Transforms a catalog of object in desi format to a catalog in DRQ format
 
     Args:
         zcat (str): path to the catalog of object
-        drq (str): path to write the DRQ catalog
+        drq_filename (str): path to write the DRQ catalog
         spectype (str): Spectype of the object, can be any spectype
             in desi catalog. Ex: 'STAR', 'GALAXY', 'QSO'
         downsampling_z_cut (float) : Minimum redshift to downsample
@@ -260,7 +301,7 @@ def desi_from_ztarget_to_drq(ztarget,drq,spectype='QSO',downsampling_z_cut=None,
         cat[k] = cat[k][w]
 
     ### Save
-    out = fitsio.FITS(drq,'rw',clobber=True)
+    out = fitsio.FITS(drq_filename,'rw',clobber=True)
     cols = [ v for v in cat.values() ]
     names = [ k for k in cat.keys() ]
     out.write(cols, names=names,extname='CAT')
