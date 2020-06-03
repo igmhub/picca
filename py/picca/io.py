@@ -154,12 +154,12 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
     
     #probably add a way to allow this being a list of files????
     if isinstance(zbestfiles, str):
-        zbestfile=[zbestfiles]
+        zbestfiles=[zbestfiles]
         numfiles=1
-
     else:
         numfiles=len(zbestfiles)
-    
+    print('Reading {} zbest files'.format(numfiles))
+
     ra_arr=[]
     dec_arr=[]
     mjd_arr=[]
@@ -235,6 +235,8 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         #         print("--bi-max set but no BI_CIV field in h")
         #         sys.exit(1)
         # print("")
+        if not keep_bal:
+            print("Note that BAL removal is not yet supported for zbest file readin!")
 
         ra = ra[w]*sp.pi/180.
         dec = dec[w]*sp.pi/180.
