@@ -203,9 +203,10 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
             except ValueError:
                 plate[i]=int('{}{}'.format(zbest.split('-')[-2], h[2]['PETAL_LOC'][:][select2][0]))   #this is to allow minisv to be read in just the same even without TILEID entries
             try:
-                night[i]=float(h[2]['NIGHT'][:][select2][0])
+                night[i]=int(h[2]['NIGHT'][:][select2][0])
             except:
-                night[i]=-1   #this is to allow for minisv
+                night[i]=int(zbest.split('-')[-1].split('.')[0])
+
             fid[i]=int( h[2]['FIBER'][:][select2][0])
 
         h.close()
@@ -921,8 +922,6 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
     
     spectra = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"),recursive=True)
     #tiles = [spectra[i].split("/")[-2].strip() for i in range(len(spectra))]
-    tiles = []
-    petals = []
     nights = []
     data = {}
     ztable = {t:z for t,z in zip(thid,zqso)}
@@ -943,17 +942,17 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
             ra = h["FIBERMAP"]["RA_TARGET"][:]*sp.pi/180.
             de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
             
-        petals.append(h["FIBERMAP"]["PETAL_LOC"][:][0])
+        petal_spec=h["FIBERMAP"]["PETAL_LOC"][:][0]
         
         if 'TILEID' in h["FIBERMAP"].get_colnames():
-            tiles.append(h["FIBERMAP"]["TILEID"][:][0])
+            tile_spec=h["FIBERMAP"]["TILEID"][:][0]
         else:
-            tiles.append(spec.split('-')[-2])    #minisv tiles don't have this in the fibermap
+            tile_spec=spec.split('-')[-2]    #minisv tiles don't have this in the fibermap
 
         if 'NIGHT' in h["FIBERMAP"].get_colnames():
             night_spec=h["FIBERMAP"]["NIGHT"][:][0]
         else:
-            night_spec=-1
+            night_spec=spec.split('-')[-1].split('.')[0]
         
         
         in_tids = h["FIBERMAP"]["TARGETID"][:]
@@ -981,13 +980,13 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
             specData[str_band]=dic
         h.close()
         
-        plate_spec = int(str(tiles[i]) + str(petals[i]))
+        plate_spec = int(str(tile_spec) + str(petal_spec))
         select=(plate==plate_spec)&(night==night_spec)
-        print('\nThis is tile {}, petal {}'.format(str(plate_spec)[:-1],str(plate_spec)[-1]))
+        print('\nThis is tile {}, petal {}'.format(tile_spec,petal_spec))
         tid_qsos = thid[select]
         plate_qsos = plate[select]
-        night_qsos = night[plate==plate_spec]
-        fid_qsos = fid[plate==plate_spec]
+        night_qsos = night[select]
+        fid_qsos = fid[select]
 
         for t,p,m,f in zip(tid_qsos,plate_qsos,night_qsos,fid_qsos):
             wt = in_tids == t
