@@ -154,7 +154,7 @@ def smooth_cov_wick(filename, wick_filename, results):
         results: str
             Filename where the smoothed covariance matrix will be saved
     """
-
+    # load subsampling covariance
     hdul = fitsio.FITS(filename)
     xi = np.array(hdul[2]['DA'][:])
     weights = np.array(hdul[2]['WE'][:])
@@ -172,23 +172,25 @@ def smooth_cov_wick(filename, wick_filename, results):
         userprint('WARNING: returning')
         return
 
-    correlation = covariance/sp.sqrt(var*var[:, None])
-    cor1d = correlation.reshape(num_bins*num_bins)
+    correlation = covariance/np.sqrt(var*var[:, None])
+    correlation1d = correlation.reshape(num_bins*num_bins)
 
-    h = fitsio.FITS(wick_filename)
-    cow = sp.array(h[1]['CO'][:])
-    h.close()
+    # load Wick covariance
+    hdul = fitsio.FITS(wick_filename)
+    covariance_wick = np.array(hdul[1]['CO'][:])
+    hdul.close()
 
-    varw = sp.diagonal(cow)
-    if sp.any(varw==0.):
+    varw = np.diagonal(covariance_wick)
+    if np.any(varw == 0.):
         userprint('WARNING: Wick covariance has bins with var = 0')
         userprint('WARNING: returning')
         return
 
-    corw = cow/sp.sqrt(varw*varw[:,None])
+    corw = covariance_wick/np.sqrt(varw*varw[:,None])
     corw1d = corw.reshape(num_bins*num_bins)
 
-    Dcor1d = cor1d - corw1d
+    # difference between 1d correlations
+    Dcor1d = correlation1d - corw1d
 
     #### indices
     ind = np.arange(num_bins)
