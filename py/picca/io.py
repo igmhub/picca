@@ -162,7 +162,7 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
 
     ra_arr=[]
     dec_arr=[]
-    mjd_arr=[]
+    night_arr=[]
     petal_arr=[]
     fiber_arr=[]
     tid_arr=[]
@@ -190,7 +190,7 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         ra=np.zeros(len(thid),dtype='float64')
         dec=np.zeros(len(thid),dtype='float64')
         plate=np.zeros(len(thid),dtype='int64')
-        mjd=np.zeros(len(thid),dtype='float64')
+        night=np.zeros(len(thid),dtype='int64')
         fid=np.zeros(len(thid),dtype='int64')
 
         for i,tid in enumerate(thid):
@@ -203,9 +203,9 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
             except ValueError:
                 plate[i]=int('{}{}'.format(zbest.split('-')[-2], h[2]['PETAL_LOC'][:][select2][0]))   #this is to allow minisv to be read in just the same even without TILEID entries
             try:
-                mjd[i]=float(h[2]['MJD'][:][select2][0])
+                night[i]=float(h[2]['NIGHT'][:][select2][0])
             except:
-                mjd[i]=-1   #this is to allow for minisv
+                night[i]=-1   #this is to allow for minisv
             fid[i]=int( h[2]['FIBER'][:][select2][0])
 
         h.close()
@@ -253,24 +253,24 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         zqso = zqso[w]
         thid = thid[w]
         plate = plate[w]
-        mjd = mjd[w]
+        night = night[w]
         fid = fid[w]
 
         ra_arr.extend(ra)
         dec_arr.extend(dec)
         fiber_arr.extend(fid)
-        mjd_arr.extend(mjd)
+        night_arr.extend(night)
         petal_arr.extend(plate)
         tid_arr.extend(thid)
         z_arr.extend(zqso)
     ra_arr=np.array(ra_arr)
     dec_arr=np.array(dec_arr)
     fiber_arr=np.array(fiber_arr)
-    mjd_arr=np.array(mjd_arr)
+    night_arr=np.array(night_arr)
     petal_arr=np.array(petal_arr)
     tid_arr=np.array(tid_arr)
     z_arr=np.array(z_arr)
-    return ra_arr,dec_arr,z_arr,tid_arr,petal_arr,mjd_arr,fiber_arr
+    return ra_arr,dec_arr,z_arr,tid_arr,petal_arr,night_arr,fiber_arr
 
 
 def read_dust_map(drq, Rv = 3.793):
@@ -913,15 +913,17 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
 
     return data
 
-def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
+def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk1d=None):
     """ Unlike DESI routine, store deltas by "tile" + "spectro number". 
     Routine used to treat the DESI mini-SV data. 
     The spectra must be in the format "spectra directory"/"tile numbers"/coadd-* """
     
     
-    spectra = glob.glob(os.path.join(in_dir,"*/coadd-*.fits"))
-    tiles = [spectra[i].split("/")[-2].strip() for i in range(len(spectra))]
+    spectra = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"),recursive=True)
+    #tiles = [spectra[i].split("/")[-2].strip() for i in range(len(spectra))]
+    tiles = []
     petals = []
+    nights = []
     data = {}
     ztable = {t:z for t,z in zip(thid,zqso)}
     ndata = 0
@@ -942,7 +944,18 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d
             de = h["FIBERMAP"]["DEC_TARGET"][:]*sp.pi/180.
             
         petals.append(h["FIBERMAP"]["PETAL_LOC"][:][0])
+        
+        if 'TILEID' in h["FIBERMAP"].get_colnames():
+            tiles.append(h["FIBERMAP"]["TILEID"][:][0])
+        else:
+            tiles.append(spec.split('-')[-2])    #minisv tiles don't have this in the fibermap
 
+        if 'NIGHT' in h["FIBERMAP"].get_colnames():
+            night_spec=h["FIBERMAP"]["NIGHT"][:][0]
+        else:
+            night_spec=-1
+        
+        
         in_tids = h["FIBERMAP"]["TARGETID"][:]
 
         specData = {}
@@ -969,13 +982,14 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d
         h.close()
         
         plate_spec = int(str(tiles[i]) + str(petals[i]))
+        select=(plate==plate_spec)&(night==night_spec)
         print('\nThis is tile {}, petal {}'.format(str(plate_spec)[:-1],str(plate_spec)[-1]))
-        tid_qsos = thid[(plate==plate_spec)]
-        plate_qsos = plate[(plate==plate_spec)]
-        mjd_qsos = mjd[(plate==plate_spec)]
-        fid_qsos = fid[(plate==plate_spec)]
+        tid_qsos = thid[select]
+        plate_qsos = plate[select]
+        night_qsos = night[plate==plate_spec]
+        fid_qsos = fid[plate==plate_spec]
 
-        for t,p,m,f in zip(tid_qsos,plate_qsos,mjd_qsos,fid_qsos):
+        for t,p,m,f in zip(tid_qsos,plate_qsos,night_qsos,fid_qsos):
             wt = in_tids == t
             if wt.sum()==0:
                 print("\nError reading thingid {}\n".format(t))
