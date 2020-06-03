@@ -180,17 +180,17 @@ def smooth_cov_wick(filename, wick_filename, results):
     covariance_wick = np.array(hdul[1]['CO'][:])
     hdul.close()
 
-    varw = np.diagonal(covariance_wick)
-    if np.any(varw == 0.):
+    var_wick = np.diagonal(covariance_wick)
+    if np.any(var_wick == 0.):
         userprint('WARNING: Wick covariance has bins with var = 0')
         userprint('WARNING: returning')
         return
 
-    corw = covariance_wick/np.sqrt(varw*varw[:,None])
-    corw1d = corw.reshape(num_bins*num_bins)
+    correlation_wick = covariance_wick/np.sqrt(var_wick*var_wick[:, None])
+    correlation_wick1d = correlation_wick.reshape(num_bins*num_bins)
 
     # difference between 1d correlations
-    Dcor1d = correlation1d - corw1d
+    Dcor1d = correlation1d - correlation_wick1d
 
     #### indices
     ind = np.arange(num_bins)
@@ -242,7 +242,7 @@ def smooth_cov_wick(filename, wick_filename, results):
         for j in range(i+1,num_bins):
             index_delta_r_par = idrp2d[i,j]
             index_delta_r_trans = idrt2d[i,j]
-            newcov = corw[i,j]
+            newcov = correlation_wick[i,j]
             if (index_delta_r_trans == 0):
                 newcov += cor0[index_delta_r_par]
             else:
