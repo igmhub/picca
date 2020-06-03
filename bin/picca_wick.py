@@ -416,6 +416,7 @@ def main():
     userprint(" \nFinished\n")
     pool.close()
 
+    # merge the results from the different CPUs
     wick_data = np.array(wick_data)
     weights_wick = wick_data[:, 0].sum(axis=0)
     num_pairs_wick = wick_data[:, 1].sum(axis=0)
@@ -443,6 +444,7 @@ def main():
     t6 *= 1. * num_pairs_used / num_pairs
     t_tot = t1 + t2 + t3 + t4 + t5 + t6
 
+    # save results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
         {
