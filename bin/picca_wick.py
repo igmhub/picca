@@ -13,6 +13,7 @@ from scipy.interpolate import interp1d
 from picca import constants, cf, utils, io
 from picca.utils import userprint
 
+
 def calc_wick_terms(healpixs):
     """Computes the wick expansion terms of the covariance matrix.
 
@@ -32,6 +33,7 @@ def calc_wick_terms(healpixs):
     wick_data = cf.compute_wick_terms(healpixs)
     return wick_data
 
+
 def main():
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes the wick covariance for the auto-correlation of forests"""
@@ -40,61 +42,53 @@ def main():
         description=('Compute the wick covariance for the auto-correlation of '
                      'forests'))
 
-    parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
-    parser.add_argument(
-        '--in-dir',
-        type=str,
-        default=None,
-        required=True,
-        help='Directory to delta files')
+    parser.add_argument('--in-dir',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Directory to delta files')
 
-    parser.add_argument(
-        '--in-dir2',
-        type=str,
-        default=None,
-        required=False,
-        help='Directory to 2nd delta files')
+    parser.add_argument('--in-dir2',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='Directory to 2nd delta files')
 
-    parser.add_argument(
-        '--rp-min',
-        type=float,
-        default=0.,
-        required=False,
-        help='Min r-parallel [h^-1 Mpc]')
+    parser.add_argument('--rp-min',
+                        type=float,
+                        default=0.,
+                        required=False,
+                        help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--rp-max',
-        type=float,
-        default=200.,
-        required=False,
-        help='Max r-parallel [h^-1 Mpc]')
+    parser.add_argument('--rp-max',
+                        type=float,
+                        default=200.,
+                        required=False,
+                        help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--rt-max',
-        type=float,
-        default=200.,
-        required=False,
-        help='Max r-transverse [h^-1 Mpc]')
+    parser.add_argument('--rt-max',
+                        type=float,
+                        default=200.,
+                        required=False,
+                        help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--np',
-        type=int,
-        default=50,
-        required=False,
-        help='Number of r-parallel bins')
+    parser.add_argument('--np',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of r-parallel bins')
 
-    parser.add_argument(
-        '--nt',
-        type=int,
-        default=50,
-        required=False,
-        help='Number of r-transverse bins')
+    parser.add_argument('--nt',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of r-transverse bins')
 
     parser.add_argument(
         '--z-cut-min',
@@ -130,12 +124,11 @@ def main():
         help=('Name of the absorption in picca.constants defining the redshift '
               'of the 2nd delta'))
 
-    parser.add_argument(
-        '--z-ref',
-        type=float,
-        default=2.25,
-        required=False,
-        help='Reference redshift')
+    parser.add_argument('--z-ref',
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help='Reference redshift')
 
     parser.add_argument(
         '--z-evol',
@@ -165,12 +158,11 @@ def main():
         required=False,
         help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument(
-        '--fid-Ok',
-        type=float,
-        default=0.,
-        required=False,
-        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+    parser.add_argument('--fid-Ok',
+                        type=float,
+                        default=0.,
+                        required=False,
+                        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
 
     parser.add_argument(
         '--fid-wl',
@@ -179,18 +171,16 @@ def main():
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
-    parser.add_argument(
-        '--no-project',
-        action='store_true',
-        required=False,
-        help='Do not project out continuum fitting modes')
+    parser.add_argument('--no-project',
+                        action='store_true',
+                        required=False,
+                        help='Do not project out continuum fitting modes')
 
-    parser.add_argument(
-        '--max-diagram',
-        type=int,
-        default=3,
-        required=False,
-        help='Maximum diagram to compute')
+    parser.add_argument('--max-diagram',
+                        type=int,
+                        default=3,
+                        required=False,
+                        help='Maximum diagram to compute')
 
     parser.add_argument(
         '--cf1d',
@@ -245,31 +235,28 @@ def main():
         required=False,
         help='Fraction of rejected pairs: -1=no rejection, 1=all rejection')
 
-    parser.add_argument(
-        '--nside',
-        type=int,
-        default=16,
-        required=False,
-        help='Healpix nside')
+    parser.add_argument('--nside',
+                        type=int,
+                        default=16,
+                        required=False,
+                        help='Healpix nside')
 
-    parser.add_argument(
-        '--nproc',
-        type=int,
-        default=None,
-        required=False,
-        help='Number of processors')
+    parser.add_argument('--nproc',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Number of processors')
 
-    parser.add_argument(
-        '--nspec',
-        type=int,
-        default=None,
-        required=False,
-        help='Maximum number of spectra to read')
+    parser.add_argument('--nspec',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Maximum number of spectra to read')
 
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()//2
+        args.nproc = cpu_count() // 2
 
     userprint("nproc", args.nproc)
 
@@ -310,8 +297,10 @@ def main():
     for deltas in data.values():
         for delta in deltas:
             delta.fname = 'D1'
-            for item in ['cont', 'delta', 'order', 'ivar', 'exposures_diff',
-                         'mean_snr', 'mean_reso', 'mean_z', 'delta_log_lambda']:
+            for item in [
+                    'cont', 'delta', 'order', 'ivar', 'exposures_diff',
+                    'mean_snr', 'mean_reso', 'mean_z', 'delta_log_lambda'
+            ]:
                 setattr(delta, item, None)
     del z_max
     cf.data = data
@@ -332,25 +321,29 @@ def main():
         num_pairs_variance_1d = hdul[1]['nv1d'][:]
         variance_1d = hdul[1]['v1d'][:]
         log_lambda = (log_lambda_min +
-                      delta_log_lambda*np.arange(len(variance_1d)))
-        cf.get_variance_1d[fname] = interp1d(log_lambda[num_pairs_variance_1d > 0],
-                                             variance_1d[num_pairs_variance_1d > 0],
-                                             kind='nearest',
-                                             fill_value='extrapolate')
+                      delta_log_lambda * np.arange(len(variance_1d)))
+        cf.get_variance_1d[fname] = interp1d(
+            log_lambda[num_pairs_variance_1d > 0],
+            variance_1d[num_pairs_variance_1d > 0],
+            kind='nearest',
+            fill_value='extrapolate')
 
         num_pairs1d = hdul[1]['nb1d'][:]
         xi_1d = hdul[1]['c1d'][:]
-        cf.xi_1d[fname] = interp1d((log_lambda - log_lambda_min)[num_pairs1d > 0],
-                                   xi_1d[num_pairs1d > 0],
-                                   kind='nearest',
-                                   fill_value='extrapolate')
+        cf.xi_1d[fname] = interp1d(
+            (log_lambda - log_lambda_min)[num_pairs1d > 0],
+            xi_1d[num_pairs1d > 0],
+            kind='nearest',
+            fill_value='extrapolate')
         hdul.close()
 
     # Load correlation functions
-    dic_xi = {"D1_D1": args.cf,
-              "D2_D2": args.cf2,
-              "D1_D2": args.cf12,
-              "D2_D1": args.cf12}
+    dic_xi = {
+        "D1_D1": args.cf,
+        "D2_D2": args.cf2,
+        "D1_D2": args.cf12,
+        "D2_D1": args.cf12
+    }
     for fname, filename in dic_xi.items():
         if filename is None:
             continue
@@ -363,7 +356,7 @@ def main():
         assert cf.r_trans_max == header['RTMAX']
         da = hdul[2]['DA'][:]
         weights = hdul[2]['WE'][:]
-        da = (da*weights).sum(axis=0)
+        da = (da * weights).sum(axis=0)
         weights = weights.sum(axis=0)
         w = weights > 0.
         da[w] /= weights[w]
@@ -383,19 +376,21 @@ def main():
         else:
             cf.lambda_abs2 = cf.lambda_abs
 
-        data2, num_data2, z_min2, z_max2 = io.read_deltas(args.in_dir2,
-                                                          cf.nside,
-                                                          cf.lambda_abs2,
-                                                          cf.alpha2,
-                                                          cf.z_ref,
-                                                          cosmo,
-                                                          max_num_spec=args.nspec)
+        data2, num_data2, z_min2, z_max2 = io.read_deltas(
+            args.in_dir2,
+            cf.nside,
+            cf.lambda_abs2,
+            cf.alpha2,
+            cf.z_ref,
+            cosmo,
+            max_num_spec=args.nspec)
         for deltas in data.values():
             for delta in deltas:
                 delta.fname = 'D2'
-                for item in ['cont', 'delta', 'order', 'ivar', 'exposures_diff',
-                             'mean_snr', 'mean_reso', 'mean_z',
-                             'delta_log_lambda']:
+                for item in [
+                        'cont', 'delta', 'order', 'ivar', 'exposures_diff',
+                        'mean_snr', 'mean_reso', 'mean_z', 'delta_log_lambda'
+                ]:
                     setattr(delta, item, None)
         del z_max2
         cf.data2 = data2
@@ -432,7 +427,7 @@ def main():
     t4 = wick_data[:, 7].sum(axis=0)
     t5 = wick_data[:, 8].sum(axis=0)
     t6 = wick_data[:, 9].sum(axis=0)
-    weights = weights_wick*weights_wick[:, None]
+    weights = weights_wick * weights_wick[:, None]
     w = weights > 0.
     t1[w] /= weights[w]
     t2[w] /= weights[w]
@@ -440,44 +435,77 @@ def main():
     t4[w] /= weights[w]
     t5[w] /= weights[w]
     t6[w] /= weights[w]
-    t1 *= 1.*num_pairs_used/num_pairs
-    t2 *= 1.*num_pairs_used/num_pairs
-    t3 *= 1.*num_pairs_used/num_pairs
-    t4 *= 1.*num_pairs_used/num_pairs
-    t5 *= 1.*num_pairs_used/num_pairs
-    t6 *= 1.*num_pairs_used/num_pairs
+    t1 *= 1. * num_pairs_used / num_pairs
+    t2 *= 1. * num_pairs_used / num_pairs
+    t3 *= 1. * num_pairs_used / num_pairs
+    t4 *= 1. * num_pairs_used / num_pairs
+    t5 *= 1. * num_pairs_used / num_pairs
+    t6 *= 1. * num_pairs_used / num_pairs
     t_tot = t1 + t2 + t3 + t4 + t5 + t6
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
-        {'name': 'RPMIN', 'value': cf.r_par_min,
-         'comment': 'Minimum r-parallel [h^-1 Mpc]'},
-        {'name': 'RPMAX', 'value': cf.r_par_max,
-         'comment': 'Maximum r-parallel [h^-1 Mpc]'},
-        {'name': 'RTMAX', 'value': cf.r_trans_max,
-         'comment': 'Maximum r-transverse [h^-1 Mpc]'},
-        {'name': 'NP', 'value': cf.num_bins_r_par,
-         'comment': 'Number of bins in r-parallel'},
-        {'name': 'NT', 'value': cf.num_bins_r_trans,
-         'comment': 'Number of bins in r-transverse'},
-        {'name': 'ZCUTMIN', 'value': cf.z_cut_min,
-         'comment':'Minimum redshift of pairs'},
-        {'name': 'ZCUTMAX', 'value': cf.z_cut_max,
-         'comment': 'Maximum redshift of pairs'},
-        {'name': 'REJ', 'value': cf.reject,
-         'comment': 'Rejection factor'},
-        {'name': 'NPALL', 'value': num_pairs,
-         'comment': 'Number of pairs'},
-        {'name': 'NPUSED', 'value': num_pairs_used,
-         'comment': 'Number of used pairs'},
+        {
+            'name': 'RPMIN',
+            'value': cf.r_par_min,
+            'comment': 'Minimum r-parallel [h^-1 Mpc]'
+        },
+        {
+            'name': 'RPMAX',
+            'value': cf.r_par_max,
+            'comment': 'Maximum r-parallel [h^-1 Mpc]'
+        },
+        {
+            'name': 'RTMAX',
+            'value': cf.r_trans_max,
+            'comment': 'Maximum r-transverse [h^-1 Mpc]'
+        },
+        {
+            'name': 'NP',
+            'value': cf.num_bins_r_par,
+            'comment': 'Number of bins in r-parallel'
+        },
+        {
+            'name': 'NT',
+            'value': cf.num_bins_r_trans,
+            'comment': 'Number of bins in r-transverse'
+        },
+        {
+            'name': 'ZCUTMIN',
+            'value': cf.z_cut_min,
+            'comment': 'Minimum redshift of pairs'
+        },
+        {
+            'name': 'ZCUTMAX',
+            'value': cf.z_cut_max,
+            'comment': 'Maximum redshift of pairs'
+        },
+        {
+            'name': 'REJ',
+            'value': cf.reject,
+            'comment': 'Rejection factor'
+        },
+        {
+            'name': 'NPALL',
+            'value': num_pairs,
+            'comment': 'Number of pairs'
+        },
+        {
+            'name': 'NPUSED',
+            'value': num_pairs_used,
+            'comment': 'Number of used pairs'
+        },
     ]
-    comment = ['Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2',
-               'T3', 'T4', 'T5', 'T6']
-    results.write([t_tot, weights_wick, num_pairs_wick, t1, t2, t3, t4, t5, t6],
-                  names=['CO', 'WALL', 'NB', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
-                  comment=comment,
-                  header=header,
-                  extname='COV')
+    comment = [
+        'Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2', 'T3',
+        'T4', 'T5', 'T6'
+    ]
+    results.write(
+        [t_tot, weights_wick, num_pairs_wick, t1, t2, t3, t4, t5, t6],
+        names=['CO', 'WALL', 'NB', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+        comment=comment,
+        header=header,
+        extname='COV')
     results.close()
 
 
