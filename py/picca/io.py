@@ -181,6 +181,10 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         
 
         thid = h[1]['TARGETID'][:][select]
+        if len(thid)==0:
+            print("no valid QSOs in file {}".format(zbest))
+            continue
+
         tid2=h[2]['TARGETID'][:]
         ra=np.zeros(len(thid),dtype='float64')
         dec=np.zeros(len(thid),dtype='float64')
@@ -198,7 +202,6 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
             fid[i]=int( h[2]['FIBER'][:][select2][0])
 
         h.close()
-
 
         ## Sanity
         print('')
