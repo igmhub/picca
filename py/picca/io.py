@@ -952,7 +952,7 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
         if 'NIGHT' in h["FIBERMAP"].get_colnames():
             night_spec=h["FIBERMAP"]["NIGHT"][:][0]
         else:
-            night_spec=spec.split('-')[-1].split('.')[0]
+            night_spec=int(spec.split('-')[-1].split('.')[0])
         
         
         in_tids = h["FIBERMAP"]["TARGETID"][:]
@@ -982,7 +982,7 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
         
         plate_spec = int(str(tile_spec) + str(petal_spec))
         select=(plate==plate_spec)&(night==night_spec)
-        print('\nThis is tile {}, petal {}'.format(tile_spec,petal_spec))
+        print('\nThis is tile {}, petal {}, night {}'.format(tile_spec,petal_spec,night_spec))
         tid_qsos = thid[select]
         plate_qsos = plate[select]
         night_qsos = night[select]
