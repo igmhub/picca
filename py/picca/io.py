@@ -213,7 +213,7 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         ## Sanity
         print('')
         w = np.ones(ra.size,dtype=bool)
-        print("Tile {}, Plate {}".format(str(plate[0])[:-1],str(plate[0])[-1]))
+        print("Tile {}, Petal {}".format(str(plate[0])[:-1],str(plate[0])[-1]))
         print(" start               : nb object in cat = {}".format(w.sum()) )
         #need to have reasonable output lines for this
         w &= zqso>0.
