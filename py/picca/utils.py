@@ -2,7 +2,7 @@
 
 These are:
     - userprint
-    - compute_covariance
+    - compute_cov
     - smooth_cov
     - smooth_cov_wick
     - compute_ang_max
@@ -32,7 +32,7 @@ def userprint(*args, **kwds):
     sys.stdout.flush()
 
 
-def compute_covariance(xi, weights):
+def compute_cov(xi, weights):
     """Computes the covariance matrix using the subsampling technique
 
     Args:
@@ -62,49 +62,84 @@ def compute_covariance(xi, weights):
     return covariance
 
 
-def smooth_cov(da,weights,r_par,r_trans,drt=4,drp=4,co=None):
+def smooth_cov(xi, weights, r_par, r_trans, delta_r_trans=4.0, delta_r_par=4.0,
+               covariance=None):
+    """Smoothes the covariance matrix
 
-    if co is None:
-        co = compute_covariance(da,weights)
+    Args:
+        xi: array of floats
+            Correlation function measburement in each helpix
+        weights: array of floats
+            Weights on the correlation function measurement
+        r_par: array of floats
+            Parallel distance of each pixel of xi (in Mpc/h)
+        r_par: array of floats
+            Transverse distance of each pixel of xi (in Mpc/h)
+        delta_r_trans: float - default: 4.0
+            Variation of the transverse distance between two pixels
+        delta_r_par: float - default: 4.0
+            Variation of the transverse distance between two pixels
+        covariance: array of floats or None - defautl: None
+            Covariance matrix. If None, it will be computed using the
+            subsampling technique
 
-    nda = co.shape[1]
-    var = sp.diagonal(co)
-    if sp.any(var==0.):
+    Returns:
+        The smooth covariance matrix. If data is not correct, then print a
+        warning and return the unsmoothed covariance matrix
+    """
+    if covariance is None:
+        covariance = compute_cov(xi, weights)
+
+    num_bins = covariance.shape[1]
+    var = np.diagonal(covariance)
+    if np.any(var == 0.):
         userprint('WARNING: data has some empty bins, impossible to smooth')
         userprint('WARNING: returning the unsmoothed covariance')
-        return co
+        return covariance
 
-    cor = co/sp.sqrt(var*var[:,None])
+    correlation = covariance/np.sqrt(var*var[:, None])
 
-    cor_smooth = np.zeros([nda,nda])
+    correlation_smooth = np.zeros([num_bins, num_bins])
 
-    dcor={}
-    dncor={}
 
-    for i in range(nda):
-        userprint("\rsmoothing {}".format(i),end="")
-        for j in range(i+1,nda):
-            idrp = round(abs(r_par[j]-r_par[i])/drp)
-            idrt = round(abs(r_trans[i]-r_trans[j])/drt)
-            if not (idrp,idrt) in dcor:
-                dcor[(idrp,idrt)]=0.
-                dncor[(idrp,idrt)]=0
+    # add together the correlation from bins with similar separations in
+    # parallel and perpendicular distances
+    sum_correlation = {}
+    counts_correlation = {}
+    for index in range(num_bins):
+        userprint("\rsmoothing {}".format(index), end="")
+        for index2 in range(index + 1, num_bins):
+            index_delta_r_par = round(abs(r_par[index2] - r_par[index])/
+                                      delta_r_par)
+            index_delta_r_trans = round(abs(r_trans[index] - r_trans[index2])/
+                                        delta_r_trans)
+            if (index_delta_r_par, index_delta_r_trans) not in sum_correlation:
+                sum_correlation[(index_delta_r_par, index_delta_r_trans)] = 0.
+                counts_correlation[(index_delta_r_par, index_delta_r_trans)] = 0
 
-            dcor[(idrp,idrt)] +=cor[i,j]
-            dncor[(idrp,idrt)] +=1
+            sum_correlation[(index_delta_r_par,
+                             index_delta_r_trans)] += correlation[index, index2]
+            counts_correlation[(index_delta_r_par, index_delta_r_trans)] += 1
 
-    for i in range(nda):
-        cor_smooth[i,i]=1.
-        for j in range(i+1,nda):
-            idrp = round(abs(r_par[j]-r_par[i])/drp)
-            idrt = round(abs(r_trans[i]-r_trans[j])/drt)
-            cor_smooth[i,j]=dcor[(idrp,idrt)]/dncor[(idrp,idrt)]
-            cor_smooth[j,i]=cor_smooth[i,j]
+    for index in range(num_bins):
+        correlation_smooth[index, index] = 1.
+        for index2 in range(index + 1, num_bins):
+            index_delta_r_par = round(abs(r_par[index2] - r_par[index])/
+                                      delta_r_par)
+            index_delta_r_trans = round(abs(r_trans[index] - r_trans[index2])/
+                                        delta_r_trans)
+            correlation_smooth[index,
+                               index2] = (sum_correlation[(index_delta_r_par,
+                                                           index_delta_r_trans)]/
+                                          counts_correlation[(index_delta_r_par,
+                                                              index_delta_r_trans)])
+            correlation_smooth[index2, index] = correlation_smooth[index,
+                                                                   index2]
 
 
     userprint("\n")
-    co_smooth = cor_smooth * sp.sqrt(var*var[:,None])
-    return co_smooth
+    covariance_smooth = correlation_smooth * np.sqrt(var*var[:, None])
+    return covariance_smooth
 
 def smooth_cov_wick(infile,Wick_infile,outfile):
     """
@@ -123,24 +158,24 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     """
 
     h = fitsio.FITS(infile)
-    da = sp.array(h[2]['DA'][:])
+    xi = sp.array(h[2]['DA'][:])
     weights = sp.array(h[2]['WE'][:])
     head = h[1].read_header()
     num_bins_r_par = head['NP']
     num_bins_r_trans = head['NT']
     h.close()
 
-    co = compute_covariance(da,weights)
+    covariance = compute_cov(xi,weights)
 
-    nbin = da.shape[1]
-    var = sp.diagonal(co)
+    nbin = xi.shape[1]
+    var = sp.diagonal(covariance)
     if sp.any(var==0.):
         userprint('WARNING: data has some empty bins, impossible to smooth')
         userprint('WARNING: returning the unsmoothed covariance')
-        return co
+        return covariance
 
-    cor = co/sp.sqrt(var*var[:,None])
-    cor1d = cor.reshape(nbin*nbin)
+    correlation = covariance/sp.sqrt(var*var[:,None])
+    cor1d = correlation.reshape(nbin*nbin)
 
     h = fitsio.FITS(Wick_infile)
     cow = sp.array(h[1]['CO'][:])
@@ -150,7 +185,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     if sp.any(varw==0.):
         userprint('WARNING: Wick covariance has bins with var = 0')
         userprint('WARNING: returning the unsmoothed covariance')
-        return co
+        return covariance
 
     corw = cow/sp.sqrt(varw*varw[:,None])
     corw1d = corw.reshape(nbin*nbin)
@@ -174,51 +209,51 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     Dcor_red = Dcor_red1d.reshape(num_bins_r_par,num_bins_r_trans)
     userprint("")
 
-    #### fit for L and A at each drp
-    def corrfun(idrp,idrt,L,A):
-        r = sp.sqrt(float(idrt)**2+float(idrp)**2) - float(idrp)
+    #### fit for L and A at each delta_r_par
+    def corrfun(index_delta_r_par,index_delta_r_trans,L,A):
+        r = sp.sqrt(float(index_delta_r_trans)**2+float(index_delta_r_par)**2) - float(index_delta_r_par)
         return A*sp.exp(-r/L)
-    def chisq(L,A,idrp):
+    def chisq(L,A,index_delta_r_par):
         chi2 = 0.
-        idrp = int(idrp)
-        for idrt in range(1,num_bins_r_trans):
-            chi = Dcor_red[idrp,idrt]-corrfun(idrp,idrt,L,A)
+        index_delta_r_par = int(index_delta_r_par)
+        for index_delta_r_trans in range(1,num_bins_r_trans):
+            chi = Dcor_red[index_delta_r_par,index_delta_r_trans]-corrfun(index_delta_r_par,index_delta_r_trans,L,A)
             chi2 += chi**2
         chi2 = chi2*num_bins_r_par*nbin
         return chi2
 
     Lfit = np.zeros(num_bins_r_par)
     Afit = np.zeros(num_bins_r_par)
-    for idrp in range(num_bins_r_par):
+    for index_delta_r_par in range(num_bins_r_par):
         m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),
             A=1.,error_A=0.2,
-            idrp=idrp,fix_idrp=True,
+            index_delta_r_par=index_delta_r_par,fix_index_delta_r_par=True,
             userprint_level=1,errordef=1.)
         m.migrad()
-        Lfit[idrp] = m.values['L']
-        Afit[idrp] = m.values['A']
+        Lfit[index_delta_r_par] = m.values['L']
+        Afit[index_delta_r_par] = m.values['A']
 
     #### hybrid covariance from wick + fit
-    co_smooth = sp.sqrt(var*var[:,None])
+    covariance_smooth = sp.sqrt(var*var[:,None])
 
     cor0 = Dcor_red1d[rtindex==0]
     for i in range(nbin):
         userprint("\rupdating {}".format(i),end="")
         for j in range(i+1,nbin):
-            idrp = idrp2d[i,j]
-            idrt = idrt2d[i,j]
+            index_delta_r_par = idrp2d[i,j]
+            index_delta_r_trans = idrt2d[i,j]
             newcov = corw[i,j]
-            if (idrt == 0):
-                newcov += cor0[idrp]
+            if (index_delta_r_trans == 0):
+                newcov += cor0[index_delta_r_par]
             else:
-                newcov += corrfun(idrp,idrt,Lfit[idrp],Afit[idrp])
-            co_smooth[i,j] *= newcov
-            co_smooth[j,i] *= newcov
+                newcov += corrfun(index_delta_r_par,index_delta_r_trans,Lfit[index_delta_r_par],Afit[index_delta_r_par])
+            covariance_smooth[i,j] *= newcov
+            covariance_smooth[j,i] *= newcov
 
     userprint("\n")
 
     h = fitsio.FITS(outfile,'rw',clobber=True)
-    h.write([co_smooth],names=['CO'],extname='COR')
+    h.write([covariance_smooth],names=['CO'],extname='COR')
     h.close()
     userprint(outfile,' written')
 

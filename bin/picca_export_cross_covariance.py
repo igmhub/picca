@@ -7,7 +7,7 @@ import fitsio
 import argparse
 import sys
 
-from picca.utils import compute_covariance, userprint
+from picca.utils import compute_cov, userprint
 
 if __name__ == '__main__':
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     weights  = sp.append(data[0]['WE'],data[1]['WE'],axis=1)
 
     ### Compute the covariance
-    covariance = compute_covariance(da,weights)
+    covariance = compute_cov(da,weights)
 
     ### Get the cross-covariance
     size1 = data[0]['DA'].shape[1]

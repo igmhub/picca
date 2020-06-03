@@ -6,7 +6,7 @@ import scipy as sp
 import scipy.linalg
 import argparse
 
-from picca.utils import smooth_cov, compute_covariance
+from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
 
 if __name__ == '__main__':
@@ -81,7 +81,7 @@ if __name__ == '__main__':
             userprint('WARNING: The correlation-matrix has some incorrect values')
         tvar = sp.diagonal(cor)
         cor = cor/sp.sqrt(tvar*tvar[:,None])
-        covariance = compute_covariance(da,weights)
+        covariance = compute_cov(da,weights)
         var = sp.diagonal(covariance)
         covariance = cor * sp.sqrt(var*var[:,None])
     else:
@@ -92,7 +92,7 @@ if __name__ == '__main__':
             covariance = smooth_cov(da,weights,r_par,r_trans,drt=binSizeT,drp=binSizeP)
         else:
             userprint('INFO: The covariance will not be smoothed')
-            covariance = compute_covariance(da,weights)
+            covariance = compute_cov(da,weights)
 
     da = (da*weights).sum(axis=0)
     weights = weights.sum(axis=0)

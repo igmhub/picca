@@ -7,7 +7,7 @@ import scipy as sp
 import scipy.linalg
 import argparse
 
-from picca.utils import smooth_cov, compute_covariance, userprint
+from picca.utils import smooth_cov, compute_cov, userprint
 
 if __name__ == '__main__':
 
@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
         if args.do_not_smooth_cov:
             userprint('INFO: The covariance will not be smoothed')
-            covariance = compute_covariance(da,weights)
+            covariance = compute_cov(da,weights)
         else:
             userprint('INFO: The covariance will be smoothed')
             binSizeRP = (data['RPMAX']-data['RPMIN']) / data['NP']
