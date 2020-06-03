@@ -2,7 +2,7 @@
 
 These are:
     - userprint
-    - cov
+    - compute_covariance
     - smooth_cov
     - smooth_cov_wick
     - compute_ang_max
@@ -32,12 +32,12 @@ def userprint(*args, **kwds):
     sys.stdout.flush()
 
 
-def cov(xi, weights):
-    """Computes the covariance matrix
+def compute_covariance(xi, weights):
+    """Computes the covariance matrix using the subsampling technique
 
     Args:
         xi: array of floats
-            Correlation function measurement in each helpix
+            Correlation function measburement in each helpix
         weights: array of floats
             Weights on the correlation function measurement
 
@@ -65,7 +65,7 @@ def cov(xi, weights):
 def smooth_cov(da,weights,r_par,r_trans,drt=4,drp=4,co=None):
 
     if co is None:
-        co = cov(da,weights)
+        co = compute_covariance(da,weights)
 
     nda = co.shape[1]
     var = sp.diagonal(co)
@@ -130,7 +130,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     num_bins_r_trans = head['NT']
     h.close()
 
-    co = cov(da,weights)
+    co = compute_covariance(da,weights)
 
     nbin = da.shape[1]
     var = sp.diagonal(co)

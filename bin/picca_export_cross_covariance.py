@@ -7,7 +7,7 @@ import fitsio
 import argparse
 import sys
 
-from picca.utils import cov, userprint
+from picca.utils import compute_covariance, userprint
 
 if __name__ == '__main__':
 
@@ -75,24 +75,24 @@ if __name__ == '__main__':
     weights  = sp.append(data[0]['WE'],data[1]['WE'],axis=1)
 
     ### Compute the covariance
-    co = cov(da,weights)
+    covariance = compute_covariance(da,weights)
 
     ### Get the cross-covariance
     size1 = data[0]['DA'].shape[1]
-    cross_co = co.copy()
+    cross_co = covariance.copy()
     cross_co = cross_co[:,size1:]
     cross_co = cross_co[:size1,:]
 
     ### Get the cross-correlation
-    var = sp.diagonal(co)
-    cor = co/sp.sqrt(var*var[:,None])
+    var = sp.diagonal(covariance)
+    cor = covariance/sp.sqrt(var*var[:,None])
     cross_cor = cor.copy()
     cross_cor = cross_cor[:,size1:]
     cross_cor = cross_cor[:size1,:]
 
     ### Test if valid
     try:
-        scipy.linalg.cholesky(co)
+        scipy.linalg.cholesky(covariance)
     except scipy.linalg.LinAlgError:
         userprint('WARNING: Matrix is not positive definite')
 

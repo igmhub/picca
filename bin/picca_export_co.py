@@ -7,7 +7,7 @@ import scipy as sp
 import scipy.linalg
 import argparse
 
-from picca.utils import smooth_cov, cov, userprint
+from picca.utils import smooth_cov, compute_covariance, userprint
 
 if __name__ == '__main__':
 
@@ -125,9 +125,9 @@ if __name__ == '__main__':
     elif args.get_cov_from_poisson:
         userprint('INFO: Compute covariance from Poisson statistics')
         w = data['corr_RR']>0.
-        co = np.zeros(data['corr_DD'].size)
-        co[w] = (data['COEF']/2.*data['corr_DD'][w])**2/(data['COEF']/2.*data['corr_RR'][w])**3
-        data['CO'] = sp.diag(co)
+        covariance = np.zeros(data['corr_DD'].size)
+        covariance[w] = (data['COEF']/2.*data['corr_DD'][w])**2/(data['COEF']/2.*data['corr_RR'][w])**3
+        data['CO'] = sp.diag(covariance)
     else:
         userprint('INFO: Compute covariance from sub-sampling')
 
@@ -180,13 +180,13 @@ if __name__ == '__main__':
 
         if args.do_not_smooth_cov:
             userprint('INFO: The covariance will not be smoothed')
-            co = cov(da,weights)
+            covariance = compute_covariance(da,weights)
         else:
             userprint('INFO: The covariance will be smoothed')
             binSizeRP = (data['RPMAX']-data['RPMIN']) / data['NP']
             binSizeRT = (data['RTMAX']-0.) / data['NT']
-            co = smooth_cov(da,weights,data['RP'],data['RT'],drp=binSizeRP,drt=binSizeRT)
-        data['CO'] = co
+            covariance = smooth_cov(da,weights,data['RP'],data['RT'],drp=binSizeRP,drt=binSizeRT)
+        data['CO'] = covariance
 
     try:
         scipy.linalg.cholesky(data['CO'])

@@ -6,7 +6,7 @@ import scipy as sp
 import scipy.linalg
 import argparse
 
-from picca.utils import smooth_cov, cov
+from picca.utils import smooth_cov, compute_covariance
 from picca.utils import userprint
 
 if __name__ == '__main__':
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     if args.cov is not None:
         userprint('INFO: The covariance-matrix will be read from file: {}'.format(args.cov))
         hh = fitsio.FITS(args.cov)
-        co = hh[1]['CO'][:]
+        covariance = hh[1]['CO'][:]
         hh.close()
     elif args.cor is not None:
         userprint('INFO: The correlation-matrix will be read from file: {}'.format(args.cor))
@@ -81,18 +81,18 @@ if __name__ == '__main__':
             userprint('WARNING: The correlation-matrix has some incorrect values')
         tvar = sp.diagonal(cor)
         cor = cor/sp.sqrt(tvar*tvar[:,None])
-        co = cov(da,weights)
-        var = sp.diagonal(co)
-        co = cor * sp.sqrt(var*var[:,None])
+        covariance = compute_covariance(da,weights)
+        var = sp.diagonal(covariance)
+        covariance = cor * sp.sqrt(var*var[:,None])
     else:
         binSizeP = (r_par_max-r_par_min) / num_bins_r_par
         binSizeT = (r_trans_max-0.) / num_bins_r_trans
         if not args.do_not_smooth_cov:
             userprint('INFO: The covariance will be smoothed')
-            co = smooth_cov(da,weights,r_par,r_trans,drt=binSizeT,drp=binSizeP)
+            covariance = smooth_cov(da,weights,r_par,r_trans,drt=binSizeT,drp=binSizeP)
         else:
             userprint('INFO: The covariance will not be smoothed')
-            co = cov(da,weights)
+            covariance = compute_covariance(da,weights)
 
     da = (da*weights).sum(axis=0)
     weights = weights.sum(axis=0)
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     da[w]/=weights[w]
 
     try:
-        scipy.linalg.cholesky(co)
+        scipy.linalg.cholesky(covariance)
     except scipy.linalg.LinAlgError:
         userprint('WARNING: Matrix is not positive definite')
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
         {'name':'NT','value':num_bins_r_trans,'comment':'Number of bins in r-transverse'}
     ]
     comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
-    h.write([r_par,r_trans,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
+    h.write([r_par,r_trans,z,da,covariance,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
     comment = ['R-parallel model','R-transverse model','Redshift model']
     h.write([dmrp,dmrt,dmz],names=['DMRP','DMRT','DMZ'],comment=comment,extname='DMATTRI')
     h.close()
