@@ -136,22 +136,22 @@ def smooth_cov(xi, weights, r_par, r_trans, delta_r_trans=4.0, delta_r_par=4.0,
             correlation_smooth[index2, index] = correlation_smooth[index,
                                                                    index2]
 
-
     userprint("\n")
     covariance_smooth = correlation_smooth * np.sqrt(var*var[:, None])
     return covariance_smooth
 
-def smooth_cov_wick(infile,Wick_infile,outfile):
+def smooth_cov_wick(infile, Wick_infile, outfile):
     """
     Model the missing correlation in the Wick computation
     with an exponential
 
     Args:
-        infile (str): path to the correlation function
-            (produced by picca_cf, picca_xcf)
-        Wick_infile (str): path to the Wick correlation function
-            (produced by picca_wick, picca_xwick)
-        outfile (str): poutput path
+        infile: str
+            Correlation function (produced by picca_cf, picca_xcf)
+        Wick_infile: str
+            Wick correlation function (produced by picca_wick, picca_xwick)
+        outfile: str
+            output path
 
     Returns:
         None

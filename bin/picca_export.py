@@ -89,7 +89,7 @@ if __name__ == '__main__':
         binSizeT = (r_trans_max-0.) / num_bins_r_trans
         if not args.do_not_smooth_cov:
             userprint('INFO: The covariance will be smoothed')
-            covariance = smooth_cov(da,weights,r_par,r_trans,drt=binSizeT,drp=binSizeP)
+            covariance = smooth_cov(da,weights,r_par,r_trans,delta_r_trans=binSizeT,delta_r_par=binSizeP)
         else:
             userprint('INFO: The covariance will not be smoothed')
             covariance = compute_cov(da,weights)

@@ -185,7 +185,7 @@ if __name__ == '__main__':
             userprint('INFO: The covariance will be smoothed')
             binSizeRP = (data['RPMAX']-data['RPMIN']) / data['NP']
             binSizeRT = (data['RTMAX']-0.) / data['NT']
-            covariance = smooth_cov(da,weights,data['RP'],data['RT'],drp=binSizeRP,drt=binSizeRT)
+            covariance = smooth_cov(da,weights,data['RP'],data['RT'],delta_r_par=binSizeRP,delta_r_trans=binSizeRT)
         data['CO'] = covariance
 
     try:
