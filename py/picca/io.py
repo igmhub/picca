@@ -172,7 +172,8 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
 
 
         #selection of quasars with good redshifts only, the exact definition here should be decided, could in principle be moved to later
-        select=(h[1]['SPECTYPE'][:]=='QSO')&(h[1]['ZWARN'][:]==0)
+        
+        select=(h[1]['SPECTYPE'][:].astype(str)=='QSO')&(h[1]['ZWARN'][:]==0)    #astype needed as this can be binary or unicode str depending on fitsio/python combination
         ## Redshift
         zqso = h[1]['Z'][:][select]
 
