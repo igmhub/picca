@@ -201,23 +201,25 @@ def smooth_cov_wick(filename, wick_filename, results):
     index_delta_r_trans1d = index_delta_r_trans2d.reshape(num_bins*num_bins)
     index_delta_r_par1d = index_delta_r_par2d.reshape(num_bins*num_bins)
 
-    #### reduced covariance  (50*50)
-    Dcor_red1d = np.zeros(num_bins)
-    for idr in range(0,num_bins):
-        userprint("\rsmoothing {}".format(idr),end="")
-        Dcor_red1d[idr] = np.mean(delta_correlation1d[(index_delta_r_par1d==index_r_par[idr])&(index_delta_r_trans1d==index_r_trans[idr])])
-    Dcor_red = Dcor_red1d.reshape(num_bins_r_par,num_bins_r_trans)
+    # compute the reduced correlation
+    reduced_delta_correlation1d = np.zeros(num_bins)
+    for index in range(0, num_bins):
+        userprint("\rsmoothing {}".format(idr), end="")
+        reduced_delta_correlation1d[index] = np.mean(delta_correlation1d[(index_delta_r_par1d == index_r_par[index]) &
+                                                                         (index_delta_r_trans1d == index_r_trans[index])])
+    reduced_delta_correlation = reduced_delta_correlation1d.reshape(num_bins_r_par,
+                                                                    num_bins_r_trans)
     userprint("")
 
     #### fit for L and A at each delta_r_par
-    def corrfun(index_delta_r_par,index_delta_r_trans,L,A):
+    def corrfun(index_delta_r_par, index_delta_r_trans, L, A):
         r = sp.sqrt(float(index_delta_r_trans)**2+float(index_delta_r_par)**2) - float(index_delta_r_par)
         return A*sp.exp(-r/L)
     def chisq(L,A,index_delta_r_par):
         chi2 = 0.
         index_delta_r_par = int(index_delta_r_par)
         for index_delta_r_trans in range(1,num_bins_r_trans):
-            chi = Dcor_red[index_delta_r_par,index_delta_r_trans]-corrfun(index_delta_r_par,index_delta_r_trans,L,A)
+            chi = reduced_delta_correlation[index_delta_r_par,index_delta_r_trans]-corrfun(index_delta_r_par,index_delta_r_trans,L,A)
             chi2 += chi**2
         chi2 = chi2*num_bins_r_par*num_bins
         return chi2
@@ -236,7 +238,7 @@ def smooth_cov_wick(filename, wick_filename, results):
     #### hybrid covariance from wick + fit
     covariance_smooth = sp.sqrt(var*var[:,None])
 
-    cor0 = Dcor_red1d[index_r_trans==0]
+    cor0 = reduced_delta_correlation1d[index_r_trans==0]
     for i in range(num_bins):
         userprint("\rupdating {}".format(i),end="")
         for j in range(i+1,num_bins):
