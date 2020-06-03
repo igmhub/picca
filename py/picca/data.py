@@ -1031,6 +1031,10 @@ class Delta(QSO):
         # variables computed in function cf.fill_neighs or xcf.fill_neighs
         self.neighbours = None
 
+        # variables used in function cf.compute_wick_terms and
+        # main from bin.picca_wick
+        self.fname = None
+
     @classmethod
     def from_forest(cls,
                     forest,
