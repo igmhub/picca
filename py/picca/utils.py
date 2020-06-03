@@ -190,22 +190,22 @@ def smooth_cov_wick(filename, wick_filename, results):
     correlation_wick1d = correlation_wick.reshape(num_bins*num_bins)
 
     # difference between 1d correlations
-    Dcor1d = correlation1d - correlation_wick1d
+    delta_correlation1d = correlation1d - correlation_wick1d
 
-    #### indices
-    ind = np.arange(num_bins)
-    rtindex = ind%num_bins_r_trans
-    rpindex = ind//num_bins_r_trans
-    idrt2d = abs(rtindex-rtindex[:,None])
-    idrp2d = abs(rpindex-rpindex[:,None])
-    idrt1d = idrt2d.reshape(num_bins*num_bins)
-    idrp1d = idrp2d.reshape(num_bins*num_bins)
+    # indices
+    index = np.arange(num_bins)
+    index_r_trans = index%num_bins_r_trans
+    index_r_par = index//num_bins_r_trans
+    index_delta_r_trans2d = abs(index_r_trans - index_r_trans[:,None])
+    index_delta_r_par2d = abs(index_r_par - index_r_par[:,None])
+    index_delta_r_trans1d = index_delta_r_trans2d.reshape(num_bins*num_bins)
+    index_delta_r_par1d = index_delta_r_par2d.reshape(num_bins*num_bins)
 
     #### reduced covariance  (50*50)
     Dcor_red1d = np.zeros(num_bins)
     for idr in range(0,num_bins):
         userprint("\rsmoothing {}".format(idr),end="")
-        Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
+        Dcor_red1d[idr] = np.mean(delta_correlation1d[(index_delta_r_par1d==index_r_par[idr])&(index_delta_r_trans1d==index_r_trans[idr])])
     Dcor_red = Dcor_red1d.reshape(num_bins_r_par,num_bins_r_trans)
     userprint("")
 
@@ -236,12 +236,12 @@ def smooth_cov_wick(filename, wick_filename, results):
     #### hybrid covariance from wick + fit
     covariance_smooth = sp.sqrt(var*var[:,None])
 
-    cor0 = Dcor_red1d[rtindex==0]
+    cor0 = Dcor_red1d[index_r_trans==0]
     for i in range(num_bins):
         userprint("\rupdating {}".format(i),end="")
         for j in range(i+1,num_bins):
-            index_delta_r_par = idrp2d[i,j]
-            index_delta_r_trans = idrt2d[i,j]
+            index_delta_r_par = index_delta_r_par2d[i,j]
+            index_delta_r_trans = index_delta_r_trans2d[i,j]
             newcov = correlation_wick[i,j]
             if (index_delta_r_trans == 0):
                 newcov += cor0[index_delta_r_par]
