@@ -140,70 +140,68 @@ def smooth_cov(xi, weights, r_par, r_trans, delta_r_trans=4.0, delta_r_par=4.0,
     covariance_smooth = correlation_smooth * np.sqrt(var*var[:, None])
     return covariance_smooth
 
-def smooth_cov_wick(infile, Wick_infile, outfile):
-    """
+def smooth_cov_wick(filename, wick_filename, results):
+    """Smoothes the Wick covariance matrix, saves it to out_file
+
     Model the missing correlation in the Wick computation
     with an exponential
 
     Args:
-        infile: str
+        filename: str
             Correlation function (produced by picca_cf, picca_xcf)
-        Wick_infile: str
-            Wick correlation function (produced by picca_wick, picca_xwick)
-        outfile: str
-            output path
-
-    Returns:
-        None
+        wick_filename: str
+            Wick covariance matrix (produced by picca_wick, picca_xwick)
+        results: str
+            Filename where the smoothed covariance matrix will be saved
     """
 
-    h = fitsio.FITS(infile)
-    xi = sp.array(h[2]['DA'][:])
-    weights = sp.array(h[2]['WE'][:])
-    head = h[1].read_header()
-    num_bins_r_par = head['NP']
-    num_bins_r_trans = head['NT']
-    h.close()
+    hdul = fitsio.FITS(filename)
+    xi = np.array(hdul[2]['DA'][:])
+    weights = np.array(hdul[2]['WE'][:])
+    header = hdul[1].read_header()
+    num_bins_r_par = header['NP']
+    num_bins_r_trans = header['NT']
+    hdul.close()
 
-    covariance = compute_cov(xi,weights)
+    covariance = compute_cov(xi, weights)
 
-    nbin = xi.shape[1]
-    var = sp.diagonal(covariance)
-    if sp.any(var==0.):
+    num_bins = xi.shape[1]
+    var = np.diagonal(covariance)
+    if np.any(var == 0.):
         userprint('WARNING: data has some empty bins, impossible to smooth')
-        userprint('WARNING: returning the unsmoothed covariance')
-        return covariance
+        userprint('WARNING: returning')
+        return
 
-    correlation = covariance/sp.sqrt(var*var[:,None])
-    cor1d = correlation.reshape(nbin*nbin)
+    correlation = covariance/sp.sqrt(var*var[:, None])
+    cor1d = correlation.reshape(num_bins*num_bins)
 
-    h = fitsio.FITS(Wick_infile)
+    h = fitsio.FITS(wick_filename)
     cow = sp.array(h[1]['CO'][:])
     h.close()
 
     varw = sp.diagonal(cow)
     if sp.any(varw==0.):
         userprint('WARNING: Wick covariance has bins with var = 0')
-        userprint('WARNING: returning the unsmoothed covariance')
-        return covariance
+        userprint('WARNING: returning')
+        return
 
     corw = cow/sp.sqrt(varw*varw[:,None])
-    corw1d = corw.reshape(nbin*nbin)
+    corw1d = corw.reshape(num_bins*num_bins)
 
     Dcor1d = cor1d - corw1d
 
     #### indices
-    ind = np.arange(nbin)
+    ind = np.arange(num_bins)
     rtindex = ind%num_bins_r_trans
     rpindex = ind//num_bins_r_trans
     idrt2d = abs(rtindex-rtindex[:,None])
     idrp2d = abs(rpindex-rpindex[:,None])
-    idrt1d = idrt2d.reshape(nbin*nbin)
-    idrp1d = idrp2d.reshape(nbin*nbin)
+    idrt1d = idrt2d.reshape(num_bins*num_bins)
+    idrp1d = idrp2d.reshape(num_bins*num_bins)
 
     #### reduced covariance  (50*50)
-    Dcor_red1d = np.zeros(nbin)
-    for idr in range(0,nbin):
+    Dcor_red1d = np.zeros(num_bins)
+    for idr in range(0,num_bins):
         userprint("\rsmoothing {}".format(idr),end="")
         Dcor_red1d[idr] = sp.mean(Dcor1d[(idrp1d==rpindex[idr])&(idrt1d==rtindex[idr])])
     Dcor_red = Dcor_red1d.reshape(num_bins_r_par,num_bins_r_trans)
@@ -219,7 +217,7 @@ def smooth_cov_wick(infile, Wick_infile, outfile):
         for index_delta_r_trans in range(1,num_bins_r_trans):
             chi = Dcor_red[index_delta_r_par,index_delta_r_trans]-corrfun(index_delta_r_par,index_delta_r_trans,L,A)
             chi2 += chi**2
-        chi2 = chi2*num_bins_r_par*nbin
+        chi2 = chi2*num_bins_r_par*num_bins
         return chi2
 
     Lfit = np.zeros(num_bins_r_par)
@@ -237,9 +235,9 @@ def smooth_cov_wick(infile, Wick_infile, outfile):
     covariance_smooth = sp.sqrt(var*var[:,None])
 
     cor0 = Dcor_red1d[rtindex==0]
-    for i in range(nbin):
+    for i in range(num_bins):
         userprint("\rupdating {}".format(i),end="")
-        for j in range(i+1,nbin):
+        for j in range(i+1,num_bins):
             index_delta_r_par = idrp2d[i,j]
             index_delta_r_trans = idrt2d[i,j]
             newcov = corw[i,j]
