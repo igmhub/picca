@@ -439,7 +439,13 @@ good-names=i,
      f,
      Ol,
      dm,
-     xi
+     xi,
+     t1,
+     t2,
+     t3,
+     t4,
+     t5,
+     t6
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
