@@ -28,37 +28,38 @@ def userprint(*args, **kwds):
         *args: arguments passed to print
         **kwargs: keyword arguments passed to print
     """
-    print(*args,**kwds)
+    print(*args, **kwds)
     sys.stdout.flush()
 
 
-def cov(da, weights):
+def cov(xi, weights):
     """Computes the covariance matrix
 
     Args:
-        da:
-
-        weights:
+        xi: array of floats
+            Correlation function measurement in each helpix
+        weights: array of floats
+            Weights on the correlation function measurement
 
     Returns:
         The covariance matrix
     """
 
-    mda = (da*weights).sum(axis=0)
-    swe = weights.sum(axis=0)
-    w = swe>0.
-    mda[w] /= swe[w]
+    mean_xi = (xi*weights).sum(axis=0)
+    sum_weights = weights.sum(axis=0)
+    w = sum_weights > 0.
+    mean_xi[w] /= sum_weights[w]
 
-    wda = weights*(da-mda)
+    meanless_xi_times_weight = weights*(xi - mean_xi)
 
     userprint("Computing cov...")
 
-    co = wda.T.dot(wda)
-    sswe = swe*swe[:,None]
-    w = sswe>0.
-    co[w] /= sswe[w]
+    covariance = meanless_xi_times_weight.T.dot(meanless_xi_times_weight)
+    sum_weights_squared = sum_weights*sum_weights[:, None]
+    w = sum_weights_squared > 0.
+    covariance[w] /= sum_weights_squared[w]
 
-    return co
+    return covariance
 
 
 def smooth_cov(da,weights,r_par,r_trans,drt=4,drp=4,co=None):
@@ -222,7 +223,7 @@ def smooth_cov_wick(infile,Wick_infile,outfile):
     userprint(outfile,' written')
 
     return
-    
+
 
 def compute_ang_max(cosmo, r_trans_max, z_min, z_min2=None):
     """Computes the maximum anglular separation the correlation should be
