@@ -25,7 +25,7 @@ z_ref = None
 z_evol_del = None
 z_evol_obj = None
 lambda_abs = None
-alpha_abs= None
+alpha_abs = None
 
 data = None
 objs = None
@@ -33,23 +33,47 @@ objs = None
 reject = None
 lock = None
 
-cosmo=None
-ang_correlation = None
+cosmo = None
+ang_correlation = False
 
-def fill_neighs(pix):
-    for ipix in pix:
-        for d in data[ipix]:
-            npix = query_disc(nside,[d.x_cart,d.y_cart,d.z_cart],ang_max,inclusive = True)
-            npix = [p for p in npix if p in objs]
-            neighs = [q for p in npix for q in objs[p] if q.thingid != d.thingid]
-            ang = d^neighs
-            w = ang<ang_max
+def fill_neighs(healpixs):
+    """Create and store a list of neighbours for each of the healpix.
+
+    Neighbours
+
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+    """
+    for healpix in healpixs:
+        for delta in data[healpix]:
+            healpix_neighbours = query_disc(
+                nside, [delta.x_cart, delta.y_cart, delta.z_cart],
+                ang_max,
+                inclusive=True)
+            healpix_neighbours = [
+                other_healpix
+                for other_healpix in healpix_neighbours
+                if other_healpix in objs
+            ]
+            neighbours = [
+                obj for other_healpix in healpix_neighbours
+                for obj in objs[other_healpix]
+                if obj.thingid != delta.thingid
+            ]
+            ang = delta^neighbours
+            w = ang < ang_max
             if not ang_correlation:
-                r_comov = sp.array([q.r_comov for q in neighs])
-                w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < r_par_max
-                w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > r_par_min
-            neighs = sp.array(neighs)[w]
-            d.neighbours = sp.array([q for q in neighs if (d.z[-1]+q.z_qso)/2.>=z_cut_min and (d.z[-1]+q.z_qso)/2.<z_cut_max])
+                r_comov = np.array([obj.r_comov for obj in neighbours])
+                w &= (delta.r_comov[0] - r_comov)*np.cos(ang/2.) < r_par_max
+                w &= (delta.r_comov[-1] - r_comov)*np.cos(ang/2.) > r_par_min
+            neighbours = np.array(neighbours)[w]
+            delta.neighbours = np.array([
+                obj
+                for obj in neighbours
+                if ((delta.z[-1] + obj.z_qso)/2. >= z_cut_min and
+                    (delta.z[-1] + obj.z_qso)/2. < z_cut_max)
+            ])
 
 def xcf(pix):
     xi = np.zeros(num_bins_r_par*num_bins_r_trans)
@@ -150,12 +174,12 @@ def dmat(pix):
             if w.sum()==0:continue
             npairs += len(d1.neighbours)
             npairs_used += w.sum()
-            neighs = d1.neighbours[w]
-            ang = d1^neighs
-            r2 = [q.r_comov for q in neighs]
-            rdm2 = [q.dist_m for q in neighs]
-            w2 = [q.weights for q in neighs]
-            z2 = [q.z_qso for q in neighs]
+            neighbours = d1.neighbours[w]
+            ang = d1^neighbours
+            r2 = [q.r_comov for q in neighbours]
+            rdm2 = [q.dist_m for q in neighbours]
+            w2 = [q.weights for q in neighbours]
+            z2 = [q.z_qso for q in neighbours]
             fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
@@ -353,17 +377,17 @@ def wickT(pix):
             r1 = d1.r_comov
             z1 = d1.z
 
-            neighs = d1.neighbours
-            ang12 = d1^neighs
-            r2 = sp.array([q2.r_comov for q2 in neighs])
-            z2 = sp.array([q2.z_qso for q2 in neighs])
-            w2 = sp.array([q2.weights for q2 in neighs])
+            neighbours = d1.neighbours
+            ang12 = d1^neighbours
+            r2 = sp.array([q2.r_comov for q2 in neighbours])
+            z2 = sp.array([q2.z_qso for q2 in neighbours])
+            w2 = sp.array([q2.weights for q2 in neighbours])
 
             fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
 
             ### Higher order diagrams
             if (cfWick is None) or (max_diagram<=4): continue
-            thingid2 = sp.array([q2.thingid for q2 in neighs])
+            thingid2 = sp.array([q2.thingid for q2 in neighbours])
             for d3 in sp.array(d1.dneighs):
                 if d3.neighbours.size==0: continue
 
@@ -372,11 +396,11 @@ def wickT(pix):
                 r3 = d3.r_comov
                 w3 = d3.weights
 
-                neighs = d3.neighbours
-                ang34 = d3^neighs
-                r4 = sp.array([q4.r_comov for q4 in neighs])
-                w4 = sp.array([q4.weights for q4 in neighs])
-                thingid4 = sp.array([q4.thingid for q4 in neighs])
+                neighbours = d3.neighbours
+                ang34 = d3^neighbours
+                r4 = sp.array([q4.r_comov for q4 in neighbours])
+                w4 = sp.array([q4.weights for q4 in neighbours])
+                thingid4 = sp.array([q4.thingid for q4 in neighbours])
 
                 if max_diagram==5:
                     w = sp.in1d(d1.neighbours,d3.neighbours)
@@ -601,12 +625,12 @@ def xcf1d(pix):
     for ipix in pix:
         for d in data[ipix]:
 
-            neighs = [q for q in objs[ipix] if q.thingid==d.thingid]
-            if len(neighs)==0: continue
+            neighbours = [q for q in objs[ipix] if q.thingid==d.thingid]
+            if len(neighbours)==0: continue
 
-            z_qso = [ q.z_qso for q in neighs ]
-            we_qso = [ q.weights for q in neighs ]
-            l_qso = [ 10.**q.log_lambda for q in neighs ]
+            z_qso = [ q.z_qso for q in neighbours ]
+            we_qso = [ q.weights for q in neighbours ]
+            l_qso = [ 10.**q.log_lambda for q in neighbours ]
             ang = np.zeros(len(l_qso))
 
             cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.delta,z_qso,l_qso,l_qso,we_qso,ang)
