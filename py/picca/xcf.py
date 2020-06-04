@@ -19,7 +19,7 @@ ang_max = None
 nside = None
 
 counter = None
-ndata = None
+num_data = None
 
 z_ref = None
 z_evol_del = None
@@ -87,7 +87,7 @@ def xcf(pix):
         for d in data[ipix]:
             with lock:
                 counter.value +=1
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data,3)),end="")
             if (d.neighbours.size != 0):
                 ang = d^d.neighbours
                 z_qso = [q.z_qso for q in d.neighbours]
@@ -162,7 +162,7 @@ def dmat(pix):
     npairs_used = 0
     for p in pix:
         for d1 in data[p]:
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndata,3)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data,3)),end="")
             with lock:
                 counter.value += 1
             r1 = d1.r_comov
@@ -259,7 +259,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
     for p in pix:
         for d in data[p]:
             with lock:
-                userprint("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndata,3)),end="")
+                userprint("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./num_data,3)),end="")
                 counter.value += 1
 
             r = sp.random.rand(len(d.neighbours))
@@ -367,7 +367,7 @@ def wickT(pix):
         if w.sum()==0: continue
 
         for d1 in [ td for ti,td in enumerate(data[ipix]) if w[ti] ]:
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./ndata/(1.-reject),3)),end="")
+            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data/(1.-reject),3)),end="")
             with lock:
                 counter.value += 1
             if d1.neighbours.size==0: continue
