@@ -149,39 +149,52 @@ def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
     results.close()
 
 
-def desi_convert_DLA(in_path,out_path):
-    """
-    Convert a catalog of DLA from a DESI format to
-    the format used by picca
-    """
+def desi_convert_dla(in_path, out_path):
+    """Convert a catalog of DLA from a DESI format to the format used by picca
 
-    fromDESIkey2piccaKey = {'RA':'RA', 'DEC':'DEC',
-        'Z':'Z_DLA_RSD', 'ZQSO':'Z_QSO_RSD',
-        'NHI':'N_HI_DLA', 'THING_ID':'MOCKID', 'DLAID':'DLAID',
-        'PLATE':'MOCKID', 'MJD':'MOCKID', 'FIBERID':'MOCKID' }
-
+    Args:
+        in_path: string
+            Full path filename containing the ASCII DLA catalogue
+        out_path: string
+            Full path filename where the fits DLA catalogue will be written to
+    """
+    from_desi_key_to_picca_key = {
+        'RA': 'RA',
+        'DEC': 'DEC',
+        'Z': 'Z_DLA_RSD',
+        'ZQSO': 'Z_QSO_RSD',
+        'NHI': 'N_HI_DLA',
+        'THING_ID': 'MOCKID',
+        'DLAID': 'DLAID',
+        'PLATE': 'MOCKID',
+        'MJD': 'MOCKID',
+        'FIBERID': 'MOCKID',
+    }
+    # read catalogue
     cat = {}
-    h = fitsio.FITS(in_path)
-    for k,v in fromDESIkey2piccaKey.items():
-        cat[k] = h['DLACAT'][v][:]
-    h.close()
-    userprint('INFO: Found {} DLA from {} quasars'.format(cat['Z'].size, np.unique(cat['THING_ID']).size))
+    hdul = fitsio.FITS(in_path)
+    for key, value in from_desi_key_to_picca_key.items():
+        cat[key] = hdul['DLACAT'][value][:]
+    hdul.close()
+    userprint(("INFO: Found {} DLA from {} "
+               "quasars").format(cat['Z'].size,
+                                 np.unique(cat['THING_ID']).size))
+    # sort by THING_ID
+    w = np.argsort(cat['THING_ID'])
+    for key in cat:
+        cat[key] = cat[key][w]
 
-    w = sp.argsort(cat['THING_ID'])
-    for k in cat.keys():
-        cat[k] = cat[k][w]
+    for key in ['RA', 'DEC']:
+        cat[key] = cat[key].astype('float64')
 
-    for k in ['RA','DEC']:
-        cat[k] = cat[k].astype('float64')
+    # save results
+    results = fitsio.FITS(out_path, 'rw', clobber=True)
+    cols = list(cat.values())
+    names = list(cat)
+    results.write(cols, names=names, extname='DLACAT')
+    results.close()
 
-    ### Save
-    out = fitsio.FITS(out_path,'rw',clobber=True)
-    cols = [ v for v in cat.values() ]
-    names = [ k for k in cat.keys() ]
-    out.write(cols,names=names,extname='DLACAT')
-    out.close()
 
-    return
 def desi_from_truth_to_drq(truth,targets,drq_filename,spectype="QSO"):
     '''
     Transform a desi truth.fits file and a
