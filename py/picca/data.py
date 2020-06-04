@@ -466,7 +466,7 @@ class Forest(QSO):
         QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
 
         # apply dust extinction correction
-        if not Forest.extinction_bv_map is None:
+        if Forest.extinction_bv_map is not None:
             corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
             flux /= corr
             ivar *= corr**2
