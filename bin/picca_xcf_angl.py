@@ -1,4 +1,4 @@
-num_data#!/usr/bin/env python
+#!/usr/bin/env python
 import scipy as sp
 import fitsio
 import argparse

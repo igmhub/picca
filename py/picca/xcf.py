@@ -115,6 +115,7 @@ def xcf(pix):
     r_trans[w]/=weights[w]
     z[w]/=weights[w]
     return weights,xi,r_par,r_trans,z,nb
+
 @jit
 def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     if ang_correlation:
