@@ -8,6 +8,7 @@ import scipy.linalg
 from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
 
+
 def main():
     """Export auto and cross-correlation for the fitter."""
     parser = argparse.ArgumentParser(
@@ -21,12 +22,11 @@ def main():
         required=True,
         help='Correlation produced via picca_cf.py, picca_xcf.py, ...')
 
-    parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
     parser.add_argument(
         '--dmat',
@@ -59,11 +59,10 @@ def main():
         required=False,
         help='Remove a correlation from shuffling the distribution of los')
 
-    parser.add_argument(
-        '--do-not-smooth-cov',
-        action='store_true',
-        default=False,
-        help='Do not smooth the covariance matrix')
+    parser.add_argument('--do-not-smooth-cov',
+                        action='store_true',
+                        default=False,
+                        help='Do not smooth the covariance matrix')
 
     args = parser.parse_args()
 
@@ -88,7 +87,7 @@ def main():
         hdul = fitsio.FITS(args.remove_shuffled_correlation)
         xi_shuffled = hdul['COR']['DA'][:]
         weight_shuffled = hdul['COR']['WE'][:]
-        xi_shuffled = (xi_shuffled*weight_shuffled).sum(axis=1)
+        xi_shuffled = (xi_shuffled * weight_shuffled).sum(axis=1)
         weight_shuffled = weight_shuffled.sum(axis=1)
         w = weight_shuffled > 0.
         xi_shuffled[w] /= weight_shuffled[w]
@@ -113,23 +112,26 @@ def main():
             userprint(("WARNING: The correlation-matrix has some incorrect "
                        "values"))
         var = np.diagonal(correlation)
-        correlation = correlation/np.sqrt(var*var[:, None])
+        correlation = correlation / np.sqrt(var * var[:, None])
         covariance = compute_cov(xi, weights)
         var = np.diagonal(covariance)
-        covariance = correlation * np.sqrt(var*var[:, None])
+        covariance = correlation * np.sqrt(var * var[:, None])
     else:
         delta_r_par = (r_par_max - r_par_min) / num_bins_r_par
         delta_r_trans = (r_trans_max - 0.) / num_bins_r_trans
         if not args.do_not_smooth_cov:
             userprint("INFO: The covariance will be smoothed")
-            covariance = smooth_cov(xi, weights, r_par, r_trans,
+            covariance = smooth_cov(xi,
+                                    weights,
+                                    r_par,
+                                    r_trans,
                                     delta_r_trans=delta_r_trans,
                                     delta_r_par=delta_r_par)
         else:
             userprint("INFO: The covariance will not be smoothed")
             covariance = compute_cov(xi, weights)
 
-    xi = (xi*weights).sum(axis=0)
+    xi = (xi * weights).sum(axis=0)
     weights = weights.sum(axis=0)
     w = weights > 0
     xi[w] /= weights[w]
@@ -162,20 +164,31 @@ def main():
         z_dmat = z.copy()
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [
-        {'name': 'RPMIN', 'value': r_par_min,
-         'comment': 'Minimum r-parallel'},
-        {'name': 'RPMAX', 'value': r_par_max,
-         'comment': 'Maximum r-parallel'},
-        {'name': 'RTMAX', 'value': r_trans_max,
-         'comment': 'Maximum r-transverse'},
-        {'name': 'NP', 'value': num_bins_r_par,
-         'comment': 'Number of bins in r-parallel'},
-        {'name': 'NT', 'value': num_bins_r_trans,
-         'comment': 'Number of bins in r-transverse'}
+    header = [{
+        'name': 'RPMIN',
+        'value': r_par_min,
+        'comment': 'Minimum r-parallel'
+    }, {
+        'name': 'RPMAX',
+        'value': r_par_max,
+        'comment': 'Maximum r-parallel'
+    }, {
+        'name': 'RTMAX',
+        'value': r_trans_max,
+        'comment': 'Maximum r-transverse'
+    }, {
+        'name': 'NP',
+        'value': num_bins_r_par,
+        'comment': 'Number of bins in r-parallel'
+    }, {
+        'name': 'NT',
+        'value': num_bins_r_trans,
+        'comment': 'Number of bins in r-transverse'
+    }]
+    comment = [
+        'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
+        'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
-    comment = ['R-parallel', 'R-transverse', 'Redshift', 'Correlation',
-               'Covariance matrix', 'Distortion matrix', 'Number of pairs']
     results.write([r_par, r_trans, z, xi, covariance, dmat, num_pairs],
                   names=['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB'],
                   comment=comment,
@@ -187,6 +200,7 @@ def main():
                   comment=comment,
                   extname='DMATTRI')
     results.close()
+
 
 if __name__ == '__main__':
     main()
