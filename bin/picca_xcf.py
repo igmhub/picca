@@ -259,44 +259,53 @@ def main():
     xcf.nside = args.nside
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
 
-    cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
+    # load fiducial cosmology
+    cosmo = constants.Cosmo(Om=args.fid_Om,
+                            Or=args.fid_Or,
+                            Ok=args.fid_Ok,
+                            wl=args.fid_wl)
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
-        args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec,no_project=args.no_project,
-        from_image=args.from_image)
-    xcf.npix = len(dels)
-    xcf.dels = dels
-    xcf.ndels = ndels
+    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
+                                                  args.nside,
+                                                  xcf.lambda_abs,
+                                                  args.z_evol_del,
+                                                  args.z_ref,
+                                                  cosmo=cosmo,
+                                                  max_num_spec=args.nspec,
+                                                  no_project=args.no_project,
+                                                  from_image=args.from_image)
+    xcf.data = data
+    xcf.ndata = ndata
     userprint("")
-    userprint("done, npix = {}\n".format(xcf.npix))
+    userprint("done, npix = {}\n".format(len(data)))
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
         Forest.delta_log_lambda = None
-        for p in xcf.dels:
-            for d in xcf.dels[p]:
+        for p in xcf.data:
+            for d in xcf.data[p]:
                 delta_log_lambda = sp.asarray([d.log_lambda[ii]-d.log_lambda[ii-1] for ii in range(1,d.log_lambda.size)]).min()
                 if Forest.delta_log_lambda is None:
                     Forest.delta_log_lambda = delta_log_lambda
                 else:
                     Forest.delta_log_lambda = min(delta_log_lambda,Forest.delta_log_lambda)
-        Forest.log_lambda_min  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-Forest.delta_log_lambda/2.
-        Forest.log_lambda_max  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+Forest.delta_log_lambda/2.
-        log_lambda,mean_delta, wst   = prep_del.stack(xcf.dels, stack_from_deltas=True)
-        for p in xcf.dels:
-            for d in xcf.dels[p]:
+        Forest.log_lambda_min  = sp.log10( (z_min+1.)*xcf.lambda_abs )-Forest.delta_log_lambda/2.
+        Forest.log_lambda_max  = sp.log10( (z_max+1.)*xcf.lambda_abs )+Forest.delta_log_lambda/2.
+        log_lambda,mean_delta, wst   = prep_del.stack(xcf.data, stack_from_deltas=True)
+        for p in xcf.data:
+            for d in xcf.data[p]:
                 bins = ((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
                 d.delta -= mean_delta[bins]
 
     ### Find the redshift range
     if (args.z_min_obj is None):
-        dmin_pix = cosmo.get_r_comov(zmin_pix)
+        dmin_pix = cosmo.get_r_comov(z_min)
         dmin_obj = max(0.,dmin_pix+xcf.r_par_min)
         args.z_min_obj = cosmo.distance_to_redshift(dmin_obj)
         userprint("\r z_min_obj = {}\r".format(args.z_min_obj),end="")
     if (args.z_max_obj is None):
-        dmax_pix = cosmo.get_r_comov(zmax_pix)
+        dmax_pix = cosmo.get_r_comov(z_max)
         dmax_obj = max(0.,dmax_pix+xcf.r_par_max)
         args.z_max_obj = cosmo.distance_to_redshift(dmax_obj)
         userprint("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
@@ -308,14 +317,14 @@ def main():
     if not args.shuffle_distrib_obj_seed is None:
         objs = utils.shuffle_distrib_forests(objs,args.shuffle_distrib_obj_seed)
     if not args.shuffle_distrib_forest_seed is None:
-        xcf.dels = utils.shuffle_distrib_forests(xcf.dels,
+        xcf.data = utils.shuffle_distrib_forests(xcf.data,
             args.shuffle_distrib_forest_seed)
 
     userprint("")
     xcf.objs = objs
 
     ###
-    xcf.ang_max = utils.compute_ang_max(cosmo,xcf.r_trans_max,zmin_pix,zmin_obj)
+    xcf.ang_max = utils.compute_ang_max(cosmo,xcf.r_trans_max,z_min,zmin_obj)
 
 
 
@@ -323,7 +332,7 @@ def main():
 
     xcf.lock = Lock()
     cpu_data = {}
-    for p in list(dels.keys()):
+    for p in list(data.keys()):
         cpu_data[p] = [p]
 
     pool = Pool(processes=args.nproc)
