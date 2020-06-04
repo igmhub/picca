@@ -211,29 +211,66 @@ def smooth_cov_wick(filename, wick_filename, results):
                                                                     num_bins_r_trans)
     userprint("")
 
-    #### fit for L and A at each delta_r_par
-    def corrfun(index_delta_r_par, index_delta_r_trans, L, A):
-        r = sp.sqrt(float(index_delta_r_trans)**2+float(index_delta_r_par)**2) - float(index_delta_r_par)
-        return A*sp.exp(-r/L)
-    def chisq(L,A,index_delta_r_par):
+    #### fit for length and amp at each delta_r_par
+    def corrfun(index_delta_r_par, index_delta_r_trans, length, amp):
+        """Models the missing correlation in the Wick computation
+        with an exponential
+
+        Args:
+            index_delta_r_par: int
+                Index associated with the separation in parallel distance
+            index_delta_r_trans: int
+                Index associated with the separation in transverse distance
+            length: float
+                Characteristic length of the exponential
+            amp: float
+                Amplitude of the exponential
+
+        Returns:
+            The model with the issed correlation
+        """
+        r = np.sqrt(float(index_delta_r_trans)**2 +
+                    float(index_delta_r_par)**2) - float(index_delta_r_par)
+        return amp*sp.exp(-r/length)
+
+    def chi2(length, amp, index_delta_r_par):
+        """Computes the chi2 for a given set of parameters in the model
+
+        Args:
+            length: float
+                Characteristic length of the exponential
+            amp: float
+                Amplitude of the exponential
+            index_delta_r_par: int
+                Index associated with the separation in parallel distance
+
+        Returns:
+            The chi2 value
+        """
         chi2 = 0.
         index_delta_r_par = int(index_delta_r_par)
         for index_delta_r_trans in range(1,num_bins_r_trans):
-            chi = reduced_delta_correlation[index_delta_r_par,index_delta_r_trans]-corrfun(index_delta_r_par,index_delta_r_trans,L,A)
+            chi = reduced_delta_correlation[index_delta_r_par,index_delta_r_trans]-corrfun(index_delta_r_par,index_delta_r_trans,length,amp)
             chi2 += chi**2
         chi2 = chi2*num_bins_r_par*num_bins
         return chi2
 
-    Lfit = np.zeros(num_bins_r_par)
-    Afit = np.zeros(num_bins_r_par)
+    length_fit = np.zeros(num_bins_r_par)
+    amp_fit = np.zeros(num_bins_r_par)
     for index_delta_r_par in range(num_bins_r_par):
-        m = iminuit.Minuit(chisq,L=5.,error_L=0.2,limit_L=(1.,400.),
-            A=1.,error_A=0.2,
-            index_delta_r_par=index_delta_r_par,fix_index_delta_r_par=True,
-            userprint_level=1,errordef=1.)
-        m.migrad()
-        Lfit[index_delta_r_par] = m.values['L']
-        Afit[index_delta_r_par] = m.values['A']
+        minimizer = iminuit.Minuit(chi2,
+                                   length=5.,
+                                   error_length=0.2,
+                                   limit_length=(1., 400.),
+                                   amp=1.,
+                                   error_amp=0.2,
+                                   index_delta_r_par=index_delta_r_par,
+                                   fix_index_delta_r_par=True,
+                                   userprint_level=1,
+                                   errordef=1.)
+        minimizer.migrad()
+        length_fit[index_delta_r_par] = minimizer.values['length']
+        amp_fit[index_delta_r_par] = minimizer.values['amp']
 
     #### hybrid covariance from wick + fit
     covariance_smooth = sp.sqrt(var*var[:,None])
@@ -248,7 +285,7 @@ def smooth_cov_wick(filename, wick_filename, results):
             if (index_delta_r_trans == 0):
                 newcov += cor0[index_delta_r_par]
             else:
-                newcov += corrfun(index_delta_r_par,index_delta_r_trans,Lfit[index_delta_r_par],Afit[index_delta_r_par])
+                newcov += corrfun(index_delta_r_par,index_delta_r_trans,length_fit[index_delta_r_par],amp_fit[index_delta_r_par])
             covariance_smooth[i,j] *= newcov
             covariance_smooth[j,i] *= newcov
 
