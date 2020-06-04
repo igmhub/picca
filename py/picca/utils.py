@@ -140,7 +140,7 @@ def smooth_cov(xi, weights, r_par, r_trans, delta_r_trans=4.0, delta_r_par=4.0,
     covariance_smooth = correlation_smooth * np.sqrt(var*var[:, None])
     return covariance_smooth
 
-def smooth_cov_wick(filename, wick_filename, results):
+def smooth_cov_wick(filename, wick_filename, results_filename):
     """Smoothes the Wick covariance matrix, saves it to out_file
 
     Model the missing correlation in the Wick computation
@@ -151,7 +151,7 @@ def smooth_cov_wick(filename, wick_filename, results):
             Correlation function (produced by picca_cf, picca_xcf)
         wick_filename: str
             Wick covariance matrix (produced by picca_wick, picca_xwick)
-        results: str
+        results_filename: str
             Filename where the smoothed covariance matrix will be saved
     """
     # load subsampling covariance
@@ -196,15 +196,15 @@ def smooth_cov_wick(filename, wick_filename, results):
     index = np.arange(num_bins)
     index_r_trans = index%num_bins_r_trans
     index_r_par = index//num_bins_r_trans
-    index_delta_r_trans2d = abs(index_r_trans - index_r_trans[:,None])
-    index_delta_r_par2d = abs(index_r_par - index_r_par[:,None])
+    index_delta_r_trans2d = abs(index_r_trans - index_r_trans[:, None])
+    index_delta_r_par2d = abs(index_r_par - index_r_par[:, None])
     index_delta_r_trans1d = index_delta_r_trans2d.reshape(num_bins*num_bins)
     index_delta_r_par1d = index_delta_r_par2d.reshape(num_bins*num_bins)
 
     # compute the reduced correlation
     reduced_delta_correlation1d = np.zeros(num_bins)
     for index in range(0, num_bins):
-        userprint("\rsmoothing {}".format(idr), end="")
+        userprint("\rsmoothing {}".format(index), end="")
         reduced_delta_correlation1d[index] = np.mean(delta_correlation1d[(index_delta_r_par1d == index_r_par[index]) &
                                                                          (index_delta_r_trans1d == index_r_trans[index])])
     reduced_delta_correlation = reduced_delta_correlation1d.reshape(num_bins_r_par,
@@ -231,7 +231,7 @@ def smooth_cov_wick(filename, wick_filename, results):
         """
         r = np.sqrt(float(index_delta_r_trans)**2 +
                     float(index_delta_r_par)**2) - float(index_delta_r_par)
-        return amp*sp.exp(-r/length)
+        return amp*np.exp(-r/length)
 
     def chi2(length, amp, index_delta_r_par):
         """Computes the chi2 for a given set of parameters in the model
@@ -249,8 +249,13 @@ def smooth_cov_wick(filename, wick_filename, results):
         """
         chi2 = 0.
         index_delta_r_par = int(index_delta_r_par)
-        for index_delta_r_trans in range(1,num_bins_r_trans):
-            chi = reduced_delta_correlation[index_delta_r_par,index_delta_r_trans]-corrfun(index_delta_r_par,index_delta_r_trans,length,amp)
+        for index_delta_r_trans in range(1, num_bins_r_trans):
+            chi = (reduced_delta_correlation[index_delta_r_par,
+                                             index_delta_r_trans] -
+                   corrfun(index_delta_r_par,
+                           index_delta_r_trans,
+                           length,
+                           amp))
             chi2 += chi**2
         chi2 = chi2*num_bins_r_par*num_bins
         return chi2
@@ -273,30 +278,31 @@ def smooth_cov_wick(filename, wick_filename, results):
         amp_fit[index_delta_r_par] = minimizer.values['amp']
 
     #### hybrid covariance from wick + fit
-    covariance_smooth = sp.sqrt(var*var[:,None])
+    covariance_smooth = np.sqrt(var*var[:, None])
 
-    cor0 = reduced_delta_correlation1d[index_r_trans==0]
-    for i in range(num_bins):
-        userprint("\rupdating {}".format(i),end="")
-        for j in range(i+1,num_bins):
-            index_delta_r_par = index_delta_r_par2d[i,j]
-            index_delta_r_trans = index_delta_r_trans2d[i,j]
-            newcov = correlation_wick[i,j]
-            if (index_delta_r_trans == 0):
+    cor0 = reduced_delta_correlation1d[index_r_trans == 0]
+    for index in range(num_bins):
+        userprint("\rupdating {}".format(index), end="")
+        for index2 in range(index + 1, num_bins):
+            index_delta_r_par = index_delta_r_par2d[index, index2]
+            index_delta_r_trans = index_delta_r_trans2d[index, index2]
+            newcov = correlation_wick[index, index2]
+            if index_delta_r_trans == 0:
                 newcov += cor0[index_delta_r_par]
             else:
-                newcov += corrfun(index_delta_r_par,index_delta_r_trans,length_fit[index_delta_r_par],amp_fit[index_delta_r_par])
-            covariance_smooth[i,j] *= newcov
-            covariance_smooth[j,i] *= newcov
+                newcov += corrfun(index_delta_r_par,
+                                  index_delta_r_trans,
+                                  length_fit[index_delta_r_par],
+                                  amp_fit[index_delta_r_par])
+            covariance_smooth[index, index2] *= newcov
+            covariance_smooth[index2, index] *= newcov
 
     userprint("\n")
 
-    h = fitsio.FITS(outfile,'rw',clobber=True)
-    h.write([covariance_smooth],names=['CO'],extname='COR')
-    h.close()
-    userprint(outfile,' written')
-
-    return
+    results = fitsio.FITS(results_filename, 'rw', clobber=True)
+    results.write([covariance_smooth], names=['CO'], extname='COR')
+    results.close()
+    userprint(results_filename, ' written')
 
 
 def compute_ang_max(cosmo, r_trans_max, z_min, z_min2=None):
