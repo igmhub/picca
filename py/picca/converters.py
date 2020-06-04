@@ -40,7 +40,7 @@ def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
             continue
         if cols[0] == 'ThingID':
             from_key_to_index = {key: index for index, key in enumerate(cols)}
-            dla_cat = {key:[] for key in from_key_to_index}
+            dla_cat = {key: [] for key in from_key_to_index}
             for key in 'MJD-plate-fiber'.split('-'):
                 dla_cat[key] = []
             continue
@@ -66,7 +66,8 @@ def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
         'MJD': 'MJD',
         'fiber': 'FIBERID',
         'RA': 'RA',
-        'Dec': 'DEC'}
+        'Dec': 'DEC'
+    }
     # define types
     from_picca_key_to_type = {
         'THING_ID': np.int64,
@@ -77,11 +78,14 @@ def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
         'MJD': np.int64,
         'FIBERID': np.int64,
         'RA': np.float64,
-        'DEC': np.float64}
+        'DEC': np.float64
+    }
 
     # format catalogue
-    cat = {value: np.array(dla_cat[key], dtype=from_picca_key_to_type[value])
-           for key, value in from_noterdaeme_key_to_picca_key.items()}
+    cat = {
+        value: np.array(dla_cat[key], dtype=from_picca_key_to_type[value])
+        for key, value in from_noterdaeme_key_to_picca_key.items()
+    }
 
     # apply cuts
     w = cat['THING_ID'] > 0
@@ -101,12 +105,12 @@ def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
     z_qso = hdul[1][drq_z_key][:]
     hdul.close()
     from_thingid_to_index = {t: index for index, t in enumerate(thingid)}
-    cat['RA'] = np.array([ra[from_thingid_to_index[t]]
-                          for t in cat['THING_ID']])
-    cat['DEC'] = np.array([dec[from_thingid_to_index[t]]
-                           for t in cat['THING_ID']])
-    cat['ZQSO'] = np.array([z_qso[from_thingid_to_index[t]]
-                            for t in cat['THING_ID']])
+    cat['RA'] = np.array(
+        [ra[from_thingid_to_index[t]] for t in cat['THING_ID']])
+    cat['DEC'] = np.array(
+        [dec[from_thingid_to_index[t]] for t in cat['THING_ID']])
+    cat['ZQSO'] = np.array(
+        [z_qso[from_thingid_to_index[t]] for t in cat['THING_ID']])
 
     # apply cuts
     w = cat['RA'] != cat['DEC']
@@ -192,7 +196,9 @@ def desi_convert_dla(in_path, out_path):
     results.close()
 
 
-def desi_from_truth_to_drq(truth_filename, targets_filename, out_path,
+def desi_from_truth_to_drq(truth_filename,
+                           targets_filename,
+                           out_path,
                            spec_type="QSO"):
     """Transform a desi truth.fits file and a desi targets.fits into a drq
     like file
@@ -214,8 +220,8 @@ def desi_from_truth_to_drq(truth_filename, targets_filename, out_path,
     w = np.ones(hdul[1]['TARGETID'][:].size).astype(bool)
     userprint(" start                 : nb object in cat = {}".format(w.sum()))
     w &= np.char.strip(hdul[1]['TRUESPECTYPE'][:].astype(str)) == spec_type
-    userprint(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spec_type,
-                                                                      w.sum()))
+    userprint(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(
+        spec_type, w.sum()))
     # load the arrays
     thingid = hdul[1]['TARGETID'][:][w]
     z_qso = hdul[1]['TRUEZ'][:][w]
@@ -268,8 +274,11 @@ def desi_from_truth_to_drq(truth_filename, targets_filename, out_path,
     results.close()
 
 
-def desi_from_ztarget_to_drq(in_path, out_path, spec_type='QSO',
-                             downsampling_z_cut=None, downsampling_num=None):
+def desi_from_ztarget_to_drq(in_path,
+                             out_path,
+                             spec_type='QSO',
+                             downsampling_z_cut=None,
+                             downsampling_num=None):
     """Transforms a catalog of object in desi format to a catalog in DRQ format
 
     Args:
@@ -296,8 +305,8 @@ def desi_from_ztarget_to_drq(in_path, out_path, spec_type='QSO',
     w = hdul[1]['ZWARN'][:] == 0.
     userprint(' and zwarn==0        : nb object in cat = {}'.format(w.sum()))
     w &= spec_type_list == spec_type
-    userprint(' and spectype=={}    : nb object in cat = {}'.format(spec_type,
-                                                                    w.sum()))
+    userprint(' and spectype=={}    : nb object in cat = {}'.format(
+        spec_type, w.sum()))
     # load the arrays
     cat = {}
     from_desi_key_to_picca_key = {
@@ -323,17 +332,16 @@ def desi_from_ztarget_to_drq(in_path, out_path, spec_type='QSO',
                        "nb downsampling = {}").format(cat['RA'].size,
                                                       downsampling_num))
         else:
-            select_fraction = (downsampling_num/
+            select_fraction = (downsampling_num /
                                (cat['Z'] > downsampling_z_cut).sum())
             np.random.seed(0)
             w = np.random.choice(np.arange(cat['RA'].size),
-                                 size=int(cat['RA'].size*select_fraction),
+                                 size=int(cat['RA'].size * select_fraction),
                                  replace=False)
             for key in cat:
                 cat[key] = cat[key][w]
             userprint((" and donsampling     : nb object in cat = {}, nb z > "
-                       "{} = {}").format(cat['RA'].size,
-                                         downsampling_z_cut,
+                       "{} = {}").format(cat['RA'].size, downsampling_z_cut,
                                          (cat["Z"] > downsampling_z_cut).sum()))
 
     # sort by THING_ID
@@ -387,16 +395,20 @@ def desi_convert_transmission_to_delta_files(obj_path,
     """
     # read catalog of objects
     hdul = fitsio.FITS(obj_path)
-    key_val = np.char.strip(np.array([hdul[1].read_header()[key]
-                                      for key in hdul[1].read_header().keys()]).astype(str))
+    key_val = np.char.strip(
+        np.array([
+            hdul[1].read_header()[key] for key in hdul[1].read_header().keys()
+        ]).astype(str))
     if 'TARGETID' in key_val:
         objs_thingid = hdul[1]['TARGETID'][:]
     elif 'THING_ID' in key_val:
         objs_thingid = hdul[1]['THING_ID'][:]
-    w = hdul[1]['Z'][:] > max(0., log_lambda_min/log_lambda_max_rest_frame -1.)
-    w &= hdul[1]['Z'][:] < max(0., log_lambda_max/log_lambda_min_rest_frame -1.)
-    objs_ra = hdul[1]['RA'][:][w].astype('float64')*np.pi/180.
-    objs_dec = hdul[1]['DEC'][:][w].astype('float64')*np.pi/180.
+    w = hdul[1]['Z'][:] > max(0.,
+                              log_lambda_min / log_lambda_max_rest_frame - 1.)
+    w &= hdul[1]['Z'][:] < max(0.,
+                               log_lambda_max / log_lambda_min_rest_frame - 1.)
+    objs_ra = hdul[1]['RA'][:][w].astype('float64') * np.pi / 180.
+    objs_dec = hdul[1]['DEC'][:][w].astype('float64') * np.pi / 180.
     objs_thingid = objs_thingid[w]
     hdul.close()
     userprint('INFO: Found {} quasars'.format(objs_ra.size))
@@ -415,18 +427,21 @@ def desi_convert_transmission_to_delta_files(obj_path,
         nest = hdul['METADATA'].read_header()['HPXNEST']
         hdul.close()
         in_healpixs = healpy.ang2pix(in_nside,
-                                     np.pi/2. - objs_dec,
+                                     np.pi / 2. - objs_dec,
                                      objs_ra,
                                      nest=nest)
         if files[0].endswith('.gz'):
             end_of_file = '.gz'
         else:
             end_of_file = ''
-        files = np.sort(np.array([("{}/{}/{healpix}/transmission-{}-{healpix}"
-                                   ".fits{}").format(in_dir, int(healpix//100),
-                                                     in_nside, end_of_file,
-                                                     healpix=healpix)
-                                  for healpix in np.unique(in_healpixs)]))
+        files = np.sort(
+            np.array([("{}/{}/{healpix}/transmission-{}-{healpix}"
+                       ".fits{}").format(in_dir,
+                                         int(healpix // 100),
+                                         in_nside,
+                                         end_of_file,
+                                         healpix=healpix)
+                      for healpix in np.unique(in_healpixs)]))
     else:
         files = np.sort(np.array(in_filenames))
     userprint('INFO: Found {} files'.format(files.size))
@@ -434,7 +449,7 @@ def desi_convert_transmission_to_delta_files(obj_path,
     # Stack the deltas transmission
     log_lambda_min = np.log10(log_lambda_min)
     log_lambda_max = np.log10(log_lambda_max)
-    num_bins = int((log_lambda_max - log_lambda_min)/delta_log_lambda) + 1
+    num_bins = int((log_lambda_max - log_lambda_min) / delta_log_lambda) + 1
     stack_delta = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
 
@@ -442,18 +457,17 @@ def desi_convert_transmission_to_delta_files(obj_path,
 
     # read deltas
     for index, filename in enumerate(files):
-        userprint("\rread {} of {} {}".format(index,
-                                              files.size,
-                                              np.sum([len(deltas[healpix])
-                                                      for healpix in deltas])),
+        userprint("\rread {} of {} {}".format(
+            index, files.size,
+            np.sum([len(deltas[healpix]) for healpix in deltas])),
                   end="")
         hdul = fitsio.FITS(filename)
         thingid = hdul['METADATA']['MOCKID'][:]
         if np.in1d(thingid, objs_thingid).sum() == 0:
             hdul.close()
             continue
-        ra = hdul['METADATA']['RA'][:].astype(np.float64)*np.pi/180.
-        dec = hdul['METADATA']['DEC'][:].astype(np.float64)*np.pi/180.
+        ra = hdul['METADATA']['RA'][:].astype(np.float64) * np.pi / 180.
+        dec = hdul['METADATA']['DEC'][:].astype(np.float64) * np.pi / 180.
         z = hdul['METADATA']['Z'][:]
         log_lambda = np.log10(hdul['WAVELENGTH'].read())
         if 'F_LYA' in hdul:
@@ -467,11 +481,11 @@ def desi_convert_transmission_to_delta_files(obj_path,
         if trans.shape[0] != num_obj:
             trans = trans.transpose()
 
-        bins = np.floor((log_lambda - log_lambda_min)/
-                        delta_log_lambda+0.5).astype(int)
-        aux_log_lambda = log_lambda_min + bins*delta_log_lambda
-        log_lambda = (10**aux_log_lambda)*np.ones(num_obj)[:, None]
-        log_lambda_rest_frame = (10**aux_log_lambda)/(1. + z[:, None])
+        bins = np.floor((log_lambda - log_lambda_min) / delta_log_lambda +
+                        0.5).astype(int)
+        aux_log_lambda = log_lambda_min + bins * delta_log_lambda
+        log_lambda = (10**aux_log_lambda) * np.ones(num_obj)[:, None]
+        log_lambda_rest_frame = (10**aux_log_lambda) / (1. + z[:, None])
         valid_pixels = np.zeros_like(trans).astype(int)
         valid_pixels[(log_lambda >= log_lambda_min) &
                      (log_lambda < log_lambda_max) &
@@ -498,11 +512,12 @@ def desi_convert_transmission_to_delta_files(obj_path,
             aux_log_lambda = log_lambda[valid_pixels[index2, :] > 0]
             aux_trans = trans[index2, :][valid_pixels[index2, :] > 0]
 
-            bins = np.floor((aux_log_lambda - log_lambda_min)/
+            bins = np.floor((aux_log_lambda - log_lambda_min) /
                             delta_log_lambda + 0.5).astype(int)
             rebin_log_lambda = (log_lambda_min +
-                                np.arange(num_bins)*delta_log_lambda)
-            rebin_flux = np.bincount(bins, weights=aux_trans,
+                                np.arange(num_bins) * delta_log_lambda)
+            rebin_flux = np.bincount(bins,
+                                     weights=aux_trans,
                                      minlength=num_bins)
             rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
 
@@ -512,26 +527,13 @@ def desi_convert_transmission_to_delta_files(obj_path,
             stack_delta += rebin_flux
             stack_weight += rebin_ivar
             rebin_log_lambda = rebin_log_lambda[w]
-            rebin_flux = rebin_flux[w]/rebin_ivar[w]
+            rebin_flux = rebin_flux[w] / rebin_ivar[w]
             rebin_ivar = rebin_ivar[w]
-            deltas[healpix].append(Delta(thingid[index2],
-                                         ra[index2],
-                                         dec[index2],
-                                         z[index2],
-                                         thingid[index2],
-                                         thingid[index2],
-                                         thingid[index2],
-                                         rebin_log_lambda,
-                                         rebin_ivar,
-                                         None,
-                                         rebin_flux,
-                                         1,
-                                         None,
-                                         None,
-                                         None,
-                                         None,
-                                         None,
-                                         None))
+            deltas[healpix].append(
+                Delta(thingid[index2], ra[index2], dec[index2], z[index2],
+                      thingid[index2], thingid[index2], thingid[index2],
+                      rebin_log_lambda, rebin_ivar, None, rebin_flux, 1, None,
+                      None, None, None, None, None))
         if (max_num_spec is not None and
                 np.sum([len(deltas[healpix])
                         for healpix in deltas]) >= max_num_spec):
@@ -548,20 +550,21 @@ def desi_convert_transmission_to_delta_files(obj_path,
         if len(deltas[healpix]) == 0:
             userprint('No data in {}'.format(healpix))
             continue
-        results = fitsio.FITS(out_dir + '/delta-{}'.format(healpix) + '.fits.gz',
-                              'rw', clobber=True)
+        results = fitsio.FITS(out_dir + '/delta-{}'.format(healpix) +
+                              '.fits.gz',
+                              'rw',
+                              clobber=True)
         for delta in deltas[healpix]:
-            bins = np.floor((delta.log_lambda - log_lambda_min)/
-                            delta_log_lambda+0.5).astype(int)
-            delta.delta = delta.delta/stack_delta[bins] - 1.
+            bins = np.floor((delta.log_lambda - log_lambda_min) /
+                            delta_log_lambda + 0.5).astype(int)
+            delta.delta = delta.delta / stack_delta[bins] - 1.
             delta.weights *= stack_delta[bins]**2
 
             header = {}
             header['RA'] = delta.ra
             header['DEC'] = delta.dec
             header['Z'] = delta.z_qso
-            header['PMF'] = '{}-{}-{}'.format(delta.plate,
-                                              delta.mjd,
+            header['PMF'] = '{}-{}-{}'.format(delta.plate, delta.mjd,
                                               delta.fiberid)
             header['THING_ID'] = delta.thingid
             header['PLATE'] = delta.plate
@@ -569,16 +572,17 @@ def desi_convert_transmission_to_delta_files(obj_path,
             header['FIBERID'] = delta.fiberid
             header['ORDER'] = delta.order
 
-            cols = [delta.log_lambda, delta.delta, delta.weights,
-                    np.ones(delta.log_lambda.size)]
+            cols = [
+                delta.log_lambda, delta.delta, delta.weights,
+                np.ones(delta.log_lambda.size)
+            ]
             names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
             results.write(cols,
                           names=names,
                           header=header,
                           extname=str(delta.thingid))
         results.close()
-        userprint("\rwrite {} of {}: {} quasars".format(index,
-                                                        len(deltas),
+        userprint("\rwrite {} of {}: {} quasars".format(index, len(deltas),
                                                         len(deltas[healpix])),
                   end="")
 
