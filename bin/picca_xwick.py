@@ -145,7 +145,6 @@ if __name__ == '__main__':
     cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read deltas
-    data, num_data, z_min, z_max
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs, args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec)
     for p,delsp in data.items():
         for d in delsp:
