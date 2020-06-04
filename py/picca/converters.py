@@ -1,8 +1,8 @@
 """This module provides functions to format several catalogues
 
 These are:
-    - eBOSS_convert_DLA
-    - desi_convert_DLA
+    - eboss_convert_dla
+    - desi_convert_dla
     - desi_from_truth_to_drq
     - desi_from_ztarget_to_drq
     - desi_convert_transmission_to_delta_files
@@ -195,24 +195,34 @@ def desi_convert_dla(in_path, out_path):
     results.close()
 
 
-def desi_from_truth_to_drq(truth,targets,drq_filename,spectype="QSO"):
-    '''
-    Transform a desi truth.fits file and a
-    desi targets.fits into a drq like file
+def desi_from_truth_to_drq(truth_filename, targets_filename, out_path,
+                           spec_type="QSO"):
+    """Transform a desi truth.fits file and a desi targets.fits into a drq
+    like file
 
-    '''
+    Args:
+        truth_filename: string
+            Filename of the truth.fits file
+        targets_filename: string
+            Filename of the desi targets.fits file
+        out_path: string
+            Full path filename where the fits catalogue will be written to
+        spec_type: string
+            Spectral type of the objects to include in the catalogue
+    """
+    # read truth table
+    hdul = fitsio.FITS(truth_filename)
 
-    ## Truth table
-    vac = fitsio.FITS(truth)
-
-    w = sp.ones(vac[1]['TARGETID'][:].size).astype(bool)
-    userprint(" start                 : nb object in cat = {}".format(w.sum()) )
-    w &= sp.char.strip(vac[1]['TRUESPECTYPE'][:].astype(str))==spectype
-    userprint(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spectype,w.sum()) )
-
-    thingid = vac[1]['TARGETID'][:][w]
-    z_qso = vac[1]['TRUEZ'][:][w]
-    vac.close()
+    # apply cuts
+    w = np.ones(hdul[1]['TARGETID'][:].size).astype(bool)
+    userprint(" start                 : nb object in cat = {}".format(w.sum()))
+    w &= np.char.strip(hdul[1]['TRUESPECTYPE'][:].astype(str)) == spec_type
+    userprint(" and TRUESPECTYPE=={}  : nb object in cat = {}".format(spec_type,
+                                                                      w.sum()))
+    # load the arrays
+    thingid = hdul[1]['TARGETID'][:][w]
+    z_qso = hdul[1]['TRUEZ'][:][w]
+    hdul.close()
     ra = np.zeros(thingid.size)
     dec = np.zeros(thingid.size)
     plate = thingid
@@ -220,26 +230,30 @@ def desi_from_truth_to_drq(truth,targets,drq_filename,spectype="QSO"):
     fiberid = thingid
 
     ### Get RA and DEC from targets
-    vac = fitsio.FITS(targets)
-    thingidTargets = vac[1]['TARGETID'][:]
-    raTargets = vac[1]['RA'][:].astype('float64')
-    decTargets = vac[1]['DEC'][:].astype('float64')
-    vac.close()
+    hdul = fitsio.FITS(targets_filename)
+    thingid_targets = hdul[1]['TARGETID'][:]
+    ra_targets = hdul[1]['RA'][:].astype('float64')
+    dec_targets = hdul[1]['DEC'][:].astype('float64')
+    hdul.close()
 
-    from_TARGETID_to_idx = {}
-    for i,t in enumerate(thingidTargets):
-        from_TARGETID_to_idx[t] = i
-    keys_from_TARGETID_to_idx = from_TARGETID_to_idx.keys()
+    from_targetid_to_index = {}
+    for index, t in enumerate(thingid_targets):
+        from_targetid_to_index[t] = index
+    keys_from_targetid_to_index = from_targetid_to_index.keys()
 
-    for i,t in enumerate(thingid):
-        if t not in keys_from_TARGETID_to_idx: continue
-        idx = from_TARGETID_to_idx[t]
-        ra[i] = raTargets[idx]
-        dec[i] = decTargets[idx]
-    if (ra==0.).sum()!=0 or (dec==0.).sum()!=0:
-        w = ra!=0.
-        w &= dec!=0.
-        userprint(" and RA and DEC        : nb object in cat = {}".format(w.sum()))
+    for index, t in enumerate(thingid):
+        if t not in keys_from_targetid_to_index:
+            continue
+        index2 = from_targetid_to_index[t]
+        ra[index] = ra_targets[index2]
+        dec[index] = dec_targets[index2]
+
+    # apply cuts
+    if (ra == 0.).sum() != 0 or (dec == 0.).sum() != 0:
+        w = ra != 0.
+        w &= dec != 0.
+        userprint((" and RA and DEC        : nb object in cat = "
+                   "{}").format(w.sum()))
 
         ra = ra[w]
         dec = dec[w]
@@ -249,22 +263,21 @@ def desi_from_truth_to_drq(truth,targets,drq_filename,spectype="QSO"):
         mjd = mjd[w]
         fiberid = fiberid[w]
 
-    ### Save
-    out = fitsio.FITS(drq_filename,'rw',clobber=True)
-    cols=[ra,dec,thingid,plate,mjd,fiberid,z_qso]
-    names=['RA','DEC','THING_ID','PLATE','MJD','FIBERID','Z']
-    out.write(cols,names=names,extname='CAT')
-    out.close()
+    # save catalogue
+    results = fitsio.FITS(out_path, 'rw', clobber=True)
+    cols = [ra, dec, thingid, plate, mjd, fiberid, z_qso]
+    names = ['RA', 'DEC', 'THING_ID', 'PLATE', 'MJD', 'FIBERID', 'Z']
+    results.write(cols, names=names, extname='CAT')
+    results.close()
 
-    return
 
-def desi_from_ztarget_to_drq(ztarget,drq_filename,spectype='QSO',downsampling_z_cut=None, downsampling_nb=None):
+def desi_from_ztarget_to_drq(ztarget,drq_filename,spec_type='QSO',downsampling_z_cut=None, downsampling_nb=None):
     """Transforms a catalog of object in desi format to a catalog in DRQ format
 
     Args:
         zcat (str): path to the catalog of object
         drq_filename (str): path to write the DRQ catalog
-        spectype (str): Spectype of the object, can be any spectype
+        spec_type (str): Spectype of the object, can be any spectype
             in desi catalog. Ex: 'STAR', 'GALAXY', 'QSO'
         downsampling_z_cut (float) : Minimum redshift to downsample
             the data, if 'None' no downsampling
@@ -284,8 +297,8 @@ def desi_from_ztarget_to_drq(ztarget,drq_filename,spectype='QSO',downsampling_z_
     userprint(' start               : nb object in cat = {}'.format(sptype.size) )
     w = h[1]['ZWARN'][:]==0.
     userprint(' and zwarn==0        : nb object in cat = {}'.format(w.sum()) )
-    w &= sptype==spectype
-    userprint(' and spectype=={}    : nb object in cat = {}'.format(spectype,w.sum()) )
+    w &= sptype==spec_type
+    userprint(' and spectype=={}    : nb object in cat = {}'.format(spec_type,w.sum()) )
 
     cat = {}
     lst = {'RA':'RA', 'DEC':'DEC', 'Z':'Z',
