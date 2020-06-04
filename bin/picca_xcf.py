@@ -276,7 +276,7 @@ def main():
                                                   no_project=args.no_project,
                                                   from_image=args.from_image)
     xcf.data = data
-    xcf.ndata = ndata
+    xcf.num_data = num_data
     userprint("")
     userprint("done, npix = {}\n".format(len(data)))
 
