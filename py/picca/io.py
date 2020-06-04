@@ -192,7 +192,7 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         plate=np.zeros(len(thid),dtype='int64')
         night=np.zeros(len(thid),dtype='int64')
         fid=np.zeros(len(thid),dtype='int64')
-
+        fiberstatus=[]
         for i,tid in enumerate(thid):
             #if multiple entries in fibermap take the first here
             select2=(tid==tid2)
@@ -206,7 +206,7 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
                 night[i]=int(h[2]['NIGHT'][:][select2][0])
             except:
                 night[i]=int(zbest.split('-')[-1].split('.')[0])
-
+            fiberstatus.append(h[2]['FIBERSTATUS'][:][select2])
             fid[i]=int( h[2]['FIBER'][:][select2][0])
 
         h.close()
@@ -215,19 +215,26 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         print('')
         w = np.ones(ra.size,dtype=bool)
         print("Tile {}, Petal {}".format(str(plate[0])[:-1],str(plate[0])[-1]))
-        print(" start               : nb object in cat = {}".format(w.sum()) )
+        print(" start                            : nb object in cat = {}".format(w.sum()) )
+
+        #checking if all fibers are fine
+        w &= np.any(np.array(fiberstatus)==0,axis=1)
+        print(" FIBERSTATUS==0 for any exposures : nb object in cat = {}".format(w.sum()) )
+
+        w &= np.all(np.array(fiberstatus)==0,axis=1)
+        print(" FIBERSTATUS==0 for all exposures : nb object in cat = {}".format(w.sum()) )
         #need to have reasonable output lines for this
         w &= zqso>0.
-        print(" and z>0.            : nb object in cat = {}".format(w.sum()) )
+        print(" and z>0.                         : nb object in cat = {}".format(w.sum()) )
+
 
         ## Redshift range
         if not zmin is None:
             w &= zqso>=zmin
-            print(" and z>=zmin         : nb object in cat = {}".format(w.sum()) )
+            print(" and z>=zmin                      : nb object in cat = {}".format(w.sum()) )
         if not zmax is None:
             w &= zqso<zmax
-            print(" and z<zmax          : nb object in cat = {}".format(w.sum()) )
-
+            print(" and z<zmax                       : nb object in cat = {}".format(w.sum()) )
         ## BAL visual
         # if not keep_bal and bi_max==None:
         #     try:
