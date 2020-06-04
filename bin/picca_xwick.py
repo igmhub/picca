@@ -145,27 +145,27 @@ if __name__ == '__main__':
     cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs, args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec)
-    for p,delsp in dels.items():
+    data, num_data, z_min, z_max
+    data, num_data, z_min, z_max = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs, args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec)
+    for p,delsp in data.items():
         for d in delsp:
             d.fname = 'D1'
             for k in ['cont','delta','order','ivar','exposures_diff','mean_snr','mean_reso','mean_z','delta_log_lambda']:
                 setattr(d,k,None)
-    xcf.npix = len(dels)
-    xcf.dels = dels
-    xcf.ndels = ndels
+    xcf.data = data
+    xcf.num_data = num_data
     sys.stderr.write("\n")
-    userprint("done, npix = {}, ndels = {}".format(xcf.npix,xcf.ndels))
+    userprint("done, npix = {}, ndels = {}".format(len(data),xcf.num_data))
     sys.stderr.write("\n")
 
     ### Find the redshift range
     if (args.z_min_obj is None):
-        dmin_pix = cosmo.get_r_comov(zmin_pix)
+        dmin_pix = cosmo.get_r_comov(z_min)
         dmin_obj = max(0.,dmin_pix+xcf.r_par_min)
         args.z_min_obj = cosmo.distance_to_redshift(dmin_obj)
         sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
     if (args.z_max_obj is None):
-        dmax_pix = cosmo.get_r_comov(zmax_pix)
+        dmax_pix = cosmo.get_r_comov(z_max)
         dmax_obj = max(0.,dmax_pix+xcf.r_par_max)
         args.z_max_obj = cosmo.distance_to_redshift(dmax_obj)
         sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     sys.stderr.write("\n")
 
     ### Maximum angle
-    xcf.ang_max = utils.compute_ang_max(cosmo,xcf.r_trans_max,zmin_pix,zmin_obj)
+    xcf.ang_max = utils.compute_ang_max(cosmo,xcf.r_trans_max,z_min,zmin_obj)
 
     ### Load cf1d
     h = fitsio.FITS(args.cf1d)
@@ -206,7 +206,7 @@ if __name__ == '__main__':
         xcf.cfWick_rp_min = head['RPMIN']
         xcf.cfWick_rp_max = head['RPMAX']
         xcf.cfWick_rt_max = head['RTMAX']
-        xcf.cfWick_angmax = utils.compute_ang_max(cosmo,xcf.cfWick_rt_max,zmin_pix)
+        xcf.cfWick_angmax = utils.compute_ang_max(cosmo,xcf.cfWick_rt_max,z_min)
         da = h[2]['DA'][:]
         weights = h[2]['WE'][:]
         da = (da*weights).sum(axis=0)
@@ -216,7 +216,7 @@ if __name__ == '__main__':
         xcf.cfWick = da.copy()
         h.close()
 
-        cf.data = xcf.dels
+        cf.data = xcf.data
         cf.ang_max = xcf.cfWick_angmax
         cf.nside = xcf.nside
         cf.z_cut_max = xcf.z_cut_max
@@ -227,7 +227,7 @@ if __name__ == '__main__':
     xcf.lock = Lock()
 
     cpu_data = {}
-    for i,p in enumerate(sorted(xcf.dels.keys())):
+    for i,p in enumerate(sorted(xcf.data.keys())):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []

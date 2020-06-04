@@ -106,26 +106,27 @@ if __name__ == '__main__':
     lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, lambda_abs, args.z_evol_del, args.z_ref, cosmo=None,max_num_spec=args.nspec,no_project=args.no_project)
-    xcf.dels = dels
+    data, num_data, z_min, z_max = io.read_deltas(args.in_dir, args.nside, lambda_abs, args.z_evol_del, args.z_ref, cosmo=None,max_num_spec=args.nspec,no_project=args.no_project)
+    xcf.data = data
+    xcf.num_data = num_data
     sys.stderr.write("\n")
-    userprint("done, npix = {}".format(len(dels)))
+    userprint("done, npix = {}".format(len(data)))
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
         Forest.delta_log_lambda = None
-        for p in xcf.dels:
-            for d in xcf.dels[p]:
+        for p in xcf.data:
+            for d in xcf.data[p]:
                 delta_log_lambda = sp.asarray([d.log_lambda[ii]-d.log_lambda[ii-1] for ii in range(1,d.log_lambda.size)]).min()
                 if Forest.delta_log_lambda is None:
                     Forest.delta_log_lambda = delta_log_lambda
                 else:
                     Forest.delta_log_lambda = min(delta_log_lambda,Forest.delta_log_lambda)
-        Forest.log_lambda_min = sp.log10( (zmin_pix+1.)*lambda_abs )-Forest.delta_log_lambda/2.
-        Forest.log_lambda_max = sp.log10( (zmax_pix+1.)*lambda_abs )+Forest.delta_log_lambda/2.
-        log_lambda,mean_delta, wst = prep_del.stack(xcf.dels, stack_from_deltas=True)
-        for p in xcf.dels:
-            for d in xcf.dels[p]:
+        Forest.log_lambda_min = sp.log10( (z_min+1.)*lambda_abs )-Forest.delta_log_lambda/2.
+        Forest.log_lambda_max = sp.log10( (z_max+1.)*lambda_abs )+Forest.delta_log_lambda/2.
+        log_lambda,mean_delta, wst = prep_del.stack(xcf.data, stack_from_deltas=True)
+        for p in xcf.data:
+            for d in xcf.data[p]:
                 bins = ((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
                 d.delta -= mean_delta[bins]
 
@@ -140,7 +141,7 @@ if __name__ == '__main__':
 
     ### Send
     pool = Pool(processes=args.nproc)
-    pixList = [ [p] for p in sorted(dels.keys()) if p in xcf.objs.keys() ]
+    pixList = [ [p] for p in sorted(data.keys()) if p in xcf.objs.keys() ]
     cfs = pool.map(corr_func, pixList)
     pool.close()
 
@@ -151,7 +152,7 @@ if __name__ == '__main__':
     zs = cfs[:,3,:]
     nbs = cfs[:,4,:].astype(sp.int64)
     cfs = cfs[:,1,:]
-    hep = sp.array([p for p in sorted(dels.keys()) if p in xcf.objs.keys()])
+    hep = sp.array([p for p in sorted(data.keys()) if p in xcf.objs.keys()])
 
     w = (wes.sum(axis=0)>0.)
     r_par = (rps*wes).sum(axis=0)

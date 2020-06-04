@@ -121,22 +121,21 @@ if __name__ == '__main__':
     cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
+    data, num_data, z_min, z_max = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
         args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec)
-    xcf.npix = len(dels)
-    xcf.dels = dels
-    xcf.ndels = ndels
+    xcf.data = data
+    xcf.num_data = num_data
     userprint("\n")
-    userprint("done, npix = {}\n".format(xcf.npix))
+    userprint("done, npix = {}\n".format(len(data)))
 
     ### Find the redshift range
     if (args.z_min_obj is None):
-        dmin_pix = cosmo.get_r_comov(zmin_pix)
+        dmin_pix = cosmo.get_r_comov(z_min)
         dmin_obj = max(0.,dmin_pix+xcf.r_par_min)
         args.z_min_obj = cosmo.distance_to_redshift(dmin_obj)
         userprint("\r z_min_obj = {}\r".format(args.z_min_obj),end="")
     if (args.z_max_obj is None):
-        dmax_pix = cosmo.get_r_comov(zmax_pix)
+        dmax_pix = cosmo.get_r_comov(z_max)
         dmax_obj = max(0.,dmax_pix+xcf.r_par_max)
         args.z_max_obj = cosmo.distance_to_redshift(dmax_obj)
         userprint("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
@@ -148,7 +147,7 @@ if __name__ == '__main__':
     xcf.objs = objs
 
     ###
-    xcf.ang_max = utils.compute_ang_max(cosmo,xcf.r_trans_max,zmin_pix,zmin_obj)
+    xcf.ang_max = utils.compute_ang_max(cosmo,xcf.r_trans_max,z_min,zmin_obj)
 
 
 
@@ -158,7 +157,7 @@ if __name__ == '__main__':
     xcf.lock = Lock()
 
     cpu_data = {}
-    for i,p in enumerate(sorted(list(dels.keys()))):
+    for i,p in enumerate(sorted(list(data.keys()))):
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []

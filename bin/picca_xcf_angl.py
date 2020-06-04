@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+num_data#!/usr/bin/env python
 import scipy as sp
 import fitsio
 import argparse
@@ -121,28 +121,27 @@ if __name__ == '__main__':
     cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, constants.ABSORBER_IGM[args.lambda_abs],args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec,no_project=args.no_project)
-    xcf.npix = len(dels)
-    xcf.dels = dels
-    xcf.ndels = ndels
+    data, num_data, z_min, z_max = io.read_deltas(args.in_dir, args.nside, constants.ABSORBER_IGM[args.lambda_abs],args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec,no_project=args.no_project)
+    xcf.data = data
+    xcf.num_data = num_data
     userprint("")
-    userprint("done, npix = {}".format(xcf.npix))
+    userprint("done, npix = {}".format(len(data)))
 
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
         Forest.delta_log_lambda = None
-        for p in xcf.dels:
-            for d in xcf.dels[p]:
+        for p in xcf.data:
+            for d in xcf.data[p]:
                 delta_log_lambda = sp.asarray([d.log_lambda[ii]-d.log_lambda[ii-1] for ii in range(1,d.log_lambda.size)]).min()
                 if Forest.delta_log_lambda is None:
                     Forest.delta_log_lambda = delta_log_lambda
                 else:
                     Forest.delta_log_lambda = min(delta_log_lambda,Forest.delta_log_lambda)
-        Forest.log_lambda_min  = sp.log10( (zmin_pix+1.)*xcf.lambda_abs )-Forest.delta_log_lambda/2.
-        Forest.log_lambda_max  = sp.log10( (zmax_pix+1.)*xcf.lambda_abs )+Forest.delta_log_lambda/2.
-        log_lambda,mean_delta, wst   = prep_del.stack(xcf.dels, stack_from_deltas=True)
-        for p in xcf.dels:
-            for d in xcf.dels[p]:
+        Forest.log_lambda_min  = sp.log10( (z_min+1.)*xcf.lambda_abs )-Forest.delta_log_lambda/2.
+        Forest.log_lambda_max  = sp.log10( (z_max+1.)*xcf.lambda_abs )+Forest.delta_log_lambda/2.
+        log_lambda,mean_delta, wst   = prep_del.stack(xcf.data, stack_from_deltas=True)
+        for p in xcf.data:
+            for d in xcf.data[p]:
                 bins = ((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
                 d.delta -= mean_delta[bins]
 
@@ -160,7 +159,7 @@ if __name__ == '__main__':
     xcf.counter = Value('i',0)
     xcf.lock = Lock()
     cpu_data = {}
-    for p in list(dels.keys()):
+    for p in list(data.keys()):
         cpu_data[p] = [p]
 
     pool = Pool(processes=args.nproc)
