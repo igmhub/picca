@@ -233,6 +233,7 @@ def main():
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
+    # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
