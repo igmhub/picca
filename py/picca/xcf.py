@@ -39,7 +39,7 @@ ang_correlation = False
 def fill_neighs(healpixs):
     """Create and store a list of neighbours for each of the healpix.
 
-    Neighbours
+    Neighbours are added to the delta objects directly
 
     Args:
         healpixs: array of ints
