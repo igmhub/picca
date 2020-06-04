@@ -320,7 +320,10 @@ class TestCor(unittest.TestCase):
 
         req = {}
 
-        path = self.picca_base+'/requirements.txt'
+        if sys.version_info > (3, 0):
+            path = self.picca_base+'/requirements.txt'
+        else:
+            path = self.picca_base+'/requirements-python2.txt'
         with open(path,'r') as f:
             for l in f:
                 l = l.replace('\n','').replace('==',' ').replace('>=',' ').split()
