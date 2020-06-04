@@ -271,69 +271,86 @@ def desi_from_truth_to_drq(truth_filename, targets_filename, out_path,
     results.close()
 
 
-def desi_from_ztarget_to_drq(ztarget,drq_filename,spec_type='QSO',downsampling_z_cut=None, downsampling_nb=None):
+def desi_from_ztarget_to_drq(in_path, out_path, spec_type='QSO',
+                             downsampling_z_cut=None, downsampling_num=None):
     """Transforms a catalog of object in desi format to a catalog in DRQ format
 
     Args:
-        zcat (str): path to the catalog of object
-        drq_filename (str): path to write the DRQ catalog
-        spec_type (str): Spectype of the object, can be any spectype
-            in desi catalog. Ex: 'STAR', 'GALAXY', 'QSO'
-        downsampling_z_cut (float) : Minimum redshift to downsample
-            the data, if 'None' no downsampling
-        downsampling_nb (int) : Target number of object above redshift
-            downsampling-z-cut, if 'None' no downsampling
-
-    Returns:
-        None
-
+        in_path: string
+            Full path filename containing the catalogue of objects
+        out_path: string
+            Full path filename where the fits DLA catalogue will be written to
+        spec_type: string
+            Spectral type of the objects to include in the catalogue
+        downsampling_z_cut: float or None - default: None
+            Minimum redshift to downsample the data. 'None' for no downsampling
+        downsampling_num: int
+            Target number of object above redshift downsampling-z-cut.
+            'None' for no downsampling
     """
 
     ## Info of the primary observation
-    h = fitsio.FITS(ztarget)
-    sptype = sp.char.strip(h[1]['SPECTYPE'][:].astype(str))
+    hdul = fitsio.FITS(in_path)
+    spec_type_list = np.char.strip(hdul[1]['SPECTYPE'][:].astype(str))
 
-    ## Sanity
-    userprint(' start               : nb object in cat = {}'.format(sptype.size) )
-    w = h[1]['ZWARN'][:]==0.
-    userprint(' and zwarn==0        : nb object in cat = {}'.format(w.sum()) )
-    w &= sptype==spec_type
-    userprint(' and spectype=={}    : nb object in cat = {}'.format(spec_type,w.sum()) )
-
+    # apply cuts
+    userprint((" start               : nb object in cat = "
+               "{}").format(spec_type_list.size))
+    w = hdul[1]['ZWARN'][:] == 0.
+    userprint(' and zwarn==0        : nb object in cat = {}'.format(w.sum()))
+    w &= spec_type_list == spec_type
+    userprint(' and spectype=={}    : nb object in cat = {}'.format(spec_type,
+                                                                    w.sum()))
+    # load the arrays
     cat = {}
-    lst = {'RA':'RA', 'DEC':'DEC', 'Z':'Z',
-        'THING_ID':'TARGETID', 'PLATE':'TARGETID', 'MJD':'TARGETID', 'FIBERID':'TARGETID'}
-    for k,v in lst.items():
-        cat[k] = h[1][v][:][w]
-    h.close()
+    from_desi_key_to_picca_key = {
+        'RA': 'RA',
+        'DEC': 'DEC',
+        'Z': 'Z',
+        'THING_ID': 'TARGETID',
+        'PLATE': 'TARGETID',
+        'MJD': 'TARGETID',
+        'FIBERID': 'TARGETID'
+    }
+    for key, value in from_desi_key_to_picca_key.items():
+        cat[key] = hdul[1][value][:][w]
+    hdul.close()
 
-    for k in ['RA','DEC']:
-        cat[k] = cat[k].astype('float64')
+    for key in ['RA', 'DEC']:
+        cat[key] = cat[key].astype('float64')
 
-    ###
-    if not downsampling_z_cut is None and not downsampling_nb is None:
-        if cat['RA'].size<downsampling_nb:
-            userprint('WARNING:: Trying to downsample, when nb cat = {} and nb downsampling = {}'.format(cat['RA'].size,downsampling_nb) )
+    # apply downsampling
+    if downsampling_z_cut is not None and downsampling_num is not None:
+        if cat['RA'].size < downsampling_num:
+            userprint(("WARNING:: Trying to downsample, when nb cat = {} and "
+                       "nb downsampling = {}").format(cat['RA'].size,
+                                                      downsampling_num))
         else:
-            select_fraction = downsampling_nb/(cat['Z']>downsampling_z_cut).sum()
-            sp.random.seed(0)
-            w = sp.random.choice(np.arange(cat['RA'].size),size=int(cat['RA'].size*select_fraction),replace=False)
-            for k in cat.keys():
-                cat[k] = cat[k][w]
-            userprint(' and donsampling     : nb object in cat = {}, nb z > {} = {}'.format(cat['RA'].size, downsampling_z_cut, (z_qso>downsampling_z_cut).sum()) )
+            select_fraction = (downsampling_num/
+                               (cat['Z'] > downsampling_z_cut).sum())
+            np.random.seed(0)
+            w = np.random.choice(np.arange(cat['RA'].size),
+                                 size=int(cat['RA'].size*select_fraction),
+                                 replace=False)
+            for key in cat:
+                cat[key] = cat[key][w]
+            userprint((" and donsampling     : nb object in cat = {}, nb z > "
+                       "{} = {}").format(cat['RA'].size,
+                                         downsampling_z_cut,
+                                         (cat["Z"] > downsampling_z_cut).sum()))
 
-    w = sp.argsort(cat['THING_ID'])
-    for k in cat.keys():
-        cat[k] = cat[k][w]
+    # sort by THING_ID
+    w = np.argsort(cat['THING_ID'])
+    for key in cat:
+        cat[key] = cat[key][w]
 
-    ### Save
-    out = fitsio.FITS(drq_filename,'rw',clobber=True)
-    cols = [ v for v in cat.values() ]
-    names = [ k for k in cat.keys() ]
-    out.write(cols, names=names,extname='CAT')
-    out.close()
+    # save catalogue
+    results = fitsio.FITS(out_path, 'rw', clobber=True)
+    cols = list(cat.values())
+    names = list(cat)
+    results.write(cols, names=names, extname='CAT')
+    results.close()
 
-    return
 
 def desi_convert_transmission_to_delta_files(zcat,outdir,indir=None,infiles=None,lObs_min=3600.,lObs_max=5500.,lRF_min=1040.,lRF_max=1200.,delta_log_lambda=3.e-4,nspec=None):
     """Convert desi transmission files to picca delta files
