@@ -301,7 +301,7 @@ def main():
     cpu_data = {}
     for index, healpix in enumerate(sorted(data)):
         num_processor = index % args.nproc
-        if not num_processor in cpu_data:
+        if num_processor not in cpu_data:
             cpu_data[num_processor] = []
         cpu_data[num_processor].append(healpix)
 

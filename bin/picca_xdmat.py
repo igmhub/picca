@@ -1,8 +1,14 @@
-#!/usr/bin/env python
-import scipy as sp
-import fitsio
+#!/usr/bin/python3
+"""Computes the distortion matrix between of the cross-correlation delta x
+object
+
+This module follow the procedure described in sections 3.5 of du Mas des
+Bourboux et al. 2020 (In prep) to compute the distortion matrix
+"""
 import argparse
-from multiprocessing import Pool,Lock,cpu_count,Value
+from multiprocessing import Pool, Lock, cpu_count, Value
+import numpy as np
+import fitsio
 
 from picca import constants, xcf, io, utils
 from picca.utils import userprint
@@ -220,8 +226,9 @@ def main():
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
-    userprint("nproc",args.nproc)
+    userprint("nproc", args.nproc)
 
+    # setup variables in module xcf
     xcf.r_par_max = args.rp_max
     xcf.r_par_min = args.rp_min
     xcf.r_trans_max = args.rt_max
@@ -237,100 +244,126 @@ def main():
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.reject = args.rej
 
-    cosmo = constants.Cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
+    # load fiducial cosmology
+    cosmo = constants.Cosmo(Om=args.fid_Om,
+                            Or=args.fid_Or,
+                            Ok=args.fid_Ok,
+                            wl=args.fid_wl)
 
     ### Read deltas
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
-        args.z_evol_del, args.z_ref, cosmo=cosmo,max_num_spec=args.nspec)
+    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
+                                                  args.nside,
+                                                  xcf.lambda_abs,
+                                                  args.z_evol_del,
+                                                  args.z_ref,
+                                                  cosmo=cosmo,
+                                                  max_num_spec=args.nspec)
     xcf.data = data
     xcf.num_data = num_data
     userprint("\n")
     userprint("done, npix = {}\n".format(len(data)))
 
     ### Find the redshift range
-    if (args.z_min_obj is None):
-        dmin_pix = cosmo.get_r_comov(z_min)
-        dmin_obj = max(0.,dmin_pix+xcf.r_par_min)
-        args.z_min_obj = cosmo.distance_to_redshift(dmin_obj)
-        userprint("\r z_min_obj = {}\r".format(args.z_min_obj),end="")
-    if (args.z_max_obj is None):
-        dmax_pix = cosmo.get_r_comov(z_max)
-        dmax_obj = max(0.,dmax_pix+xcf.r_par_max)
-        args.z_max_obj = cosmo.distance_to_redshift(dmax_obj)
-        userprint("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
+    if args.z_min_obj is None:
+        r_comov_min = cosmo.get_r_comov(z_min)
+        r_comov_min = max(0., r_comov_min + xcf.r_par_min)
+        args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
+        userprint("\r z_min_obj = {}\r".format(args.z_min_obj), end="")
+    if args.z_max_obj is None:
+        r_comov_max = cosmo.get_r_comov(z_max)
+        r_comov_max = max(0., r_comov_max + xcf.r_par_max)
+        args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
+        userprint("\r z_max_obj = {}\r".format(args.z_max_obj), end="")
 
     ### Read objects
-    objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
-                                args.z_evol_obj, args.z_ref,cosmo)
+    objs, z_min2 = io.read_objects(args.drq,
+                                   args.nside,
+                                   args.z_min_obj,
+                                   args.z_max_obj,
+                                   args.z_evol_obj,
+                                   args.z_ref,
+                                   cosmo)
     userprint("\n")
     xcf.objs = objs
 
-    ###
-    xcf.ang_max = utils.compute_ang_max(cosmo,xcf.r_trans_max,z_min,zmin_obj)
+    # compute maximum angular separation
+    xcf.ang_max = utils.compute_ang_max(cosmo, xcf.r_trans_max, z_min, z_min2)
 
 
-
-
-    xcf.counter = Value('i',0)
-
+    xcf.counter = Value('i', 0)
     xcf.lock = Lock()
-
     cpu_data = {}
-    for i,p in enumerate(sorted(list(data.keys()))):
-        ip = i%args.nproc
-        if not ip in cpu_data:
-            cpu_data[ip] = []
-        cpu_data[ip].append(p)
+    for index, healpix in enumerate(sorted(data)):
+        num_processor = index % args.nproc
+        if num_processor not in cpu_data:
+            cpu_data[num_processor] = []
+        cpu_data[num_processor].append(healpix)
 
-    if args.nproc>1:
+    # compute the distortion matrix
+    if args.nproc > 1:
         pool = Pool(processes=args.nproc)
-        dmat_data = pool.map(calc_dmat,sorted(list(cpu_data.values())))
+        dmat_data = pool.map(calc_dmat, sorted(cpu_data.values()))
         pool.close()
-    elif args.nproc==1:
-        dmat_data = map(calc_dmat,sorted(list(cpu_data.values())))
+    elif args.nproc == 1:
+        dmat_data = map(calc_dmat, sorted(cpu_data.values()))
         dmat_data = list(dmat_data)
 
-    dmat_data = sp.array(dmat_data)
-    weights_dmat = dmat_data[:,0].sum(axis=0)
-    r_par = dmat_data[:,2].sum(axis=0)
-    r_trans = dmat_data[:,3].sum(axis=0)
-    z = dmat_data[:,4].sum(axis=0)
-    weights = dmat_data[:,5].sum(axis=0)
-    npairs = dmat_data[:,6].sum(axis=0)
-    npairs_used = dmat_data[:,7].sum(axis=0)
-    dmat = dmat_data[:,1].sum(axis=0)
+    dmat_data = np.array(dmat_data)
+    weights_dmat = dmat_data[:, 0].sum(axis=0)
+    dmat = dmat_data[:, 1].sum(axis=0)
+    r_par = dmat_data[:, 2].sum(axis=0)
+    r_trans = dmat_data[:, 3].sum(axis=0)
+    z = dmat_data[:, 4].sum(axis=0)
+    weights = dmat_data[:, 5].sum(axis=0)
+    num_pairs = dmat_data[:, 6].sum(axis=0)
+    num_pairs_used = dmat_data[:, 7].sum(axis=0)
 
-    w = weights>0.
+    w = weights > 0.
     r_par[w] /= weights[w]
     r_trans[w] /= weights[w]
     z[w] /= weights[w]
-    w = weights_dmat>0.
-    dmat[w,:] /= weights_dmat[w,None]
+    w = weights_dmat > 0.
+    dmat[w, :] /= weights_dmat[w, None]
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':xcf.r_par_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
-        {'name':'RPMAX','value':xcf.r_par_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
-        {'name':'RTMAX','value':xcf.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':xcf.num_bins_r_par,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':xcf.num_bins_r_trans,'comment':'Number of bins in r-transverse'},
-        {'name':'COEFMOD','value':args.coef_binning_model,'comment':'Coefficient for model binning'},
-        {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
-        {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
-        {'name':'REJ','value':xcf.reject,'comment':'Rejection factor'},
-        {'name':'NPALL','value':npairs,'comment':'Number of pairs'},
-        {'name':'NPUSED','value':npairs_used,'comment':'Number of used pairs'},
+    results = fitsio.FITS(args.out, 'rw', clobber=True)
+    header = [
+        {'name': 'RPMIN', 'value': xcf.r_par_min,
+         'comment': 'Minimum r-parallel [h^-1 Mpc]'},
+        {'name': 'RPMAX', 'value': xcf.r_par_max,
+         'comment': 'Maximum r-parallel [h^-1 Mpc]'},
+        {'name': 'RTMAX', 'value': xcf.r_trans_max,
+         'comment': 'Maximum r-transverse [h^-1 Mpc]'},
+        {'name': 'NP', 'value': xcf.num_bins_r_par,
+         'comment': 'Number of bins in r-parallel'},
+        {'name': 'NT', 'value': xcf.num_bins_r_trans,
+         'comment': 'Number of bins in r-transverse'},
+        {'name': 'COEFMOD', 'value': args.coef_binning_model,
+         'comment': 'Coefficient for model binning'},
+        {'name': 'ZCUTMIN', 'value': xcf.z_cut_min,
+         'comment': 'Minimum redshift of pairs'},
+        {'name': 'ZCUTMAX', 'value': xcf.z_cut_max,
+         'comment': 'Maximum redshift of pairs'},
+        {'name': 'REJ', 'value': xcf.reject,
+         'comment': 'Rejection factor'},
+        {'name': 'NPALL', 'value': num_pairs,
+         'comment': 'Number of pairs'},
+        {'name': 'NPUSED', 'value': num_pairs_used,
+         'comment': 'Number of used pairs'},
     ]
-    out.write([weights_dmat,dmat],
-        names=['WDM','DM'],
-        comment=['Sum of weight','Distortion matrix'],
-        units=['',''],
-        header=head,extname='DMAT')
-    out.write([r_par,r_trans,z],
-        names=['RP','RT','Z'],
-        comment=['R-parallel','R-transverse','Redshift'],
-        units=['h^-1 Mpc','h^-1 Mpc','',],
+    results.write(
+        [weights_dmat, dmat],
+        names=['WDM', 'DM'],
+        comment=['Sum of weight', 'Distortion matrix'],
+        units=['', ''],
+        header=header,
+        extname='DMAT')
+    results.write(
+        [r_par, r_trans, z],
+        names=['RP', 'RT', 'Z'],
+        comment=['R-parallel', 'R-transverse', 'Redshift'],
+        units=['h^-1 Mpc', 'h^-1 Mpc', ''],
         extname='ATTRI')
-    out.close()
+    results.close()
 
 if __name__ == '__main__':
     main()
