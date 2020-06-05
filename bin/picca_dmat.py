@@ -333,6 +333,7 @@ def main():
     w = weights_dmat > 0
     dmat[w] /= weights_dmat[w, None]
 
+    # save results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
         {

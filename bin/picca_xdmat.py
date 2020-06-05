@@ -290,6 +290,7 @@ def main():
         dmat_data = map(calc_dmat, sorted(cpu_data.values()))
         dmat_data = list(dmat_data)
 
+    # merge the results from different CPUs
     dmat_data = np.array(dmat_data)
     weights_dmat = dmat_data[:, 0].sum(axis=0)
     dmat = dmat_data[:, 1].sum(axis=0)
@@ -300,6 +301,7 @@ def main():
     num_pairs = dmat_data[:, 6].sum(axis=0)
     num_pairs_used = dmat_data[:, 7].sum(axis=0)
 
+    # normalize values
     w = weights > 0.
     r_par[w] /= weights[w]
     r_trans[w] /= weights[w]
@@ -307,6 +309,7 @@ def main():
     w = weights_dmat > 0.
     dmat[w, :] /= weights_dmat[w, None]
 
+    # save results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
         {
