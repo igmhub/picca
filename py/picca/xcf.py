@@ -745,7 +745,7 @@ def compute_wickT1234_pairs(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
     """
     r_par = (r_comov1[:, None] - r_comov2)*np.cos(ang/2.)
     r_trans = (r_comov1[:, None] + r_comov2)*np.sin(ang/2.)
-    z_weight_evol1 = ((1. + z1)/(1. + z_ref))**(z_evol_del - 1.)
+    z_weight_evol1 = ((1. + z1)/(1. + z_ref))**(alpha - 1.)
     z_weight_evol2 = ((1. + z2)/(1. + z_ref))**(alpha_obj - 1.)
     weights12 = weights1[:, None]*weights2
     weight1 = weights1[:, None]*np.ones(len(r_comov2))
