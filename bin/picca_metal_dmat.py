@@ -1,7 +1,8 @@
 #!/usr/bin/python3
-"""Computes the distortion matrix between two delta fields.
+"""Compute the auto and cross-correlation of delta fields for a list of IGM
+absorption.
 
-This module follow the procedure described in sections 3.5 of du Mas des
+This module follow the procedure described in sections 4.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
 import argparse
@@ -38,7 +39,8 @@ def calc_metal_dmat(abs_igm1, abs_igm2, healpixs):
 
 def main():
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
-    """Computes the distortion matrix between two delta fields"""
+    """Compute the auto and cross-correlation of delta fields for a list of IGM
+    absorption."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=('Compute the auto and cross-correlation of delta fields '
