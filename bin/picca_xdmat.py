@@ -13,6 +13,7 @@ import fitsio
 from picca import constants, xcf, io, utils
 from picca.utils import userprint
 
+
 def calc_dmat(healpixs):
     """Computes the distortion matrix.
 
@@ -32,6 +33,7 @@ def calc_dmat(healpixs):
     dmat_data = xcf.compute_dmat(healpixs)
     return dmat_data
 
+
 def main():
     """Computes the distortion matrix of the cross-correlation delta x
     object."""
@@ -40,61 +42,53 @@ def main():
         description=('Compute the distortion matrix of the cross-correlation '
                      'delta x object.'))
 
-    parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
-    parser.add_argument(
-        '--in-dir',
-        type=str,
-        default=None,
-        required=True,
-        help='Directory to delta files')
+    parser.add_argument('--in-dir',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Directory to delta files')
 
-    parser.add_argument(
-        '--drq',
-        type=str,
-        default=None,
-        required=True,
-        help='Catalog of objects in DRQ format')
+    parser.add_argument('--drq',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Catalog of objects in DRQ format')
 
-    parser.add_argument(
-        '--rp-min',
-        type=float,
-        default=-200.,
-        required=False,
-        help='Min r-parallel [h^-1 Mpc]')
+    parser.add_argument('--rp-min',
+                        type=float,
+                        default=-200.,
+                        required=False,
+                        help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--rp-max',
-        type=float,
-        default=200.,
-        required=False,
-        help='Max r-parallel [h^-1 Mpc]')
+    parser.add_argument('--rp-max',
+                        type=float,
+                        default=200.,
+                        required=False,
+                        help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--rt-max',
-        type=float,
-        default=200.,
-        required=False,
-        help='Max r-transverse [h^-1 Mpc]')
+    parser.add_argument('--rt-max',
+                        type=float,
+                        default=200.,
+                        required=False,
+                        help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument(
-        '--np',
-        type=int,
-        default=100,
-        required=False,
-        help='Number of r-parallel bins')
+    parser.add_argument('--np',
+                        type=int,
+                        default=100,
+                        required=False,
+                        help='Number of r-parallel bins')
 
-    parser.add_argument(
-        '--nt',
-        type=int,
-        default=50,
-        required=False,
-        help='Number of r-transverse bins')
+    parser.add_argument('--nt',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of r-transverse bins')
 
     parser.add_argument(
         '--coef-binning-model',
@@ -104,19 +98,17 @@ def main():
         help=('Coefficient multiplying np and nt to get finner binning for the '
               'model'))
 
-    parser.add_argument(
-        '--z-min-obj',
-        type=float,
-        default=None,
-        required=False,
-        help='Min redshift for object field')
+    parser.add_argument('--z-min-obj',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help='Min redshift for object field')
 
-    parser.add_argument(
-        '--z-max-obj',
-        type=float,
-        default=None,
-        required=False,
-        help='Max redshift for object field')
+    parser.add_argument('--z-max-obj',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help='Max redshift for object field')
 
     parser.add_argument(
         '--z-cut-min',
@@ -144,12 +136,11 @@ def main():
         help=('Name of the absorption in picca.constants defining the redshift '
               'of the delta'))
 
-    parser.add_argument(
-        '--z-ref',
-        type=float,
-        default=2.25,
-        required=False,
-        help='Reference redshift')
+    parser.add_argument('--z-ref',
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help='Reference redshift')
 
     parser.add_argument(
         '--z-evol-del',
@@ -179,12 +170,11 @@ def main():
         required=False,
         help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument(
-        '--fid-Ok',
-        type=float,
-        default=0.,
-        required=False,
-        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+    parser.add_argument('--fid-Ok',
+                        type=float,
+                        default=0.,
+                        required=False,
+                        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
 
     parser.add_argument(
         '--fid-wl',
@@ -200,31 +190,28 @@ def main():
         required=False,
         help='Fraction of rejected pairs: -1=no rejection, 1=all rejection')
 
-    parser.add_argument(
-        '--nside',
-        type=int,
-        default=16,
-        required=False,
-        help='Healpix nside')
+    parser.add_argument('--nside',
+                        type=int,
+                        default=16,
+                        required=False,
+                        help='Healpix nside')
 
-    parser.add_argument(
-        '--nproc',
-        type=int,
-        default=None,
-        required=False,
-        help='Number of processors')
+    parser.add_argument('--nproc',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Number of processors')
 
-    parser.add_argument(
-        '--nspec',
-        type=int,
-        default=None,
-        required=False,
-        help='Maximum number of spectra to read')
+    parser.add_argument('--nspec',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Maximum number of spectra to read')
 
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()//2
+        args.nproc = cpu_count() // 2
 
     userprint("nproc", args.nproc)
 
@@ -236,8 +223,8 @@ def main():
     xcf.z_cut_min = args.z_cut_min
     xcf.num_bins_r_par = args.np
     xcf.num_bins_r_trans = args.nt
-    xcf.num_model_bins_r_par = args.np*args.coef_binning_model
-    xcf.num_model_bins_r_trans = args.nt*args.coef_binning_model
+    xcf.num_model_bins_r_par = args.np * args.coef_binning_model
+    xcf.num_model_bins_r_trans = args.nt * args.coef_binning_model
     xcf.nside = args.nside
     xcf.z_ref = args.z_ref
     xcf.alpha = args.z_evol_del
@@ -276,19 +263,14 @@ def main():
         userprint("\r z_max_obj = {}\r".format(args.z_max_obj), end="")
 
     ### Read objects
-    objs, z_min2 = io.read_objects(args.drq,
-                                   args.nside,
-                                   args.z_min_obj,
-                                   args.z_max_obj,
-                                   args.z_evol_obj,
-                                   args.z_ref,
+    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
+                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
                                    cosmo)
     userprint("\n")
     xcf.objs = objs
 
     # compute maximum angular separation
     xcf.ang_max = utils.compute_ang_max(cosmo, xcf.r_trans_max, z_min, z_min2)
-
 
     xcf.counter = Value('i', 0)
     xcf.lock = Lock()
@@ -327,43 +309,75 @@ def main():
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
-        {'name': 'RPMIN', 'value': xcf.r_par_min,
-         'comment': 'Minimum r-parallel [h^-1 Mpc]'},
-        {'name': 'RPMAX', 'value': xcf.r_par_max,
-         'comment': 'Maximum r-parallel [h^-1 Mpc]'},
-        {'name': 'RTMAX', 'value': xcf.r_trans_max,
-         'comment': 'Maximum r-transverse [h^-1 Mpc]'},
-        {'name': 'NP', 'value': xcf.num_bins_r_par,
-         'comment': 'Number of bins in r-parallel'},
-        {'name': 'NT', 'value': xcf.num_bins_r_trans,
-         'comment': 'Number of bins in r-transverse'},
-        {'name': 'COEFMOD', 'value': args.coef_binning_model,
-         'comment': 'Coefficient for model binning'},
-        {'name': 'ZCUTMIN', 'value': xcf.z_cut_min,
-         'comment': 'Minimum redshift of pairs'},
-        {'name': 'ZCUTMAX', 'value': xcf.z_cut_max,
-         'comment': 'Maximum redshift of pairs'},
-        {'name': 'REJ', 'value': xcf.reject,
-         'comment': 'Rejection factor'},
-        {'name': 'NPALL', 'value': num_pairs,
-         'comment': 'Number of pairs'},
-        {'name': 'NPUSED', 'value': num_pairs_used,
-         'comment': 'Number of used pairs'},
+        {
+            'name': 'RPMIN',
+            'value': xcf.r_par_min,
+            'comment': 'Minimum r-parallel [h^-1 Mpc]'
+        },
+        {
+            'name': 'RPMAX',
+            'value': xcf.r_par_max,
+            'comment': 'Maximum r-parallel [h^-1 Mpc]'
+        },
+        {
+            'name': 'RTMAX',
+            'value': xcf.r_trans_max,
+            'comment': 'Maximum r-transverse [h^-1 Mpc]'
+        },
+        {
+            'name': 'NP',
+            'value': xcf.num_bins_r_par,
+            'comment': 'Number of bins in r-parallel'
+        },
+        {
+            'name': 'NT',
+            'value': xcf.num_bins_r_trans,
+            'comment': 'Number of bins in r-transverse'
+        },
+        {
+            'name': 'COEFMOD',
+            'value': args.coef_binning_model,
+            'comment': 'Coefficient for model binning'
+        },
+        {
+            'name': 'ZCUTMIN',
+            'value': xcf.z_cut_min,
+            'comment': 'Minimum redshift of pairs'
+        },
+        {
+            'name': 'ZCUTMAX',
+            'value': xcf.z_cut_max,
+            'comment': 'Maximum redshift of pairs'
+        },
+        {
+            'name': 'REJ',
+            'value': xcf.reject,
+            'comment': 'Rejection factor'
+        },
+        {
+            'name': 'NPALL',
+            'value': num_pairs,
+            'comment': 'Number of pairs'
+        },
+        {
+            'name': 'NPUSED',
+            'value': num_pairs_used,
+            'comment': 'Number of used pairs'
+        },
     ]
-    results.write(
-        [weights_dmat, dmat],
-        names=['WDM', 'DM'],
-        comment=['Sum of weight', 'Distortion matrix'],
-        units=['', ''],
-        header=header,
-        extname='DMAT')
-    results.write(
-        [r_par, r_trans, z],
-        names=['RP', 'RT', 'Z'],
-        comment=['R-parallel', 'R-transverse', 'Redshift'],
-        units=['h^-1 Mpc', 'h^-1 Mpc', ''],
-        extname='ATTRI')
+    results.write([weights_dmat, dmat],
+                  names=['WDM', 'DM'],
+                  comment=['Sum of weight', 'Distortion matrix'],
+                  units=['', ''],
+                  header=header,
+                  extname='DMAT')
+    results.write([r_par, r_trans, z],
+                  names=['RP', 'RT', 'Z'],
+                  comment=['R-parallel', 'R-transverse', 'Redshift'],
+                  units=['h^-1 Mpc', 'h^-1 Mpc', ''],
+                  extname='ATTRI')
     results.close()
+
 
 if __name__ == '__main__':
     main()
