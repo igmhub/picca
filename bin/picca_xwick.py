@@ -133,8 +133,8 @@ if __name__ == '__main__':
     xcf.nside = args.nside
     xcf.reject = args.rej
     xcf.z_ref = args.z_ref
-    xcf.z_evol_del = args.z_evol_del
-    xcf.z_evol_obj = args.z_evol_obj
+    xcf.alpha = args.z_evol_del
+    xcf.alpha_obj = args.z_evol_obj
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.max_diagram = args.max_diagram
 

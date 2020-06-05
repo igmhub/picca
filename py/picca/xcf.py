@@ -38,8 +38,8 @@ counter = None
 num_data = None
 
 z_ref = None
-z_evol_del = None
-z_evol_obj = None
+alpha = None
+alpha_obj = None
 lambda_abs = None
 alpha_abs = None
 
@@ -708,80 +708,96 @@ def compute_wick_terms(healpixs):
     return weights_wick, num_pairs_wick, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
 
 @jit
-def compute_wickT1234_pairs(ang,r_comov1,r_comov2,z1,z2,weights1,weights2,weighted_xi_1d_1,weights_wick,num_pairs_wick,t1,t2,t3,t4):
-    """Compute the Wick covariance matrix for the object-pixel
-        cross-correlation for the T1, T2, T3 and T4 diagrams:
-        i.e. the contribution of the 1D auto-correlation to the
-        covariance matrix
+def compute_wickT1234_pairs(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
+                            weighted_xi_1d_1, weights_wick, num_pairs_wick, t1,
+                            t2, t3, t4):
+    """
+    Computes the Wick expansion terms 1, 2, and 3 of a given pair of forests
+
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
 
     Args:
-        ang (float array): angle between forest and array of objects
-        r_comov1 (float array): comoving distance to each pixel of the forest [Mpc/h]
-        r_comov2 (float array): comoving distance to each object [Mpc/h]
-        z1 (float array): redshift of each pixel of the forest
-        z2 (float array): redshift of each object
-        weights1 (float array): weight of each pixel of the forest
-        weights2 (float array): weight of each object
-        weighted_xi_1d_1 (float array): covariance between two pixels of the same forest
-        weights_wick (float array): Sum of weight
-        num_pairs_wick (int64 array): Number of pairs
-        t1 (float 2d array): Contribution of diagram T1
-        t2 (float 2d array): Contribution of diagram T2
-        t3 (float 2d array): Contribution of diagram T3
-        t4 (float 2d array): Contribution of diagram T4
-
-    Returns:
-
+        ang: array of floats
+            Angular separation between pixels in forests 1 and 2
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for forest 2
+        z1: array of floats
+            Redshifts for forest 1
+        z2: array of floats
+            Redshifts for forest 2
+        weights1: array of floats
+            Weights for forest 1
+        weights2: array of floats
+            Weights for forest 2
+        weighted_xi_1d_1: array of floats
+            Weighted 1D correlation function for forest 1
+        weights_wick: array of floats
+            Total weight in the covariance matrix pixels
+        num_pairs_wick: array of floats
+            Total number of pairs in the covariance matrix pixels
+        t1: Wick expansion, term 1
+        t2: Wick expansion, term 2
+        t3: Wick expansion, term 3
+        t4: Wick expansion, term 4
     """
-    r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2.)
-    r_trans = (r_comov1[:,None]+r_comov2)*sp.sin(ang/2.)
-    zw1 = ((1.+z1)/(1.+z_ref))**(z_evol_del-1.)
-    zw2 = ((1.+z2)/(1.+z_ref))**(z_evol_obj-1.)
-    weights = weights1[:,None]*weights2
-    we1 = weights1[:,None]*sp.ones(len(r_comov2))
-    idxPix = np.arange(r_comov1.size)[:,None]*sp.ones(len(r_comov2),dtype='int')
-    idxQso = sp.ones(r_comov1.size,dtype='int')[:,None]*np.arange(len(r_comov2))
+    r_par = (r_comov1[:, None] - r_comov2)*np.cos(ang/2.)
+    r_trans = (r_comov1[:, None] + r_comov2)*np.sin(ang/2.)
+    z_weight_evol1 = ((1. + z1)/(1. + z_ref))**(z_evol_del - 1.)
+    z_weight_evol2 = ((1. + z2)/(1. + z_ref))**(alpha_obj - 1.)
+    weights12 = weights1[:, None]*weights2
+    weight1 = weights1[:, None]*np.ones(len(r_comov2))
+    index_delta = np.arange(r_comov1.size)[:, None]*np.ones(len(r_comov2),
+                                                            dtype='int')
+    index_obj = (np.ones(r_comov1.size, dtype='int')[:, None]*
+                 np.arange(len(r_comov2)))
 
-    bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba = bt + num_bins_r_trans*bp
+    bins_r_par = ((r_par - r_par_min)/(r_par_max - r_par_min)*
+                  num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    bins_forest = bins_r_trans + num_bins_r_trans*bins_r_par
 
-    w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
-    if w.sum()==0: return
+    w = (r_par > r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
+    if w.sum() == 0:
+        return
 
-    ba = ba[w]
-    weights = weights[w]
-    we1 = we1[w]
-    idxPix = idxPix[w]
-    idxQso = idxQso[w]
+    bins_forest = bins_forest[w]
+    weights12 = weights12[w]
+    weight1 = weight1[w]
+    index_delta = index_delta[w]
+    index_obj = index_obj[w]
 
-    for k1 in range(ba.size):
-        p1 = ba[k1]
-        i1 = idxPix[k1]
-        q1 = idxQso[k1]
-        weights_wick[p1] += weights[k1]
+    for index1 in range(bins_forest.size):
+        p1 = bins_forest[index1]
+        i1 = index_delta[index1]
+        j1 = index_obj[index1]
+        weights_wick[p1] += weights12[index1]
         num_pairs_wick[p1] += 1
-        t1[p1,p1] += (weights[k1]**2)/we1[k1]*zw1[i1]
+        t1[p1, p1] += weights12[index1]**2/weight1[index1]*z_weight_evol1[i1]
 
-        for k2 in range(k1+1,ba.size):
-            p2 = ba[k2]
-            i2 = idxPix[k2]
-            q2 = idxQso[k2]
-            if q1==q2:
-                wcorr = weighted_xi_1d_1[i1,i2]*(zw2[q1]**2)
-                t2[p1,p2] += wcorr
-                t2[p2,p1] += wcorr
-            elif i1==i2:
-                wcorr = (weights[k1]*weights[k2])/we1[k1]*zw1[i1]
-                t3[p1,p2] += wcorr
-                t3[p2,p1] += wcorr
+        for index2 in range(index1 + 1, bins_forest.size):
+            p2 = bins_forest[index2]
+            i2 = index_delta[index2]
+            j2 = index_obj[index2]
+            if j1 == j2:
+                prod = weighted_xi_1d_1[i1, i2]*(z_weight_evol2[j1]**2)
+                t2[p1, p2] += prod
+                t2[p2, p1] += prod
+            elif i1 == i2:
+                prod = (weights12[index1]*weights12[index2]/weight1[index1]*
+                        z_weight_evol1[i1])
+                t3[p1, p2] += prod
+                t3[p2, p1] += prod
             else:
-                wcorr = weighted_xi_1d_1[i1,i2]*zw2[q1]*zw2[q2]
-                t4[p1,p2] += wcorr
-                t4[p2,p1] += wcorr
+                prod = (weighted_xi_1d_1[i1, i2]*z_weight_evol2[j1]*
+                        z_weight_evol2[j2])
+                t4[p1, p2] += prod
+                t4[p2, p1] += prod
 
     return
-    
+
 @jit
 def compute_wickT56_pairs(ang12,ang34,ang13,r_comov1,r_comov2,r_comov3,r_comov4,weights1,weights2,weights3,weights4,thingid2,thingid4,t5,t6):
     """Compute the Wick covariance matrix for the object-pixel
@@ -870,9 +886,9 @@ def compute_wickT56_pairs(ang12,ang34,ang13,r_comov1,r_comov2,r_comov3,r_comov4,
             pix2 = pix34[w][k2]
             t2 = thingid34[w][k2]
             weights2 = we34[w][k2]
-            wcorr = cf13[pix2,pix1]*weights1*weights2
-            T5[p1,p2] += wcorr
-            T5[p2,p1] += wcorr
+            prod = cf13[pix2,pix1]*weights1*weights2
+            T5[p1,p2] += prod
+            T5[p2,p1] += prod
 
     ### t6
     if max_diagram==5: return
@@ -885,10 +901,10 @@ def compute_wickT56_pairs(ang12,ang34,ang13,r_comov1,r_comov2,r_comov3,r_comov4,
             pix2 = pix34[k2]
             t2 = thingid34[k2]
             weights2 = we34[k2]
-            wcorr = cf13[pix2,pix1]*weights1*weights2
+            prod = cf13[pix2,pix1]*weights1*weights2
             if t2==t1: continue
-            t6[p1,p2] += wcorr
-            t6[p2,p1] += wcorr
+            t6[p1,p2] += prod
+            t6[p2,p1] += prod
 
     return
 def xcf1d(pix):
