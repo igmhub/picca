@@ -7,12 +7,12 @@ This module provides several functions:
     - compute_xi_forest_pairs
     - compute_dmat
     - compute_dmat_forest_pairs
-    - metal_dmat
-    - cf1d
-    - x_forest_cf1d
-    - wickT
-    - fill_wickT123
-    - fill_wickT45
+    - compute_metal_dmat
+    - compute_xi_1d
+    - compute_xi_1d_cross
+    - compute_wick_terms
+    - compute_wickT123_pairs
+    - compute_wickT45_pairs
 See the respective docstrings for more details
 """
 import numpy as np
