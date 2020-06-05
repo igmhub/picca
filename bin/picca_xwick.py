@@ -200,12 +200,17 @@ if __name__ == '__main__':
     if not args.cf is None:
         h = fitsio.FITS(args.cf)
         head = h[1].read_header()
-        xcf.cfWick_np = head['NP']
-        xcf.cfWick_nt = head['NT']
-        xcf.cfWick_rp_min = head['RPMIN']
-        xcf.cfWick_rp_max = head['RPMAX']
-        xcf.cfWick_rt_max = head['RTMAX']
-        xcf.cfWick_angmax = utils.compute_ang_max(cosmo,xcf.cfWick_rt_max,z_min)
+        assert cf.num_bins_r_par == head['NP']
+        assert cf.num_bins_r_trans == head['NT']
+        assert cf.r_par_min == head['RPMIN']
+        assert cf.r_par_max == head['RPMAX']
+        assert cf.r_trans_max == head['RTMAX']
+        #xcf.cfWick_np = head['NP']
+        #xcf.cfWick_nt = head['NT']
+        #xcf.cfWick_rp_min = head['RPMIN']
+        #xcf.cfWick_rp_max = head['RPMAX']
+        #xcf.cfWick_rt_max = head['RTMAX']
+        #xcf.cfWick_angmax = utils.compute_ang_max(cosmo,xcf.cfWick_rt_max,z_min)
         da = h[2]['DA'][:]
         weights = h[2]['WE'][:]
         da = (da*weights).sum(axis=0)

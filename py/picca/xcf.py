@@ -738,10 +738,14 @@ def compute_wickT1234_pairs(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
             Total weight in the covariance matrix pixels
         num_pairs_wick: array of floats
             Total number of pairs in the covariance matrix pixels
-        t1: Wick expansion, term 1
-        t2: Wick expansion, term 2
-        t3: Wick expansion, term 3
-        t4: Wick expansion, term 4
+        t1: array of floats
+            Wick expansion, term 1
+        t2: array of floats
+            Wick expansion, term 2
+        t3: array of floats
+            Wick expansion, term 3
+        t4: array of floats
+            Wick expansion, term 4
     """
     r_par = (r_comov1[:, None] - r_comov2)*np.cos(ang/2.)
     r_trans = (r_comov1[:, None] + r_comov2)*np.sin(ang/2.)
@@ -799,42 +803,64 @@ def compute_wickT1234_pairs(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
     return
 
 @jit
-def compute_wickT56_pairs(ang12,ang34,ang13,r_comov1,r_comov2,r_comov3,r_comov4,weights1,weights2,weights3,weights4,thingid2,thingid4,t5,t6):
-    """Compute the Wick covariance matrix for the object-pixel
-        cross-correlation for the T5 and T6 diagrams:
-        i.e. the contribution of the 3D auto-correlation to the
-        covariance matrix
+def compute_wickT56_pairs(ang12, ang34, ang13, r_comov1, r_comov2, r_comov3,
+                          r_comov4, weights1, weights2, weights3, weights4,
+                          thingid2, thingid4, t5, t6):
+    """
+    Compute the Wick covariance matrix for the object-pixel cross-correlation
+    for the T5 and T6 diagrams: i.e. the contribution of the 3D auto-correlation
+    to the covariance matrix
+
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
 
     Args:
-        ang12 (float array): angle between forest and array of objects
-        ang34 (float array): angle between another forest and another array of objects
-        ang13 (float array): angle between the two forests
-        r_comov1 (float array): comoving distance to each pixel of the forest [Mpc/h]
-        r_comov2 (float array): comoving distance to each object [Mpc/h]
-        r_comov3 (float array): comoving distance to each pixel of another forests [Mpc/h]
-        r_comov4 (float array): comoving distance to each object paired to the other forest [Mpc/h]
-        weights1 (float array): weight of each pixel of the forest
-        weights2 (float array): weight of each object
-        weights3 (float array): weight of each pixel of another forest
-        weights4 (float array): weight of each object paired to the other forest
-        thingid2 (float array): THING_ID of each object
-        thingid4 (float array): THING_ID of each object paired to the other forest
-        t5 (float 2d array): Contribution of diagram T5
-        t6 (float 2d array): Contribution of diagram T6
-
-    Returns:
-
+        ang12: array of floats
+            Angular separation between pixels in forests 1 and object 2
+        ang34: array of floats
+            Angular separation between pixels in forests 3 and object 4
+        ang13: array of floats
+            Angular separation between pixels in object 2 and 3
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for object 2
+        r_comov3: array of floats
+            Comoving distance (in Mpc/h) for forest 3
+        r_comov4: array of floats
+            Comoving distance (in Mpc/h) for object 4
+        weights1: array of floats
+            Weights for forest 1
+        weights2: array of floats
+            Weights for object 2
+        weights3: array of floats
+            Weights for forest 3
+        weights4: array of floats
+            Weights for object 4
+        thingid2: array of ints
+            ThingID of the observation for object 2
+        thingid4: array of ints
+            ThingID of the observation for object 4
+        t4: array of floats
+            Wick expansion, term 4
+        t5: array of floats
+            Wick expansion, term 5
     """
-
     ### Pair forest_1 - forest_3
-    r_par = np.absolute(r_comov1-r_comov3[:,None])*sp.cos(ang13/2.)
-    r_trans = (r_comov1+r_comov3[:,None])*sp.sin(ang13/2.)
+    r_par = np.absolute(r_comov1 - r_comov3[:, None])*np.cos(ang13/2.)
+    r_trans = (r_comov1 + r_comov3[:, None])*np.sin(ang13/2.)
 
-    w = (r_par<cfWick_rp_max) & (r_trans<cfWick_rt_max) & (r_par>=cfWick_rp_min)
-    if w.sum()==0: return
-    bp = sp.floor((r_par-cfWick_rp_min)/(cfWick_rp_max-cfWick_rp_min)*cfWick_np).astype(int)
-    bt = (r_trans/cfWick_rt_max*cfWick_nt).astype(int)
-    ba13 = bt + cfWick_nt*bp
+    #w = (r_par < cfWick_rp_max) & (r_trans < cfWick_rt_max) & (r_par >= cfWick_rp_min)
+    w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+    if w.sum() == 0:
+        return
+    #bp = sp.floor((r_par-cfWick_rp_min)/(cfWick_rp_max-cfWick_rp_min)*cfWick_np).astype(int)
+    bins_r_par = np.floor((r_par - r_par_min)/(r_par_max - r_par_min)*
+                          num_bins_r_par).astype(int)
+    #bt = (r_trans/cfWick_rt_max*cfWick_nt).astype(int)
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    #ba13 = bt + cfWick_nt*bp
+    ba13 = bins_r_trans + num_bins_r_trans*bins_r_par
     ba13[~w] = 0
     cf13 = xi_wick[ba13]
     cf13[~w] = 0.

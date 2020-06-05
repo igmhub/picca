@@ -1099,9 +1099,12 @@ def compute_wickT123_pairs(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
             Total weight in the covariance matrix pixels
         num_pairs_wick: array of floats
             Total number of pairs in the covariance matrix pixels
-        t1: Wick expansion, term 1
-        t2: Wick expansion, term 2
-        t3: Wick expansion, term 3
+        t1: array of floats
+            Wick expansion, term 1
+        t2: array of floats
+            Wick expansion, term 2
+        t3: array of floats
+            Wick expansion, term 3
     """
     num_pixels1 = len(r_comov1)
     num_pixels2 = len(r_comov2)
@@ -1207,8 +1210,10 @@ def compute_wickT45_pairs(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23,
             Flag name identifying the group of deltas for forest 2
         fname3: string
             Flag name identifying the group of deltas for forest 3
-        t4: Wick expansion, term 4
-        t5: Wick expansion, term 5
+        t4: array of floats
+            Wick expansion, term 4
+        t5: array of floats
+            Wick expansion, term 5
     """
     ### forest-1 x forest-2
     r_par = (r_comov1[:, None] - r_comov2) * np.cos(ang12 / 2.)
