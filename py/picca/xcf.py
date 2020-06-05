@@ -52,6 +52,18 @@ lock = None
 cosmo = None
 ang_correlation = False
 
+# variables used in the wick covariance matrix computation
+v1d = {}
+c1d = {}
+max_diagram = None
+cfWick = None
+cfWick_np = None
+cfWick_nt = None
+cfWick_rp_min = None
+cfWick_rp_max = None
+cfWick_rt_max = None
+cfWick_angmax = None
+
 def fill_neighs(healpixs):
     """Create and store a list of neighbours for each of the healpix.
 
@@ -481,10 +493,6 @@ def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
                           end="")
                 counter.value += 1
 
-            w = np.random.rand(len(delta1.neighbours)) > reject
-            num_pairs += len(delta1.neighbours)
-            num_pairs_used += w.sum()
-
             r_comov1 = delta1.r_comov
             dist_m1 = delta1.dist_m
             weights1 = delta1.weights
@@ -503,6 +511,10 @@ def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
             dist_m1_abs1 = dist_m1_abs1[w]
             if r_comov1.size == 0:
                 continue
+
+            w = np.random.rand(len(delta1.neighbours)) > reject
+            num_pairs += len(delta1.neighbours)
+            num_pairs_used += w.sum()
 
             for obj2 in np.array(delta1.neighbours)[w]:
                 ang = delta1^obj2
@@ -569,17 +581,6 @@ def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
 
     return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
             num_pairs, num_pairs_used)
-
-v1d = {}
-c1d = {}
-max_diagram = None
-cfWick = None
-cfWick_np = None
-cfWick_nt = None
-cfWick_rp_min = None
-cfWick_rp_max = None
-cfWick_rt_max = None
-cfWick_angmax = None
 
 def wickT(pix):
     """Compute the Wick covariance matrix for the object-pixel
