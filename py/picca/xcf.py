@@ -207,11 +207,11 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     bins = bins_r_trans + num_bins_r_trans*bins_r_par
 
     rebin_xi = np.bincount(bins, weights=delta_times_weight)
-    rebin_weight = np.bincount(bins, weights=weights)
-    rebin_r_par = np.bincount(bins, weights=r_par*weights)
-    rebin_r_trans = np.bincount(bins, weights=r_trans*weights)
-    rebin_z = np.bincount(bins, weights=z*weights)
-    rebin_num_pairs = np.bincount(bins, weights=(weights > 0.))
+    rebin_weight = np.bincount(bins, weights=weights12)
+    rebin_r_par = np.bincount(bins, weights=r_par*weights12)
+    rebin_r_trans = np.bincount(bins, weights=r_trans*weights12)
+    rebin_z = np.bincount(bins, weights=z*weights12)
+    rebin_num_pairs = np.bincount(bins, weights=(weights12 > 0.))
 
     return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
             rebin_num_pairs)
