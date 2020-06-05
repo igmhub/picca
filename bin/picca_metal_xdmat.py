@@ -266,6 +266,7 @@ def main():
                             wl=args.fid_wl)
     xcf.cosmo = cosmo
 
+    # read deltas
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
                                                   args.nside,
                                                   xcf.lambda_abs,
