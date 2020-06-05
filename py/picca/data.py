@@ -122,7 +122,7 @@ class QSO(object):
         self.r_comov = None
         self.dist_m = None
 
-        # variables computed in modules bin.picca_xcf_angl and bin.picca_xcd1d
+        # variables computed in modules bin.picca_xcf_angl and bin.picca_xcf1d
         self.log_lambda = None
 
     def __xor__(self, data):
