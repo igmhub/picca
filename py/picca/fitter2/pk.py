@@ -429,7 +429,7 @@ def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     kt  = k*np.sqrt(1.-muk**2)
     st2 = kwargs['per_sigma_smooth']**2
     sp2 = kwargs['par_sigma_smooth']**2
-    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)
+    return sp.exp(-(kp**2*sp2+kt**2*st2)/2.)**2
 
 def pk_gauss_exp_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     """
