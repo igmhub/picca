@@ -603,10 +603,10 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
     Args:
         healpixs: array of ints
             List of healpix numbers
-        abs_igm1: string - default: "LYA"
+        abs_igm1: str - default: "LYA"
             Name of the absorption in picca.constants defining the
             redshift of the forest pixels
-        abs_igm2: string - default: "SiIII(1207)"
+        abs_igm2: str - default: "SiIII(1207)"
             Name of the second absorption in picca.constants defining the
             redshift of the forest pixels
 

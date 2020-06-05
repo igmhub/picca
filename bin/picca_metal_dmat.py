@@ -23,11 +23,17 @@ def calc_metal_dmat(abs_igm1, abs_igm2, healpixs):
     using several CPUs.
 
     Args:
+        abs_igm1: str
+            Name of the absorption in picca.constants defining the
+            redshift of the forest pixels
+        abs_igm2: str
+            Name of the second absorption in picca.constants defining the
+            redshift of the forest pixels
         healpixs: array of ints
             List of healpix numbers
 
     Returns:
-        The distortion matri data
+        The distortion matrix data
     """
     cf.fill_neighs(healpixs)
     np.random.seed(healpixs[0])
@@ -276,6 +282,7 @@ def main():
     for metal in args.abs_igm:
         cf.alpha_abs[metal] = args.metal_alpha
 
+    # load fiducial cosmology
     cf.cosmo = constants.Cosmo(Om=args.fid_Om,
                                Or=args.fid_Or,
                                Ok=args.fid_Ok,
