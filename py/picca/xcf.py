@@ -441,7 +441,7 @@ def wickT(pix):
     T5 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
     T6 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
     wAll = np.zeros(num_bins_r_par*num_bins_r_trans)
-    num_pairs = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
+    num_pairs_wick = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
     num_pairs = 0
     num_pairs_used = 0
 
@@ -471,7 +471,7 @@ def wickT(pix):
             z2 = sp.array([q2.z_qso for q2 in neighbours])
             w2 = sp.array([q2.weights for q2 in neighbours])
 
-            fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs,T1,T2,T3,T4)
+            fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4)
 
             ### Higher order diagrams
             if (cfWick is None) or (max_diagram<=4): continue
@@ -507,9 +507,9 @@ def wickT(pix):
 
                 fill_wickT56(t_ang12,ang34,ang13,r1,t_r2,r3,r4,w1,t_w2,w3,w4,t_thingid2,thingid4,T5,T6)
 
-    return wAll, num_pairs, num_pairs, num_pairs_used, T1, T2, T3, T4, T5, T6
+    return wAll, num_pairs_wick, num_pairs, num_pairs_used, T1, T2, T3, T4, T5, T6
 @jit
-def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs,T1,T2,T3,T4):
+def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4):
     """Compute the Wick covariance matrix for the object-pixel
         cross-correlation for the T1, T2, T3 and T4 diagrams:
         i.e. the contribution of the 1D auto-correlation to the
@@ -525,7 +525,7 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs,T1,T2,T3,T4):
         w2 (float array): weight of each object
         c1d_1 (float array): covariance between two pixels of the same forest
         wAll (float array): Sum of weight
-        num_pairs (int64 array): Number of pairs
+        num_pairs_wick (int64 array): Number of pairs
         T1 (float 2d array): Contribution of diagram T1
         T2 (float 2d array): Contribution of diagram T2
         T3 (float 2d array): Contribution of diagram T3
@@ -561,7 +561,7 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs,T1,T2,T3,T4):
         i1 = idxPix[k1]
         q1 = idxQso[k1]
         wAll[p1] += weights[k1]
-        num_pairs[p1] += 1
+        num_pairs_wick[p1] += 1
         T1[p1,p1] += (weights[k1]**2)/we1[k1]*zw1[i1]
 
         for k2 in range(k1+1,ba.size):
