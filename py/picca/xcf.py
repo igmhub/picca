@@ -192,7 +192,7 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     z = (z1[:, None] + z2)/2
 
     weights12 = weights1[:, None]*weights2
-    delta_times_weight = (dist_m_qso*delta1)[:, None]*weights2
+    delta_times_weight = (weights1*delta1)[:, None]*weights2
 
     w = (r_par > r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
     r_par = r_par[w]
@@ -217,6 +217,25 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
             rebin_num_pairs)
 
 def dmat(pix):
+    """Computes the distortion matrix for each of the healpixs.
+
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+
+    Returns:
+        The following variables:
+            weights_dmat: Total weight in the distortion matrix pixels
+            dmat: The distortion matrix
+            r_par_eff: Effective parallel distance of the distortion matrix
+                pixels
+            r_trans_eff: Effective transverse distance of the distortion matrix
+                pixels
+            z_eff: Effective redshift of the distortion matrix pixels
+            weight_eff: Effective weight of the distortion matrix pixels
+            num_pairs: Total number of pairs
+            num_pairs_used: Number of used pairs
+    """
 
     dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*num_model_bins_r_par)
     wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
