@@ -8,9 +8,9 @@ This module provides several functions:
     - compute_dmat
     - compute_dmat_forest_pairs
     - compute_metal_dmat
-    - wickT
-    - fill_wickT1234
-    - fill_wickT56
+    - compute_wick_terms
+    - compute_wickT1234_pairs
+    - compute_wickT56_pairs
     - xcf1d
 See the respective docstrings for more details
 """
@@ -53,10 +53,10 @@ cosmo = None
 ang_correlation = False
 
 # variables used in the wick covariance matrix computation
-v1d = {}
+get_variance_1d = {}
 c1d = {}
 max_diagram = None
-cfWick = None
+xi_wick = None
 cfWick_np = None
 cfWick_nt = None
 cfWick_rp_min = None
@@ -582,93 +582,133 @@ def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
     return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
             num_pairs, num_pairs_used)
 
-def wickT(pix):
-    """Compute the Wick covariance matrix for the object-pixel
-        cross-correlation
+def compute_wick_terms(healpixs):
+    """
+    Computes the Wick expansion terms of the covariance matrix for the object-
+    pixel cross-correlation
+
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
 
     Args:
-        pix (lst): list of HEALpix pixels
+        healpixs: array of ints
+            List of healpix numbers
 
     Returns:
-        (tuple): results of the Wick computation
-
+        The following variables:
+            weights_wick: Total weight in the covariance matrix pixels from all
+                terms in the Wick expansion
+            num_pairs_wick: Number of pairs in the covariance matrix pixels
+            num_pairs: Total number of pairs
+            num_pairs_used: Total number of used pairs
+            t1: Wick expansion, term 1
+            t2: Wick expansion, term 2
+            t3: Wick expansion, term 3
+            t4: Wick expansion, term 4
+            t5: Wick expansion, term 5
+            t6: Wick expansion, term 6
     """
-    T1 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    T2 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    T3 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    T4 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    T5 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    T6 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
-    wAll = np.zeros(num_bins_r_par*num_bins_r_trans)
-    num_pairs_wick = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
+    t1 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    t2 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    t3 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    t4 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    t5 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    t6 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    weights_wick = np.zeros(num_bins_r_par*num_bins_r_trans)
+    num_pairs_wick = np.zeros(num_bins_r_par*num_bins_r_trans, dtype=np.int64)
     num_pairs = 0
     num_pairs_used = 0
 
-    for healpix in pix:
+    for healpix in healpixs:
 
         num_pairs += len(data[healpix])
-        r = sp.random.rand(len(data[healpix]))
-        w = r>reject
+        w = np.random.rand(len(data[healpix])) > reject
         num_pairs_used += w.sum()
-        if w.sum()==0: continue
+        if w.sum() == 0:
+            continue
 
-        for d1 in [ td for ti,td in enumerate(data[healpix]) if w[ti] ]:
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data/(1.-reject),3)),end="")
+        for delta1 in [delta
+                       for index, delta in enumerate(data[healpix])
+                       if w[index]]:
+            userprint(("\rcomputing xi: "
+                       "{}%").format(round((counter.value*100./num_data/
+                                            (1. - reject)), 3)),
+                      end="")
             with lock:
                 counter.value += 1
-            if d1.neighbours.size==0: continue
+            if delta1.neighbours.size == 0:
+                continue
 
-            v1 = v1d[d1.fname](d1.log_lambda)
-            weights1 = d1.weights
-            c1d_1 = (weights1*weights1[:,None])*c1d[d1.fname](abs(d1.log_lambda-d1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
-            r_comov1 = d1.r_comov
-            z1 = d1.z
+            variance_1d_1 = get_variance_1d[delta1.fname](delta1.log_lambda)
+            weights1 = delta1.weights
+            weighted_xi_1d_1 = ((weights1*weights1[:, None])*
+                                c1d[delta1.fname](abs(delta1.log_lambda -
+                                                      delta1.log_lambda[:, None]))*
+                                np.sqrt(variance_1d_1*variance_1d_1[:, None]))
+            r_comov1 = delta1.r_comov
+            z1 = delta1.z
 
-            neighbours = d1.neighbours
-            ang12 = d1^neighbours
-            r_comov2 = sp.array([q2.r_comov for q2 in neighbours])
-            z2 = sp.array([q2.z_qso for q2 in neighbours])
-            weights2 = sp.array([q2.weights for q2 in neighbours])
+            neighbours = delta1.neighbours
+            ang12 = delta1^neighbours
+            r_comov2 = np.array([obj2.r_comov for obj2 in neighbours])
+            z2 = np.array([obj2.z_qso for obj2 in neighbours])
+            weights2 = np.array([obj2.weights for obj2 in neighbours])
 
-            fill_wickT1234(ang12,r_comov1,r_comov2,z1,z2,weights1,weights2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4)
+            compute_wickT1234_pairs(ang12, r_comov1, r_comov2, z1, z2, weights1,
+                                    weights2, weighted_xi_1d_1, weights_wick,
+                                    num_pairs_wick, t1, t2, t3, t4)
 
             ### Higher order diagrams
-            if (cfWick is None) or (max_diagram<=4): continue
-            thingid2 = sp.array([q2.thingid for q2 in neighbours])
-            for d3 in sp.array(d1.dneighs):
-                if d3.neighbours.size==0: continue
+            if (xi_wick is None) or (max_diagram <= 4):
+                continue
+            thingid2 = np.array([obj2.thingid for obj2 in neighbours])
+            for delta3 in np.array(delta1.dneighs):
+                if delta3.neighbours.size == 0:
+                    continue
 
-                ang13 = d1^d3
+                ang13 = delta1^delta3
 
-                r3 = d3.r_comov
-                w3 = d3.weights
+                r_comov3 = delta3.r_comov
+                weights3 = delta3.weights
 
-                neighbours = d3.neighbours
-                ang34 = d3^neighbours
-                r4 = sp.array([q4.r_comov for q4 in neighbours])
-                w4 = sp.array([q4.weights for q4 in neighbours])
-                thingid4 = sp.array([q4.thingid for q4 in neighbours])
+                neighbours = delta3.neighbours
+                ang34 = delta3^neighbours
+                r_comov4 = np.array([obj4.r_comov for obj4 in neighbours])
+                weights4 = np.array([obj4.weights for obj4 in neighbours])
+                thingid4 = np.array([obj4.thingid for obj4 in neighbours])
 
-                if max_diagram==5:
-                    w = sp.in1d(d1.neighbours,d3.neighbours)
-                    if w.sum()==0: continue
-                    t_ang12 = ang12[w]
-                    t_r2 = r_comov2[w]
-                    t_w2 = weights2[w]
-                    t_thingid2 = thingid2[w]
+                if max_diagram == 5:
+                    w = np.in1d(delta1.neighbours, delta3.neighbours)
+                    if w.sum() == 0:
+                        continue
+                    aux_ang12 = ang12[w]
+                    aux_r_comov2 = r_comov2[w]
+                    aux_weights2 = weights2[w]
+                    aux_thingid2 = thingid2[w]
 
-                    w = sp.in1d(d3.neighbours,d1.neighbours)
-                    if w.sum()==0: continue
+                    w = np.in1d(delta3.neighbours, delta1.neighbours)
+                    if w.sum() == 0:
+                        continue
                     ang34 = ang34[w]
-                    r4 = r4[w]
-                    w4 = w4[w]
+                    r_comov4 = r_comov4[w]
+                    weights4 = weights4[w]
                     thingid4 = thingid4[w]
 
-                fill_wickT56(t_ang12,ang34,ang13,r_comov1,t_r2,r3,r4,weights1,t_w2,w3,w4,t_thingid2,thingid4,T5,T6)
+                compute_wickT56_pairs(aux_ang12, ang34, ang13, r_comov1,
+                                      aux_r_comov2, r_comov3, r_comov4,
+                                      weights1, aux_weights2, weights3,
+                                      weights4, aux_thingid2, thingid4, t5, t6)
 
-    return wAll, num_pairs_wick, num_pairs, num_pairs_used, T1, T2, T3, T4, T5, T6
+    return weights_wick, num_pairs_wick, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
+
 @jit
-def fill_wickT1234(ang,r_comov1,r_comov2,z1,z2,weights1,weights2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4):
+def compute_wickT1234_pairs(ang,r_comov1,r_comov2,z1,z2,weights1,weights2,weighted_xi_1d_1,weights_wick,num_pairs_wick,t1,t2,t3,t4):
     """Compute the Wick covariance matrix for the object-pixel
         cross-correlation for the T1, T2, T3 and T4 diagrams:
         i.e. the contribution of the 1D auto-correlation to the
@@ -682,13 +722,13 @@ def fill_wickT1234(ang,r_comov1,r_comov2,z1,z2,weights1,weights2,c1d_1,wAll,num_
         z2 (float array): redshift of each object
         weights1 (float array): weight of each pixel of the forest
         weights2 (float array): weight of each object
-        c1d_1 (float array): covariance between two pixels of the same forest
-        wAll (float array): Sum of weight
+        weighted_xi_1d_1 (float array): covariance between two pixels of the same forest
+        weights_wick (float array): Sum of weight
         num_pairs_wick (int64 array): Number of pairs
-        T1 (float 2d array): Contribution of diagram T1
-        T2 (float 2d array): Contribution of diagram T2
-        T3 (float 2d array): Contribution of diagram T3
-        T4 (float 2d array): Contribution of diagram T4
+        t1 (float 2d array): Contribution of diagram T1
+        t2 (float 2d array): Contribution of diagram T2
+        t3 (float 2d array): Contribution of diagram T3
+        t4 (float 2d array): Contribution of diagram T4
 
     Returns:
 
@@ -719,30 +759,30 @@ def fill_wickT1234(ang,r_comov1,r_comov2,z1,z2,weights1,weights2,c1d_1,wAll,num_
         p1 = ba[k1]
         i1 = idxPix[k1]
         q1 = idxQso[k1]
-        wAll[p1] += weights[k1]
+        weights_wick[p1] += weights[k1]
         num_pairs_wick[p1] += 1
-        T1[p1,p1] += (weights[k1]**2)/we1[k1]*zw1[i1]
+        t1[p1,p1] += (weights[k1]**2)/we1[k1]*zw1[i1]
 
         for k2 in range(k1+1,ba.size):
             p2 = ba[k2]
             i2 = idxPix[k2]
             q2 = idxQso[k2]
             if q1==q2:
-                wcorr = c1d_1[i1,i2]*(zw2[q1]**2)
-                T2[p1,p2] += wcorr
-                T2[p2,p1] += wcorr
+                wcorr = weighted_xi_1d_1[i1,i2]*(zw2[q1]**2)
+                t2[p1,p2] += wcorr
+                t2[p2,p1] += wcorr
             elif i1==i2:
                 wcorr = (weights[k1]*weights[k2])/we1[k1]*zw1[i1]
-                T3[p1,p2] += wcorr
-                T3[p2,p1] += wcorr
+                t3[p1,p2] += wcorr
+                t3[p2,p1] += wcorr
             else:
-                wcorr = c1d_1[i1,i2]*zw2[q1]*zw2[q2]
-                T4[p1,p2] += wcorr
-                T4[p2,p1] += wcorr
+                wcorr = weighted_xi_1d_1[i1,i2]*zw2[q1]*zw2[q2]
+                t4[p1,p2] += wcorr
+                t4[p2,p1] += wcorr
 
     return
 @jit
-def fill_wickT56(ang12,ang34,ang13,r_comov1,r_comov2,r3,r4,weights1,weights2,w3,w4,thingid2,thingid4,T5,T6):
+def compute_wickT56_pairs(ang12,ang34,ang13,r_comov1,r_comov2,r_comov3,r_comov4,weights1,weights2,weights3,weights4,thingid2,thingid4,t5,t6):
     """Compute the Wick covariance matrix for the object-pixel
         cross-correlation for the T5 and T6 diagrams:
         i.e. the contribution of the 3D auto-correlation to the
@@ -754,24 +794,24 @@ def fill_wickT56(ang12,ang34,ang13,r_comov1,r_comov2,r3,r4,weights1,weights2,w3,
         ang13 (float array): angle between the two forests
         r_comov1 (float array): comoving distance to each pixel of the forest [Mpc/h]
         r_comov2 (float array): comoving distance to each object [Mpc/h]
-        r3 (float array): comoving distance to each pixel of another forests [Mpc/h]
-        r4 (float array): comoving distance to each object paired to the other forest [Mpc/h]
+        r_comov3 (float array): comoving distance to each pixel of another forests [Mpc/h]
+        r_comov4 (float array): comoving distance to each object paired to the other forest [Mpc/h]
         weights1 (float array): weight of each pixel of the forest
         weights2 (float array): weight of each object
-        w3 (float array): weight of each pixel of another forest
-        w4 (float array): weight of each object paired to the other forest
+        weights3 (float array): weight of each pixel of another forest
+        weights4 (float array): weight of each object paired to the other forest
         thingid2 (float array): THING_ID of each object
         thingid4 (float array): THING_ID of each object paired to the other forest
-        T5 (float 2d array): Contribution of diagram T5
-        T6 (float 2d array): Contribution of diagram T6
+        t5 (float 2d array): Contribution of diagram T5
+        t6 (float 2d array): Contribution of diagram T6
 
     Returns:
 
     """
 
     ### Pair forest_1 - forest_3
-    r_par = np.absolute(r_comov1-r3[:,None])*sp.cos(ang13/2.)
-    r_trans = (r_comov1+r3[:,None])*sp.sin(ang13/2.)
+    r_par = np.absolute(r_comov1-r_comov3[:,None])*sp.cos(ang13/2.)
+    r_trans = (r_comov1+r_comov3[:,None])*sp.sin(ang13/2.)
 
     w = (r_par<cfWick_rp_max) & (r_trans<cfWick_rt_max) & (r_par>=cfWick_rp_min)
     if w.sum()==0: return
@@ -779,7 +819,7 @@ def fill_wickT56(ang12,ang34,ang13,r_comov1,r_comov2,r3,r4,weights1,weights2,w3,
     bt = (r_trans/cfWick_rt_max*cfWick_nt).astype(int)
     ba13 = bt + cfWick_nt*bp
     ba13[~w] = 0
-    cf13 = cfWick[ba13]
+    cf13 = xi_wick[ba13]
     cf13[~w] = 0.
 
     ### Pair forest_1 - object_2
@@ -801,11 +841,11 @@ def fill_wickT56(ang12,ang34,ang13,r_comov1,r_comov2,r3,r4,weights1,weights2,w3,
     ba12 = bt + num_bins_r_trans*bp
 
     ### Pair forest_3 - object_4
-    r_par = (r3[:,None]-r4)*sp.cos(ang34/2.)
-    r_trans = (r3[:,None]+r4)*sp.sin(ang34/2.)
-    weights = w3[:,None]*w4
-    pix = (np.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
-    thingid = sp.ones_like(w3[:,None]).astype(int)*thingid4
+    r_par = (r_comov3[:,None]-r_comov4)*sp.cos(ang34/2.)
+    r_trans = (r_comov3[:,None]+r_comov4)*sp.sin(ang34/2.)
+    weights = weights3[:,None]*weights4
+    pix = (np.arange(r_comov3.size)[:,None]*sp.ones_like(r_comov4)).astype(int)
+    thingid = sp.ones_like(weights3[:,None]).astype(int)*thingid4
 
     w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
     if w.sum()==0: return
@@ -818,7 +858,7 @@ def fill_wickT56(ang12,ang34,ang13,r_comov1,r_comov2,r3,r4,weights1,weights2,w3,
     bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
     ba34 = bt + num_bins_r_trans*bp
 
-    ### T5
+    ### t5
     for k1, p1 in enumerate(ba12):
         pix1 = pix12[k1]
         t1 = thingid12[k1]
@@ -833,7 +873,7 @@ def fill_wickT56(ang12,ang34,ang13,r_comov1,r_comov2,r3,r4,weights1,weights2,w3,
             T5[p1,p2] += wcorr
             T5[p2,p1] += wcorr
 
-    ### T6
+    ### t6
     if max_diagram==5: return
     for k1, p1 in enumerate(ba12):
         pix1 = pix12[k1]
@@ -846,8 +886,8 @@ def fill_wickT56(ang12,ang34,ang13,r_comov1,r_comov2,r3,r4,weights1,weights2,w3,
             weights2 = we34[k2]
             wcorr = cf13[pix2,pix1]*weights1*weights2
             if t2==t1: continue
-            T6[p1,p2] += wcorr
-            T6[p2,p1] += wcorr
+            t6[p1,p2] += wcorr
+            t6[p2,p1] += wcorr
 
     return
 def xcf1d(pix):

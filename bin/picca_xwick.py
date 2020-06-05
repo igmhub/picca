@@ -22,7 +22,7 @@ def calc_wickT(p):
 
     """
     sp.random.seed(p[0])
-    tmp = xcf.wickT(p)
+    tmp = xcf.compute_wick_terms(p)
     return tmp
 
 if __name__ == '__main__':
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     nv1d = h[1]['nv1d'][:]
     v1d = h[1]['v1d'][:]
     log_lambda = log_lambda_min + delta_log_lambda*np.arange(v1d.size)
-    xcf.v1d['D1'] = interp1d(log_lambda[nv1d>0],v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
+    xcf.get_variance_1d['D1'] = interp1d(log_lambda[nv1d>0],v1d[nv1d>0],kind='nearest',fill_value='extrapolate')
 
     nb1d = h[1]['nb1d'][:]
     c1d = h[1]['c1d'][:]
@@ -212,7 +212,7 @@ if __name__ == '__main__':
         weights = weights.sum(axis=0)
         w = weights>0.
         da[w] /= weights[w]
-        xcf.cfWick = da.copy()
+        xcf.xi_wick = da.copy()
         h.close()
 
         cf.data = xcf.data
