@@ -5,11 +5,10 @@ delta field.
 This module follow the procedure described in sections 3.1 and 3.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
-import numpy as np
-import scipy as sp
-import fitsio
 import argparse
 from multiprocessing import Pool, Lock, cpu_count, Value
+import numpy as np
+import fitsio
 
 from picca import constants, xcf, io, prep_del, utils
 from picca.data import Forest
@@ -298,95 +297,114 @@ def main():
                                  Forest.delta_log_lambda/2.)
         Forest.log_lambda_max = (np.log10((z_max + 1.)*xcf.lambda_abs) +
                                  Forest.delta_log_lambda/2.)
-        log_lambda, mean_delta, wst = prep_del.stack(xcf.data,
-                                                     stack_from_deltas=True)
+        log_lambda, mean_delta, stack_weight = prep_del.stack(xcf.data,
+                                                              stack_from_deltas=True)
+        del log_lambda, stack_weight
         for healpix in xcf.data:
             for delta in xcf.data[healpix]:
                 bins = ((delta.log_lambda - Forest.log_lambda_min)/
                         Forest.delta_log_lambda + 0.5).astype(int)
                 delta.delta -= mean_delta[bins]
 
-    ### Find the redshift range
-    if (args.z_min_obj is None):
-        dmin_pix = cosmo.get_r_comov(z_min)
-        dmin_obj = max(0.,dmin_pix+xcf.r_par_min)
-        args.z_min_obj = cosmo.distance_to_redshift(dmin_obj)
-        userprint("\r z_min_obj = {}\r".format(args.z_min_obj),end="")
-    if (args.z_max_obj is None):
-        dmax_pix = cosmo.get_r_comov(z_max)
-        dmax_obj = max(0.,dmax_pix+xcf.r_par_max)
-        args.z_max_obj = cosmo.distance_to_redshift(dmax_obj)
-        userprint("\r z_max_obj = {}\r".format(args.z_max_obj),end="")
+    # Find the redshift range
+    if args.z_min_obj is None:
+        r_comov_min = cosmo.get_r_comov(z_min)
+        r_comov_min = max(0., r_comov_min + xcf.r_par_min)
+        args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
+        userprint("\r z_min_obj = {}\r".format(args.z_min_obj), end="")
+    if args.z_max_obj is None:
+        r_comov_max = cosmo.get_r_comov(z_max)
+        r_comov_max = max(0., r_comov_max + xcf.r_par_max)
+        args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
+        userprint("\r z_max_obj = {}\r".format(args.z_max_obj), end="")
 
     ### Read objects
-    objs,zmin_obj = io.read_objects(args.drq, args.nside, args.z_min_obj, args.z_max_obj,\
-                                args.z_evol_obj, args.z_ref,cosmo)
-
-    if not args.shuffle_distrib_obj_seed is None:
-        objs = utils.shuffle_distrib_forests(objs,args.shuffle_distrib_obj_seed)
-    if not args.shuffle_distrib_forest_seed is None:
-        xcf.data = utils.shuffle_distrib_forests(xcf.data,
-            args.shuffle_distrib_forest_seed)
-
-    userprint("")
+    objs, z_min2 = io.read_objects(args.drq,
+                                   args.nside,
+                                   args.z_min_obj,
+                                   args.z_max_obj,
+                                   args.z_evol_obj,
+                                   args.z_ref,
+                                   cosmo)
     xcf.objs = objs
 
-    ###
-    xcf.ang_max = utils.compute_ang_max(cosmo,xcf.r_trans_max,z_min,zmin_obj)
+    # shuffle forests and objects
+    if not args.shuffle_distrib_obj_seed is None:
+        xcf.objs = utils.shuffle_distrib_forests(objs,
+                                                 args.shuffle_distrib_obj_seed)
+    if not args.shuffle_distrib_forest_seed is None:
+        xcf.data = utils.shuffle_distrib_forests(xcf.data,
+                                                 args.shuffle_distrib_forest_seed)
 
+    userprint("")
 
+    # compute maximum angular separation
+    xcf.ang_max = utils.compute_ang_max(cosmo, xcf.r_trans_max, z_min, z_min2)
 
-    xcf.counter = Value('i',0)
-
+    # compute correlation function, use pool to parallelize
+    xcf.counter = Value('i', 0)
     xcf.lock = Lock()
-    cpu_data = {}
-    for p in list(data.keys()):
-        cpu_data[p] = [p]
-
+    cpu_data = {healpix: [healpix] for healpix in data}
     pool = Pool(processes=args.nproc)
-
-    cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
+    correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
     pool.close()
 
-    cfs=sp.array(cfs)
-    wes=cfs[:,0,:]
-    rps=cfs[:,2,:]
-    rts=cfs[:,3,:]
-    zs=cfs[:,4,:]
-    nbs=cfs[:,5,:].astype(sp.int64)
-    cfs=cfs[:,1,:]
-    hep=sp.array(sorted(list(cpu_data.keys())))
+    # group data from parallelisation
+    correlation_function_data = np.array(correlation_function_data)
+    weights_list = correlation_function_data[:, 0, :]
+    xi_list = correlation_function_data[:, 1, :]
+    r_par_list = correlation_function_data[:, 2, :]
+    r_trans_list = correlation_function_data[:, 3, :]
+    z_list = correlation_function_data[:, 4, :]
+    num_pairs_list = correlation_function_data[:, 5, :].astype(np.int64)
+    healpix_list = np.array(sorted(list(cpu_data.keys())))
 
-    cut      = (wes.sum(axis=0)>0.)
-    r_par       = (rps*wes).sum(axis=0)
-    r_par[cut] /= wes.sum(axis=0)[cut]
-    r_trans       = (rts*wes).sum(axis=0)
-    r_trans[cut] /= wes.sum(axis=0)[cut]
-    z        = (zs*wes).sum(axis=0)
-    z[cut]  /= wes.sum(axis=0)[cut]
-    nb = nbs.sum(axis=0)
+    w = (weights_list.sum(axis=0) > 0.)
+    r_par = (r_par_list*weights_list).sum(axis=0)
+    r_par[w] /= weights_list.sum(axis=0)[w]
+    r_trans = (r_trans_list*weights_list).sum(axis=0)
+    r_trans[w] /= weights_list.sum(axis=0)[w]
+    z = (z_list*weights_list).sum(axis=0)
+    z[w] /= weights_list.sum(axis=0)[w]
+    num_pairs = num_pairs_list.sum(axis=0)
 
-    out = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':xcf.r_par_min,'comment':'Minimum r-parallel [h^-1 Mpc]'},
-        {'name':'RPMAX','value':xcf.r_par_max,'comment':'Maximum r-parallel [h^-1 Mpc]'},
-        {'name':'RTMAX','value':xcf.r_trans_max,'comment':'Maximum r-transverse [h^-1 Mpc]'},
-        {'name':'NP','value':xcf.num_bins_r_par,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':xcf.num_bins_r_trans,'comment':'Number of bins in r-transverse'},
-        {'name':'ZCUTMIN','value':xcf.z_cut_min,'comment':'Minimum redshift of pairs'},
-        {'name':'ZCUTMAX','value':xcf.z_cut_max,'comment':'Maximum redshift of pairs'},
-        {'name':'NSIDE','value':xcf.nside,'comment':'Healpix nside'}
+    results = fitsio.FITS(args.out, 'rw', clobber=True)
+    header = [
+        {'name': 'RPMIN', 'value': xcf.r_par_min,
+         'comment': 'Minimum r-parallel [h^-1 Mpc]'},
+        {'name': 'RPMAX', 'value': xcf.r_par_max,
+         'comment': 'Maximum r-parallel [h^-1 Mpc]'},
+        {'name': 'RTMAX', 'value': xcf.r_trans_max,
+         'comment': 'Maximum r-transverse [h^-1 Mpc]'},
+        {'name': 'NP', 'value': xcf.num_bins_r_par,
+         'comment': 'Number of bins in r-parallel'},
+        {'name': 'NT', 'value': xcf.num_bins_r_trans,
+         'comment': 'Number of bins in r-transverse'},
+        {'name': 'ZCUTMIN', 'value': xcf.z_cut_min,
+         'comment': 'Minimum redshift of pairs'},
+        {'name': 'ZCUTMAX', 'value': xcf.z_cut_max,
+         'comment': 'Maximum redshift of pairs'},
+        {'name': 'NSIDE', 'value': xcf.nside,
+         'comment': 'Healpix nside'}
     ]
-    out.write([r_par,r_trans,z,nb],names=['RP','RT','Z','NB'],
-        comment=['R-parallel','R-transverse','Redshift','Number of pairs'],
-        units=['h^-1 Mpc','h^-1 Mpc','',''],
-        header=head,extname='ATTRI')
+    results.write(
+        [r_par, r_trans, z, num_pairs],
+        names=['RP', 'RT', 'Z', 'NB'],
+        comment=['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs'],
+        units=['h^-1 Mpc', 'h^-1 Mpc', '', ''],
+        header=header,
+        extname='ATTRI')
 
-    head2 = [{'name':'HLPXSCHM','value':'RING','comment':'Healpix scheme'}]
-    out.write([hep,wes,cfs],names=['HEALPID','WE','DA'],
+    header2 = [{'name': 'HLPXSCHM', 'value': 'RING',
+                'comment': 'Healpix scheme'}]
+    results.write(
+        [healpix_list, weights_list, xi_list],
+        names=['HEALPID', 'WE', 'DA'],
         comment=['Healpix index', 'Sum of weight', 'Correlation'],
-        header=head2,extname='COR')
+        header=header2,
+        extname='COR')
 
-    out.close()
+    results.close()
 
 if __name__ == '__main__':
     main()
