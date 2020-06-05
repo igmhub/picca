@@ -75,49 +75,74 @@ def fill_neighs(healpixs):
                     (delta.z[-1] + obj.z_qso)/2. < z_cut_max)
             ])
 
-def xcf(pix):
+def compute_xi(healpixs):
+    """Computes the correlation function for each of the healpixs.
+
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+
+    Returns:
+        The following variables:
+            weights: Total weights in the correlation function pixels
+            xi: The correlation function
+            r_par: Parallel distance of the correlation function pixels
+            r_trans: Transverse distance of the correlation function pixels
+            z: Redshift of the correlation function pixels
+            num_pairs: Number of pairs in the correlation function pixels
+    """
     xi = np.zeros(num_bins_r_par*num_bins_r_trans)
     weights = np.zeros(num_bins_r_par*num_bins_r_trans)
     r_par = np.zeros(num_bins_r_par*num_bins_r_trans)
     r_trans = np.zeros(num_bins_r_par*num_bins_r_trans)
     z = np.zeros(num_bins_r_par*num_bins_r_trans)
-    nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
+    num_pairs = np.zeros(num_bins_r_par*num_bins_r_trans, dtype=np.int64)
 
-    for ipix in pix:
-        for d in data[ipix]:
+    for healpix in healpixs:
+        for delta in data[healpix]:
             with lock:
-                counter.value +=1
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data,3)),end="")
-            if (d.neighbours.size != 0):
-                ang = d^d.neighbours
-                z_qso = [q.z_qso for q in d.neighbours]
-                we_qso = [q.weights for q in d.neighbours]
+                counter.value += 1
+            userprint(("\rcomputing xi: "
+                       "{}%").format(round(counter.value * 100. / num_data, 3)),
+                      end="")
+            if delta.neighbours.size != 0:
+                ang = delta^delta.neighbours
+                z_qso = [obj.z_qso for obj in delta.neighbours]
+                weights_qso = [obj.weights for obj in delta.neighbours]
                 if ang_correlation:
-                    l_qso = [10.**q.log_lambda for q in d.neighbours]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.delta,z_qso,l_qso,l_qso,we_qso,ang)
+                    lambda_qso = [10.**obj.log_lambda
+                                  for obj in delta.neighbours]
+                    (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
+                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                         delta.z, 10.**delta.log_lambda, 10.**delta.log_lambda,
+                         delta.weights, delta.delta, z_qso, lambda_qso,
+                         lambda_qso, weights_qso, ang)
                 else:
-                    rc_qso = [q.r_comov for q in d.neighbours]
-                    rdm_qso = [q.dist_m for q in d.neighbours]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.dist_m,d.weights,d.delta,z_qso,rc_qso,rdm_qso,we_qso,ang)
+                    r_comov_qso = [obj.r_comov for obj in delta.neighbours]
+                    dist_m_qso = [obj.dist_m for obj in delta.neighbours]
+                    (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
+                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                         delta.z, delta.r_comov, delta.dist_m, delta.weights,
+                         delta.delta, z_qso, r_comov_qso, dist_m_qso,
+                         weights_qso, ang)
 
-                xi[:len(cd)]+=cd
-                weights[:len(cw)]+=cw
-                r_par[:len(crp)]+=crp
-                r_trans[:len(crt)]+=crt
-                z[:len(cz)]+=cz
-                nb[:len(cnb)]+=cnb.astype(int)
-            for el in list(d.__dict__.keys()):
-                setattr(d,el,None)
+                xi[:len(rebin_xi)] += rebin_xi
+                weights[:len(rebin_weight)] += rebin_weight
+                r_par[:len(rebin_r_par)] += rebin_r_par
+                r_trans[:len(rebin_r_trans)] += rebin_r_trans
+                z[:len(rebin_z)] += rebin_z
+                num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs.astype(int)
+            setattr(delta, "neighbours", None)
 
-    w = weights>0
-    xi[w]/=weights[w]
-    r_par[w]/=weights[w]
-    r_trans[w]/=weights[w]
-    z[w]/=weights[w]
-    return weights,xi,r_par,r_trans,z,nb
+    w = weights > 0
+    xi[w] /= weights[w]
+    r_par[w] /= weights[w]
+    r_trans[w] /= weights[w]
+    z[w] /= weights[w]
+    return weights, xi, r_par, r_trans, z, num_pairs
 
 @jit
-def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
+def compute_xi_forest_pairs(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
     if ang_correlation:
         r_par = r1[:,None]/r2
         r_trans = ang*sp.ones_like(r_par)
@@ -354,19 +379,19 @@ def wickT(pix):
     T5 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
     T6 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
     wAll = np.zeros(num_bins_r_par*num_bins_r_trans)
-    nb = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
+    num_pairs = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
     npairs = 0
     npairs_used = 0
 
-    for ipix in pix:
+    for healpix in pix:
 
-        npairs += len(data[ipix])
-        r = sp.random.rand(len(data[ipix]))
+        npairs += len(data[healpix])
+        r = sp.random.rand(len(data[healpix]))
         w = r>reject
         npairs_used += w.sum()
         if w.sum()==0: continue
 
-        for d1 in [ td for ti,td in enumerate(data[ipix]) if w[ti] ]:
+        for d1 in [ td for ti,td in enumerate(data[healpix]) if w[ti] ]:
             userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data/(1.-reject),3)),end="")
             with lock:
                 counter.value += 1
@@ -384,7 +409,7 @@ def wickT(pix):
             z2 = sp.array([q2.z_qso for q2 in neighbours])
             w2 = sp.array([q2.weights for q2 in neighbours])
 
-            fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
+            fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs,T1,T2,T3,T4)
 
             ### Higher order diagrams
             if (cfWick is None) or (max_diagram<=4): continue
@@ -420,9 +445,9 @@ def wickT(pix):
 
                 fill_wickT56(t_ang12,ang34,ang13,r1,t_r2,r3,r4,w1,t_w2,w3,w4,t_thingid2,thingid4,T5,T6)
 
-    return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
+    return wAll, num_pairs, npairs, npairs_used, T1, T2, T3, T4, T5, T6
 @jit
-def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
+def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs,T1,T2,T3,T4):
     """Compute the Wick covariance matrix for the object-pixel
         cross-correlation for the T1, T2, T3 and T4 diagrams:
         i.e. the contribution of the 1D auto-correlation to the
@@ -438,7 +463,7 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
         w2 (float array): weight of each object
         c1d_1 (float array): covariance between two pixels of the same forest
         wAll (float array): Sum of weight
-        nb (int64 array): Number of pairs
+        num_pairs (int64 array): Number of pairs
         T1 (float 2d array): Contribution of diagram T1
         T2 (float 2d array): Contribution of diagram T2
         T3 (float 2d array): Contribution of diagram T3
@@ -474,7 +499,7 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
         i1 = idxPix[k1]
         q1 = idxQso[k1]
         wAll[p1] += weights[k1]
-        nb[p1] += 1
+        num_pairs[p1] += 1
         T1[p1,p1] += (weights[k1]**2)/we1[k1]*zw1[i1]
 
         for k2 in range(k1+1,ba.size):
@@ -615,32 +640,32 @@ def xcf1d(pix):
         xi (float array): correlation
         r_par (float array): wavelenght ratio
         z (float array): Mean redshift of pairs
-        nb (int array): Number of pairs
+        num_pairs (int array): Number of pairs
     """
     xi = np.zeros(num_bins_r_par)
     weights = np.zeros(num_bins_r_par)
     r_par = np.zeros(num_bins_r_par)
     z = np.zeros(num_bins_r_par)
-    nb = np.zeros(num_bins_r_par,dtype=sp.int64)
+    num_pairs = np.zeros(num_bins_r_par,dtype=sp.int64)
 
-    for ipix in pix:
-        for d in data[ipix]:
+    for healpix in pix:
+        for d in data[healpix]:
 
-            neighbours = [q for q in objs[ipix] if q.thingid==d.thingid]
+            neighbours = [q for q in objs[healpix] if q.thingid==d.thingid]
             if len(neighbours)==0: continue
 
             z_qso = [ q.z_qso for q in neighbours ]
-            we_qso = [ q.weights for q in neighbours ]
-            l_qso = [ 10.**q.log_lambda for q in neighbours ]
-            ang = np.zeros(len(l_qso))
+            weights_qso = [ q.weights for q in neighbours ]
+            lambda_qso = [ 10.**q.log_lambda for q in neighbours ]
+            ang = np.zeros(len(lambda_qso))
 
-            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.delta,z_qso,l_qso,l_qso,we_qso,ang)
+            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.delta,z_qso,lambda_qso,lambda_qso,weights_qso,ang)
 
             xi[:cd.size] += cd
             weights[:cw.size] += cw
             r_par[:crp.size] += crp
             z[:cz.size] += cz
-            nb[:cnb.size] += cnb.astype(int)
+            num_pairs[:cnb.size] += cnb.astype(int)
 
             for el in list(d.__dict__.keys()):
                 setattr(d,el,None)
@@ -650,4 +675,4 @@ def xcf1d(pix):
     r_par[w] /= weights[w]
     z[w] /= weights[w]
 
-    return weights,xi,r_par,z,nb
+    return weights,xi,r_par,z,num_pairs

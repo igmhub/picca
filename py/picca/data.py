@@ -71,6 +71,8 @@ class QSO(object):
             Comoving distance to the object
         dist_m: float or None
             Angular diameter distance to object
+        log_lambda: float or None
+            Wavelength associated with the quasar redshift
 
     Note that plate-fiberid-mjd is a unique identifier
     for the quasar.
@@ -119,6 +121,9 @@ class QSO(object):
         self.weight = None
         self.r_comov = None
         self.dist_m = None
+
+        # variables computed in modules bin.picca_xcf_angl and bin.picca_xcd1d
+        self.log_lambda = None
 
     def __xor__(self, data):
         """Computes the angular separation between two quasars.
@@ -956,6 +961,8 @@ class Delta(QSO):
             class
         neighbours: list of Delta or QSO or None
             Neighbouring deltas/quasars
+        fname: string or None
+            String identifying Delta as part of a group
 
     Methods:
         __init__: Initializes class instances.

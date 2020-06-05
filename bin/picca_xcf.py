@@ -29,7 +29,7 @@ def corr_func(healpixs):
         The correlation function data
     """
     xcf.fill_neighs(healpixs)
-    correlation_function_data = xcf.xcf(healpixs)
+    correlation_function_data = xcf.compute_xi(healpixs)
     return correlation_function_data
 
 
