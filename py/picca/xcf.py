@@ -281,7 +281,7 @@ def compute_dmat(healpixs):
 
     return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
             num_pairs, num_pairs_used)
-            
+
 @jit
 def compute_dmat_forest_pairs(log_lambda1,r_comov1,dist_m1,z1,weights1,r_comov2,dist_m2,z2,weights2,ang,weights_dmat,dmat,r_par_eff,r_trans_eff,z_eff,weight_eff):
     r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
@@ -300,13 +300,13 @@ def compute_dmat_forest_pairs(log_lambda1,r_comov1,dist_m1,z1,weights1,r_comov2,
     m_bins = m_bins[w]
 
     sw1 = weights1.sum()
-    ml1 = sp.average(num_pairs,weights=weights1)
+    ml1 = sp.average(log_lambda1,weights=weights1)
 
-    dl1 = num_pairs-ml1
+    dl1 = log_lambda1-ml1
 
     slw1 = (weights1*dl1**2).sum()
 
-    n1 = len(num_pairs)
+    n1 = len(log_lambda1)
     n2 = len(r_comov2)
     ij = np.arange(n1)[:,None]+n1*np.arange(n2)
     ij = ij[w]
