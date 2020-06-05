@@ -1,3 +1,19 @@
+"""This module defines functions and variables required for the correlation
+analysis of two delta fields
+
+This module provides several functions:
+    - fill_neighs
+    - compute_xi
+    - compute_xi_forest_pairs
+    - compute_dmat
+    - compute_dmat_forest_pairs
+    - metal_dmat
+    - wickT
+    - fill_wickT1234
+    - fill_wickT56
+    - xcf1d
+See the respective docstrings for more details
+"""
 import numpy as np
 import scipy as sp
 from healpy import query_disc
@@ -283,62 +299,145 @@ def compute_dmat(healpixs):
             num_pairs, num_pairs_used)
 
 @jit
-def compute_dmat_forest_pairs(log_lambda1,r_comov1,dist_m1,z1,weights1,r_comov2,dist_m2,z2,weights2,ang,weights_dmat,dmat,r_par_eff,r_trans_eff,z_eff,weight_eff):
-    r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
-    r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
-    z = (z1[:,None]+z2)/2.
-    w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
+def compute_dmat_forest_pairs(log_lambda1, r_comov1, dist_m1, z1, weights1,
+                              r_comov2, dist_m2, z2, weights2, ang,
+                              weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff,
+                              weight_eff):
+    """Computes the contribution of a given pair of forests-quasar to the
+    distortion matrix.
 
-    bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    bins = bt + num_bins_r_trans*bp
+    Args:
+        log_lambda1: array of float
+            Logarithm of the wavelength (in Angs) for forest 1
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        dist_m1: array of floats
+            Angular distance for forest 1
+        z1: array of floats
+            Redshifts for forest 1
+        weights1: array of floats
+            Weights for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for forest 2
+        dist_m2: array of floats
+            Angular distance for forest 2
+        z2: array of floats
+            Redshifts for forest 2
+        weights2: array of floats
+            Weights for forest 2
+        ang: array of floats
+            Angular separation between pixels in forests 1 and 2
+        weights_dmat: array of floats
+            Total weight in the distortion matrix pixels
+        dmat: array of floats
+            The distortion matrix
+        r_par_eff: array of floats
+            Effective parallel distance for the distortion matrix bins
+        r_trans_eff: array of floats
+            Effective transverse distance for the distortion matrix bins
+        z_eff: array of floats
+            Effective redshift for the distortion matrix bins
+        weight_eff: array of floats
+            Effective weight of the distortion matrix pixels
+    """
+    # find distances between pixels
+    r_par = (r_comov1[:, None] - r_comov2)*np.cos(ang/2)
+    r_trans = (dist_m1[:, None]+dist_m2)*np.sin(ang/2)
+    z = (z1[:, None] + z2)/2.
+    w = (r_par > r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
+
+    # locate bins pixels are contributing to (correlation bins)
+    bins_r_par = ((r_par - r_par_min)/(r_par_max - r_par_min)*
+                  num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    bins = bins_r_trans + num_bins_r_trans*bins_r_par
     bins = bins[w]
 
-    m_bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
-    m_bt = (r_trans/r_trans_max*num_model_bins_r_trans).astype(int)
-    m_bins = m_bt + num_model_bins_r_trans*m_bp
-    m_bins = m_bins[w]
+    # locate bins pixels are contributing to (model bins)
+    model_bins_r_par = ((r_par - r_par_min)/(r_par_max - r_par_min)*
+                        num_model_bins_r_par).astype(int)
+    model_bins_r_trans = (r_trans/r_trans_max*
+                          num_model_bins_r_trans).astype(int)
+    model_bins = model_bins_r_trans + num_model_bins_r_trans*model_bins_r_par
+    model_bins = model_bins[w]
 
-    sw1 = weights1.sum()
-    ml1 = sp.average(log_lambda1,weights=weights1)
+    # compute useful auxiliar variables to speed up computation of eta
+    # (equation 6 of du Mas des Bourboux et al. 2020)
 
-    dl1 = log_lambda1-ml1
+    # denominator second term in equation 6 of du Mas des Bourboux et al. 2020
+    sum_weights1 = weights1.sum()
 
-    slw1 = (weights1*dl1**2).sum()
+    # mean of log_lambda
+    mean_log_lambda1 = np.average(log_lambda1, weights=weights1)
 
-    n1 = len(log_lambda1)
-    n2 = len(r_comov2)
-    ij = np.arange(n1)[:,None]+n1*np.arange(n2)
+    # log_lambda minus its mean
+    log_lambda_minus_mean1 = log_lambda1 - mean_log_lambda1
+
+    # denominator third term in equation 6 of du Mas des Bourboux et al. 2020
+    sum_weights_square_log_lambda_minus_mean1 = (
+        weights1*log_lambda_minus_mean1**2).sum()
+
+    # auxiliar variables to loop over distortion matrix bins
+    num_pixels1 = len(log_lambda1)
+    num_pixels2 = len(r_comov2)
+    ij = np.arange(num_pixels1)[:, None] + num_pixels1*np.arange(num_pixels2)
     ij = ij[w]
 
-    weights = weights1[:,None]*weights2
-    weights = weights[w]
-    c = sp.bincount(bins,weights=weights)
-    weights_dmat[:len(c)] += c
-    eta2 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n2)
-    eta4 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n2)
+    weights12 = weights1[:, None]*weights2
+    weights12 = weights12[w]
 
-    c = sp.bincount(m_bins,weights=weights*r_par[w])
-    r_par_eff[:c.size] += c
-    c = sp.bincount(m_bins,weights=weights*r_trans[w])
-    r_trans_eff[:c.size] += c
-    c = sp.bincount(m_bins,weights=weights*z[w])
-    z_eff[:c.size] += c
-    c = sp.bincount(m_bins,weights=weights)
-    weight_eff[:c.size] += c
+    rebin = np.bincount(model_bins, weights=weights12 * r_par[w])
+    r_par_eff[:rebin.size] += rebin
+    rebin = np.bincount(model_bins, weights=weights12 * r_trans[w])
+    r_trans_eff[:rebin.size] += rebin
+    rebin = np.bincount(model_bins, weights=weights12 * z[w])
+    z_eff[:rebin.size] += rebin
+    rebin = np.bincount(model_bins, weights=weights12)
+    weight_eff[:rebin.size] += rebin
 
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (weights1[:,None]*sp.ones(n2))[w]/sw1)
-    eta2[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((weights1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
-    eta4[:len(c)]+=c
+    rebin = np.bincount(bins, weights=weights12)
+    weights_dmat[:len(rebin)] += rebin
 
-    ubb = np.unique(m_bins)
-    for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
-        dmat[m_ba+num_model_bins_r_par*num_model_bins_r_trans*ba]+=weights[k]
-        i = ij[k]%n1
-        j = (ij[k]-i)//n1
-        for bb in ubb:
-            dmat[bb+num_model_bins_r_par*num_model_bins_r_trans*ba] -= weights[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+    # Combining equation 22 and equation 6 of du Mas des Bourboux et al. 2020
+    # we find an equation with 3 terms comming from the product of two eta
+    # The variables below stand for 2 of these 3 terms (the first one is
+    # pretty trivial) and are named to match those of module cf
+
+    # first eta, second term: weight/sum(weights)
+    eta2 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*num_pixels2)
+    # first eta, third term: (non-zero only for order=1)
+    #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+    eta4 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*num_pixels2)
+
+    # compute the contributions to the distortion matrix
+    rebin = np.bincount(((ij - ij%num_pixels1)//num_pixels1 +
+                         num_pixels2*model_bins),
+                        weights=((weights1[:, None]*np.ones(num_pixels2))[w]/
+                                 sum_weights1))
+    eta2[:len(rebin)] += rebin
+    rebin = np.bincount(((ij - ij%num_pixels1)//num_pixels1 +
+                         num_pixels2*model_bins),
+                        weights=(((weights1*log_lambda_minus_mean1)[:, None]*
+                                  np.ones(num_pixels2))[w]/
+                                 sum_weights_square_log_lambda_minus_mean1))
+    eta4[:len(rebin)] += rebin
+
+    # Now add all the contributions together
+    unique_model_bins = np.unique(model_bins)
+    for index, (bin, model_bin) in enumerate(zip(bins, model_bins)):
+        # first eta, first term: kronecker delta
+        dmat[model_bin + num_model_bins_r_par*num_model_bins_r_trans*
+             bin] += weights12[index]
+        i = ij[index]%num_pixels1
+        j = (ij[index] - i)//num_pixels1
+        # rest of the terms
+        for unique_model_bin in unique_model_bins:
+            dmat[unique_model_bin + num_model_bins_r_par*num_model_bins_r_trans*
+                 bin] -= weights12[index]*(eta2[j +
+                                                num_pixels2*unique_model_bin] +
+                                           eta4[j +
+                                                num_pixels2*unique_model_bin]*
+                                           log_lambda_minus_mean1[i])
 
 
 def metal_dmat(pix,abs_igm="SiII(1526)"):
