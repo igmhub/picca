@@ -5,10 +5,11 @@ delta field.
 This module follow the procedure described in sections 3.1 and 3.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
+import numpy as np
 import scipy as sp
 import fitsio
 import argparse
-from multiprocessing import Pool,Lock,cpu_count,Value
+from multiprocessing import Pool, Lock, cpu_count, Value
 
 from picca import constants, xcf, io, prep_del, utils
 from picca.data import Forest
@@ -283,20 +284,27 @@ def main():
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
         Forest.delta_log_lambda = None
-        for p in xcf.data:
-            for d in xcf.data[p]:
-                delta_log_lambda = sp.asarray([d.log_lambda[ii]-d.log_lambda[ii-1] for ii in range(1,d.log_lambda.size)]).min()
+        for healpix in xcf.data:
+            for delta in xcf.data[healpix]:
+                delta_log_lambda = np.asarray([
+                    delta.log_lambda[index] - delta.log_lambda[index - 1]
+                    for index in range(1, delta.log_lambda.size)]).min()
                 if Forest.delta_log_lambda is None:
                     Forest.delta_log_lambda = delta_log_lambda
                 else:
-                    Forest.delta_log_lambda = min(delta_log_lambda,Forest.delta_log_lambda)
-        Forest.log_lambda_min  = sp.log10( (z_min+1.)*xcf.lambda_abs )-Forest.delta_log_lambda/2.
-        Forest.log_lambda_max  = sp.log10( (z_max+1.)*xcf.lambda_abs )+Forest.delta_log_lambda/2.
-        log_lambda,mean_delta, wst   = prep_del.stack(xcf.data, stack_from_deltas=True)
-        for p in xcf.data:
-            for d in xcf.data[p]:
-                bins = ((d.log_lambda-Forest.log_lambda_min)/Forest.delta_log_lambda+0.5).astype(int)
-                d.delta -= mean_delta[bins]
+                    Forest.delta_log_lambda = min(delta_log_lambda,
+                                                  Forest.delta_log_lambda)
+        Forest.log_lambda_min = (np.log10((z_min + 1.)*xcf.lambda_abs) -
+                                 Forest.delta_log_lambda/2.)
+        Forest.log_lambda_max = (np.log10((z_max + 1.)*xcf.lambda_abs) +
+                                 Forest.delta_log_lambda/2.)
+        log_lambda, mean_delta, wst = prep_del.stack(xcf.data,
+                                                     stack_from_deltas=True)
+        for healpix in xcf.data:
+            for delta in xcf.data[healpix]:
+                bins = ((delta.log_lambda - Forest.log_lambda_min)/
+                        Forest.delta_log_lambda + 0.5).astype(int)
+                delta.delta -= mean_delta[bins]
 
     ### Find the redshift range
     if (args.z_min_obj is None):
