@@ -10,7 +10,7 @@ from picca.utils import userprint
 def calc_dmat(p):
     xcf.fill_neighs(p)
     sp.random.seed(p[0])
-    tmp = xcf.dmat(p)
+    tmp = xcf.compute_dmat(p)
     return tmp
 
 if __name__ == '__main__':

@@ -216,7 +216,7 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
             rebin_num_pairs)
 
-def dmat(pix):
+def compute_dmat(pix):
     """Computes the distortion matrix for each of the healpixs.
 
     Args:
@@ -237,15 +237,16 @@ def dmat(pix):
             num_pairs_used: Number of used pairs
     """
 
-    dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*num_model_bins_r_par)
-    wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
-    rpeff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
-    rteff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
-    zeff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
-    weff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    dmat = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*
+                    num_model_bins_r_par)
+    weights_dmat = np.zeros(num_bins_r_par*num_bins_r_trans)
+    r_par_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    r_trans_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    z_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    weight_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
 
-    npairs = 0
-    npairs_used = 0
+    num_pairs = 0
+    num_pairs_used = 0
     for p in pix:
         for d1 in data[p]:
             userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data,3)),end="")
@@ -259,21 +260,21 @@ def dmat(pix):
             r = sp.random.rand(len(d1.neighbours))
             w=r>reject
             if w.sum()==0:continue
-            npairs += len(d1.neighbours)
-            npairs_used += w.sum()
+            num_pairs += len(d1.neighbours)
+            num_pairs_used += w.sum()
             neighbours = d1.neighbours[w]
             ang = d1^neighbours
             r2 = [q.r_comov for q in neighbours]
             rdm2 = [q.dist_m for q in neighbours]
             w2 = [q.weights for q in neighbours]
             z2 = [q.z_qso for q in neighbours]
-            fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
+            fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,weights_dmat,dmat,r_par_eff,r_trans_eff,z_eff,weight_eff)
             for el in list(d1.__dict__.keys()):
                 setattr(d1,el,None)
 
-    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return weights_dmat,dmat.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),r_par_eff,r_trans_eff,z_eff,weight_eff,num_pairs,num_pairs_used
 @jit
-def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
+def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,weights_dmat,dmat,r_par_eff,r_trans_eff,z_eff,weight_eff):
     r_par = (r1[:,None]-r2)*sp.cos(ang/2)
     r_trans = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
@@ -304,18 +305,18 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
     weights = w1[:,None]*w2
     weights = weights[w]
     c = sp.bincount(bins,weights=weights)
-    wdm[:len(c)] += c
+    weights_dmat[:len(c)] += c
     eta2 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n2)
     eta4 = np.zeros(num_model_bins_r_par*num_model_bins_r_trans*n2)
 
     c = sp.bincount(m_bins,weights=weights*r_par[w])
-    rpeff[:c.size] += c
+    r_par_eff[:c.size] += c
     c = sp.bincount(m_bins,weights=weights*r_trans[w])
-    rteff[:c.size] += c
+    r_trans_eff[:c.size] += c
     c = sp.bincount(m_bins,weights=weights*z[w])
-    zeff[:c.size] += c
+    z_eff[:c.size] += c
     c = sp.bincount(m_bins,weights=weights)
-    weff[:c.size] += c
+    weight_eff[:c.size] += c
 
     c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
@@ -324,24 +325,24 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
 
     ubb = np.unique(m_bins)
     for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
-        dm[m_ba+num_model_bins_r_par*num_model_bins_r_trans*ba]+=weights[k]
+        dmat[m_ba+num_model_bins_r_par*num_model_bins_r_trans*ba]+=weights[k]
         i = ij[k]%n1
         j = (ij[k]-i)//n1
         for bb in ubb:
-            dm[bb+num_model_bins_r_par*num_model_bins_r_trans*ba] -= weights[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+            dmat[bb+num_model_bins_r_par*num_model_bins_r_trans*ba] -= weights[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
 
 
 def metal_dmat(pix,abs_igm="SiII(1526)"):
 
-    dm = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*num_model_bins_r_par)
-    wdm = np.zeros(num_bins_r_par*num_bins_r_trans)
-    rpeff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
-    rteff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
-    zeff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
-    weff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    dmat = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*num_model_bins_r_par)
+    weights_dmat = np.zeros(num_bins_r_par*num_bins_r_trans)
+    r_par_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    r_trans_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    z_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
+    weight_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
 
-    npairs = 0
-    npairs_used = 0
+    num_pairs = 0
+    num_pairs_used = 0
     for p in pix:
         for d in data[p]:
             with lock:
@@ -350,8 +351,8 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
             r = sp.random.rand(len(d.neighbours))
             w=r>reject
-            npairs += len(d.neighbours)
-            npairs_used += w.sum()
+            num_pairs += len(d.neighbours)
+            num_pairs_used += w.sum()
 
             rd = d.r_comov
             rdm = d.dist_m
@@ -385,7 +386,7 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
                 bA = bt + num_bins_r_trans*bp
                 c = sp.bincount(bA[wA],weights=wdq[wA])
-                wdm[:len(c)]+=c
+                weights_dmat[:len(c)]+=c
 
                 rp_abs = (rd_abs-rq)*sp.cos(ang/2)
                 rt_abs = (rdm_abs+rqm)*sp.sin(ang/2)
@@ -397,19 +398,19 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
                 wBma = (rp_abs>r_par_min) & (rp_abs<r_par_max) & (rt_abs<r_trans_max)
                 wAB = wA&wBma
                 c = sp.bincount(bBma[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=wdq[wAB]*zwe[wAB])
-                dm[:len(c)]+=c
+                dmat[:len(c)]+=c
 
                 c = sp.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
-                rpeff[:len(c)]+=c
+                r_par_eff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB]*zwe[wAB])
-                rteff[:len(c)]+=c
+                r_trans_eff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB]*zwe[wAB])
-                zeff[:len(c)]+=c
+                z_eff[:len(c)]+=c
                 c = sp.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
-                weff[:len(c)]+=c
+                weight_eff[:len(c)]+=c
             setattr(d,"neighbours",None)
 
-    return wdm,dm.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),rpeff,rteff,zeff,weff,npairs,npairs_used
+    return weights_dmat,dmat.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),r_par_eff,r_trans_eff,z_eff,weight_eff,num_pairs,num_pairs_used
 
 v1d = {}
 c1d = {}
@@ -441,15 +442,15 @@ def wickT(pix):
     T6 = np.zeros((num_bins_r_par*num_bins_r_trans,num_bins_r_par*num_bins_r_trans))
     wAll = np.zeros(num_bins_r_par*num_bins_r_trans)
     num_pairs = np.zeros(num_bins_r_par*num_bins_r_trans,dtype=sp.int64)
-    npairs = 0
-    npairs_used = 0
+    num_pairs = 0
+    num_pairs_used = 0
 
     for healpix in pix:
 
-        npairs += len(data[healpix])
+        num_pairs += len(data[healpix])
         r = sp.random.rand(len(data[healpix]))
         w = r>reject
-        npairs_used += w.sum()
+        num_pairs_used += w.sum()
         if w.sum()==0: continue
 
         for d1 in [ td for ti,td in enumerate(data[healpix]) if w[ti] ]:
@@ -506,7 +507,7 @@ def wickT(pix):
 
                 fill_wickT56(t_ang12,ang34,ang13,r1,t_r2,r3,r4,w1,t_w2,w3,w4,t_thingid2,thingid4,T5,T6)
 
-    return wAll, num_pairs, npairs, npairs_used, T1, T2, T3, T4, T5, T6
+    return wAll, num_pairs, num_pairs, num_pairs_used, T1, T2, T3, T4, T5, T6
 @jit
 def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs,T1,T2,T3,T4):
     """Compute the Wick covariance matrix for the object-pixel
