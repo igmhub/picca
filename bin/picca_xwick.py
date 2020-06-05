@@ -235,7 +235,7 @@ if __name__ == '__main__':
     ### Get neighbours
     for p in cpu_data.values():
         xcf.fill_neighs(p)
-        if not xcf.cfWick is None:
+        if not xcf.xi_wick is None:
             cf.fill_neighs(p)
 
     pool = Pool(processes=min(args.nproc,len(cpu_data.values())))

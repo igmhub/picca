@@ -10,7 +10,7 @@ This module provides several functions:
     - compute_metal_dmat
     - compute_wick_terms
     - compute_wickT1234_pairs
-    - compute_wickT56_pairs
+    - compute_wickT1234_pairs
     - xcf1d
 See the respective docstrings for more details
 """
@@ -781,6 +781,7 @@ def compute_wickT1234_pairs(ang,r_comov1,r_comov2,z1,z2,weights1,weights2,weight
                 t4[p2,p1] += wcorr
 
     return
+    
 @jit
 def compute_wickT56_pairs(ang12,ang34,ang13,r_comov1,r_comov2,r_comov3,r_comov4,weights1,weights2,weights3,weights4,thingid2,thingid4,t5,t6):
     """Compute the Wick covariance matrix for the object-pixel
