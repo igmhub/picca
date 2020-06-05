@@ -184,7 +184,7 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
                 pixels properly rebinned
     """
     if ang_correlation:
-        r_par = r_comov1[:, None]/r2
+        r_par = r_comov1[:, None]/r_comov2
         r_trans = ang*np.ones_like(r_par)
     else:
         r_par = (r_comov1[:, None] - r_comov2)*np.cos(ang/2)
