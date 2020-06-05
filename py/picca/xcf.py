@@ -216,7 +216,7 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
             rebin_num_pairs)
 
-def compute_dmat(pix):
+def compute_dmat(healpixs):
     """Computes the distortion matrix for each of the healpixs.
 
     Args:
@@ -247,36 +247,45 @@ def compute_dmat(pix):
 
     num_pairs = 0
     num_pairs_used = 0
-    for p in pix:
-        for d1 in data[p]:
-            userprint("\rcomputing xi: {}%".format(round(counter.value*100./num_data,3)),end="")
+    for healpix in healpixs:
+        for delta1 in data[healpix]:
+            userprint(("\rcomputing xi: "
+                       "{}%").format(round(counter.value*100./num_data, 3)),
+                      end="")
             with lock:
                 counter.value += 1
-            r1 = d1.r_comov
-            rdm1 = d1.dist_m
-            w1 = d1.weights
-            l1 = d1.log_lambda
-            z1 = d1.z
-            r = sp.random.rand(len(d1.neighbours))
-            w=r>reject
-            if w.sum()==0:continue
-            num_pairs += len(d1.neighbours)
+            r_comov1 = delta1.r_comov
+            dist_m1 = delta1.dist_m
+            weights1 = delta1.weights
+            log_lambda1 = delta1.log_lambda
+            z1 = delta1.z
+            w = np.random.rand(len(delta1.neighbours)) > reject
+            if w.sum() == 0:
+                continue
+            num_pairs += len(delta1.neighbours)
             num_pairs_used += w.sum()
-            neighbours = d1.neighbours[w]
-            ang = d1^neighbours
-            r2 = [q.r_comov for q in neighbours]
-            rdm2 = [q.dist_m for q in neighbours]
-            w2 = [q.weights for q in neighbours]
-            z2 = [q.z_qso for q in neighbours]
-            fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,weights_dmat,dmat,r_par_eff,r_trans_eff,z_eff,weight_eff)
-            for el in list(d1.__dict__.keys()):
-                setattr(d1,el,None)
+            neighbours = delta1.neighbours[w]
+            ang = delta1^neighbours
+            r_comov2 = [obj.r_comov for obj in neighbours]
+            dist_m2 = [obj.dist_m for obj in neighbours]
+            weights2 = [obj.weights for obj in neighbours]
+            z2 = [obj.z_qso for obj in neighbours]
+            compute_dmat_forest_pairs(log_lambda1, r_comov1, dist_m1, z1,
+                                      weights1, r_comov2, dist_m2, z2, weights2,
+                                      ang, weights_dmat, dmat, r_par_eff,
+                                      r_trans_eff, z_eff, weight_eff)
+            setattr(delta1, "neighbours", None)
 
-    return weights_dmat,dmat.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),r_par_eff,r_trans_eff,z_eff,weight_eff,num_pairs,num_pairs_used
+    dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
+                        num_model_bins_r_par*num_model_bins_r_trans)
+
+    return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
+            num_pairs, num_pairs_used)
+            
 @jit
-def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,weights_dmat,dmat,r_par_eff,r_trans_eff,z_eff,weight_eff):
-    r_par = (r1[:,None]-r2)*sp.cos(ang/2)
-    r_trans = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
+def compute_dmat_forest_pairs(log_lambda1,r_comov1,dist_m1,z1,weights1,r_comov2,dist_m2,z2,weights2,ang,weights_dmat,dmat,r_par_eff,r_trans_eff,z_eff,weight_eff):
+    r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2)
+    r_trans = (dist_m1[:,None]+dist_m2)*sp.sin(ang/2)
     z = (z1[:,None]+z2)/2.
     w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
 
@@ -290,19 +299,19 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,weights_dmat,dmat,r_par_eff,r_t
     m_bins = m_bt + num_model_bins_r_trans*m_bp
     m_bins = m_bins[w]
 
-    sw1 = w1.sum()
-    ml1 = sp.average(l1,weights=w1)
+    sw1 = weights1.sum()
+    ml1 = sp.average(num_pairs,weights=weights1)
 
-    dl1 = l1-ml1
+    dl1 = num_pairs-ml1
 
-    slw1 = (w1*dl1**2).sum()
+    slw1 = (weights1*dl1**2).sum()
 
-    n1 = len(l1)
-    n2 = len(r2)
+    n1 = len(num_pairs)
+    n2 = len(r_comov2)
     ij = np.arange(n1)[:,None]+n1*np.arange(n2)
     ij = ij[w]
 
-    weights = w1[:,None]*w2
+    weights = weights1[:,None]*weights2
     weights = weights[w]
     c = sp.bincount(bins,weights=weights)
     weights_dmat[:len(c)] += c
@@ -318,9 +327,9 @@ def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,weights_dmat,dmat,r_par_eff,r_t
     c = sp.bincount(m_bins,weights=weights)
     weight_eff[:c.size] += c
 
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (weights1[:,None]*sp.ones(n2))[w]/sw1)
     eta2[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
+    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((weights1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
     eta4[:len(c)]+=c
 
     ubb = np.unique(m_bins)
@@ -460,18 +469,18 @@ def wickT(pix):
             if d1.neighbours.size==0: continue
 
             v1 = v1d[d1.fname](d1.log_lambda)
-            w1 = d1.weights
-            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.log_lambda-d1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
-            r1 = d1.r_comov
+            weights1 = d1.weights
+            c1d_1 = (weights1*weights1[:,None])*c1d[d1.fname](abs(d1.log_lambda-d1.log_lambda[:,None]))*sp.sqrt(v1*v1[:,None])
+            r_comov1 = d1.r_comov
             z1 = d1.z
 
             neighbours = d1.neighbours
             ang12 = d1^neighbours
-            r2 = sp.array([q2.r_comov for q2 in neighbours])
+            r_comov2 = sp.array([q2.r_comov for q2 in neighbours])
             z2 = sp.array([q2.z_qso for q2 in neighbours])
-            w2 = sp.array([q2.weights for q2 in neighbours])
+            weights2 = sp.array([q2.weights for q2 in neighbours])
 
-            fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4)
+            fill_wickT1234(ang12,r_comov1,r_comov2,z1,z2,weights1,weights2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4)
 
             ### Higher order diagrams
             if (cfWick is None) or (max_diagram<=4): continue
@@ -494,8 +503,8 @@ def wickT(pix):
                     w = sp.in1d(d1.neighbours,d3.neighbours)
                     if w.sum()==0: continue
                     t_ang12 = ang12[w]
-                    t_r2 = r2[w]
-                    t_w2 = w2[w]
+                    t_r2 = r_comov2[w]
+                    t_w2 = weights2[w]
                     t_thingid2 = thingid2[w]
 
                     w = sp.in1d(d3.neighbours,d1.neighbours)
@@ -505,11 +514,11 @@ def wickT(pix):
                     w4 = w4[w]
                     thingid4 = thingid4[w]
 
-                fill_wickT56(t_ang12,ang34,ang13,r1,t_r2,r3,r4,w1,t_w2,w3,w4,t_thingid2,thingid4,T5,T6)
+                fill_wickT56(t_ang12,ang34,ang13,r_comov1,t_r2,r3,r4,weights1,t_w2,w3,w4,t_thingid2,thingid4,T5,T6)
 
     return wAll, num_pairs_wick, num_pairs, num_pairs_used, T1, T2, T3, T4, T5, T6
 @jit
-def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4):
+def fill_wickT1234(ang,r_comov1,r_comov2,z1,z2,weights1,weights2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4):
     """Compute the Wick covariance matrix for the object-pixel
         cross-correlation for the T1, T2, T3 and T4 diagrams:
         i.e. the contribution of the 1D auto-correlation to the
@@ -517,12 +526,12 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4):
 
     Args:
         ang (float array): angle between forest and array of objects
-        r1 (float array): comoving distance to each pixel of the forest [Mpc/h]
-        r2 (float array): comoving distance to each object [Mpc/h]
+        r_comov1 (float array): comoving distance to each pixel of the forest [Mpc/h]
+        r_comov2 (float array): comoving distance to each object [Mpc/h]
         z1 (float array): redshift of each pixel of the forest
         z2 (float array): redshift of each object
-        w1 (float array): weight of each pixel of the forest
-        w2 (float array): weight of each object
+        weights1 (float array): weight of each pixel of the forest
+        weights2 (float array): weight of each object
         c1d_1 (float array): covariance between two pixels of the same forest
         wAll (float array): Sum of weight
         num_pairs_wick (int64 array): Number of pairs
@@ -534,14 +543,14 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4):
     Returns:
 
     """
-    r_par = (r1[:,None]-r2)*sp.cos(ang/2.)
-    r_trans = (r1[:,None]+r2)*sp.sin(ang/2.)
+    r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang/2.)
+    r_trans = (r_comov1[:,None]+r_comov2)*sp.sin(ang/2.)
     zw1 = ((1.+z1)/(1.+z_ref))**(z_evol_del-1.)
     zw2 = ((1.+z2)/(1.+z_ref))**(z_evol_obj-1.)
-    weights = w1[:,None]*w2
-    we1 = w1[:,None]*sp.ones(len(r2))
-    idxPix = np.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
-    idxQso = sp.ones(r1.size,dtype='int')[:,None]*np.arange(len(r2))
+    weights = weights1[:,None]*weights2
+    we1 = weights1[:,None]*sp.ones(len(r_comov2))
+    idxPix = np.arange(r_comov1.size)[:,None]*sp.ones(len(r_comov2),dtype='int')
+    idxQso = sp.ones(r_comov1.size,dtype='int')[:,None]*np.arange(len(r_comov2))
 
     bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
     bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
@@ -583,7 +592,7 @@ def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,num_pairs_wick,T1,T2,T3,T4):
 
     return
 @jit
-def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,T6):
+def fill_wickT56(ang12,ang34,ang13,r_comov1,r_comov2,r3,r4,weights1,weights2,w3,w4,thingid2,thingid4,T5,T6):
     """Compute the Wick covariance matrix for the object-pixel
         cross-correlation for the T5 and T6 diagrams:
         i.e. the contribution of the 3D auto-correlation to the
@@ -593,12 +602,12 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
         ang12 (float array): angle between forest and array of objects
         ang34 (float array): angle between another forest and another array of objects
         ang13 (float array): angle between the two forests
-        r1 (float array): comoving distance to each pixel of the forest [Mpc/h]
-        r2 (float array): comoving distance to each object [Mpc/h]
+        r_comov1 (float array): comoving distance to each pixel of the forest [Mpc/h]
+        r_comov2 (float array): comoving distance to each object [Mpc/h]
         r3 (float array): comoving distance to each pixel of another forests [Mpc/h]
         r4 (float array): comoving distance to each object paired to the other forest [Mpc/h]
-        w1 (float array): weight of each pixel of the forest
-        w2 (float array): weight of each object
+        weights1 (float array): weight of each pixel of the forest
+        weights2 (float array): weight of each object
         w3 (float array): weight of each pixel of another forest
         w4 (float array): weight of each object paired to the other forest
         thingid2 (float array): THING_ID of each object
@@ -611,8 +620,8 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
     """
 
     ### Pair forest_1 - forest_3
-    r_par = np.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
-    r_trans = (r1+r3[:,None])*sp.sin(ang13/2.)
+    r_par = np.absolute(r_comov1-r3[:,None])*sp.cos(ang13/2.)
+    r_trans = (r_comov1+r3[:,None])*sp.sin(ang13/2.)
 
     w = (r_par<cfWick_rp_max) & (r_trans<cfWick_rt_max) & (r_par>=cfWick_rp_min)
     if w.sum()==0: return
@@ -624,11 +633,11 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
     cf13[~w] = 0.
 
     ### Pair forest_1 - object_2
-    r_par = (r1[:,None]-r2)*sp.cos(ang12/2.)
-    r_trans = (r1[:,None]+r2)*sp.sin(ang12/2.)
-    weights = w1[:,None]*w2
-    pix = (np.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
-    thingid = sp.ones_like(w1[:,None]).astype(int)*thingid2
+    r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang12/2.)
+    r_trans = (r_comov1[:,None]+r_comov2)*sp.sin(ang12/2.)
+    weights = weights1[:,None]*weights2
+    pix = (np.arange(r_comov1.size)[:,None]*sp.ones_like(r_comov2)).astype(int)
+    thingid = sp.ones_like(weights1[:,None]).astype(int)*thingid2
 
     w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
     if w.sum()==0: return
@@ -663,14 +672,14 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
     for k1, p1 in enumerate(ba12):
         pix1 = pix12[k1]
         t1 = thingid12[k1]
-        w1 = we12[k1]
+        weights1 = we12[k1]
 
         w = thingid34==t1
         for k2, p2 in enumerate(ba34[w]):
             pix2 = pix34[w][k2]
             t2 = thingid34[w][k2]
-            w2 = we34[w][k2]
-            wcorr = cf13[pix2,pix1]*w1*w2
+            weights2 = we34[w][k2]
+            wcorr = cf13[pix2,pix1]*weights1*weights2
             T5[p1,p2] += wcorr
             T5[p2,p1] += wcorr
 
@@ -679,13 +688,13 @@ def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thingid2,thingid4,T5,
     for k1, p1 in enumerate(ba12):
         pix1 = pix12[k1]
         t1 = thingid12[k1]
-        w1 = we12[k1]
+        weights1 = we12[k1]
 
         for k2, p2 in enumerate(ba34):
             pix2 = pix34[k2]
             t2 = thingid34[k2]
-            w2 = we34[k2]
-            wcorr = cf13[pix2,pix1]*w1*w2
+            weights2 = we34[k2]
+            wcorr = cf13[pix2,pix1]*weights1*weights2
             if t2==t1: continue
             T6[p1,p2] += wcorr
             T6[p2,p1] += wcorr
