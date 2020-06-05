@@ -7,7 +7,7 @@ This module provides several functions:
     - compute_xi_forest_pairs
     - compute_dmat
     - compute_dmat_forest_pairs
-    - metal_dmat
+    - compute_metal_dmat
     - wickT
     - fill_wickT1234
     - fill_wickT56
@@ -439,10 +439,31 @@ def compute_dmat_forest_pairs(log_lambda1, r_comov1, dist_m1, z1, weights1,
                                                 num_pixels2*unique_model_bin]*
                                            log_lambda_minus_mean1[i])
 
+def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
+    """Computes the metal distortion matrix for each of the healpixs.
 
-def metal_dmat(pix,abs_igm="SiII(1526)"):
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+        abs_igm: string - default: "SiII(1526)"
+            Name of the absorption in picca.constants defining the
+            redshift of the forest pixels
 
-    dmat = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*num_model_bins_r_par)
+    Returns:
+        The following variables:
+            weights_dmat: Total weight in the distortion matrix pixels
+            dmat: The distortion matrix
+            r_par_eff: Effective parallel distance of the distortion matrix
+                pixels
+            r_trans_eff: Effective transverse distance of the distortion matrix
+                pixels
+            z_eff: Effective redshift of the distortion matrix pixels
+            weight_eff: Effective weight of the distortion matrix pixels
+            num_pairs: Total number of pairs
+            num_pairs_used: Number of used pairs
+    """
+    dmat = np.zeros(num_bins_r_par*num_bins_r_trans*num_model_bins_r_trans*
+                    num_model_bins_r_par)
     weights_dmat = np.zeros(num_bins_r_par*num_bins_r_trans)
     r_par_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
     r_trans_eff = np.zeros(num_model_bins_r_trans*num_model_bins_r_par)
@@ -451,74 +472,103 @@ def metal_dmat(pix,abs_igm="SiII(1526)"):
 
     num_pairs = 0
     num_pairs_used = 0
-    for p in pix:
-        for d in data[p]:
+    for healpix in healpixs:
+        for delta1 in data[healpix]:
             with lock:
-                userprint("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./num_data,3)),end="")
+                userprint(("\rcomputing metal dmat {}: "
+                           "{}%").format(abs_igm,
+                                         round(counter.value*100./num_data, 3)),
+                          end="")
                 counter.value += 1
 
-            r = sp.random.rand(len(d.neighbours))
-            w=r>reject
-            num_pairs += len(d.neighbours)
+            w = np.random.rand(len(delta1.neighbours)) > reject
+            num_pairs += len(delta1.neighbours)
             num_pairs_used += w.sum()
 
-            rd = d.r_comov
-            rdm = d.dist_m
-            wd = d.weights
-            zd_abs = 10**d.log_lambda/constants.ABSORBER_IGM[abs_igm]-1
-            rd_abs = cosmo.get_r_comov(zd_abs)
-            rdm_abs = cosmo.get_dist_m(zd_abs)
+            r_comov1 = delta1.r_comov
+            dist_m1 = delta1.dist_m
+            weights1 = delta1.weights
+            z1_abs1 = 10**delta1.log_lambda/constants.ABSORBER_IGM[abs_igm] - 1
+            r_comov1_abs1 = cosmo.get_r_comov(z1_abs1)
+            dist_m1_abs1 = cosmo.get_dist_m(z1_abs1)
 
-            wzcut = zd_abs<d.z_qso
-            rd = rd[wzcut]
-            rdm = rdm[wzcut]
-            wd = wd[wzcut]
-            zd_abs = zd_abs[wzcut]
-            rd_abs = rd_abs[wzcut]
-            rdm_abs = rdm_abs[wzcut]
-            if rd.size==0: continue
+            # filter cases where the absorption from the metal is
+            # inconsistent with the quasar redshift
+            w = z1_abs1 < delta1.z_qso
+            r_comov1 = r_comov1[w]
+            dist_m1 = dist_m1[w]
+            weights1 = weights1[w]
+            z1_abs1 = z1_abs1[w]
+            r_comov1_abs1 = r_comov1_abs1[w]
+            dist_m1_abs1 = dist_m1_abs1[w]
+            if r_comov1.size == 0:
+                continue
 
-            for q in sp.array(d.neighbours)[w]:
-                ang = d^q
+            for obj2 in np.array(delta1.neighbours)[w]:
+                ang = delta1^obj2
 
-                rq = q.r_comov
-                rqm = q.dist_m
-                wq = q.weights
-                zq = q.z_qso
-                r_par = (rd-rq)*sp.cos(ang/2)
-                r_trans = (rdm+rqm)*sp.sin(ang/2)
-                wdq = wd*wq
+                r_comov2 = obj2.r_comov
+                dist_m2 = obj2.dist_m
+                weights2 = obj2.weights
+                z2 = obj2.z_qso
 
-                wA = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
-                bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-                bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-                bA = bt + num_bins_r_trans*bp
-                c = sp.bincount(bA[wA],weights=wdq[wA])
-                weights_dmat[:len(c)]+=c
+                # compute bins the pairs contribute to
+                r_par = (r_comov1 - r_comov2)*np.cos(ang/2)
+                r_trans = (dist_m1 + dist_m2)*np.sin(ang/2)
+                weights12 = weights1*weights2
 
-                rp_abs = (rd_abs-rq)*sp.cos(ang/2)
-                rt_abs = (rdm_abs+rqm)*sp.sin(ang/2)
-                zwe = ((1.+zd_abs)/(1.+z_ref))**(alpha_abs[abs_igm]-1.)
+                w = ((r_par > r_par_min) & (r_par < r_par_max) &
+                     (r_trans < r_trans_max))
+                bins_r_par = ((r_par - r_par_min)/(r_par_max - r_par_min)*
+                              num_bins_r_par).astype(int)
+                bins_r_trans = (r_trans/r_trans_max*
+                                num_bins_r_trans).astype(int)
+                bins = bins_r_trans + num_bins_r_trans*bins_r_par
+                rebin = np.bincount(bins[w], weights=weights12[w])
+                weights_dmat[:len(rebin)] += rebin
 
-                bp_abs = ((rp_abs-r_par_min)/(r_par_max-r_par_min)*num_model_bins_r_par).astype(int)
-                bt_abs = (rt_abs/r_trans_max*num_model_bins_r_trans).astype(int)
-                bBma = bt_abs + num_model_bins_r_trans*bp_abs
-                wBma = (rp_abs>r_par_min) & (rp_abs<r_par_max) & (rt_abs<r_trans_max)
-                wAB = wA&wBma
-                c = sp.bincount(bBma[wAB]+num_model_bins_r_par*num_model_bins_r_trans*bA[wAB],weights=wdq[wAB]*zwe[wAB])
-                dmat[:len(c)]+=c
+                r_par_abs = (r_comov1_abs1 - r_comov2)*np.cos(ang/2)
+                r_trans_abs = (dist_m1_abs1 + dist_m2)*np.sin(ang/2)
+                z_weight_evol = (((1. + z1_abs1)/(1. + z_ref))**
+                                 (alpha_abs[abs_igm] - 1.))
 
-                c = sp.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
-                r_par_eff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB]*zwe[wAB])
-                r_trans_eff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB]*zwe[wAB])
-                z_eff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
-                weight_eff[:len(c)]+=c
-            setattr(d,"neighbours",None)
+                model_bins_r_par = ((r_par_abs - r_par_min)/
+                                    (r_par_max - r_par_min)*
+                                    num_model_bins_r_par).astype(int)
+                model_bins_r_trans = (r_trans_abs/r_trans_max*
+                                      num_model_bins_r_trans).astype(int)
+                model_bins = (model_bins_r_trans +
+                              num_model_bins_r_trans*model_bins_r_par)
+                w &= ((r_par_abs > r_par_min) & (r_par_abs < r_par_max) &
+                      (r_trans_abs < r_trans_max))
 
-    return weights_dmat,dmat.reshape(num_bins_r_par*num_bins_r_trans,num_model_bins_r_par*num_model_bins_r_trans),r_par_eff,r_trans_eff,z_eff,weight_eff,num_pairs,num_pairs_used
+                rebin = np.bincount((model_bins[w] + num_model_bins_r_par*
+                                     num_model_bins_r_trans*bins[w]),
+                                    weights=weights12[w]*z_weight_evol[w])
+                dmat[:len(rebin)] += rebin
+
+                rebin = np.bincount(model_bins[w],
+                                    weights=(r_par_abs[w]*weights12[w]*
+                                             z_weight_evol[w]))
+                r_par_eff[:len(rebin)] += rebin
+                rebin = np.bincount(model_bins[w],
+                                    weights=(r_trans_abs[w]*weights12[w]*
+                                             z_weight_evol[w]))
+                r_trans_eff[:len(rebin)] += rebin
+                rebin = np.bincount(model_bins[w],
+                                    weights=((z1_abs1 + z2)[w]/2*weights12[w]*
+                                             z_weight_evol[w]))
+                z_eff[:len(rebin)] += rebin
+                rebin = np.bincount(model_bins[w],
+                                    weights=weights12[w]*z_weight_evol[w])
+                weight_eff[:len(rebin)] += rebin
+            setattr(delta1, "neighbours", None)
+
+    dmat = dmat.reshape(num_bins_r_par*num_bins_r_trans,
+                        num_model_bins_r_par*num_model_bins_r_trans)
+
+    return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
+            num_pairs, num_pairs_used)
 
 v1d = {}
 c1d = {}

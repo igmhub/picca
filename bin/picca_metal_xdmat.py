@@ -11,7 +11,7 @@ from picca.utils import userprint
 def calc_metal_xdmat(abs_igm,p):
     xcf.fill_neighs(p)
     sp.random.seed(p[0])
-    tmp = xcf.metal_dmat(p,abs_igm=abs_igm)
+    tmp = xcf.compute_metal_dmat(p,abs_igm=abs_igm)
     return tmp
 
 if __name__ == '__main__':
