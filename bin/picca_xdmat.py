@@ -7,94 +7,213 @@ from multiprocessing import Pool,Lock,cpu_count,Value
 from picca import constants, xcf, io, utils
 from picca.utils import userprint
 
-def calc_dmat(p):
-    xcf.fill_neighs(p)
-    sp.random.seed(p[0])
-    tmp = xcf.compute_dmat(p)
-    return tmp
+def calc_dmat(healpixs):
+    """Computes the distortion matrix.
 
-if __name__ == '__main__':
+    To optimize the computation, first compute a list of neighbours for each of
+    the healpix. This is an auxiliar function to split the computational load
+    using several CPUs.
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Compute the distortion matrix of the cross-correlation delta x object.')
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
 
-    parser.add_argument('--out', type=str, default=None, required=True,
+    Returns:
+        The distortion matrix data
+    """
+    xcf.fill_neighs(healpixs)
+    np.random.seed(healpixs[0])
+    dmat_data = xcf.compute_dmat(healpixs)
+    return dmat_data
+
+def main():
+    """Computes the distortion matrix of the cross-correlation delta x
+    object."""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description=('Compute the distortion matrix of the cross-correlation '
+                     'delta x object.'))
+
+    parser.add_argument(
+        '--out',
+        type=str,
+        default=None,
+        required=True,
         help='Output file name')
 
-    parser.add_argument('--in-dir', type=str, default=None, required=True,
+    parser.add_argument(
+        '--in-dir',
+        type=str,
+        default=None,
+        required=True,
         help='Directory to delta files')
 
-    parser.add_argument('--drq', type=str, default=None, required=True,
+    parser.add_argument(
+        '--drq',
+        type=str,
+        default=None,
+        required=True,
         help='Catalog of objects in DRQ format')
 
-    parser.add_argument('--rp-min', type=float, default=-200., required=False,
+    parser.add_argument(
+        '--rp-min',
+        type=float,
+        default=-200.,
+        required=False,
         help='Min r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--rp-max', type=float, default=200., required=False,
+    parser.add_argument(
+        '--rp-max',
+        type=float,
+        default=200.,
+        required=False,
         help='Max r-parallel [h^-1 Mpc]')
 
-    parser.add_argument('--rt-max', type=float, default=200., required=False,
+    parser.add_argument(
+        '--rt-max',
+        type=float,
+        default=200.,
+        required=False,
         help='Max r-transverse [h^-1 Mpc]')
 
-    parser.add_argument('--np', type=int, default=100, required=False,
+    parser.add_argument(
+        '--np',
+        type=int,
+        default=100,
+        required=False,
         help='Number of r-parallel bins')
 
-    parser.add_argument('--nt', type=int, default=50, required=False,
+    parser.add_argument(
+        '--nt',
+        type=int,
+        default=50,
+        required=False,
         help='Number of r-transverse bins')
 
-    parser.add_argument('--coef-binning-model', type=int, default=1, required=False,
-        help='Coefficient multiplying np and nt to get finner binning for the model')
+    parser.add_argument(
+        '--coef-binning-model',
+        type=int,
+        default=1,
+        required=False,
+        help=('Coefficient multiplying np and nt to get finner binning for the '
+              'model'))
 
-    parser.add_argument('--z-min-obj', type=float, default=None, required=False,
+    parser.add_argument(
+        '--z-min-obj',
+        type=float,
+        default=None,
+        required=False,
         help='Min redshift for object field')
 
-    parser.add_argument('--z-max-obj', type=float, default=None, required=False,
+    parser.add_argument(
+        '--z-max-obj',
+        type=float,
+        default=None,
+        required=False,
         help='Max redshift for object field')
 
-    parser.add_argument('--z-cut-min', type=float, default=0., required=False,
-        help='Use only pairs of forest x object with the mean of the last absorber \
-        redshift and the object redshift larger than z-cut-min')
+    parser.add_argument(
+        '--z-cut-min',
+        type=float,
+        default=0.,
+        required=False,
+        help=('Use only pairs of forest x object with the mean of the last '
+              'absorber redshift and the object redshift larger than '
+              'z-cut-min'))
 
-    parser.add_argument('--z-cut-max', type=float, default=10., required=False,
-        help='Use only pairs of forest x object with the mean of the last absorber \
-        redshift and the object redshift smaller than z-cut-max')
+    parser.add_argument(
+        '--z-cut-max',
+        type=float,
+        default=10.,
+        required=False,
+        help=('Use only pairs of forest x object with the mean of the last '
+              'absorber redshift and the object redshift smaller than '
+              'z-cut-max'))
 
-    parser.add_argument('--lambda-abs', type=str, default='LYA', required=False,
-        help='Name of the absorption in picca.constants defining the redshift of the delta')
+    parser.add_argument(
+        '--lambda-abs',
+        type=str,
+        default='LYA',
+        required=False,
+        help=('Name of the absorption in picca.constants defining the redshift '
+              'of the delta'))
 
-    parser.add_argument('--z-ref', type=float, default=2.25, required=False,
+    parser.add_argument(
+        '--z-ref',
+        type=float,
+        default=2.25,
+        required=False,
         help='Reference redshift')
 
-    parser.add_argument('--z-evol-del', type=float, default=2.9, required=False,
+    parser.add_argument(
+        '--z-evol-del',
+        type=float,
+        default=2.9,
+        required=False,
         help='Exponent of the redshift evolution of the delta field')
 
-    parser.add_argument('--z-evol-obj', type=float, default=1., required=False,
+    parser.add_argument(
+        '--z-evol-obj',
+        type=float,
+        default=1.,
+        required=False,
         help='Exponent of the redshift evolution of the object field')
 
-    parser.add_argument('--fid-Om', type=float, default=0.315, required=False,
+    parser.add_argument(
+        '--fid-Om',
+        type=float,
+        default=0.315,
+        required=False,
         help='Omega_matter(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--fid-Or', type=float, default=0., required=False,
+    parser.add_argument(
+        '--fid-Or',
+        type=float,
+        default=0.,
+        required=False,
         help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--fid-Ok', type=float, default=0., required=False,
+    parser.add_argument(
+        '--fid-Ok',
+        type=float,
+        default=0.,
+        required=False,
         help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--fid-wl', type=float, default=-1., required=False,
+    parser.add_argument(
+        '--fid-wl',
+        type=float,
+        default=-1.,
+        required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--rej', type=float, default=1., required=False,
+    parser.add_argument(
+        '--rej',
+        type=float,
+        default=1.,
+        required=False,
         help='Fraction of rejected pairs: -1=no rejection, 1=all rejection')
 
-    parser.add_argument('--nside', type=int, default=16, required=False,
+    parser.add_argument(
+        '--nside',
+        type=int,
+        default=16,
+        required=False,
         help='Healpix nside')
 
-    parser.add_argument('--nproc', type=int, default=None, required=False,
+    parser.add_argument(
+        '--nproc',
+        type=int,
+        default=None,
+        required=False,
         help='Number of processors')
 
-    parser.add_argument('--nspec', type=int, default=None, required=False,
+    parser.add_argument(
+        '--nspec',
+        type=int,
+        default=None,
+        required=False,
         help='Maximum number of spectra to read')
-
 
     args = parser.parse_args()
 
@@ -212,3 +331,6 @@ if __name__ == '__main__':
         units=['h^-1 Mpc','h^-1 Mpc','',],
         extname='ATTRI')
     out.close()
+
+if __name__ == '__main__':
+    main()
