@@ -268,7 +268,6 @@ def main():
                                                   args.z_ref,
                                                   cosmo=cosmo,
                                                   max_num_spec=args.nspec)
-    del z_max
     for deltas in data.values():
         for delta in deltas:
             delta.fname = 'D1'
@@ -290,7 +289,7 @@ def main():
         args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
         sys.stderr.write("\r z_min_obj = {}\r".format(args.z_min_obj))
     if args.z_max_obj is None:
-        r_comov_max = cosmo.get_r_comov(r_comov_max)
+        r_comov_max = cosmo.get_r_comov(z_max)
         r_comov_max = max(0., r_comov_max + xcf.r_par_max)
         args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
         sys.stderr.write("\r z_max_obj = {}\r".format(args.z_max_obj))
