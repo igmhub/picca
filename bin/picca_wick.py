@@ -26,7 +26,7 @@ def calc_wick_terms(healpixs):
             List of healpix numbers
 
     Returns:
-        The correlation function data
+        The results of the Wick computation
     """
     cf.fill_neighs(healpixs)
     np.random.seed(healpixs[0])
@@ -309,7 +309,7 @@ def main():
     sys.stderr.write("\n")
     userprint("done, npix = {}".format(len(data)))
 
-    ### Load 1d correlation functions
+    # Load 1d correlation functions
     dic_xi1d = {"D1": args.cf1d, "D2": args.cf1d2}
     for fname, filename in dic_xi1d.items():
         if filename is None:
