@@ -57,12 +57,6 @@ get_variance_1d = {}
 c1d = {}
 max_diagram = None
 xi_wick = None
-cfWick_np = None
-cfWick_nt = None
-cfWick_rp_min = None
-cfWick_rp_max = None
-cfWick_rt_max = None
-cfWick_angmax = None
 
 def fill_neighs(healpixs):
     """Create and store a list of neighbours for each of the healpix.
@@ -850,89 +844,89 @@ def compute_wickT56_pairs(ang12, ang34, ang13, r_comov1, r_comov2, r_comov3,
     r_par = np.absolute(r_comov1 - r_comov3[:, None])*np.cos(ang13/2.)
     r_trans = (r_comov1 + r_comov3[:, None])*np.sin(ang13/2.)
 
-    #w = (r_par < cfWick_rp_max) & (r_trans < cfWick_rt_max) & (r_par >= cfWick_rp_min)
     w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
     if w.sum() == 0:
         return
-    #bp = sp.floor((r_par-cfWick_rp_min)/(cfWick_rp_max-cfWick_rp_min)*cfWick_np).astype(int)
     bins_r_par = np.floor((r_par - r_par_min)/(r_par_max - r_par_min)*
                           num_bins_r_par).astype(int)
-    #bt = (r_trans/cfWick_rt_max*cfWick_nt).astype(int)
     bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    #ba13 = bt + cfWick_nt*bp
-    ba13 = bins_r_trans + num_bins_r_trans*bins_r_par
-    ba13[~w] = 0
-    cf13 = xi_wick[ba13]
-    cf13[~w] = 0.
+    bins_forest13 = bins_r_trans + num_bins_r_trans*bins_r_par
+    bins_forest13[~w] = 0
+    xi13 = xi_wick[bins_forest13]
+    xi13[~w] = 0.
 
     ### Pair forest_1 - object_2
-    r_par = (r_comov1[:,None]-r_comov2)*sp.cos(ang12/2.)
-    r_trans = (r_comov1[:,None]+r_comov2)*sp.sin(ang12/2.)
-    weights = weights1[:,None]*weights2
-    pix = (np.arange(r_comov1.size)[:,None]*sp.ones_like(r_comov2)).astype(int)
-    thingid = sp.ones_like(weights1[:,None]).astype(int)*thingid2
+    r_par = (r_comov1[:, None] - r_comov2)*np.cos(ang12/2.)
+    r_trans = (r_comov1[:, None] + r_comov2)*np.sin(ang12/2.)
+    weights12 = weights1[:, None]*weights2
+    bins12 = (np.arange(r_comov1.size)[:, None]*
+              np.ones_like(r_comov2)).astype(int)
+    thingid_wick12 = np.ones_like(weights1[:, None]).astype(int)*thingid2
 
-    w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
-    if w.sum()==0: return
+    w = (r_par > r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
+    if w.sum() == 0:
+        return
     r_par = r_par[w]
     r_trans = r_trans[w]
-    we12 = weights[w]
-    pix12 = pix[w]
-    thingid12 = thingid[w]
-    bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba12 = bt + num_bins_r_trans*bp
+    weights12 = weights12[w]
+    bins12 = bins12[w]
+    thingid_wick12 = thingid_wick12[w]
+    bins_r_par = ((r_par - r_par_min)/(r_par_max - r_par_min)*
+                  num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    bins_forest12 = bins_r_trans + num_bins_r_trans*bins_r_par
 
     ### Pair forest_3 - object_4
-    r_par = (r_comov3[:,None]-r_comov4)*sp.cos(ang34/2.)
-    r_trans = (r_comov3[:,None]+r_comov4)*sp.sin(ang34/2.)
-    weights = weights3[:,None]*weights4
-    pix = (np.arange(r_comov3.size)[:,None]*sp.ones_like(r_comov4)).astype(int)
-    thingid = sp.ones_like(weights3[:,None]).astype(int)*thingid4
+    r_par = (r_comov3[:, None] - r_comov4)*np.cos(ang34/2.)
+    r_trans = (r_comov3[:, None] + r_comov4)*np.sin(ang34/2.)
+    weights34 = weights3[:, None]*weights4
+    bins34 = (np.arange(r_comov3.size)[:, None]*
+              np.ones_like(r_comov4)).astype(int)
+    thingid_wick34 = np.ones_like(weights3[:, None]).astype(int)*thingid4
 
-    w = (r_par>r_par_min) & (r_par<r_par_max) & (r_trans<r_trans_max)
-    if w.sum()==0: return
+    w = (r_par > r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
+    if w.sum() == 0:
+        return
     r_par = r_par[w]
     r_trans = r_trans[w]
-    we34 = weights[w]
-    pix34 = pix[w]
-    thingid34 = thingid[w]
-    bp = ((r_par-r_par_min)/(r_par_max-r_par_min)*num_bins_r_par).astype(int)
-    bt = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    ba34 = bt + num_bins_r_trans*bp
+    weights34 = weights34[w]
+    bins34 = bins34[w]
+    thingid_wick34 = thingid_wick34[w]
+    bins_r_par = ((r_par - r_par_min)/(r_par_max - r_par_min)*
+                  num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
+    bins_forest34 = bins_r_trans + num_bins_r_trans*bins_r_par
 
     ### t5
-    for k1, p1 in enumerate(ba12):
-        pix1 = pix12[k1]
-        t1 = thingid12[k1]
-        weights1 = we12[k1]
+    for index1, p1 in enumerate(bins_forest12):
+        selected_bin12 = bins12[index1]
+        weight1 = weights12[index1]
 
-        w = thingid34==t1
-        for k2, p2 in enumerate(ba34[w]):
-            pix2 = pix34[w][k2]
-            t2 = thingid34[w][k2]
-            weights2 = we34[w][k2]
-            prod = cf13[pix2,pix1]*weights1*weights2
-            T5[p1,p2] += prod
-            T5[p2,p1] += prod
+        w = thingid_wick34 == thingid_wick12[index1]
+        for index2, p2 in enumerate(bins_forest34[w]):
+            selected_bin34 = bins34[w][index2]
+            weight2 = weights34[w][index2]
+            prod = xi13[selected_bin34, selected_bin12]*weight1*weight2
+            t5[p1, p2] += prod
+            t5[p2, p1] += prod
 
     ### t6
-    if max_diagram==5: return
-    for k1, p1 in enumerate(ba12):
-        pix1 = pix12[k1]
-        t1 = thingid12[k1]
-        weights1 = we12[k1]
+    if max_diagram == 5:
+        return
+    for index1, p1 in enumerate(bins_forest12):
+        selected_bin12 = bins12[index1]
+        weight1 = weights12[index1]
 
-        for k2, p2 in enumerate(ba34):
-            pix2 = pix34[k2]
-            t2 = thingid34[k2]
-            weights2 = we34[k2]
-            prod = cf13[pix2,pix1]*weights1*weights2
-            if t2==t1: continue
-            t6[p1,p2] += prod
-            t6[p2,p1] += prod
+        for index2, p2 in enumerate(bins_forest34):
+            if thingid_wick34[index2] == thingid_wick12[index1]:
+                continue
+            selected_bin34 = bins34[index2]
+            weight2 = weights34[index2]
+            prod = xi13[selected_bin34, selected_bin12]*weight1*weight2
+            t6[p1, p2] += prod
+            t6[p2, p1] += prod
 
-    return
+
 def xcf1d(pix):
     """Compute the 1D cross-correlation between delta and objects on the same LOS
 
