@@ -54,7 +54,7 @@ ang_correlation = False
 
 # variables used in the wick covariance matrix computation
 get_variance_1d = {}
-c1d = {}
+xi_1d = {}
 max_diagram = None
 xi_wick = None
 
@@ -639,12 +639,12 @@ def compute_wick_terms(healpixs):
             if delta1.neighbours.size == 0:
                 continue
 
-            variance_1d_1 = get_variance_1d[delta1.fname](delta1.log_lambda)
+            variance_1d = get_variance_1d[delta1.fname](delta1.log_lambda)
             weights1 = delta1.weights
             weighted_xi_1d_1 = ((weights1*weights1[:, None])*
-                                c1d[delta1.fname](abs(delta1.log_lambda -
-                                                      delta1.log_lambda[:, None]))*
-                                np.sqrt(variance_1d_1*variance_1d_1[:, None]))
+                                xi_1d[delta1.fname](abs(delta1.log_lambda -
+                                                        delta1.log_lambda[:, None]))*
+                                np.sqrt(variance_1d*variance_1d[:, None]))
             r_comov1 = delta1.r_comov
             z1 = delta1.z
 
