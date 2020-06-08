@@ -30,6 +30,7 @@ x_correlation = False
 counter = None
 lock = None
 
+
 def fill_neighs(healpixs):
     """Create and store a list of neighbours for each of the healpix.
 
@@ -41,33 +42,35 @@ def fill_neighs(healpixs):
     """
     for healpix in healpixs:
         for obj1 in objs[healpix]:
-            healpix_neighbours = query_disc(nside,
-                                            [obj1.x_cart, obj1.y_cart, obj1.z_cart],
-                                            ang_max,
-                                            inclusive=True)
+            healpix_neighbours = query_disc(
+                nside, [obj1.x_cart, obj1.y_cart, obj1.z_cart],
+                ang_max,
+                inclusive=True)
             if x_correlation:
-                healpix_neighbours = [healpix
-                                      for healpix in healpix_neighbours
-                                      if healpix in objs2]
-                neighbours = [obj2
-                              for healpix in healpix_neighbours
-                              for obj2 in objs2[healpix]
-                              if obj1.thingid != obj2.thingid]
+                healpix_neighbours = [
+                    healpix for healpix in healpix_neighbours
+                    if healpix in objs2
+                ]
+                neighbours = [
+                    obj2 for healpix in healpix_neighbours
+                    for obj2 in objs2[healpix] if obj1.thingid != obj2.thingid
+                ]
             else:
-                healpix_neighbours = [healpix
-                                      for healpix in healpix_neighbours
-                                      if healpix in objs]
-                neighbours = [obj2
-                              for healpix in healpix_neighbours
-                              for obj2 in objs[healpix]
-                              if obj1.thingid != obj2.thingid]
-            ang = obj1^neighbours
+                healpix_neighbours = [
+                    healpix for healpix in healpix_neighbours if healpix in objs
+                ]
+                neighbours = [
+                    obj2 for healpix in healpix_neighbours
+                    for obj2 in objs[healpix] if obj1.thingid != obj2.thingid
+                ]
+            ang = obj1 ^ neighbours
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
-            obj1.neighbours = np.array([obj2
-                                        for obj2 in neighbours
-                                        if ((obj2.z_qso + obj1.z_qso)/2. >= z_cut_min and
-                                            (obj2.z_qso + obj1.z_qso)/2. < z_cut_max)])
+            obj1.neighbours = np.array([
+                obj2 for obj2 in neighbours
+                if ((obj2.z_qso + obj1.z_qso) / 2. >= z_cut_min and
+                    (obj2.z_qso + obj1.z_qso) / 2. < z_cut_max)
+            ])
 
 
 def compute_xi(healpixs):
@@ -85,17 +88,17 @@ def compute_xi(healpixs):
             z: Redshift of the correlation function pixels
             num_pairs: Number of pairs in the correlation function pixels
     """
-    weights = np.zeros(num_bins_r_par*num_bins_r_trans)
-    r_par = np.zeros(num_bins_r_par*num_bins_r_trans)
-    r_trans = np.zeros(num_bins_r_par*num_bins_r_trans)
-    z = np.zeros(num_bins_r_par*num_bins_r_trans)
-    num_pairs = np.zeros(num_bins_r_par*num_bins_r_trans, dtype=np.int64)
+    weights = np.zeros(num_bins_r_par * num_bins_r_trans)
+    r_par = np.zeros(num_bins_r_par * num_bins_r_trans)
+    r_trans = np.zeros(num_bins_r_par * num_bins_r_trans)
+    z = np.zeros(num_bins_r_par * num_bins_r_trans)
+    num_pairs = np.zeros(num_bins_r_par * num_bins_r_trans, dtype=np.int64)
 
     for healpix in healpixs:
         for obj1 in objs[healpix]:
 
             userprint(("\rcomputing xi: "
-                       "{}%").format(round(counter.value*100./num_data, 2)),
+                       "{}%").format(round(counter.value * 100. / num_data, 2)),
                       end="")
             with lock:
                 counter.value += 1
@@ -103,22 +106,16 @@ def compute_xi(healpixs):
             if obj1.neighbours.size == 0:
                 continue
 
-            ang = obj1^obj1.neighbours
+            ang = obj1 ^ obj1.neighbours
             z2 = np.array([obj2.z_qso for obj2 in obj1.neighbours])
             r_comov2 = np.array([obj2.r_comov for obj2 in obj1.neighbours])
             dist_m2 = np.array([obj2.dist_m for obj2 in obj1.neighbours])
             weights2 = np.array([obj2.weights for obj2 in obj1.neighbours])
 
-            (rebin_weight, rebin_r_par, rebin_r_trans, rebin_z,
-             rebin_num_pairs) = compute_xi_forest_pairs(obj1.z_qso,
-                                                        obj1.r_comov,
-                                                        obj1.dist_m,
-                                                        obj1.weights,
-                                                        z2,
-                                                        r_comov2,
-                                                        dist_m2,
-                                                        weights2,
-                                                        ang)
+            (rebin_weight, rebin_r_par, rebin_r_trans,
+             rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                 obj1.z_qso, obj1.r_comov, obj1.dist_m, obj1.weights, z2,
+                 r_comov2, dist_m2, weights2, ang)
 
             weights[:len(rebin_weight)] += rebin_weight
             r_par[:len(rebin_r_par)] += rebin_r_par
@@ -173,12 +170,12 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
             rebin_num_pairs: The number of pairs of the correlation function
                 pixels properly rebinned
     """
-    r_par = (r_comov1 - r_comov2)*np.cos(ang/2.)
+    r_par = (r_comov1 - r_comov2) * np.cos(ang / 2.)
     if not x_correlation or type_corr in ['DR', 'RD']:
         r_par = np.absolute(r_par)
-    r_trans = (dist_m1 + dist_m2)*np.sin(ang/2.)
-    z = (z1 + z2)/2.
-    weights12 = weights1*weights2
+    r_trans = (dist_m1 + dist_m2) * np.sin(ang / 2.)
+    z = (z1 + z2) / 2.
+    weights12 = weights1 * weights2
 
     w = (r_par >= r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
     w &= (weights12 > 0.)
@@ -187,15 +184,15 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
     z = z[w]
     weights12 = weights12[w]
 
-    bins_r_par = np.floor((r_par - r_par_min)/(r_par_max - r_par_min)*
+    bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) *
                           num_bins_r_par).astype(int)
-    bins_r_trans = (r_trans/r_trans_max*num_bins_r_trans).astype(int)
-    bins = bins_r_trans + num_bins_r_trans*bins_r_par
+    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins = bins_r_trans + num_bins_r_trans * bins_r_par
 
     rebin_weight = np.bincount(bins, weights=weights12)
-    rebin_r_par = np.bincount(bins, weights=r_par*weights12)
-    rebin_r_trans = np.bincount(bins, weights=r_trans*weights12)
-    rebin_z = np.bincount(bins, weights=z*weights12)
+    rebin_r_par = np.bincount(bins, weights=r_par * weights12)
+    rebin_r_trans = np.bincount(bins, weights=r_trans * weights12)
+    rebin_z = np.bincount(bins, weights=z * weights12)
     rebin_num_pairs = np.bincount(bins)
 
     return rebin_weight, rebin_r_par, rebin_r_trans, rebin_z, rebin_num_pairs
