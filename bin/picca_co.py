@@ -1,22 +1,21 @@
 #!/usr/bin/env python
-import scipy as sp
-import fitsio
+"""Compute the auto and cross-correlation between catalogs of objects
+"""
 import argparse
 import sys
-from multiprocessing import Pool,Lock,cpu_count,Value
+from multiprocessing import Pool, Lock, cpu_count, Valueimport numpy as np
+import fitsio
 
 from picca import constants, co, io, utils
 from picca.utils import userprint
 
 def corr_func(p):
-    if co.x_correlation:
-        co.fill_neighs_x_correlation(p)
-    else:
-        co.fill_neighs(p)
+    co.fill_neighs(p)
     tmp = co.co(p)
     return tmp
 
-if __name__ == '__main__':
+def main():
+    """Compute the auto and cross-correlation between catalogs of objects"""
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Compute the auto and cross-correlation between catalogs of objects')
@@ -177,3 +176,6 @@ if __name__ == '__main__':
     out.close()
 
     userprint("\nFinished")
+
+if __name__ == '__main__':
+    main()
