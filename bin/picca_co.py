@@ -3,7 +3,8 @@
 """
 import argparse
 import sys
-from multiprocessing import Pool, Lock, cpu_count, Valueimport numpy as np
+from multiprocessing import Pool, Lock, cpu_count, Value
+import numpy as np
 import fitsio
 
 from picca import constants, co, io, utils
