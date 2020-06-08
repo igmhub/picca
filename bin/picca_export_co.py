@@ -6,8 +6,8 @@ import fitsio
 import numpy as np
 import scipy.linalg
 
-
 from picca.utils import smooth_cov, compute_cov, userprint
+
 
 def main():
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
@@ -18,47 +18,41 @@ def main():
         description=('Export auto and cross-correlation of catalog of objects '
                      'for the fitter.'))
 
-    parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
-    parser.add_argument(
-        '--DD-file',
-        type=str,
-        default=None,
-        required=False,
-        help='File of the data x data auto-correlation')
+    parser.add_argument('--DD-file',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='File of the data x data auto-correlation')
 
-    parser.add_argument(
-        '--RR-file',
-        type=str,
-        default=None,
-        required=False,
-        help='File of the random x random auto-correlation')
+    parser.add_argument('--RR-file',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='File of the random x random auto-correlation')
 
-    parser.add_argument(
-        '--DR-file',
-        type=str,
-        default=None,
-        required=False,
-        help='File of the data x random auto-correlation')
+    parser.add_argument('--DR-file',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='File of the data x random auto-correlation')
 
-    parser.add_argument(
-        '--RD-file',
-        type=str,
-        default=None,
-        required=False,
-        help='File of the random x data auto-correlation')
+    parser.add_argument('--RD-file',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='File of the random x data auto-correlation')
 
-    parser.add_argument(
-        '--xDD-file',
-        type=str,
-        default=None,
-        required=False,
-        help='File of the data_1 x data_2 cross-correlation')
+    parser.add_argument('--xDD-file',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='File of the data_1 x data_2 cross-correlation')
 
     parser.add_argument(
         '--xRR-file',
@@ -67,19 +61,17 @@ def main():
         required=False,
         help='File of the random_1 x random_2 cross-correlation')
 
-    parser.add_argument(
-        '--xD1R2-file',
-        type=str,
-        default=None,
-        required=False,
-        help='File of the data_1 x random_2 cross-correlation')
+    parser.add_argument('--xD1R2-file',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='File of the data_1 x random_2 cross-correlation')
 
-    parser.add_argument(
-        '--xR1D2-file',
-        type=str,
-        default=None,
-        required=False,
-        help='File of the random_1 x data_2 cross-correlation')
+    parser.add_argument('--xR1D2-file',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='File of the random_1 x data_2 cross-correlation')
 
     parser.add_argument(
         '--do-not-smooth-cov',
@@ -87,11 +79,10 @@ def main():
         default=False,
         help='Do not smooth the covariance matrix from sub-sampling')
 
-    parser.add_argument(
-        '--get-cov-from-poisson',
-        action='store_true',
-        default=False,
-        help='Get covariance matrix from Poisson statistics')
+    parser.add_argument('--get-cov-from-poisson',
+                        action='store_true',
+                        default=False,
+                        help='Get covariance matrix from Poisson statistics')
 
     parser.add_argument(
         '--cov',
@@ -112,17 +103,21 @@ def main():
         sys.exit()
     elif args.DD_file is not None:
         corr = 'AUTO'
-        correlation_files = {'DD': args.DD_file,
-                             'RR': args.RR_file,
-                             'DR': args.DR_file,
-                             'RD': args.RD_file}
+        correlation_files = {
+            'DD': args.DD_file,
+            'RR': args.RR_file,
+            'DR': args.DR_file,
+            'RD': args.RD_file
+        }
     elif not args.xDD_file is None:
         # TODO: Test if picca_co.py and export_co.py work for cross
         corr = 'CROSS'
-        correlation_files = {'xDD': args.xDD_file,
-                             'xRR': args.xRR_file,
-                             'xD1R2': args.xD1R2_file,
-                             'xR1D2': args.xR1D2_file}
+        correlation_files = {
+            'xDD': args.xDD_file,
+            'xRR': args.xRR_file,
+            'xD1R2': args.xD1R2_file,
+            'xR1D2': args.xR1D2_file
+        }
 
     # Read files
     data = {}
@@ -132,11 +127,11 @@ def main():
 
         if type_corr in ['DD', 'RR']:
             num_objects = header['NOBJ']
-            coef = num_objects*(num_objects - 1)
+            coef = num_objects * (num_objects - 1)
         else:
             num_objects = header['NOBJ']
             num_objects2 = header['NOBJ2']
-            coef = num_objects*num_objects2
+            coef = num_objects * num_objects2
 
         if type_corr in ['DD', 'xDD']:
             data['COEF'] = coef
@@ -153,7 +148,7 @@ def main():
             userprint("INFO: {} sub-samples were empty".format(w.size -
                                                                w.sum()))
         data[type_corr]['HEALPID'] = hdul[2]['HEALPID'][:][w]
-        data[type_corr]['WE'] = hdul[2]['WE'][:][w]/coef
+        data[type_corr]['WE'] = hdul[2]['WE'][:][w] / coef
         hdul.close()
 
     # Compute correlation
@@ -165,7 +160,7 @@ def main():
         w = xi_random_random > 0.
         xi = np.zeros(xi_data_data.size)
         xi[w] = (xi_data_data[w] + xi_random_random[w] - xi_random_data[w] -
-                 xi_data_random[w])/xi_random_random[w]
+                 xi_data_random[w]) / xi_random_random[w]
     else:
         xi_data_data = data['xDD']['WE'].sum(axis=0)
         xi_random_random = data['xRR']['WE'].sum(axis=0)
@@ -174,7 +169,7 @@ def main():
         w = xi_random_random > 0.
         xi = np.zeros(xi_data_data.size)
         xi[w] = (xi_data_data[w] + xi_random_random[w] - xi_data1_random2[w] -
-                 xi_data2_random1[w])/xi_random_random[w]
+                 xi_data2_random1[w]) / xi_random_random[w]
     data['DA'] = xi
     data['corr_DD'] = xi_data_data
     data['corr_RR'] = xi_random_random
@@ -189,8 +184,8 @@ def main():
         userprint('INFO: Compute covariance from Poisson statistics')
         w = data['corr_RR'] > 0.
         covariance = np.zeros(data['corr_DD'].size)
-        covariance[w] = ((data['COEF']/2.*data['corr_DD'][w])**2/
-                         (data['COEF']/2.*data['corr_RR'][w])**3)
+        covariance[w] = ((data['COEF'] / 2. * data['corr_DD'][w])**2 /
+                         (data['COEF'] / 2. * data['corr_RR'][w])**3)
         data['CO'] = np.diag(covariance)
     else:
         userprint('INFO: Compute covariance from sub-sampling')
@@ -210,23 +205,24 @@ def main():
                                           data[type_corr2]['HLPXSCHM']))
                     sys.exit()
 
-                w = np.logical_not(np.in1d(data[type_corr1]['HEALPID'],
-                                           data[type_corr2]['HEALPID']))
+                w = np.logical_not(
+                    np.in1d(data[type_corr1]['HEALPID'],
+                            data[type_corr2]['HEALPID']))
                 if w.sum() != 0:
                     userprint("WARNING: HEALPID are different by {} for {}:{} "
-                              "and {}:{}".format(w.sum(),
-                                                 type_corr1,
-                                                 data[type_corr1]['HEALPID'].size,
-                                                 type_corr2,
-                                                 data[type_corr2]['HEALPID'].size))
+                              "and {}:{}".format(
+                                  w.sum(), type_corr1,
+                                  data[type_corr1]['HEALPID'].size, type_corr2,
+                                  data[type_corr2]['HEALPID'].size))
                     new_healpix = data[type_corr1]['HEALPID'][w]
                     num_new_healpix = new_healpix.size
                     num_bins = data[type_corr2]['WE'].shape[1]
-                    data[type_corr2]['HEALPID'] = np.append(data[type_corr2]['HEALPID'],
-                                                            new_healpix)
+                    data[type_corr2]['HEALPID'] = np.append(
+                        data[type_corr2]['HEALPID'], new_healpix)
                     data[type_corr2]['WE'] = np.append(data[type_corr2]['WE'],
-                                                       np.zeros((num_new_healpix,
-                                                                 num_bins)),
+                                                       np.zeros(
+                                                           (num_new_healpix,
+                                                            num_bins)),
                                                        axis=0)
 
         # Sort the data by the healpix values
@@ -243,7 +239,7 @@ def main():
             w = xi_random_random > 0.
             xi = np.zeros(xi_data_data.shape)
             xi[w] = (xi_data_data[w] + xi_random_random[w] - xi_data_random[w] -
-                     xi_random_data[w])/xi_random_random[w]
+                     xi_random_data[w]) / xi_random_random[w]
             weights = data['DD']['WE']
         else:
             xi_data_data = data['xDD']['WE']
@@ -253,7 +249,7 @@ def main():
             w = xi_random_random > 0.
             xi = np.zeros(xi_data_data.shape)
             xi[w] = ((xi_data_data[w] + xi_random_random[w] -
-                      xi_data1_random2[w] - xi_data2_random1[w])/
+                      xi_data1_random2[w] - xi_data2_random1[w]) /
                      xi_random_random[w])
             weights = data['xDD']['WE']
         data['HLP_DA'] = xi
@@ -289,29 +285,41 @@ def main():
         nside = data['DD']['NSIDE']
     else:
         nside = data['xDD']['NSIDE']
-    header = [
-        {'name': 'RPMIN', 'value': data['RPMIN'],
-         'comment': 'Minimum r-parallel'},
-        {'name': 'RPMAX', 'value': data['RPMAX'],
-         'comment': 'Maximum r-parallel'},
-        {'name': 'RTMAX', 'value': data['RTMAX'],
-         'comment': 'Maximum r-transverse'},
-        {'name': 'NP', 'value': data['NP'],
-         'comment': 'Number of bins in r-parallel'},
-        {'name': 'NT', 'value': data['NT'],
-         'comment': 'Number of bins in r-transverse'},
-        {'name': 'NSIDE', 'value': nside,
-         'comment': 'Healpix nside'}
-    ]
+    header = [{
+        'name': 'RPMIN',
+        'value': data['RPMIN'],
+        'comment': 'Minimum r-parallel'
+    }, {
+        'name': 'RPMAX',
+        'value': data['RPMAX'],
+        'comment': 'Maximum r-parallel'
+    }, {
+        'name': 'RTMAX',
+        'value': data['RTMAX'],
+        'comment': 'Maximum r-transverse'
+    }, {
+        'name': 'NP',
+        'value': data['NP'],
+        'comment': 'Number of bins in r-parallel'
+    }, {
+        'name': 'NT',
+        'value': data['NT'],
+        'comment': 'Number of bins in r-transverse'
+    }, {
+        'name': 'NSIDE',
+        'value': nside,
+        'comment': 'Healpix nside'
+    }]
     names = ['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB']
-    comment = ['R-parallel', 'R-transverse', 'Redshift', 'Correlation',
-               'Covariance matrix', 'Distortion matrix', 'Number of pairs']
-    results.write(
-        [data[name] for name in names],
-        names=names,
-        header=header,
-        comment=comment,
-        extname='COR')
+    comment = [
+        'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
+        'Covariance matrix', 'Distortion matrix', 'Number of pairs'
+    ]
+    results.write([data[name] for name in names],
+                  names=names,
+                  header=header,
+                  comment=comment,
+                  extname='COR')
 
     if args.cov is None and not args.get_cov_from_poisson:
         if corr == 'AUTO':
@@ -320,18 +328,20 @@ def main():
         else:
             healpix_scheme = data['xDD']['HLPXSCHM']
             healpix_list = data['xDD']['HEALPID']
-        header2 = [{'name': 'HLPXSCHM',
-                    'value': healpix_scheme,
-                    'comment': 'healpix scheme'}]
+        header2 = [{
+            'name': 'HLPXSCHM',
+            'value': healpix_scheme,
+            'comment': 'healpix scheme'
+        }]
         comment = ['Healpix index', 'Sum of weight', 'Correlation']
-        results.write(
-            [healpix_list, data['HLP_WE'], data['HLP_DA']],
-            names=['HEALPID', 'WE', 'DA'],
-            header=header2,
-            comment=comment,
-            extname='SUB_COR')
+        results.write([healpix_list, data['HLP_WE'], data['HLP_DA']],
+                      names=['HEALPID', 'WE', 'DA'],
+                      header=header2,
+                      comment=comment,
+                      extname='SUB_COR')
 
     results.close()
+
 
 if __name__ == '__main__':
     main()
