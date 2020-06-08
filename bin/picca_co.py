@@ -137,13 +137,13 @@ def main():
     cfs = pool.map(corr_func,sorted(list(cpu_data.values())))
     pool.close()
 
-    cfs = sp.array(cfs)
+    cfs = np.array(cfs)
     wes = cfs[:,0,:]
     rps = cfs[:,1,:]
     rts = cfs[:,2,:]
     zs  = cfs[:,3,:]
-    nbs = cfs[:,4,:].astype(sp.int64)
-    hep = sp.array(sorted(list(cpu_data.keys())))
+    nbs = cfs[:,4,:].astype(np.int64)
+    hep = np.array(sorted(list(cpu_data.keys())))
 
     cut      = (wes.sum(axis=0)>0.)
     r_par       = (rps*wes).sum(axis=0)
