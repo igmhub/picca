@@ -11,11 +11,10 @@ This module provides several functions:
     - compute_wick_terms
     - compute_wickT1234_pairs
     - compute_wickT1234_pairs
-    - xcf1d
+    - compute_xi_1d
 See the respective docstrings for more details
 """
 import numpy as np
-import scipy as sp
 from healpy import query_disc
 from numba import jit
 
@@ -927,50 +926,64 @@ def compute_wickT56_pairs(ang12, ang34, ang13, r_comov1, r_comov2, r_comov3,
             t6[p2, p1] += prod
 
 
-def xcf1d(pix):
-    """Compute the 1D cross-correlation between delta and objects on the same LOS
+def compute_xi_1d(healpixs):
+    """Computes the 1D autocorrelation delta and objects on the same LOS
 
     Args:
-        pix (list): List of HEALpix to compute
+        healpixs: array of ints
+            List of healpix numbers
 
     Returns:
-        weights (float array): weights
-        xi (float array): correlation
-        r_par (float array): wavelenght ratio
-        z (float array): Mean redshift of pairs
-        num_pairs (int array): Number of pairs
+        The following variables:
+            weights1d: Total weights for the 1d correlation function
+            xi1d: The 1d correlation function
+            r_par1d: The wavelength ratios
+            z1d: Mean redshift of pairs
+            num_pairs1d: Number of pairs for the 1d correlation function
     """
-    xi = np.zeros(num_bins_r_par)
-    weights = np.zeros(num_bins_r_par)
-    r_par = np.zeros(num_bins_r_par)
-    z = np.zeros(num_bins_r_par)
-    num_pairs = np.zeros(num_bins_r_par,dtype=sp.int64)
+    xi_1d = np.zeros(num_bins_r_par)
+    weights1d = np.zeros(num_bins_r_par)
+    r_par1d = np.zeros(num_bins_r_par)
+    z1d = np.zeros(num_bins_r_par)
+    num_pairs1d = np.zeros(num_bins_r_par, dtype=np.int64)
 
-    for healpix in pix:
-        for d in data[healpix]:
+    for healpix in healpixs:
+        for delta in data[healpix]:
 
-            neighbours = [q for q in objs[healpix] if q.thingid==d.thingid]
-            if len(neighbours)==0: continue
+            neighbours = [
+                obj for obj in objs[healpix]
+                if obj.thingid == delta.thingid
+            ]
+            if len(neighbours) == 0:
+                continue
 
-            z_qso = [ q.z_qso for q in neighbours ]
-            weights_qso = [ q.weights for q in neighbours ]
-            lambda_qso = [ 10.**q.log_lambda for q in neighbours ]
+            z_qso = [obj.z_qso for obj in neighbours]
+            weights_qso = [obj.weights for obj in neighbours]
+            lambda_qso = [10.**obj.log_lambda for obj in neighbours]
             ang = np.zeros(len(lambda_qso))
 
-            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.log_lambda,10.**d.log_lambda,d.weights,d.delta,z_qso,lambda_qso,lambda_qso,weights_qso,ang)
+            (rebin_weight, rebin_xi, rebin_r_par, _, rebin_z,
+             rebin_num_pairs) = compute_xi_forest_pairs(delta.z,
+                                                        10.**delta.log_lambda,
+                                                        10.**delta.log_lambda,
+                                                        delta.weights,
+                                                        delta.delta,
+                                                        z_qso,
+                                                        lambda_qso,
+                                                        lambda_qso,
+                                                        weights_qso,
+                                                        ang)
 
-            xi[:cd.size] += cd
-            weights[:cw.size] += cw
-            r_par[:crp.size] += crp
-            z[:cz.size] += cz
-            num_pairs[:cnb.size] += cnb.astype(int)
+            xi_1d[:rebin_xi.size] += rebin_xi
+            weights1d[:rebin_weight.size] += rebin_weight
+            r_par1d[:rebin_r_par.size] += rebin_r_par
+            z1d[:rebin_z.size] += rebin_z
+            num_pairs1d[:rebin_num_pairs.size] += rebin_num_pairs.astype(int)
 
-            for el in list(d.__dict__.keys()):
-                setattr(d,el,None)
 
-    w = weights>0.
-    xi[w] /= weights[w]
-    r_par[w] /= weights[w]
-    z[w] /= weights[w]
+    w = weights1d > 0.
+    xi_1d[w] /= weights1d[w]
+    r_par1d[w] /= weights1d[w]
+    z[w] /= weights1d[w]
 
-    return weights,xi,r_par,z,num_pairs
+    return weights1d, xi_1d, r_par1d, z, num_pairs1d
