@@ -11,6 +11,7 @@ from picca import constants, xcf, io, prep_del
 from picca.data import Forest
 from picca.utils import userprint
 
+
 def corr_func(healpixs):
     """Computes the correlation function.
 
@@ -39,75 +40,65 @@ def main():
                      'objects and a delta field as a function of angle and '
                      'wavelength ratio'))
 
-    parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
-    parser.add_argument(
-        '--in-dir',
-        type=str,
-        default=None,
-        required=True,
-        help='Directory to delta files')
+    parser.add_argument('--in-dir',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Directory to delta files')
 
-    parser.add_argument(
-        '--drq',
-        type=str,
-        default=None,
-        required=True,
-        help='Catalog of objects in DRQ format')
+    parser.add_argument('--drq',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Catalog of objects in DRQ format')
 
-    parser.add_argument(
-        '--wr-min',
-        type=float,
-        default=0.9,
-        required=False,
-        help='Min of wavelength ratio')
+    parser.add_argument('--wr-min',
+                        type=float,
+                        default=0.9,
+                        required=False,
+                        help='Min of wavelength ratio')
 
-    parser.add_argument(
-        '--wr-max',
-        type=float,
-        default=1.1,
-        required=False,
-        help='Max of wavelength ratio')
+    parser.add_argument('--wr-max',
+                        type=float,
+                        default=1.1,
+                        required=False,
+                        help='Max of wavelength ratio')
 
-    parser.add_argument(
-        '--ang-max',
-        type=float,
-        default=0.02,
-        required=False,
-        help='Max angle (rad)')
+    parser.add_argument('--ang-max',
+                        type=float,
+                        default=0.02,
+                        required=False,
+                        help='Max angle (rad)')
 
-    parser.add_argument(
-        '--np',
-        type=int,
-        default=100,
-        required=False,
-        help='Number of wavelength ratio bins')
+    parser.add_argument('--np',
+                        type=int,
+                        default=100,
+                        required=False,
+                        help='Number of wavelength ratio bins')
 
-    parser.add_argument(
-        '--nt',
-        type=int,
-        default=50,
-        required=False,
-        help='Number of angular bins')
+    parser.add_argument('--nt',
+                        type=int,
+                        default=50,
+                        required=False,
+                        help='Number of angular bins')
 
-    parser.add_argument(
-        '--z-min-obj',
-        type=float,
-        default=None,
-        required=False,
-        help='Min redshift for object field')
+    parser.add_argument('--z-min-obj',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help='Min redshift for object field')
 
-    parser.add_argument(
-        '--z-max-obj',
-        type=float,
-        default=None,
-        required=False,
-        help='Max redshift for object field')
+    parser.add_argument('--z-max-obj',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help='Max redshift for object field')
 
     parser.add_argument(
         '--z-cut-min',
@@ -143,12 +134,11 @@ def main():
         help=('Name of the absorption in picca.constants the object is '
               'considered as'))
 
-    parser.add_argument(
-        '--z-ref',
-        type=float,
-        default=2.25,
-        required=False,
-        help='Reference redshift')
+    parser.add_argument('--z-ref',
+                        type=float,
+                        default=2.25,
+                        required=False,
+                        help='Reference redshift')
 
     parser.add_argument(
         '--z-evol-del',
@@ -178,12 +168,11 @@ def main():
         required=False,
         help='Omega_radiation(z=0) of fiducial LambdaCDM cosmology')
 
-    parser.add_argument(
-        '--fid-Ok',
-        type=float,
-        default=0.,
-        required=False,
-        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
+    parser.add_argument('--fid-Ok',
+                        type=float,
+                        default=0.,
+                        required=False,
+                        help='Omega_k(z=0) of fiducial LambdaCDM cosmology')
 
     parser.add_argument(
         '--fid-wl',
@@ -192,43 +181,38 @@ def main():
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
-    parser.add_argument(
-        '--no-project',
-        action='store_true',
-        required=False,
-        help='Do not project out continuum fitting modes')
+    parser.add_argument('--no-project',
+                        action='store_true',
+                        required=False,
+                        help='Do not project out continuum fitting modes')
 
-    parser.add_argument(
-        '--no-remove-mean-lambda-obs',
-        action='store_true',
-        required=False,
-        help='Do not remove mean delta versus lambda_obs')
+    parser.add_argument('--no-remove-mean-lambda-obs',
+                        action='store_true',
+                        required=False,
+                        help='Do not remove mean delta versus lambda_obs')
 
-    parser.add_argument(
-        '--nside',
-        type=int,
-        default=16,
-        required=False,
-        help='Healpix nside')
+    parser.add_argument('--nside',
+                        type=int,
+                        default=16,
+                        required=False,
+                        help='Healpix nside')
 
-    parser.add_argument(
-        '--nproc',
-        type=int,
-        default=None,
-        required=False,
-        help='Number of processors')
+    parser.add_argument('--nproc',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Number of processors')
 
-    parser.add_argument(
-        '--nspec',
-        type=int,
-        default=None,
-        required=False,
-        help='Maximum number of spectra to read')
+    parser.add_argument('--nspec',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Maximum number of spectra to read')
 
     args = parser.parse_args()
 
     if args.nproc is None:
-        args.nproc = cpu_count()//2
+        args.nproc = cpu_count() // 2
 
     # setup variables in module xcf
     xcf.r_par_min = args.wr_min
@@ -250,14 +234,15 @@ def main():
                             wl=args.fid_wl)
 
     ### Read deltas
-    data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
-                                                  args.nside,
-                                                  constants.ABSORBER_IGM[args.lambda_abs],
-                                                  args.z_evol_del,
-                                                  args.z_ref,
-                                                  cosmo=cosmo,
-                                                  max_num_spec=args.nspec,
-                                                  no_project=args.no_project)
+    data, num_data, z_min, z_max = io.read_deltas(
+        args.in_dir,
+        args.nside,
+        constants.ABSORBER_IGM[args.lambda_abs],
+        args.z_evol_del,
+        args.z_ref,
+        cosmo=cosmo,
+        max_num_spec=args.nspec,
+        no_project=args.no_project)
     xcf.data = data
     xcf.num_data = num_data
     userprint("")
@@ -270,38 +255,35 @@ def main():
             for delta in xcf.data[healpix]:
                 delta_log_lambda = np.asarray([
                     delta.log_lambda[index] - delta.log_lambda[index - 1]
-                    for index in range(1, delta.log_lambda.size)]).min()
+                    for index in range(1, delta.log_lambda.size)
+                ]).min()
                 if Forest.delta_log_lambda is None:
                     Forest.delta_log_lambda = delta_log_lambda
                 else:
                     Forest.delta_log_lambda = min(delta_log_lambda,
                                                   Forest.delta_log_lambda)
         Forest.log_lambda_min = (np.log10(
-            (z_min + 1.)*xcf.lambda_abs) - Forest.delta_log_lambda/2.)
+            (z_min + 1.) * xcf.lambda_abs) - Forest.delta_log_lambda / 2.)
         Forest.log_lambda_max = (np.log10(
-            (z_max + 1.)*xcf.lambda_abs) + Forest.delta_log_lambda/2.)
+            (z_max + 1.) * xcf.lambda_abs) + Forest.delta_log_lambda / 2.)
         log_lambda, mean_delta, stack_weight = prep_del.stack(
             xcf.data, stack_from_deltas=True)
         del log_lambda, stack_weight
         for healpix in xcf.data:
             for delta in xcf.data[healpix]:
-                bins = ((delta.log_lambda - Forest.log_lambda_min)/
+                bins = ((delta.log_lambda - Forest.log_lambda_min) /
                         Forest.delta_log_lambda + 0.5).astype(int)
                 delta.delta -= mean_delta[bins]
 
     ### Read objects
-    objs, z_min2 = io.read_objects(args.drq,
-                                   args.nside,
-                                   args.z_min_obj,
-                                   args.z_max_obj,
-                                   args.z_evol_obj,
-                                   args.z_ref,
+    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
+                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
                                    cosmo)
     del z_min2
     for index, healpix in enumerate(sorted(objs)):
         for obj in objs[healpix]:
-            obj.log_lambda = np.log10((1.+obj.z_qso)*
-                                      constants.ABSORBER_IGM[args.lambda_abs_obj])
+            obj.log_lambda = np.log10(
+                (1. + obj.z_qso) * constants.ABSORBER_IGM[args.lambda_abs_obj])
     userprint("")
     xcf.objs = objs
 
@@ -325,34 +307,49 @@ def main():
     healpix_list = np.array(sorted(list(cpu_data.keys())))
 
     w = (weights_list.sum(axis=0) > 0.)
-    r_par = (r_par_list*weights_list).sum(axis=0)
+    r_par = (r_par_list * weights_list).sum(axis=0)
     r_par[w] /= weights_list.sum(axis=0)[w]
-    r_trans = (r_trans_list*weights_list).sum(axis=0)
+    r_trans = (r_trans_list * weights_list).sum(axis=0)
     r_trans[w] /= weights_list.sum(axis=0)[w]
-    z = (z_list*weights_list).sum(axis=0)
+    z = (z_list * weights_list).sum(axis=0)
     z[w] /= weights_list.sum(axis=0)[w]
     num_pairs = num_pairs_list.sum(axis=0)
 
     # save results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [
-        {'name': 'RPMIN', 'value': xcf.r_par_min,
-         'comment': 'Minimum wavelength ratio'},
-        {'name': 'RPMAX', 'value': xcf.r_par_max,
-         'comment': 'Maximum wavelength ratio'},
-        {'name': 'RTMAX', 'value': xcf.r_trans_max,
-         'comment': 'Maximum angle [rad]'},
-        {'name': 'NP', 'value': xcf.num_bins_r_par,
-         'comment': 'Number of bins in wavelength ratio'},
-        {'name': 'NT', 'value': xcf.num_bins_r_trans,
-         'comment': 'Number of bins in angle'},
-        {'name': 'ZCUTMIN', 'value': xcf.z_cut_min,
-         'comment': 'Minimum redshift of pairs'},
-        {'name': 'ZCUTMAX', 'value': xcf.z_cut_max,
-         'comment': 'Maximum redshift of pairs'},
-        {'name': 'NSIDE', 'value': xcf.nside,
-         'comment': 'Healpix nside'}
-    ]
+    header = [{
+        'name': 'RPMIN',
+        'value': xcf.r_par_min,
+        'comment': 'Minimum wavelength ratio'
+    }, {
+        'name': 'RPMAX',
+        'value': xcf.r_par_max,
+        'comment': 'Maximum wavelength ratio'
+    }, {
+        'name': 'RTMAX',
+        'value': xcf.r_trans_max,
+        'comment': 'Maximum angle [rad]'
+    }, {
+        'name': 'NP',
+        'value': xcf.num_bins_r_par,
+        'comment': 'Number of bins in wavelength ratio'
+    }, {
+        'name': 'NT',
+        'value': xcf.num_bins_r_trans,
+        'comment': 'Number of bins in angle'
+    }, {
+        'name': 'ZCUTMIN',
+        'value': xcf.z_cut_min,
+        'comment': 'Minimum redshift of pairs'
+    }, {
+        'name': 'ZCUTMAX',
+        'value': xcf.z_cut_max,
+        'comment': 'Maximum redshift of pairs'
+    }, {
+        'name': 'NSIDE',
+        'value': xcf.nside,
+        'comment': 'Healpix nside'
+    }]
     results.write(
         [r_par, r_trans, z, num_pairs],
         names=['RP', 'RT', 'Z', 'NB'],
@@ -361,15 +358,19 @@ def main():
         header=header,
         extname='ATTRI')
 
-    header2 = [{'name': 'HLPXSCHM', 'value': 'RING', 'comment':' Healpix scheme'}]
-    results.write(
-        [healpix_list, weights_list, xi_list],
-        names=['HEALPID', 'WE', 'DA'],
-        comment=['Healpix index', 'Sum of weight', 'Correlation'],
-        header=header2,
-        extname='COR')
+    header2 = [{
+        'name': 'HLPXSCHM',
+        'value': 'RING',
+        'comment': ' Healpix scheme'
+    }]
+    results.write([healpix_list, weights_list, xi_list],
+                  names=['HEALPID', 'WE', 'DA'],
+                  comment=['Healpix index', 'Sum of weight', 'Correlation'],
+                  header=header2,
+                  extname='COR')
 
     results.close()
+
 
 if __name__ == '__main__':
     main()
