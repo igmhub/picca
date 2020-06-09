@@ -172,16 +172,15 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
 
 
         #selection of quasars with good redshifts only, the exact definition here should be decided, could in principle be moved to later
+        spectypes=h[1]['SPECTYPE'][:].astype(str)
         
-        select=(h[1]['SPECTYPE'][:].astype(str)=='QSO')
-        select&=(h[1]['ZWARN'][:]==0)    #note that zwarn is potentially not essential
+        select=spectypes=='QSO'      #this could be done later but slower
+
+
         ## Redshift
         zqso = h[1]['Z'][:][select]
-
-
+        zwarn=h[1]['ZWARN'][:][select]    #note that zwarn is potentially not essential
         ## Info of the primary observation
-        
-
         thid = h[1]['TARGETID'][:][select]
         if len(thid)==0:
             print("no valid QSOs in file {}".format(zbest))
@@ -232,7 +231,7 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         print('')
         w = np.ones(ra.size,dtype=bool)
         print("Tile {}, Petal {}".format(str(plate[0])[:-1],str(plate[0])[-1]))
-        print(" start                            : nb object in cat = {}".format(w.sum()) )
+        print(" start (all redrock QSOs)         : nb object in cat = {}".format(w.sum()) )
         #note that in principle we could also check for subtypes here...
         w &= (((cmx_target&(2**12))!=0) |
                 # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/cmx/data/cmx_targetmask.yaml
@@ -241,6 +240,12 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
               ((sv1_target&(2**2))!=0))
                 # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/sv1/data/sv1_targetmask.yaml
         print(" Targeted as QSO                  : nb object in cat = {}".format(w.sum()) )
+        #the bottom selection has been done earlier already to speed up things
+        #w &= spectypes == 'QSO'
+        #print(" Redrock QSO                      : nb object in cat = {}".format(w.sum()) )
+        
+        w &= zwarn == 0
+        print(" Redrock no ZWARN                 : nb object in cat = {}".format(w.sum()) )
 
 
         #checking if all fibers are fine
@@ -249,9 +254,6 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
 
         w &= np.all(np.array(fiberstatus)==0,axis=1)
         print(" FIBERSTATUS==0 for all exposures : nb object in cat = {}".format(w.sum()) )
-        #need to have reasonable output lines for this
-        w &= zqso>0.
-        print(" and z>0.                         : nb object in cat = {}".format(w.sum()) )
 
 
         ## Redshift range
@@ -953,7 +955,17 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
     The spectra must be in the format "spectra directory"/"tile numbers"/coadd-* """
     
     
-    spectra = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"),recursive=True)
+    spectra_in = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"),recursive=True)
+    spectra = []
+    plate_unique=np.unique(plate)
+    for s in spectra_in:
+        for p in plate_unique:
+            if str(p)[:-1] in s:
+                spectra.append(s)
+                break
+                
+
+
     #tiles = [spectra[i].split("/")[-2].strip() for i in range(len(spectra))]
     nights = []
     data = {}
