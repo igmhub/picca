@@ -173,7 +173,8 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
 
         #selection of quasars with good redshifts only, the exact definition here should be decided, could in principle be moved to later
         
-        select=(h[1]['SPECTYPE'][:].astype(str)=='QSO')&(h[1]['ZWARN'][:]==0)    #astype needed as this can be binary or unicode str depending on fitsio/python combination
+        select=(h[1]['SPECTYPE'][:].astype(str)=='QSO')
+        select&=(h[1]['ZWARN'][:]==0)    #note that zwarn is potentially not essential
         ## Redshift
         zqso = h[1]['Z'][:][select]
 
@@ -187,12 +188,16 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
             continue
 
         tid2=h[2]['TARGETID'][:]
-        ra=np.zeros(len(thid),dtype='float64')
-        dec=np.zeros(len(thid),dtype='float64')
-        plate=np.zeros(len(thid),dtype='int64')
-        night=np.zeros(len(thid),dtype='int64')
-        fid=np.zeros(len(thid),dtype='int64')
+        ra=np.zeros(len(thid), dtype='float64')
+        dec=np.zeros(len(thid), dtype='float64')
+        plate=np.zeros(len(thid), dtype='int64')
+        night=np.zeros(len(thid), dtype='int64')
+        fid=np.zeros(len(thid), dtype='int64')
         fiberstatus=[]
+        cmx_target=np.zeros(len(thid), dtype='int64')
+        desi_target=np.zeros(len(thid), dtype='int64')
+        sv1_target=np.zeros(len(thid), dtype='int64')
+
         for i,tid in enumerate(thid):
             #if multiple entries in fibermap take the first here
             select2=(tid==tid2)
@@ -208,6 +213,18 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
                 night[i]=int(zbest.split('-')[-1].split('.')[0])
             fiberstatus.append(h[2]['FIBERSTATUS'][:][select2])
             fid[i]=int( h[2]['FIBER'][:][select2][0])
+            try:
+                cmx_target[i]=h[2]['CMX_TARGET'][:][select2][0]
+            except ValueError:
+                pass
+            try:
+                desi_target[i]=h[2]['DESI_TARGET'][:][select2][0]
+            except ValueError:
+                pass
+            try:
+                sv1_target[i]=h[2]['SV1_DESI_TARGET'][:][select2][0]
+            except ValueError:
+                pass
 
         h.close()
 
@@ -216,6 +233,15 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         w = np.ones(ra.size,dtype=bool)
         print("Tile {}, Petal {}".format(str(plate[0])[:-1],str(plate[0])[-1]))
         print(" start                            : nb object in cat = {}".format(w.sum()) )
+        #note that in principle we could also check for subtypes here...
+        w &= (((cmx_target&(2**12))!=0) |
+                # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/cmx/data/cmx_targetmask.yaml
+              ((desi_target&(2**2))!=0) |
+                # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/data/targetmask.yaml
+              ((sv1_target&(2**2))!=0))
+                # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/sv1/data/sv1_targetmask.yaml
+        print(" Targeted as QSO                  : nb object in cat = {}".format(w.sum()) )
+
 
         #checking if all fibers are fine
         w &= np.any(np.array(fiberstatus)==0,axis=1)
