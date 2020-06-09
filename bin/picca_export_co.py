@@ -278,7 +278,7 @@ def main():
     # Identity distortion matrix
     data['DM'] = np.eye(data['DA'].size)
 
-    ### Save
+    # Save results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = {}
     if corr == 'AUTO':
