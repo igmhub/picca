@@ -86,37 +86,55 @@ def split_forest(num_parts, delta_log_lambda, log_lambda, delta, exposures_diff,
     return (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
             ivar_array)
 
-def rebin_diff_noise(delta_log_lambda,log_lambda,exposures_diff):
+def rebin_diff_noise(delta_log_lambda, log_lambda, exposures_diff):
+    """Rebin the semidifference between two customized coadded spectra to
+    construct the noise array
 
-    crebin = 3
-    if (exposures_diff.size < crebin):
+    The rebinning is done by combining 3 of the original pixels into analysis
+    pixels.
+
+    Args:
+        delta_log_lambda: float
+            Variation of the logarithm of the wavelength between two pixels
+        log_lambda: array of floats
+            Array containing the logarithm of the wavelengths (in Angs)
+        exposures_diff: array of floats
+            Semidifference between two customized coadded spectra obtained from
+            weighted averages of the even-number exposures, for the first
+            spectrum, and of the odd-number exposures, for the second one
+
+    Returns:
+        The noise array
+    """
+    rebin = 3
+    if exposures_diff.size < rebin:
         userprint("Warning: exposures_diff.size too small for rebin")
         return exposures_diff
-    delta_log_lambda2 = crebin*delta_log_lambda
+    rebin_delta_log_lambda = rebin*delta_log_lambda
 
     # rebin not mixing pixels separated by masks
-    bin2 = np.floor((log_lambda-log_lambda.min())/delta_log_lambda2+0.5).astype(int)
+    bins = np.floor((log_lambda - log_lambda.min())/
+                    rebin_delta_log_lambda + 0.5).astype(int)
 
-    # rebin regardless of intervening masks
-    # nmax = diff.size//crebin
-    # bin2 = np.zeros(diff.size)
-    # for n in range (1,nmax +1):
-    #     bin2[n*crebin:] += np.ones(diff.size-n*crebin)
+    rebin_exposure_diff = np.bincount(bins.astype(int), weights=exposures_diff)
+    rebin_counts = np.bincount(bins.astype(int))
+    w = (rebin_counts > 0)
+    if len(rebin_counts) == 0:
+        userprint("Error: exposures_diff size = 0 ", exposures_diff)
+    rebin_exposure_diff = rebin_exposure_diff[w]/np.sqrt(rebin_counts[w])
 
-    cdiff2 = np.bincount(bin2.astype(int),weights=exposures_diff)
-    civ2 = np.bincount(bin2.astype(int))
-    w = (civ2>0)
-    if (len(civ2) == 0) :
-        userprint( "Error: exposures_diff size = 0 ",exposures_diff)
-    diff2 = cdiff2[w]/civ2[w]*np.sqrt(civ2[w])
-    diffout = np.zeros(exposures_diff.size)
-    nmax = len(exposures_diff)//len(diff2)
-    for n in range (nmax+1) :
-        lengthmax = min(len(exposures_diff),(n+1)*len(diff2))
-        diffout[n*len(diff2):lengthmax] = diff2[:lengthmax-n*len(diff2)]
-        np.random.shuffle(diff2)
+    # now merge the rebinned array into a noise array
+    noise = np.zeros(exposures_diff.size)
+    for index in range(len(exposures_diff)//len(rebin_exposure_diff) + 1):
+        length_max = min(len(exposures_diff),
+                         (index + 1)*len(rebin_exposure_diff))
+        noise[index*len(rebin_exposure_diff):
+              length_max] = rebin_exposure_diff[:(length_max - index*
+                                                  len(rebin_exposure_diff))]
+        # shuffle the array before the next iteration
+        np.random.shuffle(rebin_exposure_diff)
 
-    return diffout
+    return noise
 
 
 def fill_masked_pixels(delta_log_lambda,log_lambda,delta,exposures_diff,ivar,no_apply_filling):
