@@ -1,52 +1,90 @@
+"""This module defines functions and variables required for the analysis of
+the 1D power spectra
 
+This module provides with one clas (Pk1D) and several functions:
+    - split_forest
+    - rebin_diff_noise
+    - fill_masked_pixels
+    - compute_Pk_raw
+    - compute_Pk_noise
+    - compute_cor_reso
+See the respective docstrings for more details
+"""
 import numpy as np
-import scipy as sp
 from scipy.fftpack import fft
 
 from picca import constants
 from picca.utils import userprint
 
 
-def split_forest(nb_part,delta_log_lambda,log_lambda,delta,exposures_diff,ivar,first_pixel):
+def split_forest(num_parts, delta_log_lambda, log_lambda, delta, exposures_diff,
+                 ivar, first_pixel_index, abs_igm="LYA"):
+    """Splits the forest in n parts
 
-    ll_limit=[log_lambda[first_pixel]]
-    nb_bin= (len(log_lambda)-first_pixel)//nb_part
+    Args:
+        num_parts: int
+            Number of parts
+        delta_log_lambda: float
+            Variation of the logarithm of the wavelength between two pixels
+        log_lambda: array of float
+            Logarith of the wavelength (in Angs)
+        delta: array of float
+            Mean transmission fluctuation (delta field)
+        exposures_diff: array of float
+            Semidifference between two customized coadded spectra obtained from
+            weighted averages of the even-number exposures, for the first
+            spectrum, and of the odd-number exposures, for the second one
+        ivar: array of floats
+            Inverse variances
+        first_pixel_index: int
+            Index of the first pixel in the forest
+        abs_igm: string - default: "LYA"
+            Name of the absorption in picca.constants defining the
+            redshift of the forest pixels
 
-    m_z_arr = []
-    ll_arr = []
-    de_arr = []
-    diff_arr = []
-    iv_arr = []
+    Returns:
+        The following variables:
+            mean_z_array: Array with the mean redshift the parts of the forest
+            log_lambda_array: Array with logarith of the wavelength for the
+                parts of the forest
+            delta_array: Array with the deltas for the parts of the forest
+            exposures_diff_array: Array with the exposures_diff for the parts of
+                the forest
+            ivar_array: Array with the ivar for the parts of the forest
 
-    ll_c = log_lambda.copy()
-    de_c = delta.copy()
-    diff_c = exposures_diff.copy()
-    iv_c = ivar.copy()
+    """
+    log_lambda_limit = [log_lambda[first_pixel_index]]
+    num_bins = (len(log_lambda) - first_pixel_index)//num_parts
 
-    for p in range(1,nb_part) :
-        ll_limit.append(log_lambda[nb_bin*p+first_pixel])
+    mean_z_array = []
+    log_lambda_array = []
+    delta_array = []
+    exposures_diff_array = []
+    ivar_array = []
 
-    ll_limit.append(log_lambda[len(log_lambda)-1]+0.1*delta_log_lambda)
+    for index in range(1, num_parts):
+        log_lambda_limit.append(log_lambda[num_bins*index + first_pixel_index])
 
-    for p in range(nb_part) :
+    log_lambda_limit.append(log_lambda[len(log_lambda) - 1] +
+                            0.1*delta_log_lambda)
 
-        selection = (ll_c>= ll_limit[p]) & (ll_c<ll_limit[p+1])
+    for index in range(num_parts):
+        selection = ((log_lambda >= log_lambda_limit[index]) &
+                     (log_lambda < log_lambda_limit[index + 1]))
 
-        ll_part = ll_c[selection]
-        de_part = de_c[selection]
-        diff_part = diff_c[selection]
-        iv_part = iv_c[selection]
+        log_lambda_part = log_lambda[selection].copy()
+        lambda_abs_igm = constants.ABSORBER_IGM[abs_igm]
+        mean_z = (np.power(10., log_lambda_part[len(log_lambda_part) - 1]) +
+                  np.power(10., log_lambda_part[0]))/2./lambda_abs_igm -1.0
 
-        lam_lya = constants.ABSORBER_IGM["LYA"]
-        m_z = (sp.power(10.,ll_part[len(ll_part)-1])+sp.power(10.,ll_part[0]))/2./lam_lya -1.0
+        mean_z_array.append(mean_z)
+        log_lambda_array.append(log_lambda_part)
+        delta_array.append(delta[selection].copy())
+        exposures_diff_array.append(exposures_diff[selection].copy())
+        ivar_array.append(ivar[selection].copy())
 
-        m_z_arr.append(m_z)
-        ll_arr.append(ll_part)
-        de_arr.append(de_part)
-        diff_arr.append(diff_part)
-        iv_arr.append(iv_part)
-
-    return m_z_arr,ll_arr,de_arr,diff_arr,iv_arr
+    return (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
+            ivar_array)
 
 def rebin_diff_noise(delta_log_lambda,log_lambda,exposures_diff):
 
@@ -57,26 +95,26 @@ def rebin_diff_noise(delta_log_lambda,log_lambda,exposures_diff):
     delta_log_lambda2 = crebin*delta_log_lambda
 
     # rebin not mixing pixels separated by masks
-    bin2 = sp.floor((log_lambda-log_lambda.min())/delta_log_lambda2+0.5).astype(int)
+    bin2 = np.floor((log_lambda-log_lambda.min())/delta_log_lambda2+0.5).astype(int)
 
     # rebin regardless of intervening masks
     # nmax = diff.size//crebin
     # bin2 = np.zeros(diff.size)
     # for n in range (1,nmax +1):
-    #     bin2[n*crebin:] += sp.ones(diff.size-n*crebin)
+    #     bin2[n*crebin:] += np.ones(diff.size-n*crebin)
 
-    cdiff2 = sp.bincount(bin2.astype(int),weights=exposures_diff)
-    civ2 = sp.bincount(bin2.astype(int))
+    cdiff2 = np.bincount(bin2.astype(int),weights=exposures_diff)
+    civ2 = np.bincount(bin2.astype(int))
     w = (civ2>0)
     if (len(civ2) == 0) :
         userprint( "Error: exposures_diff size = 0 ",exposures_diff)
-    diff2 = cdiff2[w]/civ2[w]*sp.sqrt(civ2[w])
+    diff2 = cdiff2[w]/civ2[w]*np.sqrt(civ2[w])
     diffout = np.zeros(exposures_diff.size)
     nmax = len(exposures_diff)//len(diff2)
     for n in range (nmax+1) :
         lengthmax = min(len(exposures_diff),(n+1)*len(diff2))
         diffout[n*len(diff2):lengthmax] = diff2[:lengthmax-n*len(diff2)]
-        sp.random.shuffle(diff2)
+        np.random.shuffle(diff2)
 
     return diffout
 
@@ -91,21 +129,21 @@ def fill_masked_pixels(delta_log_lambda,log_lambda,delta,exposures_diff,ivar,no_
     ll_idx -= log_lambda[0]
     ll_idx /= delta_log_lambda
     ll_idx += 0.5
-    index =sp.array(ll_idx,dtype=int)
+    index =np.array(ll_idx,dtype=int)
     index_all = range(index[-1]+1)
-    index_ok = sp.in1d(index_all, index)
+    index_ok = np.in1d(index_all, index)
 
     delta_new = np.zeros(len(index_all))
     delta_new[index_ok]=delta
 
-    ll_new = sp.array(index_all,dtype=float)
+    ll_new = np.array(index_all,dtype=float)
     ll_new *= delta_log_lambda
     ll_new += log_lambda[0]
 
     diff_new = np.zeros(len(index_all))
     diff_new[index_ok]=exposures_diff
 
-    iv_new = sp.ones(len(index_all))
+    iv_new = np.ones(len(index_all))
     iv_new *=0.0
     iv_new[index_ok]=ivar
 
@@ -116,7 +154,7 @@ def fill_masked_pixels(delta_log_lambda,log_lambda,delta,exposures_diff,ivar,no_
 def compute_Pk_raw(delta_log_lambda,delta,log_lambda):
 
     #   Length in km/s
-    length_lambda = delta_log_lambda*constants.SPEED_LIGHT*sp.log(10.)*len(delta)
+    length_lambda = delta_log_lambda*constants.SPEED_LIGHT*np.log(10.)*len(delta)
 
     # make 1D FFT
     nb_pixels = len(delta)
@@ -126,7 +164,7 @@ def compute_Pk_raw(delta_log_lambda,delta,log_lambda):
     # compute power spectrum
     fft_a = fft_a[:nb_bin_FFT]
     Pk = (fft_a.real**2+fft_a.imag**2)*length_lambda/nb_pixels**2
-    k = np.arange(nb_bin_FFT,dtype=float)*2*sp.pi/length_lambda
+    k = np.arange(nb_bin_FFT,dtype=float)*2*np.pi/length_lambda
 
     return k,Pk
 
@@ -140,12 +178,12 @@ def compute_Pk_noise(delta_log_lambda,ivar,exposures_diff,log_lambda,run_noise):
     Pk = np.zeros(nb_bin_FFT)
     err = np.zeros(nb_pixels)
     w = ivar>0
-    err[w] = 1.0/sp.sqrt(ivar[w])
+    err[w] = 1.0/np.sqrt(ivar[w])
 
     if (run_noise) :
         for _ in range(nb_noise_exp): #iexp unused, but needed
             delta_exp= np.zeros(nb_pixels)
-            delta_exp[w] = sp.random.normal(0.,err[w])
+            delta_exp[w] = np.random.normal(0.,err[w])
             _,Pk_exp = compute_Pk_raw(delta_log_lambda,delta_exp,log_lambda) #k_exp unused, but needed
             Pk += Pk_exp
 
@@ -158,12 +196,12 @@ def compute_Pk_noise(delta_log_lambda,ivar,exposures_diff,log_lambda,run_noise):
 def compute_cor_reso(delta_pixel,mean_reso,k):
 
     nb_bin_FFT = len(k)
-    cor = sp.ones(nb_bin_FFT)
+    cor = np.ones(nb_bin_FFT)
 
-    sinc = sp.ones(nb_bin_FFT)
-    sinc[k>0.] =  (sp.sin(k[k>0.]*delta_pixel/2.0)/(k[k>0.]*delta_pixel/2.0))**2
+    sinc = np.ones(nb_bin_FFT)
+    sinc[k>0.] =  (np.sin(k[k>0.]*delta_pixel/2.0)/(k[k>0.]*delta_pixel/2.0))**2
 
-    cor *= sp.exp(-(k*mean_reso)**2)
+    cor *= np.exp(-(k*mean_reso)**2)
     cor *= sinc
     return cor
 
