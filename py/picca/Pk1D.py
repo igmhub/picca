@@ -137,37 +137,66 @@ def rebin_diff_noise(delta_log_lambda, log_lambda, exposures_diff):
     return noise
 
 
-def fill_masked_pixels(delta_log_lambda,log_lambda,delta,exposures_diff,ivar,no_apply_filling):
+def fill_masked_pixels(delta_log_lambda, log_lambda, delta, exposures_diff,
+                       ivar, no_apply_filling):
+    """Fills the masked pixels with zeros
 
+    Args:
+        delta_log_lambda: float
+            Variation of the logarithm of the wavelength between two pixels
+        log_lambda: array of floats
+            Array containing the logarithm of the wavelengths (in Angs)
+        delta: array of floats
+            Mean transmission fluctuation (delta field)
+        exposures_diff: array of floats
+            Semidifference between two customized coadded spectra obtained from
+            weighted averages of the even-number exposures, for the first
+            spectrum, and of the odd-number exposures, for the second one
+        ivar: array of floats
+            Array containing the inverse variance
+        no_apply_filling: boolean
+            If True, then return the original arrays
 
-    if no_apply_filling : return log_lambda,delta,exposures_diff,ivar,0
+    Returns:
+        The following variables:
+            log_lambda_new: Array containing the logarithm of the wavelengths
+                (in Angs)
+            delta_new: Mean transmission fluctuation (delta field)
+            exposures_diff_new: Semidifference between two customized coadded
+                spectra obtained from weighted averages of the even-number
+                exposures, for the first spectrum, and of the odd-number
+                exposures, for the second one
+            ivar_new: Array containing the inverse variance
+            num_masked_pixels: Number of masked pixels
+    """
+    if no_apply_filling:
+        return log_lambda, delta, exposures_diff, ivar, 0
 
-
-    ll_idx = log_lambda.copy()
-    ll_idx -= log_lambda[0]
-    ll_idx /= delta_log_lambda
-    ll_idx += 0.5
-    index =np.array(ll_idx,dtype=int)
-    index_all = range(index[-1]+1)
-    index_ok = np.in1d(index_all, index)
+    log_lambda_index = log_lambda.copy()
+    log_lambda_index -= log_lambda[0]
+    log_lambda_index /= delta_log_lambda
+    log_lambda_index += 0.5
+    log_lambda_index = np.array(log_lambda_index, dtype=int)
+    index_all = range(log_lambda_index[-1] + 1)
+    index_ok = np.in1d(index_all, log_lambda_index)
 
     delta_new = np.zeros(len(index_all))
-    delta_new[index_ok]=delta
+    delta_new[index_ok] = delta
 
-    ll_new = np.array(index_all,dtype=float)
-    ll_new *= delta_log_lambda
-    ll_new += log_lambda[0]
+    log_lambda_new = np.array(index_all, dtype=float)
+    log_lambda_new *= delta_log_lambda
+    log_lambda_new += log_lambda[0]
 
-    diff_new = np.zeros(len(index_all))
-    diff_new[index_ok]=exposures_diff
+    exposures_diff_new = np.zeros(len(index_all))
+    exposures_diff_new[index_ok] = exposures_diff
 
-    iv_new = np.ones(len(index_all))
-    iv_new *=0.0
-    iv_new[index_ok]=ivar
+    ivar_new = np.zeros(len(index_all), dtype=float)
+    ivar_new[index_ok] = ivar
 
-    nb_masked_pixel=len(index_all)-len(index)
+    num_masked_pixels = len(index_all) - len(log_lambda_index)
 
-    return ll_new,delta_new,diff_new,iv_new,nb_masked_pixel
+    return (log_lambda_new, delta_new, exposures_diff_new, ivar_new,
+            num_masked_pixels)
 
 def compute_Pk_raw(delta_log_lambda,delta,log_lambda):
 

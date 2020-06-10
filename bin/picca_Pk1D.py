@@ -52,7 +52,7 @@ def make_tree(tree, nb_bin_max):
     mean_z = array('f', [0.])
     mean_reso = array('f', [0.])
     mean_snr = array('f', [0.])
-    num_masked_pixels = array('f', [0.])
+    num_masked_pixels_tree = array('f', [0.])
 
     lambda_min = array('f', [0.])
     lambda_max= array('f', [0.])
@@ -75,7 +75,7 @@ def make_tree(tree, nb_bin_max):
     tree.Branch("mean_snr", mean_snr, "mean_snr/F")
     tree.Branch("lambda_min", lambda_min, "lambda_min/F")
     tree.Branch("lambda_max", lambda_max, "lambda_max/F")
-    tree.Branch("nb_masked_pixel", num_masked_pixels, "nb_mask_pixel/F")
+    tree.Branch("nb_masked_pixel", num_masked_pixels_tree, "nb_mask_pixel/F")
 
     tree.Branch("plate", plate, "plate/I")
     tree.Branch("mjd", mjd, "mjd/I")
@@ -90,8 +90,8 @@ def make_tree(tree, nb_bin_max):
     tree.Branch("Pk", pk_tree, "Pk[NbBin]/F")
 
     return (z_qso, mean_z, mean_reso, mean_snr, lambda_min, lambda_max, plate,
-            mjd, fiber, num_masked_pixels, num_bins_tree, k_tree, pk_tree, pk_raw_tree, pk_noise_tree,
-            correlation_reso_tree, pk_diff_tree)
+            mjd, fiber, num_masked_pixels_tree, num_bins_tree, k_tree, pk_tree,
+            pk_raw_tree, pk_noise_tree, correlation_reso_tree, pk_diff_tree)
 
 def compute_mean_delta(log_lambda,delta,ivar,z_qso):
 
@@ -228,7 +228,7 @@ def main():
         nb_bin_max = 700
         tree = TTree("Pk1D", "SDSS 1D Power spectrum Ly-a");
         (z_qso, mean_z, mean_reso, mean_snr, lambda_min, lambda_max, plate, mjd,
-         fiber, num_masked_pixels, num_bins_tree, k_tree, pk_tree, pk_raw_tree, pk_noise_tree, correlation_reso_tree,
+         fiber, num_masked_pixels_tree, num_bins_tree, k_tree, pk_tree, pk_raw_tree, pk_noise_tree, correlation_reso_tree,
          pk_diff_tree) = make_tree(tree, b_bin_max)
 
         # control histograms
@@ -307,9 +307,11 @@ def main():
                     diff_arr[f]=rebin_diff_noise(d.delta_log_lambda,ll_arr[f],diff_arr[f])
 
                 # Fill masked pixels with 0.
-                ll_new,delta_new,diff_new,iv_new,nb_masked_pixel = fill_masked_pixels(d.delta_log_lambda,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f],args.no_apply_filling)
-                if (nb_masked_pixel> args.nb_pixel_masked_max) : continue
-                if (args.out_format=='root' and  args.debug): compute_mean_delta(ll_new,delta_new,iv_new,d.z_qso)
+                ll_new, delta_new, diff_new, iv_new, num_masked_pixels = fill_masked_pixels(d.delta_log_lambda,ll_arr[f],de_arr[f],diff_arr[f],iv_arr[f],args.no_apply_filling)
+                if (num_masked_pixels > args.nb_pixel_masked_max) :
+                    continue
+                if (args.out_format=='root' and  args.debug):
+                    compute_mean_delta(ll_new,delta_new,iv_new,d.z_qso)
 
                 lam_lya = constants.ABSORBER_IGM["LYA"]
                 z_abs =  np.power(10.,ll_new)/lam_lya - 1.0
@@ -347,7 +349,7 @@ def main():
                     mean_snr[0] = d.mean_snr
                     lambda_min[0] =  np.power(10.,ll_new[0])
                     lambda_max[0] =  np.power(10.,ll_new[-1])
-                    num_masked_pixels[0] = nb_masked_pixel
+                    num_masked_pixels_tree[0] = num_masked_pixels
 
                     plate[0] = d.plate
                     mjd[0] = d.mjd
@@ -372,7 +374,7 @@ def main():
                         {'name':'MEANZ','value':m_z_arr[f],'comment':"Absorbers mean redshift"},
                         {'name':'MEANRESO','value':d.mean_reso,'comment':'Mean resolution [km/s]'},
                         {'name':'MEANSNR','value':d.mean_snr,'comment':'Mean signal to noise ratio'},
-                        {'name':'NBMASKPIX','value':nb_masked_pixel,'comment':'Number of masked pixels in the section'},
+                        {'name':'NBMASKPIX','value':num_masked_pixels,'comment':'Number of masked pixels in the section'},
                         {'name':'PLATE','value':d.plate,'comment':"Spectrum's plate id"},
                         {'name':'MJD','value':d.mjd,'comment':'Modified Julian Date,date the spectrum was taken'},
                         {'name':'FIBER','value':d.fiberid,'comment':"Spectrum's fiber number"}
