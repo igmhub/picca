@@ -5,8 +5,8 @@ This module provides with one clas (Pk1D) and several functions:
     - split_forest
     - rebin_diff_noise
     - fill_masked_pixels
-    - compute_Pk_raw
-    - compute_Pk_noise
+    - compute_pk_raw
+    - compute_pk_noise
     - compute_cor_reso
 See the respective docstrings for more details
 """
@@ -198,54 +198,90 @@ def fill_masked_pixels(delta_log_lambda, log_lambda, delta, exposures_diff,
     return (log_lambda_new, delta_new, exposures_diff_new, ivar_new,
             num_masked_pixels)
 
-def compute_Pk_raw(delta_log_lambda,delta,log_lambda):
+def compute_pk_raw(delta_log_lambda, delta):
+    """Computes the raw power spectrum
 
-    #   Length in km/s
-    length_lambda = delta_log_lambda*constants.SPEED_LIGHT*np.log(10.)*len(delta)
+    Args:
+        delta_log_lambda: float
+            Variation of the logarithm of the wavelength between two pixels
+        delta: array of floats
+            Mean transmission fluctuation (delta field)
+
+    Returns:
+        The following variables
+            k: the Fourier modes the Power Spectrum is measured on
+            pk: the Power Spectrum
+    """
+    # spectral length in km/s
+    length_lambda = (delta_log_lambda*constants.SPEED_LIGHT*np.log(10.)*
+                     len(delta))
 
     # make 1D FFT
-    nb_pixels = len(delta)
-    nb_bin_FFT = nb_pixels//2 + 1
-    fft_a = fft(delta)
+    num_pixels = len(delta)
+    num_bins_fft = num_pixels//2 + 1
+    fft_delta = fft(delta)
 
     # compute power spectrum
-    fft_a = fft_a[:nb_bin_FFT]
-    Pk = (fft_a.real**2+fft_a.imag**2)*length_lambda/nb_pixels**2
-    k = np.arange(nb_bin_FFT,dtype=float)*2*np.pi/length_lambda
+    fft_delta = fft_delta[: num_bins_fft]
+    pk = (fft_delta.real**2 + fft_delta.imag**2)*length_lambda/num_pixels**2
+    k = np.arange(num_bins_fft, dtype=float)*2*np.pi/length_lambda
 
-    return k,Pk
+    return k, pk
 
 
-def compute_Pk_noise(delta_log_lambda,ivar,exposures_diff,log_lambda,run_noise):
+def compute_pk_noise(delta_log_lambda, ivar, exposures_diff, run_noise):
+    """Computes the noise power spectrum
 
-    nb_pixels = len(ivar)
-    nb_bin_FFT = nb_pixels//2 + 1
+    Two noise power spectrum are computed: one using the pipeline noise and
+    another one using the noise derived from exposures_diff
 
-    nb_noise_exp = 10
-    Pk = np.zeros(nb_bin_FFT)
-    err = np.zeros(nb_pixels)
-    w = ivar>0
-    err[w] = 1.0/np.sqrt(ivar[w])
+    Args:
+        delta_log_lambda: float
+            Variation of the logarithm of the wavelength between two pixels
+        ivar: array of floats
+            Array containing the inverse variance
+        exposures_diff: array of floats
+            Semidifference between two customized coadded spectra obtained from
+            weighted averages of the even-number exposures, for the first
+            spectrum, and of the odd-number exposures, for the second one
+        run_noise: boolean
+            If False the noise power spectrum using the pipeline noise is not
+            computed and an array filled with zeros is returned instead
 
-    if (run_noise) :
-        for _ in range(nb_noise_exp): #iexp unused, but needed
-            delta_exp= np.zeros(nb_pixels)
-            delta_exp[w] = np.random.normal(0.,err[w])
-            _,Pk_exp = compute_Pk_raw(delta_log_lambda,delta_exp,log_lambda) #k_exp unused, but needed
-            Pk += Pk_exp
+    Returns:
+        The following variables
+            pk_noise: the noise Power Spectrum using the pipeline noise
+            pk_diff: the noise Power Spectrum using the noise derived from
+                exposures_diff
+    """
+    num_pixels = len(ivar)
+    num_bins_fft = num_pixels//2 + 1
 
-        Pk /= float(nb_noise_exp)
+    num_noise_exposures = 10
+    pk_noise = np.zeros(num_bins_fft)
+    error = np.zeros(num_pixels)
+    w = ivar > 0
+    error[w] = 1.0/np.sqrt(ivar[w])
 
-    _,Pk_diff = compute_Pk_raw(delta_log_lambda,exposures_diff,log_lambda) #k_diff unused, but needed
+    if run_noise:
+        for _ in range(num_noise_exposures):
+            delta_exp = np.zeros(num_pixels)
+            delta_exp[w] = np.random.normal(0., error[w])
+            _, pk_exp = compute_pk_raw(delta_log_lambda, delta_exp)
+            pk_noise += pk_exp
 
-    return Pk,Pk_diff
+        pk_noise /= float(num_noise_exposures)
+
+    _, pk_diff = compute_pk_raw(delta_log_lambda, exposures_diff)
+
+    return pk_noise, pk_diff
 
 def compute_cor_reso(delta_pixel,mean_reso,k):
 
-    nb_bin_FFT = len(k)
-    cor = np.ones(nb_bin_FFT)
+    num_bins_fft = len(k)
+    cor = np.ones(num_bins_fft)
 
-    sinc = np.ones(nb_bin_FFT)
+    sinc = np.ones(num_bins_fft)
     sinc[k>0.] =  (np.sin(k[k>0.]*delta_pixel/2.0)/(k[k>0.]*delta_pixel/2.0))**2
 
     cor *= np.exp(-(k*mean_reso)**2)
@@ -256,7 +292,7 @@ def compute_cor_reso(delta_pixel,mean_reso,k):
 class Pk1D :
 
     def __init__(self,ra,dec,z_qso,mean_z,plate,mjd,fiberid,msnr,mreso,
-                 k,Pk_raw,Pk_noise,cor_reso,Pk,nb_mp,Pk_diff=None):
+                 k,Pk_raw,Pk_noise,cor_reso,pk,nb_mp,pk_diff=None):
 
         self.ra = ra
         self.dec = dec
@@ -273,8 +309,8 @@ class Pk1D :
         self.Pk_raw = Pk_raw
         self.Pk_noise = Pk_noise
         self.cor_reso = cor_reso
-        self.Pk = Pk
-        self.Pk_diff = Pk_diff
+        self.pk = pk
+        self.pk_diff = pk_diff
 
 
     @classmethod
@@ -299,10 +335,10 @@ class Pk1D :
 
         data = hdu.read()
         k = data['k'][:]
-        Pk = data['Pk'][:]
+        pk = data['Pk'][:]
         Pk_raw = data['Pk_raw'][:]
         Pk_noise = data['Pk_noise'][:]
         cor_reso = data['cor_reso'][:]
-        Pk_diff = data['Pk_diff'][:]
+        pk_diff = data['Pk_diff'][:]
 
-        return cls(ra,dec,z_qso,mean_z,plate,mjd,fiberid, mean_snr, mean_reso,k,Pk_raw,Pk_noise,cor_reso, Pk,nb_mp,Pk_diff)
+        return cls(ra,dec,z_qso,mean_z,plate,mjd,fiberid, mean_snr, mean_reso,k,Pk_raw,Pk_noise,cor_reso, pk,nb_mp,pk_diff)

@@ -445,7 +445,8 @@ good-names=i,
      t3,
      t4,
      t5,
-     t6
+     t6,
+     pk
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
