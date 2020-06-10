@@ -17,8 +17,14 @@ from picca import constants
 from picca.utils import userprint
 
 
-def split_forest(num_parts, delta_log_lambda, log_lambda, delta, exposures_diff,
-                 ivar, first_pixel_index, abs_igm="LYA"):
+def split_forest(num_parts,
+                 delta_log_lambda,
+                 log_lambda,
+                 delta,
+                 exposures_diff,
+                 ivar,
+                 first_pixel_index,
+                 abs_igm="LYA"):
     """Splits the forest in n parts
 
     Args:
@@ -54,7 +60,7 @@ def split_forest(num_parts, delta_log_lambda, log_lambda, delta, exposures_diff,
 
     """
     log_lambda_limit = [log_lambda[first_pixel_index]]
-    num_bins = (len(log_lambda) - first_pixel_index)//num_parts
+    num_bins = (len(log_lambda) - first_pixel_index) // num_parts
 
     mean_z_array = []
     log_lambda_array = []
@@ -63,10 +69,11 @@ def split_forest(num_parts, delta_log_lambda, log_lambda, delta, exposures_diff,
     ivar_array = []
 
     for index in range(1, num_parts):
-        log_lambda_limit.append(log_lambda[num_bins*index + first_pixel_index])
+        log_lambda_limit.append(log_lambda[num_bins * index +
+                                           first_pixel_index])
 
     log_lambda_limit.append(log_lambda[len(log_lambda) - 1] +
-                            0.1*delta_log_lambda)
+                            0.1 * delta_log_lambda)
 
     for index in range(num_parts):
         selection = ((log_lambda >= log_lambda_limit[index]) &
@@ -75,7 +82,7 @@ def split_forest(num_parts, delta_log_lambda, log_lambda, delta, exposures_diff,
         log_lambda_part = log_lambda[selection].copy()
         lambda_abs_igm = constants.ABSORBER_IGM[abs_igm]
         mean_z = (np.power(10., log_lambda_part[len(log_lambda_part) - 1]) +
-                  np.power(10., log_lambda_part[0]))/2./lambda_abs_igm -1.0
+                  np.power(10., log_lambda_part[0])) / 2. / lambda_abs_igm - 1.0
 
         mean_z_array.append(mean_z)
         log_lambda_array.append(log_lambda_part)
@@ -85,6 +92,7 @@ def split_forest(num_parts, delta_log_lambda, log_lambda, delta, exposures_diff,
 
     return (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
             ivar_array)
+
 
 def rebin_diff_noise(delta_log_lambda, log_lambda, exposures_diff):
     """Rebin the semidifference between two customized coadded spectra to
@@ -110,27 +118,27 @@ def rebin_diff_noise(delta_log_lambda, log_lambda, exposures_diff):
     if exposures_diff.size < rebin:
         userprint("Warning: exposures_diff.size too small for rebin")
         return exposures_diff
-    rebin_delta_log_lambda = rebin*delta_log_lambda
+    rebin_delta_log_lambda = rebin * delta_log_lambda
 
     # rebin not mixing pixels separated by masks
-    bins = np.floor((log_lambda - log_lambda.min())/
-                    rebin_delta_log_lambda + 0.5).astype(int)
+    bins = np.floor((log_lambda - log_lambda.min()) / rebin_delta_log_lambda +
+                    0.5).astype(int)
 
     rebin_exposure_diff = np.bincount(bins.astype(int), weights=exposures_diff)
     rebin_counts = np.bincount(bins.astype(int))
     w = (rebin_counts > 0)
     if len(rebin_counts) == 0:
         userprint("Error: exposures_diff size = 0 ", exposures_diff)
-    rebin_exposure_diff = rebin_exposure_diff[w]/np.sqrt(rebin_counts[w])
+    rebin_exposure_diff = rebin_exposure_diff[w] / np.sqrt(rebin_counts[w])
 
     # now merge the rebinned array into a noise array
     noise = np.zeros(exposures_diff.size)
-    for index in range(len(exposures_diff)//len(rebin_exposure_diff) + 1):
+    for index in range(len(exposures_diff) // len(rebin_exposure_diff) + 1):
         length_max = min(len(exposures_diff),
-                         (index + 1)*len(rebin_exposure_diff))
-        noise[index*len(rebin_exposure_diff):
-              length_max] = rebin_exposure_diff[:(length_max - index*
-                                                  len(rebin_exposure_diff))]
+                         (index + 1) * len(rebin_exposure_diff))
+        noise[index *
+              len(rebin_exposure_diff):length_max] = rebin_exposure_diff[:(
+                  length_max - index * len(rebin_exposure_diff))]
         # shuffle the array before the next iteration
         np.random.shuffle(rebin_exposure_diff)
 
@@ -198,6 +206,7 @@ def fill_masked_pixels(delta_log_lambda, log_lambda, delta, exposures_diff,
     return (log_lambda_new, delta_new, exposures_diff_new, ivar_new,
             num_masked_pixels)
 
+
 def compute_pk_raw(delta_log_lambda, delta):
     """Computes the raw power spectrum
 
@@ -213,18 +222,18 @@ def compute_pk_raw(delta_log_lambda, delta):
             pk: the Power Spectrum
     """
     # spectral length in km/s
-    length_lambda = (delta_log_lambda*constants.SPEED_LIGHT*np.log(10.)*
+    length_lambda = (delta_log_lambda * constants.SPEED_LIGHT * np.log(10.) *
                      len(delta))
 
     # make 1D FFT
     num_pixels = len(delta)
-    num_bins_fft = num_pixels//2 + 1
+    num_bins_fft = num_pixels // 2 + 1
     fft_delta = fft(delta)
 
     # compute power spectrum
-    fft_delta = fft_delta[: num_bins_fft]
-    pk = (fft_delta.real**2 + fft_delta.imag**2)*length_lambda/num_pixels**2
-    k = np.arange(num_bins_fft, dtype=float)*2*np.pi/length_lambda
+    fft_delta = fft_delta[:num_bins_fft]
+    pk = (fft_delta.real**2 + fft_delta.imag**2) * length_lambda / num_pixels**2
+    k = np.arange(num_bins_fft, dtype=float) * 2 * np.pi / length_lambda
 
     return k, pk
 
@@ -255,13 +264,13 @@ def compute_pk_noise(delta_log_lambda, ivar, exposures_diff, run_noise):
                 exposures_diff
     """
     num_pixels = len(ivar)
-    num_bins_fft = num_pixels//2 + 1
+    num_bins_fft = num_pixels // 2 + 1
 
     num_noise_exposures = 10
     pk_noise = np.zeros(num_bins_fft)
     error = np.zeros(num_pixels)
     w = ivar > 0
-    error[w] = 1.0/np.sqrt(ivar[w])
+    error[w] = 1.0 / np.sqrt(ivar[w])
 
     if run_noise:
         for _ in range(num_noise_exposures):
@@ -275,6 +284,7 @@ def compute_pk_noise(delta_log_lambda, ivar, exposures_diff, run_noise):
     _, pk_diff = compute_pk_raw(delta_log_lambda, exposures_diff)
 
     return pk_noise, pk_diff
+
 
 def compute_correction_reso(delta_pixel, mean_reso, k):
     """Computes the resolution correction
@@ -295,10 +305,10 @@ def compute_correction_reso(delta_pixel, mean_reso, k):
     correction = np.ones(num_bins_fft)
 
     sinc = np.ones(num_bins_fft)
-    sinc[k > 0.] = (np.sin(k[k > 0.]*delta_pixel/2.0)/
-                    (k[k > 0.]*delta_pixel/2.0))**2
+    sinc[k > 0.] = (np.sin(k[k > 0.] * delta_pixel / 2.0) /
+                    (k[k > 0.] * delta_pixel / 2.0))**2
 
-    correction *= np.exp(-(k*mean_reso)**2)
+    correction *= np.exp(-(k * mean_reso)**2)
     correction *= sinc
     return correction
 
@@ -344,9 +354,24 @@ class Pk1D:
         __init__: Initialize class instance.
         from_fitsio: Initialize instance from a fits file.
     """
-    def __init__(self, ra, dec, z_qso, mean_z, plate, mjd, fiberid, mean_snr,
-                 mean_reso, k, pk_raw, pk_noise, correction_reso, pk,
-                 num_masked_pixels, pk_diff=None):
+
+    def __init__(self,
+                 ra,
+                 dec,
+                 z_qso,
+                 mean_z,
+                 plate,
+                 mjd,
+                 fiberid,
+                 mean_snr,
+                 mean_reso,
+                 k,
+                 pk_raw,
+                 pk_noise,
+                 correction_reso,
+                 pk,
+                 num_masked_pixels,
+                 pk_diff=None):
         """Initializes instance
 
         Args:
@@ -400,7 +425,6 @@ class Pk1D:
         self.correction_reso = correction_reso
         self.pk = pk
         self.pk_diff = pk_diff
-
 
     @classmethod
     def from_fitsio(cls, hdu):
