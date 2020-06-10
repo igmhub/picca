@@ -9,8 +9,9 @@ import fitsio
 
 from picca import constants
 from picca.data import Delta
-from picca.Pk1D import (compute_cor_reso, compute_pk_noise, compute_pk_raw,
-                        fill_masked_pixels, rebin_diff_noise, split_forest)
+from picca.Pk1D import (compute_correction_reso, compute_pk_noise,
+                        compute_pk_raw, fill_masked_pixels, rebin_diff_noise,
+                        split_forest)
 from picca.utils import userprint
 
 
@@ -43,7 +44,7 @@ def make_tree(tree, nb_bin_max):
                 (storage tree version)
             pk_noise_tree: Noise power spectrum for the different fourier modes
                 (storage tree version)
-            correlation_reso_tree: Resolution for the correlation function
+            correction_reso_tree: Resolution for the correlation function
                 (storage tree version)
             pk_diff_tree: Power spectrum of exposures_diff for the different
                 fourier modes (storage tree version)
@@ -67,7 +68,7 @@ def make_tree(tree, nb_bin_max):
     pk_raw_tree = array('f', nb_bin_max*[0.])
     pk_noise_tree = array('f', nb_bin_max*[0.])
     pk_diff_tree = array('f', nb_bin_max*[0.])
-    correlation_reso_tree = array('f', nb_bin_max*[0.])
+    correction_reso_tree = array('f', nb_bin_max*[0.])
 
     tree.Branch("z_qso", z_qso, "z_qso/F")
     tree.Branch("mean_z", mean_z, "mean_z/F")
@@ -86,12 +87,12 @@ def make_tree(tree, nb_bin_max):
     tree.Branch("Pk_raw", pk_raw_tree, "Pk_raw[NbBin]/F")
     tree.Branch("Pk_noise", pk_noise_tree, "Pk_noise[NbBin]/F")
     tree.Branch("Pk_diff", pk_diff_tree, "Pk_diff[NbBin]/F")
-    tree.Branch("cor_reso", correlation_reso_tree, "cor_reso[NbBin]/F")
+    tree.Branch("cor_reso", correction_reso_tree, "cor_reso[NbBin]/F")
     tree.Branch("Pk", pk_tree, "Pk[NbBin]/F")
 
     return (z_qso, mean_z, mean_reso, mean_snr, lambda_min, lambda_max, plate,
             mjd, fiber, num_masked_pixels_tree, num_bins_tree, k_tree, pk_tree,
-            pk_raw_tree, pk_noise_tree, correlation_reso_tree, pk_diff_tree)
+            pk_raw_tree, pk_noise_tree, correction_reso_tree, pk_diff_tree)
 
 def compute_mean_delta(log_lambda,delta,ivar,z_qso):
 
@@ -228,7 +229,7 @@ def main():
         nb_bin_max = 700
         tree = TTree("Pk1D", "SDSS 1D Power spectrum Ly-a");
         (z_qso, mean_z, mean_reso, mean_snr, lambda_min, lambda_max, plate, mjd,
-         fiber, num_masked_pixels_tree, num_bins_tree, k_tree, pk_tree, pk_raw_tree, pk_noise_tree, correlation_reso_tree,
+         fiber, num_masked_pixels_tree, num_bins_tree, k_tree, pk_tree, pk_raw_tree, pk_noise_tree, correction_reso_tree,
          pk_diff_tree) = make_tree(tree, b_bin_max)
 
         # control histograms
@@ -323,11 +324,11 @@ def main():
                 # Compute Pk_noise
                 run_noise = False
                 if (args.noise_estimate=='pipeline'): run_noise=True
-                Pk_noise,pk_diff = compute_pk_noise(d.delta_log_lambda,iv_new,diff_new,ll_new,run_noise)
+                Pk_noise,pk_diff = compute_pk_noise(d.delta_log_lambda,iv_new,diff_new,run_noise)
 
                 # Compute resolution correction
                 delta_pixel = d.delta_log_lambda*np.log(10.)*constants.speed_light/1000.
-                cor_reso = compute_cor_reso(delta_pixel,d.mean_reso,k)
+                cor_reso = compute_correction_reso(delta_pixel,d.mean_reso,k)
 
                 # Compute 1D Pk
                 if (args.noise_estimate=='pipeline'):
@@ -362,7 +363,7 @@ def main():
                         pk_noise_tree[i] = Pk_noise[i]
                         pk_diff_tree[i] = pk_diff[i]
                         pk_tree[i] = pk[i]
-                        correlation_reso_tree[i] = cor_reso[i]
+                        correction_reso_tree[i] = cor_reso[i]
 
                     tree.Fill()
 

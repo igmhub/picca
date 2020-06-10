@@ -7,7 +7,7 @@ This module provides with one clas (Pk1D) and several functions:
     - fill_masked_pixels
     - compute_pk_raw
     - compute_pk_noise
-    - compute_cor_reso
+    - compute_correction_reso
 See the respective docstrings for more details
 """
 import numpy as np
@@ -276,17 +276,31 @@ def compute_pk_noise(delta_log_lambda, ivar, exposures_diff, run_noise):
 
     return pk_noise, pk_diff
 
-def compute_cor_reso(delta_pixel,mean_reso,k):
+def compute_correction_reso(delta_pixel, mean_reso, k):
+    """Computes the resolution correction
 
+    Args:
+        delta_pixel: float
+            Variation of the logarithm of the wavelength between two pixels
+            (in km/s)
+        mean_reso: float
+            Mean resolution of the forest
+        k: array of floats
+            Fourier modes
+
+    Returns:
+        The resolution correction
+    """
     num_bins_fft = len(k)
-    cor = np.ones(num_bins_fft)
+    correction = np.ones(num_bins_fft)
 
     sinc = np.ones(num_bins_fft)
-    sinc[k>0.] =  (np.sin(k[k>0.]*delta_pixel/2.0)/(k[k>0.]*delta_pixel/2.0))**2
+    sinc[k > 0.] = (np.sin(k[k > 0.]*delta_pixel/2.0)/
+                    (k[k > 0.]*delta_pixel/2.0))**2
 
-    cor *= np.exp(-(k*mean_reso)**2)
-    cor *= sinc
-    return cor
+    correction *= np.exp(-(k*mean_reso)**2)
+    correction *= sinc
+    return correction
 
 
 class Pk1D :
