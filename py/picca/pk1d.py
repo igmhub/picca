@@ -303,56 +303,138 @@ def compute_correction_reso(delta_pixel, mean_reso, k):
     return correction
 
 
-class Pk1D :
+class Pk1D:
+    """Class to represent the 1D Power Spectrum for a given forest
 
-    def __init__(self,ra,dec,z_qso,mean_z,plate,mjd,fiberid,msnr,mreso,
-                 k,Pk_raw,Pk_noise,cor_reso,pk,nb_mp,pk_diff=None):
+    Attributes:
+        ra: float
+            Right-ascension of the quasar (in radians).
+        dec: float
+            Declination of the quasar (in radians).
+        z_qso: float
+            Redshift of the quasar.
+        plate: integer
+            Plate number of the observation.
+        fiberid: integer
+            Fiberid of the observation.
+        mjd: integer
+            Modified Julian Date of the observation.
+        mean_snr: float
+            Mean signal-to-noise ratio in the forest
+        mean_reso: float
+            Mean resolution of the forest
+        mean_z: float
+            Mean redshift of the forest
+        num_masked_pixels: int
+            Number of masked pixels
+        k: array of floats
+            Fourier modes
+        pk_raw: array of floats
+            Raw power spectrum
+        pk_noise: array of floats
+            Noise power spectrum for the different Fourier modes
+        correction_reso: array of floats
+            Resolution correction
+        pk: array of floats
+            Power Spectrum
+        pk_diff: array of floats or None
+            Power spectrum of exposures_diff for the different Fourier modes
 
+    Methods:
+        __init__: Initialize class instance.
+        from_fitsio: Initialize instance from a fits file.
+    """
+    def __init__(self, ra, dec, z_qso, mean_z, plate, mjd, fiberid, mean_snr,
+                 mean_reso, k, pk_raw, pk_noise, correction_reso, pk,
+                 num_masked_pixels, pk_diff=None):
+        """Initializes instance
+
+        Args:
+            ra: float
+                Right-ascension of the quasar (in radians).
+            dec: float
+                Declination of the quasar (in radians).
+            z_qso: float
+                Redshift of the quasar.
+            mean_z: float
+                Mean redshift of the forest
+            plate: integer
+                Plate number of the observation.
+            mjd: integer
+                Modified Julian Date of the observation.
+            fiberid: integer
+                Fiberid of the observation.
+            mean_snr: float
+                Mean signal-to-noise ratio in the forest
+            mean_reso: float
+                Mean resolution of the forest
+            k: array of floats
+                Fourier modes
+            pk_raw: array of floats
+                Raw power spectrum
+            pk_noise: array of floats
+                Noise power spectrum for the different Fourier modes
+            correction_reso: array of floats
+                Resolution correction
+            pk: array of floats
+                Power Spectrum
+            num_masked_pixels: int
+                Number of masked pixels
+            pk_diff: array of floats or None - default: None
+                Power spectrum of exposures_diff for the different Fourier modes
+        """
         self.ra = ra
         self.dec = dec
         self.z_qso = z_qso
         self.mean_z = mean_z
-        self.mean_snr = msnr
-        self.mean_reso = mreso
-        self.nb_mp = nb_mp
+        self.mean_snr = mean_snr
+        self.mean_reso = mean_reso
+        self.num_masked_pixels = num_masked_pixels
 
         self.plate = plate
         self.mjd = mjd
         self.fiberid = fiberid
         self.k = k
-        self.Pk_raw = Pk_raw
-        self.Pk_noise = Pk_noise
-        self.cor_reso = cor_reso
+        self.pk_raw = pk_raw
+        self.pk_noise = pk_noise
+        self.correction_reso = correction_reso
         self.pk = pk
         self.pk_diff = pk_diff
 
 
     @classmethod
-    def from_fitsio(cls,hdu):
+    def from_fitsio(cls, hdu):
+        """Reads the 1D Power Spectrum from fits file
 
+        Args:
+            hdu: Header Data Unit
+                Header Data Unit where the 1D Power Spectrum is read
+
+        Returns:
+            An intialized instance of Pk1D
         """
-        read Pk1D from fits file
-        """
 
-        hdr = hdu.read_header()
+        header = hdu.read_header()
 
-        ra = hdr['RA']
-        dec = hdr['DEC']
-        z_qso = hdr['Z']
-        mean_z = hdr['MEANZ']
-        mean_reso = hdr['MEANRESO']
-        mean_snr = hdr['MEANSNR']
-        plate = hdr['PLATE']
-        mjd = hdr['MJD']
-        fiberid = hdr['FIBER']
-        nb_mp = hdr['NBMASKPIX']
+        ra = header['RA']
+        dec = header['DEC']
+        z_qso = header['Z']
+        mean_z = header['MEANZ']
+        mean_reso = header['MEANRESO']
+        mean_snr = header['MEANSNR']
+        plate = header['PLATE']
+        mjd = header['MJD']
+        fiberid = header['FIBER']
+        num_masked_pixels = header['NBMASKPIX']
 
         data = hdu.read()
         k = data['k'][:]
         pk = data['Pk'][:]
-        Pk_raw = data['Pk_raw'][:]
-        Pk_noise = data['Pk_noise'][:]
-        cor_reso = data['cor_reso'][:]
+        pk_raw = data['Pk_raw'][:]
+        pk_noise = data['Pk_noise'][:]
+        correction_reso = data['correction_reso'][:]
         pk_diff = data['Pk_diff'][:]
 
-        return cls(ra,dec,z_qso,mean_z,plate,mjd,fiberid, mean_snr, mean_reso,k,Pk_raw,Pk_noise,cor_reso, pk,nb_mp,pk_diff)
+        return cls(ra, dec, z_qso, mean_z, plate, mjd, fiberid, mean_snr,
+                   mean_reso, k, pk_raw, pk_noise, correction_reso, pk,
+                   num_masked_pixels, pk_diff)

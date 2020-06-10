@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 #rcParams['text.latex.preamble'] = [r'\usepackage{sfmath} \boldmath']
 
 from picca.utils import userprint
-from picca.Pk1D import Pk1D
+from picca.pk1d import Pk1D
 
 if __name__ == '__main__':
 

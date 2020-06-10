@@ -9,7 +9,7 @@ import fitsio
 
 from picca import constants
 from picca.data import Delta
-from picca.Pk1D import (compute_correction_reso, compute_pk_noise,
+from picca.pk1d import (compute_correction_reso, compute_pk_noise,
                         compute_pk_raw, fill_masked_pixels, rebin_diff_noise,
                         split_forest)
 from picca.utils import userprint
@@ -318,29 +318,29 @@ def main():
                 z_abs =  np.power(10.,ll_new)/lam_lya - 1.0
                 mean_z_new = sum(z_abs)/float(len(z_abs))
 
-                # Compute Pk_raw
-                k,Pk_raw = compute_pk_raw(d.delta_log_lambda,delta_new)
+                # Compute pk_raw
+                k,pk_raw = compute_pk_raw(d.delta_log_lambda,delta_new)
 
-                # Compute Pk_noise
+                # Compute pk_noise
                 run_noise = False
                 if (args.noise_estimate=='pipeline'): run_noise=True
-                Pk_noise,pk_diff = compute_pk_noise(d.delta_log_lambda,iv_new,diff_new,run_noise)
+                pk_noise,pk_diff = compute_pk_noise(d.delta_log_lambda,iv_new,diff_new,run_noise)
 
                 # Compute resolution correction
                 delta_pixel = d.delta_log_lambda*np.log(10.)*constants.speed_light/1000.
-                cor_reso = compute_correction_reso(delta_pixel,d.mean_reso,k)
+                correction_reso = compute_correction_reso(delta_pixel,d.mean_reso,k)
 
                 # Compute 1D Pk
                 if (args.noise_estimate=='pipeline'):
-                    pk = (Pk_raw - Pk_noise)/cor_reso
+                    pk = (pk_raw - pk_noise)/correction_reso
                 elif (args.noise_estimate=='diff' or args.noise_estimate=='rebin_diff'):
-                    pk = (Pk_raw - pk_diff)/cor_reso
+                    pk = (pk_raw - pk_diff)/correction_reso
                 elif (args.noise_estimate=='mean_diff' or args.noise_estimate=='mean_rebin_diff'):
                     selection = (k>0) & (k<0.02)
                     if (args.noise_estimate=='mean_rebin_diff'):
                         selection = (k>0.003) & (k<0.02)
                     Pk_mean_diff = sum(pk_diff[selection])/float(len(pk_diff[selection]))
-                    pk = (Pk_raw - Pk_mean_diff)/cor_reso
+                    pk = (pk_raw - Pk_mean_diff)/correction_reso
 
                 # save in root format
                 if (args.out_format=='root'):
@@ -359,11 +359,11 @@ def main():
                     num_bins_tree[0] = min(len(k),nb_bin_max)
                     for i in range(num_bins_tree[0]) :
                         k_tree[i] = k[i]
-                        pk_raw_tree[i] = Pk_raw[i]
-                        pk_noise_tree[i] = Pk_noise[i]
+                        pk_raw_tree[i] = pk_raw[i]
+                        pk_noise_tree[i] = pk_noise[i]
                         pk_diff_tree[i] = pk_diff[i]
                         pk_tree[i] = pk[i]
-                        correction_reso_tree[i] = cor_reso[i]
+                        correction_reso_tree[i] = correction_reso[i]
 
                     tree.Fill()
 
@@ -381,7 +381,7 @@ def main():
                         {'name':'FIBER','value':d.fiberid,'comment':"Spectrum's fiber number"}
                     ]
 
-                    cols=[k,Pk_raw,Pk_noise,pk_diff,cor_reso,pk]
+                    cols=[k,pk_raw,pk_noise,pk_diff,correction_reso,pk]
                     names=['k','Pk_raw','Pk_noise','Pk_diff','cor_reso','Pk']
                     comments=['Wavenumber', 'Raw power spectrum', "Noise's power spectrum", 'Noise coadd difference power spectrum',\
                               'Correction resolution function', 'Corrected power spectrum (resolution and noise)']
