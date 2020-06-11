@@ -63,12 +63,12 @@ def make_tree(tree, max_num_bins):
     fiber = array('i', [0])
 
     num_bins_tree = array('i', [0])
-    k_tree = array('f', max_num_bins*[0.])
-    pk_tree = array('f', max_num_bins*[0.])
-    pk_raw_tree = array('f', max_num_bins*[0.])
-    pk_noise_tree = array('f', max_num_bins*[0.])
-    pk_diff_tree = array('f', max_num_bins*[0.])
-    correction_reso_tree = array('f', max_num_bins*[0.])
+    k_tree = array('f', max_num_bins * [0.])
+    pk_tree = array('f', max_num_bins * [0.])
+    pk_raw_tree = array('f', max_num_bins * [0.])
+    pk_noise_tree = array('f', max_num_bins * [0.])
+    pk_diff_tree = array('f', max_num_bins * [0.])
+    correction_reso_tree = array('f', max_num_bins * [0.])
 
     tree.Branch("z_qso", z_qso, "z_qso/F")
     tree.Branch("mean_z", mean_z, "mean_z/F")
@@ -95,9 +95,10 @@ def make_tree(tree, max_num_bins):
             num_bins_tree, k_tree, pk_tree, pk_raw_tree, pk_noise_tree,
             correction_reso_tree, pk_diff_tree)
 
+
 def compute_mean_delta(log_lambda, delta, ivar, z_qso, hist_delta,
-                       hist_delta_rest_frame, hist_delta_obs_frame,
-                       hist_ivar, hist_snr, hist_weighted_delta_rest_frame,
+                       hist_delta_rest_frame, hist_delta_obs_frame, hist_ivar,
+                       hist_snr, hist_weighted_delta_rest_frame,
                        hist_weighted_delta_obs_frame):
     """Computes the mean delta and stores it in the control histogram variables
 
@@ -133,12 +134,12 @@ def compute_mean_delta(log_lambda, delta, ivar, z_qso, hist_delta,
 
     for index, _ in enumerate(log_lambda):
         log_lambda_obs = np.power(10., log_lambda[index])
-        log_lambda_rf = log_lambda_obs/(1.+z_qso)
+        log_lambda_rf = log_lambda_obs / (1. + z_qso)
         hist_delta.Fill(log_lambda_obs, log_lambda_rf, delta[index])
         hist_delta_rest_frame.Fill(log_lambda_rf, delta[index])
         hist_delta_obs_frame.Fill(log_lambda_obs, delta[index])
         hist_ivar.Fill(ivar[index])
-        snr_pixel = (delta[index]+1)*np.sqrt(ivar[index])
+        snr_pixel = (delta[index] + 1) * np.sqrt(ivar[index])
         hist_snr.Fill(snr_pixel)
         hist_ivar.Fill(ivar[index])
         if ivar[index] < 1000:
@@ -155,12 +156,11 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Compute the 1D power spectrum')
 
-    parser.add_argument(
-        '--out-dir',
-        type=str,
-        default=None,
-        required=True,
-        help='Output directory')
+    parser.add_argument('--out-dir',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output directory')
 
     parser.add_argument(
         '--out-format',
@@ -169,12 +169,11 @@ def main():
         required=False,
         help='Output format: root or fits (if root call PyRoot)')
 
-    parser.add_argument(
-        '--in-dir',
-        type=str,
-        default=None,
-        required=True,
-        help='Directory to delta files')
+    parser.add_argument('--in-dir',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Directory to delta files')
 
     parser.add_argument(
         '--in-format',
@@ -183,40 +182,35 @@ def main():
         required=False,
         help=' Input format used for input files: ascii or fits')
 
-    parser.add_argument(
-        '--SNR-min',
-        type=float,
-        default=2.,
-        required=False,
-        help='Minimal mean SNR per pixel ')
+    parser.add_argument('--SNR-min',
+                        type=float,
+                        default=2.,
+                        required=False,
+                        help='Minimal mean SNR per pixel ')
 
-    parser.add_argument(
-        '--reso-max',
-        type=float,
-        default=85.,
-        required=False,
-        help='Maximal resolution in km/s ')
+    parser.add_argument('--reso-max',
+                        type=float,
+                        default=85.,
+                        required=False,
+                        help='Maximal resolution in km/s ')
 
-    parser.add_argument(
-        '--lambda-obs-min',
-        type=float,
-        default=3600.,
-        required=False,
-        help='Lower limit on observed wavelength [Angstrom]')
+    parser.add_argument('--lambda-obs-min',
+                        type=float,
+                        default=3600.,
+                        required=False,
+                        help='Lower limit on observed wavelength [Angstrom]')
 
-    parser.add_argument(
-        '--nb-part',
-        type=int,
-        default=3,
-        required=False,
-        help='Number of parts in forest')
+    parser.add_argument('--nb-part',
+                        type=int,
+                        default=3,
+                        required=False,
+                        help='Number of parts in forest')
 
-    parser.add_argument(
-        '--nb-pixel-min',
-        type=int,
-        default=75,
-        required=False,
-        help='Minimal number of pixels in a part of forest')
+    parser.add_argument('--nb-pixel-min',
+                        type=int,
+                        default=75,
+                        required=False,
+                        help='Minimal number of pixels in a part of forest')
 
     parser.add_argument(
         '--nb-pixel-masked-max',
@@ -225,12 +219,11 @@ def main():
         required=False,
         help='Maximal number of masked pixels in a part of forest')
 
-    parser.add_argument(
-        '--no-apply-filling',
-        action='store_true',
-        default=False,
-        required=False,
-        help='Dont fill masked pixels')
+    parser.add_argument('--no-apply-filling',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Dont fill masked pixels')
 
     parser.add_argument(
         '--noise-estimate',
@@ -240,19 +233,17 @@ def main():
         help=('Estimate of Pk_noise '
               'pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff'))
 
-    parser.add_argument(
-        '--forest-type',
-        type=str,
-        default='Lya',
-        required=False,
-        help='Forest used: Lya, SiIV, CIV')
+    parser.add_argument('--forest-type',
+                        type=str,
+                        default='Lya',
+                        required=False,
+                        help='Forest used: Lya, SiIV, CIV')
 
-    parser.add_argument(
-        '--debug',
-        action='store_true',
-        default=False,
-        required=False,
-        help='Fill root histograms for debugging')
+    parser.add_argument('--debug',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Fill root histograms for debugging')
 
     parser.add_argument(
         '--abs-igm',
@@ -270,8 +261,7 @@ def main():
         # import is done here as ROOT is not a required package for the code
         # to run, except if args.out_format is set to 'root'
         from ROOT import TH1D, TFile, TTree, TProfile2D, TProfile
-        store_file = TFile(args.out_dir + "/Testpicca.root",
-                           "RECREATE",
+        store_file = TFile(args.out_dir + "/Testpicca.root", "RECREATE",
                            "PK 1D studies studies")
         max_num_bins = 700
         tree = TTree("Pk1D", "SDSS 1D Power spectrum Ly-a")
@@ -290,64 +280,26 @@ def main():
         elif args.forest_type == 'CIV':
             lambda_min = 1410.
             lambda_max = 1520.
-        hist_delta = TProfile2D(
-            'hdelta',
-            'delta mean as a function of lambda-lambdaRF',
-            36,
-            3600.,
-            7200.,
-            16,
-            lambda_min,
-            lambda_max,
-            -5.0,
-            5.0)
+        hist_delta = TProfile2D('hdelta',
+                                'delta mean as a function of lambda-lambdaRF',
+                                36, 3600., 7200., 16, lambda_min, lambda_max,
+                                -5.0, 5.0)
         hist_delta_rest_frame = TProfile(
-            'hdelta_RF',
-            'delta mean as a function of lambdaRF',
-            320,
-            lambda_min,
-            lambda_max,
-            -5.0,
-            5.0)
+            'hdelta_RF', 'delta mean as a function of lambdaRF', 320,
+            lambda_min, lambda_max, -5.0, 5.0)
         hist_delta_obs_frame = TProfile(
-            'hdelta_OBS',
-            'delta mean as a function of lambdaOBS',
-            1800,
-            3600.,
-            7200.,
-            -5.0,
-            5.0)
+            'hdelta_OBS', 'delta mean as a function of lambdaOBS', 1800, 3600.,
+            7200., -5.0, 5.0)
         hist_weighted_delta_rest_frame = TProfile(
-            'hdelta_RF_we',
-            'delta mean weighted as a function of lambdaRF',
-            320,
-            lambda_min,
-            lambda_max,
-            -5.0,
-            5.0)
+            'hdelta_RF_we', 'delta mean weighted as a function of lambdaRF',
+            320, lambda_min, lambda_max, -5.0, 5.0)
         hist_weighted_delta_obs_frame = TProfile(
-            'hdelta_OBS_we',
-            'delta mean weighted as a function of lambdaOBS',
-            1800,
-            3600.,
-            7200.,
-            -5.0,
-            5.0)
-        hist_ivar = TH1D(
-            'hivar',
-            '  ivar ',
-            10000,
-            0.0,
-            10000.)
-        hist_snr = TH1D(
-            'hsnr',
-            '  snr per pixel ',
-            100,
-            0.0,
-            100.)
+            'hdelta_OBS_we', 'delta mean weighted as a function of lambdaOBS',
+            1800, 3600., 7200., -5.0, 5.0)
+        hist_ivar = TH1D('hivar', '  ivar ', 10000, 0.0, 10000.)
+        hist_snr = TH1D('hsnr', '  snr per pixel ', 100, 0.0, 100.)
         hist_weighted_delta_rest_frame.Sumw2()
         hist_weighted_delta_obs_frame.Sumw2()
-
 
     # Read deltas
     if args.in_format == 'fits':
@@ -369,7 +321,9 @@ def main():
         # read fits or ascii file
         if args.in_format == 'fits':
             hdul = fitsio.FITS(file)
-            deltas = [Delta.from_fitsio(hdu, pk1d_type=True) for hdu in hdul[1:]]
+            deltas = [
+                Delta.from_fitsio(hdu, pk1d_type=True) for hdu in hdul[1:]
+            ]
         elif args.in_format == 'ascii':
             ascii_file = open(file, 'r')
             deltas = [Delta.from_ascii(line) for line in ascii_file]
@@ -387,7 +341,8 @@ def main():
                 continue
 
             # first pixel in forest
-            first_pixel_index = np.argmax(10**delta.log_lambda > args.lambda_obs_min)
+            first_pixel_index = np.argmax(
+                10**delta.log_lambda > args.lambda_obs_min)
 
             # minimum number of pixel in forest
             min_num_pixels = args.nb_pixel_min
@@ -396,15 +351,12 @@ def main():
 
             # Split in n parts the forest
             max_num_parts = (len(delta.log_lambda) -
-                             first_pixel_index)//min_num_pixels
+                             first_pixel_index) // min_num_pixels
             num_parts = min(args.nb_part, max_num_parts)
             (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
-             ivar_array) = split_forest(num_parts,
-                                        delta.delta_log_lambda,
-                                        delta.log_lambda,
-                                        delta.delta,
-                                        delta.exposures_diff,
-                                        delta.ivar,
+             ivar_array) = split_forest(num_parts, delta.delta_log_lambda,
+                                        delta.log_lambda, delta.delta,
+                                        delta.exposures_diff, delta.ivar,
                                         first_pixel_index)
             for index2 in range(num_parts):
 
@@ -412,32 +364,23 @@ def main():
                 if (args.noise_estimate == 'rebin_diff' or
                         args.noise_estimate == 'mean_rebin_diff'):
                     exposures_diff_array[index2] = rebin_diff_noise(
-                        delta.delta_log_lambda,
-                        log_lambda_array[index2],
+                        delta.delta_log_lambda, log_lambda_array[index2],
                         exposures_diff_array[index2])
 
                 # Fill masked pixels with 0.
                 (log_lambda_new, delta_new, exposures_diff_new, ivar_new,
                  num_masked_pixels) = fill_masked_pixels(
-                     delta.delta_log_lambda,
-                     log_lambda_array[index2],
-                     delta_array[index2],
-                     exposures_diff_array[index2],
-                     ivar_array[index2],
-                     args.no_apply_filling)
+                     delta.delta_log_lambda, log_lambda_array[index2],
+                     delta_array[index2], exposures_diff_array[index2],
+                     ivar_array[index2], args.no_apply_filling)
                 if num_masked_pixels > args.nb_pixel_masked_max:
                     continue
-                if args.out_format == 'root' and  args.debug:
-                    compute_mean_delta(log_lambda_new,
-                                       delta_new,
-                                       ivar_new,
-                                       delta.z_qso,
-                                       hist_delta,
+                if args.out_format == 'root' and args.debug:
+                    compute_mean_delta(log_lambda_new, delta_new, ivar_new,
+                                       delta.z_qso, hist_delta,
                                        hist_delta_rest_frame,
-                                       hist_delta_obs_frame,
-                                       hist_ivar,
-                                       hist_snr,
-                                       hist_weighted_delta_rest_frame,
+                                       hist_delta_obs_frame, hist_ivar,
+                                       hist_snr, hist_weighted_delta_rest_frame,
                                        hist_weighted_delta_obs_frame)
 
                 # Compute pk_raw
@@ -453,26 +396,25 @@ def main():
                                                      run_noise)
 
                 # Compute resolution correction
-                delta_pixel = (delta.delta_log_lambda*np.log(10.)*
-                               constants.speed_light/1000.)
-                correction_reso = compute_correction_reso(delta_pixel,
-                                                          delta.mean_reso,
-                                                          k)
+                delta_pixel = (delta.delta_log_lambda * np.log(10.) *
+                               constants.speed_light / 1000.)
+                correction_reso = compute_correction_reso(
+                    delta_pixel, delta.mean_reso, k)
 
                 # Compute 1D Pk
                 if args.noise_estimate == 'pipeline':
-                    pk = (pk_raw - pk_noise)/correction_reso
+                    pk = (pk_raw - pk_noise) / correction_reso
                 elif (args.noise_estimate == 'diff' or
                       args.noise_estimate == 'rebin_diff'):
-                    pk = (pk_raw - pk_diff)/correction_reso
+                    pk = (pk_raw - pk_diff) / correction_reso
                 elif (args.noise_estimate == 'mean_diff' or
                       args.noise_estimate == 'mean_rebin_diff'):
                     selection = (k > 0) & (k < 0.02)
                     if args.noise_estimate == 'mean_rebin_diff':
                         selection = (k > 0.003) & (k < 0.02)
-                    mean_pk_diff = (sum(pk_diff[selection])/
+                    mean_pk_diff = (sum(pk_diff[selection]) /
                                     float(len(pk_diff[selection])))
-                    pk = (pk_raw - mean_pk_diff)/correction_reso
+                    pk = (pk_raw - mean_pk_diff) / correction_reso
 
                 # save in root format
                 if args.out_format == 'root':
@@ -501,67 +443,88 @@ def main():
 
                 # save in fits format
                 if args.out_format == 'fits':
-                    header = [
-                        {'name': 'RA', 'value': delta.ra,
-                         'comment': "QSO's Right Ascension [degrees]"},
-                        {'name': 'DEC', 'value': delta.dec,
-                         'comment': "QSO's Declination [degrees]"},
-                        {'name': 'Z', 'value': delta.z_qso,
-                         'comment': "QSO's redshift"},
-                        {'name': 'MEANZ', 'value': mean_z_array[index],
-                         'comment': "Absorbers mean redshift"},
-                        {'name': 'MEANRESO', 'value': delta.mean_reso,
-                         'comment': 'Mean resolution [km/s]'},
-                        {'name': 'MEANSNR', 'value': delta.mean_snr,
-                         'comment': 'Mean signal to noise ratio'},
-                        {'name': 'NBMASKPIX', 'value': num_masked_pixels,
-                         'comment': 'Number of masked pixels in the section'},
-                        {'name': 'PLATE', 'value': delta.plate,
-                         'comment': "Spectrum's plate id"},
-                        {'name': 'MJD', 'value': delta.mjd,
-                         'comment': ('Modified Julian Date,date the spectrum '
-                                     'was taken')},
-                        {'name': 'FIBER', 'value': delta.fiberid,
-                         'comment': "Spectrum's fiber number"}
-                    ]
+                    header = [{
+                        'name': 'RA',
+                        'value': delta.ra,
+                        'comment': "QSO's Right Ascension [degrees]"
+                    }, {
+                        'name': 'DEC',
+                        'value': delta.dec,
+                        'comment': "QSO's Declination [degrees]"
+                    }, {
+                        'name': 'Z',
+                        'value': delta.z_qso,
+                        'comment': "QSO's redshift"
+                    }, {
+                        'name': 'MEANZ',
+                        'value': mean_z_array[index],
+                        'comment': "Absorbers mean redshift"
+                    }, {
+                        'name': 'MEANRESO',
+                        'value': delta.mean_reso,
+                        'comment': 'Mean resolution [km/s]'
+                    }, {
+                        'name': 'MEANSNR',
+                        'value': delta.mean_snr,
+                        'comment': 'Mean signal to noise ratio'
+                    }, {
+                        'name': 'NBMASKPIX',
+                        'value': num_masked_pixels,
+                        'comment': 'Number of masked pixels in the section'
+                    }, {
+                        'name': 'PLATE',
+                        'value': delta.plate,
+                        'comment': "Spectrum's plate id"
+                    }, {
+                        'name':
+                            'MJD',
+                        'value':
+                            delta.mjd,
+                        'comment': ('Modified Julian Date,date the spectrum '
+                                    'was taken')
+                    }, {
+                        'name': 'FIBER',
+                        'value': delta.fiberid,
+                        'comment': "Spectrum's fiber number"
+                    }]
 
                     cols = [k, pk_raw, pk_noise, pk_diff, correction_reso, pk]
-                    names = ['k', 'Pk_raw', 'Pk_noise', 'Pk_diff', 'cor_reso',
-                             'Pk']
+                    names = [
+                        'k', 'Pk_raw', 'Pk_noise', 'Pk_diff', 'cor_reso', 'Pk'
+                    ]
                     comments = [
-                        'Wavenumber',
-                        'Raw power spectrum',
+                        'Wavenumber', 'Raw power spectrum',
                         "Noise's power spectrum",
                         'Noise coadd difference power spectrum',
                         'Correction resolution function',
-                        'Corrected power spectrum (resolution and noise)']
-                    units = ['(km/s)^-1', 'km/s', 'km/s', 'km/s', 'km/s',
-                             'km/s']
+                        'Corrected power spectrum (resolution and noise)'
+                    ]
+                    units = [
+                        '(km/s)^-1', 'km/s', 'km/s', 'km/s', 'km/s', 'km/s'
+                    ]
 
                     try:
-                        results.write(
-                            cols,
-                            names=names,
-                            header=header,
-                            comments=comments,
-                            units=units)
+                        results.write(cols,
+                                      names=names,
+                                      header=header,
+                                      comments=comments,
+                                      units=units)
                     except AttributeError:
-                        results = fitsio.FITS((args.out_dir + '/Pk1D-' +
-                                               str(index) + '.fits.gz'),
-                                              'rw', clobber=True)
-                        results.write(
-                            cols,
-                            names=names,
-                            header=header,
-                            comment=comments,
-                            units=units)
+                        results = fitsio.FITS(
+                            (args.out_dir + '/Pk1D-' + str(index) + '.fits.gz'),
+                            'rw',
+                            clobber=True)
+                        results.write(cols,
+                                      names=names,
+                                      header=header,
+                                      comment=comments,
+                                      units=units)
         if (args.out_format == 'fits' and results is not None):
             results.close()
 
     # Store root file results
     if args.out_format == 'root':
         store_file.Write()
-
 
     userprint("all done ")
 
