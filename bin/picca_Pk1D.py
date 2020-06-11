@@ -133,19 +133,19 @@ def compute_mean_delta(log_lambda, delta, ivar, z_qso, hist_delta,
     """
 
     for index, _ in enumerate(log_lambda):
-        log_lambda_obs = np.power(10., log_lambda[index])
-        log_lambda_rf = log_lambda_obs / (1. + z_qso)
-        hist_delta.Fill(log_lambda_obs, log_lambda_rf, delta[index])
-        hist_delta_rest_frame.Fill(log_lambda_rf, delta[index])
-        hist_delta_obs_frame.Fill(log_lambda_obs, delta[index])
+        lambda_ = np.power(10., log_lambda[index])
+        lambda_rf = lambda_ / (1. + z_qso)
+        hist_delta.Fill(lambda_, lambda_rf, delta[index])
+        hist_delta_rest_frame.Fill(lambda_rf, delta[index])
+        hist_delta_obs_frame.Fill(lambda_, delta[index])
         hist_ivar.Fill(ivar[index])
         snr_pixel = (delta[index] + 1) * np.sqrt(ivar[index])
         hist_snr.Fill(snr_pixel)
         hist_ivar.Fill(ivar[index])
         if ivar[index] < 1000:
-            hist_weighted_delta_rest_frame.Fill(log_lambda_rf, delta[index],
+            hist_weighted_delta_rest_frame.Fill(lambda_rf, delta[index],
                                                 ivar[index])
-            hist_weighted_delta_obs_frame.Fill(log_lambda_obs, delta[index],
+            hist_weighted_delta_obs_frame.Fill(lambda_, delta[index],
                                                ivar[index])
 
 
