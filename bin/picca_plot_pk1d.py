@@ -11,45 +11,41 @@ import matplotlib.pyplot as plt
 from picca.utils import userprint
 from picca.pk1d import Pk1D
 
+
 def main():
     """Plots the 1D Power Spectrum"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument(
-        '--in-dir',
-        type=str,
-        default=None,
-        required=True,
-        help='data directory')
+    parser.add_argument('--in-dir',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='data directory')
 
-    parser.add_argument(
-        '--SNR-min',
-        type=float,
-        default=2.,
-        required=False,
-        help='minimal mean SNR per pixel ')
+    parser.add_argument('--SNR-min',
+                        type=float,
+                        default=2.,
+                        required=False,
+                        help='minimal mean SNR per pixel ')
 
-    parser.add_argument(
-        '--z-min',
-        type=float,
-        default=2.1,
-        required=False,
-        help='minimal mean absorption redshift ')
+    parser.add_argument('--z-min',
+                        type=float,
+                        default=2.1,
+                        required=False,
+                        help='minimal mean absorption redshift ')
 
-    parser.add_argument(
-        '--reso-max',
-        type=float,
-        default=85.,
-        required=False,
-        help='maximal resolution in km/s ')
+    parser.add_argument('--reso-max',
+                        type=float,
+                        default=85.,
+                        required=False,
+                        help='maximal resolution in km/s ')
 
-    parser.add_argument(
-        '--out-fig',
-        type=str,
-        default='Pk1D.png',
-        required=False,
-        help='data directory')
+    parser.add_argument('--out-fig',
+                        type=str,
+                        default='Pk1D.png',
+                        required=False,
+                        help='data directory')
 
     args = parser.parse_args()
 
@@ -57,7 +53,7 @@ def main():
     num_z_bins = 13
     num_k_bins = 35
     k_min = 0.000813
-    k_max = k_min + num_k_bins*0.000542
+    k_max = k_min + num_k_bins * 0.000542
 
     # initialize arrays
     sum_pk = np.zeros([num_z_bins, num_k_bins], dtype=np.float64)
@@ -65,7 +61,7 @@ def main():
     counts = np.zeros([num_z_bins, num_k_bins], dtype=np.float64)
     k = np.zeros([num_k_bins], dtype=np.float64)
     for index_k in range(num_k_bins):
-        k[index_k] = k_min + (index_k + 0.5)*0.000542
+        k[index_k] = k_min + (index_k + 0.5) * 0.000542
 
     # list of Pk(1D)
     files = glob.glob(args.in_dir + "/*.fits.gz")
@@ -74,10 +70,9 @@ def main():
 
     # loop over input files
     for index, file in enumerate(files):
-        if index%1 == 0:
-            sys.stderr.write("\rread {} of {} {}".format(index,
-                                                         len(files),
-                                                         num_data))
+        if index % 1 == 0:
+            sys.stderr.write("\rread {} of {} {}".format(
+                index, len(files), num_data))
 
         # read fits files
         hdul = fitsio.FITS(file)
@@ -95,28 +90,31 @@ def main():
             if pk.mean_z <= args.z_min:
                 continue
 
-            index_z = int((pk.mean_z - args.z_min)/0.2)
+            index_z = int((pk.mean_z - args.z_min) / 0.2)
             if index_z >= num_z_bins or index_z < 0:
                 continue
 
             for index2 in range(len(pk.k)):
-                index_k = int((pk.k[index2] - k_min)/(k_max - k_min)*num_k_bins)
+                index_k = int(
+                    (pk.k[index2] - k_min) / (k_max - k_min) * num_k_bins)
                 if index_k >= num_k_bins or index_k < 0:
                     continue
-                sum_pk[index_z, index_k] += pk.Pk[index2]*pk.k[index2]/np.pi
-                sum_pk_square[index_z, index_k] += (pk.Pk[index2]*pk.k[index2]/
-                                                    np.pi)**2
+                sum_pk[index_z, index_k] += pk.Pk[index2] * pk.k[index2] / np.pi
+                sum_pk_square[index_z, index_k] += (pk.Pk[index2] *
+                                                    pk.k[index2] / np.pi)**2
                 counts[index_z, index_k] += 1.0
 
     # compute mean and error on Pk
-    mean_pk = np.where(counts != 0, sum_pk/counts, 0.0)
-    error_pk = np.where(counts != 0,
-                        np.sqrt(((sum_pk_square/counts) - mean_pk**2)/counts),
-                        0.0)
+    mean_pk = np.where(counts != 0, sum_pk / counts, 0.0)
+    error_pk = np.where(
+        counts != 0, np.sqrt(((sum_pk_square / counts) - mean_pk**2) / counts),
+        0.0)
 
     # plot settings
-    colors = ['m', 'r', 'b', 'k', 'chartreuse', 'gold', 'aqua', 'slateblue',
-              'orange', 'mediumblue', 'darkgrey', 'olive', 'firebrick']
+    colors = [
+        'm', 'r', 'b', 'k', 'chartreuse', 'gold', 'aqua', 'slateblue', 'orange',
+        'mediumblue', 'darkgrey', 'olive', 'firebrick'
+    ]
     markersize = 6
     fontsize = 16
     labelsize = 10
@@ -127,14 +125,18 @@ def main():
     ax.set_yscale('log')
 
     for index_z in range(num_z_bins):
-        z = 2.2 + index_z*0.2
+        z = 2.2 + index_z * 0.2
         #ax.errorbar(k, mean_pk[index_z,:], yerr=error_pk[index_z,:], fmt='o',
         #            color=colors[index_z], markersize=markersize,
         #            label =r('\bf {:1.1f} $\displaystyle <$ '
         #                     'z $\displaystyle <$ {:1.1f}').format(z - 0.1,
         #                                                           z + 0.1))
-        ax.errorbar(k, mean_pk[index_z, :], yerr=error_pk[index_z, :], fmt='o',
-                    color=colors[index_z], markersize=markersize,
+        ax.errorbar(k,
+                    mean_pk[index_z, :],
+                    yerr=error_pk[index_z, :],
+                    fmt='o',
+                    color=colors[index_z],
+                    markersize=markersize,
                     label=r' z = {:1.1f}'.format(z))
 
     #ax.set_xlabel(r'\bf $\displaystyle k [km.s^{-1}]$', fontsize=fontsize)
@@ -150,15 +152,24 @@ def main():
     ax.yaxis.set_tick_params(labelsize=labelsize)
 
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc=2, bbox_to_anchor=(1.03, 0.98),
-              borderaxespad=0., fontsize=legendsize)
-    fig.subplots_adjust(top=0.98, bottom=0.114, left=0.078, right=0.758,
-                        hspace=0.2, wspace=0.2)
+    ax.legend(handles,
+              labels,
+              loc=2,
+              bbox_to_anchor=(1.03, 0.98),
+              borderaxespad=0.,
+              fontsize=legendsize)
+    fig.subplots_adjust(top=0.98,
+                        bottom=0.114,
+                        left=0.078,
+                        right=0.758,
+                        hspace=0.2,
+                        wspace=0.2)
 
     plt.show()
     fig.savefig(args.out_fig, transparent=False)
 
     userprint("all done ")
+
 
 if __name__ == '__main__':
     main()
