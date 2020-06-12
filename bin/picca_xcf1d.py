@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 """Compute the 1D auto or cross-correlation between a catalog of objects and a
 delta field as a function of wavelength ratio
 """
