@@ -29,13 +29,11 @@ if __name__ == '__main__':
         required=True,
         help='Correlation 2 produced via picca_cf.py, picca_xcf.py, ...')
 
-    parser.add_argument(
-        '--out',
-        type=str,
-        default=None,
-        required=True,
-        help='Output file name')
-
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
     args = parser.parse_args()
 
@@ -51,11 +49,13 @@ if __name__ == '__main__':
         xi = np.array(hdul[2]['DA'][:])
         weights = np.array(hdul[2]['WE'][:])
         healpix_list = np.array(hdul[2]['HEALPID'][:])
-        data[index] = {'DA': xi,
-                       'WE': weights,
-                       'HEALPID': healpix_list,
-                       'NSIDE': nside,
-                       'HLPXSCHM': healpix_scheme}
+        data[index] = {
+            'DA': xi,
+            'WE': weights,
+            'HEALPID': healpix_list,
+            'NSIDE': nside,
+            'HLPXSCHM': healpix_scheme
+        }
         hdul.close()
 
     # exit if NSIDE1 != NSIDE2
@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
     ### Get the cross-correlation
     var = np.diagonal(covariance)
-    cor = covariance/np.sqrt(var*var[:, None])
+    cor = covariance / np.sqrt(var * var[:, None])
     cross_correlation = cor.copy()
     cross_correlation = cross_correlation[:, num_bins:]
     cross_correlation = cross_correlation[:num_bins, :]
@@ -122,9 +122,8 @@ if __name__ == '__main__':
 
     ### Save
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    results.write(
-        [cross_covariance, cross_correlation],
-        names=['CO', 'COR'],
-        comment=['Covariance matrix', 'Correlation matrix'],
-        extname='COVAR')
+    results.write([cross_covariance, cross_correlation],
+                  names=['CO', 'COR'],
+                  comment=['Covariance matrix', 'Correlation matrix'],
+                  extname='COVAR')
     results.close()
