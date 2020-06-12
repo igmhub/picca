@@ -42,7 +42,7 @@ class wedge:
         self.W = W.reshape(nr,nrt*nrp)
         self.r = rmin + (np.arange(nr)+0.5)*(rmax-rmin)/nr
 
-    def wedge(self,da,co):
+    def wedge(self, da, co):
         we = 1/sp.diagonal(co)
         w = self.W.dot(we)
         Wwe = self.W*we
