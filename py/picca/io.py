@@ -177,6 +177,7 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
             do_selection=True
         else:
             do_selection=False
+            print("already reading a catalog, no further selection besides min/max redshift")
 
 
         #selection of quasars with good redshifts only, the exact definition here should be decided, could in principle be moved to later
