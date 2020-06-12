@@ -15,9 +15,9 @@ if __name__ == '__main__':
     parser.add_argument('--out-cat', type = str, default = None, required=True,
             help = 'Output path to a catalog of objects in DRQ format')
     
-    parser.add_argument('--zmin', type = float, default = 2.1,
+    parser.add_argument('--zmin', type = float, default = 2.0,
             help = 'Minimal object redshift')
-    parser.add_argument('--zmax', type = float, default = 4.0,
+    parser.add_argument('--zmax', type = float, default = 4.288461538461538,
             help = 'Maximal object redshift')
 
     #could add additional things here, e.g. different spectypes (needs modification of targeting checks as well)
