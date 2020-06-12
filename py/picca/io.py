@@ -170,23 +170,35 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
     for zbest in zbestfiles:
         h = fitsio.FITS(zbest)
 
+        
+        try:
+            h["SELECTION"]
+        except OSError:
+            do_selection=True
+        else:
+            do_selection=False
+
 
         #selection of quasars with good redshifts only, the exact definition here should be decided, could in principle be moved to later
-        spectypes=h[1]['SPECTYPE'][:].astype(str)
+        spectypes=h["ZBEST"]['SPECTYPE'][:].astype(str)
         
-        select=spectypes=='QSO'      #this could be done later but slower
+
+        if do_selection:
+            select=spectypes=='QSO'      #this could be done later but slower
+        else:
+            select=np.ones(len(spectypes),dtype=bool)
 
 
         ## Redshift
-        zqso = h[1]['Z'][:][select]
-        zwarn=h[1]['ZWARN'][:][select]    #note that zwarn is potentially not essential
+        zqso = h["ZBEST"]['Z'][:][select]
+        zwarn=h["ZBEST"]['ZWARN'][:][select]    #note that zwarn is potentially not essential
         ## Info of the primary observation
-        thid = h[1]['TARGETID'][:][select]
+        thid = h["ZBEST"]['TARGETID'][:][select]
         if len(thid)==0:
             print("no valid QSOs in file {}".format(zbest))
             continue
 
-        tid2=h[2]['TARGETID'][:]
+        tid2=h["FIBERMAP"]['TARGETID'][:]
         ra=np.zeros(len(thid), dtype='float64')
         dec=np.zeros(len(thid), dtype='float64')
         plate=np.zeros(len(thid), dtype='int64')
@@ -200,60 +212,63 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         for i,tid in enumerate(thid):
             #if multiple entries in fibermap take the first here
             select2=(tid==tid2)
-            ra[i] = h[2]['TARGET_RA'][:][select2][0]
-            dec[i] = h[2]['TARGET_DEC'][:][select2][0]
+            ra[i] = h["FIBERMAP"]['TARGET_RA'][:][select2][0]
+            dec[i] = h["FIBERMAP"]['TARGET_DEC'][:][select2][0]
             try:
-                plate[i]=int('{}{}'.format(h[2]['TILEID'][:][select2][0], h[2]['PETAL_LOC'][:][select2][0]))
+                plate[i]=int('{}{}'.format(h["FIBERMAP"]['TILEID'][:][select2][0], h["FIBERMAP"]['PETAL_LOC'][:][select2][0]))
             except ValueError:
-                plate[i]=int('{}{}'.format(zbest.split('-')[-2], h[2]['PETAL_LOC'][:][select2][0]))   #this is to allow minisv to be read in just the same even without TILEID entries
+                plate[i]=int('{}{}'.format(zbest.split('-')[-2], h["FIBERMAP"]['PETAL_LOC'][:][select2][0]))   #this is to allow minisv to be read in just the same even without TILEID entries
             try:
-                night[i]=int(h[2]['NIGHT'][:][select2][0])
+                night[i]=int(h["FIBERMAP"]['NIGHT'][:][select2][0])
             except:
                 night[i]=int(zbest.split('-')[-1].split('.')[0])
-            fiberstatus.append(h[2]['FIBERSTATUS'][:][select2])
-            fid[i]=int( h[2]['FIBER'][:][select2][0])
+            fiberstatus.append(h["FIBERMAP"]['FIBERSTATUS'][:][select2])
+            fid[i]=int( h["FIBERMAP"]['FIBER'][:][select2][0])
             try:
-                cmx_target[i]=h[2]['CMX_TARGET'][:][select2][0]
+                cmx_target[i]=h["FIBERMAP"]['CMX_TARGET'][:][select2][0]
             except ValueError:
                 pass
             try:
-                desi_target[i]=h[2]['DESI_TARGET'][:][select2][0]
+                desi_target[i]=h["FIBERMAP"]['DESI_TARGET'][:][select2][0]
             except ValueError:
                 pass
             try:
-                sv1_target[i]=h[2]['SV1_DESI_TARGET'][:][select2][0]
+                sv1_target[i]=h["FIBERMAP"]['SV1_DESI_TARGET'][:][select2][0]
             except ValueError:
                 pass
 
         h.close()
-
-        ## Sanity
-        print('')
         w = np.ones(ra.size,dtype=bool)
-        print("Tile {}, Petal {}".format(str(plate[0])[:-1],str(plate[0])[-1]))
-        print(" start (all redrock QSOs)         : nb object in cat = {}".format(w.sum()) )
-        #note that in principle we could also check for subtypes here...
-        w &= (((cmx_target&(2**12))!=0) |
-                # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/cmx/data/cmx_targetmask.yaml
-              ((desi_target&(2**2))!=0) |
-                # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/data/targetmask.yaml
-              ((sv1_target&(2**2))!=0))
-                # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/sv1/data/sv1_targetmask.yaml
-        print(" Targeted as QSO                  : nb object in cat = {}".format(w.sum()) )
-        #the bottom selection has been done earlier already to speed up things
-        #w &= spectypes == 'QSO'
-        #print(" Redrock QSO                      : nb object in cat = {}".format(w.sum()) )
-        
-        w &= zwarn == 0
-        print(" Redrock no ZWARN                 : nb object in cat = {}".format(w.sum()) )
+
+        if do_selection:
+            ## Sanity
+            print('')
+            print("Tile {}, Petal {}".format(str(plate[0])[:-1],str(plate[0])[-1]))
+            print(" start (all redrock QSOs)         : nb object in cat = {}".format(w.sum()) )
+            #note that in principle we could also check for subtypes here...
+            w &= (((cmx_target&(2**12))!=0) |
+                    # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/cmx/data/cmx_targetmask.yaml
+                ((desi_target&(2**2))!=0) |
+                    # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/data/targetmask.yaml
+                ((sv1_target&(2**2))!=0))
+                    # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/sv1/data/sv1_targetmask.yaml
+            print(" Targeted as QSO                  : nb object in cat = {}".format(w.sum()) )
+            #the bottom selection has been done earlier already to speed up things
+            #w &= spectypes == 'QSO'
+            #print(" Redrock QSO                      : nb object in cat = {}".format(w.sum()) )
+            
+            w &= zwarn == 0
+            print(" Redrock no ZWARN                 : nb object in cat = {}".format(w.sum()) )
 
 
-        #checking if all fibers are fine
-        w &= np.any(np.array(fiberstatus)==0,axis=1)
-        print(" FIBERSTATUS==0 for any exposures : nb object in cat = {}".format(w.sum()) )
+            #checking if all fibers are fine
+            w &= np.any(np.array(fiberstatus)==0,axis=1)
+            print(" FIBERSTATUS==0 for any exposures : nb object in cat = {}".format(w.sum()) )
 
-        w &= np.all(np.array(fiberstatus)==0,axis=1)
-        print(" FIBERSTATUS==0 for all exposures : nb object in cat = {}".format(w.sum()) )
+            w &= np.all(np.array(fiberstatus)==0,axis=1)
+            print(" FIBERSTATUS==0 for all exposures : nb object in cat = {}".format(w.sum()) )
+        else:
+            print(" all objects in file              : nb object in cat = {}".format(w.sum()) )
 
 
         ## Redshift range
@@ -266,7 +281,7 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         ## BAL visual
         # if not keep_bal and bi_max==None:
         #     try:
-        #         bal_flag = h[1]['BAL_FLAG_VI'][:]
+        #         bal_flag = h["ZBEST"]['BAL_FLAG_VI'][:]
         #         w &= bal_flag==0
         #         print(" and BAL_FLAG_VI == 0  : nb object in cat = {}".format(ra[w].size) )
         #     except:
@@ -274,7 +289,7 @@ def read_zbest(zbestfiles,zmin,zmax,keep_bal,bi_max=None):
         # ## BAL CIV
         # if bi_max is not None:
         #     try:
-        #         bi = h[1]['BI_CIV'][:]
+        #         bi = h["ZBEST"]['BI_CIV'][:]
         #         w &= bi<=bi_max
         #         print(" and BI_CIV<=bi_max  : nb object in cat = {}".format(ra[w].size) )
         #     except:

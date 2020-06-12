@@ -862,5 +862,9 @@ def catalog_from_zbest(zbestfiles,outfile,zmin,zmax):
 
     outcat = fitsio.FITS(outfile,'rw',clobber=True)
     #probably add some metadata with the selection parameters
-    outcat.write(rows_all_redrock,extname='REDROCK')
+    outcat.write(rows_all_redrock,extname='ZBEST')
     outcat.write(rows_all_fibermap,extname='FIBERMAP')
+
+    dic=dict(ZMIN=np.array([zmin]),
+             ZMAX=np.array([zmax]))
+    outcat.write(dic,extname='SELECTION')
