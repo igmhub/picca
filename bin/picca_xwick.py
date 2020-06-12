@@ -40,8 +40,8 @@ if __name__ == '__main__':
     parser.add_argument('--from-image', type=str, default=None, required=False,
         help='Read delta from image format', nargs='*')
 
-    parser.add_argument('--drq', type=str, default=None, required=True,
-        help='Catalog of objects in DRQ format')
+    parser.add_argument('--drq', type=str, default=None, nargs='+', required=True,
+        help='Catalog(s) of objects in DRQ format or zbest format')
 
     parser.add_argument('--rp-min', type=float, default=-200., required=False,
         help='Min r-parallel [h^-1 Mpc]')
@@ -119,7 +119,8 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-
+    if len(args.drq)==1:
+        args.drq=args.drq[0]
     if args.nproc is None:
         args.nproc = cpu_count()//2
 

@@ -27,8 +27,8 @@ if __name__ == '__main__':
     parser.add_argument('--in-dir', type=str, default=None, required=True,
         help='Directory to delta files')
 
-    parser.add_argument('--drq', type=str, default=None, required=True,
-        help='Catalog of objects in DRQ format')
+    parser.add_argument('--drq', type=str, default=None, nargs='+', required=True,
+        help='Catalog(s) of objects in DRQ format or zbest format')
 
     parser.add_argument('--wr-min', type=float, default=0.9, required=False,
         help='Min of wavelength ratio')
@@ -103,7 +103,8 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-
+    if len(args.drq)==1:
+        args.drq=args.drq[0]
     if args.nproc is None:
         args.nproc = cpu_count()//2
 
