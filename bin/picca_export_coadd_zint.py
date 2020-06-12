@@ -8,30 +8,24 @@ import scipy.linalg
 
 from picca.utils import smooth_cov, userprint
 
+
 def main():
     """Coadds correlation function from different redshift intervals"""
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "--data",
-        type=str,
-        nargs="*",
-        required=True,
-        help="the (x)cf_z_....fits files to be coadded")
+    parser.add_argument("--data",
+                        type=str,
+                        nargs="*",
+                        required=True,
+                        help="the (x)cf_z_....fits files to be coadded")
 
-    parser.add_argument(
-        "--out",
-        type=str,
-        required=True,
-        help="output file")
+    parser.add_argument("--out", type=str, required=True, help="output file")
 
-    parser.add_argument(
-        "--no-dmat",
-        action=
-        'store_true',
-        default=False,
-        required=False,
-        help='Use an identity matrix as the distortion matrix.')
+    parser.add_argument("--no-dmat",
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Use an identity matrix as the distortion matrix.')
 
     args = parser.parse_args()
 
@@ -42,11 +36,11 @@ def main():
     # initialize coadd arrays, fill them with zeros
     hdul = fitsio.FITS(args.data[0])
     header = hdul[1].read_header()
-    r_par = hdul[1]['RP'][:]*0
-    r_trans = hdul[1]['RT'][:]*0
-    num_pairs = hdul[1]['NB'][:]*0
-    z = hdul[1]['Z'][:]*0
-    weights_total = r_par*0
+    r_par = hdul[1]['RP'][:] * 0
+    r_trans = hdul[1]['RT'][:] * 0
+    num_pairs = hdul[1]['NB'][:] * 0
+    z = hdul[1]['Z'][:] * 0
+    weights_total = r_par * 0
     hdul.close()
 
     xi = {}
@@ -55,7 +49,7 @@ def main():
     # initialize distortion matrix array, fill them with zeros
     if not args.no_dmat:
         hdul = fitsio.FITS(args.data[0].replace('cf', 'dmat'))
-        dmat = hdul[1]['DM'][:]*0
+        dmat = hdul[1]['DM'][:] * 0
         try:
             r_par_dmat = np.zeros(hdul[2]['RP'][:].size)
             r_trans_dmat = np.zeros(hdul[2]['RT'][:].size)
@@ -75,28 +69,28 @@ def main():
         hdul = fitsio.FITS(file)
         weights_aux = hdul[2]["WE"][:]
         weights_total_aux = weights_aux.sum(axis=0)
-        r_par += hdul[1]['RP'][:]*weights_total_aux
-        r_trans += hdul[1]['RT'][:]*weights_total_aux
-        z += hdul[1]['Z'][:]*weights_total_aux
+        r_par += hdul[1]['RP'][:] * weights_total_aux
+        r_trans += hdul[1]['RT'][:] * weights_total_aux
+        z += hdul[1]['Z'][:] * weights_total_aux
         num_pairs += hdul[1]['NB'][:]
         weights_total += weights_total_aux
 
         healpixs = hdul[2]['HEALPID'][:]
         for index, healpix in enumerate(healpixs):
-            userprint("\rcoadding healpix {} in file {}".format(healpix,
-                                                                file), end="")
+            userprint("\rcoadding healpix {} in file {}".format(healpix, file),
+                      end="")
             if healpix in xi:
-                xi[healpix] += hdul[2]["DA"][:][index]*weights_aux[index]
+                xi[healpix] += hdul[2]["DA"][:][index] * weights_aux[index]
                 weights[healpix] += weights_aux[index, :]
             else:
-                xi[healpix] = hdul[2]["DA"][:][index]*weights_aux[index]
+                xi[healpix] = hdul[2]["DA"][:][index] * weights_aux[index]
                 weights[healpix] = weights_aux[index]
         hdul.close()
 
         # add distortion matrix
         if not args.no_dmat:
             hdul = fitsio.FITS(file.replace('cf', 'dmat'))
-            dmat += hdul[1]['DM'][:]*weights_total_aux[:, None]
+            dmat += hdul[1]['DM'][:] * weights_total_aux[:, None]
             if 'r_par_dmat' in locals():
                 # TODO: get the weights
                 r_par_dmat += hdul[2]['RP'][:]
@@ -122,7 +116,7 @@ def main():
     if not args.no_dmat:
         dmat /= weights_total[:, None]
 
-    xi = (xi*weights).sum(axis=0)
+    xi = (xi * weights).sum(axis=0)
     xi /= weights_total
 
     if 'r_par_dmat' in locals():
@@ -141,20 +135,22 @@ def main():
 
     # save results
     results = fitsio.FITS(args.out, "rw", clobber=True)
-    comment = ['R-parallel', 'R-transverse', 'Redshift', 'Correlation',
-               'Covariance matrix', 'Distortion matrix', 'Number of pairs']
+    comment = [
+        'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
+        'Covariance matrix', 'Distortion matrix', 'Number of pairs'
+    ]
     results.write([r_par, r_trans, z, xi, covariance, dmat, num_pairs],
                   names=['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB'],
                   comment=comment,
                   header=header,
                   extname='COR')
     comment = ['R-parallel model', 'R-transverse model', 'Redshift model']
-    results.write(
-        [r_par_dmat, r_trans_dmat, z_dmat],
-        names=['DMRP', 'DMRT', 'DMZ'],
-        comment=comment,
-        extname='DMATTRI')
+    results.write([r_par_dmat, r_trans_dmat, z_dmat],
+                  names=['DMRP', 'DMRT', 'DMZ'],
+                  comment=comment,
+                  extname='DMATTRI')
     results.close()
+
 
 if __name__ == "__main__":
     main()
