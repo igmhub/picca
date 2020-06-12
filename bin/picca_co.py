@@ -93,7 +93,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if len(args.drq)==1:
         args.drq=args.drq[0]
-    if len(args.drq2)==1:
+    if args.drq2 is not None and len(args.drq2)==1:
         args.drq2=args.drq2[0]
 
     if args.nproc is None:
