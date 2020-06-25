@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Compute the auto and cross-correlation between a catalog of objects and a
 delta field.
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Computes delta field from a list of spectra.
 
 Computes the mean transmission fluctuation field (delta field) for a list of

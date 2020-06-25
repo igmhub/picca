@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Compute the distortion matrix of the cross-correlation delta x object for a
 list of IGM absorption.
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Export auto and cross-correlation of catalog of objects for the fitter."""
 import sys
 import argparse

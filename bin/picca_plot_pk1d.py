@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Plots the 1D Power Spectrum
 """
 import argparse

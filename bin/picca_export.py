@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Export auto and cross-correlation for the fitter."""
 import argparse
 import fitsio
