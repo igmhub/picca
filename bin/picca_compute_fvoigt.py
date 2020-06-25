@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+"""
+Computes the convolution term Fvoigt(k) and saves it in an ASCII file. The inputs are a DLA and a QSO catalog (both as fits binary tables). The DLA table must contain the columns "MOCKID" matching qso "THING_ID", and "Z_DLA_RSD". The QSO table must contain the columns "THING_ID", and "Z"
+"""
+import argparse
 import numpy as np
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 import astropy.io.fits as fits
 from scipy.special import wofz
-import picca.constants as constants
-import argparse
 
+import picca.constants as constants
 from picca.utils import userprint
 
 def voigt(x, sigma=1, gamma=1):
@@ -118,57 +120,89 @@ def compute_dla_prob(wavelength, NHI, dla, qso, weight):
 
 def main() :
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description='Computes the convolution term Fvoigt(k) and saves it in an ASCII file. The inputs are a DLA and a QSO catalog (both as fits binary tables). The DLA table must contain the columns "MOCKID" matching qso "THING_ID", and "Z_DLA_RSD". The QSO table must contain the columns "THING_ID", and "Z"')
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description=('Computes the convolution term Fvoigt(k) and saves it in '
+                     'an ASCII file. The inputs are a DLA and a QSO catalog '
+                     '(both as fits binary tables). The DLA table must contain '
+                     'the columns "MOCKID" matching qso "THING_ID", and '
+                     '"Z_DLA_RSD". The QSO table must contain the columns '
+                     '"THING_ID", and "Z"'))
 
-    parser.add_argument('--dla-catalog', type=str, default=None, required = True,
-                      help='DLA catalog fits file , like /project/projectdirs/desi/mocks/lya_forest/develop/saclay/v4.4/v4.4.3/master_DLA.fits')
-    parser.add_argument('--drq-catalog', type=str, default=None, required = True,
-                      help='DRQ catalog fits file, like /project/projectdirs/desi/mocks/lya_forest/develop/saclay/v4.4/v4.4.3/eboss-0.2/zcat_desi_drq.fits')
-    parser.add_argument('--weight-vs-wavelength', type=str, default=None, required = False,
-                      help='sum of delta weight as a function of wavelength (two columns ASCII file)')
-    parser.add_argument('-o','--output', type=str, default=None, required = True,
-                      help='FVoigt as a function of k in h/Mpc (two columns ASCII file)')
+    parser.add_argument(
+        '--dla-catalog',
+        type=str,
+        default=None,
+        required=True,
+        help=('DLA catalog fits file , like '
+              '/project/projectdirs/desi/mocks/lya_forest/develop/saclay/v4.4/v4.4.3/master_DLA.fits'))
+
+    parser.add_argument(
+        '--drq-catalog',
+        type=str,
+        default=None,
+        required=True,
+        help=('DRQ catalog fits file, like '
+              '/project/projectdirs/desi/mocks/lya_forest/develop/saclay/v4.4/v4.4.3/eboss-0.2/zcat_desi_drq.fits'))
+
+    parser.add_argument(
+        '--weight-vs-wavelength',
+        type=str,
+        default=None,
+        required=False,
+        help=('sum of delta weight as a function of wavelength (two columns '
+              'ASCII file)'))
+
+    parser.add_argument(
+        '-o', '--output',
+        type=str,
+        default=None,
+        required=True,
+        help='FVoigt as a function of k in h/Mpc (two columns ASCII file)')
+
     parser.add_argument('-d','--debug', action='store_true', default=True)
-    parser.add_argument('-p','--plot', action='store_true',help="show some plots")
+
+    parser.add_argument('-p','--plot', action='store_true',
+                        help="show some plots")
 
 
     args = parser.parse_args()
 
-    if args.debug : userprint("read DLA catalog")
+    if args.debug:
+        userprint("read DLA catalog")
     dla = fits.open(args.dla_catalog)[1].data
 
-    if args.debug : userprint("read DRQ catalog")
+    if args.debug:
+        userprint("read DRQ catalog")
     qso = fits.open(args.drq_catalog)[1].data
 
-    if args.debug : userprint("only keep DLAs in DRQ quasars LOS")
+    if args.debug:
+        userprint("only keep DLAs in DRQ quasars LOS")
     dla = dla[:][np.in1d(dla['MOCKID'], qso['THING_ID'])]
-
-    #nb_dla = dla['Z_DLA_RSD'].size
-    #nb_qso = qso['Z'].size #nombre de ligne de visée
 
     coarse_wavelength = np.arange(3000, 8000, 100)
 
-    if args.weight_vs_wavelength is None :
-        filename="/global/common/software/desi/users/jguy/igmhub/code_stage_lbl/build_Fvoigt/data/weight_lambda.txt"
+    if args.weight_vs_wavelength is None:
+        filename = "/global/common/software/desi/users/jguy/igmhub/code_stage_lbl/build_Fvoigt/data/weight_lambda.txt"
         userprint("WARNING: Hardcoded weight vs wavelength file {}".format(filename))
         args.weight_vs_wavelength = filename
 
-    if args.weight_vs_wavelength is not None :
-        if args.debug : userprint("read weights vs wave")
+    if args.weight_vs_wavelength is not None:
+        if args.debug:
+            userprint("read weights vs wave")
         tmp = np.loadtxt(args.weight_vs_wavelength)
-        weight = np.interp(coarse_wavelength,tmp[:,0],tmp[:,1])
+        weight = np.interp(coarse_wavelength, tmp[:, 0], tmp[:, 1])
     else :
         weight = np.ones(coarse_wavelength.shape)
 
     zdla = np.mean(dla['Z_DLA_RSD'])
-    NHI = np.linspace(17,22,(22-17)/0.1+1)
+    NHI = np.linspace(17, 22, (22 - 17)/0.1 + 1)
 
     # probability of finding a DLA at NHI in a QSO LOS (per A and per unit NHI)
     # averaged over wavelength, using the provided wavelength weight
-    prob = compute_dla_prob(coarse_wavelength,NHI,dla=dla,qso=qso,weight=weight)
+    prob = compute_dla_prob(coarse_wavelength, NHI, dla=dla, qso=qso, weight=weight)
 
-    ii=(prob>0)
+    ii=(prob > 0)
     prob=prob[ii]
     NHI=NHI[ii]
 
