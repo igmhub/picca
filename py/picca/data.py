@@ -505,32 +505,26 @@ class Forest(QSO):
         # rebin arrays
         rebin_log_lambda = (Forest.log_lambda_min +
                             np.arange(bins.max() + 1) * Forest.delta_log_lambda)
-        #### old way rebinning
-        #rebin_flux = np.zeros(bins.max()+1)
-        #rebin_ivar = np.zeros(bins.max()+1)
-        #if mean_expected_flux_frac is not None:
-        #    rebin_mean_expected_flux_frac = np.zeros(bins.max()+1)
-        #ccfl = np.bincount(bins, weights=ivar*flux)
-        #cciv = np.bincount(bins, weights=ivar)
-        #if mean_expected_flux_frac is not None:
-        #    ccmmef = np.bincount(bins, weights=ivar*mean_expected_flux_frac)
-        #rebin_flux[:len(ccfl)] += ccfl
-        #rebin_ivar[:len(cciv)] += cciv
-        #if mean_expected_flux_frac is not None:
-        #    rebin_mean_expected_flux_frac[:len(ccmmef)] += ccmmef
-        #### end of old way rebinning
-        rebin_flux = np.bincount(bins, weights=ivar * flux)
-        rebin_ivar = np.bincount(bins, weights=ivar)
+        rebin_flux = np.zeros(bins.max() + 1)
+        rebin_ivar = np.zeros(bins.max() + 1)
         if mean_expected_flux_frac is not None:
-            rebin_mean_expected_flux_frac = np.bincount(bins,
-                                                        weights=ivar *
-                                                        mean_expected_flux_frac)
+            rebin_mean_expected_flux_frac = np.zeros(bins.max() + 1)
+        rebin_flux_aux = np.bincount(bins, weights=ivar * flux)
+        rebin_ivar_aux = np.bincount(bins, weights=ivar)
+        if mean_expected_flux_frac is not None:
+            rebin_mean_expected_flux_frac_aux = np.bincount(
+                bins, weights=ivar * mean_expected_flux_frac)
         if exposures_diff is not None:
             rebin_exposures_diff = np.bincount(bins,
                                                weights=ivar * exposures_diff)
         if reso is not None:
             rebin_reso = np.bincount(bins, weights=ivar * reso)
-
+        rebin_flux[:len(rebin_flux_aux)] += rebin_flux_aux
+        rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
+        if mean_expected_flux_frac is not None:
+            rebin_mean_expected_flux_frac[:len(
+                rebin_mean_expected_flux_frac_aux
+            )] += rebin_mean_expected_flux_frac_aux
         w = (rebin_ivar > 0.)
         if w.sum() == 0:
             return
@@ -581,9 +575,9 @@ class Forest(QSO):
         snr = flux / error
         self.mean_snr = sum(snr) / float(len(snr))
         lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
-        self.mean_z = (
-            (np.power(10., log_lambda[len(log_lambda) - 1]) +
-             np.power(10., log_lambda[0])) / 2. / lambda_abs_igm - 1.0)
+        self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
+                        np.power(10., log_lambda[0])) / 2. / lambda_abs_igm -
+                       1.0)
 
         # continuum-related variables
         self.cont = None
@@ -632,27 +626,19 @@ class Forest(QSO):
                         Forest.delta_log_lambda + 0.5).astype(int)
         rebin_log_lambda = Forest.log_lambda_min + (np.arange(bins.max() + 1) *
                                                     Forest.delta_log_lambda)
-        ## old way rebinning
-        #rebin_ivar = np.zeros(bins.max() + 1)
-        #cciv = np.bincount(bins,weights=ivar)
-        #rebin_ivar[:len(cciv)] += cciv
-        ## end of old way rebinning
-        rebin_ivar = np.bincount(bins, weights=ivar)
+        rebin_ivar = np.zeros(bins.max() + 1)
+        rebin_ivar_aux = np.bincount(bins, weights=ivar)
+        rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
         w = (rebin_ivar > 0.)
         self.log_lambda = rebin_log_lambda[w]
         self.ivar = rebin_ivar[w]
 
         # rebin using inverse variance weighting
         for key, value in ivar_coadd_data.items():
-            ## old way rebinning
-            #cnew = np.zeros(bins.max() + 1)
-            #ccnew = np.bincount(bins, weights=ivar * value)
-            #cnew[:len(ccnew)] += ccnew
-            #setattr(self, key, cnew[w] / rebin_ivar[w])
-            ## end of old way rebinning
-            rebin_value = np.bincount(bins, weights=ivar * value)
-            rebin_value = rebin_value[w] / rebin_ivar[w]
-            setattr(self, key, rebin_value)
+            rebin_value = np.zeros(bins.max() + 1)
+            rebin_value_aux = np.bincount(bins, weights=ivar * value)
+            rebin_value[:len(rebin_value_aux)] += rebin_value_aux
+            setattr(self, key, rebin_value[w] / rebin_ivar[w])
 
         # recompute means of quality variables
         if self.reso is not None:
@@ -661,9 +647,9 @@ class Forest(QSO):
         snr = self.flux / error
         self.mean_snr = snr.mean()
         lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
-        self.mean_z = (
-            (np.power(10., log_lambda[len(log_lambda) - 1]) +
-             np.power(10., log_lambda[0])) / 2. / lambda_abs_igm - 1.0)
+        self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
+                        np.power(10., log_lambda[0])) / 2. / lambda_abs_igm -
+                       1.0)
 
         return self
 
