@@ -605,7 +605,7 @@ class Forest(QSO):
         Returns:
             The coadded forest.
         """
-        if not hasattr(self, 'log_lambda') or not hasattr(other, 'log_lambda'):
+        if self.log_lambda is None or other.log_lambda is None:
             return self
 
         # this should contain all quantities that are to be coadded using

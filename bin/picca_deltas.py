@@ -493,7 +493,7 @@ def main():
     for healpix in data:
         forests = []
         for forest in data[healpix]:
-            if (not hasattr(forest, 'log_lambda') or
+            if (forest.log_lambda is None) or
                     len(forest.log_lambda) < args.npix_min):
                 log_file.write(("INFO: Rejected {} due to forest too "
                                 "short\n").format(forest.thingid))
@@ -527,7 +527,7 @@ def main():
     # Sanity check: all forests must have the attribute log_lambda
     for healpix in data:
         for forest in data[healpix]:
-            assert hasattr(forest, 'log_lambda')
+            assert forest.log_lambda is not None
 
     # compute fits to the forests iteratively
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
