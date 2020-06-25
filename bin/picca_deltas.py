@@ -493,7 +493,7 @@ def main():
     for healpix in data:
         forests = []
         for forest in data[healpix]:
-            if (forest.log_lambda is None) or
+            if ((forest.log_lambda is None) or
                     len(forest.log_lambda) < args.npix_min):
                 log_file.write(("INFO: Rejected {} due to forest too "
                                 "short\n").format(forest.thingid))
