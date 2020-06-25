@@ -896,6 +896,7 @@ class Forest(QSO):
         self.p0 = minimizer.values["p0"]
         self.p1 = minimizer.values["p1"]
 
+        self.bad_cont = None
         if not minimizer_result.is_valid:
             self.bad_cont = "minuit didn't converge"
         if np.any(self.cont <= 0):
