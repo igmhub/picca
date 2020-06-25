@@ -685,7 +685,7 @@ class Forest(QSO):
             mask_rest_frame: array of arrays
                 Same as mask_obs_frame but for rest-frame wavelengths.
         """
-        if not hasattr(self, 'log_lambda'):
+        if self.log_lambda is None:
             return
 
         w = np.ones(self.log_lambda.size, dtype=bool)
@@ -727,7 +727,7 @@ class Forest(QSO):
             Restframe wavelength of the element responsible for the absorption.
             In Angstroms
         """
-        if not hasattr(self, 'log_lambda'):
+        if self.log_lambda is None:
             return
 
         if self.mean_optical_depth is None:
@@ -752,7 +752,7 @@ class Forest(QSO):
             mask : list or None - Default None
             Wavelengths to be masked in DLA rest-frame wavelength
         """
-        if not hasattr(self, 'log_lambda'):
+        if self.log_lambda is None:
             return
         if self.dla_transmission is None:
             self.dla_transmission = np.ones(len(self.log_lambda))
@@ -784,7 +784,7 @@ class Forest(QSO):
             lambda_absorber: float
                 Wavelength of the absorber
         """
-        if not hasattr(self, 'log_lambda'):
+        if self.log_lambda is None:
             return
 
         w = np.ones(self.log_lambda.size, dtype=bool)
