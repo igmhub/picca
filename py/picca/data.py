@@ -505,7 +505,6 @@ class Forest(QSO):
         # rebin arrays
         rebin_log_lambda = (Forest.log_lambda_min +
                             np.arange(bins.max() + 1) * Forest.delta_log_lambda)
-        #### old way rebinning
         rebin_flux = np.zeros(bins.max() + 1)
         rebin_ivar = np.zeros(bins.max() + 1)
         if mean_expected_flux_frac is not None:
@@ -513,7 +512,8 @@ class Forest(QSO):
         rebin_flux_aux = np.bincount(bins, weights=ivar * flux)
         rebin_ivar_aux = np.bincount(bins, weights=ivar)
         if mean_expected_flux_frac is not None:
-            ccmmef = np.bincount(bins, weights=ivar * mean_expected_flux_frac)
+            rebin_mean_expected_flux_frac_aux = np.bincount(
+                bins, weights=ivar * mean_expected_flux_frac)
         if exposures_diff is not None:
             rebin_exposures_diff = np.bincount(bins,
                                                weights=ivar * exposures_diff)
@@ -522,7 +522,9 @@ class Forest(QSO):
         rebin_flux[:len(rebin_flux_aux)] += rebin_flux_aux
         rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
         if mean_expected_flux_frac is not None:
-            rebin_mean_expected_flux_frac[:len(ccmmef)] += ccmmef
+            rebin_mean_expected_flux_frac[:len(
+                rebin_mean_expected_flux_frac_aux
+            )] += rebin_mean_expected_flux_frac_aux
         w = (rebin_ivar > 0.)
         if w.sum() == 0:
             return
