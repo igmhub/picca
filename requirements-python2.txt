@@ -7,4 +7,4 @@ llvmlite==0.31.0
 numba>=0.47.0
 h5py>=2.10.0
 future>=0.18.2
-setuptools>=44.1.0
+setuptools>=44.1.1
