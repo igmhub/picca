@@ -557,7 +557,7 @@ def main():
             if not (args.use_ivar_as_weight or args.use_constant_weight):
                 (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
                  var_delta, var2_delta, count, num_qso, chi2_in_bin, error_eta,
-                 error_var_lss, err_fudge) = prep_del.compute_var_stats(
+                 error_var_lss, error_fudge) = prep_del.compute_var_stats(
                      data, (args.eta_min, args.eta_max),
                      (args.vlss_min, args.vlss_max))
                 Forest.get_eta = interp1d(log_lambda[num_pixels > 0],
@@ -593,7 +593,7 @@ def main():
 
                 error_eta = np.zeros(num_bins)
                 error_var_lss = np.zeros(num_bins)
-                err_fudge = np.zeros(num_bins)
+                error_fudge = np.zeros(num_bins)
                 chi2_in_bin = np.zeros(num_bins)
 
                 num_pixels = np.zeros(num_bins)
