@@ -1516,14 +1516,18 @@ def read_spall(in_dir, thingid):
                    "will lose reobservations)"))
         sys.exit(1)
 
-    spall = fitsio.FITS(filenames[0])
+    spall = fitsio.FITS(filenames[0],
+                        columns=[
+                            'THING_ID', 'PLATE', 'MJD', 'FIBERID',
+                            'PLATEQUALITY', 'ZWARNING'
+                        ])
     userprint("INFO: reading spAll from {}".format(filenames[0]))
-    thingid_spall = spall[1]["THING_ID"][:]
-    plate_spall = spall[1]["PLATE"][:]
-    mjd_spall = spall[1]["MJD"][:]
-    fiberid_spall = spall[1]["FIBERID"][:]
-    quality_spall = spall[1]["PLATEQUALITY"][:].astype(str)
-    z_warn_spall = spall[1]["ZWARNING"][:]
+    thingid_spall = spall["THING_ID"]
+    plate_spall = spall["PLATE"]
+    mjd_spall = spall["MJD"]
+    fiberid_spall = spall["FIBERID"]
+    quality_spall = spall["PLATEQUALITY"].astype(str)
+    z_warn_spall = spall["ZWARNING"]
 
     w = np.in1d(thingid_spall, thingid)
     userprint("INFO: Found {} spectra with required THING_ID".format(w.sum()))
