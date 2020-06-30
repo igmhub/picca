@@ -1506,6 +1506,8 @@ def read_spall(in_dir, thingid, spall=None):
             Directory to spectra files
         thingid: array of int
             Thingid of the observations
+        spall: str - default: None
+            Path to the spAll file required for multiple observations
     Returns:
         Arrays with thingid, plate, mjd, and fiberid
     """
@@ -1557,12 +1559,11 @@ def read_spall(in_dir, thingid, spall=None):
         9: 'NODATA'
     }
     for z_warn_bit, z_warn_bit_name in bad_z_warn_bit.items():
-        wbit = (z_warn_spall & 2**z_warn_bit == 0 )
+        wbit = (z_warn_spall & 2**z_warn_bit == 0)
         w &= wbit 
         userprint(("INFO: Found {} spectra without {} bit set: "
                    "{}").format(w.sum(), z_warn_bit, z_warn_bit_name))
     userprint("INFO: # unique objs: ", len(thingid))
     userprint("INFO: # spectra: ", w.sum())
-    #spall.close()
 
     return thingid_spall[w], plate_spall[w], mjd_spall[w], fiberid_spall[w]
