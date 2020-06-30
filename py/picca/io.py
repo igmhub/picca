@@ -1557,11 +1557,12 @@ def read_spall(in_dir, thingid, spall=None):
         9: 'NODATA'
     }
     for z_warn_bit, z_warn_bit_name in bad_z_warn_bit.items():
-        w &= z_warn_spall & 2**z_warn_bit
+        wbit = (z_warn_spall & 2**z_warn_bit == 0 )
+        w &= wbit 
         userprint(("INFO: Found {} spectra without {} bit set: "
                    "{}").format(w.sum(), z_warn_bit, z_warn_bit_name))
     userprint("INFO: # unique objs: ", len(thingid))
     userprint("INFO: # spectra: ", w.sum())
-    spall.close()
+    #spall.close()
 
     return thingid_spall[w], plate_spall[w], mjd_spall[w], fiberid_spall[w]
