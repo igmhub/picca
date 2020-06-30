@@ -289,6 +289,12 @@ def main():
                         default=False,
                         help='use the mock continuum for computing the deltas')
 
+    parser.add_argument('--spall',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help=('Path to spAll file'))
+
     args = parser.parse_args()
 
     # setup forest class variables
@@ -394,7 +400,8 @@ def main():
                                          order=args.order,
                                          best_obs=args.best_obs,
                                          single_exp=args.single_exp,
-                                         pk1d=args.delta_format)
+                                         pk1d=args.delta_format,
+                                         spall=args.spall)
 
     ### Read masks
     mask_obs_frame = None
