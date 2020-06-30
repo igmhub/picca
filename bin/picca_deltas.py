@@ -10,6 +10,7 @@ import os
 from multiprocessing import Pool
 import argparse
 import fitsio
+import time
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -289,6 +290,14 @@ def main():
                         default=False,
                         help='use the mock continuum for computing the deltas')
 
+    parser.add_argument('--spall',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help=('Path to spAll file'))
+
+    t0 = time.time()
+
     args = parser.parse_args()
 
     # setup forest class variables
@@ -394,7 +403,8 @@ def main():
                                          order=args.order,
                                          best_obs=args.best_obs,
                                          single_exp=args.single_exp,
-                                         pk1d=args.delta_format)
+                                         pk1d=args.delta_format,
+                                         spall=args.spall)
 
     ### Read masks
     mask_obs_frame = None
@@ -528,6 +538,10 @@ def main():
     for healpix in data:
         for forest in data[healpix]:
             assert forest.log_lambda is not None
+
+    t1 = time.time()
+    tmin = (t1-t0)/60
+    userprint('INFO: time elapsed to read data', tmin, 'minutes')
 
     # compute fits to the forests iteratively
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
@@ -671,8 +685,12 @@ def main():
     log_file.write(
         ("INFO: Accepted sample has {}"
          "forests\n").format(np.sum([len(p) for p in deltas.values()])))
+    
+    t2 = time.time()
+    tmin = (t2-t1)/60
+    userprint('INFO: time elapsed to fit continuum', tmin, 'minutes')
 
-    log_file.close()
+    #log_file.close()
 
     ### Save delta
     for healpix in sorted(deltas.keys()):
@@ -825,6 +843,13 @@ def main():
 
             results.close()
 
+    t3 = time.time()
+    tmin = (t3-t2)/60
+    userprint('INFO: time elapsed to write deltas', tmin, 'minutes')
+    ttot = (t3-t0)/60
+    userprint('INFO: total elapsed time', ttot, 'minutes')
+   
+    log_file.close() 
 
 if __name__ == '__main__':
     main()

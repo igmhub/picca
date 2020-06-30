@@ -295,7 +295,8 @@ def read_data(in_dir,
               order=1,
               best_obs=False,
               single_exp=False,
-              pk1d=None):
+              pk1d=None, 
+              spall=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -332,6 +333,8 @@ def read_data(in_dir,
             observations (chosen randomly)
         pk1d: str or None - default: None
             Format for Pk 1D: Pk1D
+        spall: str - default: None
+            Path to the spAll file required for multiple observations
 
     Returns:
         The following variables:
@@ -408,7 +411,8 @@ def read_data(in_dir,
                                          fiberid,
                                          order,
                                          log_file=log_file,
-                                         best_obs=best_obs)
+                                         best_obs=best_obs, 
+                                         spall=spall)
         else:
             pix_data = read_from_spec(in_dir,
                                       thingid,
@@ -422,7 +426,8 @@ def read_data(in_dir,
                                       mode=mode,
                                       log_file=log_file,
                                       pk1d=pk1d,
-                                      best_obs=best_obs)
+                                      best_obs=best_obs,
+                                      spall=spall)
         ra = np.array([d.ra for d in pix_data])
         dec = np.array([d.dec for d in pix_data])
         healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
@@ -553,7 +558,8 @@ def read_from_spec(in_dir,
                    mode,
                    log_file=None,
                    pk1d=None,
-                   best_obs=None):
+                   best_obs=None,
+                   spall=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -584,6 +590,8 @@ def read_from_spec(in_dir,
         best_obs: bool - default: False
             If set, reads only the best observation for objects with repeated
             observations
+        spall: str - default: None
+            Path to the spAll file required for multiple observations
 
     Returns:
         List of read spectra for all the healpixs
@@ -595,7 +603,7 @@ def read_from_spec(in_dir,
     ## then replace thingid, plate, mjd, fiberid
     ## by what's available in spAll
     if not best_obs:
-        thingid, plate, mjd, fiberid = read_spall(in_dir, thingid)
+        thingid, plate, mjd, fiberid = read_spall(in_dir, thingid, spall=spall)
 
     ## to simplify, use a list of all metadata
     all_metadata = []
@@ -1030,7 +1038,8 @@ def read_from_spplate(in_dir,
                       fiberid,
                       order,
                       log_file=None,
-                      best_obs=False):
+                      best_obs=False,
+                      spall=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -1057,6 +1066,8 @@ def read_from_spplate(in_dir,
         best_obs: bool - default: False
             If set, reads only the best observation for objects with repeated
             observations
+        spall: str - default: None
+            Path to the spAll file required for multiple observations
 
     Returns:
         List of read spectra for all the healpixs
@@ -1067,7 +1078,7 @@ def read_from_spplate(in_dir,
     ## then replace thingid, plate, mjd, fiberid
     ## by what's available in spAll
     if not best_obs:
-        thingid, plate, mjd, fiberid = read_spall(in_dir, thingid)
+        thingid, plate, mjd, fiberid = read_spall(in_dir, thingid, spall=spall)
 
     ## to simplify, use a list of all metadata
     all_metadata = []
@@ -1487,7 +1498,7 @@ def read_objects(filename,
     return objs, z_qso.min()
 
 
-def read_spall(in_dir, thingid):
+def read_spall(in_dir, thingid, spall=None):
     """Loads thingid, plate, mjd, and fiberid from spAll file
 
     Args:
@@ -1495,33 +1506,37 @@ def read_spall(in_dir, thingid):
             Directory to spectra files
         thingid: array of int
             Thingid of the observations
+        spall: str - default: None
+            Path to the spAll file required for multiple observations
     Returns:
         Arrays with thingid, plate, mjd, and fiberid
     """
-    folder = in_dir.replace("spectra/", "")
-    folder = folder.replace("lite", "").replace("full", "")
-    filenames = glob.glob(folder + "/spAll-*.fits")
+    if spall is None:
+        folder = in_dir.replace("spectra/", "")
+        folder = folder.replace("lite", "").replace("full", "")
+        filenames = glob.glob(folder + "/spAll-*.fits")
 
-    if len(filenames) > 1:
-        userprint("ERROR: found multiple spAll files")
-        userprint(("ERROR: try running with --bestobs option (but you will "
-                   "lose reobservations)"))
-        for filename in filenames:
-            userprint("found: ", filename)
-        sys.exit(1)
-    if len(filenames) == 0:
-        userprint(("ERROR: can't find required spAll file in "
+        if len(filenames) > 1:
+            userprint("ERROR: found multiple spAll files")
+            userprint(("ERROR: try running with --bestobs option (but you will "
+                       "lose reobservations)"))
+            for filename in filenames:
+                userprint("found: ", filename)
+            sys.exit(1)
+        if len(filenames) == 0:
+            userprint(("ERROR: can't find required spAll file in "
                    "{}").format(in_dir))
-        userprint(("ERROR: try runnint with --best-obs option (but you "
-                   "will lose reobservations)"))
-        sys.exit(1)
+            userprint(("ERROR: try runnint with --best-obs option (but you "
+                       "will lose reobservations)"))
+            sys.exit(1)
+        spall = filenames[0]
 
-    spall = fitsio.FITS(filenames[0],
+    userprint("INFO: reading spAll from {}".format(spall))
+    spall = fitsio.read(spall,
                         columns=[
                             'THING_ID', 'PLATE', 'MJD', 'FIBERID',
                             'PLATEQUALITY', 'ZWARNING'
                         ])
-    userprint("INFO: reading spAll from {}".format(filenames[0]))
     thingid_spall = spall["THING_ID"]
     plate_spall = spall["PLATE"]
     mjd_spall = spall["MJD"]
@@ -1544,11 +1559,11 @@ def read_spall(in_dir, thingid):
         9: 'NODATA'
     }
     for z_warn_bit, z_warn_bit_name in bad_z_warn_bit.items():
-        w &= z_warn_spall & 2**z_warn_bit
+        wbit = (z_warn_spall & 2**z_warn_bit == 0)
+        w &= wbit 
         userprint(("INFO: Found {} spectra without {} bit set: "
                    "{}").format(w.sum(), z_warn_bit, z_warn_bit_name))
     userprint("INFO: # unique objs: ", len(thingid))
     userprint("INFO: # spectra: ", w.sum())
-    spall.close()
 
     return thingid_spall[w], plate_spall[w], mjd_spall[w], fiberid_spall[w]
