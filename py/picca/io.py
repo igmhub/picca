@@ -1530,7 +1530,7 @@ def read_spall(in_dir, thingid, spall=None):
         spall = filenames[0]
 
     userprint("INFO: reading spAll from {}".format(spall))
-    spall = fitsio.FITS(spall,
+    spall = fitsio.read(spall,
                         columns=[
                             'THING_ID', 'PLATE', 'MJD', 'FIBERID',
                             'PLATEQUALITY', 'ZWARNING'
