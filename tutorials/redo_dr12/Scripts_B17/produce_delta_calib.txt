@@ -1,0 +1,13 @@
+--in-dir          $EBOSS_v5_9_0/
+--drq             $EBOSS_DR13/qso/DR12Q/DR12Q.fits
+--out-dir         $REDO_B17/Delta_calibration/Delta/
+--iter-out-prefix $REDO_B17/Delta_calibration/Log/delta_attributes
+--log             $REDO_B17/Delta_calibration/Log/input.log
+--rebin 3
+--mode spplate
+--lambda-min 3600.0
+--lambda-max 5500.0
+--lambda-rest-min 2900.0
+--lambda-rest-max 3120.0
+--nit 5
+--best-obs

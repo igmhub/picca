@@ -1,0 +1,16 @@
+--in-dir          $EBOSS_v5_9_0/
+--drq             $EBOSS_DR13/qso/DR12Q/DR12Q.fits
+--out-dir         $REDO_dMdB17/Delta_calibration2/Delta/
+--iter-out-prefix $REDO_dMdB17/Delta_calibration2/Log/delta_attributes
+--log             $REDO_dMdB17/Delta_calibration2/Log/input.log
+--flux-calib      $REDO_dMdB17/Delta_calibration/Log/delta_attributes.fits.gz
+--mask-file       $PICCA_BASE/etc/dr12-sky-mask.txt
+--keep-zero-thid
+--rebin 3
+--mode spplate
+--lambda-min 3600.0
+--lambda-max 5500.0
+--lambda-rest-min 2900.0
+--lambda-rest-max 3120.0
+--nit 5
+--best-obs
