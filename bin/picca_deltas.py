@@ -10,10 +10,9 @@ from scipy.interpolate import interp1d
 from multiprocessing import Pool
 from math import isnan
 import argparse
-import bal_tools #functions for  for BAL masking
 
 from picca.data import forest, delta
-from picca import prep_del, io, constants
+from picca import prep_del, io, constants, bal_tools
 from picca.utils import print
 
 def cont_fit(data):
@@ -60,13 +59,12 @@ if __name__ == '__main__':
     parser.add_argument('--keep-bal',action='store_true',required=False,
         help='Do not reject BALs in drq')
 
-    ##Adding in BAL Catalog. --keep-bal should probably be set
-    parser.add_argument('--bal', type = str, default = None, required=False,
-            help = 'BAL file')
+    parser.add_argument('--bal-catalog', type = str, default = None, required=False,
+            help = 'BAL catalog location. Use with --keep-bal to mask BAL features')
 
     ##New arg for using just BI or AI velocities
-    parser.add_argument('--BALi', type = str, default = 'AI', required=False,
-            help = 'BAL index type.')
+    parser.add_argument('--BAL-index', type = str, default = 'AI', required=False,
+            help = 'BAL index type, choose either AI or BI. Use with --bal-catalog and -keep-bal. This will set which velocity the BAL mask uses.')
 
     parser.add_argument('--bi-max',type=float,required=False,default=None,
         help='Maximum CIV balnicity index in drq (overrides --keep-bal)')
@@ -304,9 +302,9 @@ if __name__ == '__main__':
                         nb_dla_in_forest += 1
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
-    ## Correct for BALs
+    ## Mask BALs
     if not args.bal is None:
-        print("INFO: Adding BALs")
+        print("INFO: Adding BALs found in BAL catalog")
         bcat = bal_tools.read_bal(args.bal)
         nb_bal_in_forest = 0
         for p in data:
