@@ -50,36 +50,33 @@ salloc -N 1 -C haswell -q interactive -t 04:00:00
 Run a script to measure the correlation, distortion and metal matrix:
 python -u $PICCA_DR12/Scripts_dMdB17/send_cor.py > info_xcf &  
 
+Note that there will be a lot of numba deprecation warnings.
+
 
 --- Inspecting the measured correlations ---
 
 Install baoutil from Julien's branch: 
 https://github.com/julienguy/baoutil/tree/julien
 
-plot_xi.py -d Correlations/xcf.fits.gz --mu "0.95:1.0,0.8:0.95,0.5:0.8,0.0:0.5" --abs --rrange "0:200" --out-figure Correlations/xcf
+plot_xi.py -d $REDO_dMdB17/Correlations/xcf-exp.fits.gz --mu "0.95:1.0,0.8:0.95,0.5:0.8,0.0:0.5" --abs --rrange "0:200" 
 
 
 --- Run BAO fits ---
 
-picca_fitter2.py Fits/chi2_cf_v0.ini
-picca_fitter2.py Fits/chi2_xcf_v0.ini
+picca_fitter2.py $PICCA_DR12/Scripts_dMdB17/chi2_xcf_baseline.ini > info_xcf_baseline &
 
 
 --- Inspect results from BAO fits ---
 
-extract_fit_pars.py -i Fits/results_cf_v3_rej099_lyaonly.h5
-extract_fit_pars.py -i Fits/results_xcf_v3_rej098_lyaonly.h5
+extract_fit_pars.py -i $REDO_dMdB17/Fits/results_xcf_baseline.h5
 
 
 --- You can extract to ASCII the results as well ---
 
-extract_model.py -i Fits/results_cf_v3_rej099_lyaonly.h5 -o Fits/results_cf_v3_rej099_lyaonly.txt
-extract_model.py -i Fits/results_xcf_v3_rej098_lyaonly.h5 -o Fits/results_xcf_v3_rej098_lyaonly.txt
+extract_model.py -i $REDO_dMdB17/Fits/results_xcf_baseline.h5 -o Fits/results_xcf_baseline.txt
 
 
 --- You can overplot data and model like this ---
 
-plot_xi.py -d Correlations/e_cf_v3_rej099.fits.gz --mu "0.95:1.0,0.8:0.95,0.5:0.8,0.0:0.5" --model Fits/results_cf_v3_rej099_lyaonly.txt 
-plot_xi.py -d Correlations/e_xcf_v3_rej098.fits.gz --mu "0.96:1.0,0.8:0.96,0.5:0.8,0.0:0.5" --abs --rrange "0:200" --model Fits/results_xcf_v3_rej098_lyaonly.txt
-
+plot_xi.py -d $REDO_dMdB17/Correlations/xcf-exp.fits.gz --mu "0.95:1.0,0.8:0.95,0.5:0.8,0.0:0.5" --model $REDO_dMdB17/Fits/results_xcf_baseline.txt --abs --rrange "0:200" --out-figure $REDO_dMdB17/Correlations/xcf
 
