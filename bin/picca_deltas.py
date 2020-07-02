@@ -62,9 +62,8 @@ if __name__ == '__main__':
     parser.add_argument('--bal-catalog', type = str, default = None, required=False,
             help = 'BAL catalog location. Use with --keep-bal to mask BAL features')
 
-    ##New arg for using just BI or AI velocities
-    parser.add_argument('--BAL-index', type = str, default = 'AI', required=False,
-            help = 'BAL index type, choose either AI or BI. Use with --bal-catalog and -keep-bal. This will set which velocity the BAL mask uses.')
+    parser.add_argument('--bal-index', type = str, default = 'ai', required=False,
+            help = 'BAL index type, choose either ai or bi. Use with --bal-catalog and -keep-bal. This will set which velocity the BAL mask uses.')
 
     parser.add_argument('--bi-max',type=float,required=False,default=None,
         help='Maximum CIV balnicity index in drq (overrides --keep-bal)')
@@ -305,13 +304,13 @@ if __name__ == '__main__':
     ## Mask BALs
     if not args.bal is None:
         print("INFO: Adding BALs found in BAL catalog")
-        bcat = bal_tools.read_bal(args.bal)
+        bal_cat = bal_tools.read_bal(args.bal_catalog)
         nb_bal_in_forest = 0
         for p in data:
             for d in data[p]:
                 if d.thid in bcat["THING_ID"]:
-                    BAL_mask_obs = []
-                    BAL_mask_rf = bal_tools.add_bal_rf(bcat,d.thid,args.BALi)
+                    bal_mask_obs = []
+                    bal_mask_rf = bal_tools.add_bal_rf(bal_cat,d.thid,ags.bal_index)
                     d.mask(mask_obs=BAL_mask_obs , mask_RF=BAL_mask_rf)
                     nb_bal_in_forest += 1
         log.write("Found {} BAL quasars in forests\n".format(nb_bal_in_forest))
