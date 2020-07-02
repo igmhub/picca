@@ -10,7 +10,7 @@ def read_bal(bal_catalog): ##Based on read_dla from picca/py/picca/io.py
     bal_dict = { k :h[1][k][:] for k in lst }
     h.close()
 
-    return bal_catalog
+    return bal_dict
 
 
 #based on add_dla from picca/py/picca/data.py
