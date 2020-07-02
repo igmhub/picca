@@ -361,10 +361,10 @@ def desi_convert_transmission_to_delta_files(obj_path,
                                              out_dir,
                                              in_dir=None,
                                              in_filenames=None,
-                                             log_lambda_min=3600.,
-                                             log_lambda_max=5500.,
-                                             log_lambda_min_rest_frame=1040.,
-                                             log_lambda_max_rest_frame=1200.,
+                                             lambda_min=3600.,
+                                             lambda_max=5500.,
+                                             lambda_min_rest_frame=1040.,
+                                             lambda_max_rest_frame=1200.,
                                              delta_log_lambda=3.e-4,
                                              max_num_spec=None):
     """Convert desi transmission files to picca delta files
@@ -380,13 +380,13 @@ def desi_convert_transmission_to_delta_files(obj_path,
         in_filenames: array of str or None - default: None
             List of the filenames for the transmission files. Ignored if in_dir
             is not 'None'
-        log_lambda_min: float - default: 3600.
+        lambda_min: float - default: 3600.
             Minimum observed wavelength in Angstrom
-        log_lambda_max: float - default: 5500.
+        lambda_max: float - default: 5500.
             Maximum observed wavelength in Angstrom
-        log_lambda_min_rest_frame: float - default: 1040.
+        lambda_min_rest_frame: float - default: 1040.
             Minimum Rest Frame wavelength in Angstrom
-        log_lambda_max_rest_frame: float - default: 1200.
+        lambda_max_rest_frame: float - default: 1200.
             Maximum Rest Frame wavelength in Angstrom
         delta_log_lambda: float - default: 3.e-4
             Variation of the logarithm of the wavelength between two pixels
@@ -447,8 +447,8 @@ def desi_convert_transmission_to_delta_files(obj_path,
     userprint('INFO: Found {} files'.format(files.size))
 
     # Stack the deltas transmission
-    log_lambda_min = np.log10(log_lambda_min)
-    log_lambda_max = np.log10(log_lambda_max)
+    log_lambda_min = np.log10(lambda_min)
+    log_lambda_max = np.log10(lambda_max)
     num_bins = int((log_lambda_max - log_lambda_min) / delta_log_lambda) + 1
     stack_delta = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
@@ -484,13 +484,13 @@ def desi_convert_transmission_to_delta_files(obj_path,
         bins = np.floor((log_lambda - log_lambda_min) / delta_log_lambda +
                         0.5).astype(int)
         aux_log_lambda = log_lambda_min + bins * delta_log_lambda
-        log_lambda = (10**aux_log_lambda) * np.ones(num_obj)[:, None]
-        log_lambda_rest_frame = (10**aux_log_lambda) / (1. + z[:, None])
+        lambda_obs_frame =  (10**aux_log_lambda) * np.ones(num_obj)[:, None]
+        lambda_rest_frame = (10**aux_log_lambda) / (1. + z[:, None])
         valid_pixels = np.zeros_like(trans).astype(int)
         valid_pixels[(log_lambda >= log_lambda_min) &
                      (log_lambda < log_lambda_max) &
-                     (log_lambda_rest_frame > log_lambda_min_rest_frame) &
-                     (log_lambda_rest_frame < log_lambda_max_rest_frame)] = 1
+                     (lambda_rest_frame > lambda_min_rest_frame) &
+                     (lambda_rest_frame < lambda_max_rest_frame)] = 1
         num_pixels = np.sum(valid_pixels, axis=1)
         w = num_pixels >= 50
         w &= np.in1d(thingid, objs_thingid)
