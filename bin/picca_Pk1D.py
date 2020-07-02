@@ -457,7 +457,7 @@ def main():
                         'comment': "QSO's redshift"
                     }, {
                         'name': 'MEANZ',
-                        'value': mean_z_array[index],
+                        'value': mean_z_array[index2],
                         'comment': "Absorbers mean redshift"
                     }, {
                         'name': 'MEANRESO',
