@@ -403,10 +403,8 @@ def desi_convert_transmission_to_delta_files(obj_path,
         objs_thingid = hdul[1]['TARGETID'][:]
     elif 'THING_ID' in key_val:
         objs_thingid = hdul[1]['THING_ID'][:]
-    w = hdul[1]['Z'][:] > max(0.,
-                              log_lambda_min / log_lambda_max_rest_frame - 1.)
-    w &= hdul[1]['Z'][:] < max(0.,
-                               log_lambda_max / log_lambda_min_rest_frame - 1.)
+    w = hdul[1]['Z'][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
+    w &= hdul[1]['Z'][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
     objs_ra = hdul[1]['RA'][:][w].astype('float64') * np.pi / 180.
     objs_dec = hdul[1]['DEC'][:][w].astype('float64') * np.pi / 180.
     objs_thingid = objs_thingid[w]
