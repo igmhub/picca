@@ -26,12 +26,12 @@ def add_bal_rf(bal_catalog,thid,BAL_index): #BAL catalog, THING_ID, and BAL inde
         "lOI" : 1039
     }
 
-    if bal_index == 'BI':
+    if bal_index == 'bi':
         lst = ['VMIN_CIV_2000','VMAX_CIV_2000']
     else: ##AI, the default
         lst = ['VMIN_CIV_450','VMAX_CIV_450']
 
-    BAL_mask_rf = []
+    bal_mask_rf = []
 
     ls = sp.constants.c*10**-3 ##Speed of light in km/s
 
@@ -59,9 +59,9 @@ def add_bal_rf(bal_catalog,thid,BAL_index): #BAL catalog, THING_ID, and BAL inde
         for lin in lines.values():
             lMin = lin*(1-vMin[i]/ls)
             lMax = lin*(1-vMax[i]/ls)
-            BAL_mask_rf += [[lMin, lMax]]
+            bal_mask_rf += [[lMin, lMax]]
     
-    BAL_mask_rf = sp.log10(sp.asarray(BAL_mask_rf))
+    bal_mask_rf = sp.log10(sp.asarray(BAL_mask_rf))
 
-    return BAL_mask_rf
+    return bal_mask_rf
 
