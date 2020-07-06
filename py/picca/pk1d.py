@@ -456,7 +456,7 @@ class Pk1D:
         pk = data['Pk'][:]
         pk_raw = data['Pk_raw'][:]
         pk_noise = data['Pk_noise'][:]
-        correction_reso = data['correction_reso'][:]
+        correction_reso = data['cor_reso'][:]
         pk_diff = data['Pk_diff'][:]
 
         return cls(ra, dec, z_qso, mean_z, plate, mjd, fiberid, mean_snr,
