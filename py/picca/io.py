@@ -1116,6 +1116,8 @@ def read_from_spplate(in_dir,
             log_file.write("error reading {}\n".format(spplate))
             continue
 
+        t0 = time.time()
+
         coeff0 = header["COEFF0"]
         coeff1 = header["COEFF1"]
 
@@ -1145,7 +1147,7 @@ def read_from_spplate(in_dir,
         num_read = len(platemjd[(p, m)])
         userprint(("INFO: read {} from {} in {} per spec. Progress: {} "
                    "of {} \n").format(num_read, os.path.basename(spplate),
-                                      (time.time() - 0) / (num_read + 1e-3),
+                                      (time.time() - t0) / (num_read + 1e-3),
                                       len(pix_data), len(thingid)))
         hdul.close()
 
