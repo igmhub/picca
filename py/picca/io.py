@@ -1242,8 +1242,8 @@ def read_from_desi(nside,
         for spectrograph in spectrographs:
             spec = {}
             try:
-                lambda_ = hdul["{}_WAVELENGTH".format(spectrograph)].read()
-                spec["log_lambda"] = np.log10(lambda_)
+                spec["log_lambda"] = np.log10(
+                    hdul["{}_WAVELENGTH".format(spectrograph)].read())
                 spec["FL"] = hdul["{}_FLUX".format(spectrograph)].read()
                 spec["IV"] = (
                     hdul["{}_IVAR".format(spectrograph)].read() *
@@ -1251,10 +1251,12 @@ def read_from_desi(nside,
                 w = np.isnan(spec["FL"]) | np.isnan(spec["IV"])
                 for key in ["FL", "IV"]:
                     spec[key][w] = 0.
-                spec["RESO"] = hdul["{}_RESOLUTION".format(spectrograph)].read()
+                if "{}_RESOLUTION".format(spectrograph) in hdul:
+                    spec["RESO"] = hdul["{}_RESOLUTION".format(
+                        spectrograph)].read()
                 spec_data[spectrograph] = spec
             except OSError:
-                pass
+                print("error {}".format(spectrograph))
         hdul.close()
 
         for t, p, m, f in zip(thingid_qsos, plate_qsos, mjd_qsos, fiberid_qsos):
