@@ -3,7 +3,7 @@ scipy>=1.5.0
 iminuit>=1.4.5
 healpy>=1.13.0
 fitsio==1.0.5
-llvmlite>=0.33.0
+llvmlite==0.32.1
 numba>=0.50.1
 h5py>=2.10.0
 future>=0.18.2
