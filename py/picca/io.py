@@ -213,7 +213,7 @@ def read_data(in_dir,drq,mode,zmin = 2.1,zmax = 3.5,nspec=None,log=None,keep_bal
         nside = 8
         print("Found {} qsos".format(len(zqso)))
         data = read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order, pk1d=pk1d)
-        return data,len(data),nside,"RING"
+        return data,len(data),nside,"RING"py/picca/io.py
 
     else:
         print("I don't know mode: {}".format(mode))
