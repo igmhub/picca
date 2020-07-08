@@ -341,8 +341,9 @@ def main():
                 continue
 
             # first pixel in forest
-            first_pixel_index = np.argmax(
-                10**delta.log_lambda > args.lambda_obs_min)
+            selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
+            first_pixel_index = (np.argmax(selected_pixels) 
+                                 if np.any(selected_pixels) else len(selected_pixels))
 
             # minimum number of pixel in forest
             min_num_pixels = args.nb_pixel_min

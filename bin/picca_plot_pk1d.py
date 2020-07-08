@@ -99,8 +99,8 @@ def main():
                     (pk.k[index2] - k_min) / (k_max - k_min) * num_k_bins)
                 if index_k >= num_k_bins or index_k < 0:
                     continue
-                sum_pk[index_z, index_k] += pk.Pk[index2] * pk.k[index2] / np.pi
-                sum_pk_square[index_z, index_k] += (pk.Pk[index2] *
+                sum_pk[index_z, index_k] += pk.pk[index2] * pk.k[index2] / np.pi
+                sum_pk_square[index_z, index_k] += (pk.pk[index2] *
                                                     pk.k[index2] / np.pi)**2
                 counts[index_z, index_k] += 1.0
 
