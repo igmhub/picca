@@ -1,4 +1,11 @@
-# NOTE: THIS IS NOT THE LATEST RELEASE OF PICCA. THIS ONE SHOULD ONLY BE USED WHEN TRYING TO REPRODUCE DR12 RESULTS FROM BOSS.
+# NOTE: THIS IS NOT THE LATEST RELEASE OF PICCA. 
+
+This tag is for a special branch in Picca, redo_dr12, that was created in 2019/2020 while writing the DR16 paper from eBOSS (du Mas des Bourboux et al. 2020).
+
+It is an attempt to reproduce as close as possible the DR12 results presented from BOSS in Bautista et al. (2017) and in du Mas des Bourboux et al. (2017). 
+
+Instructions for how to reproduce the results can be found in picca/tutorials/redo_dr12/
+
 
 # picca
 
