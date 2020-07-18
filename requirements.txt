@@ -1,10 +1,10 @@
 numpy>=1.19.0
-scipy>=1.5.0
-iminuit==1.4.5
+scipy>=1.5.1
+iminuit==1.4.6 ### because of precision issue in latest release
 healpy>=1.13.0
-fitsio==1.0.5
+fitsio==2.0.5 ### because of pip install errors https://github.com/esheldon/fitsio/issues/298
 llvmlite>=0.33.0
 numba>=0.50.1
 h5py>=2.10.0
 future>=0.18.2
-setuptools>=47.3.1
+setuptools>=49.2.0
