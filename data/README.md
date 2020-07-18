@@ -23,7 +23,7 @@ data/duMasdesBourbouxetal2020/combined_stdFit/combined.ap.at.scan.dat \
 --label auto-DR16 cross-DR16 combined-DR16
 ```
 
-![DR14-chi2scan](/tutorials/data/DR14-chi2-scan-ap-at.png)
+![DR16-chi2scan](/tutorials/data/DR16-chi2-scan-ap-at.png)
 
 ## DR16
 
