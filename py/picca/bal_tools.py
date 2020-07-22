@@ -14,7 +14,7 @@ def read_bal(bal_catalog): ##Based on read_dla from picca/py/picca/io.py
 
 
 #based on add_dla from picca/py/picca/data.py
-def add_bal_rf(bal_catalog,thid,BAL_index): #BAL catalog, THING_ID, and BAL index
+def add_bal_rf(bal_catalog,thid,bal_index): #BAL catalog, THING_ID, and BAL index
     ### Wavelengths in Angstroms
     lines = {
         "lCIV" : 1549, #Used for testing
@@ -61,7 +61,7 @@ def add_bal_rf(bal_catalog,thid,BAL_index): #BAL catalog, THING_ID, and BAL inde
             lMax = lin*(1-vMax[i]/ls)
             bal_mask_rf += [[lMin, lMax]]
     
-    bal_mask_rf = sp.log10(sp.asarray(BAL_mask_rf))
+    bal_mask_rf = sp.log10(sp.asarray(bal_mask_rf))
 
     return bal_mask_rf
 

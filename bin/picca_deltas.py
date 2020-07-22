@@ -302,16 +302,16 @@ if __name__ == '__main__':
         log.write("Found {} DLAs in forests\n".format(nb_dla_in_forest))
 
     ## Mask BALs
-    if not args.bal is None:
+    if not args.bal_catalog is None:
         print("INFO: Adding BALs found in BAL catalog")
         bal_cat = bal_tools.read_bal(args.bal_catalog)
         nb_bal_in_forest = 0
         for p in data:
             for d in data[p]:
-                if d.thid in bcat["THING_ID"]:
+                if d.thid in bal_cat["THING_ID"]:
                     bal_mask_obs = []
-                    bal_mask_rf = bal_tools.add_bal_rf(bal_cat,d.thid,ags.bal_index)
-                    d.mask(mask_obs=BAL_mask_obs , mask_RF=BAL_mask_rf)
+                    bal_mask_rf = bal_tools.add_bal_rf(bal_cat,d.thid,args.bal_index)
+                    d.mask(mask_obs=bal_mask_obs , mask_RF=bal_mask_rf)
                     nb_bal_in_forest += 1
         log.write("Found {} BAL quasars in forests\n".format(nb_bal_in_forest))
                 
