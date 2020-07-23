@@ -89,12 +89,23 @@ def read_drq(drq,zmin,zmax,keep_bal,bi_max=None):
         zqso = h[1]['Z_VI'][:]
 
     ## Info of the primary observation
-    thid = h[1]['THING_ID'][:]
-    ra = h[1]['RA'][:].astype('float64')
-    dec = h[1]['DEC'][:].astype('float64')
-    plate = h[1]['PLATE'][:]
-    mjd = h[1]['MJD'][:]
-    fid = h[1]['FIBERID'][:]
+    try:
+        print("DESI DRQ catalog format")
+        thid = h[1]['TARGETID'][:]
+        ra = h[1]['TARGET_RA'][:].astype('float64')
+        dec = h[1]['TARGET_DEC'][:].astype('float64')
+        plate = h[1]['TILEID'][:]
+        mjd = h[1]['NIGHT'][:]
+        fid = h[1]['FIBER'][:]
+
+    except:
+        thid = h[1]['THING_ID'][:]
+        ra = h[1]['RA'][:].astype('float64')
+        dec = h[1]['DEC'][:].astype('float64')
+        plate = h[1]['PLATE'][:]
+        mjd = h[1]['MJD'][:]
+        fid = h[1]['FIBERID'][:]
+
 
     ## Sanity
     print('')
@@ -970,7 +981,6 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
     Routine used to treat the DESI mini-SV data. 
     The spectra must be in the format "spectra directory"/"tile numbers"/coadd-* """
     
-    
     spectra_in = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"),recursive=True)
     spectra = []
     plate_unique=np.unique(plate)
@@ -1048,7 +1058,6 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
         plate_qsos = plate[select]
         night_qsos = night[select]
         fid_qsos = fid[select]
-
         for t,p,m,f in zip(tid_qsos,plate_qsos,night_qsos,fid_qsos):
             wt = in_tids == t
             if wt.sum()==0:
