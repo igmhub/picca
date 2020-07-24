@@ -980,15 +980,26 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
     """ Unlike DESI routine, store deltas by "tile" + "spectro number". 
     Routine used to treat the DESI mini-SV data. 
     The spectra must be in the format "spectra directory"/"tile numbers"/coadd-* """
-    
+    if(len(str(plate[0]))== 5):
+        no_petal_number=True
+    else:
+        no_petal_number=False
+
+
     spectra_in = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"),recursive=True)
     spectra = []
     plate_unique=np.unique(plate)
     for s in spectra_in:
         for p in plate_unique:
-            if str(p)[:-1] in s:
-                spectra.append(s)
-                break
+            if(no_petal_number):
+                if str(p) in s:
+                    spectra.append(s)
+                    break
+            else:
+                if str(p)[:-1] in s:
+                    spectra.append(s)
+                    break
+
                 
 
 
@@ -1050,8 +1061,11 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
             dic['RESO'] = h['{}_RESOLUTION'.format(str_band)].read()
             specData[str_band]=dic
         h.close()
-        
-        plate_spec = int(str(tile_spec) + str(petal_spec))
+        if(no_petal_number):
+            plate_spec = tile_spec
+        else:
+            plate_spec = int(str(tile_spec) + str(petal_spec))
+
         select=(plate==plate_spec)&(night==night_spec)
         print('\nThis is tile {}, petal {}, night {}'.format(tile_spec,petal_spec,night_spec))
         tid_qsos = thid[select]
@@ -1062,7 +1076,6 @@ def read_from_minisv_desi(nside,in_dir,thid,ra,dec,zqso,plate,night,fid,order,pk
             wt = in_tids == t
             if wt.sum()==0:
                 print("\nError reading thingid {}\n".format(t))
-                print("catalog thid : {}".format( tid_qsos))
                 print("spectra : {}".format(spec))
                 print("plate_spec : {}".format(plate_spec))
                 continue
