@@ -423,7 +423,9 @@ def pk_hcd_Rogers2018_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     """
     Apply a Gaussian smoothing to the full correlation function
-
+    Args : k, sigma_smooth par and per
+    return : P(k) multiplied by G(k)^2
+    with G(k) = exp(-kpar^2 sigma_par^2 - kperp^2 sigma_perp^2)
     """
     kp  = k*muk
     kt  = k*np.sqrt(1.-muk**2)
