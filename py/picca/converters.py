@@ -485,8 +485,8 @@ def desi_convert_transmission_to_delta_files(obj_path,
         lambda_obs_frame =  (10**aux_log_lambda) * np.ones(num_obj)[:, None]
         lambda_rest_frame = (10**aux_log_lambda) / (1. + z[:, None])
         valid_pixels = np.zeros_like(trans).astype(int)
-        valid_pixels[(log_lambda >= log_lambda_min) &
-                     (log_lambda < log_lambda_max) &
+        valid_pixels[(lambda_obs_frame >= lambda_min) &
+                     (lambda_obs_frame < lambda_max) &
                      (lambda_rest_frame > lambda_min_rest_frame) &
                      (lambda_rest_frame < lambda_max_rest_frame)] = 1
         num_pixels = np.sum(valid_pixels, axis=1)
