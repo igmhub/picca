@@ -5,6 +5,7 @@ import scipy as sp
 from scipy import linalg
 from scipy.sparse import csr_matrix
 
+from picca.utils import userprint
 from . import pk, xi
 
 
@@ -93,14 +94,14 @@ class data:
         ico = ico[mask,:]
         try:
             sp.linalg.cholesky(co)
-            print('LOG: Full matrix is positive definite')
+            userprint('LOG: Full matrix is positive definite')
         except sp.linalg.LinAlgError:
-            print('WARNING: Full matrix is not positive definite')
+            userprint('WARNING: Full matrix is not positive definite')
         try:
             sp.linalg.cholesky(ico)
-            print('LOG: Reduced matrix is positive definite')
+            userprint('LOG: Reduced matrix is positive definite')
         except sp.linalg.LinAlgError:
-            print('WARNING: Reduced matrix is not positive definite')
+            userprint('WARNING: Reduced matrix is not positive definite')
 
         # We need the determinant of the cov matrix for the likelihood norm
         # log |C| = sum log diag D, where C = L D L*

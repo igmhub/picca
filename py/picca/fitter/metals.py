@@ -3,6 +3,7 @@ import scipy as sp
 import fitsio
 import sys
 
+from picca.utils import userprint
 from picca.fitter import utils
 from picca.fitter.cosmo import model as cosmo_model
 
@@ -63,13 +64,13 @@ class model:
             for i in range(nmet):
                 for mp in range(3):
                     fmet=met_prefix+"_Lya_"+met_names[i]+"."+str(2*mp)+".dat"
-                    print("reading "+fmet)
+                    userprint("reading "+fmet)
                     to=sp.loadtxt(fmet)
                     self.temp_lya_met[to[:,0].astype(int),i,mp]=to[:,1]
 
                     for j in range(i,nmet):
                         fmet=met_prefix+"_"+met_names[i]+"_"+met_names[j]+"."+str(2*mp)+".dat"
-                        print("reading "+fmet)
+                        userprint("reading "+fmet)
                         to=sp.loadtxt(fmet)
                         self.temp_met_met[to[:,0].astype(int),i,j,mp]=to[:,1]
         else:
@@ -116,7 +117,7 @@ class model:
         self.different_drp = dic_init['different_drp']
         if (self.different_drp):
             if not self.grid:
-                print("different drp and metal matrix not implemented")
+                userprint("different drp and metal matrix not implemented")
                 sys.exit(1)
             for name in self.met_names:
                 self.pname.append("drp_"+name)
@@ -135,14 +136,14 @@ class model:
             self.grid_qso_met=np.zeros([self.nd_cross,nmet,3])
             for i in range(nmet):
                 fmet = met_prefix + '_QSO_' + met_names[i] + '.grid'
-                print('  Reading cross correlation metal grid : ')
-                print('  ', fmet)
+                userprint('  Reading cross correlation metal grid : ')
+                userprint('  ', fmet)
                 to = sp.loadtxt(fmet)
                 idx = to[:,0].astype(int)
                 self.grid_qso_met[idx,i,0] = to[:,1]
                 self.grid_qso_met[idx,i,1] = to[:,2]
                 self.grid_qso_met[idx,i,2] = to[:,3]
-            print()
+            userprint()
         else:
             h = fitsio.FITS(self.met_prefix)
             self.abs_igm_cross = [i.strip() for i in h[1]["ABS_IGM"][:]]
@@ -236,7 +237,7 @@ class model:
 
                 if recalc:
                     if self.verbose:
-                        print("recalculating ",met)
+                        userprint("recalculating ",met)
                     pk  = (1+beta_lya*muk**2)*(1+beta_met*muk**2)*self.pk
                     pk *= Gpar*Gper
                     xi = cosmo_model.Pk2Xi(r,mur,self.k,pk,ell_max=self.ell_max)
@@ -275,7 +276,7 @@ class model:
 
                     if recalc:
                         if self.verbose:
-                            print("recalculating ",met1,met2)
+                            userprint("recalculating ",met1,met2)
                         r = sp.sqrt(rt**2+rp**2)
                         w=r==0
                         r[w]=1e-6
@@ -355,7 +356,7 @@ class model:
                     self.prev_pmet['drp'] != drp
                 if recalc:
                     if self.verbose:
-                        print("recalculating metal {}".format(i))
+                        userprint("recalculating metal {}".format(i))
                     self.prev_pmet['beta_'+i] = beta_met
                     self.prev_pmet['growth_rate'] = growth_rate
                     self.prev_pmet['qso_evol'] = qso_evol
@@ -379,23 +380,3 @@ class model:
                 xi_qso_met += qso_boost*bias_qso*bias_met*self.prev_xi_qso_met[i]
 
         return xi_qso_met
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

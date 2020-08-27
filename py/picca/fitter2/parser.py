@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from functools import partial
 import sys
 import scipy as sp
@@ -12,6 +10,7 @@ else:
     import ConfigParser
 
 import fitsio
+from picca.utils import userprint
 from . import data, utils, priors
 
 def parse_chi2(filename):
@@ -27,7 +26,7 @@ def parse_chi2(filename):
     p = os.path.expandvars(p)
     if not os.path.isfile(p):
         p = resource_filename('picca', 'fitter2')+'/models/{}'.format(p)
-    print('INFO: reading input Pk {}'.format(p))
+    userprint('INFO: reading input Pk {}'.format(p))
 
     h = fitsio.FITS(p)
     zref = h[1].read_header()['ZREF']
@@ -43,7 +42,7 @@ def parse_chi2(filename):
     except (KeyError, AttributeError):
         dic_init['fiducial']['full-shape'] = False
     if dic_init['fiducial']['full-shape']:
-        print('WARNING!!!: Using full-shape fit to the correlation function. Sailor you are reaching unexplored territories, precede at your own risk.')
+        userprint('WARNING!!!: Using full-shape fit to the correlation function. Sailor you are reaching unexplored territories, precede at your own risk.')
 
     zeff = float(cp.get('data sets','zeff'))
     dic_init['data sets'] = {}
@@ -112,7 +111,7 @@ def parse_data(filename,zeff,fiducial):
 
     dic_init = {}
     dic_init['data'] = {}
-    print("INFO: reading {}".format(filename))
+    userprint("INFO: reading {}".format(filename))
     for item, value in cp.items('data'):
         if item == "rp_binsize" or value == "rt_binsize":
             value = float(value)
@@ -198,7 +197,7 @@ def parse_data(filename,zeff,fiducial):
     if 'priors' in cp.sections():
         for item, value in cp.items('priors'):
             if item in priors.prior_dic.keys():
-                print("WARNING: prior on {} will be overwritten".format(item))
+                userprint("WARNING: prior on {} will be overwritten".format(item))
             value = value.split()
             priors.prior_dic[item] = partial(getattr(priors, value[0]), prior_pars=sp.array(value[1:]).astype(float), name=item)
 

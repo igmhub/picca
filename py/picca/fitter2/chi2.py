@@ -1,4 +1,3 @@
-from __future__ import print_function
 import os.path
 import numpy as np
 import scipy as sp
@@ -8,6 +7,7 @@ import h5py
 import sys
 from scipy.linalg import cholesky
 
+from picca.utils import userprint
 from . import priors
 
 def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
@@ -72,10 +72,10 @@ class chi2:
         if self.verbosity == 1:
             del dic['SB']
             for p in sorted(dic.keys()):
-                print(p+" "+str(dic[p]))
+                userprint(p+" "+str(dic[p]))
 
-            print("Chi2: "+str(chi2))
-            print("---\n")
+            userprint("Chi2: "+str(chi2))
+            userprint("---\n")
         return chi2
 
     def _minimize(self):
@@ -106,7 +106,7 @@ class chi2:
         mig.migrad()
         mig.print_param()
 
-        print("INFO: minimized in {}".format(time.time()-t0))
+        userprint("INFO: minimized in {}".format(time.time()-t0))
         sys.stdout.flush()
         return mig
 
@@ -285,9 +285,9 @@ class chi2:
                     self.best_fit.minos(var=var,sigma=sigma)
                 else:
                     if var in self.best_fit.list_of_fixed_param():
-                        print('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
+                        userprint('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
                     else:
-                        print('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
+                        userprint('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
 
     def export(self):
         f = h5py.File(self.outfile,"w")

@@ -1,630 +1,992 @@
-from __future__ import print_function
+"""This module defines functions and variables required for the correlation
+analysis of two delta fields
+
+This module provides several functions:
+    - fill_neighs
+    - compute_xi
+    - compute_xi_forest_pairs
+    - compute_dmat
+    - compute_dmat_forest_pairs
+    - compute_metal_dmat
+    - compute_wick_terms
+    - compute_wickT1234_pairs
+    - compute_wickT1234_pairs
+    - compute_xi_1d
+See the respective docstrings for more details
+"""
 import numpy as np
-import scipy as sp
 from healpy import query_disc
 from numba import jit
 
 from picca import constants
-from picca.utils import print
+from picca.utils import userprint
 
-# npb = number of parallel bins (to avoid collision with numpy np)
-npb = None
-ntb = None
-npm = None
-ntm = None
-rp_max = None
-rp_min = None
-rt_max = None
+num_bins_r_par = None
+num_bins_r_trans = None
+num_model_bins_r_par = None
+num_model_bins_r_trans = None
+r_par_max = None
+r_par_min = None
+r_trans_max = None
 z_cut_max = None
 z_cut_min = None
-angmax = None
+ang_max = None
 nside = None
 
 counter = None
-ndels = None
+num_data = None
 
-zref = None
-z_evol_del = None
-z_evol_obj = None
+z_ref = None
+alpha = None
+alpha_obj = None
 lambda_abs = None
-alpha_abs= None
+alpha_abs = None
 
-dels = None
+data = None
 objs = None
 
-rej = None
+reject = None
 lock = None
 
-cosmo=None
-ang_correlation = None
+cosmo = None
+ang_correlation = False
 
-def fill_neighs(pix):
-    for ipix in pix:
-        for d in dels[ipix]:
-            npix = query_disc(nside,[d.xcart,d.ycart,d.zcart],angmax,inclusive = True)
-            npix = [p for p in npix if p in objs]
-            neighs = [q for p in npix for q in objs[p] if q.thid != d.thid]
-            ang = d^neighs
-            w = ang<angmax
+# variables used in the wick covariance matrix computation
+get_variance_1d = {}
+xi_1d = {}
+max_diagram = None
+xi_wick = None
+
+
+def fill_neighs(healpixs):
+    """Create and store a list of neighbours for each of the healpix.
+
+    Neighbours are added to the delta objects directly
+
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+    """
+    for healpix in healpixs:
+        for delta in data[healpix]:
+            healpix_neighbours = query_disc(
+                nside, [delta.x_cart, delta.y_cart, delta.z_cart],
+                ang_max,
+                inclusive=True)
+            healpix_neighbours = [
+                other_healpix for other_healpix in healpix_neighbours
+                if other_healpix in objs
+            ]
+            neighbours = [
+                obj for other_healpix in healpix_neighbours
+                for obj in objs[other_healpix] if obj.thingid != delta.thingid
+            ]
+            ang = delta ^ neighbours
+            w = ang < ang_max
             if not ang_correlation:
-                r_comov = sp.array([q.r_comov for q in neighs])
-                w &= (d.r_comov[0] - r_comov)*sp.cos(ang/2.) < rp_max
-                w &= (d.r_comov[-1] - r_comov)*sp.cos(ang/2.) > rp_min
-            neighs = sp.array(neighs)[w]
-            d.qneighs = sp.array([q for q in neighs if (d.z[-1]+q.zqso)/2.>=z_cut_min and (d.z[-1]+q.zqso)/2.<z_cut_max])
+                r_comov = np.array([obj.r_comov for obj in neighbours])
+                w &= (delta.r_comov[0] - r_comov) * np.cos(ang / 2.) < r_par_max
+                w &= (delta.r_comov[-1] - r_comov) * np.cos(
+                    ang / 2.) > r_par_min
+            neighbours = np.array(neighbours)[w]
+            delta.neighbours = np.array([
+                obj for obj in neighbours
+                if ((delta.z[-1] + obj.z_qso) / 2. >= z_cut_min and
+                    (delta.z[-1] + obj.z_qso) / 2. < z_cut_max)
+            ])
 
-def xcf(pix):
-    xi = np.zeros(npb*ntb)
-    we = np.zeros(npb*ntb)
-    rp = np.zeros(npb*ntb)
-    rt = np.zeros(npb*ntb)
-    z = np.zeros(npb*ntb)
-    nb = np.zeros(npb*ntb,dtype=sp.int64)
 
-    for ipix in pix:
-        for d in dels[ipix]:
-            with lock:
-                counter.value +=1
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
-            if (d.qneighs.size != 0):
-                ang = d^d.qneighs
-                zqso = [q.zqso for q in d.qneighs]
-                we_qso = [q.we for q in d.qneighs]
-                if ang_correlation:
-                    l_qso = [10.**q.ll for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,zqso,l_qso,l_qso,we_qso,ang)
-                else:
-                    rc_qso = [q.r_comov for q in d.qneighs]
-                    rdm_qso = [q.rdm_comov for q in d.qneighs]
-                    cw,cd,crp,crt,cz,cnb = fast_xcf(d.z,d.r_comov,d.rdm_comov,d.we,d.de,zqso,rc_qso,rdm_qso,we_qso,ang)
+def compute_xi(healpixs):
+    """Computes the correlation function for each of the healpixs.
 
-                xi[:len(cd)]+=cd
-                we[:len(cw)]+=cw
-                rp[:len(crp)]+=crp
-                rt[:len(crt)]+=crt
-                z[:len(cz)]+=cz
-                nb[:len(cnb)]+=cnb.astype(int)
-            for el in list(d.__dict__.keys()):
-                setattr(d,el,None)
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
 
-    w = we>0
-    xi[w]/=we[w]
-    rp[w]/=we[w]
-    rt[w]/=we[w]
-    z[w]/=we[w]
-    return we,xi,rp,rt,z,nb
-@jit
-def fast_xcf(z1,r1,rdm1,w1,d1,z2,r2,rdm2,w2,ang):
-    if ang_correlation:
-        rp = r1[:,None]/r2
-        rt = ang*sp.ones_like(rp)
-    else:
-        rp = (r1[:,None]-r2)*sp.cos(ang/2)
-        rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
-    z = (z1[:,None]+z2)/2
+    Returns:
+        The following variables:
+            weights: Total weights in the correlation function pixels
+            xi: The correlation function
+            r_par: Parallel distance of the correlation function pixels
+            r_trans: Transverse distance of the correlation function pixels
+            z: Redshift of the correlation function pixels
+            num_pairs: Number of pairs in the correlation function pixels
+    """
+    xi = np.zeros(num_bins_r_par * num_bins_r_trans)
+    weights = np.zeros(num_bins_r_par * num_bins_r_trans)
+    r_par = np.zeros(num_bins_r_par * num_bins_r_trans)
+    r_trans = np.zeros(num_bins_r_par * num_bins_r_trans)
+    z = np.zeros(num_bins_r_par * num_bins_r_trans)
+    num_pairs = np.zeros(num_bins_r_par * num_bins_r_trans, dtype=np.int64)
 
-    we = w1[:,None]*w2
-    wde = (w1*d1)[:,None]*w2
-
-    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
-    rp = rp[w]
-    rt = rt[w]
-    z  = z[w]
-    we = we[w]
-    wde = wde[w]
-
-    bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
-    bt = (rt/rt_max*ntb).astype(int)
-    bins = bt + ntb*bp
-
-    cd = sp.bincount(bins,weights=wde)
-    cw = sp.bincount(bins,weights=we)
-    crp = sp.bincount(bins,weights=rp*we)
-    crt = sp.bincount(bins,weights=rt*we)
-    cz = sp.bincount(bins,weights=z*we)
-    cnb = sp.bincount(bins,weights=(we>0.))
-
-    return cw,cd,crp,crt,cz,cnb
-
-def dmat(pix):
-
-    dm = np.zeros(npb*ntb*ntm*npm)
-    wdm = np.zeros(npb*ntb)
-    rpeff = np.zeros(ntm*npm)
-    rteff = np.zeros(ntm*npm)
-    zeff = np.zeros(ntm*npm)
-    weff = np.zeros(ntm*npm)
-
-    npairs = 0
-    npairs_used = 0
-    for p in pix:
-        for d1 in dels[p]:
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels,3)),end="")
+    for healpix in healpixs:
+        for delta in data[healpix]:
             with lock:
                 counter.value += 1
-            r1 = d1.r_comov
-            rdm1 = d1.rdm_comov
-            w1 = d1.we
-            l1 = d1.ll
-            z1 = d1.z
-            r = sp.random.rand(len(d1.qneighs))
-            w=r>rej
-            if w.sum()==0:continue
-            npairs += len(d1.qneighs)
-            npairs_used += w.sum()
-            neighs = d1.qneighs[w]
-            ang = d1^neighs
-            r2 = [q.r_comov for q in neighs]
-            rdm2 = [q.rdm_comov for q in neighs]
-            w2 = [q.we for q in neighs]
-            z2 = [q.zqso for q in neighs]
-            fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff)
-            for el in list(d1.__dict__.keys()):
-                setattr(d1,el,None)
+            userprint(("\rcomputing xi: "
+                       "{}%").format(round(counter.value * 100. / num_data, 3)),
+                      end="")
+            if delta.neighbours.size != 0:
+                ang = delta ^ delta.neighbours
+                z_qso = [obj.z_qso for obj in delta.neighbours]
+                weights_qso = [obj.weights for obj in delta.neighbours]
+                if ang_correlation:
+                    lambda_qso = [
+                        10.**obj.log_lambda for obj in delta.neighbours
+                    ]
+                    (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
+                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                         delta.z, 10.**delta.log_lambda, 10.**delta.log_lambda,
+                         delta.weights, delta.delta, z_qso, lambda_qso,
+                         lambda_qso, weights_qso, ang)
+                else:
+                    r_comov_qso = [obj.r_comov for obj in delta.neighbours]
+                    dist_m_qso = [obj.dist_m for obj in delta.neighbours]
+                    (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
+                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                         delta.z, delta.r_comov, delta.dist_m, delta.weights,
+                         delta.delta, z_qso, r_comov_qso, dist_m_qso,
+                         weights_qso, ang)
 
-    return wdm,dm.reshape(npb*ntb,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
+                xi[:len(rebin_xi)] += rebin_xi
+                weights[:len(rebin_weight)] += rebin_weight
+                r_par[:len(rebin_r_par)] += rebin_r_par
+                r_trans[:len(rebin_r_trans)] += rebin_r_trans
+                z[:len(rebin_z)] += rebin_z
+                num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs.astype(int)
+            setattr(delta, "neighbours", None)
+
+    w = weights > 0
+    xi[w] /= weights[w]
+    r_par[w] /= weights[w]
+    r_trans[w] /= weights[w]
+    z[w] /= weights[w]
+    return weights, xi, r_par, r_trans, z, num_pairs
+
+
 @jit
-def fill_dmat(l1,r1,rdm1,z1,w1,r2,rdm2,z2,w2,ang,wdm,dm,rpeff,rteff,zeff,weff):
-    rp = (r1[:,None]-r2)*sp.cos(ang/2)
-    rt = (rdm1[:,None]+rdm2)*sp.sin(ang/2)
-    z = (z1[:,None]+z2)/2.
-    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
+def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
+                            r_comov2, dist_m2, weights2, ang):
+    """Computes the contribution of a given pair of forests to the correlation
+    function.
 
-    bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
-    bt = (rt/rt_max*ntb).astype(int)
-    bins = bt + ntb*bp
+    Args:
+        z1: array of float
+            Redshift of pixel 1
+        r_comov1: array of float
+            Comoving distance for forest 1 (in Mpc/h)
+        dist_m1: array of float
+            Comoving angular distance for forest 1 (in Mpc/h)
+        weights1: array of float
+            Pixel weights for forest 1
+        delta1: array of float
+            Delta field for forest 1
+        z2: array of float
+            Redshift of pixel 2
+        r_comov2: array of float
+            Comoving distance for forest 2 (in Mpc/h)
+        dist_m2: array of float
+            Comoving angular distance for forest 2 (in Mpc/h)
+        weights2: array of float
+            Pixel weights for forest 2
+        ang: array of float
+            Angular separation between pixels in forests 1 and 2
+
+    Returns:
+        The following variables:
+            rebin_weight: The weight of the correlation function pixels
+                properly rebinned
+            rebin_xi: The correlation function properly rebinned
+            rebin_r_par: The parallel distance of the correlation function
+                pixels properly rebinned
+            rebin_r_trans: The transverse distance of the correlation function
+                pixels properly rebinned
+            rebin_z: The redshift of the correlation function pixels properly
+                rebinned
+            rebin_num_pairs: The number of pairs of the correlation function
+                pixels properly rebinned
+    """
+    if ang_correlation:
+        r_par = r_comov1[:, None] / r_comov2
+        r_trans = ang * np.ones_like(r_par)
+    else:
+        r_par = (r_comov1[:, None] - r_comov2) * np.cos(ang / 2)
+        r_trans = (dist_m1[:, None] + dist_m2) * np.sin(ang / 2)
+    z = (z1[:, None] + z2) / 2
+
+    weights12 = weights1[:, None] * weights2
+    delta_times_weight = (weights1 * delta1)[:, None] * weights2
+
+    w = (r_par > r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
+    r_par = r_par[w]
+    r_trans = r_trans[w]
+    z = z[w]
+    weights12 = weights12[w]
+    delta_times_weight = delta_times_weight[w]
+
+    bins_r_par = ((r_par - r_par_min) / (r_par_max - r_par_min) *
+                  num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins = bins_r_trans + num_bins_r_trans * bins_r_par
+
+    rebin_xi = np.bincount(bins, weights=delta_times_weight)
+    rebin_weight = np.bincount(bins, weights=weights12)
+    rebin_r_par = np.bincount(bins, weights=r_par * weights12)
+    rebin_r_trans = np.bincount(bins, weights=r_trans * weights12)
+    rebin_z = np.bincount(bins, weights=z * weights12)
+    rebin_num_pairs = np.bincount(bins, weights=(weights12 > 0.))
+
+    return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
+            rebin_num_pairs)
+
+
+def compute_dmat(healpixs):
+    """Computes the distortion matrix for each of the healpixs.
+
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+
+    Returns:
+        The following variables:
+            weights_dmat: Total weight in the distortion matrix pixels
+            dmat: The distortion matrix
+            r_par_eff: Effective parallel distance of the distortion matrix
+                pixels
+            r_trans_eff: Effective transverse distance of the distortion matrix
+                pixels
+            z_eff: Effective redshift of the distortion matrix pixels
+            weight_eff: Effective weight of the distortion matrix pixels
+            num_pairs: Total number of pairs
+            num_pairs_used: Number of used pairs
+    """
+
+    dmat = np.zeros(num_bins_r_par * num_bins_r_trans * num_model_bins_r_trans *
+                    num_model_bins_r_par)
+    weights_dmat = np.zeros(num_bins_r_par * num_bins_r_trans)
+    r_par_eff = np.zeros(num_model_bins_r_trans * num_model_bins_r_par)
+    r_trans_eff = np.zeros(num_model_bins_r_trans * num_model_bins_r_par)
+    z_eff = np.zeros(num_model_bins_r_trans * num_model_bins_r_par)
+    weight_eff = np.zeros(num_model_bins_r_trans * num_model_bins_r_par)
+
+    num_pairs = 0
+    num_pairs_used = 0
+    for healpix in healpixs:
+        for delta1 in data[healpix]:
+            userprint(("\rcomputing xi: "
+                       "{}%").format(round(counter.value * 100. / num_data, 3)),
+                      end="")
+            with lock:
+                counter.value += 1
+            r_comov1 = delta1.r_comov
+            dist_m1 = delta1.dist_m
+            weights1 = delta1.weights
+            log_lambda1 = delta1.log_lambda
+            z1 = delta1.z
+            w = np.random.rand(len(delta1.neighbours)) > reject
+            if w.sum() == 0:
+                continue
+            num_pairs += len(delta1.neighbours)
+            num_pairs_used += w.sum()
+            neighbours = delta1.neighbours[w]
+            ang = delta1 ^ neighbours
+            r_comov2 = [obj.r_comov for obj in neighbours]
+            dist_m2 = [obj.dist_m for obj in neighbours]
+            weights2 = [obj.weights for obj in neighbours]
+            z2 = [obj.z_qso for obj in neighbours]
+            compute_dmat_forest_pairs(log_lambda1, r_comov1, dist_m1, z1,
+                                      weights1, r_comov2, dist_m2, z2, weights2,
+                                      ang, weights_dmat, dmat, r_par_eff,
+                                      r_trans_eff, z_eff, weight_eff)
+            setattr(delta1, "neighbours", None)
+
+    dmat = dmat.reshape(num_bins_r_par * num_bins_r_trans,
+                        num_model_bins_r_par * num_model_bins_r_trans)
+
+    return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
+            num_pairs, num_pairs_used)
+
+
+@jit
+def compute_dmat_forest_pairs(log_lambda1, r_comov1, dist_m1, z1, weights1,
+                              r_comov2, dist_m2, z2, weights2, ang,
+                              weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff,
+                              weight_eff):
+    """Computes the contribution of a given pair of forests-quasar to the
+    distortion matrix.
+
+    Args:
+        log_lambda1: array of float
+            Logarithm of the wavelength (in Angs) for forest 1
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        dist_m1: array of floats
+            Angular distance for forest 1
+        z1: array of floats
+            Redshifts for forest 1
+        weights1: array of floats
+            Weights for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for forest 2
+        dist_m2: array of floats
+            Angular distance for forest 2
+        z2: array of floats
+            Redshifts for forest 2
+        weights2: array of floats
+            Weights for forest 2
+        ang: array of floats
+            Angular separation between pixels in forests 1 and 2
+        weights_dmat: array of floats
+            Total weight in the distortion matrix pixels
+        dmat: array of floats
+            The distortion matrix
+        r_par_eff: array of floats
+            Effective parallel distance for the distortion matrix bins
+        r_trans_eff: array of floats
+            Effective transverse distance for the distortion matrix bins
+        z_eff: array of floats
+            Effective redshift for the distortion matrix bins
+        weight_eff: array of floats
+            Effective weight of the distortion matrix pixels
+    """
+    # find distances between pixels
+    r_par = (r_comov1[:, None] - r_comov2) * np.cos(ang / 2)
+    r_trans = (dist_m1[:, None] + dist_m2) * np.sin(ang / 2)
+    z = (z1[:, None] + z2) / 2.
+    w = (r_par > r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
+
+    # locate bins pixels are contributing to (correlation bins)
+    bins_r_par = ((r_par - r_par_min) / (r_par_max - r_par_min) *
+                  num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins = bins_r_trans + num_bins_r_trans * bins_r_par
     bins = bins[w]
 
-    m_bp = ((rp-rp_min)/(rp_max-rp_min)*npm).astype(int)
-    m_bt = (rt/rt_max*ntm).astype(int)
-    m_bins = m_bt + ntm*m_bp
-    m_bins = m_bins[w]
+    # locate bins pixels are contributing to (model bins)
+    model_bins_r_par = ((r_par - r_par_min) / (r_par_max - r_par_min) *
+                        num_model_bins_r_par).astype(int)
+    model_bins_r_trans = (r_trans / r_trans_max *
+                          num_model_bins_r_trans).astype(int)
+    model_bins = model_bins_r_trans + num_model_bins_r_trans * model_bins_r_par
+    model_bins = model_bins[w]
 
-    sw1 = w1.sum()
-    ml1 = sp.average(l1,weights=w1)
+    # compute useful auxiliar variables to speed up computation of eta
+    # (equation 6 of du Mas des Bourboux et al. 2020)
 
-    dl1 = l1-ml1
+    # denominator second term in equation 6 of du Mas des Bourboux et al. 2020
+    sum_weights1 = weights1.sum()
 
-    slw1 = (w1*dl1**2).sum()
+    # mean of log_lambda
+    mean_log_lambda1 = np.average(log_lambda1, weights=weights1)
 
-    n1 = len(l1)
-    n2 = len(r2)
-    ij = np.arange(n1)[:,None]+n1*np.arange(n2)
+    # log_lambda minus its mean
+    log_lambda_minus_mean1 = log_lambda1 - mean_log_lambda1
+
+    # denominator third term in equation 6 of du Mas des Bourboux et al. 2020
+    sum_weights_square_log_lambda_minus_mean1 = (
+        weights1 * log_lambda_minus_mean1**2).sum()
+
+    # auxiliar variables to loop over distortion matrix bins
+    num_pixels1 = len(log_lambda1)
+    num_pixels2 = len(r_comov2)
+    ij = np.arange(num_pixels1)[:, None] + num_pixels1 * np.arange(num_pixels2)
     ij = ij[w]
 
-    we = w1[:,None]*w2
-    we = we[w]
-    c = sp.bincount(bins,weights=we)
-    wdm[:len(c)] += c
-    eta2 = np.zeros(npm*ntm*n2)
-    eta4 = np.zeros(npm*ntm*n2)
+    weights12 = weights1[:, None] * weights2
+    weights12 = weights12[w]
 
-    c = sp.bincount(m_bins,weights=we*rp[w])
-    rpeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*rt[w])
-    rteff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we*z[w])
-    zeff[:c.size] += c
-    c = sp.bincount(m_bins,weights=we)
-    weff[:c.size] += c
+    rebin = np.bincount(model_bins, weights=weights12 * r_par[w])
+    r_par_eff[:rebin.size] += rebin
+    rebin = np.bincount(model_bins, weights=weights12 * r_trans[w])
+    r_trans_eff[:rebin.size] += rebin
+    rebin = np.bincount(model_bins, weights=weights12 * z[w])
+    z_eff[:rebin.size] += rebin
+    rebin = np.bincount(model_bins, weights=weights12)
+    weight_eff[:rebin.size] += rebin
 
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = (w1[:,None]*sp.ones(n2))[w]/sw1)
-    eta2[:len(c)]+=c
-    c = sp.bincount((ij-ij%n1)//n1+n2*m_bins,weights = ((w1*dl1)[:,None]*sp.ones(n2))[w]/slw1)
-    eta4[:len(c)]+=c
+    rebin = np.bincount(bins, weights=weights12)
+    weights_dmat[:len(rebin)] += rebin
 
-    ubb = np.unique(m_bins)
-    for k, (ba,m_ba) in enumerate(zip(bins,m_bins)):
-        dm[m_ba+npm*ntm*ba]+=we[k]
-        i = ij[k]%n1
-        j = (ij[k]-i)//n1
-        for bb in ubb:
-            dm[bb+npm*ntm*ba] -= we[k]*(eta2[j+n2*bb]+eta4[j+n2*bb]*dl1[i])
+    # Combining equation 22 and equation 6 of du Mas des Bourboux et al. 2020
+    # we find an equation with 3 terms comming from the product of two eta
+    # The variables below stand for 2 of these 3 terms (the first one is
+    # pretty trivial) and are named to match those of module cf
+
+    # first eta, second term: weight/sum(weights)
+    eta2 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans * num_pixels2)
+    # first eta, third term: (non-zero only for order=1)
+    #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+    eta4 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans * num_pixels2)
+
+    # compute the contributions to the distortion matrix
+    rebin = np.bincount(
+        ((ij - ij % num_pixels1) // num_pixels1 + num_pixels2 * model_bins),
+        weights=((weights1[:, None] * np.ones(num_pixels2))[w] / sum_weights1))
+    eta2[:len(rebin)] += rebin
+    rebin = np.bincount(
+        ((ij - ij % num_pixels1) // num_pixels1 + num_pixels2 * model_bins),
+        weights=(((weights1 * log_lambda_minus_mean1)[:, None] *
+                  np.ones(num_pixels2))[w] /
+                 sum_weights_square_log_lambda_minus_mean1))
+    eta4[:len(rebin)] += rebin
+
+    # Now add all the contributions together
+    unique_model_bins = np.unique(model_bins)
+    for index, (bin, model_bin) in enumerate(zip(bins, model_bins)):
+        # first eta, first term: kronecker delta
+        dmat[model_bin + num_model_bins_r_par * num_model_bins_r_trans *
+             bin] += weights12[index]
+        i = ij[index] % num_pixels1
+        j = (ij[index] - i) // num_pixels1
+        # rest of the terms
+        for unique_model_bin in unique_model_bins:
+            dmat[unique_model_bin + num_model_bins_r_par *
+                 num_model_bins_r_trans * bin] -= weights12[index] * (
+                     eta2[j + num_pixels2 * unique_model_bin] +
+                     eta4[j + num_pixels2 * unique_model_bin] *
+                     log_lambda_minus_mean1[i])
 
 
-def metal_dmat(pix,abs_igm="SiII(1526)"):
-
-    dm = np.zeros(npb*ntb*ntm*npm)
-    wdm = np.zeros(npb*ntb)
-    rpeff = np.zeros(ntm*npm)
-    rteff = np.zeros(ntm*npm)
-    zeff = np.zeros(ntm*npm)
-    weff = np.zeros(ntm*npm)
-
-    npairs = 0
-    npairs_used = 0
-    for p in pix:
-        for d in dels[p]:
-            with lock:
-                print("\rcomputing metal dmat {}: {}%".format(abs_igm,round(counter.value*100./ndels,3)),end="")
-                counter.value += 1
-
-            r = sp.random.rand(len(d.qneighs))
-            w=r>rej
-            npairs += len(d.qneighs)
-            npairs_used += w.sum()
-
-            rd = d.r_comov
-            rdm = d.rdm_comov
-            wd = d.we
-            zd_abs = 10**d.ll/constants.absorber_IGM[abs_igm]-1
-            rd_abs = cosmo.r_comoving(zd_abs)
-            rdm_abs = cosmo.dm(zd_abs)
-
-            wzcut = zd_abs<d.zqso
-            rd = rd[wzcut]
-            rdm = rdm[wzcut]
-            wd = wd[wzcut]
-            zd_abs = zd_abs[wzcut]
-            rd_abs = rd_abs[wzcut]
-            rdm_abs = rdm_abs[wzcut]
-            if rd.size==0: continue
-
-            for q in sp.array(d.qneighs)[w]:
-                ang = d^q
-
-                rq = q.r_comov
-                rqm = q.rdm_comov
-                wq = q.we
-                zq = q.zqso
-                rp = (rd-rq)*sp.cos(ang/2)
-                rt = (rdm+rqm)*sp.sin(ang/2)
-                wdq = wd*wq
-
-                wA = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
-                bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
-                bt = (rt/rt_max*ntb).astype(int)
-                bA = bt + ntb*bp
-                c = sp.bincount(bA[wA],weights=wdq[wA])
-                wdm[:len(c)]+=c
-
-                rp_abs = (rd_abs-rq)*sp.cos(ang/2)
-                rt_abs = (rdm_abs+rqm)*sp.sin(ang/2)
-                zwe = ((1.+zd_abs)/(1.+zref))**(alpha_abs[abs_igm]-1.)
-
-                bp_abs = ((rp_abs-rp_min)/(rp_max-rp_min)*npm).astype(int)
-                bt_abs = (rt_abs/rt_max*ntm).astype(int)
-                bBma = bt_abs + ntm*bp_abs
-                wBma = (rp_abs>rp_min) & (rp_abs<rp_max) & (rt_abs<rt_max)
-                wAB = wA&wBma
-                c = sp.bincount(bBma[wAB]+npm*ntm*bA[wAB],weights=wdq[wAB]*zwe[wAB])
-                dm[:len(c)]+=c
-
-                c = sp.bincount(bBma[wAB],weights=rp_abs[wAB]*wdq[wAB]*zwe[wAB])
-                rpeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=rt_abs[wAB]*wdq[wAB]*zwe[wAB])
-                rteff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=(zd_abs+zq)[wAB]/2*wdq[wAB]*zwe[wAB])
-                zeff[:len(c)]+=c
-                c = sp.bincount(bBma[wAB],weights=wdq[wAB]*zwe[wAB])
-                weff[:len(c)]+=c
-            setattr(d,"qneighs",None)
-
-    return wdm,dm.reshape(npb*ntb,npm*ntm),rpeff,rteff,zeff,weff,npairs,npairs_used
-
-v1d = {}
-c1d = {}
-max_diagram = None
-cfWick = None
-cfWick_np = None
-cfWick_nt = None
-cfWick_rp_min = None
-cfWick_rp_max = None
-cfWick_rt_max = None
-cfWick_angmax = None
-
-def wickT(pix):
-    """Compute the Wick covariance matrix for the object-pixel
-        cross-correlation
+def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
+    """Computes the metal distortion matrix for each of the healpixs.
 
     Args:
-        pix (lst): list of HEALpix pixels
+        healpixs: array of ints
+            List of healpix numbers
+        abs_igm: string - default: "SiII(1526)"
+            Name of the absorption in picca.constants defining the
+            redshift of the forest pixels
 
     Returns:
-        (tuple): results of the Wick computation
-
+        The following variables:
+            weights_dmat: Total weight in the distortion matrix pixels
+            dmat: The distortion matrix
+            r_par_eff: Effective parallel distance of the distortion matrix
+                pixels
+            r_trans_eff: Effective transverse distance of the distortion matrix
+                pixels
+            z_eff: Effective redshift of the distortion matrix pixels
+            weight_eff: Effective weight of the distortion matrix pixels
+            num_pairs: Total number of pairs
+            num_pairs_used: Number of used pairs
     """
-    T1 = np.zeros((npb*ntb,npb*ntb))
-    T2 = np.zeros((npb*ntb,npb*ntb))
-    T3 = np.zeros((npb*ntb,npb*ntb))
-    T4 = np.zeros((npb*ntb,npb*ntb))
-    T5 = np.zeros((npb*ntb,npb*ntb))
-    T6 = np.zeros((npb*ntb,npb*ntb))
-    wAll = np.zeros(npb*ntb)
-    nb = np.zeros(npb*ntb,dtype=sp.int64)
-    npairs = 0
-    npairs_used = 0
+    dmat = np.zeros(num_bins_r_par * num_bins_r_trans * num_model_bins_r_trans *
+                    num_model_bins_r_par)
+    weights_dmat = np.zeros(num_bins_r_par * num_bins_r_trans)
+    r_par_eff = np.zeros(num_model_bins_r_trans * num_model_bins_r_par)
+    r_trans_eff = np.zeros(num_model_bins_r_trans * num_model_bins_r_par)
+    z_eff = np.zeros(num_model_bins_r_trans * num_model_bins_r_par)
+    weight_eff = np.zeros(num_model_bins_r_trans * num_model_bins_r_par)
 
-    for ipix in pix:
+    num_pairs = 0
+    num_pairs_used = 0
+    for healpix in healpixs:
+        for delta1 in data[healpix]:
+            with lock:
+                userprint(
+                    ("\rcomputing metal dmat {}: "
+                     "{}%").format(abs_igm,
+                                   round(counter.value * 100. / num_data, 3)),
+                    end="")
+                counter.value += 1
 
-        npairs += len(dels[ipix])
-        r = sp.random.rand(len(dels[ipix]))
-        w = r>rej
-        npairs_used += w.sum()
-        if w.sum()==0: continue
+            r_comov1 = delta1.r_comov
+            dist_m1 = delta1.dist_m
+            weights1 = delta1.weights
+            z1_abs1 = 10**delta1.log_lambda / constants.ABSORBER_IGM[abs_igm] - 1
+            r_comov1_abs1 = cosmo.get_r_comov(z1_abs1)
+            dist_m1_abs1 = cosmo.get_dist_m(z1_abs1)
 
-        for d1 in [ td for ti,td in enumerate(dels[ipix]) if w[ti] ]:
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndels/(1.-rej),3)),end="")
+            # filter cases where the absorption from the metal is
+            # inconsistent with the quasar redshift
+            w = z1_abs1 < delta1.z_qso
+            r_comov1 = r_comov1[w]
+            dist_m1 = dist_m1[w]
+            weights1 = weights1[w]
+            z1_abs1 = z1_abs1[w]
+            r_comov1_abs1 = r_comov1_abs1[w]
+            dist_m1_abs1 = dist_m1_abs1[w]
+            if r_comov1.size == 0:
+                continue
+
+            w = np.random.rand(len(delta1.neighbours)) > reject
+            num_pairs += len(delta1.neighbours)
+            num_pairs_used += w.sum()
+
+            for obj2 in np.array(delta1.neighbours)[w]:
+                ang = delta1 ^ obj2
+
+                r_comov2 = obj2.r_comov
+                dist_m2 = obj2.dist_m
+                weights2 = obj2.weights
+                z2 = obj2.z_qso
+
+                # compute bins the pairs contribute to
+                r_par = (r_comov1 - r_comov2) * np.cos(ang / 2)
+                r_trans = (dist_m1 + dist_m2) * np.sin(ang / 2)
+                weights12 = weights1 * weights2
+
+                w = ((r_par > r_par_min) & (r_par < r_par_max) &
+                     (r_trans < r_trans_max))
+                bins_r_par = ((r_par - r_par_min) / (r_par_max - r_par_min) *
+                              num_bins_r_par).astype(int)
+                bins_r_trans = (r_trans / r_trans_max *
+                                num_bins_r_trans).astype(int)
+                bins = bins_r_trans + num_bins_r_trans * bins_r_par
+                rebin = np.bincount(bins[w], weights=weights12[w])
+                weights_dmat[:len(rebin)] += rebin
+
+                r_par_abs = (r_comov1_abs1 - r_comov2) * np.cos(ang / 2)
+                r_trans_abs = (dist_m1_abs1 + dist_m2) * np.sin(ang / 2)
+                z_weight_evol = (((1. + z1_abs1) /
+                                  (1. + z_ref))**(alpha_abs[abs_igm] - 1.))
+
+                model_bins_r_par = ((r_par_abs - r_par_min) /
+                                    (r_par_max - r_par_min) *
+                                    num_model_bins_r_par).astype(int)
+                model_bins_r_trans = (r_trans_abs / r_trans_max *
+                                      num_model_bins_r_trans).astype(int)
+                model_bins = (model_bins_r_trans +
+                              num_model_bins_r_trans * model_bins_r_par)
+                w &= ((r_par_abs > r_par_min) & (r_par_abs < r_par_max) &
+                      (r_trans_abs < r_trans_max))
+
+                rebin = np.bincount(
+                    (model_bins[w] +
+                     num_model_bins_r_par * num_model_bins_r_trans * bins[w]),
+                    weights=weights12[w] * z_weight_evol[w])
+                dmat[:len(rebin)] += rebin
+
+                rebin = np.bincount(model_bins[w],
+                                    weights=(r_par_abs[w] * weights12[w] *
+                                             z_weight_evol[w]))
+                r_par_eff[:len(rebin)] += rebin
+                rebin = np.bincount(model_bins[w],
+                                    weights=(r_trans_abs[w] * weights12[w] *
+                                             z_weight_evol[w]))
+                r_trans_eff[:len(rebin)] += rebin
+                rebin = np.bincount(model_bins[w],
+                                    weights=((z1_abs1 + z2)[w] / 2 *
+                                             weights12[w] * z_weight_evol[w]))
+                z_eff[:len(rebin)] += rebin
+                rebin = np.bincount(model_bins[w],
+                                    weights=weights12[w] * z_weight_evol[w])
+                weight_eff[:len(rebin)] += rebin
+            setattr(delta1, "neighbours", None)
+
+    dmat = dmat.reshape(num_bins_r_par * num_bins_r_trans,
+                        num_model_bins_r_par * num_model_bins_r_trans)
+
+    return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
+            num_pairs, num_pairs_used)
+
+
+def compute_wick_terms(healpixs):
+    """
+    Computes the Wick expansion terms of the covariance matrix for the object-
+    pixel cross-correlation
+
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
+
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+
+    Returns:
+        The following variables:
+            weights_wick: Total weight in the covariance matrix pixels from all
+                terms in the Wick expansion
+            num_pairs_wick: Number of pairs in the covariance matrix pixels
+            num_pairs: Total number of pairs
+            num_pairs_used: Total number of used pairs
+            t1: Wick expansion, term 1
+            t2: Wick expansion, term 2
+            t3: Wick expansion, term 3
+            t4: Wick expansion, term 4
+            t5: Wick expansion, term 5
+            t6: Wick expansion, term 6
+    """
+    t1 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    t2 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    t3 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    t4 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    t5 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    t6 = np.zeros(
+        (num_bins_r_par * num_bins_r_trans, num_bins_r_par * num_bins_r_trans))
+    weights_wick = np.zeros(num_bins_r_par * num_bins_r_trans)
+    num_pairs_wick = np.zeros(num_bins_r_par * num_bins_r_trans, dtype=np.int64)
+    num_pairs = 0
+    num_pairs_used = 0
+
+    for healpix in healpixs:
+
+        num_pairs += len(data[healpix])
+        w = np.random.rand(len(data[healpix])) > reject
+        num_pairs_used += w.sum()
+        if w.sum() == 0:
+            continue
+
+        for delta1 in [
+                delta for index, delta in enumerate(data[healpix]) if w[index]
+        ]:
+            userprint(
+                ("\rcomputing xi: "
+                 "{}%").format(
+                     round((counter.value * 100. / num_data / (1. - reject)),
+                           3)),
+                end="")
             with lock:
                 counter.value += 1
-            if d1.qneighs.size==0: continue
+            if delta1.neighbours.size == 0:
+                continue
 
-            v1 = v1d[d1.fname](d1.ll)
-            w1 = d1.we
-            c1d_1 = (w1*w1[:,None])*c1d[d1.fname](abs(d1.ll-d1.ll[:,None]))*sp.sqrt(v1*v1[:,None])
-            r1 = d1.r_comov
-            z1 = d1.z
+            variance_1d = get_variance_1d[delta1.fname](delta1.log_lambda)
+            weights1 = delta1.weights
+            weighted_xi_1d_1 = (
+                (weights1 * weights1[:, None]) * xi_1d[delta1.fname](
+                    abs(delta1.log_lambda - delta1.log_lambda[:, None])) *
+                np.sqrt(variance_1d * variance_1d[:, None]))
+            r_comov1 = delta1.r_comov
+            z1 = delta1.z
 
-            neighs = d1.qneighs
-            ang12 = d1^neighs
-            r2 = sp.array([q2.r_comov for q2 in neighs])
-            z2 = sp.array([q2.zqso for q2 in neighs])
-            w2 = sp.array([q2.we for q2 in neighs])
+            neighbours = delta1.neighbours
+            ang12 = delta1 ^ neighbours
+            r_comov2 = np.array([obj2.r_comov for obj2 in neighbours])
+            z2 = np.array([obj2.z_qso for obj2 in neighbours])
+            weights2 = np.array([obj2.weights for obj2 in neighbours])
 
-            fill_wickT1234(ang12,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4)
+            compute_wickT1234_pairs(ang12, r_comov1, r_comov2, z1, z2, weights1,
+                                    weights2, weighted_xi_1d_1, weights_wick,
+                                    num_pairs_wick, t1, t2, t3, t4)
 
             ### Higher order diagrams
-            if (cfWick is None) or (max_diagram<=4): continue
-            thid2 = sp.array([q2.thid for q2 in neighs])
-            for d3 in sp.array(d1.dneighs):
-                if d3.qneighs.size==0: continue
+            if (xi_wick is None) or (max_diagram <= 4):
+                continue
+            thingid2 = np.array([obj2.thingid for obj2 in neighbours])
+            for delta3 in np.array(delta1.dneighs):
+                if delta3.neighbours.size == 0:
+                    continue
 
-                ang13 = d1^d3
+                ang13 = delta1 ^ delta3
 
-                r3 = d3.r_comov
-                w3 = d3.we
+                r_comov3 = delta3.r_comov
+                weights3 = delta3.weights
 
-                neighs = d3.qneighs
-                ang34 = d3^neighs
-                r4 = sp.array([q4.r_comov for q4 in neighs])
-                w4 = sp.array([q4.we for q4 in neighs])
-                thid4 = sp.array([q4.thid for q4 in neighs])
+                neighbours = delta3.neighbours
+                ang34 = delta3 ^ neighbours
+                r_comov4 = np.array([obj4.r_comov for obj4 in neighbours])
+                weights4 = np.array([obj4.weights for obj4 in neighbours])
+                thingid4 = np.array([obj4.thingid for obj4 in neighbours])
 
-                if max_diagram==5:
-                    w = sp.in1d(d1.qneighs,d3.qneighs)
-                    if w.sum()==0: continue
-                    t_ang12 = ang12[w]
-                    t_r2 = r2[w]
-                    t_w2 = w2[w]
-                    t_thid2 = thid2[w]
+                if max_diagram == 5:
+                    w = np.in1d(delta1.neighbours, delta3.neighbours)
+                    if w.sum() == 0:
+                        continue
+                    aux_ang12 = ang12[w]
+                    aux_r_comov2 = r_comov2[w]
+                    aux_weights2 = weights2[w]
+                    aux_thingid2 = thingid2[w]
 
-                    w = sp.in1d(d3.qneighs,d1.qneighs)
-                    if w.sum()==0: continue
+                    w = np.in1d(delta3.neighbours, delta1.neighbours)
+                    if w.sum() == 0:
+                        continue
                     ang34 = ang34[w]
-                    r4 = r4[w]
-                    w4 = w4[w]
-                    thid4 = thid4[w]
+                    r_comov4 = r_comov4[w]
+                    weights4 = weights4[w]
+                    thingid4 = thingid4[w]
 
-                fill_wickT56(t_ang12,ang34,ang13,r1,t_r2,r3,r4,w1,t_w2,w3,w4,t_thid2,thid4,T5,T6)
+                compute_wickT56_pairs(aux_ang12, ang34, ang13, r_comov1,
+                                      aux_r_comov2, r_comov3, r_comov4,
+                                      weights1, aux_weights2, weights3,
+                                      weights4, aux_thingid2, thingid4, t5, t6)
 
-    return wAll, nb, npairs, npairs_used, T1, T2, T3, T4, T5, T6
+    return weights_wick, num_pairs_wick, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
+
+
 @jit
-def fill_wickT1234(ang,r1,r2,z1,z2,w1,w2,c1d_1,wAll,nb,T1,T2,T3,T4):
-    """Compute the Wick covariance matrix for the object-pixel
-        cross-correlation for the T1, T2, T3 and T4 diagrams:
-        i.e. the contribution of the 1D auto-correlation to the
-        covariance matrix
+def compute_wickT1234_pairs(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
+                            weighted_xi_1d_1, weights_wick, num_pairs_wick, t1,
+                            t2, t3, t4):
+    """
+    Computes the Wick expansion terms 1, 2, and 3 of a given pair of forests
+
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
 
     Args:
-        ang (float array): angle between forest and array of objects
-        r1 (float array): comoving distance to each pixel of the forest [Mpc/h]
-        r2 (float array): comoving distance to each object [Mpc/h]
-        z1 (float array): redshift of each pixel of the forest
-        z2 (float array): redshift of each object
-        w1 (float array): weight of each pixel of the forest
-        w2 (float array): weight of each object
-        c1d_1 (float array): covariance between two pixels of the same forest
-        wAll (float array): Sum of weight
-        nb (int64 array): Number of pairs
-        T1 (float 2d array): Contribution of diagram T1
-        T2 (float 2d array): Contribution of diagram T2
-        T3 (float 2d array): Contribution of diagram T3
-        T4 (float 2d array): Contribution of diagram T4
-
-    Returns:
-
+        ang: array of floats
+            Angular separation between pixels in forests 1 and 2
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for forest 2
+        z1: array of floats
+            Redshifts for forest 1
+        z2: array of floats
+            Redshifts for forest 2
+        weights1: array of floats
+            Weights for forest 1
+        weights2: array of floats
+            Weights for forest 2
+        weighted_xi_1d_1: array of floats
+            Weighted 1D correlation function for forest 1
+        weights_wick: array of floats
+            Total weight in the covariance matrix pixels
+        num_pairs_wick: array of floats
+            Total number of pairs in the covariance matrix pixels
+        t1: array of floats
+            Wick expansion, term 1
+        t2: array of floats
+            Wick expansion, term 2
+        t3: array of floats
+            Wick expansion, term 3
+        t4: array of floats
+            Wick expansion, term 4
     """
-    rp = (r1[:,None]-r2)*sp.cos(ang/2.)
-    rt = (r1[:,None]+r2)*sp.sin(ang/2.)
-    zw1 = ((1.+z1)/(1.+zref))**(z_evol_del-1.)
-    zw2 = ((1.+z2)/(1.+zref))**(z_evol_obj-1.)
-    we = w1[:,None]*w2
-    we1 = w1[:,None]*sp.ones(len(r2))
-    idxPix = np.arange(r1.size)[:,None]*sp.ones(len(r2),dtype='int')
-    idxQso = sp.ones(r1.size,dtype='int')[:,None]*np.arange(len(r2))
+    r_par = (r_comov1[:, None] - r_comov2) * np.cos(ang / 2.)
+    r_trans = (r_comov1[:, None] + r_comov2) * np.sin(ang / 2.)
+    z_weight_evol1 = ((1. + z1) / (1. + z_ref))**(alpha - 1.)
+    z_weight_evol2 = ((1. + z2) / (1. + z_ref))**(alpha_obj - 1.)
+    weights12 = weights1[:, None] * weights2
+    weight1 = weights1[:, None] * np.ones(len(r_comov2))
+    index_delta = np.arange(r_comov1.size)[:, None] * np.ones(len(r_comov2),
+                                                              dtype='int')
+    index_obj = (np.ones(r_comov1.size, dtype='int')[:, None] *
+                 np.arange(len(r_comov2)))
 
-    bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
-    bt = (rt/rt_max*ntb).astype(int)
-    ba = bt + ntb*bp
+    bins_r_par = ((r_par - r_par_min) / (r_par_max - r_par_min) *
+                  num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins_forest = bins_r_trans + num_bins_r_trans * bins_r_par
 
-    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
-    if w.sum()==0: return
+    w = (r_par > r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
+    if w.sum() == 0:
+        return
 
-    ba = ba[w]
-    we = we[w]
-    we1 = we1[w]
-    idxPix = idxPix[w]
-    idxQso = idxQso[w]
+    bins_forest = bins_forest[w]
+    weights12 = weights12[w]
+    weight1 = weight1[w]
+    index_delta = index_delta[w]
+    index_obj = index_obj[w]
 
-    for k1 in range(ba.size):
-        p1 = ba[k1]
-        i1 = idxPix[k1]
-        q1 = idxQso[k1]
-        wAll[p1] += we[k1]
-        nb[p1] += 1
-        T1[p1,p1] += (we[k1]**2)/we1[k1]*zw1[i1]
+    for index1 in range(bins_forest.size):
+        p1 = bins_forest[index1]
+        i1 = index_delta[index1]
+        j1 = index_obj[index1]
+        weights_wick[p1] += weights12[index1]
+        num_pairs_wick[p1] += 1
+        t1[p1,
+           p1] += weights12[index1]**2 / weight1[index1] * z_weight_evol1[i1]
 
-        for k2 in range(k1+1,ba.size):
-            p2 = ba[k2]
-            i2 = idxPix[k2]
-            q2 = idxQso[k2]
-            if q1==q2:
-                wcorr = c1d_1[i1,i2]*(zw2[q1]**2)
-                T2[p1,p2] += wcorr
-                T2[p2,p1] += wcorr
-            elif i1==i2:
-                wcorr = (we[k1]*we[k2])/we1[k1]*zw1[i1]
-                T3[p1,p2] += wcorr
-                T3[p2,p1] += wcorr
+        for index2 in range(index1 + 1, bins_forest.size):
+            p2 = bins_forest[index2]
+            i2 = index_delta[index2]
+            j2 = index_obj[index2]
+            if j1 == j2:
+                prod = weighted_xi_1d_1[i1, i2] * (z_weight_evol2[j1]**2)
+                t2[p1, p2] += prod
+                t2[p2, p1] += prod
+            elif i1 == i2:
+                prod = (weights12[index1] * weights12[index2] /
+                        weight1[index1] * z_weight_evol1[i1])
+                t3[p1, p2] += prod
+                t3[p2, p1] += prod
             else:
-                wcorr = c1d_1[i1,i2]*zw2[q1]*zw2[q2]
-                T4[p1,p2] += wcorr
-                T4[p2,p1] += wcorr
+                prod = (weighted_xi_1d_1[i1, i2] * z_weight_evol2[j1] *
+                        z_weight_evol2[j2])
+                t4[p1, p2] += prod
+                t4[p2, p1] += prod
 
     return
+
+
 @jit
-def fill_wickT56(ang12,ang34,ang13,r1,r2,r3,r4,w1,w2,w3,w4,thid2,thid4,T5,T6):
-    """Compute the Wick covariance matrix for the object-pixel
-        cross-correlation for the T5 and T6 diagrams:
-        i.e. the contribution of the 3D auto-correlation to the
-        covariance matrix
+def compute_wickT56_pairs(ang12, ang34, ang13, r_comov1, r_comov2, r_comov3,
+                          r_comov4, weights1, weights2, weights3, weights4,
+                          thingid2, thingid4, t5, t6):
+    """
+    Compute the Wick covariance matrix for the object-pixel cross-correlation
+    for the T5 and T6 diagrams: i.e. the contribution of the 3D auto-correlation
+    to the covariance matrix
+
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
 
     Args:
-        ang12 (float array): angle between forest and array of objects
-        ang34 (float array): angle between another forest and another array of objects
-        ang13 (float array): angle between the two forests
-        r1 (float array): comoving distance to each pixel of the forest [Mpc/h]
-        r2 (float array): comoving distance to each object [Mpc/h]
-        r3 (float array): comoving distance to each pixel of another forests [Mpc/h]
-        r4 (float array): comoving distance to each object paired to the other forest [Mpc/h]
-        w1 (float array): weight of each pixel of the forest
-        w2 (float array): weight of each object
-        w3 (float array): weight of each pixel of another forest
-        w4 (float array): weight of each object paired to the other forest
-        thid2 (float array): THING_ID of each object
-        thid4 (float array): THING_ID of each object paired to the other forest
-        T5 (float 2d array): Contribution of diagram T5
-        T6 (float 2d array): Contribution of diagram T6
-
-    Returns:
-
+        ang12: array of floats
+            Angular separation between pixels in forests 1 and object 2
+        ang34: array of floats
+            Angular separation between pixels in forests 3 and object 4
+        ang13: array of floats
+            Angular separation between pixels in object 2 and 3
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for object 2
+        r_comov3: array of floats
+            Comoving distance (in Mpc/h) for forest 3
+        r_comov4: array of floats
+            Comoving distance (in Mpc/h) for object 4
+        weights1: array of floats
+            Weights for forest 1
+        weights2: array of floats
+            Weights for object 2
+        weights3: array of floats
+            Weights for forest 3
+        weights4: array of floats
+            Weights for object 4
+        thingid2: array of ints
+            ThingID of the observation for object 2
+        thingid4: array of ints
+            ThingID of the observation for object 4
+        t4: array of floats
+            Wick expansion, term 4
+        t5: array of floats
+            Wick expansion, term 5
     """
-
     ### Pair forest_1 - forest_3
-    rp = np.absolute(r1-r3[:,None])*sp.cos(ang13/2.)
-    rt = (r1+r3[:,None])*sp.sin(ang13/2.)
+    r_par = np.absolute(r_comov1 - r_comov3[:, None]) * np.cos(ang13 / 2.)
+    r_trans = (r_comov1 + r_comov3[:, None]) * np.sin(ang13 / 2.)
 
-    w = (rp<cfWick_rp_max) & (rt<cfWick_rt_max) & (rp>=cfWick_rp_min)
-    if w.sum()==0: return
-    bp = sp.floor((rp-cfWick_rp_min)/(cfWick_rp_max-cfWick_rp_min)*cfWick_np).astype(int)
-    bt = (rt/cfWick_rt_max*cfWick_nt).astype(int)
-    ba13 = bt + cfWick_nt*bp
-    ba13[~w] = 0
-    cf13 = cfWick[ba13]
-    cf13[~w] = 0.
+    w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+    if w.sum() == 0:
+        return
+    bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) *
+                          num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins_forest13 = bins_r_trans + num_bins_r_trans * bins_r_par
+    bins_forest13[~w] = 0
+    xi13 = xi_wick[bins_forest13]
+    xi13[~w] = 0.
 
     ### Pair forest_1 - object_2
-    rp = (r1[:,None]-r2)*sp.cos(ang12/2.)
-    rt = (r1[:,None]+r2)*sp.sin(ang12/2.)
-    we = w1[:,None]*w2
-    pix = (np.arange(r1.size)[:,None]*sp.ones_like(r2)).astype(int)
-    thid = sp.ones_like(w1[:,None]).astype(int)*thid2
+    r_par = (r_comov1[:, None] - r_comov2) * np.cos(ang12 / 2.)
+    r_trans = (r_comov1[:, None] + r_comov2) * np.sin(ang12 / 2.)
+    weights12 = weights1[:, None] * weights2
+    bins12 = (np.arange(r_comov1.size)[:, None] *
+              np.ones_like(r_comov2)).astype(int)
+    thingid_wick12 = np.ones_like(weights1[:, None]).astype(int) * thingid2
 
-    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
-    if w.sum()==0: return
-    rp = rp[w]
-    rt = rt[w]
-    we12 = we[w]
-    pix12 = pix[w]
-    thid12 = thid[w]
-    bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
-    bt = (rt/rt_max*ntb).astype(int)
-    ba12 = bt + ntb*bp
+    w = (r_par > r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
+    if w.sum() == 0:
+        return
+    r_par = r_par[w]
+    r_trans = r_trans[w]
+    weights12 = weights12[w]
+    bins12 = bins12[w]
+    thingid_wick12 = thingid_wick12[w]
+    bins_r_par = ((r_par - r_par_min) / (r_par_max - r_par_min) *
+                  num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins_forest12 = bins_r_trans + num_bins_r_trans * bins_r_par
 
     ### Pair forest_3 - object_4
-    rp = (r3[:,None]-r4)*sp.cos(ang34/2.)
-    rt = (r3[:,None]+r4)*sp.sin(ang34/2.)
-    we = w3[:,None]*w4
-    pix = (np.arange(r3.size)[:,None]*sp.ones_like(r4)).astype(int)
-    thid = sp.ones_like(w3[:,None]).astype(int)*thid4
+    r_par = (r_comov3[:, None] - r_comov4) * np.cos(ang34 / 2.)
+    r_trans = (r_comov3[:, None] + r_comov4) * np.sin(ang34 / 2.)
+    weights34 = weights3[:, None] * weights4
+    bins34 = (np.arange(r_comov3.size)[:, None] *
+              np.ones_like(r_comov4)).astype(int)
+    thingid_wick34 = np.ones_like(weights3[:, None]).astype(int) * thingid4
 
-    w = (rp>rp_min) & (rp<rp_max) & (rt<rt_max)
-    if w.sum()==0: return
-    rp = rp[w]
-    rt = rt[w]
-    we34 = we[w]
-    pix34 = pix[w]
-    thid34 = thid[w]
-    bp = ((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
-    bt = (rt/rt_max*ntb).astype(int)
-    ba34 = bt + ntb*bp
+    w = (r_par > r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
+    if w.sum() == 0:
+        return
+    r_par = r_par[w]
+    r_trans = r_trans[w]
+    weights34 = weights34[w]
+    bins34 = bins34[w]
+    thingid_wick34 = thingid_wick34[w]
+    bins_r_par = ((r_par - r_par_min) / (r_par_max - r_par_min) *
+                  num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins_forest34 = bins_r_trans + num_bins_r_trans * bins_r_par
 
-    ### T5
-    for k1, p1 in enumerate(ba12):
-        pix1 = pix12[k1]
-        t1 = thid12[k1]
-        w1 = we12[k1]
+    ### t5
+    for index1, p1 in enumerate(bins_forest12):
+        selected_bin12 = bins12[index1]
+        weight1 = weights12[index1]
 
-        w = thid34==t1
-        for k2, p2 in enumerate(ba34[w]):
-            pix2 = pix34[w][k2]
-            t2 = thid34[w][k2]
-            w2 = we34[w][k2]
-            wcorr = cf13[pix2,pix1]*w1*w2
-            T5[p1,p2] += wcorr
-            T5[p2,p1] += wcorr
+        w = thingid_wick34 == thingid_wick12[index1]
+        for index2, p2 in enumerate(bins_forest34[w]):
+            selected_bin34 = bins34[w][index2]
+            weight2 = weights34[w][index2]
+            prod = xi13[selected_bin34, selected_bin12] * weight1 * weight2
+            t5[p1, p2] += prod
+            t5[p2, p1] += prod
 
-    ### T6
-    if max_diagram==5: return
-    for k1, p1 in enumerate(ba12):
-        pix1 = pix12[k1]
-        t1 = thid12[k1]
-        w1 = we12[k1]
+    ### t6
+    if max_diagram == 5:
+        return
+    for index1, p1 in enumerate(bins_forest12):
+        selected_bin12 = bins12[index1]
+        weight1 = weights12[index1]
 
-        for k2, p2 in enumerate(ba34):
-            pix2 = pix34[k2]
-            t2 = thid34[k2]
-            w2 = we34[k2]
-            wcorr = cf13[pix2,pix1]*w1*w2
-            if t2==t1: continue
-            T6[p1,p2] += wcorr
-            T6[p2,p1] += wcorr
+        for index2, p2 in enumerate(bins_forest34):
+            if thingid_wick34[index2] == thingid_wick12[index1]:
+                continue
+            selected_bin34 = bins34[index2]
+            weight2 = weights34[index2]
+            prod = xi13[selected_bin34, selected_bin12] * weight1 * weight2
+            t6[p1, p2] += prod
+            t6[p2, p1] += prod
 
-    return
-def xcf1d(pix):
-    """Compute the 1D cross-correlation between delta and objects on the same LOS
+
+def compute_xi_1d(healpixs):
+    """Computes the 1D autocorrelation delta and objects on the same LOS
 
     Args:
-        pix (list): List of HEALpix to compute
+        healpixs: array of ints
+            List of healpix numbers
 
     Returns:
-        we (float array): weight
-        xi (float array): correlation
-        rp (float array): wavelenght ratio
-        z (float array): Mean redshift of pairs
-        nb (int array): Number of pairs
+        The following variables:
+            weights1d: Total weights for the 1d correlation function
+            xi1d: The 1d correlation function
+            r_par1d: The wavelength ratios
+            z1d: Mean redshift of pairs
+            num_pairs1d: Number of pairs for the 1d correlation function
     """
-    xi = np.zeros(npb)
-    we = np.zeros(npb)
-    rp = np.zeros(npb)
-    z = np.zeros(npb)
-    nb = np.zeros(npb,dtype=sp.int64)
+    xi_1d = np.zeros(num_bins_r_par)
+    weights1d = np.zeros(num_bins_r_par)
+    r_par1d = np.zeros(num_bins_r_par)
+    z1d = np.zeros(num_bins_r_par)
+    num_pairs1d = np.zeros(num_bins_r_par, dtype=np.int64)
 
-    for ipix in pix:
-        for d in dels[ipix]:
+    for healpix in healpixs:
+        for delta in data[healpix]:
 
-            neighs = [q for q in objs[ipix] if q.thid==d.thid]
-            if len(neighs)==0: continue
+            neighbours = [
+                obj for obj in objs[healpix] if obj.thingid == delta.thingid
+            ]
+            if len(neighbours) == 0:
+                continue
 
-            zqso = [ q.zqso for q in neighs ]
-            we_qso = [ q.we for q in neighs ]
-            l_qso = [ 10.**q.ll for q in neighs ]
-            ang = np.zeros(len(l_qso))
+            z_qso = [obj.z_qso for obj in neighbours]
+            weights_qso = [obj.weights for obj in neighbours]
+            lambda_qso = [10.**obj.log_lambda for obj in neighbours]
+            ang = np.zeros(len(lambda_qso))
 
-            cw,cd,crp,_,cz,cnb = fast_xcf(d.z,10.**d.ll,10.**d.ll,d.we,d.de,zqso,l_qso,l_qso,we_qso,ang)
+            (rebin_weight, rebin_xi, rebin_r_par, _,
+             rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                 delta.z, 10.**delta.log_lambda, 10.**delta.log_lambda,
+                 delta.weights, delta.delta, z_qso, lambda_qso, lambda_qso,
+                 weights_qso, ang)
 
-            xi[:cd.size] += cd
-            we[:cw.size] += cw
-            rp[:crp.size] += crp
-            z[:cz.size] += cz
-            nb[:cnb.size] += cnb.astype(int)
+            xi_1d[:rebin_xi.size] += rebin_xi
+            weights1d[:rebin_weight.size] += rebin_weight
+            r_par1d[:rebin_r_par.size] += rebin_r_par
+            z1d[:rebin_z.size] += rebin_z
+            num_pairs1d[:rebin_num_pairs.size] += rebin_num_pairs.astype(int)
 
-            for el in list(d.__dict__.keys()):
-                setattr(d,el,None)
+    w = weights1d > 0.
+    xi_1d[w] /= weights1d[w]
+    r_par1d[w] /= weights1d[w]
+    z[w] /= weights1d[w]
 
-    w = we>0.
-    xi[w] /= we[w]
-    rp[w] /= we[w]
-    z[w] /= we[w]
-
-    return we,xi,rp,z,nb
+    return weights1d, xi_1d, r_par1d, z, num_pairs1d

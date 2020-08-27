@@ -26,9 +26,9 @@ class wedge:
         bp = (rpmc-rpmin)/(rpmax-rpmin)*nrp
         bp = bp.astype(int)
 
-        rp = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
-        rt = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
-        r=sp.sqrt(rp**2+rt**2)
+        r_par = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
+        r_trans = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
+        r=sp.sqrt(r_par**2+r_trans**2)
 
         bins = bt+nrt*bp + nrp*nrt*br
 
@@ -42,7 +42,7 @@ class wedge:
         self.W = W.reshape(nr,nrt*nrp)
         self.r = rmin + (np.arange(nr)+0.5)*(rmax-rmin)/nr
 
-    def wedge(self,da,co):
+    def wedge(self, da, co):
         we = 1/sp.diagonal(co)
         w = self.W.dot(we)
         Wwe = self.W*we
@@ -50,5 +50,3 @@ class wedge:
         Wwe[mask,:]/=w[mask,None]
         d = Wwe.dot(da)
         return self.r,d,Wwe.dot(co).dot(Wwe.T)
-
-

@@ -3,6 +3,9 @@ import copy
 import sys
 import subprocess
 
+from picca.utils import userprint
+
+
 class parameters:
 
     def __init__(self):
@@ -191,13 +194,13 @@ class parameters:
                     dic_unknown[unknown[i][2:]] = float(unknown[i+1])
                     i += 2
                 else:
-                    print('  picca/py/picca/fitter/parameters.py:: unknown entry = ', unknown[i])
-                    print('  Exit')
+                    userprint('  picca/py/picca/fitter/parameters.py:: unknown entry = ', unknown[i])
+                    userprint('  Exit')
                     sys.exit(0)
                     i += 1
             except:
-                print('  picca/py/picca/fitter/parameters.py:: unknown entry = ', unknown[i])
-                print('  Exit')
+                userprint('  picca/py/picca/fitter/parameters.py:: unknown entry = ', unknown[i])
+                userprint('  Exit')
                 sys.exit(0)
                 i += 1
 
@@ -212,8 +215,8 @@ class parameters:
 
         if self.dic_init['metals'] is None:
             if (len(dic_unknown)!=0):
-                print('  picca/py/picca/fitter/parameters.py:: entries not metal = ', dic_unknown)
-                print('  Exit')
+                userprint('  picca/py/picca/fitter/parameters.py:: entries not metal = ', dic_unknown)
+                userprint('  Exit')
                 sys.exit(0)
             return
 
@@ -225,8 +228,8 @@ class parameters:
                     if (par+'_'+met == i):
                         is_a_metal = True
             if not is_a_metal:
-                print('  picca/py/picca/fitter/parameters.py:: entry not metal = ', i)
-                print('  Exit')
+                userprint('  picca/py/picca/fitter/parameters.py:: entry not metal = ', i)
+                userprint('  Exit')
                 sys.exit(0)
 
         ### Set values
@@ -246,13 +249,13 @@ class parameters:
     def test_init_is_valid(self):
 
         if self.dic_init['model'] is None:
-            print('  picca/py/picca/fitter/parameters.py::  No model file.')
-            print('  Exit')
+            userprint('  picca/py/picca/fitter/parameters.py::  No model file.')
+            userprint('  Exit')
             sys.exit(0)
 
         if self.dic_init['data_auto'] is None and self.dic_init['data_cross'] is None and self.dic_init['data_autoQSO'] is None:
-            print('  picca/py/picca/fitter/parameters.py::  No data file.')
-            print('  Exit')
+            userprint('  picca/py/picca/fitter/parameters.py::  No data file.')
+            userprint('  Exit')
             sys.exit(0)
 
         try:
@@ -261,25 +264,8 @@ class parameters:
             command = 'rm '+path_to_save
             subprocess.call(command, shell=True)
         except:
-            print('  picca/py/picca/fitter/parameters.py::  Impossible to save in : ', self.dic_init['output_prefix'])
-            print('  Exit')
+            userprint('  picca/py/picca/fitter/parameters.py::  Impossible to save in : ', self.dic_init['output_prefix'])
+            userprint('  Exit')
             sys.exit(0)
 
         return
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

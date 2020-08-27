@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import iminuit
 import sys
 import configargparse
 
-from picca.utils import print
+from picca.utils import userprint
 from picca.fitter import parameters, cosmo, Chi2, metals
 
 ### Get the parser
@@ -43,10 +42,10 @@ if not dic_init['metals'] is None:
         kw['fix_'+i]=True
 
     for n,v in zip(met.pname,met.pinit):
-        print(n,v)
+        userprint(n,v)
         kw[n]=v
         kw['error_'+n]=0.005
-    print()
+    userprint()
 
 m=cosmo.model(dic_init)
 if not dic_init['data_auto'] is None:
@@ -59,7 +58,7 @@ if not dic_init['data_autoQSO'] is None:
 chi2=Chi2.Chi2(dic_init,cosmo=m,met=met)
 
 for n,v in zip(m.pall,m.pinit):
-    #print(n,v)
+    #userprint(n,v)
     kw[n]=v
     if abs(v)!=0:
         kw['error_'+n]=abs(v)/10.
@@ -75,9 +74,9 @@ if not dic_init['fix'] is None:
         if any(i==el for el in chi2.pname):
             kw['fix_'+i]=True
         else:
-            print()
-            print('  fit/bin/fit:: Unknown parameter = ', i)
-            print('  Exit')
+            userprint()
+            userprint('  fit/bin/fit:: Unknown parameter = ', i)
+            userprint('  Exit')
             sys.exit(0)
 
 if not dic_init['free'] is None:
@@ -85,9 +84,9 @@ if not dic_init['free'] is None:
         if any(i==el for el in chi2.pname):
             kw['fix_'+i]=False
         else:
-            print()
-            print('  fit/bin/fit:: Unknown parameter = ', i)
-            print('  Exit')
+            userprint()
+            userprint('  fit/bin/fit:: Unknown parameter = ', i)
+            userprint('  Exit')
             sys.exit(0)
 
 if not dic_init['limit'] is None:
@@ -124,9 +123,9 @@ if not dic_init['debug']:
         if not dic_init['no_hesse']:
             mig.hesse()
     except Exception as error :
-        print()
-        print('  fit/bin/fit:: error in minimization = ', error)
-        print('  Exit')
+        userprint()
+        userprint('  fit/bin/fit:: error in minimization = ', error)
+        userprint('  Exit')
         sys.exit(0)
 
 if not dic_init['minos'] is None and mig.migrad_ok():
