@@ -56,8 +56,8 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
         xi_loc=xi_loc[s]
         xi_loc/=r**(3-n)
         xi_loc[-1]=0
-        spline=np.interpolate.splrep(np.log(r)-dr/2,np.real(xi_loc),k=3,s=0)
-        xi[ell//2,:]=np.interpolate.splev(np.log(ar),spline)
+        spline=scipy.interpolate.splrep(np.log(r)-dr/2,np.real(xi_loc),k=3,s=0)
+        xi[ell//2,:]=scipy.interpolate.splev(np.log(ar),spline)
 
     return xi
 
