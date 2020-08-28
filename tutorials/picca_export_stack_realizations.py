@@ -75,8 +75,8 @@ if __name__ == '__main__':
 
     ###
     try:
-        scipy.linalg.cholesky(dic['CO'])
-    except scipy.linalg.LinAlgError:
+        numpy.linalg.cholesky(dic['CO'])
+    except numpy.linalg.LinAlgError:
         print('WARNING: Matrix is not positive definite')
 
     ###
