@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 from numpy import fft
 from scipy import special
 import scipy.interpolate
@@ -12,7 +11,7 @@ dmuk = 1./nmuk
 muk=muk[:,None]
 
 def sinc(x):
-    return sp.sin(x)/x
+    return np.sin(x)/x
 
 def Pk2Mp(ar,k,pk,ell_vals,tform=None):
     """
@@ -26,9 +25,9 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
 
     N=len(k)
     emm=N*fft.fftfreq(N)
-    r=r0*sp.exp(-emm*l/N)
+    r=r0*np.exp(-emm*l/N)
     dr=abs(np.log(r[1]/r[0]))
-    s=sp.argsort(r)
+    s=np.argsort(r)
     r=r[s]
 
     xi=np.zeros([len(ell_vals),len(ar)])
@@ -41,24 +40,24 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
             pk_ell=pk
             n=2.
         else:
-            pk_ell=np.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)/2/sp.pi**2
+            pk_ell=np.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)/2/np.pi**2
             n=2.
         mu=ell+0.5
         q=2-n-0.5
-        x=q+2*sp.pi*1j*emm/l
+        x=q+2*np.pi*1j*emm/l
         lg1=myGamma.LogGammaLanczos((mu+1+x)/2)
         lg2=myGamma.LogGammaLanczos((mu+1-x)/2)
 
-        um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
-        um[0]=sp.real(um[0])
-        an=fft.fft(pk_ell*k**n*np.sqrt(sp.pi/2))
+        um=(k0*r0)**(-2*np.pi*1j*emm/l)*2**x*np.exp(lg1-lg2)
+        um[0]=np.real(um[0])
+        an=fft.fft(pk_ell*k**n*np.sqrt(np.pi/2))
         an*=um
         xi_loc=fft.ifft(an)
         xi_loc=xi_loc[s]
         xi_loc/=r**(3-n)
         xi_loc[-1]=0
-        spline=sp.interpolate.splrep(np.log(r)-dr/2,sp.real(xi_loc),k=3,s=0)
-        xi[ell//2,:]=sp.interpolate.splev(np.log(ar),spline)
+        spline=np.interpolate.splrep(np.log(r)-dr/2,np.real(xi_loc),k=3,s=0)
+        xi[ell//2,:]=np.interpolate.splev(np.log(ar),spline)
 
     return xi
 
