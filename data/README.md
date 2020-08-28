@@ -23,12 +23,12 @@ data/duMasdesBourbouxetal2020/combined_stdFit/combined.ap.at.scan.dat \
 --label auto-DR16 cross-DR16 combined-DR16
 ```
 
-![DR14-chi2scan](/tutorials/data/DR14-chi2-scan-ap-at.png)
+![DR16-chi2scan](/tutorials/data/DR16-chi2-scan-ap-at.png)
 
 ## DR16
 
-### Results of H. du Mas des Bourboux et al. 2020 ([arXiv:<arxiv.number>](https://arxiv.org/abs/<arxiv.number>))
-In ![duMasdesBourbouxetal2020](/data/duMasdesBourbouxetal2020/) (will be added once on arxiv):
+### Results of H. du Mas des Bourboux et al. 2020 ([arXiv:2007.08995](https://arxiv.org/abs/2007.08995), submitted to ApJ)
+In ![duMasdesBourbouxetal2020](/data/duMasdesBourbouxetal2020/):
 
 *   ![auto\_full\_stdFit](/data/duMasdesBourbouxetal2020/auto_full_stdFit/): Result of the full auto-correlation with a combined fit of:
     * auto-correlation of Lya absorption in the Lya region (Lya(Lya)xLya(Lya))
@@ -43,7 +43,7 @@ In ![duMasdesBourbouxetal2020](/data/duMasdesBourbouxetal2020/) (will be added o
 
 ## DR14
 
-### Results of V. de Sainte Agathe et al. 2019 ([arXiv:1904.03400](https://arxiv.org/abs/1904.03400))
+### Results of V. de Sainte Agathe et al. 2019 ([arXiv:1904.03400](https://arxiv.org/abs/1904.03400), published in A&A)
 In ![deSainteAgatheetal2019](/data/deSainteAgatheetal2019/):
 
 *   ![auto\_alone\_stdFit](/data/deSainteAgatheetal2019/auto_alone_stdFit/): fit results of the combined Lya absorption in Lya region
@@ -53,7 +53,7 @@ In ![deSainteAgatheetal2019](/data/deSainteAgatheetal2019/):
 
 *   ![combined\_stdFit](/data/deSainteAgatheetal2019/combined_stdFit/): combined with the cross-correlation function from Blomqvist et al. 2019
 
-### Results of M. Blomqvist et al. 2019 ([arXiv:1904.03430](https://arxiv.org/abs/1904.03430))
+### Results of M. Blomqvist et al. 2019 ([arXiv:1904.03430](https://arxiv.org/abs/1904.03430), published in A&A)
 In ![Blomqvistetal2019/](/data/Blomqvistetal2019/):
 
 *   ![cross\_alone\_stdFit](/data/Blomqvistetal2019/cross_alone_stdFit): standard fit results to quasar-(Lya+Lyb) regions cross-correlation
@@ -63,12 +63,12 @@ In ![Blomqvistetal2019/](/data/Blomqvistetal2019/):
 
 ## DR12
 
-### Results of J.E. Bautista et al. 2017 ([arXiv:1702.00176](https://arxiv.org/abs/1702.00176))
+### Results of J.E. Bautista et al. 2017 ([arXiv:1702.00176](https://arxiv.org/abs/1702.00176), published in A&A)
 In ![Bautistaetal2017/fits](/data/Bautistaetal2017/fits/):
 
 *   ![physical](/data/Bautistaetal2017/fits/physical/): fit results to lyman-alpha forest auto-correlation data
 
-### Results of H. du Mas des Bourboux et al. 2017 ([arXiv:1708.02225](https://arxiv.org/abs/1708.02225))
+### Results of H. du Mas des Bourboux et al. 2017 ([arXiv:1708.02225](https://arxiv.org/abs/1708.02225), published in A&A)
 In ![duMasdesBourbouxetal2017/fits](/data/duMasdesBourbouxetal2017/fits/):
 
 *   ![cross\_alone\_stdFit](/data/duMasdesBourbouxetal2017/fits/cross_alone_stdFit/): standard fit results to quasar-lyman-alpha forest cross-correlation data

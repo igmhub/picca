@@ -38,6 +38,8 @@ if __name__ == '__main__':
 
     color = ['blue','red','green','orange']
 
+    nbLevels = 2
+
     assert len(args.chi2scan)==len(args.label)
 
     for i,path in enumerate(args.chi2scan):
@@ -69,13 +71,14 @@ if __name__ == '__main__':
         ### Read the convertion from delta-chi2 to sigma
         if not os.path.isfile(path.replace('.ap.at.scan.dat','.dchi2.to.sigma')):
             print("WARNING: did not find .dchi2.to.sigma to convert delta-chi2 to sigma, assuming Linear mapping")
-            levels = [ sp.stats.chi2.ppf( sp.stats.chi2.cdf(sigma**2,1), 2) for sigma in range(1,4)]
+            levels = [ sp.stats.chi2.ppf( sp.stats.chi2.cdf(sigma**2,1), 2) for sigma in range(1,nbLevels+1)]
         else:
             with open(path.replace('.ap.at.scan.dat','.dchi2.to.sigma')) as f:
                 for line in f:
                     line = line.split()
                     if line[0]=='ap_at':
                         levels = [float(lev) for lev in line[1:]]
+            levels = levels[:nbLevels]
 
         ### Read the fiducial cosmology
         if args.d_over_rd:

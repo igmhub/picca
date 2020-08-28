@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 
 class wedge:
     def __init__(self,rpmin=0.,rpmax=200.,nrp=50,rtmin=0.,rtmax=200.,nrt=50,\
@@ -12,7 +11,7 @@ class wedge:
         irpmc=(index-irtmc)//nrtmc
         rtmc = rtmin+(irtmc+0.5)*(rtmax-rtmin)/nrtmc
         rpmc = rpmin+(irpmc+0.5)*(rpmax-rpmin)/nrpmc
-        rmc = sp.sqrt(rtmc**2+rpmc**2)
+        rmc = np.sqrt(rtmc**2+rpmc**2)
         mumc = rpmc/rmc
         if absoluteMu:
             mumc = np.absolute(mumc)
@@ -28,7 +27,7 @@ class wedge:
 
         r_par = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
         r_trans = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
-        r=sp.sqrt(r_par**2+r_trans**2)
+        r=np.sqrt(r_par**2+r_trans**2)
 
         bins = bt+nrt*bp + nrp*nrt*br
 
@@ -36,14 +35,14 @@ class wedge:
         bins = bins[w]
 
         W = np.zeros(nrp*nrt*nr)
-        c=sp.bincount(bins.flatten())
+        c=np.bincount(bins.flatten())
         W[:len(c)]+=c
 
         self.W = W.reshape(nr,nrt*nrp)
         self.r = rmin + (np.arange(nr)+0.5)*(rmax-rmin)/nr
 
-    def wedge(self, da, co):
-        we = 1/sp.diagonal(co)
+    def wedge(self,da,co):
+        we = 1/np.diagonal(co)
         w = self.W.dot(we)
         Wwe = self.W*we
         mask = w>0

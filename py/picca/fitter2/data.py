@@ -47,7 +47,7 @@ class data:
             dmrp = rp.copy()
             dmrt = rt.copy()
             dmz = z.copy()
-        coef_binning_model = sp.sqrt(dmrp.size/rp.size)
+        coef_binning_model = np.sqrt(dmrp.size/rp.size)
         head = h[1].read_header()
 
         h.close()
@@ -76,7 +76,7 @@ class data:
             idx = ( trt/bin_size_rt ).astype(int)
             bin_center_rt[i] = (idx+0.5)*bin_size_rt
 
-        bin_center_r = sp.sqrt(bin_center_rp**2+bin_center_rt**2)
+        bin_center_r = np.sqrt(bin_center_rp**2+bin_center_rt**2)
         bin_center_mu = bin_center_rp/bin_center_r
 
         ## select data within cuts
@@ -111,7 +111,7 @@ class data:
         self.ico = linalg.inv(ico)
         self.dm = dm
 
-        self.rsquare = sp.sqrt(rp**2+rt**2)
+        self.rsquare = np.sqrt(rp**2+rt**2)
         self.musquare = np.zeros(self.rsquare.size)
         w = self.rsquare>0.
         self.musquare[w] = rp[w]/self.rsquare[w]
@@ -119,7 +119,7 @@ class data:
         self.rp = dmrp
         self.rt = dmrt
         self.z = dmz
-        self.r = sp.sqrt(self.rp**2+self.rt**2)
+        self.r = np.sqrt(self.rp**2+self.rt**2)
         self.mu = np.zeros(self.r.size)
         w = self.r>0.
         self.mu[w] = self.rp[w]/self.r[w]
@@ -335,7 +335,7 @@ class data:
             rt = self.rt_met[(tracer1, tracer2)]
             z = self.z_met[(tracer1, tracer2)]
             dm_met = self.dm_met[(tracer1, tracer2)]
-            r = sp.sqrt(rp**2+rt**2)
+            r = np.sqrt(rp**2+rt**2)
             w = r == 0
             r[w] = 1e-6
             mu = rp/r

@@ -52,14 +52,14 @@ class model:
             i   = self.imin + i*self.istep
             ell = self.ellmin + ell*self.ellstep
             self.par_name += ['a_cross_'+str(i)+'_'+str(ell)]
-        self.par_name = sp.array(self.par_name)
+        self.par_name = np.array(self.par_name)
 
         return
     def value(self,data_rest,drp):
 
         rt       = self.rt
         rp_shift = self.rp+drp
-        r        = sp.sqrt(rt**2 + rp_shift**2)
+        r        = np.sqrt(rt**2 + rp_shift**2)
         mu       = rp_shift/r
 
         A = np.zeros([self.npar,len(r)])
@@ -91,7 +91,7 @@ class model:
 
         self.pars = pars
         rp_shift = rp+drp
-        r        = sp.sqrt(rt**2 + rp_shift**2)
+        r        = np.sqrt(rt**2 + rp_shift**2)
         mu       = rp_shift/r
         bb = np.zeros(len(r))
 

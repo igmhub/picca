@@ -1,4 +1,4 @@
-import scipy as sp
+import numpy as np
 import copy
 import sys
 import subprocess
@@ -56,10 +56,10 @@ class parameters:
             'rmax'             : 180.,
             'mumin'             : -1.,
             'mumax'             : 1.,
-            'r_per_min'        : sp.nan,
-            'r_per_max'        : sp.nan,
-            'r_par_min'        : sp.nan,
-            'r_par_max'        : sp.nan,
+            'r_per_min'        : np.nan,
+            'r_per_max'        : np.nan,
+            'r_par_min'        : np.nan,
+            'r_par_max'        : np.nan,
         }
         self.dic_init_int = {
             'ell_max'           : 6,
@@ -260,7 +260,7 @@ class parameters:
 
         try:
             path_to_save = self.dic_init['output_prefix']+'test_if_output_possible'
-            sp.savetxt(path_to_save,sp.ones(10))
+            np.savetxt(path_to_save,np.ones(10))
             command = 'rm '+path_to_save
             subprocess.call(command, shell=True)
         except:
