@@ -173,8 +173,8 @@ class model:
 
 
         if self.templates:
-            bias_met=sp.array([pars['bias_'+met] for met in self.met_names])
-            beta_met=sp.array([pars['beta_'+met] for met in self.met_names])
+            bias_met=np.array([pars['bias_'+met] for met in self.met_names])
+            beta_met=np.array([pars['beta_'+met] for met in self.met_names])
             amp=np.zeros([self.nmet,3])
             amp[:,0] = bias_met*(1 + (beta_lya+beta_met)/3 + beta_lya*beta_met/5)
             amp[:,1] = bias_met*(2*(beta_lya+beta_met)/3 + 4*beta_lya*beta_met/7)
@@ -183,7 +183,7 @@ class model:
             amp*=bias_lya
 
             xi_lya_met=amp*self.temp_lya_met
-            xi_lya_met=sp.sum(xi_lya_met,axis=(1,2))
+            xi_lya_met=np.sum(xi_lya_met,axis=(1,2))
 
             amp=np.zeros([self.nmet,self.nmet,3])
 
@@ -194,13 +194,13 @@ class model:
             amp[:,:,2] = bias_met2*8*beta_met*beta_met[None,:]/35
 
             xi_met_met=amp*self.temp_met_met
-            xi_met_met=sp.sum(xi_met_met,axis=(1,2,3))
+            xi_met_met=np.sum(xi_met_met,axis=(1,2,3))
 
         else:
             muk = cosmo_model.muk
             k = self.k
             kp = k*muk
-            kt = k*sp.sqrt(1-muk**2)
+            kt = k*np.sqrt(1-muk**2)
             nbins = self.dmat["LYA_"+self.met_names[0]].shape[0]
 
             if self.hcds_mets:
@@ -230,7 +230,7 @@ class model:
                 rt = self.auto_rt["LYA_"+met]
                 rp = self.auto_rp["LYA_"+met]
                 zeff  = self.auto_zeff["LYA_"+met]
-                r = sp.sqrt(rt**2+rp**2)
+                r = np.sqrt(rt**2+rp**2)
                 w = (r==0)
                 r[w] = 1e-6
                 mur = rp/r
@@ -276,8 +276,8 @@ class model:
 
                     if recalc:
                         if self.verbose:
-                            userprint("recalculating ",met1,met2)
-                        r = sp.sqrt(rt**2+rp**2)
+                            print("recalculating ",met1,met2)
+                        r = np.sqrt(rt**2+rp**2)
                         w=r==0
                         r[w]=1e-6
                         mur = rp/r
@@ -299,15 +299,15 @@ class model:
         bias_qso          = pars["bias_qso"]
         growth_rate = pars["growth_rate"]
         beta_qso          = growth_rate/bias_qso
-        bias_met = sp.array([pars['bias_'+met] for met in self.met_names])
-        beta_met = sp.array([pars['beta_'+met] for met in self.met_names])
+        bias_met = np.array([pars['bias_'+met] for met in self.met_names])
+        beta_met = np.array([pars['beta_'+met] for met in self.met_names])
         Lpar = pars["Lpar_cross"]
         Lper = pars["Lper_cross"]
 
         ### Scales
         if (self.different_drp):
-            drp_met = sp.array([pars['drp_'+met]  for met in self.met_names])
-            drp     = sp.outer(sp.ones(self.nd_cross),drp_met)
+            drp_met = np.array([pars['drp_'+met]  for met in self.met_names])
+            drp     = sp.outer(np.ones(self.nd_cross),drp_met)
         else:
             drp = pars["drp"]
 
@@ -315,19 +315,19 @@ class model:
 
             ### Redshift evolution
             z     = self.grid_qso_met[:,:,2]
-            evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+            evol  = np.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
             evol *= self.evolution_Lya_bias(z,[pars["alpha_lya"]])/self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])
             evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
 
 
             rp_shift = self.grid_qso_met[:,:,0]+drp
             rt       = self.grid_qso_met[:,:,1]
-            r        = sp.sqrt(rp_shift**2 + rt**2)
+            r        = np.sqrt(rp_shift**2 + rt**2)
             mur      = rp_shift/r
 
         muk      = cosmo_model.muk
         kp       = self.k * muk
-        kt       = self.k * sp.sqrt(1.-muk**2)
+        kt       = self.k * np.sqrt(1.-muk**2)
 
         ### Correction to linear power-spectrum
         pk_corr = (1.+0.*muk)*self.pk
@@ -363,13 +363,13 @@ class model:
                     self.prev_pmet['drp'] = drp
 
                     z = self.xzeff[i]
-                    evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+                    evol  = np.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
                     evol *= self.evolution_Lya_bias(z,[pars["alpha_"+i]])/self.evolution_Lya_bias(self.zref,[pars["alpha_"+i]])
                     evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
 
                     rp = self.xrp[i] + drp
                     rt = self.xrt[i]
-                    r = sp.sqrt(rp**2+rt**2)
+                    r = np.sqrt(rp**2+rt**2)
                     w=r==0
                     r[w]=1e-6
                     mur = rp/r

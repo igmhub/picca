@@ -685,7 +685,7 @@ def main():
     log_file.write(
         ("INFO: Accepted sample has {}"
          "forests\n").format(np.sum([len(p) for p in deltas.values()])))
-    
+
     t2 = time.time()
     tmin = (t2-t1)/60
     userprint('INFO: time elapsed to fit continuum', tmin, 'minutes')
@@ -848,8 +848,8 @@ def main():
     userprint('INFO: time elapsed to write deltas', tmin, 'minutes')
     ttot = (t3-t0)/60
     userprint('INFO: total elapsed time', ttot, 'minutes')
-   
-    log_file.close() 
+
+    log_file.close()
 
 if __name__ == '__main__':
     main()
