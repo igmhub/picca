@@ -3,8 +3,7 @@
 from __future__ import print_function
 import fitsio
 import numpy as np
-import scipy as sp
-import scipy.linalg
+import numpy.linalg
 import argparse
 
 from picca.utils import smooth_cov, print
@@ -59,8 +58,8 @@ if __name__ == '__main__':
 
     ###
     for k in dic.keys():
-        dic[k] = sp.vstack(dic[k])
-    dic['CO'] = sp.cov(dic['DA'].T)
+        dic[k] = np.vstack(dic[k])
+    dic['CO'] = np.cov(dic['DA'].T)
     if args.error_on_mean:
         dic['CO'] /= dic['DA'].shape[0]
     for k in [ el for el in dic.keys() if el!='CO']:
