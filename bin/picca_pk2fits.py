@@ -2,7 +2,6 @@
 
 from astropy.io import fits
 import numpy as np
-import scipy as sp
 import argparse
 
 if __name__ == '__main__':
@@ -42,8 +41,8 @@ if __name__ == '__main__':
 
     args=parser.parse_args()
 
-    pk=sp.loadtxt(args.prefix_pk+'_matterpower.dat')
-    pkSB=sp.loadtxt(args.prefix_pk+'SB_matterpower.dat')
+    pk=np.loadtxt(args.prefix_pk+'_matterpower.dat')
+    pkSB=np.loadtxt(args.prefix_pk+'SB_matterpower.dat')
     col1=fits.Column(name='K',format='D',array=np.array(pk[:,0]))
     col2=fits.Column(name='PK',format='D',array=np.array(pk[:,1]))
     col3=fits.Column(name='PKSB',format='D',array=np.array(pkSB[:,1]))
@@ -60,4 +59,3 @@ if __name__ == '__main__':
     head['rdrag']=args.rdrag
     tbhdu=fits.BinTableHDU.from_columns(cols,header=head)
     tbhdu.writeto(args.out,clobber=True)
-
