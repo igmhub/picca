@@ -44,8 +44,8 @@ if __name__ == '__main__':
         hdul = fitsio.FITS(filename)
         header = hdul[1].read_header()
         nside = header['NSIDE']
-        head = hdul[2].read_header()
-        healpix_scheme = head['HLPXSCHM']
+        header2 = hdul[2].read_header()
+        healpix_scheme = header2['HLPXSCHM']
         xi = np.array(hdul[2]['DA'][:])
         weights = np.array(hdul[2]['WE'][:])
         healpix_list = np.array(hdul[2]['HEALPID'][:])
