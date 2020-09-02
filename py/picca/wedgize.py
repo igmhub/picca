@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 
 class wedge:
     def __init__(self,rpmin=0.,rpmax=200.,nrp=50,rtmin=0.,rtmax=200.,nrt=50,\
@@ -26,9 +25,9 @@ class wedge:
         bp = (rpmc-rpmin)/(rpmax-rpmin)*nrp
         bp = bp.astype(int)
 
-        rp = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
-        rt = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
-        r=np.sqrt(rp**2+rt**2)
+        r_par = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
+        r_trans = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
+        r=np.sqrt(r_par**2+r_trans**2)
 
         bins = bt+nrt*bp + nrp*nrt*br
 
@@ -50,5 +49,3 @@ class wedge:
         Wwe[mask,:]/=w[mask,None]
         d = Wwe.dot(da)
         return self.r,d,Wwe.dot(co).dot(Wwe.T)
-
-

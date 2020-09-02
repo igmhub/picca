@@ -1,142 +1,206 @@
-#!/usr/bin/env python
-
-from __future__ import print_function
+#!/usr/bin/env python3
+"""Export auto and cross-correlation for the fitter."""
+import argparse
 import fitsio
 import numpy as np
-import scipy as sp
 import scipy.linalg
-import argparse
 
-from picca.utils import smooth_cov, cov
-from picca.utils import print
+from picca.utils import smooth_cov, compute_cov
+from picca.utils import userprint
 
-if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+def main():
+    """Export auto and cross-correlation for the fitter."""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Export auto and cross-correlation for the fitter.')
 
-    parser.add_argument('--data', type=str, default=None, required=True,
+    parser.add_argument(
+        '--data',
+        type=str,
+        default=None,
+        required=True,
         help='Correlation produced via picca_cf.py, picca_xcf.py, ...')
 
-    parser.add_argument('--out', type=str, default=None, required=True,
-        help='Output file name')
+    parser.add_argument('--out',
+                        type=str,
+                        default=None,
+                        required=True,
+                        help='Output file name')
 
-    parser.add_argument('--dmat', type=str, default=None, required=False,
-        help='Distortion matrix produced via picca_dmat.py, picca_xdmat.py... (if not provided will be identity)')
+    parser.add_argument(
+        '--dmat',
+        type=str,
+        default=None,
+        required=False,
+        help=('Distortion matrix produced via picca_dmat.py, picca_xdmat.py... '
+              '(if not provided will be identity)'))
 
-    parser.add_argument('--cov', type=str, default=None, required=False,
-        help='Covariance matrix (if not provided will be calculated by subsampling)')
+    parser.add_argument(
+        '--cov',
+        type=str,
+        default=None,
+        required=False,
+        help=('Covariance matrix (if not provided will be calculated by '
+              'subsampling)'))
 
-    parser.add_argument('--cor', type=str, default=None, required=False,
-        help='Correlation matrix (if not provided will be calculated by subsampling)')
+    parser.add_argument(
+        '--cor',
+        type=str,
+        default=None,
+        required=False,
+        help=('Correlation matrix (if not provided will be calculated by '
+              'subsampling)'))
 
-    parser.add_argument('--remove-shuffled-correlation', type=str, default=None, required=False,
+    parser.add_argument(
+        '--remove-shuffled-correlation',
+        type=str,
+        default=None,
+        required=False,
         help='Remove a correlation from shuffling the distribution of los')
 
-    parser.add_argument('--do-not-smooth-cov', action='store_true', default=False,
-        help='Do not smooth the covariance matrix')
-
+    parser.add_argument('--do-not-smooth-cov',
+                        action='store_true',
+                        default=False,
+                        help='Do not smooth the covariance matrix')
 
     args = parser.parse_args()
 
-    h = fitsio.FITS(args.data)
+    hdul = fitsio.FITS(args.data)
 
-    rp = np.array(h[1]['RP'][:])
-    rt = np.array(h[1]['RT'][:])
-    z  = np.array(h[1]['Z'][:])
-    nb = np.array(h[1]['NB'][:])
-    da = np.array(h[2]['DA'][:])
-    we = np.array(h[2]['WE'][:])
-    hep = np.array(h[2]['HEALPID'][:])
+    r_par = np.array(hdul[1]['RP'][:])
+    r_trans = np.array(hdul[1]['RT'][:])
+    z = np.array(hdul[1]['Z'][:])
+    num_pairs = np.array(hdul[1]['NB'][:])
+    xi = np.array(hdul[2]['DA'][:])
+    weights = np.array(hdul[2]['WE'][:])
 
-    head = h[1].read_header()
-    # npb = number of parallel bins (to avoid collision with numpy np)
-    npb = head['NP']
-    ntb = head['NT']
-    rt_max = head['RTMAX']
-    rp_min = head['RPMIN']
-    rp_max = head['RPMAX']
-    h.close()
+    head = hdul[1].read_header()
+    num_bins_r_par = head['NP']
+    num_bins_r_trans = head['NT']
+    r_trans_max = head['RTMAX']
+    r_par_min = head['RPMIN']
+    r_par_max = head['RPMAX']
+    hdul.close()
 
     if not args.remove_shuffled_correlation is None:
-        th = fitsio.FITS(args.remove_shuffled_correlation)
-        da_s = th['COR']['DA'][:]
-        we_s = th['COR']['WE'][:]
-        da_s = (da_s*we_s).sum(axis=1)
-        we_s = we_s.sum(axis=1)
-        w = we_s>0.
-        da_s[w] /= we_s[w]
-        th.close()
-        da -= da_s[:,None]
+        hdul = fitsio.FITS(args.remove_shuffled_correlation)
+        xi_shuffled = hdul['COR']['DA'][:]
+        weight_shuffled = hdul['COR']['WE'][:]
+        xi_shuffled = (xi_shuffled * weight_shuffled).sum(axis=1)
+        weight_shuffled = weight_shuffled.sum(axis=1)
+        w = weight_shuffled > 0.
+        xi_shuffled[w] /= weight_shuffled[w]
+        hdul.close()
+        xi -= xi_shuffled[:, None]
 
     if args.cov is not None:
-        print('INFO: The covariance-matrix will be read from file: {}'.format(args.cov))
-        hh = fitsio.FITS(args.cov)
-        co = hh[1]['CO'][:]
-        hh.close()
+        userprint(("INFO: The covariance-matrix will be read from file: "
+                   "{}").format(args.cov))
+        hdul = fitsio.FITS(args.cov)
+        covariance = hdul[1]['CO'][:]
+        hdul.close()
     elif args.cor is not None:
-        print('INFO: The correlation-matrix will be read from file: {}'.format(args.cor))
-        hh = fitsio.FITS(args.cor)
-        cor = hh[1]['CO'][:]
-        hh.close()
-        if (cor.min()<-1.) | (cor.min()>1.) | (cor.max()<-1.) | (cor.max()>1.) | sp.any(np.diag(cor)!=1.):
-            print('WARNING: The correlation-matrix has some incorrect values')
-        tvar = np.diagonal(cor)
-        cor = cor/np.sqrt(tvar*tvar[:,None])
-        co = cov(da,we)
-        var = np.diagonal(co)
-        co = cor * np.sqrt(var*var[:,None])
+        userprint(("INFO: The correlation-matrix will be read from file: "
+                   "{}").format(args.cor))
+        hdul = fitsio.FITS(args.cor)
+        correlation = hdul[1]['CO'][:]
+        hdul.close()
+        if ((correlation.min() < -1.) or (correlation.min() > 1.) or
+                (correlation.max() < -1.) or (correlation.max() > 1.) or
+                np.any(np.diag(correlation) != 1.)):
+            userprint(("WARNING: The correlation-matrix has some incorrect "
+                       "values"))
+        var = np.diagonal(correlation)
+        correlation = correlation / np.sqrt(var * var[:, None])
+        covariance = compute_cov(xi, weights)
+        var = np.diagonal(covariance)
+        covariance = correlation * np.sqrt(var * var[:, None])
     else:
-        binSizeP = (rp_max-rp_min) / npb
-        binSizeT = (rt_max-0.) / ntb
+        delta_r_par = (r_par_max - r_par_min) / num_bins_r_par
+        delta_r_trans = (r_trans_max - 0.) / num_bins_r_trans
         if not args.do_not_smooth_cov:
-            print('INFO: The covariance will be smoothed')
-            co = smooth_cov(da,we,rp,rt,drt=binSizeT,drp=binSizeP)
+            userprint("INFO: The covariance will be smoothed")
+            covariance = smooth_cov(xi,
+                                    weights,
+                                    r_par,
+                                    r_trans,
+                                    delta_r_trans=delta_r_trans,
+                                    delta_r_par=delta_r_par)
         else:
-            print('INFO: The covariance will not be smoothed')
-            co = cov(da,we)
+            userprint("INFO: The covariance will not be smoothed")
+            covariance = compute_cov(xi, weights)
 
-    da = (da*we).sum(axis=0)
-    we = we.sum(axis=0)
-    w = we>0
-    da[w]/=we[w]
+    xi = (xi * weights).sum(axis=0)
+    weights = weights.sum(axis=0)
+    w = weights > 0
+    xi[w] /= weights[w]
 
     try:
-        scipy.linalg.cholesky(co)
+        scipy.linalg.cholesky(covariance)
     except scipy.linalg.LinAlgError:
-        print('WARNING: Matrix is not positive definite')
+        userprint("WARNING: Matrix is not positive definite")
 
     if args.dmat is not None:
-        h = fitsio.FITS(args.dmat)
-        dm = h[1]['DM'][:]
+        hdul = fitsio.FITS(args.dmat)
+        dmat = hdul[1]['DM'][:]
         try:
-            dmrp = h[2]['RP'][:]
-            dmrt = h[2]['RT'][:]
-            dmz = h[2]['Z'][:]
+            r_par_dmat = hdul[2]['RP'][:]
+            r_trans_dmat = hdul[2]['RT'][:]
+            z_dmat = hdul[2]['Z'][:]
         except IOError:
-            dmrp = rp.copy()
-            dmrt = rt.copy()
-            dmz = z.copy()
-        if dm.shape==(da.size,da.size):
-            dmrp = rp.copy()
-            dmrt = rt.copy()
-            dmz = z.copy()
-        h.close()
+            r_par_dmat = r_par.copy()
+            r_trans_dmat = r_trans.copy()
+            z_dmat = z.copy()
+        if dmat.shape == (xi.size, xi.size):
+            r_par_dmat = r_par.copy()
+            r_trans_dmat = r_trans.copy()
+            z_dmat = z.copy()
+        hdul.close()
     else:
-        dm = np.eye(len(da))
-        dmrp = rp.copy()
-        dmrt = rt.copy()
-        dmz = z.copy()
+        dmat = np.eye(len(xi))
+        r_par_dmat = r_par.copy()
+        r_trans_dmat = r_trans.copy()
+        z_dmat = z.copy()
 
-    h = fitsio.FITS(args.out,'rw',clobber=True)
-    head = [ {'name':'RPMIN','value':rp_min,'comment':'Minimum r-parallel'},
-        {'name':'RPMAX','value':rp_max,'comment':'Maximum r-parallel'},
-        {'name':'RTMAX','value':rt_max,'comment':'Maximum r-transverse'},
-        {'name':'NP','value':npb,'comment':'Number of bins in r-parallel'},
-        {'name':'NT','value':ntb,'comment':'Number of bins in r-transverse'}
+    results = fitsio.FITS(args.out, 'rw', clobber=True)
+    header = [{
+        'name': 'RPMIN',
+        'value': r_par_min,
+        'comment': 'Minimum r-parallel'
+    }, {
+        'name': 'RPMAX',
+        'value': r_par_max,
+        'comment': 'Maximum r-parallel'
+    }, {
+        'name': 'RTMAX',
+        'value': r_trans_max,
+        'comment': 'Maximum r-transverse'
+    }, {
+        'name': 'NP',
+        'value': num_bins_r_par,
+        'comment': 'Number of bins in r-parallel'
+    }, {
+        'name': 'NT',
+        'value': num_bins_r_trans,
+        'comment': 'Number of bins in r-transverse'
+    }]
+    comment = [
+        'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
+        'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
-    comment = ['R-parallel','R-transverse','Redshift','Correlation','Covariance matrix','Distortion matrix','Number of pairs']
-    h.write([rp,rt,z,da,co,dm,nb],names=['RP','RT','Z','DA','CO','DM','NB'],comment=comment,header=head,extname='COR')
-    comment = ['R-parallel model','R-transverse model','Redshift model']
-    h.write([dmrp,dmrt,dmz],names=['DMRP','DMRT','DMZ'],comment=comment,extname='DMATTRI')
-    h.close()
+    results.write([r_par, r_trans, z, xi, covariance, dmat, num_pairs],
+                  names=['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB'],
+                  comment=comment,
+                  header=header,
+                  extname='COR')
+    comment = ['R-parallel model', 'R-transverse model', 'Redshift model']
+    results.write([r_par_dmat, r_trans_dmat, z_dmat],
+                  names=['DMRP', 'DMRT', 'DMZ'],
+                  comment=comment,
+                  extname='DMATTRI')
+    results.close()
+
+
+if __name__ == '__main__':
+    main()

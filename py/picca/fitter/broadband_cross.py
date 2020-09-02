@@ -5,6 +5,8 @@ import scipy as sp
 from scipy import linalg
 import sys
 
+from picca.utils import userprint
+
 class model:
     def __init__(self,data,imin,imax,istep,ellmin,ellmax,ellstep,distort,bb_rPerp_rParal):
 
@@ -24,7 +26,7 @@ class model:
         self.istep = istep
         self.ni    = 1 + (self.imax-self.imin)//self.istep
         if (self.ni<=0):
-            print('  fit/py/broadband_cross.py:: negative number of parameters.')
+            userprint('  fit/py/broadband_cross.py:: negative number of parameters.')
             sys.exit(0)
 
         ### Legendre Polynomial
@@ -33,7 +35,7 @@ class model:
         self.ellstep = ellstep
         self.nell    = 1 + (self.ellmax-self.ellmin)//self.ellstep
         if (self.nell<=0):
-            print('  fit/py/broadband_cross.py:: negative number of parameters.')
+            userprint('  fit/py/broadband_cross.py:: negative number of parameters.')
             sys.exit(0)
 
         ###

@@ -1,114 +1,198 @@
-from __future__ import print_function
+"""This module defines functions and variables required for the correlation
+analysis of two object catalogues
 
+This module provides several functions:
+    - fill_neighs
+    - compute_xi
+    - compute_xi_forest_pairs
+See the respective docstrings for more details
+"""
 import numpy as np
-import scipy as sp
 from healpy import query_disc
 from numba import jit
 
-from picca.utils import print
+from picca.utils import userprint
 
-# npb = number of parallel bins (to avoid collision with numpy np)
-npb = None
-ntb = None
-rp_min = None
-rp_max = None
-rt_max = None
-angmax = None
+num_bins_r_par = None
+num_bins_r_trans = None
+r_par_min = None
+r_par_max = None
+r_trans_max = None
+ang_max = None
 nside = None
 
 objs = None
 objs2 = None
 
 type_corr = None
-x_correlation = None
+x_correlation = False
 
 counter = None
 lock = None
 
-def fill_neighs(pix):
-    for ipix in pix:
-        for o1 in objs[ipix]:
-            npix = query_disc(nside,[o1.xcart,o1.ycart,o1.zcart],angmax,inclusive = True)
-            npix = [p for p in npix if p in objs]
-            neighs = [o2 for p in npix for o2 in objs[p] if o1.thid != o2.thid]
-            ang = o1^neighs
-            w = ang<angmax
-            neighs = sp.array(neighs)[w]
-            o1.neighs = sp.array([o2 for o2 in neighs if (o2.zqso+o1.zqso)/2.>=z_cut_min and (o2.zqso+o1.zqso)/2.<z_cut_max])
+
+def fill_neighs(healpixs):
+    """Create and store a list of neighbours for each of the healpix.
+
+    Neighbours are added to the delta objects directly
+
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
+    """
+    for healpix in healpixs:
+        for obj1 in objs[healpix]:
+            healpix_neighbours = query_disc(
+                nside, [obj1.x_cart, obj1.y_cart, obj1.z_cart],
+                ang_max,
+                inclusive=True)
+            if x_correlation:
+                healpix_neighbours = [
+                    healpix for healpix in healpix_neighbours
+                    if healpix in objs2
+                ]
+                neighbours = [
+                    obj2 for healpix in healpix_neighbours
+                    for obj2 in objs2[healpix] if obj1.thingid != obj2.thingid
+                ]
+            else:
+                healpix_neighbours = [
+                    healpix for healpix in healpix_neighbours if healpix in objs
+                ]
+                neighbours = [
+                    obj2 for healpix in healpix_neighbours
+                    for obj2 in objs[healpix] if obj1.thingid != obj2.thingid
+                ]
+            ang = obj1 ^ neighbours
+            w = ang < ang_max
+            neighbours = np.array(neighbours)[w]
+            obj1.neighbours = np.array([
+                obj2 for obj2 in neighbours
+                if ((obj2.z_qso + obj1.z_qso) / 2. >= z_cut_min and
+                    (obj2.z_qso + obj1.z_qso) / 2. < z_cut_max)
+            ])
 
 
-def fill_neighs_x_correlation(pix):
-    for ipix in pix:
-        for o1 in objs[ipix]:
-            npix = query_disc(nside,[o1.xcart,o1.ycart,o1.zcart],angmax,inclusive = True)
-            npix = [p for p in npix if p in objs2]
-            neighs = [o2 for p in npix for o2 in objs2[p] if o1.thid != o2.thid]
-            ang = o1^neighs
-            w = ang<angmax
-            neighs = sp.array(neighs)[w]
-            o1.neighs = sp.array([o2 for o2 in neighs if (o2.zqso+o1.zqso)/2.>=z_cut_min and (o2.zqso+o1.zqso)/2.<z_cut_max])
+def compute_xi(healpixs):
+    """Computes the correlation function for each of the healpixs.
 
-def co(pix):
+    Args:
+        healpixs: array of ints
+            List of healpix numbers
 
-    we = np.zeros(npb*ntb)
-    rp = np.zeros(npb*ntb)
-    rt = np.zeros(npb*ntb)
-    z  = np.zeros(npb*ntb)
-    nb = np.zeros(npb*ntb,dtype=sp.int64)
+    Returns:
+        The following variables:
+            weights: Total weights in the correlation function pixels
+            r_par: Parallel distance of the correlation function pixels
+            r_trans: Transverse distance of the correlation function pixels
+            z: Redshift of the correlation function pixels
+            num_pairs: Number of pairs in the correlation function pixels
+    """
+    weights = np.zeros(num_bins_r_par * num_bins_r_trans)
+    r_par = np.zeros(num_bins_r_par * num_bins_r_trans)
+    r_trans = np.zeros(num_bins_r_par * num_bins_r_trans)
+    z = np.zeros(num_bins_r_par * num_bins_r_trans)
+    num_pairs = np.zeros(num_bins_r_par * num_bins_r_trans, dtype=np.int64)
 
-    for ipix in pix:
-        for o1 in objs[ipix]:
+    for healpix in healpixs:
+        for obj1 in objs[healpix]:
 
-            print("\rcomputing xi: {}%".format(round(counter.value*100./ndata,2)),end="")
+            userprint(("\rcomputing xi: "
+                       "{}%").format(round(counter.value * 100. / num_data, 2)),
+                      end="")
             with lock:
                 counter.value += 1
 
-            if (o1.neighs.size == 0): continue
+            if obj1.neighbours.size == 0:
+                continue
 
-            ang      = o1^o1.neighs
-            zo2      = sp.array([o2.zqso    for o2 in o1.neighs])
-            r_comov2 = sp.array([o2.r_comov for o2 in o1.neighs])
-            rdm_comov2 = sp.array([o2.rdm_comov for o2 in o1.neighs])
-            weo2     = sp.array([o2.we      for o2 in o1.neighs])
+            ang = obj1 ^ obj1.neighbours
+            z2 = np.array([obj2.z_qso for obj2 in obj1.neighbours])
+            r_comov2 = np.array([obj2.r_comov for obj2 in obj1.neighbours])
+            dist_m2 = np.array([obj2.dist_m for obj2 in obj1.neighbours])
+            weights2 = np.array([obj2.weights for obj2 in obj1.neighbours])
 
-            cw,crp,crt,cz,cnb = fast_co(o1.zqso,o1.r_comov,o1.rdm_comov,o1.we,zo2,r_comov2,rdm_comov2,weo2,ang)
+            (rebin_weight, rebin_r_par, rebin_r_trans,
+             rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                 obj1.z_qso, obj1.r_comov, obj1.dist_m, obj1.weights, z2,
+                 r_comov2, dist_m2, weights2, ang)
 
-            we[:len(cw)]  += cw
-            rp[:len(crp)] += crp
-            rt[:len(crp)] += crt
-            z[:len(crp)]  += cz
-            nb[:len(cnb)] += cnb
-            setattr(o1,"neighs",None)
+            weights[:len(rebin_weight)] += rebin_weight
+            r_par[:len(rebin_r_par)] += rebin_r_par
+            r_trans[:len(rebin_r_trans)] += rebin_r_trans
+            z[:len(rebin_z)] += rebin_z
+            num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs
+            setattr(obj1, "neighbours", None)
 
-    w = we>0.
-    rp[w] /= we[w]
-    rt[w] /= we[w]
-    z[w]  /= we[w]
-    return we,rp,rt,z,nb
+    w = weights > 0.
+    r_par[w] /= weights[w]
+    r_trans[w] /= weights[w]
+    z[w] /= weights[w]
+    return weights, r_par, r_trans, z, num_pairs
+
+
 @jit
-def fast_co(z1,r1,rdm1,w1,z2,r2,rdm2,w2,ang):
+def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
+                            dist_m2, weights2, ang):
+    """Computes the contribution of a given pair of forests to the correlation
+    function.
 
-    rp  = (r1-r2)*sp.cos(ang/2.)
-    if not x_correlation or type_corr in ['DR','RD']:
-        rp = np.absolute(rp)
-    rt  = (rdm1+rdm2)*sp.sin(ang/2.)
-    z   = (z1+z2)/2.
-    w12 = w1*w2
+    Args:
+        z1: array of float
+            Redshift of pixel 1
+        r_comov1: array of float
+            Comoving distance for forest 1 (in Mpc/h)
+        dist_m1: array of float
+            Comoving angular distance for forest 1 (in Mpc/h)
+        weights1: array of float
+            Pixel weights for forest 1
+        z2: array of float
+            Redshift of pixel 2
+        r_comov2: array of float
+            Comoving distance for forest 2 (in Mpc/h)
+        dist_m2: array of float
+            Comoving angular distance for forest 2 (in Mpc/h)
+        weights2: array of float
+            Pixel weights for forest 2
+        ang: array of float
+            Angular separation between pixels in forests 1 and 2
 
-    w   = (rp>=rp_min) & (rp<rp_max) & (rt<rt_max) & (w12>0.)
-    rp  = rp[w]
-    rt  = rt[w]
-    z   = z[w]
-    w12 = w12[w]
+    Returns:
+        The following variables:
+            rebin_weight: The weight of the correlation function pixels
+                properly rebinned
+            rebin_r_par: The parallel distance of the correlation function
+                pixels properly rebinned
+            rebin_r_trans: The transverse distance of the correlation function
+                pixels properly rebinned
+            rebin_z: The redshift of the correlation function pixels properly
+                rebinned
+            rebin_num_pairs: The number of pairs of the correlation function
+                pixels properly rebinned
+    """
+    r_par = (r_comov1 - r_comov2) * np.cos(ang / 2.)
+    if not x_correlation or type_corr in ['DR', 'RD']:
+        r_par = np.absolute(r_par)
+    r_trans = (dist_m1 + dist_m2) * np.sin(ang / 2.)
+    z = (z1 + z2) / 2.
+    weights12 = weights1 * weights2
 
-    bp   = sp.floor((rp-rp_min)/(rp_max-rp_min)*npb).astype(int)
-    bt   = (rt/rt_max*ntb).astype(int)
-    bins = bt + ntb*bp
+    w = (r_par >= r_par_min) & (r_par < r_par_max) & (r_trans < r_trans_max)
+    w &= (weights12 > 0.)
+    r_par = r_par[w]
+    r_trans = r_trans[w]
+    z = z[w]
+    weights12 = weights12[w]
 
-    cw  = np.bincount(bins,weights=w12)
-    crp = np.bincount(bins,weights=rp*w12)
-    crt = np.bincount(bins,weights=rt*w12)
-    cz  = np.bincount(bins,weights=z*w12)
-    cnb = np.bincount(bins)
+    bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) *
+                          num_bins_r_par).astype(int)
+    bins_r_trans = (r_trans / r_trans_max * num_bins_r_trans).astype(int)
+    bins = bins_r_trans + num_bins_r_trans * bins_r_par
 
-    return cw,crp,crt,cz,cnb
+    rebin_weight = np.bincount(bins, weights=weights12)
+    rebin_r_par = np.bincount(bins, weights=r_par * weights12)
+    rebin_r_trans = np.bincount(bins, weights=r_trans * weights12)
+    rebin_z = np.bincount(bins, weights=z * weights12)
+    rebin_num_pairs = np.bincount(bins)
+
+    return rebin_weight, rebin_r_par, rebin_r_trans, rebin_z, rebin_num_pairs
