@@ -423,9 +423,18 @@ def pk_hcd_Rogers2018_uv_cross(k, pk_lin, tracer1, tracer2, **kwargs):
 def pk_gauss_smoothing(k, pk_lin, tracer1, tracer2, **kwargs):
     """
     Apply a Gaussian smoothing to the full correlation function
-    Args : k, sigma_smooth par and per
-    return : P(k) multiplied by G(k)^2
-    with G(k) = exp(-kpar^2 sigma_par^2 - kperp^2 sigma_perp^2)
+    Args:
+        k: array containing k (in h/Mpc)
+        pk_lin: not used
+        tracer1: not used
+        tracer2: not used
+        par_sigma_smooth (in kwargs): sigma of the smoothing in the
+                                        parallel direction (in Mpc/h)
+        per_sigma_smooth (in kwargs): sigma of the smoothing in the
+                                        perpendicular direction (in Mpc/h)
+    return : G(k)^2
+    with G(k) = exp(-(kpar^2 sigma_par^2 + kperp^2 sigma_perp^2)/2)
+    where G(k) is the smoothing applied to density field in mocks
     """
     kp  = k*muk
     kt  = k*np.sqrt(1.-muk**2)
