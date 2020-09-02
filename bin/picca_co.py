@@ -327,7 +327,7 @@ def main():
     units = ['h^-1 Mpc', 'h^-1 Mpc', '', '']
     results.write([r_par, r_trans, z, num_pairs],
                   names=['RP', 'RT', 'Z', 'NB'],
-                  headerer=header,
+                  header=header,
                   comment=comment,
                   units=units,
                   extname='ATTRI')
