@@ -833,7 +833,8 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr DD"
-        subprocess.call(cmd, shell=True)
+        returncode=subprocess.call(cmd, shell=True)
+        self.assertEqual(returncode,0,"picca_co did not finish on DD")
         ### Send
         cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/random.fits"
@@ -845,7 +846,8 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr RR"
-        subprocess.call(cmd, shell=True)
+        returncode=subprocess.call(cmd, shell=True)
+        self.assertEqual(returncode,0,"picca_co did not finish on RR")
         ### Send
         cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/cat.fits"
@@ -858,8 +860,9 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr DR"
-        subprocess.call(cmd, shell=True)
-        ### Send
+        returncode=subprocess.call(cmd, shell=True)
+        self.assertEqual(returncode,0,"picca_co did not finish on DR")
+                ### Send
         cmd  = " picca_co.py"
         cmd += " --drq "    + self._branchFiles+"/Products/random.fits"
         cmd += " --drq2 "   + self._branchFiles+"/Products/cat.fits"
@@ -871,7 +874,9 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr RD"
-        subprocess.call(cmd, shell=True)
+        returncode=subprocess.call(cmd, shell=True)
+        self.assertEqual(returncode,0,"picca_co did not finish on RD")
+
 
         ### Test
         if self._test:
@@ -904,7 +909,7 @@ class TestCor(unittest.TestCase):
         cmd += " --out " + self._branchFiles+"/Products/Correlations/exported_co.fits.gz"
         cmd += " --get-cov-from-poisson"
         returncode=subprocess.call(cmd, shell=True)
-        self.assertEqual(returncode,0,"export_co did not finish")
+        self.assertEqual(returncode,0,"picca_export_co did not finish")
 
         return
     def send_fitter2(self):
