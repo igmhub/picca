@@ -1,6 +1,5 @@
 import os.path
 import numpy as np
-import scipy as sp
 import iminuit
 import time
 import h5py
@@ -166,7 +165,7 @@ class chi2:
                 best_fit = self._minimize()
                 chi2_result = best_fit.fval
             except:
-                chi2_result = sp.nan
+                chi2_result = np.nan
             tresult = []
             for p in sorted(best_fit.values):
                 tresult += [best_fit.values[p]]
@@ -218,7 +217,7 @@ class chi2:
     def fastMC(self):
         if not hasattr(self,"nfast_mc"): return
 
-        sp.random.seed(self.seedfast_mc)
+        np.random.seed(self.seedfast_mc)
         nfast_mc = self.nfast_mc
 
         for d, s in zip(self.data, self.scalefast_mc):
@@ -260,7 +259,7 @@ class chi2:
                 if self.forecast_mc:
                     d.da = d.fiducial_model
                 else:
-                    g = sp.random.randn(len(d.da))
+                    g = np.random.randn(len(d.da))
                     d.da = d.cho.dot(g) + d.fiducial_model
                 self.fast_mc_data[d.name+'_'+str(it)] = d.da
                 d.da_cut = d.da[d.mask]

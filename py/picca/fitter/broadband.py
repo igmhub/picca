@@ -1,7 +1,6 @@
 
 from picca.fitter.utils import L
 import numpy as np
-import scipy as sp
 from scipy import linalg
 
 class model:
@@ -45,15 +44,15 @@ class model:
             A[ipar,:]=(r0/r)**i*L(mu,ell)
 
             if distort:
-                A[ipar,:]=sp.dot(data.dm,A[ipar,:])
+                A[ipar,:]=np.dot(data.dm,A[ipar,:])
 
         A = A[:,data.cuts]
 
         self.A = A
-        M = sp.dot(A,sp.dot(ico,A.T))
+        M = np.dot(A,np.dot(ico,A.T))
         IM =linalg.inv(M)
         self.IM = IM
-        self.IMA = sp.dot(IM,A)
+        self.IMA = np.dot(IM,A)
 
         self.ico = ico
 
@@ -68,9 +67,9 @@ class model:
         self.par_name = np.array(self.par_name)
 
     def value(self,data):
-        tmp = sp.dot(data,sp.dot(self.ico,self.A.T))
-        p = sp.dot(self.IM,tmp)
-        d = sp.dot(p,self.A)
+        tmp = np.dot(data,np.dot(self.ico,self.A.T))
+        p = np.dot(self.IM,tmp)
+        d = np.dot(p,self.A)
         return p,d
 
     def __call__(self,rt,rp,pars):

@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 import fitsio
 import sys
 
@@ -55,7 +54,7 @@ class model:
         met_names = self.met_names
 
         if self.templates:
-            to = sp.loadtxt(met_prefix+"_Lya_"+met_names[0]+".0.dat")
+            to = np.loadtxt(met_prefix+"_Lya_"+met_names[0]+".0.dat")
             nd = len(to[:,0])
 
             self.temp_lya_met=np.zeros([nd,nmet,3])
@@ -65,13 +64,13 @@ class model:
                 for mp in range(3):
                     fmet=met_prefix+"_Lya_"+met_names[i]+"."+str(2*mp)+".dat"
                     userprint("reading "+fmet)
-                    to=sp.loadtxt(fmet)
+                    to=np.loadtxt(fmet)
                     self.temp_lya_met[to[:,0].astype(int),i,mp]=to[:,1]
 
                     for j in range(i,nmet):
                         fmet=met_prefix+"_"+met_names[i]+"_"+met_names[j]+"."+str(2*mp)+".dat"
                         userprint("reading "+fmet)
-                        to=sp.loadtxt(fmet)
+                        to=np.loadtxt(fmet)
                         self.temp_met_met[to[:,0].astype(int),i,j,mp]=to[:,1]
         else:
             h = fitsio.FITS(met_prefix)
@@ -129,7 +128,7 @@ class model:
 
         if self.grid:
 
-            to = sp.loadtxt(met_prefix + '_QSO_' + met_names[0] + '.grid')
+            to = np.loadtxt(met_prefix + '_QSO_' + met_names[0] + '.grid')
             self.nd_cross = to[:,0].size
 
             ### Get the grid of the metals
@@ -138,7 +137,7 @@ class model:
                 fmet = met_prefix + '_QSO_' + met_names[i] + '.grid'
                 userprint('  Reading cross correlation metal grid : ')
                 userprint('  ', fmet)
-                to = sp.loadtxt(fmet)
+                to = np.loadtxt(fmet)
                 idx = to[:,0].astype(int)
                 self.grid_qso_met[idx,i,0] = to[:,1]
                 self.grid_qso_met[idx,i,1] = to[:,2]
@@ -207,14 +206,14 @@ class model:
                 bias_lls = pars["bias_lls"]
                 beta_lls = pars["beta_lls"]
                 L0_lls = pars["L0_lls"]
-                Flls = sp.sin(kp*L0_lls)/(kp*L0_lls)
+                Flls = np.sin(kp*L0_lls)/(kp*L0_lls)
 
             Lpar_auto = pars["Lpar_auto"]
             Lper_auto = pars["Lper_auto"]
             alpha_lya = pars["alpha_lya"]
 
-            Gpar = sp.sinc(kp*Lpar_auto/2/sp.pi)**2
-            Gper = sp.sinc(kt*Lper_auto/2/sp.pi)**2
+            Gpar = np.sinc(kp*Lpar_auto/2/np.pi)**2
+            Gper = np.sinc(kt*Lper_auto/2/np.pi)**2
 
             xi_lya_met = np.zeros(nbins)
             for met in self.met_names:
@@ -307,7 +306,7 @@ class model:
         ### Scales
         if (self.different_drp):
             drp_met = np.array([pars['drp_'+met]  for met in self.met_names])
-            drp     = sp.outer(np.ones(self.nd_cross),drp_met)
+            drp     = np.outer(np.ones(self.nd_cross),drp_met)
         else:
             drp = pars["drp"]
 
@@ -331,8 +330,8 @@ class model:
 
         ### Correction to linear power-spectrum
         pk_corr = (1.+0.*muk)*self.pk
-        pk_corr *= sp.sinc(kp*Lpar/2./sp.pi)**2
-        pk_corr *= sp.sinc(kt*Lper/2./sp.pi)**2
+        pk_corr *= np.sinc(kp*Lpar/2./np.pi)**2
+        pk_corr *= np.sinc(kt*Lper/2./np.pi)**2
 
         ### Biases
         b1b2 = qso_boost*bias_qso*bias_met
