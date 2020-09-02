@@ -585,8 +585,8 @@ class TestCor(unittest.TestCase):
         cmd += " --data " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
         cmd += " --dmat " + self._branchFiles+"/Products/Correlations/dmat.fits.gz"
         cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_cf.fits.gz"
-        subprocess.call(cmd, shell=True)
-
+        returncode=subprocess.call(cmd, shell=True)
+        self.assertEqual(returncode,0,"export_cf did not finish")
         return
     def send_cf_cross(self):
 
@@ -675,7 +675,9 @@ class TestCor(unittest.TestCase):
         cmd += " --data " + self._branchFiles+"/Products/Correlations/cf_cross.fits.gz"
         cmd += " --dmat " + self._branchFiles+"/Products/Correlations/dmat_cross.fits.gz"
         cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_cf_cross.fits.gz"
-        subprocess.call(cmd, shell=True)
+        returncode = subprocess.call(cmd, shell=True)
+        self.assertEqual(returncode,0,"export_cf_cross did not finish")
+
 
         return
     def send_xcf_angl(self):
@@ -801,7 +803,8 @@ class TestCor(unittest.TestCase):
         cmd += " --data " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
         cmd += " --dmat " + self._branchFiles+"/Products/Correlations/xdmat.fits.gz"
         cmd += " --out "  + self._branchFiles+"/Products/Correlations/exported_xcf.fits.gz"
-        subprocess.call(cmd, shell=True)
+        returncode=subprocess.call(cmd, shell=True)
+        self.assertEqual(returncode,0,"export_xcf did not finish")
 
         return
     def send_export_cross_covariance_cf_xcf(self):
@@ -812,7 +815,8 @@ class TestCor(unittest.TestCase):
         cmd += " --data1 " + self._branchFiles+"/Products/Correlations/cf.fits.gz"
         cmd += " --data2 " + self._branchFiles+"/Products/Correlations/xcf.fits.gz"
         cmd += " --out "   + self._branchFiles+"/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
-        subprocess.call(cmd, shell=True)
+        returncode=subprocess.call(cmd, shell=True)
+        self.assertEqual(returncode,0,"export_cross_covariance_cf_xcf did not finish")
 
         return
     def send_co(self):
@@ -899,7 +903,8 @@ class TestCor(unittest.TestCase):
         cmd += " --RD-file " + self._branchFiles+"/Products/Correlations/Co_Random/co_RD.fits.gz"
         cmd += " --out " + self._branchFiles+"/Products/Correlations/exported_co.fits.gz"
         cmd += " --get-cov-from-poisson"
-        subprocess.call(cmd, shell=True)
+        returncode=subprocess.call(cmd, shell=True)
+        self.assertEqual(returncode,0,"export_co did not finish")
 
         return
     def send_fitter2(self):
