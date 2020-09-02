@@ -2,8 +2,8 @@
 
 from __future__ import print_function
 import fitsio
-import scipy as sp
-import scipy.linalg
+import numpy as np
+import numpy.linalg
 import argparse
 
 from picca.utils import smooth_cov, print
@@ -44,8 +44,8 @@ if __name__ == '__main__':
             dic[k] += [h[1][k][:]]
 
         if h[1].read_header()['EXTNAME'].strip()=='ATTRI':
-            da = sp.array(h['COR']['DA'][:])
-            we = sp.array(h['COR']['WE'][:])
+            da = np.array(h['COR']['DA'][:])
+            we = np.array(h['COR']['WE'][:])
             da = (da*we).sum(axis=0)
             we = we.sum(axis=0)
             w = we>0
@@ -58,8 +58,8 @@ if __name__ == '__main__':
 
     ###
     for k in dic.keys():
-        dic[k] = sp.vstack(dic[k])
-    dic['CO'] = sp.cov(dic['DA'].T)
+        dic[k] = np.vstack(dic[k])
+    dic['CO'] = np.cov(dic['DA'].T)
     if args.error_on_mean:
         dic['CO'] /= dic['DA'].shape[0]
     for k in [ el for el in dic.keys() if el!='CO']:
@@ -75,12 +75,12 @@ if __name__ == '__main__':
 
     ###
     try:
-        scipy.linalg.cholesky(dic['CO'])
-    except scipy.linalg.LinAlgError:
+        numpy.linalg.cholesky(dic['CO'])
+    except numpy.linalg.LinAlgError:
         print('WARNING: Matrix is not positive definite')
 
     ###
-    dic['DM'] = sp.eye(dic['DA'].size)
+    dic['DM'] = np.eye(dic['DA'].size)
     dic['DMRP'] = dic['RP'].copy()
     dic['DMRT'] = dic['RT'].copy()
     dic['DMZ'] = dic['Z'].copy()

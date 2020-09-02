@@ -1,5 +1,4 @@
-
-import scipy as sp
+import numpy as np
 from numpy import fft
 from scipy import special
 import scipy.interpolate
@@ -7,12 +6,12 @@ import scipy.interpolate
 from . import myGamma
 
 nmuk = 1000
-muk=(sp.arange(nmuk)+0.5)/nmuk
+muk=(np.arange(nmuk)+0.5)/nmuk
 dmuk = 1./nmuk
 muk=muk[:,None]
 
 def sinc(x):
-    return sp.sin(x)/x
+    return np.sin(x)/x
 
 def Pk2Mp(ar,k,pk,ell_vals,tform=None):
     """
@@ -21,17 +20,17 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
     """
 
     k0 = k[0]
-    l=sp.log(k.max()/k0)
+    l=np.log(k.max()/k0)
     r0=1.
 
     N=len(k)
     emm=N*fft.fftfreq(N)
-    r=r0*sp.exp(-emm*l/N)
-    dr=abs(sp.log(r[1]/r[0]))
-    s=sp.argsort(r)
+    r=r0*np.exp(-emm*l/N)
+    dr=abs(np.log(r[1]/r[0]))
+    s=np.argsort(r)
     r=r[s]
 
-    xi=sp.zeros([len(ell_vals),len(ar)])
+    xi=np.zeros([len(ell_vals),len(ar)])
 
     for ell in ell_vals:
         if tform=="rel":
@@ -41,24 +40,24 @@ def Pk2Mp(ar,k,pk,ell_vals,tform=None):
             pk_ell=pk
             n=2.
         else:
-            pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)/2/sp.pi**2
+            pk_ell=np.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)/2/np.pi**2
             n=2.
         mu=ell+0.5
         q=2-n-0.5
-        x=q+2*sp.pi*1j*emm/l
+        x=q+2*np.pi*1j*emm/l
         lg1=myGamma.LogGammaLanczos((mu+1+x)/2)
         lg2=myGamma.LogGammaLanczos((mu+1-x)/2)
 
-        um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
-        um[0]=sp.real(um[0])
-        an=fft.fft(pk_ell*k**n*sp.sqrt(sp.pi/2))
+        um=(k0*r0)**(-2*np.pi*1j*emm/l)*2**x*np.exp(lg1-lg2)
+        um[0]=np.real(um[0])
+        an=fft.fft(pk_ell*k**n*np.sqrt(np.pi/2))
         an*=um
         xi_loc=fft.ifft(an)
         xi_loc=xi_loc[s]
         xi_loc/=r**(3-n)
         xi_loc[-1]=0
-        spline=sp.interpolate.splrep(sp.log(r)-dr/2,sp.real(xi_loc),k=3,s=0)
-        xi[ell//2,:]=sp.interpolate.splev(sp.log(ar),spline)
+        spline=scipy.interpolate.splrep(np.log(r)-dr/2,np.real(xi_loc),k=3,s=0)
+        xi[ell//2,:]=scipy.interpolate.splev(np.log(ar),spline)
 
     return xi
 
@@ -67,7 +66,7 @@ def Pk2Xi(ar,mur,k,pk,ell_max=None):
     xi=Pk2Mp(ar,k,pk,ell_vals)
     for ell in ell_vals:
         xi[ell//2,:]*=L(mur,ell)
-    return sp.sum(xi,axis=0)
+    return np.sum(xi,axis=0)
 
 def Pk2XiRel(ar,mur,k,pk,kwargs):
     """Calculate the cross-correlation contribution from relativistic effects (Bonvin et al. 2014).

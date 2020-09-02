@@ -7,7 +7,7 @@ import copy
 import functools
 import argparse
 import h5py
-import scipy as sp
+import numpy as np
 from scipy import linalg
 import matplotlib.pyplot as plt
 if (sys.version_info > (3, 0)):
@@ -15,6 +15,7 @@ if (sys.version_info > (3, 0)):
 else:
     import ConfigParser
 
+from picca.utils import userprint
 from picca.fitter2 import parser as fit_parser
 
 
@@ -128,7 +129,7 @@ def compute_dm_dp(data, dic_init, freep, pars):
 
     dm = {}
     for p in freep:
-        print('Parameter {}'.format(p))
+        userprint('Parameter {}'.format(p))
         g = functools.partial(xi_mod_p, data=data, dic_init=dic_init, pname=p, pars=pars)
         dm[p] = derivative(g,pars[p])
 
@@ -174,20 +175,20 @@ if __name__ == '__main__':
     free_pars, fixed_pars, best_fit_pars, err_best_fit_pars = extract_h5file(dic_init['outfile'])
     if 'all' in args.params:
         args.params = free_pars.copy()
-    if sp.any(~sp.in1d(args.params,free_pars)):
+    if np.any(~np.in1d(args.params,free_pars)):
         print('ERROR: Some parameters are not fitted {}, the list is {}'.format(args.params,free_pars))
         sys.exit(12)
 
     ### Computing derivatives for each parameter, in each correlation
     for data in dic_init['data sets']['data']:
-        print('\n data: {}\n'.format(data.name))
+        userprint('\n data: {}\n'.format(data.name))
         data.dm_dp = compute_dm_dp(data,dic_init,free_pars,best_fit_pars)
         apply_mask(data)
 
     ### Computation of the effective bins
-    print("\n")
+    userprint("\n")
     for p in args.params:
-        print('\n\nParameter {}'.format(p))
+        userprint('\n\nParameter {}'.format(p))
 
         res = []
         den = []
@@ -196,11 +197,11 @@ if __name__ == '__main__':
             tres, tden = compute_z0(M,data.z)
             res += [tres]
             den += [tden]
-            print('{}, <z> = {}/{} = {}'.format(data.name,tres,tden,tres/tden))
+            userprint('{}, <z> = {}/{} = {}'.format(data.name,tres,tden,tres/tden))
 
         if len(dic_init['data sets']['data'])>1:
-            res = sp.array(res).sum()
-            den = sp.array(den).sum()
+            res = np.array(res).sum()
+            den = np.array(den).sum()
             print('Combined')
             print('<z> = {}/{} = {}'.format(res,den,res/den))
 

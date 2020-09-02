@@ -14,7 +14,7 @@ def read_bal(bal_catalog): ##Based on read_dla from picca/py/picca/io.py
 
 
 #based on add_dla from picca/py/picca/data.py
-def add_bal_rf(bal_catalog,thid,bal_index): #BAL catalog, THING_ID, and BAL index
+def add_bal_rf(bal_catalog,thingid,bal_index): #BAL catalog, THING_ID, and BAL index
     ### Wavelengths in Angstroms
     lines = {
         "lCIV" : 1549, #Used for testing
@@ -39,7 +39,7 @@ def add_bal_rf(bal_catalog,thid,bal_index): #BAL catalog, THING_ID, and BAL inde
     vMax = [] ##list of maximum velocities
 
     ##Match thing_id to BAL catalog index
-    indx = sp.where(bal_catalog['THING_ID']==thid)[0][0]
+    indx = sp.where(bal_catalog['THING_ID']==thingid)[0][0]
 
     #Store the min/max velocity pairs from the BAL catalog
     for i in lst:

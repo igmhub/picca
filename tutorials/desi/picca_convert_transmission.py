@@ -2,7 +2,7 @@
 
 import argparse
 
-from picca import utils
+from picca import converters
 
 if __name__ == '__main__':
 
@@ -41,4 +41,13 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    utils.desi_convert_transmission_to_delta_files(args.object_cat, args.out_dir, indir=args.in_dir, infiles=args.in_files, lObs_min=args.lambda_min, lObs_max=args.lambda_max, lRF_min=args.lambda_rest_min, lRF_max=args.lambda_rest_max, dll=args.dll, nspec=args.nspec)
+    converters.desi_convert_transmission_to_delta_files(args.object_cat, 
+                                                        args.out_dir, 
+                                                        in_dir=args.in_dir, 
+                                                        in_files=args.in_files, 
+                                                        lambda_min=args.lambda_min, 
+                                                        lambda_max=args.lambda_max, 
+                                                        lambda_min_rest_frame=args.lambda_rest_min, 
+                                                        lambda_max_rest_frame=args.lambda_rest_max, 
+                                                        delta_log_lambda=args.dll, 
+                                                        max_num_spec=args.nspec)

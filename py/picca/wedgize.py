@@ -1,4 +1,4 @@
-import scipy as sp
+import numpy as np
 
 class wedge:
     def __init__(self,rpmin=0.,rpmax=200.,nrp=50,rtmin=0.,rtmax=200.,nrt=50,\
@@ -6,15 +6,15 @@ class wedge:
         nrtmc = ss*nrt
         nrpmc = ss*nrp
         nss=nrtmc*nrpmc
-        index=sp.arange(nss)
+        index=np.arange(nss)
         irtmc=index%nrtmc
         irpmc=(index-irtmc)//nrtmc
         rtmc = rtmin+(irtmc+0.5)*(rtmax-rtmin)/nrtmc
         rpmc = rpmin+(irpmc+0.5)*(rpmax-rpmin)/nrpmc
-        rmc = sp.sqrt(rtmc**2+rpmc**2)
+        rmc = np.sqrt(rtmc**2+rpmc**2)
         mumc = rpmc/rmc
         if absoluteMu:
-            mumc = sp.absolute(mumc)
+            mumc = np.absolute(mumc)
 
         br = (rmc-rmin)/(rmax-rmin)*nr
         br = br.astype(int)
@@ -25,29 +25,27 @@ class wedge:
         bp = (rpmc-rpmin)/(rpmax-rpmin)*nrp
         bp = bp.astype(int)
 
-        rp = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
-        rt = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
-        r=sp.sqrt(rp**2+rt**2)
+        r_par = rpmin + (bp+0.5)*(rpmax-rpmin)/nrp
+        r_trans = rtmin + (bt+0.5)*(rtmax-rtmin)/nrt
+        r=np.sqrt(r_par**2+r_trans**2)
 
         bins = bt+nrt*bp + nrp*nrt*br
 
         w = (mumc>=mumin) & (mumc<=mumax) & (r<rmax) & (r>rmin) & (br<nr)
         bins = bins[w]
 
-        W = sp.zeros(nrp*nrt*nr)
-        c=sp.bincount(bins.flatten())
+        W = np.zeros(nrp*nrt*nr)
+        c=np.bincount(bins.flatten())
         W[:len(c)]+=c
 
         self.W = W.reshape(nr,nrt*nrp)
-        self.r = rmin + (sp.arange(nr)+0.5)*(rmax-rmin)/nr
+        self.r = rmin + (np.arange(nr)+0.5)*(rmax-rmin)/nr
 
     def wedge(self,da,co):
-        we = 1/sp.diagonal(co)
+        we = 1/np.diagonal(co)
         w = self.W.dot(we)
         Wwe = self.W*we
         mask = w>0
         Wwe[mask,:]/=w[mask,None]
         d = Wwe.dot(da)
         return self.r,d,Wwe.dot(co).dot(Wwe.T)
-
-

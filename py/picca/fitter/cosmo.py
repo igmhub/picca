@@ -1,9 +1,10 @@
 import astropy.io.fits as pyfits
+import numpy as np
 import scipy as sp
 import scipy.interpolate
 import sys
-import numpy as np
 
+from picca.utils import userprint
 from picca.fitter import myGamma
 from picca.fitter import utils
 from . import fftlog
@@ -16,7 +17,7 @@ class model:
     parameters for FFT
     '''
     nmuk = 1000
-    muk=(sp.arange(nmuk)+0.5)/nmuk
+    muk=(np.arange(nmuk)+0.5)/nmuk
     dmuk = 1./nmuk
     muk=muk[:,None]
 
@@ -51,8 +52,8 @@ class model:
         if self.fix_bias_beta_peak:
             self.bias_lya_peak=dic_init['bias_lya_peak']
             self.beta_lya_peak=dic_init['beta_lya_peak']
-            print("Fixing for BAO peak bias=",self.bias_lya_peak)
-            print("Fixing for BAO peak beta=",self.beta_lya_peak)
+            userprint("Fixing for BAO peak bias=",self.bias_lya_peak)
+            userprint("Fixing for BAO peak beta=",self.beta_lya_peak)
 
         self.pall = self.pglob[:]
 
@@ -76,10 +77,10 @@ class model:
         self.bv_dnl = None
         self.kp_dnl = None
         if dic_init['dnl_model'] == "mcdonald":
-            print("with DNL (McDonald 2003)")
+            userprint("with DNL (McDonald 2003)")
             self.dnl_model = "mcdonald"
         elif dic_init['dnl_model'] == "arinyo":
-            print("with DNL (Arinyo et al. 2015)")
+            userprint("with DNL (Arinyo et al. 2015)")
             self.dnl_model = "arinyo"
             z_dnl = [2.2000, 2.4000, 2.6000, 2.8000, 3.0000]
             q1_dnl = [0.8670, 0.8510, 0.7810, 0.7730, 0.7920]
@@ -97,21 +98,21 @@ class model:
             self.av_dnl = av_dnl_interp(self.zref)
             self.bv_dnl = bv_dnl_interp(self.zref)
             self.kp_dnl = kp_dnl_interp(self.zref)
-            print("q1 =", self.q1_dnl)
-            print("kv =", self.kv_dnl)
-            print("av =", self.av_dnl)
-            print("bv =", self.bv_dnl)
-            print("kp =", self.kp_dnl)
+            userprint("q1 =", self.q1_dnl)
+            userprint("kv =", self.kv_dnl)
+            userprint("av =", self.av_dnl)
+            userprint("bv =", self.bv_dnl)
+            userprint("kp =", self.kp_dnl)
         elif (not dic_init['dnl_model'] is None) & (not dic_init['dnl_model'] == "mcdonald") & (not dic_init['dnl_model'] == "arinyo"):
-            print('  Unknown dnl model: ', dic_init['dnl_model'])
-            print('  Exit')
+            userprint('  Unknown dnl model: ', dic_init['dnl_model'])
+            userprint('  Exit')
             sys.exit(0)
         else :
-            print("without DNL")
+            userprint("without DNL")
 
         self.twod = dic_init['2d']
         if self.twod :
-            print("initalize pk2D array for 2D transfo ...")
+            userprint("initalize pk2D array for 2D transfo ...")
             kmin=1.e-7
             kmax=100.
             nk  = 1024
@@ -124,7 +125,7 @@ class model:
             self.pk_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pk).reshape(kk.shape)
             self.pkSB_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pkSB).reshape(kk.shape)
             self.k=kk
-            print("done")
+            userprint("done")
 
     def add_cross(self,dic_init):
 
@@ -193,13 +194,13 @@ class model:
             dnl = sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kvel)**1.5)
         elif model == "arinyo":
             growth = q1*k*k*k*pk/(2*sp.pi*sp.pi)
-            pecvelocity = sp.power(k/kv,av)*sp.power(sp.fabs(muk),bv)
+            pecvelocity = np.power(k/kv,av)*np.power(sp.fabs(muk),bv)
             pressure = (k/kp)*(k/kp)
             dnl = sp.exp(growth*(1-pecvelocity)-pressure)
         return dnl
 
     def valueAuto(self,rp,rt,z,pars):
-        if self.xi_auto_prev is None or not sp.allclose(list(pars.values()),self.pars_auto_prev):
+        if self.xi_auto_prev is None or not np.allclose(list(pars.values()),self.pars_auto_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -233,12 +234,12 @@ class model:
             ap=pars["aiso"]*pars["1+epsilon"]*pars["1+epsilon"]
             at=pars["aiso"]/pars["1+epsilon"]
 
-        ar=sp.sqrt(rt**2*at**2+rp**2*ap**2)
+        ar=np.sqrt(rt**2*at**2+rp**2*ap**2)
         mur=rp*ap/ar
 
         muk = model.muk
         kp = k * muk
-        kt = k * sp.sqrt(1-muk**2)
+        kt = k * np.sqrt(1-muk**2)
 
         bias_lya = pars["bias_lya*(1+beta_lya)"]/(1.+pars["beta_lya"])
         beta_lya = pars["beta_lya"]
@@ -332,7 +333,7 @@ class model:
         return fftlog.Pk2XiA(self.k1d,pk_full,arp,art)*evol
 
     def valueCross(self,rp,rt,z,pars):
-        if self.xi_cross_prev is None or not sp.allclose(list(pars.values()),self.pars_cross_prev):
+        if self.xi_cross_prev is None or not np.allclose(list(pars.values()),self.pars_cross_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -371,12 +372,12 @@ class model:
         Lper=pars["Lper_cross"]
         qso_evol = [pars['qso_evol_0'],pars['qso_evol_1']]
         rp_shift=rp+drp
-        ar=sp.sqrt(rt**2*at**2+rp_shift**2*ap**2)
+        ar=np.sqrt(rt**2*at**2+rp_shift**2*ap**2)
         mur=rp_shift*ap/ar
 
         muk = model.muk
         kp = k * muk
-        kt = k * sp.sqrt(1-muk**2)
+        kt = k * np.sqrt(1-muk**2)
 
         bias_lya = pars["bias_lya*(1+beta_lya)"]/(1.+pars["beta_lya"])
         beta_lya = pars["beta_lya"]
@@ -408,7 +409,7 @@ class model:
         if (self.velo_gauss):
             pk_full *= sp.exp( -0.25*(kp*pars['sigma_velo_gauss'])**2 )
         if (self.velo_lorentz):
-            pk_full /= sp.sqrt(1.+(kp*pars['sigma_velo_lorentz'])**2)
+            pk_full /= np.sqrt(1.+(kp*pars['sigma_velo_lorentz'])**2)
 
         ### Peak broadening
         sigmaNLper = pars["SigmaNL_perp"]
@@ -420,17 +421,17 @@ class model:
         pk_full *= sp.sinc(kt*Lper/2./sp.pi)**2
 
         ### Non-linear correction
-        pk_full *= sp.sqrt(self.DNL(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model))
+        pk_full *= np.sqrt(self.DNL(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model))
 
         ### Redshift evolution
-        evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+        evol  = np.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
         evol *= self.evolution_Lya_bias(z,[pars["alpha_lya"]])/self.evolution_Lya_bias(self.zref,[pars["alpha_lya"]])
         evol *= self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol)
 
         return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
 
     def valueAutoQSO(self,rp,rt,z,pars):
-        if self.xi_autoQSO_prev is None or not sp.allclose(list(pars.values()),self.pars_autoQSO_prev):
+        if self.xi_autoQSO_prev is None or not np.allclose(list(pars.values()),self.pars_autoQSO_prev):
             parsSB = pars.copy()
             if not self.fit_aiso:
                 parsSB["at"]=1.
@@ -457,12 +458,12 @@ class model:
         else:
             ap = pars["aiso"]*pars["1+epsilon"]*pars["1+epsilon"]
             at = pars["aiso"]/pars["1+epsilon"]
-        ar  = sp.sqrt(rt**2*at**2+rp**2*ap**2)
+        ar  = np.sqrt(rt**2*at**2+rp**2*ap**2)
         mur = rp*ap/ar
 
         muk = model.muk
         kp = k * muk
-        kt = k * sp.sqrt(1-muk**2)
+        kt = k * np.sqrt(1-muk**2)
 
         ### QSO-QSO auto correlation
         bias_qso = pars["bias_qso"]
@@ -488,8 +489,8 @@ class model:
 
         ### Redshift evolution
         qso_evol = [pars['qso_evol_0'],pars['qso_evol_1']]
-        evol  = sp.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
-        evol *= sp.power( self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol),2. )
+        evol  = np.power( self.evolution_growth_factor(z)/self.evolution_growth_factor(self.zref),2. )
+        evol *= np.power( self.evolution_QSO_bias(z,qso_evol)/self.evolution_QSO_bias(self.zref,qso_evol),2. )
 
         return self.Pk2Xi(ar,mur,k,pk_full,ell_max=self.ell_max)*evol
 
@@ -505,20 +506,20 @@ class model:
         dmuk = model.dmuk
 
         k0 = k[0]
-        l=sp.log(k.max()/k0)
+        l=np.log(k.max()/k0)
         r0=1.
 
         N=len(k)
         emm=N*np.fft.fftfreq(N)
         r=r0*sp.exp(-emm*l/N)
-        dr=abs(sp.log(r[1]/r[0]))
+        dr=abs(np.log(r[1]/r[0]))
         s=sp.argsort(r)
         r=r[s]
 
-        xi=sp.zeros([ell_max//2+1,len(ar)])
+        xi=np.zeros([ell_max//2+1,len(ar)])
 
         for ell in range(0,ell_max+1,2):
-            pk_ell=sp.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)
+            pk_ell=np.sum(dmuk*L(muk,ell)*pk,axis=0)*(2*ell+1)*(-1)**(ell//2)
             mu=ell+0.5
             n=2.
             q=2-n-0.5
@@ -528,14 +529,14 @@ class model:
 
             um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
             um[0]=sp.real(um[0])
-            an=np.fft.fft(pk_ell*k**n/2/sp.pi**2*sp.sqrt(sp.pi/2))
+            an=np.fft.fft(pk_ell*k**n/2/sp.pi**2*np.sqrt(sp.pi/2))
             an*=um
             xi_loc=np.fft.ifft(an)
             xi_loc=xi_loc[s]
             xi_loc/=r**(3-n)
             xi_loc[-1]=0
-            spline=sp.interpolate.splrep(sp.log(r)-dr/2,sp.real(xi_loc),k=3,s=0)
-            xi[ell//2,:]=sp.interpolate.splev(sp.log(ar),spline)
+            spline=sp.interpolate.splrep(np.log(r)-dr/2,sp.real(xi_loc),k=3,s=0)
+            xi[ell//2,:]=sp.interpolate.splev(np.log(ar),spline)
 
         return xi
 
@@ -544,4 +545,4 @@ class model:
         xi=model.Pk2Mp(ar,k,pk,ell_max)
         for ell in range(0,ell_max+1,2):
             xi[ell//2,:]*=L(mur,ell)
-        return sp.sum(xi,axis=0)
+        return np.sum(xi,axis=0)
