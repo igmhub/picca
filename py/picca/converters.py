@@ -585,3 +585,141 @@ def desi_convert_transmission_to_delta_files(obj_path,
                   end="")
 
     userprint("")
+
+
+def catalog_from_zbest(zbestfiles,outfile,zmin,zmax): 
+    """
+    Allows merging multiple zbest files to form a kind of catalog from e.g. the mini-SV data
+    Will use some default selection currently
+
+     Args:
+        zbestfiles: list of str
+            Path to the catalog of object to extract the transmission from
+        outfile: str
+            Path to the directory where delta files will be written
+        zmin: float
+            Minimal quasar redshift considered
+        zmax: float
+            Maximal quasar redshift considered
+    """
+    if isinstance(zbestfiles, str):
+        zbestfiles=[zbestfiles]
+        numfiles=1
+    else:
+        numfiles=len(zbestfiles)
+    print('Reading {} zbest files'.format(numfiles))
+
+    tid_arr=[]
+    z_arr=[]
+    rows_all_redrock=[]
+    rows_all_fibermap=[]
+    for zbest in zbestfiles:
+        h = fitsio.FITS(zbest)
+
+        #selection of quasars with good redshifts only, the exact definition here should be decided, could in principle be moved to later
+        spectypes=h[1]['SPECTYPE'][:].astype(str)
+        
+        select=(spectypes=='QSO')      #this could be done later but slower
+
+        ## Redshift
+        zqso = h[1]['Z'][:][select]
+        zwarn = h[1]['ZWARN'][:][select]
+        ## Info of the primary observation
+        thid = h[1]['TARGETID'][:][select]
+
+        if len(thid)==0:
+            print("no valid QSOs in file {}".format(zbest))
+            continue
+
+        tid2=h[2]['TARGETID'][:]
+
+        fiberstatus=[]
+        cmx_target=np.zeros(len(thid), dtype='int64')
+        desi_target=np.zeros(len(thid), dtype='int64')
+        sv1_target=np.zeros(len(thid), dtype='int64')
+
+        for i,tid in enumerate(thid):
+            #if multiple entries in fibermap take the first here
+            select2=(tid==tid2)
+            fiberstatus.append(h[2]['FIBERSTATUS'][:][select2])
+            try:
+                cmx_target[i]=h[2]['CMX_TARGET'][:][select2][0]
+            except ValueError:
+                pass
+            try:
+                desi_target[i]=h[2]['DESI_TARGET'][:][select2][0]
+            except ValueError:
+                pass
+            try:
+                sv1_target[i]=h[2]['SV1_DESI_TARGET'][:][select2][0]
+            except ValueError:
+                pass
+
+        ## Sanity
+        print('')
+        w = np.ones(thid.size,dtype=bool)
+        print(" start (all redrock QSOs)         : nb object in cat = {}".format(w.sum()) )
+        #note that in principle we could also check for subtypes here...
+        w &= (((cmx_target&(2**12))!=0) |
+                # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/cmx/data/cmx_targetmask.yaml
+              ((desi_target&(2**2))!=0) |
+                # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/data/targetmask.yaml
+              ((sv1_target&(2**2))!=0))
+                # see https://github.com/desihub/desitarget/blob/0.37.0/py/desitarget/sv1/data/sv1_targetmask.yaml
+        print(" Targeted as QSO                  : nb object in cat = {}".format(w.sum()) )
+        #the bottom selection has been done earlier already to speed up things
+        #w &= spectypes == 'QSO'
+        #print(" Redrock QSO                      : nb object in cat = {}".format(w.sum()) )
+        
+        w &= zwarn == 0
+        print(" Redrock no ZWARN                 : nb object in cat = {}".format(w.sum()) )
+
+
+        #checking if all fibers are fine
+        w &= np.any(np.array(fiberstatus)==0,axis=1)
+        print(" FIBERSTATUS==0 for any exposures : nb object in cat = {}".format(w.sum()) )
+
+        w &= np.all(np.array(fiberstatus)==0,axis=1)
+        print(" FIBERSTATUS==0 for all exposures : nb object in cat = {}".format(w.sum()) )
+
+
+        ## Redshift range
+        if not zmin is None:
+            w &= zqso>=zmin
+            print(" and z>=zmin                      : nb object in cat = {}".format(w.sum()) )
+        if not zmax is None:
+            w &= zqso<zmax
+            print(" and z<zmax                       : nb object in cat = {}".format(w.sum()) )
+
+        thid_selected = thid[w]
+        #load the full list again to select from
+        thid = h[1].read()['TARGETID']
+
+        selectinds=[]
+        select2inds=[]
+        for t in thid_selected:
+          select=(t==thid).nonzero()[0]
+          select2=(t==tid2).nonzero()[0]
+          selectinds.extend(select)
+          select2inds.extend(select2)
+        rows_redrock=h[1].read(rows=selectinds).copy()
+        rows_fibermap=h[2].read(rows=select2inds).copy()
+        #the following is a fix to different dtype in some files
+        dtypes=np.dtype([(k,rows_fibermap.dtype[k]) if k != 'NUMOBS_MORE' else (k,'>i8') for k in rows_fibermap.dtype.names],align=True) 
+        rows_fibermap=np.array(rows_fibermap,dtype=dtypes)
+        rows_all_redrock.append(rows_redrock)
+        rows_all_fibermap.append(rows_fibermap)
+    rows_all_redrock=np.concatenate(rows_all_redrock)
+    rows_all_redrock.sort(order='TARGETID')
+    
+    rows_all_fibermap=np.concatenate(rows_all_fibermap)
+    rows_all_fibermap.sort(order='TARGETID')
+
+    outcat = fitsio.FITS(outfile,'rw',clobber=True)
+    #probably add some metadata with the selection parameters
+    outcat.write(rows_all_redrock,extname='ZBEST')
+    outcat.write(rows_all_fibermap,extname='FIBERMAP')
+
+    dic=dict(ZMIN=np.array([zmin]),
+             ZMAX=np.array([zmax]))
+    outcat.write(dic,extname='SELECTION')
