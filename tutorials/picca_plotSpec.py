@@ -4,7 +4,6 @@ import sys
 import fitsio
 import healpy
 import numpy as np
-import scipy as sp
 import argparse
 import matplotlib.pyplot as plt
 
@@ -102,7 +101,7 @@ if __name__ == '__main__':
     mjd = mjd[cut]
     fid = fid[cut]
     phi = ra
-    th = sp.pi/2.-dec
+    th = np.pi/2.-dec
     pix = healpy.ang2pix(args.nside,th,phi)
 
     ### Get data
@@ -227,44 +226,3 @@ if __name__ == '__main__':
     plt.ylabel(r'$f \, [10^{-19} \mathrm{W \, m^{-2} \, nm^{-1}}]$',fontsize=30)
     plt.grid()
     plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

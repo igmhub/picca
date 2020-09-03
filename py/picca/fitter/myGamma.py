@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 
 
 def gamma(z):             # great function from Wiki, but maybe could use memorization?
@@ -36,7 +35,7 @@ def LogGammaLanczos(z):
     #  not in A & S
     p =[76.18009172947146,-86.50532032941677, 24.01409824083091,
         -1.231739572450155, 0.1208650973866179E-2,-0.5395239384953E-5]
-    LogSqrtTwoPi = 0.5*np.log(2*sp.pi)
+    LogSqrtTwoPi = 0.5*np.log(2*np.pi)
     denom = z + 1.
     y = z + 5.5
     series = 1.000000000190015
