@@ -17,7 +17,7 @@ See the respective docstrings for more details
 """
 import numpy as np
 from healpy import query_disc
-from numba import jit, float32, float64, boolean
+from numba import jit
 
 from picca import constants
 from picca.utils import userprint
@@ -1066,7 +1066,7 @@ def compute_wick_terms(healpixs):
             t4, t5, t6)
 
 
-#@jit
+@jit
 def compute_wickT123_pairs(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
                            weighted_xi_1d_1, weighted_xi_1d_2, weights_wick,
                            num_pairs_wick, t1, t2, t3):
@@ -1168,7 +1168,7 @@ def compute_wickT123_pairs(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
     return
 
 
-#@jit
+@jit
 def compute_wickT45_pairs(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23,
                           weights1, weights2, weights3, weighted_xi_1d_1,
                           weighted_xi_1d_2, weighted_xi_1d_3, fname1, fname2,
