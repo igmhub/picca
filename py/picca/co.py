@@ -63,7 +63,7 @@ def fill_neighs(healpixs):
                     obj2 for healpix in healpix_neighbours
                     for obj2 in objs[healpix] if obj1.thingid != obj2.thingid
                 ]
-            ang = obj1 ^ neighbours
+            ang = obj1.get_angle_between(neighbours)
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
             obj1.neighbours = np.array([
@@ -106,7 +106,7 @@ def compute_xi(healpixs):
             if obj1.neighbours.size == 0:
                 continue
 
-            ang = obj1 ^ obj1.neighbours
+            ang = obj1.get_angle_between(obj1.neighbours)
             z2 = np.array([obj2.z_qso for obj2 in obj1.neighbours])
             r_comov2 = np.array([obj2.r_comov for obj2 in obj1.neighbours])
             dist_m2 = np.array([obj2.dist_m for obj2 in obj1.neighbours])
