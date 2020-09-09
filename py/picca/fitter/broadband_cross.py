@@ -1,7 +1,6 @@
 
 from picca.fitter.utils import L
 import numpy as np
-import scipy as sp
 from scipy import linalg
 import sys
 
@@ -77,14 +76,14 @@ class model:
 
 
         if self.distort:
-            A = sp.dot(A,self.dm.T)
+            A = np.dot(A,self.dm.T)
         A = A[:,self.cuts]
 
-        M   = sp.dot(A,sp.dot(self.ico,A.T))
+        M   = np.dot(A,np.dot(self.ico,A.T))
         IM  = linalg.inv(M)
-        tmp = sp.dot(data_rest,sp.dot(self.ico,A.T))
-        p   = sp.dot(IM,tmp)
-        d   = sp.dot(p,A)
+        tmp = np.dot(data_rest,np.dot(self.ico,A.T))
+        p   = np.dot(IM,tmp)
+        d   = np.dot(p,A)
 
         return p,d
     def __call__(self,rt,rp,drp,pars):

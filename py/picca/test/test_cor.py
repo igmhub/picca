@@ -1,6 +1,5 @@
 import unittest
 import numpy as np
-import scipy as sp
 import numpy.random
 import fitsio
 import healpy
@@ -166,8 +165,8 @@ class TestCor(unittest.TestCase):
 
         ### Load DRQ
         vac = fitsio.FITS(self._branchFiles+"/Products/cat.fits")
-        ra    = vac[1]["RA"][:]*sp.pi/180.
-        dec   = vac[1]["DEC"][:]*sp.pi/180.
+        ra    = vac[1]["RA"][:]*np.pi/180.
+        dec   = vac[1]["DEC"][:]*np.pi/180.
         thid  = vac[1]["THING_ID"][:]
         plate = vac[1]["PLATE"][:]
         mjd   = vac[1]["MJD"][:]
@@ -175,7 +174,7 @@ class TestCor(unittest.TestCase):
         vac.close()
 
         ### Get Healpy pixels
-        pixs  = healpy.ang2pix(nside, sp.pi/2.-dec, ra)
+        pixs  = healpy.ang2pix(nside, np.pi/2.-dec, ra)
 
         ### Save master file
         path = self._branchFiles+"/Products/Spectra/master.fits"
@@ -248,9 +247,9 @@ class TestCor(unittest.TestCase):
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
                 if d_m.dtype in ['<U23','S23']: ### for fitsio old version compatibility
-                    d_m = sp.char.strip(d_m)
+                    d_m = np.char.strip(d_m)
                 if d_b.dtype in ['<U23','S23']: ### for fitsio old version compatibility
-                    d_b = sp.char.strip(d_b)
+                    d_b = np.char.strip(d_b)
                 self.assertEqual(d_m.size,d_b.size,"{}: Header key is {}".format(nameRun,k))
                 if not np.array_equal(d_m,d_b):
                     userprint("WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose".format(nameRun,k))
