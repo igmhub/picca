@@ -239,18 +239,18 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     delta_times_weight1 = delta1 * weights1
     delta_times_weight2 = delta2 * weights2
     if ang_correlation:
-        r_par = r_comov1 / r_comov2[:, None]
+        r_par = r_comov1 / np.expand_dims(r_comov2, axis=1)
         if not x_correlation:
             r_par[r_par < 1.] = 1. / r_par[r_par < 1.]
         r_trans = ang * np.ones_like(r_par)
     else:
-        r_par = (r_comov1 - r_comov2[:, None]) * np.cos(ang / 2)
+        r_par = (r_comov1 - np.expand_dims(r_comov2, axis=1)) * np.cos(ang / 2)
         if not x_correlation:
-            r_par = abs(r_par)
-        r_trans = (dist_m1 + dist_m2[:, None]) * np.sin(ang / 2)
-    delta_times_weight12 = delta_times_weight1 * delta_times_weight2[:, None]
-    weights12 = weights1 * weights2[:, None]
-    z = (z1 + z2[:, None]) / 2
+            r_par = np.abs(r_par)
+        r_trans = (dist_m1 + np.expand_dims(dist_m2, axis=1)) * np.sin(ang / 2)
+    delta_times_weight12 = delta_times_weight1 * np.expand_dims(delta_times_weight2, axis=1)
+    weights12 = weights1 * np.expand_dims(weights2, axis=1)
+    z = (z1 + np.expand_dims(z2, axis=1)) / 2
 
     w = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
 
