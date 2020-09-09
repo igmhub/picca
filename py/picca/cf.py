@@ -189,7 +189,7 @@ def compute_xi(healpixs):
     return weights, xi, r_par, r_trans, z, num_pairs
 
 
-@jit
+#@jit
 def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             r_comov2, dist_m2, weights2, delta2, ang,
                             same_half_plate):
@@ -352,7 +352,7 @@ def compute_dmat(healpixs):
             num_pairs, num_pairs_used)
 
 
-@jit
+#@jit
 def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
                               dist_m1, dist_m2, z1, z2, weights1, weights2, ang,
                               weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff,
@@ -1066,7 +1066,7 @@ def compute_wick_terms(healpixs):
             t4, t5, t6)
 
 
-@jit
+#@jit
 def compute_wickT123_pairs(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
                            weighted_xi_1d_1, weighted_xi_1d_2, weights_wick,
                            num_pairs_wick, t1, t2, t3):
@@ -1168,7 +1168,7 @@ def compute_wickT123_pairs(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
     return
 
 
-@jit
+#@jit
 def compute_wickT45_pairs(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23,
                           weights1, weights2, weights3, weighted_xi_1d_1,
                           weighted_xi_1d_2, weighted_xi_1d_3, fname1, fname2,
