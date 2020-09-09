@@ -189,7 +189,8 @@ def compute_xi(healpixs):
     return weights, xi, r_par, r_trans, z, num_pairs
 
 
-@jit(nopython=True)
+@jit((float32[:], float32[:], float32[:], float32[:],
+      float32[:], float32[:], float32[:], float32[:], float32, boolean), nopython=True)
 def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             r_comov2, dist_m2, weights2, delta2, ang,
                             same_half_plate):
