@@ -585,8 +585,8 @@ class Forest(QSO):
         self.p1 = None
         self.bad_cont = None
 
-    def __add__(self, other):
-        """Adds the information of another forest.
+    def coadd(self, other):
+        """Coadds the information of another forest.
 
         Forests are coadded by using inverse variance weighting.
 

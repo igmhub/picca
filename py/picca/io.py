@@ -679,19 +679,20 @@ def read_from_spec(in_dir,
                                 exposures_diff=exposures_diff,
                                 reso=reso)
             else:
-                deltas += Forest(log_lambda,
-                                 flux,
-                                 ivar,
-                                 metadata.thingid,
-                                 metadata.ra,
-                                 metadata.dec,
-                                 metadata.z_qso,
-                                 metadata.plate,
-                                 metadata.mjd,
-                                 metadata.fiberid,
-                                 order,
-                                 exposures_diff=exposures_diff,
-                                 reso=reso)
+                deltas.coadd(
+                    Forest(log_lambda,
+                           flux,
+                           ivar,
+                           metadata.thingid,
+                           metadata.ra,
+                           metadata.dec,
+                           metadata.z_qso,
+                           metadata.plate,
+                           metadata.mjd,
+                           metadata.fiberid,
+                           order,
+                           exposures_diff=exposures_diff,
+                           reso=reso))
             hdul.close()
         if deltas is not None:
             pix_data.append(deltas)
@@ -1289,9 +1290,10 @@ def read_from_desi(nside,
                                dec[w_t][0], z_table[t], p, m, f, order,
                                exposures_diff, reso_in_km_per_s))
                 else:
-                    forest += Forest(spec['log_lambda'], flux, ivar, t,
-                                     ra[w_t][0], dec[w_t][0], z_table[t], p, m,
-                                     f, order, exposures_diff, reso_in_km_per_s)
+                    forest.coadd(
+                        Forest(spec['log_lambda'], flux, ivar, t, ra[w_t][0],
+                               dec[w_t][0], z_table[t], p, m, f, order,
+                               exposures_diff, reso_in_km_per_s))
 
             pix = healpixs[w_t][0]
             if pix not in data:
