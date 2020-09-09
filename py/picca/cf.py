@@ -17,7 +17,7 @@ See the respective docstrings for more details
 """
 import numpy as np
 from healpy import query_disc
-from numba import jit
+from numba import jit, float32, float64, boolean
 
 from picca import constants
 from picca.utils import userprint
