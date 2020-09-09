@@ -81,7 +81,7 @@ def fill_neighs(healpixs):
                 obj for other_healpix in healpix_neighbours
                 for obj in objs[other_healpix] if obj.thingid != delta.thingid
             ]
-            ang = delta ^ neighbours
+            ang = delta.get_angle_between(neighbours)
             w = ang < ang_max
             if not ang_correlation:
                 r_comov = np.array([obj.r_comov for obj in neighbours])
@@ -127,7 +127,7 @@ def compute_xi(healpixs):
                        "{}%").format(round(counter.value * 100. / num_data, 3)),
                       end="")
             if delta.neighbours.size != 0:
-                ang = delta ^ delta.neighbours
+                ang = delta.get_angle_between(delta.neighbours)
                 z_qso = [obj.z_qso for obj in delta.neighbours]
                 weights_qso = [obj.weights for obj in delta.neighbours]
                 if ang_correlation:
@@ -289,7 +289,7 @@ def compute_dmat(healpixs):
             num_pairs += len(delta1.neighbours)
             num_pairs_used += w.sum()
             neighbours = delta1.neighbours[w]
-            ang = delta1 ^ neighbours
+            ang = delta1.get_angle_between(neighbours)
             r_comov2 = [obj.r_comov for obj in neighbours]
             dist_m2 = [obj.dist_m for obj in neighbours]
             weights2 = [obj.weights for obj in neighbours]
@@ -514,7 +514,7 @@ def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
             num_pairs_used += w.sum()
 
             for obj2 in np.array(delta1.neighbours)[w]:
-                ang = delta1 ^ obj2
+                ang = delta1.get_angle_between(obj2)
 
                 r_comov2 = obj2.r_comov
                 dist_m2 = obj2.dist_m
@@ -656,7 +656,7 @@ def compute_wick_terms(healpixs):
             z1 = delta1.z
 
             neighbours = delta1.neighbours
-            ang12 = delta1 ^ neighbours
+            ang12 = delta1.get_angle_between(neighbours)
             r_comov2 = np.array([obj2.r_comov for obj2 in neighbours])
             z2 = np.array([obj2.z_qso for obj2 in neighbours])
             weights2 = np.array([obj2.weights for obj2 in neighbours])
@@ -673,13 +673,13 @@ def compute_wick_terms(healpixs):
                 if delta3.neighbours.size == 0:
                     continue
 
-                ang13 = delta1 ^ delta3
+                ang13 = delta1.get_angle_between(delta3)
 
                 r_comov3 = delta3.r_comov
                 weights3 = delta3.weights
 
                 neighbours = delta3.neighbours
-                ang34 = delta3 ^ neighbours
+                ang34 = delta3.get_angle_between(neighbours)
                 r_comov4 = np.array([obj4.r_comov for obj4 in neighbours])
                 weights4 = np.array([obj4.weights for obj4 in neighbours])
                 thingid4 = np.array([obj4.thingid for obj4 in neighbours])

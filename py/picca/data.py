@@ -79,7 +79,7 @@ class QSO(object):
 
     Methods:
         __init__: Initialize class instance.
-        __xor__: Computes the angular separation between two quasars.
+        get_angle_between: Computes the angular separation between two quasars.
     """
 
     def __init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid):
@@ -125,7 +125,7 @@ class QSO(object):
         # variables computed in modules bin.picca_xcf_angl and bin.picca_xcf1d
         self.log_lambda = None
 
-    def __xor__(self, data):
+    def get_angle_between(self, data):
         """Computes the angular separation between two quasars.
 
         Args:
