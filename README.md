@@ -1,17 +1,15 @@
 # picca
 
-Package for Igm Cosmological-Correlations Analyses
+Package for Igm Cosmological-Correlations Analyses.
 
-requirements:
-*   python 2.7
-*   scipy 0.17.0 or later
-*   iminuit 1.2 or later
-*   fitsio
-*   healpy
-*   numba
-*   multiprocessing
-*   configargparse
-*   h5py
+This package contains tools used for the analysis of the Lyman-alpha forest sample from the extended Baryon Oscillation Spectroscopic Survey (eBOSS) and the Dark Energy Spectroscopic Instrument (DESI). Here you will find tools to 
+
+- fit continua of forests
+- compute correlation functions (1D and 3D) and power-spectra (1D) 
+- compute covariance matrices
+- fit models for the correlation functions
+
+The current reference is du Mas des Bourboux et al. 2020 (https://arxiv.org/abs/2007.08995).
 
 ## Installation
 
