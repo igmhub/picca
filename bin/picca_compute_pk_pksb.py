@@ -4,7 +4,6 @@ import os
 import argparse
 import fitsio
 import numpy as np
-import scipy as sp
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 import camb
@@ -101,7 +100,7 @@ if __name__ == '__main__':
     sb2_rmin = 150.*coef_Planck2015
     sb2_rmax = 190.*coef_Planck2015
     xi = nbodykit.cosmology.correlation.pk_to_xi(k,pk)
-    r = 10**sp.linspace(-7.,3.5,1e4)
+    r = 10**np.linspace(-7.,3.5,1e4)
     xi = xi(r)
 
     def f_xiSB(r,am3,am2,am1,a0,a1):

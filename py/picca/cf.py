@@ -104,7 +104,7 @@ def fill_neighs(healpixs):
                     for other_delta in data[other_healpix]
                     if delta.thingid != other_delta.thingid
                 ]
-            ang = delta ^ neighbours
+            ang = delta.get_angle_between(neighbours)
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
             if x_correlation:
@@ -153,7 +153,7 @@ def compute_xi(healpixs):
             with lock:
                 counter.value += 1
             for delta2 in delta1.neighbours:
-                ang = delta1 ^ delta2
+                ang = delta1.get_angle_between(delta2)
                 same_half_plate = ((delta1.plate == delta2.plate) and (
                     (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
                     (delta1.fiberid > 500 and delta2.fiberid > 500)))
@@ -331,7 +331,7 @@ def compute_dmat(healpixs):
                     (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
                     (delta1.fiberid > 500 and delta2.fiberid > 500)))
                 order2 = delta2.order
-                ang = delta1 ^ delta2
+                ang = delta1.get_angle_between(delta2)
                 r_comov2 = delta2.r_comov
                 dist_m2 = delta2.dist_m
                 weights2 = delta2.weights
@@ -669,7 +669,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 same_half_plate = ((delta1.plate == delta2.plate) and (
                     (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
                     (delta1.fiberid > 500 and delta2.fiberid > 500)))
-                ang = delta1 ^ delta2
+                ang = delta1.get_angle_between(delta2)
                 r_comov2 = delta2.r_comov
                 dist_m2 = delta2.dist_m
                 z2_abs2 = (
@@ -1018,7 +1018,7 @@ def compute_wick_terms(healpixs):
             z1 = delta1.z
 
             for index2, delta2 in enumerate(delta1.neighbours):
-                ang12 = delta1 ^ delta2
+                ang12 = delta1.get_angle_between(delta2)
 
                 variance_1d_2 = get_variance_1d[delta2.fname](delta2.log_lambda)
                 weights2 = delta2.weights
@@ -1038,8 +1038,8 @@ def compute_wick_terms(healpixs):
 
                 ### delta3 and delta2 have the same 'fname'
                 for delta3 in delta1.neighbours[:index2]:
-                    ang13 = delta1 ^ delta3
-                    ang23 = delta2 ^ delta3
+                    ang13 = delta1.get_angle_between(delta3)
+                    ang23 = delta2.get_angle_between(delta3)
 
                     variance_1d_3 = get_variance_1d[delta3.fname](
                         delta3.log_lambda)

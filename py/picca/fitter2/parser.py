@@ -1,7 +1,6 @@
 from functools import partial
 import sys
 import numpy as np
-import scipy as sp
 import os.path
 from pkg_resources import resource_filename
 if (sys.version_info > (3, 0)):
@@ -215,7 +214,7 @@ def parse_chi2scan(items):
         dic['min']    = float(value[0])
         dic['max']    = float(value[1])
         dic['nb_bin'] = int(value[2])
-        dic['grid']   = sp.linspace(dic['min'],dic['max'],num=dic['nb_bin'],endpoint=True)
+        dic['grid']   = np.linspace(dic['min'],dic['max'],num=dic['nb_bin'],endpoint=True)
         dic_init[item] = dic
 
     return dic_init
