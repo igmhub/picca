@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import numpy as np
 import scipy as sp
 from picca import constants
 from picca.utils import print, unred
@@ -50,7 +51,7 @@ class qso:
                 cos[w] = -1.
             angl = sp.arccos(cos)
 
-            w = (sp.absolute(ra-self.ra)<constants.small_angle_cut_off) & (sp.absolute(dec-self.dec)<constants.small_angle_cut_off)
+            w = (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off)
             if w.sum()!=0:
                 angl[w] = sp.sqrt( (dec[w]-self.dec)**2 + (self.cosdec*(ra[w]-self.ra))**2 )
         except:
@@ -68,7 +69,7 @@ class qso:
                 print('WARNING: 1 pair has cosinus<=-1.')
                 cos = -1.
             angl = sp.arccos(cos)
-            if (sp.absolute(ra-self.ra)<constants.small_angle_cut_off) & (sp.absolute(dec-self.dec)<constants.small_angle_cut_off):
+            if (np.absolute(ra-self.ra)<constants.small_angle_cut_off) & (np.absolute(dec-self.dec)<constants.small_angle_cut_off):
                 angl = sp.sqrt( (dec-self.dec)**2 + (self.cosdec*(ra-self.ra))**2 )
         return angl
 
@@ -138,11 +139,11 @@ class forest(qso):
             reso=reso[w]
 
         ## rebin
-        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
-        cfl = sp.zeros(bins.max()+1)
-        civ = sp.zeros(bins.max()+1)
+        cll = forest.lmin + np.arange(bins.max()+1)*forest.dll
+        cfl = np.zeros(bins.max()+1)
+        civ = np.zeros(bins.max()+1)
         if mmef is not None:
-            cmmef = sp.zeros(bins.max()+1)
+            cmmef = np.zeros(bins.max()+1)
         ccfl = sp.bincount(bins,weights=iv*fl)
         cciv = sp.bincount(bins,weights=iv)
         if mmef is not None:
@@ -189,7 +190,7 @@ class forest(qso):
         self.diff = diff
         self.reso = reso
         #else :
-        #   self.diff = sp.zeros(len(ll))
+        #   self.diff = np.zeros(len(ll))
         #   self.reso = sp.ones(len(ll))
 
         # compute means
@@ -221,8 +222,8 @@ class forest(qso):
             dic['reso'] = sp.append(self.reso, d.reso)
 
         bins = sp.floor((ll-forest.lmin)/forest.dll+0.5).astype(int)
-        cll = forest.lmin + sp.arange(bins.max()+1)*forest.dll
-        civ = sp.zeros(bins.max()+1)
+        cll = forest.lmin + np.arange(bins.max()+1)*forest.dll
+        civ = np.zeros(bins.max()+1)
         cciv = sp.bincount(bins,weights=iv)
         civ[:len(cciv)] += cciv
         w = (civ>0.)
@@ -230,7 +231,7 @@ class forest(qso):
         self.iv = civ[w]
 
         for k, v in dic.items():
-            cnew = sp.zeros(bins.max() + 1)
+            cnew = np.zeros(bins.max() + 1)
             ccnew = sp.bincount(bins, weights=iv * v)
             cnew[:len(ccnew)] += ccnew
             setattr(self, k, cnew[w] / civ[w])
