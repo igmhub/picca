@@ -74,7 +74,7 @@ class TestCor(unittest.TestCase):
         self.send_metal_dmat()
         self.send_wick()
         self.send_export_cf()
-
+         
         self.send_cf_cross()
         self.send_dmat_cross()
         self.send_metal_dmat_cross()
@@ -560,7 +560,7 @@ class TestCor(unittest.TestCase):
         cmd = " picca_metal_dmat.py"
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out " + self._branchFiles+"/Products/Correlations/metal_dmat.fits.gz"
-        cmd += " --abs-igm SiIII\(1207\)"
+        cmd += r" --abs-igm SiIII\(1207\)"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -678,8 +678,8 @@ class TestCor(unittest.TestCase):
         cmd += " --in-dir2 " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/metal_dmat_cross.fits.gz"
-        cmd += " --abs-igm SiIII\(1207\)"
-        cmd += " --abs-igm2 SiIII\(1207\)"
+        cmd += r" --abs-igm SiIII\(1207\)"
+        cmd += r" --abs-igm2 SiIII\(1207\)"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -789,7 +789,7 @@ class TestCor(unittest.TestCase):
         cmd += " --in-dir " + self._branchFiles+"/Products/Delta_LYA/Delta/"
         cmd += " --drq " + self._branchFiles+"/Products/cat.fits"
         cmd += " --out " + self._branchFiles+"/Products/Correlations/metal_xdmat.fits.gz"
-        cmd += " --abs-igm SiIII\(1207\)"
+        cmd += r" --abs-igm SiIII\(1207\)"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
