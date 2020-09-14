@@ -346,15 +346,17 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
                 r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
                 if not x_correlation:
                     r_par = np.abs(r_par)
-                if (r_par >= r_par_max or 
-                    r_trans >= r_trans_max or 
-                    r_par < r_par_min):
-                    continue
-                delta_times_weight1 = delta1[i]*weights1[i]
-                delta_times_weight2 = delta2[j]*weights2[j]        
-                delta_times_weight12 = delta_times_weight1 * delta_times_weight2
-                weights12 = weights1[i] * weights2[j]
-                z = (z1[i] + z2[j]) / 2
+
+            if (r_par >= r_par_max or 
+                r_trans >= r_trans_max or 
+                r_par < r_par_min):
+                continue
+            
+            delta_times_weight1 = delta1[i]*weights1[i]
+            delta_times_weight2 = delta2[j]*weights2[j]        
+            delta_times_weight12 = delta_times_weight1 * delta_times_weight2
+            weights12 = weights1[i] * weights2[j]
+            z = (z1[i] + z2[j]) / 2
 
             bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) 
                                   * num_bins_r_par)
