@@ -7,10 +7,11 @@ section 2.4 of du Mas des Bourboux et al. 2020 (In prep).
 """
 import sys
 import os
+import time
+import multiprocessing
 from multiprocessing import Pool
 import argparse
 import fitsio
-import time
 import numpy as np
 from astropy.table import Table
 from scipy.interpolate import interp1d
@@ -34,18 +35,19 @@ def cont_fit(forests):
 
 
 def get_metadata(data):
-    ''' Constructs an astropy.table from all forests' metadata 
+    ''' Constructs an astropy.table from all forests' metadata
     '''
     tab = Table()
-    for field in ['ra', 'dec', 'z_qso', 'thingid', 'plate', 'mjd', 'fiberid', 'mean_snr', 'p0', 'p1']:
-        x = []
+    for field in ['ra', 'dec', 'z_qso', 'thingid', 'plate',
+                  'mjd', 'fiberid', 'mean_snr', 'p0', 'p1']:
+        column_values = []
         for healpix in data:
             for forest in data[healpix]:
                 if field in forest.__dict__ and not forest.__dict__[field] is None:
-                    x.append(forest.__dict__[field])
+                    column_values.append(forest.__dict__[field])
                 else:
-                    x.append(0)
-        tab[field] = np.array(x)
+                    column_values.append(0)
+        tab[field] = np.array(column_values)
 
     npix = []
     for healpix in data:
@@ -55,7 +57,7 @@ def get_metadata(data):
             else:
                 npix.append(forest.log_lambda.size)
     tab['npixels'] = np.array(npix)
-    
+
     return tab
 
 def main():
@@ -584,7 +586,6 @@ def main():
     for iteration in range(num_iterations):
         pool = Pool(processes=args.nproc)
         userprint("iteration: ", iteration)
-        nfit = 0
         sort = np.array(list(data.keys())).argsort()
         data_fit_cont = pool.map(cont_fit, np.array(list(data.values()))[sort])
         for index, healpix in enumerate(sorted(list(data.keys()))):

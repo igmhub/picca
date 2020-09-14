@@ -124,7 +124,10 @@ def main():
     for type_corr, filename in correlation_files.items():
         hdul = fitsio.FITS(filename)
         header = hdul[1].read_header()
-
+        fid_Om = header['OMEGAM']
+        fid_Or = header['OMEGAR']
+        fid_Ok = header['OMEGAK']
+        fid_wl = header['WL']
         if type_corr in ['DD', 'RR']:
             num_objects = header['NOBJ']
             coef = num_objects * (num_objects - 1)
@@ -309,7 +312,24 @@ def main():
         'name': 'NSIDE',
         'value': nside,
         'comment': 'Healpix nside'
-    }]
+    }, {
+        'name': 'OMEGAM', 
+        'value': fid_Om, 
+        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAR', 
+        'value': fid_Or, 
+        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAK', 
+        'value': fid_Ok, 
+        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'WL', 
+        'value': fid_wl, 
+        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }
+    ]
     names = ['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB']
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',

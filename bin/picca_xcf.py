@@ -383,6 +383,22 @@ def main():
         'name': 'NSIDE',
         'value': xcf.nside,
         'comment': 'Healpix nside'
+    }, {
+        'name': 'OMEGAM', 
+        'value': args.fid_Om, 
+        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAR', 
+        'value': args.fid_Or, 
+        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAK', 
+        'value': args.fid_Ok, 
+        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'WL', 
+        'value': args.fid_wl, 
+        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
     }]
     results.write(
         [r_par, r_trans, z, num_pairs],
