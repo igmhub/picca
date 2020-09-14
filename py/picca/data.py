@@ -1005,12 +1005,12 @@ class Delta(QSO):
                 Variation of the logarithm of the wavelength between two pixels
         """
         QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
-        self.log_lambda = log_lambda
-        self.weights = weights
-        self.cont = cont
-        self.delta = delta
+        self.log_lambda = log_lambda.astype(float)
+        self.weights = weights.astype(float)
+        self.cont = cont.astype(float)
+        self.delta = delta.astype(float)
         self.order = order
-        self.ivar = ivar
+        self.ivar = ivar.astype(float)
         self.exposures_diff = exposures_diff
         self.mean_snr = mean_snr
         self.mean_reso = mean_reso
