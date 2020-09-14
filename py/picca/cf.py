@@ -159,7 +159,7 @@ def compute_xi(healpixs):
                     (delta1.fiberid > 500 and delta2.fiberid > 500)))
                 if ang_correlation:
                     (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
-                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs_fast(
                          delta1.z, 10.**delta1.log_lambda,
                          10.**delta1.log_lambda, delta1.weights, delta1.delta,
                          delta2.z, 10.**delta2.log_lambda,
@@ -167,7 +167,7 @@ def compute_xi(healpixs):
                          ang, same_half_plate)
                 else:
                     (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
-                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs_fast(
                          delta1.z, delta1.r_comov, delta1.dist_m,
                          delta1.weights, delta1.delta, delta2.z, delta2.r_comov,
                          delta2.dist_m, delta2.weights, delta2.delta, ang,
@@ -275,6 +275,102 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     rebin_r_trans = np.bincount(bins, weights=r_trans * weights12)
     rebin_z = np.bincount(bins, weights=z * weights12)
     rebin_num_pairs = np.bincount(bins, weights=(weights12 > 0.))
+
+    return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
+            rebin_num_pairs)
+
+@jit(nopython=True)
+def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
+                            r_comov2, dist_m2, weights2, delta2, ang,
+                            same_half_plate):
+    """Computes the contribution of a given pair of forests to the correlation
+    function.
+
+    Args:
+        z1: array of float
+            Redshift of pixel 1
+        r_comov1: array of float
+            Comoving distance for forest 1 (in Mpc/h)
+        dist_m1: array of float
+            Comoving angular distance for forest 1 (in Mpc/h)
+        weights1: array of float
+            Pixel weights for forest 1
+        delta1: array of float
+            Delta field for forest 1
+        z2: array of float
+            Redshift of pixel 2
+        r_comov2: array of float
+            Comoving distance for forest 2 (in Mpc/h)
+        dist_m2: array of float
+            Comoving angular distance for forest 2 (in Mpc/h)
+        weights2: array of float
+            Pixel weights for forest 2
+        delta2: array of float
+            Delta field for forest 2
+        ang: array of float
+            Angular separation between pixels in forests 1 and 2
+        same_half_plate: bool
+            Flag to determine if the two forests are on the same half plate
+
+    Returns:
+        The following variables:
+            rebin_weight: The weight of the correlation function pixels
+                properly rebinned
+            rebin_xi: The correlation function properly rebinned
+            rebin_r_par: The parallel distance of the correlation function
+                pixels properly rebinned
+            rebin_r_trans: The transverse distance of the correlation function
+                pixels properly rebinned
+            rebin_z: The redshift of the correlation function pixels properly
+                rebinned
+            rebin_num_pairs: The number of pairs of the correlation function
+                pixels properly rebinned
+    """
+    num_bins = num_bins_r_par*num_bins_r_trans
+    rebin_weight = np.zeros(num_bins)
+    rebin_xi = np.zeros(num_bins)
+    rebin_r_par = np.zeros(num_bins)
+    rebin_r_trans= np.zeros(num_bins)
+    rebin_z = np.zeros(num_bins)
+    rebin_num_pairs = np.zeros(num_bins)
+    
+    for i in range(z1.size):
+        for j in range(z2.size):
+            if ang_correlation:
+                r_par = r_comov1[i] / r_comov2[j]
+                if not x_correlation and r_par < 1.:
+                    r_par = 1. / r_par
+                r_trans = ang 
+            else:
+                r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
+                r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
+                if not x_correlation:
+                    r_par = np.abs(r_par)
+                if (r_par >= r_par_max or 
+                    r_trans >= r_trans_max or 
+                    r_par < r_par_min):
+                    continue
+                delta_times_weight1 = delta1[i]*weights1[i]
+                delta_times_weight2 = delta2[j]*weights2[j]        
+                delta_times_weight12 = delta_times_weight1 * delta_times_weight2
+                weights12 = weights1[i] * weights2[j]
+                z = (z1[i] + z2[j]) / 2
+
+            bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) 
+                                  * num_bins_r_par)
+            bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
+            bins = np.int(bins_r_trans + num_bins_r_trans * bins_r_par)
+
+            if remove_same_half_plate_close_pairs and same_half_plate:
+                if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
+                    continue
+
+            rebin_xi[bins] += delta_times_weight12
+            rebin_weight[bins] += weights12
+            rebin_r_par[bins] += r_par * weights12
+            rebin_r_trans[bins] += r_trans * weights12
+            rebin_z[bins] += z * weights12
+            rebin_num_pairs[bins] += 1.
 
     return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
             rebin_num_pairs)
