@@ -287,7 +287,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, 
                             rebin_z, rebin_num_pairs):
     """Computes the contribution of a given pair of forests to the correlation
-    function.
+    function. Fills rebin_* on place.
 
     Args:
         z1: array of float
@@ -314,29 +314,18 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             Angular separation between pixels in forests 1 and 2
         same_half_plate: bool
             Flag to determine if the two forests are on the same half plate
-
-    Returns:
-        The following variables:
-            rebin_weight: The weight of the correlation function pixels
-                properly rebinned
-            rebin_xi: The correlation function properly rebinned
-            rebin_r_par: The parallel distance of the correlation function
-                pixels properly rebinned
-            rebin_r_trans: The transverse distance of the correlation function
-                pixels properly rebinned
-            rebin_z: The redshift of the correlation function pixels properly
-                rebinned
-            rebin_num_pairs: The number of pairs of the correlation function
-                pixels properly rebinned
+        rebin_weight: The weight of the correlation function pixels
+            properly rebinned
+        rebin_xi: The correlation function properly rebinned
+        rebin_r_par: The parallel distance of the correlation function
+            pixels properly rebinned
+        rebin_r_trans: The transverse distance of the correlation function
+            pixels properly rebinned
+        rebin_z: The redshift of the correlation function pixels properly
+            rebinned
+        rebin_num_pairs: The number of pairs of the correlation function
+            pixels properly rebinned
     """
-    #num_bins = num_bins_r_par*num_bins_r_trans
-    #rebin_weight = np.zeros(num_bins)
-    #rebin_xi = np.zeros(num_bins)
-    #rebin_r_par = np.zeros(num_bins)
-    #rebin_r_trans= np.zeros(num_bins)
-    #rebin_z = np.zeros(num_bins)
-    #rebin_num_pairs = np.zeros(num_bins)
-    
     for i in range(z1.size):
         for j in range(z2.size):
             if ang_correlation:
