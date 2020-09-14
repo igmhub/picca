@@ -470,8 +470,24 @@ def main():
             'name': 'ALPHAMET',
             'value': args.metal_alpha,
             'comment': 'Evolution of metal bias'
-        },
-    ]
+        }, {
+            'name': 'OMEGAM', 
+            'value': args.fid_Om, 
+            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'OMEGAR', 
+            'value': args.fid_Or, 
+            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'OMEGAK', 
+            'value': args.fid_Ok, 
+            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'WL', 
+            'value': args.fid_wl, 
+            'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }
+        ]
 
     len_names = np.array([len(name) for name in names]).max()
     names = np.array(names, dtype='S' + str(len_names))

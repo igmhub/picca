@@ -7,11 +7,13 @@ section 2.4 of du Mas des Bourboux et al. 2020 (In prep).
 """
 import sys
 import os
+import time
+import multiprocessing
 from multiprocessing import Pool
 import argparse
 import fitsio
-import time
 import numpy as np
+from astropy.table import Table
 from scipy.interpolate import interp1d
 
 from picca.data import Forest, Delta
@@ -31,6 +33,32 @@ def cont_fit(forests):
         forest.cont_fit()
     return forests
 
+
+def get_metadata(data):
+    ''' Constructs an astropy.table from all forests' metadata
+    '''
+    tab = Table()
+    for field in ['ra', 'dec', 'z_qso', 'thingid', 'plate',
+                  'mjd', 'fiberid', 'mean_snr', 'p0', 'p1']:
+        column_values = []
+        for healpix in data:
+            for forest in data[healpix]:
+                if field in forest.__dict__ and not forest.__dict__[field] is None:
+                    column_values.append(forest.__dict__[field])
+                else:
+                    column_values.append(0)
+        tab[field] = np.array(column_values)
+
+    npix = []
+    for healpix in data:
+        for forest in data[healpix]:
+            if forest.log_lambda is None:
+                npix.append(0)
+            else:
+                npix.append(forest.log_lambda.size)
+    tab['npixels'] = np.array(npix)
+
+    return tab
 
 def main():
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
@@ -307,6 +335,11 @@ def main():
                         default = 'ai', 
                         required=False,
                         help = 'BAL index type, choose either ai or bi. Use with --bal-catalog and -keep-bal. This will set which velocity the BAL mask uses.')
+    parser.add_argument('--metadata',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help=('Name for table containing forests metadata'))
 
     t0 = time.time()
 
@@ -575,7 +608,6 @@ def main():
     for iteration in range(num_iterations):
         pool = Pool(processes=args.nproc)
         userprint("iteration: ", iteration)
-        nfit = 0
         sort = np.array(list(data.keys())).argsort()
         data_fit_cont = pool.map(cont_fit, np.array(list(data.values()))[sort])
         for index, healpix in enumerate(sorted(list(data.keys()))):
@@ -655,6 +687,11 @@ def main():
                                             fudge,
                                             fill_value='extrapolate',
                                             kind='nearest')
+
+    ### Read metadata from forests and export it
+    if not args.metadata is None:
+        tab_cont = get_metadata(data)
+        tab_cont.write(args.metadata, format="fits", overwrite=True)
 
     stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
 

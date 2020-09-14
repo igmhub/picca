@@ -1005,9 +1005,9 @@ def read_from_spcframe(in_dir,
                 f = metadata.fiberid
                 order = metadata.order
                 if t in pix_data:
-                    pix_data[t] += Forest(log_lambda[index], flux[index],
+                    pix_data[t].coadd(Forest(log_lambda[index], flux[index],
                                           ivar[index], t, r, d, z, p, m, f,
-                                          order)
+                                          order))
                 else:
                     pix_data[t] = Forest(log_lambda[index], flux[index],
                                          ivar[index], t, r, d, z, p, m, f,
@@ -1137,8 +1137,8 @@ def read_from_spplate(in_dir,
 
             i = metadata.fiberid - 1
             if t in pix_data:
-                pix_data[t] += Forest(log_lambda, flux[i], ivar[i], t, r, d, z,
-                                      p, m, f, order)
+                pix_data[t].coadd(Forest(log_lambda, flux[i], ivar[i], t, r, d, z,
+                                      p, m, f, order))
             else:
                 pix_data[t] = Forest(log_lambda, flux[i], ivar[i], t, r, d, z,
                                      p, m, f, order)
