@@ -158,27 +158,28 @@ def compute_xi(healpixs):
                     (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
                     (delta1.fiberid > 500 and delta2.fiberid > 500)))
                 if ang_correlation:
-                    (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
-                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs_fast(
+                    compute_xi_forest_pairs_fast(
                          delta1.z, 10.**delta1.log_lambda,
                          10.**delta1.log_lambda, delta1.weights, delta1.delta,
                          delta2.z, 10.**delta2.log_lambda,
                          10.**delta2.log_lambda, delta2.weights, delta2.delta,
-                         ang, same_half_plate)
+                         ang, same_half_plate, 
+                         weights, xi, r_par, r_trans, z, num_pairs)
                 else:
-                    (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
-                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs_fast(
+                    compute_xi_forest_pairs_fast(
                          delta1.z, delta1.r_comov, delta1.dist_m,
-                         delta1.weights, delta1.delta, delta2.z, delta2.r_comov,
-                         delta2.dist_m, delta2.weights, delta2.delta, ang,
-                         same_half_plate)
+                         delta1.weights, delta1.delta, 
+                         delta2.z, delta2.r_comov, delta2.dist_m, 
+                         delta2.weights, delta2.delta, 
+                         ang, same_half_plate, 
+                         weights, xi, r_par, r_trans, z, num_pairs)
 
-                xi[:len(rebin_xi)] += rebin_xi
-                weights[:len(rebin_weight)] += rebin_weight
-                r_par[:len(rebin_r_par)] += rebin_r_par
-                r_trans[:len(rebin_r_trans)] += rebin_r_trans
-                z[:len(rebin_z)] += rebin_z
-                num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs.astype(int)
+                #xi[:len(rebin_xi)] += rebin_xi
+                #weights[:len(rebin_weight)] += rebin_weight
+                #r_par[:len(rebin_r_par)] += rebin_r_par
+                #r_trans[:len(rebin_r_trans)] += rebin_r_trans
+                #z[:len(rebin_z)] += rebin_z
+                #num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs.astype(int)
             setattr(delta1, "neighbours", None)
 
     w = weights > 0
@@ -282,7 +283,9 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
 @jit(nopython=True)
 def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             r_comov2, dist_m2, weights2, delta2, ang,
-                            same_half_plate):
+                            same_half_plate,
+                            rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, 
+                            rebin_z, rebin_num_pairs):
     """Computes the contribution of a given pair of forests to the correlation
     function.
 
@@ -326,13 +329,13 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             rebin_num_pairs: The number of pairs of the correlation function
                 pixels properly rebinned
     """
-    num_bins = num_bins_r_par*num_bins_r_trans
-    rebin_weight = np.zeros(num_bins)
-    rebin_xi = np.zeros(num_bins)
-    rebin_r_par = np.zeros(num_bins)
-    rebin_r_trans= np.zeros(num_bins)
-    rebin_z = np.zeros(num_bins)
-    rebin_num_pairs = np.zeros(num_bins)
+    #num_bins = num_bins_r_par*num_bins_r_trans
+    #rebin_weight = np.zeros(num_bins)
+    #rebin_xi = np.zeros(num_bins)
+    #rebin_r_par = np.zeros(num_bins)
+    #rebin_r_trans= np.zeros(num_bins)
+    #rebin_z = np.zeros(num_bins)
+    #rebin_num_pairs = np.zeros(num_bins)
     
     for i in range(z1.size):
         for j in range(z2.size):
@@ -351,7 +354,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
                 r_trans >= r_trans_max or 
                 r_par < r_par_min):
                 continue
-            
+
             delta_times_weight1 = delta1[i]*weights1[i]
             delta_times_weight2 = delta2[j]*weights2[j]        
             delta_times_weight12 = delta_times_weight1 * delta_times_weight2
@@ -372,11 +375,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             rebin_r_par[bins] += r_par * weights12
             rebin_r_trans[bins] += r_trans * weights12
             rebin_z[bins] += z * weights12
-            rebin_num_pairs[bins] += 1.
-
-    return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
-            rebin_num_pairs)
-
+            rebin_num_pairs[bins] += 1
 
 def compute_dmat(healpixs):
     """Computes the distortion matrix for each of the healpixs.
