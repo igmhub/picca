@@ -327,7 +327,11 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             pixels properly rebinned
     """
     for i in range(z1.size):
+        if weights1[i] == 0: continue
+
         for j in range(z2.size):
+            if weights2[j] == 0: continue
+
             if ang_correlation:
                 r_par = r_comov1[i] / r_comov2[j]
                 if not x_correlation and r_par < 1.:

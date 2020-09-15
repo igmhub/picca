@@ -128,32 +128,34 @@ def compute_xi(healpixs):
                       end="")
             if delta.neighbours.size != 0:
                 ang = delta.get_angle_between(delta.neighbours)
-                z_qso = [obj.z_qso for obj in delta.neighbours]
-                weights_qso = [obj.weights for obj in delta.neighbours]
+                z_qso = np.array([obj.z_qso for obj in delta.neighbours])
+                weights_qso = np.array([obj.weights for obj in delta.neighbours])
                 if ang_correlation:
-                    lambda_qso = [
+                    lambda_qso = np.array([
                         10.**obj.log_lambda for obj in delta.neighbours
-                    ]
-                    (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
-                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                    ])
+                    compute_xi_forest_pairs_fast(
                          delta.z, 10.**delta.log_lambda, 10.**delta.log_lambda,
                          delta.weights, delta.delta, z_qso, lambda_qso,
-                         lambda_qso, weights_qso, ang)
+                         lambda_qso, weights_qso, ang,
+                         weights, xi, r_par, r_trans,
+                         z, num_pairs)
                 else:
-                    r_comov_qso = [obj.r_comov for obj in delta.neighbours]
-                    dist_m_qso = [obj.dist_m for obj in delta.neighbours]
-                    (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
-                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                    r_comov_qso = np.array([obj.r_comov for obj in delta.neighbours])
+                    dist_m_qso = np.array([obj.dist_m for obj in delta.neighbours])
+                    compute_xi_forest_pairs_fast(
                          delta.z, delta.r_comov, delta.dist_m, delta.weights,
                          delta.delta, z_qso, r_comov_qso, dist_m_qso,
-                         weights_qso, ang)
-
-                xi[:len(rebin_xi)] += rebin_xi
-                weights[:len(rebin_weight)] += rebin_weight
-                r_par[:len(rebin_r_par)] += rebin_r_par
-                r_trans[:len(rebin_r_trans)] += rebin_r_trans
-                z[:len(rebin_z)] += rebin_z
-                num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs.astype(int)
+                         weights_qso, ang,
+                         weights, xi, r_par, r_trans,
+                         z, num_pairs)
+                         
+                #xi[:len(rebin_xi)] += rebin_xi
+                #weights[:len(rebin_weight)] += rebin_weight
+                #r_par[:len(rebin_r_par)] += rebin_r_par
+                #r_trans[:len(rebin_r_trans)] += rebin_r_trans
+                #z[:len(rebin_z)] += rebin_z
+                #num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs.astype(int)
             setattr(delta, "neighbours", None)
 
     w = weights > 0
@@ -239,6 +241,80 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
             rebin_num_pairs)
 
+@jit(nopython=True)
+def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
+                            r_comov2, dist_m2, weights2, ang,
+                            rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, 
+                            rebin_z, rebin_num_pairs):
+    """Computes the contribution of a given pair of forests to the correlation
+    function.
+
+    Args:
+        z1: array of float
+            Redshift of pixel 1
+        r_comov1: array of float
+            Comoving distance for forest 1 (in Mpc/h)
+        dist_m1: array of float
+            Comoving angular distance for forest 1 (in Mpc/h)
+        weights1: array of float
+            Pixel weights for forest 1
+        delta1: array of float
+            Delta field for forest 1
+        z2: array of float
+            Redshift of pixel 2
+        r_comov2: array of float
+            Comoving distance for forest 2 (in Mpc/h)
+        dist_m2: array of float
+            Comoving angular distance for forest 2 (in Mpc/h)
+        weights2: array of float
+            Pixel weights for forest 2
+        ang: array of float
+            Angular separation between pixels in forests 1 and 2
+        rebin_weight: The weight of the correlation function pixels
+            properly rebinned
+        rebin_xi: The correlation function properly rebinned
+        rebin_r_par: The parallel distance of the correlation function
+            pixels properly rebinned
+        rebin_r_trans: The transverse distance of the correlation function
+            pixels properly rebinned
+        rebin_z: The redshift of the correlation function pixels properly
+            rebinned
+        rebin_num_pairs: The number of pairs of the correlation function
+            pixels properly rebinned
+    """
+    for i in range(z1.size):
+        if weights1[i] == 0: continue
+
+        for j in range(len(z2)):
+            if weights2[j] == 0: continue
+
+            if ang_correlation:
+                r_par = r_comov1[i] / r_comov2[j]
+                r_trans = ang[j]
+            else:
+                r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
+                r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
+
+            if (r_par >= r_par_max or 
+                r_trans >= r_trans_max or 
+                r_par <= r_par_min):
+                continue
+
+            delta_times_weight = delta1[i]*weights1[i]*weights2[j]
+            weights12 = weights1[i] * weights2[j]
+            z = (z1[i] + z2[j]) / 2
+
+            bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) 
+                                  * num_bins_r_par)
+            bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
+            bins = np.int(bins_r_trans + num_bins_r_trans * bins_r_par)
+
+            rebin_xi[bins] += delta_times_weight
+            rebin_weight[bins] += weights12
+            rebin_r_par[bins] += r_par * weights12
+            rebin_r_trans[bins] += r_trans * weights12
+            rebin_z[bins] += z * weights12
+            rebin_num_pairs[bins] += 1
 
 def compute_dmat(healpixs):
     """Computes the distortion matrix for each of the healpixs.
