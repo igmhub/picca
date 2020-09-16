@@ -749,6 +749,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
     eta7 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans)
     eta8 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans)
 
+    #-- Notice that the dtype is numba.int32
     all_bins = np.zeros(num_pairs, dtype=int32)
     all_bins_model = np.zeros(num_pairs, dtype=int32)
     all_i = np.zeros(num_pairs, dtype=int32)
@@ -872,15 +873,13 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             dmat[dmat_bin] += (
                 weights12 *
                 (eta5[k] + 
-                eta6[k] * log_lambda_minus_mean2[j] + 
-                eta7[k] * log_lambda_minus_mean1[i] + 
-                eta8[k] *
-                log_lambda_minus_mean1[i] * log_lambda_minus_mean2[j]) -
-                (weights12 *
-                (eta1[i+num_pixels1*k] +
-                eta2[j+num_pixels2*k] +
-                eta3[i+num_pixels1*k] * log_lambda_minus_mean2[j] +
-                eta4[j+num_pixels2*k] * log_lambda_minus_mean1[i]))
+                + eta6[k] * log_lambda_minus_mean2[j] + 
+                + eta7[k] * log_lambda_minus_mean1[i] + 
+                + eta8[k] * log_lambda_minus_mean1[i] * log_lambda_minus_mean2[j] 
+                - eta1[i+num_pixels1*k] 
+                - eta2[j+num_pixels2*k] 
+                - eta3[i+num_pixels1*k] * log_lambda_minus_mean2[j] 
+                - eta4[j+num_pixels2*k] * log_lambda_minus_mean1[i])
                 )
 
 def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
