@@ -1325,7 +1325,8 @@ def read_from_desi(nside,
             num_data += 1
 
     userprint("found {} quasars in input files\n".format(num_data))
-
+    if num_data==0:
+        raise ValueError("No Quasars found, stopping here")
     return data, num_data
 
 def read_from_minisv_desi(in_dir,
@@ -1488,7 +1489,8 @@ def read_from_minisv_desi(in_dir,
             data[plate_spec].append(forest)
             num_data+=1
     userprint("found {} quasars in input files\n".format(num_data))
-
+    if num_data==0:
+        raise ValueError("No Quasars found, stopping here")
     return data, num_data
 
 
