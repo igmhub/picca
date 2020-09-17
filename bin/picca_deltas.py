@@ -78,7 +78,6 @@ def main():
                         type=str,
                         default=None,
                         required=True,
-                        nargs='+',
                         help='Catalog of objects in DRQ format')
 
     parser.add_argument('--in-dir',
@@ -334,8 +333,6 @@ def main():
     t0 = time.time()
 
     args = parser.parse_args()
-    if len(args.drq)==1:
-        args.drq=args.drq[0]
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)

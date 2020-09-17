@@ -51,7 +51,6 @@ def main():
                         type=str,
                         default=None,
                         required=True,
-                        nargs='+',
                         help='Catalog of objects in DRQ format')
 
     parser.add_argument('--wr-min',
@@ -167,8 +166,6 @@ def main():
                         help='Maximum number of spectra to read')
 
     args = parser.parse_args()
-    if len(args.drq)==1:
-        args.drq = args.drq[0]
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
