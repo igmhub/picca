@@ -1497,7 +1497,7 @@ def read_from_minisv_desi(nside,
 
             if plate_spec not in data:
                 data[plate_spec]=[]
-            data[plate_spec].append(d)
+            data[plate_spec].append(forest)
             num_data+=1
     userprint("found {} quasars in input files\n".format(num_data))
 
