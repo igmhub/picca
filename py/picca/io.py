@@ -1380,6 +1380,10 @@ def read_from_minisv_desi(nside,
         List of read spectra for all the healpixs
     """
 
+    nights = []
+    data = {}
+    num_data = 0
+
     spectra_in = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"),recursive=True)
     spectra = []
     plate_unique=np.unique(plate)
@@ -1389,100 +1393,107 @@ def read_from_minisv_desi(nside,
                 spectra.append(s)
                 break
 
-    nights = []
-    data = {}
-    ztable = {t:z for t,z in zip(thingid,z_qso)}
-    num_data = 0
+    z_table = {t:z for t,z in zip(thingid,z_qso)}
 
-    for i,spec in enumerate(spectra):
-        print("\rread tile {} of {}. ndata: {}".format(i,len(spectra),num_data))
+    for index,filename in enumerate(spectra):
+        userprint("\rread tile {} of {}. ndata: {}".format(index,len(spectra),num_data))
         try:
-            h = fitsio.FITS(spec)
+            hdul = fitsio.FITS(filename)
         except IOError:
-            print("Error reading pix {}\n".format(spec))
+            userprint("Error reading file {}\n".format(filename))
             continue
 
-        if 'TARGET_RA' in h["FIBERMAP"].get_colnames():
-            ra = h["FIBERMAP"]["TARGET_RA"][:]*np.pi/180.
-            de = h["FIBERMAP"]["TARGET_DEC"][:]*np.pi/180.
-        elif 'RA_TARGET' in h["FIBERMAP"].get_colnames():
-            ra = h["FIBERMAP"]["RA_TARGET"][:]*np.pi/180.
-            de = h["FIBERMAP"]["DEC_TARGET"][:]*np.pi/180.
+        if 'TARGET_RA' in hdul["FIBERMAP"].get_colnames():
+            ra = hdul["FIBERMAP"]["TARGET_RA"][:]*np.pi/180.
+            dec = hdul["FIBERMAP"]["TARGET_DEC"][:]*np.pi/180.
+        elif 'RA_TARGET' in hdul["FIBERMAP"].get_colnames():
+            ra = hdul["FIBERMAP"]["RA_TARGET"][:]*np.pi/180.
+            dec = hdul["FIBERMAP"]["DEC_TARGET"][:]*np.pi/180.
             
-        petal_spec=h["FIBERMAP"]["PETAL_LOC"][:][0]
+        petal_spec=hdul["FIBERMAP"]["PETAL_LOC"][:][0]
         
-        if 'TILEID' in h["FIBERMAP"].get_colnames():
-            tile_spec=h["FIBERMAP"]["TILEID"][:][0]
+        if 'TILEID' in hdul["FIBERMAP"].get_colnames():
+            tile_spec=hdul["FIBERMAP"]["TILEID"][:][0]
         else:
-            tile_spec=spec.split('-')[-2]    #minisv tiles don't have this in the fibermap
+            tile_spec=filename.split('-')[-2]    #pre-andes tiles don't have this in the fibermap
 
-        if 'NIGHT' in h["FIBERMAP"].get_colnames():
-            night_spec=h["FIBERMAP"]["NIGHT"][:][0]
+        if 'NIGHT' in hdul["FIBERMAP"].get_colnames():
+            night_spec=hdul["FIBERMAP"]["NIGHT"][:][0]
         else:
-            night_spec=int(spec.split('-')[-1].split('.')[0])
+            night_spec=int(filename.split('-')[-1].split('.')[0])    #pre-andes tiles don't have this in the fibermap
         
         
-        in_tids = h["FIBERMAP"]["TARGETID"][:]
+        in_thingids = hdul["FIBERMAP"]["TARGETID"][:]
 
-        specData = {}
-        try:
-            bands=['BRZ']
-            h['{}_WAVELENGTH'.format(bands[0])]
-            if i==0:
+        spec_data = {}
+        if 'brz_wavelength' in hdul.hdu_map.keys():
+            spectrographs=['BRZ']
+            if index==0:
                 print("reading all-band coadd as in minisv pre-andes dataset")
-        except (KeyError,IOError):
-            if i==0:
+        else:
+            spectrographs=['B','R','Z']
+            if index==0:
                 print("couldn't read the all band-coadd, trying single band as introduced in Andes reduction")
-            bands=['B','R','Z']
 
-        for str_band in bands:
-            dic={}
-            dic['LL'] = np.log10(h['{}_WAVELENGTH'.format(str_band)].read())
-            dic['FL'] = h['{}_FLUX'.format(str_band)].read()
-            dic['IV'] = h['{}_IVAR'.format(str_band)].read()*(h['{}_MASK'.format(str_band)].read()==0)
-            w = np.isnan(dic['FL']) | np.isnan(dic['IV'])
-            for k in ['FL','IV']:
-                dic[k][w] = 0.
-            dic['RESO'] = h['{}_RESOLUTION'.format(str_band)].read()
-            specData[str_band]=dic
-        h.close()
+        for spectrograph in spectrographs:
+            try:
+                spec={}
+                spec['LL'] = np.log10(
+                    hdul['{}_WAVELENGTH'.format(spectrograph)].read())
+                spec['FL'] = hdul['{}_FLUX'.format(spectrograph)].read()
+                spec['IV'] = (
+                    hdul['{}_IVAR'.format(spectrograph)].read() *
+                    (hdul['{}_MASK'.format(spectrograph)].read()==0))
+                w = np.isnan(spec['FL']) | np.isnan(spec['IV'])
+                for k in ['FL','IV']:
+                    spec[k][w] = 0.
+                spec['RESO'] = hdul['{}_RESOLUTION'.format(
+                    spectrograph)].read()
+                spec_data[spectrograph]=spec
+            except OSError:
+                userprint(f"error when reading {spectrograph}-band data")
+
+        hdul.close()
         plate_spec = int(str(tile_spec) + str(petal_spec))
 
         select=(plate==plate_spec)&(night==night_spec)
         print('\nThis is tile {}, petal {}, night {}'.format(tile_spec,petal_spec,night_spec))
-        tid_qsos = thingid[select]
+        thingid_qsos = thingid[select]
         plate_qsos = plate[select]
         night_qsos = night[select]
-        fid_qsos = fiberid[select]
-        for t,p,m,f in zip(tid_qsos,plate_qsos,night_qsos,fid_qsos):
-            wt = in_tids == t
-            if wt.sum()==0:
-                print("\nError reading thingid {}\n".format(t))
-                print("spectra : {}".format(spec))
-                print("plate_spec : {}".format(plate_spec))
+        fiberid_qsos = fiberid[select]
+        for t, p, m, f in zip(thingid_qsos,plate_qsos,night_qsos,fiberid_qsos):
+            w_t = in_thingids == t
+            if w_t.sum() == 0:
+                print(f"\nError reading thingid {t}\n")
+                print(f"spectra : {spec}\n")
+                print(f"plate_spec : {plate_spec}\n")
                 continue
             
-            d=None
-            for key,tdata in specData.items():
-                iv = tdata['IV'][wt]
-                fl = (iv*tdata['FL'][wt]).sum(axis=0)
+            forest=None
+            for spec in spec_data.values():
+                iv = spec['IV'][w_t]
+                fl = (iv*spec['FL'][w_t]).sum(axis=0)
                 iv = iv.sum(axis=0)
-                w = iv>0.
+                w = iv > 0.
                 fl[w] /= iv[w]
                     
                 if pk1d is not None:
-                    reso_sum = tdata['RESO'][wt].sum(axis=0)
-                    reso_in_km_per_s = sp.real(spectral_resolution_desi(reso_sum,tdata['LL']))
-                    diff = sp.zeros(tdata['LL'].shape)
+                    reso_sum = spec['RESO'][w_t].sum(axis=0)
+                    reso_in_km_per_s = np.real(spectral_resolution_desi(
+                        reso_sum,spec['log_lambda']))
+                    exposures_diff = np.zeros(spec['log_lambda'].shape)
                 else:
                     reso_in_km_per_s = None
-                    diff = None
-                td = forest(tdata['LL'],fl,iv,t,ra[wt][0],de[wt][0],ztable[t],
-                    p,m,f,order,diff,reso_in_km_per_s)
-                if d is None:
-                    d = copy.deepcopy(td)
+                    exposures_diff = None
+
+                forest_temp = Forest(spec['log_lambda'],flux,ivar,t,ra[w_t][0],
+                    dec[w_t][0],z_table[t], p, m, f, order,
+                    exposures_diff, reso_in_km_per_s)
+                if forest is None:
+                    forest = copy.deepcopy(forest_temp)
                 else:
-                    d += td
+                    forest.coadd(forest,forest_temp)
 
             if plate_spec not in data:
                 data[plate_spec]=[]
