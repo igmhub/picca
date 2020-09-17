@@ -196,22 +196,21 @@ def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
 
     ## Info of the primary observation
 
-    try:
+    if 'TARGETID' in hdul[1].get_colnames():
         thingid = hdul[1]['TARGETID'][:]
         ra = hdul[1]['TARGET_RA'][:].astype('float64')
         dec = hdul[1]['TARGET_DEC'][:].astype('float64')
         plate = np.array([int('{}{}'.format(t, p)) for t,p in zip(hdul[1]['TILEID'][:],hdul[1]['PETAL_LOC'][:])])
         mjd = hdul[1]['NIGHT'][:]
         fiberid = hdul[1]['FIBER'][:]
-    except:
+        userprint("using DESI mini SV DRQ catalog format")
+    else:
         thingid = hdul[1]['THING_ID'][:]
         ra = hdul[1]['RA'][:].astype('float64')
         dec = hdul[1]['DEC'][:].astype('float64')
         plate = hdul[1]['PLATE'][:]
         mjd = hdul[1]['MJD'][:]
         fiberid = hdul[1]['FIBERID'][:]
-    else:
-        print("using DESI mini SV DRQ catalog format")
 
     ## Sanity
     userprint('')
@@ -355,16 +354,9 @@ def read_data(in_dir,
             "RING": The healpix pixel ordering used.
     """
     userprint("mode: " + mode)
-    # read quasar characteristics from DRQ catalogue
+    # read quasar characteristics from DRQ or DESI-miniSV catalogue
 
-    try:
-        ra, dec, z_qso, thingid, plate, mjd, fiberid = read_drq(drq_filename,
-                                                        z_min,
-                                                        z_max,
-                                                        keep_bal,
-                                                        bi_max=bi_max)
-    except (ValueError,OSError,AttributeError):
-        ra, dec, z_qso, thingid, plate, mjd, fiberid = read_zbest(drq_filename,
+    ra, dec, z_qso, thingid, plate, mjd, fiberid = read_drq(drq_filename,
                                                         z_min,
                                                         z_max,
                                                         keep_bal,
@@ -527,8 +519,7 @@ def read_data(in_dir,
     elif mode=="desiminisv":
         nside = 8
         userprint("Found {} qsos".format(len(z_qso)))
-        data, num_data = read_from_minisv_desi(nside,
-                                        in_dir,
+        data, num_data = read_from_minisv_desi(in_dir,
                                         thingid,
                                         ra,
                                         dec,
@@ -1337,8 +1328,7 @@ def read_from_desi(nside,
 
     return data, num_data
 
-def read_from_minisv_desi(nside,
-                   in_dir,
+def read_from_minisv_desi(in_dir,
                    thingid,
                    ra,
                    dec,
@@ -1353,8 +1343,6 @@ def read_from_minisv_desi(nside,
     Routine used to treat the DESI mini-SV data. 
 
     Args:
-        nside: int
-            The healpix nside parameter
         in_dir: str
             Directory to spectra files
         thingid: array of int
@@ -1438,15 +1426,15 @@ def read_from_minisv_desi(nside,
         for spectrograph in spectrographs:
             try:
                 spec={}
-                spec['LL'] = np.log10(
+                spec['log_lambda'] = np.log10(
                     hdul['{}_WAVELENGTH'.format(spectrograph)].read())
                 spec['FL'] = hdul['{}_FLUX'.format(spectrograph)].read()
                 spec['IV'] = (
                     hdul['{}_IVAR'.format(spectrograph)].read() *
                     (hdul['{}_MASK'.format(spectrograph)].read()==0))
                 w = np.isnan(spec['FL']) | np.isnan(spec['IV'])
-                for k in ['FL','IV']:
-                    spec[k][w] = 0.
+                for key in ['FL','IV']:
+                    spec[key][w] = 0.
                 spec['RESO'] = hdul['{}_RESOLUTION'.format(
                     spectrograph)].read()
                 spec_data[spectrograph]=spec
@@ -1472,11 +1460,11 @@ def read_from_minisv_desi(nside,
             
             forest=None
             for spec in spec_data.values():
-                iv = spec['IV'][w_t]
-                fl = (iv*spec['FL'][w_t]).sum(axis=0)
-                iv = iv.sum(axis=0)
-                w = iv > 0.
-                fl[w] /= iv[w]
+                ivar = spec['IV'][w_t]
+                flux = (ivar*spec['FL'][w_t]).sum(axis=0)
+                ivar = ivar.sum(axis=0)
+                w = ivar > 0.
+                flux[w] /= ivar[w]
                     
                 if pk1d is not None:
                     reso_sum = spec['RESO'][w_t].sum(axis=0)
@@ -1493,7 +1481,7 @@ def read_from_minisv_desi(nside,
                 if forest is None:
                     forest = copy.deepcopy(forest_temp)
                 else:
-                    forest.coadd(forest,forest_temp)
+                    forest.coadd(forest_temp)
 
             if plate_spec not in data:
                 data[plate_spec]=[]
@@ -1502,23 +1490,6 @@ def read_from_minisv_desi(nside,
     userprint("found {} quasars in input files\n".format(num_data))
 
     return data, num_data
-
-
-
-def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False,from_image=None):
-    '''
-    reads deltas from indir
-    fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
-    returns data,zmin_pix
-    '''
-
-    fi = []
-    indir = os.path.expandvars(indir)
-    if from_image is None or len(from_image)==0:
-        if len(indir)>8 and indir[-8:]=='.fits.gz':
-            fi += glob.glob(indir)
-        elif len(indir)>5 and indir[-5:]=='.fits':
-            fi += glob.glob(indir)
 
 
 def read_deltas(in_dir,
