@@ -24,6 +24,7 @@ import copy
 import numpy as np
 import healpy
 import fitsio
+from astropy.table import Table
 
 from picca.utils import userprint
 from picca.data import Forest, Delta, QSO
@@ -184,15 +185,22 @@ def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
             mjd: the Modified Julian Date of the observation
             fiberid: the fiberid of the observations
     """
-    hdul = fitsio.FITS(drq_filename)
+    hdu = Table.read(drq_filename)
+
+    if 'desi' in :
+        columns = ['TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER',
+                    'TARGET_RA', 'TARGET_DEC', 'Z', 'FIBERSTATUS']
+    else: 
+        columns = ['THING_ID', 'PLATE', 'MJD', 'FIBERID', 
+                    'RA', 'DEC', 'Z']
 
     ## Redshift
     try:
-        z_qso = hdul[1]['Z'][:]
+        z_qso = hdul['Z']
     except ValueError:
         userprint(
             "Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
-        z_qso = hdul[1]['Z_VI'][:]
+        z_qso = hdul'Z_VI']
 
     ## Info of the primary observation
     thingid = hdul[1]['THING_ID'][:]

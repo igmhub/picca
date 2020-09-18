@@ -353,28 +353,34 @@ def main():
         args.zqso_max = max(0., args.lambda_max / args.lambda_rest_min - 1.)
         userprint("zqso_max = {}".format(args.zqso_max))
 
+    #-- Create interpolators for mean quantities, such as
+    #-- Large-scale structure variance : var_lss
+    #-- Pipeline ivar correction error: eta
+    #-- Pipeline ivar correction term : fudge
+    #-- Mean continuum : mean_cont
+    log_lambda_temp = (Forest.log_lambda_min + np.arange(2) *
+                      (Forest.log_lambda_max - Forest.log_lambda_min))
+    log_lambda_rest_frame_temp = (Forest.log_lambda_min_rest_frame + np.arange(2) *
+                                  (Forest.log_lambda_max_rest_frame 
+                                   - Forest.log_lambda_min_rest_frame))
     Forest.get_var_lss = interp1d(
-        (Forest.log_lambda_min + np.arange(2) *
-         (Forest.log_lambda_max - Forest.log_lambda_min)),
+        log_lambda_temp,
         0.2 + np.zeros(2),
         fill_value="extrapolate",
         kind="nearest")
-    Forest.get_eta = interp1d((Forest.log_lambda_min + np.arange(2) *
-                               (Forest.log_lambda_max - Forest.log_lambda_min)),
-                              np.ones(2),
-                              fill_value="extrapolate",
-                              kind="nearest")
+    Forest.get_eta = interp1d(
+        log_lambda_temp,
+        np.ones(2),
+        fill_value="extrapolate",
+        kind="nearest")
     Forest.get_fudge = interp1d(
-        (Forest.log_lambda_min + np.arange(2) *
-         (Forest.log_lambda_max - Forest.log_lambda_min)),
+        log_lambda_temp,
         np.zeros(2),
         fill_value="extrapolate",
         kind="nearest")
     Forest.get_mean_cont = interp1d(
-        (Forest.log_lambda_min_rest_frame + np.arange(2) *
-         (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame)),
+        log_lambda_rest_frame_temp, 
         1 + np.zeros(2))
-    # end of setup forest class variables
 
     ### check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
@@ -386,15 +392,14 @@ def main():
     ### Correct multiplicative pipeline flux calibration
     if args.flux_calib is not None:
         try:
-            hdul = fitsio.FITS(args.flux_calib)
-            stack_log_lambda = hdul[1]['loglam'][:]
-            stack_delta = hdul[1]['stack'][:]
+            hdul = fitsio.read(args.flux_calib, ext=1)
+            stack_log_lambda = hdul[1]['loglam']
+            stack_delta = hdul[1]['stack']
             w = (stack_delta != 0.)
             Forest.correct_flux = interp1d(stack_log_lambda[w],
                                            stack_delta[w],
                                            fill_value="extrapolate",
                                            kind="nearest")
-            hdul.close()
         except (OSError, ValueError):
             userprint(("ERROR: Error while reading flux_calib"
                        "file {}".format(args.flux_calib)))
@@ -403,14 +408,13 @@ def main():
     ### Correct multiplicative pipeline inverse variance calibration
     if args.ivar_calib is not None:
         try:
-            hdul = fitsio.FITS(args.ivar_calib)
-            log_lambda = hdul[2]['LOGLAM'][:]
-            eta = hdul[2]['ETA'][:]
+            hdul = fitsio.FITS(args.ivar_calib, ext=2)
+            log_lambda = hdul[2]['LOGLAM']
+            eta = hdul[2]['ETA']
             Forest.correct_ivar = interp1d(log_lambda,
                                            eta,
                                            fill_value="extrapolate",
                                            kind="nearest")
-            hdul.close()
         except (OSError, ValueError):
             userprint(("ERROR: Error while reading ivar_calib"
                        "file {}".format(args.ivar_calib)))
@@ -447,31 +451,28 @@ def main():
     if args.mask_file is not None:
         args.mask_file = os.path.expandvars(args.mask_file)
         try:
-            mask_obs_frame = []
-            mask_rest_frame = []
-            mask_rest_frame_dla = []
-            with open(args.mask_file, 'r') as file:
-                loop = True
-                for line in file:
-                    if line[0] == '#':
-                        continue
-                    cols = line.split()
-                    if cols[3] == 'OBS':
-                        mask_obs_frame += [[float(cols[1]), float(cols[2])]]
-                    elif cols[3] == 'RF':
-                        mask_rest_frame += [[float(cols[1]), float(cols[2])]]
-                    elif cols[3] == 'RF_DLA':
-                        mask_rest_frame_dla += [[
-                            float(cols[1]), float(cols[2])
-                        ]]
-                    else:
-                        raise ValueError("Invalid value found in mask")
-            mask_obs_frame = np.log10(np.asarray(mask_obs_frame))
-            mask_rest_frame = np.log10(np.asarray(mask_rest_frame))
-            mask_rest_frame_dla = np.log10(np.asarray(mask_rest_frame_dla))
-            if mask_rest_frame_dla.size == 0:
+            mask = Table.read(
+                args.mask_file, 
+                names=('type', 'wave_min', 'wave_max', 'frame'), 
+                format='ascii')
+            if 'OBS' in mask['frame']:
+                w = mask['frame'] == 'OBS'
+                mask_obs_frame = np.array([np.log10(mask['wave_min'])[w], 
+                                            np.log10(mask['wave_max'])[w]])
+            else:
+                mask_obs_frame = np.array([])
+            if 'RF' in mask['frame']:
+                w = mask['frame'] == 'RF'
+                mask_rest_frame = np.array([np.log10(mask['wave_min'])[w], 
+                                            np.log10(mask['wave_max'])[w]])
+            else:
+                mask_rest_frame = np.array([])
+            if 'RF_DLA' in mask['frame']:
+                w = mask['frame'] == 'RF_DLA'
+                mask_rest_frame_dla = np.array([np.log10(mask['wave_min'])[w], 
+                                                np.log10(mask['wave_max'])[w]])
+            else:
                 mask_rest_frame_dla = None
-
         except (OSError, ValueError):
             userprint(("ERROR: Error while reading mask_file "
                        "file {}").format(args.mask_file))
