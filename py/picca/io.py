@@ -200,7 +200,8 @@ def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
         thingid = hdul[1]['TARGETID'][:]
         ra = hdul[1]['TARGET_RA'][:].astype('float64')
         dec = hdul[1]['TARGET_DEC'][:].astype('float64')
-        plate = np.array([int('{}{}'.format(t, p)) for t,p in zip(hdul[1]['TILEID'][:],hdul[1]['PETAL_LOC'][:])])
+        plate = np.array(
+            [int('{}{}'.format(t, p)) for t,p in zip(hdul[1]['TILEID'][:],hdul[1]['PETAL_LOC'][:])])
         mjd = hdul[1]['NIGHT'][:]
         fiberid = hdul[1]['FIBER'][:]
         userprint("using DESI mini SV DRQ catalog format")
@@ -1320,6 +1321,8 @@ def read_from_desi(nside,
                                dec[w_t][0], z_table[t], p, m, f, order,
                                exposures_diff, reso_in_km_per_s))
 
+            pix=healpixs[w_t]
+            if pix not in data:
                 data[pix] = []
             data[pix].append(forest)
             num_data += 1
@@ -1341,7 +1344,7 @@ def read_from_minisv_desi(in_dir,
                    pk1d=None):
     """Reads the spectra and formats its data as Forest instances.
     Unlike the read_from_desi routine, this orders things by tile/petal
-    Routine used to treat the DESI mini-SV data. 
+    Routine used to treat the DESI mini-SV data.
 
     Args:
         in_dir: str
@@ -1369,23 +1372,22 @@ def read_from_minisv_desi(in_dir,
         List of read spectra for all the healpixs
     """
 
-    nights = []
     data = {}
     num_data = 0
 
-    spectra_in = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"),recursive=True)
-    spectra = []
+    files_in = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"),recursive=True)
+    filenames = []
     plate_unique=np.unique(plate)
-    for s in spectra_in:
-        for p in plate_unique:
-            if str(p)[:-1] in s:
-                spectra.append(s)
+    for f_in in files_in:
+        for p_in in plate_unique:
+            if f"{p_in//10}-{p_in%10}" in f_in:
+                filenames.append(f_in)
                 break
 
     z_table = {t:z for t,z in zip(thingid,z_qso)}
 
-    for index,filename in enumerate(spectra):
-        userprint("\rread tile {} of {}. ndata: {}".format(index,len(spectra),num_data))
+    for index,filename in enumerate(filenames):
+        userprint("\rread tile {} of {}. ndata: {}".format(index,len(filenames),num_data))
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
@@ -1398,20 +1400,21 @@ def read_from_minisv_desi(in_dir,
         elif 'RA_TARGET' in hdul["FIBERMAP"].get_colnames():
             ra = hdul["FIBERMAP"]["RA_TARGET"][:]*np.pi/180.
             dec = hdul["FIBERMAP"]["DEC_TARGET"][:]*np.pi/180.
-            
+
         petal_spec=hdul["FIBERMAP"]["PETAL_LOC"][:][0]
-        
+
         if 'TILEID' in hdul["FIBERMAP"].get_colnames():
             tile_spec=hdul["FIBERMAP"]["TILEID"][:][0]
         else:
-            tile_spec=filename.split('-')[-2]    #pre-andes tiles don't have this in the fibermap
+            #pre-andes tiles don't have this in the fibermap
+            tile_spec=filename.split('-')[-2]
 
         if 'NIGHT' in hdul["FIBERMAP"].get_colnames():
             night_spec=hdul["FIBERMAP"]["NIGHT"][:][0]
         else:
-            night_spec=int(filename.split('-')[-1].split('.')[0])    #pre-andes tiles don't have this in the fibermap
-        
-        
+            #pre-andes tiles don't have this in the fibermap
+            night_spec=int(filename.split('-')[-1].split('.')[0])
+
         in_thingids = hdul["FIBERMAP"]["TARGETID"][:]
 
         spec_data = {}
@@ -1422,7 +1425,8 @@ def read_from_minisv_desi(in_dir,
         else:
             spectrographs=['B','R','Z']
             if index==0:
-                print("couldn't read the all band-coadd, trying single band as introduced in Andes reduction")
+                print("couldn't read the all band-coadd,"
+                      " trying single band as introduced in Andes reduction")
 
         for spectrograph in spectrographs:
             try:
@@ -1443,7 +1447,7 @@ def read_from_minisv_desi(in_dir,
                 userprint(f"error when reading {spectrograph}-band data")
 
         hdul.close()
-        plate_spec = int(str(tile_spec) + str(petal_spec))
+        plate_spec = int(f"{tile_spec}{petal_spec}")
 
         select=(plate==plate_spec)&(night==night_spec)
         print('\nThis is tile {}, petal {}, night {}'.format(tile_spec,petal_spec,night_spec))
@@ -1458,7 +1462,7 @@ def read_from_minisv_desi(in_dir,
                 print(f"spectra : {spec}\n")
                 print(f"plate_spec : {plate_spec}\n")
                 continue
-            
+
             forest=None
             for spec in spec_data.values():
                 ivar = spec['IV'][w_t]
@@ -1466,7 +1470,7 @@ def read_from_minisv_desi(in_dir,
                 ivar = ivar.sum(axis=0)
                 w = ivar > 0.
                 flux[w] /= ivar[w]
-                    
+
                 if pk1d is not None:
                     reso_sum = spec['RESO'][w_t].sum(axis=0)
                     reso_in_km_per_s = np.real(spectral_resolution_desi(
