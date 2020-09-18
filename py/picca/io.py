@@ -1321,7 +1321,7 @@ def read_from_desi(nside,
                                dec[w_t][0], z_table[t], p, m, f, order,
                                exposures_diff, reso_in_km_per_s))
 
-            pix=healpixs[w_t]
+            pix = healpixs[w_t][0]
             if pix not in data:
                 data[pix] = []
             data[pix].append(forest)
