@@ -228,7 +228,6 @@ def main():
               'given seed. Do not shuffle if None'))
 
     args = parser.parse_args()
-
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
