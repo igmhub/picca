@@ -428,7 +428,6 @@ class Forest(QSO):
                  plate,
                  mjd,
                  fiberid,
-                 order,
                  exposures_diff=None,
                  reso=None,
                  mean_expected_flux_frac=None,
@@ -456,8 +455,6 @@ class Forest(QSO):
                 Modified Julian Date of the observation.
             fiberid: integer
                 Fiberid of the observation.
-            order: 1 or 0
-                Renamed to make meaning more explicit.
             exposures_diff: array of floats or None - default: None
                 Difference between exposures.
             reso: array of floats or None - default: None
@@ -560,7 +557,6 @@ class Forest(QSO):
         self.flux = flux
         self.ivar = ivar
         self.mean_expected_flux_frac = mean_expected_flux_frac
-        self.order = order
         self.exposures_diff = exposures_diff
         self.reso = reso
         self.abs_igm = abs_igm
