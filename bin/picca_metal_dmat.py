@@ -5,6 +5,7 @@ absorption.
 This module follow the procedure described in sections 4.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+import time
 import argparse
 from multiprocessing import Pool, Lock, cpu_count, Value
 from functools import partial
@@ -288,6 +289,8 @@ def main():
                                Ok=args.fid_Ok,
                                wl=args.fid_wl)
 
+    t0 = time.time()
+
     ### Read data 1
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
                                                   cf.nside,
@@ -333,6 +336,9 @@ def main():
                                            z_min2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
+
+    t1 = time.time()
+    userprint(f'picca_metal_dmat.py - Time reading data: {(t1-t0)/60:.3f} minutes')
 
     cf.counter = Value('i', 0)
     cf.lock = Lock()
@@ -417,6 +423,9 @@ def main():
             names.append(abs_igm1 + "_" + abs_igm2)
             num_pairs_all.append(num_pairs)
             num_pairs_used_all.append(num_pairs_used)
+
+    t2 = time.time()
+    userprint(f'picca_metal_dmat.py - Time computing all metal matrices : {(t2-t1)/60:.3f} minutes')
 
     # save the results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
@@ -540,6 +549,8 @@ def main():
                   extname='MDMAT')
     results.close()
 
+    t3 = time.time()
+    userprint(f'picca_metal_dmat.py - Time total : {(t3-t0)/60:.3f} minutes')
 
 if __name__ == '__main__':
     main()
