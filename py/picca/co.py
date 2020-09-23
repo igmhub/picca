@@ -100,7 +100,7 @@ def compute_xi(healpixs):
             with lock:
                 xicounter = round(counter.value * 100. / num_data, 2)
                 if (counter.value % 1000 == 0):
-                    userprint(("computing xi: {}%").format(xicounter), end="")
+                    userprint(("\ncomputing xi: {}%").format(xicounter), end="")
                 counter.value += 1
 
             if obj1.neighbours.size == 0:

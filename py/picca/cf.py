@@ -150,7 +150,7 @@ def compute_xi(healpixs):
             with lock:
                 xicounter = round(counter.value * 100. / num_data, 2)
                 if (counter.value % 1000 == 0):
-                    userprint(("computing xi: {}%").format(xicounter), end="")
+                    userprint(("\ncomputing xi: {}%").format(xicounter), end="")
                 counter.value += 1
 
             for delta2 in delta1.neighbours:
@@ -316,7 +316,7 @@ def compute_dmat(healpixs):
             with lock:
                 xicounter = round(counter.value * 100. / num_data, 2)
                 if (counter.value % 1000 == 0):
-                    userprint(("computing xi: {}%").format(xicounter), end="")
+                    userprint(("\ncomputing xi: {}%").format(xicounter), end="")
                 counter.value += 1
 
             order1 = delta1.order
@@ -641,7 +641,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
             with lock:
                 dmatcounter = round(counter.value * 100. / num_data, 2)
                 if (counter.value % 1000 == 0):
-                    userprint(("computing metal dmat {} {}: "
+                    userprint(("\ncomputing metal dmat {} {}: "
                        "{}%").format(abs_igm1, abs_igm2, dmatcounter), end="")
                 counter.value += 1
 
@@ -890,7 +890,7 @@ def compute_xi_1d(healpix):
         with lock:
             xicounter = round(counter.value * 100. / num_data, 2)
             if (counter.value % 1000 == 0):
-                userprint(("computing xi: {}%").format(xicounter), end="")
+                userprint(("\ncomputing xi: {}%").format(xicounter), end="")
             counter.value += 1
 
         bins = ((delta.log_lambda - log_lambda_min) / delta_log_lambda +
@@ -928,7 +928,7 @@ def compute_xi_1d_cross(healpix):
         with lock:
             xicounter = round(counter.value * 100. / num_data, 2)
             if (counter.value % 1000 == 0):
-                userprint(("computing xi: {}%").format(xicounter), end="")
+                userprint(("\ncomputing xi: {}%").format(xicounter), end="")
             counter.value += 1
 
         bins1 = ((delta1.log_lambda - log_lambda_min) / delta_log_lambda +
@@ -1010,7 +1010,7 @@ def compute_wick_terms(healpixs):
                 xicounter = round(
                             counter.value * 100. / num_data / (1. - reject), 2)
                 if (counter.value % 1000 == 0):
-                    userprint(("computing xi: {}%").format(xicounter), end="")
+                    userprint(("\ncomputing xi: {}%").format(xicounter), end="")
                 counter.value += 1
 
             if len(delta1.neighbours) == 0:

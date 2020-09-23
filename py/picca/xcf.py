@@ -124,7 +124,7 @@ def compute_xi(healpixs):
             with lock:
                 xicounter = round(counter.value * 100. / num_data, 2)
                 if (counter.value % 1000 == 0):
-                    userprint(("computing xi: {}%").format(xicounter), end="")
+                    userprint(("\ncomputing xi: {}%").format(xicounter), end="")
                 counter.value += 1
 
             if delta.neighbours.size != 0:
@@ -277,7 +277,7 @@ def compute_dmat(healpixs):
             with lock:
                 xicounter = round(counter.value * 100. / num_data, 2)
                 if (counter.value % 1000 == 0):
-                    userprint(("computing xi: {}%").format(xicounter), end="")
+                    userprint(("\ncomputing xi: {}%").format(xicounter), end="")
                 counter.value += 1
 
             r_comov1 = delta1.r_comov
@@ -487,7 +487,7 @@ def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
             with lock:
                 dmatcounter = round(counter.value * 100. / num_data, 2)
                 if (counter.value % 1000 == 0):
-                    userprint(("computing metal dmat {}:"
+                    userprint(("\ncomputing metal dmat {}:"
                                " {}%").format(abs_igm, dmatcounter), end="")
                 counter.value += 1
 
@@ -640,7 +640,7 @@ def compute_wick_terms(healpixs):
                 xicounter = round(
                           (counter.value * 100. / num_data / (1. - reject)), 2)
                 if (counter.value % 1000 == 0):
-                    userprint(("computing computing xi: "
+                    userprint(("\ncomputing computing xi: "
                                " {}%").format(xicounter), end="")
                 counter.value += 1
 
