@@ -209,7 +209,6 @@ def main():
                         help='Maximum number of spectra to read')
 
     args = parser.parse_args()
-
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 

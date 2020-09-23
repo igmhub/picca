@@ -62,6 +62,11 @@ class TestCor(unittest.TestCase):
         self.produce_forests()
         self.produce_cat(nObj=1000, name="random", thidoffset=1000)
 
+
+        self.produce_cat_minisv(nObj=1000)
+        self.produce_forests_minisv()
+        self.send_delta_Pk1D_minisv()
+
         self.send_delta()
 
         self.send_cf1d()
@@ -95,7 +100,7 @@ class TestCor(unittest.TestCase):
         self.send_fitter2()
 
         self.send_delta_Pk1D()
-        self.send_Pk1D()
+        self.send_Pk1D()       
 
         if self._test:
             self.remove_folder()
@@ -115,7 +120,8 @@ class TestCor(unittest.TestCase):
                     "/Products/Correlations/Fit/",
                     "/Products/Delta_Pk1D/", "/Products/Delta_Pk1D/Delta/",
                     "/Products/Delta_Pk1D/Log/",
-                    "/Products/Pk1D/"
+                    "/Products/Pk1D/", "/Products/Spectra_MiniSV/","/Products/Delta_Pk1D_MiniSV/", 
+                    "/Products/Delta_Pk1D_MiniSV/Delta/", "/Products/Delta_Pk1D_MiniSV/Log/"
                     ]
 
         for fold in lst_fold:
@@ -223,6 +229,119 @@ class TestCor(unittest.TestCase):
             out.write(p_om,   header={}, extname="ORMASK")
             out.close()
 
+        return
+
+
+    def produce_cat_minisv(self, nObj, name="cat_minisv"):
+        """
+
+        """
+
+        userprint("\n")
+        userprint("Create cat with number of object = ", nObj)
+
+        ### Create random catalog
+        ra = 10.*numpy.random.random_sample(nObj)
+        dec = 10.*numpy.random.random_sample(nObj)
+        tile = numpy.random.randint(100, high=110, size=nObj,dtype=np.int32)   # restricted to not get too many files
+        petal_loc=numpy.random.randint(0, high=10, size=nObj,dtype=np.int16)
+        night = numpy.array([np.int32(f'{yyyy:04d}{mm:02d}{dd:02d}') for dd,mm,yyyy in zip(numpy.random.randint(1, high=3, size=nObj),
+            numpy.random.randint(1, high=2, size=nObj),
+            numpy.random.randint(2019, high=2020, size=nObj))])  # restricted to not get too many files
+        fiberid = numpy.random.randint(1, high=5001, size=nObj,dtype=np.int32)
+        thid = numpy.arange(2**60, 2**60+nObj)
+        z_qso = (3.6-2.0)*numpy.random.random_sample(nObj) + 2.0
+
+        ### Save
+        out = fitsio.FITS(self._branchFiles+"/Products/" +
+                          name+".fits", 'rw', clobber=True)
+        cols = [ra, dec, thid, tile, petal_loc, night, fiberid, z_qso]
+        names = ['TARGET_RA', 'TARGET_DEC', 'TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER', 'Z']
+        out.write(cols, names=names, extname='CAT')
+        out.close()
+
+        return
+
+    def produce_forests_minisv(self):
+        """
+
+        """
+
+        userprint("\n")
+
+        ### Load DRQ
+        vac = fitsio.FITS(self._branchFiles+"/Products/cat_minisv.fits")
+        ra = vac[1]["TARGET_RA"][:]*np.pi/180.
+        dec = vac[1]["TARGET_DEC"][:]*np.pi/180.
+        thid = vac[1]["TARGETID"][:]
+        petal_loc = vac[1]["PETAL_LOC"][:]
+        tile = vac[1]["TILEID"][:]
+        night = vac[1]["NIGHT"][:]
+        fiberid = vac[1]["FIBER"][:]
+        
+        tile_night_petal_combined=np.unique([*zip(tile,night,petal_loc)],axis=0)
+        vac.close()
+
+        cols = [thid, ra, dec, night, fiberid, tile, petal_loc]
+        names = ['TARGETID', 'TARGET_RA', 'TARGET_DEC', 'NIGHT', 'FIBER', 'TILEID', 'PETAL_LOC']
+
+        ### Log lambda grid
+        l_min_b = 3600
+        l_max_b = 5800
+
+        l_min_r = 5760
+        l_max_r = 7620
+
+        l_min_z = 7520  
+        l_max_z = 9824
+
+        l_step = 0.8
+        lam_b = np.arange(l_min_b, l_max_b, l_step)
+        lam_r = np.arange(l_min_r, l_max_r, l_step)
+        lam_z = np.arange(l_min_z, l_max_z, l_step)
+
+        lam={'b':lam_b,'r':lam_r,'z':lam_z}
+
+        ###
+        for t, n, p in tile_night_petal_combined:
+
+            ###
+            selector=((petal_loc == p) & (tile==t) & (night==n))
+
+            cols = [thid[selector], ra[selector], dec[selector], night[selector], fiberid[selector], tile[selector], petal_loc[selector]]
+            p_thid = cols[0]
+            names = ['TARGETID', 'TARGET_RA', 'TARGET_DEC', 'NIGHT', 'FIBER', 'TILEID', 'PETAL_LOC']
+            p_fl={}
+            p_iv={}
+            p_m={}
+            p_res={}
+            for key,lam_key in lam.items():
+                p_fl[key] = numpy.random.normal(
+                    loc=1., scale=1., size=(p_thid.size, lam_key.size))
+                p_iv[key] = numpy.random.lognormal(
+                    mean=0.1, sigma=0.1, size=(p_thid.size, lam_key.size))
+                p_m[key] = numpy.zeros((p_thid.size, lam_key.size)).astype(int)
+                p_m[key][numpy.random.random(
+                    size=(p_thid.size, lam_key.size)) > 0.90] = 1
+                tmp=numpy.exp(-((numpy.arange(11)-5)/0.6382)**2)    #to fake resolution from a gaussian, this assumes R=3000 at minimum wavelength
+                tmp=numpy.repeat(tmp[numpy.newaxis,:,numpy.newaxis],p_thid.size,axis=0)
+                p_res[key]=numpy.repeat(tmp,lam_key.size,axis=2)
+
+            p_path = self._branchFiles+f"/Products/Spectra_MiniSV/{t}/{n}/"
+            if not os.path.isdir(p_path):
+                os.makedirs(p_path)
+            p_file = p_path + f"coadd-{p}-{t}-{n}.fits"
+            ###
+            out = fitsio.FITS(p_file, 'rw', clobber=True)
+            
+            out.write(cols, names=names, extname="FIBERMAP")
+            for key,lam_key in lam.items():
+                out.write_image(lam_key,  extname=f"{key.upper()}_WAVELENGTH")
+                out.write(p_fl[key], extname=f"{key.upper()}_FLUX")
+                out.write(p_iv[key], extname=f"{key.upper()}_IVAR")
+                out.write(p_m[key], extname=f"{key.upper()}_MASK")
+                out.write(p_res[key], extname=f"{key.upper()}_RESOLUTION")
+            out.close()
         return
 
     def compare_fits(self, path1, path2, nameRun=""):
@@ -396,6 +515,7 @@ class TestCor(unittest.TestCase):
 
         return
 
+    
     def send_delta_Pk1D(self):
 
         userprint("\n")
@@ -431,6 +551,46 @@ class TestCor(unittest.TestCase):
             self.compare_fits(path1, path2, "picca_deltas.py")
 
         return
+
+
+    def send_delta_Pk1D_minisv(self):
+
+        userprint("\n")
+        ### Path
+        path_to_etc = self.picca_base+'/etc/'
+        ### Send
+        cmd = " picca_deltas.py"
+        cmd += " --in-dir " + self._branchFiles + "/Products/Spectra_MiniSV/"
+        cmd += " --drq " + self._branchFiles + "/Products/cat_minisv.fits"
+        cmd += " --out-dir " + self._branchFiles+"/Products/Delta_Pk1D_MiniSV/Delta/"
+        cmd += " --iter-out-prefix " + self._branchFiles + \
+            "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes"
+        cmd += " --log " + self._branchFiles+"/Products/Delta_Pk1D_MiniSV/Log/input.log"
+        cmd += " --delta-format Pk1D --mode desiminisv --order 0 --use-constant-weight"
+        cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
+        cmd += " --nproc 1"
+        cmd += " --best-obs"
+        cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
+        returncode = subprocess.call(cmd, shell=True)
+        self.assertEqual(returncode, 0, "delta_Pk1D_minisv did not finish")
+
+
+        ### Test
+        #if self._test:
+        #    path1 = self._masterFiles + "/test_Pk1D/delta_attributes_Pk1D.fits.gz"
+        #    path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
+        #    self.compare_fits(path1, path2, "picca_deltas.py")
+
+        #    path1 = self._masterFiles + "/test_Pk1D/delta-64_Pk1D.fits.gz"
+        #    path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-64.fits.gz"
+        #    self.compare_fits(path1, path2, "picca_deltas.py")
+
+        #    path1 = self._masterFiles + "/test_Pk1D/delta-80_Pk1D.fits.gz"
+        #    path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-80.fits.gz"
+        #    self.compare_fits(path1, path2, "picca_deltas.py")
+
+        return
+
 
     def send_Pk1D(self):
 
