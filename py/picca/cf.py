@@ -174,6 +174,7 @@ def compute_xi(healpixs):
                          ang, same_half_plate, 
                          weights, xi, r_par, r_trans, z, num_pairs)
 
+                #-- These were used by compute_xi_forest_pairs (to be deprecated)
                 #xi[:len(rebin_xi)] += rebin_xi
                 #weights[:len(rebin_weight)] += rebin_weight
                 #r_par[:len(rebin_r_par)] += rebin_r_par
@@ -190,6 +191,8 @@ def compute_xi(healpixs):
     return weights, xi, r_par, r_trans, z, num_pairs
 
 
+#-- This has been superseeded by compute_xi_forest_pairs_fast
+#-- and will be deprecated
 @jit
 def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             r_comov2, dist_m2, weights2, delta2, ang,
@@ -442,6 +445,8 @@ def compute_dmat(healpixs):
             num_pairs, num_pairs_used)
 
 
+#-- This has been superseeded by compute_dmat_forest_pairs_fast
+#-- and will be deprecated
 @jit
 def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
                               dist_m1, dist_m2, z1, z2, weights1, weights2, ang,
