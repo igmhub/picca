@@ -122,10 +122,11 @@ def compute_xi(healpixs):
     for healpix in healpixs:
         for delta in data[healpix]:
             with lock:
+                xicounter = round(counter.value * 100. / num_data, 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing xi: {}%").format(xicounter), end="")
                 counter.value += 1
-            userprint(("\rcomputing xi: "
-                       "{}%").format(round(counter.value * 100. / num_data, 3)),
-                      end="")
+
             if delta.neighbours.size != 0:
                 ang = delta.get_angle_between(delta.neighbours)
                 z_qso = [obj.z_qso for obj in delta.neighbours]
@@ -273,11 +274,12 @@ def compute_dmat(healpixs):
     num_pairs_used = 0
     for healpix in healpixs:
         for delta1 in data[healpix]:
-            userprint(("\rcomputing xi: "
-                       "{}%").format(round(counter.value * 100. / num_data, 3)),
-                      end="")
             with lock:
+                xicounter = round(counter.value * 100. / num_data, 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing xi: {}%").format(xicounter), end="")
                 counter.value += 1
+
             r_comov1 = delta1.r_comov
             dist_m1 = delta1.dist_m
             weights1 = delta1.weights
@@ -483,11 +485,10 @@ def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
     for healpix in healpixs:
         for delta1 in data[healpix]:
             with lock:
-                userprint(
-                    ("\rcomputing metal dmat {}: "
-                     "{}%").format(abs_igm,
-                                   round(counter.value * 100. / num_data, 3)),
-                    end="")
+                dmatcounter = round(counter.value * 100. / num_data, 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing metal dmat {}:"
+                               " {}%").format(abs_igm, dmatcounter), end="")
                 counter.value += 1
 
             r_comov1 = delta1.r_comov
@@ -635,14 +636,14 @@ def compute_wick_terms(healpixs):
         for delta1 in [
                 delta for index, delta in enumerate(data[healpix]) if w[index]
         ]:
-            userprint(
-                ("\rcomputing xi: "
-                 "{}%").format(
-                     round((counter.value * 100. / num_data / (1. - reject)),
-                           3)),
-                end="")
             with lock:
+                xicounter = round(
+                          (counter.value * 100. / num_data / (1. - reject)), 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing computing xi: "
+                               " {}%").format(xicounter), end="")
                 counter.value += 1
+
             if delta1.neighbours.size == 0:
                 continue
 
