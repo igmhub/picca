@@ -195,12 +195,23 @@ def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
         z_qso = hdul[1]['Z_VI'][:]
 
     ## Info of the primary observation
-    thingid = hdul[1]['THING_ID'][:]
-    ra = hdul[1]['RA'][:].astype('float64')
-    dec = hdul[1]['DEC'][:].astype('float64')
-    plate = hdul[1]['PLATE'][:]
-    mjd = hdul[1]['MJD'][:]
-    fiberid = hdul[1]['FIBERID'][:]
+
+    if 'TARGETID' in hdul[1].get_colnames():
+        thingid = hdul[1]['TARGETID'][:]
+        ra = hdul[1]['TARGET_RA'][:].astype('float64')
+        dec = hdul[1]['TARGET_DEC'][:].astype('float64')
+        plate = np.array(
+            [int('{}{}'.format(t, p)) for t,p in zip(hdul[1]['TILEID'][:],hdul[1]['PETAL_LOC'][:])])
+        mjd = hdul[1]['NIGHT'][:]
+        fiberid = hdul[1]['FIBER'][:]
+        userprint("using DESI mini SV DRQ catalog format")
+    else:
+        thingid = hdul[1]['THING_ID'][:]
+        ra = hdul[1]['RA'][:].astype('float64')
+        dec = hdul[1]['DEC'][:].astype('float64')
+        plate = hdul[1]['PLATE'][:]
+        mjd = hdul[1]['MJD'][:]
+        fiberid = hdul[1]['FIBERID'][:]
 
     ## Sanity
     userprint('')
@@ -258,7 +269,6 @@ def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
     hdul.close()
 
     return ra, dec, z_qso, thingid, plate, mjd, fiberid
-
 
 def read_dust_map(drq_filename, extinction_conversion_r=3.793):
     """Reads the dust map.
@@ -345,12 +355,13 @@ def read_data(in_dir,
             "RING": The healpix pixel ordering used.
     """
     userprint("mode: " + mode)
-    # read quasar characteristics from DRQ catalogue
+    # read quasar characteristics from DRQ or DESI-miniSV catalogue
+
     ra, dec, z_qso, thingid, plate, mjd, fiberid = read_drq(drq_filename,
-                                                            z_min,
-                                                            z_max,
-                                                            keep_bal,
-                                                            bi_max=bi_max)
+                                                        z_min,
+                                                        z_max,
+                                                        keep_bal,
+                                                        bi_max=bi_max)
 
     # if there is a maximum number of spectra, make sure they are selected
     # in a contiguous regions
@@ -368,6 +379,7 @@ def read_data(in_dir,
 
     data = {}
     num_data = 0
+
 
     # read data taking the mode into account
     if mode == "desi":
@@ -504,6 +516,20 @@ def read_data(in_dir,
             if not pix_data is None and len(pix_data) > 0:
                 data[healpix] = pix_data
                 num_data += len(pix_data)
+
+    elif mode=="desiminisv":
+        nside = 8
+        userprint("Found {} qsos".format(len(z_qso)))
+        data, num_data = read_from_minisv_desi(in_dir,
+                                        thingid,
+                                        ra,
+                                        dec,
+                                        z_qso,
+                                        plate,
+                                        mjd,
+                                        fiberid,
+                                        order,
+                                        pk1d=pk1d)
 
     else:
         userprint("I don't know mode: {}".format(mode))
@@ -1259,7 +1285,7 @@ def read_from_desi(nside,
                         spectrograph)].read()
                 spec_data[spectrograph] = spec
             except OSError:
-                print("error {}".format(spectrograph))
+                userprint("error {}".format(spectrograph))
         hdul.close()
 
         for t, p, m, f in zip(thingid_qsos, plate_qsos, mjd_qsos, fiberid_qsos):
@@ -1302,7 +1328,173 @@ def read_from_desi(nside,
             num_data += 1
 
     userprint("found {} quasars in input files\n".format(num_data))
+    if num_data==0:
+        raise ValueError("No Quasars found, stopping here")
+    return data, num_data
 
+def read_from_minisv_desi(in_dir,
+                   thingid,
+                   ra,
+                   dec,
+                   z_qso,
+                   plate,
+                   night,
+                   fiberid,
+                   order,
+                   pk1d=None):
+    """Reads the spectra and formats its data as Forest instances.
+    Unlike the read_from_desi routine, this orders things by tile/petal
+    Routine used to treat the DESI mini-SV data.
+
+    Args:
+        in_dir: str
+            Directory to spectra files
+        thingid: array of int
+            Thingid of the observations
+        ra: array of float
+            Right-ascension of the quasars (in radians)
+        dec: array of float
+            Declination of the quasars (in radians)
+        z_qso: array of float
+            Redshift of the quasars
+        plate: array of integer
+            Plate number of the observations
+        night: array of integer
+            Nights of the observations
+        fiberid: array of integer
+            Fiberid of the observations
+        order: 0 or 1 - default: 1
+            Order of the log10(lambda) polynomial for the continuum fit
+        pk1d: str or None - default: None
+            Format for Pk 1D: Pk1D
+
+    Returns:
+        List of read spectra for all the healpixs
+    """
+
+    data = {}
+    num_data = 0
+
+    files_in = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"),recursive=True)
+    filenames = []
+    plate_unique=np.unique(plate)
+    for f_in in files_in:
+        for p_in in plate_unique:
+            if f"{p_in//10}-{p_in%10}" in f_in:
+                filenames.append(f_in)
+                break
+
+    z_table = {t:z for t,z in zip(thingid,z_qso)}
+
+    for index,filename in enumerate(filenames):
+        userprint("\rread tile {} of {}. ndata: {}".format(index,len(filenames),num_data))
+        try:
+            hdul = fitsio.FITS(filename)
+        except IOError:
+            userprint("Error reading file {}\n".format(filename))
+            continue
+
+        if 'TARGET_RA' in hdul["FIBERMAP"].get_colnames():
+            ra = hdul["FIBERMAP"]["TARGET_RA"][:]*np.pi/180.
+            dec = hdul["FIBERMAP"]["TARGET_DEC"][:]*np.pi/180.
+        elif 'RA_TARGET' in hdul["FIBERMAP"].get_colnames():
+            ra = hdul["FIBERMAP"]["RA_TARGET"][:]*np.pi/180.
+            dec = hdul["FIBERMAP"]["DEC_TARGET"][:]*np.pi/180.
+
+        petal_spec=hdul["FIBERMAP"]["PETAL_LOC"][:][0]
+
+        if 'TILEID' in hdul["FIBERMAP"].get_colnames():
+            tile_spec=hdul["FIBERMAP"]["TILEID"][:][0]
+        else:
+            #pre-andes tiles don't have this in the fibermap
+            tile_spec=filename.split('-')[-2]
+
+        if 'NIGHT' in hdul["FIBERMAP"].get_colnames():
+            night_spec=hdul["FIBERMAP"]["NIGHT"][:][0]
+        else:
+            #pre-andes tiles don't have this in the fibermap
+            night_spec=int(filename.split('-')[-1].split('.')[0])
+
+        in_thingids = hdul["FIBERMAP"]["TARGETID"][:]
+
+        spec_data = {}
+        if 'brz_wavelength' in hdul.hdu_map.keys():
+            spectrographs=['BRZ']
+            if index==0:
+                print("reading all-band coadd as in minisv pre-andes dataset")
+        else:
+            spectrographs=['B','R','Z']
+            if index==0:
+                print("couldn't read the all band-coadd,"
+                      " trying single band as introduced in Andes reduction")
+
+        for spectrograph in spectrographs:
+            try:
+                spec={}
+                spec['log_lambda'] = np.log10(
+                    hdul['{}_WAVELENGTH'.format(spectrograph)].read())
+                spec['FL'] = hdul['{}_FLUX'.format(spectrograph)].read()
+                spec['IV'] = (
+                    hdul['{}_IVAR'.format(spectrograph)].read() *
+                    (hdul['{}_MASK'.format(spectrograph)].read()==0))
+                w = np.isnan(spec['FL']) | np.isnan(spec['IV'])
+                for key in ['FL','IV']:
+                    spec[key][w] = 0.
+                spec['RESO'] = hdul['{}_RESOLUTION'.format(
+                    spectrograph)].read()
+                spec_data[spectrograph]=spec
+            except OSError:
+                userprint(f"error when reading {spectrograph}-band data")
+
+        hdul.close()
+        plate_spec = int(f"{tile_spec}{petal_spec}")
+
+        select=(plate==plate_spec)&(night==night_spec)
+        print('\nThis is tile {}, petal {}, night {}'.format(tile_spec,petal_spec,night_spec))
+        thingid_qsos = thingid[select]
+        plate_qsos = plate[select]
+        night_qsos = night[select]
+        fiberid_qsos = fiberid[select]
+        for t, p, m, f in zip(thingid_qsos,plate_qsos,night_qsos,fiberid_qsos):
+            w_t = in_thingids == t
+            if w_t.sum() == 0:
+                print(f"\nError reading thingid {t}\n")
+                print(f"spectra : {spec}\n")
+                print(f"plate_spec : {plate_spec}\n")
+                continue
+
+            forest=None
+            for spec in spec_data.values():
+                ivar = spec['IV'][w_t]
+                flux = (ivar*spec['FL'][w_t]).sum(axis=0)
+                ivar = ivar.sum(axis=0)
+                w = ivar > 0.
+                flux[w] /= ivar[w]
+
+                if pk1d is not None:
+                    reso_sum = spec['RESO'][w_t].sum(axis=0)
+                    reso_in_km_per_s = np.real(spectral_resolution_desi(
+                        reso_sum,spec['log_lambda']))
+                    exposures_diff = np.zeros(spec['log_lambda'].shape)
+                else:
+                    reso_in_km_per_s = None
+                    exposures_diff = None
+
+                forest_temp = Forest(spec['log_lambda'],flux,ivar,t,ra[w_t][0],
+                    dec[w_t][0],z_table[t], p, m, f, order,
+                    exposures_diff, reso_in_km_per_s)
+                if forest is None:
+                    forest = copy.deepcopy(forest_temp)
+                else:
+                    forest.coadd(forest_temp)
+
+            if plate_spec not in data:
+                data[plate_spec]=[]
+            data[plate_spec].append(forest)
+            num_data+=1
+    userprint("found {} quasars in input files\n".format(num_data))
+    if num_data==0:
+        raise ValueError("No Quasars found, stopping here")
     return data, num_data
 
 
@@ -1476,6 +1668,7 @@ def read_objects(filename,
         AssertionError: if no healpix numbers are found
     """
     objs = {}
+
     ra, dec, z_qso, thingid, plate, mjd, fiberid = read_drq(filename,
                                                             z_min,
                                                             z_max,

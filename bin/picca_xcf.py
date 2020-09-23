@@ -5,6 +5,7 @@ delta field.
 This module follow the procedure described in sections 3.1 and 3.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
+import time
 import argparse
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
@@ -227,7 +228,6 @@ def main():
               'given seed. Do not shuffle if None'))
 
     args = parser.parse_args()
-
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -247,6 +247,8 @@ def main():
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
                             wl=args.fid_wl)
+
+    t0 = time.time()
 
     ### Read deltas
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
@@ -321,6 +323,9 @@ def main():
     # compute maximum angular separation
     xcf.ang_max = utils.compute_ang_max(cosmo, xcf.r_trans_max, z_min, z_min2)
 
+    t1 = time.time()
+    userprint(f'picca_xcf.py - Time reading data: {(t1-t0)/60:.3f} minutes')
+
     # compute correlation function, use pool to parallelize
     xcf.counter = Value('i', 0)
     xcf.lock = Lock()
@@ -328,6 +333,9 @@ def main():
     pool = Pool(processes=args.nproc)
     correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
     pool.close()
+
+    t2 = time.time()
+    userprint(f'picca_xcf.py - Time computing cross-correlation function: {(t2-t1)/60:.3f} minutes')
 
     # group data from parallelisation
     correlation_function_data = np.array(correlation_function_data)
@@ -419,6 +427,8 @@ def main():
 
     results.close()
 
+    t3 = time.time()
+    userprint(f'picca_xcf.py - Time total: {(t3-t0)/60:.3f} minutes')
 
 if __name__ == '__main__':
     main()

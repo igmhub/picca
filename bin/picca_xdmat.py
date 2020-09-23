@@ -5,6 +5,7 @@ object
 This module follow the procedure described in sections 3.5 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+import time
 import argparse
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
@@ -209,7 +210,6 @@ def main():
                         help='Maximum number of spectra to read')
 
     args = parser.parse_args()
-
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -236,6 +236,8 @@ def main():
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
                             wl=args.fid_wl)
+
+    t0 = time.time()
 
     ### Read deltas
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
@@ -272,6 +274,9 @@ def main():
     # compute maximum angular separation
     xcf.ang_max = utils.compute_ang_max(cosmo, xcf.r_trans_max, z_min, z_min2)
 
+    t1 = time.time()
+    userprint(f'picca_xdmat.py - Time reading data: {(t1-t0)/60:.3f} minutes')
+
     xcf.counter = Value('i', 0)
     xcf.lock = Lock()
     cpu_data = {}
@@ -289,6 +294,9 @@ def main():
     elif args.nproc == 1:
         dmat_data = map(calc_dmat, sorted(cpu_data.values()))
         dmat_data = list(dmat_data)
+
+    t2 = time.time()
+    userprint(f'picca_xdmat.py - Time computing distortion matrix: {(t2-t1)/60:.3f} minutes')
 
     # merge the results from different CPUs
     dmat_data = np.array(dmat_data)
@@ -397,6 +405,8 @@ def main():
                   extname='ATTRI')
     results.close()
 
+    t3 = time.time()
+    userprint(f'picca_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes')
 
 if __name__ == '__main__':
     main()
