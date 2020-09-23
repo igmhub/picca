@@ -187,23 +187,23 @@ def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
     """
     hdu = Table.read(drq_filename)
 
-    if 'desi' in :
+    if 'desi' in mode:
         columns = ['TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER',
                     'TARGET_RA', 'TARGET_DEC', 'Z', 'FIBERSTATUS']
+        ra = hdu[]
     else: 
         columns = ['THING_ID', 'PLATE', 'MJD', 'FIBERID', 
                     'RA', 'DEC', 'Z']
 
     ## Redshift
     try:
-        z_qso = hdul['Z']
+        z_qso = hdu['Z']
     except ValueError:
         userprint(
             "Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)")
-        z_qso = hdul'Z_VI']
+        z_qso = hdu['Z_VI']
 
     ## Info of the primary observation
-
     if 'TARGETID' in hdul[1].get_colnames():
         thingid = hdul[1]['TARGETID'][:]
         ra = hdul[1]['TARGET_RA'][:].astype('float64')
@@ -274,7 +274,6 @@ def read_drq(drq_filename, z_min, z_max, keep_bal, bi_max=None):
     plate = plate[w]
     mjd = mjd[w]
     fiberid = fiberid[w]
-    hdul.close()
 
     return ra, dec, z_qso, thingid, plate, mjd, fiberid
 
