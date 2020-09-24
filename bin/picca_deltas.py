@@ -438,11 +438,16 @@ def main():
                                          log_file=log_file,
                                          keep_bal=args.keep_bal,
                                          bi_max=args.bi_max,
-                                         order=args.order,
                                          best_obs=args.best_obs,
                                          single_exp=args.single_exp,
                                          pk1d=args.delta_format,
                                          spall=args.spall)
+
+    #-- Add order info
+    for pix in data:
+        for forest in data[pix]:
+            if not forest is None:
+                forest.order = args.order 
 
     ### Read masks
     mask_obs_frame = None
