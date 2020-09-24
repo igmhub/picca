@@ -1,6 +1,6 @@
 """This module defines a set of functions to manage reading of data.
 
-This module provides a class (Metadata) and several functions:
+This module several functions to read different types of data:
     - read_dlas
     - read_absorbers
     - read_drq
@@ -30,45 +30,6 @@ from picca.utils import userprint
 from picca.data import Forest, Delta, QSO
 from picca.prep_pk1d import exp_diff, spectral_resolution
 from picca.prep_pk1d import spectral_resolution_desi
-
-
-## use a metadata class to simplify things
-class Metadata(object):
-    """Class defined to organize the storage of metadata.
-
-    Attributes:
-        thingid: integer or None
-            Thingid of the observation.
-        ra: float or None
-            Right-ascension of the quasar (in radians).
-        dec: float or None
-            Declination of the quasar (in radians).
-        z_qso: float or None
-            Redshift of the quasar.
-        plate: integer or None
-            Plate number of the observation.
-        mjd: integer or None
-            Modified Julian Date of the observation.
-        fiberid: integer or None
-            Fiberid of the observation.
-        order: 0 or 1 or None
-            Order of the log10(lambda) polynomial for the continuum fit
-
-    Methods:
-        __init__
-    """
-
-    def __init__(self):
-        """Initialize instance."""
-        self.thingid = None
-        self.ra = None
-        self.dec = None
-        self.z_qso = None
-        self.plate = None
-        self.mjd = None
-        self.fiberid = None
-        self.order = None
-
 
 def read_dlas(filename):
     """Reads the DLA catalog from a fits file.
@@ -372,7 +333,7 @@ def read_data(in_dir,
                                         pk1d=pk1d)
 
     elif mode in ["spcframe", "spplate", "spec", "corrected-spec"]:
-        nside, healpixs = find_nside(catalog['RA'].data, catalog['DEC'].data, log_file)
+        nside, healpixs = find_nside(catalog['RA'].data, catalog['DEC'].data)
 
         if mode == "spcframe":
             pix_data = read_from_spcframe(in_dir,
@@ -423,9 +384,11 @@ def read_data(in_dir,
                         sys.exit(1)
             nside = hdul[1].read_header()['NSIDE']
             hdul.close()
-            healpixs = healpy.ang2pix(nside, np.pi / 2 - catalog['DEC'], catalog['RA'])
+            healpixs = healpy.ang2pix(nside, 
+                np.pi / 2 - catalog['DEC'].data, 
+                catalog['RA'].data)
         else:
-            nside, healpixs = find_nside(catalog['RA'], catalog['DEC'], log_file)
+            nside, healpixs = find_nside(catalog['RA'].data, catalog['DEC'].data)
 
         unique_healpix = np.unique(healpixs)
 
@@ -469,7 +432,7 @@ def read_data(in_dir,
     return data, num_data, nside, "RING"
 
 
-def find_nside(ra, dec, log_file):
+def find_nside(ra, dec):
     """Determines nside such that there are 1000 objs per pixel on average.
 
     Args:
@@ -496,9 +459,6 @@ def find_nside(ra, dec, log_file):
         mean_num_obj = len(healpixs) / len(np.unique(healpixs))
     userprint("nside = {} -- mean #obj per pixel = {}".format(
         nside, mean_num_obj))
-    if log_file is not None:
-        log_file.write(("nside = {} -- mean #obj per pixel"
-                        " = {}\n").format(nside, mean_num_obj))
 
     return nside, healpixs
 
@@ -791,14 +751,14 @@ def read_from_spcframe(in_dir,
     all_metadata = []
     for t, r, d, z, p, m, f in zip(thingid, ra, dec, z_qso, plate, mjd,
                                    fiberid):
-        metadata = Metadata()
-        metadata.thingid = t
-        metadata.ra = r
-        metadata.dec = d
-        metadata.z_qso = z
-        metadata.plate = p
-        metadata.mjd = m
-        metadata.fiberid = f
+        metadata = {}
+        metadata['thingid'] = t
+        metadata['ra'] = r
+        metadata['dec'] = d
+        metadata['z_qso'] = z
+        metadata['plate'] = p
+        metadata['mjd'] = m
+        metadata['fiberid'] = f
         all_metadata.append(metadata)
 
     # group the metadata with respect to their plate and mjd
@@ -864,16 +824,16 @@ def read_from_spcframe(in_dir,
 
             ## now convert all those fluxes into forest objects
             for metadata in platemjd[key]:
-                if spectro == 1 and metadata.fiberid > 500:
+                if spectro == 1 and metadata['fiberid'] > 500:
                     continue
-                if spectro == 2 and metadata.fiberid <= 500:
+                if spectro == 2 and metadata['fiberid'] <= 500:
                     continue
-                index = (metadata.fiberid - 1) % 500
-                t = metadata.thingid
-                r = metadata.ra
-                d = metadata.dec
-                z = metadata.z_qso
-                f = metadata.fiberid
+                index = (metadata['fiberid'] - 1) % 500
+                t = metadata['thingid']
+                r = metadata['ra']
+                d = metadata['dec']
+                z = metadata['z_qso']
+                f = metadata['fiberid']
                 if t in pix_data:
                     pix_data[t].coadd(Forest(log_lambda[index], flux[index],
                                           ivar[index], t, r, d, z, p, m, f))
