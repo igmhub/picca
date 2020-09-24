@@ -470,3 +470,4 @@ def unred(wave, ebv, R_V=3.1, LMC2=False, AVGLMC=False):
     corr = 1. / (10.**(0.4 * curve))
 
     return corr
+
