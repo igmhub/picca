@@ -463,19 +463,19 @@ def main():
             if 'OBS' in mask['frame']:
                 w = mask['frame'] == 'OBS'
                 mask_obs_frame = np.array([np.log10(mask['wave_min'])[w], 
-                                           np.log10(mask['wave_max'])[w]])
+                                           np.log10(mask['wave_max'])[w]]).T
             else:
                 mask_obs_frame = np.array([])
             if 'RF' in mask['frame']:
                 w = mask['frame'] == 'RF'
                 mask_rest_frame = np.array([np.log10(mask['wave_min'])[w], 
-                                            np.log10(mask['wave_max'])[w]])
+                                            np.log10(mask['wave_max'])[w]]).T
             else:
                 mask_rest_frame = np.array([])
             if 'RF_DLA' in mask['frame']:
                 w = mask['frame'] == 'RF_DLA'
                 mask_rest_frame_dla = np.array([np.log10(mask['wave_min'])[w], 
-                                                np.log10(mask['wave_max'])[w]])
+                                                np.log10(mask['wave_max'])[w]]).T
             else:
                 mask_rest_frame_dla = None
         except (OSError, ValueError):
