@@ -589,9 +589,13 @@ def main():
     for iteration in range(num_iterations):
         pool = Pool(processes=args.nproc)
         userprint(f"Continuum fitting: starting iteration {iteration} of {num_iterations}")
-        sort = np.array(list(data.keys())).argsort()
-        data_fit_cont = pool.map(cont_fit, np.array(list(data.values()))[sort])
-        for index, healpix in enumerate(sorted(list(data.keys()))):
+        
+        #-- Sorting healpix pixels before giving to pool (for some reason)
+        pixels = np.array([k for k in data.keys()])
+        sort = pixels.argsort()
+        sorted_data = [data[k] for k in pixels[sort]]
+        data_fit_cont = pool.map(cont_fit, sorted_data)
+        for index, healpix in enumerate(pixels[sort]):
             data[healpix] = data_fit_cont[index]
 
         userprint(f"Continuum fitting: ending iteration {iteration} of {num_iterations}")
