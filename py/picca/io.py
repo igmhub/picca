@@ -192,7 +192,7 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
         obj_id_name='TARGETID'
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
-        keep_columns += ['TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER',
+        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER',
                         'FIBERSTATUS']
     else: 
         obj_id_name='THING_ID'
@@ -256,6 +256,11 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
 
     catalog.keep_columns(keep_columns)
     catalog = catalog[w]
+
+    #-- Convert angles to radians
+    catalog['RA'] = np.radians(catalog['RA'])
+    catalog['DEC'] = np.radians(catalog['DEC'])
+
     return catalog
 
 def read_dust_map(drq_filename, extinction_conversion_r=3.793):
@@ -276,9 +281,7 @@ def read_dust_map(drq_filename, extinction_conversion_r=3.793):
     hdul = fitsio.read(drq_filename, ext=1)
     thingid = hdul['THING_ID']
     ext = hdul['EXTINCTION'][:, 1] / extinction_conversion_r
-
     return dict(zip(thingid, ext))
-
 
 def read_data(in_dir,
               drq_filename,
@@ -1162,13 +1165,14 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
 
     filenames = []
     for entry in catalog:
-        fi = f"{entry['TILEID']}/{entry['NIGHT']}/"+
-             f"coadd-{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}.fits"
+        fi = (f"{entry['TILEID']}/{entry['NIGHT']}/"+
+              f"coadd-{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}.fits")
         filenames.append(fi)
     filenames = np.unique(filenames)
 
     for index, filename in enumerate(filenames):
         userprint("read tile {} of {}. ndata: {}".format(index,len(filenames),num_data))
+        filename = in_dir+'/'+filename
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
@@ -1236,9 +1240,13 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
                    (catalog['NIGHT']  == night_spec) )
         userprint(f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}')
 
+        #-- Loop over quasars in catalog inside this tile-petal
         for entry in catalog[select]:
-        for t, p, m, f in zip(thingid_qsos,plate_qsos,night_qsos,fiberid_qsos):
+
+            #-- Find which row in tile contains this quasar
             w_t = np.where(targetid_spec == entry['TARGETID'])[0][0]
+
+            #-- Loop over three spectrograph arms and coadd fluxes
             forest = None
             for spec in spec_data.values():
                 ivar = spec['IV'][w_t]*1
@@ -1254,7 +1262,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
                     exposures_diff = None
 
                 forest_temp = Forest(spec['log_lambda'], flux, ivar,
-                    entry['TARGETID']
+                    entry['TARGETID'],
                     entry['RA'], entry['DEC'], entry['Z'],
                     entry['TILEID'], entry['NIGHT'], entry['FIBER'],  
                     exposures_diff, reso_in_km_per_s)
@@ -1268,8 +1276,10 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
             data[plate_spec].append(forest)
             num_data+=1
     userprint("found {} quasars in input files\n".format(num_data))
+
     if num_data==0:
         raise ValueError("No Quasars found, stopping here")
+    
     return data, num_data
 
 
