@@ -33,7 +33,6 @@ def cont_fit(forests):
         forest.cont_fit()
     return forests
 
-
 def get_metadata(data):
     ''' Constructs an astropy.table from all forests' metadata
     '''
@@ -621,9 +620,11 @@ def main():
     for healpix in remove_keys:
         del data[healpix]
 
+    num_forests = np.sum([len(forest) for forest in data.values()])
     log_file.write(
         ("INFO: Remaining sample has {} "
-         "forests\n").format(np.sum([len(forest) for forest in data.values()])))
+         "forests\n").format(num_forests))
+    userprint(f"Remaining sample has {num_forests} forests")
 
     # Sanity check: all forests must have the attribute log_lambda
     for healpix in data:

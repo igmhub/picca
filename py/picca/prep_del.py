@@ -229,8 +229,7 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
             return np.sum(chi2_contribution[w]**2 / weights[w])
 
         minimizer = iminuit.Minuit(chi2,
-                                   forced_parameters=("eta", "var_lss",
-                                                      "fudge"),
+                                   name=("eta", "var_lss", "fudge"),
                                    eta=1.,
                                    var_lss=0.1,
                                    fudge=1.,
