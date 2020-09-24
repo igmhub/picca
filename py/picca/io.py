@@ -192,8 +192,7 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
         obj_id_name='TARGETID'
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
-        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER',
-                        'FIBERSTATUS']
+        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER']
     else: 
         obj_id_name='THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
@@ -235,8 +234,8 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
             userprint(f" and BAL_FLAG_VI == 0  : nb object in cat = {np.sum(w)}")
             keep_columns += ['BAL_FLAG_VI']
         else:
-            userprint("ERROR: BAL_FLAG_VI not found")
-            sys.exit(0)
+            userprint("WARNING: BAL_FLAG_VI not found")
+
 
     ## BAL CIV
     if bi_max is not None:
