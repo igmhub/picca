@@ -588,17 +588,18 @@ def main():
     num_iterations = args.nit
     for iteration in range(num_iterations):
         pool = Pool(processes=args.nproc)
-        userprint("iteration: ", iteration)
+        userprint(f"Continuum fitting: starting iteration {iteration} of {num_iterations}")
         sort = np.array(list(data.keys())).argsort()
         data_fit_cont = pool.map(cont_fit, np.array(list(data.values()))[sort])
         for index, healpix in enumerate(sorted(list(data.keys()))):
             data[healpix] = data_fit_cont[index]
 
-        userprint("done")
+        userprint(f"Continuum fitting: ending iteration {iteration} of {num_iterations}")
 
         pool.close()
 
         if iteration < num_iterations - 1:
+            #-- Compute mean continuum (stack in rest-frame)
             (log_lambda_rest_frame, mean_cont,
              mean_cont_weight) = prep_del.compute_mean_cont(data)
             Forest.get_mean_cont = interp1d(
@@ -607,6 +608,8 @@ def main():
                     log_lambda_rest_frame[mean_cont_weight > 0.]) *
                 mean_cont[mean_cont_weight > 0.],
                 fill_value="extrapolate")
+            
+            #-- Compute observer-frame mean quantities (var_lss, eta, fudge)
             if not (args.use_ivar_as_weight or args.use_constant_weight):
                 (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
                  var_delta, var2_delta, count, num_qso, chi2_in_bin, error_eta,

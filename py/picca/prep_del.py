@@ -179,6 +179,9 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
     # fit the functions eta, var_lss, and fudge
     chi2_in_bin = np.zeros(num_bins)
     fudge_ref = 1e-7
+
+    userprint(" Mean quantities in observer-frame")
+    userprint(" loglam    eta      var_lss  fudge    chi2     num_pix ")
     for index in range(num_bins):
         # pylint: disable-msg=cell-var-from-loop
         # this function is defined differntly at each step of the loop
@@ -258,9 +261,11 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
         num_pixels[index] = count[index * num_var_bins:(index + 1) *
                                   num_var_bins].sum()
         chi2_in_bin[index] = minimizer.fval
-        userprint(eta[index], var_lss[index], fudge[index], chi2_in_bin[index],
-                  num_pixels[index], error_eta[index], error_var_lss[index],
-                  error_fudge[index])
+
+        userprint(f" {log_lambda[index]:.3e} "
+                  f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "+
+                  f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ") 
+                  #f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
 
     return (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
             var_delta.reshape(num_bins, -1), var2_delta.reshape(num_bins, -1),
