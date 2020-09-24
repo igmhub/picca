@@ -1,8 +1,8 @@
 """This module defines data structure to deal with line of sight data.
 
-This module provides with three classes (QSO, Forest, Delta) and one
-function (get_variance) to manage the line-of-sight data. See the respective
-docstrings for more details
+This module provides with three classes (QSO, Forest, Delta) 
+to manage the line-of-sight data. 
+See the respective docstrings for more details
 """
 import numpy as np
 import iminuit
@@ -11,30 +11,6 @@ import fitsio
 from picca import constants
 from picca.utils import userprint, unred
 from picca.dla import DLA
-
-
-def get_variance(var_pipe, eta, var_lss, fudge):
-    """Computes the total variance.
-
-    This includes contributions from pipeline noise, Large Scale Structure
-    variance, and a fudge contribution.
-
-    Args:
-        var_pipe: array of floats
-            Pipeline variance
-        eta: array of floats
-            Correction factor to the contribution of the pipeline estimate of
-            the instrumental noise to the variance.
-        var_lss: array of floats
-            Pixel variance due to the Large Scale Strucure
-        fudge: array of floats
-            Fudge contribution to the pixel variance
-
-    Returns:
-        The total variance
-    """
-    return eta * var_pipe + var_lss + fudge / var_pipe
-
 
 class QSO(object):
     """Class to represent quasar objects.
@@ -863,7 +839,7 @@ class Forest(QSO):
             ## prep_del.variance is the variance of delta
             ## we want here the weights = ivar(flux)
 
-            variance = get_variance(var_pipe, eta, var_lss, fudge)
+            variance = eta * var_pipe + var_lss + fudge / var_pipe
             weights = 1.0 / cont_model**2 / variance
 
             # force weights=1 when use-constant-weight
@@ -949,7 +925,6 @@ class Delta(QSO):
 
     Methods:
         __init__: Initializes class instances.
-        from_forest: Initialize instance from Forest data.
         from_fitsio: Initialize instance from a fits file.
         from_ascii: Initialize instance from an ascii file.
         from_image: Initialize instance from an ascii file.
@@ -1024,61 +999,6 @@ class Delta(QSO):
         # variables used in function cf.compute_wick_terms and
         # main from bin.picca_wick
         self.fname = None
-
-    @classmethod
-    def from_forest(cls,
-                    forest,
-                    get_stack_delta,
-                    get_var_lss,
-                    get_eta,
-                    get_fudge,
-                    use_mock_cont=False):
-        """Initialize instance from Forest data.
-
-        Args:
-            forest: Forest
-                A forest instance from which to initialize the deltas
-            get_stack_delta: function
-                Interpolates the stacked delta field for a given redshift.
-            get_var_lss: Interpolates the pixel variance due to the Large Scale
-                Strucure on the wavelength array.
-            get_eta: Interpolates the correction factor to the contribution of the
-                pipeline estimate of the instrumental noise to the variance on the
-                wavelength array.
-            get_fudge: Interpolates the fudge contribution to the variance on the
-                wavelength array.
-            use_mock_cont: bool - default: False
-                Flag to use the mock continuum to compute the mean expected
-                flux fraction
-
-        Returns:
-            a Delta instance
-        """
-        log_lambda = forest.log_lambda
-        stack_delta = get_stack_delta(log_lambda)
-        var_lss = get_var_lss(log_lambda)
-        eta = get_eta(log_lambda)
-        fudge = get_fudge(log_lambda)
-
-        #if mc is True use the mock continuum to compute the mean
-        # expected flux fraction
-        if use_mock_cont:
-            mean_expected_flux_frac = forest.mean_expected_flux_frac
-        else:
-            mean_expected_flux_frac = forest.cont * stack_delta
-        delta = forest.flux / mean_expected_flux_frac - 1.
-        var_pipe = 1. / forest.ivar / mean_expected_flux_frac**2
-        weights = 1. / get_variance(var_pipe, eta, var_lss, fudge)
-        exposures_diff = forest.exposures_diff
-        if forest.exposures_diff is not None:
-            exposures_diff /= mean_expected_flux_frac
-        ivar = forest.ivar / (eta + (eta == 0)) * (mean_expected_flux_frac**2)
-
-        return cls(forest.thingid, forest.ra, forest.dec, forest.z_qso,
-                   forest.plate, forest.mjd, forest.fiberid, log_lambda,
-                   weights, forest.cont, delta, forest.order, ivar,
-                   exposures_diff, forest.mean_snr, forest.mean_reso,
-                   forest.mean_z, forest.delta_log_lambda)
 
     @classmethod
     def from_fitsio(cls, hdu, pk1d_type=False):

@@ -8,7 +8,7 @@ See the respective documentation for details
 """
 import numpy as np
 import iminuit
-from picca.data import Forest, get_variance
+from picca.data import Forest
 from picca.utils import userprint
 
 
@@ -45,7 +45,8 @@ def compute_mean_cont(data):
             eta = Forest.get_eta(forest.log_lambda)
             fudge = Forest.get_fudge(forest.log_lambda)
             var_pipe = 1. / forest.ivar / forest.cont**2
-            weights = 1 / get_variance(var_pipe, eta, var_lss, fudge)
+            variance = eta * var_pipe + var_lss + fudge / var_pipe
+            weights = 1 / variance
             cont = np.bincount(bins,
                                weights=forest.flux / forest.cont * weights)
             mean_cont[:len(cont)] += cont
@@ -219,9 +220,9 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
             Returns:
                 The obtained chi2
             """
+            variance = eta * var_pipe_values + var_lss + fudge*fudge_ref / var_pipe_values
             chi2_contribution = (
-                var_delta[index * num_var_bins:(index + 1) * num_var_bins] -
-                get_variance(var_pipe_values, eta, var_lss, fudge * fudge_ref))
+                var_delta[index * num_var_bins:(index + 1) * num_var_bins] - variance)
             weights = var2_delta[index * num_var_bins:(index + 1) *
                                  num_var_bins]
             w = num_qso[index * num_var_bins:(index + 1) * num_var_bins] > 100
@@ -307,7 +308,8 @@ def stack(data, stack_from_deltas=False):
                 eta = Forest.get_eta(forest.log_lambda)
                 fudge = Forest.get_fudge(forest.log_lambda)
                 var = 1. / forest.ivar / forest.cont**2
-                weights = 1. / get_variance(var, eta, var_lss, fudge)
+                variance = eta * var + var_lss + fudge / var
+                weights = 1. / variance
 
             bins = ((forest.log_lambda - Forest.log_lambda_min) /
                     Forest.delta_log_lambda + 0.5).astype(int)

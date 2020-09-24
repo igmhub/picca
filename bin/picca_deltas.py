@@ -16,7 +16,7 @@ import numpy as np
 from astropy.table import Table
 from scipy.interpolate import interp1d
 
-from picca.data import Forest, Delta
+from picca.data import Forest
 from picca import prep_del, io, constants
 from picca.utils import userprint
 
@@ -59,6 +59,57 @@ def get_metadata(data):
     tab['npixels'] = np.array(npix)
 
     return tab
+
+def get_delta_from_forest(
+                    forest,
+                    get_stack_delta,
+                    get_var_lss,
+                    get_eta,
+                    get_fudge,
+                    use_mock_cont=False):
+        """Computes delta field from forest
+
+        Args:
+            forest: Forest
+                A forest instance from which to initialize the deltas
+            get_stack_delta: function
+                Interpolates the stacked delta field for a given redshift.
+            get_var_lss: Interpolates the pixel variance due to the Large Scale
+                Strucure on the wavelength array.
+            get_eta: Interpolates the correction factor to the contribution of the
+                pipeline estimate of the instrumental noise to the variance on the
+                wavelength array.
+            get_fudge: Interpolates the fudge contribution to the variance on the
+                wavelength array.
+            use_mock_cont: bool - default: False
+                Flag to use the mock continuum to compute the mean expected
+                flux fraction
+        """
+        log_lambda = forest.log_lambda
+        stack_delta = get_stack_delta(log_lambda)
+        var_lss = get_var_lss(log_lambda)
+        eta = get_eta(log_lambda)
+        fudge = get_fudge(log_lambda)
+
+        #-- if use_mock_cont is True use the mock continuum to compute the mean
+        #-- expected flux fraction
+        if use_mock_cont:
+            mean_expected_flux_frac = forest.mean_expected_flux_frac
+        else:
+            mean_expected_flux_frac = forest.cont * stack_delta
+        delta = forest.flux / mean_expected_flux_frac - 1.
+        var_pipe = 1. / forest.ivar / mean_expected_flux_frac**2
+        variance = eta * var_pipe + var_lss + fudge / var_pipe
+        weights = 1. / variance
+        exposures_diff = forest.exposures_diff
+        if forest.exposures_diff is not None:
+            exposures_diff /= mean_expected_flux_frac
+        ivar = forest.ivar / (eta + (eta == 0)) * (mean_expected_flux_frac**2)
+
+        forest.delta = delta
+        forest.weights = weights
+        forest.exposures_diff = exposures_diff
+        forest.ivar = ivar
 
 def main():
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
@@ -606,12 +657,11 @@ def main():
             #-- Compute mean continuum (stack in rest-frame)
             (log_lambda_rest_frame, mean_cont,
              mean_cont_weight) = prep_del.compute_mean_cont(data)
-            Forest.get_mean_cont = interp1d(
-                log_lambda_rest_frame[mean_cont_weight > 0.],
-                Forest.get_mean_cont(
-                    log_lambda_rest_frame[mean_cont_weight > 0.]) *
-                mean_cont[mean_cont_weight > 0.],
-                fill_value="extrapolate")
+            w = mean_cont_weight > 0.
+            log_lambda_cont = log_lambda_rest_frame[w]
+            new_cont = Forest.get_mean_cont(log_lambda_cont) * mean_cont[w]
+            Forest.get_mean_cont = interp1d(log_lambda_cont, new_cont,
+                                            fill_value="extrapolate")
             
             #-- Compute observer-frame mean quantities (var_lss, eta, fudge)
             if not (args.use_ivar_as_weight or args.use_constant_weight):
@@ -620,16 +670,17 @@ def main():
                  error_var_lss, error_fudge) = prep_del.compute_var_stats(
                      data, (args.eta_min, args.eta_max),
                      (args.vlss_min, args.vlss_max))
-                Forest.get_eta = interp1d(log_lambda[num_pixels > 0],
-                                          eta[num_pixels > 0],
+                w = num_pixels > 0
+                Forest.get_eta = interp1d(log_lambda[w],
+                                          eta[w],
                                           fill_value="extrapolate",
                                           kind="nearest")
-                Forest.get_var_lss = interp1d(log_lambda[num_pixels > 0],
-                                              var_lss[num_pixels > 0.],
+                Forest.get_var_lss = interp1d(log_lambda[w],
+                                              var_lss[w],
                                               fill_value="extrapolate",
                                               kind="nearest")
-                Forest.get_fudge = interp1d(log_lambda[num_pixels > 0],
-                                            fudge[num_pixels > 0],
+                Forest.get_fudge = interp1d(log_lambda[w],
+                                            fudge[w],
                                             fill_value="extrapolate",
                                             kind="nearest")
             else:
@@ -698,7 +749,8 @@ def main():
                   extname='WEIGHT')
     results.write([
         log_lambda_rest_frame,
-        Forest.get_mean_cont(log_lambda_rest_frame), mean_cont_weight
+        Forest.get_mean_cont(log_lambda_rest_frame), 
+        mean_cont_weight
     ],
                   names=['loglam_rest', 'mean_cont', 'weight'],
                   extname='CONT')
@@ -718,13 +770,16 @@ def main():
     deltas = {}
     data_bad_cont = []
     for healpix in sorted(data.keys()):
-        deltas[healpix] = [
-            Delta.from_forest(forest, get_stack_delta, Forest.get_var_lss,
-                              Forest.get_eta, Forest.get_fudge,
-                              args.use_mock_continuum)
-            for forest in data[healpix]
-            if forest.bad_cont is None
-        ]
+        for forest in data[healpix]:
+            if not forest.bad_cont is None: continue
+            #-- Compute delta field from flux, continuum and various quantites
+            get_delta_from_forest(forest, get_stack_delta, Forest.get_var_lss,
+                                  Forest.get_eta, Forest.get_fudge,
+                                  args.use_mock_continuum)
+            if healpix in deltas:
+                deltas[healpix].append(forest)
+            else:
+                deltas[healpix] = [forest]
         data_bad_cont = data_bad_cont + [
             forest for forest in data[healpix] if forest.bad_cont is not None
         ]
@@ -740,8 +795,6 @@ def main():
     t2 = time.time()
     tmin = (t2-t1)/60
     userprint('INFO: time elapsed to fit continuum', tmin, 'minutes')
-
-    #log_file.close()
 
     ### Save delta
     for healpix in sorted(deltas.keys()):
