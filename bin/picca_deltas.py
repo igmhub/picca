@@ -463,7 +463,7 @@ def main():
             if 'OBS' in mask['frame']:
                 w = mask['frame'] == 'OBS'
                 mask_obs_frame = np.array([np.log10(mask['wave_min'])[w], 
-                                            np.log10(mask['wave_max'])[w]])
+                                           np.log10(mask['wave_max'])[w]])
             else:
                 mask_obs_frame = np.array([])
             if 'RF' in mask['frame']:

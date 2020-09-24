@@ -186,7 +186,7 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
             fiberid: the fiberid of the observations
     """
     userprint('Reading catalog from ', drq_filename)
-    catalog = Table.read(drq_filename)
+    catalog = Table(fitsio.read(drq_filename, ext=1))
 
     keep_columns = ['RA', 'DEC', 'Z']
     if 'desi' in mode:
@@ -248,13 +248,13 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
         else:
             userprint("ERROR: --bi-max set but no BI_CIV field in HDU")
             sys.exit(0)
-    userprint("")
 
     #-- DLA Column density
     if 'NHI' in catalog.colnames:
         keep_columns += ['NHI']
 
     catalog.keep_columns(keep_columns)
+    w = np.where(w)[0]
     catalog = catalog[w]
 
     #-- Convert angles to radians
@@ -372,7 +372,7 @@ def read_data(in_dir,
                                         pk1d=pk1d)
 
     elif mode in ["spcframe", "spplate", "spec", "corrected-spec"]:
-        nside, healpixs = find_nside(catalog['RA'], catalog['DEC'], log_file)
+        nside, healpixs = find_nside(catalog['RA'].data, catalog['DEC'].data, log_file)
 
         if mode == "spcframe":
             pix_data = read_from_spcframe(in_dir,
@@ -517,20 +517,8 @@ def read_from_spec(in_dir,
     Args:
         in_dir: str
             Directory to spectra files
-        thingid: array of int
-            Thingid of the observations
-        ra: array of float
-            Right-ascension of the quasars (in radians)
-        dec: array of float
-            Declination of the quasars (in radians)
-        z_qso: array of float
-            Redshift of the quasars
-        plate: array of integer
-            Plate number of the observations
-        mjd: array of integer
-            Modified Julian Date of the observations
-        fiberid: array of integer
-            Fiberid of the observations
+        catalog: astropy.table.Table
+            Table containing catalog with objects 
         mode: str
             One of 'spec' or 'corrected-spec'. Open mode of the spectra files
         log_file: _io.TextIOWrapper or None - default: None
@@ -553,8 +541,9 @@ def read_from_spec(in_dir,
     if not best_obs:
         thing_id_all, plate_all, mjd_all, fiberid_all = read_spall(in_dir, catalog['THING_ID'], spall=spall)
     
-    userprint(f"reading {len(catalog)} thingids")
+    userprint(f"Reading {len(catalog)} objects")
 
+    pix_data = []
     #-- Loop over unique objects
     for i in range(len(catalog)):
         thing_id = catalog['THING_ID'][i]
@@ -577,9 +566,9 @@ def read_from_spec(in_dir,
             try:
                 hdul = fitsio.FITS(filename)
             except IOError:
-                log_file.write("error reading {}\n".format(filename))
+                userprint("Error reading {}".format(filename))
                 continue
-            log_file.write("{} read\n".format(filename))
+            userprint("Read {}".format(filename))
 
             log_lambda = hdul[1]["loglam"][:]
             flux = hdul[1]["flux"][:]
