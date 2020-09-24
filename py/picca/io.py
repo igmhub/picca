@@ -185,6 +185,7 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
             mjd: the Modified Julian Date of the observation
             fiberid: the fiberid of the observations
     """
+    userprint('Reading catalog from ', drq_filename)
     catalog = Table.read(drq_filename)
 
     keep_columns = ['RA', 'DEC', 'Z']
@@ -1463,7 +1464,7 @@ def read_objects(filename,
     healpixs = healpy.ang2pix(nside, theta, phi)
     if healpixs.size == 0:
         raise AssertionError()
-    userprint("reading qsos")
+    userprint("Reading objects ")
 
     unique_healpix = np.unique(healpixs)
     for index, healpix in enumerate(unique_healpix):
@@ -1480,8 +1481,6 @@ def read_objects(filename,
             if not cosmo is None:
                 obj.r_comov = cosmo.get_r_comov(obj.z_qso)
                 obj.dist_m = cosmo.get_dist_m(obj.z_qso)
-
-    userprint("\n")
 
     return objs, catalog['Z'].min()
 
