@@ -257,12 +257,12 @@ def main():
         r_comov_min = cosmo.get_r_comov(z_min)
         r_comov_min = max(0., r_comov_min + xcf.r_par_min)
         args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
-        userprint("\r z_min_obj = {}\r".format(args.z_min_obj), end="")
+        userprint("\r z_min_obj = {}\r".format(args.z_min_obj) )
     if args.z_max_obj is None:
         r_comov_max = cosmo.get_r_comov(z_max)
         r_comov_max = max(0., r_comov_max + xcf.r_par_max)
         args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
-        userprint("\r z_max_obj = {}\r".format(args.z_max_obj), end="")
+        userprint("\r z_max_obj = {}\r".format(args.z_max_obj) )
 
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
