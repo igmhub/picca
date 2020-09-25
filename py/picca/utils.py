@@ -107,7 +107,7 @@ def smooth_cov(xi,
     sum_correlation = {}
     counts_correlation = {}
     for index in range(num_bins):
-        userprint("\rsmoothing {}".format(index) )
+        userprint("\rsmoothing {}".format(index), end="")
         for index2 in range(index + 1, num_bins):
             index_delta_r_par = round(
                 abs(r_par[index2] - r_par[index]) / delta_r_par)
@@ -203,7 +203,7 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
     # compute the reduced correlation
     reduced_delta_correlation1d = np.zeros(num_bins)
     for index in range(0, num_bins):
-        userprint("\rsmoothing {}".format(index) )
+        userprint("\rsmoothing {}".format(index), end="")
         reduced_delta_correlation1d[index] = np.mean(delta_correlation1d[
             (index_delta_r_par1d == index_r_par[index]) &
             (index_delta_r_trans1d == index_r_trans[index])])
@@ -280,7 +280,7 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
 
     cor0 = reduced_delta_correlation1d[index_r_trans == 0]
     for index in range(num_bins):
-        userprint("\rupdating {}".format(index) )
+        userprint("\rupdating {}".format(index), end="")
         for index2 in range(index + 1, num_bins):
             index_delta_r_par = index_delta_r_par2d[index, index2]
             index_delta_r_trans = index_delta_r_trans2d[index, index2]
