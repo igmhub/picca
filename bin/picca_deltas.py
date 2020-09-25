@@ -20,8 +20,6 @@ from picca.data import Forest
 from picca import prep_del, io, constants
 from picca.utils import userprint
 
-#- Doing one change
-#- Doing another one
 
 def cont_fit(forests):
     """ Computes the quasar continua for all the forests in data
@@ -434,43 +432,33 @@ def main():
         log_lambda_rest_frame_temp, 
         1 + np.zeros(2))
 
-    ### check that the order of the continuum fit is 0 (constant) or 1 (linear).
+    #-- Check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
         if (args.order != 0) and (args.order != 1):
             userprint(("ERROR : invalid value for order, must be eqal to 0 or"
                        "1. Here order = {:d}").format(args.order))
             sys.exit(12)
 
-    ### Correct multiplicative pipeline flux calibration
+    #-- Correct multiplicative pipeline flux calibration
     if args.flux_calib is not None:
-        try:
-            hdul = fitsio.read(args.flux_calib, ext=1)
-            stack_log_lambda = hdul[1]['loglam']
-            stack_delta = hdul[1]['stack']
-            w = (stack_delta != 0.)
-            Forest.correct_flux = interp1d(stack_log_lambda[w],
-                                           stack_delta[w],
-                                           fill_value="extrapolate",
-                                           kind="nearest")
-        except (OSError, ValueError):
-            userprint(("ERROR: Error while reading flux_calib"
-                       "file {}".format(args.flux_calib)))
-            sys.exit(1)
+        hdul = fitsio.read(args.flux_calib, ext=1)
+        stack_log_lambda = hdul['loglam']
+        stack_delta = hdul['stack']
+        w = (stack_delta != 0.)
+        Forest.correct_flux = interp1d(stack_log_lambda[w],
+                                        stack_delta[w],
+                                        fill_value="extrapolate",
+                                        kind="nearest")
 
-    ### Correct multiplicative pipeline inverse variance calibration
+    #-- Correct multiplicative pipeline inverse variance calibration
     if args.ivar_calib is not None:
-        try:
-            hdul = fitsio.FITS(args.ivar_calib, ext=2)
-            log_lambda = hdul[2]['LOGLAM']
-            eta = hdul[2]['ETA']
-            Forest.correct_ivar = interp1d(log_lambda,
-                                           eta,
-                                           fill_value="extrapolate",
-                                           kind="nearest")
-        except (OSError, ValueError):
-            userprint(("ERROR: Error while reading ivar_calib"
-                       "file {}".format(args.ivar_calib)))
-            sys.exit(1)
+        hdul = fitsio.read(args.ivar_calib, ext=2)
+        log_lambda = hdul['loglam']
+        eta = hdul['eta']
+        Forest.correct_ivar = interp1d(log_lambda,
+                                        eta,
+                                        fill_value="extrapolate",
+                                        kind="nearest")
 
     ### Apply dust correction
     if not args.dust_map is None:
