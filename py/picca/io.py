@@ -1185,7 +1185,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
                 flux = spec['FL'][w_t]
 
                 if pk1d is not None:
-                    reso_sum = spec['RESO'][w_t].sum(axis=0)
+                    reso_sum = spec['RESO'][w_t]
                     reso_in_km_per_s = np.real(spectral_resolution_desi(
                         reso_sum, spec['log_lambda']))
                     exposures_diff = np.zeros(spec['log_lambda'].shape)
