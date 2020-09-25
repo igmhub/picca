@@ -150,7 +150,7 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
     catalog = Table(fitsio.read(drq_filename, ext=1))
 
     keep_columns = ['RA', 'DEC', 'Z']
-    if 'desi' in mode:
+    if 'desi' in mode and 'TARGETID' in catalog.colnames:
         obj_id_name='TARGETID'
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
@@ -174,7 +174,7 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
     w = np.ones(len(catalog), dtype=bool)
     userprint(f" start                 : nb object in cat = {np.sum(w)}")
     w &= catalog[obj_id_name] > 0
-    userprint(f" and thingid > 0       : nb object in cat = {np.sum(w)}")
+    userprint(f" and {obj_id_name} > 0       : nb object in cat = {np.sum(w)}")
     w &= catalog['RA'] != catalog['DEC']
     userprint(f" and ra != dec         : nb object in cat = {np.sum(w)}")
     w &= catalog['RA'] != 0.
@@ -204,7 +204,7 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
         if 'BI_CIV' in catalog.colnames:
             bi = catalog['BI_CIV']
             w &= bi <= bi_max
-            userprint(f" and BI_CIV <= bi_max  : nb object in cat = {np.sum(w)}")
+            userprint(f" and BI_CIV <= {bi_max}  : nb object in cat = {np.sum(w)}")
             keep_columns += ['BI_CIV']
         else:
             userprint("ERROR: --bi-max set but no BI_CIV field in HDU")
@@ -1112,16 +1112,23 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
     data = {}
     num_data = 0
 
+    files_in = glob.glob(os.path.join(in_dir,"**/coadd-*.fits"), recursive=True)
+    petal_tile_night = [f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}" for entry in catalog]
+    petal_tile_night_unique = np.unique(petal_tile_night)
     filenames = []
-    for entry in catalog:
-        fi = (f"{entry['TILEID']}/{entry['NIGHT']}/"+
-              f"coadd-{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}.fits")
-        filenames.append(fi)
+    for f_in in files_in:
+        for ptn in petal_tile_night_unique:
+            if ptn in os.path.basename(f_in):
+                filenames.append(f_in)
+    #filenames = []
+    #for entry in catalog:
+    #    fi = (f"{entry['TILEID']}/{entry['NIGHT']}/"+
+    #          f"coadd-{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}.fits")
+    #    filenames.append(fi)
     filenames = np.unique(filenames)
 
     for index, filename in enumerate(filenames):
         userprint("read tile {} of {}. ndata: {}".format(index,len(filenames),num_data))
-        filename = in_dir+'/'+filename
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
