@@ -20,6 +20,8 @@ from picca.data import Forest
 from picca import prep_del, io, constants
 from picca.utils import userprint
 
+#- Doing one change
+#- Doing another one
 
 def cont_fit(forests):
     """ Computes the quasar continua for all the forests in data
