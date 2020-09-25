@@ -934,7 +934,6 @@ def read_from_spplate(in_dir,
     data = list(pix_data.values())
     return data
 
-#-- Not implemented yet
 def read_from_desi(nside,
                    in_dir,
                    catalog,
