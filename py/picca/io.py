@@ -1036,13 +1036,10 @@ def read_from_desi(nside,
             forest = None
             for spec in spec_data.values():
                 ivar = spec['IV'][w_t]
-                flux = (ivar * spec['FL'][w_t]).sum(axis=0)
-                ivar = ivar.sum(axis=0)
-                w = ivar > 0.
-                flux[w] /= ivar[w]
+                flux = spec['FL'][w_t]
 
                 if not pk1d is None:
-                    reso_sum = spec['RESO'][w_t].sum(axis=0)
+                    reso_sum = spec['RESO'][w_t]
                     reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['log_lambda'])
                     exposures_diff = np.zeros(spec['log_lambda'].shape)
