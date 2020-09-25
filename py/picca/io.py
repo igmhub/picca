@@ -1062,10 +1062,9 @@ def read_from_desi(nside,
                 else:
                     forest.coadd(forest_temp)
 
-            pix = healpixs[w_t][0]
-            if pix not in data:
-                data[pix] = []
-            data[pix].append(forest)
+            if healpix not in data:
+                data[healpix] = []
+            data[healpix].append(forest)
             num_data += 1
 
     userprint(f"found {num_data} quasars in input files")
