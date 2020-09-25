@@ -147,11 +147,12 @@ def compute_xi(healpixs):
 
     for healpix in healpixs:
         for delta1 in data[healpix]:
-            userprint(("\rcomputing xi: "
-                       "{}%").format(round(counter.value * 100. / num_data, 2)),
-                      end="")
             with lock:
+                xicounter = round(counter.value * 100. / num_data, 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing xi: {}%").format(xicounter) )
                 counter.value += 1
+
             for delta2 in delta1.neighbours:
                 ang = delta1.get_angle_between(delta2)
                 same_half_plate = ((delta1.plate == delta2.plate) and (
@@ -405,11 +406,12 @@ def compute_dmat(healpixs):
     num_pairs_used = 0
     for healpix in healpixs:
         for delta1 in data[healpix]:
-            userprint(("\rcomputing xi: "
-                       "{}%").format(round(counter.value * 100. / num_data, 3)),
-                      end="")
             with lock:
+                xicounter = round(counter.value * 100. / num_data, 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing xi: {}%").format(xicounter) )
                 counter.value += 1
+
             order1 = delta1.order
             r_comov1 = delta1.r_comov
             dist_m1 = delta1.dist_m
@@ -926,11 +928,11 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
     num_pairs_used = 0
     for healpix in healpixs:
         for delta1 in data[healpix]:
-            userprint(("\rcomputing metal dmat {} {}: "
-                       "{}%").format(abs_igm1, abs_igm2,
-                                     round(counter.value * 100. / num_data, 3)),
-                      end="")
             with lock:
+                dmatcounter = round(counter.value * 100. / num_data, 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing metal dmat {} {}: "
+                       "{}%").format(abs_igm1, abs_igm2, dmatcounter) )
                 counter.value += 1
 
             w = np.random.rand(len(delta1.neighbours)) > reject
@@ -1175,9 +1177,12 @@ def compute_xi_1d(healpix):
     num_pairs1d = np.zeros(num_pixels**2, dtype=np.int64)
 
     for delta in data[healpix]:
-        userprint(("\rcomputing xi: "
-                   "{}%").format(round(counter.value * 100. / num_data, 2)),
-                  end="")
+        with lock:
+            xicounter = round(counter.value * 100. / num_data, 2)
+            if (counter.value % 1000 == 0):
+                userprint(("computing xi: {}%").format(xicounter) )
+            counter.value += 1
+
         bins = ((delta.log_lambda - log_lambda_min) / delta_log_lambda +
                 0.5).astype(int)
         bins = bins + num_pixels * bins[:, None]
@@ -1210,9 +1215,12 @@ def compute_xi_1d_cross(healpix):
     num_pairs1d = np.zeros(num_pixels**2, dtype=np.int64)
 
     for delta1 in data[healpix]:
-        userprint(("\rcomputing xi: "
-                   "{}%").format(round(counter.value * 100. / num_data, 2)),
-                  end="")
+        with lock:
+            xicounter = round(counter.value * 100. / num_data, 2)
+            if (counter.value % 1000 == 0):
+                userprint(("computing xi: {}%").format(xicounter) )
+            counter.value += 1
+
         bins1 = ((delta1.log_lambda - log_lambda_min) / delta_log_lambda +
                  0.5).astype(int)
         delta_times_weight1 = delta1.weights * delta1.delta
@@ -1288,13 +1296,13 @@ def compute_wick_terms(healpixs):
         for delta1 in [
                 delta for index, delta in enumerate(data[healpix]) if w[index]
         ]:
-            userprint(
-                ("\rcomputing xi: "
-                 "{}%").format(
-                     round(counter.value * 100. / num_data / (1. - reject), 3)),
-                end="")
             with lock:
+                xicounter = round(
+                            counter.value * 100. / num_data / (1. - reject), 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing xi: {}%").format(xicounter) )
                 counter.value += 1
+
             if len(delta1.neighbours) == 0:
                 continue
 

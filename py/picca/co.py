@@ -97,10 +97,10 @@ def compute_xi(healpixs):
     for healpix in healpixs:
         for obj1 in objs[healpix]:
 
-            userprint(("\rcomputing xi: "
-                       "{}%").format(round(counter.value * 100. / num_data, 2)),
-                      end="")
             with lock:
+                xicounter = round(counter.value * 100. / num_data, 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing xi: {}%").format(xicounter) )
                 counter.value += 1
 
             if obj1.neighbours.size == 0:
