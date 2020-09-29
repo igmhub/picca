@@ -432,7 +432,7 @@ def find_nside(ra, dec):
     mean_num_obj = len(healpixs) / len(np.unique(healpixs))
     target_mean_num_obj = 500
     nside_min = 8
-    while mean_num_obj < target_mean_num_obj and nside > nside_min:
+    while mean_num_obj < target_mean_num_obj and nside >= nside_min:
         nside //= 2
         healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
         mean_num_obj = len(healpixs) / len(np.unique(healpixs))
