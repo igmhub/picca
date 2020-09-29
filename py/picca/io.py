@@ -232,9 +232,9 @@ def read_dust_map(drq_filename, extinction_conversion_r=3.793):
         associated with the observation. Values are the extinction for that
         line of sight.
     """
-    hdul = fitsio.read(drq_filename, ext=1)
-    thingid = hdul['THING_ID']
-    ext = hdul['EXTINCTION'][:, 1] / extinction_conversion_r
+    hdu = fitsio.read(drq_filename, ext=1)
+    thingid = hdu['THING_ID']
+    ext = hdu['EXTINCTION'][:, 1] / extinction_conversion_r
     return dict(zip(thingid, ext))
 
 def read_data(in_dir,
@@ -317,16 +317,12 @@ def read_data(in_dir,
     num_data = 0
 
     # read data taking the mode into account
-    if mode == "desi":
-        userprint("Found {} qsos".format(len(catalog)))
-        data, num_data = read_from_desi(in_dir,
-                                        catalog,
-                                        pk1d=pk1d)
-
-    elif mode in ["spcframe", "spplate", "spec", "corrected-spec"]:
-        nside, healpixs = find_nside(catalog['RA'].data, catalog['DEC'].data)
-
-        if mode == "spcframe":
+    if mode in ["desi", "spcframe", "spplate", "spec", "corrected-spec"]:
+        if mode == "desi":
+            pix_data = read_from_desi(in_dir,
+                                      catalog,
+                                      pk1d=pk1d)
+        elif mode == "spcframe":
             pix_data = read_from_spcframe(in_dir,
                                           catalog,
                                           log_file=log_file,
@@ -346,7 +342,7 @@ def read_data(in_dir,
                                       spall=spall)
         ra = np.array([d.ra for d in pix_data])
         dec = np.array([d.dec for d in pix_data])
-        healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
+        nside, healpixs = find_nside(ra, dec)
         for index, healpix in enumerate(healpixs):
             if healpix not in data:
                 data[healpix] = []
@@ -408,10 +404,9 @@ def read_data(in_dir,
 
     elif mode=="desiminisv":
         nside = 8
-        #userprint("Found {} qsos".format(len(z_qso)))
         data, num_data = read_from_minisv_desi(in_dir,
-                                        catalog,
-                                        pk1d=pk1d)
+                                               catalog,
+                                               pk1d=pk1d)
     else:
         userprint("I don't know mode: {}".format(mode))
         sys.exit(1)
@@ -437,7 +432,7 @@ def find_nside(ra, dec):
     mean_num_obj = len(healpixs) / len(np.unique(healpixs))
     target_mean_num_obj = 500
     nside_min = 8
-    while mean_num_obj < target_mean_num_obj and nside >= nside_min:
+    while mean_num_obj < target_mean_num_obj and nside > nside_min:
         nside //= 2
         healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
         mean_num_obj = len(healpixs) / len(np.unique(healpixs))
@@ -490,7 +485,7 @@ def read_from_spec(in_dir,
     #-- Loop over unique objects
     for i in range(len(catalog)):
         thing_id = catalog['THING_ID'][i]
-        
+
         if not best_obs:
             w = thing_id_all == thing_id
             plates = plate_all[w]*1
@@ -632,6 +627,8 @@ def read_from_pix(in_dir,
     Returns:
         List of read spectra for all the healpixs
     """
+    userprint('DeprecationWarning: this method will be deprecated.')
+
     try:
         filename = in_dir + "/pix_{}.fits.gz".format(healpix)
         hdul = fitsio.FITS(filename)
@@ -948,46 +945,40 @@ def read_from_desi(in_dir,
         List of read spectra for all the healpixs
     """
     in_nside = int(in_dir.split('spectra-')[-1].replace('/', ''))
-    #z_table = dict(zip(thingid, z_qso))
     ra = catalog['RA'].data
     dec = catalog['DEC'].data
     in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
     unique_in_healpixs = np.unique(in_healpixs)
 
-    data = {}
-    num_data = 0
+    #-- This is making it compatible with quickquasars on eBOSS mode
+    if 'TARGETID' in catalog.colnames:
+        id_name = 'TARGETID'
+        plate_name = 'TILEID'
+        mjd_name = 'NIGHT'
+        fiberid_name = 'FIBER'
+    else:
+        id_name = 'THING_ID'
+        plate_name = 'PLATE'
+        mjd_name = 'MJD'
+        fiberid_name = 'FIBERID'       
+
+    data = []
     for index, healpix in enumerate(unique_in_healpixs):
         filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
 
-        userprint(f"Read {index} of {len(unique_in_healpixs)}. num_data: {num_data}")
+        userprint(f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
             userprint(f"Error reading pix {healpix}")
             continue
 
+        #-- Read targetid from fibermap to match to catalog later
         fibermap = hdul['FIBERMAP'].read()
-        fibermap_colnames = hdul['FIBERMAP'].get_colnames()
-        if 'TARGET_RA' in fibermap_colnames:
-            ra = fibermap["TARGET_RA"]
-            dec = fibermap["TARGET_DEC"]
-        elif 'RA_TARGET' in fibermap_colnames:
-            ## These lines are for backward compatibility
-            ## Should be removed at some point
-            ra = fibermap["RA_TARGET"]
-            dec = fibermap["DEC_TARGET"]
-        #ra = np.degrees(ra)
-        #dec = np.degrees(dec)
-        #healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
-        #exp = h["FIBERMAP"]["EXPID"][:]
-        #night = h["FIBERMAP"]["NIGHT"][:]
-        #fib = h["FIBERMAP"]["FIBER"][:]
         targetid_spec = fibermap["TARGETID"]
 
-        #petal_spec = fibermap['PETAL_LOC'][0]
-        #tile_spec = fibermap['TILEID'][0]
-        #night_spec = fibermap['NIGHT'][0]
-
+        #-- First read all wavelength, flux, ivar, mask, and resolution
+        #-- from this file
         spec_data = {}
         colors = ["B", "R"]
         if "Z_FLUX" in hdul:
@@ -1017,15 +1008,15 @@ def read_from_desi(in_dir,
         #-- Loop over quasars in catalog inside this healpixel
         for entry in catalog[select]:
             #-- Find which row in tile contains this quasar
-            w_t = np.where(targetid_spec == entry['TARGETID'])[0][0]
+            #-- It should be there by construction
+            w_t = np.where(targetid_spec == entry[id_name])[0]
+            if len(w_t) == 0:
+                userprint(f"Error reading {entry[id_name]}")
+                continue
+            else:
+                w_t = w_t[0]
 
             #-- Loop over three spectrograph arms and coadd fluxes
-            forest = None
-
-            if len(w_t) == 0:
-                userprint(f"Error reading {entry['TARGETID']}")
-                continue
-
             forest = None
             for spec in spec_data.values():
                 ivar = spec['IV'][w_t]
@@ -1041,9 +1032,9 @@ def read_from_desi(in_dir,
                     exposures_diff = None
 
                 forest_temp = Forest(spec['log_lambda'], flux, ivar, 
-                                     entry['TARGETID'],
+                                     entry[id_name],
                                      entry['RA'], entry['DEC'], entry['Z'],
-                                     entry['TILEID'], entry['NIGHT'], entry['FIBER'],
+                                     entry[plate_name], entry[mjd_name], entry[fiberid_name],
                                      exposures_diff, reso_in_km_per_s)
 
                 if forest is None:
@@ -1051,15 +1042,9 @@ def read_from_desi(in_dir,
                 else:
                     forest.coadd(forest_temp)
 
-            if healpix not in data:
-                data[healpix] = []
-            data[healpix].append(forest)
-            num_data += 1
+            data.append(forest)
 
-    userprint(f"found {num_data} quasars in input files")
-    if num_data==0:
-        raise ValueError("No Quasars found, stopping here")
-    return data, num_data
+    return data
 
 def read_from_minisv_desi(in_dir, catalog, pk1d=None):
     """Reads the spectra and formats its data as Forest instances.

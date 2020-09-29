@@ -30,4 +30,4 @@ if __name__ == '__main__':
                                         args.out_object_cat, 
                                         spec_type=args.spectype, 
                                         downsampling_z_cut=args.downsampling_z_cut, 
-                                        downsampling_nb=args.downsampling_nb)
+                                        downsampling_num=args.downsampling_nb)
