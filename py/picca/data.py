@@ -1,6 +1,6 @@
 """This module defines data structure to deal with line of sight data.
 
-This module provides with three classes (QSO, Forest, Delta) 
+This module provides with three classes (QSO, Forest, Delta)
 to manage the line-of-sight data. 
 See the respective docstrings for more details
 """
@@ -556,6 +556,7 @@ class Forest(QSO):
         self.p0 = None
         self.p1 = None
         self.bad_cont = None
+        self.order = None
 
     def coadd(self, other):
         """Coadds the information of another forest.

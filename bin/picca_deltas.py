@@ -8,7 +8,6 @@ section 2.4 of du Mas des Bourboux et al. 2020 (In prep).
 import sys
 import os
 import time
-import multiprocessing
 from multiprocessing import Pool
 import argparse
 import fitsio
@@ -33,16 +32,20 @@ def cont_fit(forests):
         forest.cont_fit()
     return forests
 
+
 def get_metadata(data):
     ''' Constructs an astropy.table from all forests' metadata
     '''
     tab = Table()
-    for field in ['ra', 'dec', 'z_qso', 'thingid', 'plate',
-                  'mjd', 'fiberid', 'mean_snr', 'p0', 'p1']:
+    for field in [
+            'ra', 'dec', 'z_qso', 'thingid', 'plate', 'mjd', 'fiberid',
+            'mean_snr', 'p0', 'p1'
+    ]:
         column_values = []
         for healpix in data:
             for forest in data[healpix]:
-                if field in forest.__dict__ and not forest.__dict__[field] is None:
+                if field in forest.__dict__ and not forest.__dict__[
+                        field] is None:
                     column_values.append(forest.__dict__[field])
                 else:
                     column_values.append(0)
@@ -59,56 +62,57 @@ def get_metadata(data):
 
     return tab
 
-def get_delta_from_forest(
-                    forest,
-                    get_stack_delta,
-                    get_var_lss,
-                    get_eta,
-                    get_fudge,
-                    use_mock_cont=False):
-        """Computes delta field from forest
 
-        Args:
-            forest: Forest
-                A forest instance from which to initialize the deltas
-            get_stack_delta: function
-                Interpolates the stacked delta field for a given redshift.
-            get_var_lss: Interpolates the pixel variance due to the Large Scale
-                Strucure on the wavelength array.
-            get_eta: Interpolates the correction factor to the contribution of the
-                pipeline estimate of the instrumental noise to the variance on the
-                wavelength array.
-            get_fudge: Interpolates the fudge contribution to the variance on the
-                wavelength array.
-            use_mock_cont: bool - default: False
-                Flag to use the mock continuum to compute the mean expected
-                flux fraction
-        """
-        log_lambda = forest.log_lambda
-        stack_delta = get_stack_delta(log_lambda)
-        var_lss = get_var_lss(log_lambda)
-        eta = get_eta(log_lambda)
-        fudge = get_fudge(log_lambda)
+def get_delta_from_forest(forest,
+                          get_stack_delta,
+                          get_var_lss,
+                          get_eta,
+                          get_fudge,
+                          use_mock_cont=False):
+    """Computes delta field from forest
 
-        #-- if use_mock_cont is True use the mock continuum to compute the mean
-        #-- expected flux fraction
-        if use_mock_cont:
-            mean_expected_flux_frac = forest.mean_expected_flux_frac
-        else:
-            mean_expected_flux_frac = forest.cont * stack_delta
-        delta = forest.flux / mean_expected_flux_frac - 1.
-        var_pipe = 1. / forest.ivar / mean_expected_flux_frac**2
-        variance = eta * var_pipe + var_lss + fudge / var_pipe
-        weights = 1. / variance
-        exposures_diff = forest.exposures_diff
-        if forest.exposures_diff is not None:
-            exposures_diff /= mean_expected_flux_frac
-        ivar = forest.ivar / (eta + (eta == 0)) * (mean_expected_flux_frac**2)
+    Args:
+        forest: Forest
+            A forest instance from which to initialize the deltas
+        get_stack_delta: function
+            Interpolates the stacked delta field for a given redshift.
+        get_var_lss: Interpolates the pixel variance due to the Large Scale
+            Strucure on the wavelength array.
+        get_eta: Interpolates the correction factor to the contribution of the
+            pipeline estimate of the instrumental noise to the variance on the
+            wavelength array.
+        get_fudge: Interpolates the fudge contribution to the variance on the
+            wavelength array.
+        use_mock_cont: bool - default: False
+            Flag to use the mock continuum to compute the mean expected
+            flux fraction
+    """
+    log_lambda = forest.log_lambda
+    stack_delta = get_stack_delta(log_lambda)
+    var_lss = get_var_lss(log_lambda)
+    eta = get_eta(log_lambda)
+    fudge = get_fudge(log_lambda)
 
-        forest.delta = delta
-        forest.weights = weights
-        forest.exposures_diff = exposures_diff
-        forest.ivar = ivar
+    #-- if use_mock_cont is True use the mock continuum to compute the mean
+    #-- expected flux fraction
+    if use_mock_cont:
+        mean_expected_flux_frac = forest.mean_expected_flux_frac
+    else:
+        mean_expected_flux_frac = forest.cont * stack_delta
+    delta = forest.flux / mean_expected_flux_frac - 1.
+    var_pipe = 1. / forest.ivar / mean_expected_flux_frac**2
+    variance = eta * var_pipe + var_lss + fudge / var_pipe
+    weights = 1. / variance
+    exposures_diff = forest.exposures_diff
+    if forest.exposures_diff is not None:
+        exposures_diff /= mean_expected_flux_frac
+    ivar = forest.ivar / (eta + (eta == 0)) * (mean_expected_flux_frac**2)
+
+    forest.delta = delta
+    forest.weights = weights
+    forest.exposures_diff = exposures_diff
+    forest.ivar = ivar
+
 
 def main():
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
@@ -161,12 +165,13 @@ def main():
                         help=('If mode == spcframe, then use only the best '
                               'observation'))
 
-    parser.add_argument('--single-exp',
-                        action='store_true',
-                        required=False,
-                        help=('If mode == spcframe, then use only one of the '
-                              'available exposures. If best-obs then choose it '
-                              'among those contributing to the best obs'))
+    parser.add_argument(
+        '--single-exp',
+        action='store_true',
+        required=False,
+        help=('If mode == spcframe, then use only one of the '
+              'available exposures. If best-obs then choose it '
+              'among those contributing to the best obs'))
 
     parser.add_argument('--zqso-min',
                         type=float,
@@ -248,13 +253,14 @@ def main():
                         required=False,
                         help='Absorber catalog file')
 
-    parser.add_argument('--absorber-mask',
-                        type=float,
-                        default=2.5,
-                        required=False,
-                        help=('Mask width on each side of the absorber central '
-                              'observed wavelength in units of '
-                              '1e4*dlog10(lambda)'))
+    parser.add_argument(
+        '--absorber-mask',
+        type=float,
+        default=2.5,
+        required=False,
+        help=('Mask width on each side of the absorber central '
+              'observed wavelength in units of '
+              '1e4*dlog10(lambda)'))
 
     parser.add_argument('--mask-file',
                         type=str,
@@ -279,21 +285,23 @@ def main():
                         help=('Path to DRQ catalog of objects for dust map to '
                               'apply the Schlegel correction'))
 
-    parser.add_argument('--flux-calib',
-                        type=str,
-                        default=None,
-                        required=False,
-                        help=('Path to previously produced picca_delta.py file '
-                              'to correct for multiplicative errors in the '
-                              'pipeline flux calibration'))
+    parser.add_argument(
+        '--flux-calib',
+        type=str,
+        default=None,
+        required=False,
+        help=('Path to previously produced picca_delta.py file '
+              'to correct for multiplicative errors in the '
+              'pipeline flux calibration'))
 
-    parser.add_argument('--ivar-calib',
-                        type=str,
-                        default=None,
-                        required=False,
-                        help=('Path to previously produced picca_delta.py file '
-                              'to correct for multiplicative errors in the '
-                              'pipeline inverse variance calibration'))
+    parser.add_argument(
+        '--ivar-calib',
+        type=str,
+        default=None,
+        required=False,
+        help=('Path to previously produced picca_delta.py file '
+              'to correct for multiplicative errors in the '
+              'pipeline inverse variance calibration'))
 
     parser.add_argument('--eta-min',
                         type=float,
@@ -409,28 +417,24 @@ def main():
     #-- Pipeline ivar correction term : fudge
     #-- Mean continuum : mean_cont
     log_lambda_temp = (Forest.log_lambda_min + np.arange(2) *
-                      (Forest.log_lambda_max - Forest.log_lambda_min))
-    log_lambda_rest_frame_temp = (Forest.log_lambda_min_rest_frame + np.arange(2) *
-                                  (Forest.log_lambda_max_rest_frame 
-                                   - Forest.log_lambda_min_rest_frame))
-    Forest.get_var_lss = interp1d(
-        log_lambda_temp,
-        0.2 + np.zeros(2),
-        fill_value="extrapolate",
-        kind="nearest")
-    Forest.get_eta = interp1d(
-        log_lambda_temp,
-        np.ones(2),
-        fill_value="extrapolate",
-        kind="nearest")
-    Forest.get_fudge = interp1d(
-        log_lambda_temp,
-        np.zeros(2),
-        fill_value="extrapolate",
-        kind="nearest")
-    Forest.get_mean_cont = interp1d(
-        log_lambda_rest_frame_temp, 
-        1 + np.zeros(2))
+                       (Forest.log_lambda_max - Forest.log_lambda_min))
+    log_lambda_rest_frame_temp = (
+        Forest.log_lambda_min_rest_frame + np.arange(2) *
+        (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame))
+    Forest.get_var_lss = interp1d(log_lambda_temp,
+                                  0.2 + np.zeros(2),
+                                  fill_value="extrapolate",
+                                  kind="nearest")
+    Forest.get_eta = interp1d(log_lambda_temp,
+                              np.ones(2),
+                              fill_value="extrapolate",
+                              kind="nearest")
+    Forest.get_fudge = interp1d(log_lambda_temp,
+                                np.zeros(2),
+                                fill_value="extrapolate",
+                                kind="nearest")
+    Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp,
+                                    1 + np.zeros(2))
 
     #-- Check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
@@ -441,24 +445,24 @@ def main():
 
     #-- Correct multiplicative pipeline flux calibration
     if args.flux_calib is not None:
-        hdul = fitsio.read(args.flux_calib, ext=1)
-        stack_log_lambda = hdul['loglam']
-        stack_delta = hdul['stack']
+        hdu = fitsio.read(args.flux_calib, ext=1)
+        stack_log_lambda = hdu['loglam']
+        stack_delta = hdu['stack']
         w = (stack_delta != 0.)
         Forest.correct_flux = interp1d(stack_log_lambda[w],
-                                        stack_delta[w],
-                                        fill_value="extrapolate",
-                                        kind="nearest")
+                                       stack_delta[w],
+                                       fill_value="extrapolate",
+                                       kind="nearest")
 
     #-- Correct multiplicative pipeline inverse variance calibration
     if args.ivar_calib is not None:
-        hdul = fitsio.read(args.ivar_calib, ext=2)
-        log_lambda = hdul['loglam']
-        eta = hdul['eta']
+        hdu = fitsio.read(args.ivar_calib, ext=2)
+        log_lambda = hdu['loglam']
+        eta = hdu['eta']
         Forest.correct_ivar = interp1d(log_lambda,
-                                        eta,
-                                        fill_value="extrapolate",
-                                        kind="nearest")
+                                       eta,
+                                       fill_value="extrapolate",
+                                       kind="nearest")
 
     ### Apply dust correction
     if not args.dust_map is None:
@@ -487,7 +491,7 @@ def main():
     for pix in data:
         for forest in data[pix]:
             if not forest is None:
-                forest.order = args.order 
+                forest.order = args.order
 
     ### Read masks
     mask_obs_frame = None
@@ -496,26 +500,31 @@ def main():
     if args.mask_file is not None:
         args.mask_file = os.path.expandvars(args.mask_file)
         try:
-            mask = Table.read(
-                args.mask_file, 
-                names=('type', 'wave_min', 'wave_max', 'frame'), 
-                format='ascii')
+            mask = Table.read(args.mask_file,
+                              names=('type', 'wave_min', 'wave_max', 'frame'),
+                              format='ascii')
             if 'OBS' in mask['frame']:
                 w = mask['frame'] == 'OBS'
-                mask_obs_frame = np.array([np.log10(mask['wave_min'])[w], 
-                                           np.log10(mask['wave_max'])[w]]).T
+                mask_obs_frame = np.array([
+                    np.log10(mask['wave_min'])[w],
+                    np.log10(mask['wave_max'])[w]
+                ]).T
             else:
                 mask_obs_frame = np.array([])
             if 'RF' in mask['frame']:
                 w = mask['frame'] == 'RF'
-                mask_rest_frame = np.array([np.log10(mask['wave_min'])[w], 
-                                            np.log10(mask['wave_max'])[w]]).T
+                mask_rest_frame = np.array([
+                    np.log10(mask['wave_min'])[w],
+                    np.log10(mask['wave_max'])[w]
+                ]).T
             else:
                 mask_rest_frame = np.array([])
             if 'RF_DLA' in mask['frame']:
                 w = mask['frame'] == 'RF_DLA'
-                mask_rest_frame_dla = np.array([np.log10(mask['wave_min'])[w], 
-                                                np.log10(mask['wave_max'])[w]]).T
+                mask_rest_frame_dla = np.array([
+                    np.log10(mask['wave_min'])[w],
+                    np.log10(mask['wave_max'])[w]
+                ]).T
             else:
                 mask_rest_frame_dla = None
         except (OSError, ValueError):
@@ -578,13 +587,14 @@ def main():
     ## Apply cuts
     log_file.write(
         ("INFO: Input sample has {} "
-         "forests\n").format(np.sum([len(forest) for forest in data.values()])))
+         "forests\n").format(np.sum([len(forest)
+                                     for forest in data.values()])))
     remove_keys = []
     for healpix in data:
         forests = []
         for forest in data[healpix]:
-            if ((forest.log_lambda is None) or
-                    len(forest.log_lambda) < args.npix_min):
+            if ((forest.log_lambda is None)
+                    or len(forest.log_lambda) < args.npix_min):
                 log_file.write(("INFO: Rejected {} due to forest too "
                                 "short\n").format(forest.thingid))
                 continue
@@ -594,8 +604,8 @@ def main():
                                 "found\n").format(forest.thingid))
                 continue
 
-            if (args.use_constant_weight and
-                    (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
+            if (args.use_constant_weight
+                    and (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
                 log_file.write(("INFO: Rejected {} due to negative mean or "
                                 "too low SNR found\n").format(forest.thingid))
                 continue
@@ -611,9 +621,8 @@ def main():
         del data[healpix]
 
     num_forests = np.sum([len(forest) for forest in data.values()])
-    log_file.write(
-        ("INFO: Remaining sample has {} "
-         "forests\n").format(num_forests))
+    log_file.write(("INFO: Remaining sample has {} "
+                    "forests\n").format(num_forests))
     userprint(f"Remaining sample has {num_forests} forests")
 
     # Sanity check: all forests must have the attribute log_lambda
@@ -622,7 +631,7 @@ def main():
             assert forest.log_lambda is not None
 
     t1 = time.time()
-    tmin = (t1-t0)/60
+    tmin = (t1 - t0) / 60
     userprint('INFO: time elapsed to read data', tmin, 'minutes')
 
     # compute fits to the forests iteratively
@@ -630,17 +639,21 @@ def main():
     num_iterations = args.nit
     for iteration in range(num_iterations):
         pool = Pool(processes=args.nproc)
-        userprint(f"Continuum fitting: starting iteration {iteration} of {num_iterations}")
-        
+        userprint(
+            f"Continuum fitting: starting iteration {iteration} of {num_iterations}"
+        )
+
         #-- Sorting healpix pixels before giving to pool (for some reason)
-        pixels = np.array([k for k in data.keys()])
+        pixels = np.array([k for k in data])
         sort = pixels.argsort()
         sorted_data = [data[k] for k in pixels[sort]]
         data_fit_cont = pool.map(cont_fit, sorted_data)
         for index, healpix in enumerate(pixels[sort]):
             data[healpix] = data_fit_cont[index]
 
-        userprint(f"Continuum fitting: ending iteration {iteration} of {num_iterations}")
+        userprint(
+            f"Continuum fitting: ending iteration {iteration} of {num_iterations}"
+        )
 
         pool.close()
 
@@ -651,9 +664,10 @@ def main():
             w = mean_cont_weight > 0.
             log_lambda_cont = log_lambda_rest_frame[w]
             new_cont = Forest.get_mean_cont(log_lambda_cont) * mean_cont[w]
-            Forest.get_mean_cont = interp1d(log_lambda_cont, new_cont,
+            Forest.get_mean_cont = interp1d(log_lambda_cont,
+                                            new_cont,
                                             fill_value="extrapolate")
-            
+
             #-- Compute observer-frame mean quantities (var_lss, eta, fudge)
             if not (args.use_ivar_as_weight or args.use_constant_weight):
                 (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
@@ -726,7 +740,9 @@ def main():
     stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
 
     ### Save iter_out_prefix
-    results = fitsio.FITS(args.iter_out_prefix + ".fits.gz", 'rw', clobber=True)
+    results = fitsio.FITS(args.iter_out_prefix + ".fits.gz",
+                          'rw',
+                          clobber=True)
     header = {}
     header["NSIDE"] = nside
     header["PIXORDER"] = healpy_pix_ordering
@@ -740,8 +756,7 @@ def main():
                   extname='WEIGHT')
     results.write([
         log_lambda_rest_frame,
-        Forest.get_mean_cont(log_lambda_rest_frame), 
-        mean_cont_weight
+        Forest.get_mean_cont(log_lambda_rest_frame), mean_cont_weight
     ],
                   names=['loglam_rest', 'mean_cont', 'weight'],
                   extname='CONT')
@@ -762,7 +777,8 @@ def main():
     data_bad_cont = []
     for healpix in sorted(data.keys()):
         for forest in data[healpix]:
-            if not forest.bad_cont is None: continue
+            if not forest.bad_cont is None:
+                continue
             #-- Compute delta field from flux, continuum and various quantites
             get_delta_from_forest(forest, get_stack_delta, Forest.get_var_lss,
                                   Forest.get_eta, Forest.get_fudge,
@@ -784,14 +800,12 @@ def main():
          "forests\n").format(np.sum([len(p) for p in deltas.values()])))
 
     t2 = time.time()
-    tmin = (t2-t1)/60
+    tmin = (t2 - t1) / 60
     userprint('INFO: time elapsed to fit continuum', tmin, 'minutes')
 
     ### Save delta
     for healpix in sorted(deltas.keys()):
 
-        if len(deltas[healpix]) == 0:
-            continue
         if args.delta_format == 'Pk1D_ascii':
             results = open(args.out_dir + "/delta-{}".format(healpix) + ".txt",
                            'w')
@@ -803,7 +817,8 @@ def main():
                         float(len(delta.log_lambda) - 1))
                 else:
                     delta_log_lambda = delta.delta_log_lambda
-                line = '{} {} {} '.format(delta.plate, delta.mjd, delta.fiberid)
+                line = '{} {} {} '.format(delta.plate, delta.mjd,
+                                          delta.fiberid)
                 line += '{} {} {} '.format(delta.ra, delta.dec, delta.z_qso)
                 line += '{} {} {} {} {} '.format(delta.mean_z, delta.mean_snr,
                                                  delta.mean_reso,
@@ -845,10 +860,10 @@ def main():
                     },
                     {
                         'name':
-                            'PMF',
+                        'PMF',
                         'value':
-                            '{}-{}-{}'.format(delta.plate, delta.mjd,
-                                              delta.fiberid)
+                        '{}-{}-{}'.format(delta.plate, delta.mjd,
+                                          delta.fiberid)
                     },
                     {
                         'name': 'THING_ID',
@@ -920,7 +935,8 @@ def main():
                     ]
                 else:
                     cols = [
-                        delta.log_lambda, delta.delta, delta.weights, delta.cont
+                        delta.log_lambda, delta.delta, delta.weights,
+                        delta.cont
                     ]
                     names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
                     units = ['log Angstrom', '', '', '']
@@ -939,12 +955,13 @@ def main():
             results.close()
 
     t3 = time.time()
-    tmin = (t3-t2)/60
+    tmin = (t3 - t2) / 60
     userprint('INFO: time elapsed to write deltas', tmin, 'minutes')
-    ttot = (t3-t0)/60
+    ttot = (t3 - t0) / 60
     userprint('INFO: total elapsed time', ttot, 'minutes')
 
     log_file.close()
+
 
 if __name__ == '__main__':
     main()

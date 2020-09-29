@@ -183,7 +183,7 @@ def read_drq(drq_filename, z_min=0, z_max=10., keep_bal=False, bi_max=None, mode
     userprint(f" and z < {z_max}         : nb object in cat = {np.sum(w)}")
 
     ## BAL visual
-    if keep_bal == False and bi_max is None:
+    if not keep_bal and bi_max is None:
         if 'BAL_FLAG_VI' in catalog.colnames:
             bal_flag = catalog['BAL_FLAG_VI']
             w &= bal_flag == 0
@@ -299,11 +299,11 @@ def read_data(in_dir,
     # read quasar characteristics from DRQ or DESI-miniSV catalogue
 
     catalog = read_drq(drq_filename,
-                        z_min=z_min,
-                        z_max=z_max,
-                        keep_bal=keep_bal,
-                        bi_max=bi_max,
-                        mode=mode)
+                       z_min=z_min,
+                       z_max=z_max,
+                       keep_bal=keep_bal,
+                       bi_max=bi_max,
+                       mode=mode)
 
     # if there is a maximum number of spectra, make sure they are selected
     # in a contiguous regions
@@ -318,10 +318,8 @@ def read_data(in_dir,
 
     # read data taking the mode into account
     if mode == "desi":
-        nside = 8
-        userprint("Found {} qsos".format(len(z_qso)))
-        data, num_data = read_from_desi(nside,
-                                        in_dir,
+        userprint("Found {} qsos".format(len(catalog)))
+        data, num_data = read_from_desi(in_dir,
                                         catalog,
                                         pk1d=pk1d)
 
@@ -343,7 +341,6 @@ def read_data(in_dir,
             pix_data = read_from_spec(in_dir,
                                       catalog,
                                       mode=mode,
-                                      log_file=log_file,
                                       pk1d=pk1d,
                                       best_obs=best_obs,
                                       spall=spall)
@@ -377,8 +374,8 @@ def read_data(in_dir,
                         sys.exit(1)
             nside = hdul[1].read_header()['NSIDE']
             hdul.close()
-            healpixs = healpy.ang2pix(nside, 
-                np.pi / 2 - catalog['DEC'].data, 
+            healpixs = healpy.ang2pix(nside,
+                np.pi / 2 - catalog['DEC'].data,
                 catalog['RA'].data)
         else:
             nside, healpixs = find_nside(catalog['RA'].data, catalog['DEC'].data)
@@ -452,7 +449,6 @@ def find_nside(ra, dec):
 def read_from_spec(in_dir,
                    catalog,
                    mode,
-                   log_file=None,
                    pk1d=None,
                    best_obs=False,
                    spall=None):
@@ -467,8 +463,6 @@ def read_from_spec(in_dir,
             Table containing catalog with objects 
         mode: str
             One of 'spec' or 'corrected-spec'. Open mode of the spectra files
-        log_file: _io.TextIOWrapper or None - default: None
-            Opened file to print log
         pk1d: str or None - default: None
             Format for Pk 1D: Pk1D
         best_obs: bool - default: False
@@ -485,7 +479,10 @@ def read_from_spec(in_dir,
     ## then obtain all plate, mjd, fiberid 
     ## by what's available in spAll
     if not best_obs:
-        thing_id_all, plate_all, mjd_all, fiberid_all = read_spall(in_dir, catalog['THING_ID'], spall=spall)
+        (thing_id_all, 
+         plate_all, 
+         mjd_all, 
+         fiberid_all) = read_spall(in_dir, catalog['THING_ID'], spall=spall)
     
     userprint(f"Reading {len(catalog)} objects")
 
@@ -667,8 +664,8 @@ def read_from_pix(in_dir,
             index = thingid2index[entry['THING_ID']]
         except KeyError:
             if log_file is not None:
-                log_file.write("{} missing from pixel {}\n".format(t, healpix))
-            userprint("{} missing from pixel {}".format(t, healpix))
+                log_file.write("{} missing from pixel {}\n".format(entry['THING_ID'], healpix))
+            userprint("{} missing from pixel {}".format(entry['THING_ID'], healpix))
             continue
         pix_data.append(
             Forest(log_lambda, flux[:, index],
@@ -678,7 +675,7 @@ def read_from_pix(in_dir,
                    )
             )
         if log_file is not None:
-            log_file.write("{} read\n".format(t))
+            log_file.write("{} read\n".format(entry['THING_ID']))
     hdul.close()
 
     return pix_data
@@ -934,15 +931,12 @@ def read_from_spplate(in_dir,
     data = list(pix_data.values())
     return data
 
-def read_from_desi(nside,
-                   in_dir,
+def read_from_desi(in_dir,
                    catalog,
                    pk1d=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
-        nside: int
-            The healpix nside parameter
         in_dir: str
             Directory to spectra files
         catalog: astropy.table
@@ -963,7 +957,6 @@ def read_from_desi(nside,
     data = {}
     num_data = 0
     for index, healpix in enumerate(unique_in_healpixs):
-        
         filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
 
         userprint(f"Read {index} of {len(unique_in_healpixs)}. num_data: {num_data}")
@@ -979,26 +972,26 @@ def read_from_desi(nside,
             ra = fibermap["TARGET_RA"]
             dec = fibermap["TARGET_DEC"]
         elif 'RA_TARGET' in fibermap_colnames:
-            ## TODO: These lines are for backward compatibility
+            ## These lines are for backward compatibility
             ## Should be removed at some point
             ra = fibermap["RA_TARGET"]
             dec = fibermap["DEC_TARGET"]
-        ra = np.degrees(ra)
-        dec = np.degrees(dec)
-        healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
+        #ra = np.degrees(ra)
+        #dec = np.degrees(dec)
+        #healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
         #exp = h["FIBERMAP"]["EXPID"][:]
         #night = h["FIBERMAP"]["NIGHT"][:]
         #fib = h["FIBERMAP"]["FIBER"][:]
         targetid_spec = fibermap["TARGETID"]
 
-        petal_spec = fibermap['PETAL_LOC'][0]
-        tile_spec = fibermap['TILEID'][0]
-        night_spec = fibermap['NIGHT'][0]
+        #petal_spec = fibermap['PETAL_LOC'][0]
+        #tile_spec = fibermap['TILEID'][0]
+        #night_spec = fibermap['NIGHT'][0]
 
         spec_data = {}
         colors = ["B", "R"]
         if "Z_FLUX" in hdul:
-             colors.append("Z")
+            colors.append("Z")
         for color in colors:
             spec = {}
             try:
@@ -1048,10 +1041,10 @@ def read_from_desi(nside,
                     exposures_diff = None
 
                 forest_temp = Forest(spec['log_lambda'], flux, ivar, 
-                               entry['TARGETID'],
-                               entry['RA'], entry['DEC'], entry['Z'],
-                               entry['TILEID'], entry['NIGHT'], entry['FIBER'],
-                               exposures_diff, reso_in_km_per_s)
+                                     entry['TARGETID'],
+                                     entry['RA'], entry['DEC'], entry['Z'],
+                                     entry['TILEID'], entry['NIGHT'], entry['FIBER'],
+                                     exposures_diff, reso_in_km_per_s)
 
                 if forest is None:
                     forest = copy.deepcopy(forest_temp)
@@ -1199,7 +1192,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
                     entry['TILEID'], entry['NIGHT'], entry['FIBER'],  
                     exposures_diff, reso_in_km_per_s)
                 if forest is None:
-                    forest = forest_temp
+                    forest = copy.deepcopy(forest_temp)
                 else:
                     forest.coadd(forest_temp)
 
