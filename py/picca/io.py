@@ -1013,17 +1013,19 @@ def read_from_desi(in_dir, catalog, pk1d=None):
             if len(w_t) == 0:
                 userprint(f"Error reading {entry[id_name]}")
                 continue
+            elif len(w_t) > 1:
+                userprint(f"Warning: more than one spectrum in this file for {entry[id_name]}")
             else:
                 w_t = w_t[0]
 
             #-- Loop over three spectrograph arms and coadd fluxes
             forest = None
             for spec in spec_data.values():
-                ivar = spec['IV'][w_t]
-                flux = spec['FL'][w_t]
+                ivar = spec['IV'][w_t].copy()
+                flux = spec['FL'][w_t].copy()
 
                 if not pk1d is None:
-                    reso_sum = spec['RESO'][w_t]
+                    reso_sum = spec['RESO'][w_t].copy()
                     reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['log_lambda'])
                     exposures_diff = np.zeros(spec['log_lambda'].shape)
@@ -1162,16 +1164,23 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
         for entry in catalog[select]:
 
             #-- Find which row in tile contains this quasar
-            w_t = np.where(targetid_spec == entry['TARGETID'])[0][0]
+            w_t = np.where(targetid_spec == entry['TARGETID'])[0]
+            if len(w_t) == 0:
+                userprint(f"Error reading {entry['TARGETID']}")
+                continue
+            elif len(w_t) > 1:
+                userprint(f"Warning: more than one spectrum in this file for {entry['TARGETID']}")
+            else:
+                w_t = w_t[0]
 
             #-- Loop over three spectrograph arms and coadd fluxes
             forest = None
             for spec in spec_data.values():
-                ivar = spec['IV'][w_t]
-                flux = spec['FL'][w_t]
+                ivar = spec['IV'][w_t].copy()
+                flux = spec['FL'][w_t].copy()
 
                 if pk1d is not None:
-                    reso_sum = spec['RESO'][w_t]
+                    reso_sum = spec['RESO'][w_t].copy()
                     reso_in_km_per_s = np.real(
                         spectral_resolution_desi(reso_sum, spec['log_lambda']))
                     exposures_diff = np.zeros(spec['log_lambda'].shape)
