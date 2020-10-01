@@ -25,6 +25,7 @@ import numpy as np
 import healpy
 import fitsio
 from astropy.table import Table
+import warnings
 
 from picca.utils import userprint
 from picca.data import Forest, Delta, QSO
@@ -627,7 +628,7 @@ def read_from_pix(in_dir, healpix, catalog, log_file=None):
     Returns:
         List of read spectra for all the healpixs
     """
-    userprint('DeprecationWarning: this method will be deprecated.')
+    warnings.warn("this method will be deprecated.", DeprecationWarning)
 
     try:
         filename = in_dir + "/pix_{}.fits.gz".format(healpix)
