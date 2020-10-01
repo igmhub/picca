@@ -12,7 +12,7 @@ from multiprocessing import Pool
 import argparse
 import fitsio
 import numpy as np
-from astropy.table import Table
+from astropy.table import Table, Column
 from scipy.interpolate import interp1d
 
 from picca.data import Forest
@@ -494,50 +494,26 @@ def main():
                 forest.order = args.order
 
     ### Read masks
-    mask_obs_frame = None
-    mask_rest_frame = None
-    mask_rest_frame_dla = None
     if args.mask_file is not None:
         args.mask_file = os.path.expandvars(args.mask_file)
         try:
             mask = Table.read(args.mask_file,
                               names=('type', 'wave_min', 'wave_max', 'frame'),
                               format='ascii')
-            if 'OBS' in mask['frame']:
-                w = mask['frame'] == 'OBS'
-                mask_obs_frame = np.array([
-                    np.log10(mask['wave_min'])[w],
-                    np.log10(mask['wave_max'])[w]
-                ]).T
-            else:
-                mask_obs_frame = np.array([])
-            if 'RF' in mask['frame']:
-                w = mask['frame'] == 'RF'
-                mask_rest_frame = np.array([
-                    np.log10(mask['wave_min'])[w],
-                    np.log10(mask['wave_max'])[w]
-                ]).T
-            else:
-                mask_rest_frame = np.array([])
-            if 'RF_DLA' in mask['frame']:
-                w = mask['frame'] == 'RF_DLA'
-                mask_rest_frame_dla = np.array([
-                    np.log10(mask['wave_min'])[w],
-                    np.log10(mask['wave_max'])[w]
-                ]).T
-            else:
-                mask_rest_frame_dla = None
+            col_log_min=Column(np.log10(mask['wave_min']),name='log_wave_min')
+            col_log_max=Column(np.log10(mask['wave_max']),name='log_wave_max')
+            mask.add_columns([col_log_min,col_log_max])
         except (OSError, ValueError):
             userprint(("ERROR: Error while reading mask_file "
                        "file {}").format(args.mask_file))
             sys.exit(1)
+    else:
+        mask = Table(names=('type', 'wave_min', 'wave_max', 'frame','log_wave_min','log_wave_max'))
 
     ### Mask lines
-    if not mask_obs_frame is None:
-        if mask_obs_frame.size + mask_rest_frame.size != 0:
-            for healpix in data:
-                for forest in data[healpix]:
-                    forest.mask(mask_obs_frame, mask_rest_frame)
+    for healpix in data:
+        for forest in data[healpix]:
+            forest.mask(mask)
 
     ### Mask absorbers
     if not args.absorber_vac is None:
@@ -580,7 +556,7 @@ def main():
             for forest in data[healpix]:
                 if forest.thingid in dlas:
                     for dla in dlas[forest.thingid]:
-                        forest.add_dla(dla[0], dla[1], mask_rest_frame_dla)
+                        forest.add_dla(dla[0], dla[1], mask)
                         num_dlas += 1
         log_file.write("Found {} DLAs in forests\n".format(num_dlas))
 
