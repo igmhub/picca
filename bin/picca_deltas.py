@@ -12,7 +12,7 @@ from multiprocessing import Pool
 import argparse
 import fitsio
 import numpy as np
-from astropy.table import Table, Column
+from astropy.table import Table
 from scipy.interpolate import interp1d
 
 from picca.data import Forest
@@ -500,9 +500,8 @@ def main():
             mask = Table.read(args.mask_file,
                               names=('type', 'wave_min', 'wave_max', 'frame'),
                               format='ascii')
-            col_log_min=Column(np.log10(mask['wave_min']),name='log_wave_min')
-            col_log_max=Column(np.log10(mask['wave_max']),name='log_wave_max')
-            mask.add_columns([col_log_min,col_log_max])
+            mask['log_wave_min']=np.log10(mask['wave_min'])
+            mask['log_wave_max']=np.log10(mask['wave_max'])
         except (OSError, ValueError):
             userprint(("ERROR: Error while reading mask_file "
                        "file {}").format(args.mask_file))
