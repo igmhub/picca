@@ -1,67 +1,99 @@
-##Functions used for masking BAL features ##LE 2020
+""" This module defines functions for masking BAL absorption.
 
+This module provides two functions:
+    - read_bal
+    - add_bal_rest_frame
+See the respective docstrings for more details
+"""
 
 import fitsio
-import scipy as sp
+import numpy as np
+from picca import constants
 
-def read_bal(bal_catalog): ##Based on read_dla from picca/py/picca/io.py
-    lst = ['THING_ID','VMIN_CIV_450','VMAX_CIV_450','VMIN_CIV_2000','VMAX_CIV_2000']
-    h = fitsio.FITS(bal_catalog)
-    bal_dict = { k :h[1][k][:] for k in lst }
-    h.close()
+
+def read_bal(filename):  ##Based on read_dla from picca/py/picca/io.py
+    """Reads the BAL catalog from a fits file.
+
+    Args:
+        filename: str
+            Catalog of BALs
+
+    Returns:
+        A dictionary with BAL information. Keys are the THING_ID
+        associated with the BALs. Values are a tuple with its AI
+        (*_CIV_450) and BI (*_CIV_2000) velocity.
+
+    """
+    column_list = [
+        'THING_ID', 'VMIN_CIV_450', 'VMAX_CIV_450', 'VMIN_CIV_2000',
+        'VMAX_CIV_2000'
+    ]
+    hdul = fitsio.FITS(filename)
+    bal_dict = {col: hdul[1][col][:] for col in column_list}
+    hdul.close()
 
     return bal_dict
 
 
-#based on add_dla from picca/py/picca/data.py
-def add_bal_rf(bal_catalog,thingid,bal_index): #BAL catalog, THING_ID, and BAL index
+def add_bal_rest_frame(bal_catalog, thingid, bal_index):
+    """Creates a list of wavelengths to be masked out by forest.mask
+
+    Args:
+        bal_catalog: str
+            Catalog of BALs
+        thingid: str
+            thingid of quasar (eBOSS)
+        bal_index: str
+            which index to use (AI or BI). In picca_deltas.py, AI is
+            used as the default.
+
+    """
     ### Wavelengths in Angstroms
     lines = {
-        "lCIV" : 1549, #Used for testing
-        "lNV" : 1240.81,
-        "lLya" : 1216.1,
-        "lLyb" : 1020,
-        "lOIV" : 1031,
-        "lOVI" : 1037,
-        "lOI" : 1039
+        "lCIV": 1549,
+        "lNV": 1240.81,
+        "lLya": 1216.1,
+        "lLyb": 1020,
+        "lOIV": 1031,
+        "lOVI": 1037,
+        "lOI": 1039
     }
 
     if bal_index == 'bi':
-        lst = ['VMIN_CIV_2000','VMAX_CIV_2000']
-    else: ##AI, the default
-        lst = ['VMIN_CIV_450','VMAX_CIV_450']
+        velocity_list = ['VMIN_CIV_2000', 'VMAX_CIV_2000']
+    else:  ##AI, the default
+        velocity_list = ['VMIN_CIV_450', 'VMAX_CIV_450']
 
-    bal_mask_rf = []
+    mask_rest_frame_bal = []
 
-    ls = sp.constants.c*10**-3 ##Speed of light in km/s
+    light_speed = constants.SPEED_LIGHT
 
-    vMin = [] ##list of minimum velocities
-    vMax = [] ##list of maximum velocities
+    min_velocities = []  ##list of minimum velocities
+    max_velocities = []  ##list of maximum velocities
 
-    ##Match thing_id to BAL catalog index
-    indx = sp.where(bal_catalog['THING_ID']==thingid)[0][0]
+    ##Match thing_id of object to BAL catalog index
+    match_index = np.where(bal_catalog['THING_ID'] == thingid)[0][0]
 
     #Store the min/max velocity pairs from the BAL catalog
-    for i in lst:
-        if i.find('VMIN') == 0: ##Feels risky
-            velocity_list = bal_catalog[i]
-            for j in velocity_list[indx]:
-                if j > 0:
-                    vMin.append(j)
+    for col in velocity_list:
+        if col.find('VMIN') == 0:
+            velocity_list = bal_catalog[col]
+            for vel in velocity_list[match_index]:
+                if vel > 0:
+                    min_velocities.append(vel)
         else:
-            velocity_list = bal_catalog[i]
-            for j in velocity_list[indx]:
-                if j > 0:
-                    vMax.append(j)
+            velocity_list = bal_catalog[col]
+            for vel in velocity_list[match_index]:
+                if vel > 0:
+                    max_velocities.append(vel)
 
     ##Calculate mask width for each velocity pair, for each emission line
-    for i in range(len(vMin)): 
-        for lin in lines.values():
-            lMin = lin*(1-vMin[i]/ls)
-            lMax = lin*(1-vMax[i]/ls)
-            bal_mask_rf += [[lMin, lMax]]
-    
-    bal_mask_rf = sp.log10(sp.asarray(bal_mask_rf))
+    for vel in range(len(min_velocities)):
+        for line in lines.values():
+            min_wavelength = line * (1 - min_velocities[vel] / light_speed)
+            max_wavelength = line * (1 - max_velocities[vel] / light_speed)
+            mask_rest_frame_bal += [[min_wavelength, max_wavelength]]
 
-    return bal_mask_rf
+    mask_rest_frame_bal = np.log10(np.asarray(mask_rest_frame_bal))
 
+    return mask_rest_frame_bal

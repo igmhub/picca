@@ -296,17 +296,20 @@ def main():
                         required=False,
                         help=('Path to spAll file'))
 
-    parser.add_argument('--bal-catalog', 
-                        type = str, 
-                        default = None, 
+    parser.add_argument('--bal-catalog',
+                        type=str,
+                        default=None,
                         required=False,
-                        help = 'BAL catalog location. Use with --keep-bal to mask BAL features')
+                        help=('BAL catalog location. Use with --keep-bal to '
+                              'mask BAL features'))
 
-    parser.add_argument('--bal-index', 
-                        type = str, 
-                        default = 'ai', 
+    parser.add_argument('--bal-index',
+                        type=str,
+                        default='ai',
                         required=False,
-                        help = 'BAL index type, choose either ai or bi. Use with --bal-catalog and -keep-bal. This will set which velocity the BAL mask uses.')
+                        help=('BAL index type, choose either ai or bi. Use '
+                              'with --bal-catalog and -keep-bal. This will '
+                              'set which velocity the BAL mask uses.'))
 
     t0 = time.time()
 
@@ -515,9 +518,10 @@ def main():
         for healpix in data:
             for forest in data[healpix]:
                 if forest.thingid in bal_cat["THING_ID"]:
-                    bal_mask_obs = []
-                    bal_mask_rf = bal_tools.add_bal_rf(bal_cat, forest.thingid, args.bal_index)
-                    forest.mask(mask_obs_frame=bal_mask_obs , mask_rest_frame=bal_mask_rf)
+                    mask_obs_frame_bal = []
+                    mask_rest_frame_bal = bal_tools.add_bal_rest_frame(
+                        bal_cat, forest.thingid, args.bal_index)
+                    forest.mask(mask_obs_frame_bal, mask_rest_frame_bal)
                     num_bal += 1
         log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
 
