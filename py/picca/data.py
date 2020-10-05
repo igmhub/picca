@@ -79,7 +79,7 @@ class QSO(object):
 
     Methods:
         __init__: Initialize class instance.
-        __xor__: Computes the angular separation between two quasars.
+        get_angle_between: Computes the angular separation between two quasars.
     """
 
     def __init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid):
@@ -125,7 +125,7 @@ class QSO(object):
         # variables computed in modules bin.picca_xcf_angl and bin.picca_xcf1d
         self.log_lambda = None
 
-    def __xor__(self, data):
+    def get_angle_between(self, data):
         """Computes the angular separation between two quasars.
 
         Args:
@@ -585,8 +585,8 @@ class Forest(QSO):
         self.p1 = None
         self.bad_cont = None
 
-    def __add__(self, other):
-        """Adds the information of another forest.
+    def coadd(self, other):
+        """Coadds the information of another forest.
 
         Forests are coadded by using inverse variance weighting.
 
@@ -1099,12 +1099,12 @@ class Delta(QSO):
         """
         header = hdu.read_header()
 
-        delta = hdu['DELTA'][:]
-        log_lambda = hdu['LOGLAM'][:]
+        delta = hdu['DELTA'][:].astype(float)
+        log_lambda = hdu['LOGLAM'][:].astype(float)
 
         if pk1d_type:
-            ivar = hdu['IVAR'][:]
-            exposures_diff = hdu['DIFF'][:]
+            ivar = hdu['IVAR'][:].astype(float)
+            exposures_diff = hdu['DIFF'][:].astype(float)
             mean_snr = header['MEANSNR']
             mean_reso = header['MEANRESO']
             mean_z = header['MEANZ']
@@ -1118,8 +1118,8 @@ class Delta(QSO):
             mean_reso = None
             delta_log_lambda = None
             mean_z = None
-            weights = hdu['WEIGHT'][:]
-            cont = hdu['CONT'][:]
+            weights = hdu['WEIGHT'][:].astype(float)
+            cont = hdu['CONT'][:].astype(float)
 
         thingid = header['THING_ID']
         ra = header['RA']
@@ -1192,9 +1192,9 @@ class Delta(QSO):
             a list of Delta instances
         """
         hdu = fitsio.FITS(file)
-        deltas_image = hdu[0].read()
-        ivar_image = hdu[1].read()
-        log_lambda_image = hdu[2].read()
+        deltas_image = hdu[0].read().astype(float)
+        ivar_image = hdu[1].read().astype(float)
+        log_lambda_image = hdu[2].read().astype(float)
         ra = hdu[3]["RA"][:].astype(np.float64) * np.pi / 180.
         dec = hdu[3]["DEC"][:].astype(np.float64) * np.pi / 180.
         z = hdu[3]["Z"][:].astype(np.float64)

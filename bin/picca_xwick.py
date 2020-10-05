@@ -230,7 +230,6 @@ def main():
                         help='Maximum number of spectra to read')
 
     args = parser.parse_args()
-
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -453,8 +452,24 @@ def main():
             'name': 'NPUSED',
             'value': npairs_used,
             'comment': 'Number of used pairs'
-        },
-    ]
+        }, {
+            'name': 'OMEGAM', 
+            'value': args.fid_Om, 
+            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'OMEGAR', 
+            'value': args.fid_Or, 
+            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'OMEGAK', 
+            'value': args.fid_Ok, 
+            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'WL', 
+            'value': args.fid_wl, 
+            'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }
+        ]
     comment = [
         'Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2', 'T3',
         'T4', 'T5', 'T6'

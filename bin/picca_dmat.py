@@ -4,6 +4,7 @@
 This module follow the procedure described in sections 3.5 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+import time
 import argparse
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
@@ -252,6 +253,8 @@ def main():
                             Ok=args.fid_Ok,
                             wl=args.fid_wl)
 
+    t0 = time.time()
+
     ### Read data 1
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
                                                   cf.nside,
@@ -296,6 +299,9 @@ def main():
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
 
+    t1 = time.time()
+    userprint(f'picca_dmat.py - Time reading data: {(t1-t0)/60:.3f} minutes')
+
     cf.counter = Value('i', 0)
     cf.lock = Lock()
     cpu_data = {}
@@ -313,6 +319,10 @@ def main():
     elif args.nproc == 1:
         dmat_data = map(calc_dmat, sorted(cpu_data.values()))
         dmat_data = list(dmat_data)
+
+    t2 = time.time()
+    userprint(f'picca_dmat.py - Time computing distortion matrix: {(t2-t1)/60:.3f} minutes')
+
 
     # merge the results from different CPUs
     dmat_data = np.array(dmat_data)
@@ -390,8 +400,24 @@ def main():
             'name': 'NPUSED',
             'value': num_pairs_used,
             'comment': 'Number of used pairs'
-        },
-    ]
+        }, {
+            'name': 'OMEGAM', 
+            'value': args.fid_Om, 
+            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'OMEGAR', 
+            'value': args.fid_Or, 
+            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'OMEGAK', 
+            'value': args.fid_Ok, 
+            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'WL', 
+            'value': args.fid_wl, 
+            'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }    
+        ]
     results.write([weights_dmat, dmat],
                   names=['WDM', 'DM'],
                   comment=['Sum of weight', 'Distortion matrix'],
@@ -404,6 +430,9 @@ def main():
                   units=['h^-1 Mpc', 'h^-1 Mpc', ''],
                   extname='ATTRI')
     results.close()
+
+    t3 = time.time()
+    userprint(f'picca_dmat.py - Time total : {(t3-t0)/60:.3f} minutes')
 
 
 if __name__ == '__main__':

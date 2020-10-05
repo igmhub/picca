@@ -184,7 +184,24 @@ def main():
         'name': 'NT',
         'value': num_bins_r_trans,
         'comment': 'Number of bins in r-transverse'
-    }]
+    }, {
+        'name': 'OMEGAM', 
+        'value': head['OMEGAM'], 
+        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAR', 
+        'value': head['OMEGAR'], 
+        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAK', 
+        'value': head['OMEGAK'], 
+        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'WL', 
+        'value': head['WL'], 
+        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }
+    ]
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'

@@ -1,6 +1,5 @@
 import astropy.io.fits as pyfits
 import numpy as np
-import scipy as sp
 from scipy import linalg
 import copy
 
@@ -36,20 +35,20 @@ class data:
         bin_center_rt = np.zeros(self.rt.size)
         bin_center_rp = np.zeros(self.rp.size)
         for i in np.arange(-self.rt.size-1,self.rt.size+1,1).astype('int'):
-            bin_center_rt[ sp.logical_and( self.rt>=bin_size*i, self.rt<bin_size*(i+1.) ) ] = bin_size*(i+0.5)
-            bin_center_rp[ sp.logical_and( self.rp>=bin_size*i, self.rp<bin_size*(i+1.) ) ] = bin_size*(i+0.5)
+            bin_center_rt[ np.logical_and( self.rt>=bin_size*i, self.rt<bin_size*(i+1.) ) ] = bin_size*(i+0.5)
+            bin_center_rp[ np.logical_and( self.rp>=bin_size*i, self.rp<bin_size*(i+1.) ) ] = bin_size*(i+0.5)
 
         r = np.sqrt(bin_center_rt**2 + bin_center_rp**2)
         mu=bin_center_rp/r
 
         cuts = (r>rmin) & (r<rmax) & (mu>=mumin) & (mu<=mumax)
-        if sp.isfinite(dic_init['r_per_min']):
+        if np.isfinite(dic_init['r_per_min']):
             cuts = cuts & (bin_center_rt > dic_init['r_per_min'])
-        if sp.isfinite(dic_init['r_per_max']):
+        if np.isfinite(dic_init['r_per_max']):
             cuts = cuts & (bin_center_rt < dic_init['r_per_max'])
-        if sp.isfinite(dic_init['r_par_min']):
+        if np.isfinite(dic_init['r_par_min']):
             cuts = cuts & (bin_center_rp > dic_init['r_par_min'])
-        if sp.isfinite(dic_init['r_par_max']):
+        if np.isfinite(dic_init['r_par_max']):
             cuts = cuts & (bin_center_rp < dic_init['r_par_max'])
 
         co=co[:,cuts]
@@ -59,34 +58,16 @@ class data:
         self.cuts = cuts
         self.da=da
         self.co=co
-        self.ico=sp.linalg.inv(co)
+        self.ico=np.linalg.inv(co)
 
     def get_realisation_fastMonteCarlo(self,bestFit):
 
         if not hasattr(self,'cho_co'):
-            self.cho_co = sp.linalg.cholesky(self.co_all,lower=True)
+            self.cho_co = np.linalg.cholesky(self.co_all,lower=True)
 
         self.da_all[:] = bestFit
-        rand = sp.random.normal(loc=0.0, scale=1.0, size=self.da_all.size)
-        self.da_all += sp.dot(self.cho_co,rand)
+        rand = np.random.normal(loc=0.0, scale=1.0, size=self.da_all.size)
+        self.da_all += np.dot(self.cho_co,rand)
         self.da = self.da_all[(self.cuts)]
 
         return
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

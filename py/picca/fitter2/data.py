@@ -1,7 +1,6 @@
 import fitsio
 from functools import partial
 import numpy as np
-import scipy as sp
 from scipy import linalg
 from scipy.sparse import csr_matrix
 
@@ -93,14 +92,14 @@ class data:
         ico = co[:,mask]
         ico = ico[mask,:]
         try:
-            sp.linalg.cholesky(co)
+            np.linalg.cholesky(co)
             userprint('LOG: Full matrix is positive definite')
-        except sp.linalg.LinAlgError:
+        except np.linalg.LinAlgError:
             userprint('WARNING: Full matrix is not positive definite')
         try:
-            sp.linalg.cholesky(ico)
+            np.linalg.cholesky(ico)
             userprint('LOG: Reduced matrix is positive definite')
-        except sp.linalg.LinAlgError:
+        except np.linalg.LinAlgError:
             userprint('WARNING: Reduced matrix is not positive definite')
 
         # We need the determinant of the cov matrix for the likelihood norm

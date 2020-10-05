@@ -5,6 +5,7 @@ list of IGM absorption.
 This module follow the procedure described in sections 4.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+import time
 import argparse
 from functools import partial
 from multiprocessing import Pool, Lock, cpu_count, Value
@@ -236,6 +237,7 @@ def main():
 
     args = parser.parse_args()
 
+
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -265,6 +267,8 @@ def main():
                             Ok=args.fid_Ok,
                             wl=args.fid_wl)
     xcf.cosmo = cosmo
+
+    t0 = time.time()
 
     # read deltas
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
@@ -298,6 +302,9 @@ def main():
 
     # compute maximum angular separation
     xcf.ang_max = utils.compute_ang_max(cosmo, xcf.r_trans_max, z_min, z_min2)
+
+    t1 = time.time()
+    userprint(f'picca_metal_xdmat.py - Time reading data: {(t1-t0)/60:.3f} minutes')
 
     xcf.counter = Value('i', 0)
     xcf.lock = Lock()
@@ -362,6 +369,9 @@ def main():
         num_pairs_all.append(num_pairs)
         num_pairs_used_all.append(num_pairs_used)
 
+    t2 = time.time()
+    userprint(f'picca_metal_xdmat.py - Time computing all metal matrix: {(t2-t1)/60:.3f} minutes')
+
     # save the results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
@@ -409,8 +419,24 @@ def main():
             'name': 'REJ',
             'value': xcf.reject,
             'comment': 'Rejection factor'
-        },
-    ]
+        }, {
+            'name': 'OMEGAM', 
+            'value': args.fid_Om, 
+            'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'OMEGAR', 
+            'value': args.fid_Or, 
+            'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'OMEGAK', 
+            'value': args.fid_Ok, 
+            'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+        }, {
+            'name': 'WL', 
+            'value': args.fid_wl, 
+            'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }
+        ]
 
     len_names = np.array([len(name) for name in names]).max()
     names = np.array(names, dtype='S' + str(len_names))
@@ -462,6 +488,9 @@ def main():
                   units=out_units,
                   extname='MDMAT')
     results.close()
+
+    t3 = time.time()
+    userprint(f'picca_metal_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes')
 
 
 if __name__ == '__main__':

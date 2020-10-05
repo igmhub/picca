@@ -4,6 +4,7 @@
 This module follow the procedure described in sections 3.1 and 3.2 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
+import time
 import argparse
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
@@ -239,6 +240,8 @@ def main():
                             Ok=args.fid_Ok,
                             wl=args.fid_wl)
 
+    t0 = time.time()
+
     ### Read data 1
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
                                                   cf.nside,
@@ -290,6 +293,8 @@ def main():
         cf.data = utils.shuffle_distrib_forests(
             cf.data, args.shuffle_distrib_forest_seed)
 
+    t1 = time.time()
+    userprint(f'picca_cf.py - Time reading data: {(t1-t0)/60:.3f} minutes')
     # compute correlation function, use pool to parallelize
     cf.counter = Value('i', 0)
     cf.lock = Lock()
@@ -297,6 +302,9 @@ def main():
     pool = Pool(processes=args.nproc)
     correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
     pool.close()
+
+    t2 = time.time()
+    userprint(f'picca_cf.py - Time computing correlation function: {(t2-t1)/60:.3f} minutes')
 
     # group data from parallelisation
     correlation_function_data = np.array(correlation_function_data)
@@ -352,7 +360,24 @@ def main():
         'name': 'NSIDE',
         'value': cf.nside,
         'comment': 'Healpix nside'
-    }]
+    }, {
+        'name': 'OMEGAM', 
+        'value': args.fid_Om, 
+        'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAR', 
+        'value': args.fid_Or, 
+        'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'OMEGAK', 
+        'value': args.fid_Ok, 
+        'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
+    }, {
+        'name': 'WL', 
+        'value': args.fid_wl, 
+        'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }
+    ]
     results.write(
         [r_par, r_trans, z, num_pairs],
         names=['RP', 'RT', 'Z', 'NB'],
@@ -374,6 +399,8 @@ def main():
 
     results.close()
 
+    t3 = time.time()
+    userprint(f'picca_cf.py - Time total : {(t3-t0)/60:.3f} minutes')
 
 if __name__ == '__main__':
     main()

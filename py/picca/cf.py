@@ -17,7 +17,7 @@ See the respective docstrings for more details
 """
 import numpy as np
 from healpy import query_disc
-from numba import jit
+from numba import jit, int32
 
 from picca import constants
 from picca.utils import userprint
@@ -104,7 +104,7 @@ def fill_neighs(healpixs):
                     for other_delta in data[other_healpix]
                     if delta.thingid != other_delta.thingid
                 ]
-            ang = delta ^ neighbours
+            ang = delta.get_angle_between(neighbours)
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
             if x_correlation:
@@ -153,32 +153,34 @@ def compute_xi(healpixs):
             with lock:
                 counter.value += 1
             for delta2 in delta1.neighbours:
-                ang = delta1 ^ delta2
+                ang = delta1.get_angle_between(delta2)
                 same_half_plate = ((delta1.plate == delta2.plate) and (
                     (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
                     (delta1.fiberid > 500 and delta2.fiberid > 500)))
                 if ang_correlation:
-                    (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
-                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                    compute_xi_forest_pairs_fast(
                          delta1.z, 10.**delta1.log_lambda,
                          10.**delta1.log_lambda, delta1.weights, delta1.delta,
                          delta2.z, 10.**delta2.log_lambda,
                          10.**delta2.log_lambda, delta2.weights, delta2.delta,
-                         ang, same_half_plate)
+                         ang, same_half_plate, 
+                         weights, xi, r_par, r_trans, z, num_pairs)
                 else:
-                    (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
-                     rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+                    compute_xi_forest_pairs_fast(
                          delta1.z, delta1.r_comov, delta1.dist_m,
-                         delta1.weights, delta1.delta, delta2.z, delta2.r_comov,
-                         delta2.dist_m, delta2.weights, delta2.delta, ang,
-                         same_half_plate)
+                         delta1.weights, delta1.delta, 
+                         delta2.z, delta2.r_comov, delta2.dist_m, 
+                         delta2.weights, delta2.delta, 
+                         ang, same_half_plate, 
+                         weights, xi, r_par, r_trans, z, num_pairs)
 
-                xi[:len(rebin_xi)] += rebin_xi
-                weights[:len(rebin_weight)] += rebin_weight
-                r_par[:len(rebin_r_par)] += rebin_r_par
-                r_trans[:len(rebin_r_trans)] += rebin_r_trans
-                z[:len(rebin_z)] += rebin_z
-                num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs.astype(int)
+                #-- These were used by compute_xi_forest_pairs (to be deprecated)
+                #xi[:len(rebin_xi)] += rebin_xi
+                #weights[:len(rebin_weight)] += rebin_weight
+                #r_par[:len(rebin_r_par)] += rebin_r_par
+                #r_trans[:len(rebin_r_trans)] += rebin_r_trans
+                #z[:len(rebin_z)] += rebin_z
+                #num_pairs[:len(rebin_num_pairs)] += rebin_num_pairs.astype(int)
             setattr(delta1, "neighbours", None)
 
     w = weights > 0
@@ -189,6 +191,8 @@ def compute_xi(healpixs):
     return weights, xi, r_par, r_trans, z, num_pairs
 
 
+#-- This has been superseeded by compute_xi_forest_pairs_fast
+#-- and will be deprecated
 @jit
 def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             r_comov2, dist_m2, weights2, delta2, ang,
@@ -279,6 +283,95 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
             rebin_num_pairs)
 
+@jit(nopython=True)
+def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
+                            r_comov2, dist_m2, weights2, delta2, ang,
+                            same_half_plate,
+                            rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, 
+                            rebin_z, rebin_num_pairs):
+    """Computes the contribution of a given pair of forests to the correlation
+    function. Fills rebin_* on place.
+
+    Args:
+        z1: array of float
+            Redshift of pixel 1
+        r_comov1: array of float
+            Comoving distance for forest 1 (in Mpc/h)
+        dist_m1: array of float
+            Comoving angular distance for forest 1 (in Mpc/h)
+        weights1: array of float
+            Pixel weights for forest 1
+        delta1: array of float
+            Delta field for forest 1
+        z2: array of float
+            Redshift of pixel 2
+        r_comov2: array of float
+            Comoving distance for forest 2 (in Mpc/h)
+        dist_m2: array of float
+            Comoving angular distance for forest 2 (in Mpc/h)
+        weights2: array of float
+            Pixel weights for forest 2
+        delta2: array of float
+            Delta field for forest 2
+        ang: array of float
+            Angular separation between pixels in forests 1 and 2
+        same_half_plate: bool
+            Flag to determine if the two forests are on the same half plate
+        rebin_weight: The weight of the correlation function pixels
+            properly rebinned
+        rebin_xi: The correlation function properly rebinned
+        rebin_r_par: The parallel distance of the correlation function
+            pixels properly rebinned
+        rebin_r_trans: The transverse distance of the correlation function
+            pixels properly rebinned
+        rebin_z: The redshift of the correlation function pixels properly
+            rebinned
+        rebin_num_pairs: The number of pairs of the correlation function
+            pixels properly rebinned
+    """
+    for i in range(z1.size):
+        if weights1[i] == 0: continue
+
+        for j in range(z2.size):
+            if weights2[j] == 0: continue
+
+            if ang_correlation:
+                r_par = r_comov1[i] / r_comov2[j]
+                if not x_correlation and r_par < 1.:
+                    r_par = 1. / r_par
+                r_trans = ang 
+            else:
+                r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
+                r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
+                if not x_correlation:
+                    r_par = np.abs(r_par)
+
+            if (r_par >= r_par_max or 
+                r_trans >= r_trans_max or 
+                r_par < r_par_min):
+                continue
+
+            delta_times_weight1 = delta1[i]*weights1[i]
+            delta_times_weight2 = delta2[j]*weights2[j]        
+            delta_times_weight12 = delta_times_weight1 * delta_times_weight2
+            weights12 = weights1[i] * weights2[j]
+            z = (z1[i] + z2[j]) / 2
+
+            bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) 
+                                  * num_bins_r_par)
+            bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
+            bins = np.int(bins_r_trans + num_bins_r_trans * bins_r_par)
+
+            if remove_same_half_plate_close_pairs and same_half_plate:
+                if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
+                    continue
+
+            rebin_xi[bins] += delta_times_weight12
+            rebin_weight[bins] += weights12
+            rebin_r_par[bins] += r_par * weights12
+            rebin_r_trans[bins] += r_trans * weights12
+            rebin_z[bins] += z * weights12
+            rebin_num_pairs[bins] += 1
 
 def compute_dmat(healpixs):
     """Computes the distortion matrix for each of the healpixs.
@@ -331,13 +424,13 @@ def compute_dmat(healpixs):
                     (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
                     (delta1.fiberid > 500 and delta2.fiberid > 500)))
                 order2 = delta2.order
-                ang = delta1 ^ delta2
+                ang = delta1.get_angle_between(delta2)
                 r_comov2 = delta2.r_comov
                 dist_m2 = delta2.dist_m
                 weights2 = delta2.weights
                 log_lambda2 = delta2.log_lambda
                 z2 = delta2.z
-                compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1,
+                compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1,
                                           r_comov2, dist_m1, dist_m2, z1, z2,
                                           weights1, weights2, ang, weights_dmat,
                                           dmat, r_par_eff, r_trans_eff, z_eff,
@@ -352,6 +445,8 @@ def compute_dmat(healpixs):
             num_pairs, num_pairs_used)
 
 
+#-- This has been superseeded by compute_dmat_forest_pairs_fast
+#-- and will be deprecated
 @jit
 def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
                               dist_m1, dist_m2, z1, z2, weights1, weights2, ang,
@@ -596,6 +691,201 @@ def compute_dmat_forest_pairs(log_lambda1, log_lambda2, r_comov1, r_comov2,
                        eta4[j + num_pixels2 * unique_model_bin] *
                        log_lambda_minus_mean1[i])))
 
+@jit(nopython=True)
+def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
+                              dist_m1, dist_m2, z1, z2, weights1, weights2, ang,
+                              weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff,
+                              weight_eff, same_half_plate, order1, order2):
+
+    #-- First, determine how many relevant pixel pairs for speed up
+    num_pairs = 0
+    for i in range(z1.size):
+        if weights1[i] == 0: continue
+        for j in range(z2.size):
+            if weights2[j] ==0: continue
+            r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
+            r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
+            if not x_correlation:
+                r_par = np.abs(r_par)
+            if (r_par >= r_par_max or 
+                r_trans >= r_trans_max or 
+                r_par < r_par_min):
+                continue
+            if remove_same_half_plate_close_pairs and same_half_plate:
+                if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
+                    continue
+            num_pairs += 1
+
+    if num_pairs == 0: 
+        return
+
+
+    # Compute useful auxiliar variables to speed up computation of eta
+    # (equation 6 of du Mas des Bourboux et al. 2020)
+
+    # denominator second term in equation 6 of du Mas des Bourboux et al. 2020
+    sum_weights1 = weights1.sum()
+    sum_weights2 = weights2.sum()
+
+    # mean of log_lambda
+    mean_log_lambda1 = np.sum(log_lambda1*weights1)/sum_weights1
+    mean_log_lambda2 = np.sum(log_lambda2*weights2)/sum_weights2
+
+    # log_lambda minus its mean
+    log_lambda_minus_mean1 = log_lambda1 - mean_log_lambda1
+    log_lambda_minus_mean2 = log_lambda2 - mean_log_lambda2
+
+    # denominator third term in equation 6 of du Mas des Bourboux et al. 2020
+    sum_weights_square_log_lambda_minus_mean1 = (
+        weights1 * log_lambda_minus_mean1**2).sum()
+    sum_weights_square_log_lambda_minus_mean2 = (
+        weights2 * log_lambda_minus_mean2**2).sum()
+
+    # auxiliar variables to loop over distortion matrix bins
+    num_pixels1 = len(log_lambda1)
+    num_pixels2 = len(log_lambda2)
+
+    eta1 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans * num_pixels1)
+    eta2 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans * num_pixels2)
+    eta3 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans * num_pixels1)
+    eta4 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans * num_pixels2)
+    eta5 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans)
+    eta6 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans)
+    eta7 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans)
+    eta8 = np.zeros(num_model_bins_r_par * num_model_bins_r_trans)
+
+    #-- Notice that the dtype is numba.int32
+    all_bins = np.zeros(num_pairs, dtype=int32)
+    all_bins_model = np.zeros(num_pairs, dtype=int32)
+    all_i = np.zeros(num_pairs, dtype=int32)
+    all_j = np.zeros(num_pairs, dtype=int32)
+    k=0
+    for i in range(z1.size):
+        if weights1[i] == 0: continue
+        for j in range(z2.size):
+            if weights2[j] == 0: continue
+            r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
+            r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
+            if not x_correlation:
+                r_par = np.abs(r_par)
+            if (r_par >= r_par_max or 
+                r_trans >= r_trans_max or 
+                r_par < r_par_min):
+                continue
+            if remove_same_half_plate_close_pairs and same_half_plate:
+                if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
+                    continue
+            
+            weights12 = weights1[i] * weights2[j]
+            z = (z1[i] + z2[j]) / 2
+
+            bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
+            bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
+            bins = int32(bins_r_trans + num_bins_r_trans * bins_r_par)
+            model_bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) *
+                                        num_model_bins_r_par)
+            model_bins_r_trans = np.floor(r_trans / r_trans_max *
+                                num_model_bins_r_trans)
+            model_bins = int32(model_bins_r_trans + num_model_bins_r_trans * model_bins_r_par)
+
+            #-- This will be used later to fill the distortion matrix
+            all_bins_model[k] = model_bins 
+            all_bins[k] = bins
+            all_i[k] = i
+            all_j[k] = j
+            k+=1
+
+            #-- Fill effective quantities (r_par, r_trans, z_eff, weight_eff)
+            r_par_eff[model_bins] += weights12 * r_par
+            r_trans_eff[model_bins] += weights12 * r_trans
+            z_eff[model_bins] += weights12 * z
+            weight_eff[model_bins] += weights12 
+            weights_dmat[bins] += weights12 
+
+            # Combining equation 21 and equation 6 of du Mas des Bourboux et al. 2020
+            # we find an equation with 9 terms comming from the product of two eta
+            # The variables below stand for 8 of these 9 terms (the first one is
+            # pretty trivial)
+
+            # first eta, first term: kronecker delta
+            # second eta, second term: weight/sum(weights)
+            eta1[i+num_pixels1*model_bins] += weights2[j]/sum_weights2
+
+            # first eta, second term: weight/sum(weights)
+            # second eta, first term: kronecker delta
+            eta2[j+num_pixels2*model_bins] += weights1[i]/sum_weights1
+
+            # first eta, second term: weight/sum(weights)
+            # second eta, second term: weight/sum(weights)  
+            eta5[model_bins] += weights12/sum_weights1/sum_weights2
+
+            if order2 == 1:
+                # first eta, first term: kronecker delta
+                # second eta, third term: (non-zero only for order=1)
+                #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+                #   sum(weight*(Lambda-bar(Lambda)**2))
+                eta3[i+num_pixels1*model_bins] += (weights2[j]*log_lambda_minus_mean2[j] /
+                                                  sum_weights_square_log_lambda_minus_mean2)
+
+                # first eta, second term: weight/sum(weights)
+                # second eta, third term: (non-zero only for order=1)
+                #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+                #   sum(weight*(Lambda-bar(Lambda)**2))
+                eta6[model_bins] += (weights1[i]/sum_weights1 * 
+                                     (weights2[j]*log_lambda_minus_mean2[j] /
+                                     sum_weights_square_log_lambda_minus_mean2))
+            if order1 == 1:
+                # first eta, third term: (non-zero only for order=1)
+                #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+                #   sum(weight*(Lambda-bar(Lambda)**2))
+                # second eta, first term: kronecker delta
+                eta4[j+num_pixels2*model_bins] += (weights1[i]*log_lambda_minus_mean1[i] /
+                        sum_weights_square_log_lambda_minus_mean1)
+                # first eta, third term: (non-zero only for order=1)
+                #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+                #   sum(weight*(Lambda-bar(Lambda)**2))
+                # second eta, second term: weight/sum(weights)
+                eta7[model_bins] += (weights2[j]/sum_weights2 * 
+                                     (weights1[i]*log_lambda_minus_mean1[i] /
+                                     sum_weights_square_log_lambda_minus_mean1))
+                if order2 == 1:
+                    # first eta, third term: (non-zero only for order=1)
+                    #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+                    #   sum(weight*(Lambda-bar(Lambda)**2))
+                    # second eta, third term: (non-zero only for order=1)
+                    #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
+                    #   sum(weight*(Lambda-bar(Lambda)**2)
+                    eta8[model_bins] += ( weights1[i]*log_lambda_minus_mean1[i] * 
+                                          weights2[j]*log_lambda_minus_mean2[j] /
+                                          sum_weights_square_log_lambda_minus_mean1 /
+                                          sum_weights_square_log_lambda_minus_mean2 )
+
+    # Now add all the contributions together
+    unique_bins_model = np.unique(all_bins_model)
+    for pair in range(num_pairs):
+        i = all_i[pair]
+        j = all_j[pair]
+        bins = all_bins[pair]
+        model_bins = all_bins_model[pair]
+        weights12 = weights1[i] * weights2[j]
+        # first eta, first term: kronecker delta
+        # second eta, first term: kronecker delta
+        dmat_bin = model_bins + num_model_bins_r_par * num_model_bins_r_trans * bins
+        dmat[dmat_bin] += weights12
+        # rest of the terms
+        for k in unique_bins_model:
+            dmat_bin = k + num_model_bins_r_par * num_model_bins_r_trans * bins
+            dmat[dmat_bin] += (
+                weights12 *
+                (eta5[k] + 
+                + eta6[k] * log_lambda_minus_mean2[j] + 
+                + eta7[k] * log_lambda_minus_mean1[i] + 
+                + eta8[k] * log_lambda_minus_mean1[i] * log_lambda_minus_mean2[j] 
+                - eta1[i+num_pixels1*k] 
+                - eta2[j+num_pixels2*k] 
+                - eta3[i+num_pixels1*k] * log_lambda_minus_mean2[j] 
+                - eta4[j+num_pixels2*k] * log_lambda_minus_mean1[i])
+                )
 
 def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
     """Computes the metal distortion matrix for each of the healpixs.
@@ -669,7 +959,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 same_half_plate = ((delta1.plate == delta2.plate) and (
                     (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
                     (delta1.fiberid > 500 and delta2.fiberid > 500)))
-                ang = delta1 ^ delta2
+                ang = delta1.get_angle_between(delta2)
                 r_comov2 = delta2.r_comov
                 dist_m2 = delta2.dist_m
                 z2_abs2 = (
@@ -1018,7 +1308,7 @@ def compute_wick_terms(healpixs):
             z1 = delta1.z
 
             for index2, delta2 in enumerate(delta1.neighbours):
-                ang12 = delta1 ^ delta2
+                ang12 = delta1.get_angle_between(delta2)
 
                 variance_1d_2 = get_variance_1d[delta2.fname](delta2.log_lambda)
                 weights2 = delta2.weights
@@ -1038,8 +1328,8 @@ def compute_wick_terms(healpixs):
 
                 ### delta3 and delta2 have the same 'fname'
                 for delta3 in delta1.neighbours[:index2]:
-                    ang13 = delta1 ^ delta3
-                    ang23 = delta2 ^ delta3
+                    ang13 = delta1.get_angle_between(delta3)
+                    ang23 = delta2.get_angle_between(delta3)
 
                     variance_1d_3 = get_variance_1d[delta3.fname](
                         delta3.log_lambda)
