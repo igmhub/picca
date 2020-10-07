@@ -27,7 +27,7 @@ data/duMasdesBourbouxetal2020/combined_stdFit/combined.ap.at.scan.dat \
 
 ## DR16
 
-### Results of H. du Mas des Bourboux et al. 2020 ([arXiv:2007.08995](https://arxiv.org/abs/2007.08995), submitted to ApJ)
+### Results of H. du Mas des Bourboux et al. 2020 ([arXiv:2007.08995](https://arxiv.org/abs/2007.08995), published in ApJ)
 In ![duMasdesBourbouxetal2020](/data/duMasdesBourbouxetal2020/):
 
 *   ![auto\_full\_stdFit](/data/duMasdesBourbouxetal2020/auto_full_stdFit/): Result of the full auto-correlation with a combined fit of:
