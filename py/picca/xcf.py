@@ -917,8 +917,8 @@ def compute_wick_terms(healpixs):
     return weights_wick, num_pairs_wick, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
 
 
-@jit
-def compute_wickT1234_pairs(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
+#@jit
+def compute_wickT1234_pairs_slow(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
                             weighted_xi_1d_1, weights_wick, num_pairs_wick, t1,
                             t2, t3, t4):
     """
@@ -1181,7 +1181,7 @@ def compute_xi_1d(healpixs):
             ang = np.zeros(len(lambda_qso))
 
             (rebin_weight, rebin_xi, rebin_r_par, _,
-             rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+             rebin_z, rebin_num_pairs) = compute_xi_forest_pairs_fast(
                  delta.z, 10.**delta.log_lambda, 10.**delta.log_lambda,
                  delta.weights, delta.delta, z_qso, lambda_qso, lambda_qso,
                  weights_qso, ang)
@@ -1198,3 +1198,119 @@ def compute_xi_1d(healpixs):
     z[w] /= weights1d[w]
 
     return weights1d, xi_1d, r_par1d, z, num_pairs1d
+
+
+@jit(nopython=True)
+def compute_wickT1234_pairs(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
+                            weighted_xi_1d_1, weights_wick, num_pairs_wick, t1,
+                            t2, t3, t4):
+    """
+    Computes the Wick expansion terms 1, 2, and 3 of a given pair of forests
+
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
+
+    Args:
+        ang: array of floats
+            Angular separation between pixels in forests 1 and 2
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for forest 2
+        z1: array of floats
+            Redshifts for forest 1
+        z2: array of floats
+            Redshifts for forest 2
+        weights1: array of floats
+            Weights for forest 1
+        weights2: array of floats
+            Weights for forest 2
+        weighted_xi_1d_1: array of floats
+            Weighted 1D correlation function for forest 1
+        weights_wick: array of floats
+            Total weight in the covariance matrix pixels
+        num_pairs_wick: array of floats
+            Total number of pairs in the covariance matrix pixels
+        t1: array of floats
+            Wick expansion, term 1
+        t2: array of floats
+            Wick expansion, term 2
+        t3: array of floats
+            Wick expansion, term 3
+        t4: array of floats
+            Wick expansion, term 4
+    """
+    num_pixels1 = len(r_comov1)
+    num_pixels2 = len(r_comov2)
+    i1 = np.arange(num_pixels1)
+    i2 = np.arange(num_pixels2)
+    z_weight_evol1 = ((1 + z1) / (1 + z_ref))**(alpha - 1)
+    z_weight_evol2 = ((1 + z2) / (1 + z_ref))**(alpha_obj - 1)
+    w=np.zeros((num_pixels1,num_pixels2))
+
+    wsum=0
+    for ind2 in i2:    #first figure out how many elements there are
+      for ind1 in i1:
+            r_par = (r_comov1[ind1] - r_comov2[ind2]) * np.cos(ang[ind2] / 2)
+            r_trans = (r_comov1[ind1] + r_comov2[ind2]) * np.sin(ang[ind2] / 2)
+            w[ind1,ind2] = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+            if w[ind1,ind2]>0:
+                wsum+=1
+    if wsum == 0:
+        return
+
+    bins = np.zeros((wsum),dtype=np.int64)
+    bins_forest = np.zeros((wsum),dtype=np.int64)
+    weights12 = np.zeros((wsum))
+    weight1 = np.zeros((wsum))
+    index_obj = np.zeros((wsum),dtype=np.int64)
+    index_delta = np.zeros((wsum),dtype=np.int64)
+    ind=0
+    for ind2 in i2:
+        for ind1 in i1:
+            if w[ind1,ind2]==0:
+                continue
+            bins[ind]=ind1 + num_pixels1 * ind2
+            r_par = (r_comov1[ind1] - r_comov2[ind2]) * np.cos(ang[ind2] / 2)
+            r_trans = (r_comov1[ind1] + r_comov2[ind2]) * np.sin(ang[ind2] / 2)
+            bin_r_par= int((r_par - r_par_min) / (r_par_max - r_par_min) *
+                                num_bins_r_par)
+            bin_r_trans = int(r_trans / r_trans_max * num_bins_r_trans)
+            bins_forest[ind] = bin_r_trans + num_bins_r_trans * bin_r_par
+            weights12[ind] = weights1[ind1] * weights2[ind2]
+            weight1[ind]=weights1[ind1]
+            index_delta[ind]=ind1
+            index_obj[ind]=ind2
+            ind+=1
+
+
+    for index1 in range(bins_forest.size):
+
+        p1 = bins_forest[index1]
+        i1 = index_delta[index1]
+        j1 = index_obj[index1]
+        weights_wick[p1] += weights12[index1]
+        num_pairs_wick[p1] += 1
+        t1[p1,
+           p1] += weights12[index1]**2 / weight1[index1] * z_weight_evol1[i1]
+
+        for index2 in range(index1 + 1, bins_forest.size):
+            p2 = bins_forest[index2]
+            i2 = index_delta[index2]
+            j2 = index_obj[index2]
+            if j1 == j2:
+                prod = weighted_xi_1d_1[i1, i2] * (z_weight_evol2[j1]**2)
+                t2[p1, p2] += prod
+                t2[p2, p1] += prod
+            elif i1 == i2:
+                prod = (weights12[index1] * weights12[index2] /
+                        weight1[index1] * z_weight_evol1[i1])
+                t3[p1, p2] += prod
+                t3[p2, p1] += prod
+            else:
+                prod = (weighted_xi_1d_1[i1, i2] * z_weight_evol2[j1] *
+                        z_weight_evol2[j2])
+                t4[p1, p2] += prod
+                t4[p2, p1] += prod
+
+    return

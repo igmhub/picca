@@ -1586,7 +1586,7 @@ def compute_wickT123_pairs(r_comov1, r_comov2, ang, weights1, weights2, z1, z2,
 
 @jit
 def compute_wickT45_pairs(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23,
-                          weights1, weights2, weights3, weighted_xi_1d_1,
+                          weights1, weights2, weights3, z1, z2, z3, weighted_xi_1d_1,
                           weighted_xi_1d_2, weighted_xi_1d_3, fname1, fname2,
                           fname3, t4, t5):
     """
@@ -1709,6 +1709,192 @@ def compute_wickT45_pairs(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23,
         selected_bin2_12 = bins2_12[index1]
 
         for index2, p2 in enumerate(bins_forest12):
+            selected_bin1_13 = bins1_13[index2]
+            selected_bin3_13 = bins3_13[index2]
+
+            select_xi23 = xi23[selected_bin2_12, selected_bin3_13]
+            if selected_bin1_12 == selected_bin1_13:
+                # TODO: work on the good formula
+                prod = weights1[selected_bin1_12] * select_xi23
+                t4[p1, p2] += prod
+                t4[p2, p1] += prod
+            else:
+                # TODO: work on the good formula
+                prod = weighted_xi_1d_1[selected_bin1_12,
+                                        selected_bin1_13] * select_xi23
+                t5[p1, p2] += prod
+                t5[p2, p1] += prod
+
+    return
+
+
+#the following is not yet finished, do we need it?
+@jit(nopython=True)              #TODO: this should be completed at some point, the function above did not work either, and numba-ing the output dict is not simple
+def compute_wickT45_pairs_fast(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23,
+                          weights1, weights2, weights3, 
+                          z1,z2,z3,weighted_xi_1d_1,
+                          weighted_xi_1d_2, weighted_xi_1d_3, fname1, fname2,
+                          fname3, t4, t5):
+    """
+    Computes the Wick expansion terms 4 and 5 of a given set of 3 forests
+
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
+
+    Args:
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for forest 2
+        r_comov3: array of floats
+            Comoving distance (in Mpc/h) for forest 3
+        ang12: array of floats
+            Angular separation between pixels in forests 1 and 2
+        ang13: array of floats
+            Angular separation between pixels in forests 1 and 3
+        ang23: array of floats
+            Angular separation between pixels in forests 2 and 3
+        weights1: array of floats
+            Weights for forest 1
+        weights2: array of floats
+            Weights for forest 2
+        weights3: array of floats
+            Weights for forest 3
+        weighted_xi_1d_1: array of floats
+            Weighted 1D correlation function for forest 1
+        weighted_xi_1d_2: array of floats
+            Weighted 1D correlation function for forest 2
+        weighted_xi_1d_3: array of floats
+            Weighted 1D correlation function for forest 3
+        fname1: string
+            Flag name identifying the group of deltas for forest 1
+        fname2: string
+            Flag name identifying the group of deltas for forest 2
+        fname3: string
+            Flag name identifying the group of deltas for forest 3
+        t4: array of floats
+            Wick expansion, term 4
+        t5: array of floats
+            Wick expansion, term 5
+    """
+    ### forest-1 x forest-2
+    num_pixels1 = len(r_comov1)
+    num_pixels2 = len(r_comov2)
+    num_pixels3 = len(r_comov3)
+
+    i1 = np.arange(num_pixels1)
+    i2 = np.arange(num_pixels2)
+    i3 = np.arange(num_pixels3)
+
+    w=np.zeros((num_pixels1,num_pixels2))
+
+    wsum=0
+    for ind2 in i2:    #first figure out how many elements there are
+        for ind1 in i1:
+            r_par = (r_comov1[ind1] - r_comov2[ind2]) * np.cos(ang12 / 2)
+            if not x_correlation:
+                r_par = abs(r_par)
+            r_trans = (r_comov1[ind1] + r_comov2[ind2]) * np.sin(ang12 / 2)
+            w[ind1,ind2] = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+            if w[ind1,ind2]>0:
+                wsum+=1
+    if wsum == 0:
+        return        
+
+
+    bins1_12 = np.zeros(wsum,dtype=np.int64)
+    bins2_12 = np.zeros(wsum,dtype=np.int64)
+    bins_forest12 = np.zeros(wsum,dtype=np.int64)
+
+    ind=0
+    for ind2 in i2:
+        for ind1 in i1:
+            if w[ind1,ind2]==0:
+                continue
+            r_par = (r_comov1[ind1] - r_comov2[ind2]) * np.cos(ang12 / 2)
+            if not x_correlation:
+                r_par = abs(r_par)
+            r_trans = (r_comov1[ind1] + r_comov2[ind2]) * np.sin(ang12 / 2)
+            bins1_12[ind]=ind1
+            bins2_12[ind]=ind2
+            bin_r_par = int((r_par - r_par_min) / (r_par_max - r_par_min) *
+                          num_bins_r_par)
+            bin_r_trans = int(r_trans / r_trans_max * num_bins_r_trans)
+            bins_forest12[ind] = bin_r_trans + num_bins_r_trans * bin_r_par
+            ind+=1
+
+
+    ### forest-1 x forest-3
+    w=np.zeros((num_pixels1,num_pixels3))
+
+    wsum=0
+    for ind3 in i3:    #first figure out how many elements there are
+        for ind1 in i1:
+            r_par = (r_comov1[ind1] - r_comov3[ind3]) * np.cos(ang13 / 2)
+            if not x_correlation:
+                r_par = abs(r_par)
+            r_trans = (r_comov1[ind1] + r_comov3[ind3]) * np.sin(ang13 / 2)
+            w[ind1,ind2] = (r_par < r_par_max) & (r_trans < r_trans_max) & (r_par >= r_par_min)
+            if w[ind1,ind3]>0:
+                wsum+=1
+    if wsum == 0:
+        return        
+
+
+    bins1_13 = np.zeros(wsum,dtype=np.int64)
+    bins3_13 = np.zeros(wsum,dtype=np.int64)
+    bins_forest13 = np.zeros(wsum,dtype=np.int64)
+
+    ind=0
+    for ind3 in i3:
+        for ind1 in i1:
+            if w[ind1,ind3]==0:
+                continue
+            r_par = (r_comov1[ind1] - r_comov3[ind3]) * np.cos(ang13 / 2)
+            if not x_correlation:
+                r_par = abs(r_par)
+            r_trans = (r_comov1[ind1] + r_comov3[ind3]) * np.sin(ang13 / 2)
+            bins1_13[ind]=ind1
+            bins3_13[ind]=ind3
+            bin_r_par = int((r_par - r_par_min) / (r_par_max - r_par_min) *
+                          num_bins_r_par)
+            bin_r_trans = int(r_trans / r_trans_max * num_bins_r_trans)
+            bins_forest13[ind] = bin_r_trans + num_bins_r_trans * bin_r_par
+            ind+=1
+
+    ### forest-2 x forest-3
+    
+    bins2_23 = np.zeros(wsum,dtype=np.int64)
+    bins3_23 = np.zeros(wsum,dtype=np.int64)
+    bins_forest23 = np.zeros(wsum,dtype=np.int64)
+    xi23 = np.zeros(wsum,dtype=np.int64)
+
+
+    ind=0
+    for ind3 in i3:
+        for ind2 in i2:
+            if w[ind2,ind3]==0:
+                continue
+            r_par = (r_comov1[ind2] - r_comov3[ind3]) * np.cos(ang23 / 2)
+            if not x_correlation:
+                r_par = abs(r_par)
+            r_trans = (r_comov1[ind2] + r_comov3[ind3]) * np.sin(ang23 / 2)
+            bins2_23[ind]=ind2
+            bins3_23[ind]=ind3
+            bin_r_par = int((r_par - r_par_min) / (r_par_max - r_par_min) *
+                          num_bins_r_par)
+            bin_r_trans = int(r_trans / r_trans_max * num_bins_r_trans)
+            bins_forest23[ind] = bin_r_trans + num_bins_r_trans * bin_r_par
+            ind+=1
+            xi23 = xi_wick['{}_{}'.format(fname2, fname3)][bins_forest23[ind]]
+
+
+    ### Wick t4 and t5
+    for index1, p1 in enumerate(bins_forest12):
+        selected_bin1_12 = bins1_12[index1]
+        selected_bin2_12 = bins2_12[index1]
+
+        for index2, p2 in enumerate(bins_forest13):
             selected_bin1_13 = bins1_13[index2]
             selected_bin3_13 = bins3_13[index2]
 
