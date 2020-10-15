@@ -198,7 +198,7 @@ def compute_xi_forest_pairs_slow(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
     return rebin_weight, rebin_r_par, rebin_r_trans, rebin_z, rebin_num_pairs
 
 
-#@jit(nopython=True)
+@jit(nopython=True)
 def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, z2, r_comov2,
                             dist_m2, weights2, ang):
     """Computes the contribution of a given pair of forests to the correlation
