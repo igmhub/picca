@@ -1739,10 +1739,8 @@ def compute_wickT45_pairs(r_comov1, r_comov2, r_comov3, ang12, ang13, ang23,
     return
 
 
-#the following is not yet finished, do we need it?
-@jit(
-    nopython=True
-)  #TODO: this should be completed at some point, the function above did not work either, and numba-ing the output dict is not simple
+#TODO: this should be completed at some point, the function above did not work either, and numba-ing the output dict is not simple
+@jit(nopython=True)
 def compute_wickT45_pairs_fast(r_comov1, r_comov2, r_comov3, ang12, ang13,
                                ang23, weights1, weights2, weights3, z1, z2, z3,
                                weighted_xi_1d_1, weighted_xi_1d_2,
