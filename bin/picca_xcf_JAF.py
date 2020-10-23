@@ -5,7 +5,7 @@ import fitsio
 import argparse
 from multiprocessing import Pool,Lock,cpu_count,Value
 
-from picca import constants, xcf, io, io_mptest, prep_del, utils
+from picca import constants, xcf, io, prep_del, utils, io_mptest
 from picca.data import forest
 from picca.utils import print
 
@@ -133,10 +133,36 @@ if __name__ == '__main__':
 
     cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
-    ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
-        args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
-        from_image=args.from_image,nproc=args.nproc)
+    if __name__ == "__main__":
+        dels, ndels, zmin_pix, zmax_pix = io_mptest.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
+            args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
+            from_image=args.from_image,nproc=args.nproc)
+
+    """
+
+    def get_file_deltas(f):
+        dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs,
+            args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec,no_project=args.no_project,
+            from_image=args.from_image)
+        return (dels,ndels,zmin_pix,zmax_pix)
+
+    pool = Pool(processes=args.nproc)
+    res = pool.map(get_file_deltas,fi)
+    pool.close()
+
+    pix = []
+    for re in res:
+        pix += [list(re[0].keys())]
+    pix = list(set(pix))
+    dels = {}
+    ndels = 0
+    zmin_piz = 0.0
+    zmax_pix = 10**6
+    for re in res:
+        ndels += 
+
+    """
+
     xcf.npix = len(dels)
     xcf.dels = dels
     xcf.ndels = ndels
@@ -185,8 +211,14 @@ if __name__ == '__main__':
 
     print("")
     xcf.objs = objs
+
+    ###
     xcf.angmax = utils.compute_ang_max(cosmo,xcf.rt_max,zmin_pix,zmin_obj)
+
+
+
     xcf.counter = Value('i',0)
+
     xcf.lock = Lock()
     cpu_data = {}
     for p in list(dels.keys()):

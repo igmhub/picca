@@ -7,6 +7,7 @@ import sys
 import time
 import os.path
 import copy
+from multiprocessing import Pool,Lock,cpu_count,Value
 
 from picca.utils import print
 from picca.data import forest, delta, qso
@@ -779,8 +780,20 @@ def read_from_desi(nside,in_dir,thid,ra,dec,zqso,plate,mjd,fid,order,pk1d=None):
 
     return data
 
+def get_file_deltas(f,from_image=False):
 
-def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False,from_image=None):
+    dels = []
+    if from_image is None:
+        hdus = fitsio.FITS(f)
+        dels += [delta.from_fitsio(h) for h in hdus[1:]]
+        hdus.close()
+    else:
+        dels += delta.from_image(f)
+    print(f,len(dels),end='\r')
+
+    return dels
+
+def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=False,from_image=None,nproc=1):
     '''
     reads deltas from indir
     fills the fields delta.z and multiplies the weights by (1+z)^(alpha-1)/(1+zref)^(alpha-1)
@@ -805,21 +818,18 @@ def read_deltas(indir,nside,lambda_abs,alpha,zref,cosmo,nspec=None,no_project=Fa
             else:
                 fi += glob.glob(arg+'/*.fits') + glob.glob(arg+'/*.fits.gz')
     fi = sorted(fi)
+    
+    print('loading deltas')
+    arguments = [(f,from_image) for f in fi]
+    pool = Pool(processes=nproc)
+    res = [pool.apply_async(get_file_deltas,argument) for argument in arguments]
+    pool.close()
+    pool.join()
 
     dels = []
-    ndata = 0
-    for i,f in enumerate(fi):
-        print("\rread {} of {} {}".format(i,len(fi),ndata))
-        if from_image is None:
-            hdus = fitsio.FITS(f)
-            dels += [delta.from_fitsio(h) for h in hdus[1:]]
-            hdus.close()
-        else:
-            dels += delta.from_image(f)
-
-        ndata = len(dels)
-        if not nspec is None:
-            if ndata>nspec:break
+    for re in res:
+        dels += re.get()
+    ndata = len(dels)
 
     ###
     if not nspec is None:

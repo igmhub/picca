@@ -145,7 +145,7 @@ if __name__ == '__main__':
     cosmo = constants.cosmo(Om=args.fid_Om,Or=args.fid_Or,Ok=args.fid_Ok,wl=args.fid_wl)
 
     ### Read deltas
-    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs, args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec)
+    dels, ndels, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, args.nside, xcf.lambda_abs, args.z_evol_del, args.z_ref, cosmo=cosmo,nspec=args.nspec,nproc=args.nproc)
     for p,delsp in dels.items():
         for d in delsp:
             d.fname = 'D1'
@@ -228,16 +228,22 @@ if __name__ == '__main__':
 
     cpu_data = {}
     for i,p in enumerate(sorted(xcf.dels.keys())):
+        print(i/len(xcf.dels.keys()),end='\r')
         ip = i%args.nproc
         if not ip in cpu_data:
             cpu_data[ip] = []
         cpu_data[ip].append(p)
 
+    print('\n\n')
+
     ### Get neighbours
-    for p in cpu_data.values():
+    for i,p in enumerate(cpu_data.values()):
+        print(i,'/',len(cpu_data.values()),end='\r')
         xcf.fill_neighs(p)
         if not xcf.cfWick is None:
             cf.fill_neighs(p)
+
+    print('\n\n')
 
     pool = Pool(processes=min(args.nproc,len(cpu_data.values())))
     print(" \nStarting\n")

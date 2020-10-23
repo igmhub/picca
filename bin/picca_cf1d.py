@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
 
     ### Read data 1
-    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs,args.z_evol, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
+    data, ndata, zmin_pix, zmax_pix = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs,args.z_evol, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project,nproc=args.nproc)
     cf.npix  = len(data)
     cf.data  = data
     cf.ndata = ndata
@@ -104,14 +104,14 @@ if __name__ == '__main__':
     ### Read data 2
     if args.in_dir2:
         cf.x_correlation = True
-        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
+        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir2, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project,nproc=args.nproc)
         cf.data2  = data2
         cf.ndata2 = ndata2
         print("")
         print("done, npix = {}\n".format(len(data2)))
     elif cf.lambda_abs != cf.lambda_abs2:
         cf.x_correlation = True
-        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project)
+        data2, ndata2, zmin_pix2, zmax_pix2 = io.read_deltas(args.in_dir, cf.nside, cf.lambda_abs2,args.z_evol2, args.z_ref, cosmo=None,nspec=args.nspec,no_project=args.no_project,nproc=args.nproc)
         cf.data2  = data2
         cf.ndata2 = ndata2
 

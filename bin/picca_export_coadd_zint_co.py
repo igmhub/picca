@@ -105,7 +105,7 @@ if __name__ == '__main__':
         for k in ['NT','NP','RTMAX','RPMIN','RPMAX','NSIDE']:
             data[type_corr][k] = data[k]
         for k in ['RP','RT','Z','NB','WET']:
-            data[type_corr][k] = data[k]
+            data[type_corr][k] = sp.zeros(data[k][:].shape)
 
         #Picca saves the output file from picca_co.py with head['NOBJ'] as the
         #total number of objects in the catalog *before* any redshift cuts are
@@ -154,7 +154,7 @@ if __name__ == '__main__':
             coef = nObj*(nObj-1)
         else:
             coef = nObj*nObj2
-        data['COEF'] = coef
+        data[type_corr]['COEF'] = coef
 
         #Correctly normalise all of the data.
         for k in ['RP','RT','Z']:
@@ -165,6 +165,7 @@ if __name__ == '__main__':
             for k in ['RP','RT','Z','NB','WET']:
                 data[k] = data[type_corr][k]
 
+        #Normalise the weights.
         data[type_corr]['WE'] /= coef
 
     ### Get correlation
@@ -208,8 +209,7 @@ if __name__ == '__main__':
         comment = ['Healpix index', 'Sum of weight', 'Number of pairs']
         head2 = [{'name':'HLPXSCHM','value':'RING','comment':'healpix scheme'}]
         names = ['HEALPID','WE','NB']
-        hold_names = ['HEALPID','WE','NBS']
-        out.write([data[type_corr][k] for k in hold_names],names=names,header=head2,comment=comment,extname='COR')
+        out.write([data[type_corr]['HEALPID'],data[type_corr]['WE']*data[type_corr]['COEF'],data[type_corr]['NBS']],names=names,header=head2,comment=comment,extname='COR')
         out.close()
 
         return
