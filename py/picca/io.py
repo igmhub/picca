@@ -935,7 +935,7 @@ def read_from_spplate(in_dir,
     data = list(pix_data.values())
     return data
 
-def read_desi_spectra_file(healpix,in_dir,in_nside):
+def read_desi_spectra_file(healpix,in_dir,in_nside,in_healpixs):
 
     filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
     data = []
@@ -1056,7 +1056,7 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
         mjd_name = 'MJD'
         fiberid_name = 'FIBERID'
 
-    arguments = [(healpix,in_dir,in_nside) for healpix in unique_in_healpixs]
+    arguments = [(healpix,in_dir,in_nside,in_healpixs) for healpix in unique_in_healpixs]
     pool = Pool(processes=nproc)
     results = []
     jobs = [pool.apply_async(read_desi_spectra_file,argument) for argument in arguments]
