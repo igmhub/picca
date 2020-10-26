@@ -1055,7 +1055,7 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
         mjd_name = 'MJD'
         fiberid_name = 'FIBERID'
 
-    arguments = [healpix,in_dir,in_nside for healpix in unique_in_healpixs]
+    arguments = [(healpix,in_dir,in_nside) for healpix in unique_in_healpixs]
     pool = Pool(processes=nproc)
     res = [pool.apply_async(read_desi_spectra_file,argument) for argument in arguments]
     pool.close()
