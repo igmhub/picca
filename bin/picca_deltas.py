@@ -487,6 +487,15 @@ def main():
                                          pk1d=args.delta_format,
                                          spall=args.spall)
 
+    ### HACK: expand the data to give 3072 pixels worth but having only loaded
+    ### a single pixel for speed.
+    import copy
+    key = list(data.keys())[0]
+    for i in range(3072):
+        print(i,end='\r')
+        data[i] = copy.deepcopy(data[key])
+    ### END OF HACK
+
     #-- Add order info
     for pix in data:
         for forest in data[pix]:
@@ -611,14 +620,17 @@ def main():
 
     ### HACK: expand the data to give 3072 pixels worth but having only loaded
     ### a single pixel for speed.
-    key = data.keys()[0]
-    for i in range(3072):
-        data[i] = data[key]
+    #key = list(data.keys())[0]
+    #for i in range(100):
+    #    data[i] = data[key]
+    ### END OF HACK
 
     # compute fits to the forests iteratively
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
     num_iterations = args.nit
     for iteration in range(num_iterations):
+        start = time.time()
+
         pool = Pool(processes=args.nproc)
         userprint(
             f"Continuum fitting: starting iteration {iteration} of {num_iterations}"
@@ -629,13 +641,12 @@ def main():
         sort = pixels.argsort()
         sorted_data = [data[k] for k in pixels[sort]]
 
-        ### HACK: New code
-        data_fit_cont = pool.map(cont_fit, sorted_data, chunksize=1)
+        ### HACK: Different options to avoid memory issues.
+        data_fit_cont = pool.map(cont_fit, sorted_data) # Existing code
+        #data_fit_cont = pool.map(cont_fit, sorted_data, chunksize=20) # Remove chunking. 
+        #data_fit_cont = pool.imap(cont_fit, sorted_data) # Use imap (chunksize=1 automatically, I think?)
+        ### END OF HACK
 
-        """
-        ### HACK: Original code
-        data_fit_cont = pool.map(cont_fit, sorted_data)
-        """
         for index, healpix in enumerate(pixels[sort]):
             data[healpix] = data_fit_cont[index]
 
@@ -644,6 +655,8 @@ def main():
         )
 
         pool.close()
+
+        print('Took {:2.3f} seconds'.format(time.time()-start))
 
         if iteration < num_iterations - 1:
             #-- Compute mean continuum (stack in rest-frame)
