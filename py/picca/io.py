@@ -26,6 +26,7 @@ import healpy
 import fitsio
 from astropy.table import Table
 import warnings
+from multiprocessing import Pool
 
 from picca.utils import userprint
 from picca.data import Forest, Delta, QSO
@@ -933,6 +934,92 @@ def read_from_spplate(in_dir,
     data = list(pix_data.values())
     return data
 
+def read_desi_spectra_file(healpix):
+
+    filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
+    data = []
+
+    userprint(
+        f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
+    try:
+        hdul = fitsio.FITS(filename)
+    except IOError:
+        userprint(f"Error reading pix {healpix}")
+        return
+
+    #-- Read targetid from fibermap to match to catalog later
+    fibermap = hdul['FIBERMAP'].read()
+    targetid_spec = fibermap["TARGETID"]
+
+    #-- First read all wavelength, flux, ivar, mask, and resolution
+    #-- from this file
+    spec_data = {}
+    colors = ["B", "R"]
+    if "Z_FLUX" in hdul:
+        colors.append("Z")
+    for color in colors:
+        spec = {}
+        try:
+            spec["log_lambda"] = np.log10(
+                hdul[f"{color}_WAVELENGTH"].read())
+            spec["FL"] = hdul[f"{color}_FLUX"].read()
+            spec["IV"] = (hdul[f"{color}_IVAR"].read() *
+                          (hdul[f"{color}_MASK"].read() == 0))
+            w = np.isnan(spec["FL"]) | np.isnan(spec["IV"])
+            for key in ["FL", "IV"]:
+                spec[key][w] = 0.
+            if f"{color}_RESOLUTION" in hdul:
+                spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
+            spec_data[color] = spec
+        except OSError:
+            userprint(f"ERROR: while reading {color} band from {filename}")
+    hdul.close()
+
+    ## Get the quasars in this healpix pixel
+    select = np.where(in_healpixs == healpix)[0]
+
+    #-- Loop over quasars in catalog inside this healpixel
+    for entry in catalog[select]:
+        #-- Find which row in tile contains this quasar
+        #-- It should be there by construction
+        w_t = np.where(targetid_spec == entry[id_name])[0]
+        if len(w_t) == 0:
+            userprint(f"Error reading {entry[id_name]}")
+            return
+        elif len(w_t) > 1:
+            userprint(f"Warning: more than one spectrum in this file for {entry[id_name]}")
+        else:
+            w_t = w_t[0]
+
+        #-- Loop over three spectrograph arms and coadd fluxes
+        forest = None
+        for spec in spec_data.values():
+            ivar = spec['IV'][w_t].copy()
+            flux = spec['FL'][w_t].copy()
+
+            if not pk1d is None:
+                reso_sum = spec['RESO'][w_t].copy()
+                reso_in_km_per_s = spectral_resolution_desi(
+                    reso_sum, spec['log_lambda'])
+                exposures_diff = np.zeros(spec['log_lambda'].shape)
+            else:
+                reso_in_km_per_s = None
+                exposures_diff = None
+
+            forest_temp = Forest(spec['log_lambda'], flux, ivar,
+                                 entry[id_name], entry['RA'], entry['DEC'],
+                                 entry['Z'], entry[plate_name],
+                                 entry[mjd_name], entry[fiberid_name],
+                                 exposures_diff, reso_in_km_per_s)
+
+            if forest is None:
+                forest = copy.deepcopy(forest_temp)
+            else:
+                forest.coadd(forest_temp)
+
+        data.append(forest)
+
+    return data
 
 def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
     """Reads the spectra and formats its data as Forest instances.
@@ -968,100 +1055,14 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
         mjd_name = 'MJD'
         fiberid_name = 'FIBERID'
 
-    def _func(healpix):
-
-        filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
-        data = []
-
-        userprint(
-            f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
-        try:
-            hdul = fitsio.FITS(filename)
-        except IOError:
-            userprint(f"Error reading pix {healpix}")
-            return
-
-        #-- Read targetid from fibermap to match to catalog later
-        fibermap = hdul['FIBERMAP'].read()
-        targetid_spec = fibermap["TARGETID"]
-
-        #-- First read all wavelength, flux, ivar, mask, and resolution
-        #-- from this file
-        spec_data = {}
-        colors = ["B", "R"]
-        if "Z_FLUX" in hdul:
-            colors.append("Z")
-        for color in colors:
-            spec = {}
-            try:
-                spec["log_lambda"] = np.log10(
-                    hdul[f"{color}_WAVELENGTH"].read())
-                spec["FL"] = hdul[f"{color}_FLUX"].read()
-                spec["IV"] = (hdul[f"{color}_IVAR"].read() *
-                              (hdul[f"{color}_MASK"].read() == 0))
-                w = np.isnan(spec["FL"]) | np.isnan(spec["IV"])
-                for key in ["FL", "IV"]:
-                    spec[key][w] = 0.
-                if f"{color}_RESOLUTION" in hdul:
-                    spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
-                spec_data[color] = spec
-            except OSError:
-                userprint(f"ERROR: while reading {color} band from {filename}")
-        hdul.close()
-
-        ## Get the quasars in this healpix pixel
-        select = np.where(in_healpixs == healpix)[0]
-
-        #-- Loop over quasars in catalog inside this healpixel
-        for entry in catalog[select]:
-            #-- Find which row in tile contains this quasar
-            #-- It should be there by construction
-            w_t = np.where(targetid_spec == entry[id_name])[0]
-            if len(w_t) == 0:
-                userprint(f"Error reading {entry[id_name]}")
-                return
-            elif len(w_t) > 1:
-                userprint(f"Warning: more than one spectrum in this file for {entry[id_name]}")
-            else:
-                w_t = w_t[0]
-
-            #-- Loop over three spectrograph arms and coadd fluxes
-            forest = None
-            for spec in spec_data.values():
-                ivar = spec['IV'][w_t].copy()
-                flux = spec['FL'][w_t].copy()
-
-                if not pk1d is None:
-                    reso_sum = spec['RESO'][w_t].copy()
-                    reso_in_km_per_s = spectral_resolution_desi(
-                        reso_sum, spec['log_lambda'])
-                    exposures_diff = np.zeros(spec['log_lambda'].shape)
-                else:
-                    reso_in_km_per_s = None
-                    exposures_diff = None
-
-                forest_temp = Forest(spec['log_lambda'], flux, ivar,
-                                     entry[id_name], entry['RA'], entry['DEC'],
-                                     entry['Z'], entry[plate_name],
-                                     entry[mjd_name], entry[fiberid_name],
-                                     exposures_diff, reso_in_km_per_s)
-
-                if forest is None:
-                    forest = copy.deepcopy(forest_temp)
-                else:
-                    forest.coadd(forest_temp)
-
-            data.append(forest)
-
-        return data
-
     pool = Pool(processes=nproc)
 
-    list_of_datas = pool.map(_func, unique_in_healpixs)
+    list_of_datas = pool.map(read_desi_spectra_file, unique_in_healpixs)
 
     data = []
-    for d in list_of_data:
-        data.append(d)
+    for data_result in list_of_data:
+        for d in data_result:
+            data.append(d)
 
     pool.close()
 
