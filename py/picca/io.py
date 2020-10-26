@@ -979,7 +979,7 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
             hdul = fitsio.FITS(filename)
         except IOError:
             userprint(f"Error reading pix {healpix}")
-            continue
+            return
 
         #-- Read targetid from fibermap to match to catalog later
         fibermap = hdul['FIBERMAP'].read()
@@ -1019,7 +1019,7 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
             w_t = np.where(targetid_spec == entry[id_name])[0]
             if len(w_t) == 0:
                 userprint(f"Error reading {entry[id_name]}")
-                continue
+                return
             elif len(w_t) > 1:
                 userprint(f"Warning: more than one spectrum in this file for {entry[id_name]}")
             else:
