@@ -27,6 +27,7 @@ import fitsio
 from astropy.table import Table
 import warnings
 from multiprocessing import Pool
+import tqdm
 
 from picca.utils import userprint
 from picca.data import Forest, Delta, QSO
@@ -1057,8 +1058,13 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
 
     arguments = [(healpix,in_dir,in_nside) for healpix in unique_in_healpixs]
     pool = Pool(processes=nproc)
-    res = [pool.apply_async(read_desi_spectra_file,argument) for argument in arguments]
+    results = []
+    jobs = [pool.apply_async(read_desi_spectra_file,argument) for argument in arguments]
     pool.close()
+
+    for job in tqdm.tqdm(jobs,ncols=80,desc='Progress'):
+        results.append(job.get())
+
     pool.join()
 
     return data
