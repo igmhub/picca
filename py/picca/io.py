@@ -934,13 +934,13 @@ def read_from_spplate(in_dir,
     data = list(pix_data.values())
     return data
 
-def read_desi_spectra_file(healpix):
+def read_desi_spectra_file(healpix,in_dir,in_nside):
 
     filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
     data = []
 
-    userprint(
-        f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
+    #userprint(
+    #    f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
     try:
         hdul = fitsio.FITS(filename)
     except IOError:
@@ -1055,16 +1055,11 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
         mjd_name = 'MJD'
         fiberid_name = 'FIBERID'
 
+    arguments = [healpix,in_dir,in_nside for healpix in unique_in_healpixs]
     pool = Pool(processes=nproc)
-
-    list_of_datas = pool.map(read_desi_spectra_file, unique_in_healpixs)
-
-    data = []
-    for data_result in list_of_data:
-        for d in data_result:
-            data.append(d)
-
+    res = [pool.apply_async(read_desi_spectra_file,argument) for argument in arguments]
     pool.close()
+    pool.join()
 
     return data
 
