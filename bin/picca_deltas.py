@@ -609,6 +609,12 @@ def main():
     tmin = (t1 - t0) / 60
     userprint('INFO: time elapsed to read data', tmin, 'minutes')
 
+    ### HACK: expand the data to give 3072 pixels worth but having only loaded
+    ### a single pixel for speed.
+    key = data.keys()[0]
+    for i in range(3072):
+        data[i] = data[key]
+
     # compute fits to the forests iteratively
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
     num_iterations = args.nit
@@ -622,7 +628,14 @@ def main():
         pixels = np.array([k for k in data])
         sort = pixels.argsort()
         sorted_data = [data[k] for k in pixels[sort]]
+
+        ### HACK: New code
+        data_fit_cont = pool.map(cont_fit, sorted_data, chunksize=1)
+
+        """
+        ### HACK: Original code
         data_fit_cont = pool.map(cont_fit, sorted_data)
+        """
         for index, healpix in enumerate(pixels[sort]):
             data[healpix] = data_fit_cont[index]
 
