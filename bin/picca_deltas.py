@@ -485,7 +485,8 @@ def main():
                                          best_obs=args.best_obs,
                                          single_exp=args.single_exp,
                                          pk1d=args.delta_format,
-                                         spall=args.spall)
+                                         spall=args.spall,
+                                         nproc=args.nproc)
 
     ### HACK: expand the data to give 3072 pixels worth but having only loaded
     ### a single pixel for speed.
@@ -643,7 +644,7 @@ def main():
 
         ### HACK: Different options to avoid memory issues.
         data_fit_cont = pool.map(cont_fit, sorted_data) # Existing code
-        #data_fit_cont = pool.map(cont_fit, sorted_data, chunksize=20) # Remove chunking. 
+        #data_fit_cont = pool.map(cont_fit, sorted_data, chunksize=20) # Control chunking.
         #data_fit_cont = pool.imap(cont_fit, sorted_data) # Use imap (chunksize=1 automatically, I think?)
         ### END OF HACK
 

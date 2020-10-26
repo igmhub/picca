@@ -262,7 +262,8 @@ def read_data(in_dir,
               best_obs=False,
               single_exp=False,
               pk1d=None,
-              spall=None):
+              spall=None,
+              nproc=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -299,6 +300,8 @@ def read_data(in_dir,
             Format for Pk 1D: Pk1D
         spall: str - default: None
             Path to the spAll file required for multiple observations
+        nproc: int or None - default: None
+            Number of multiprocessing processes
 
     Returns:
         The following variables:
@@ -332,7 +335,7 @@ def read_data(in_dir,
     # read data taking the mode into account
     if mode in ["desi", "spcframe", "spplate", "spec", "corrected-spec"]:
         if mode == "desi":
-            pix_data = read_from_desi(in_dir, catalog, pk1d=pk1d)
+            pix_data = read_from_desi(in_dir, catalog, pk1d=pk1d, nproc=nproc)
         elif mode == "spcframe":
             pix_data = read_from_spcframe(in_dir,
                                           catalog,
@@ -464,7 +467,7 @@ def read_from_spec(in_dir,
         in_dir: str
             Directory to spectra files
         catalog: astropy.table.Table
-            Table containing catalog with objects 
+            Table containing catalog with objects
         mode: str
             One of 'spec' or 'corrected-spec'. Open mode of the spectra files
         pk1d: str or None - default: None
@@ -683,7 +686,7 @@ def read_from_pix(in_dir, healpix, catalog, log_file=None):
 
 def read_from_spcframe(in_dir, catalog, log_file=None, single_exp=False):
     """ Reads the spectra from SDSS type spCFrame files
-        (individual exposures) 
+        (individual exposures)
         and formats its data as Forest instances.
 
     Args:
@@ -836,7 +839,7 @@ def read_from_spplate(in_dir,
         in_dir: str
             Directory to spectra files
         catalog: astropy.table
-            Table containing metadata of objects 
+            Table containing metadata of objects
         log_file: _io.TextIOWrapper or None - default: None
             Opened file to print log
         best_obs: bool - default: False
@@ -931,16 +934,18 @@ def read_from_spplate(in_dir,
     return data
 
 
-def read_from_desi(in_dir, catalog, pk1d=None):
+def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
         in_dir: str
             Directory to spectra files
         catalog: astropy.table
-            Table containing metadata of objects 
+            Table containing metadata of objects
         pk1d: str or None - default: None
             Format for Pk 1D: Pk1D
+        nproc: int or None - default: None
+            Number of multiprocessing processes
 
     Returns:
         List of read spectra for all the healpixs
@@ -963,9 +968,10 @@ def read_from_desi(in_dir, catalog, pk1d=None):
         mjd_name = 'MJD'
         fiberid_name = 'FIBERID'
 
-    data = []
-    for index, healpix in enumerate(unique_in_healpixs):
+    def _func(healpix):
+
         filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
+        data = []
 
         userprint(
             f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
@@ -1047,6 +1053,18 @@ def read_from_desi(in_dir, catalog, pk1d=None):
 
             data.append(forest)
 
+        return data
+
+    pool = Pool(processes=nproc)
+
+    list_of_datas = pool.map(_func, unique_in_healpixs)
+
+    data = []
+    for d in list_of_data:
+        data.append(d)
+
+    pool.close()
+
     return data
 
 
@@ -1059,7 +1077,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
         in_dir: str
             Directory to spectra files
         catalog: astropy.table
-            Table containing metadata of objects 
+            Table containing metadata of objects
         pk1d: str or None - default: None
             Format for Pk 1D: Pk1D
 
