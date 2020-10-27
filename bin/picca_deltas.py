@@ -490,11 +490,11 @@ def main():
 
     ### HACK: expand the data to give 3072 pixels worth but having only loaded
     ### a single pixel for speed.
-    import copy
-    key = list(data.keys())[0]
-    for i in range(3072):
-        print(i,end='\r')
-        data[i] = copy.deepcopy(data[key])
+    #import copy
+    #key = list(data.keys())[0]
+    #for i in range(3072):
+    #    print(i,end='\r')
+    #    data[i] = copy.deepcopy(data[key])
     ### END OF HACK
 
     #-- Add order info
@@ -643,13 +643,27 @@ def main():
         sorted_data = [data[k] for k in pixels[sort]]
 
         ### HACK: Different options to avoid memory issues.
-        data_fit_cont = pool.map(cont_fit, sorted_data) # Existing code
-        #data_fit_cont = pool.map(cont_fit, sorted_data, chunksize=20) # Control chunking.
-        #data_fit_cont = pool.imap(cont_fit, sorted_data) # Use imap (chunksize=1 automatically, I think?)
-        ### END OF HACK
 
+        """
+        # Existing code 
+        data_fit_cont = pool.map(cont_fit, sorted_data) # Existing code
         for index, healpix in enumerate(pixels[sort]):
             data[healpix] = data_fit_cont[index]
+        """
+
+        """
+        # Control chunking 
+        data_fit_cont = pool.map(cont_fit, sorted_data, chunksize=4)
+        for index, healpix in enumerate(pixels[sort]):
+            data[healpix] = data_fit_cont[index]
+        """
+
+        # Use imap
+        data_fit_cont = pool.imap(cont_fit, sorted_data)
+        for i, d in enumerate(data_fit_cont):
+            data[pixels[i]] = d
+
+        ### END OF HACK
 
         userprint(
             f"Continuum fitting: ending iteration {iteration} of {num_iterations}"
@@ -661,14 +675,34 @@ def main():
 
         if iteration < num_iterations - 1:
             #-- Compute mean continuum (stack in rest-frame)
+
+            start = time.time()
+            
             (log_lambda_rest_frame, mean_cont,
-             mean_cont_weight) = prep_del.compute_mean_cont(data)
+             mean_cont_weight) = prep_del.compute_mean_cont(data,nproc=args.nproc)
+            
+            print('checkpoint run compute_mean_cont: {:2.3f}s'.format(time.time()-start))
+            start = time.time()
+            
             w = mean_cont_weight > 0.
             log_lambda_cont = log_lambda_rest_frame[w]
+            
+            print('checkpoint weights: {:2.3f}s'.format(time.time()-start))
+            start = time.time()
+            
             new_cont = Forest.get_mean_cont(log_lambda_cont) * mean_cont[w]
+            
+            print('checkpoint run get_mean_cont: {:2.3f}s'.format(time.time()-start))
+            start = time.time()
+            
             Forest.get_mean_cont = interp1d(log_lambda_cont,
                                             new_cont,
                                             fill_value="extrapolate")
+
+            print('checkpoint update get_mean_cont: {:2.3f}s'.format(time.time()-start))
+            start = time.time()
+
+            print((args.use_ivar_as_weight or args.use_constant_weight))
 
             #-- Compute observer-frame mean quantities (var_lss, eta, fudge)
             if not (args.use_ivar_as_weight or args.use_constant_weight):
@@ -676,7 +710,8 @@ def main():
                  var_delta, var2_delta, count, num_qso, chi2_in_bin, error_eta,
                  error_var_lss, error_fudge) = prep_del.compute_var_stats(
                      data, (args.eta_min, args.eta_max),
-                     (args.vlss_min, args.vlss_max))
+                     (args.vlss_min, args.vlss_max),
+                     nproc=args.nproc)
                 w = num_pixels > 0
                 Forest.get_eta = interp1d(log_lambda[w],
                                           eta[w],
@@ -733,6 +768,9 @@ def main():
                                             fudge,
                                             fill_value='extrapolate',
                                             kind='nearest')
+
+            print('checkpoint observer frame mean quants: {:2.3f}s'.format(time.time()-start))
+            start = time.time()
 
     ### Read metadata from forests and export it
     if not args.metadata is None:

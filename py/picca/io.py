@@ -935,7 +935,19 @@ def read_from_spplate(in_dir,
     data = list(pix_data.values())
     return data
 
-def read_desi_spectra_file(healpix,in_dir,in_nside,in_healpixs):
+def read_desi_spectra_file(healpix,in_dir,in_nside,in_healpixs,catalog,pk1d=None):
+
+    #-- This is making it compatible with quickquasars on eBOSS mode
+    if 'TARGETID' in catalog.colnames:
+        id_name = 'TARGETID'
+        plate_name = 'TILEID'
+        mjd_name = 'NIGHT'
+        fiberid_name = 'FIBER'
+    else:
+        id_name = 'THING_ID'
+        plate_name = 'PLATE'
+        mjd_name = 'MJD'
+        fiberid_name = 'FIBERID'
 
     filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
     data = []
@@ -1044,20 +1056,18 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
     in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
     unique_in_healpixs = np.unique(in_healpixs)
 
-    #-- This is making it compatible with quickquasars on eBOSS mode
-    if 'TARGETID' in catalog.colnames:
-        id_name = 'TARGETID'
-        plate_name = 'TILEID'
-        mjd_name = 'NIGHT'
-        fiberid_name = 'FIBER'
-    else:
-        id_name = 'THING_ID'
-        plate_name = 'PLATE'
-        mjd_name = 'MJD'
-        fiberid_name = 'FIBERID'
-
-    arguments = [(healpix,in_dir,in_nside,in_healpixs) for healpix in unique_in_healpixs]
+    arguments = [(healpix,in_dir,in_nside,in_healpixs,catalog,pk1d) for healpix in unique_in_healpixs]
     pool = Pool(processes=nproc)
+    
+    results = pool.starmap(read_desi_spectra_file,arguments)
+    #results = [pool.apply_async(read_desi_spectra_file,argument) for argument in arguments]
+    pool.close()
+    #pool.join()
+    data = []
+    for r in results:
+        if r is not None:
+            data += r
+    """
     results = []
     jobs = [pool.apply_async(read_desi_spectra_file,argument) for argument in arguments]
     pool.close()
@@ -1066,6 +1076,7 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
         results.append(job.get())
 
     pool.join()
+    """
 
     return data
 

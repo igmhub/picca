@@ -8,6 +8,7 @@ See the respective documentation for details
 """
 import numpy as np
 import iminuit
+from multiprocessing import Pool
 from picca.data import Forest
 from picca.utils import userprint
 
