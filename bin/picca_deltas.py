@@ -645,14 +645,14 @@ def main():
         ### HACK: Different options to avoid memory issues.
 
         """
-        # Existing code 
+        # Existing code
         data_fit_cont = pool.map(cont_fit, sorted_data) # Existing code
         for index, healpix in enumerate(pixels[sort]):
             data[healpix] = data_fit_cont[index]
         """
 
         """
-        # Control chunking 
+        # Control chunking
         data_fit_cont = pool.map(cont_fit, sorted_data, chunksize=4)
         for index, healpix in enumerate(pixels[sort]):
             data[healpix] = data_fit_cont[index]
@@ -671,30 +671,32 @@ def main():
 
         pool.close()
 
-        print('Took {:2.3f} seconds'.format(time.time()-start))
+        userprint(
+            f"Took {:2.3f} seconds".format(time.time()-start)
+        )
 
         if iteration < num_iterations - 1:
             #-- Compute mean continuum (stack in rest-frame)
 
             start = time.time()
-            
+
             (log_lambda_rest_frame, mean_cont,
              mean_cont_weight) = prep_del.compute_mean_cont(data,nproc=args.nproc)
-            
+
             print('checkpoint run compute_mean_cont: {:2.3f}s'.format(time.time()-start))
             start = time.time()
-            
+
             w = mean_cont_weight > 0.
             log_lambda_cont = log_lambda_rest_frame[w]
-            
+
             print('checkpoint weights: {:2.3f}s'.format(time.time()-start))
             start = time.time()
-            
+
             new_cont = Forest.get_mean_cont(log_lambda_cont) * mean_cont[w]
-            
+
             print('checkpoint run get_mean_cont: {:2.3f}s'.format(time.time()-start))
             start = time.time()
-            
+
             Forest.get_mean_cont = interp1d(log_lambda_cont,
                                             new_cont,
                                             fill_value="extrapolate")

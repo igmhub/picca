@@ -998,7 +998,7 @@ def read_desi_spectra_file(healpix,in_dir,in_nside,in_healpixs,catalog,pk1d=None
         w_t = np.where(targetid_spec == entry[id_name])[0]
         if len(w_t) == 0:
             userprint(f"Error reading {entry[id_name]}")
-            return
+            continue
         elif len(w_t) > 1:
             userprint(f"Warning: more than one spectrum in this file for {entry[id_name]}")
         else:
@@ -1058,7 +1058,7 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
 
     arguments = [(healpix,in_dir,in_nside,in_healpixs,catalog,pk1d) for healpix in unique_in_healpixs]
     pool = Pool(processes=nproc)
-    
+
     results = pool.starmap(read_desi_spectra_file,arguments)
     #results = [pool.apply_async(read_desi_spectra_file,argument) for argument in arguments]
     pool.close()
