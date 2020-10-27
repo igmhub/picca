@@ -626,6 +626,7 @@ def main():
     #    data[i] = data[key]
     ### END OF HACK
 
+    print(len(data.keys()),'pixels in data')
     # compute fits to the forests iteratively
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
     num_iterations = args.nit
@@ -672,7 +673,7 @@ def main():
         pool.close()
 
         userprint(
-            f"Took {:2.3f} seconds".format(time.time()-start)
+            f"Took {time.time()-start:2.3f} seconds"
         )
 
         if iteration < num_iterations - 1:
