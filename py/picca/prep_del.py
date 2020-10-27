@@ -11,8 +11,30 @@ import iminuit
 from picca.data import Forest
 from picca.utils import userprint
 
+def compute_forests_mean_cont(forests,num_bins):
 
-def compute_mean_cont(data):
+    mean_cont = np.zeros(num_bins)
+    mean_cont_weight = np.zeros(num_bins)
+    for forest in forests:
+        bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
+                 np.log10(1 + forest.z_qso)) /
+                (Forest.log_lambda_max_rest_frame -
+                 Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
+        var_lss = Forest.get_var_lss(forest.log_lambda)
+        eta = Forest.get_eta(forest.log_lambda)
+        fudge = Forest.get_fudge(forest.log_lambda)
+        var_pipe = 1. / forest.ivar / forest.cont**2
+        variance = eta * var_pipe + var_lss + fudge / var_pipe
+        weights = 1 / variance
+        cont = np.bincount(bins,
+                           weights=forest.flux / forest.cont * weights)
+        mean_cont[:len(cont)] += cont
+        cont = np.bincount(bins, weights=weights)
+        mean_cont_weight[:len(cont)] += cont
+
+    return mean_cont, mean_cont_weight
+
+def compute_mean_cont(data,nproc=None):
     """Computes the mean quasar continuum over the whole sample.
 
     Args:
@@ -35,6 +57,22 @@ def compute_mean_cont(data):
         Forest.log_lambda_min_rest_frame + (np.arange(num_bins) + .5) *
         (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame) /
         num_bins)
+
+    pool = Pool(processes=nproc)
+
+    tasks = [(data[k],num_bins) for k in data.keys()]
+    jobs = [pool.apply_async(compute_forests_mean_cont,task) for task in tasks]
+    pool.close()
+
+    results = []
+    for job in jobs:
+        result = job.get()
+        mean_cont += result[0]
+        mean_cont_weight += result[1]
+
+    pool.join()
+
+    """
     for healpix in sorted(list(data.keys())):
         for forest in data[healpix]:
             bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
@@ -52,6 +90,7 @@ def compute_mean_cont(data):
             mean_cont[:len(cont)] += cont
             cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont
+    """
 
     w = mean_cont_weight > 0
     mean_cont[w] /= mean_cont_weight[w]
@@ -59,7 +98,56 @@ def compute_mean_cont(data):
     return log_lambda_rest_frame, mean_cont, mean_cont_weight
 
 
-def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
+def compute_forests_var_stats(forests,num_bins,num_var_bins,var_pipe_min,var_pipe_max):
+
+    mean_delta = np.zeros(num_bins * num_var_bins)
+    var_delta = np.zeros(num_bins * num_var_bins)
+    var2_delta = np.zeros(num_bins * num_var_bins)
+    count = np.zeros(num_bins * num_var_bins)
+    num_qso = np.zeros(num_bins * num_var_bins)
+
+    for forest in forests:
+
+        var_pipe = 1 / forest.ivar / forest.cont**2
+        w = ((np.log10(var_pipe) > var_pipe_min) &
+             (np.log10(var_pipe) < var_pipe_max))
+
+        # select the wavelength and the pipeline variance bins
+        log_lambda_bins = ((forest.log_lambda - Forest.log_lambda_min) /
+                           (Forest.log_lambda_max - Forest.log_lambda_min) *
+                           num_bins).astype(int)
+        var_pipe_bins = np.floor(
+            (np.log10(var_pipe) - var_pipe_min) /
+            (var_pipe_max - var_pipe_min) * num_var_bins).astype(int)
+
+        # filter the values with a pipeline variance out of range
+        log_lambda_bins = log_lambda_bins[w]
+        var_pipe_bins = var_pipe_bins[w]
+
+        # compute overall bin
+        bins = var_pipe_bins + num_var_bins * log_lambda_bins
+
+        # compute deltas
+        delta = (forest.flux / forest.cont - 1)
+        delta = delta[w]
+
+        # add contributions to delta statistics
+        rebin = np.bincount(bins, weights=delta)
+        mean_delta[:len(rebin)] += rebin
+
+        rebin = np.bincount(bins, weights=delta**2)
+        var_delta[:len(rebin)] += rebin
+
+        rebin = np.bincount(bins, weights=delta**4)
+        var2_delta[:len(rebin)] += rebin
+
+        rebin = np.bincount(bins)
+        count[:len(rebin)] += rebin
+        num_qso[np.unique(bins)] += 1
+
+    return mean_delta, var_delta, var2_delta, count, num_qso
+
+def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3), nproc=None):
     """Computes variance functions and statistics
 
     This function computes the statistics required to fit the mapping functions
@@ -128,6 +216,23 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
     num_qso = np.zeros(num_bins * num_var_bins)
 
     # compute delta statistics, binning the variance according to 'var'
+    pool = Pool(processes=nproc)
+
+    tasks = [(data[k],num_bins,num_var_bins,var_pipe_min,var_pipe_max) for k in data.keys()]
+    jobs = [pool.apply_async(compute_forests_var_stats,task) for task in tasks]
+    pool.close()
+
+    for job in jobs:
+        result = job.get()
+        mean_delta += result[0]
+        var_delta += result[1]
+        var2_delta += result[2]
+        count += result[3]
+        num_qso += result[4]
+
+    pool.join()
+
+    """
     for healpix in sorted(list(data.keys())):
         for forest in data[healpix]:
 
@@ -167,6 +272,7 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
             rebin = np.bincount(bins)
             count[:len(rebin)] += rebin
             num_qso[np.unique(bins)] += 1
+    """
 
     # normalise and finish the computation of delta statistics
     w = count > 0
@@ -264,7 +370,7 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
 
         userprint(f" {log_lambda[index]:.3e} "
                   f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "+
-                  f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ") 
+                  f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
                   #f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
 
     return (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
