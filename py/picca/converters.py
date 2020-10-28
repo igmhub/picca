@@ -443,7 +443,7 @@ def desi_convert_transmission_to_delta_files(obj_path,
                                          in_nside,
                                          end_of_file,
                                          healpix=healpix)
-                      for healpix in np.unique(in_healpixs)]))
+                       for healpix in np.unique(in_healpixs)]))
     else:
         files = np.sort(np.array(in_filenames))
         nest = None
@@ -554,26 +554,27 @@ def desi_convert_transmission_to_delta_files(obj_path,
             userprint('No data in {}'.format(healpix))
             continue
         if (nest is None):
-            if (args.out_healpix_order is None):
+            if (out_healpix_order is None):
                 out_healpix = healpix
             else:
-                raise ValueError('Input HEALPix scheme not known, cannot convert to scheme {}'.format(args.out_healpix_order))
+                raise ValueError('Input HEALPix scheme not known, cannot convert to scheme {}'.format(out_healpix_order))
         else:
             if nest:
-                if args.out_healpix_order.lower() == 'nest':
+                if out_healpix_order.lower() == 'nest':
                     out_healpix = healpix
-                elif args.out_healpix_order.lower() == 'ring':
-                    out_healpix = healpy.nest2ring(in_nside, healpix)
+                elif out_healpix_order.lower() == 'ring':
+                    out_healpix = healpy.nest2ring(int(in_nside), int(healpix))
                 else:
-                    raise ValueError('HEALPix scheme {} not recognised'.format(args.out_healpix_order))
+                    raise ValueError('HEALPix scheme {} not recognised'.format(out_healpix_order))
             else:
-                if args.out_healpix_order.lower() == 'nest':
-                    out_healpix = healpy.ring2nest(in_nside, healpix)
-                elif args.out_healpix_order.lower() == 'ring':
+                if out_healpix_order.lower() == 'nest':
+                    out_healpix = healpy.ring2nest(int(in_nside), int(healpix))
+                elif out_healpix_order.lower() == 'ring':
                     out_healpix = healpix
                 else:
-                    raise ValueError('HEALPix scheme {} not recognised'.format(args.out_healpix_order))
+                    raise ValueError('HEALPix scheme {} not recognised'.format(out_healpix_order))
 
+        print('Input nested? {} // in_healpix={} // out_healpix={}'.format(nest,healpix,out_healpix))
         results = fitsio.FITS(out_dir + '/delta-{}'.format(out_healpix) +
                               '.fits.gz',
                               'rw',
