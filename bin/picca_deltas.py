@@ -645,13 +645,13 @@ def main():
 
         ### HACK: Different options to avoid memory issues.
 
-        """
         # Existing code
+        """
         data_fit_cont = pool.map(cont_fit, sorted_data) # Existing code
         for index, healpix in enumerate(pixels[sort]):
             data[healpix] = data_fit_cont[index]
         """
-
+        
         """
         # Control chunking
         data_fit_cont = pool.map(cont_fit, sorted_data, chunksize=4)
@@ -662,7 +662,7 @@ def main():
         # Use imap
         data_fit_cont = pool.imap(cont_fit, sorted_data)
         for i, d in enumerate(data_fit_cont):
-            data[pixels[i]] = d
+            data[pixels[sort][i]] = d
 
         ### END OF HACK
 
