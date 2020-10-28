@@ -14,6 +14,7 @@ import glob
 import numpy as np
 import fitsio
 import healpy
+from multiprocessing import Pool
 
 from picca.data import Delta
 from picca.utils import userprint
@@ -357,7 +358,9 @@ def desi_from_ztarget_to_drq(in_path,
     results.close()
 
 
-def read_transmission_file(filename,num_bins):
+def read_transmission_file(filename,num_bins,objs_thingid,lambda_min,lambda_max,delta_log_lambda,lambda_min_rest_frame,lambda_max_rest_frame):
+
+    log_lambda_min = np.log10(lambda_min)
 
     stack_delta = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
@@ -367,7 +370,7 @@ def read_transmission_file(filename,num_bins):
     thingid = hdul['METADATA']['MOCKID'][:]
     if np.in1d(thingid, objs_thingid).sum() == 0:
         hdul.close()
-        continue
+        return
     ra = hdul['METADATA']['RA'][:].astype(np.float64) * np.pi / 180.
     dec = hdul['METADATA']['DEC'][:].astype(np.float64) * np.pi / 180.
     z = hdul['METADATA']['Z'][:]
@@ -398,7 +401,7 @@ def read_transmission_file(filename,num_bins):
     w &= np.in1d(thingid, objs_thingid)
     if w.sum() == 0:
         hdul.close()
-        continue
+        return
 
     ra = ra[w]
     dec = dec[w]
@@ -443,7 +446,7 @@ def write_delta_from_transmission(deltas,healpix,out_filename,log_lambda_min,del
 
     if len(deltas) == 0:
         userprint('No data in {}'.format(healpix))
-        continue
+        return
 
     results = fitsio.FITS(out_filename,
                           'rw',
@@ -583,7 +586,7 @@ def desi_convert_transmission_to_delta_files(obj_path,
 
     deltas = {}
 
-    arguments = [(f,num_bins) for f in files]
+    arguments = [(f,num_bins,objs_thingid,lambda_min,lambda_max,delta_log_lambda,lambda_min_rest_frame,lambda_max_rest_frame) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_transmission_file,arguments)
     pool.close()
@@ -593,16 +596,16 @@ def desi_convert_transmission_to_delta_files(obj_path,
             healpix_deltas = r[0]
             healpix_stack_delta = r[1]
             healpix_stack_weight = r[2]
-            for k in r.keys()
-                if k not in deltas.keys()
+            for k in healpix_deltas.keys():
+                if k not in deltas.keys():
                     deltas[k] = []
-                deltas[k].append(healpix_deltas)
-                stack_delta += healpix_stack_delta
-                stack_weight += healpix_stack_weight
-                if (max_num_spec is not None and
-                        np.sum([len(deltas[healpix])
-                                for healpix in deltas]) >= max_num_spec):
-                    break
+                deltas[k] += healpix_deltas[k]
+            stack_delta += healpix_stack_delta
+            stack_weight += healpix_stack_weight
+            if (max_num_spec is not None and
+                    np.sum([len(deltas[healpix])
+                            for healpix in deltas]) >= max_num_spec):
+                break
 
     userprint('\n')
 
@@ -636,8 +639,6 @@ def desi_convert_transmission_to_delta_files(obj_path,
 
         print('Input nested? {} // in_healpix={} // out_healpix={}'.format(nest,healpix,out_healpix))
         out_filenames[healpix] = out_dir + '/delta-{}'.format(out_healpix) + '.fits.gz'
-
-(deltas,healpix,out_filename,log_lambda_min,delta_log_lambda,stack_delta)
 
     arguments = [(deltas[hpix],hpix,out_filenames[hpix],log_lambda_min,delta_log_lambda,stack_delta) for hpix in deltas.keys()]
     pool = Pool(processes=nproc)
