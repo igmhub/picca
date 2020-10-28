@@ -366,7 +366,8 @@ def desi_convert_transmission_to_delta_files(obj_path,
                                              lambda_min_rest_frame=1040.,
                                              lambda_max_rest_frame=1200.,
                                              delta_log_lambda=3.e-4,
-                                             max_num_spec=None):
+                                             max_num_spec=None,
+                                             out_healpix_order='RING'):
     """Convert desi transmission files to picca delta files
 
     Args:
@@ -392,6 +393,9 @@ def desi_convert_transmission_to_delta_files(obj_path,
             Variation of the logarithm of the wavelength between two pixels
         max_num_spec: int or None - default: None
             Maximum number of spectra to read. 'None' for no maximum
+        out_healpix_order: str or None - default: None
+            Which HEALPix ordering scheme to use for outputs. 'None' for 'RING'
+            scheme, as is hardcoded in picca_deltas
     """
     # read catalog of objects
     hdul = fitsio.FITS(obj_path)
@@ -442,6 +446,7 @@ def desi_convert_transmission_to_delta_files(obj_path,
                       for healpix in np.unique(in_healpixs)]))
     else:
         files = np.sort(np.array(in_filenames))
+        nest = None
     userprint('INFO: Found {} files'.format(files.size))
 
     # Stack the deltas transmission
@@ -548,7 +553,28 @@ def desi_convert_transmission_to_delta_files(obj_path,
         if len(deltas[healpix]) == 0:
             userprint('No data in {}'.format(healpix))
             continue
-        results = fitsio.FITS(out_dir + '/delta-{}'.format(healpix) +
+        if (nest is None):
+            if (args.out_healpix_order is None):
+                out_healpix = healpix
+            else:
+                raise ValueError('Input HEALPix scheme not known, cannot convert to scheme {}'.format(args.out_healpix_order))
+        else:
+            if nest:
+                if args.out_healpix_order.lower() == 'nest':
+                    out_healpix = healpix
+                elif args.out_healpix_order.lower() == 'ring':
+                    out_healpix = healpy.nest2ring(in_nside, healpix)
+                else:
+                    raise ValueError('HEALPix scheme {} not recognised'.format(args.out_healpix_order))
+            else:
+                if args.out_healpix_order.lower() == 'nest':
+                    out_healpix = healpy.ring2nest(in_nside, healpix)
+                elif args.out_healpix_order.lower() == 'ring':
+                    out_healpix = healpix
+                else:
+                    raise ValueError('HEALPix scheme {} not recognised'.format(args.out_healpix_order))
+
+        results = fitsio.FITS(out_dir + '/delta-{}'.format(out_healpix) +
                               '.fits.gz',
                               'rw',
                               clobber=True)
