@@ -259,7 +259,8 @@ def main():
                                                   cosmo=cosmo,
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project,
-                                                  from_image=args.from_image)
+                                                  from_image=args.from_image,
+                                                  nproc=args.nproc)
     xcf.data = data
     xcf.num_data = num_data
     userprint("")
@@ -390,20 +391,20 @@ def main():
         'value': xcf.nside,
         'comment': 'Healpix nside'
     }, {
-        'name': 'OMEGAM', 
-        'value': args.fid_Om, 
+        'name': 'OMEGAM',
+        'value': args.fid_Om,
         'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'OMEGAR', 
-        'value': args.fid_Or, 
+        'name': 'OMEGAR',
+        'value': args.fid_Or,
         'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'OMEGAK', 
-        'value': args.fid_Ok, 
+        'name': 'OMEGAK',
+        'value': args.fid_Ok,
         'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'WL', 
-        'value': args.fid_wl, 
+        'name': 'WL',
+        'value': args.fid_wl,
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
     }]
     results.write(

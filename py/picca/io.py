@@ -1241,6 +1241,16 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
 
     return data, num_data
 
+def read_delta_file(filename,from_image=False):
+
+    if from_image is None:
+        hdul = fitsio.FITS(filename)
+        deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
+        hdul.close()
+    else:
+        deltas = Delta.from_image(filename)
+
+    return deltas
 
 def read_deltas(in_dir,
                 nside,
@@ -1250,7 +1260,8 @@ def read_deltas(in_dir,
                 cosmo,
                 max_num_spec=None,
                 no_project=False,
-                from_image=None):
+                from_image=None,
+                nproc=None):
     """Reads deltas and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -1279,7 +1290,7 @@ def read_deltas(in_dir,
             et al. 2020)
         from_image: list or None - default: None
             If not None, read the deltas from image files. The list of
-            filenname for the image files should be paassed in from_image
+            filenames for the image files should be passed in from_image
 
     Returns:
         The following variables:
@@ -1313,21 +1324,22 @@ def read_deltas(in_dir,
                                                                 '/*.fits.gz')
     files = sorted(files)
 
+    #userprint("\rread {} of {} {}".format(index, len(files), num_data))
+
+    arguments = [(f,from_image) for f in files]
+    pool = Pool(processes=nproc)
+    results = pool.starmap(read_delta_file,arguments)
+    pool.close()
+
     deltas = []
     num_data = 0
-    for index, filename in enumerate(files):
-        userprint("\rread {} of {} {}".format(index, len(files), num_data))
-        if from_image is None:
-            hdul = fitsio.FITS(filename)
-            deltas += [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
-            hdul.close()
-        else:
-            deltas += Delta.from_image(filename)
-
-        num_data = len(deltas)
-        if max_num_spec is not None:
-            if num_data > max_num_spec:
+    for r in results:
+        if r is not None:
+            deltas += r
+            num_data = len(deltas)
+            if (max_num_spec is not None) and (num_data > max_num_spec):
                 break
+    deltas = deltas[:max_num_spec]
 
     # truncate the deltas if we load too many lines of sight
     if max_num_spec is not None:
