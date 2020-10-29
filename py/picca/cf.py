@@ -164,15 +164,15 @@ def compute_xi(healpixs):
                          10.**delta1.log_lambda, delta1.weights, delta1.delta,
                          delta2.z, 10.**delta2.log_lambda,
                          10.**delta2.log_lambda, delta2.weights, delta2.delta,
-                         ang, same_half_plate, 
+                         ang, same_half_plate,
                          weights, xi, r_par, r_trans, z, num_pairs)
                 else:
                     compute_xi_forest_pairs_fast(
                          delta1.z, delta1.r_comov, delta1.dist_m,
-                         delta1.weights, delta1.delta, 
-                         delta2.z, delta2.r_comov, delta2.dist_m, 
-                         delta2.weights, delta2.delta, 
-                         ang, same_half_plate, 
+                         delta1.weights, delta1.delta,
+                         delta2.z, delta2.r_comov, delta2.dist_m,
+                         delta2.weights, delta2.delta,
+                         ang, same_half_plate,
                          weights, xi, r_par, r_trans, z, num_pairs)
 
                 #-- These were used by compute_xi_forest_pairs (to be deprecated)
@@ -288,7 +288,7 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
 def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
                             r_comov2, dist_m2, weights2, delta2, ang,
                             same_half_plate,
-                            rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, 
+                            rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans,
                             rebin_z, rebin_num_pairs):
     """Computes the contribution of a given pair of forests to the correlation
     function. Fills rebin_* on place.
@@ -340,25 +340,25 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
                 r_par = r_comov1[i] / r_comov2[j]
                 if not x_correlation and r_par < 1.:
                     r_par = 1. / r_par
-                r_trans = ang 
+                r_trans = ang
             else:
                 r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang / 2)
                 r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
                 if not x_correlation:
                     r_par = np.abs(r_par)
 
-            if (r_par >= r_par_max or 
-                r_trans >= r_trans_max or 
+            if (r_par >= r_par_max or
+                r_trans >= r_trans_max or
                 r_par < r_par_min):
                 continue
 
             delta_times_weight1 = delta1[i]*weights1[i]
-            delta_times_weight2 = delta2[j]*weights2[j]        
+            delta_times_weight2 = delta2[j]*weights2[j]
             delta_times_weight12 = delta_times_weight1 * delta_times_weight2
             weights12 = weights1[i] * weights2[j]
             z = (z1[i] + z2[j]) / 2
 
-            bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) 
+            bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min)
                                   * num_bins_r_par)
             bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
             bins = np.int(bins_r_trans + num_bins_r_trans * bins_r_par)
@@ -709,8 +709,8 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
             if not x_correlation:
                 r_par = np.abs(r_par)
-            if (r_par >= r_par_max or 
-                r_trans >= r_trans_max or 
+            if (r_par >= r_par_max or
+                r_trans >= r_trans_max or
                 r_par < r_par_min):
                 continue
             if remove_same_half_plate_close_pairs and same_half_plate:
@@ -718,7 +718,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                     continue
             num_pairs += 1
 
-    if num_pairs == 0: 
+    if num_pairs == 0:
         return
 
 
@@ -770,14 +770,14 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang / 2)
             if not x_correlation:
                 r_par = np.abs(r_par)
-            if (r_par >= r_par_max or 
-                r_trans >= r_trans_max or 
+            if (r_par >= r_par_max or
+                r_trans >= r_trans_max or
                 r_par < r_par_min):
                 continue
             if remove_same_half_plate_close_pairs and same_half_plate:
                 if np.abs(r_par) < (r_par_max - r_par_min) / num_bins_r_par:
                     continue
-            
+
             weights12 = weights1[i] * weights2[j]
             z = (z1[i] + z2[j]) / 2
 
@@ -791,7 +791,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             model_bins = int32(model_bins_r_trans + num_model_bins_r_trans * model_bins_r_par)
 
             #-- This will be used later to fill the distortion matrix
-            all_bins_model[k] = model_bins 
+            all_bins_model[k] = model_bins
             all_bins[k] = bins
             all_i[k] = i
             all_j[k] = j
@@ -801,8 +801,8 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             r_par_eff[model_bins] += weights12 * r_par
             r_trans_eff[model_bins] += weights12 * r_trans
             z_eff[model_bins] += weights12 * z
-            weight_eff[model_bins] += weights12 
-            weights_dmat[bins] += weights12 
+            weight_eff[model_bins] += weights12
+            weights_dmat[bins] += weights12
 
             # Combining equation 21 and equation 6 of du Mas des Bourboux et al. 2020
             # we find an equation with 9 terms comming from the product of two eta
@@ -818,7 +818,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             eta2[j+num_pixels2*model_bins] += weights1[i]/sum_weights1
 
             # first eta, second term: weight/sum(weights)
-            # second eta, second term: weight/sum(weights)  
+            # second eta, second term: weight/sum(weights)
             eta5[model_bins] += weights12/sum_weights1/sum_weights2
 
             if order2 == 1:
@@ -833,7 +833,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                 # second eta, third term: (non-zero only for order=1)
                 #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
                 #   sum(weight*(Lambda-bar(Lambda)**2))
-                eta6[model_bins] += (weights1[i]/sum_weights1 * 
+                eta6[model_bins] += (weights1[i]/sum_weights1 *
                                      (weights2[j]*log_lambda_minus_mean2[j] /
                                      sum_weights_square_log_lambda_minus_mean2))
             if order1 == 1:
@@ -847,7 +847,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                 #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
                 #   sum(weight*(Lambda-bar(Lambda)**2))
                 # second eta, second term: weight/sum(weights)
-                eta7[model_bins] += (weights2[j]/sum_weights2 * 
+                eta7[model_bins] += (weights2[j]/sum_weights2 *
                                      (weights1[i]*log_lambda_minus_mean1[i] /
                                      sum_weights_square_log_lambda_minus_mean1))
                 if order2 == 1:
@@ -857,7 +857,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
                     # second eta, third term: (non-zero only for order=1)
                     #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
                     #   sum(weight*(Lambda-bar(Lambda)**2)
-                    eta8[model_bins] += ( weights1[i]*log_lambda_minus_mean1[i] * 
+                    eta8[model_bins] += ( weights1[i]*log_lambda_minus_mean1[i] *
                                           weights2[j]*log_lambda_minus_mean2[j] /
                                           sum_weights_square_log_lambda_minus_mean1 /
                                           sum_weights_square_log_lambda_minus_mean2 )
@@ -879,13 +879,13 @@ def compute_dmat_forest_pairs_fast(log_lambda1, log_lambda2, r_comov1, r_comov2,
             dmat_bin = k + num_model_bins_r_par * num_model_bins_r_trans * bins
             dmat[dmat_bin] += (
                 weights12 *
-                (eta5[k] + 
-                + eta6[k] * log_lambda_minus_mean2[j] + 
-                + eta7[k] * log_lambda_minus_mean1[i] + 
-                + eta8[k] * log_lambda_minus_mean1[i] * log_lambda_minus_mean2[j] 
-                - eta1[i+num_pixels1*k] 
-                - eta2[j+num_pixels2*k] 
-                - eta3[i+num_pixels1*k] * log_lambda_minus_mean2[j] 
+                (eta5[k] +
+                + eta6[k] * log_lambda_minus_mean2[j] +
+                + eta7[k] * log_lambda_minus_mean1[i] +
+                + eta8[k] * log_lambda_minus_mean1[i] * log_lambda_minus_mean2[j]
+                - eta1[i+num_pixels1*k]
+                - eta2[j+num_pixels2*k]
+                - eta3[i+num_pixels1*k] * log_lambda_minus_mean2[j]
                 - eta4[j+num_pixels2*k] * log_lambda_minus_mean1[i])
                 )
 

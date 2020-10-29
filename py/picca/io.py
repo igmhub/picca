@@ -1378,6 +1378,21 @@ def read_deltas(in_dir,
     return data, num_data, z_min, z_max
 
 
+def read_catalog_pixel(entries,healpix,z_ref,alpha,cosmo):
+
+    objs = [
+        QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],
+            entry['PLATE'], entry['MJD'], entry['FIBERID'])
+        for entry in entries
+    ]
+    for obj in objs:
+        obj.weights = ((1. + obj.z_qso) / (1. + z_ref))**(alpha - 1.)
+        if not cosmo is None:
+            obj.r_comov = cosmo.get_r_comov(obj.z_qso)
+            obj.dist_m = cosmo.get_dist_m(obj.z_qso)
+
+    return healpix, objs
+
 def read_objects(filename,
                  nside,
                  z_min,
@@ -1385,7 +1400,8 @@ def read_objects(filename,
                  alpha,
                  z_ref,
                  cosmo,
-                 keep_bal=True):
+                 keep_bal=True,
+                 nproc=None):
     """Reads objects and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -1434,20 +1450,14 @@ def read_objects(filename,
         raise AssertionError()
     userprint("Reading objects ")
 
-    unique_healpix = np.unique(healpixs)
-    for index, healpix in enumerate(unique_healpix):
-        userprint("{} of {}".format(index, len(unique_healpix)))
-        w = healpixs == healpix
-        objs[healpix] = [
-            QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],
-                entry['PLATE'], entry['MJD'], entry['FIBERID'])
-            for entry in catalog[w]
-        ]
-        for obj in objs[healpix]:
-            obj.weights = ((1. + obj.z_qso) / (1. + z_ref))**(alpha - 1.)
-            if not cosmo is None:
-                obj.r_comov = cosmo.get_r_comov(obj.z_qso)
-                obj.dist_m = cosmo.get_dist_m(obj.z_qso)
+    arguments = [(catalog[healpixs==healpix],healpix,z_ref,alpha,cosmo) for healpix in np.unique(healpixs)]
+    pool = Pool(processes=nproc)
+    results = pool.starmap(read_catalog_pixel,arguments)
+    pool.close()
+
+    for r in results:
+        if r is not None:
+            objs[r[0]] = r[1]
 
     return objs, catalog['Z'].min()
 

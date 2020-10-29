@@ -308,7 +308,7 @@ def main():
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
+                                   cosmo, nproc=args.nproc)
     xcf.objs = objs
 
     # shuffle forests and objects
