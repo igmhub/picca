@@ -3,6 +3,7 @@
 as a function of angle and wavelength ratio
 """
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
@@ -90,13 +91,13 @@ def main():
 
     parser.add_argument('--z-min-obj',
                         type=float,
-                        default=None,
+                        default=0,
                         required=False,
                         help='Min redshift for object field')
 
     parser.add_argument('--z-max-obj',
                         type=float,
-                        default=None,
+                        default=10,
                         required=False,
                         help='Max redshift for object field')
 
@@ -290,7 +291,8 @@ def main():
     xcf.counter = Value('i', 0)
     xcf.lock = Lock()
     cpu_data = {healpix: [healpix] for healpix in data}
-    pool = Pool(processes=args.nproc)
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=args.nproc)
     correlation_function_data = pool.map(corr_func,
                                          sorted(list(cpu_data.values())))
     pool.close()

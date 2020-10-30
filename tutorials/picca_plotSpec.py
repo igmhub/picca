@@ -6,11 +6,13 @@ import healpy
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+from astropy.table import Table
 
 from scipy.interpolate import interp1d
 from picca.data import forest
 from picca.data import delta
 from picca import io
+from picca.utils import userprint
 
 
 
@@ -91,7 +93,7 @@ if __name__ == '__main__':
     ra,dec,zqso,thid,plate,mjd,fid = io.read_drq(args.drq,0.,1000.,keep_bal=True)
     cut = (plate==args.plate) & (mjd==args.mjd) & (fid==args.fiberid)
     if cut.sum()==0:
-        print("Object not in drq")
+        userprint("Object not in drq")
         sys.exit()
     ra = ra[cut]
     dec = dec[cut]
@@ -113,7 +115,7 @@ if __name__ == '__main__':
     elif args.mode =="spcframe":
         data = io.read_from_spcframe(args.in_dir,thid, ra, dec, zqso, plate, mjd, fid, order=None, mode=args.mode, log=None)
     if data is None:
-        print("Object not in in_dir")
+        userprint("Object not in in_dir")
         sys.exit()
     else:
         data = data[0]
@@ -130,7 +132,7 @@ if __name__ == '__main__':
             forest.correc_flux = interp1d(ll_st[w],st[w],fill_value="extrapolate")
             vac.close()
         except:
-            print(" Error while reading flux_calib file {}".format(args.flux_calib))
+            userprint(" Error while reading flux_calib file {}".format(args.flux_calib))
             sys.exit(1)
 
     ### Correct multiplicative pipeline inverse variance calibration
@@ -142,55 +144,36 @@ if __name__ == '__main__':
             forest.correc_ivar = interp1d(ll,eta,fill_value="extrapolate",kind="nearest")
             vac.close()
         except:
-            print(" Error while reading ivar_calib file {}".format(args.ivar_calib))
+            userprint(" Error while reading ivar_calib file {}".format(args.ivar_calib))
             sys.exit(1)
 
     ### Get the lines to veto
-    usr_mask_obs    = None
-    usr_mask_RF     = None
-    usr_mask_RF_DLA = None
-    if (args.mask_file is not None):
-        try:
-            usr_mask_obs    = []
-            usr_mask_RF     = []
-            usr_mask_RF_DLA = []
-            with open(args.mask_file, 'r') as f:
-                loop = True
-                for l in f:
-                    if (l[0]=='#'): continue
-                    l = l.split()
-                    if (l[3]=='OBS'):
-                        usr_mask_obs    += [ [float(l[1]),float(l[2])] ]
-                    elif (l[3]=='RF'):
-                        usr_mask_RF     += [ [float(l[1]),float(l[2])] ]
-                    elif (l[3]=='RF_DLA'):
-                        usr_mask_RF_DLA += [ [float(l[1]),float(l[2])] ]
-                    else:
-                        raise
-            usr_mask_obs    = np.log10(np.asarray(usr_mask_obs))
-            usr_mask_RF     = np.log10(np.asarray(usr_mask_RF))
-            usr_mask_RF_DLA = np.log10(np.asarray(usr_mask_RF_DLA))
-            if usr_mask_RF_DLA.size==0:
-                usr_mask_RF_DLA = None
 
-        except:
-            print(" Error while reading mask_file file {}".format(args.mask_file))
+    if args.mask_file is not None:
+        args.mask_file = os.path.expandvars(args.mask_file)
+        try:
+            mask = Table.read(args.mask_file,
+                              names=('type', 'wave_min', 'wave_max', 'frame'),
+                              format='ascii')
+            mask['log_wave_min']=np.log10(mask['wave_min'])
+            mask['log_wave_max']=np.log10(mask['wave_max'])
+        except (OSError, ValueError):
+            userprint(("ERROR: Error while reading mask_file "
+                       "file {}").format(args.mask_file))
             sys.exit(1)
 
     ### Veto lines
-    if not usr_mask_obs is None:
-        if ( usr_mask_obs.size+usr_mask_RF.size!=0):
-            data.mask(mask_obs=usr_mask_obs , mask_RF=usr_mask_RF)
+    data.mask(mask_table=mask)
 
     ### Correct for DLAs
     if not args.dla_vac is None:
-        print("adding dlas")
+        userprint("adding dlas")
         dlas = io.read_dlas(args.dla_vac)
         for p in data:
             for d in data[p]:
                 if d.thid in dlas:
                     for dla in dlas[d.thid]:
-                        data.add_dla(dla[0],dla[1],usr_mask_RF_DLA)
+                        data.add_dla(dla[0],dla[1],mask)
 
     ### Get delta from picca_delta
     done_delta = None
@@ -205,7 +188,7 @@ if __name__ == '__main__':
             break
     if done_delta is None:
         hdus.close()
-        print("Object not in spectrum")
+        userprint("Object not in spectrum")
         sys.exit()
 
 

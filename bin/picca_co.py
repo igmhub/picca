@@ -3,6 +3,7 @@
 """
 import argparse
 import sys
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
@@ -104,13 +105,13 @@ def main():
 
     parser.add_argument('--z-min-obj',
                         type=float,
-                        default=None,
+                        default=0,
                         required=False,
                         help='Min redshift for object field')
 
     parser.add_argument('--z-max-obj',
                         type=float,
-                        default=None,
+                        default=10,
                         required=False,
                         help='Max redshift for object field')
 
@@ -236,7 +237,8 @@ def main():
     co.counter = Value('i', 0)
     co.lock = Lock()
     cpu_data = {healpix: [healpix] for healpix in co.objs}
-    pool = Pool(processes=args.nproc)
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=args.nproc)
     correlation_function_data = pool.map(corr_func,
                                          sorted(list(cpu_data.values())))
     pool.close()
@@ -304,20 +306,20 @@ def main():
             'comment':
                 'Number of objects'
         }, {
-            'name': 'OMEGAM', 
-            'value': args.fid_Om, 
+            'name': 'OMEGAM',
+            'value': args.fid_Om,
             'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAR', 
-            'value': args.fid_Or, 
+            'name': 'OMEGAR',
+            'value': args.fid_Or,
             'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAK', 
-            'value': args.fid_Ok, 
+            'name': 'OMEGAK',
+            'value': args.fid_Ok,
             'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'WL', 
-            'value': args.fid_wl, 
+            'name': 'WL',
+            'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
         }
         ]
