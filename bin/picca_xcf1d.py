@@ -4,6 +4,7 @@ delta field as a function of wavelength ratio
 """
 import argparse
 import sys
+import multiprocessing
 from multiprocessing import Pool, cpu_count
 import numpy as np
 import fitsio
@@ -240,7 +241,8 @@ def main():
     sys.stderr.write("\n")
 
     # Compute the correlation function, use pool to parallelize
-    pool = Pool(processes=args.nproc)
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=args.nproc)
     healpixs = [[healpix] for healpix in sorted(data) if healpix in xcf.objs]
     correlation_function_data = pool.map(corr_func, healpixs)
     pool.close()

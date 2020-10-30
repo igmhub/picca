@@ -7,6 +7,7 @@ Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
 import time
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 from functools import partial
 import numpy as np
@@ -386,7 +387,8 @@ def main():
 
             # compute the distortion matrix
             if args.nproc > 1:
-                pool = Pool(processes=args.nproc)
+                context = multiprocessing.get_context('fork')
+                pool = context.Pool(processes=args.nproc)
                 dmat_data = pool.map(calc_metal_dmat_wrapper,
                                      sorted(cpu_data.values()))
                 pool.close()
@@ -480,20 +482,20 @@ def main():
             'value': args.metal_alpha,
             'comment': 'Evolution of metal bias'
         }, {
-            'name': 'OMEGAM', 
-            'value': args.fid_Om, 
+            'name': 'OMEGAM',
+            'value': args.fid_Om,
             'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAR', 
-            'value': args.fid_Or, 
+            'name': 'OMEGAR',
+            'value': args.fid_Or,
             'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAK', 
-            'value': args.fid_Ok, 
+            'name': 'OMEGAK',
+            'value': args.fid_Ok,
             'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'WL', 
-            'value': args.fid_wl, 
+            'name': 'WL',
+            'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
         }
         ]
