@@ -7,6 +7,7 @@ import subprocess
 import os
 import tempfile
 import shutil
+import glob
 from pkg_resources import resource_filename
 import sys
 
@@ -14,7 +15,7 @@ from picca.utils import userprint
 
 from .test_helpers import update_system_status_values, compare_fits, compare_h5py
 
-class TestPk1d(unittest.TestCase):
+class TestDelta(unittest.TestCase):
     #TODO: bad style, using it for the moment while transitioning, remove later
     compare_fits = compare_fits
     compare_h5py = compare_h5py
@@ -52,6 +53,11 @@ class TestPk1d(unittest.TestCase):
 
         self.send_delta()
         self.send_delta_Pk1D()
+
+        ###These commented lines are to simplify accessing test outputs if needed
+        #if os.path.exists(self._masterFiles+'new/'):
+        #    os.rmdir(self._masterFiles+'new/')
+        #shutil.copytree(self._branchFiles,self._masterFiles+'new/')
 
         if self._test:
             self.remove_folder()
@@ -120,6 +126,11 @@ class TestPk1d(unittest.TestCase):
         names = ['RA', 'DEC', 'THING_ID', 'PLATE', 'MJD', 'FIBERID', 'Z']
         out.write(cols, names=names, extname='CAT')
         out.close()
+
+        if self._test:
+            path1 = self._masterFiles + "/test_delta/" + name + ".fits"
+            path2 = self._branchFiles + "/Products/" + name + ".fits"
+            self.compare_fits(path1, path2, "produce cat")
 
         return
 
@@ -227,6 +238,10 @@ class TestPk1d(unittest.TestCase):
         out.write(cols, names=names, extname='CAT')
         out.close()
 
+        if self._test:
+            path1 = self._masterFiles + "/test_delta/" + name + ".fits"
+            path2 = self._branchFiles + "/Products/" + name + ".fits"
+            self.compare_fits(path1, path2, "produce cat MiniSV")
         return
 
     def produce_forests_minisv(self):
@@ -383,7 +398,7 @@ class TestPk1d(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/delta_attributes.fits.gz"
+            path1 = self._masterFiles + "/test_delta/delta_attributes.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_LYA/Log/delta_attributes.fits.gz"
             self.compare_fits(path1, path2, "picca_deltas.py")
 
@@ -396,8 +411,8 @@ class TestPk1d(unittest.TestCase):
         path_to_etc = self.picca_base + '/etc/'
         ### Send
         cmd = " picca_deltas.py"
-        cmd += " --in-dir " + self._masterFiles + "/test_Pk1D/Spectra_test/"
-        cmd += " --drq " + self._masterFiles + "/test_Pk1D/DRQ_test.fits"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Spectra_Pk1D/"
+        cmd += " --drq " + self._masterFiles + "/test_delta/DRQ_Pk1D.fits"
         cmd += " --out-dir " + self._branchFiles + "/Products/Delta_Pk1D/Delta/"
         cmd += " --iter-out-prefix " + self._branchFiles + \
             "/Products/Delta_Pk1D/Log/delta_attributes"
@@ -411,15 +426,15 @@ class TestPk1d(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/test_Pk1D/delta_attributes_Pk1D.fits.gz"
+            path1 = self._masterFiles + "/test_delta/delta_attributes_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
             self.compare_fits(path1, path2, "picca_deltas.py")
 
-            path1 = self._masterFiles + "/test_Pk1D/delta-64_Pk1D.fits.gz"
+            path1 = self._masterFiles + "/test_delta/delta-64_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-64.fits.gz"
             self.compare_fits(path1, path2, "picca_deltas.py")
 
-            path1 = self._masterFiles + "/test_Pk1D/delta-80_Pk1D.fits.gz"
+            path1 = self._masterFiles + "/test_delta/delta-80_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-80.fits.gz"
             self.compare_fits(path1, path2, "picca_deltas.py")
 
@@ -447,19 +462,16 @@ class TestPk1d(unittest.TestCase):
         self.assertEqual(returncode, 0, "delta_Pk1D_minisv did not finish")
 
         ### Test
-        #if self._test:
-        #    path1 = self._masterFiles + "/test_Pk1D/delta_attributes_Pk1D.fits.gz"
-        #    path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
-        #    self.compare_fits(path1, path2, "picca_deltas.py")
+        if self._test:
+            path1 = self._masterFiles + "/test_delta/delta_attributes_Pk1D_MiniSV.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes.fits.gz"
+            self.compare_fits(path1, path2, "picca_deltas.py")
 
-        #    path1 = self._masterFiles + "/test_Pk1D/delta-64_Pk1D.fits.gz"
-        #    path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-64.fits.gz"
-        #    self.compare_fits(path1, path2, "picca_deltas.py")
-
-        #    path1 = self._masterFiles + "/test_Pk1D/delta-80_Pk1D.fits.gz"
-        #    path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-80.fits.gz"
-        #    self.compare_fits(path1, path2, "picca_deltas.py")
-
+#this checks if any of the output delta files changed
+            for fname in glob.glob(f'{self._branchFiles}/Products/Delta_Pk1D_MiniSV/Delta/delta-*.fits.gz'):
+                path2 = fname
+                path1 = f"{self._masterFiles}/test_delta/Delta_Pk1D_MiniSV/{os.path.basename(fname)}"
+                self.compare_fits(path1, path2, "picca_deltas.py")
         return
 
 if __name__ == '__main__':

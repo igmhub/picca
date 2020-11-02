@@ -28,7 +28,7 @@ class TestPk1d(unittest.TestCase):
         if os.path.isdir(cls._branchFiles):
             shutil.rmtree(cls._branchFiles, ignore_errors=True)
 
-    def test_pk1d(self):
+    def setUp(self):
 
         self.picca_base = resource_filename('picca',
                                             './').replace('py/picca/./', '')
@@ -39,7 +39,10 @@ class TestPk1d(unittest.TestCase):
         self._test = True
         self._masterFiles = self.picca_base + '/py/picca/test/data/'
         self.produce_folder()
-        self.send_Pk1D()
+        
+        
+        
+    def tearDown(self):
 
         if self._test:
             self.remove_folder()
@@ -111,12 +114,12 @@ class TestPk1d(unittest.TestCase):
 
         return
 
-    def send_Pk1D(self):
+    def test_Pk1D(self):
 
         userprint("\n")
         ### Send
         cmd = " picca_Pk1D.py"
-        cmd += " --in-dir " + self._masterFiles + "/test_Pk1D/delta_Pk1D/"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_Pk1D/"
         cmd += " --out-dir " + self._branchFiles + "/Products/Pk1D/"
         subprocess.call(cmd, shell=True)
 

@@ -75,8 +75,10 @@ class TestCor(unittest.TestCase):
         self.send_co()
         self.send_export_co()
 
-        self.send_fitter2()
-
+        ###These commented lines are to simplify accessing test outputs if needed
+        #if os.path.exists(self._masterFiles+'new/'):
+        #    os.rmdir(self._masterFiles+'new/')
+        #shutil.copytree(self._branchFiles,self._masterFiles+'new/')
 
         if self._test:
             self.remove_folder()
@@ -148,7 +150,7 @@ class TestCor(unittest.TestCase):
         nside = 8
 
         ### Load DRQ
-        vac = fitsio.FITS(self._branchFiles + "/Products/cat.fits")
+        vac = fitsio.FITS(self._masterFiles + "/test_delta/cat.fits")
         ra = vac[1]["RA"][:] * np.pi / 180.
         dec = vac[1]["DEC"][:] * np.pi / 180.
         thid = vac[1]["THING_ID"][:]
@@ -247,14 +249,14 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_cf1d.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf1d.fits.gz"
         cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/cf1d.fits.gz"
+            path1 = self._masterFiles + "/test_cor/cf1d.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf1d.fits.gz"
             self.compare_fits(path1, path2, "picca_cf1d.py")
 
@@ -265,15 +267,15 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_cf1d.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += " --in-dir2 " + self._branchFiles + "/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf1d_cross.fits.gz"
         cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/cf1d_cross.fits.gz"
+            path1 = self._masterFiles + "/test_cor/cf1d_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf1d_cross.fits.gz"
             self.compare_fits(path1, path2, "picca_cf1d.py")
 
@@ -284,14 +286,14 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_cf_angl.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_angl.fits.gz"
         cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/cf_angl.fits.gz"
+            path1 = self._masterFiles + "/test_cor/cf_angl.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf_angl.fits.gz"
             self.compare_fits(path1, path2, "picca_cf_angl.py")
 
@@ -302,7 +304,7 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_cf.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf.fits.gz"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
@@ -315,7 +317,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/cf.fits.gz"
+            path1 = self._masterFiles + "/test_cor/cf.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf.fits.gz"
             self.compare_fits(path1, path2, "picca_cf.py")
 
@@ -326,7 +328,7 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_dmat.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/dmat.fits.gz"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
@@ -340,7 +342,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/dmat.fits.gz"
+            path1 = self._masterFiles + "/test_cor/dmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/dmat.fits.gz"
             self.compare_fits(path1, path2, "picca_dmat.py")
 
@@ -351,7 +353,7 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_metal_dmat.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
         cmd += r" --abs-igm SiIII\(1207\)"
         cmd += " --rp-min +0.0"
@@ -366,7 +368,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/metal_dmat.fits.gz"
+            path1 = self._masterFiles + "/test_cor/metal_dmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
 
@@ -377,9 +379,9 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_wick.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/wick.fits.gz"
-        cmd += " --cf1d " + self._branchFiles + "/Products/Correlations/cf1d.fits.gz"
+        cmd += " --cf1d " + self._masterFiles +"/test_cor/cf1d.fits.gz"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -391,7 +393,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/wick.fits.gz"
+            path1 = self._masterFiles + "/test_cor/wick.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/wick.fits.gz"
             self.compare_fits(path1, path2, "picca_wick.py")
 
@@ -402,8 +404,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_export.py"
-        cmd += " --data " + self._branchFiles + "/Products/Correlations/cf.fits.gz"
-        cmd += " --dmat " + self._branchFiles + "/Products/Correlations/dmat.fits.gz"
+        cmd += " --data " + self._masterFiles + "/test_cor/cf.fits.gz"
+        cmd += " --dmat " + self._masterFiles + "/test_cor/dmat.fits.gz"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/exported_cf.fits.gz"
         returncode = subprocess.call(cmd, shell=True)
         self.assertEqual(returncode, 0, "export_cf did not finish")
@@ -414,8 +416,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_cf.py"
-        cmd += " --in-dir  " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += " --in-dir2 " + self._branchFiles + "/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir  " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_cross.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
@@ -429,7 +431,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/cf_cross.fits.gz"
+            path1 = self._masterFiles + "/test_cor/cf_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/cf_cross.fits.gz"
             self.compare_fits(path1, path2, "picca_cf.py")
 
@@ -440,8 +442,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_dmat.py"
-        cmd += " --in-dir  " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += " --in-dir2 " + self._branchFiles + "/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir  " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/dmat_cross.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
@@ -456,7 +458,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/dmat_cross.fits.gz"
+            path1 = self._masterFiles + "/test_cor/dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/dmat_cross.fits.gz"
             self.compare_fits(path1, path2, "picca_dmat.py")
 
@@ -467,8 +469,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_metal_dmat.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += " --in-dir2 " + self._branchFiles + "/Products/Delta_LYA/Delta/"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --in-dir2 " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/metal_dmat_cross.fits.gz"
         cmd += r" --abs-igm SiIII\(1207\)"
@@ -486,7 +488,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/metal_dmat_cross.fits.gz"
+            path1 = self._masterFiles + "/test_cor/metal_dmat_cross.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_dmat_cross.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_dmat.py")
 
@@ -497,8 +499,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_export.py"
-        cmd += " --data " + self._masterFiles + "/cf_cross.fits.gz"
-        cmd += " --dmat " + self._masterFiles + "/dmat_cross.fits.gz"
+        cmd += " --data " + self._masterFiles + "/test_cor/cf_cross.fits.gz"
+        cmd += " --dmat " + self._masterFiles + "/test_cor/dmat_cross.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_cf_cross.fits.gz"
         returncode = subprocess.call(cmd, shell=True)
@@ -511,15 +513,15 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_xcf_angl.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
         cmd += " --nproc 1"
         subprocess.call(cmd, shell=True)
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/xcf_angl.fits.gz"
+            path1 = self._masterFiles + "/test_cor/xcf_angl.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
             self.compare_fits(path1, path2, "picca_xcf_angl.py")
 
@@ -530,8 +532,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_xcf.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
@@ -543,7 +545,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/xcf.fits.gz"
+            path1 = self._masterFiles + "/test_cor/xcf.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xcf.fits.gz"
             self.compare_fits(path1, path2, "picca_xcf.py")
 
@@ -554,8 +556,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_xdmat.py"
-        cmd += " --in-dir  " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
+        cmd += " --in-dir  " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/xdmat.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
@@ -568,7 +570,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/xdmat.fits.gz"
+            path1 = self._masterFiles + "/test_cor/xdmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xdmat.fits.gz"
             self.compare_fits(path1, path2, "picca_xdmat.py")
 
@@ -579,8 +581,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_metal_xdmat.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
         cmd += r" --abs-igm SiIII\(1207\)"
         cmd += " --rp-min -60.0"
@@ -594,7 +596,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/metal_xdmat.fits.gz"
+            path1 = self._masterFiles + "/test_cor/metal_xdmat.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/metal_xdmat.fits.gz"
             self.compare_fits(path1, path2, "picca_metal_xdmat.py")
 
@@ -605,10 +607,10 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_xwick.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
+        cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/xwick.fits.gz"
-        cmd += " --cf1d " + self._masterFiles + "/cf1d.fits.gz"
+        cmd += " --cf1d " + self._masterFiles + "/test_cor/cf1d.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -620,7 +622,7 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/xwick.fits.gz"
+            path1 = self._masterFiles + "/test_cor/xwick.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/xwick.fits.gz"
             self.compare_fits(path1, path2, "picca_xwick.py")
 
@@ -631,8 +633,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_export.py"
-        cmd += " --data " + self._masterFiles + "/xcf.fits.gz"
-        cmd += " --dmat " + self._masterFiles + "/xdmat.fits.gz"
+        cmd += " --data " + self._masterFiles + "/test_cor/xcf.fits.gz"
+        cmd += " --dmat " + self._masterFiles + "/test_cor/xdmat.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_xcf.fits.gz"
         returncode = subprocess.call(cmd, shell=True)
@@ -645,8 +647,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_export_cross_covariance.py"
-        cmd += " --data1 " + self._masterFiles + "/cf.fits.gz"
-        cmd += " --data2 " + self._masterFiles + "/xcf.fits.gz"
+        cmd += " --data1 " + self._masterFiles + "/test_cor/cf.fits.gz"
+        cmd += " --data2 " + self._masterFiles + "/test_cor/xcf.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
         returncode = subprocess.call(cmd, shell=True)
@@ -660,7 +662,7 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_co.py"
-        cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
+        cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/co_DD.fits.gz"
         cmd += " --rp-min 0."
         cmd += " --rp-max +60.0"
@@ -673,7 +675,7 @@ class TestCor(unittest.TestCase):
         self.assertEqual(returncode, 0, "picca_co did not finish on DD")
         ### Send
         cmd = " picca_co.py"
-        cmd += " --drq " + self._branchFiles + "/Products/random.fits"
+        cmd += " --drq " + self._masterFiles + "/test_delta/random.fits"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/Co_Random/co_RR.fits.gz"
         cmd += " --rp-min 0."
@@ -687,8 +689,8 @@ class TestCor(unittest.TestCase):
         self.assertEqual(returncode, 0, "picca_co did not finish on RR")
         ### Send
         cmd = " picca_co.py"
-        cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
-        cmd += " --drq2 " + self._branchFiles + "/Products/random.fits"
+        cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
+        cmd += " --drq2 " + self._masterFiles + "/test_delta/random.fits"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/Co_Random/co_DR.fits.gz"
         cmd += " --rp-min 0."
@@ -702,8 +704,8 @@ class TestCor(unittest.TestCase):
         self.assertEqual(returncode, 0, "picca_co did not finish on DR")
         ### Send
         cmd = " picca_co.py"
-        cmd += " --drq " + self._branchFiles + "/Products/random.fits"
-        cmd += " --drq2 " + self._branchFiles + "/Products/cat.fits"
+        cmd += " --drq " + self._masterFiles + "/test_delta/random.fits"
+        cmd += " --drq2 " + self._masterFiles + "/test_delta/cat.fits"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/Co_Random/co_RD.fits.gz"
         cmd += " --rp-min 0."
@@ -718,19 +720,19 @@ class TestCor(unittest.TestCase):
 
         ### Test
         if self._test:
-            path1 = self._masterFiles + "/co_DD.fits.gz"
+            path1 = self._masterFiles + "/test_cor/co_DD.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/co_DD.fits.gz"
             self.compare_fits(path1, path2, "picca_co.py DD")
 
-            path1 = self._masterFiles + "/co_RR.fits.gz"
+            path1 = self._masterFiles + "/test_cor/co_RR.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RR.fits.gz"
             self.compare_fits(path1, path2, "picca_co.py RR")
 
-            path1 = self._masterFiles + "/co_DR.fits.gz"
+            path1 = self._masterFiles + "/test_cor/co_DR.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_DR.fits.gz"
             self.compare_fits(path1, path2, "picca_co.py DR")
 
-            path1 = self._masterFiles + "/co_RD.fits.gz"
+            path1 = self._masterFiles + "/test_cor/co_RD.fits.gz"
             path2 = self._branchFiles + "/Products/Correlations/Co_Random/co_RD.fits.gz"
             self.compare_fits(path1, path2, "picca_co.py RD")
 
@@ -741,71 +743,19 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_export_co.py"
-        cmd += " --DD-file " + self._masterFiles + "/co_DD.fits.gz"
+        cmd += " --DD-file " + self._masterFiles + "/test_cor/co_DD.fits.gz"
         cmd += " --RR-file " + self._masterFiles + \
-            "/co_RR.fits.gz"
+            "/test_cor/co_RR.fits.gz"
         cmd += " --DR-file " + self._masterFiles + \
-            "/co_DR.fits.gz"
+            "/test_cor/co_DR.fits.gz"
         cmd += " --RD-file " + self._masterFiles + \
-            "/co_RD.fits.gz"
+            "/test_cor/co_RD.fits.gz"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/exported_co.fits.gz"
         cmd += " --get-cov-from-poisson"
         returncode = subprocess.call(cmd, shell=True)
         self.assertEqual(returncode, 0, "picca_export_co did not finish")
 
         return
-
-    def send_fitter2(self):
-
-        userprint("\n")
-
-        ### copy ini files to branch
-        cmd = 'cp '+self._masterFiles+'/*ini ' + \
-            self._branchFiles+'/Products/Correlations/Fit/'
-        subprocess.call(cmd, shell=True)
-
-        ### Set path in chi2.ini
-        path = self._branchFiles + '/Products/Correlations/Fit/chi2.ini'
-        value = self._branchFiles + '/Products/Correlations/Fit/config_cf.ini '
-        value += self._branchFiles + '/Products/Correlations/Fit/config_xcf.ini '
-        value += self._branchFiles + '/Products/Correlations/Fit/config_cf_cross.ini '
-        update_system_status_values(path, 'data sets', 'ini files', value)
-        value = 'PlanckDR12/PlanckDR12.fits'
-        update_system_status_values(path, 'fiducial', 'filename', value)
-        value = self._branchFiles + '/Products/Correlations/Fit/result_fitter2.h5'
-        update_system_status_values(path, 'output', 'filename', value)
-
-        ### Set path in config_cf.ini
-        path = self._branchFiles + '/Products/Correlations/Fit/config_cf.ini'
-        value = self._branchFiles + '/Products/Correlations/exported_cf.fits.gz'
-        update_system_status_values(path, 'data', 'filename', value)
-        value = self._branchFiles + '/Products/Correlations/metal_dmat.fits.gz'
-        update_system_status_values(path, 'metals', 'filename', value)
-
-        ### Set path in config_cf_cross.ini
-        path = self._branchFiles + '/Products/Correlations/Fit/config_cf_cross.ini'
-        value = self._branchFiles + '/Products/Correlations/exported_cf_cross.fits.gz'
-        update_system_status_values(path, 'data', 'filename', value)
-        value = self._branchFiles + '/Products/Correlations/metal_dmat_cross.fits.gz'
-        update_system_status_values(path, 'metals', 'filename', value)
-
-        ### Set path in config_xcf.ini
-        path = self._branchFiles + '/Products/Correlations/Fit/config_xcf.ini'
-        value = self._branchFiles + '/Products/Correlations/exported_xcf.fits.gz'
-        update_system_status_values(path, 'data', 'filename', value)
-        value = self._branchFiles + '/Products/Correlations/metal_xdmat.fits.gz'
-        update_system_status_values(path, 'metals', 'filename', value)
-
-        ### Send
-        cmd = ' picca_fitter2.py '+self._branchFiles + \
-            '/Products/Correlations/Fit/chi2.ini'
-        subprocess.call(cmd, shell=True)
-
-        ### Test
-        if self._test:
-            path1 = self._masterFiles + '/result_fitter2.h5'
-            path2 = self._branchFiles + '/Products/Correlations/Fit/result_fitter2.h5'
-            self.compare_h5py(path1, path2, "picca_fitter2")
 
 
 if __name__ == '__main__':
