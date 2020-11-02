@@ -46,7 +46,7 @@ def fill_neighs(healpixs):
                 nside, [obj1.x_cart, obj1.y_cart, obj1.z_cart],
                 ang_max,
                 inclusive=True)
-            if x_correlation:
+            if objs2 is not None:
                 healpix_neighbours = [
                     healpix for healpix in healpix_neighbours
                     if healpix in objs2
