@@ -107,7 +107,7 @@ def fill_neighs(healpixs):
             ang = delta.get_angle_between(neighbours)
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
-            if x_correlation:
+            if data2 is not None:
                 delta.neighbours = [
                     other_delta for other_delta in neighbours
                     if ((other_delta.z[-1] + delta.z[-1]) / 2. >= z_cut_min and
