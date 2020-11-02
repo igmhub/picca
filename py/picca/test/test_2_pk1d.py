@@ -1,4 +1,3 @@
-
 import unittest
 import numpy as np
 import fitsio
@@ -12,7 +11,8 @@ import sys
 
 from picca.utils import userprint
 
-from .test_helpers import update_system_status_values, compare_fits, compare_h5py
+from .test_helpers import update_system_status_values, compare_fits, compare_h5py, send_requirements, load_requirements
+
 
 class TestPk1d(unittest.TestCase):
     #TODO: bad style, using it for the moment while transitioning, remove later
@@ -22,70 +22,19 @@ class TestPk1d(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._branchFiles = tempfile.mkdtemp() + "/"
+        cls.produce_folder(cls)
+        cls.picca_base = resource_filename('picca',
+                                           './').replace('py/picca/./', '')
+        send_requirements(load_requirements(cls.picca_base))
+        np.random.seed(42)
+        cls._masterFiles = cls.picca_base + '/py/picca/test/data/'
+
+        userprint("\n")
 
     @classmethod
     def tearDownClass(cls):
         if os.path.isdir(cls._branchFiles):
             shutil.rmtree(cls._branchFiles, ignore_errors=True)
-
-    def setUp(self):
-
-        self.picca_base = resource_filename('picca',
-                                            './').replace('py/picca/./', '')
-        self.send_requirements()
-        np.random.seed(42)
-
-        userprint("\n")
-        self._test = True
-        self._masterFiles = self.picca_base + '/py/picca/test/data/'
-        self.produce_folder()
-        
-        
-        
-    def tearDown(self):
-
-        if self._test:
-            self.remove_folder()
-
-        return
-
-
-    def load_requirements(self):
-
-        req = {}
-
-        if sys.version_info > (3, 0):
-            path = self.picca_base + '/requirements.txt'
-        else:
-            path = self.picca_base + '/requirements-python2.txt'
-        with open(path, 'r') as f:
-            for l in f:
-                l = l.replace('\n', '').replace('==',
-                                                ' ').replace('>=',
-                                                             ' ').split()
-                self.assertTrue(
-                    len(l) == 2,
-                    "requirements.txt attribute is not valid: {}".format(
-                        str(l)))
-                req[l[0]] = l[1]
-
-        return req
-
-    def send_requirements(self):
-
-        userprint("\n")
-        req = self.load_requirements()
-        for req_lib, req_ver in req.items():
-            try:
-                local_ver = __import__(req_lib).__version__
-                if local_ver != req_ver:
-                    userprint(
-                        "WARNING: The local version of {}: {} is different from the required version: {}"
-                        .format(req_lib, local_ver, req_ver))
-            except ImportError:
-                userprint("WARNING: Module {} can't be found".format(req_lib))
-
-        return
 
     def produce_folder(self):
         """
@@ -93,10 +42,7 @@ class TestPk1d(unittest.TestCase):
         """
 
         userprint("\n")
-        lst_fold = [
-            "/Products/", 
-            "/Products/Pk1D/"
-        ]
+        lst_fold = ["/Products/", "/Products/Pk1D/"]
 
         for fold in lst_fold:
             if not os.path.isdir(self._branchFiles + fold):
@@ -104,18 +50,8 @@ class TestPk1d(unittest.TestCase):
 
         return
 
-    def remove_folder(self):
-        """
-            Remove the produced folders
-        """
-
-        userprint("\n")
-        shutil.rmtree(self._branchFiles, ignore_errors=True)
-
-        return
-
     def test_Pk1D(self):
-
+        self._test = True
         userprint("\n")
         ### Send
         cmd = " picca_Pk1D.py"

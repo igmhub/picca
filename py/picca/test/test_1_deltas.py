@@ -1,4 +1,3 @@
-
 import unittest
 import numpy as np
 import fitsio
@@ -13,7 +12,8 @@ import sys
 
 from picca.utils import userprint
 
-from .test_helpers import update_system_status_values, compare_fits, compare_h5py
+from .test_helpers import update_system_status_values, compare_fits, compare_h5py, send_requirements, load_requirements
+
 
 class TestDelta(unittest.TestCase):
     #TODO: bad style, using it for the moment while transitioning, remove later
@@ -23,6 +23,14 @@ class TestDelta(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._branchFiles = tempfile.mkdtemp() + "/"
+        cls.produce_folder(cls)
+        cls.picca_base = resource_filename('picca',
+                                           './').replace('py/picca/./', '')
+        send_requirements(load_requirements(cls.picca_base))
+        np.random.seed(42)
+        cls._masterFiles = cls.picca_base + '/py/picca/test/data/'
+
+        userprint("\n")
 
     @classmethod
     def tearDownClass(cls):
@@ -30,37 +38,18 @@ class TestDelta(unittest.TestCase):
             shutil.rmtree(cls._branchFiles, ignore_errors=True)
 
     def test_delta(self):
-
-        self.picca_base = resource_filename('picca',
-                                            './').replace('py/picca/./', '')
-        self.send_requirements()
-        np.random.seed(42)
-
-        userprint("\n")
         self._test = True
-        self._masterFiles = self.picca_base + '/py/picca/test/data/'
 
-        
-        self.produce_folder()
-        
         self.produce_cat(nObj=1000)
         self.produce_forests()
         self.produce_cat(nObj=1000, name="random", thidoffset=1000)
 
         self.produce_cat_minisv(nObj=1000)
         self.produce_forests_minisv()
-        self.send_delta_Pk1D_minisv()
 
+        self.send_delta_Pk1D_minisv()
         self.send_delta()
         self.send_delta_Pk1D()
-
-        ###These commented lines are to simplify accessing test outputs if needed
-        #if os.path.exists(self._masterFiles+'new/'):
-        #    os.rmdir(self._masterFiles+'new/')
-        #shutil.copytree(self._branchFiles,self._masterFiles+'new/')
-
-        if self._test:
-            self.remove_folder()
 
         return
 
@@ -71,33 +60,17 @@ class TestDelta(unittest.TestCase):
 
         userprint("\n")
         lst_fold = [
-            "/Products/", 
-            "/Products/Spectra/", 
-            "/Products/Spectra_MiniSV/",
-            "/Products/Delta_Pk1D/",
-            "/Products/Delta_Pk1D/Delta/", 
-            "/Products/Delta_Pk1D/Log/",
-            "/Products/Delta_Pk1D_MiniSV/",
+            "/Products/", "/Products/Spectra/", "/Products/Spectra_MiniSV/",
+            "/Products/Delta_Pk1D/", "/Products/Delta_Pk1D/Delta/",
+            "/Products/Delta_Pk1D/Log/", "/Products/Delta_Pk1D_MiniSV/",
             "/Products/Delta_Pk1D_MiniSV/Delta/",
-            "/Products/Delta_Pk1D_MiniSV/Log/",
-            "/Products/Delta_LYA/",
-            "/Products/Delta_LYA/Delta/", 
-            "/Products/Delta_LYA/Log/"
+            "/Products/Delta_Pk1D_MiniSV/Log/", "/Products/Delta_LYA/",
+            "/Products/Delta_LYA/Delta/", "/Products/Delta_LYA/Log/"
         ]
 
         for fold in lst_fold:
             if not os.path.isdir(self._branchFiles + fold):
                 os.mkdir(self._branchFiles + fold)
-
-        return
-
-    def remove_folder(self):
-        """
-            Remove the produced folders
-        """
-
-        userprint("\n")
-        shutil.rmtree(self._branchFiles, ignore_errors=True)
 
         return
 
@@ -316,14 +289,14 @@ class TestDelta(unittest.TestCase):
                                                 size=(p_thid.size,
                                                       lam_key.size))
                 p_m[key] = np.zeros((p_thid.size, lam_key.size)).astype(int)
-                p_m[key][np.random.random_sample(size=(p_thid.size,
-                                                lam_key.size)) > 0.90] = 1
+                p_m[key][np.random.random_sample(
+                    size=(p_thid.size, lam_key.size)) > 0.90] = 1
                 tmp = np.exp(
                     -((np.arange(11) - 5) / 0.6382)**2
                 )  #to fake resolution from a gaussian, this assumes R=3000 at minimum wavelength
                 tmp = np.repeat(tmp[np.newaxis, :, np.newaxis],
-                                   p_thid.size,
-                                   axis=0)
+                                p_thid.size,
+                                axis=0)
                 p_res[key] = np.repeat(tmp, lam_key.size, axis=2)
 
             p_path = self._branchFiles + f"/Products/Spectra_MiniSV/{t}/{n}/"
@@ -342,45 +315,6 @@ class TestDelta(unittest.TestCase):
                 out.write(p_res[key], extname=f"{key.upper()}_RESOLUTION")
             out.close()
         return
-
-
-    def load_requirements(self):
-
-        req = {}
-
-        if sys.version_info > (3, 0):
-            path = self.picca_base + '/requirements.txt'
-        else:
-            path = self.picca_base + '/requirements-python2.txt'
-        with open(path, 'r') as f:
-            for l in f:
-                l = l.replace('\n', '').replace('==',
-                                                ' ').replace('>=',
-                                                             ' ').split()
-                self.assertTrue(
-                    len(l) == 2,
-                    "requirements.txt attribute is not valid: {}".format(
-                        str(l)))
-                req[l[0]] = l[1]
-
-        return req
-
-    def send_requirements(self):
-
-        userprint("\n")
-        req = self.load_requirements()
-        for req_lib, req_ver in req.items():
-            try:
-                local_ver = __import__(req_lib).__version__
-                if local_ver != req_ver:
-                    userprint(
-                        "WARNING: The local version of {}: {} is different from the required version: {}"
-                        .format(req_lib, local_ver, req_ver))
-            except ImportError:
-                userprint("WARNING: Module {} can't be found".format(req_lib))
-
-        return
-
 
     def send_delta(self):
 
@@ -467,12 +401,15 @@ class TestDelta(unittest.TestCase):
             path2 = self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes.fits.gz"
             self.compare_fits(path1, path2, "picca_deltas.py")
 
-#this checks if any of the output delta files changed
-            for fname in glob.glob(f'{self._branchFiles}/Products/Delta_Pk1D_MiniSV/Delta/delta-*.fits.gz'):
+            #this checks if any of the output delta files changed
+            for fname in glob.glob(
+                    f'{self._branchFiles}/Products/Delta_Pk1D_MiniSV/Delta/delta-*.fits.gz'
+            ):
                 path2 = fname
                 path1 = f"{self._masterFiles}/test_delta/Delta_Pk1D_MiniSV/{os.path.basename(fname)}"
                 self.compare_fits(path1, path2, "picca_deltas.py")
         return
+
 
 if __name__ == '__main__':
     unittest.main()

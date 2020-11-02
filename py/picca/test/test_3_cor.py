@@ -14,9 +14,7 @@ import sys
 
 from picca.utils import userprint
 
-from .test_helpers import update_system_status_values, compare_fits, compare_h5py
-
-
+from .test_helpers import update_system_status_values, compare_fits, compare_h5py, send_requirements, load_requirements
 
 
 class TestCor(unittest.TestCase):
@@ -24,66 +22,57 @@ class TestCor(unittest.TestCase):
     compare_fits = compare_fits
     compare_h5py = compare_h5py
 
-
-
     @classmethod
     def setUpClass(cls):
         cls._branchFiles = tempfile.mkdtemp() + "/"
+        cls.produce_folder(cls)
+        cls.picca_base = resource_filename('picca',
+                                           './').replace('py/picca/./', '')
+        send_requirements(load_requirements(cls.picca_base))
+        np.random.seed(42)
+        cls._masterFiles = cls.picca_base + '/py/picca/test/data/'
+        cls._test=True
+        userprint("\n")
 
     @classmethod
     def tearDownClass(cls):
         if os.path.isdir(cls._branchFiles):
             shutil.rmtree(cls._branchFiles, ignore_errors=True)
 
-    def test_cor(self):
+    # def test_cor(self):
 
-        self.picca_base = resource_filename('picca',
-                                            './').replace('py/picca/./', '')
-        self.send_requirements()
-        np.random.seed(42)
+    #     self._test = True
+    #     self.produce_folder()
 
-        userprint("\n")
-        self._test = True
-        self._masterFiles = self.picca_base + '/py/picca/test/data/'
-        self.produce_folder()
+    #     self.send_cf1d()
+    #     self.send_cf1d_cross()
 
-        self.send_cf1d()
-        self.send_cf1d_cross()
+    #     self.send_cf_angl()
 
-        self.send_cf_angl()
+    #     self.send_cf()
+    #     self.send_dmat()
+    #     self.send_metal_dmat()
+    #     self.send_wick()
+    #     self.send_export_cf()
 
-        self.send_cf()
-        self.send_dmat()
-        self.send_metal_dmat()
-        self.send_wick()
-        self.send_export_cf()
+    #     self.send_cf_cross()
+    #     self.send_dmat_cross()
+    #     self.send_metal_dmat_cross()
+    #     self.send_export_cf_cross()
 
-        self.send_cf_cross()
-        self.send_dmat_cross()
-        self.send_metal_dmat_cross()
-        self.send_export_cf_cross()
+    #     self.send_xcf_angl()
 
-        self.send_xcf_angl()
+    #     self.send_xcf()
+    #     self.send_xdmat()
+    #     self.send_metal_xdmat()
+    #     self.send_xwick()
+    #     self.send_export_xcf()
+    #     self.send_export_cross_covariance_cf_xcf()
 
-        self.send_xcf()
-        self.send_xdmat()
-        self.send_metal_xdmat()
-        self.send_xwick()
-        self.send_export_xcf()
-        self.send_export_cross_covariance_cf_xcf()
+    #     self.send_co()
+    #     self.send_export_co()
 
-        self.send_co()
-        self.send_export_co()
-
-        ###These commented lines are to simplify accessing test outputs if needed
-        #if os.path.exists(self._masterFiles+'new/'):
-        #    os.rmdir(self._masterFiles+'new/')
-        #shutil.copytree(self._branchFiles,self._masterFiles+'new/')
-
-        if self._test:
-            self.remove_folder()
-
-        return
+    #     return
 
     def produce_folder(self):
         """
@@ -92,9 +81,11 @@ class TestCor(unittest.TestCase):
 
         userprint("\n")
         lst_fold = [
-            "/Products/", "/Products/Spectra/", 
-            "/Products/Correlations/", "/Products/Correlations/Co_Random/",
-            "/Products/Correlations/Fit/", 
+            "/Products/",
+            "/Products/Spectra/",
+            "/Products/Correlations/",
+            "/Products/Correlations/Co_Random/",
+            "/Products/Correlations/Fit/",
         ]
 
         for fold in lst_fold:
@@ -103,148 +94,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def remove_folder(self):
-        """
-            Remove the produced folders
-        """
-
-        userprint("\n")
-        shutil.rmtree(self._branchFiles, ignore_errors=True)
-
-        return
-
-    def produce_cat(self, nObj, name="cat", thidoffset=0):
-        """
-
-        """
-
-        userprint("\n")
-        userprint("Create cat with number of object = ", nObj)
-
-        ### Create random catalog
-        ra = 10. * np.random.random_sample(nObj)
-        dec = 10. * np.random.random_sample(nObj)
-        plate = np.random.randint(266, high=10001, size=nObj)
-        mjd = np.random.randint(51608, high=57521, size=nObj)
-        fiberid = np.random.randint(1, high=1001, size=nObj)
-        thid = np.arange(thidoffset + 1, thidoffset + nObj + 1)
-        z_qso = (3.6 - 2.0) * np.random.random_sample(nObj) + 2.0
-
-        ### Save
-        out = fitsio.FITS(self._branchFiles + "/Products/" + name + ".fits",
-                          'rw',
-                          clobber=True)
-        cols = [ra, dec, thid, plate, mjd, fiberid, z_qso]
-        names = ['RA', 'DEC', 'THING_ID', 'PLATE', 'MJD', 'FIBERID', 'Z']
-        out.write(cols, names=names, extname='CAT')
-        out.close()
-
-        return
-
-    def produce_forests(self):
-        """
-
-        """
-
-        userprint("\n")
-        nside = 8
-
-        ### Load DRQ
-        vac = fitsio.FITS(self._masterFiles + "/test_delta/cat.fits")
-        ra = vac[1]["RA"][:] * np.pi / 180.
-        dec = vac[1]["DEC"][:] * np.pi / 180.
-        thid = vac[1]["THING_ID"][:]
-        plate = vac[1]["PLATE"][:]
-        mjd = vac[1]["MJD"][:]
-        fiberid = vac[1]["FIBERID"][:]
-        vac.close()
-
-        ### Get Healpy pixels
-        pixs = healpy.ang2pix(nside, np.pi / 2. - dec, ra)
-
-        ### Save master file
-        path = self._branchFiles + "/Products/Spectra/master.fits"
-        head = {}
-        head['NSIDE'] = nside
-        cols = [thid, pixs, plate, mjd, fiberid]
-        names = ['THING_ID', 'PIX', 'PLATE', 'MJD', 'FIBER']
-        out = fitsio.FITS(path, 'rw', clobber=True)
-        out.write(cols, names=names, header=head, extname="MASTER TABLE")
-        out.close()
-
-        ### Log lambda grid
-        logl_min = 3.550
-        logl_max = 4.025
-        logl_step = 1.e-4
-        log_lambda = np.arange(logl_min, logl_max, logl_step)
-
-        ###
-        for p in np.unique(pixs):
-
-            ###
-            p_thid = thid[(pixs == p)]
-            p_fl = np.random.normal(loc=1.,
-                                    scale=1.,
-                                    size=(log_lambda.size, p_thid.size))
-            p_iv = np.random.lognormal(mean=0.1,
-                                       sigma=0.1,
-                                       size=(log_lambda.size, p_thid.size))
-            p_am = np.zeros((log_lambda.size, p_thid.size)).astype(int)
-            p_am[np.random.random_sample(size=(log_lambda.size,
-                                               p_thid.size)) > 0.90] = 1
-            p_om = np.zeros((log_lambda.size, p_thid.size)).astype(int)
-
-            ###
-            p_path = self._branchFiles + "/Products/Spectra/pix_" + str(
-                p) + ".fits"
-            out = fitsio.FITS(p_path, 'rw', clobber=True)
-            out.write(p_thid, header={}, extname="THING_ID_MAP")
-            out.write(log_lambda, header={}, extname="LOGLAM_MAP")
-            out.write(p_fl, header={}, extname="FLUX")
-            out.write(p_iv, header={}, extname="IVAR")
-            out.write(p_am, header={}, extname="ANDMASK")
-            out.write(p_om, header={}, extname="ORMASK")
-            out.close()
-
-        return
-        
-    def load_requirements(self):
-
-        req = {}
-
-        if sys.version_info > (3, 0):
-            path = self.picca_base + '/requirements.txt'
-        else:
-            path = self.picca_base + '/requirements-python2.txt'
-        with open(path, 'r') as f:
-            for l in f:
-                l = l.replace('\n', '').replace('==',
-                                                ' ').replace('>=',
-                                                             ' ').split()
-                self.assertTrue(
-                    len(l) == 2,
-                    "requirements.txt attribute is not valid: {}".format(
-                        str(l)))
-                req[l[0]] = l[1]
-
-        return req
-
-    def send_requirements(self):
-
-        userprint("\n")
-        req = self.load_requirements()
-        for req_lib, req_ver in req.items():
-            try:
-                local_ver = __import__(req_lib).__version__
-                if local_ver != req_ver:
-                    userprint(
-                        "WARNING: The local version of {}: {} is different from the required version: {}"
-                        .format(req_lib, local_ver, req_ver))
-            except ImportError:
-                userprint("WARNING: Module {} can't be found".format(req_lib))
-
-        return
-    def send_cf1d(self):
+    def test_cf1d(self):
 
         userprint("\n")
         ### Send
@@ -262,7 +112,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_cf1d_cross(self):
+    def test_cf1d_cross(self):
 
         userprint("\n")
         ### Send
@@ -281,7 +131,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_cf_angl(self):
+    def test_cf_angl(self):
 
         userprint("\n")
         ### Send
@@ -299,7 +149,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_cf(self):
+    def test_cf(self):
 
         userprint("\n")
         ### Send
@@ -323,7 +173,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_dmat(self):
+    def test_dmat(self):
 
         userprint("\n")
         ### Send
@@ -348,7 +198,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_metal_dmat(self):
+    def test_metal_dmat(self):
 
         userprint("\n")
         ### Send
@@ -374,14 +224,14 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_wick(self):
+    def test_wick(self):
 
         userprint("\n")
         ### Send
         cmd = " picca_wick.py"
         cmd += " --in-dir " + self._masterFiles + "/test_delta/Delta_LYA/"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/wick.fits.gz"
-        cmd += " --cf1d " + self._masterFiles +"/test_cor/cf1d.fits.gz"
+        cmd += " --cf1d " + self._masterFiles + "/test_cor/cf1d.fits.gz"
         cmd += " --rp-min +0.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -399,7 +249,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_export_cf(self):
+    def test_export_cf(self):
 
         userprint("\n")
         ### Send
@@ -411,7 +261,7 @@ class TestCor(unittest.TestCase):
         self.assertEqual(returncode, 0, "export_cf did not finish")
         return
 
-    def send_cf_cross(self):
+    def test_cf_cross(self):
 
         userprint("\n")
         ### Send
@@ -437,7 +287,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_dmat_cross(self):
+    def test_dmat_cross(self):
 
         userprint("\n")
         ### Send
@@ -464,7 +314,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_metal_dmat_cross(self):
+    def test_metal_dmat_cross(self):
 
         userprint("\n")
         ### Send
@@ -494,7 +344,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_export_cf_cross(self):
+    def test_export_cf_cross(self):
 
         userprint("\n")
         ### Send
@@ -508,7 +358,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_xcf_angl(self):
+    def test_xcf_angl(self):
 
         userprint("\n")
         ### Send
@@ -527,7 +377,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_xcf(self):
+    def test_xcf(self):
 
         userprint("\n")
         ### Send
@@ -551,7 +401,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_xdmat(self):
+    def test_xdmat(self):
 
         userprint("\n")
         ### Send
@@ -576,7 +426,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_metal_xdmat(self):
+    def test_metal_xdmat(self):
 
         userprint("\n")
         ### Send
@@ -602,7 +452,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_xwick(self):
+    def test_xwick(self):
 
         userprint("\n")
         ### Send
@@ -628,7 +478,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_export_xcf(self):
+    def test_export_xcf(self):
 
         userprint("\n")
         ### Send
@@ -642,7 +492,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_export_cross_covariance_cf_xcf(self):
+    def test_export_cross_covariance_cf_xcf(self):
 
         userprint("\n")
         ### Send
@@ -657,7 +507,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_co(self):
+    def test_co(self):
 
         userprint("\n")
         ### Send
@@ -738,7 +588,7 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def send_export_co(self):
+    def test_export_co(self):
 
         userprint("\n")
         ### Send
