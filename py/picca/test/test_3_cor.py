@@ -9,32 +9,23 @@ import subprocess
 import os
 import tempfile
 import shutil
-import h5py
 from pkg_resources import resource_filename
 import sys
 
 from picca.utils import userprint
-import configparser as ConfigParser
+
+from .test_helpers import update_system_status_values, compare_fits, compare_h5py
 
 
-def update_system_status_values(path, section, system, value):
-
-    ### Make ConfigParser case sensitive
-    class CaseConfigParser(ConfigParser.ConfigParser):
-        def optionxform(self, optionstr):
-            return optionstr
-
-    cp = CaseConfigParser()
-    cp.read(path)
-    cf = open(path, 'w')
-    cp.set(section, system, value)
-    cp.write(cf)
-    cf.close()
-
-    return
 
 
 class TestCor(unittest.TestCase):
+    #TODO: bad style, using it for the moment while transitioning, remove later
+    compare_fits = compare_fits
+    compare_h5py = compare_h5py
+
+
+
     @classmethod
     def setUpClass(cls):
         cls._branchFiles = tempfile.mkdtemp() + "/"
@@ -55,15 +46,6 @@ class TestCor(unittest.TestCase):
         self._test = True
         self._masterFiles = self.picca_base + '/py/picca/test/data/'
         self.produce_folder()
-        self.produce_cat(nObj=1000)
-        self.produce_forests()
-        self.produce_cat(nObj=1000, name="random", thidoffset=1000)
-
-        self.produce_cat_minisv(nObj=1000)
-        self.produce_forests_minisv()
-        self.send_delta_Pk1D_minisv()
-
-        self.send_delta()
 
         self.send_cf1d()
         self.send_cf1d_cross()
@@ -95,8 +77,6 @@ class TestCor(unittest.TestCase):
 
         self.send_fitter2()
 
-        self.send_delta_Pk1D()
-        self.send_Pk1D()
 
         if self._test:
             self.remove_folder()
@@ -110,15 +90,9 @@ class TestCor(unittest.TestCase):
 
         userprint("\n")
         lst_fold = [
-            "/Products/", "/Products/Spectra/", "/Products/Delta_LYA/",
-            "/Products/Delta_LYA/Delta/", "/Products/Delta_LYA/Log/",
+            "/Products/", "/Products/Spectra/", 
             "/Products/Correlations/", "/Products/Correlations/Co_Random/",
-            "/Products/Correlations/Fit/", "/Products/Delta_Pk1D/",
-            "/Products/Delta_Pk1D/Delta/", "/Products/Delta_Pk1D/Log/",
-            "/Products/Pk1D/", "/Products/Spectra_MiniSV/",
-            "/Products/Delta_Pk1D_MiniSV/",
-            "/Products/Delta_Pk1D_MiniSV/Delta/",
-            "/Products/Delta_Pk1D_MiniSV/Log/"
+            "/Products/Correlations/Fit/", 
         ]
 
         for fold in lst_fold:
@@ -231,267 +205,7 @@ class TestCor(unittest.TestCase):
             out.close()
 
         return
-
-    def produce_cat_minisv(self, nObj, name="cat_minisv"):
-        """
-
-        """
-
-        userprint("\n")
-        userprint("Create cat with number of object = ", nObj)
-
-        ### Create random catalog
-        ra = 10. * np.random.random_sample(nObj)
-        dec = 10. * np.random.random_sample(nObj)
-        tile = np.random.randint(
-            100, high=110, size=nObj,
-            dtype=np.int32)  # restricted to not get too many files
-        petal_loc = np.random.randint(0, high=10, size=nObj, dtype=np.int16)
-        night = np.array([
-            np.int32(f'{yyyy:04d}{mm:02d}{dd:02d}') for dd, mm, yyyy in zip(
-                np.random.randint(1, high=3, size=nObj),
-                np.random.randint(1, high=2, size=nObj),
-                np.random.randint(2019, high=2020, size=nObj))
-        ])  # restricted to not get too many files
-        fiberid = np.random.randint(1, high=5001, size=nObj, dtype=np.int32)
-        thid = np.arange(2**60, 2**60 + nObj)
-        z_qso = (3.6 - 2.0) * np.random.random_sample(nObj) + 2.0
-
-        ### Save
-        out = fitsio.FITS(self._branchFiles + "/Products/" + name + ".fits",
-                          'rw',
-                          clobber=True)
-        cols = [ra, dec, thid, tile, petal_loc, night, fiberid, z_qso]
-        names = [
-            'TARGET_RA', 'TARGET_DEC', 'TARGETID', 'TILEID', 'PETAL_LOC',
-            'NIGHT', 'FIBER', 'Z'
-        ]
-        out.write(cols, names=names, extname='CAT')
-        out.close()
-
-        return
-
-    def produce_forests_minisv(self):
-        """
-
-        """
-
-        userprint("\n")
-
-        ### Load DRQ
-        vac = fitsio.FITS(self._branchFiles + "/Products/cat_minisv.fits")
-        ra = vac[1]["TARGET_RA"][:] * np.pi / 180.
-        dec = vac[1]["TARGET_DEC"][:] * np.pi / 180.
-        thid = vac[1]["TARGETID"][:]
-        petal_loc = vac[1]["PETAL_LOC"][:]
-        tile = vac[1]["TILEID"][:]
-        night = vac[1]["NIGHT"][:]
-        fiberid = vac[1]["FIBER"][:]
-
-        tile_night_petal_combined = np.unique([*zip(tile, night, petal_loc)],
-                                              axis=0)
-        vac.close()
-
-        cols = [thid, ra, dec, night, fiberid, tile, petal_loc]
-        names = [
-            'TARGETID', 'TARGET_RA', 'TARGET_DEC', 'NIGHT', 'FIBER', 'TILEID',
-            'PETAL_LOC'
-        ]
-
-        ### Log lambda grid
-        l_min_b = 3600
-        l_max_b = 5800
-
-        l_min_r = 5760
-        l_max_r = 7620
-
-        l_min_z = 7520
-        l_max_z = 9824
-
-        l_step = 0.8
-        lam_b = np.arange(l_min_b, l_max_b, l_step)
-        lam_r = np.arange(l_min_r, l_max_r, l_step)
-        lam_z = np.arange(l_min_z, l_max_z, l_step)
-
-        lam = {'b': lam_b, 'r': lam_r, 'z': lam_z}
-
-        ###
-        for t, n, p in tile_night_petal_combined:
-
-            ###
-            selector = ((petal_loc == p) & (tile == t) & (night == n))
-
-            cols = [
-                thid[selector], ra[selector], dec[selector], night[selector],
-                fiberid[selector], tile[selector], petal_loc[selector]
-            ]
-            p_thid = cols[0]
-            names = [
-                'TARGETID', 'TARGET_RA', 'TARGET_DEC', 'NIGHT', 'FIBER',
-                'TILEID', 'PETAL_LOC'
-            ]
-            p_fl = {}
-            p_iv = {}
-            p_m = {}
-            p_res = {}
-            for key, lam_key in lam.items():
-                p_fl[key] = np.random.normal(loc=1.,
-                                             scale=1.,
-                                             size=(p_thid.size, lam_key.size))
-                p_iv[key] = np.random.lognormal(mean=0.1,
-                                                sigma=0.1,
-                                                size=(p_thid.size,
-                                                      lam_key.size))
-                p_m[key] = np.zeros((p_thid.size, lam_key.size)).astype(int)
-                p_m[key][np.random.random_sample(size=(p_thid.size,
-                                                lam_key.size)) > 0.90] = 1
-                tmp = np.exp(
-                    -((np.arange(11) - 5) / 0.6382)**2
-                )  #to fake resolution from a gaussian, this assumes R=3000 at minimum wavelength
-                tmp = np.repeat(tmp[np.newaxis, :, np.newaxis],
-                                   p_thid.size,
-                                   axis=0)
-                p_res[key] = np.repeat(tmp, lam_key.size, axis=2)
-
-            p_path = self._branchFiles + f"/Products/Spectra_MiniSV/{t}/{n}/"
-            if not os.path.isdir(p_path):
-                os.makedirs(p_path)
-            p_file = p_path + f"coadd-{p}-{t}-{n}.fits"
-            ###
-            out = fitsio.FITS(p_file, 'rw', clobber=True)
-
-            out.write(cols, names=names, extname="FIBERMAP")
-            for key, lam_key in lam.items():
-                out.write_image(lam_key, extname=f"{key.upper()}_WAVELENGTH")
-                out.write(p_fl[key], extname=f"{key.upper()}_FLUX")
-                out.write(p_iv[key], extname=f"{key.upper()}_IVAR")
-                out.write(p_m[key], extname=f"{key.upper()}_MASK")
-                out.write(p_res[key], extname=f"{key.upper()}_RESOLUTION")
-            out.close()
-        return
-
-    def compare_fits(self, path1, path2, nameRun=""):
-
-        userprint("\n")
-        m = fitsio.FITS(path1)
-        self.assertTrue(os.path.isfile(path2), "{}".format(nameRun))
-        b = fitsio.FITS(path2)
-
-        self.assertEqual(len(m), len(b), "{}".format(nameRun))
-
-        for i, _ in enumerate(m):
-
-            ###
-            r_m = m[i].read_header().records()
-            ld_m = []
-            for el in r_m:
-                name = el['name']
-                if len(name) > 5 and name[:5] == "TTYPE":
-                    ld_m += [el['value'].replace(" ", "")]
-            ###
-            r_b = b[i].read_header().records()
-            ld_b = []
-            for el in r_b:
-                name = el['name']
-                if len(name) > 5 and name[:5] == "TTYPE":
-                    ld_b += [el['value'].replace(" ", "")]
-
-            self.assertListEqual(ld_m, ld_b, "{}".format(nameRun))
-
-            for k in ld_m:
-                d_m = m[i][k][:]
-                d_b = b[i][k][:]
-                if d_m.dtype in ['<U23', 'S23'
-                                 ]:  # for fitsio old version compatibility
-                    d_m = np.char.strip(d_m)
-                if d_b.dtype in ['<U23', 'S23'
-                                 ]:  # for fitsio old version compatibility
-                    d_b = np.char.strip(d_b)
-                self.assertEqual(d_m.size, d_b.size,
-                                 "{}: Header key is {}".format(nameRun, k))
-                if not np.array_equal(d_m, d_b):
-                    userprint(
-                        "WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose"
-                        .format(nameRun, k))
-                    diff = d_m - d_b
-                    w = d_m != 0.
-                    diff[w] = np.absolute(diff[w] / d_m[w])
-                    allclose = np.allclose(d_m, d_b)
-                    self.assertTrue(
-                        allclose,
-                        "{}: Header key is {}, maximum relative difference is {}"
-                        .format(nameRun, k, diff.max()))
-
-        m.close()
-        b.close()
-
-        return
-
-    def compare_h5py(self, path1, path2, nameRun=""):
-        def compare_attributes(atts1, atts2):
-            self.assertEqual(len(atts1.keys()), len(atts2.keys()),
-                             "{}".format(nameRun))
-            self.assertListEqual(sorted(atts1.keys()), sorted(atts2.keys()),
-                                 "{}".format(nameRun))
-            for item in atts1:
-                nequal = True
-                if isinstance(atts1[item], np.ndarray):
-                    nequal = np.logical_not(
-                        np.array_equal(atts1[item], atts2[item]))
-                else:
-                    nequal = atts1[item] != atts2[item]
-                if nequal:
-                    userprint(
-                        "WARNING: {}: not exactly equal, using allclose for {}"
-                        .format(nameRun, item))
-                    userprint(atts1[item], atts2[item])
-                    allclose = np.allclose(atts1[item], atts2[item])
-                    self.assertTrue(allclose, "{}".format(nameRun))
-            return
-
-        def compare_values(val1, val2):
-            if not np.array_equal(val1, val2):
-                userprint(
-                    "WARNING: {}: not exactly equal, using allclose".format(
-                        nameRun))
-                allclose = np.allclose(val1, val2)
-                self.assertTrue(allclose, "{}".format(nameRun))
-            return
-
-        userprint("\n")
-        m = h5py.File(path1, "r")
-        self.assertTrue(os.path.isfile(path2), "{}".format(nameRun))
-        b = h5py.File(path2, "r")
-
-        self.assertListEqual(sorted(m.keys()), sorted(b.keys()),
-                             "{}".format(nameRun))
-
-        ### best fit
-        k = 'best fit'
-        compare_attributes(m[k].attrs, b[k].attrs)
-
-        ### fit data
-        for k in m.keys():
-            if k in ['best fit', 'fast mc', 'minos', 'chi2 scan']:
-                continue
-            compare_attributes(m[k].attrs, b[k].attrs)
-            compare_values(m[k]['fit'][()], b[k]['fit'][()])
-
-        ### minos
-        k = 'minos'
-        compare_attributes(m[k].attrs, b[k].attrs)
-        for p in m[k].keys():
-            compare_attributes(m[k][p].attrs, b[k][p].attrs)
-
-        ### chi2 scan
-        k = 'chi2 scan'
-        for p in m[k].keys():
-            compare_attributes(m[k][p].attrs, b[k][p].attrs)
-            if p == 'result':
-                compare_values(m[k][p]['values'][()], b[k][p]['values'][()])
-
-        return
-
+        
     def load_requirements(self):
 
         req = {}
@@ -528,119 +242,6 @@ class TestCor(unittest.TestCase):
                 userprint("WARNING: Module {} can't be found".format(req_lib))
 
         return
-
-    def send_delta(self):
-
-        userprint("\n")
-        ### Send
-        cmd = " picca_deltas.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Spectra/"
-        cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
-        cmd += " --out-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
-        cmd += " --iter-out-prefix " + self._branchFiles + \
-            "/Products/Delta_LYA/Log/delta_attributes"
-        cmd += " --log " + self._branchFiles + "/Products/Delta_LYA/Log/input.log"
-        cmd += " --nproc 1"
-        subprocess.call(cmd, shell=True)
-
-        ### Test
-        if self._test:
-            path1 = self._masterFiles + "/delta_attributes.fits.gz"
-            path2 = self._branchFiles + "/Products/Delta_LYA/Log/delta_attributes.fits.gz"
-            self.compare_fits(path1, path2, "picca_deltas.py")
-
-        return
-
-    def send_delta_Pk1D(self):
-
-        userprint("\n")
-        ### Path
-        path_to_etc = self.picca_base + '/etc/'
-        ### Send
-        cmd = " picca_deltas.py"
-        cmd += " --in-dir " + self._masterFiles + "/test_Pk1D/Spectra_test/"
-        cmd += " --drq " + self._masterFiles + "/test_Pk1D/DRQ_test.fits"
-        cmd += " --out-dir " + self._branchFiles + "/Products/Delta_Pk1D/Delta/"
-        cmd += " --iter-out-prefix " + self._branchFiles + \
-            "/Products/Delta_Pk1D/Log/delta_attributes"
-        cmd += " --log " + self._branchFiles + "/Products/Delta_Pk1D/Log/input.log"
-        cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight"
-        cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
-        cmd += " --nproc 1"
-        cmd += " --best-obs"
-        cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
-        subprocess.call(cmd, shell=True)
-
-        ### Test
-        if self._test:
-            path1 = self._masterFiles + "/test_Pk1D/delta_attributes_Pk1D.fits.gz"
-            path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
-            self.compare_fits(path1, path2, "picca_deltas.py")
-
-            path1 = self._masterFiles + "/test_Pk1D/delta-64_Pk1D.fits.gz"
-            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-64.fits.gz"
-            self.compare_fits(path1, path2, "picca_deltas.py")
-
-            path1 = self._masterFiles + "/test_Pk1D/delta-80_Pk1D.fits.gz"
-            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-80.fits.gz"
-            self.compare_fits(path1, path2, "picca_deltas.py")
-
-        return
-
-    def send_delta_Pk1D_minisv(self):
-
-        userprint("\n")
-        ### Path
-        path_to_etc = self.picca_base + '/etc/'
-        ### Send
-        cmd = " picca_deltas.py"
-        cmd += " --in-dir " + self._branchFiles + "/Products/Spectra_MiniSV/"
-        cmd += " --drq " + self._branchFiles + "/Products/cat_minisv.fits"
-        cmd += " --out-dir " + self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Delta/"
-        cmd += " --iter-out-prefix " + self._branchFiles + \
-            "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes"
-        cmd += " --log " + self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Log/input.log"
-        cmd += " --delta-format Pk1D --mode desiminisv --order 0 --use-constant-weight"
-        cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
-        cmd += " --nproc 1"
-        cmd += " --best-obs"
-        cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
-        returncode = subprocess.call(cmd, shell=True)
-        self.assertEqual(returncode, 0, "delta_Pk1D_minisv did not finish")
-
-        ### Test
-        #if self._test:
-        #    path1 = self._masterFiles + "/test_Pk1D/delta_attributes_Pk1D.fits.gz"
-        #    path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
-        #    self.compare_fits(path1, path2, "picca_deltas.py")
-
-        #    path1 = self._masterFiles + "/test_Pk1D/delta-64_Pk1D.fits.gz"
-        #    path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-64.fits.gz"
-        #    self.compare_fits(path1, path2, "picca_deltas.py")
-
-        #    path1 = self._masterFiles + "/test_Pk1D/delta-80_Pk1D.fits.gz"
-        #    path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-80.fits.gz"
-        #    self.compare_fits(path1, path2, "picca_deltas.py")
-
-        return
-
-    def send_Pk1D(self):
-
-        userprint("\n")
-        ### Send
-        cmd = " picca_Pk1D.py"
-        cmd += " --in-dir " + self._masterFiles + "/test_Pk1D/delta_Pk1D/"
-        cmd += " --out-dir " + self._branchFiles + "/Products/Pk1D/"
-        subprocess.call(cmd, shell=True)
-
-        ### Test
-        if self._test:
-            path1 = self._masterFiles + "/test_Pk1D/Pk1D.fits.gz"
-            path2 = self._branchFiles + "/Products/Pk1D/Pk1D-0.fits.gz"
-            self.compare_fits(path1, path2, "picca_Pk1D.py")
-
-        return
-
     def send_cf1d(self):
 
         userprint("\n")
@@ -896,8 +497,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_export.py"
-        cmd += " --data " + self._branchFiles + "/Products/Correlations/cf_cross.fits.gz"
-        cmd += " --dmat " + self._branchFiles + "/Products/Correlations/dmat_cross.fits.gz"
+        cmd += " --data " + self._masterFiles + "/cf_cross.fits.gz"
+        cmd += " --dmat " + self._masterFiles + "/dmat_cross.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_cf_cross.fits.gz"
         returncode = subprocess.call(cmd, shell=True)
@@ -1007,7 +608,7 @@ class TestCor(unittest.TestCase):
         cmd += " --in-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
         cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/xwick.fits.gz"
-        cmd += " --cf1d " + self._branchFiles + "/Products/Correlations/cf1d.fits.gz"
+        cmd += " --cf1d " + self._masterFiles + "/cf1d.fits.gz"
         cmd += " --rp-min -60.0"
         cmd += " --rp-max +60.0"
         cmd += " --rt-max +60.0"
@@ -1030,8 +631,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_export.py"
-        cmd += " --data " + self._branchFiles + "/Products/Correlations/xcf.fits.gz"
-        cmd += " --dmat " + self._branchFiles + "/Products/Correlations/xdmat.fits.gz"
+        cmd += " --data " + self._masterFiles + "/xcf.fits.gz"
+        cmd += " --dmat " + self._masterFiles + "/xdmat.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_xcf.fits.gz"
         returncode = subprocess.call(cmd, shell=True)
@@ -1044,8 +645,8 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_export_cross_covariance.py"
-        cmd += " --data1 " + self._branchFiles + "/Products/Correlations/cf.fits.gz"
-        cmd += " --data2 " + self._branchFiles + "/Products/Correlations/xcf.fits.gz"
+        cmd += " --data1 " + self._masterFiles + "/cf.fits.gz"
+        cmd += " --data2 " + self._masterFiles + "/xcf.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
         returncode = subprocess.call(cmd, shell=True)
@@ -1140,13 +741,13 @@ class TestCor(unittest.TestCase):
         userprint("\n")
         ### Send
         cmd = " picca_export_co.py"
-        cmd += " --DD-file " + self._branchFiles + "/Products/Correlations/co_DD.fits.gz"
-        cmd += " --RR-file " + self._branchFiles + \
-            "/Products/Correlations/Co_Random/co_RR.fits.gz"
-        cmd += " --DR-file " + self._branchFiles + \
-            "/Products/Correlations/Co_Random/co_DR.fits.gz"
-        cmd += " --RD-file " + self._branchFiles + \
-            "/Products/Correlations/Co_Random/co_RD.fits.gz"
+        cmd += " --DD-file " + self._masterFiles + "/co_DD.fits.gz"
+        cmd += " --RR-file " + self._masterFiles + \
+            "/co_RR.fits.gz"
+        cmd += " --DR-file " + self._masterFiles + \
+            "/co_DR.fits.gz"
+        cmd += " --RD-file " + self._masterFiles + \
+            "/co_RD.fits.gz"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/exported_co.fits.gz"
         cmd += " --get-cov-from-poisson"
         returncode = subprocess.call(cmd, shell=True)
