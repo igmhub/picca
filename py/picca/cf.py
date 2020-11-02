@@ -84,7 +84,7 @@ def fill_neighs(healpixs):
                 nside, [delta.x_cart, delta.y_cart, delta.z_cart],
                 ang_max,
                 inclusive=True)
-            if x_correlation:
+            if data2 is not None:
                 healpix_neighbours = [
                     other_healpix for other_healpix in healpix_neighbours
                     if other_healpix in data2
@@ -107,7 +107,7 @@ def fill_neighs(healpixs):
             ang = delta.get_angle_between(neighbours)
             w = ang < ang_max
             neighbours = np.array(neighbours)[w]
-            if x_correlation:
+            if data2 is not None:
                 delta.neighbours = [
                     other_delta for other_delta in neighbours
                     if ((other_delta.z[-1] + delta.z[-1]) / 2. >= z_cut_min and
