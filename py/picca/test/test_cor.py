@@ -439,9 +439,17 @@ class TestCor(unittest.TestCase):
                                  "{}".format(nameRun))
             for item in atts1:
                 nequal = True
-                if isinstance(atts1[item], np.ndarray):
-                    nequal = np.logical_not(
-                        np.array_equal(atts1[item], atts2[item]))
+                if isinstance(atts1[item], np.ndarray): #the dtype check is needed for h5py version 3
+                    dtype1=atts1[item].dtype
+                    dtype2=atts2[item].dtype
+                    if dtype1==dtype2:
+                        nequal = np.logical_not(
+                            np.array_equal(atts1[item], atts2[item]))
+                    else:
+                        userprint(f"Note that the test file has different dtype for attribute {item}")
+                        nequal = np.logical_not(np.array_equal(atts1[item].astype(atts2[item].dtype), atts2[item]))
+                        if nequal:
+                            nequal = np.logical_not(np.array_equal(atts2[item].astype(atts1[item].dtype), atts1[item]))
                 else:
                     nequal = atts1[item] != atts2[item]
                 if nequal:
