@@ -31,6 +31,8 @@ class TestDelta(unittest.TestCase):
         cls._masterFiles = cls.picca_base + '/py/picca/test/data/'
 
         userprint("\n")
+        cls._test = True
+
 
     @classmethod
     def tearDownClass(cls):
@@ -38,19 +40,15 @@ class TestDelta(unittest.TestCase):
             shutil.rmtree(cls._branchFiles, ignore_errors=True)
 
     def test_delta(self):
-        self._test = True
-
         self.produce_cat(nObj=1000)
         self.produce_forests()
         self.produce_cat(nObj=1000, name="random", thidoffset=1000)
+        self.send_delta()
+        return
 
+    def test_delta_Pk1D_minisv(self):
         self.produce_cat_minisv(nObj=1000)
         self.produce_forests_minisv()
-
-        self.send_delta_Pk1D_minisv()
-        self.send_delta()
-        self.send_delta_Pk1D()
-
         return
 
     def produce_folder(self):
@@ -338,41 +336,7 @@ class TestDelta(unittest.TestCase):
 
         return
 
-    def send_delta_Pk1D(self):
 
-        userprint("\n")
-        ### Path
-        path_to_etc = self.picca_base + '/etc/'
-        ### Send
-        cmd = " picca_deltas.py"
-        cmd += " --in-dir " + self._masterFiles + "/test_delta/Spectra_Pk1D/"
-        cmd += " --drq " + self._masterFiles + "/test_delta/DRQ_Pk1D.fits"
-        cmd += " --out-dir " + self._branchFiles + "/Products/Delta_Pk1D/Delta/"
-        cmd += " --iter-out-prefix " + self._branchFiles + \
-            "/Products/Delta_Pk1D/Log/delta_attributes"
-        cmd += " --log " + self._branchFiles + "/Products/Delta_Pk1D/Log/input.log"
-        cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight"
-        cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
-        cmd += " --nproc 1"
-        cmd += " --best-obs"
-        cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
-        subprocess.call(cmd, shell=True)
-
-        ### Test
-        if self._test:
-            path1 = self._masterFiles + "/test_delta/delta_attributes_Pk1D.fits.gz"
-            path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
-            self.compare_fits(path1, path2, "picca_deltas.py")
-
-            path1 = self._masterFiles + "/test_delta/delta-64_Pk1D.fits.gz"
-            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-64.fits.gz"
-            self.compare_fits(path1, path2, "picca_deltas.py")
-
-            path1 = self._masterFiles + "/test_delta/delta-80_Pk1D.fits.gz"
-            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-80.fits.gz"
-            self.compare_fits(path1, path2, "picca_deltas.py")
-
-        return
 
     def send_delta_Pk1D_minisv(self):
 
@@ -410,6 +374,42 @@ class TestDelta(unittest.TestCase):
                 self.compare_fits(path1, path2, "picca_deltas.py")
         return
 
+
+    def test_delta_Pk1D(self):
+
+        userprint("\n")
+        ### Path
+        path_to_etc = self.picca_base + '/etc/'
+        ### Send
+        cmd = " picca_deltas.py"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Spectra_Pk1D/"
+        cmd += " --drq " + self._masterFiles + "/test_delta/DRQ_Pk1D.fits"
+        cmd += " --out-dir " + self._branchFiles + "/Products/Delta_Pk1D/Delta/"
+        cmd += " --iter-out-prefix " + self._branchFiles + \
+            "/Products/Delta_Pk1D/Log/delta_attributes"
+        cmd += " --log " + self._branchFiles + "/Products/Delta_Pk1D/Log/input.log"
+        cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight"
+        cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
+        cmd += " --nproc 1"
+        cmd += " --best-obs"
+        cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
+        subprocess.call(cmd, shell=True)
+
+        ### Test
+        if self._test:
+            path1 = self._masterFiles + "/test_delta/delta_attributes_Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
+            self.compare_fits(path1, path2, "picca_deltas.py")
+
+            path1 = self._masterFiles + "/test_delta/delta-64_Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-64.fits.gz"
+            self.compare_fits(path1, path2, "picca_deltas.py")
+
+            path1 = self._masterFiles + "/test_delta/delta-80_Pk1D.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D/Delta/delta-80.fits.gz"
+            self.compare_fits(path1, path2, "picca_deltas.py")
+
+        return
 
 if __name__ == '__main__':
     unittest.main()
