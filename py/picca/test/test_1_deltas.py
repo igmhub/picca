@@ -315,9 +315,9 @@ class TestDelta(unittest.TestCase):
         return
 
     def send_delta(self):
-    """
-        Test the continuum fitting routines on randomly generated eBOSS mock data
-    """
+        """
+            Test the continuum fitting routines on randomly generated eBOSS mock data
+        """
 
         userprint("\n")
         ### Send
@@ -342,11 +342,11 @@ class TestDelta(unittest.TestCase):
 
 
     def send_delta_Pk1D_minisv(self):
-    """
-        Test of picca_deltas currently only to check if miniSV I/O routines
-        work correctly. The data for this routine is randomly generated as for "send_delta", but
-        in DESI-miniSV format instead of an eBOSS format
-    """
+        """
+            Test of picca_deltas currently only to check if miniSV I/O routines
+            work correctly. The data for this routine is randomly generated as for "send_delta", but
+            in DESI-miniSV format instead of an eBOSS format
+        """
 
         userprint("\n")
         ### Path
@@ -384,10 +384,10 @@ class TestDelta(unittest.TestCase):
 
 
     def test_delta_Pk1D(self):
-    """
-        Test of picca_deltas for purposes of Pk1d running on a very small set of
-        eBOSS like spectra saved on disk
-    """
+        """
+            Test of picca_deltas for purposes of Pk1d running on a very small set of
+            eBOSS like spectra saved on disk
+        """
 
         userprint("\n")
         ### Path
