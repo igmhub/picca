@@ -115,7 +115,7 @@ def get_delta_from_forest(forest,
     forest.ivar = ivar
 
 
-def main(args):
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes delta field"""
     parser = argparse.ArgumentParser(
@@ -391,7 +391,7 @@ def main(args):
 
     t0 = time.time()
 
-    args = parser.parse_args(args)
+    args = parser.parse_args(cmdargs)
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
@@ -941,5 +941,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    print(repr(sys.argv[1:]))
     main(sys.argv[1:])

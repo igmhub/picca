@@ -101,7 +101,7 @@ class TestCor(unittest.TestCase):
         update_system_status_values(path, 'metals', 'filename', value)
 
         ### Send
-        cmd = ' picca_fitter2.py '+self._branchFiles + \
+        cmd = 'picca_fitter2.py '+self._branchFiles + \
             '/Products/Correlations/Fit/chi2.ini'
         subprocess.call(cmd, shell=True)
 

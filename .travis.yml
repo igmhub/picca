@@ -3,8 +3,9 @@ python:
     - "3.8.3"
 
 install:
+    - pip install coverage pytest-cov
     - pip install -r requirements.txt
     - python setup.py install
 
 script:
-    - pytest py/picca/test --capture=tee-sys
+    - pytest py/picca/test --capture=tee-sys --cov=picca

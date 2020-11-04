@@ -1,6 +1,6 @@
 **/*.pyc
 *~
-
+.coverage*
 \.vscode/
 
 \dist/
