@@ -8,4 +8,4 @@ install:
     - python setup.py install
 
 script:
-    - pytest py/picca/test --capture=tee-sys --cov=picca
+    - pytest py/picca/test --capture=tee-sys --cov=picca --cov=picca_bin --cov-report term-missing
