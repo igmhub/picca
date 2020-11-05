@@ -1,6 +1,7 @@
 **/*.pyc
 *~
 .coverage*
+\htmlcov/
 \.vscode/
 
 \dist/
