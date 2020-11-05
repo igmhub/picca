@@ -8,7 +8,7 @@ import tempfile
 import shutil
 from pkg_resources import resource_filename
 import sys
-import picca_Pk1D
+import picca_bin.picca_Pk1D as picca_Pk1D
 
 from picca.utils import userprint
 

@@ -437,6 +437,8 @@ def main(cmdargs):
     Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp,
                                     1 + np.zeros(2))
 
+    breakpoint()
+
     #-- Check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
         if (args.order != 0) and (args.order != 1):
