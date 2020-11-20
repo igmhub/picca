@@ -358,7 +358,43 @@ def desi_from_ztarget_to_drq(in_path,
     results.close()
 
 
-def read_transmission_file(filename,num_bins,objs_thingid,lambda_min,lambda_max,delta_log_lambda,lambda_min_rest_frame,lambda_max_rest_frame):
+def read_transmission_file(filename,
+                           num_bins,
+                           objs_thingid,
+                           lambda_min=3600.,
+                           lambda_max=5500.,
+                           lambda_min_rest_frame=1040.,
+                           lambda_max_rest_frame=1200.,
+                           delta_log_lambda=3.e-4):
+
+    """Make delta objects from all skewers in a transmission file.
+
+    Args:
+        filename: str
+            Path to the transmission file to read
+        num_bins: int
+            The number of bins in our wavelength grid.
+        lambda_min: float - default: 3600.
+            Minimum observed wavelength in Angstrom
+        lambda_max: float - default: 5500.
+            Maximum observed wavelength in Angstrom
+        lambda_min_rest_frame: float - default: 1040.
+            Minimum Rest Frame wavelength in Angstrom
+        lambda_max_rest_frame: float - default: 1200.
+            Maximum Rest Frame wavelength in Angstrom
+        delta_log_lambda: float - default: 3.e-4
+            Variation of the logarithm of the wavelength between two pixels
+
+    Returns:
+        deltas:
+            Dictionary containing delta objects for all the skewers (flux not
+            yet normalised). Keys are HEALPix pixels, values are lists of delta
+            objects.
+        stack_delta:
+            The stacked value of flux across all skewers.
+        stack_weight:
+            The stacked value of weights across all skewers.
+    """
 
     log_lambda_min = np.log10(lambda_min)
 
@@ -442,7 +478,31 @@ def read_transmission_file(filename,num_bins,objs_thingid,lambda_min,lambda_max,
 
     return deltas, stack_delta, stack_weight
 
-def write_delta_from_transmission(deltas,healpix,out_filename,log_lambda_min,delta_log_lambda,stack_delta):
+def write_delta_from_transmission(deltas,
+                                  stack_delta,
+                                  healpix,
+                                  out_filename,
+                                  lambda_min=3600.,
+                                  delta_log_lambda=3.e-4):
+
+    """Write deltas to file for a given HEALPix pixel.
+
+    Args:
+        deltas: list
+            List of delta objects contained in the given HEALPix pixel.
+        stack_delta: array
+            Stacked value of deltas across all skewers.
+        healpix: int
+            The HEALPix pixel under consideration.
+        out_filename: str
+            Output filename.
+        lambda_min: float - default: 3600.
+            Minimum observed wavelength in Angstrom
+        delta_log_lambda: float - default: 3.e-4
+            Variation of the logarithm of the wavelength between two pixels
+    """
+
+    log_lambda_min = np.log10(lambda_min)
 
     if len(deltas) == 0:
         userprint('No data in {}'.format(healpix))
@@ -584,9 +644,7 @@ def desi_convert_transmission_to_delta_files(obj_path,
     stack_delta = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
 
-    deltas = {}
-
-    arguments = [(f,num_bins,objs_thingid,lambda_min,lambda_max,delta_log_lambda,lambda_min_rest_frame,lambda_max_rest_frame) for f in files]
+    arguments = [(f,num_bins,objs_thingid,lambda_min,lambda_max,lambda_min_rest_frame,lambda_max_rest_frame,delta_log_lambda) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_transmission_file,arguments)
     pool.close()
@@ -640,7 +698,7 @@ def desi_convert_transmission_to_delta_files(obj_path,
         print('Input nested? {} // in_healpix={} // out_healpix={}'.format(nest,healpix,out_healpix))
         out_filenames[healpix] = out_dir + '/delta-{}'.format(out_healpix) + '.fits.gz'
 
-    arguments = [(deltas[hpix],hpix,out_filenames[hpix],log_lambda_min,delta_log_lambda,stack_delta) for hpix in deltas.keys()]
+    arguments = [(deltas[hpix],stack_delta,hpix,out_filenames[hpix],lambda_min,delta_log_lambda) for hpix in deltas.keys()]
     pool = Pool(processes=nproc)
     results = pool.starmap(write_delta_from_transmission,arguments)
     pool.close()
