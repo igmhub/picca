@@ -241,7 +241,8 @@ def main():
         args.z_ref,
         cosmo=cosmo,
         max_num_spec=args.nspec,
-        no_project=args.no_project)
+        no_project=args.no_project,
+        nproc=args.nproc)
     xcf.data = data
     xcf.num_data = num_data
     userprint("")
@@ -277,7 +278,7 @@ def main():
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
+                                   cosmo, nproc=args.nproc)
     del z_min2
     for index, healpix in enumerate(sorted(objs)):
         for obj in objs[healpix]:

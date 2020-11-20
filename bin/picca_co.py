@@ -215,7 +215,7 @@ def main():
     ### Read objects 1
     objs, z_min = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                  cosmo)
+                                  cosmo,nproc=args.nproc)
     userprint("")
     co.objs = objs
     co.num_data = len([obj for healpix in co.objs for obj in co.objs[healpix]])
@@ -226,7 +226,7 @@ def main():
     if co.x_correlation:
         objs2, z_min2 = io.read_objects(args.drq2, args.nside, args.z_min_obj,
                                         args.z_max_obj, args.z_evol_obj2,
-                                        args.z_ref, cosmo)
+                                        args.z_ref, cosmo, nproc=args.nproc)
         userprint("")
         co.objs2 = objs2
         # recompute maximum angular separation
@@ -304,20 +304,20 @@ def main():
             'comment':
                 'Number of objects'
         }, {
-            'name': 'OMEGAM', 
-            'value': args.fid_Om, 
+            'name': 'OMEGAM',
+            'value': args.fid_Om,
             'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAR', 
-            'value': args.fid_Or, 
+            'name': 'OMEGAR',
+            'value': args.fid_Or,
             'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAK', 
-            'value': args.fid_Ok, 
+            'name': 'OMEGAK',
+            'value': args.fid_Ok,
             'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'WL', 
-            'value': args.fid_wl, 
+            'name': 'WL',
+            'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
         }
         ]

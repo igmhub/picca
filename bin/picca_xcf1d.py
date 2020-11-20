@@ -190,7 +190,8 @@ def main():
                                                   args.z_ref,
                                                   cosmo=None,
                                                   max_num_spec=args.nspec,
-                                                  no_project=args.no_project)
+                                                  no_project=args.no_project,
+                                                  nproc=args.nproc)
     xcf.data = data
     xcf.num_data = num_data
     sys.stderr.write("\n")
@@ -230,7 +231,8 @@ def main():
                                    args.z_max_obj,
                                    args.z_evol_obj,
                                    args.z_ref,
-                                   cosmo=None)
+                                   cosmo=None,
+                                   nproc=args.nproc)
     del z_min2
     xcf.objs = objs
     for healpix in xcf.objs:

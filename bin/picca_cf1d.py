@@ -162,7 +162,8 @@ def main():
                                                   args.z_ref,
                                                   cosmo=None,
                                                   max_num_spec=args.nspec,
-                                                  no_project=args.no_project)
+                                                  no_project=args.no_project,
+                                                  nproc=args.nproc)
     cf.data = data
     cf.num_data = num_data
     del z_min, z_max
@@ -180,7 +181,8 @@ def main():
             args.z_ref,
             cosmo=None,
             max_num_spec=args.nspec,
-            no_project=args.no_project)
+            no_project=args.no_project,
+            nproc=args.nproc)
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2
@@ -196,7 +198,8 @@ def main():
             args.z_ref,
             cosmo=None,
             max_num_spec=args.nspec,
-            no_project=args.no_project)
+            no_project=args.no_project,
+            nproc=args.nproc)
         cf.data2 = data2
         cf.num_data2 = num_data2
         del z_min2, z_max2

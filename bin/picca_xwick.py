@@ -266,7 +266,8 @@ def main():
                                                   args.z_evol_del,
                                                   args.z_ref,
                                                   cosmo=cosmo,
-                                                  max_num_spec=args.nspec)
+                                                  max_num_spec=args.nspec,
+                                                  nproc=args.nproc)
     for deltas in data.values():
         for delta in deltas:
             delta.fname = 'D1'
@@ -296,7 +297,7 @@ def main():
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
+                                   cosmo, nproc=args.nproc)
     xcf.objs = objs
     sys.stderr.write("\n")
     userprint("done, npix = {}".format(len(objs)))
@@ -453,20 +454,20 @@ def main():
             'value': npairs_used,
             'comment': 'Number of used pairs'
         }, {
-            'name': 'OMEGAM', 
-            'value': args.fid_Om, 
+            'name': 'OMEGAM',
+            'value': args.fid_Om,
             'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAR', 
-            'value': args.fid_Or, 
+            'name': 'OMEGAR',
+            'value': args.fid_Or,
             'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAK', 
-            'value': args.fid_Ok, 
+            'name': 'OMEGAK',
+            'value': args.fid_Ok,
             'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'WL', 
-            'value': args.fid_wl, 
+            'name': 'WL',
+            'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
         }
         ]
