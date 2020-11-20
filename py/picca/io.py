@@ -27,7 +27,6 @@ import fitsio
 from astropy.table import Table
 import warnings
 from multiprocessing import Pool
-import tqdm
 
 from picca.utils import userprint
 from picca.data import Forest, Delta, QSO
@@ -936,6 +935,26 @@ def read_from_spplate(in_dir,
     return data
 
 def read_desi_spectra_file(healpix,in_dir,in_nside,in_healpixs,catalog,pk1d=None):
+    """Reads the spectra from one DESI spectra file and formats its data as
+    Forest instances.
+
+    Args:
+        healpix: int
+            HEALPix pixel number to read
+        in_dir: str
+            Directory to spectra files
+        in_nside: int
+            HEALPix value of nside used in spectra files
+        in_healpixs: array
+            Array of HEALPix pixel numbers for all spectra
+        catalog: astropy.table
+            Table containing metadata of objects
+        pk1d: str or None - default: None
+            Format for Pk 1D: Pk1D
+
+    Returns:
+        List of read spectra for the HEALPix pixel considered
+    """
 
     #-- This is making it compatible with quickquasars on eBOSS mode
     if 'TARGETID' in catalog.colnames:
@@ -952,8 +971,6 @@ def read_desi_spectra_file(healpix,in_dir,in_nside,in_healpixs,catalog,pk1d=None
     filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
     data = []
 
-    #userprint(
-    #    f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
     try:
         hdul = fitsio.FITS(filename)
     except IOError:
@@ -1060,23 +1077,11 @@ def read_from_desi(in_dir, catalog, pk1d=None, nproc=None):
     pool = Pool(processes=nproc)
 
     results = pool.starmap(read_desi_spectra_file,arguments)
-    #results = [pool.apply_async(read_desi_spectra_file,argument) for argument in arguments]
     pool.close()
-    #pool.join()
     data = []
     for r in results:
         if r is not None:
             data += r
-    """
-    results = []
-    jobs = [pool.apply_async(read_desi_spectra_file,argument) for argument in arguments]
-    pool.close()
-
-    for job in tqdm.tqdm(jobs,ncols=80,desc='Progress'):
-        results.append(job.get())
-
-    pool.join()
-    """
 
     return data
 
@@ -1242,6 +1247,19 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
     return data, num_data
 
 def read_delta_file(filename,from_image=False):
+    """Extracts deltas from a single file.
+
+    Args:
+        filename: str
+            Path to the file to read
+        from_image: bool - default: False
+            Whether to use the from_image method.
+
+    Returns:
+        deltas:
+            A dictionary with the data. Keys are the healpix numbers of each
+                spectrum. Values are lists of delta instances.
+    """
 
     if from_image is None:
         hdul = fitsio.FITS(filename)
@@ -1291,6 +1309,8 @@ def read_deltas(in_dir,
         from_image: list or None - default: None
             If not None, read the deltas from image files. The list of
             filenames for the image files should be passed in from_image
+        nproc: int or None - default: None
+            Number of multiprocessing processes
 
     Returns:
         The following variables:
@@ -1323,8 +1343,6 @@ def read_deltas(in_dir,
                 files += glob.glob(arg + '/*.fits') + glob.glob(arg +
                                                                 '/*.fits.gz')
     files = sorted(files)
-
-    #userprint("\rread {} of {} {}".format(index, len(files), num_data))
 
     arguments = [(f,from_image) for f in files]
     pool = Pool(processes=nproc)
@@ -1379,6 +1397,27 @@ def read_deltas(in_dir,
 
 
 def read_catalog_pixel(entries,healpix,z_ref,alpha,cosmo):
+    """Reads objects from a single pixel's data.
+
+    Args:
+        entries:
+            Table containing information about QSOs in the pixel
+        healpix: int
+            HEALPix pixel number
+        z_ref: float
+            Redshift of reference
+        alpha:
+            Redshift evolution coefficient (see equation 7 of du Mas des
+            Bourboux et al. 2020)
+        cosmo: constants.Cosmo
+            The fiducial cosmology
+
+    Returns:
+        healpix: int
+            HEALPix pixel number
+        objs:
+            A list of QSO instances
+    """
 
     objs = [
         QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],
@@ -1430,6 +1469,8 @@ def read_objects(filename,
         keep_bal: bool
             If False, remove the quasars flagged as having a Broad Absorption
             Line. Ignored if bi_max is not None
+        nproc: int or None - default: None
+            Number of multiprocessing processes
 
     Returns:
         The following variables:

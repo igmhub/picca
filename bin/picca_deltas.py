@@ -488,15 +488,6 @@ def main():
                                          spall=args.spall,
                                          nproc=args.nproc)
 
-    ### HACK: expand the data to give 3072 pixels worth but having only loaded
-    ### a single pixel for speed.
-    #import copy
-    #key = list(data.keys())[0]
-    #for i in range(3072):
-    #    print(i,end='\r')
-    #    data[i] = copy.deepcopy(data[key])
-    ### END OF HACK
-
     #-- Add order info
     for pix in data:
         for forest in data[pix]:
@@ -619,19 +610,10 @@ def main():
     tmin = (t1 - t0) / 60
     userprint('INFO: time elapsed to read data', tmin, 'minutes')
 
-    ### HACK: expand the data to give 3072 pixels worth but having only loaded
-    ### a single pixel for speed.
-    #key = list(data.keys())[0]
-    #for i in range(100):
-    #    data[i] = data[key]
-    ### END OF HACK
-
-    print(len(data.keys()),'pixels in data')
     # compute fits to the forests iteratively
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
     num_iterations = args.nit
     for iteration in range(num_iterations):
-        start = time.time()
 
         pool = Pool(processes=args.nproc)
         userprint(
@@ -643,28 +625,9 @@ def main():
         sort = pixels.argsort()
         sorted_data = [data[k] for k in pixels[sort]]
 
-        ### HACK: Different options to avoid memory issues.
-
-        # Existing code
-        """
         data_fit_cont = pool.map(cont_fit, sorted_data) # Existing code
         for index, healpix in enumerate(pixels[sort]):
             data[healpix] = data_fit_cont[index]
-        """
-        
-        """
-        # Control chunking
-        data_fit_cont = pool.map(cont_fit, sorted_data, chunksize=4)
-        for index, healpix in enumerate(pixels[sort]):
-            data[healpix] = data_fit_cont[index]
-        """
-
-        # Use imap
-        data_fit_cont = pool.imap(cont_fit, sorted_data)
-        for i, d in enumerate(data_fit_cont):
-            data[pixels[sort][i]] = d
-
-        ### END OF HACK
 
         userprint(
             f"Continuum fitting: ending iteration {iteration} of {num_iterations}"
@@ -672,40 +635,20 @@ def main():
 
         pool.close()
 
-        userprint(
-            f"Took {time.time()-start:2.3f} seconds"
-        )
-
         if iteration < num_iterations - 1:
             #-- Compute mean continuum (stack in rest-frame)
-
-            start = time.time()
 
             (log_lambda_rest_frame, mean_cont,
              mean_cont_weight) = prep_del.compute_mean_cont(data,nproc=args.nproc)
 
-            print('checkpoint run compute_mean_cont: {:2.3f}s'.format(time.time()-start))
-            start = time.time()
-
             w = mean_cont_weight > 0.
             log_lambda_cont = log_lambda_rest_frame[w]
 
-            print('checkpoint weights: {:2.3f}s'.format(time.time()-start))
-            start = time.time()
-
             new_cont = Forest.get_mean_cont(log_lambda_cont) * mean_cont[w]
-
-            print('checkpoint run get_mean_cont: {:2.3f}s'.format(time.time()-start))
-            start = time.time()
 
             Forest.get_mean_cont = interp1d(log_lambda_cont,
                                             new_cont,
                                             fill_value="extrapolate")
-
-            print('checkpoint update get_mean_cont: {:2.3f}s'.format(time.time()-start))
-            start = time.time()
-
-            print((args.use_ivar_as_weight or args.use_constant_weight))
 
             #-- Compute observer-frame mean quantities (var_lss, eta, fudge)
             if not (args.use_ivar_as_weight or args.use_constant_weight):
@@ -771,9 +714,6 @@ def main():
                                             fudge,
                                             fill_value='extrapolate',
                                             kind='nearest')
-
-            print('checkpoint observer frame mean quants: {:2.3f}s'.format(time.time()-start))
-            start = time.time()
 
     ### Read metadata from forests and export it
     if not args.metadata is None:
