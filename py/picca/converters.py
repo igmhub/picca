@@ -641,13 +641,15 @@ def desi_convert_transmission_to_delta_files(obj_path,
     log_lambda_min = np.log10(lambda_min)
     log_lambda_max = np.log10(lambda_max)
     num_bins = int((log_lambda_max - log_lambda_min) / delta_log_lambda) + 1
-    stack_delta = np.zeros(num_bins)
-    stack_weight = np.zeros(num_bins)
 
     arguments = [(f,num_bins,objs_thingid,lambda_min,lambda_max,lambda_min_rest_frame,lambda_max_rest_frame,delta_log_lambda) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_transmission_file,arguments)
     pool.close()
+
+    stack_delta = np.zeros(num_bins)
+    stack_weight = np.zeros(num_bins)
+    deltas = {}
 
     for r in results:
         if r is not None:
