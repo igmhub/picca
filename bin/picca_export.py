@@ -184,7 +184,7 @@ def main():
         'name': 'NT',
         'value': num_bins_r_trans,
         'comment': 'Number of bins in r-transverse'
-    }, """{
+    }, {
         'name': 'OMEGAM', 
         'value': head['OMEGAM'], 
         'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
@@ -200,7 +200,7 @@ def main():
         'name': 'WL', 
         'value': head['WL'], 
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    }"""
+    }
     ]
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
@@ -209,12 +209,12 @@ def main():
     results.write([r_par, r_trans, z, xi, covariance, dmat, num_pairs],
                   names=['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB'],
                   comment=comment,
-                  #header=header,
+                  header=header,
                   extname='COR')
     comment = ['R-parallel model', 'R-transverse model', 'Redshift model']
     results.write([r_par_dmat, r_trans_dmat, z_dmat],
                   names=['DMRP', 'DMRT', 'DMZ'],
-                  #comment=comment,
+                  comment=comment,
                   extname='DMATTRI')
     results.close()
 

@@ -106,16 +106,25 @@ def main():
     xi = np.vstack(list(xi.values()))
     weights = np.vstack(list(weights.values()))
 
-    # compute covariance matrix
-    covariance = smooth_cov(xi, weights, r_par, r_trans)
+    num_bins_r_par = header['NP']
+    num_bins_r_trans = header['NT']
+    r_trans_max = header['RTMAX']
+    r_par_min = header['RPMIN']
+    r_par_max = header['RPMAX']
+    delta_r_par = (r_par_max - r_par_min) / num_bins_r_par
+    delta_r_trans = (r_trans_max - 0.) / num_bins_r_trans
 
-    # normalize
+    # normalize r and z bins
     r_par /= weights_total
     r_trans /= weights_total
     z /= weights_total
     if not args.no_dmat:
         dmat /= weights_total[:, None]
 
+    # compute covariance matrix
+    covariance = smooth_cov(xi, weights, r_par, r_trans, delta_r_trans=delta_r_trans, delta_r_par=delta_r_par)
+    
+    # combine healpix pixels to get mean xi
     xi = (xi * weights).sum(axis=0)
     xi /= weights_total
 
