@@ -8,7 +8,6 @@ import scipy.linalg
 
 from picca.utils import smooth_cov, userprint
 
-
 def main():
     """Coadds correlation function from different redshift intervals"""
     parser = argparse.ArgumentParser()
@@ -27,11 +26,34 @@ def main():
                         required=False,
                         help='Use an identity matrix as the distortion matrix.')
 
+    parser.add_argument("--coadd-out",
+                        type=str,
+                        default=None,
+                        required=False,
+                        help="coadded (not exported) output file")
+
+    parser.add_argument('--remove-shuffled-correlation',
+                        type=str,
+                        default=None,
+                        nargs="*",
+                        required=False,
+                        help="the shuffled (x)cf_z_....fits files to be coadded and then removed")
+
+    parser.add_argument("--coadd-out-shuffled",
+                        type=str,
+                        default=None,
+                        required=False,
+                        help="coadded (not exported) shuffled output file")
+
     args = parser.parse_args()
 
     for file in args.data:
         if not os.path.isfile(file):
             args.data.remove(file)
+
+
+
+
 
     # initialize coadd arrays, fill them with zeros
     hdul = fitsio.FITS(args.data[0])
