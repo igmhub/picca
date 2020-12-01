@@ -90,6 +90,8 @@ class DesiData(Data):
         else:
             self.read_from_desi(catalogue)
 
+        super().filter_forests()
+
     def _parse_config(self, config):
         """Parse the configuration options
 
@@ -134,18 +136,20 @@ class DesiData(Data):
         """
         in_nside = int(self.input_directory.split('spectra-')[-1].replace('/', ''))
 
-        ra = catalogue['RA'].data
-        dec = catalogue['DEC'].data
-        in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
-        unique_in_healpixs = np.unique(in_healpixs)
+        healpix = [healpy.ang2pix(16, np.pi / 2 - row["DEC"], row["RA"])
+                   for row in catalogue]
+        catalogue["healpix"] = healpix
+        catalogue.sort("healpix")
+        grouped_catalogue = catalogue.group_by("healpix")
 
         forests_by_targetid = {}
-        for index, healpix in enumerate(unique_in_healpixs):
+        for (index, healpix), group in zip(enumerate(grouped_catalogue.groups.keys),
+                                           grouped_catalogue.groups):
             filename = (f"{self.input_directory}/{healpix//100}/{healpix}/spectra"
                         f"-{in_nside}-{healpix}.fits")
 
-            userprint(f"Read {index} of {len(unique_in_healpixs)}. "
-                      f"num_data: {len(self.forests)}")
+            userprint(f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
+                      f"num_data: {len(forests_by_targetid)}")
             try:
                 hdul = fitsio.FITS(filename)
             except IOError:
@@ -180,14 +184,11 @@ class DesiData(Data):
                                   DataWarning)
             hdul.close()
 
-            # Get the quasars in this healpix pixel
-            select = np.where(in_healpixs == healpix)[0]
-
             # Loop over quasars in catalogue inside this healpixel
-            for entry in catalogue[select]:
+            for row in group:
                 # Find which row in tile contains this quasar
                 # It should be there by construction
-                targetid = entry["TARGETID"]
+                targetid = row["TARGETID"]
                 w_t = np.where(targetid_spec == targetid)[0]
                 if len(w_t) == 0:
                     warnings.warn(f"Error reading {targetid}. Ignoring object",
@@ -209,12 +210,12 @@ class DesiData(Data):
                                            "flux": flux,
                                            "ivar": ivar,
                                            "targetid": targetid,
-                                           "ra": entry['RA'],
-                                           "dec": entry['DEC'],
-                                           "z": entry['Z'],
-                                           "petal": entry["PETAL_LOC"],
-                                           "tile": entry["TILEID"],
-                                           "night": entry["NIGHT"]})
+                                           "ra": row['RA'],
+                                           "dec": row['DEC'],
+                                           "z": row['Z'],
+                                           "petal": row["PETAL_LOC"],
+                                           "tile": row["TILEID"],
+                                           "night": row["NIGHT"]})
 
                     if targetid in forests_by_targetid:
                         forests_by_targetid[targetid].coadd(forest)
