@@ -41,5 +41,16 @@ class MaskError(Exception):
         Exceptions occurred in class Mask
     """
 
+class QuasarCatalogueError(Exception):
+    """
+        Exceptions occurred in class Mask
+    """
+
+class QuasarCatalogueWarning(UserWarning):
+    """
+        Warnings occurred in class Data
+    """
+
+
 if __name__ == '__main__':
     raise Exception()

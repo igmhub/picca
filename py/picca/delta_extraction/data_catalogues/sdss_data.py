@@ -1,6 +1,4 @@
-"""This module defines the abstract class Data from which all
-classes loading data must inherit
-"""
+"""This module defines the class SdssData to read SDSS data"""
 import os
 import warnings
 import time
@@ -11,10 +9,9 @@ from picca.delta_extraction.data import Data
 from picca.delta_extraction.errors import DataError, DataWarning
 from picca.delta_extraction.userprint import userprint
 
-from picca.delta_extraction.data_catalogues.drq_catalogue import DrqCatalogue
-
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 
+from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
 
 defaults = {
     "lambda max": 5500.0,
@@ -34,6 +31,8 @@ class SdssData(Data):
     get_forest_list (from Data)
     __init__
     _parse_config
+    read_from_spec
+    read_from_spplate
 
 
     Attributes
@@ -147,7 +146,7 @@ class SdssData(Data):
 
         Arguments
         ---------
-        catalogue: list of DrqObject
+        catalogue: astropy.table.Table
         Table with the DRQ catalogue
         """
         userprint(f"Reading {len(catalogue)} objects")
@@ -197,7 +196,7 @@ class SdssData(Data):
 
         Arguments
         ---------
-        catalogue: astropy.Table
+        catalogue: astropy.table.Table
         Table with the DRQ catalogue
         """
         grouped_catalogue = catalogue.group_by("PLATE", "MJD")

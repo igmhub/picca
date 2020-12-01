@@ -15,6 +15,7 @@ class Forest(AstronomicalObject):
     __gt__ (from AstronomicalObject)
     __eq__ (from AstronomicalObject)
     __init__
+    rebin
 
     Attributes
     ----------
@@ -93,3 +94,33 @@ class Forest(AstronomicalObject):
 
         # call parent constructor
         super().__init__(**kwargs)
+
+    def rebin(self, bins):
+        """Rebin the flux and ivar arrays.
+
+        Arguments
+        ---------
+        bins: array of float
+        The binning solution
+
+        Returns
+        -------
+        w: array of bool
+        Mask used in the rebinning
+        """
+        rebin_flux = np.zeros(bins.max() + 1)
+        rebin_ivar = np.zeros(bins.max() + 1)
+        rebin_flux_aux = np.bincount(bins, weights=self.ivar * self.flux)
+        rebin_ivar_aux = np.bincount(bins, weights=self.ivar)
+        rebin_flux[:len(rebin_flux_aux)] += rebin_flux_aux
+        rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
+
+        w = (rebin_ivar > 0.)
+        if w.sum() == 0:
+            raise AstronomicalObjectError("Attempting to rebin arrays flux and "
+                                          "ivar in class Forest, but ivar seems "
+                                          "to contain only zeros")
+        self.flux = rebin_flux[w] / rebin_ivar[w]
+        self.ivar = rebin_ivar[w]
+
+        return w

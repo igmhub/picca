@@ -5,7 +5,6 @@ import numpy as np
 
 from picca.delta_extraction.errors import AstronomicalObjectError
 
-from picca.delta_extraction.astronomical_objects.drq_object import DrqObject
 from picca.delta_extraction.astronomical_objects.forest import Forest
 
 class SdssForest(Forest):
@@ -16,6 +15,7 @@ class SdssForest(Forest):
     __gt__ (from AstronomicalObject)
     __eq__ (from AstronomicalObject)
     __init__
+    coadd
 
     Class Attributes
     ----------------
@@ -127,25 +127,13 @@ class SdssForest(Forest):
 
         self.fiberid = kwargs.get("fiberid")
         if self.fiberid is None:
-            raise AstronomicalObjectError("Error constructing DrqObject. "
+            raise AstronomicalObjectError("Error constructing SdssForest. "
                                           "Missing variable 'fiberid'")
         del kwargs["fiberid"]
 
-        self.flux = kwargs.get("flux")
-        if self.flux is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Missing variable 'flux'")
-        del kwargs["flux"]
-
-        self.ivar = kwargs.get("ivar")
-        if self.ivar is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Missing variable 'ivar'")
-        del kwargs["ivar"]
-
         self.mjd = kwargs.get("mjd")
         if self.mjd is None:
-            raise AstronomicalObjectError("Error constructing DrqObject. "
+            raise AstronomicalObjectError("Error constructing SdssForest. "
                                           "Missing variable 'mjd'")
         del kwargs["mjd"]
 
@@ -157,13 +145,13 @@ class SdssForest(Forest):
 
         self.plate = kwargs.get("plate")
         if self.plate is None:
-            raise AstronomicalObjectError("Error constructing DrqObject. "
+            raise AstronomicalObjectError("Error constructing SdssForest. "
                                           "Missing variable 'plate'")
         del kwargs["plate"]
 
         self.thingid = kwargs.get("thingid")
         if self.thingid is None:
-            raise AstronomicalObjectError("Error constructing DrqObject. "
+            raise AstronomicalObjectError("Error constructing SdssForest. "
                                           "Missing variable 'thingid'")
         del kwargs["thingid"]
 
@@ -172,49 +160,30 @@ class SdssForest(Forest):
             raise AstronomicalObjectError("Error constructing SdssForest. "
                                           "Missing variable 'z'")
 
-
-        ## cut to specified range
-        bins = (np.floor((log_lambda - SdssForest.log_lambda_min) /
-                         SdssForest.delta_log_lambda + 0.5).astype(int))
-        log_lambda = SdssForest.log_lambda_min + bins * SdssForest.delta_log_lambda
-        w = (log_lambda >= SdssForest.log_lambda_min)
-        w = w & (log_lambda < SdssForest.log_lambda_max)
-        w = w & (log_lambda - np.log10(1. + z) >
-                 SdssForest.log_lambda_min_rest_frame)
-        w = w & (log_lambda - np.log10(1. + z) <
-                 SdssForest.log_lambda_max_rest_frame)
-        w = w & (ivar > 0.)
-        if w.sum() == 0:
-            return
-        bins = bins[w]
-        log_lambda = log_lambda[w]
-        flux = flux[w]
-        ivar = ivar[w]
-
-        # rebin arrays
-        rebin_log_lambda = (SdssForest.log_lambda_min +
-                            np.arange(bins.max() + 1) * SdssForest.delta_log_lambda)
-        rebin_flux = np.zeros(bins.max() + 1)
-        rebin_ivar = np.zeros(bins.max() + 1)
-        rebin_flux_aux = np.bincount(bins, weights=ivar * flux)
-        rebin_ivar_aux = np.bincount(bins, weights=ivar)
-        rebin_flux[:len(rebin_flux_aux)] += rebin_flux_aux
-        rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
-        w = (rebin_ivar > 0.)
-        if w.sum() == 0:
-            return
-        log_lambda = rebin_log_lambda[w]
-        flux = rebin_flux[w] / rebin_ivar[w]
-        ivar = rebin_ivar[w]
-
-        # keep the rebinned arrays
-        self.log_lambda = log_lambda
-        kwargs["flux"] = flux
-        kwargs["ivar"] = ivar
-
         # call parent constructor
         kwargs["los_id"] = self.thingid
         super().__init__(**kwargs)
+
+        # rebin arrays
+        # this needs to happen after flux and ivar arrays are initialized by
+        # Forest constructor
+        bins = (np.floor((self.log_lambda - SdssForest.log_lambda_min) /
+                         SdssForest.delta_log_lambda + 0.5).astype(int))
+        self.log_lambda = SdssForest.log_lambda_min + bins * SdssForest.delta_log_lambda
+        w = (self.log_lambda >= SdssForest.log_lambda_min)
+        w = w & (self.log_lambda < SdssForest.log_lambda_max)
+        w = w & (self.log_lambda - np.log10(1. + z) >
+                 SdssForest.log_lambda_min_rest_frame)
+        w = w & (self.log_lambda - np.log10(1. + z) <
+                 SdssForest.log_lambda_max_rest_frame)
+        w = w & (self.ivar > 0.)
+        if w.sum() == 0:
+            return
+        bins = bins[w]
+        self.log_lambda = self.log_lambda[w]
+        self.flux = self.flux[w]
+        self.ivar = self.ivar[w]
+        self.rebin(bins)
 
     def coadd(self, other):
         """Coadds the information of another forest.
@@ -226,25 +195,28 @@ class SdssForest(Forest):
         other: SdssForest
         The forest instance to be coadded.
         """
-        log_lambda = np.append(self.log_lambda, other.log_lambda)
-        flux = np.append(self.flux, other.flux)
-        ivar = np.append(self.ivar, other.ivar)
+        self.log_lambda = np.append(self.log_lambda, other.log_lambda)
+        self.flux = np.append(self.flux, other.flux)
+        self.ivar = np.append(self.ivar, other.ivar)
 
         # coadd the deltas by rebinning
-        # log lambda & ivar
-        bins = np.floor((log_lambda - SdssForest.log_lambda_min) /
+        bins = np.floor((self.log_lambda - SdssForest.log_lambda_min) /
                         SdssForest.delta_log_lambda + 0.5).astype(int)
-        rebin_log_lambda = SdssForest.log_lambda_min + (np.arange(bins.max() + 1) *
-                                                        SdssForest.delta_log_lambda)
-        rebin_ivar = np.zeros(bins.max() + 1)
-        rebin_ivar_aux = np.bincount(bins, weights=ivar)
-        rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
-        w = (rebin_ivar > 0.)
-        self.log_lambda = rebin_log_lambda[w]
+        self.rebin(bins)
 
-        self.ivar = rebin_ivar[w]
-        # flux
-        rebin_flux = np.zeros(bins.max() + 1)
-        rebin_flux_aux = np.bincount(bins, weights=ivar * flux)
-        rebin_flux[:len(rebin_flux_aux)] += rebin_flux_aux
-        self.flux = rebin_flux[w] / rebin_ivar[w]
+    def rebin(self, bins):
+        """Rebin log_lambda, flux and ivar arrays
+
+        Flux and ivar are rebinned using the Forest version of rebin
+
+        Arguments
+        ---------
+        bins: array of floats
+        The binning solution
+        """
+        # flux and ivar are rebinned by super()
+        w = super().rebin(bins)
+        # rebin log lambda
+        rebin_lambda = (SdssForest.log_lambda_min +
+                        np.arange(bins.max() + 1) * SdssForest.delta_log_lambda)
+        self.log_lambda = rebin_lambda[w]

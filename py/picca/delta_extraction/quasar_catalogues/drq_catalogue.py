@@ -1,37 +1,45 @@
-"""This module defines the abstract class Data from which all
-classes loading data must inherit
+"""This module defines the class DrqCatalogue to read SDSS
+DRQX Catalogues
 """
 import glob
 import warnings
 from astropy.table import Table, join
-import healpy
 import numpy as np
 
-from picca.delta_extraction.data import Data
-from picca.delta_extraction.errors import DataError, DataWarning
+from picca.delta_extraction.errors import QuasarCatalogueError, QuasarCatalogueWarning
+from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
 from picca.delta_extraction.userprint import userprint
-
-from picca.delta_extraction.astronomical_objects.drq_object import DrqObject
 
 defaults = {
     "best obs": False,
     "keep BAL": False,
-    "z max": 3.5,
-    "z min": 2.1,
 }
 
-class DrqCatalogue:
+class DrqCatalogue(QuasarCatalogue):
     """Reads the DRQ quasar catalogue SDSS
 
     Methods
     -------
-    get_forest_list (from Data)
     __init__
     _parse_config
 
 
     Attributes
     ----------
+    catalogue: astropy.table.Table (from QuasarCatalogue)
+    The quasar catalogue
+
+    max_num_spec: int or None (from QuasarCatalogue)
+    Maximum number of spectra to read. None for no maximum
+
+    z_min: float (from QuasarCatalogue)
+    Minimum redshift. Quasars with redshifts lower than z_min will be
+    discarded
+
+    z_max: float (from QuasarCatalogue)
+    Maximum redshift. Quasars with redshifts higher than or equal to
+    z_max will be discarded
+
     best_obs: bool
     If True, reads only the best observation for objects with repeated
     observations
@@ -47,19 +55,8 @@ class DrqCatalogue:
     If False, remove the quasars flagged as having a Broad Absorption
     Line. Ignored if bi_max is not None
 
-    max_num_spec: int or None
-    Maximum number of spectra to read. None for no maximum
-
     spall: str
     Path to the spAll file required for multiple observations
-
-    z_min: float
-    Minimum redshift. Quasars with redshifts lower than z_min will be
-    discarded
-
-    z_max: float
-    Maximum redshift. Quasars with redshifts higher than or equal to
-    z_max will be discarded
     """
     def __init__(self, config):
         """Initialize class instance
@@ -69,37 +66,28 @@ class DrqCatalogue:
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
+        super().__init__(config)
 
         # load variables from config
         self.best_obs = None
         self.bi_max = None
         self.drq_filename = None
         self.keep_bal = None
-        self.max_num_spec = None
         self.spall = None
-        self.z_max = None
-        self.z_min = None
         self._parse_config(config)
 
         # read DRQ Catalogue
         catalogue = self.read_drq()
 
-        # if using multiople observations load the information from spAll file
+        # if using multiple observations load the information from spAll file
         if not self.best_obs:
             catalogue = self.read_spall(catalogue)
 
-        # format catalogue into a list of objects
         self.catalogue = catalogue
 
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
-        if self.max_num_spec is not None:
-            # sort forests by healpix
-            healpix = [healpy.ang2pix(16, np.pi / 2 - row["DEC"], row["RA"])
-                       for row in self.catalogue]
-            self.catalogue["healpix"] = healpix
-            self.catalogue.sort("healpix")
-            self.catalogue = self.catalogue[:self.max_num_spec]
+        super().trim_catalogue()
 
     def _parse_config(self, config):
         """Parse the configuration options
@@ -110,7 +98,7 @@ class DrqCatalogue:
 
         Raise
         -----
-        DataError upon missing required variables
+        QuasarCatalogueError upon missing required variables
         """
         self.best_obs = config.getboolean("best obs")
         if self.best_obs is None:
@@ -118,17 +106,10 @@ class DrqCatalogue:
         self.bi_max = config.getfloat("BI max")
         self.drq_filename = config.get("drq catalogue")
         if self.drq_filename is None:
-            raise DataError("Missing argument 'drq catalogue' required by SdssData")
+            raise QuasarCatalogueError("Missing argument 'drq catalogue' required by DrqCatalogue")
         self.keep_bal = config.getboolean("keep BAL")
         if self.keep_bal is None:
             self.keep_bal = defaults.get("keep BAL")
-        self.max_num_spec = config.getint("max num spectra")
-        self.z_min = config.getfloat("z min")
-        if self.z_min is None:
-            self.z_min = defaults.get("z min")
-        self.z_max = config.getfloat("z max")
-        if self.z_max is None:
-            self.z_max = defaults.get("z max")
 
         if self.best_obs:
             self.spall = None
@@ -136,13 +117,13 @@ class DrqCatalogue:
             self.spall = config.get("spAll")
             if self.spall is None:
                 warnings.warn("Missing argument 'spAll' required by DrqCatalogue. "
-                              "Looking for spAll in input directory...", DataWarning)
+                              "Looking for spAll in input directory...", QuasarCatalogueWarning)
 
             if config.get("input directory") is None:
                 warnings.warn("'spAll' file not found. If you didn't want to load "
                               "the spAll file you should pass the option "
-                              "'best obs = True'. Quiting...", DataWarning)
-                raise DataError("Missing argument 'spAll' required by DrqCatalogue.")
+                              "'best obs = True'. Quiting...", QuasarCatalogueWarning)
+                raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
             folder = config.get("spAll").replace("spectra/",
                                                  "").replace("lite",
                                                              "").replace("full",
@@ -151,15 +132,15 @@ class DrqCatalogue:
 
             if len(filenames) > 1:
                 warnings.warn("Found multiple 'spAll' files not found. Quiting...",
-                              DataWarning)
+                              QuasarCatalogueWarning)
                 for filename in filenames:
-                    warnings.warn(f"found: {filename}", DataWarning)
-                raise DataError("Missing argument 'spAll' required by DrqCatalogue.")
+                    warnings.warn(f"found: {filename}", QuasarCatalogueWarning)
+                raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
             if len(filenames) == 0:
                 warnings.warn("'spAll' file not found. If you didn't want to load "
                               "the spAll file you should pass the option "
-                              "'best obs = True'. Quiting...", DataWarning)
-                raise DataError("Missing argument 'spAll' required by DrqCatalogue.")
+                              "'best obs = True'. Quiting...", QuasarCatalogueWarning)
+                raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
             self.spall = filenames[0]
             warnings.warn("'spAll' file found. Contining with normal execution.")
 
@@ -185,8 +166,9 @@ class DrqCatalogue:
                     "Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)"
                 )
             else:
-                raise DataError("Error in reading DRQ Catalogue. No valid column "
-                                f"for redshift found in {self.drq_filename}")
+                raise QuasarCatalogueError("Error in reading DRQ Catalogue. No "
+                                           "valid column for redshift found in "
+                                           f"{self.drq_filename}")
 
         ## Sanity checks
         userprint('')
@@ -217,7 +199,7 @@ class DrqCatalogue:
                 keep_columns += ['BAL_FLAG_VI']
             else:
                 warnings.warn(f"BAL_FLAG_VI not found in {self.drq_filename}",
-                              DataWarning)
+                              QuasarCatalogueWarning)
 
         ## BAL CIV
         if self.bi_max is not None:
@@ -228,9 +210,9 @@ class DrqCatalogue:
                     f"and BI_CIV <= {self.bi_max}  : nb object in cat = {np.sum(w)}")
                 keep_columns += ['BI_CIV']
             else:
-                raise DataError("Error in reading DRQ Catalogue. 'BI max' "
-                                "was passed but field BI_CIV was not present "
-                                "in the HDU")
+                raise QuasarCatalogueError("Error in reading DRQ Catalogue. "
+                                           "'BI max' was passed but field BI_CIV "
+                                           "was not present in the HDU")
 
         # DLA Column density
         if 'NHI' in catalogue.colnames:
@@ -261,7 +243,7 @@ class DrqCatalogue:
 
         Raise
         -----
-        DataError if spAll file is not found
+        QuasarCatalogueError if spAll file is not found
         """
         userprint(f"INFO: reading spAll from {self.spall}")
         try:
@@ -270,8 +252,9 @@ class DrqCatalogue:
                                                  "FIBERID", "PLATEQUALITY",
                                                  "ZWARNING", "RA", "DEC"])
         except IOError as error:
-            raise DataError("Error in reading DRQ Catalogue. Error reading "
-                            f"file {self.spall}. IOError message: {str(error)}")
+            raise QuasarCatalogueError("Error in reading DRQ Catalogue. Error "
+                                       f"reading file {self.spall}. IOError "
+                                       f"message: {str(error)}")
 
         w = np.in1d(catalogue["THING_ID"], drq_catalogue["THING_ID"])
         userprint(f"INFO: Found {np.sum(w)} spectra with required THING_ID")

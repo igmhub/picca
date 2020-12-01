@@ -4,8 +4,6 @@ import os
 
 from picca.delta_extraction.astronomical_object import AstronomicalObject
 
-from picca.delta_extraction.astronomical_objects.drq_object import DrqObject
-
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -61,26 +59,6 @@ class TestConfiguration(AbstractTest):
         self.assertFalse(test_obj > other)
         self.assertTrue(test_obj == other)
         self.assertFalse(test_obj < other)
-
-    def test_drq_object(self):
-        """Tests the DrqObject class
-
-        Create a DrqObject and checks that the inheritance is correct
-        and that los_id=thing_id
-        """
-        kwargs = {
-            "plate": 1234,
-            "thingid": 9999,
-            "fiberid": 444,
-            "mjd": 55999,
-            "ra": 0.0,
-            "dec": 1.0,
-            "z": 2.1,
-        }
-        test_obj = DrqObject(**kwargs)
-        self.assertTrue(test_obj.los_id == 9999)
-        self.assertTrue(test_obj.healpix == 264)
-        self.assertTrue(test_obj.z == 2.1)
 
 if __name__ == '__main__':
     unittest.main()
