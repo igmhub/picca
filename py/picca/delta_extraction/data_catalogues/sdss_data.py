@@ -165,7 +165,7 @@ class SdssData(Data):
             try:
                 hdul = fitsio.FITS(filename)
             except IOError:
-                warnings.warn(f"error reading {filename}. Ignoring file",
+                warnings.warn(f"Error reading {filename}. Ignoring file",
                               DataWarning)
                 continue
             userprint("Read {}".format(filename))
@@ -212,7 +212,7 @@ class SdssData(Data):
                 hdul = fitsio.FITS(spplate)
                 header = hdul[0].read_header()
             except IOError:
-                warnings.warn(f"error reading {spplate}. Ignoring file",
+                warnings.warn(f"Error reading {spplate}. Ignoring file",
                               DataWarning)
                 continue
 
