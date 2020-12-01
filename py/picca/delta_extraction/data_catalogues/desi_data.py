@@ -1,7 +1,9 @@
 """This module defines the abstract class Data from which all
 classes loading data must inherit
 """
+import os
 import warnings
+import glob
 import numpy as np
 import fitsio
 import healpy
@@ -20,6 +22,7 @@ defaults = {
     "lambda max rest frame": 1200.0,
     "lambda min": 3600.0,
     "lambda min rest frame": 1040.0,
+    "mini SV": False,
 }
 
 class DesiData(Data):
@@ -68,7 +71,7 @@ class DesiData(Data):
 
         # load variables from config
         self.input_directory = None
-        self.mode = None
+        self.mini_sv = None
         self._parse_config(config)
 
         # load z_truth catalogue
@@ -82,7 +85,10 @@ class DesiData(Data):
         DesiForest.lambda_min_rest_frame = self.lambda_min_rest_frame
 
         # read data
-        self.read_from_desi(catalogue)
+        if self.mini_sv:
+            self.read_from_minisv_desi(catalogue)
+        else:
+            self.read_from_desi(catalogue)
 
     def _parse_config(self, config):
         """Parse the configuration options
@@ -114,7 +120,9 @@ class DesiData(Data):
         self.lambda_min_rest_frame = config.get("lambda min rest frame")
         if self.lambda_min_rest_frame is None:
             self.lambda_min_rest_frame = defaults.get("lambda min rest frame")
-
+        self.mini_sv = config.getboolean("mini SV")
+        if self.mini_sv is None:
+            self.mini_sv = defaults.get("mini SV")
 
     def read_from_desi(self, catalogue):
         """Reads the spectra and formats its data as Forest instances.
@@ -182,7 +190,8 @@ class DesiData(Data):
                 targetid = entry["TARGETID"]
                 w_t = np.where(targetid_spec == targetid)[0]
                 if len(w_t) == 0:
-                    warnings.warn(f"Error reading {targetid}. Ignoring file", DataWarning)
+                    warnings.warn(f"Error reading {targetid}. Ignoring object",
+                                  DataWarning)
                     continue
                 if len(w_t) > 1:
                     warnings.warn("Warning: more than one spectrum in this file "
@@ -199,16 +208,153 @@ class DesiData(Data):
                     forest = DesiForest(**{"lambda": spec['WAVELENGTH'],
                                            "flux": flux,
                                            "ivar": ivar,
+                                           "targetid": targetid,
+                                           "ra": entry['RA'],
+                                           "dec": entry['DEC'],
+                                           "z": entry['Z'],
+                                           "petal": entry["PETAL_LOC"],
+                                           "tile": entry["TILEID"],
+                                           "night": entry["NIGHT"]})
+
+                    if targetid in forests_by_targetid:
+                        forests_by_targetid[targetid].coadd(forest)
+                    else:
+                        forests_by_targetid[targetid] = forest
+
+        self.forests = list(forests_by_targetid.values())
+
+    def read_from_minisv_desi(self, catalogue):
+        """Reads the spectra and formats its data as Forest instances.
+        Unlike the read_from_desi routine, this orders things by tile/petal
+        Routine used to treat the DESI mini-SV data.
+
+        Arguments
+        ---------
+        catalogue: astropy.Table
+        Table with the quasar catalogue
+        """
+
+        forests_by_targetid = {}
+        num_data = 0
+
+        files_in = glob.glob(os.path.join(self.input_directory, "**/coadd-*.fits"),
+                             recursive=True)
+        petal_tile_night = [
+            f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
+            for entry in catalogue
+        ]
+        petal_tile_night_unique = np.unique(petal_tile_night)
+        filenames = []
+        for f_in in files_in:
+            for ptn in petal_tile_night_unique:
+                if ptn in os.path.basename(f_in):
+                    filenames.append(f_in)
+        filenames = np.unique(filenames)
+
+        for index, filename in enumerate(filenames):
+            userprint("read tile {} of {}. ndata: {}".format(
+                index, len(filenames), num_data))
+            try:
+                hdul = fitsio.FITS(filename)
+            except IOError:
+                warnings.warn(f"Error reading file {filename}. Ignoring file",
+                              DataWarning)
+                continue
+
+            fibermap = hdul['FIBERMAP'].read()
+            fibermap_colnames = hdul["FIBERMAP"].get_colnames()
+            # pre-Andes
+            if 'TARGET_RA' in fibermap_colnames:
+                ra = fibermap['TARGET_RA']
+                dec = fibermap['TARGET_DEC']
+                tile_spec = fibermap['TILEID'][0]
+                night_spec = fibermap['NIGHT'][0]
+                colors = ['BRZ']
+                if index == 0:
+                    warnings.warn("Reading all-band coadd as in minisv pre-Andes "
+                                  "dataset", DataWarning)
+            # Andes
+            elif 'RA_TARGET' in fibermap_colnames:
+                ra = fibermap['RA_TARGET']
+                dec = fibermap['DEC_TARGET']
+                tile_spec = filename.split('-')[-2]
+                night_spec = int(filename.split('-')[-1].split('.')[0])
+                colors = ['B', 'R', 'Z']
+                if index == 0:
+                    warnings.warn("Couldn't read the all band-coadd, trying "
+                                  "single band as introduced in Andes reduction",
+                                  DataWarning)
+            ra = np.radians(ra)
+            dec = np.radians(dec)
+
+            petal_spec = fibermap['PETAL_LOC'][0]
+
+            targetid_spec = fibermap['TARGETID']
+
+            spectrographs_data = {}
+            for color in colors:
+                try:
+                    spec = {}
+                    spec['WAVELENGTH'] = hdul[f'{color}_WAVELENGTH'].read()
+                    spec['FLUX'] = hdul[f'{color}_FLUX'].read()
+                    spec['IVAR'] = (hdul[f'{color}_IVAR'].read() *
+                                    (hdul[f'{color}_MASK'].read() == 0))
+                    w = np.isnan(spec['FLUX']) | np.isnan(spec['IVAR'])
+                    for key in ['FLUX', 'IVAR']:
+                        spec[key][w] = 0.
+                    spectrographs_data[color] = spec
+                except OSError:
+                    warnings.warn(f"Error while reading {color} band from {filename}."
+                                  "Ignoring color.", DataWarning)
+
+            hdul.close()
+
+            select = ((catalogue['TILEID'] == tile_spec) &
+                      (catalogue['PETAL_LOC'] == petal_spec) &
+                      (catalogue['NIGHT'] == night_spec))
+            userprint(
+                f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}')
+
+            # Loop over quasars in catalog inside this tile-petal
+            for entry in catalogue[select]:
+
+                # Find which row in tile contains this quasar
+                targetid = entry['TARGETID']
+                w_t = np.where(targetid_spec == targetid)[0]
+                if len(w_t) == 0:
+                    warnings.warn(f"Error reading {targetid}. Ignoring object",
+                                  DataWarning)
+                    continue
+                if len(w_t) > 1:
+                    warnings.warn("Warning: more than one spectrum in this file "
+                                  f"for {targetid}", DataWarning)
+                else:
+                    w_t = w_t[0]
+
+                for spec in spectrographs_data.values():
+                    ivar = spec['IV'][w_t].copy()
+                    flux = spec['FL'][w_t].copy()
+
+                    forest = DesiForest(**{"lambda": spec['WAVELENGTH'],
+                                           "flux": flux,
+                                           "ivar": ivar,
                                            "targetid": entry["TARGETID"],
                                            "ra": entry['RA'],
                                            "dec": entry['DEC'],
                                            "z": entry['Z'],
-                                           "spectrograph": entry["SPECTROGRAPH"],
-                                           "fiber": entry["FIBER"],})
+                                           "petal": entry["PETAL_LOC"],
+                                           "tile": entry["TILEID"],
+                                           "night": entry["NIGHT"]})
 
-                    if entry["TARGETID"] in forests_by_targetid:
-                        forests_by_targetid[entry["TARGETID"]].coadd(forest)
+                    if targetid in forests_by_targetid:
+                        forests_by_targetid[targetid].coadd(forest)
                     else:
-                        forests_by_targetid[entry["TARGETID"]] = forest
+                        forests_by_targetid[targetid] = forest
+
+                num_data += 1
+        userprint("Found {} quasars in input files".format(num_data))
+
+        if num_data == 0:
+            raise DataError("No Quasars found, stopping here")
 
         self.forests = list(forests_by_targetid.values())

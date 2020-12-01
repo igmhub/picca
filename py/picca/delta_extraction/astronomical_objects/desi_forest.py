@@ -70,17 +70,21 @@ class DesiForest(Forest):
     mean_snf: float (from Forest)
     Mean signal-to-noise of the forest
 
-    fiber: int or None
-    Identifier of the fiber used in the observation. None for no info
-
     lambda_: array of float
     Wavelength (in Angstroms)
 
-    spectrograph: int or None
+    night: int or None
+    Identifier of the night where the observation was made. None for no info
+
+    petal: int or None
     Identifier of the spectrograph used in the observation. None for no info
 
     targetid: int
     Targetid of the object
+
+    tile: int or None
+    Identifier of the tile used in the observation. None for no info
+
     """
     delta_lambda = None
     lambda_max = None
@@ -96,25 +100,29 @@ class DesiForest(Forest):
         **kwargs: dict
         Dictionary contiaing the information
         """
-        self.fiber = kwargs.get("fiber")
-        if self.fiber is not None:
-            del kwargs["fiber"]
-
         self.lambda_ = kwargs.get("lambda")
         if self.lambda_ is None:
             raise AstronomicalObjectError("Error constructing DesiForest. "
                                           "Missing variable 'wavelength'")
         del kwargs["lambda"]
 
-        self.spectrograph = kwargs.get("spectrograph")
-        if self.spectrograph is not None:
-            del kwargs["spectrograph"]
+        self.night = kwargs.get("night")
+        if self.night is not None:
+            del kwargs["night"]
+
+        self.petal = kwargs.get("petal")
+        if self.petal is not None:
+            del kwargs["petal"]
 
         self.targetid = kwargs.get("targetid")
         if self.targetid is None:
             raise AstronomicalObjectError("Error constructing DesiForest. "
                                           "Missing variable 'thingid'")
         del kwargs["targetid"]
+
+        self.tile = kwargs.get("tile")
+        if self.tile is not None:
+            del kwargs["tile"]
 
         z = kwargs.get("z")
         if z is None:

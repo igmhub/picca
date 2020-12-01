@@ -87,7 +87,8 @@ class DrqCatalogue(QuasarCatalogue):
 
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
-        super().trim_catalogue()
+        if self.max_num_spec is not None:
+            super().trim_catalogue()
 
     def _parse_config(self, config):
         """Parse the configuration options

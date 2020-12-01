@@ -138,7 +138,7 @@ class SdssData(Data):
             lambda_min_rest_frame = defaults.get("lambda min rest frame")
         self.log_lambda_min_rest_frame = np.log10(lambda_min_rest_frame)
         self.mode = config.get("mode")
-        if self.input_directory is None:
+        if self.mode is None:
             self.mode = defaults.get("mode")
 
     def read_from_spec(self, catalogue):
