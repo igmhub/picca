@@ -8,6 +8,7 @@ Bourboux et al. 2020 (In prep) to compute the distortion matrix
 import time
 import argparse
 from functools import partial
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
@@ -333,7 +334,8 @@ def main():
         userprint("")
 
         if args.nproc > 1:
-            pool = Pool(processes=args.nproc)
+            context = multiprocessing.get_context('fork')
+            pool = context.Pool(processes=args.nproc)
             dmat_data = pool.map(calc_metal_dmat_wrapper,
                                  sorted(cpu_data.values()))
             pool.close()

@@ -5,6 +5,7 @@ The wick covariance is computed as explained in Delubac et al. 2015
 """
 import sys
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import fitsio
 import numpy as np
@@ -412,7 +413,8 @@ def main():
         cpu_data[num_processor].append(healpix)
 
     # compute the covariance matrix
-    pool = Pool(processes=min(args.nproc, len(cpu_data.values())))
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=min(args.nproc, len(cpu_data.values())))
     userprint(" \nStarting\n")
     wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
     userprint(" \nFinished\n")

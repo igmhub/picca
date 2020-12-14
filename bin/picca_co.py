@@ -3,6 +3,7 @@
 """
 import argparse
 import sys
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
@@ -236,7 +237,8 @@ def main():
     co.counter = Value('i', 0)
     co.lock = Lock()
     cpu_data = {healpix: [healpix] for healpix in co.objs}
-    pool = Pool(processes=args.nproc)
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=args.nproc)
     correlation_function_data = pool.map(corr_func,
                                          sorted(list(cpu_data.values())))
     pool.close()

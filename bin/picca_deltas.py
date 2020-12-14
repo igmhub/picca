@@ -8,6 +8,7 @@ section 2.4 of du Mas des Bourboux et al. 2020 (In prep).
 import sys
 import os
 import time
+import multiprocessing
 from multiprocessing import Pool
 import argparse
 import fitsio
@@ -614,8 +615,8 @@ def main():
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
     num_iterations = args.nit
     for iteration in range(num_iterations):
-
-        pool = Pool(processes=args.nproc)
+        context = multiprocessing.get_context('fork')
+        pool = context.Pool(processes=args.nproc)
         userprint(
             f"Continuum fitting: starting iteration {iteration} of {num_iterations}"
         )

@@ -21,6 +21,7 @@ def update_system_status_values(path, section, system, value):
 
     ### Make ConfigParser case sensitive
     class CaseConfigParser(ConfigParser.ConfigParser):
+
         def optionxform(self, optionstr):
             return optionstr
 
@@ -35,6 +36,7 @@ def update_system_status_values(path, section, system, value):
 
 
 class TestCor(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls._branchFiles = tempfile.mkdtemp() + "/"
@@ -343,14 +345,14 @@ class TestCor(unittest.TestCase):
                                                 size=(p_thid.size,
                                                       lam_key.size))
                 p_m[key] = np.zeros((p_thid.size, lam_key.size)).astype(int)
-                p_m[key][np.random.random_sample(size=(p_thid.size,
-                                                lam_key.size)) > 0.90] = 1
+                p_m[key][np.random.random_sample(
+                    size=(p_thid.size, lam_key.size)) > 0.90] = 1
                 tmp = np.exp(
                     -((np.arange(11) - 5) / 0.6382)**2
                 )  #to fake resolution from a gaussian, this assumes R=3000 at minimum wavelength
                 tmp = np.repeat(tmp[np.newaxis, :, np.newaxis],
-                                   p_thid.size,
-                                   axis=0)
+                                p_thid.size,
+                                axis=0)
                 p_res[key] = np.repeat(tmp, lam_key.size, axis=2)
 
             p_path = self._branchFiles + f"/Products/Spectra_MiniSV/{t}/{n}/"
@@ -401,11 +403,11 @@ class TestCor(unittest.TestCase):
             for k in ld_m:
                 d_m = m[i][k][:]
                 d_b = b[i][k][:]
-                if d_m.dtype in ['<U23', 'S23'
-                                 ]:  # for fitsio old version compatibility
+                if d_m.dtype in ['<U23',
+                                 'S23']:  # for fitsio old version compatibility
                     d_m = np.char.strip(d_m)
-                if d_b.dtype in ['<U23', 'S23'
-                                 ]:  # for fitsio old version compatibility
+                if d_b.dtype in ['<U23',
+                                 'S23']:  # for fitsio old version compatibility
                     d_b = np.char.strip(d_b)
                 self.assertEqual(d_m.size, d_b.size,
                                  "{}: Header key is {}".format(nameRun, k))
@@ -421,6 +423,7 @@ class TestCor(unittest.TestCase):
                         allclose,
                         "{}: Header key is {}, maximum relative difference is {}"
                         .format(nameRun, k, diff.max()))
+                    userprint(f"OK, maximum relative difference {diff.max():.2e}")
 
         m.close()
         b.close()
@@ -428,6 +431,7 @@ class TestCor(unittest.TestCase):
         return
 
     def compare_h5py(self, path1, path2, nameRun=""):
+
         def compare_attributes(atts1, atts2):
             self.assertEqual(len(atts1.keys()), len(atts2.keys()),
                              "{}".format(nameRun))
@@ -435,15 +439,23 @@ class TestCor(unittest.TestCase):
                                  "{}".format(nameRun))
             for item in atts1:
                 nequal = True
-                if isinstance(atts1[item], np.ndarray):
-                    nequal = np.logical_not(
-                        np.array_equal(atts1[item], atts2[item]))
+                if isinstance(atts1[item], np.ndarray): #the dtype check is needed for h5py version 3
+                    dtype1=atts1[item].dtype
+                    dtype2=atts2[item].dtype
+                    if dtype1==dtype2:
+                        nequal = np.logical_not(
+                            np.array_equal(atts1[item], atts2[item]))
+                    else:
+                        userprint(f"Note that the test file has different dtype for attribute {item}")
+                        nequal = np.logical_not(np.array_equal(atts1[item].astype(atts2[item].dtype), atts2[item]))
+                        if nequal:
+                            nequal = np.logical_not(np.array_equal(atts2[item].astype(atts1[item].dtype), atts1[item]))
                 else:
                     nequal = atts1[item] != atts2[item]
                 if nequal:
                     userprint(
-                        "WARNING: {}: not exactly equal, using allclose for {}"
-                        .format(nameRun, item))
+                        "WARNING: {}: not exactly equal, using allclose for {}".
+                        format(nameRun, item))
                     userprint(atts1[item], atts2[item])
                     allclose = np.allclose(atts1[item], atts2[item])
                     self.assertTrue(allclose, "{}".format(nameRun))
@@ -502,9 +514,8 @@ class TestCor(unittest.TestCase):
             path = self.picca_base + '/requirements-python2.txt'
         with open(path, 'r') as f:
             for l in f:
-                l = l.replace('\n', '').replace('==',
-                                                ' ').replace('>=',
-                                                             ' ').split()
+                l = l.replace('\n', '').replace('==', ' ').replace('>=',
+                                                                   ' ').split()
                 self.assertTrue(
                     len(l) == 2,
                     "requirements.txt attribute is not valid: {}".format(
