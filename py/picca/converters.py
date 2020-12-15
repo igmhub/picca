@@ -6,6 +6,7 @@ These are:
     - desi_from_truth_to_drq
     - desi_from_ztarget_to_drq
     - desi_convert_transmission_to_delta_files
+    - desi_convert_delta_files_from_true_cont
 See the respective docstrings for more details
 """
 import os
@@ -15,9 +16,11 @@ import numpy as np
 import fitsio
 import healpy
 
-from picca.data import Delta
+from picca.data import Delta, Forest
 from picca.utils import userprint
 
+from picca import io
+#from picca import prep_del, io, constants
 
 def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
     """Converts Pasquier Noterdaeme ASCII DLA catalog to a fits file
@@ -585,3 +588,320 @@ def desi_convert_transmission_to_delta_files(obj_path,
                   end="")
 
     userprint("")
+    
+def desi_convert_delta_files_from_true_cont(obj_path,
+                                             out_dir,
+                                             in_dir_transmission=None,
+                                             in_dir_spectra=None,
+                                             in_filenames=None,
+                                             lambda_min=3600.,
+                                             lambda_max=5500.,
+                                             lambda_min_rest_frame=1040.,
+                                             lambda_max_rest_frame=1200.,
+                                             delta_log_lambda=3.e-4,
+                                             max_num_spec=None,
+                                             dla_mask = .8,
+                                             absorber_mask = 2.5,
+                                             delta_format = None,
+                                             spall = None,
+                                             zqso_min = None,
+                                             zqso_max = None,
+                                             mode='desi',
+                                             keep_bal=False,
+                                             bi_max = None,
+                                             best_obs = False,
+                                             single_exp = False):
+    
+    """Get picca delta files from true continuum
+
+    Args:
+        obj_path: str
+            Path to the catalog of object to extract the transmission from
+        out_dir: str
+            Path to the directory where delta files will be written
+        in_dir_transmission: str or None - default: None
+            Path to the directory containing the transmission files directory.
+            If 'None', then in_files must be a non-empty array
+        in_dir_spectra: str or None - default: None
+            Path to the directory containing the spectra files directory.
+            If 'None', then compute raw deltas
+        in_filenames: array of str or None - default: None
+            List of the filenames for the transmission files. Ignored if in_dir
+            is not 'None'
+        lambda_min: float - default: 3600.
+            Minimum observed wavelength in Angstrom
+        lambda_max: float - default: 5500.
+            Maximum observed wavelength in Angstrom
+        lambda_min_rest_frame: float - default: 1040.
+            Minimum Rest Frame wavelength in Angstrom
+        lambda_max_rest_frame: float - default: 1200.
+            Maximum Rest Frame wavelength in Angstrom
+        delta_log_lambda: float - default: 3.e-4
+            Variation of the logarithm of the wavelength between two pixels
+        max_num_spec: int or None - default: None
+            Maximum number of spectra to read. 'None' for no maximum
+    """
+    
+    # read catalog of objects
+    hdul = fitsio.FITS(obj_path)
+    key_val = np.char.strip(
+        np.array([
+            hdul[1].read_header()[key] for key in hdul[1].read_header().keys()
+        ]).astype(str))
+    if 'TARGETID' in key_val:
+        objs_thingid = hdul[1]['TARGETID'][:]
+    elif 'THING_ID' in key_val:
+        objs_thingid = hdul[1]['THING_ID'][:]
+    w = hdul[1]['Z'][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
+    w &= hdul[1]['Z'][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
+    objs_ra = hdul[1]['RA'][:][w].astype('float64') * np.pi / 180.
+    objs_dec = hdul[1]['DEC'][:][w].astype('float64') * np.pi / 180.
+    objs_thingid = objs_thingid[w]
+    hdul.close()
+    userprint('INFO: Found {} quasars'.format(objs_ra.size))
+    
+    # Load list of transmission files
+    if ((in_dir_transmission is None and in_filenames is None) or
+        (in_dir_transmission is not None and in_filenames is not None)):
+        userprint(("ERROR: No spectra input files or both 'in_dir' and ""'in_filenames' given"))
+        sys.exit()
+    elif in_dir_transmission is not None:
+        files = glob.glob(in_dir_transmission + '/*/*/transmission-16-*.fits*')
+        files = np.sort(np.array(files))
+        hdul = fitsio.FITS(files[0])
+        in_nside = hdul['METADATA'].read_header()['HPXNSIDE']
+        nest = hdul['METADATA'].read_header()['HPXNEST']
+        hdul.close()
+        in_healpixs = healpy.ang2pix(in_nside,
+                                     np.pi / 2. - objs_dec,
+                                     objs_ra,
+                                     nest=nest)
+        if files[0].endswith('.gz'):
+            end_of_file = '.gz'
+        else:
+            end_of_file = ''
+        files_trans = np.sort(
+            np.array([("{}/{}/{healpix}/transmission-{}-{healpix}"
+                       ".fits{}").format(in_dir_transmission,
+                                         int(healpix // 100),
+                                         in_nside,
+                                         end_of_file,
+                                         healpix=healpix)
+                      for healpix in np.unique(in_healpixs)])) ### list of all files to read
+    else:
+        files_trans = np.sort(np.array(in_filenames))
+    userprint('INFO: Found {} files'.format(files.size))
+    
+    # Stack the deltas transmission
+    log_lambda_min = np.log10(lambda_min)
+    log_lambda_max = np.log10(lambda_max)
+    num_bins = int((log_lambda_max - log_lambda_min) / delta_log_lambda) + 1
+    stack_delta = np.zeros(num_bins)
+    stack_weight = np.zeros(num_bins)
+    
+    spec_count = 0
+    for index, filename in enumerate(files_trans):
+        userprint("\rread {} of {} {}".format(index, files.size,spec_count),end="")
+        hdul = fitsio.FITS(filename)
+        truth = fitsio.FITS(filename.replace("spectra","truth"))
+        thingid = hdul['METADATA']['MOCKID'][:]
+        if np.in1d(thingid, objs_thingid).sum() == 0:
+            print(filename)
+            hdul.close()
+            continue
+        ra = hdul['METADATA']['RA'][:].astype(np.float64) * np.pi / 180.
+        dec = hdul['METADATA']['DEC'][:].astype(np.float64) * np.pi / 180.
+        z = hdul['METADATA']['Z'][:]
+        log_lambda = np.log10(hdul['WAVELENGTH'].read())
+        if 'F_LYA' in hdul:
+            trans = hdul['F_LYA'].read()
+        else:
+            trans = hdul['TRANSMISSION'].read()
+
+        num_obj = z.size
+        healpix = filename.split('-')[-1].split('.')[0]
+
+        if trans.shape[0] != num_obj:
+            trans = trans.transpose()
+
+        bins = np.floor((log_lambda - log_lambda_min) / delta_log_lambda +
+                        0.5).astype(int)
+        aux_log_lambda = log_lambda_min + bins * delta_log_lambda
+        lambda_obs_frame =  (10**aux_log_lambda) * np.ones(num_obj)[:, None]
+        lambda_rest_frame = (10**aux_log_lambda) / (1. + z[:, None])
+        valid_pixels = np.zeros_like(trans).astype(int)
+        valid_pixels[(lambda_obs_frame >= lambda_min) &
+                     (lambda_obs_frame < lambda_max) &
+                     (lambda_rest_frame > lambda_min_rest_frame) &
+                     (lambda_rest_frame < lambda_max_rest_frame)] = 1
+        num_pixels = np.sum(valid_pixels, axis=1)
+        w = num_pixels >= 50
+        w &= np.in1d(thingid, objs_thingid)
+        if w.sum() == 0:
+            hdul.close()
+            continue
+
+        ra = ra[w]
+        dec = dec[w]
+        z = z[w]
+        thingid = thingid[w]
+        trans = trans[w, :]
+        valid_pixels = valid_pixels[w, :]
+        num_obj = z.size
+        hdul.close()
+
+        for index2 in range(num_obj):
+            aux_log_lambda = log_lambda[valid_pixels[index2, :] > 0]
+            aux_trans = trans[index2, :][valid_pixels[index2, :] > 0]
+
+            bins = np.floor((aux_log_lambda - log_lambda_min) /delta_log_lambda + 0.5).astype(int)
+            rebin_log_lambda = (log_lambda_min +np.arange(num_bins) * delta_log_lambda)
+            rebin_flux = np.bincount(bins,weights=aux_trans,minlength=num_bins)
+            rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
+
+            w = rebin_ivar > 0.
+            if w.sum() < 50:
+                continue
+            stack_delta += rebin_flux
+            stack_weight += rebin_ivar
+            rebin_log_lambda = rebin_log_lambda[w]
+            rebin_flux = rebin_flux[w] / rebin_ivar[w]
+            rebin_ivar = rebin_ivar[w]
+            
+            spec_count+=1
+        if (max_num_spec is not None and  spec_count >= max_num_spec):
+            break
+
+    userprint('\n')
+    # normalize stacked transmission
+    w = stack_weight > 0.
+    stack_delta[w] /= stack_weight[w]
+    
+    # setup forest class variables
+    Forest.log_lambda_min = np.log10(lambda_min)
+    Forest.log_lambda_max = np.log10(lambda_max)
+    Forest.log_lambda_min_rest_frame = np.log10(lambda_min_rest_frame)
+    Forest.log_lambda_max_rest_frame = np.log10(lambda_max_rest_frame)
+    Forest.delta_log_lambda = delta_log_lambda
+    # minumum dla transmission
+    Forest.dla_mask_limit = dla_mask
+    Forest.absorber_mask_width = absorber_mask
+
+    # Find the redshift range
+    if zqso_min is None:
+        zqso_min = max(0., lambda_min / lambda_max_rest_frame - 1.)
+        userprint("zqso_min = {}".format(zqso_min))
+    if zqso_max is None:
+        zqso_max = max(0., lambda_max / lambda_min_rest_frame - 1.)
+        userprint("zqso_max = {}".format(zqso_max))
+
+    log_lambda_temp = (Forest.log_lambda_min + np.arange(2) *
+                       (Forest.log_lambda_max - Forest.log_lambda_min))
+    log_lambda_rest_frame_temp = (
+        Forest.log_lambda_min_rest_frame + np.arange(2) *
+        (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame))
+
+    #Forest.get_var_lss = interp1d(log_lambda_temp,0.2 + np.zeros(2),fill_value="extrapolate",kind="nearest")
+    #Forest.get_eta = interp1d(log_lambda_temp,np.ones(2),fill_value="extrapolate",kind="nearest")
+    #Forest.get_fudge = interp1d(log_lambda_temp,np.zeros(2),fill_value="extrapolate",kind="nearest")
+    #Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp,1 + np.zeros(2))
+    
+    log_file = open(os.path.expandvars(out_dir.replace('deltas','input.log')), 'w')
+
+    # Read data
+    (data, num_data, nside,
+     healpy_pix_ordering) = io.read_data(os.path.expandvars(in_dir_spectra),
+                                         obj_path,
+                                         mode,
+                                         z_min=zqso_min,
+                                         z_max=zqso_max,
+                                         max_num_spec=max_num_spec,
+                                         log_file=log_file,
+                                         keep_bal=keep_bal,
+                                         bi_max=bi_max,
+                                         best_obs=best_obs,
+                                         single_exp=single_exp,
+                                         pk1d=delta_format,
+                                         spall=spall)
+    
+    # add continua to forest objects
+    for healpix in data:
+        for forest in data[healpix]:
+            tid = forest.thingid
+            pix = healpy.ang2pix(in_nside, np.pi / 2. - forest.dec, forest.ra, nest=True)
+
+            truth = fitsio.FITS(in_dir_spectra+f'{pix//100}/{pix}/truth-16-{pix}.fits') ## find corresponding truth file
+
+            ind = np.where(truth['TRUTH']['TARGETID'][:] == tid)[0][0]
+            cont = truth[3]['TRUE_CONT'][ind]
+            head = truth[3].read_header()
+            truth.close()
+            
+            wave_cont = np.log10(np.arange(head['WMIN'],head['WMAX']+head['DWAVE']/2,head['DWAVE']))
+            cont_rebin = np.interp(forest.log_lambda, wave_cont, cont)
+
+            forest.continuum = cont_rebin
+
+            bins = np.floor((forest.log_lambda - log_lambda_min) /
+                            delta_log_lambda + 0.5).astype(int)
+            forest.delta = forest.flux / (stack_delta[bins] * forest.continuum) - 1.
+
+            forest.mean_trans = stack_delta[bins]
+            forest.weights = stack_delta[bins]**2
+            
+    # save results
+    for index, healpix in enumerate(sorted(data)): ## loop over forests 
+        if len(data[healpix]) == 0:
+            userprint('No data in {}'.format(healpix))
+            continue
+        results = fitsio.FITS(out_dir + '/delta-{}'.format(healpix) +'.fits','rw', clobber=True)
+        for forest in data[healpix]:
+
+            header = [
+                    {'name': 'RA',
+                        'value': forest.ra,
+                        'comment': 'Right Ascension [rad]'
+                    },
+                    {'name': 'DEC',
+                        'value': forest.dec,
+                        'comment': 'Declination [rad]'
+                    },
+                    {'name': 'Z',
+                        'value': forest.z_qso,
+                        'comment': 'Redshift'
+                    },
+                    {'name':'PMF',
+                        'value':'{}-{}-{}'.format(forest.plate, forest.mjd,forest.fiberid)
+                    },
+                    {'name': 'THING_ID',
+                        'value': forest.thingid,
+                        'comment': 'Object identification'
+                    },
+                    {'name': 'PLATE',
+                        'value': forest.plate
+                    },
+                    {'name': 'MJD',
+                        'value': forest.mjd,
+                        'comment': 'Modified Julian date'
+                    },
+                    {'name': 'FIBERID',
+                        'value': forest.fiberid
+                    },
+                ]
+
+            cols = [forest.log_lambda, forest.delta, forest.weights,forest.continuum,forest.mean_trans]
+            names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT','MEAN_TRANS']
+            units = ['log Angstrom', '', '', '','']
+
+            results.write(cols,
+                          names=names,
+                          header=header,
+                          units=units,
+                          extname=str(forest.thingid))
+
+        results.close()
+        userprint("\rwrite {} of {}: {} quasars".format(index, len(data),len(data[healpix])),end="")
+
+    userprint("")
+
+
