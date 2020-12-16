@@ -603,14 +603,16 @@ def desi_convert_delta_files_from_true_cont(obj_path,
                                              dla_mask = .8,
                                              absorber_mask = 2.5,
                                              delta_format = None,
-                                             spall = None,
-                                             zqso_min = None,
-                                             zqso_max = None,
+                                             spall=None,
+                                             zqso_min=None,
+                                             zqso_max=None,
                                              mode='desi',
                                              keep_bal=False,
-                                             bi_max = None,
-                                             best_obs = False,
-                                             single_exp = False):
+                                             bi_max=None,
+                                             best_obs=False,
+                                             single_exp=False,
+                                             npix_min=50,
+                                             use_constant_weight=False):
     
     """Get picca delta files from true continuum
 
@@ -760,7 +762,7 @@ def desi_convert_delta_files_from_true_cont(obj_path,
             rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
 
             w = rebin_ivar > 0.
-            if w.sum() < 50:
+            if w.sum() < npix_min:
                 continue
             stack_delta += rebin_flux
             stack_weight += rebin_ivar
@@ -823,7 +825,43 @@ def desi_convert_delta_files_from_true_cont(obj_path,
                                          single_exp=single_exp,
                                          pk1d=delta_format,
                                          spall=spall)
-    
+    remove_keys = []
+    for healpix in data:
+        forests = []
+        for forest in data[healpix]:
+            if ((forest.log_lambda is None)
+                    or len(forest.log_lambda) < npix_min):
+                log_file.write(("INFO: Rejected {} due to forest too "
+                                "short\n").format(forest.thingid))
+                continue
+
+            if np.isnan((forest.flux * forest.ivar).sum()):
+                log_file.write(("INFO: Rejected {} due to nan "
+                                "found\n").format(forest.thingid))
+                continue
+
+            if (use_constant_weight
+                    and (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
+                log_file.write(("INFO: Rejected {} due to negative mean or "
+                                "too low SNR found\n").format(forest.thingid))
+                continue
+
+            forests.append(forest)
+            log_file.write("{} {}-{}-{} accepted\n".format(
+                forest.thingid, forest.plate, forest.mjd, forest.fiberid))
+        data[healpix][:] = forests
+        if len(data[healpix]) == 0:
+            remove_keys += [healpix]
+
+    for healpix in remove_keys:
+        del data[healpix]
+
+    num_forests = np.sum([len(forest) for forest in data.values()])
+    log_file.write(("INFO: Remaining sample has {} "
+                    "forests\n").format(num_forests))
+    userprint(f"Remaining sample has {num_forests} forests")
+
+
     # add continua to forest objects
     for healpix in data:
         for forest in data[healpix]:
