@@ -59,19 +59,17 @@ def compute_mean_cont(data,nproc=None):
         (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame) /
         num_bins)
 
+    """
     pool = Pool(processes=nproc)
 
-    tasks = [(data[k],num_bins) for k in data.keys()]
-    jobs = [pool.apply_async(compute_forests_mean_cont,task) for task in tasks]
+    tasks = [(data[k],num_bins) for k in sorted(list(data.keys()))]
+    
+    results = pool.starmap(compute_forests_mean_cont,tasks)
     pool.close()
 
-    results = []
-    for job in jobs:
-        result = job.get()
+    for result in results:
         mean_cont += result[0]
         mean_cont_weight += result[1]
-
-    pool.join()
 
     """
     for healpix in sorted(list(data.keys())):
@@ -91,7 +89,6 @@ def compute_mean_cont(data,nproc=None):
             mean_cont[:len(cont)] += cont
             cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont
-    """
 
     w = mean_cont_weight > 0
     mean_cont[w] /= mean_cont_weight[w]
@@ -216,6 +213,7 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3), nproc
     count = np.zeros(num_bins * num_var_bins)
     num_qso = np.zeros(num_bins * num_var_bins)
 
+    """
     # compute delta statistics, binning the variance according to 'var'
     pool = Pool(processes=nproc)
 
@@ -273,7 +271,6 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3), nproc
             rebin = np.bincount(bins)
             count[:len(rebin)] += rebin
             num_qso[np.unique(bins)] += 1
-    """
 
     # normalise and finish the computation of delta statistics
     w = count > 0
