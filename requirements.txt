@@ -1,10 +1,10 @@
-numpy>=1.19.0
-scipy>=1.5.2
+numpy>=1.19.4
+scipy>=1.5.4
 iminuit>=1.5.2
 healpy>=1.14.0
-fitsio==1.0.5
-llvmlite>=0.33.0
-numba>=0.50.1
-h5py>=2.10.0
+fitsio>=1.1.3
+llvmlite>=0.34.0
+numba>=0.51.2
+h5py>=3.1.0
 future>=0.18.2
-setuptools>=49.2.0
+setuptools>=50.3.2
