@@ -7,7 +7,7 @@ import fitsio
 import argparse
 import copy
 
-from picca.utils import smooth_cov, cov
+from picca.utils import smooth_cov, compute_cov
 
 if __name__ == '__main__':
 
@@ -134,10 +134,10 @@ if __name__ == '__main__':
         binSizeT = (final['RTMAX']-0.) / final['NT']
         if not args.do_not_smooth_cov:
             print('INFO: The covariance will be smoothed')
-            final['CO'] = smooth_cov(final['DA'],final['WE'],final['RP'],final['RT'],drt=binSizeT,drp=binSizeP)
+            final['CO'] = smooth_cov(final['DA'],final['WE'],final['RP'],final['RT'],delta_r_trans=binSizeT,delta_r_par=binSizeP)
         else:
             print('INFO: The covariance will not be smoothed')
-            final['CO'] = cov(final['DA'],final['WE'])
+            final['CO'] = compute_cov(final['DA'],final['WE'])
 
     ### Test covariance matrix
     try:
