@@ -885,7 +885,7 @@ def desi_convert_delta_files_from_true_cont(obj_path,
             forest.delta = forest.flux / (stack_delta[bins] * forest.continuum) - 1.
 
             forest.mean_trans = stack_delta[bins]
-            forest.weights = stack_delta[bins]**2
+            forest.weights = stack_delta[bins]**2/forest.ivar
             
     # save results
     for index, healpix in enumerate(sorted(data)): ## loop over forests 
