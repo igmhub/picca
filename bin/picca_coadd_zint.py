@@ -8,13 +8,13 @@ import numpy as np
 from picca.utils import userprint
 
 
-def coadd_correlations(fi,fout):
+def coadd_correlations(input_files,output_file):
     """Coadds correlation functions measured in different redshift intervals.
 
     Args:
-        fi: list of strings
+        input_files: list of strings
             List of the paths to the input correlations to be coadded.
-        fout: string
+        output_file: string
             String of the path to the desired output.
     """
 
@@ -23,7 +23,7 @@ def coadd_correlations(fi,fout):
     headers_to_check_match = ['NP','NT','OMEGAM','OMEGAR','OMEGAK','WL','NSIDE']
 
     # initialize coadd arrays, fill them with zeros
-    with fitsio.FITS(fi[0]) as hdul:
+    with fitsio.FITS(input_files[0]) as hdul:
         r_par = hdul[1]['RP'][:] * 0
         r_trans = hdul[1]['RT'][:] * 0
         num_pairs = hdul[1]['NB'][:] * 0
@@ -44,12 +44,12 @@ def coadd_correlations(fi,fout):
 
     # check to see if all files have the same HEALPix pixels
     same_healpixs = True
-    for file in fi:
+    for file in input_files:
         with fitsio.FITS(file) as hdul:
             if len(hdul[2]['HEALPID'][:]) != len(healpixs):
-                same_healpixs *= False
+                same_healpixs = False
             elif (hdul[2]['HEALPID'][:] != healpixs).all():
-                same_healpixs *= False
+                same_healpixs = False
 
     # if so, initialise our xi and weights as arrays
     if same_healpixs:
@@ -62,7 +62,7 @@ def coadd_correlations(fi,fout):
         weights = {}
 
     # loop over files
-    for file in fi:
+    for file in input_files:
 
         # open the file and read the header
         userprint("coadding file {}".format(file))
@@ -70,8 +70,8 @@ def coadd_correlations(fi,fout):
         header = hdul[1].read_header()
 
         # check that the header properties match those from the first file
-        for h in headers_to_check_match:
-            assert header[h] == headers_to_check_match_values[h]
+        for entry in headers_to_check_match:
+            assert header[entry] == headers_to_check_match_values[entry]
 
         # add weighted contributions from this file to coadd variables
         weights_aux = hdul[2]['WE'][:]
@@ -103,7 +103,7 @@ def coadd_correlations(fi,fout):
                 else:
                     xi[healpix] = hdul[2]["DA"][:][index] * weights_aux[index]
                     weights[healpix] = weights_aux[index]
-            print('')
+            userprint('')
 
         hdul.close()
 
@@ -123,7 +123,7 @@ def coadd_correlations(fi,fout):
     r_trans[w] /= weights_total[w]
     z[w] /= weights_total[w]
 
-    results = fitsio.FITS(fout, 'rw', clobber=True)
+    results = fitsio.FITS(output_file, 'rw', clobber=True)
 
     header = [
     {
@@ -210,13 +210,13 @@ def coadd_correlations(fi,fout):
 
     return
 
-def coadd_dmats(fi,fout):
+def coadd_dmats(input_files,output_file):
     """Coadds distortion matrices measured in different redshift intervals.
 
     Args:
-        fi: list of strings
+        input_files: list of strings
             List of the paths to the input distortion matrices to be coadded.
-        fout: string
+        output_file: string
             String of the path to the desired output.
     """
 
@@ -225,7 +225,7 @@ def coadd_dmats(fi,fout):
     headers_to_check_match = ['NP','NT','COEFMOD','REJ','OMEGAM','OMEGAR','OMEGAK','WL']
 
     # initialize distortion matrix array, fill them with zeros
-    with fitsio.FITS(fi[0]) as hdul:
+    with fitsio.FITS(input_files[0]) as hdul:
         dmat = hdul[1]['DM'][:] * 0
         weights_dmat = hdul[1]['WDM'][:] * 0
         r_par_dmat = np.zeros(hdul[2]['RP'][:].size)
@@ -237,12 +237,6 @@ def coadd_dmats(fi,fout):
         header = hdul[1].read_header()
         headers_to_check_match_values = {h:header[h] for h in headers_to_check_match}
 
-    ### OLD WEIGHTS
-    #with fitsio.FITS(fi[0].replace('dmat','cf')) as hdul_corr:
-    #    weights_total = hdul_corr[2]['WE'][:].sum(axis=0) * 0
-    ###
-    ###
-
     # initialise header quantities
     num_pairs = 0
     num_pairs_used = 0
@@ -253,7 +247,7 @@ def coadd_dmats(fi,fout):
     z_cut_max = -1.e6
 
     # loop over files
-    for file in fi:
+    for file in input_files:
 
         # open the file and read the header
         userprint("coadding file {}".format(file))
@@ -261,33 +255,18 @@ def coadd_dmats(fi,fout):
         header = hdul[1].read_header()
 
         # check that the header properties match those from the first file
-        for h in headers_to_check_match:
-            assert header[h] == headers_to_check_match_values[h]
+        for entry in headers_to_check_match:
+            assert header[entry] == headers_to_check_match_values[entry]
 
         # add weighted contributions from this file to coadd variables
-
-        ### OLD WEIGHTS
-        #with fitsio.FITS(file.replace('dmat','cf')) as hdul_corr:
-        #    weights_total_aux = hdul_corr[2]['WE'][:].sum(axis=0)
-        #dmat += hdul[1]['DM'][:] * weights_total_aux[:,None]
-        #weights_total += weights_total_aux
-        ###
         weights_dmat_aux = hdul[1]['WDM'][:]
         dmat += hdul[1]['DM'][:] * weights_dmat_aux
         weights_dmat += weights_dmat_aux
-        ###
 
-        ### OLD WEIGHTS
-        #r_par_dmat += hdul[2]['RP'][:]
-        #r_trans_dmat += hdul[2]['RT'][:]
-        #z_dmat += hdul[2]['Z'][:]
-        #num_pairs_dmat += 1.
-        ###
         r_par_dmat += hdul[2]['RP'][:] * weights_dmat_aux
         r_trans_dmat += hdul[2]['RT'][:] * weights_dmat_aux
         z_dmat += hdul[2]['Z'][:] * weights_dmat_aux
         num_pairs_dmat += 1.
-        ###
 
         # update values to go in coadd header
         num_pairs += header['NPALL']
@@ -301,21 +280,14 @@ def coadd_dmats(fi,fout):
         hdul.close()
 
     # normalize
-    ### OLD WEIGHTS
-    #dmat /= weights_total[:, None]
-    #r_par_dmat /= num_pairs_dmat
-    #r_trans_dmat /= num_pairs_dmat
-    #z_dmat /= num_pairs_dmat
-    ###
     w = weights_dmat>0
     dmat[w] /= weights_dmat[w]
     r_par_dmat[w] /= weights_dmat[w]
     r_trans_dmat[w] /= weights_dmat[w]
     z_dmat[w] /= weights_dmat[w]
-    ###
 
     # save results
-    results = fitsio.FITS(fout, 'rw', clobber=True)
+    results = fitsio.FITS(output_file, 'rw', clobber=True)
     header = [
         {
             'name': 'RPMIN',
