@@ -73,7 +73,7 @@ def main():
                         type=str,
                         required=False,
                         choices=['desi', 'sdss'],
-                        default='sdss'
+                        default='sdss',
                         help='Mode for reading the catalog (default sdss)'
                         )
 
