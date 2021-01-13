@@ -1339,6 +1339,7 @@ def read_deltas(in_dir,
 
 
 def read_objects(filename,
+                 mode,
                  nside,
                  z_min,
                  z_max,
@@ -1356,6 +1357,8 @@ def read_objects(filename,
         filename: str
             Filename of the objects catalogue (must follow DRQ catalogue
             structure)
+        mode: str
+            Mode to read drq file.
         nside: int
             The healpix nside parameter
         z_min: float
@@ -1385,7 +1388,7 @@ def read_objects(filename,
     """
     objs = {}
 
-    catalog = read_drq(filename, z_min=z_min, z_max=z_max, keep_bal=keep_bal)
+    catalog = read_drq(filename, z_min=z_min, z_max=z_max, keep_bal=keep_bal, mode=mode)
 
     phi = catalog['RA']
     theta = np.pi / 2. - catalog['DEC']
