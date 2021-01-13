@@ -69,11 +69,11 @@ def main():
                         required=True,
                         help='Catalog of objects in DRQ format')
 
-    parser.add_argument('--drq-mode',
+    parser.add_argument('--mode',
                         type=str,
                         required=True,
                         choices=['desi', 'sdss'],
-                        help='Catalog structure mode'
+                        help='Mode for reading the catalog'
                         )
 
     parser.add_argument('--rp-min',
@@ -257,7 +257,25 @@ def main():
                             wl=args.fid_wl)
 
     t0 = time.time()
+    
+    # Find the redshift range
+    if args.z_min_obj is None:
+        r_comov_min = cosmo.get_r_comov(z_min)
+        r_comov_min = max(0., r_comov_min + xcf.r_par_min)
+        args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
+        userprint("z_min_obj = {}".format(args.z_min_obj), end="")
+    if args.z_max_obj is None:
+        r_comov_max = cosmo.get_r_comov(z_max)
+        r_comov_max = max(0., r_comov_max + xcf.r_par_max)
+        args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
+        userprint("z_max_obj = {}".format(args.z_max_obj), end="")
 
+    ### Read objects
+    objs, z_min2 = io.read_objects(args.drq, args.mode, args.nside, args.z_min_obj,
+                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
+                                   cosmo)
+    xcf.objs = objs
+    
     ### Read deltas
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
                                                   args.nside,
@@ -272,7 +290,6 @@ def main():
     xcf.num_data = num_data
     userprint("")
     userprint("done, npix = {}\n".format(len(data)))
-
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
         Forest.delta_log_lambda = None
@@ -299,24 +316,6 @@ def main():
                 bins = ((delta.log_lambda - Forest.log_lambda_min) /
                         Forest.delta_log_lambda + 0.5).astype(int)
                 delta.delta -= mean_delta[bins]
-
-    # Find the redshift range
-    if args.z_min_obj is None:
-        r_comov_min = cosmo.get_r_comov(z_min)
-        r_comov_min = max(0., r_comov_min + xcf.r_par_min)
-        args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
-        userprint("z_min_obj = {}".format(args.z_min_obj), end="")
-    if args.z_max_obj is None:
-        r_comov_max = cosmo.get_r_comov(z_max)
-        r_comov_max = max(0., r_comov_max + xcf.r_par_max)
-        args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
-        userprint("z_max_obj = {}".format(args.z_max_obj), end="")
-
-    ### Read objects
-    objs, z_min2 = io.read_objects(args.drq, args.drq_mode, args.nside, args.z_min_obj,
-                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
-    xcf.objs = objs
 
     # shuffle forests and objects
     if not args.shuffle_distrib_obj_seed is None:
