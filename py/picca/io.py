@@ -1401,7 +1401,7 @@ def read_objects(filename,
         if 'desi' in mode:
             objs[healpix] = [
                 QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
-                    entry['TILEID'], entry['NIGHT'], entry['FIBERID'])
+                    entry['TILEID'], entry['NIGHT'], entry['FIBER'])
                 for entry in catalog[w]
             ]
         else:
