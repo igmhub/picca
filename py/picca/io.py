@@ -152,10 +152,13 @@ def read_drq(drq_filename,
 
     keep_columns = ['RA', 'DEC', 'Z']
     if 'desi' in mode and 'TARGETID' in catalog.colnames:
-        obj_id_name = 'TARGETID'
+        obj_id_name = 'THING_ID'
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
-        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER']
+        catalog.rename_column('TARGETID', 'THING_ID')
+        catalog.rename_column('TILEID', 'PLATE')
+        catalog.rename_column('FIBER', 'FIBERID')
+        keep_columns += ['THING_ID', 'PLATE', 'MJD', 'NIGHT', 'FIBERID', 'MJD']
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
