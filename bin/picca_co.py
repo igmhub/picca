@@ -56,6 +56,14 @@ def main():
                         default=None,
                         required=False,
                         help='Catalog of objects 2 in DRQ format')
+    
+    parser.add_argument(
+                        '--mode',
+                        type=str,
+                        default='sdss',
+                        choices=['sdss','desi']
+                        required=False,
+                        help='type of catalog supplied, default sdss')
 
     parser.add_argument('--rp-min',
                         type=float,
@@ -216,7 +224,7 @@ def main():
     ### Read objects 1
     objs, z_min = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                  cosmo)
+                                  cosmo,mode=args.mode)
     userprint("")
     co.objs = objs
     co.num_data = len([obj for healpix in co.objs for obj in co.objs[healpix]])
@@ -227,7 +235,7 @@ def main():
     if co.x_correlation:
         objs2, z_min2 = io.read_objects(args.drq2, args.nside, args.z_min_obj,
                                         args.z_max_obj, args.z_evol_obj2,
-                                        args.z_ref, cosmo)
+                                        args.z_ref, cosmo,mode=args.mode)
         userprint("")
         co.objs2 = objs2
         # recompute maximum angular separation

@@ -58,6 +58,14 @@ def main():
                         default=None,
                         required=True,
                         help='Catalog of objects in DRQ format')
+                        
+    parser.add_argument(
+                        '--mode',
+                        type=str,
+                        default='sdss',
+                        choices=['sdss','desi']
+                        required=False,
+                        help='type of catalog supplied, default sdss')
 
     parser.add_argument('--wr-min',
                         type=float,
@@ -278,7 +286,7 @@ def main():
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
+                                   cosmo, mode=args.mode)
     del z_min2
     for index, healpix in enumerate(sorted(objs)):
         for obj in objs[healpix]:
