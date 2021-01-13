@@ -58,12 +58,12 @@ def main():
                         default=None,
                         required=True,
                         help='Catalog of objects in DRQ format')
-                        
+
     parser.add_argument(
                         '--mode',
                         type=str,
                         default='sdss',
-                        choices=['sdss','desi']
+                        choices=['sdss','desi'],
                         required=False,
                         help='type of catalog supplied, default sdss')
 
