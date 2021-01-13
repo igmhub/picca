@@ -152,13 +152,10 @@ def read_drq(drq_filename,
 
     keep_columns = ['RA', 'DEC', 'Z']
     if 'desi' in mode and 'TARGETID' in catalog.colnames:
-        obj_id_name = 'THING_ID'
+        obj_id_name = 'TARGETID'
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
-        catalog.rename_column('TARGETID', 'THING_ID')
-        catalog.rename_column('TILEID', 'PLATE')
-        catalog.rename_column('FIBER', 'FIBERID')
-        keep_columns += ['THING_ID', 'PLATE', 'MJD', 'NIGHT', 'FIBERID', 'MJD']
+        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER']
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
@@ -1339,13 +1336,13 @@ def read_deltas(in_dir,
 
 
 def read_objects(filename,
-                 mode,
                  nside,
                  z_min,
                  z_max,
                  alpha,
                  z_ref,
                  cosmo,
+                 mode='sdss',
                  keep_bal=True):
     """Reads objects and computes their redshifts.
 
@@ -1357,8 +1354,6 @@ def read_objects(filename,
         filename: str
             Filename of the objects catalogue (must follow DRQ catalogue
             structure)
-        mode: str
-            Mode to read drq file.
         nside: int
             The healpix nside parameter
         z_min: float
@@ -1374,6 +1369,8 @@ def read_objects(filename,
             Redshift of reference
         cosmo: constants.Cosmo
             The fiducial cosmology
+        mode: str
+            Mode to read drq file. Defaults to sdss for backward compatibility
         keep_bal: bool
             If False, remove the quasars flagged as having a Broad Absorption
             Line. Ignored if bi_max is not None
@@ -1401,11 +1398,18 @@ def read_objects(filename,
     for index, healpix in enumerate(unique_healpix):
         userprint("{} of {}".format(index, len(unique_healpix)))
         w = healpixs == healpix
-        objs[healpix] = [
-            QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],
-                entry['PLATE'], entry['MJD'], entry['FIBERID'])
-            for entry in catalog[w]
-        ]
+        if 'desi' in mode:
+            objs[healpix] = [
+                QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
+                    entry['TILEID'], entry['NIGHT'], entry['FIBERID'])
+                for entry in catalog[w]
+            ]
+        else:
+            objs[healpix] = [
+                QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],
+                    entry['PLATE'], entry['MJD'], entry['FIBERID'])
+                for entry in catalog[w]
+            ]
         for obj in objs[healpix]:
             obj.weights = ((1. + obj.z_qso) / (1. + z_ref))**(alpha - 1.)
             if not cosmo is None:

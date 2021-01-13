@@ -67,13 +67,14 @@ def main():
                         type=str,
                         default=None,
                         required=True,
-                        help='Catalog of objects in DRQ format')
+                        help='Catalog of objects in format selected by mode')
 
     parser.add_argument('--mode',
                         type=str,
-                        required=True,
+                        required=False,
                         choices=['desi', 'sdss'],
-                        help='Mode for reading the catalog'
+                        default='sdss'
+                        help='Mode for reading the catalog (default sdss)'
                         )
 
     parser.add_argument('--rp-min',
@@ -271,9 +272,9 @@ def main():
         userprint("z_max_obj = {}".format(args.z_max_obj), end="")
 
     ### Read objects
-    objs, z_min2 = io.read_objects(args.drq, args.mode, args.nside, args.z_min_obj,
+    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
+                                   cosmo, mode=args.mode)
     xcf.objs = objs
     
     ### Read deltas
