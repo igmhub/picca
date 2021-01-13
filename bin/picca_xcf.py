@@ -69,6 +69,13 @@ def main():
                         required=True,
                         help='Catalog of objects in DRQ format')
 
+    parser.add_argument('--drq-mode',
+                        type=str,
+                        required=True,
+                        choices=['desi', 'sdss'],
+                        help='Catalog structure mode'
+                        )
+
     parser.add_argument('--rp-min',
                         type=float,
                         default=-200.,
@@ -306,7 +313,7 @@ def main():
         userprint("z_max_obj = {}".format(args.z_max_obj), end="")
 
     ### Read objects
-    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
+    objs, z_min2 = io.read_objects(args.drq, args.drq_mode, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
                                    cosmo)
     xcf.objs = objs
