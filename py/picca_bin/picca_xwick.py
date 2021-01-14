@@ -68,6 +68,14 @@ def main():
                         required=True,
                         help='Catalog of objects in DRQ format')
 
+    parser.add_argument(
+                        '--mode',
+                        type=str,
+                        default='sdss',
+                        choices=['sdss','desi'],
+                        required=False,
+                        help='type of catalog supplied, default sdss')
+
     parser.add_argument('--rp-min',
                         type=float,
                         default=-200.,
@@ -297,7 +305,7 @@ def main():
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
+                                   cosmo, mode=args.mode)
     xcf.objs = objs
     sys.stderr.write("\n")
     userprint("done, npix = {}".format(len(objs)))
