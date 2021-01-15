@@ -31,7 +31,7 @@ def corr_func(healpixs):
     return correlation_function_data
 
 
-def main():
+def main(cmdargs):
     """Compute the auto and cross-correlation between catalogs of objects"""
 
     parser = argparse.ArgumentParser(
@@ -189,7 +189,7 @@ def main():
                         required=False,
                         help='Number of processors')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -369,4 +369,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

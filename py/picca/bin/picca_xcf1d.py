@@ -27,7 +27,7 @@ def corr_func(healpixs):
     return correlation_function_data
 
 
-def main():
+def main(cmdargs):
     """Compute the 1D cross-correlation between a catalog of objects and a delta
     field as a function of wavelength ratio"""
     parser = argparse.ArgumentParser(
@@ -174,7 +174,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -321,4 +321,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

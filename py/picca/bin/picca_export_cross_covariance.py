@@ -8,7 +8,7 @@ import fitsio
 
 from picca.utils import compute_cov, userprint
 
-if __name__ == '__main__':
+def main(cmdargs):
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -35,7 +35,7 @@ if __name__ == '__main__':
                         required=True,
                         help='Output file name')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     data = {}
 
@@ -127,3 +127,8 @@ if __name__ == '__main__':
                   comment=['Covariance matrix', 'Correlation matrix'],
                   extname='COVAR')
     results.close()
+
+
+if __name__ == '__main__':
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

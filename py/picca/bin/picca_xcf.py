@@ -5,6 +5,7 @@ delta field.
 This module follow the procedure described in sections 3.1 and 3.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
+import sys
 import time
 import argparse
 import multiprocessing
@@ -36,7 +37,7 @@ def corr_func(healpixs):
     return correlation_function_data
 
 
-def main():
+def main(cmdargs):
     """Compute the cross-correlation between a catalog of objects and a delta
     field."""
     parser = argparse.ArgumentParser(
@@ -236,7 +237,7 @@ def main():
         help=('Shuffle the distribution of forests on the sky following the '
               'given seed. Do not shuffle if None'))
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -440,4 +441,5 @@ def main():
     userprint(f'picca_xcf.py - Time total: {(t3-t0)/60:.3f} minutes')
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

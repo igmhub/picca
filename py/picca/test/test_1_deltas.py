@@ -9,7 +9,7 @@ import shutil
 import glob
 from pkg_resources import resource_filename
 import sys
-import picca_bin.picca_deltas as picca_deltas
+import picca.bin.picca_deltas as picca_deltas
 
 from picca.utils import userprint
 

@@ -9,7 +9,7 @@ import scipy.linalg
 from picca.utils import smooth_cov, compute_cov, userprint
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Exports auto and cross-correlation of catalog of objects for the
     fitter."""
@@ -92,7 +92,7 @@ def main():
         help=('Path to a covariance matrix file (if not provided it will be '
               'calculated by subsampling or from Poisson statistics)'))
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     ### Auto or cross correlation?
     if ((args.DD_file is None and args.xDD_file is None) or
@@ -364,4 +364,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

@@ -16,6 +16,9 @@ from picca.utils import userprint
 
 from .test_helpers import update_system_status_values, compare_fits, compare_h5py, send_requirements, load_requirements
 
+import picca.bin.picca_cf
+import picca.bin.picca_cf
+
 
 class TestCor(unittest.TestCase):
     #TODO: bad style, using it for the moment while transitioning, remove later

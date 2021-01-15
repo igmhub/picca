@@ -13,6 +13,7 @@ from pkg_resources import resource_filename
 import sys
 
 from picca.utils import userprint
+import picca.bin.picca_fitter2 as picca_fitter2
 
 from .test_helpers import update_system_status_values, compare_fits, compare_h5py, send_requirements, load_requirements
 
@@ -100,10 +101,8 @@ class TestCor(unittest.TestCase):
         value = self._masterFiles + '/test_cor/metal_xdmat.fits.gz'
         update_system_status_values(path, 'metals', 'filename', value)
 
-        ### Send
-        cmd = 'picca_fitter2.py '+self._branchFiles + \
-            '/Products/Correlations/Fit/chi2.ini'
-        subprocess.call(cmd, shell=True)
+        ### Send            
+        picca_fitter2.main(self._branchFiles+'/Products/Correlations/Fit/chi2.ini')
 
         ###These commented lines are to simplify accessing test outputs if needed
         #if os.path.exists(self._masterFiles+'new/'):

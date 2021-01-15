@@ -12,7 +12,7 @@ from picca.utils import userprint
 from picca.pk1d import Pk1D
 
 
-def main():
+def main(cmdargs):
     """Plots the 1D Power Spectrum"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -47,7 +47,7 @@ def main():
                         required=False,
                         help='data directory')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     # Binning corresponding to BOSS paper
     num_z_bins = 13
@@ -172,4 +172,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

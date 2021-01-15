@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import os
 import argparse
 import fitsio
@@ -12,8 +13,7 @@ import nbodykit.cosmology.correlation
 from picca.utils import userprint
 from picca.constants import SPEED_LIGHT
 
-if __name__ == '__main__':
-
+def main(cmdargs):
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('-i','--ini', type=str, required=True,
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('--plot', action='store_true', required=False,
         help='Plot the resulting correlation functions and power-spectra')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     ### Parameters kmin and kmax to get exactly same as DR12
     minkh = 1.e-4
@@ -165,3 +165,8 @@ if __name__ == '__main__':
         plt.legend()
         plt.grid()
         plt.show()
+
+
+if __name__ == '__main__':
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

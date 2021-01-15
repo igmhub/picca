@@ -2,6 +2,7 @@
 """Compute the cross-correlation between a catalog of objects and a delta field
 as a function of angle and wavelength ratio
 """
+import sys
 import argparse
 import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
@@ -32,7 +33,7 @@ def corr_func(healpixs):
     return correlation_function_data
 
 
-def main():
+def main(cmdargs):
     """Computes the cross-correlation between a catalog of objects and a delta
     field as a function of angle and wavelength ratio"""
     parser = argparse.ArgumentParser(
@@ -218,7 +219,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -382,4 +383,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

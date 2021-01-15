@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Compute the 1D power spectrum
 """
+import sys
 import argparse
 import glob
 from array import array
@@ -531,4 +532,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    cmdargs=sys.argv[1:]
+    main(cmdargs)
