@@ -15,6 +15,7 @@ import glob
 import numpy as np
 import fitsio
 import healpy
+from scipy.interpolate import interp1d
 
 from picca.data import Delta, Forest
 from picca.utils import userprint
@@ -644,9 +645,13 @@ def desi_convert_delta_files_from_true_cont(obj_path,
             Maximum number of spectra to read. 'None' for no maximum
     """
     
+    if max_num_spec:
+        if max_num_spec <= 400:
+            print('WARNING: Not enough spectra division by zero will be encountered')
+    
     # read catalog of objects
     hdul = fitsio.FITS(obj_path)
-    key_val = np.char.strip(
+    key_val = np.char.strip(deltas_nspec_400/
         np.array([
             hdul[1].read_header()[key] for key in hdul[1].read_header().keys()
         ]).astype(str))
@@ -803,12 +808,12 @@ def desi_convert_delta_files_from_true_cont(obj_path,
         Forest.log_lambda_min_rest_frame + np.arange(2) *
         (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame))
 
-    #Forest.get_var_lss = interp1d(log_lambda_temp,0.2 + np.zeros(2),fill_value="extrapolate",kind="nearest")
-    #Forest.get_eta = interp1d(log_lambda_temp,np.ones(2),fill_value="extrapolate",kind="nearest")
-    #Forest.get_fudge = interp1d(log_lambda_temp,np.zeros(2),fill_value="extrapolate",kind="nearest")
+    Forest.get_var_lss = interp1d(log_lambda_temp,0.2 + np.zeros(2),fill_value="extrapolate",kind="nearest")
+    Forest.get_eta = interp1d(log_lambda_temp,np.ones(2),fill_value="extrapolate",kind="nearest")
+    Forest.get_fudge = interp1d(log_lambda_temp,np.zeros(2),fill_value="extrapolate",kind="nearest")
     #Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp,1 + np.zeros(2))
     
-    log_file = open(os.path.expandvars(out_dir.replace('deltas','input.log')), 'w')
+    log_file = open(os.path.expandvars(out_dir+'input.log'), 'w')
 
     # Read data
     (data, num_data, nside,
@@ -868,7 +873,7 @@ def desi_convert_delta_files_from_true_cont(obj_path,
             tid = forest.thingid
             pix = healpy.ang2pix(in_nside, np.pi / 2. - forest.dec, forest.ra, nest=True)
 
-            truth = fitsio.FITS(in_dir_spectra+f'{pix//100}/{pix}/truth-16-{pix}.fits') ## find corresponding truth file
+            truth = fitsio.FITS(in_dir_spectra+f'/{pix//100}/{pix}/truth-16-{pix}.fits') ## find corresponding truth file
 
             ind = np.where(truth['TRUTH']['TARGETID'][:] == tid)[0][0]
             cont = truth[3]['TRUE_CONT'][ind]
@@ -885,7 +890,16 @@ def desi_convert_delta_files_from_true_cont(obj_path,
             forest.delta = forest.flux / (stack_delta[bins] * forest.continuum) - 1.
 
             forest.mean_trans = stack_delta[bins]
-            forest.weights = stack_delta[bins]**2/forest.ivar
+            
+            var_lss = Forest.get_var_lss(forest.log_lambda)
+            eta = Forest.get_eta(forest.log_lambda)
+            fudge = Forest.get_fudge(forest.log_lambda)
+
+            var_pipe = stack_delta[bins]**2/forest.ivar
+            variance = eta * var_pipe + var_lss + fudge / var_pipe
+            forest.weights = 1. / variance
+            
+            #forest.weights = stack_delta[bins]**2/forest.ivar
             
     # save results
     for index, healpix in enumerate(sorted(data)): ## loop over forests 
