@@ -9,7 +9,6 @@ import shutil
 import glob
 from pkg_resources import resource_filename
 import sys
-import picca.bin.picca_deltas as picca_deltas
 
 from picca.utils import userprint
 
@@ -307,6 +306,7 @@ class TestDelta(unittest.TestCase):
         """
             Test the continuum fitting routines on randomly generated eBOSS mock data
         """
+        import picca.bin.picca_deltas as picca_deltas
 
         userprint("\n")
         ### Send
@@ -318,7 +318,7 @@ class TestDelta(unittest.TestCase):
             "/Products/Delta_LYA/Log/delta_attributes"
         cmd += " --log " + self._branchFiles + "/Products/Delta_LYA/Log/input.log"
         cmd += " --nproc 1"
-        picca_deltas.main(cmd.split(' '))
+        picca_deltas.main(cmd.split())
         #subprocess.call(cmd, shell=True)
 
         ### Test
@@ -336,6 +336,7 @@ class TestDelta(unittest.TestCase):
             work correctly. The data for this routine is randomly generated as for "send_delta", but
             in DESI-miniSV format instead of an eBOSS format
         """
+        import picca.bin.picca_deltas as picca_deltas
 
         userprint("\n")
         ### Path
@@ -354,7 +355,7 @@ class TestDelta(unittest.TestCase):
         cmd += " --best-obs"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
         
-        picca_deltas.main(cmd.split(' '))
+        picca_deltas.main(cmd.split())
         #returncode = subprocess.call(cmd, shell=True)
         #self.assertEqual(returncode, 0, "delta_Pk1D_minisv did not finish")
 
@@ -397,7 +398,7 @@ class TestDelta(unittest.TestCase):
             Test of picca_deltas for purposes of Pk1d running on a very small set of
             eBOSS like spectra saved on disk
         """
-
+        import picca.bin.picca_deltas as picca_deltas
         userprint("\n")
         ### Path
         path_to_etc = self.picca_base + '/etc/'
@@ -415,7 +416,7 @@ class TestDelta(unittest.TestCase):
         cmd += " --best-obs"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
         
-        picca_deltas.main(cmd.split(' '))
+        picca_deltas.main(cmd.split())
         #subprocess.call(cmd, shell=True)
 
         ### Test

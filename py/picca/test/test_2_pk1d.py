@@ -8,7 +8,6 @@ import tempfile
 import shutil
 from pkg_resources import resource_filename
 import sys
-import picca.bin.picca_Pk1D as picca_Pk1D
 
 from picca.utils import userprint
 
@@ -52,13 +51,15 @@ class TestPk1d(unittest.TestCase):
         return
 
     def test_Pk1D(self):
+        import picca.bin.picca_Pk1D as picca_Pk1D
+
         self._test = True
         userprint("\n")
         ### Send
         #cmd = " picca_Pk1D.py"
         cmd = "--in-dir " + self._masterFiles + "/test_delta/Delta_Pk1D/"
         cmd += " --out-dir " + self._branchFiles + "/Products/Pk1D/"
-        picca_Pk1D.main(cmd.split(" "))
+        picca_Pk1D.main(cmd.split())
         #subprocess.call(cmd, shell=True)
 
         ### Test

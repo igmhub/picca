@@ -414,7 +414,10 @@ def main(cmdargs):
     context = multiprocessing.get_context('fork')
     pool = context.Pool(processes=min(args.nproc, len(cpu_data.values())))
     userprint(" \nStarting\n")
-    wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
+    if args.nproc>1:
+        wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
+    else:
+        wick_data = [calc_wick_terms(arg) for arg in sorted(cpu_data.values())]
     userprint(" \nFinished\n")
     pool.close()
 

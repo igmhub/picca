@@ -13,7 +13,6 @@ from pkg_resources import resource_filename
 import sys
 
 from picca.utils import userprint
-import picca.bin.picca_fitter2 as picca_fitter2
 
 from .test_helpers import update_system_status_values, compare_fits, compare_h5py, send_requirements, load_requirements
 
@@ -60,6 +59,8 @@ class TestCor(unittest.TestCase):
         return
 
     def test_fitter2(self):
+        import picca.bin.picca_fitter2 as picca_fitter2
+
         self._test = True
 
         userprint("\n")
