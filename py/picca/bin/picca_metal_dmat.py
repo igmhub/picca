@@ -5,6 +5,7 @@ absorption.
 This module follow the procedure described in sections 4.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+import sys
 import time
 import argparse
 import multiprocessing
