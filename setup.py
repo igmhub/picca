@@ -4,7 +4,7 @@ import glob
 
 from setuptools import setup
 
-scripts = glob.glob('picca/bin/picca*.py')
+scripts = glob.glob('py/picca/bin/picca*.py')
 
 description = "Package for Igm Cosmological-Correlations Analyses"
 
