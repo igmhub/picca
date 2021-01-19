@@ -96,7 +96,6 @@ class TestDelta(unittest.TestCase):
         """
 
         """
-
         userprint("\n")
         nside = 8
 
@@ -163,7 +162,6 @@ class TestDelta(unittest.TestCase):
         """
 
         """
-
         userprint("\n")
         userprint("Create cat with number of object = ", nObj)
 
@@ -309,16 +307,15 @@ class TestDelta(unittest.TestCase):
 
         userprint("\n")
         ### Send
-        #cmd = "picca_deltas.py"
-        cmd = "--in-dir " + self._branchFiles + "/Products/Spectra/"
+        cmd = "picca_deltas.py"
+        cmd += " --in-dir " + self._branchFiles + "/Products/Spectra/"
         cmd += " --drq " + self._branchFiles + "/Products/cat.fits"
         cmd += " --out-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
         cmd += " --iter-out-prefix " + self._branchFiles + \
             "/Products/Delta_LYA/Log/delta_attributes"
         cmd += " --log " + self._branchFiles + "/Products/Delta_LYA/Log/input.log"
         cmd += " --nproc 1"
-        picca_deltas.main(cmd.split())
-        #subprocess.call(cmd, shell=True)
+        picca_deltas.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -341,8 +338,8 @@ class TestDelta(unittest.TestCase):
         ### Path
         path_to_etc = self.picca_base + '/etc/'
         ### Send
-        #cmd = " picca_deltas.py"
-        cmd = "--in-dir " + self._branchFiles + "/Products/Spectra_MiniSV/"
+        cmd = "picca_deltas.py"
+        cmd += " --in-dir " + self._branchFiles + "/Products/Spectra_MiniSV/"
         cmd += " --drq " + self._branchFiles + "/Products/cat_minisv.fits"
         cmd += " --out-dir " + self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Delta/"
         cmd += " --iter-out-prefix " + self._branchFiles + \
@@ -354,10 +351,8 @@ class TestDelta(unittest.TestCase):
         cmd += " --best-obs"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
         
-        picca_deltas.main(cmd.split())
-        #returncode = subprocess.call(cmd, shell=True)
-        #self.assertEqual(returncode, 0, "delta_Pk1D_minisv did not finish")
-
+        picca_deltas.main(cmd.split()[1:])
+        
         ### Test
         if self._test:
             path1 = self._masterFiles + "/test_delta/delta_attributes_Pk1D_MiniSV.fits.gz"
@@ -377,6 +372,7 @@ class TestDelta(unittest.TestCase):
         """
             wrapper around send_delta test to produce the mock datasets
         """
+        np.random.seed(42)
         self.produce_cat(nObj=1000)
         self.produce_forests()
         self.produce_cat(nObj=1000, name="random", thidoffset=1000)
@@ -387,6 +383,7 @@ class TestDelta(unittest.TestCase):
         """
             wrapper around send_delta test to produce the mock datasets
         """
+        np.random.seed(42)
         self.produce_cat_minisv(nObj=1000)
         self.produce_forests_minisv()
         self.send_delta_Pk1D_minisv()
@@ -402,8 +399,8 @@ class TestDelta(unittest.TestCase):
         ### Path
         path_to_etc = self.picca_base + '/etc/'
         ### Send
-        #cmd = " picca_deltas.py"
-        cmd = "--in-dir " + self._masterFiles + "/test_delta/Spectra_Pk1D/"
+        cmd = "picca_deltas.py"
+        cmd += " --in-dir " + self._masterFiles + "/test_delta/Spectra_Pk1D/"
         cmd += " --drq " + self._masterFiles + "/test_delta/DRQ_Pk1D.fits"
         cmd += " --out-dir " + self._branchFiles + "/Products/Delta_Pk1D/Delta/"
         cmd += " --iter-out-prefix " + self._branchFiles + \
@@ -415,8 +412,7 @@ class TestDelta(unittest.TestCase):
         cmd += " --best-obs"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
         
-        picca_deltas.main(cmd.split())
-        #subprocess.call(cmd, shell=True)
+        picca_deltas.main(cmd.split()[1:])
 
         ### Test
         if self._test:

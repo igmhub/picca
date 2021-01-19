@@ -11,4 +11,4 @@ install:
     - python setup.py install
 
 script:
-    - pytest py/picca/test --capture=tee-sys --cov=picca --cov-report term-missing
+    - pytest py/picca/test --capture=tee-sys --cov=picca --cov-report term-missing --ff --maxfail=2

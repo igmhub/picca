@@ -10,6 +10,7 @@ import tempfile
 import shutil
 from pkg_resources import resource_filename
 import sys
+import glob
 
 from picca.utils import userprint
 
@@ -65,9 +66,9 @@ class TestCor(unittest.TestCase):
         userprint("\n")
 
         ### copy ini files to branch
-        cmd = 'cp '+self._masterFiles+'test_fitter2/*ini ' + \
-            self._branchFiles+'/Products/Correlations/Fit/'
-        subprocess.call(cmd, shell=True)
+        filestocopy=glob.glob(self._masterFiles+'test_fitter2/*ini')
+        for f in filestocopy:
+            shutil.copy(f, self._branchFiles+'/Products/Correlations/Fit/')
 
         ### Set path in chi2.ini
         path = self._branchFiles + '/Products/Correlations/Fit/chi2.ini'

@@ -55,11 +55,10 @@ class TestPk1d(unittest.TestCase):
         self._test = True
         userprint("\n")
         ### Send
-        #cmd = " picca_Pk1D.py"
-        cmd = "--in-dir " + self._masterFiles + "/test_delta/Delta_Pk1D/"
+        cmd = "picca_Pk1D.py "
+        cmd += "--in-dir " + self._masterFiles + "/test_delta/Delta_Pk1D/"
         cmd += " --out-dir " + self._branchFiles + "/Products/Pk1D/"
-        picca_Pk1D.main(cmd.split())
-        #subprocess.call(cmd, shell=True)
+        picca_Pk1D.main(cmd.split()[1:])
 
         ### Test
         if self._test:
