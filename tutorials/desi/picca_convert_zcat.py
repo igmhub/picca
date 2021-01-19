@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--downsampling-z-cut', type = float, default = 2.1, required = False,
             help = "Minimum redshift to downsample the data, if 'None' no downsampling")
 
-    parser.add_argument('--downsampling-nb', type = int, default = None, required = False,
+    parser.add_argument('--downsampling-nb', type = int, default = 700000, required = False,
             help = "Target number of object above redshift downsampling-z-cut, if 'None' no downsampling")
 
     args = parser.parse_args()

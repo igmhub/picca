@@ -332,17 +332,22 @@ def desi_from_ztarget_to_drq(in_path,
                        "nb downsampling = {}").format(cat['RA'].size,
                                                       downsampling_num))
         else:
-            select_fraction = (downsampling_num /
-                               (cat['Z'] > downsampling_z_cut).sum())
-            np.random.seed(0)
-            w = np.random.choice(np.arange(cat['RA'].size),
+            z_cut_num = (cat['Z'] > downsampling_z_cut).sum()
+            select_fraction = (downsampling_num / z_cut_num)
+            if select_fraction < 1.0:
+                np.random.seed(0)
+                w = np.random.choice(np.arange(cat['RA'].size),
                                  size=int(cat['RA'].size * select_fraction),
                                  replace=False)
-            for key in cat:
-                cat[key] = cat[key][w]
-            userprint((" and donsampling     : nb object in cat = {}, nb z > "
+                for key in cat:
+                    cat[key] = cat[key][w]
+                userprint((" and downsampling : nb object in cat = {}, nb z > "
                        "{} = {}").format(cat['RA'].size, downsampling_z_cut,
-                                         (cat["Z"] > downsampling_z_cut).sum()))
+                                        (cat["Z"] > downsampling_z_cut).sum()))
+            else:
+                userprint(("WARNING:: Trying to downsample, when nb QSOs with "
+                           "z > {} = {} and downsampling = {}").format
+                           (downsampling_z_cut, z_cut_num, downsampling_num))
 
     # sort by THING_ID
     w = np.argsort(cat['THING_ID'])
