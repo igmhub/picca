@@ -5,7 +5,6 @@ import unittest
 import numpy as np
 import fitsio
 import healpy
-import subprocess
 import os
 import tempfile
 import shutil

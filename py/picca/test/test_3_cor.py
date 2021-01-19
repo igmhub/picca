@@ -1,11 +1,11 @@
 '''
 Test module
 '''
+
 import unittest
 import numpy as np
 import fitsio
 import healpy
-import subprocess
 import os
 import tempfile
 import shutil
@@ -15,18 +15,7 @@ import sys
 from picca.utils import userprint
 
 from .test_helpers import update_system_status_values, compare_fits, compare_h5py, send_requirements, load_requirements
-
-### TODO: some tests still rely on subprocesses, else tests fail, this needs to be fixed, failed tests:
-### FAILED py/picca/test/test_3_cor.py::TestCor::test_cf_angl - AssertionError: False is not true : picca_cf_angl.py: Header key is RT, maximum relative difference is 0.013693115777246457
-### FAILED py/picca/test/test_3_cor.py::TestCor::test_cf_cross - AssertionError: False is not true : picca_cf.py: Header key is RP, maximum relative difference is 1.0
-### FAILED py/picca/test/test_3_cor.py::TestCor::test_dmat - AssertionError: False is not true : picca_dmat.py: Header key is WDM, maximum relative difference is 216.50592600211263
-### FAILED py/picca/test/test_3_cor.py::TestCor::test_dmat_cross - AssertionError: False is not true : picca_dmat.py: Header key is WDM, maximum relative difference is 1.0
-### FAILED py/picca/test/test_3_cor.py::TestCor::test_metal_dmat - AssertionError: False is not true : picca_metal_dmat.py: Header key is NPALL, maximum relative difference is 1
-### FAILED py/picca/test/test_3_cor.py::TestCor::test_wick - KeyError: None
-### FAILED py/picca/test/test_3_cor.py::TestCor::test_xdmat - AssertionError: False is not true : picca_xdmat.py: Header key is WDM, maximum relative difference is 2.3240540394721165
-
-
-
+import importlib
 
 
 class TestCor(unittest.TestCase):
@@ -74,6 +63,7 @@ class TestCor(unittest.TestCase):
 
     def test_cf1d(self):
         import picca.bin.picca_cf1d as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -94,6 +84,7 @@ class TestCor(unittest.TestCase):
 
     def test_cf1d_cross(self):
         import picca.bin.picca_cf1d as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -115,6 +106,8 @@ class TestCor(unittest.TestCase):
 
     def test_cf_angl(self):
         import picca.bin.picca_cf_angl as picca_test
+        importlib.reload(picca_test.cf)
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -123,8 +116,7 @@ class TestCor(unittest.TestCase):
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_angl.fits.gz"
         cmd += " --nproc 1"
         print(repr(cmd))
-        subprocess.call(cmd, shell=True)
-        #picca_test.main(cmd.split()[1:])
+        picca_test.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -136,6 +128,8 @@ class TestCor(unittest.TestCase):
 
     def test_cf(self):
         import picca.bin.picca_cf as picca_test
+        importlib.reload(picca_test.cf)
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -150,8 +144,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         print(repr(cmd))
-        subprocess.call(cmd, shell=True)
-#        picca_test.main(cmd.split()[1:])
+        picca_test.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -163,6 +156,8 @@ class TestCor(unittest.TestCase):
 
     def test_dmat(self):
         import picca.bin.picca_dmat as picca_test
+        importlib.reload(picca_test.cf)
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -178,8 +173,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         print(repr(cmd))
-        subprocess.call(cmd, shell=True)
-#        picca_test.main(cmd.split()[1:])
+        picca_test.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -191,6 +185,8 @@ class TestCor(unittest.TestCase):
 
     def test_metal_dmat(self):
         import picca.bin.picca_metal_dmat as picca_test
+        importlib.reload(picca_test.cf)
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -207,8 +203,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         print(repr(cmd))
-#        picca_test.main(cmd.split()[1:])
-        subprocess.call(cmd.replace('(',r'\(').replace(')',r'\)'),shell=True)
+        picca_test.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -220,6 +215,8 @@ class TestCor(unittest.TestCase):
 
     def test_wick(self):
         import picca.bin.picca_wick as picca_test
+        importlib.reload(picca_test.cf)
+        importlib.reload(picca_test)
 
 
         userprint("\n")
@@ -236,8 +233,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         print(repr(cmd))
-        subprocess.call(cmd, shell=True)
-#        picca_test.main(cmd.split()[1:])
+        picca_test.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -249,6 +245,7 @@ class TestCor(unittest.TestCase):
 
     def test_export_cf(self):
         import picca.bin.picca_export as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -256,13 +253,14 @@ class TestCor(unittest.TestCase):
         cmd += " --data " + self._masterFiles + "/test_cor/cf.fits.gz"
         cmd += " --dmat " + self._masterFiles + "/test_cor/dmat.fits.gz"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/exported_cf.fits.gz"
-        returncode = print(repr(cmd))
+        print(repr(cmd))
         picca_test.main(cmd.split()[1:])
-        #self.assertEqual(returncode, 0, "export_cf did not finish")
         return
 
     def test_cf_cross(self):
         import picca.bin.picca_cf as picca_test
+        importlib.reload(picca_test.cf)
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -291,6 +289,8 @@ class TestCor(unittest.TestCase):
 
     def test_dmat_cross(self):
         import picca.bin.picca_dmat as picca_test
+        importlib.reload(picca_test.cf)
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -308,8 +308,7 @@ class TestCor(unittest.TestCase):
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
         print(repr(cmd))
-        subprocess.call(cmd, shell=True)
-#        picca_test.main(cmd.split()[1:])
+        picca_test.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -321,6 +320,8 @@ class TestCor(unittest.TestCase):
 
     def test_metal_dmat_cross(self):
         import picca.bin.picca_metal_dmat as picca_test
+        importlib.reload(picca_test.cf)
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -353,6 +354,7 @@ class TestCor(unittest.TestCase):
 
     def test_export_cf_cross(self):
         import picca.bin.picca_export as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -361,14 +363,14 @@ class TestCor(unittest.TestCase):
         cmd += " --dmat " + self._masterFiles + "/test_cor/dmat_cross.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_cf_cross.fits.gz"
-        returncode = print(repr(cmd))
+        print(repr(cmd))
         picca_test.main(cmd.split()[1:])
-        #self.assertEqual(returncode, 0, "export_cf_cross did not finish")
 
         return
 
     def test_xcf_angl(self):
         import picca.bin.picca_xcf_angl as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -390,6 +392,7 @@ class TestCor(unittest.TestCase):
 
     def test_xcf(self):
         import picca.bin.picca_xcf as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -416,6 +419,8 @@ class TestCor(unittest.TestCase):
 
     def test_xdmat(self):
         import picca.bin.picca_xdmat as picca_test
+        importlib.reload(picca_test.xcf)
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -431,8 +436,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         print(repr(cmd))
-        subprocess.call(cmd, shell=True)
-#        picca_test.main(cmd.split()[1:])
+        picca_test.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -444,6 +448,7 @@ class TestCor(unittest.TestCase):
 
     def test_metal_xdmat(self):
         import picca.bin.picca_metal_xdmat as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -472,6 +477,7 @@ class TestCor(unittest.TestCase):
 
     def test_xwick(self):
         import picca.bin.picca_xwick as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -500,6 +506,7 @@ class TestCor(unittest.TestCase):
 
     def test_export_xcf(self):
         import picca.bin.picca_export as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -508,14 +515,14 @@ class TestCor(unittest.TestCase):
         cmd += " --dmat " + self._masterFiles + "/test_cor/xdmat.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_xcf.fits.gz"
-        returncode = print(repr(cmd))
+        print(repr(cmd))
         picca_test.main(cmd.split()[1:])
-        #self.assertEqual(returncode, 0, "export_xcf did not finish")
 
         return
 
     def test_export_cross_covariance_cf_xcf(self):
         import picca.bin.picca_export_cross_covariance as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -524,15 +531,14 @@ class TestCor(unittest.TestCase):
         cmd += " --data2 " + self._masterFiles + "/test_cor/xcf.fits.gz"
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
-        returncode = print(repr(cmd))
+        print(repr(cmd))
         picca_test.main(cmd.split()[1:])
-        #self.assertEqual(returncode, 0,
-        #                 "export_cross_covariance_cf_xcf did not finish")
 
         return
 
     def test_co(self):
         import picca.bin.picca_co as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -546,9 +552,8 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr DD"
-        returncode = print(repr(cmd))
+        print(repr(cmd))
         picca_test.main(cmd.split()[1:])
-        #self.assertEqual(returncode, 0, "picca_co did not finish on DD")
         ### Send
         cmd = "picca_co.py"
         cmd += " --drq " + self._masterFiles + "/test_delta/random.fits"
@@ -561,9 +566,8 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr RR"
-        returncode = print(repr(cmd))
+        print(repr(cmd))
         picca_test.main(cmd.split()[1:])
-        #self.assertEqual(returncode, 0, "picca_co did not finish on RR")
         ### Send
         cmd = "picca_co.py"
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
@@ -577,9 +581,8 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr DR"
-        returncode = print(repr(cmd))
+        print(repr(cmd))
         picca_test.main(cmd.split()[1:])
-        #self.assertEqual(returncode, 0, "picca_co did not finish on DR")
         ### Send
         cmd = "picca_co.py"
         cmd += " --drq " + self._masterFiles + "/test_delta/random.fits"
@@ -593,9 +596,8 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         cmd += " --type-corr RD"
-        returncode = print(repr(cmd))
+        print(repr(cmd))
         picca_test.main(cmd.split()[1:])
-        #self.assertEqual(returncode, 0, "picca_co did not finish on RD")
 
         ### Test
         if self._test:
@@ -619,6 +621,7 @@ class TestCor(unittest.TestCase):
 
     def test_export_co(self):
         import picca.bin.picca_export_co as picca_test
+        importlib.reload(picca_test)
 
         userprint("\n")
         ### Send
@@ -632,9 +635,8 @@ class TestCor(unittest.TestCase):
             "/test_cor/co_RD.fits.gz"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/exported_co.fits.gz"
         cmd += " --get-cov-from-poisson"
-        returncode = print(repr(cmd))
+        print(repr(cmd))
         picca_test.main(cmd.split()[1:])
-        #self.assertEqual(returncode, 0, "picca_export_co did not finish")
 
         return
 
