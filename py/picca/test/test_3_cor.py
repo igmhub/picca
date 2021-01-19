@@ -207,7 +207,8 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+#        picca_test.main(cmd.split()[1:])
+        subprocess.call(cmd.replace('(',r'\(').replace(')',r'\)'),shell=True)
 
         ### Test
         if self._test:
