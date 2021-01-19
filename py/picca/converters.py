@@ -343,7 +343,7 @@ def desi_from_ztarget_to_drq(in_path,
                     cat[key] = cat[key][w]
                 userprint((" and downsampling : nb object in cat = {}, nb z > "
                        "{} = {}").format(cat['RA'].size, downsampling_z_cut,
-                                        (cat["Z"] > downsampling_z_cut).sum()))
+                                        z_cut_num))
             else:
                 userprint(("WARNING:: Trying to downsample, when nb QSOs with "
                            "z > {} = {} and downsampling = {}").format
