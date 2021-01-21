@@ -1342,6 +1342,7 @@ def read_objects(filename,
                  alpha,
                  z_ref,
                  cosmo,
+                 mode='sdss',
                  keep_bal=True):
     """Reads objects and computes their redshifts.
 
@@ -1368,6 +1369,8 @@ def read_objects(filename,
             Redshift of reference
         cosmo: constants.Cosmo
             The fiducial cosmology
+        mode: str
+            Mode to read drq file. Defaults to sdss for backward compatibility
         keep_bal: bool
             If False, remove the quasars flagged as having a Broad Absorption
             Line. Ignored if bi_max is not None
@@ -1382,7 +1385,7 @@ def read_objects(filename,
     """
     objs = {}
 
-    catalog = read_drq(filename, z_min=z_min, z_max=z_max, keep_bal=keep_bal)
+    catalog = read_drq(filename, z_min=z_min, z_max=z_max, keep_bal=keep_bal, mode=mode)
 
     phi = catalog['RA']
     theta = np.pi / 2. - catalog['DEC']
@@ -1395,11 +1398,18 @@ def read_objects(filename,
     for index, healpix in enumerate(unique_healpix):
         userprint("{} of {}".format(index, len(unique_healpix)))
         w = healpixs == healpix
-        objs[healpix] = [
-            QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],
-                entry['PLATE'], entry['MJD'], entry['FIBERID'])
-            for entry in catalog[w]
-        ]
+        if 'desi' in mode:
+            objs[healpix] = [
+                QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
+                    entry['TILEID'], entry['NIGHT'], entry['FIBER'])
+                for entry in catalog[w]
+            ]
+        else:
+            objs[healpix] = [
+                QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],
+                    entry['PLATE'], entry['MJD'], entry['FIBERID'])
+                for entry in catalog[w]
+            ]
         for obj in objs[healpix]:
             obj.weights = ((1. + obj.z_qso) / (1. + z_ref))**(alpha - 1.)
             if not cosmo is None:
