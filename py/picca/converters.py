@@ -651,7 +651,7 @@ def desi_convert_delta_files_from_true_cont(obj_path,
     
     # read catalog of objects
     hdul = fitsio.FITS(obj_path)
-    key_val = np.char.strip(deltas_nspec_400/
+    key_val = np.char.strip(
         np.array([
             hdul[1].read_header()[key] for key in hdul[1].read_header().keys()
         ]).astype(str))
@@ -783,6 +783,18 @@ def desi_convert_delta_files_from_true_cont(obj_path,
     # normalize stacked transmission
     w = stack_weight > 0.
     stack_delta[w] /= stack_weight[w]
+    
+    stack_log_lambda = np.arange(log_lambda_min,log_lambda_max,delta_log_lambda)
+    
+    
+    results = fitsio.FITS(out_dir+"iter.fits.gz",'rw',clobber=True)
+    header = {}
+    header["NSIDE"] = in_nside
+    results.write([stack_log_lambda, stack_delta, stack_weight],
+                  names=['loglam', 'stack', 'weight'],
+                  header=header,
+                  extname='STACK')
+    results.close()
     
     # setup forest class variables
     Forest.log_lambda_min = np.log10(lambda_min)
