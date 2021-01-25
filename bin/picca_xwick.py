@@ -5,6 +5,7 @@ The wick covariance is computed as explained in Delubac et al. 2015
 """
 import sys
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import fitsio
 import numpy as np
@@ -67,6 +68,14 @@ def main():
                         required=True,
                         help='Catalog of objects in DRQ format')
 
+    parser.add_argument(
+                        '--mode',
+                        type=str,
+                        default='sdss',
+                        choices=['sdss','desi'],
+                        required=False,
+                        help='type of catalog supplied, default sdss')
+
     parser.add_argument('--rp-min',
                         type=float,
                         default=-200.,
@@ -99,13 +108,13 @@ def main():
 
     parser.add_argument('--z-min-obj',
                         type=float,
-                        default=None,
+                        default=0,
                         required=False,
                         help='Min redshift for object field')
 
     parser.add_argument('--z-max-obj',
                         type=float,
-                        default=None,
+                        default=10,
                         required=False,
                         help='Max redshift for object field')
 
@@ -296,7 +305,7 @@ def main():
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
+                                   cosmo, mode=args.mode)
     xcf.objs = objs
     sys.stderr.write("\n")
     userprint("done, npix = {}".format(len(objs)))
@@ -368,7 +377,8 @@ def main():
             cf.fill_neighs(healpixs)
 
     # compute the covariance matrix
-    pool = Pool(processes=min(args.nproc, len(cpu_data.values())))
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=min(args.nproc, len(cpu_data.values())))
     userprint(" \nStarting\n")
     wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
     userprint(" \nFinished\n")
@@ -453,20 +463,20 @@ def main():
             'value': npairs_used,
             'comment': 'Number of used pairs'
         }, {
-            'name': 'OMEGAM', 
-            'value': args.fid_Om, 
+            'name': 'OMEGAM',
+            'value': args.fid_Om,
             'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAR', 
-            'value': args.fid_Or, 
+            'name': 'OMEGAR',
+            'value': args.fid_Or,
             'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAK', 
-            'value': args.fid_Ok, 
+            'name': 'OMEGAK',
+            'value': args.fid_Ok,
             'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'WL', 
-            'value': args.fid_wl, 
+            'name': 'WL',
+            'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
         }
         ]

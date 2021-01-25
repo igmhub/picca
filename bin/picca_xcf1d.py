@@ -4,6 +4,7 @@ delta field as a function of wavelength ratio
 """
 import argparse
 import sys
+import multiprocessing
 from multiprocessing import Pool, cpu_count
 import numpy as np
 import fitsio
@@ -53,6 +54,14 @@ def main():
                         required=True,
                         help='Catalog of objects in DRQ format')
 
+    parser.add_argument(
+                        '--mode',
+                        type=str,
+                        default='sdss',
+                        choices=['sdss','desi'],
+                        required=False,
+                        help='type of catalog supplied, default sdss')
+
     parser.add_argument('--wr-min',
                         type=float,
                         default=0.9,
@@ -73,13 +82,13 @@ def main():
 
     parser.add_argument('--z-min-obj',
                         type=float,
-                        default=None,
+                        default=0,
                         required=False,
                         help='Min redshift for object field')
 
     parser.add_argument('--z-max-obj',
                         type=float,
-                        default=None,
+                        default=10,
                         required=False,
                         help='Max redshift for object field')
 
@@ -230,7 +239,8 @@ def main():
                                    args.z_max_obj,
                                    args.z_evol_obj,
                                    args.z_ref,
-                                   cosmo=None)
+                                   cosmo=None,
+                                   mode=args.mode)
     del z_min2
     xcf.objs = objs
     for healpix in xcf.objs:
@@ -240,7 +250,8 @@ def main():
     sys.stderr.write("\n")
 
     # Compute the correlation function, use pool to parallelize
-    pool = Pool(processes=args.nproc)
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=args.nproc)
     healpixs = [[healpix] for healpix in sorted(data) if healpix in xcf.objs]
     correlation_function_data = pool.map(corr_func, healpixs)
     pool.close()

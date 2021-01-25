@@ -122,34 +122,37 @@ def compute_xi(healpixs):
     for healpix in healpixs:
         for delta in data[healpix]:
             with lock:
+                xicounter = round(counter.value * 100. / num_data, 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing xi: {}%").format(xicounter))
                 counter.value += 1
-            userprint(("\rcomputing xi: "
-                       "{}%").format(round(counter.value * 100. / num_data, 3)),
-                      end="")
+
             if delta.neighbours.size != 0:
                 ang = delta.get_angle_between(delta.neighbours)
                 z_qso = np.array([obj.z_qso for obj in delta.neighbours])
-                weights_qso = np.array([obj.weights for obj in delta.neighbours])
+                weights_qso = np.array(
+                    [obj.weights for obj in delta.neighbours])
                 if ang_correlation:
-                    lambda_qso = np.array([
-                        10.**obj.log_lambda for obj in delta.neighbours
-                    ])
-                    compute_xi_forest_pairs_fast(
-                         delta.z, 10.**delta.log_lambda, 10.**delta.log_lambda,
-                         delta.weights, delta.delta, z_qso, lambda_qso,
-                         lambda_qso, weights_qso, ang,
-                         weights, xi, r_par, r_trans,
-                         z, num_pairs)
+                    lambda_qso = np.array(
+                        [10.**obj.log_lambda for obj in delta.neighbours])
+                    compute_xi_forest_pairs_fast(delta.z, 10.**delta.log_lambda,
+                                                 10.**delta.log_lambda,
+                                                 delta.weights, delta.delta,
+                                                 z_qso, lambda_qso, lambda_qso,
+                                                 weights_qso, ang, weights, xi,
+                                                 r_par, r_trans, z, num_pairs)
                 else:
-                    r_comov_qso = np.array([obj.r_comov for obj in delta.neighbours])
-                    dist_m_qso = np.array([obj.dist_m for obj in delta.neighbours])
-                    compute_xi_forest_pairs_fast(
-                         delta.z, delta.r_comov, delta.dist_m, delta.weights,
-                         delta.delta, z_qso, r_comov_qso, dist_m_qso,
-                         weights_qso, ang,
-                         weights, xi, r_par, r_trans,
-                         z, num_pairs)
-                         
+                    r_comov_qso = np.array(
+                        [obj.r_comov for obj in delta.neighbours])
+                    dist_m_qso = np.array(
+                        [obj.dist_m for obj in delta.neighbours])
+                    compute_xi_forest_pairs_fast(delta.z, delta.r_comov,
+                                                 delta.dist_m, delta.weights,
+                                                 delta.delta, z_qso,
+                                                 r_comov_qso, dist_m_qso,
+                                                 weights_qso, ang, weights, xi,
+                                                 r_par, r_trans, z, num_pairs)
+
                 #-- The following was used by compute_xi_forest_pairs_fast
                 #-- which will be deprecated
                 #xi[:len(rebin_xi)] += rebin_xi
@@ -245,11 +248,12 @@ def compute_xi_forest_pairs(z1, r_comov1, dist_m1, weights1, delta1, z2,
     return (rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
             rebin_num_pairs)
 
+
 @jit(nopython=True)
 def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
-                            r_comov2, dist_m2, weights2, ang,
-                            rebin_weight, rebin_xi, rebin_r_par, rebin_r_trans, 
-                            rebin_z, rebin_num_pairs):
+                                 r_comov2, dist_m2, weights2, ang, rebin_weight,
+                                 rebin_xi, rebin_r_par, rebin_r_trans, rebin_z,
+                                 rebin_num_pairs):
     """Computes the contribution of a given pair of forests to the correlation
     function.
 
@@ -287,10 +291,12 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             pixels properly rebinned
     """
     for i in range(z1.size):
-        if weights1[i] == 0: continue
+        if weights1[i] == 0:
+            continue
 
         for j in range(len(z2)):
-            if weights2[j] == 0: continue
+            if weights2[j] == 0:
+                continue
 
             if ang_correlation:
                 r_par = r_comov1[i] / r_comov2[j]
@@ -299,17 +305,16 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
                 r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
                 r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
 
-            if (r_par >= r_par_max or 
-                r_trans >= r_trans_max or 
-                r_par <= r_par_min):
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_par <= r_par_min):
                 continue
 
-            delta_times_weight = delta1[i]*weights1[i]*weights2[j]
+            delta_times_weight = delta1[i] * weights1[i] * weights2[j]
             weights12 = weights1[i] * weights2[j]
             z = (z1[i] + z2[j]) / 2
 
-            bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) 
-                                  * num_bins_r_par)
+            bins_r_par = np.floor(
+                (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
             bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
             bins = np.int(bins_r_trans + num_bins_r_trans * bins_r_par)
 
@@ -319,6 +324,7 @@ def compute_xi_forest_pairs_fast(z1, r_comov1, dist_m1, weights1, delta1, z2,
             rebin_r_trans[bins] += r_trans * weights12
             rebin_z[bins] += z * weights12
             rebin_num_pairs[bins] += 1
+
 
 def compute_dmat(healpixs):
     """Computes the distortion matrix for each of the healpixs.
@@ -353,10 +359,10 @@ def compute_dmat(healpixs):
     num_pairs_used = 0
     for healpix in healpixs:
         for delta1 in data[healpix]:
-            userprint(("\rcomputing xi: "
-                       "{}%").format(round(counter.value * 100. / num_data, 3)),
-                      end="")
             with lock:
+                xicounter = round(counter.value * 100. / num_data, 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing xi: {}%").format(xicounter))
                 counter.value += 1
             order1 = delta1.order
             r_comov1 = delta1.r_comov
@@ -376,9 +382,10 @@ def compute_dmat(healpixs):
             weights2 = np.array([obj.weights for obj in neighbours])
             z2 = np.array([obj.z_qso for obj in neighbours])
             compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1,
-                                      weights1, r_comov2, dist_m2, z2, weights2,
-                                      ang, weights_dmat, dmat, r_par_eff,
-                                      r_trans_eff, z_eff, weight_eff, order1)
+                                           weights1, r_comov2, dist_m2, z2,
+                                           weights2, ang, weights_dmat, dmat,
+                                           r_par_eff, r_trans_eff, z_eff,
+                                           weight_eff, order1)
             setattr(delta1, "neighbours", None)
 
     dmat = dmat.reshape(num_bins_r_par * num_bins_r_trans,
@@ -386,6 +393,7 @@ def compute_dmat(healpixs):
 
     return (weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff, weight_eff,
             num_pairs, num_pairs_used)
+
 
 #-- This has been superseeded by compute_dmat_forest_pairs_fast
 #-- and will be deprecated
@@ -528,27 +536,29 @@ def compute_dmat_forest_pairs(log_lambda1, r_comov1, dist_m1, z1, weights1,
                      eta4[j + num_pixels2 * unique_model_bin] *
                      log_lambda_minus_mean1[i])
 
+
 @jit(nopython=True)
 def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
-                              r_comov2, dist_m2, z2, weights2, ang,
-                              weights_dmat, dmat, r_par_eff, r_trans_eff, z_eff,
-                              weight_eff, order1):
+                                   r_comov2, dist_m2, z2, weights2, ang,
+                                   weights_dmat, dmat, r_par_eff, r_trans_eff,
+                                   z_eff, weight_eff, order1):
 
     #-- First, determine how many relevant pixel pairs for speed up
     num_pairs = 0
     for i in range(z1.size):
-        if weights1[i] == 0: continue
+        if weights1[i] == 0:
+            continue
         for j in range(z2.size):
-            if weights2[j] ==0: continue
+            if weights2[j] == 0:
+                continue
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
-            if (r_par >= r_par_max or 
-                r_trans >= r_trans_max or 
-                r_par <= r_par_min):
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_par <= r_par_min):
                 continue
             num_pairs += 1
 
-    if num_pairs == 0: 
+    if num_pairs == 0:
         return
 
     # Compute useful auxiliar variables to speed up computation of eta
@@ -558,7 +568,7 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
     sum_weights1 = weights1.sum()
 
     # mean of log_lambda
-    mean_log_lambda1 = np.sum(log_lambda1*weights1)/sum_weights1
+    mean_log_lambda1 = np.sum(log_lambda1 * weights1) / sum_weights1
 
     # log_lambda minus its mean
     log_lambda_minus_mean1 = log_lambda1 - mean_log_lambda1
@@ -579,43 +589,47 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
     all_bins_model = np.zeros(num_pairs, dtype=int32)
     all_i = np.zeros(num_pairs, dtype=int32)
     all_j = np.zeros(num_pairs, dtype=int32)
-    k=0
+    k = 0
     for i in range(z1.size):
-        if weights1[i] == 0: continue
+        if weights1[i] == 0:
+            continue
         for j in range(z2.size):
-            if weights2[j] == 0: continue
+            if weights2[j] == 0:
+                continue
             r_par = (r_comov1[i] - r_comov2[j]) * np.cos(ang[j] / 2)
             r_trans = (dist_m1[i] + dist_m2[j]) * np.sin(ang[j] / 2)
-            if (r_par >= r_par_max or 
-                r_trans >= r_trans_max or 
-                r_par < r_par_min):
+            if (r_par >= r_par_max or r_trans >= r_trans_max or
+                    r_par < r_par_min):
                 continue
-            
+
             weights12 = weights1[i] * weights2[j]
             z = (z1[i] + z2[j]) / 2
 
-            bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
+            bins_r_par = np.floor(
+                (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
             bins_r_trans = np.floor(r_trans / r_trans_max * num_bins_r_trans)
             bins = int32(bins_r_trans + num_bins_r_trans * bins_r_par)
-            model_bins_r_par = np.floor((r_par - r_par_min) / (r_par_max - r_par_min) *
-                                        num_model_bins_r_par)
+            model_bins_r_par = np.floor(
+                (r_par - r_par_min) / (r_par_max - r_par_min) *
+                num_model_bins_r_par)
             model_bins_r_trans = np.floor(r_trans / r_trans_max *
-                                num_model_bins_r_trans)
-            model_bins = int32(model_bins_r_trans + num_model_bins_r_trans * model_bins_r_par)
+                                          num_model_bins_r_trans)
+            model_bins = int32(model_bins_r_trans +
+                               num_model_bins_r_trans * model_bins_r_par)
 
             #-- This will be used later to fill the distortion matrix
-            all_bins_model[k] = model_bins 
+            all_bins_model[k] = model_bins
             all_bins[k] = bins
             all_i[k] = i
             all_j[k] = j
-            k+=1
+            k += 1
 
             #-- Fill effective quantities (r_par, r_trans, z_eff, weight_eff)
             r_par_eff[model_bins] += weights12 * r_par
             r_trans_eff[model_bins] += weights12 * r_trans
             z_eff[model_bins] += weights12 * z
-            weight_eff[model_bins] += weights12 
-            weights_dmat[bins] += weights12 
+            weight_eff[model_bins] += weights12
+            weights_dmat[bins] += weights12
 
             # Combining equation 21 and equation 6 of du Mas des Bourboux et al. 2020
             # we find an equation with 9 terms comming from the product of two eta
@@ -624,16 +638,17 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
 
             # first eta, second term: weight/sum(weights)
             # second eta, first term: kronecker delta
-            eta2[j+num_pixels2*model_bins] += weights1[i]/sum_weights1
+            eta2[j + num_pixels2 * model_bins] += weights1[i] / sum_weights1
 
             if order1 == 1:
                 # first eta, third term: (non-zero only for order=1)
                 #   weight*(Lambda-bar(Lambda))*(Lambda-bar(Lambda))/
                 #   sum(weight*(Lambda-bar(Lambda)**2))
                 # second eta, first term: kronecker delta
-                eta4[j+num_pixels2*model_bins] += (weights1[i]*log_lambda_minus_mean1[i] /
-                        sum_weights_square_log_lambda_minus_mean1)
-            
+                eta4[j + num_pixels2 * model_bins] += (
+                    weights1[i] * log_lambda_minus_mean1[i] /
+                    sum_weights_square_log_lambda_minus_mean1)
+
     # Now add all the contributions together
     unique_bins_model = np.unique(all_bins_model)
     for pair in range(num_pairs):
@@ -651,9 +666,9 @@ def compute_dmat_forest_pairs_fast(log_lambda1, r_comov1, dist_m1, z1, weights1,
             dmat_bin = k + num_model_bins_r_par * num_model_bins_r_trans * bins
             dmat[dmat_bin] += (
                 weights12 *
-                (- eta2[j+num_pixels2*k] 
-                 - eta4[j+num_pixels2*k] * log_lambda_minus_mean1[i])
-                )
+                (-eta2[j + num_pixels2 * k] -
+                 eta4[j + num_pixels2 * k] * log_lambda_minus_mean1[i]))
+
 
 def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
     """Computes the metal distortion matrix for each of the healpixs.
@@ -691,11 +706,10 @@ def compute_metal_dmat(healpixs, abs_igm="SiII(1526)"):
     for healpix in healpixs:
         for delta1 in data[healpix]:
             with lock:
-                userprint(
-                    ("\rcomputing metal dmat {}: "
-                     "{}%").format(abs_igm,
-                                   round(counter.value * 100. / num_data, 3)),
-                    end="")
+                dmatcounter = round(counter.value * 100. / num_data, 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing metal dmat {}:"
+                               " {}%").format(abs_igm, dmatcounter))
                 counter.value += 1
 
             r_comov1 = delta1.r_comov
@@ -843,14 +857,14 @@ def compute_wick_terms(healpixs):
         for delta1 in [
                 delta for index, delta in enumerate(data[healpix]) if w[index]
         ]:
-            userprint(
-                ("\rcomputing xi: "
-                 "{}%").format(
-                     round((counter.value * 100. / num_data / (1. - reject)),
-                           3)),
-                end="")
             with lock:
+                xicounter = round(
+                    (counter.value * 100. / num_data / (1. - reject)), 2)
+                if (counter.value % 1000 == 0):
+                    userprint(("computing computing xi: "
+                               " {}%").format(xicounter))
                 counter.value += 1
+
             if delta1.neighbours.size == 0:
                 continue
 
@@ -917,10 +931,10 @@ def compute_wick_terms(healpixs):
     return weights_wick, num_pairs_wick, num_pairs, num_pairs_used, t1, t2, t3, t4, t5, t6
 
 
-@jit
-def compute_wickT1234_pairs(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
-                            weighted_xi_1d_1, weights_wick, num_pairs_wick, t1,
-                            t2, t3, t4):
+#@jit   #this will be removed in the future, it's an older implementation that does not work properly with current numba
+def compute_wickT1234_pairs_slow(ang, r_comov1, r_comov2, z1, z2, weights1,
+                                 weights2, weighted_xi_1d_1, weights_wick,
+                                 num_pairs_wick, t1, t2, t3, t4):
     """
     Computes the Wick expansion terms 1, 2, and 3 of a given pair of forests
 
@@ -1180,8 +1194,8 @@ def compute_xi_1d(healpixs):
             lambda_qso = [10.**obj.log_lambda for obj in neighbours]
             ang = np.zeros(len(lambda_qso))
 
-            (rebin_weight, rebin_xi, rebin_r_par, _,
-             rebin_z, rebin_num_pairs) = compute_xi_forest_pairs(
+            (rebin_weight, rebin_xi, rebin_r_par, _, rebin_z,
+             rebin_num_pairs) = compute_xi_forest_pairs_fast(
                  delta.z, 10.**delta.log_lambda, 10.**delta.log_lambda,
                  delta.weights, delta.delta, z_qso, lambda_qso, lambda_qso,
                  weights_qso, ang)
@@ -1198,3 +1212,120 @@ def compute_xi_1d(healpixs):
     z[w] /= weights1d[w]
 
     return weights1d, xi_1d, r_par1d, z, num_pairs1d
+
+
+@jit(nopython=True)
+def compute_wickT1234_pairs(ang, r_comov1, r_comov2, z1, z2, weights1, weights2,
+                            weighted_xi_1d_1, weights_wick, num_pairs_wick, t1,
+                            t2, t3, t4):
+    """
+    Computes the Wick expansion terms 1, 2, and 3 of a given pair of forests
+
+    Each of the terms represents the contribution of different type of pairs as
+    illustrated in figure A.1 from Delubac et al. 2015
+
+    Args:
+        ang: array of floats
+            Angular separation between pixels in forests 1 and 2
+        r_comov1: array of floats
+            Comoving distance (in Mpc/h) for forest 1
+        r_comov2: array of floats
+            Comoving distance (in Mpc/h) for forest 2
+        z1: array of floats
+            Redshifts for forest 1
+        z2: array of floats
+            Redshifts for forest 2
+        weights1: array of floats
+            Weights for forest 1
+        weights2: array of floats
+            Weights for forest 2
+        weighted_xi_1d_1: array of floats
+            Weighted 1D correlation function for forest 1
+        weights_wick: array of floats
+            Total weight in the covariance matrix pixels
+        num_pairs_wick: array of floats
+            Total number of pairs in the covariance matrix pixels
+        t1: array of floats
+            Wick expansion, term 1
+        t2: array of floats
+            Wick expansion, term 2
+        t3: array of floats
+            Wick expansion, term 3
+        t4: array of floats
+            Wick expansion, term 4
+    """
+    num_pixels1 = len(r_comov1)
+    num_pixels2 = len(r_comov2)
+    i1 = np.arange(num_pixels1)
+    i2 = np.arange(num_pixels2)
+    z_weight_evol1 = ((1 + z1) / (1 + z_ref))**(alpha - 1)
+    z_weight_evol2 = ((1 + z2) / (1 + z_ref))**(alpha_obj - 1)
+    w = np.zeros((num_pixels1, num_pixels2))
+
+    wsum = 0
+    for ind2 in i2:  #first figure out how many elements there are
+        for ind1 in i1:
+            r_par = (r_comov1[ind1] - r_comov2[ind2]) * np.cos(ang[ind2] / 2)
+            r_trans = (r_comov1[ind1] + r_comov2[ind2]) * np.sin(ang[ind2] / 2)
+            w[ind1,
+              ind2] = (r_par < r_par_max) & (r_trans <
+                                             r_trans_max) & (r_par >= r_par_min)
+            if w[ind1, ind2] > 0:
+                wsum += 1
+    if wsum == 0:
+        return
+
+    bins = np.zeros((wsum), dtype=np.int64)
+    bins_forest = np.zeros((wsum), dtype=np.int64)
+    weights12 = np.zeros((wsum))
+    weight1 = np.zeros((wsum))
+    index_obj = np.zeros((wsum), dtype=np.int64)
+    index_delta = np.zeros((wsum), dtype=np.int64)
+    ind = 0
+    for ind2 in i2:
+        for ind1 in i1:
+            if w[ind1, ind2] == 0:
+                continue
+            bins[ind] = ind1 + num_pixels1 * ind2
+            r_par = (r_comov1[ind1] - r_comov2[ind2]) * np.cos(ang[ind2] / 2)
+            r_trans = (r_comov1[ind1] + r_comov2[ind2]) * np.sin(ang[ind2] / 2)
+            bin_r_par = int(
+                (r_par - r_par_min) / (r_par_max - r_par_min) * num_bins_r_par)
+            bin_r_trans = int(r_trans / r_trans_max * num_bins_r_trans)
+            bins_forest[ind] = bin_r_trans + num_bins_r_trans * bin_r_par
+            weights12[ind] = weights1[ind1] * weights2[ind2]
+            weight1[ind] = weights1[ind1]
+            index_delta[ind] = ind1
+            index_obj[ind] = ind2
+            ind += 1
+
+    for index1 in range(bins_forest.size):
+
+        p1 = bins_forest[index1]
+        i1 = index_delta[index1]
+        j1 = index_obj[index1]
+        weights_wick[p1] += weights12[index1]
+        num_pairs_wick[p1] += 1
+        t1[p1,
+           p1] += weights12[index1]**2 / weight1[index1] * z_weight_evol1[i1]
+
+        for index2 in range(index1 + 1, bins_forest.size):
+            p2 = bins_forest[index2]
+            i2 = index_delta[index2]
+            j2 = index_obj[index2]
+            if j1 == j2:
+                prod = weighted_xi_1d_1[i1, i2] * (z_weight_evol2[j1]**2)
+                t2[p1, p2] += prod
+                t2[p2, p1] += prod
+            elif i1 == i2:
+                prod = (weights12[index1] * weights12[index2] /
+                        weight1[index1] * z_weight_evol1[i1])
+                t3[p1, p2] += prod
+                t3[p2, p1] += prod
+            else:
+                prod = (weighted_xi_1d_1[i1, i2] * z_weight_evol2[j1] *
+                        z_weight_evol2[j2])
+                t4[p1, p2] += prod
+                t4[p2, p1] += prod
+
+    return

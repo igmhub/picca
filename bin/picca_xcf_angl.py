@@ -3,6 +3,7 @@
 as a function of angle and wavelength ratio
 """
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
@@ -58,6 +59,14 @@ def main():
                         required=True,
                         help='Catalog of objects in DRQ format')
 
+    parser.add_argument(
+                        '--mode',
+                        type=str,
+                        default='sdss',
+                        choices=['sdss','desi'],
+                        required=False,
+                        help='type of catalog supplied, default sdss')
+
     parser.add_argument('--wr-min',
                         type=float,
                         default=0.9,
@@ -90,13 +99,13 @@ def main():
 
     parser.add_argument('--z-min-obj',
                         type=float,
-                        default=None,
+                        default=0,
                         required=False,
                         help='Min redshift for object field')
 
     parser.add_argument('--z-max-obj',
                         type=float,
-                        default=None,
+                        default=10,
                         required=False,
                         help='Max redshift for object field')
 
@@ -277,7 +286,7 @@ def main():
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
+                                   cosmo, mode=args.mode)
     del z_min2
     for index, healpix in enumerate(sorted(objs)):
         for obj in objs[healpix]:
@@ -290,7 +299,8 @@ def main():
     xcf.counter = Value('i', 0)
     xcf.lock = Lock()
     cpu_data = {healpix: [healpix] for healpix in data}
-    pool = Pool(processes=args.nproc)
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=args.nproc)
     correlation_function_data = pool.map(corr_func,
                                          sorted(list(cpu_data.values())))
     pool.close()

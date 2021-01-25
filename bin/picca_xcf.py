@@ -7,6 +7,7 @@ Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
 import time
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
@@ -66,7 +67,15 @@ def main():
                         type=str,
                         default=None,
                         required=True,
-                        help='Catalog of objects in DRQ format')
+                        help='Catalog of objects in format selected by mode')
+
+    parser.add_argument('--mode',
+                        type=str,
+                        required=False,
+                        choices=['desi', 'sdss'],
+                        default='sdss',
+                        help='Mode for reading the catalog (default sdss)'
+                        )
 
     parser.add_argument('--rp-min',
                         type=float,
@@ -100,13 +109,13 @@ def main():
 
     parser.add_argument('--z-min-obj',
                         type=float,
-                        default=None,
+                        default=0,
                         required=False,
                         help='Min redshift for object field')
 
     parser.add_argument('--z-max-obj',
                         type=float,
-                        default=None,
+                        default=10,
                         required=False,
                         help='Max redshift for object field')
 
@@ -249,7 +258,25 @@ def main():
                             wl=args.fid_wl)
 
     t0 = time.time()
+    
+    # Find the redshift range
+    if args.z_min_obj is None:
+        r_comov_min = cosmo.get_r_comov(z_min)
+        r_comov_min = max(0., r_comov_min + xcf.r_par_min)
+        args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
+        userprint("z_min_obj = {}".format(args.z_min_obj), end="")
+    if args.z_max_obj is None:
+        r_comov_max = cosmo.get_r_comov(z_max)
+        r_comov_max = max(0., r_comov_max + xcf.r_par_max)
+        args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
+        userprint("z_max_obj = {}".format(args.z_max_obj), end="")
 
+    ### Read objects
+    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
+                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
+                                   cosmo, mode=args.mode)
+    xcf.objs = objs
+    
     ### Read deltas
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
                                                   args.nside,
@@ -264,7 +291,6 @@ def main():
     xcf.num_data = num_data
     userprint("")
     userprint("done, npix = {}\n".format(len(data)))
-
     ### Remove <delta> vs. lambda_obs
     if not args.no_remove_mean_lambda_obs:
         Forest.delta_log_lambda = None
@@ -292,24 +318,6 @@ def main():
                         Forest.delta_log_lambda + 0.5).astype(int)
                 delta.delta -= mean_delta[bins]
 
-    # Find the redshift range
-    if args.z_min_obj is None:
-        r_comov_min = cosmo.get_r_comov(z_min)
-        r_comov_min = max(0., r_comov_min + xcf.r_par_min)
-        args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
-        userprint("\r z_min_obj = {}\r".format(args.z_min_obj), end="")
-    if args.z_max_obj is None:
-        r_comov_max = cosmo.get_r_comov(z_max)
-        r_comov_max = max(0., r_comov_max + xcf.r_par_max)
-        args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
-        userprint("\r z_max_obj = {}\r".format(args.z_max_obj), end="")
-
-    ### Read objects
-    objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
-                                   args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
-    xcf.objs = objs
-
     # shuffle forests and objects
     if not args.shuffle_distrib_obj_seed is None:
         xcf.objs = utils.shuffle_distrib_forests(objs,
@@ -330,7 +338,8 @@ def main():
     xcf.counter = Value('i', 0)
     xcf.lock = Lock()
     cpu_data = {healpix: [healpix] for healpix in data}
-    pool = Pool(processes=args.nproc)
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=args.nproc)
     correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
     pool.close()
 
@@ -390,20 +399,20 @@ def main():
         'value': xcf.nside,
         'comment': 'Healpix nside'
     }, {
-        'name': 'OMEGAM', 
-        'value': args.fid_Om, 
+        'name': 'OMEGAM',
+        'value': args.fid_Om,
         'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'OMEGAR', 
-        'value': args.fid_Or, 
+        'name': 'OMEGAR',
+        'value': args.fid_Or,
         'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'OMEGAK', 
-        'value': args.fid_Ok, 
+        'name': 'OMEGAK',
+        'value': args.fid_Ok,
         'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'WL', 
-        'value': args.fid_wl, 
+        'name': 'WL',
+        'value': args.fid_wl,
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
     }]
     results.write(
