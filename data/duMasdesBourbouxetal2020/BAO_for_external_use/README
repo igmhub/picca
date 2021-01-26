@@ -11,7 +11,7 @@ Column 1:  (DM/rd) at z=2.334
 Column 2:  (DH/rd) at z=2.334
 Column 3:  likelihood (relative to the best point on the grid)
 
-2. Files containing the full scan output in text format with all parameters can be found here: https://github.com/igmhub/picca/tree/master/data/duMasdesBourbouxetal2020. There is a folder with auto results, one for the cross and one for the combined results. Note that those results were run on a smaller grid compared to the official results.
+2. Files containing the full scan output in text format with all parameters can be found here: https://github.com/igmhub/picca/tree/master/data/duMasdesBourbouxetal2020. There is a folder with auto results (auto_full_stdFit), one for the cross (cross_full_stdFit) and one for the combined results (combined_stdFit). These were used for the Lyman-alpha BAO analysis (https://arxiv.org/pdf/2007.08995.pdf).
 
 3. Attached is a script (get_scan.py) that reads picca fitter2 .h5 output files (you can find the raw outputs here as auto_scan.h5 and cross_scan.h5) and writes the scan information to a file. This script can be used to produce the scan files used by CosmoMC, MontePython and Cobaya, or for getting the scan information for plotting purposes (see tutorial here https://github.com/igmhub/picca/tree/master/data for more info on plotting contours).
 
