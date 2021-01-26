@@ -7,12 +7,13 @@ import os
 import time
 from numba import jit, prange
 
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.config import Config
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.errors import DeltaExtractionError
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.mask import Mask
+from picca.delta_extraction.mean_expected_flux import MeanExpectedFlux
 from picca.delta_extraction.userprint import UserPrint, userprint
 
 class Survey:

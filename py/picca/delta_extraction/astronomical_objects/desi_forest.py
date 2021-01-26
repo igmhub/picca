@@ -7,6 +7,7 @@ from picca.delta_extraction.errors import AstronomicalObjectError
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 
+
 class DesiForest(Forest):
     """Forest Object
 
@@ -100,6 +101,34 @@ class DesiForest(Forest):
         **kwargs: dict
         Dictionary contiaing the information
         """
+        if DesiForest.delta_lambda is None:
+            raise AstronomicalObjectError("Error constructing DesiForest. "
+                                          "Class variable 'delta_lambda' "
+                                          "must be set prior to initialize "
+                                          "instances of this type")
+        if DesiForest.lambda_max is None:
+            raise AstronomicalObjectError("Error constructing DesiForest. "
+                                          "Class variable 'lambda_max' "
+                                          "must be set prior to initialize "
+                                          "instances of this type")
+        if DesiForest.lambda_max_rest_frame is None:
+            raise AstronomicalObjectError(
+                "Error constructing DesiForest. "
+                "Class variable 'lambda_max_rest_frame' "
+                "must be set prior to initialize "
+                "instances of this type")
+        if DesiForest.lambda_min is None:
+            raise AstronomicalObjectError("Error constructing DesiForest. "
+                                          "Class variable 'lambda_min' "
+                                          "must be set prior to initialize "
+                                          "instances of this type")
+        if DesiForest.lambda_min_rest_frame is None:
+            raise AstronomicalObjectError(
+                "Error constructing DesiForest. "
+                "Class variable 'lambda_min_rest_frame' "
+                "must be set prior to initialize "
+                "instances of this type")
+
         self.lambda_ = kwargs.get("lambda")
         if self.lambda_ is None:
             raise AstronomicalObjectError("Error constructing DesiForest. "
@@ -117,7 +146,7 @@ class DesiForest(Forest):
         self.targetid = kwargs.get("targetid")
         if self.targetid is None:
             raise AstronomicalObjectError("Error constructing DesiForest. "
-                                          "Missing variable 'thingid'")
+                                          "Missing variable 'targetid'")
         del kwargs["targetid"]
 
         self.tile = kwargs.get("tile")
@@ -132,6 +161,14 @@ class DesiForest(Forest):
         # call parent constructor
         kwargs["los_id"] = self.targetid
         super().__init__(**kwargs)
+        self.mask_fields.append("lambda_")
+
+        # consistency check
+        if (self.lambda_.size != self.flux.size or
+                self.lambda_.size != self.ivar.size):
+            raise AstronomicalObjectError("Error constructing DesiForest. "
+                                          "'flux', 'ivar', and 'lambda' don't "
+                                          "have the same size")
 
         # rebin arrays
         # this needs to happen after flux and ivar arrays are initialized by
@@ -141,10 +178,8 @@ class DesiForest(Forest):
         self.lambda_ = DesiForest.lambda_min + bins * DesiForest.delta_lambda
         w = (self.lambda_ >= DesiForest.lambda_min)
         w = w & (self.lambda_ < DesiForest.lambda_max)
-        w = w & (self.lambda_ / (1. + z) >
-                 DesiForest.lambda_min_rest_frame)
-        w = w & (self.lambda_ / (1. + z) <
-                 DesiForest.lambda_max_rest_frame)
+        w = w & (self.lambda_ / (1. + z) > DesiForest.lambda_min_rest_frame)
+        w = w & (self.lambda_ / (1. + z) < DesiForest.lambda_max_rest_frame)
         w = w & (self.ivar > 0.)
         if w.sum() == 0:
             return
@@ -154,7 +189,6 @@ class DesiForest(Forest):
         self.ivar = self.ivar[w]
 
         self.rebin(bins)
-
 
     def coadd(self, other):
         """Coadds the information of another forest.
@@ -169,6 +203,8 @@ class DesiForest(Forest):
         self.lambda_ = np.append(self.lambda_, other.lambda_)
         self.flux = np.append(self.flux, other.flux)
         self.ivar = np.append(self.ivar, other.ivar)
+        self.transmission_correction = np.append(self.transmission_correction,
+                                                 other.transmission_correction)
 
         # coadd the deltas by rebinning
         bins = np.floor((self.lambda_ - DesiForest.lambda_min) /

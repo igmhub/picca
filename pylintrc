@@ -447,7 +447,12 @@ good-names=i,
      t5,
      t6,
      pk,
-     ax
+     ax,
+     MeanExpectedFluxType,
+     CorrectionType,
+     DataType,
+     MaskType,
+
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no

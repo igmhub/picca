@@ -12,7 +12,7 @@ from picca.delta_extraction.tests.abstract_test import AbstractTest
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-class TestConfiguration(AbstractTest):
+class TestMask(AbstractTest):
     """Test the configuration."""
 
     def test_mask(self):

@@ -7,6 +7,7 @@ from picca.delta_extraction.errors import AstronomicalObjectError
 
 from picca.delta_extraction.astronomical_object import AstronomicalObject
 
+
 class Forest(AstronomicalObject):
     """Forest Object
 
@@ -61,6 +62,7 @@ class Forest(AstronomicalObject):
     transmission_correction: array of float
     Transmission correction.
     """
+
     def __init__(self, **kwargs):
         """Initialize instance
 
@@ -90,17 +92,21 @@ class Forest(AstronomicalObject):
                                           "Missing variable 'ivar'")
         del kwargs["ivar"]
 
-        self.mask_fields = kwargs.get("mask_fields")
+        self.mask_fields = kwargs.get("mask fields")
         if self.mask_fields is None:
             self.mask_fields = ["flux", "ivar", "transmission_correction"]
         else:
-            del kwargs["mask_fields"]
+            del kwargs["mask fields"]
+        if not isinstance(self.mask_fields, list):
+            raise AstronomicalObjectError(
+                "Error constructing Forest. "
+                "Expected list in variable 'mask fields'. "
+                f"Found {self.mask_fields}.")
 
         self.transmission_correction = np.ones_like(self.flux)
 
         # compute mean quality variables
-        error = 1.0 / np.sqrt(self.ivar)
-        snr = self.flux / error
+        snr = self.flux * np.sqrt(self.ivar)
         self.mean_snr = sum(snr) / float(len(snr))
 
         # call parent constructor
@@ -120,18 +126,30 @@ class Forest(AstronomicalObject):
         Mask used in the rebinning
         """
         rebin_flux = np.zeros(bins.max() + 1)
+        rebin_transmission_correction = np.zeros(bins.max() + 1)
         rebin_ivar = np.zeros(bins.max() + 1)
         rebin_flux_aux = np.bincount(bins, weights=self.ivar * self.flux)
+        rebin_transmission_correction_aux = np.bincount(
+            bins, weights=(self.ivar * self.transmission_correction))
         rebin_ivar_aux = np.bincount(bins, weights=self.ivar)
         rebin_flux[:len(rebin_flux_aux)] += rebin_flux_aux
+        rebin_transmission_correction[:
+                                      len(rebin_transmission_correction_aux
+                                         )] += rebin_transmission_correction_aux
         rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
 
         w = (rebin_ivar > 0.)
         if w.sum() == 0:
-            raise AstronomicalObjectError("Attempting to rebin arrays flux and "
-                                          "ivar in class Forest, but ivar seems "
-                                          "to contain only zeros")
+            raise AstronomicalObjectError(
+                "Attempting to rebin arrays flux and "
+                "ivar in class Forest, but ivar seems "
+                "to contain only zeros")
         self.flux = rebin_flux[w] / rebin_ivar[w]
+        self.transmission_correction = rebin_transmission_correction[
+            w] / rebin_ivar[w]
         self.ivar = rebin_ivar[w]
+
+        snr = self.flux * np.sqrt(self.ivar)
+        self.mean_snr = sum(snr) / float(len(snr))
 
         return w

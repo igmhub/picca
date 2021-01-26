@@ -8,13 +8,15 @@ from picca.delta_extraction.errors import CorrectionError
 from picca.delta_extraction.corrections.sdss_calibration_correction import SdssCalibrationCorrection
 from picca.delta_extraction.corrections.sdss_dust_correction import SdssDustCorrection
 from picca.delta_extraction.corrections.sdss_ivar_correction import SdssIvarCorrection
+from picca.delta_extraction.corrections.sdss_optical_depth_correction import SdssOpticalDepthCorrection
 
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-class TestConfiguration(AbstractTest):
-    """Test the configuration."""
+
+class TestCorrection(AbstractTest):
+    """Test Correction and its childs."""
 
     def test_correction(self):
         """Tests Abstract class Correction
@@ -77,6 +79,23 @@ class TestConfiguration(AbstractTest):
 
         correction = SdssIvarCorrection({"filename": in_file})
         self.assertTrue(isinstance(correction, Correction))
+
+    def test_sdss_optical_depth_correction(self):
+        """Tests correct initialisation and inheritance for class
+        OpticalDepthCorrection
+
+        Load a SdssIvarCorrection instace and check that it is
+        correctly initialized.
+
+        #TODO:Check that the function apply_correction
+        is correctly implemented in a dummy Forest instance
+
+        """
+        in_file = f"{THIS_DIR}/data/delta_attributes.fits.gz"
+
+        correction = SdssOpticalDepthCorrection({"filename": in_file})
+        self.assertTrue(isinstance(correction, Correction))
+
 
 if __name__ == '__main__':
     unittest.main()

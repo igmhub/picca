@@ -163,6 +163,7 @@ class SdssForest(Forest):
         # call parent constructor
         kwargs["los_id"] = self.thingid
         super().__init__(**kwargs)
+        self.mask_fields.append("log_lambda")
 
         # rebin arrays
         # this needs to happen after flux and ivar arrays are initialized by
@@ -198,6 +199,8 @@ class SdssForest(Forest):
         self.log_lambda = np.append(self.log_lambda, other.log_lambda)
         self.flux = np.append(self.flux, other.flux)
         self.ivar = np.append(self.ivar, other.ivar)
+        self.transmission_correction = np.append(self.transmission_correction,
+                                                 other.transmission_correction)
 
         # coadd the deltas by rebinning
         bins = np.floor((self.log_lambda - SdssForest.log_lambda_min) /
