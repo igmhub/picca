@@ -5,7 +5,7 @@ objects.
 """
 import os
 import time
-from numba import jit
+from numba import jit, prange
 
 from picca.delta_extraction.config import Config
 from picca.delta_extraction.correction import Correction
@@ -54,30 +54,77 @@ class Survey:
         self.corrections = None
         self.masks = None
         self.forests = None
+        self.mean_expected_flux = None
 
-    @jit(nopython=True)
+    @jit(nopython=True, parallel=True)
+    def extract_deltas(self):
+        """Computes the delta fields"""
+        t0 = time.time()
+        # pylint: disable=not-an-iterable
+        # prange is used to signal jit of parallelisation but is otherwise
+        # equivalent to range
+        for forest_index in prange(len(self.forests)):
+            self.mean_expected_flux.extract_delta(self.forests[forest_index])
+
+        t1 = time.time()
+        userprint(f"Time spent extracting deltas: {t1-t0}")
+
+    @jit(nopython=True, parallel=True)
     def apply_corrections(self):
         """Applies the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
 
-        for forest_index in range(len(self.forests)):
+        # pylint: disable=not-an-iterable
+        # prange is used to signal jit of parallelisation but is otherwise
+        # equivalent to range
+        for forest_index in prange(len(self.forests)):
             for correction_index in range(len(self.corrections)):
                 self.corrections[correction_index].apply_correction(self.forests[forest_index])
 
         t1 = time.time()
         userprint(f"Time spent applying corrections: {t1-t0}")
 
-    @jit(nopython=True)
+    @jit(nopython=True, parallel=True)
     def apply_masks(self):
         """Applies the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
 
-        for forest_index in range(len(self.forests)):
+        # pylint: disable=not-an-iterable
+        # prange is used to signal jit of parallelisation but is otherwise
+        # equivalent to range
+        for forest_index in prange(len(self.forests)):
             for mask_index in range(len(self.masks)):
                 self.masks[mask_index].apply_mask(self.forests[forest_index])
 
         t1 = time.time()
         userprint(f"Time spent applying corrections: {t1-t0}")
+
+    def compute_mean_expected_flux(self):
+        """Computes the mean expected flux.
+        This includes the quasar continua and the mean transimission.
+
+        Raises
+        ------
+        DeltaExtractionError selected mean expected flux object does not have
+        the correct type
+        """
+        t0 = time.time()
+        userprint("Computing mean expected flux.")
+
+        MeanExpectedFluxType = self.config.mean_expected_flux[0]
+        mean_expected_flux_arguments = self.config.mean_expected_flux[1]
+        self.mean_expected_flux = MeanExpectedFluxType(mean_expected_flux_arguments)
+        if not isinstance(self.mean_expected_flux, MeanExpectedFlux):
+            raise DeltaExtractionError("Error computing mean expected flux.\n"
+                                       f"Type {MeanExpectedFluxType} with arguments "
+                                       f"{mean_expected_flux_arguments} is "
+                                       "not a correct type. Expected inheritance "
+                                       "from 'MeanExpectedFlux'. Please check "
+                                       "for correct inheritance pattern.")
+
+        self.mean_expected_flux.compute_mean_expected_flux(self.forests)
+        t1 = time.time()
+        userprint(f"Time spent computing the mean expected flux: {t1-t0}")
 
     def initialize_folders(self):
         """Initialize output folders

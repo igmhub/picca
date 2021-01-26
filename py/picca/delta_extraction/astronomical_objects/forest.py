@@ -19,6 +19,10 @@ class Forest(AstronomicalObject):
 
     Attributes
     ----------
+    bad_continuum_reason: str or None
+    Reason as to why the continuum fit is not acceptable. None for acceptable
+    contiuum.
+
     dec: float (from AstronomicalObject)
     Declination (in rad)
 
@@ -48,10 +52,14 @@ class Forest(AstronomicalObject):
 
     mask_fields: list of str
     Names of the fields that are affected by masking. In general it will
-    be "flux" and "ivar" but some child classes might add more.
+    be "flux", "ivar" and "transmission_correction" but some child classes might
+    add more.
 
     mean_snf: float
     Mean signal-to-noise of the forest
+
+    transmission_correction: array of float
+    Transmission correction.
     """
     def __init__(self, **kwargs):
         """Initialize instance
@@ -61,6 +69,7 @@ class Forest(AstronomicalObject):
         **kwargs: dict
         Dictionary contiaing the information
         """
+        self.bad_continuum_reason = None
         self.continuum = kwargs.get("continuum")
         if kwargs.get("continuum") is not None:
             del kwargs["continuum"]
@@ -83,9 +92,11 @@ class Forest(AstronomicalObject):
 
         self.mask_fields = kwargs.get("mask_fields")
         if self.mask_fields is None:
-            self.mask_fields = ["flux", "ivar"]
+            self.mask_fields = ["flux", "ivar", "transmission_correction"]
         else:
             del kwargs["mask_fields"]
+
+        self.transmission_correction = np.ones_like(self.flux)
 
         # compute mean quality variables
         error = 1.0 / np.sqrt(self.ivar)

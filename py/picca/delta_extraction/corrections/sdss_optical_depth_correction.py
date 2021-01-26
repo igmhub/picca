@@ -66,4 +66,4 @@ class SdssOpticalDepthCorrection(Correction):
             z = 10.**forest.log_lambda / lambda_rest_frame - 1.
             mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
 
-        raise CorrectionError("Under development")
+        forest.transmission_correction *= mean_optical_depth

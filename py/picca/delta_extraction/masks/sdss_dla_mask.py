@@ -126,6 +126,7 @@ class SdssDlaMask(Mask):
                                mask_range['log_wave_max']))
 
             # do the actual masking
+            forest.transmission_correction *= dla_transmission
             for param in forest.mask_fields:
                 setattr(forest, param, getattr(forest, param)[w])
 

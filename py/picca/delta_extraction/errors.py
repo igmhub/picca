@@ -41,6 +41,10 @@ class MaskError(Exception):
         Exceptions occurred in class Mask
     """
 
+class MeanExpectedFluxError(Exception):
+    """
+        Exceptions occurred in class MeanExpectedFlux
+    """
 class QuasarCatalogueError(Exception):
     """
         Exceptions occurred in class Mask

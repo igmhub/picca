@@ -38,10 +38,10 @@ def main(args):
     survey.apply_masks()
 
     # compute forest continua
-    survey.compute_continua()
+    survey.compute_mean_expected_flux()
 
     # compute the delta field
-    survey.apply_continua()
+    survey.extract_deltas()
 
     # save results
     survey.save_deltas()

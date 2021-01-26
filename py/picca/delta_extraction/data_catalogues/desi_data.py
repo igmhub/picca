@@ -17,7 +17,7 @@ from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.quasar_catalogues.ztruth_catalogue import ZtruthCatalogue
 
 defaults = {
-    "delta lambda": 1.0,
+    "delta lambda": 1.0, # TODO: update this value to the correct DESI expectation
     "lambda max": 5500.0,
     "lambda max rest frame": 1200.0,
     "lambda min": 3600.0,
