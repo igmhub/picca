@@ -32,9 +32,24 @@ class SdssOpticalDepthCorrection(Correction):
         ------
         CorrectionError if the variables 'optical depths tau',
         """
-        self.tau_list = config.get("optical depth tau").split()
-        self.gamma_list = config.get("optical depth gamma").split()
-        absorber_list = config.get("optical depth absorber").split()
+        self.tau_list = config.get("optical depth tau")
+        if self.tau_list is None:
+            raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
+                                  "Missing variable 'optical depth tau'")
+        else:
+            self.tau_list = [float(item) for item in self.tau_list.split()]
+        self.gamma_list = config.get("optical depth gamma")
+        if self.gamma_list is None:
+            raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
+                                  "Missing variable 'optical depth gamma'")
+        else:
+            self.gamma_list = [float(item) for item in self.gamma_list.split()]
+        absorber_list = config.get("optical depth absorber")
+        if absorber_list is None:
+            raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
+                                  "Missing variable 'optical depth absorber'")
+        else:
+            absorber_list = [item.upper() for item in absorber_list.split()]
         self.lambda_rest_frame_list = [ABSORBER_IGM[absorber]
                                        for absorber in absorber_list]
         if not (len(self.tau_list) == len(self.gamma_list) and
@@ -54,15 +69,14 @@ class SdssOpticalDepthCorrection(Correction):
         forest: Forest
         A Forest instance to which the correction is applied
         """
-        userprint(("INFO: Adding {} optical"
-                   "depths").format(len(self.tau_list) // 3))
+        userprint(f"INFO: Adding {len(self.tau_list)} optical depths")
 
         mean_optical_depth = np.ones(forest.log_lambda.size)
         for tau, gamma, lambda_rest_frame in zip(self.tau_list,
                                                  self.gamma_list,
                                                  self.lambda_rest_frame_list):
 
-            w = 10.**forest.log_lambda / (1. + forest.z_qso) <= lambda_rest_frame
+            w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
             z = 10.**forest.log_lambda / lambda_rest_frame - 1.
             mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
 

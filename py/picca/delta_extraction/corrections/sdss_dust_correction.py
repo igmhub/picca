@@ -36,9 +36,19 @@ class SdssDustCorrection(Correction):
         if extinction_conversion_r is None:
             extinction_conversion_r = defaults.get("extinction_conversion_r")
 
-        hdu = fitsio.read(filename, ext=1)
-        thingid = hdu['THING_ID']
-        ext = hdu['EXTINCTION'][:, 1] / extinction_conversion_r
+        try:
+            hdu = fitsio.read(filename, ext="EXTINCTION")
+            thingid = hdu['THING_ID']
+            ext = hdu['EXTINCTION'][:, 1] / extinction_conversion_r
+        except OSError:
+            raise CorrectionError("Error loading SdssDustCorrection. "
+                                  f"File {filename} does not have extension "
+                                  "'EXTINCTION'")
+        except ValueError:
+            raise CorrectionError("Error loading SdssDustCorrection. "
+                                  f"File {filename} does not have fields "
+                                  "'THING_ID' and/or 'EXTINCTION' in HDU "
+                                  "'EXTINCTION'")
         self.extinction_bv_map = dict(zip(thingid, ext))
 
     def apply_correction(self, forest):
@@ -63,12 +73,12 @@ class SdssDustCorrection(Correction):
                                   "should only be applied to data with the "
                                   "attribute 'log_lambda'")
         thingid = forest.los_id
-        correction = unred(10**forest.log_lambda, self.extinction_bv_map[thingid])
+        extinction = self.extinction_bv_map.get(thingid)
+        if extinction is None:
+            return
+        correction = unred(10**forest.log_lambda, extinction)
         forest.flux /= correction
         forest.ivar *= correction**2
-        if hasattr(forest, "exposures_diff") and not forest.exposures_diff is None:
-            forest.exposures_diff /= correction
-
 
 # pylint: disable=invalid-name,locally-disabled
 # we keep variable names since this function is adopted from elsewhere

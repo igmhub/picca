@@ -379,7 +379,7 @@ class TestAstronomicalObject(AbstractTest):
         self.assertTrue(test_obj.bad_continuum_reason is None)
         self.assertTrue(test_obj.continuum is None)
         self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
+        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)*2))
         self.assertTrue(np.allclose(test_obj.log_lambda, np.array([3.556525,
                                                                    3.556725,
                                                                    3.556925,
@@ -392,7 +392,7 @@ class TestAstronomicalObject(AbstractTest):
         self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
         self.assertTrue(test_obj.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 4))
+        self.assertTrue(np.allclose(test_obj.mean_snr, 8))
         self.assertTrue(test_obj.plate == 0)
         self.assertTrue(test_obj.fiberid == 0)
         self.assertTrue(test_obj.mjd == 0)
@@ -574,7 +574,7 @@ class TestAstronomicalObject(AbstractTest):
         self.assertTrue(test_obj.bad_continuum_reason is None)
         self.assertTrue(test_obj.continuum is None)
         self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
+        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)*2))
         self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
                                                                 3650,
                                                                 3670,
@@ -587,7 +587,7 @@ class TestAstronomicalObject(AbstractTest):
         self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
         self.assertTrue(test_obj.mask_fields[3] == "lambda_")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 4))
+        self.assertTrue(np.allclose(test_obj.mean_snr, 8))
         self.assertTrue(test_obj.night == 0)
         self.assertTrue(test_obj.petal == 0)
         self.assertTrue(test_obj.tile == 0)

@@ -28,9 +28,18 @@ class SdssCalibrationCorrection(Correction):
         Parsed options to initialize class
         """
         filename = config.get("filename")
-        hdu = fitsio.read(filename, ext=1)
-        stack_log_lambda = hdu['loglam']
-        stack_delta = hdu['stack']
+        try:
+            hdu = fitsio.read(filename, ext="STACK_DELTAS")
+            stack_log_lambda = hdu['loglam']
+            stack_delta = hdu['stack']
+        except OSError:
+            raise CorrectionError("Error loading SdssCalibrationCorrection. "
+                                  f"File {filename} does not have extension "
+                                  "'STACK_DELTAS'")
+        except ValueError:
+            raise CorrectionError("Error loading SdssCalibrationCorrection. "
+                                  f"File {filename} does not have fields "
+                                  "'loglam' and/or 'stack' in HDU 'STACK_DELTAS'")
         w = (stack_delta != 0.)
         self.correct_flux = interp1d(stack_log_lambda[w],
                                      stack_delta[w],

@@ -28,9 +28,18 @@ class SdssIvarCorrection(Correction):
         Parsed options to initialize class
         """
         filename = config.get("filename")
-        hdu = fitsio.read(filename, ext=2)
-        log_lambda = hdu['loglam']
-        eta = hdu['eta']
+        try:
+            hdu = fitsio.read(filename, ext="VAR_FUNC")
+            log_lambda = hdu['loglam']
+            eta = hdu['eta']
+        except OSError:
+            raise CorrectionError("Error loading SdssIvarCorrection. "
+                                  f"File {filename} does not have extension "
+                                  "'VAR_FUNC'")
+        except ValueError:
+            raise CorrectionError("Error loading SdssIvarCorrection. "
+                                  f"File {filename} does not have fields "
+                                  "'loglam' and/or 'eta' in HDU 'VAR_FUNC'")
         self.correct_ivar = interp1d(log_lambda,
                                      eta,
                                      fill_value="extrapolate",
@@ -54,5 +63,5 @@ class SdssIvarCorrection(Correction):
             raise CorrectionError("Correction from SdssIvarCorrection "
                                   "should only be applied to data with the "
                                   "attribute 'log_lambda'")
-        correction = forest.correct_ivar(forest.log_lambda)
+        correction = self.correct_ivar(forest.log_lambda)
         forest.ivar /= correction
