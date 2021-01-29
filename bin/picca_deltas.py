@@ -16,8 +16,8 @@ import numpy as np
 from astropy.table import Table
 from scipy.interpolate import interp1d
 
-from picca.data import Forest
-from picca import prep_del, io, constants
+from picca.data import Forest, Delta
+from picca import prep_del, io, constants, bal_tools
 from picca.utils import userprint
 
 
@@ -383,6 +383,21 @@ def main():
                         required=False,
                         help=('Path to spAll file'))
 
+    parser.add_argument('--bal-catalog',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help=('BAL catalog location. Use with --keep-bal to '
+                              'mask BAL features'))
+
+    parser.add_argument('--bal-index',
+                        type=str,
+                        default='ai',
+                        required=False,
+                        help=('BAL index type, choose either ai or bi. Use '
+                              'with --bal-catalog and -keep-bal. This will '
+                              'set which velocity the BAL mask uses.'))
+
     parser.add_argument('--metadata',
                         type=str,
                         default=None,
@@ -559,6 +574,21 @@ def main():
                         forest.add_dla(dla[0], dla[1], mask)
                         num_dlas += 1
         log_file.write("Found {} DLAs in forests\n".format(num_dlas))
+
+    ### Mask BALs
+    if not args.bal_catalog is None:
+        userprint("INFO: Adding BALs found in BAL catalog")
+        bal_cat = bal_tools.read_bal(args.bal_catalog)
+        num_bal = 0
+        for healpix in data:
+            for forest in data[healpix]:
+                if forest.thingid in bal_cat["THING_ID"]:
+                    mask_obs_frame_bal = []
+                    mask_rest_frame_bal = bal_tools.add_bal_rest_frame(
+                        bal_cat, forest.thingid, args.bal_index)
+                    forest.mask(mask_obs_frame_bal, mask_rest_frame_bal)
+                    num_bal += 1
+        log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
 
     ## Apply cuts
     log_file.write(
