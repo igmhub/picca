@@ -26,8 +26,8 @@ class TestCorrection(AbstractTest):
     def test_correction(self):
         """Tests Abstract class Correction
 
-        Load a Correction instace and check that it cannot be
-        initialized.
+        Load a Correction instace and check that method apply_correction is
+        not initialized.
         """
         with self.assertRaises(CorrectionError):
             # create Correction instance

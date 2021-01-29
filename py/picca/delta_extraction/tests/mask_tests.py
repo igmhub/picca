@@ -23,12 +23,7 @@ class TestMask(AbstractTest):
     def test_mask(self):
         """Tests Abstract class Mask
 
-        Load a Mask instace and check that it cannot be
-        initialized.
-
-        #TODO:Check that the function apply_correction
-        is correctly implemented in a dummy Forest instance
-
+        Load a Mask instace and check that method apply_mask is not initialized.
         """
         with self.assertRaises(MaskError):
             mask = Mask()
@@ -42,10 +37,6 @@ class TestMask(AbstractTest):
 
         Load a SdssDlaMask instace and check that it is
         correctly initialized.
-
-        #TODO:Check that the function apply_mask
-        is correctly implemented in a dummy Forest instance
-
         """
         in_file = f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz"
         out_file = f"{THIS_DIR}/results/sdss_dla_mask_print.txt"
@@ -84,10 +75,6 @@ class TestMask(AbstractTest):
 
         Load a SdssAbsorberMask instace and check that it is
         correctly initialized.
-
-        #TODO:Check that the function apply_mask
-        is correctly implemented in a dummy Forest instance
-
         """
         in_file = f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz"
         out_file = f"{THIS_DIR}/results/sdss_absorber_mask_print.txt"
