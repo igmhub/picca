@@ -25,7 +25,7 @@ class TestConfiguration(AbstractTest):
         with self.assertWarns(ConfigWarning):
             config = Config(in_file)
         config.write_config()
-        self.compare_ascii(test_file, out_file)
+        self.compare_ascii(test_file, out_file, expand_dir=True)
 
 if __name__ == '__main__':
     unittest.main()

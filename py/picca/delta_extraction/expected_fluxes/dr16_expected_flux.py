@@ -3,7 +3,7 @@ from scipy.interpolate import interp1d
 from multiprocessing import Pool
 import fitsio
 
-from picca.delta_extraction.mean_expected_flux import MeanExpectedFlux
+from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.userprint import userprint
 
 defaults = {
@@ -15,8 +15,8 @@ defaults = {
     "use_ivar_as_weight": False,
 }
 
-class Dr16MeanExpectedFlux(MeanExpectedFlux):
-    """Class to the mean expected flux as done in the DR16 SDSS analysys
+class Dr16ExpectedFlux(ExpectedFlux):
+    """Class to the expected flux as done in the DR16 SDSS analysys
     The mean expected flux is calculated iteratively as explained in
     du Mas des Bourboux et al. (2020)
 
@@ -39,7 +39,7 @@ class Dr16MeanExpectedFlux(MeanExpectedFlux):
 
     Attributes
     ----------
-    los_ids: dict (from MeanExpectedFlux)
+    los_ids: dict (from ExpectedFlux)
     A dictionary containing the mean expected flux fraction, the weights, and
     the inverse variance for each line of sight. Keys are the identifier for the
     line of sight and values are dictionaries with the keys "mean expected flux",
@@ -695,9 +695,9 @@ class Dr16MeanExpectedFlux(MeanExpectedFlux):
                 if not (args.use_ivar_as_weight or args.use_constant_weight):
                     self.compute_var_stats()
 
-             userprint(
-                 f"Continuum fitting: ending iteration {iteration} of {num_iterations}"
-             )
+            userprint(
+                f"Continuum fitting: ending iteration {iteration} of {num_iterations}"
+            )
 
         # compute the mean deltas
         compute_mean_deta(forests)

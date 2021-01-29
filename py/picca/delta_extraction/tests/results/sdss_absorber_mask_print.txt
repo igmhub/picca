@@ -1,0 +1,4 @@
+Reading absorbers from: /Users/iperezra/software/picca/py/picca/delta_extraction/tests/data/dummy_absorbers_cat.fits.gz
+ In catalog: 3 absorbers
+ In catalog: 2 forests have absorbers
+

@@ -1,4 +1,4 @@
-"""This module defines the abstract class MeanExpectedFlux from which all
+"""This module defines the abstract class ExpectedFlux from which all
 classes computing the mean expected flux must inherit. The mean expected flux
 is the product of the unabsorbed quasar continuum and the mean transmission
 """
@@ -6,8 +6,8 @@ defaults = {
     "minimum number pixels in forest": 50,
 }
 
-class MeanExpectedFlux:
-    """Abstract class from which all classes computing the mean expected flux
+class ExpectedFlux:
+    """Abstract class from which all classes computing the expected flux
     must inherit. Classes that inherit from this should be initialized using
     a configparser.SectionProxy instance.
 

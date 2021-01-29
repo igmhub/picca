@@ -112,6 +112,11 @@ class Forest(AstronomicalObject):
         # call parent constructor
         super().__init__(**kwargs)
 
+        # consistency check
+        if self.flux.size != self.ivar.size:
+            raise AstronomicalObjectError("Error constructing Forest. 'flux', "
+                                          "and 'ivar' don't have the same size")
+
     def rebin(self, bins):
         """Rebin the flux and ivar arrays.
 

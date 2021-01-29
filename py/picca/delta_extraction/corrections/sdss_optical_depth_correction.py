@@ -36,20 +36,17 @@ class SdssOpticalDepthCorrection(Correction):
         if self.tau_list is None:
             raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
                                   "Missing variable 'optical depth tau'")
-        else:
-            self.tau_list = [float(item) for item in self.tau_list.split()]
+        self.tau_list = [float(item) for item in self.tau_list.split()]
         self.gamma_list = config.get("optical depth gamma")
         if self.gamma_list is None:
             raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
                                   "Missing variable 'optical depth gamma'")
-        else:
-            self.gamma_list = [float(item) for item in self.gamma_list.split()]
+        self.gamma_list = [float(item) for item in self.gamma_list.split()]
         absorber_list = config.get("optical depth absorber")
         if absorber_list is None:
             raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
                                   "Missing variable 'optical depth absorber'")
-        else:
-            absorber_list = [item.upper() for item in absorber_list.split()]
+        absorber_list = [item.upper() for item in absorber_list.split()]
         self.lambda_rest_frame_list = [ABSORBER_IGM[absorber]
                                        for absorber in absorber_list]
         if not (len(self.tau_list) == len(self.gamma_list) and

@@ -1,6 +1,7 @@
 """This module defines the abstract class AbsorberMask in the
 masking of absorbers"""
 import numpy as np
+import fitsio
 
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask
@@ -21,8 +22,8 @@ class SdssAbsorberMask(Mask):
     Attributes
     ----------
     los_ids: dict (from Mask)
-    A dictionary with the DLAs contained in each line of sight. Keys are the
-    identifier for the line of sight and values are lists of (z_abs, nhi)
+    A dictionary with the absorbers contained in each line of sight. Keys are the
+    identifier for the line of sight and values are lists of z_abs
 
     absorber_mask_width: float
     Mask width on each side of the absorber central observed wavelength in
@@ -30,8 +31,6 @@ class SdssAbsorberMask(Mask):
     """
     def __init__(self, config):
         """Initializes class instance.
-        Arguments are required to be keyword arguments by the lack of
-        order in Config
 
         Arguments
         ---------
@@ -45,28 +44,29 @@ class SdssAbsorberMask(Mask):
                             "AbsorbersMask")
 
         userprint('Reading absorbers from:', absorbers_catalogue)
-        file = open(absorbers_catalogue)
+
+        columns_list = ["THING_ID", "LAMBDA_ABS"]
+        try:
+            hdul = fitsio.FITS(absorbers_catalogue)
+            cat = {col: hdul["ABSORBERCAT"][col][:] for col in columns_list}
+        except OSError:
+            raise MaskError("Error loading SdssAbsorberMask. File "
+                            f"{absorbers_catalogue} does not have extension "
+                            "'ABSORBERCAT'")
+        except ValueError:
+            aux = "', '".join(columns_list)
+            raise MaskError("Error loading SdssAbsorberMask. File "
+                            f"{absorbers_catalogue} does not have fields '{aux}' "
+                            "in HDU 'ABSORBERCAT'")
+        finally:
+            hdul.close()
+
+        # group absorbers on the same line of sight together
         self.los_ids = {}
-        num_absorbers = 0
-        col_names = None
-        for line in file.readlines():
-            cols = line.split()
-            if len(cols) == 0:
-                continue
-            if cols[0][0] == "#":
-                continue
-            if cols[0] == "ThingID":
-                col_names = cols
-                continue
-            if cols[0][0] == "-":
-                continue
-            thingid = int(cols[col_names.index("ThingID")])
-            if thingid not in self.los_ids:
-                self.los_ids[thingid] = []
-            lambda_absorber = float(cols[col_names.index("lambda")])
-            self.los_ids[thingid].append(lambda_absorber)
-            num_absorbers += 1
-        file.close()
+        for thingid in np.unique(cat["THING_ID"]):
+            w = (thingid == cat["THING_ID"])
+            self.los_ids[thingid] = list(cat["LAMBDA_ABS"][w])
+        num_absorbers = np.sum([len(thingid) for thingid in self.los_ids.values()])
 
         userprint(" In catalog: {} absorbers".format(num_absorbers))
         userprint(" In catalog: {} forests have absorbers".format(len(self.los_ids)))
@@ -99,7 +99,7 @@ class SdssAbsorberMask(Mask):
         if self.los_ids.get(forest.los_id) is not None:
             # find out which pixels to mask
             w = np.ones(forest.log_lambda.size, dtype=bool)
-            for lambda_absorber in self.los_ids.get(forest.los_ids):
+            for lambda_absorber in self.los_ids.get(forest.los_id):
                 w &= (np.fabs(1.e4 * (forest.log_lambda - np.log10(lambda_absorber))) >
                       self.absorber_mask_width)
 

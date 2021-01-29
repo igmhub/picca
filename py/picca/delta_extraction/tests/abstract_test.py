@@ -20,14 +20,30 @@ class AbstractTest(unittest.TestCase):
         if not os.path.exists("{}/results/".format(THIS_DIR)):
             os.makedirs("{}/results/".format(THIS_DIR))
 
-    def compare_ascii(self, orig_file, new_file):
-        """Compares two ascii files to check that they are equal"""
+    def compare_ascii(self, orig_file, new_file, expand_dir=False):
+        """Compares two ascii files to check that they are equal
+
+        Arguments
+        ---------
+        orig_file: str
+        Control file
+
+        new_file: str
+        New file
+
+        expand_dir: bool - Default: False
+        If set to true, replace the instances of the string 'THIS_DIR' by
+        its value
+        """
         orig = open(orig_file, 'r')
         new = open(new_file, 'r')
 
         try:
             for orig_line, new_line in zip(orig.readlines(),
                                            new.readlines()):
+                if expand_dir:
+                    new_line = new_line.replace("$THIS_DIR", THIS_DIR)
+                    orig_line = orig_line.replace("$THIS_DIR", THIS_DIR)
                 self.assertTrue(orig_line == new_line)
         finally:
             orig.close()

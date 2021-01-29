@@ -21,7 +21,7 @@ default_config = {
     },
     "masks": {
     },
-    "mean expected flux":{
+    "expected flux":{
     },
     "empty":{
     },
@@ -35,6 +35,7 @@ class Config:
     __init__
     __format_continua_section
     __format_correction_section
+    __format_expected_flux
     __format_data_section
     __format_general_section
     __format_masks_section
@@ -116,41 +117,7 @@ class Config:
         self.data = None
         self.__format_data_section()
         self.mean_expected_flux = None
-        self.__format_mean_expected_flux()
-
-    def __format_mean_expected_flux(self):
-        """Formats the mean expected section of the parser into usable data
-
-        Raises
-        ------
-        ConfigError if the config file is not correct
-
-        Warnings
-        --------
-        ConfigWarning if no arguments were found to pass to ContinuaType
-        """
-        if "mean expected flux" not in self.config:
-            raise ConfigError("Missing section [mean expected flux]")
-        section = self.config["mean expected flux"]
-
-        # first load the data class
-        mean_expected_flux_name = section.get("type")
-        module_name = section.get("module name")
-        if module_name is None:
-            module_name = re.sub('(?<!^)(?=[A-Z])', '_', mean_expected_flux_name).lower()
-            module_name = f"picca.delta_extraction.{module_name.lower()}"
-        try:
-            MeanExpectedFluxType = class_from_string(mean_expected_flux_name,
-                                                     module_name)
-        except ImportError:
-            raise ConfigError(f"Error loading class {mean_expected_flux_name}, "
-                              f"module {module_name} could not be loaded")
-        except AttributeError:
-            raise ConfigError(f"Error loading class {mean_expected_flux_name}, "
-                              f"module {module_name} did not contain class")
-
-        # finally add the information to self.continua
-        self.mean_expected_flux = (MeanExpectedFluxType, section)
+        self.__format_expected_flux()
 
     def __format_corrections_section(self):
         """Formats the corrections section of the parser into usable data
@@ -178,7 +145,7 @@ class Config:
             module_name = section.get(f"module name {correction_index}")
             if module_name is None:
                 module_name = re.sub('(?<!^)(?=[A-Z])', '_', correction_name).lower()
-                module_name = f"picca.delta_extraction.correction.{module_name.lower()}"
+                module_name = f"picca.delta_extraction.corrections.{module_name.lower()}"
             try:
                 CorrectionType = class_from_string(correction_name, module_name)
             except ImportError:
@@ -232,6 +199,39 @@ class Config:
 
         # finally add the information to self.data
         self.data = (DataType, section)
+
+    def __format_expected_flux(self):
+        """Formats the expected flux section of the parser into usable data
+
+        Raises
+        ------
+        ConfigError if the config file is not correct
+
+        Warnings
+        --------
+        ConfigWarning if no arguments were found to pass to ContinuaType
+        """
+        if "expected flux" not in self.config:
+            raise ConfigError("Missing section [expected flux]")
+        section = self.config["expected flux"]
+
+        # first load the data class
+        expected_flux_name = section.get("type")
+        module_name = section.get("module name")
+        if module_name is None:
+            module_name = re.sub('(?<!^)(?=[A-Z])', '_', expected_flux_name).lower()
+            module_name = f"picca.delta_extraction.expected_fluxes.{module_name.lower()}"
+        try:
+            ExpectedFluxType = class_from_string(expected_flux_name, module_name)
+        except ImportError:
+            raise ConfigError(f"Error loading class {expected_flux_name}, "
+                              f"module {module_name} could not be loaded")
+        except AttributeError:
+            raise ConfigError(f"Error loading class {expected_flux_name}, "
+                              f"module {module_name} did not contain class")
+
+        # finally add the information to self.continua
+        self.expected_flux = (ExpectedFluxType, section)
 
     def __format_general_section(self):
         """Formats the general section of the parser into usable data

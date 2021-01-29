@@ -38,8 +38,6 @@ class SdssDlaMask(Mask):
     """
     def __init__(self, config):
         """Initializes class instance.
-        Arguments are required to be keyword arguments by the lack of
-        order in Config
 
         Arguments
         ---------
@@ -54,9 +52,18 @@ class SdssDlaMask(Mask):
 
         userprint("Reading DLA catalog from:", dla_catalogue)
         columns_list = ["THING_ID", "Z", "NHI"]
-        hdul = fitsio.FITS(dla_catalogue)
-        cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
-        hdul.close()
+        try:
+            hdul = fitsio.FITS(dla_catalogue)
+            cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
+        except OSError:
+            raise MaskError(f"Error loading SdssDlaMask. File {dla_catalogue} does "
+                            "not have extension 'DLACAT'")
+        except ValueError:
+            aux = "', '".join(columns_list)
+            raise MaskError(f"Error loading SdssDlaMask. File {dla_catalogue} does "
+                            f"not have fields '{aux}' in HDU 'DLACAT'")
+        finally:
+            hdul.close()
 
         # group DLAs on the same line of sight together
         self.los_ids = {}
@@ -92,7 +99,7 @@ class SdssDlaMask(Mask):
             self.mask = Table(names=('type', 'wave_min', 'wave_max', 'frame',
                                      'log_wave_min', 'log_wave_max'))
 
-    def apply_maks(self, forest):
+    def apply_mask(self, forest):
         """Applies the mask. The mask is done by removing the affected
         pixels from the arrays in data.mask_fields
 

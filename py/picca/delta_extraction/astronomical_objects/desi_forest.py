@@ -164,11 +164,9 @@ class DesiForest(Forest):
         self.mask_fields.append("lambda_")
 
         # consistency check
-        if (self.lambda_.size != self.flux.size or
-                self.lambda_.size != self.ivar.size):
-            raise AstronomicalObjectError("Error constructing DesiForest. "
-                                          "'flux', 'ivar', and 'lambda' don't "
-                                          "have the same size")
+        if self.lambda_.size != self.flux.size:
+            raise AstronomicalObjectError("Error constructing DesiForest. 'flux' "
+                                          "and 'lambda' don't have the same size")
 
         # rebin arrays
         # this needs to happen after flux and ivar arrays are initialized by
@@ -187,6 +185,7 @@ class DesiForest(Forest):
         self.lambda_ = self.lambda_[w]
         self.flux = self.flux[w]
         self.ivar = self.ivar[w]
+        self.transmission_correction = self.transmission_correction[w]
 
         self.rebin(bins)
 

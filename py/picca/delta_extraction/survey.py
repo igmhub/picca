@@ -13,7 +13,7 @@ from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.errors import DeltaExtractionError
 from picca.delta_extraction.mask import Mask
-from picca.delta_extraction.mean_expected_flux import MeanExpectedFlux
+from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.userprint import UserPrint, userprint
 
 class Survey:
@@ -55,7 +55,7 @@ class Survey:
         self.corrections = None
         self.masks = None
         self.forests = None
-        self.mean_expected_flux = None
+        self.expected_flux = None
 
     @jit(nopython=True, parallel=True)
     def extract_deltas(self):
@@ -65,7 +65,7 @@ class Survey:
         # prange is used to signal jit of parallelisation but is otherwise
         # equivalent to range
         for forest_index in prange(len(self.forests)):
-            self.mean_expected_flux.extract_delta(self.forests[forest_index])
+            self.expected_flux.extract_delta(self.forests[forest_index])
 
         t1 = time.time()
         userprint(f"Time spent extracting deltas: {t1-t0}")
@@ -112,18 +112,18 @@ class Survey:
         t0 = time.time()
         userprint("Computing mean expected flux.")
 
-        MeanExpectedFluxType = self.config.mean_expected_flux[0]
-        mean_expected_flux_arguments = self.config.mean_expected_flux[1]
-        self.mean_expected_flux = MeanExpectedFluxType(mean_expected_flux_arguments)
-        if not isinstance(self.mean_expected_flux, MeanExpectedFlux):
-            raise DeltaExtractionError("Error computing mean expected flux.\n"
-                                       f"Type {MeanExpectedFluxType} with arguments "
-                                       f"{mean_expected_flux_arguments} is "
+        ExpectedFluxType = self.config.expected_flux[0]
+        expected_flux_arguments = self.config.expected_flux[1]
+        self.expected_flux = ExpectedFluxType(expected_flux_arguments)
+        if not isinstance(self.expected_flux, ExpectedFlux):
+            raise DeltaExtractionError("Error computing expected flux.\n"
+                                       f"Type {ExpectedFluxType} with arguments "
+                                       f"{expected_flux_arguments} is "
                                        "not a correct type. Expected inheritance "
-                                       "from 'MeanExpectedFlux'. Please check "
+                                       "from 'ExpectedFlux'. Please check "
                                        "for correct inheritance pattern.")
 
-        self.mean_expected_flux.compute_mean_expected_flux(self.forests)
+        self.expected_flux.compute_expected_flux(self.forests)
         t1 = time.time()
         userprint(f"Time spent computing the mean expected flux: {t1-t0}")
 

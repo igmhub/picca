@@ -358,7 +358,7 @@ ignore-docstrings=yes
 ignore-imports=yes
 
 # Minimum lines number of a similarity.
-min-similarity-lines=4
+min-similarity-lines=5
 
 
 [BASIC]
@@ -448,7 +448,7 @@ good-names=i,
      t6,
      pk,
      ax,
-     MeanExpectedFluxType,
+     ExpectedFluxType,
      CorrectionType,
      DataType,
      MaskType,

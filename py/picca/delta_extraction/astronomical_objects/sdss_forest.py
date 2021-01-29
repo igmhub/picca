@@ -165,6 +165,12 @@ class SdssForest(Forest):
         super().__init__(**kwargs)
         self.mask_fields.append("log_lambda")
 
+        # consistency check
+        if self.log_lambda.size != self.flux.size:
+            raise AstronomicalObjectError("Error constructing SdssForest. 'flux' "
+                                          " and 'log_lambda' don't have the same "
+                                          " size")
+
         # rebin arrays
         # this needs to happen after flux and ivar arrays are initialized by
         # Forest constructor
@@ -184,6 +190,8 @@ class SdssForest(Forest):
         self.log_lambda = self.log_lambda[w]
         self.flux = self.flux[w]
         self.ivar = self.ivar[w]
+        self.transmission_correction = self.transmission_correction[w]
+
         self.rebin(bins)
 
     def coadd(self, other):

@@ -1,0 +1,3 @@
+Reading DLA catalog from: $THIS_DIR/data/dummy_absorbers_cat.fits.gz
+ In catalog: 3 DLAs
+ In catalog: 2 forests have a DLA

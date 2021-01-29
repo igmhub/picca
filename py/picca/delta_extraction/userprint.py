@@ -69,6 +69,13 @@ class UserPrint:
         """ Don't print anything """
 
     @classmethod
+    def reset_log(cls):
+        """Closes log file and resets cls.log_file to None"""
+        if cls.log_file is not None:
+            cls.log_file.close()
+            cls.log_file = None
+
+    @classmethod
     def verboseprint(cls, *args, **kwargs):
         """Function to use user-specified prints.
         Default is to use an extension of the normal print function,
