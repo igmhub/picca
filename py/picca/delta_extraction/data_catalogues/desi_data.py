@@ -31,7 +31,6 @@ class DesiData(Data):
 
     Methods
     -------
-    get_forest_list (from Data)
     __init__
     _parse_config
 
@@ -78,11 +77,12 @@ class DesiData(Data):
         catalogue = ZtruthCatalogue(config)
 
         # setup DesiForest class variables
-        DesiForest.delta_lambda = self.delta_lambda
-        DesiForest.lambda_max = self.lambda_max
-        DesiForest.lambda_max_rest_frame = self.lambda_max_rest_frame
-        DesiForest.lambda_min = self.lambda_min
-        DesiForest.lambda_min_rest_frame = self.lambda_min_rest_frame
+        Forest.wave_solution = "lin"
+        Forest.delta_lambda = self.delta_lambda
+        Forest.lambda_max = self.lambda_max
+        Forest.lambda_max_rest_frame = self.lambda_max_rest_frame
+        Forest.lambda_min = self.lambda_min
+        Forest.lambda_min_rest_frame = self.lambda_min_rest_frame
 
         # read data
         if self.mini_sv:

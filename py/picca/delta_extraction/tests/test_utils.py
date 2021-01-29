@@ -1,14 +1,17 @@
 """This file contains objects used in different tests"""
 import numpy as np
 
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 
-# setup SdssForest class variables
-SdssForest.delta_log_lambda = 1e-4
-SdssForest.log_lambda_max = np.log10(5500.0)
-SdssForest.log_lambda_max_rest_frame = np.log10(1200.0)
-SdssForest.log_lambda_min = np.log10(3600.0)
-SdssForest.log_lambda_min_rest_frame = np.log10(1040.0)
+
+# setup Forest class variables
+Forest.wave_solution = "log"
+Forest.delta_log_lambda = 1e-4
+Forest.log_lambda_max = np.log10(5500.0)
+Forest.log_lambda_max_rest_frame = np.log10(1200.0)
+Forest.log_lambda_min = np.log10(3600.0)
+Forest.log_lambda_min_rest_frame = np.log10(1040.0)
 
 # create SdssForest instance forest1
 # has:

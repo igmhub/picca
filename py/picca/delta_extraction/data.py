@@ -18,7 +18,7 @@ class Data:
     Methods
     -------
     _parse_config
-    get_forest_list
+    filter_forests
 
     Attributes
     ----------
@@ -51,7 +51,10 @@ class Data:
         userprint(f"INFO: Input sample has {len(self.forests)} forests")
         remove_indexs = []
         for index, forest in enumerate(self.forests):
-            if len(forest.log_lambda) < self.min_num_pix:
+            if ((Forest.wave_solution == "log" and
+                    len(forest.log_lambda) < self.min_num_pix) or
+                (Forest.wave_solution == "lin" and
+                        len(forest.lambda_) < self.min_num_pix)):
                 userprint(f"INFO: Rejected forest with thingid {forest.thingid} "
                           "due to forest being too short")
             elif np.isnan((forest.flux * forest.ivar).sum()):
@@ -65,14 +68,3 @@ class Data:
             del self.forests[index]
 
         userprint(f"INFO: Remaining sample has {len(self.forests)} forests")
-
-    def get_forest_list(self):
-        """Gets the list of forests
-
-        Raises
-        ------
-        DataError if variable 'forests' was not defined by child class
-        """
-        if not hasattr(self, "forests"):
-            raise DataError("Variable 'forests' was not defined by child class")
-        return self.forests

@@ -14,25 +14,58 @@ class SdssForest(Forest):
     -------
     __gt__ (from AstronomicalObject)
     __eq__ (from AstronomicalObject)
+    rebin (from Forest)
     __init__
     coadd
 
     Class Attributes
     ----------------
-    delta_log_lambda: float
+    delta_lambda: float or None (from Forest)
+    Variation of the wavelength (in Angs) between two pixels. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+
+    delta_log_lambda: float or None (from Forest)
     Variation of the logarithm of the wavelength (in Angs) between two pixels.
+    This should not be None if wave_solution is "log". Ignored if wave_solution
+    is "lin".
 
-    log_lambda_max: float
+    lambda_max: float or None (from Forest)
+    Maximum wavelength (in Angs) to be considered in a forest. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+
+    lambda_min: float or None (from Forest)
+    Minimum wavelength (in Angs) to be considered in a forest. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+
+    lambda_max_rest_frame: float or None (from Forest)
+    As wavelength_max but for rest-frame wavelength. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+
+    lambda_min_rest_frame: float or None (from Forest)
+    As wavelength_min but for rest-frame wavelength. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+
+    log_lambda_max: float or None (from Forest)
     Logarithm of the maximum wavelength (in Angs) to be considered in a forest.
+    This should not be None if wave_solution is "log". Ignored if wave_solution
+    is "lin".
 
-    log_lambda_min: float
+    log_lambda_min: float or None (from Forest)
     Logarithm of the minimum wavelength (in Angs) to be considered in a forest.
+    This should not be None if wave_solution is "log". Ignored if wave_solution
+    is "lin".
 
-    log_lambda_max_rest_frame: float
-    As log_lambda_max but for rest-frame wavelength.
+    log_lambda_max_rest_frame: float or None (from Forest)
+    As log_lambda_max but for rest-frame wavelength. This should not be None if
+    wave_solution is "log". Ignored if wave_solution is "lin".
 
-    log_lambda_min_rest_frame: float
-    As log_lambda_min but for rest-frame wavelength.
+    log_lambda_min_rest_frame: float or None (from Forest)
+    As log_lambda_min but for rest-frame wavelength. This should not be None if
+    wave_solution is "log". Ignored if wave_solution is "lin".
+
+    wave_solution: "lin" or "log" (from Forest)
+    Determines whether the wavelength solution has linear spacing ("lin") or
+    logarithmic spacing ("log").
 
     Attributes
     ----------
@@ -63,6 +96,12 @@ class SdssForest(Forest):
     ivar: array of float (from Forest)
     Inverse variance
 
+    lambda_: array of float or None (from Forest)
+    Wavelength (in Angstroms)
+
+    log_lambda: array of float or None (from Forest)
+    Logarithm of the wavelength (in Angstroms)
+
     mask_fields: list of str (from Forest)
     Names of the fields that are affected by masking. In general it will
     be "flux" and "ivar" but some child classes might add more.
@@ -81,9 +120,6 @@ class SdssForest(Forest):
 
     thingid: int
     Thingid of the object
-
-    log_lambda: array of float
-    Logarithm of the wavelengths (in Angstroms)
     """
     delta_log_lambda = None
     log_lambda_max = None
@@ -99,32 +135,6 @@ class SdssForest(Forest):
         **kwargs: dict
         Dictionary contiaing the information
         """
-        if SdssForest.delta_log_lambda is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Class variable 'delta_log_lambda' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if SdssForest.log_lambda_max is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Class variable 'log_lambda_max' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if SdssForest.log_lambda_max_rest_frame is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Class variable 'log_lambda_max_rest_frame' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if SdssForest.log_lambda_min is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Class variable 'log_lambda_min' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if SdssForest.log_lambda_min_rest_frame is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Class variable 'log_lambda_min_rest_frame' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-
         self.fiberid = kwargs.get("fiberid")
         if self.fiberid is None:
             raise AstronomicalObjectError("Error constructing SdssForest. "
@@ -136,12 +146,6 @@ class SdssForest(Forest):
             raise AstronomicalObjectError("Error constructing SdssForest. "
                                           "Missing variable 'mjd'")
         del kwargs["mjd"]
-
-        self.log_lambda = kwargs.get("log_lambda")
-        if self.log_lambda is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Missing variable 'log_lambda'")
-        del kwargs["log_lambda"]
 
         self.plate = kwargs.get("plate")
         if self.plate is None:
@@ -155,79 +159,11 @@ class SdssForest(Forest):
                                           "Missing variable 'thingid'")
         del kwargs["thingid"]
 
-        z = kwargs.get("z")
-        if z is None:
-            raise AstronomicalObjectError("Error constructing SdssForest. "
-                                          "Missing variable 'z'")
-
         # call parent constructor
         kwargs["los_id"] = self.thingid
         super().__init__(**kwargs)
-        self.mask_fields.append("log_lambda")
-
-        # consistency check
-        if self.log_lambda.size != self.flux.size:
-            raise AstronomicalObjectError("Error constructing SdssForest. 'flux' "
-                                          " and 'log_lambda' don't have the same "
-                                          " size")
-
+        
         # rebin arrays
         # this needs to happen after flux and ivar arrays are initialized by
         # Forest constructor
-        bins = (np.floor((self.log_lambda - SdssForest.log_lambda_min) /
-                         SdssForest.delta_log_lambda + 0.5).astype(int))
-        self.log_lambda = SdssForest.log_lambda_min + bins * SdssForest.delta_log_lambda
-        w = (self.log_lambda >= SdssForest.log_lambda_min)
-        w = w & (self.log_lambda < SdssForest.log_lambda_max)
-        w = w & (self.log_lambda - np.log10(1. + z) >
-                 SdssForest.log_lambda_min_rest_frame)
-        w = w & (self.log_lambda - np.log10(1. + z) <
-                 SdssForest.log_lambda_max_rest_frame)
-        w = w & (self.ivar > 0.)
-        if w.sum() == 0:
-            return
-        bins = bins[w]
-        self.log_lambda = self.log_lambda[w]
-        self.flux = self.flux[w]
-        self.ivar = self.ivar[w]
-        self.transmission_correction = self.transmission_correction[w]
-
-        self.rebin(bins)
-
-    def coadd(self, other):
-        """Coadds the information of another forest.
-
-        Forests are coadded by using inverse variance weighting.
-
-        Arguments
-        ---------
-        other: SdssForest
-        The forest instance to be coadded.
-        """
-        self.log_lambda = np.append(self.log_lambda, other.log_lambda)
-        self.flux = np.append(self.flux, other.flux)
-        self.ivar = np.append(self.ivar, other.ivar)
-        self.transmission_correction = np.append(self.transmission_correction,
-                                                 other.transmission_correction)
-
-        # coadd the deltas by rebinning
-        bins = np.floor((self.log_lambda - SdssForest.log_lambda_min) /
-                        SdssForest.delta_log_lambda + 0.5).astype(int)
-        self.rebin(bins)
-
-    def rebin(self, bins):
-        """Rebin log_lambda, flux and ivar arrays
-
-        Flux and ivar are rebinned using the Forest version of rebin
-
-        Arguments
-        ---------
-        bins: array of floats
-        The binning solution
-        """
-        # flux and ivar are rebinned by super()
-        w = super().rebin(bins)
-        # rebin log lambda
-        rebin_lambda = (SdssForest.log_lambda_min +
-                        np.arange(bins.max() + 1) * SdssForest.delta_log_lambda)
-        self.log_lambda = rebin_lambda[w]
+        super().rebin()

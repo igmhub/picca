@@ -15,25 +15,58 @@ class DesiForest(Forest):
     -------
     __gt__ (from AstronomicalObject)
     __eq__ (from AstronomicalObject)
+    rebin (from Forest)
     __init__
     coadd
 
     Class Attributes
     ----------------
-    delta_lambda: float
-    Variation of the wavelength (in Angs) between two pixels.
+    delta_lambda: float or None (from Forest)
+    Variation of the wavelength (in Angs) between two pixels. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
 
-    lambda_max: float
-    Maximum wavelength (in Angs) to be considered in a forest.
+    delta_log_lambda: float or None (from Forest)
+    Variation of the logarithm of the wavelength (in Angs) between two pixels.
+    This should not be None if wave_solution is "log". Ignored if wave_solution
+    is "lin".
 
-    lambda_min: float
-    Minimum wavelength (in Angs) to be considered in a forest.
+    lambda_max: float or None (from Forest)
+    Maximum wavelength (in Angs) to be considered in a forest. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
 
-    lambda_max_rest_frame: float
-    As wavelength_max but for rest-frame wavelength.
+    lambda_min: float or None (from Forest)
+    Minimum wavelength (in Angs) to be considered in a forest. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
 
-    lambda_min_rest_frame: float
-    As wavelength_min but for rest-frame wavelength.
+    lambda_max_rest_frame: float or None (from Forest)
+    As wavelength_max but for rest-frame wavelength. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+
+    lambda_min_rest_frame: float or None (from Forest)
+    As wavelength_min but for rest-frame wavelength. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+
+    log_lambda_max: float or None (from Forest)
+    Logarithm of the maximum wavelength (in Angs) to be considered in a forest.
+    This should not be None if wave_solution is "log". Ignored if wave_solution
+    is "lin".
+
+    log_lambda_min: float or None (from Forest)
+    Logarithm of the minimum wavelength (in Angs) to be considered in a forest.
+    This should not be None if wave_solution is "log". Ignored if wave_solution
+    is "lin".
+
+    log_lambda_max_rest_frame: float or None (from Forest)
+    As log_lambda_max but for rest-frame wavelength. This should not be None if
+    wave_solution is "log". Ignored if wave_solution is "lin".
+
+    log_lambda_min_rest_frame: float or None (from Forest)
+    As log_lambda_min but for rest-frame wavelength. This should not be None if
+    wave_solution is "log". Ignored if wave_solution is "lin".
+
+    wave_solution: "lin" or "log" (from Forest)
+    Determines whether the wavelength solution has linear spacing ("lin") or
+    logarithmic spacing ("log").
 
     Attributes
     ----------
@@ -64,15 +97,18 @@ class DesiForest(Forest):
     ivar: array of float (from Forest)
     Inverse variance
 
+    lambda_: array of float or None (from Forest)
+    Wavelength (in Angstroms)
+
+    log_lambda: array of float or None (from Forest)
+    Logarithm of the wavelength (in Angstroms)
+
     mask_fields: list of str (from Forest)
     Names of the fields that are affected by masking. In general it will
     be "flux" and "ivar" but some child classes might add more.
 
     mean_snf: float (from Forest)
     Mean signal-to-noise of the forest
-
-    lambda_: array of float
-    Wavelength (in Angstroms)
 
     night: int or None
     Identifier of the night where the observation was made. None for no info
@@ -85,14 +121,7 @@ class DesiForest(Forest):
 
     tile: int or None
     Identifier of the tile used in the observation. None for no info
-
     """
-    delta_lambda = None
-    lambda_max = None
-    lambda_max_rest_frame = None
-    lambda_min = None
-    lambda_min_rest_frame = None
-
     def __init__(self, **kwargs):
         """Initialize instance
 
@@ -101,40 +130,6 @@ class DesiForest(Forest):
         **kwargs: dict
         Dictionary contiaing the information
         """
-        if DesiForest.delta_lambda is None:
-            raise AstronomicalObjectError("Error constructing DesiForest. "
-                                          "Class variable 'delta_lambda' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if DesiForest.lambda_max is None:
-            raise AstronomicalObjectError("Error constructing DesiForest. "
-                                          "Class variable 'lambda_max' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if DesiForest.lambda_max_rest_frame is None:
-            raise AstronomicalObjectError(
-                "Error constructing DesiForest. "
-                "Class variable 'lambda_max_rest_frame' "
-                "must be set prior to initialize "
-                "instances of this type")
-        if DesiForest.lambda_min is None:
-            raise AstronomicalObjectError("Error constructing DesiForest. "
-                                          "Class variable 'lambda_min' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if DesiForest.lambda_min_rest_frame is None:
-            raise AstronomicalObjectError(
-                "Error constructing DesiForest. "
-                "Class variable 'lambda_min_rest_frame' "
-                "must be set prior to initialize "
-                "instances of this type")
-
-        self.lambda_ = kwargs.get("lambda")
-        if self.lambda_ is None:
-            raise AstronomicalObjectError("Error constructing DesiForest. "
-                                          "Missing variable 'wavelength'")
-        del kwargs["lambda"]
-
         self.night = kwargs.get("night")
         if self.night is not None:
             del kwargs["night"]
@@ -153,76 +148,9 @@ class DesiForest(Forest):
         if self.tile is not None:
             del kwargs["tile"]
 
-        z = kwargs.get("z")
-        if z is None:
-            raise AstronomicalObjectError("Error constructing DesiForest. "
-                                          "Missing variable 'z'")
-
         # call parent constructor
         kwargs["los_id"] = self.targetid
         super().__init__(**kwargs)
-        self.mask_fields.append("lambda_")
-
-        # consistency check
-        if self.lambda_.size != self.flux.size:
-            raise AstronomicalObjectError("Error constructing DesiForest. 'flux' "
-                                          "and 'lambda' don't have the same size")
 
         # rebin arrays
-        # this needs to happen after flux and ivar arrays are initialized by
-        # Forest constructor
-        bins = (np.floor((self.lambda_ - DesiForest.lambda_min) /
-                         DesiForest.delta_lambda + 0.5).astype(int))
-        self.lambda_ = DesiForest.lambda_min + bins * DesiForest.delta_lambda
-        w = (self.lambda_ >= DesiForest.lambda_min)
-        w = w & (self.lambda_ < DesiForest.lambda_max)
-        w = w & (self.lambda_ / (1. + z) > DesiForest.lambda_min_rest_frame)
-        w = w & (self.lambda_ / (1. + z) < DesiForest.lambda_max_rest_frame)
-        w = w & (self.ivar > 0.)
-        if w.sum() == 0:
-            return
-        bins = bins[w]
-        self.lambda_ = self.lambda_[w]
-        self.flux = self.flux[w]
-        self.ivar = self.ivar[w]
-        self.transmission_correction = self.transmission_correction[w]
-
-        self.rebin(bins)
-
-    def coadd(self, other):
-        """Coadds the information of another forest.
-
-        Forests are coadded by using inverse variance weighting
-
-        Arguments
-        ---------
-        other: DesiForest
-        The forest instance to be coadded.
-        """
-        self.lambda_ = np.append(self.lambda_, other.lambda_)
-        self.flux = np.append(self.flux, other.flux)
-        self.ivar = np.append(self.ivar, other.ivar)
-        self.transmission_correction = np.append(self.transmission_correction,
-                                                 other.transmission_correction)
-
-        # coadd the deltas by rebinning
-        bins = np.floor((self.lambda_ - DesiForest.lambda_min) /
-                        DesiForest.delta_lambda + 0.5).astype(int)
-        self.rebin(bins)
-
-    def rebin(self, bins):
-        """Rebin the lambda_, flux and ivar arrays.
-
-        Flux and ivar are rebinned using the Forest version of rebin
-
-        Arguments
-        ---------
-        bins: array of floats
-        The binning solution
-        """
-        # flux and ivar are rebinned by super()
-        w = super().rebin(bins)
-        # rebin wavelength
-        rebin_lambda = (DesiForest.lambda_min +
-                        np.arange(bins.max() + 1) * DesiForest.delta_lambda)
-        self.lambda_ = rebin_lambda[w]
+        super().rebin()

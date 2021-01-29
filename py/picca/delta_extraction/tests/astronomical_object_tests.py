@@ -15,19 +15,17 @@ class TestAstronomicalObject(AbstractTest):
     """Test AstronomicalObject and its childs."""
 
     def tearDown(self):
-        # reset SdssForest class variables
-        SdssForest.delta_log_lambda = None
-        SdssForest.log_lambda_max = None
-        SdssForest.log_lambda_max_rest_frame = None
-        SdssForest.log_lambda_min = None
-        SdssForest.log_lambda_min_rest_frame = None
-
-        # reset DesiForest class variables
-        DesiForest.delta_log_lambda = None
-        DesiForest.log_lambda_max = None
-        DesiForest.log_lambda_max_rest_frame = None
-        DesiForest.log_lambda_min = None
-        DesiForest.log_lambda_min_rest_frame = None
+        # reset Forest class variables
+        Forest.delta_log_lambda = None
+        Forest.delta_log_lambda = None
+        Forest.lambda_max = None
+        Forest.lambda_max_rest_frame = None
+        Forest.lambda_min = None
+        Forest.lambda_min_rest_frame = None
+        Forest.log_lambda_max = None
+        Forest.log_lambda_max_rest_frame = None
+        Forest.log_lambda_min = None
+        Forest.log_lambda_min_rest_frame = None
 
     def test_astronomical_object(self):
         """Test constructor for AstronomicalObject."""
@@ -79,6 +77,14 @@ class TestAstronomicalObject(AbstractTest):
 
     def test_forest(self):
         """Test constructor for Forest object."""
+        # set class variables
+        Forest.wave_solution = "log"
+        Forest.delta_log_lambda = 1e-4
+        Forest.log_lambda_max = np.log10(5500.0)
+        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
+        Forest.log_lambda_min = np.log10(3600.0)
+        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
+
         # create a Forest
         kwargs = {
             "los_id": 9999,
@@ -87,6 +93,7 @@ class TestAstronomicalObject(AbstractTest):
             "z": 2.1,
             "flux": np.ones(15),
             "ivar": np.ones(15)*4,
+            "log_lambda": np.ones(15),
         }
         test_obj = Forest(**kwargs)
         self.assertTrue(isinstance(test_obj, AstronomicalObject))
@@ -98,10 +105,11 @@ class TestAstronomicalObject(AbstractTest):
         self.assertTrue(test_obj.deltas is None)
         self.assertTrue(np.allclose(test_obj.flux, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(15)*4))
-        self.assertTrue(len(test_obj.mask_fields) == 3)
+        self.assertTrue(len(test_obj.mask_fields) == 4)
         self.assertTrue(test_obj.mask_fields[0] == "flux")
         self.assertTrue(test_obj.mask_fields[1] == "ivar")
         self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
+        self.assertTrue(test_obj.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2))
 
@@ -115,7 +123,8 @@ class TestAstronomicalObject(AbstractTest):
             "ivar": np.ones(15)*4,
             "continuum": np.ones(15),
             "deltas": np.zeros(15),
-            "mask fields": ["flux"],
+            "mask_fields": ["flux"],
+            "log_lambda": np.ones(15)
         }
         test_obj = Forest(**kwargs)
         self.assertTrue(isinstance(test_obj, AstronomicalObject))
@@ -140,7 +149,8 @@ class TestAstronomicalObject(AbstractTest):
             "z": 2.1,
             "flux": np.ones(15),
             "ivar": np.ones(15)*4,
-            "test variable": "test",
+            "test_variable": "test",
+            "log_lambda": np.ones(15)
         }
         test_obj = Forest(**kwargs)
         self.assertTrue(isinstance(test_obj, AstronomicalObject))
@@ -152,10 +162,11 @@ class TestAstronomicalObject(AbstractTest):
         self.assertTrue(test_obj.deltas is None)
         self.assertTrue(np.allclose(test_obj.flux, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(15)*4))
-        self.assertTrue(len(test_obj.mask_fields) == 3)
+        self.assertTrue(len(test_obj.mask_fields) == 4)
         self.assertTrue(test_obj.mask_fields[0] == "flux")
         self.assertTrue(test_obj.mask_fields[1] == "ivar")
         self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
+        self.assertTrue(test_obj.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2))
 
@@ -178,28 +189,6 @@ class TestAstronomicalObject(AbstractTest):
         with self.assertRaises(AstronomicalObjectError):
             Forest(**kwargs)
 
-    def test_forest_rebin(self):
-        """Test rebin function in Forest."""
-        # create a Forest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.arange(10),
-            "ivar": np.ones(10)*4,
-        }
-        test_obj = Forest(**kwargs)
-
-        # rebin
-        bins = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
-        test_obj.rebin(bins)
-
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
-        self.assertTrue(np.allclose(test_obj.flux, np.array([0.5, 2.5, 4.5, 6.5, 8.5])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 12.727922061357855))
-
     def test_sdss_object(self):
         """Test constructor for SdssForest.
         This includes a test of function rebin.
@@ -221,16 +210,14 @@ class TestAstronomicalObject(AbstractTest):
         # expected error as class variables are not yet set
         with self.assertRaises(AstronomicalObjectError):
             SdssForest(**kwargs)
-            print(SdssForest.delta_log_lambda)
-            print(SdssForest.log_lambda_max)
-            print(SdssForest.log_lambda_min)
 
         # set class variables
-        SdssForest.delta_log_lambda = 1e-4
-        SdssForest.log_lambda_max = np.log10(5500.0)
-        SdssForest.log_lambda_max_rest_frame = np.log10(1200.0)
-        SdssForest.log_lambda_min = np.log10(3600.0)
-        SdssForest.log_lambda_min_rest_frame = np.log10(1040.0)
+        Forest.wave_solution = "log"
+        Forest.delta_log_lambda = 1e-4
+        Forest.log_lambda_max = np.log10(5500.0)
+        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
+        Forest.log_lambda_min = np.log10(3600.0)
+        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
 
         # create a SdssForest
         test_obj = SdssForest(**kwargs)
@@ -277,7 +264,7 @@ class TestAstronomicalObject(AbstractTest):
             "test variable": "test",
         }
         test_obj = SdssForest(**kwargs)
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
+        self.assertTrue(isinstance(test_obj, Forest))
         self.assertTrue(test_obj.los_id == 100000000)
         self.assertTrue(test_obj.healpix == 1505)
         self.assertTrue(test_obj.z == 2.1)
@@ -332,11 +319,12 @@ class TestAstronomicalObject(AbstractTest):
     def test_sdss_object_coadd(self):
         """Test the coadd function in SdssForest"""
         # set class variables
-        SdssForest.delta_log_lambda = 1e-4
-        SdssForest.log_lambda_max = np.log10(5500.0)
-        SdssForest.log_lambda_max_rest_frame = np.log10(1200.0)
-        SdssForest.log_lambda_min = np.log10(3600.0)
-        SdssForest.log_lambda_min_rest_frame = np.log10(1040.0)
+        Forest.wave_solution = "log"
+        Forest.delta_log_lambda = 1e-4
+        Forest.log_lambda_max = np.log10(5500.0)
+        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
+        Forest.log_lambda_min = np.log10(3600.0)
+        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
 
         # create a SdssForest
         kwargs = {
@@ -421,16 +409,17 @@ class TestAstronomicalObject(AbstractTest):
             DesiForest(**kwargs)
 
         # set class variables
-        DesiForest.delta_lambda = 1.
-        DesiForest.lambda_max = 5500.0
-        DesiForest.lambda_max_rest_frame = 1200.0
-        DesiForest.lambda_min = 3600.0
-        DesiForest.lambda_min_rest_frame = 1040.0
+        Forest.wave_solution = "lin"
+        Forest.delta_lambda = 1.
+        Forest.lambda_max = 5500.0
+        Forest.lambda_max_rest_frame = 1200.0
+        Forest.lambda_min = 3600.0
+        Forest.lambda_min_rest_frame = 1040.0
 
-        # create a SdssForest
+        # create a DesiForest
         test_obj = DesiForest(**kwargs)
 
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
+        self.assertTrue(isinstance(test_obj, Forest))
         self.assertTrue(test_obj.los_id == 100000000)
         self.assertTrue(test_obj.healpix == 1505)
         self.assertTrue(test_obj.z == 2.1)
@@ -472,7 +461,7 @@ class TestAstronomicalObject(AbstractTest):
             "test variable": "test",
         }
         test_obj = DesiForest(**kwargs)
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
+        self.assertTrue(isinstance(test_obj, Forest))
         self.assertTrue(test_obj.los_id == 100000000)
         self.assertTrue(test_obj.healpix == 1505)
         self.assertTrue(test_obj.z == 2.1)
@@ -498,7 +487,7 @@ class TestAstronomicalObject(AbstractTest):
         self.assertTrue(test_obj.tile == 0)
         self.assertTrue(test_obj.targetid == 100000000)
 
-        # create a SdssForest with missing SdssForest variables
+        # create a DesiForest with missing DesiForest variables
         kwargs = {
             "ra": 0.15,
             "dec": 0.0,
@@ -507,7 +496,7 @@ class TestAstronomicalObject(AbstractTest):
             "ivar": np.ones(15)*4,
         }
         with self.assertRaises(AstronomicalObjectError):
-            SdssForest(**kwargs)
+            DesiForest(**kwargs)
 
         # create forest with missing Forest variables
         kwargs = {
@@ -522,16 +511,17 @@ class TestAstronomicalObject(AbstractTest):
             "fiber": 0,
         }
         with self.assertRaises(AstronomicalObjectError):
-            SdssForest(**kwargs)
+            DesiForest(**kwargs)
 
     def test_desi_object_coadd(self):
         """Test the coadd function in DesiForest"""
         # set class variables
-        DesiForest.delta_log_lambda = 1e-4
-        DesiForest.log_lambda_max = np.log10(5500.0)
-        DesiForest.log_lambda_max_rest_frame = np.log10(1200.0)
-        DesiForest.log_lambda_min = np.log10(3600.0)
-        DesiForest.log_lambda_min_rest_frame = np.log10(1040.0)
+        Forest.wave_solution = "lin"
+        Forest.delta_log_lambda = 1e-4
+        Forest.lambda_max = 5500.0
+        Forest.lambda_max_rest_frame = 1200.0
+        Forest.lambda_min = 3600.0
+        Forest.lambda_min_rest_frame = 1040.0
 
         # create a DesiForest
         kwargs = {

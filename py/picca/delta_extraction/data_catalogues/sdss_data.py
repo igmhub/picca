@@ -28,7 +28,6 @@ class SdssData(Data):
 
     Methods
     -------
-    get_forest_list (from Data)
     __init__
     _parse_config
     read_from_spec
@@ -87,11 +86,12 @@ class SdssData(Data):
         catalogue = DrqCatalogue(config).catalogue
 
         # setup SdssForest class variables
-        SdssForest.delta_log_lambda = self.delta_log_lambda
-        SdssForest.log_lambda_max = self.log_lambda_max
-        SdssForest.log_lambda_max_rest_frame = self.log_lambda_max_rest_frame
-        SdssForest.log_lambda_min = self.log_lambda_min
-        SdssForest.log_lambda_min_rest_frame = self.log_lambda_min_rest_frame
+        Forest.wave_solution = "log"
+        Forest.delta_log_lambda = self.delta_log_lambda
+        Forest.log_lambda_max = self.log_lambda_max
+        Forest.log_lambda_max_rest_frame = self.log_lambda_max_rest_frame
+        Forest.log_lambda_min = self.log_lambda_min
+        Forest.log_lambda_min_rest_frame = self.log_lambda_min_rest_frame
 
         # read data
         if self.mode == "spplate":
