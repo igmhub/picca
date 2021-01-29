@@ -1,4 +1,4 @@
-"""This file contains configuration tests"""
+"""This file contains tests related to AstronomicalObject and its childs"""
 import unittest
 import numpy as np
 

@@ -1,4 +1,4 @@
-"""This file contains configuration tests"""
+"""This file contains tests related to Mask and its childs"""
 import os
 import unittest
 import numpy as np
