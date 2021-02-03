@@ -11,6 +11,32 @@ from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 
+def setup_forest():
+    """Sets Forest class variables
+
+    Arguments
+    ---------
+    wave_solution: "log" or "lin"
+    Determines whether the wavelength solution has linear spacing ("lin") or
+    logarithmic spacing ("log").
+    """
+    assert wave_solution in ["log", "lin"]
+
+    if wave_solution == "log"
+        Forest.wave_solution = "log"
+        Forest.delta_log_lambda = 1e-4
+        Forest.log_lambda_max = np.log10(5500.0)
+        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
+        Forest.log_lambda_min = np.log10(3600.0)
+        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
+    elif wave_solution == "lin":
+        Forest.wave_solution = "lin"
+        Forest.delta_lambda = 1.
+        Forest.lambda_max = 5500.0
+        Forest.lambda_max_rest_frame = 1200.0
+        Forest.lambda_min = 3600.0
+        Forest.lambda_min_rest_frame = 1040.0
+
 class TestAstronomicalObject(AbstractTest):
     """Test AstronomicalObject and its childs."""
 
@@ -78,12 +104,7 @@ class TestAstronomicalObject(AbstractTest):
     def test_forest(self):
         """Test constructor for Forest object."""
         # set class variables
-        Forest.wave_solution = "log"
-        Forest.delta_log_lambda = 1e-4
-        Forest.log_lambda_max = np.log10(5500.0)
-        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
-        Forest.log_lambda_min = np.log10(3600.0)
-        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
+        setup_forest(wave_solution="log")
 
         # create a Forest
         kwargs = {
@@ -212,12 +233,7 @@ class TestAstronomicalObject(AbstractTest):
             SdssForest(**kwargs)
 
         # set class variables
-        Forest.wave_solution = "log"
-        Forest.delta_log_lambda = 1e-4
-        Forest.log_lambda_max = np.log10(5500.0)
-        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
-        Forest.log_lambda_min = np.log10(3600.0)
-        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
+        setup_forest(wave_solution= "log")
 
         # create a SdssForest
         test_obj = SdssForest(**kwargs)
@@ -319,12 +335,7 @@ class TestAstronomicalObject(AbstractTest):
     def test_sdss_object_coadd(self):
         """Test the coadd function in SdssForest"""
         # set class variables
-        Forest.wave_solution = "log"
-        Forest.delta_log_lambda = 1e-4
-        Forest.log_lambda_max = np.log10(5500.0)
-        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
-        Forest.log_lambda_min = np.log10(3600.0)
-        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
+        setup_forest(wave_solution="log")
 
         # create a SdssForest
         kwargs = {
@@ -409,12 +420,7 @@ class TestAstronomicalObject(AbstractTest):
             DesiForest(**kwargs)
 
         # set class variables
-        Forest.wave_solution = "lin"
-        Forest.delta_lambda = 1.
-        Forest.lambda_max = 5500.0
-        Forest.lambda_max_rest_frame = 1200.0
-        Forest.lambda_min = 3600.0
-        Forest.lambda_min_rest_frame = 1040.0
+        setup_forest(wave_solution="lin")
 
         # create a DesiForest
         test_obj = DesiForest(**kwargs)
@@ -516,12 +522,7 @@ class TestAstronomicalObject(AbstractTest):
     def test_desi_object_coadd(self):
         """Test the coadd function in DesiForest"""
         # set class variables
-        Forest.wave_solution = "lin"
-        Forest.delta_log_lambda = 1e-4
-        Forest.lambda_max = 5500.0
-        Forest.lambda_max_rest_frame = 1200.0
-        Forest.lambda_min = 3600.0
-        Forest.lambda_min_rest_frame = 1040.0
+        setup_forest(wave_solution="lin")
 
         # create a DesiForest
         kwargs = {

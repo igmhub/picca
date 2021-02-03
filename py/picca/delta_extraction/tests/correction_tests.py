@@ -2,8 +2,8 @@
 import os
 import unittest
 import copy
+from configparser import ConfigParser
 import numpy as np
-
 
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
@@ -46,8 +46,10 @@ class TestCorrection(AbstractTest):
         """
         in_file = f"{THIS_DIR}/data/dummy_corrections.fits.gz"
 
-        # create SdssCorrection instance
-        correction = SdssCalibrationCorrection({"filename": in_file})
+        # create SdssCalibrationCorrection instance
+        config = ConfigParser()
+        config.read_dict({"corrections": {"filename": in_file}})
+        correction = SdssCalibrationCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
 
         # apply the correction
@@ -73,16 +75,29 @@ class TestCorrection(AbstractTest):
         """
         in_file = f"{THIS_DIR}/data/dummy_corrections.fits.gz"
 
-        correction = SdssDustCorrection({"filename": in_file})
+        # create SdssDustCorrection instance
+        config = ConfigParser()
+        config.read_dict({"corrections": {"filename": in_file}})
+        correction = SdssDustCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
 
         # apply the correction
         forest = copy.deepcopy(forest1)
         correction.apply_correction(forest)
 
+        # TODO: add checks in ivar and flux
         self.assertTrue(np.allclose(forest.log_lambda, forest1_log_lambda))
         self.assertTrue(np.allclose(forest.transmission_correction,
                                     np.ones_like(forest1_log_lambda)))
+
+        # create SdssDustCorrection instance specifying the extinction conversion
+        # factor
+        config = ConfigParser()
+        config.read_dict({"corrections": {"filename": in_file,
+                                          "extinction_conversion_r": 3.5}})
+        correction = SdssDustCorrection(config["corrections"])
+        self.assertTrue(len(correction.extinction_bv_map) == 1)
+        self.assertTrue(correction.extinction_bv_map.get(100000) == 1/3.5)
 
     def test_sdss_ivar_correction(self):
         """Tests correct initialisation and inheritance for class
@@ -93,7 +108,10 @@ class TestCorrection(AbstractTest):
         """
         in_file = f"{THIS_DIR}/data/dummy_corrections.fits.gz"
 
-        correction = SdssIvarCorrection({"filename": in_file})
+        # create SdssIvarCorrection instance
+        config = ConfigParser()
+        config.read_dict({"corrections": {"filename": in_file}})
+        correction = SdssIvarCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
 
         # apply the correction
@@ -120,17 +138,17 @@ class TestCorrection(AbstractTest):
         # setup printing
         UserPrint.initialize_log(out_file)
 
-        correction = SdssOpticalDepthCorrection({"filename": in_file,
-                                                 "optical depth tau": "1",
-                                                 "optical depth gamma": "0",
-                                                 "optical depth absorber": "LYA",
-                                                 })
+        config = ConfigParser()
+        config.read_dict({"corrections": {"filename": in_file,
+                                          "optical depth tau": "1",
+                                          "optical depth gamma": "0",
+                                          "optical depth absorber": "LYA"}})
+        correction = SdssOpticalDepthCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
         self.compare_ascii(test_file, out_file, expand_dir=True)
 
         # reset printing
         UserPrint.reset_log()
-
 
         # apply the correction
         forest = copy.deepcopy(forest1)

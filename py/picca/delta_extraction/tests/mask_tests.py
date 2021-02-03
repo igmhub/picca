@@ -1,6 +1,7 @@
 """This file contains tests related to Mask and its childs"""
 import os
 import unittest
+from configparser import ConfigParser
 import numpy as np
 
 from picca.delta_extraction.errors import MaskError
@@ -31,44 +32,6 @@ class TestMask(AbstractTest):
             # run apply_correction, this should raise MaskError
             mask.apply_mask(forest1)
 
-    def test_dla_mask(self):
-        """Tests correct initialisation and inheritance for class
-        SdssDlaMask
-
-        Load a SdssDlaMask instace and check that it is
-        correctly initialized.
-        """
-        in_file = f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz"
-        out_file = f"{THIS_DIR}/results/sdss_dla_mask_print.txt"
-        test_file = f"{THIS_DIR}/data/sdss_dla_mask_print.txt"
-
-        # setup printing
-        UserPrint.initialize_log(out_file)
-
-        # initialize mask
-        mask = SdssDlaMask({"dla catalogue": in_file})
-        self.assertTrue(isinstance(mask, Mask))
-        self.compare_ascii(test_file, out_file, expand_dir=True)
-
-        # reset printing
-        UserPrint.reset_log()
-
-        # apply mask to forest with 1 DLA
-        mask.apply_mask(forest1)
-        # TODO: check that the profile is correct
-
-        # apply mask to forest with 2 DLAs
-        mask.apply_mask(forest2)
-        # TODO: check that the profile is correct
-
-        # apply mask to forest without DLAs
-        mask.apply_mask(forest3)
-        self.assertTrue(np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
-        self.assertTrue(np.allclose(forest3.log_lambda, forest3_log_lambda))
-        self.assertTrue(np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda)*4))
-        self.assertTrue(np.allclose(forest3.transmission_correction,
-                                    np.ones_like(forest3_log_lambda)))
-
     def test_absorber_mask(self):
         """Tests correct initialisation and inheritance for class
         SdssAbsorberMask
@@ -84,9 +47,12 @@ class TestMask(AbstractTest):
         UserPrint.initialize_log(out_file)
 
         # initialize mask
-        mask = SdssAbsorberMask({"absorbers catalogue": in_file})
+        config = ConfigParser()
+        config.read_dict({"masks": {"absorbers catalogue": in_file}})
+        mask = SdssAbsorberMask(config["masks"])
         self.assertTrue(isinstance(mask, Mask))
         self.compare_ascii(test_file, out_file, expand_dir=True)
+        self.assertTrue(mask.absorber_mask_width == 2.5)
 
         # reset printing
         UserPrint.reset_log()
@@ -122,6 +88,52 @@ class TestMask(AbstractTest):
         self.assertTrue(np.allclose(forest2.transmission_correction,
                                     np.ones_like(forest3_log_lambda)))
 
+        # initialize mask specifying variables
+        config = ConfigParser()
+        config.read_dict({"masks": {"absorbers catalogue": in_file,
+                                    "absorber mask width": 1.5,}})
+        mask = SdssAbsorberMask(config["masks"])
+        self.assertTrue(mask.absorber_mask_width == 1.5)
+
+    def test_dla_mask(self):
+        """Tests correct initialisation and inheritance for class
+        SdssDlaMask
+
+        Load a SdssDlaMask instace and check that it is
+        correctly initialized.
+        """
+        in_file = f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz"
+        out_file = f"{THIS_DIR}/results/sdss_dla_mask_print.txt"
+        test_file = f"{THIS_DIR}/data/sdss_dla_mask_print.txt"
+
+        # setup printing
+        UserPrint.initialize_log(out_file)
+
+        # initialize mask
+        config = ConfigParser()
+        config.read_dict({"masks": {"dla catalogue": in_file}})
+        mask = SdssDlaMask(config["masks"])
+        self.assertTrue(isinstance(mask, Mask))
+        self.compare_ascii(test_file, out_file, expand_dir=True)
+
+        # reset printing
+        UserPrint.reset_log()
+
+        # apply mask to forest with 1 DLA
+        mask.apply_mask(forest1)
+        # TODO: check that the profile is correct
+
+        # apply mask to forest with 2 DLAs
+        mask.apply_mask(forest2)
+        # TODO: check that the profile is correct
+
+        # apply mask to forest without DLAs
+        mask.apply_mask(forest3)
+        self.assertTrue(np.allclose(forest3.flux, np.ones_like(forest3_log_lambda)))
+        self.assertTrue(np.allclose(forest3.log_lambda, forest3_log_lambda))
+        self.assertTrue(np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda)*4))
+        self.assertTrue(np.allclose(forest3.transmission_correction,
+                                    np.ones_like(forest3_log_lambda)))
 
 
 if __name__ == '__main__':

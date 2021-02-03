@@ -1,8 +1,6 @@
 """This module defines the abstract class SdssForest to represent
 SDSS forests
 """
-import numpy as np
-
 from picca.delta_extraction.errors import AstronomicalObjectError
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -162,7 +160,7 @@ class SdssForest(Forest):
         # call parent constructor
         kwargs["los_id"] = self.thingid
         super().__init__(**kwargs)
-        
+
         # rebin arrays
         # this needs to happen after flux and ivar arrays are initialized by
         # Forest constructor

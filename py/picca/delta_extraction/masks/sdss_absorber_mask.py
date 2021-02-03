@@ -74,7 +74,7 @@ class SdssAbsorberMask(Mask):
 
         # setup transmission limit
         # transmissions below this number are masked
-        self.absorber_mask_width = config.get("absorber mask width")
+        self.absorber_mask_width = config.getfloat("absorber mask width")
         if self.absorber_mask_width is None:
             self.absorber_mask_width = defaults.get("absorber mask width")
 

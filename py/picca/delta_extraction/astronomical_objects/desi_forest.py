@@ -1,8 +1,6 @@
 """This module defines the abstract class SdssForest to represent
 SDSS forests
 """
-import numpy as np
-
 from picca.delta_extraction.errors import AstronomicalObjectError
 
 from picca.delta_extraction.astronomical_objects.forest import Forest

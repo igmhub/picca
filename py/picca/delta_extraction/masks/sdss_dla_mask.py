@@ -78,12 +78,12 @@ class SdssDlaMask(Mask):
 
         # setup transmission limit
         # transmissions below this number are masked
-        self.dla_mask_limit = config.get("dla mask limit")
+        self.dla_mask_limit = config.getfloat("dla mask limit")
         if self.dla_mask_limit is None:
             self.dla_mask_limit = defaults.get("dla mask limit")
 
         # load mask
-        mask_file = config.get("mask_file")
+        mask_file = config.get("mask file")
         if mask_file is not None:
             try:
                 self.mask = Table.read(mask_file,

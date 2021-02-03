@@ -13,6 +13,7 @@ from picca.delta_extraction.errors import DataError, DataWarning
 from picca.delta_extraction.userprint import userprint
 
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
+from picca.delta_extraction.astronomical_objects.forest import Forest
 
 from picca.delta_extraction.quasar_catalogues.ztruth_catalogue import ZtruthCatalogue
 

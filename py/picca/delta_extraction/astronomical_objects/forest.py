@@ -121,7 +121,7 @@ class Forest(AstronomicalObject):
     """
 
     delta_lambda = None
-    delta_lambda = None
+    delta_log_lambda = None
     lambda_max = None
     lambda_max_rest_frame = None
     lambda_min = None
@@ -208,62 +208,63 @@ class Forest(AstronomicalObject):
 
         self.__consistency_check()
 
-    def __class_variable_check(self):
+    @classmethod
+    def __class_variable_check(cls):
         """Check that class variables have been correctly initialized"""
-        if Forest.wave_solution is None:
+        if cls.wave_solution is None:
             raise AstronomicalObjectError("Error constructing Forest. "
                                           "Class variable 'wave_solution' "
                                           "must be set prior to initialize "
                                           "instances of this type")
-        elif Forest.wave_solution == "log":
-            if Forest.delta_log_lambda is None:
+        if cls.wave_solution == "log":
+            if cls.delta_log_lambda is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
                                               "Class variable 'delta_log_lambda' "
                                               "must be set prior to initialize "
                                               "instances of this type")
-            if Forest.log_lambda_max is None:
+            if cls.log_lambda_max is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
                                               "Class variable 'log_lambda_max' "
                                               "must be set prior to initialize "
                                               "instances of this type")
-            if Forest.log_lambda_max_rest_frame is None:
+            if cls.log_lambda_max_rest_frame is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
                                               "Class variable 'log_lambda_max_rest_frame' "
                                               "must be set prior to initialize "
                                               "instances of this type")
-            if Forest.log_lambda_min is None:
+            if cls.log_lambda_min is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
                                               "Class variable 'log_lambda_min' "
                                               "must be set prior to initialize "
                                               "instances of this type")
-            if Forest.log_lambda_min_rest_frame is None:
+            if cls.log_lambda_min_rest_frame is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
                                               "Class variable 'log_lambda_min_rest_frame' "
                                               "must be set prior to initialize "
                                               "instances of this type")
-        elif Forest.wave_solution == "lin":
-            if Forest.delta_lambda is None:
+        elif cls.wave_solution == "lin":
+            if cls.delta_lambda is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
                                               "Class variable 'delta_lambda' "
                                               "must be set prior to initialize "
                                               "instances of this type")
-            if Forest.lambda_max is None:
+            if cls.lambda_max is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
                                               "Class variable 'lambda_max' "
                                               "must be set prior to initialize "
                                               "instances of this type")
-            if Forest.lambda_max_rest_frame is None:
+            if cls.lambda_max_rest_frame is None:
                 raise AstronomicalObjectError(
                     "Error constructing Forest. "
                     "Class variable 'lambda_max_rest_frame' "
                     "must be set prior to initialize "
                     "instances of this type")
-            if Forest.lambda_min is None:
+            if cls.lambda_min is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
                                               "Class variable 'lambda_min' "
                                               "must be set prior to initialize "
                                               "instances of this type")
-            if Forest.lambda_min_rest_frame is None:
+            if cls.lambda_min_rest_frame is None:
                 raise AstronomicalObjectError(
                     "Error constructing Forest. "
                     "Class variable 'lambda_min_rest_frame' "
@@ -273,7 +274,7 @@ class Forest(AstronomicalObject):
             raise AstronomicalObjectError("Error constructing Forest. "
                                           "Class variable 'wave_solution' "
                                           "must be either 'lin' or 'log'. "
-                                          f"Found: {Forest.wave_solution}")
+                                          f"Found: {cls.wave_solution}")
 
     def __consistency_check(self):
         """Consistency checks after __init__"""
@@ -408,5 +409,3 @@ class Forest(AstronomicalObject):
         # finally update control variables
         snr = self.flux * np.sqrt(self.ivar)
         self.mean_snr = sum(snr) / float(len(snr))
-
-        return w

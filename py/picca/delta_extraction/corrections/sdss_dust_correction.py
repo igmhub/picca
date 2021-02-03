@@ -32,7 +32,7 @@ class SdssDustCorrection(Correction):
         Parsed options to initialize class
         """
         filename = config.get("filename")
-        extinction_conversion_r = config.get("extinction_conversion_r")
+        extinction_conversion_r = config.getfloat("extinction_conversion_r")
         if extinction_conversion_r is None:
             extinction_conversion_r = defaults.get("extinction_conversion_r")
 
