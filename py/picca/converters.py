@@ -20,8 +20,7 @@ from scipy.interpolate import interp1d
 from picca.data import Delta, Forest
 from picca.utils import userprint
 
-from picca import io
-#from picca import prep_del, io, constants
+from picca import prep_del, io, constants
 
 def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
     """Converts Pasquier Noterdaeme ASCII DLA catalog to a fits file
@@ -546,6 +545,16 @@ def desi_convert_transmission_to_delta_files(obj_path,
     # normalize stacked transmission
     w = stack_weight > 0.
     stack_delta[w] /= stack_weight[w]
+    
+    stack_log_lambda = np.arange(log_lambda_min,log_lambda_max,delta_log_lambda)
+    results = fitsio.FITS(out_dir+"iter.fits.gz",'rw',clobber=True)
+    header = {}
+    header["NSIDE"] = in_nside
+    results.write([stack_log_lambda, stack_delta, stack_weight],
+                  names=['loglam', 'stack', 'weight'],
+                  header=header,
+                  extname='STACK')
+    
 
     #  save results
     for index, healpix in enumerate(sorted(deltas)):
@@ -591,29 +600,33 @@ def desi_convert_transmission_to_delta_files(obj_path,
     userprint("")
     
 def desi_convert_delta_files_from_true_cont(obj_path,
-                                             out_dir,
-                                             in_dir_transmission=None,
-                                             in_dir_spectra=None,
-                                             in_filenames=None,
-                                             lambda_min=3600.,
-                                             lambda_max=5500.,
-                                             lambda_min_rest_frame=1040.,
-                                             lambda_max_rest_frame=1200.,
-                                             delta_log_lambda=3.e-4,
-                                             max_num_spec=None,
-                                             dla_mask = .8,
-                                             absorber_mask = 2.5,
-                                             delta_format = None,
-                                             spall=None,
-                                             zqso_min=None,
-                                             zqso_max=None,
-                                             mode='desi',
-                                             keep_bal=False,
-                                             bi_max=None,
-                                             best_obs=False,
-                                             single_exp=False,
-                                             npix_min=50,
-                                             use_constant_weight=False):
+                                            out_dir,
+                                            in_dir_transmission=None,
+                                            in_dir_spectra=None,
+                                            in_filenames=None,
+                                            lambda_min=3600.,
+                                            lambda_max=5500.,
+                                            lambda_min_rest_frame=1040.,
+                                            lambda_max_rest_frame=1200.,
+                                            delta_log_lambda=3.e-4,
+                                            max_num_spec=None,
+                                            dla_mask = .8,
+                                            absorber_mask = 2.5,
+                                            delta_format = None,
+                                            spall=None,
+                                            zqso_min=None,
+                                            zqso_max=None,
+                                            mode='desi',
+                                            keep_bal=False,
+                                            bi_max=None,
+                                            best_obs=False,
+                                            single_exp=False,
+                                            npix_min=50,
+                                            use_constant_weight=False,
+                                            eta_min = .5,
+                                            eta_max = 1.5,
+                                            vlss_min = .2,
+                                            vlss_max = .3,):
     
     """Get picca delta files from true continuum
 
@@ -786,15 +799,14 @@ def desi_convert_delta_files_from_true_cont(obj_path,
     
     stack_log_lambda = np.arange(log_lambda_min,log_lambda_max,delta_log_lambda)
     
-    
     results = fitsio.FITS(out_dir+"iter.fits.gz",'rw',clobber=True)
     header = {}
     header["NSIDE"] = in_nside
     results.write([stack_log_lambda, stack_delta, stack_weight],
-                  names=['loglam', 'stack', 'weight'],
+                  names=['LOGLAM', 'MEAN_TRANS', 'WEIGHT'],
                   header=header,
-                  extname='STACK')
-    results.close()
+                  extname='MEAN_TRANS')
+    #results.close()
     
     # setup forest class variables
     Forest.log_lambda_min = np.log10(lambda_min)
@@ -819,11 +831,7 @@ def desi_convert_delta_files_from_true_cont(obj_path,
     log_lambda_rest_frame_temp = (
         Forest.log_lambda_min_rest_frame + np.arange(2) *
         (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame))
-
-    Forest.get_var_lss = interp1d(log_lambda_temp,0.2 + np.zeros(2),fill_value="extrapolate",kind="nearest")
-    Forest.get_eta = interp1d(log_lambda_temp,np.ones(2),fill_value="extrapolate",kind="nearest")
-    Forest.get_fudge = interp1d(log_lambda_temp,np.zeros(2),fill_value="extrapolate",kind="nearest")
-    #Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp,1 + np.zeros(2))
+    
     
     log_file = open(os.path.expandvars(out_dir+'input.log'), 'w')
 
@@ -879,6 +887,22 @@ def desi_convert_delta_files_from_true_cont(obj_path,
     userprint(f"Remaining sample has {num_forests} forests")
 
 
+    (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
+                 var_delta, var2_delta, count, num_qso, chi2_in_bin, error_eta,
+                 error_var_lss, error_fudge) = prep_del.compute_var_stats(
+                     data, (eta_min, eta_max),
+                     (vlss_min, vlss_max))
+    w = num_pixels > 0
+    
+    '''Forest.get_var_lss = interp1d(log_lambda_temp,0.2 + np.zeros(2),fill_value="extrapolate",kind="nearest")
+    Forest.get_eta = interp1d(log_lambda_temp,np.ones(2),fill_value="extrapolate",kind="nearest")
+    Forest.get_fudge = interp1d(log_lambda_temp,np.zeros(2),fill_value="extrapolate",kind="nearest")
+    #Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp,1 + np.zeros(2))'''
+    
+    Forest.get_eta = interp1d(log_lambda[w],eta[w],fill_value="extrapolate",kind="nearest")
+    Forest.get_var_lss = interp1d(log_lambda[w],var_lss[w],fill_value="extrapolate",kind="nearest")
+    Forest.get_fudge = interp1d(log_lambda[w],fudge[w],fill_value="extrapolate",kind="nearest")
+    
     # add continua to forest objects
     for healpix in data:
         for forest in data[healpix]:
@@ -895,11 +919,11 @@ def desi_convert_delta_files_from_true_cont(obj_path,
             wave_cont = np.log10(np.arange(head['WMIN'],head['WMAX']+head['DWAVE']/2,head['DWAVE']))
             cont_rebin = np.interp(forest.log_lambda, wave_cont, cont)
 
-            forest.continuum = cont_rebin
+            forest.cont = cont_rebin
 
             bins = np.floor((forest.log_lambda - log_lambda_min) /
                             delta_log_lambda + 0.5).astype(int)
-            forest.delta = forest.flux / (stack_delta[bins] * forest.continuum) - 1.
+            forest.delta = forest.flux / (stack_delta[bins] * forest.cont) - 1.
 
             forest.mean_trans = stack_delta[bins]
             
@@ -912,6 +936,23 @@ def desi_convert_delta_files_from_true_cont(obj_path,
             forest.weights = 1. / variance
             
             #forest.weights = stack_delta[bins]**2/forest.ivar
+    
+    stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
+    
+    results.write([stack_log_lambda, stack_delta, stack_weight],
+                  names=['LOGLAM', 'STACK', 'WEIGHT'],
+                  header=header,
+                  extname='STACK')
+    
+    var_lss = Forest.get_var_lss(stack_log_lambda)
+    eta = Forest.get_eta(stack_log_lambda)
+    fudge = Forest.get_fudge(stack_log_lambda) 
+    
+    results.write([stack_log_lambda, eta, var_lss, fudge],
+                  names=['loglam', 'eta', 'var_lss', 'fudge'],
+                  extname='WEIGHT')
+    
+    results.close()
             
     # save results
     for index, healpix in enumerate(sorted(data)): ## loop over forests 
@@ -953,7 +994,7 @@ def desi_convert_delta_files_from_true_cont(obj_path,
                     },
                 ]
 
-            cols = [forest.log_lambda, forest.delta, forest.weights,forest.continuum,forest.mean_trans]
+            cols = [forest.log_lambda, forest.delta, forest.weights,forest.cont,forest.mean_trans]
             names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT','MEAN_TRANS']
             units = ['log Angstrom', '', '', '','']
 
