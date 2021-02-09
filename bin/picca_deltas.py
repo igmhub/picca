@@ -404,6 +404,19 @@ def main():
                         required=False,
                         help=('Name for table containing forests metadata'))
 
+    parser.add_argument('--use-single-nights',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help=('Use individual night for input spectra (DESI SV)'))
+
+    parser.add_argument('--use-all',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help=('Use all dir for input spectra (DESI SV)'))
+                        
+
     t0 = time.time()
 
     args = parser.parse_args()
@@ -501,7 +514,9 @@ def main():
                                          best_obs=args.best_obs,
                                          single_exp=args.single_exp,
                                          pk1d=args.delta_format,
-                                         spall=args.spall)
+                                         spall=args.spall,
+                                         useall=args.use_all,
+                                         usesinglenights=args.use_single_nights)
 
     #-- Add order info
     for pix in data:
