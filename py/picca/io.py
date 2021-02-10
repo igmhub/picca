@@ -1083,6 +1083,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
             for entry in catalog
         ]
+        #this uniqueness check is to ensure each petal/tile/night combination only appears once in the filelist
         petal_tile_night_unique = np.unique(petal_tile_night)
     
         filenames = []
@@ -1090,6 +1091,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
           for ptn in petal_tile_night_unique:
             if ptn in os.path.basename(f_in):
                 filenames.append(f_in)
+                break
     else:
         if useall:
             files_in = glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
@@ -1101,12 +1103,14 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             f"{entry['PETAL_LOC']}-{entry['TILEID']}"
             for entry in catalog
         ]
+        #this uniqueness check is to ensure each petal/tile combination only appears once in the filelist
         petal_tile_unique = np.unique(petal_tile)
         filenames = []
         for f_in in files_in:
           for pt in petal_tile_unique:
             if pt in os.path.basename(f_in):
                 filenames.append(f_in)
+                break
 
         
     #filenames = []
