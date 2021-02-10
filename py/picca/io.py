@@ -262,7 +262,9 @@ def read_data(in_dir,
               best_obs=False,
               single_exp=False,
               pk1d=None,
-              spall=None):
+              spall=None,
+              useall=False,
+              usesinglenights=False):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -299,6 +301,11 @@ def read_data(in_dir,
             Format for Pk 1D: Pk1D
         spall: str - default: None
             Path to the spAll file required for multiple observations
+        useall: bool - default: False
+            In case of DESI SV readin use the all directory
+        usesinglenights: bool - default: False
+            In case of DESI SV readin use only nights specified within the cat
+        
 
     Returns:
         The following variables:
@@ -413,7 +420,7 @@ def read_data(in_dir,
 
     elif mode == "desiminisv":
         nside = 8
-        data, num_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d)
+        data, num_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights)
     else:
         userprint("I don't know mode: {}".format(mode))
         sys.exit(1)
@@ -1050,7 +1057,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     return data
 
 
-def read_from_minisv_desi(in_dir, catalog, pk1d=None):
+def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, useall=False):
     """Reads the spectra and formats its data as Forest instances.
     Unlike the read_from_desi routine, this orders things by tile/petal
     Routine used to treat the DESI mini-SV data.
@@ -1069,19 +1076,43 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
 
     data = {}
     num_data = 0
-
-    files_in = glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
+    if usesinglenights:
+        files_in = glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
                          recursive=True)
-    petal_tile_night = [
-        f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
-        for entry in catalog
-    ]
-    petal_tile_night_unique = np.unique(petal_tile_night)
-    filenames = []
-    for f_in in files_in:
-        for ptn in petal_tile_night_unique:
+        petal_tile_night = [
+            f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
+            for entry in catalog
+        ]
+        #this uniqueness check is to ensure each petal/tile/night combination only appears once in the filelist
+        petal_tile_night_unique = np.unique(petal_tile_night)
+    
+        filenames = []
+        for f_in in files_in:
+          for ptn in petal_tile_night_unique:
             if ptn in os.path.basename(f_in):
                 filenames.append(f_in)
+                break
+    else:
+        if useall:
+            files_in = glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
+                         recursive=True)
+        else:
+            files_in = glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
+                         recursive=True)
+        petal_tile = [
+            f"{entry['PETAL_LOC']}-{entry['TILEID']}"
+            for entry in catalog
+        ]
+        #this uniqueness check is to ensure each petal/tile combination only appears once in the filelist
+        petal_tile_unique = np.unique(petal_tile)
+        filenames = []
+        for f_in in files_in:
+          for pt in petal_tile_unique:
+            if pt in os.path.basename(f_in):
+                filenames.append(f_in)
+                break
+
+        
     #filenames = []
     #for entry in catalog:
     #    fi = (f"{entry['TILEID']}/{entry['NIGHT']}/"+
