@@ -41,6 +41,9 @@ class DesiData(Data):
     forests: list of Forest (from Data)
     A list of Forest from which to compute the deltas.
 
+    min_num_pix: int (from Data)
+    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
+
     delta_lambda: float
     Variation of the wavelength (in Angs) between two pixels.
 
@@ -58,6 +61,9 @@ class DesiData(Data):
 
     lambda_min_rest_frame: float
     As lambda_min but for rest-frame wavelength.
+
+    mini_sv: bool
+    Read data in Mini SV format.
     """
     def __init__(self, config):
         """Initialize class instance

@@ -136,6 +136,12 @@ class Config:
                           "be applied to data", ConfigWarning)
         section = self.config["corrections"]
         self.num_corrections = section.getint("num corrections")
+        if self.num_corrections is None:
+            raise ConfigError("In section 'corrections', variable 'num corrections' "
+                              "is required")
+        if self.num_corrections < 0:
+            raise ConfigError("In section 'corrections', variable 'num corrections' "
+                              "must be a non-negative integer")
         for correction_index in range(self.num_corrections):
             # first load the correction class
             correction_name = section.get(f"type {correction_index}")

@@ -180,9 +180,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.lambda_ = None
         self.log_lambda_max = None
         if Forest.wave_solution == "log":
-            self._initialize_arrays_log()
+            self._initialize_variables_log()
         elif Forest.wave_solution == "linear":
-            self._initialize_arrays_lin()
+            self._initialize_variables_lin()
         else:
             raise MeanExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'linear'")
@@ -363,7 +363,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             except ValueError:
                 raise Exception("Problem found when loading get_mean_cont")
 
-            # add the optical depth correction
+            # add transmission correction
             # (previously computed using method add_optical_depth)
             mean_cont *= forest.transmission_correction
 
@@ -622,7 +622,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                         new_cont,
                                         fill_value="extrapolate")
 
-    def compute_mean_expected_flux(forests):
+    def compute_expected_flux(forests):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
         computed iteratively following as explained in du Mas des Bourboux et
@@ -666,11 +666,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             )
 
         # compute the mean deltas
-        compute_mean_deta(forests)
-        get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
-                                   stack_delta[stack_weight > 0.],
-                                   kind="nearest",
-                                   fill_value="extrapolate")
+        compute_deta_stack(forests)
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
@@ -718,7 +714,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         count = np.zeros(self.num_bins_variance * num_var_bins)
         num_qso = np.zeros(self.num_bins_variance * num_var_bins)
 
-        # compute delta statistics, binning the variance according to 'var'
+        # compute delta statistics, binning the variance according to 'ivar'
         for forest in forests:
             var_pipe = 1 / forest.ivar / forest.cont**2
             w = ((np.log10(var_pipe) > var_pipe_min) &

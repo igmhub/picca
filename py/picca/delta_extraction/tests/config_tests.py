@@ -10,7 +10,7 @@ from picca.delta_extraction.tests.abstract_test import AbstractTest
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 os.environ["THIS_DIR"] = THIS_DIR
 
-class TestConfiguration(AbstractTest):
+class ConfigurationTest(AbstractTest):
     """Test the configuration."""
 
     def test_config(self):

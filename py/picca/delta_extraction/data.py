@@ -26,24 +26,15 @@ class Data:
     ----------
     forests: list of Forest
     A list of Forest from which to compute the deltas.
+
+    min_num_pix: int
+    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
     """
 
     def __init__(self, config):
         """Initialize class instance"""
         self.forests = []
-        self.min_num_pix = None
-        self._parse_config(config)
 
-    # pylint: disable=no-self-use
-    # this method should use self in child classes
-    def _parse_config(self, config):
-        """Parse the configuration options for the parent type.
-
-        Arguments
-        ---------
-        config: configparser.SectionProxy
-        Parsed options to initialize class
-        """
         self.min_num_pix = config.getint("minimum number pixels in forest")
         if self.min_num_pix is None:
             self.min_num_pix = defaults.get("minimum number pixels in forest")

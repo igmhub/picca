@@ -41,7 +41,7 @@ class SdssData(Data):
     A list of Forest from which to compute the deltas.
 
     min_num_pix: int (from Data)
-    Minimum number of rebinned pixels to accept a forest.
+    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
 
     delta_log_lambda: float
     Variation of the logarithm of the wavelength (in Angs) between two pixels.
@@ -79,7 +79,12 @@ class SdssData(Data):
         super().__init__(config)
 
         # load variables from config
+        self.delta_log_lambda = None
         self.input_directory = None
+        self.log_lambda_max = None
+        self.log_lambda_max_rest_frame = None
+        self.log_lambda_min = None
+        self.log_lambda_min_rest_frame = None
         self.mode = None
         self._parse_config(config)
 
@@ -117,26 +122,26 @@ class SdssData(Data):
         -----
         DataError upon missing required variables
         """
-        rebin = config.get("rebin")
+        rebin = config.getint("rebin")
         if rebin is None:
             rebin = defaults.get("rebin")
         self.delta_log_lambda = rebin * 1e-4
         self.input_directory = config.get("input directory")
         if self.input_directory is None:
             raise DataError("Missing argument 'input directory' required by SdssData")
-        lambda_max = config.get("lambda max")
+        lambda_max = config.getfloat("lambda max")
         if lambda_max is None:
             lambda_max = defaults.get("lambda max")
         self.log_lambda_max = np.log10(lambda_max)
-        lambda_max_rest_frame = config.get("lambda max rest frame")
+        lambda_max_rest_frame = config.getfloat("lambda max rest frame")
         if lambda_max_rest_frame is None:
             lambda_max_rest_frame = defaults.get("lambda max rest frame")
         self.log_lambda_max_rest_frame = np.log10(lambda_max_rest_frame)
-        lambda_min = config.get("lambda min")
+        lambda_min = config.getfloat("lambda min")
         if lambda_min is None:
             lambda_min = defaults.get("lambda min")
         self.log_lambda_min = np.log10(lambda_min)
-        lambda_min_rest_frame = config.get("lambda min rest frame")
+        lambda_min_rest_frame = config.getfloat("lambda min rest frame")
         if lambda_min_rest_frame is None:
             lambda_min_rest_frame = defaults.get("lambda min rest frame")
         self.log_lambda_min_rest_frame = np.log10(lambda_min_rest_frame)
@@ -202,7 +207,8 @@ class SdssData(Data):
         catalogue: astropy.table.Table
         Table with the DRQ catalogue
         """
-        grouped_catalogue = catalogue.group_by("PLATE", "MJD")
+        grouped_catalogue = catalogue.group_by(["PLATE", "MJD"])
+        num_objects = np.unique(catalogue["THING_ID"]).size
         userprint("reading {} plates".format(len(grouped_catalogue.groups)))
 
         forests_by_thingid = {}
@@ -249,11 +255,14 @@ class SdssData(Data):
                     forests_by_thingid[thingid] = forest
                 userprint(f"{thingid} read from file {spplate} and fiberid {fiberid}\n")
 
-            num_read = len(group)
-            time_read = (time.time() - t0) / (num_read + num_read == 0)
+            num_read = float(len(group))
+            if num_read > 0.0:
+                time_read = (time.time() - t0) / num_read
+            else:
+                time_read = np.nan
             userprint(f"INFO: read {num_read} from {os.path.basename(spplate)}"
                       f" in {time_read:.3f} per spec. Progress: "
-                      f"{len(forests_by_thingid)} of {len(catalogue)}")
+                      f"{len(forests_by_thingid)} of {num_objects}")
             hdul.close()
 
         self.forests = list(forests_by_thingid.values())

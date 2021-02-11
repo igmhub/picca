@@ -119,12 +119,6 @@ class SdssForest(Forest):
     thingid: int
     Thingid of the object
     """
-    delta_log_lambda = None
-    log_lambda_max = None
-    log_lambda_max_rest_frame = None
-    log_lambda_min = None
-    log_lambda_min_rest_frame = None
-
     def __init__(self, **kwargs):
         """Initialize instance
 

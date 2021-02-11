@@ -26,13 +26,13 @@ class QuasarCatalogue:
     max_num_spec: int or None
     Maximum number of spectra to read. None for no maximum
 
-    z_min: float
-    Minimum redshift. Quasars with redshifts lower than z_min will be
-    discarded
-
     z_max: float
     Maximum redshift. Quasars with redshifts higher than or equal to
     z_max will be discarded
+
+    z_min: float
+    Minimum redshift. Quasars with redshifts lower than z_min will be
+    discarded
     """
     def __init__(self, config):
         """Initialize class instance
@@ -43,32 +43,15 @@ class QuasarCatalogue:
         Parsed options to initialize class
         """
         # load variables from config
-        self.max_num_spec = None
-        self.z_max = None
-        self.z_min = None
-        self._parse_config(config)
-
-        self.catalogue = None
-
-    def _parse_config(self, config):
-        """Parse the configuration options
-
-        Arguments
-        ---------
-        config: configparser.SectionProxy
-        Parsed options to initialize class
-
-        Raise
-        -----
-        DataError upon missing required variables
-        """
-        self.max_num_spec = config.getint("max num spectra")
+        self.max_num_spec = config.getint("max num spec")
         self.z_min = config.getfloat("z min")
         if self.z_min is None:
             self.z_min = defaults.get("z min")
         self.z_max = config.getfloat("z max")
         if self.z_max is None:
             self.z_max = defaults.get("z max")
+
+        self.catalogue = None
 
     def trim_catalogue(self):
         """Trims the current catalogue.

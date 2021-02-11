@@ -38,7 +38,7 @@ def main(args):
     survey.apply_masks()
 
     # compute forest continua
-    survey.compute_mean_expected_flux()
+    survey.compute_expected_flux()
 
     # compute the delta field
     survey.extract_deltas()
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument('config-file',
                         type=str,
                         default=None,
-                        help='Configureation file')
+                        help='Configuration file')
 
     args = parser.parse_args()
     main(args)

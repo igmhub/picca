@@ -18,8 +18,8 @@ from picca.delta_extraction.tests.test_utils import forest3_log_lambda, forest3
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-class TestMask(AbstractTest):
-    """Test the configuration."""
+class MaskTest(AbstractTest):
+    """Test class Mask and its childs."""
 
     def test_mask(self):
         """Tests Abstract class Mask

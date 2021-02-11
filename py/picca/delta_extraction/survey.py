@@ -100,8 +100,8 @@ class Survey:
         t1 = time.time()
         userprint(f"Time spent applying corrections: {t1-t0}")
 
-    def compute_mean_expected_flux(self):
-        """Computes the mean expected flux.
+    def compute_expected_flux(self):
+        """Computes the expected flux.
         This includes the quasar continua and the mean transimission.
 
         Raises

@@ -21,7 +21,7 @@ from picca.delta_extraction.tests.test_utils import forest1_log_lambda, forest1
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class TestCorrection(AbstractTest):
+class CorrectionTest(AbstractTest):
     """Test Correction and its childs."""
     def test_correction(self):
         """Tests Abstract class Correction

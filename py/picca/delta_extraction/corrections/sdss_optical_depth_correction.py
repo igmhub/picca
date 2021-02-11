@@ -19,6 +19,15 @@ class SdssOpticalDepthCorrection(Correction):
     correct_flux: scipy.interpolate.interp1d
     Interpolation function to adapt the correction to slightly different
     grids of wavelength
+
+    gamma_list: list of float
+    List of gamma factors for each of the optical depth absorbers
+
+    lambda_rest_frame_list: list of float
+    List of rest frame wavelengths for each of the optical depth absorbers
+
+    tau_list: list of float
+    List of tau factors for each of the optical depth absorbers
     """
     def __init__(self, config):
         """Initializes class instance.
@@ -32,16 +41,16 @@ class SdssOpticalDepthCorrection(Correction):
         ------
         CorrectionError if the variables 'optical depths tau',
         """
-        self.tau_list = config.get("optical depth tau")
-        if self.tau_list is None:
+        tau_list = config.get("optical depth tau")
+        if tau_list is None:
             raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
                                   "Missing variable 'optical depth tau'")
-        self.tau_list = [float(item) for item in self.tau_list.split()]
-        self.gamma_list = config.get("optical depth gamma")
-        if self.gamma_list is None:
+        self.tau_list = [float(item) for item in tau_list.split()]
+        gamma_list = config.get("optical depth gamma")
+        if gamma_list is None:
             raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
                                   "Missing variable 'optical depth gamma'")
-        self.gamma_list = [float(item) for item in self.gamma_list.split()]
+        self.gamma_list = [float(item) for item in gamma_list.split()]
         absorber_list = config.get("optical depth absorber")
         if absorber_list is None:
             raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "

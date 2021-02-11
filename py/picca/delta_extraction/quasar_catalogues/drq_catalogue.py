@@ -120,30 +120,29 @@ class DrqCatalogue(QuasarCatalogue):
                 warnings.warn("Missing argument 'spAll' required by DrqCatalogue. "
                               "Looking for spAll in input directory...", QuasarCatalogueWarning)
 
-            if config.get("input directory") is None:
-                warnings.warn("'spAll' file not found. If you didn't want to load "
-                              "the spAll file you should pass the option "
-                              "'best obs = True'. Quiting...", QuasarCatalogueWarning)
-                raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
-            folder = config.get("spAll").replace("spectra/",
-                                                 "").replace("lite",
-                                                             "").replace("full",
-                                                                         "")
-            filenames = glob.glob(folder + "/spAll-*.fits")
-
-            if len(filenames) > 1:
-                warnings.warn("Found multiple 'spAll' files not found. Quiting...",
-                              QuasarCatalogueWarning)
-                for filename in filenames:
-                    warnings.warn(f"found: {filename}", QuasarCatalogueWarning)
-                raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
-            if len(filenames) == 0:
-                warnings.warn("'spAll' file not found. If you didn't want to load "
-                              "the spAll file you should pass the option "
-                              "'best obs = True'. Quiting...", QuasarCatalogueWarning)
-                raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
-            self.spall = filenames[0]
-            warnings.warn("'spAll' file found. Contining with normal execution.")
+                if config.get("input directory") is None:
+                    warnings.warn("'spAll' file not found. If you didn't want to load "
+                                  "the spAll file you should pass the option "
+                                  "'best obs = True'. Quiting...", QuasarCatalogueWarning)
+                    raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
+                folder = config.get("input directory").replace("spectra",
+                                                               "").replace("lite",
+                                                                           "").replace("full",
+                                                                                       "")
+                filenames = glob.glob(f"{folder}/spAll*.fits")
+                if len(filenames) > 1:
+                    warnings.warn("Found multiple 'spAll' files not found. Quiting...",
+                                  QuasarCatalogueWarning)
+                    for filename in filenames:
+                        warnings.warn(f"found: {filename}", QuasarCatalogueWarning)
+                    raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
+                if len(filenames) == 0:
+                    warnings.warn("'spAll' file not found. If you didn't want to load "
+                                  "the spAll file you should pass the option "
+                                  "'best obs = True'. Quiting...", QuasarCatalogueWarning)
+                    raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
+                self.spall = filenames[0]
+                warnings.warn("'spAll' file found. Contining with normal execution.")
 
 
     def read_drq(self):
@@ -154,8 +153,8 @@ class DrqCatalogue(QuasarCatalogue):
         catalogue: Astropy.table.Table
         Table with the DRQ catalogue
         """
-        userprint('Reading DRQ catalogue from ', self.drq_filename)
-        catalogue = Table.read(self.drq_filename, ext=1)
+        userprint(f"Reading DRQ catalogue from {self.drq_filename}")
+        catalogue = Table.read(self.drq_filename, hdu="CATALOGUE")
 
         keep_columns = ['RA', 'DEC', 'Z', 'THING_ID', 'PLATE', 'MJD', 'FIBERID']
 
@@ -220,8 +219,8 @@ class DrqCatalogue(QuasarCatalogue):
             keep_columns += ['NHI']
 
         # Convert angles to radians
-        catalogue['RA'] = np.radians(catalogue['RA'])
-        catalogue['DEC'] = np.radians(catalogue['DEC'])
+        np.radians(catalogue['RA'], out=catalogue['RA'])
+        np.radians(catalogue['DEC'], out=catalogue['DEC'])
 
         catalogue.keep_columns(keep_columns)
         w = np.where(w)[0]
@@ -248,10 +247,10 @@ class DrqCatalogue(QuasarCatalogue):
         """
         userprint(f"INFO: reading spAll from {self.spall}")
         try:
-            catalogue = Table.read(self.spall, ext=1,
-                                   keep_columns=["THING_ID", "PLATE", "MJD",
-                                                 "FIBERID", "PLATEQUALITY",
-                                                 "ZWARNING", "RA", "DEC"])
+            catalogue = Table.read(self.spall, hdu=1)
+            catalogue.keep_columns(["THING_ID", "PLATE", "MJD",
+                                    "FIBERID", "PLATEQUALITY",
+                                    "ZWARNING"])
         except IOError as error:
             raise QuasarCatalogueError("Error in reading DRQ Catalogue. Error "
                                        f"reading file {self.spall}. IOError "
@@ -288,7 +287,7 @@ class DrqCatalogue(QuasarCatalogue):
         # stage
         select_cols = [name for name in catalogue.colnames
                        if name not in ["PLATEQUALITY", "ZWARNING"]]
-        select_cols_drq = [name for name in catalogue.colnames
+        select_cols_drq = [name for name in drq_catalogue.colnames
                            if name not in ["PLATE", "FIBERID", "MJD"]]
         catalogue = join(catalogue[select_cols],
                          drq_catalogue[select_cols_drq],
