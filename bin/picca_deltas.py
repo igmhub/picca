@@ -776,10 +776,10 @@ def main():
             ],
                           names=['loglam_rest', 'mean_cont', 'weight'],
                           extname='CONT')
-            var_pipe_values = np.broadcast_to(var_pipe_values.reshape(1, -1),
+            var_pipe_values_out = np.broadcast_to(var_pipe_values.reshape(1, -1),
                                               var_delta.shape)
             results.write([
-                var_pipe_values, var_delta, var2_delta, count, num_qso,
+                var_pipe_values_out, var_delta, var2_delta, count, num_qso,
                 chi2_in_bin
             ],
                           names=[
