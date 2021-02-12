@@ -548,6 +548,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
         mean_cont = np.zeros(num_bins)
         mean_cont_weight = np.zeros(num_bins)
 
+        # first compute <F/C> in bins. C=Cont_old*spectrum_dependent_fitting_fct
+        # (and Cont_old is constant for all spectra in a bin), thus we actually
+        # compute
+        #    1/Cont_old * <F/spectrum_dependent_fitting_function>
         for forest in forests:
             bins = ((forest.lambda_/(1 + forest.z) -
                      Forest.lambda_min_rest_frame) /
@@ -571,8 +575,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         mean_cont /= mean_cont.mean()
         lambda_cont = self.lambda_rest_frame[w]
 
-        # the new mean continuum is multiplied by the previous one
-        # (for some reason)
+        # the new mean continuum is multiplied by the previous one to recover
+        # <F/spectrum_dependent_fitting_function>
         new_cont = self.get_mean_cont(lambda_cont) * mean_cont[w]
         self.get_mean_cont = interp1d(lambda_cont,
                                         new_cont,
@@ -592,6 +596,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
         mean_cont = np.zeros(num_bins)
         mean_cont_weight = np.zeros(num_bins)
 
+        # first compute <F/C> in bins. C=Cont_old*spectrum_dependent_fitting_fct
+        # (and Cont_old is constant for all spectra in a bin), thus we actually
+        # compute
+        #    1/Cont_old * <F/spectrum_dependent_fitting_function>
         for forest in forests:
             bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
                      np.log10(1 + forest.z_qso)) /
@@ -615,8 +623,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         mean_cont /= mean_cont.mean()
         log_lambda_cont = self.log_lambda_rest_frame[w]
 
-        # the new mean continuum is multiplied by the previous one
-        # (for some reason)
+        # the new mean continuum is multiplied by the previous one to recover
+        # <F/spectrum_dependent_fitting_function>
         new_cont = self.get_mean_cont(log_lambda_cont) * mean_cont[w]
         self.get_mean_cont = interp1d(log_lambda_cont,
                                         new_cont,
