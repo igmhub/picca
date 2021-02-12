@@ -752,10 +752,12 @@ def main():
         stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
 
         ### Save iter_out_prefix
-        with fitsio.FITS(args.iter_out_prefix +
-                         "_iteration{}.fits.gz".format(iteration),
-                         'rw',
-                         clobber=True) as results:
+        delta_attrib_name = args.iter_out_prefix
+        if iteration == num_iterations - 1:
+            delta_attrib_name += ".fits.gz"
+        else:
+            delta_attrib_name += "_iteration{}.fits.gz".format(iteration + 1)
+        with fitsio.FITS(delta_attrib_name, 'rw', clobber=True) as results:
             header = {}
             header["NSIDE"] = nside
             header["PIXORDER"] = healpy_pix_ordering
