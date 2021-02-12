@@ -208,10 +208,11 @@ class SdssData(Data):
         Table with the DRQ catalogue
         """
         grouped_catalogue = catalogue.group_by(["PLATE", "MJD"])
-        num_objects = np.unique(catalogue["THING_ID"]).size
+        num_objects = catalogue["THING_ID"].size
         userprint("reading {} plates".format(len(grouped_catalogue.groups)))
 
         forests_by_thingid = {}
+        num_read_total = 0
         for (plate, mjd), group in zip(grouped_catalogue.groups.keys,
                                        grouped_catalogue.groups):
             spplate = f"{self.input_directory}/{plate}/spPlate-{plate:04d}-{mjd}.fits"
@@ -255,14 +256,15 @@ class SdssData(Data):
                     forests_by_thingid[thingid] = forest
                 userprint(f"{thingid} read from file {spplate} and fiberid {fiberid}\n")
 
-            num_read = float(len(group))
+            num_read = len(group)
+            num_read_total += num_read
             if num_read > 0.0:
                 time_read = (time.time() - t0) / num_read
             else:
                 time_read = np.nan
             userprint(f"INFO: read {num_read} from {os.path.basename(spplate)}"
                       f" in {time_read:.3f} per spec. Progress: "
-                      f"{len(forests_by_thingid)} of {num_objects}")
+                      f"{num_read_total} of {num_objects}")
             hdul.close()
 
         self.forests = list(forests_by_thingid.values())

@@ -75,12 +75,40 @@ class DataTest(AbstractTest):
         UserPrint.reset_log()
 
 
+    def test_sdss_data_spec(self):
+        """Tests SdssData when run in spec mode"""
+        config = ConfigParser()
+        config.read_dict({"data": {"input directory": f"{THIS_DIR}/data",
+                                   "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+                                   "mode": "spec"}
+                         })
+        data = SdssData(config["data"])
+
+        self.assertTrue(len(data.forests) == 43)
+        self.assertTrue(data.min_num_pix == 50)
+        self.assertTrue(all(isinstance(forest, SdssForest)
+                        for forest in data.forests))
+
     def test_sdss_data_spplate(self):
         """Tests SdssData when run in spplate mode"""
+        # using default  value for 'mode'
         config = ConfigParser()
         config.read_dict({"data": {"input directory": f"{THIS_DIR}/data",
                                    "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
                                    }
+                         })
+        data = SdssData(config["data"])
+
+        self.assertTrue(len(data.forests) == 43)
+        self.assertTrue(data.min_num_pix == 50)
+        self.assertTrue(all(isinstance(forest, SdssForest)
+                        for forest in data.forests))
+
+        # specifying 'mode'
+        config = ConfigParser()
+        config.read_dict({"data": {"input directory": f"{THIS_DIR}/data",
+                                   "drq catalogue": f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+                                   "mode": "spplate",}
                          })
         data = SdssData(config["data"])
 

@@ -1,5 +1,0 @@
-Reading DLA catalog from: /Users/iperezra/software/picca/py/picca/delta_extraction/tests/data/dummy_absorbers_cat.fits.gz
- In catalog: 3 DLAs
- In catalog: 2 forests have a DLA
-
-

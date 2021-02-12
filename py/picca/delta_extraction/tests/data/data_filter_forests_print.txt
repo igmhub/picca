@@ -1,0 +1,5 @@
+INFO: Input sample has 1 forests
+INFO: Remaining sample has 1 forests
+INFO: Input sample has 1 forests
+INFO: Rejected forest with thingid 10000 due to forest being too short
+INFO: Remaining sample has 0 forests
