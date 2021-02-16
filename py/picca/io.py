@@ -1006,21 +1006,19 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                     spec[key][w] = 0.
                 if f"{color}_RESOLUTION" in hdul:
                     spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
-                else:
+                elif pk1d is not None:
+                    filename_truth=f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits"
                     try:
-                        filename_truth=f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits"
-
                         with fitsio.FITS(filename_truth) as hdul_truth:
                             spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
                     except IOError:
-                        userprint(f"Error reading truth file {filename_truth}")    
-                        breakpoint()
+                        userprint(f"Error reading truth file {filename_truth}")   
                     except KeyError:
-                        userprint(f"Error reading resolution from truth file for pix {healpix}")    
+                        userprint(f"Error reading resolution from truth file for pix {healpix}")
                     else:
-                        reso_from_truth=True
-
-                            
+                        if not reso_from_truth:
+                            userprint('Did not find resolution matrix in spectrum files, using resolution from truth files')
+                            reso_from_truth=True
                 spec_data[color] = spec
             except OSError:
                 userprint(f"ERROR: while reading {color} band from {filename}")
