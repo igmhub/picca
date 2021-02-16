@@ -1008,7 +1008,8 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                     spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                 else:
                     try:
-                        filename_truth=filename.replace('spectra-','truth-')
+                        filename_truth=f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits"
+
                         with fitsio.FITS(filename_truth) as hdul_truth:
                             spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
                     except IOError:
