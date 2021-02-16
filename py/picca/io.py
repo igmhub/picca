@@ -1012,7 +1012,8 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                         with fitsio.FITS(filename_truth) as hdul_truth:
                             spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
                     except IOError:
-                        userprint(f"Error reading truth file for resolution for pix {healpix}")    
+                        userprint(f"Error reading truth file {filename_truth}")    
+                        breakpoint()
                     except KeyError:
                         userprint(f"Error reading resolution from truth file for pix {healpix}")    
                     else:
