@@ -986,6 +986,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
         fibermap = hdul['FIBERMAP'].read()
         targetid_spec = fibermap["TARGETID"]
 
+        reso_from_truth=False
         #-- First read all wavelength, flux, ivar, mask, and resolution
         #-- from this file
         spec_data = {}
@@ -1005,6 +1006,19 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                     spec[key][w] = 0.
                 if f"{color}_RESOLUTION" in hdul:
                     spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
+                else:
+                    try:
+                        filename_truth=filename.replace('spectra-','truth-')
+                        with fitsio.FITS(filename_truth) as hdul_truth:
+                            spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
+                    except IOError:
+                        userprint(f"Error reading truth file for resolution for pix {healpix}")    
+                    except KeyError:
+                        userprint(f"Error reading resolution from truth file for pix {healpix}")    
+                    else:
+                        reso_from_truth=True
+
+                            
                 spec_data[color] = spec
             except OSError:
                 userprint(f"ERROR: while reading {color} band from {filename}")
@@ -1033,7 +1047,10 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                 flux = spec['FL'][w_t].copy()
 
                 if not pk1d is None:
-                    reso_sum = spec['RESO'][w_t].copy()
+                    if not reso_from_truth:
+                        reso_sum = spec['RESO'][w_t].copy()
+                    else:
+                        reso_sum = spec['RESO'][:].copy()
                     reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['log_lambda'])
                     exposures_diff = np.zeros(spec['log_lambda'].shape)
@@ -1212,10 +1229,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 flux = spec['FL'][w_t].copy()
 
                 if pk1d is not None:
-                    if len(spec['RESO'])>1:
-                        reso_sum = spec['RESO'][w_t].copy()
-                    else:
-                        reso_sum = spec['RESO'][0].copy()
+                    reso_sum = spec['RESO'][w_t].copy()
                     reso_in_km_per_s = np.real(
                         spectral_resolution_desi(reso_sum, spec['log_lambda']))
                     exposures_diff = np.zeros(spec['log_lambda'].shape)
