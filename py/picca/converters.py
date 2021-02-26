@@ -369,7 +369,8 @@ def desi_convert_transmission_to_delta_files(obj_path,
                                              lambda_min_rest_frame=1040.,
                                              lambda_max_rest_frame=1200.,
                                              delta_log_lambda=3.e-4,
-                                             max_num_spec=None):
+                                             max_num_spec=None,
+                                             use_constant_weight=False,):
     """Convert desi transmission files to picca delta files
 
     Args:
@@ -544,6 +545,8 @@ def desi_convert_transmission_to_delta_files(obj_path,
 
     # normalize stacked transmission
     w = stack_weight > 0.
+    
+    #if not use_constant_weight:
     stack_delta[w] /= stack_weight[w]
     
     stack_log_lambda = np.arange(log_lambda_min,log_lambda_max,delta_log_lambda)
@@ -569,7 +572,11 @@ def desi_convert_transmission_to_delta_files(obj_path,
             bins = np.floor((delta.log_lambda - log_lambda_min) /
                             delta_log_lambda + 0.5).astype(int)
             delta.delta = delta.delta / stack_delta[bins] - 1.
-            delta.weights *= stack_delta[bins]**2
+            
+            if not use_constant_weight:
+                delta.weights *= stack_delta[bins]**2
+            else:
+                delta.weights = np.ones(len(stack_delta[bins]))
 
             header = {}
             header['RA'] = delta.ra
@@ -795,6 +802,8 @@ def desi_convert_delta_files_from_true_cont(obj_path,
     userprint('\n')
     # normalize stacked transmission
     w = stack_weight > 0.
+    
+    #if not use_constant_weight:
     stack_delta[w] /= stack_weight[w]
     
     stack_log_lambda = np.arange(log_lambda_min,log_lambda_max,delta_log_lambda)
@@ -886,22 +895,10 @@ def desi_convert_delta_files_from_true_cont(obj_path,
                     "forests\n").format(num_forests))
     userprint(f"Remaining sample has {num_forests} forests")
 
-
-    (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
-                 var_delta, var2_delta, count, num_qso, chi2_in_bin, error_eta,
-                 error_var_lss, error_fudge) = prep_del.compute_var_stats(
-                     data, (eta_min, eta_max),
-                     (vlss_min, vlss_max))
-    w = num_pixels > 0
-    
-    '''Forest.get_var_lss = interp1d(log_lambda_temp,0.2 + np.zeros(2),fill_value="extrapolate",kind="nearest")
+    Forest.get_var_lss = interp1d(log_lambda_temp,0.2 + np.zeros(2),fill_value="extrapolate",kind="nearest")
     Forest.get_eta = interp1d(log_lambda_temp,np.ones(2),fill_value="extrapolate",kind="nearest")
     Forest.get_fudge = interp1d(log_lambda_temp,np.zeros(2),fill_value="extrapolate",kind="nearest")
-    #Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp,1 + np.zeros(2))'''
-    
-    Forest.get_eta = interp1d(log_lambda[w],eta[w],fill_value="extrapolate",kind="nearest")
-    Forest.get_var_lss = interp1d(log_lambda[w],var_lss[w],fill_value="extrapolate",kind="nearest")
-    Forest.get_fudge = interp1d(log_lambda[w],fudge[w],fill_value="extrapolate",kind="nearest")
+    Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp,1 + np.zeros(2))
     
     # add continua to forest objects
     for healpix in data:
@@ -927,15 +924,32 @@ def desi_convert_delta_files_from_true_cont(obj_path,
 
             forest.mean_trans = stack_delta[bins]
             
-            var_lss = Forest.get_var_lss(forest.log_lambda)
-            eta = Forest.get_eta(forest.log_lambda)
-            fudge = Forest.get_fudge(forest.log_lambda)
+    if not use_constant_weight:
+        (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
+                 var_delta, var2_delta, count, num_qso, chi2_in_bin, error_eta,
+                 error_var_lss, error_fudge) = prep_del.compute_var_stats(
+                     data, (eta_min, eta_max),
+                     (vlss_min, vlss_max))
+        w = num_pixels > 0
 
-            var_pipe = stack_delta[bins]**2/forest.ivar
-            variance = eta * var_pipe + var_lss + fudge / var_pipe
-            forest.weights = 1. / variance
-            
-            #forest.weights = stack_delta[bins]**2/forest.ivar
+        Forest.get_eta = interp1d(log_lambda[w],eta[w],fill_value="extrapolate",kind="nearest")
+        Forest.get_var_lss = interp1d(log_lambda[w],var_lss[w],fill_value="extrapolate",kind="nearest")
+        Forest.get_fudge = interp1d(log_lambda[w],fudge[w],fill_value="extrapolate",kind="nearest")
+        
+    else:
+        num_bins = 10  # this value is arbitrary
+        log_lambda = (
+            Forest.log_lambda_min + (np.arange(num_bins) + .5) *
+            (Forest.log_lambda_max - Forest.log_lambda_min) / num_bins)
+
+        userprint(("INFO: using constant weights, skipping eta, var_lss, fudge fits"))
+        eta = np.zeros(num_bins)
+        var_lss = np.ones(num_bins)
+        fudge = np.zeros(num_bins)
+
+        Forest.get_eta = interp1d(log_lambda,eta,fill_value='extrapolate',kind='nearest')
+        Forest.get_var_lss = interp1d(log_lambda,var_lss,fill_value='extrapolate',kind='nearest')
+        Forest.get_fudge = interp1d(log_lambda,fudge,fill_value='extrapolate',kind='nearest')
     
     stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
     
@@ -953,7 +967,21 @@ def desi_convert_delta_files_from_true_cont(obj_path,
                   extname='WEIGHT')
     
     results.close()
-            
+    
+    # calculate correct weights
+    for healpix in data:
+        for forest in data[healpix]:
+
+            bins = np.floor((forest.log_lambda - log_lambda_min) / delta_log_lambda + 0.5).astype(int)
+
+            var_lss = Forest.get_var_lss(forest.log_lambda)
+            eta = Forest.get_eta(forest.log_lambda)
+            fudge = Forest.get_fudge(forest.log_lambda)
+
+            var_pipe = stack_delta[bins]**2/forest.ivar
+            variance = eta * var_pipe + var_lss + fudge / var_pipe
+            forest.weights = 1. / variance
+        
     # save results
     for index, healpix in enumerate(sorted(data)): ## loop over forests 
         if len(data[healpix]) == 0:
