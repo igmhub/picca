@@ -19,7 +19,7 @@ def bias_vs_z_std(z, zref, alpha):
 
 def growthRateStructure(z, omega_M_0=0.31457):
     omega_m = omega_M_0*(1.+z)**3 / ( omega_M_0*(1.+z)**3+(1.-omega_M_0))
-    f = sp.power(omega_m,0.55)
+    f = omega_m**0.55
     return f
 
 def update_system_status_values(path, section, system, value):
@@ -57,23 +57,23 @@ if __name__ == '__main__':
     z = h['COR']['Z'][:]
     rp = h['COR']['RP'][:]
     rt = h['COR']['RT'][:]
-    r = sp.sqrt(rp**2. + rt**2.)
+    r = np.sqrt(rp**2. + rt**2.)
     w = (r>80.) & (r<120.)
     h.close()
     
     weTot = 0.
     zeffTot = 0.
     
-    if sp.sum( we[w] )!=0.:
-        zeff = sp.sum( z[w]*we[w] )/sp.sum( we[w] )
-        zeffTot = zeffTot*weTot + sp.sum( z[w]*we[w] )
-        weTot += sp.sum( we[w] )
+    if np.sum( we[w] )!=0.:
+        zeff = np.sum( z[w]*we[w] )/np.sum( we[w] )
+        zeffTot = zeffTot*weTot + np.sum( z[w]*we[w] )
+        weTot += np.sum( we[w] )
         zeffTot /= weTot
 
     f = growthRateStructure(zeff)
     biasQSO = 3.7 * bias_vs_z_std(zeff, zref=2.33, alpha=1.7)
     betaQSO = f/biasQSO
-    
+    print('zeff =',zeff)
     update_system_status_values(args.chi2, 'data sets', 'zeff', str(zeff))
     
     conf = args.data.replace('.fits','.ini')
