@@ -155,7 +155,7 @@ def read_drq(drq_filename,
         obj_id_name = 'TARGETID'
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
-        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER']
+        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'FIBER']
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
@@ -1100,15 +1100,16 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
             for entry in catalog
         ]
+        
         #this uniqueness check is to ensure each petal/tile/night combination only appears once in the filelist
         petal_tile_night_unique = np.unique(petal_tile_night)
     
         filenames = []
         for f_in in files_in:
-          for ptn in petal_tile_night_unique:
-            if ptn in os.path.basename(f_in):
-                filenames.append(f_in)
-                break
+            for ptn in petal_tile_night_unique:
+                if ptn in os.path.basename(f_in):
+                    filenames.append(f_in)
+                    break
     else:
         if useall:
             files_in = glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
@@ -1116,6 +1117,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         else:
             files_in = glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
                          recursive=True)
+            
         petal_tile = [
             f"{entry['PETAL_LOC']}-{entry['TILEID']}"
             for entry in catalog
@@ -1124,10 +1126,10 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         petal_tile_unique = np.unique(petal_tile)
         filenames = []
         for f_in in files_in:
-          for pt in petal_tile_unique:
-            if pt in os.path.basename(f_in):
-                filenames.append(f_in)
-                break
+            for pt in petal_tile_unique:
+                if pt in os.path.basename(f_in):
+                    filenames.append(f_in)
+                    break
 
         
     #filenames = []
@@ -1165,11 +1167,11 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             #pre-andes tiles don't have this in the fibermap
             tile_spec = filename.split('-')[-2]
 
-        if 'NIGHT' in fibermap_colnames:
-            night_spec = fibermap['NIGHT'][0]
-        else:
+        #if 'NIGHT' in fibermap_colnames:
+        #    night_spec = fibermap['NIGHT'][0]
+        #else:
             #pre-andes tiles don't have this in the fibermap
-            night_spec = int(filename.split('-')[-1].split('.')[0])
+        #    night_spec = int(filename.split('-')[-1].split('.')[0])
 
         targetid_spec = fibermap['TARGETID']
 
@@ -1207,7 +1209,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                   (catalog['PETAL_LOC'] == petal_spec) 
                   )
         userprint(
-            f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}')
+            f'This is tile {tile_spec}, petal {petal_spec}, night deep/all')
 
         #-- Loop over quasars in catalog inside this tile-petal
         for entry in catalog[select]:
