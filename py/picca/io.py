@@ -1242,7 +1242,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 forest_temp = Forest(spec['log_lambda'], flux, ivar,
                                      entry['TARGETID'], entry['RA'],
                                      entry['DEC'], entry['Z'], entry['TILEID'],
-                                      entry['FIBER'],
+                                      'deep/all', entry['FIBER'],
                                      exposures_diff, reso_in_km_per_s)
                 if forest is None:
                     forest = copy.deepcopy(forest_temp)
