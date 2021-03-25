@@ -1264,6 +1264,8 @@ def read_deltas(in_dir,
                 lambda_abs,
                 alpha,
                 z_ref,
+                z_qso_min,
+                z_qso_max,
                 cosmo,
                 max_num_spec=None,
                 no_project=False,
@@ -1336,7 +1338,11 @@ def read_deltas(in_dir,
         userprint("\rread {} of {} {}".format(index, len(files), num_data))
         if from_image is None:
             hdul = fitsio.FITS(filename)
-            deltas += [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
+            #deltas += [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
+            for hdu in hdul[1:]:
+                delta = Delta.from_fitsio(hdu)
+            if delta.z_qso >= z_qso_min and delta.z_qso <= z_qso_max:
+               deltas += [delta]
             hdul.close()
         else:
             deltas += Delta.from_image(filename)

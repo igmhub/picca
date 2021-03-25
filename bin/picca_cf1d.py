@@ -98,6 +98,21 @@ def main():
                         required=False,
                         help='Reference redshift')
 
+    parser.add_argument('--z-qso_min',
+                        type=float,
+                        default=2.1,
+                        required=False,
+                        help='Minimum redshift, used for subsampling'
+                             'forests with or without Lyman beta region'
+                             'cutoff is ~2.46')
+
+    parser.add_argument('--z-qso_max',
+                        type=float,
+                        default=10.,
+                        required=False,
+                        help='Maximum redshift, used for subsampling'
+                             'forests with or without Lyman beta region')
+
     parser.add_argument(
         '--z-evol',
         type=float,
@@ -161,6 +176,8 @@ def main():
                                                   cf.lambda_abs,
                                                   args.z_evol,
                                                   args.z_ref,
+                                                  args.z_qso_min,
+                                                  args.z_qso_max,
                                                   cosmo=None,
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project)
@@ -179,6 +196,8 @@ def main():
             cf.lambda_abs2,
             args.z_evol2,
             args.z_ref,
+            args.z_qso_min,
+            args.z_qso_max,
             cosmo=None,
             max_num_spec=args.nspec,
             no_project=args.no_project)
@@ -195,6 +214,8 @@ def main():
             cf.lambda_abs2,
             args.z_evol2,
             args.z_ref,
+            args.z_qso_min,
+            args.z_qso_max,
             cosmo=None,
             max_num_spec=args.nspec,
             no_project=args.no_project)

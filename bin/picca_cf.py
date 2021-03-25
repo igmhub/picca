@@ -111,6 +111,21 @@ def main():
                               'of the last absorber redshift and the object '
                               'redshift smaller than z-cut-max'))
 
+    parser.add_argument('--z-qso_min',
+                        type=float,
+                        default=2.1,
+                        required=False,
+                        help='Minimum redshift, used for subsampling'
+                             'forests with or without Lyman beta region'
+                             'cutoff is ~2.46')
+
+    parser.add_argument('--z-qso_max',
+                        type=float,
+                        default=10.,
+                        required=False,
+                        help='Maximum redshift, used for subsampling'
+                             'forests with or without Lyman beta region')
+
     parser.add_argument('--lambda-abs',
                         type=str,
                         default='LYA',
@@ -231,6 +246,8 @@ def main():
     cf.num_bins_r_trans = args.nt
     cf.nside = args.nside
     cf.z_ref = args.z_ref
+    cf.z_qso_min = args.z_qso_min
+    cf.z_qso_max = args.z_qso_max
     cf.alpha = args.z_evol
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
@@ -249,6 +266,8 @@ def main():
                                                   cf.lambda_abs,
                                                   cf.alpha,
                                                   cf.z_ref,
+                                                  cf.z_qso_min,
+                                                  cf.z_qso_max,
                                                   cosmo,
                                                   max_num_spec=args.nspec,
                                                   no_project=args.no_project,
@@ -278,6 +297,8 @@ def main():
             cf.lambda_abs2,
             cf.alpha2,
             cf.z_ref,
+            cf.z_qso_min,
+            cf.z_qso_max,
             cosmo,
             max_num_spec=args.nspec,
             no_project=args.no_project,
