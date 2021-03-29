@@ -50,7 +50,7 @@ def get_header(time, outdir, name, email=None, queue="regular", account="desi"):
 
     return header
 
-def picca_deltas(b,time, in_dir, out_dir, drq, email=None,debug=False,mode="desi", lambda_rest_min=None, lambda_rest_max=None, mask_dla_cat=None):
+def picca_deltas(b,time, in_dir, out_dir, drq, email=None,debug=False,mode="desi", lambda_rest_min=None, lambda_rest_max=None, mask_dla_cat=None, use_constant_weight=None):
     '''
     Writes a .batch file to submit the picca_deltas.py script
     Inputs:
@@ -65,42 +65,43 @@ def picca_deltas(b,time, in_dir, out_dir, drq, email=None,debug=False,mode="desi
     assert mode in ["eboss", "desi", "spplate"]
     
     if 'raw' in out_dir:
-        header = get_header(time, b.outdir, name="deltas_from_transmission",  email=email)
+        header = get_header(time, b.outdir, name="picca_deltas",  email=email)
         header += "/usr/bin/time -f '%eReal %Uuser %Ssystem %PCPU %M' srun -n 1 -c 64 delta_from_transmission.py " + \
-                    "--in-dir {} ".format(in_dir.replace("eboss-raw/",'').replace("spectra-16/",'')) + \
-                    "--zcat {} ".format(in_dir.replace('raw','0.0').replace('/spectra-16/','/zcat.fits'))+ \
+                    "--in-dir {} ".format(in_dir) + \
+                    "--zcat {} ".format(drq)+ \
                     "--out-dir {}/deltas/ ".format(out_dir)
-        if debug:
-            header += " --nspec 10000"
 
-        header += "\n"
-        b.picca_deltas = "deltas_from_transmission.batch"
-        fout = open(out_dir+"/deltas_from_transmission.batch","w")
-        fout.write(header)
-        fout.close()
-        
-        
+    elif 'true' in out_dir:
+        header = get_header(time, b.outdir, name="deltas_from_true_cont",  email=email)
+        header += "/usr/bin/time -f '%eReal %Uuser %Ssystem %PCPU %M' srun -n 1 -c 64 delta_from_true_cont.py " + \
+                    "--in-dir_trans {} ".format(in_dir.replace("eboss-raw/",'').replace("spectra-16/",'')) + \
+                    "--in-dir_spec {} --zcat {}".format(in_dir, drq) + \
+                    "--out-dir {}/deltas/ ".format(out_dir)
     else:
         header = get_header(time, b.outdir, name="picca_deltas",  email=email)
         header += "/usr/bin/time -f '%eReal %Uuser %Ssystem %PCPU %M' srun -n 1 -c 64 picca_deltas.py " + \
                     "--in-dir {} --drq {} ".format(in_dir, drq) + \
                     "--out-dir {}/deltas/ --mode {} ".format(out_dir,mode) + \
                     "--iter-out-prefix {}/iter --log {}/input.log".format(out_dir,out_dir)
-        if not lambda_rest_min is None:
-            header += " --lambda-rest-min {}".format(lambda_rest_min)
-        if not lambda_rest_max is None:
-            header += " --lambda-rest-max {}".format(lambda_rest_max)
-        if not mask_dla_cat is None:
-            header += " --dla-vac {}".format(mask_dla_cat)
+        
+    if not lambda_rest_min is None:
+        header += " --lambda-rest-min {}".format(lambda_rest_min)
+    if not lambda_rest_max is None:
+        header += " --lambda-rest-max {}".format(lambda_rest_max)
+    if not mask_dla_cat is None:
+        header += " --dla-vac {}".format(mask_dla_cat)
     
-        if debug:
-            header += " --nspec 10000"
-
-        header += "\n"
-        b.picca_deltas = "picca_deltas.batch"
-        fout = open(out_dir+"/picca_deltas.batch","w")
-        fout.write(header)
-        fout.close()
+    if debug:
+        header += " --nspec 10000"
+        
+    if use_constant_weight:
+        header += " --use-constant-weight"
+        
+    header += "\n"
+    b.picca_deltas = "picca_deltas.batch"
+    fout = open(out_dir+"/picca_deltas.batch","w")
+    fout.write(header)
+    fout.close()
 
 def cf(b,time, zint, outdir, email=None, fidOm = None, fidPk = None, fidOr = None):
     '''
@@ -156,7 +157,7 @@ def cf(b,time, zint, outdir, email=None, fidOm = None, fidPk = None, fidOr = Non
         fout = open(fbatch,"w")
         fout.write(srun)
         fout.close()
-    
+
     if len(zint) >1:
         stack_batch = stack(b,"00:20:00", zint, outdir, '', fidPk)
         b.stack = "cf_z_0_10-exp.batch"
@@ -669,6 +670,10 @@ parser.add_argument('--dmat-file',type=str,default=None,required=False,
 parser.add_argument("--shuffle-seed", type=int, default = 0,
         required=False, help="seed for shuffled correlation")
 
+parser.add_argument("--use-constant-weight",
+        action="store_true", default=False,
+        help="Run picca_deltas with eta = fudge = 0, var_lss = 1")
+
 args = parser.parse_args()
 
 if not args.no_deltas:
@@ -726,6 +731,6 @@ elif 'raw' in b.outdir:
 if not args.no_deltas:
     picca_deltas(b,time,args.in_dir, args.out_dir,args.drq,
             email=args.email, debug=args.debug, mode=args.mode,
-        lambda_rest_min=args.lambda_rest_min, lambda_rest_max=args.lambda_rest_max, mask_dla_cat=args.dla_vac)
+        lambda_rest_min=args.lambda_rest_min, lambda_rest_max=args.lambda_rest_max, mask_dla_cat=args.dla_vac, use_constant_weight=args.use_constant_weight)
 
 submit(b)
