@@ -155,7 +155,7 @@ def read_drq(drq_filename,
         obj_id_name = 'TARGETID'
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
-        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'FIBER']
+        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'FIBER', 'NIGHT', 'FIRST_NIGHT', 'LAST_NIGHT', 'NUM_NIGHT']
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
@@ -218,7 +218,15 @@ def read_drq(drq_filename,
     if 'NHI' in catalog.colnames:
         keep_columns += ['NHI']
 
-    catalog.keep_columns(keep_columns)
+    #not
+    keep_columns_exist=[]
+    for col in keep_columns:
+        if col in catalog.colnames:
+            keep_columns_exist.append(col)
+        else:
+            print(f"column {col} is not part of the catalog")
+
+    catalog.keep_columns(keep_columns_exist)
     w = np.where(w)[0]
     catalog = catalog[w]
 
@@ -962,7 +970,14 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     if 'TARGETID' in catalog.colnames:
         id_name = 'TARGETID'
         plate_name = 'TILEID'
-        mjd_name = 'NIGHT'
+        if 'NIGHT' in catalog:
+            mjd_name = 'NIGHT'
+        elif 'FIRST_NIGHT' in catalog:
+            mjd_name = 'FIRST_NIGHT'
+        else:
+            print("night info not stored in catalog, will replace it with 'unknown' and continue")
+            mjd_name='NIGHT'
+            catalog['NIGHT']='unknown'
         fiberid_name = 'FIBER'
     else:
         id_name = 'THING_ID'
@@ -1167,11 +1182,13 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             #pre-andes tiles don't have this in the fibermap
             tile_spec = filename.split('-')[-2]
 
-        #if 'NIGHT' in fibermap_colnames:
-        #    night_spec = fibermap['NIGHT'][0]
-        #else:
+        if 'NIGHT' in fibermap_colnames:
+            night_spec = fibermap['NIGHT'][0]
+        elif 'FIRST_NIGHT' in fibermap_colnames:
+            night_spec = fibermap['FIRST_NIGHT'][0]
+        else:
             #pre-andes tiles don't have this in the fibermap
-        #    night_spec = int(filename.split('-')[-1].split('.')[0])
+            night_spec = int(filename.split('-')[-1].split('.')[0])
 
         targetid_spec = fibermap['TARGETID']
 
@@ -1208,8 +1225,11 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         select = ((catalog['TILEID'] == tile_spec) &
                   (catalog['PETAL_LOC'] == petal_spec) 
                   )
+        if usesinglenights:
+            select &= catalog['NIGHT'] == night_spec
+
         userprint(
-            f'This is tile {tile_spec}, petal {petal_spec}, night deep/all')
+            f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec if usesinglenights else "all" if useall else "deep"}')
 
         #-- Loop over quasars in catalog inside this tile-petal
         for entry in catalog[select]:
@@ -1242,7 +1262,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 forest_temp = Forest(spec['log_lambda'], flux, ivar,
                                      entry['TARGETID'], entry['RA'],
                                      entry['DEC'], entry['Z'], entry['TILEID'],
-                                      'deep/all', entry['FIBER'],
+                                     entry['NIGHT'], entry['FIBER'],
                                      exposures_diff, reso_in_km_per_s)
                 if forest is None:
                     forest = copy.deepcopy(forest_temp)
