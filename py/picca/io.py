@@ -970,9 +970,9 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     if 'TARGETID' in catalog.colnames:
         id_name = 'TARGETID'
         plate_name = 'TILEID'
-        if 'NIGHT' in catalog:
+        if 'NIGHT' in catalog.colnames:
             mjd_name = 'NIGHT'
-        elif 'FIRST_NIGHT' in catalog:
+        elif 'FIRST_NIGHT' in catalog.colnames:
             mjd_name = 'FIRST_NIGHT'
         else:
             print("night info not stored in catalog, will replace it with 'unknown' and continue")
@@ -1127,6 +1127,9 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                     filenames.append(f_in)
                     break
     else:
+        if 'NIGHT' not in catalog.colnames:
+            print("night info not stored in catalog, will replace it with 'unknown' and continue")
+            catalog['NIGHT']='unknown'
         if useall:
             files_in = glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
                          recursive=True)
@@ -1232,7 +1235,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         select = ((catalog['TILEID'] == tile_spec) &
                   (catalog['PETAL_LOC'] == petal_spec) 
                   )
-        if usesinglenights and 'NIGHT' in catalog:
+        if usesinglenights and catalog['NIGHT'][0]!='unknown':
             #if each NIGHT to be used is seperately in the catalog only those nights are used
             #if the NIGHT is not part of the catalog a coadd of all available nights for that tile will be done by picca
             select &= catalog['NIGHT'] == night_spec
