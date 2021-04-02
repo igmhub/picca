@@ -1108,14 +1108,15 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
 
     data = {}
     num_data = 0
-    if usesinglenights:
+    if usesinglenights and "NIGHT" in catalog.colnames:
+        #will just use specified nights
         files_in = glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
                          recursive=True)
         petal_tile_night = [
             f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
             for entry in catalog
         ]
-        
+    
         #this uniqueness check is to ensure each petal/tile/night combination only appears once in the filelist
         petal_tile_night_unique = np.unique(petal_tile_night)
     
@@ -1129,6 +1130,12 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         if useall:
             files_in = glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
                          recursive=True)
+        elif usesinglenights:
+            #will let picca coadd all different nights
+            print("no 'NIGHT' in catalog, picca will perform coaddition of all available nights")
+            files_in = glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
+                         recursive=True)
+            files_in = [f for f in files_in if not (("deep" in f) or ("all") in f)]
         else:
             files_in = glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
                          recursive=True)
@@ -1225,11 +1232,13 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         select = ((catalog['TILEID'] == tile_spec) &
                   (catalog['PETAL_LOC'] == petal_spec) 
                   )
-        if usesinglenights:
+        if usesinglenights and 'NIGHT' in catalog:
+            #if each NIGHT to be used is seperately in the catalog only those nights are used
+            #if the NIGHT is not part of the catalog a coadd of all available nights for that tile will be done by picca
             select &= catalog['NIGHT'] == night_spec
 
         userprint(
-            f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec if usesinglenights else "all" if useall else "deep"}')
+            f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec if usesinglenights and "NIGHT" in catalog else "deep/all"}')
 
         #-- Loop over quasars in catalog inside this tile-petal
         for entry in catalog[select]:
