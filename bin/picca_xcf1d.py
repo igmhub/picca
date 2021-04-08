@@ -54,6 +54,14 @@ def main():
                         required=True,
                         help='Catalog of objects in DRQ format')
 
+    parser.add_argument(
+                        '--mode',
+                        type=str,
+                        default='sdss',
+                        choices=['sdss','desi'],
+                        required=False,
+                        help='type of catalog supplied, default sdss')
+
     parser.add_argument('--wr-min',
                         type=float,
                         default=0.9,
@@ -231,7 +239,8 @@ def main():
                                    args.z_max_obj,
                                    args.z_evol_obj,
                                    args.z_ref,
-                                   cosmo=None)
+                                   cosmo=None,
+                                   mode=args.mode)
     del z_min2
     xcf.objs = objs
     for healpix in xcf.objs:

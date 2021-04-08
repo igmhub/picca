@@ -616,6 +616,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += " --best-obs"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
+        cmd += " --use-single-nights"
         returncode = subprocess.call(cmd, shell=True)
         self.assertEqual(returncode, 0, "delta_Pk1D_minisv did not finish")
 
