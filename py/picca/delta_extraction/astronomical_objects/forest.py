@@ -68,6 +68,12 @@ class Forest(AstronomicalObject):
     As log_lambda_min but for rest-frame wavelength. This should not be None if
     wave_solution is "log". Ignored if wave_solution is "lin".
 
+    mask_fields: list of str
+    Names of the fields that are affected by masking. In general it will
+    be "flux", "ivar", "transmission_correction" and either "log_lambda" if
+    Forest.wave_solution is "log" or "lambda_" if Forests.wave_solution is "lin",
+    but some child classes might add more.
+    
     wave_solution: "lin" or "log"
     Determines whether the wavelength solution has linear spacing ("lin") or
     logarithmic spacing ("log").
@@ -108,12 +114,6 @@ class Forest(AstronomicalObject):
     ivar: array of float
     Inverse variance
 
-    mask_fields: list of str
-    Names of the fields that are affected by masking. In general it will
-    be "flux", "ivar", "transmission_correction" and either "log_lambda" if
-    Forest.wave_solution is "log" or "lambda_" if Forests.wave_solution is "lin",
-    but some child classes might add more.
-
     mean_snf: float
     Mean signal-to-noise of the forest
 
@@ -134,6 +134,7 @@ class Forest(AstronomicalObject):
     log_lambda_max_rest_frame = None
     log_lambda_min = None
     log_lambda_min_rest_frame = None
+    mask_fields = None
     wave_solution = None
 
     def __init__(self, **kwargs):
@@ -181,25 +182,6 @@ class Forest(AstronomicalObject):
             raise AstronomicalObjectError("Error constructing Forest. "
                                           "Missing variable 'ivar'")
         del kwargs["ivar"]
-
-        self.mask_fields = kwargs.get("mask_fields")
-        if self.mask_fields is None:
-            if Forest.wave_solution == "log":
-                self.mask_fields = defaults.get("mask fields log")
-            elif Forest.wave_solution == "lin":
-                self.mask_fields = defaults.get("mask fields lin")
-            else:
-                raise AstronomicalObjectError("Error constructing Forest. "
-                                              "Class variable 'wave_solution' "
-                                              "must be either 'lin' or 'log'. "
-                                              f"Found: {Forest.wave_solution}")
-        else:
-            del kwargs["mask_fields"]
-        if not isinstance(self.mask_fields, list):
-            raise AstronomicalObjectError(
-                "Error constructing Forest. "
-                "Expected list in variable 'mask fields'. "
-                f"Found {self.mask_fields}.")
 
         self.transmission_correction = np.ones_like(self.flux)
 
@@ -250,6 +232,9 @@ class Forest(AstronomicalObject):
                                               "Class variable 'log_lambda_min_rest_frame' "
                                               "must be set prior to initialize "
                                               "instances of this type")
+            if cls.mask_fields is None:
+                cls.mask_fields = defaults.get("mask fields log")
+
         elif cls.wave_solution == "lin":
             if cls.delta_lambda is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
@@ -278,11 +263,20 @@ class Forest(AstronomicalObject):
                     "Class variable 'lambda_min_rest_frame' "
                     "must be set prior to initialize "
                     "instances of this type")
+
+            if cls.mask_fields is None:
+                cls.mask_fields = defaults.get("mask fields lin")
         else:
             raise AstronomicalObjectError("Error constructing Forest. "
                                           "Class variable 'wave_solution' "
                                           "must be either 'lin' or 'log'. "
                                           f"Found: {cls.wave_solution}")
+
+        if not isinstance(cls.mask_fields, list):
+            raise AstronomicalObjectError(
+                "Error constructing Forest. "
+                "Expected list in class variable 'mask fields'. "
+                f"Found {cls.mask_fields}.")
 
     def __consistency_check(self):
         """Consistency checks after __init__"""
@@ -425,6 +419,9 @@ class Forest(AstronomicalObject):
         bins: array of float
         Binning solution to be used for the rebinning
 
+        rebin_ivar: array of float
+        Rebinned version of ivar
+
         w1: array of bool
         Masking array for the bins solution
 
@@ -444,7 +441,7 @@ class Forest(AstronomicalObject):
                        Forest.log_lambda_max_rest_frame)
             w1 = w1 & (self.ivar > 0.)
             if w1.sum() == 0:
-                return [], [], []
+                return _, _, _, _
             bins = bins[w1]
             self.log_lambda = self.log_lambda[w1]
             self.flux = self.flux[w1]
@@ -461,7 +458,7 @@ class Forest(AstronomicalObject):
             w1 = w1 & (self.lambda_ / (1. + self.z) < Forest.lambda_max_rest_frame)
             w1 = w1 & (self.ivar > 0.)
             if w1.sum() == 0:
-                return [], [], []
+                return _, _, _, _
             bins = bins[w1]
             self.lambda_ = self.lambda_[w1]
             self.flux = self.flux[w1]

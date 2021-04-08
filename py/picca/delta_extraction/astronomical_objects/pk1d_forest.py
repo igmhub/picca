@@ -70,6 +70,12 @@ class Pk1dForest(Forest):
     As log_lambda_min but for rest-frame wavelength. This should not be None if
     wave_solution is "log". Ignored if wave_solution is "lin".
 
+    mask_fields: list of str (from Forest)
+    Names of the fields that are affected by masking. In general it will
+    be "flux", "ivar", "transmission_correction", "exposures_diff", "reso" and
+    either "log_lambda" if Forest.wave_solution is "log" or "lambda_" if
+    Forests.wave_solution is "lin", but some child classes might add more.
+
     wave_solution: "lin" or "log" (from Forest)
     Determines whether the wavelength solution has linear spacing ("lin") or
     logarithmic spacing ("log").
@@ -124,12 +130,6 @@ class Pk1dForest(Forest):
 
     exposures_diff: array of floats
     Difference between exposures
-
-    mask_fields: list of str
-    Names of the fields that are affected by masking. In general it will
-    be "flux", "ivar", "transmission_correction", "exposures_diff", "reso" and
-    either "log_lambda" if Forest.wave_solution is "log" or "lambda_" if
-    Forests.wave_solution is "lin", but some child classes might add more.
 
     mean_z: float
     Mean redshift of the forest
@@ -195,6 +195,8 @@ class Pk1dForest(Forest):
             raise AstronomicalObjectError("Error constructing Pk1dForest. 'flux', "
                                           "and 'exposures_diff' don't have the "
                                           "same size")
+        if "exposures_diff" not in Forest.mask_fields:
+            Forest.mask_fields.append("exposures_diff")
 
     def coadd(self, other):
         """Coadds the information of another forest.
@@ -283,13 +285,18 @@ class Pk1dForest(Forest):
         bins: array of float
         Binning solution to be used for the rebinning
 
+        rebin_ivar: array of float
+        Rebinned version of ivar
+
         w1: array of bool
         Masking array for the bins solution
 
         w2: array of bool
         Masking array for the rebinned ivar solution
         """
-        bins, w1, w2 = super().rebin()
+        bins, rebin_ivar, w1, w2 = super().rebin()
+        if rebin_ivar == _:
+            return _, _, _, _
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
@@ -304,7 +311,7 @@ class Pk1dForest(Forest):
         rebin_reso[:len(rebin_reso_aux)] += rebin_reso_aux
 
         # apply mask due to rebinned inverse vairane
-        self.exposures_diff = rebin_exposures_diff[w2]
+        self.exposures_diff = rebin_exposures_diff[w2]/rebin_ivar[w2]
         self.reso = rebin_reso[w2]
 
         # finally update control variables
@@ -324,4 +331,4 @@ class Pk1dForest(Forest):
 
         # return weights and binning solution to be used by child classes if
         # required
-        return bins, w1, w2
+        return bins, rebin_ivar, w1, w2

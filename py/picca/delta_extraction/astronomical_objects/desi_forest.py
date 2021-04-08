@@ -62,6 +62,10 @@ class DesiForest(Forest):
     As log_lambda_min but for rest-frame wavelength. This should not be None if
     wave_solution is "log". Ignored if wave_solution is "lin".
 
+    mask_fields: list of str (from Forest)
+    Names of the fields that are affected by masking. In general it will
+    be "flux" and "ivar" but some child classes might add more.
+
     wave_solution: "lin" or "log" (from Forest)
     Determines whether the wavelength solution has linear spacing ("lin") or
     logarithmic spacing ("log").
@@ -100,10 +104,6 @@ class DesiForest(Forest):
 
     log_lambda: array of float or None (from Forest)
     Logarithm of the wavelength (in Angstroms)
-
-    mask_fields: list of str (from Forest)
-    Names of the fields that are affected by masking. In general it will
-    be "flux" and "ivar" but some child classes might add more.
 
     mean_snf: float (from Forest)
     Mean signal-to-noise of the forest
