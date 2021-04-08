@@ -101,7 +101,7 @@ class SdssDlaMask(Mask):
 
     def apply_mask(self, forest):
         """Applies the mask. The mask is done by removing the affected
-        pixels from the arrays in data.mask_fields
+        pixels from the arrays in Forest.mask_fields
 
         Arguments
         ---------
@@ -134,7 +134,7 @@ class SdssDlaMask(Mask):
 
             # do the actual masking
             forest.transmission_correction *= dla_transmission
-            for param in forest.mask_fields:
+            for param in Forest.mask_fields:
                 setattr(forest, param, getattr(forest, param)[w])
 
 

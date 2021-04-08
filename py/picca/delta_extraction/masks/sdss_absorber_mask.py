@@ -104,5 +104,5 @@ class SdssAbsorberMask(Mask):
                       self.absorber_mask_width)
 
             # do the actual masking
-            for param in forest.mask_fields:
+            for param in Forest.mask_fields:
                 setattr(forest, param, getattr(forest, param)[w])
