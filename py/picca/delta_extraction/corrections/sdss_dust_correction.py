@@ -6,6 +6,7 @@ from scipy import interpolate
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
 
+
 defaults = {
     "extinction_conversion_r": 3.793,
 }
@@ -79,6 +80,8 @@ class SdssDustCorrection(Correction):
         correction = unred(10**forest.log_lambda, extinction)
         forest.flux /= correction
         forest.ivar *= correction**2
+        if hasattr(forest, "exposures_diff"):
+            exposures_diff /= corr
 
 # pylint: disable=invalid-name,locally-disabled
 # we keep variable names since this function is adopted from elsewhere
