@@ -22,18 +22,22 @@ class DataTest(AbstractTest):
         Load a Data instace.
         """
         config = ConfigParser()
-        config.read_dict({"data": {}})
+        config.read_dict({"data": {"output directory": f"{THIS_DIR}/results"},
+                         })
         data = Data(config["data"])
 
         self.assertTrue(len(data.forests) == 0)
         self.assertTrue(data.min_num_pix == 50)
 
         config = ConfigParser()
-        config.read_dict({"data": {"minimum number pixels in forest": 40}})
+        config.read_dict({"data": {"minimum number pixels in forest": 40,
+                                   "output directory": f"{THIS_DIR}/results",},
+                         })
         data = Data(config["data"])
 
         self.assertTrue(len(data.forests) == 0)
         self.assertTrue(data.min_num_pix == 40)
+        self.assertTrue(data.analysis_type == "BAO 3D")
 
     def test_data_filter_forests(self):
         """Test method filter_forests from Abstract Class Data"""
@@ -45,7 +49,7 @@ class DataTest(AbstractTest):
 
         # create Data instance
         config = ConfigParser()
-        config.read_dict({"data": {}})
+        config.read_dict({"data": {"output directory": f"{THIS_DIR}/results"}})
         data = Data(config["data"])
 
         # add dummy forest
@@ -58,7 +62,9 @@ class DataTest(AbstractTest):
 
         # create Data instance with insane forest requirements
         config = ConfigParser()
-        config.read_dict({"data": {"minimum number pixels in forest": 10000}})
+        config.read_dict({"data": {"minimum number pixels in forest": 10000,
+                                   "output directory": f"{THIS_DIR}/results"}
+                         })
         data = Data(config["data"])
 
         # add dummy forest
@@ -80,16 +86,19 @@ class DataTest(AbstractTest):
             "data": {
                 "input directory":
                     f"{THIS_DIR}/data",
+                "output directory":
+                    f"{THIS_DIR}/results",
                 "drq catalogue":
                     f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
                 "mode":
-                    "spec"
+                    "spec",
             }
         })
         data = SdssData(config["data"])
 
         self.assertTrue(len(data.forests) == 43)
         self.assertTrue(data.min_num_pix == 50)
+        self.assertTrue(data.analysis_type == "BAO 3D")
         self.assertTrue(
             all(isinstance(forest, SdssForest) for forest in data.forests))
 
@@ -101,6 +110,8 @@ class DataTest(AbstractTest):
             "data": {
                 "input directory":
                     f"{THIS_DIR}/data",
+                "output directory":
+                    f"{THIS_DIR}/results",
                 "drq catalogue":
                     f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
             }
@@ -109,6 +120,7 @@ class DataTest(AbstractTest):
 
         self.assertTrue(len(data.forests) == 43)
         self.assertTrue(data.min_num_pix == 50)
+        self.assertTrue(data.analysis_type == "BAO 3D")
         self.assertTrue(
             all(isinstance(forest, SdssForest) for forest in data.forests))
 
@@ -118,6 +130,8 @@ class DataTest(AbstractTest):
             "data": {
                 "input directory":
                     f"{THIS_DIR}/data",
+                "output directory":
+                    f"{THIS_DIR}/results",
                 "drq catalogue":
                     f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
                 "mode":

@@ -972,7 +972,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 stack_log_lambda = (Forest.log_lambda_min + np.arange(num_bins) *
                                     Forest.delta_log_lambda)
                 results.write(
-                    [stack_log_lambda, self.get_stack_delta(stack_log_lambda),
+                    [stack_log_lambda, self.get_stack_delta(stack_log_lambda)],
                     names=['loglam', 'stack'],
                     header=header,
                     extname='STACK')

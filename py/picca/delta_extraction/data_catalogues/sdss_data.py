@@ -37,6 +37,9 @@ class SdssData(Data):
 
     Attributes
     ----------
+    analysis_type: str (from Data)
+    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
+
     forests: list of Forest (from Data)
     A list of Forest from which to compute the deltas.
 
@@ -48,18 +51,6 @@ class SdssData(Data):
 
     in_dir: str
     Directory to spectra files.
-
-    log_lambda_max: float
-    Logarithm of the maximum wavelength (in Angs) to be considered in a forest.
-
-    log_lambda_min: float
-    Logarithm of the minimum wavelength (in Angs) to be considered in a forest.
-
-    log_lambda_max_rest_frame: float
-    As log_lambda_max but for rest-frame wavelength.
-
-    log_lambda_min_rest_frame: float
-    As log_lambda_min but for rest-frame wavelength.
 
     mode: str
     Reading mode. Currently supported reading modes are "spplate" and "spec"
@@ -79,13 +70,8 @@ class SdssData(Data):
         super().__init__(config)
 
         # load variables from config
-        self.analysis_type = None
         self.delta_log_lambda = None
         self.input_directory = None
-        self.log_lambda_max = None
-        self.log_lambda_max_rest_frame = None
-        self.log_lambda_min = None
-        self.log_lambda_min_rest_frame = None
         self.mode = None
         self._parse_config(config)
 
@@ -212,6 +198,8 @@ class SdssData(Data):
                                            "fiberid": fiberid,
                                            "exposures_diff": exposures_diff,
                                            "reso": reso})
+            else:
+                raise DataError(f"analysis_type = {self.analysis_type}")
 
             if thingid in forests_by_thingid:
                 forests_by_thingid[thingid].coadd(forest)

@@ -296,7 +296,7 @@ class Pk1dForest(Forest):
         """
         bins, rebin_ivar, w1, w2 = super().rebin()
         if rebin_ivar == _:
-            return _, _, _, _
+            return [], [], [], []
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]

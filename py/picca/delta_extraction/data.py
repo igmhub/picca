@@ -31,6 +31,9 @@ class Data:
 
     Attributes
     ----------
+    analysis_type: str
+    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
+
     forests: list of Forest
     A list of Forest from which to compute the deltas.
 

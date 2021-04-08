@@ -38,6 +38,9 @@ class DesiData(Data):
 
     Attributes
     ----------
+    analysis_type: str (from Data)
+    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
+
     forests: list of Forest (from Data)
     A list of Forest from which to compute the deltas.
 
@@ -49,18 +52,6 @@ class DesiData(Data):
 
     in_dir: str
     Directory to spectra files.
-
-    lambda_max: float
-    Maximum wavelength (in Angs) to be considered in a forest.
-
-    lambda_min: float
-    Minimum wavelength (in Angs) to be considered in a forest.
-
-    lambda_max_rest_frame: float
-    As lambda_max but for rest-frame wavelength.
-
-    lambda_min_rest_frame: float
-    As lambda_min but for rest-frame wavelength.
 
     mini_sv: bool
     Read data in Mini SV format.

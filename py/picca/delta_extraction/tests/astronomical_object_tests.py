@@ -27,6 +27,7 @@ class AstronomicalObjectTest(AbstractTest):
         Forest.log_lambda_max_rest_frame = None
         Forest.log_lambda_min = None
         Forest.log_lambda_min_rest_frame = None
+        Forest.mask_fields = None
 
     def test_astronomical_object(self):
         """Test constructor for AstronomicalObject."""
@@ -125,9 +126,12 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(Forest.mask_fields[3] == "lambda_")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(test_obj.night == 0)
-        self.assertTrue(test_obj.petal == 0)
-        self.assertTrue(test_obj.tile == 0)
+        self.assertTrue(isinstance(test_obj.night, list))
+        self.assertTrue(test_obj.night[0] == 0)
+        self.assertTrue(isinstance(test_obj.petal, list))
+        self.assertTrue(test_obj.petal[0] == 0)
+        self.assertTrue(isinstance(test_obj.tile, list))
+        self.assertTrue(test_obj.tile[0] == 0)
         self.assertTrue(test_obj.targetid == 100000000)
 
         # create forest with extra variables
@@ -167,9 +171,12 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(Forest.mask_fields[3] == "lambda_")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(test_obj.night == 0)
-        self.assertTrue(test_obj.petal == 0)
-        self.assertTrue(test_obj.tile == 0)
+        self.assertTrue(isinstance(test_obj.night, list))
+        self.assertTrue(test_obj.night[0] == 0)
+        self.assertTrue(isinstance(test_obj.petal, list))
+        self.assertTrue(test_obj.petal[0] == 0)
+        self.assertTrue(isinstance(test_obj.tile, list))
+        self.assertTrue(test_obj.tile[0] == 0)
         self.assertTrue(test_obj.targetid == 100000000)
 
         # create a DesiForest with missing DesiForest variables
@@ -258,9 +265,15 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(Forest.mask_fields[3] == "lambda_")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 8))
-        self.assertTrue(test_obj.night == 0)
-        self.assertTrue(test_obj.petal == 0)
-        self.assertTrue(test_obj.tile == 0)
+        self.assertTrue(isinstance(test_obj.night, list))
+        self.assertTrue(test_obj.night[0] == 0)
+        self.assertTrue(test_obj.night[1] == 1)
+        self.assertTrue(isinstance(test_obj.petal, list))
+        self.assertTrue(test_obj.petal[0] == 0)
+        self.assertTrue(test_obj.petal[1] == 2)
+        self.assertTrue(isinstance(test_obj.tile, list))
+        self.assertTrue(test_obj.tile[0] == 0)
+        self.assertTrue(test_obj.tile[1] == 3)
         self.assertTrue(test_obj.targetid == 100000000)
 
     def test_forest(self):
@@ -306,7 +319,6 @@ class AstronomicalObjectTest(AbstractTest):
             "ivar": np.ones(15)*4,
             "continuum": np.ones(15),
             "deltas": np.zeros(15),
-            "mask_fields": ["flux"],
             "log_lambda": np.ones(15)
         }
         test_obj = Forest(**kwargs)
@@ -319,8 +331,11 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(np.allclose(test_obj.deltas, np.zeros(15)))
         self.assertTrue(np.allclose(test_obj.flux, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(15)*4))
-        self.assertTrue(len(Forest.mask_fields) == 1)
+        self.assertTrue(len(Forest.mask_fields) == 4)
         self.assertTrue(Forest.mask_fields[0] == "flux")
+        self.assertTrue(Forest.mask_fields[1] == "ivar")
+        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
+        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2))
 
@@ -421,9 +436,12 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(Forest.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(test_obj.plate == 0)
-        self.assertTrue(test_obj.fiberid == 0)
-        self.assertTrue(test_obj.mjd == 0)
+        self.assertTrue(isinstance(test_obj.plate, list))
+        self.assertTrue(test_obj.plate[0] == 0)
+        self.assertTrue(isinstance(test_obj.fiberid, list))
+        self.assertTrue(test_obj.fiberid[0] == 0)
+        self.assertTrue(isinstance(test_obj.mjd, list))
+        self.assertTrue(test_obj.mjd[0] == 0)
         self.assertTrue(test_obj.thingid == 100000000)
 
         # create forest with extra variables
@@ -463,9 +481,12 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(Forest.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(test_obj.plate == 0)
-        self.assertTrue(test_obj.fiberid == 0)
-        self.assertTrue(test_obj.mjd == 0)
+        self.assertTrue(isinstance(test_obj.plate, list))
+        self.assertTrue(test_obj.plate[0] == 0)
+        self.assertTrue(isinstance(test_obj.fiberid, list))
+        self.assertTrue(test_obj.fiberid[0] == 0)
+        self.assertTrue(isinstance(test_obj.mjd, list))
+        self.assertTrue(test_obj.mjd[0] == 0)
         self.assertTrue(test_obj.thingid == 100000000)
 
         # create a SdssForest with missing SdssForest variables
@@ -554,9 +575,15 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(Forest.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 8))
-        self.assertTrue(test_obj.plate == 0)
-        self.assertTrue(test_obj.fiberid == 0)
-        self.assertTrue(test_obj.mjd == 0)
+        self.assertTrue(isinstance(test_obj.plate, list))
+        self.assertTrue(test_obj.plate[0] == 0)
+        self.assertTrue(test_obj.plate[1] == 1)
+        self.assertTrue(isinstance(test_obj.fiberid, list))
+        self.assertTrue(test_obj.fiberid[0] == 0)
+        self.assertTrue(test_obj.fiberid[1] == 2)
+        self.assertTrue(isinstance(test_obj.mjd, list))
+        self.assertTrue(test_obj.mjd[0] == 0)
+        self.assertTrue(test_obj.mjd[1] == 3)
         self.assertTrue(test_obj.thingid == 100000000)
 
 if __name__ == '__main__':

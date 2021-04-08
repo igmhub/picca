@@ -4,6 +4,7 @@ import numpy as np
 import fitsio
 from astropy.table import Table
 
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask
 from picca.delta_extraction.userprint import userprint

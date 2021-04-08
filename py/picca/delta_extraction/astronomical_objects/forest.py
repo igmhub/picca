@@ -73,7 +73,7 @@ class Forest(AstronomicalObject):
     be "flux", "ivar", "transmission_correction" and either "log_lambda" if
     Forest.wave_solution is "log" or "lambda_" if Forests.wave_solution is "lin",
     but some child classes might add more.
-    
+
     wave_solution: "lin" or "log"
     Determines whether the wavelength solution has linear spacing ("lin") or
     logarithmic spacing ("log").
@@ -145,7 +145,7 @@ class Forest(AstronomicalObject):
         **kwargs: dict
         Dictionary contiaing the information
         """
-        self.__class_variable_check()
+        Forest.__class_variable_check()
 
         if Forest.wave_solution == "log":
             self.lambda_ = None
@@ -233,7 +233,7 @@ class Forest(AstronomicalObject):
                                               "must be set prior to initialize "
                                               "instances of this type")
             if cls.mask_fields is None:
-                cls.mask_fields = defaults.get("mask fields log")
+                Forest.mask_fields = defaults.get("mask fields log")
 
         elif cls.wave_solution == "lin":
             if cls.delta_lambda is None:
@@ -265,7 +265,7 @@ class Forest(AstronomicalObject):
                     "instances of this type")
 
             if cls.mask_fields is None:
-                cls.mask_fields = defaults.get("mask fields lin")
+                Forest.mask_fields = defaults.get("mask fields lin")
         else:
             raise AstronomicalObjectError("Error constructing Forest. "
                                           "Class variable 'wave_solution' "
@@ -441,7 +441,7 @@ class Forest(AstronomicalObject):
                        Forest.log_lambda_max_rest_frame)
             w1 = w1 & (self.ivar > 0.)
             if w1.sum() == 0:
-                return _, _, _, _
+                return [], [], [], []
             bins = bins[w1]
             self.log_lambda = self.log_lambda[w1]
             self.flux = self.flux[w1]
@@ -458,7 +458,7 @@ class Forest(AstronomicalObject):
             w1 = w1 & (self.lambda_ / (1. + self.z) < Forest.lambda_max_rest_frame)
             w1 = w1 & (self.ivar > 0.)
             if w1.sum() == 0:
-                return _, _, _, _
+                return [], [], [], []
             bins = bins[w1]
             self.lambda_ = self.lambda_[w1]
             self.flux = self.flux[w1]
