@@ -66,6 +66,12 @@ class QuasarCatalogueTest(AbstractTest):
         UserPrint.reset_log()
         self.compare_ascii(test_file, out_file, expand_dir=True)
 
+        self.assertTrue(quasar_catalogue.catalogue is None)
+        self.assertTrue(quasar_catalogue.z_min == 2.1)
+        self.assertTrue(quasar_catalogue.z_max == 3.5)
+        self.assertTrue(quasar_catalogue.max_num_spec is None)
+
+
     def test_quasar_catalogue(self):
         """Test Abstract class QuasarCatalogue
 

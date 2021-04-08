@@ -4,14 +4,34 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 
-
 # setup Forest class variables
-Forest.wave_solution = "log"
-Forest.delta_log_lambda = 1e-4
-Forest.log_lambda_max = np.log10(5500.0)
-Forest.log_lambda_max_rest_frame = np.log10(1200.0)
-Forest.log_lambda_min = np.log10(3600.0)
-Forest.log_lambda_min_rest_frame = np.log10(1040.0)
+def setup_forest(wave_solution):
+    """Sets Forest class variables
+
+    Arguments
+    ---------
+    wave_solution: "log" or "lin"
+    Determines whether the wavelength solution has linear spacing ("lin") or
+    logarithmic spacing ("log").
+    """
+    assert wave_solution in ["log", "lin"]
+
+    if wave_solution == "log":
+        Forest.wave_solution = "log"
+        Forest.delta_log_lambda = 1e-4
+        Forest.log_lambda_max = np.log10(5500.0)
+        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
+        Forest.log_lambda_min = np.log10(3600.0)
+        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
+    elif wave_solution == "lin":
+        Forest.wave_solution = "lin"
+        Forest.delta_lambda = 1.
+        Forest.lambda_max = 5500.0
+        Forest.lambda_max_rest_frame = 1200.0
+        Forest.lambda_min = 3600.0
+        Forest.lambda_min_rest_frame = 1040.0
+
+setup_forest("log")
 
 # create SdssForest instance forest1
 # has:

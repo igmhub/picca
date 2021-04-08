@@ -10,32 +10,7 @@ from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 
 from picca.delta_extraction.tests.abstract_test import AbstractTest
-
-def setup_forest(wave_solution):
-    """Sets Forest class variables
-
-    Arguments
-    ---------
-    wave_solution: "log" or "lin"
-    Determines whether the wavelength solution has linear spacing ("lin") or
-    logarithmic spacing ("log").
-    """
-    assert wave_solution in ["log", "lin"]
-
-    if wave_solution == "log":
-        Forest.wave_solution = "log"
-        Forest.delta_log_lambda = 1e-4
-        Forest.log_lambda_max = np.log10(5500.0)
-        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
-        Forest.log_lambda_min = np.log10(3600.0)
-        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
-    elif wave_solution == "lin":
-        Forest.wave_solution = "lin"
-        Forest.delta_lambda = 1.
-        Forest.lambda_max = 5500.0
-        Forest.lambda_max_rest_frame = 1200.0
-        Forest.lambda_min = 3600.0
-        Forest.lambda_min_rest_frame = 1040.0
+from picca.delta_extraction.tests.test_utils import setup_forest
 
 class AstronomicalObjectTest(AbstractTest):
     """Test AstronomicalObject and its childs."""
@@ -143,11 +118,11 @@ class AstronomicalObjectTest(AbstractTest):
                                                                 3680,
                                                                 3700])))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(test_obj.mask_fields) == 4)
-        self.assertTrue(test_obj.mask_fields[0] == "flux")
-        self.assertTrue(test_obj.mask_fields[1] == "ivar")
-        self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
-        self.assertTrue(test_obj.mask_fields[3] == "lambda_")
+        self.assertTrue(len(Forest.mask_fields) == 4)
+        self.assertTrue(Forest.mask_fields[0] == "flux")
+        self.assertTrue(Forest.mask_fields[1] == "ivar")
+        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
+        self.assertTrue(Forest.mask_fields[3] == "lambda_")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
         self.assertTrue(test_obj.night == 0)
@@ -185,11 +160,11 @@ class AstronomicalObjectTest(AbstractTest):
                                                                 3680,
                                                                 3700])))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(test_obj.mask_fields) == 4)
-        self.assertTrue(test_obj.mask_fields[0] == "flux")
-        self.assertTrue(test_obj.mask_fields[1] == "ivar")
-        self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
-        self.assertTrue(test_obj.mask_fields[3] == "lambda_")
+        self.assertTrue(len(Forest.mask_fields) == 4)
+        self.assertTrue(Forest.mask_fields[0] == "flux")
+        self.assertTrue(Forest.mask_fields[1] == "ivar")
+        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
+        self.assertTrue(Forest.mask_fields[3] == "lambda_")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
         self.assertTrue(test_obj.night == 0)
@@ -276,11 +251,11 @@ class AstronomicalObjectTest(AbstractTest):
                                                                 3680,
                                                                 3700])))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*16))
-        self.assertTrue(len(test_obj.mask_fields) == 4)
-        self.assertTrue(test_obj.mask_fields[0] == "flux")
-        self.assertTrue(test_obj.mask_fields[1] == "ivar")
-        self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
-        self.assertTrue(test_obj.mask_fields[3] == "lambda_")
+        self.assertTrue(len(Forest.mask_fields) == 4)
+        self.assertTrue(Forest.mask_fields[0] == "flux")
+        self.assertTrue(Forest.mask_fields[1] == "ivar")
+        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
+        self.assertTrue(Forest.mask_fields[3] == "lambda_")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 8))
         self.assertTrue(test_obj.night == 0)
@@ -313,11 +288,11 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(test_obj.deltas is None)
         self.assertTrue(np.allclose(test_obj.flux, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(15)*4))
-        self.assertTrue(len(test_obj.mask_fields) == 4)
-        self.assertTrue(test_obj.mask_fields[0] == "flux")
-        self.assertTrue(test_obj.mask_fields[1] == "ivar")
-        self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
-        self.assertTrue(test_obj.mask_fields[3] == "log_lambda")
+        self.assertTrue(len(Forest.mask_fields) == 4)
+        self.assertTrue(Forest.mask_fields[0] == "flux")
+        self.assertTrue(Forest.mask_fields[1] == "ivar")
+        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
+        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2))
 
@@ -344,8 +319,8 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(np.allclose(test_obj.deltas, np.zeros(15)))
         self.assertTrue(np.allclose(test_obj.flux, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(15)*4))
-        self.assertTrue(len(test_obj.mask_fields) == 1)
-        self.assertTrue(test_obj.mask_fields[0] == "flux")
+        self.assertTrue(len(Forest.mask_fields) == 1)
+        self.assertTrue(Forest.mask_fields[0] == "flux")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2))
 
@@ -370,11 +345,11 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(test_obj.deltas is None)
         self.assertTrue(np.allclose(test_obj.flux, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(15)*4))
-        self.assertTrue(len(test_obj.mask_fields) == 4)
-        self.assertTrue(test_obj.mask_fields[0] == "flux")
-        self.assertTrue(test_obj.mask_fields[1] == "ivar")
-        self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
-        self.assertTrue(test_obj.mask_fields[3] == "log_lambda")
+        self.assertTrue(len(Forest.mask_fields) == 4)
+        self.assertTrue(Forest.mask_fields[0] == "flux")
+        self.assertTrue(Forest.mask_fields[1] == "ivar")
+        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
+        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(15)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2))
 
@@ -439,11 +414,11 @@ class AstronomicalObjectTest(AbstractTest):
                                                                    3.557125,
                                                                    3.557325])))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(test_obj.mask_fields) == 4)
-        self.assertTrue(test_obj.mask_fields[0] == "flux")
-        self.assertTrue(test_obj.mask_fields[1] == "ivar")
-        self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
-        self.assertTrue(test_obj.mask_fields[3] == "log_lambda")
+        self.assertTrue(len(Forest.mask_fields) == 4)
+        self.assertTrue(Forest.mask_fields[0] == "flux")
+        self.assertTrue(Forest.mask_fields[1] == "ivar")
+        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
+        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
         self.assertTrue(test_obj.plate == 0)
@@ -481,11 +456,11 @@ class AstronomicalObjectTest(AbstractTest):
                                                                    3.557125,
                                                                    3.557325])))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(test_obj.mask_fields) == 4)
-        self.assertTrue(test_obj.mask_fields[0] == "flux")
-        self.assertTrue(test_obj.mask_fields[1] == "ivar")
-        self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
-        self.assertTrue(test_obj.mask_fields[3] == "log_lambda")
+        self.assertTrue(len(Forest.mask_fields) == 4)
+        self.assertTrue(Forest.mask_fields[0] == "flux")
+        self.assertTrue(Forest.mask_fields[1] == "ivar")
+        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
+        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
         self.assertTrue(test_obj.plate == 0)
@@ -572,11 +547,11 @@ class AstronomicalObjectTest(AbstractTest):
                                                                    3.557125,
                                                                    3.557325])))
         self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*16))
-        self.assertTrue(len(test_obj.mask_fields) == 4)
-        self.assertTrue(test_obj.mask_fields[0] == "flux")
-        self.assertTrue(test_obj.mask_fields[1] == "ivar")
-        self.assertTrue(test_obj.mask_fields[2] == "transmission_correction")
-        self.assertTrue(test_obj.mask_fields[3] == "log_lambda")
+        self.assertTrue(len(Forest.mask_fields) == 4)
+        self.assertTrue(Forest.mask_fields[0] == "flux")
+        self.assertTrue(Forest.mask_fields[1] == "ivar")
+        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
+        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
         self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
         self.assertTrue(np.allclose(test_obj.mean_snr, 8))
         self.assertTrue(test_obj.plate == 0)
