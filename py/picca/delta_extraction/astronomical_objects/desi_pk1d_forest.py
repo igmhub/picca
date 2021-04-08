@@ -1,12 +1,11 @@
 """This module defines the abstract class SdssForest to represent
 SDSS forests
 """
-from picca.delta_extraction.errors import AstronomicalObjectError
+from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
+from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 
-from picca.delta_extraction.astronomical_objects.forest import Forest
 
-
-class DesiForest(Forest):
+class DesiPk1dForest(Pk1dForest, DesiForest):
     """Forest Object
 
     Methods
@@ -108,17 +107,23 @@ class DesiForest(Forest):
     mean_snf: float (from Forest)
     Mean signal-to-noise of the forest
 
-    night: list of int
+    night: list of int (from DesiForest)
     Identifier of the night where the observation was made. None for no info
 
-    petal: list of int
+    petal: list of int (from DesiForest)
     Identifier of the spectrograph used in the observation. None for no info
 
-    targetid: int
+    targetid: int (from DesiForest)
     Targetid of the object
 
-    tile: list of int
+    tile: list of int (from DesiForest)
     Identifier of the tile used in the observation. None for no info
+
+    exposures_diff: array of floats (from Pk1dForest)
+    Difference between exposures
+
+    reso: array of floats or None (from Pk1dForest)
+    Resolution of the forest
     """
     def __init__(self, **kwargs):
         """Initialize instance
@@ -128,81 +133,19 @@ class DesiForest(Forest):
         **kwargs: dict
         Dictionary contiaing the information
         """
-        self.night = []
-        if kwargs.get("night") is not None:
-            self.night.append(kwargs.get("night"))
-            del kwargs["night"]
-
-        self.petal = []
-        if kwargs.get("petal") is not None:
-            self.petal.append(kwargs.get("petal"))
-            del kwargs["petal"]
-
-        self.targetid = kwargs.get("targetid")
-        if self.targetid is None:
-            raise AstronomicalObjectError("Error constructing DesiForest. "
-                                          "Missing variable 'targetid'")
-        del kwargs["targetid"]
-
-        self.tile = []
-        if kwargs.get("tile") is not None:
-            self.tile.append(kwargs.get("tile"))
-            del kwargs["tile"]
-
-        # call parent constructor
-        kwargs["los_id"] = self.targetid
         super().__init__(**kwargs)
 
         # rebin arrays
+        # this needs to happen after flux, ivar arrays are initialized by
+        # Forest constructor
         super().rebin()
-
-    def coadd(self, other):
-        """Coadds the information of another forest.
-
-        Forests are coadded by calling the coadd function from Forest
-
-        Arguments
-        ---------
-        other: Forest
-        The forest instance to be coadded.
-        """
-        self.night += other.night
-        self.petal += other.petal
-        self.tile += other.tile
-        super().coadd(other)
 
     def get_header(self):
         """Returns line-of-sight data to be saved as a fits file header
-
-        Adds to specific SDSS keys to general header (defined in class Forsest)
 
         Returns
         -------
         header : list of dict
         A list of dictionaries containing 'name', 'value' and 'comment' fields
         """
-        header = super().get_header()
-        header += [
-            {
-                'name': 'TARGETID',
-                'value': self.targetid,
-                'comment': 'Object identification'
-            },
-            {
-                'name': 'NIGHT',
-                'value': self.night,
-                'comment': "Observation night"
-            },
-            {
-                'name': 'PETAL',
-                'value': self.petal,
-                'comment': 'Observation petal'
-            },
-            {
-                'name': 'TILE',
-                'value': self.tile,
-                'comment': 'Observation tile'
-            },
-        ]
-
-        return header
+        return super().get_header()

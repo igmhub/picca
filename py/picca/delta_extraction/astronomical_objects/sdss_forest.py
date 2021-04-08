@@ -107,13 +107,13 @@ class SdssForest(Forest):
     mean_snf: float (from Forest)
     Mean signal-to-noise of the forest
 
-    fiberid: int
+    fiberid: list of int
     Fiberid of the observation
 
-    mjd: int
+    mjd: list of int
     Modified Julian Date of the observation
 
-    plate: int
+    plate: list of int
     Plate of the observation
 
     thingid: int
@@ -127,22 +127,22 @@ class SdssForest(Forest):
         **kwargs: dict
         Dictionary contiaing the information
         """
-        self.fiberid = kwargs.get("fiberid")
-        if self.fiberid is None:
+        if kwargs.get("fiberid") is None:
             raise AstronomicalObjectError("Error constructing SdssForest. "
                                           "Missing variable 'fiberid'")
+        self.fiberid = [kwargs.get("fiberid")]
         del kwargs["fiberid"]
 
-        self.mjd = kwargs.get("mjd")
-        if self.mjd is None:
+        if kwargs.get("mjd") is None:
             raise AstronomicalObjectError("Error constructing SdssForest. "
                                           "Missing variable 'mjd'")
+        self.mjd = [kwargs.get("mjd")]
         del kwargs["mjd"]
 
-        self.plate = kwargs.get("plate")
-        if self.plate is None:
+        if kwargs.get("plate") is None:
             raise AstronomicalObjectError("Error constructing SdssForest. "
                                           "Missing variable 'plate'")
+        self.plate = [kwargs.get("plate")]
         del kwargs["plate"]
 
         self.thingid = kwargs.get("thingid")
@@ -159,3 +159,59 @@ class SdssForest(Forest):
         # this needs to happen after flux and ivar arrays are initialized by
         # Forest constructor
         super().rebin()
+
+    def coadd(self, other):
+        """Coadds the information of another forest.
+
+        Forests are coadded by calling the coadd function from Forest
+
+        Arguments
+        ---------
+        other: Forest
+        The forest instance to be coadded.
+        """
+        self.fiberid += other.fiberid
+        self.mjd += other.mjd
+        self.plate += other.plate
+        super().coadd(other)
+
+    def get_header(self):
+        """Returns line-of-sight data to be saved as a fits file header
+
+        Adds to specific SDSS keys to general header (defined in class Forsest)
+
+        Returns
+        -------
+        header : list of dict
+        A list of dictionaries containing 'name', 'value' and 'comment' fields
+        """
+        header = super().get_header()
+        header += [
+            {
+                'name':
+                'PMF',
+                'value':
+                '{}-{}-{}'.format(self.plate, self.mjd,
+                                  self.fiberid)
+            },
+            {
+                'name': 'THING_ID',
+                'value': self.thingid,
+                'comment': 'Object identification'
+            },
+            {
+                'name': 'PLATE',
+                'value': self.plate
+            },
+            {
+                'name': 'MJD',
+                'value': self.mjd,
+                'comment': 'Modified Julian date'
+            },
+            {
+                'name': 'FIBERID',
+                'value': self.fiberid
+            },
+        ]
+
+        return header

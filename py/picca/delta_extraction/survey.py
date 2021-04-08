@@ -39,7 +39,7 @@ class Survey:
     Spectral corrections to be applied to all spectra. This includes things
     like calibration correction, ivar correction, dust correction, ...
 
-    forests: List of Forest
+    data: Data
     A list of Forest from which to compute the deltas.
 
     masks: list of Mask
@@ -54,7 +54,7 @@ class Survey:
         self.config = None
         self.corrections = None
         self.masks = None
-        self.forests = None
+        self.data = None
         self.expected_flux = None
 
     @jit(nopython=True, parallel=True)
@@ -64,8 +64,8 @@ class Survey:
         # pylint: disable=not-an-iterable
         # prange is used to signal jit of parallelisation but is otherwise
         # equivalent to range
-        for forest_index in prange(len(self.forests)):
-            self.expected_flux.extract_delta(self.forests[forest_index])
+        for forest_index in prange(len(self.data.forests)):
+            self.expected_flux.extract_delta(self.data.forests[forest_index])
 
         t1 = time.time()
         userprint(f"Time spent extracting deltas: {t1-t0}")
@@ -78,9 +78,9 @@ class Survey:
         # pylint: disable=not-an-iterable
         # prange is used to signal jit of parallelisation but is otherwise
         # equivalent to range
-        for forest_index in prange(len(self.forests)):
+        for forest_index in prange(len(self.data.forests)):
             for correction_index in range(len(self.corrections)):
-                self.corrections[correction_index].apply_correction(self.forests[forest_index])
+                self.corrections[correction_index].apply_correction(self.data.forests[forest_index])
 
         t1 = time.time()
         userprint(f"Time spent applying corrections: {t1-t0}")
@@ -93,9 +93,9 @@ class Survey:
         # pylint: disable=not-an-iterable
         # prange is used to signal jit of parallelisation but is otherwise
         # equivalent to range
-        for forest_index in prange(len(self.forests)):
+        for forest_index in prange(len(self.data.forests)):
             for mask_index in range(len(self.masks)):
-                self.masks[mask_index].apply_mask(self.forests[forest_index])
+                self.masks[mask_index].apply_mask(self.data.forests[forest_index])
 
         t1 = time.time()
         userprint(f"Time spent applying corrections: {t1-t0}")
@@ -123,7 +123,7 @@ class Survey:
                                        "from 'ExpectedFlux'. Please check "
                                        "for correct inheritance pattern.")
 
-        self.expected_flux.compute_expected_flux(self.forests)
+        self.expected_flux.compute_expected_flux(self.data.forests)
         t1 = time.time()
         userprint(f"Time spent computing the mean expected flux: {t1-t0}")
 
@@ -203,16 +203,15 @@ class Survey:
         userprint("Reading data")
 
         DataType, data_arguments = self.config.data
-        data = DataType(data_arguments)
-        if not isinstance(data, Data):
+        self.data = DataType(data_arguments)
+        if not isinstance(self.data, Data):
             raise DeltaExtractionError("Error reading data\n"
                                        f"Type {DataType} with arguments "
                                        f"{data_arguments} is not a correct "
                                        "type. Data should inher from "
                                        "'Forest'. Please check for correct "
                                        "inheritance pattern.")
-        self.forests = data.get_forest_list()
-        if not all([isinstance(forest, Forest) for forest in self.forests]):
+        if not all([isinstance(forest, Forest) for forest in self.data.forests]):
             raise DeltaExtractionError("Error reading data.\n At least one of "
                                        "the elements in variable 'forest' is "
                                        "not of class Forest. This can happen if "
@@ -250,3 +249,7 @@ class Survey:
 
         t1 = time.time()
         userprint(f"Time spent reading masks: {t1-t0}")
+
+    def save_deltas(self):
+        """Saves the deltas."""
+        self.data.save_deltas(self.config.out_dir)

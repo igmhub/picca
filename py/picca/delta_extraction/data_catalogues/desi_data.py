@@ -8,17 +8,17 @@ import numpy as np
 import fitsio
 import healpy
 
+from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
+from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.errors import DataError, DataWarning
-from picca.delta_extraction.userprint import userprint
-
-from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
-from picca.delta_extraction.astronomical_objects.forest import Forest
-
 from picca.delta_extraction.quasar_catalogues.ztruth_catalogue import ZtruthCatalogue
+from picca.delta_extraction.userprint import userprint
+from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 
 defaults = {
-    "delta lambda": 1.0, # TODO: update this value to the correct DESI expectation
+    "delta lambda": 1.0, # TODO: update this value to the read from DESI files
     "lambda max": 5500.0,
     "lambda max rest frame": 1200.0,
     "lambda min": 3600.0,
@@ -83,7 +83,7 @@ class DesiData(Data):
         # load z_truth catalogue
         catalogue = ZtruthCatalogue(config)
 
-        # setup DesiForest class variables
+        # setup Forest class variables
         Forest.wave_solution = "lin"
         Forest.delta_lambda = self.delta_lambda
         Forest.lambda_max = self.lambda_max
@@ -177,13 +177,21 @@ class DesiData(Data):
             for color in colors:
                 spec = {}
                 try:
-                    spec["WAVELENGTHL"] = hdul[f"{color}_WAVELENGTH"].read()
+                    spec["WAVELENGTH"] = hdul[f"{color}_WAVELENGTH"].read()
                     spec["FLUX"] = hdul[f"{color}_FLUX"].read()
                     spec["IVAR"] = (hdul[f"{color}_IVAR"].read() *
                                     (hdul[f"{color}_MASK"].read() == 0))
                     w = np.isnan(spec["FLUX"]) | np.isnan(spec["IVAR"])
                     for key in ["FLUX", "IVAR"]:
                         spec[key][w] = 0.
+                    if self.analysis_type == "PK 1D":
+                        if f"{color}_RESOLUTION" in hdul:
+                            spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
+                        else:
+                            raise DataError("Error while reading {color} band from "
+                                            "{filename}. Analysis type is  'PK 1D', "
+                                            "but file does not contain HDU "
+                                            f"'{color}_RESOLUTION' ")
                     spectrographs_data[color] = spec
                 except OSError:
                     warnings.warn(f"Error while reading {color} band from {filename}."
@@ -213,16 +221,35 @@ class DesiData(Data):
                     ivar = spec['IV'][w_t].copy()
                     flux = spec['FL'][w_t].copy()
 
-                    forest = DesiForest(**{"lambda": spec['WAVELENGTH'],
-                                           "flux": flux,
-                                           "ivar": ivar,
-                                           "targetid": targetid,
-                                           "ra": row['RA'],
-                                           "dec": row['DEC'],
-                                           "z": row['Z'],
-                                           "petal": row["PETAL_LOC"],
-                                           "tile": row["TILEID"],
-                                           "night": row["NIGHT"]})
+                    if self.analysis_type == "BAO 3D":
+                        forest = DesiForest(**{"lambda": spec['WAVELENGTH'],
+                                               "flux": flux,
+                                               "ivar": ivar,
+                                               "targetid": targetid,
+                                               "ra": row['RA'],
+                                               "dec": row['DEC'],
+                                               "z": row['Z'],
+                                               "petal": row["PETAL_LOC"],
+                                               "tile": row["TILEID"],
+                                               "night": row["NIGHT"]})
+                    elif self.analysis_type == "PK 1D":
+                        reso_sum = spec['RESO'][w_t].copy()
+                        reso_in_km_per_s = spectral_resolution_desi(
+                            reso_sum, spec['WAVELENGTH'])
+                        exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
+
+                        forest = DesiPk1dForest(**{"lambda": spec['WAVELENGTH'],
+                                                   "flux": flux,
+                                                   "ivar": ivar,
+                                                   "targetid": targetid,
+                                                   "ra": row['RA'],
+                                                   "dec": row['DEC'],
+                                                   "z": row['Z'],
+                                                   "petal": row["PETAL_LOC"],
+                                                   "tile": row["TILEID"],
+                                                   "night": row["NIGHT"],
+                                                   "exposures_diff": exposures_diff,
+                                                   "reso": reso_in_km_per_s})
 
                     if targetid in forests_by_targetid:
                         forests_by_targetid[targetid].coadd(forest)
@@ -307,6 +334,14 @@ class DesiData(Data):
                     spec['FLUX'] = hdul[f'{color}_FLUX'].read()
                     spec['IVAR'] = (hdul[f'{color}_IVAR'].read() *
                                     (hdul[f'{color}_MASK'].read() == 0))
+                    if self.analysis_type == "PK 1D":
+                        if f"{color}_RESOLUTION" in hdul:
+                            spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
+                        else:
+                            raise DataError("Error while reading {color} band from "
+                                            "{filename}. Analysis type is  'PK 1D', "
+                                            "but file does not contain HDU "
+                                            f"'{color}_RESOLUTION' ")
                     w = np.isnan(spec['FLUX']) | np.isnan(spec['IVAR'])
                     for key in ['FLUX', 'IVAR']:
                         spec[key][w] = 0.
@@ -343,16 +378,35 @@ class DesiData(Data):
                     ivar = spec['IV'][w_t].copy()
                     flux = spec['FL'][w_t].copy()
 
-                    forest = DesiForest(**{"lambda": spec['WAVELENGTH'],
-                                           "flux": flux,
-                                           "ivar": ivar,
-                                           "targetid": entry["TARGETID"],
-                                           "ra": entry['RA'],
-                                           "dec": entry['DEC'],
-                                           "z": entry['Z'],
-                                           "petal": entry["PETAL_LOC"],
-                                           "tile": entry["TILEID"],
-                                           "night": entry["NIGHT"]})
+                    if self.analysis_type == "BAO 3D":
+                        forest = DesiForest(**{"lambda": spec['WAVELENGTH'],
+                                               "flux": flux,
+                                               "ivar": ivar,
+                                               "targetid": targetid,
+                                               "ra": entry['RA'],
+                                               "dec": entry['DEC'],
+                                               "z": entry['Z'],
+                                               "petal": entry["PETAL_LOC"],
+                                               "tile": entry["TILEID"],
+                                               "night": entry["NIGHT"]})
+                    elif self.analysis_type == "PK 1D":
+                        reso_sum = spec['RESO'][w_t].copy()
+                        reso_in_km_per_s = np.real(
+                            spectral_resolution_desi(reso_sum, spec['WAVELENGTH']))
+                        exposures_diff = np.zeros(spec['log_lambda'].shape)
+
+                        forest = DesiPk1dForest(**{"lambda": spec['WAVELENGTH'],
+                                                   "flux": flux,
+                                                   "ivar": ivar,
+                                                   "targetid": targetid,
+                                                   "ra": entry['RA'],
+                                                   "dec": entry['DEC'],
+                                                   "z": entry['Z'],
+                                                   "petal": entry["PETAL_LOC"],
+                                                   "tile": entry["TILEID"],
+                                                   "night": entry["NIGHT"],
+                                                   "exposures_diff": exposures_diff,
+                                                   "reso": reso_in_km_per_s})
 
                     if targetid in forests_by_targetid:
                         forests_by_targetid[targetid].coadd(forest)

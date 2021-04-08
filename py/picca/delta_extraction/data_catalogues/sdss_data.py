@@ -5,14 +5,14 @@ import time
 import numpy as np
 import fitsio
 
-from picca.delta_extraction.data import Data
-from picca.delta_extraction.errors import DataError, DataWarning
-from picca.delta_extraction.userprint import userprint
-
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
-
+from picca.delta_extraction.astronomical_objects.sdss_pk1d_forest import SdssPk1dForest
+from picca.delta_extraction.data import Data
+from picca.delta_extraction.errors import DataError, DataWarning
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
+from picca.delta_extraction.userprint import userprint
+from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
 
 defaults = {
     "lambda max": 5500.0,
@@ -79,6 +79,7 @@ class SdssData(Data):
         super().__init__(config)
 
         # load variables from config
+        self.analysis_type = None
         self.delta_log_lambda = None
         self.input_directory = None
         self.log_lambda_max = None
@@ -181,16 +182,36 @@ class SdssData(Data):
             flux = hdul[1]["flux"][:]
             ivar = hdul[1]["ivar"][:] * (hdul[1]["and_mask"][:] == 0)
 
-            forest = SdssForest(**{"log_lambda": log_lambda,
-                                   "flux": flux,
-                                   "ivar": ivar,
-                                   "thingid": thingid,
-                                   "ra": row["RA"],
-                                   "dec": row["DEC"],
-                                   "z": row["Z"],
-                                   "plate": plate,
-                                   "mjd": mjd,
-                                   "fiberid": fiberid})
+            if self.analysis_type == "BAO 3D":
+                forest = SdssForest(**{"log_lambda": log_lambda,
+                                       "flux": flux,
+                                       "ivar": ivar,
+                                       "thingid": thingid,
+                                       "ra": row["RA"],
+                                       "dec": row["DEC"],
+                                       "z": row["Z"],
+                                       "plate": plate,
+                                       "mjd": mjd,
+                                       "fiberid": fiberid})
+            elif self.analysis_type == "PK 1D":
+                # compute difference between exposure
+                exposures_diff = exp_diff(hdul, log_lambda)
+                # compute spectral resolution
+                wdisp = hdul[1]["wdisp"][:]
+                reso = spectral_resolution(wdisp, True, fiberid, log_lambda)
+
+                forest = SdssPk1dForest(**{"log_lambda": log_lambda,
+                                           "flux": flux,
+                                           "ivar": ivar,
+                                           "thingid": thingid,
+                                           "ra": row["RA"],
+                                           "dec": row["DEC"],
+                                           "z": row["Z"],
+                                           "plate": plate,
+                                           "mjd": mjd,
+                                           "fiberid": fiberid,
+                                           "exposures_diff": exposures_diff,
+                                           "reso": reso})
 
             if thingid in forests_by_thingid:
                 forests_by_thingid[thingid].coadd(forest)
@@ -240,16 +261,36 @@ class SdssData(Data):
                 thingid = row["THING_ID"]
                 fiberid = row["FIBERID"]
                 array_index = fiberid - 1
-                forest = SdssForest(**{"log_lambda": log_lambda,
-                                       "flux": flux[array_index],
-                                       "ivar": ivar[array_index],
-                                       "thingid": row["THING_ID"],
-                                       "ra": row["RA"],
-                                       "dec": row["DEC"],
-                                       "z": row["Z"],
-                                       "plate": row["PLATE"],
-                                       "mjd": row["MJD"],
-                                       "fiberid": row["FIBERID"]})
+                if self.analysis_type == "BAO 3D":
+                    forest = SdssForest(**{"log_lambda": log_lambda,
+                                           "flux": flux[array_index],
+                                           "ivar": ivar[array_index],
+                                           "thingid": row["THING_ID"],
+                                           "ra": row["RA"],
+                                           "dec": row["DEC"],
+                                           "z": row["Z"],
+                                           "plate": row["PLATE"],
+                                           "mjd": row["MJD"],
+                                           "fiberid": row["FIBERID"]})
+                elif self.analysis_type == "PK 1D":
+                    # compute difference between exposure
+                    exposures_diff = exp_diff(hdul, log_lambda)
+                    # compute spectral resolution
+                    wdisp = hdul[1]["wdisp"][:]
+                    reso = spectral_resolution(wdisp, True, fiberid, log_lambda)
+
+                    forest = SdssPk1dForest(**{"log_lambda": log_lambda,
+                                               "flux": flux,
+                                               "ivar": ivar,
+                                               "thingid": thingid,
+                                               "ra": row["RA"],
+                                               "dec": row["DEC"],
+                                               "z": row["Z"],
+                                               "plate": plate,
+                                               "mjd": mjd,
+                                               "fiberid": fiberid,
+                                               "exposures_diff": exposures_diff,
+                                               "reso": reso})
                 if thingid in forests_by_thingid:
                     forests_by_thingid[thingid].coadd(forest)
                 else:

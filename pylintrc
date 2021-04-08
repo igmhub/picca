@@ -425,6 +425,8 @@ good-names=i,
            Run,
            _,
      w,
+     w1,
+     w2,
 	   ra,
      p0,
      p1,
@@ -582,7 +584,7 @@ max-attributes=20
 max-bool-expr=10
 
 # Maximum number of branch for function / method body.
-max-branches=20
+max-branches=30
 
 # Maximum number of locals for function / method body.
 max-locals=50

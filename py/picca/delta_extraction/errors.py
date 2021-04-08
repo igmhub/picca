@@ -36,15 +36,16 @@ class DeltaExtractionError(Exception):
         Exceptions occurred in class Survey
     """
 
+class ExpectedFluxError(Exception):
+    """
+        Exceptions occurred in class ExpectedFlux
+    """
+
 class MaskError(Exception):
     """
         Exceptions occurred in class Mask
     """
 
-class MeanExpectedFluxError(Exception):
-    """
-        Exceptions occurred in class MeanExpectedFlux
-    """
 class QuasarCatalogueError(Exception):
     """
         Exceptions occurred in class Mask

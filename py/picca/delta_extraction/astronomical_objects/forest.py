@@ -74,10 +74,6 @@ class Forest(AstronomicalObject):
 
     Attributes
     ----------
-    bad_continuum_reason: str or None
-    Reason as to why the continuum fit is not acceptable. None for acceptable
-    contiuum.
-
     dec: float (from AstronomicalObject)
     Declination (in rad)
 
@@ -96,6 +92,10 @@ class Forest(AstronomicalObject):
     z: float (from AstronomicalObject)
     Redshift
 
+    bad_continuum_reason: str or None
+    Reason as to why the continuum fit is not acceptable. None for acceptable
+    contiuum.
+
     continuum: array of float or None
     Quasar continuum. None for no information
 
@@ -110,14 +110,18 @@ class Forest(AstronomicalObject):
 
     mask_fields: list of str
     Names of the fields that are affected by masking. In general it will
-    be "flux", "ivar" and "transmission_correction" but some child classes might
-    add more.
+    be "flux", "ivar", "transmission_correction" and either "log_lambda" if
+    Forest.wave_solution is "log" or "lambda_" if Forests.wave_solution is "lin",
+    but some child classes might add more.
 
     mean_snf: float
     Mean signal-to-noise of the forest
 
     transmission_correction: array of float
     Transmission correction.
+
+    weights: array of float or None
+    Weights associated to the delta field. None for no information
     """
 
     delta_lambda = None
@@ -198,6 +202,10 @@ class Forest(AstronomicalObject):
                 f"Found {self.mask_fields}.")
 
         self.transmission_correction = np.ones_like(self.flux)
+
+        self.weights = kwargs.get("weights")
+        if kwargs.get("weights") is not None:
+            del kwargs["weights"]
 
         # compute mean quality variables
         snr = self.flux * np.sqrt(self.ivar)
@@ -300,7 +308,7 @@ class Forest(AstronomicalObject):
     def coadd(self, other):
         """Coadds the information of another forest.
 
-        Forests are coadded by using inverse variance weighting
+        Forests are coadded by rebinning
 
         Arguments
         ---------
@@ -324,44 +332,141 @@ class Forest(AstronomicalObject):
         # coadd the deltas by rebinning
         self.rebin()
 
+    def get_data(self):
+        """Get the data to be saved in a fits file.
+
+        Data contains lambda_ or log_lambda depending on whether
+        wave_solution is "lin" or "log"
+        Data also contains the delta field, the weights and the quasar
+        continuum.
+
+        Returns
+        -------
+        cols: list of arrays
+        Data of the different variables
+
+        names: list of str
+        Names of the different variables
+
+        units: list of str
+        Units of the different variables
+
+        comments: list of str
+        Comments attached to the different variables
+        """
+        cols = []
+        names = []
+        comments = []
+        units = []
+        if Forest.wave_solution == "log":
+            cols += [self.log_lambda]
+            names += ["LOGLAM"]
+            comments += ["Log lambda"]
+            units += ["log Angstrom"]
+        elif Forest.wave_solution == "lin":
+            cols += [self.log_lambda]
+            names += ["LAMBDA"]
+            comments += ["Lambda"]
+            units += ["Angstrom"]
+        else:
+            raise AstronomicalObjectError("Error in coadding Forest. "
+                                          "Class variable 'wave_solution' "
+                                          "must be either 'lin' or 'log'. "
+                                          f"Found: {Forest.wave_solution}")
+
+        if self.continuum is None:
+            cols += [np.zeros_like(self.deltas)]
+        else:
+            cols += [self.continuum]
+        names += "CONT"
+        comments += "Quasar continuum if BAD_CONT is None"
+        units += [""] # TODO: fix units
+
+        cols += [self.deltas, self.weights]
+        names += ['DELTA', 'WEIGHT']
+        comments += ['Delta field', 'Pixel weights']
+        units += ["", ""]
+
+        return cols, names, units, comments
+
+    def get_header(self):
+        """Returns line-of-sight data to be saved as a fits file header
+
+        Adds to specific SDSS keys to general header (defined in class Forsest)
+
+        Returns
+        -------
+        header : list of dict
+        A list of dictionaries containing 'name', 'value' and 'comment' fields
+        """
+        header = super().get_header()
+        header += [
+            {
+                'name': 'BAD_CONT',
+                'value': self.bad_continuum_reason,
+                'comment': 'Reason as to why the continuum is bad'
+            },
+            {
+                'name': 'MEANSNR',
+                'value': self.mean_snr,
+                'comment': 'Mean SNR'
+            },
+        ]
+
+        return header
+
     def rebin(self):
-        """Rebin the flux and ivar arrays."""
+        """Rebin the arrays and update control variables
+        Rebinned arrays are flux, ivar, lambda_ or log_lambda, and
+        transmission_correction. Control variables are mean_snr
+
+        Returns
+        -------
+        bins: array of float
+        Binning solution to be used for the rebinning
+
+        w1: array of bool
+        Masking array for the bins solution
+
+        w2: array of bool
+        Masking array for the rebinned ivar solution
+        """
         # compute bins
         if Forest.wave_solution == "log":
             bins = (np.floor((self.log_lambda - Forest.log_lambda_min) /
                              Forest.delta_log_lambda + 0.5).astype(int))
             self.log_lambda = Forest.log_lambda_min + bins * Forest.delta_log_lambda
-            w = (self.log_lambda >= Forest.log_lambda_min)
-            w = w & (self.log_lambda < Forest.log_lambda_max)
-            w = w & (self.log_lambda - np.log10(1. + self.z) >
-                     Forest.log_lambda_min_rest_frame)
-            w = w & (self.log_lambda - np.log10(1. + self.z) <
-                     Forest.log_lambda_max_rest_frame)
-            w = w & (self.ivar > 0.)
-            if w.sum() == 0:
-                return
-            bins = bins[w]
-            self.log_lambda = self.log_lambda[w]
-            self.flux = self.flux[w]
-            self.ivar = self.ivar[w]
-            self.transmission_correction = self.transmission_correction[w]
+            w1 = (self.log_lambda >= Forest.log_lambda_min)
+            w1 = w1 & (self.log_lambda < Forest.log_lambda_max)
+            w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >
+                       Forest.log_lambda_min_rest_frame)
+            w1 = w1 & (self.log_lambda - np.log10(1. + self.z) <
+                       Forest.log_lambda_max_rest_frame)
+            w1 = w1 & (self.ivar > 0.)
+            if w1.sum() == 0:
+                return [], [], []
+            bins = bins[w1]
+            self.log_lambda = self.log_lambda[w1]
+            self.flux = self.flux[w1]
+            self.ivar = self.ivar[w1]
+            self.transmission_correction = self.transmission_correction[w1]
 
         elif Forest.wave_solution == "lin":
             bins = (np.floor((self.lambda_ - Forest.lambda_min) /
                              Forest.delta_lambda + 0.5).astype(int))
             self.lambda_ = Forest.lambda_min + bins * Forest.delta_lambda
-            w = (self.lambda_ >= Forest.lambda_min)
-            w = w & (self.lambda_ < Forest.lambda_max)
-            w = w & (self.lambda_ / (1. + self.z) > Forest.lambda_min_rest_frame)
-            w = w & (self.lambda_ / (1. + self.z) < Forest.lambda_max_rest_frame)
-            w = w & (self.ivar > 0.)
-            if w.sum() == 0:
-                return
-            bins = bins[w]
-            self.lambda_ = self.lambda_[w]
-            self.flux = self.flux[w]
-            self.ivar = self.ivar[w]
-            self.transmission_correction = self.transmission_correction[w]
+            w1 = (self.lambda_ >= Forest.lambda_min)
+            w1 = w1 & (self.lambda_ < Forest.lambda_max)
+            w1 = w1 & (self.lambda_ / (1. + self.z) > Forest.lambda_min_rest_frame)
+            w1 = w1 & (self.lambda_ / (1. + self.z) < Forest.lambda_max_rest_frame)
+            w1 = w1 & (self.ivar > 0.)
+            if w1.sum() == 0:
+                return [], [], []
+            bins = bins[w1]
+            self.lambda_ = self.lambda_[w1]
+            self.flux = self.flux[w1]
+            self.ivar = self.ivar[w1]
+            self.transmission_correction = self.transmission_correction[w1]
         else:
             raise AstronomicalObjectError("Error in rebinning Forest. "
                                           "Class variable 'wave_solution' "
@@ -382,26 +487,26 @@ class Forest(AstronomicalObject):
                                          )] += rebin_transmission_correction_aux
         rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
 
-        w = (rebin_ivar > 0.)
-        if w.sum() == 0:
+        w2 = (rebin_ivar > 0.)
+        if w2.sum() == 0:
             raise AstronomicalObjectError(
                 "Attempting to rebin arrays flux and "
                 "ivar in class Forest, but ivar seems "
                 "to contain only zeros")
-        self.flux = rebin_flux[w] / rebin_ivar[w]
+        self.flux = rebin_flux[w2] / rebin_ivar[w2]
         self.transmission_correction = rebin_transmission_correction[
-            w] / rebin_ivar[w]
-        self.ivar = rebin_ivar[w]
+            w2] / rebin_ivar[w2]
+        self.ivar = rebin_ivar[w2]
 
         # then rebin wavelength
         if self.wave_solution == "log":
             rebin_lambda = (Forest.log_lambda_min +
                             np.arange(bins.max() + 1) * Forest.delta_log_lambda)
-            self.log_lambda = rebin_lambda[w]
+            self.log_lambda = rebin_lambda[w2]
         elif self.wave_solution == "lin":
             rebin_lambda = (Forest.lambda_min +
                             np.arange(bins.max() + 1) * Forest.delta_lambda)
-            self.lambda_ = rebin_lambda[w]
+            self.lambda_ = rebin_lambda[w2]
         else:
             raise AstronomicalObjectError("wavelength solution must be either "
                                           "'log' or 'linear'")
@@ -409,3 +514,7 @@ class Forest(AstronomicalObject):
         # finally update control variables
         snr = self.flux * np.sqrt(self.ivar)
         self.mean_snr = sum(snr) / float(len(snr))
+
+        # return weights and binning solution to be used by child classes if
+        # required
+        return bins, w1, w2

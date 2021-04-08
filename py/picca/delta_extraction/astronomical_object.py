@@ -90,3 +90,36 @@ class AstronomicalObject:
         """
         return (self.healpix == other.healpix and self.ra == other.ra and
                 self.dec == other.dec and self.z == other.z)
+
+    def get_header(self):
+        """Returns line-of-sight data to be saved as a fits file header
+
+        Returns
+        -------
+        header : list of dict
+        A list of dictionaries containing 'name', 'value' and 'comment' fields
+        """
+        header = [
+            {
+                'name': 'LOS_ID',
+                'value': self.los_id,
+                'comment': 'Picca line-of-sight id'
+            },
+            {
+                'name': 'RA',
+                'value': self.ra,
+                'comment': 'Right Ascension [rad]'
+            },
+            {
+                'name': 'DEC',
+                'value': self.dec,
+                'comment': 'Declination [rad]'
+            },
+            {
+                'name': 'Z',
+                'value': self.z,
+                'comment': 'Redshift'
+            },
+        ]
+
+        return header
