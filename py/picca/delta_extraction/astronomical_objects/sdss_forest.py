@@ -188,29 +188,22 @@ class SdssForest(Forest):
         header = super().get_header()
         header += [
             {
-                'name':
-                'PMF',
-                'value':
-                '{}-{}-{}'.format(self.plate, self.mjd,
-                                  self.fiberid)
-            },
-            {
                 'name': 'THING_ID',
                 'value': self.thingid,
                 'comment': 'Object identification'
             },
             {
                 'name': 'PLATE',
-                'value': self.plate
+                'value': "-".join(f"{plate:04d}" for plate in self.plate),
             },
             {
                 'name': 'MJD',
-                'value': self.mjd,
+                'value': "-".join(f"{mjd:05d}" for mjd in self.mjd),
                 'comment': 'Modified Julian date'
             },
             {
                 'name': 'FIBERID',
-                'value': self.fiberid
+                'value': "-".join(f"{fiberid:04d}" for fiberid in self.fiberid),
             },
         ]
 

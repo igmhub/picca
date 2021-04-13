@@ -4,7 +4,7 @@ SDSS forests
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 
-class SdssPk1dForest(Pk1dForest, SdssForest):
+class SdssPk1dForest(SdssForest, Pk1dForest):
     """Forest Object
 
     Methods
@@ -138,13 +138,3 @@ class SdssPk1dForest(Pk1dForest, SdssForest):
         # this needs to happen after flux, ivar arrays are initialized by
         # Forest constructor
         super().rebin()
-
-    def get_header(self):
-        """Returns line-of-sight data to be saved as a fits file header
-
-        Returns
-        -------
-        header : list of dict
-        A list of dictionaries containing 'name', 'value' and 'comment' fields
-        """
-        return super().get_header()

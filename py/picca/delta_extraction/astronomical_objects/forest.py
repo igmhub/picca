@@ -134,7 +134,7 @@ class Forest(AstronomicalObject):
     log_lambda_max_rest_frame = None
     log_lambda_min = None
     log_lambda_min_rest_frame = None
-    mask_fields = None
+    mask_fields = []
     wave_solution = None
 
     def __init__(self, **kwargs):
@@ -145,7 +145,7 @@ class Forest(AstronomicalObject):
         **kwargs: dict
         Dictionary contiaing the information
         """
-        Forest.__class_variable_check()
+        Forest.class_variable_check()
 
         if Forest.wave_solution == "log":
             self.lambda_ = None
@@ -159,7 +159,7 @@ class Forest(AstronomicalObject):
             self.lambda_ = kwargs.get("lambda")
             if self.lambda_ is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
-                                              "Missing variable 'wavelength'")
+                                              "Missing variable 'lambda'")
             del kwargs["lambda"]
 
         self.bad_continuum_reason = None
@@ -196,16 +196,21 @@ class Forest(AstronomicalObject):
         # call parent constructor
         super().__init__(**kwargs)
 
-        self.__consistency_check()
+        self.consistency_check()
 
     @classmethod
-    def __class_variable_check(cls):
+    def class_variable_check(cls):
         """Check that class variables have been correctly initialized"""
         if cls.wave_solution is None:
             raise AstronomicalObjectError("Error constructing Forest. "
                                           "Class variable 'wave_solution' "
                                           "must be set prior to initialize "
                                           "instances of this type")
+        if not isinstance(cls.mask_fields, list):
+            raise AstronomicalObjectError(
+                "Error constructing Forest. "
+                "Expected list in class variable 'mask fields'. "
+                f"Found {cls.mask_fields}.")
         if cls.wave_solution == "log":
             if cls.delta_log_lambda is None:
                 raise AstronomicalObjectError("Error constructing Forest. "
@@ -232,8 +237,8 @@ class Forest(AstronomicalObject):
                                               "Class variable 'log_lambda_min_rest_frame' "
                                               "must be set prior to initialize "
                                               "instances of this type")
-            if cls.mask_fields is None:
-                Forest.mask_fields = defaults.get("mask fields log")
+            if len(cls.mask_fields) == 0:
+                Forest.mask_fields = defaults.get("mask fields log").copy()
 
         elif cls.wave_solution == "lin":
             if cls.delta_lambda is None:
@@ -264,21 +269,15 @@ class Forest(AstronomicalObject):
                     "must be set prior to initialize "
                     "instances of this type")
 
-            if cls.mask_fields is None:
-                Forest.mask_fields = defaults.get("mask fields lin")
+            if len(cls.mask_fields) == 0:
+                Forest.mask_fields = defaults.get("mask fields lin").copy()
         else:
             raise AstronomicalObjectError("Error constructing Forest. "
                                           "Class variable 'wave_solution' "
                                           "must be either 'lin' or 'log'. "
                                           f"Found: {cls.wave_solution}")
 
-        if not isinstance(cls.mask_fields, list):
-            raise AstronomicalObjectError(
-                "Error constructing Forest. "
-                "Expected list in class variable 'mask fields'. "
-                f"Found {cls.mask_fields}.")
-
-    def __consistency_check(self):
+    def consistency_check(self):
         """Consistency checks after __init__"""
         if self.flux.size != self.ivar.size:
             raise AstronomicalObjectError("Error constructing Forest. 'flux', "
@@ -309,6 +308,12 @@ class Forest(AstronomicalObject):
         other: Forest
         The forest instance to be coadded.
         """
+        if self.los_id != other.los_id:
+            raise AstronomicalObjectError("Attempting to coadd two Forests "
+                                          "with different los_id. This should "
+                                          f"not happen. this.los_id={self.los_id}, "
+                                          f"other.los_id={other.los_id}.")
+
         if Forest.wave_solution == "log":
             self.log_lambda = np.append(self.log_lambda, other.log_lambda)
         elif Forest.wave_solution == "lin":
@@ -357,11 +362,13 @@ class Forest(AstronomicalObject):
             names += ["LOGLAM"]
             comments += ["Log lambda"]
             units += ["log Angstrom"]
+            array_size = self.log_lambda.size
         elif Forest.wave_solution == "lin":
-            cols += [self.log_lambda]
+            cols += [self.lambda_]
             names += ["LAMBDA"]
             comments += ["Lambda"]
             units += ["Angstrom"]
+            array_size = self.lambda_.size
         else:
             raise AstronomicalObjectError("Error in coadding Forest. "
                                           "Class variable 'wave_solution' "
@@ -369,24 +376,37 @@ class Forest(AstronomicalObject):
                                           f"Found: {Forest.wave_solution}")
 
         if self.continuum is None:
-            cols += [np.zeros_like(self.deltas)]
+            cols += [np.zeros(array_size, dtype=float)]
         else:
             cols += [self.continuum]
-        names += "CONT"
-        comments += "Quasar continuum if BAD_CONT is None"
-        units += [""] # TODO: fix units
+        names += ["CONT"]
+        comments += ["Quasar continuum if BAD_CONT is 'None'. Check input "
+                     "spectra for units"]
+        units += ["Flux units"]
 
-        cols += [self.deltas, self.weights]
-        names += ['DELTA', 'WEIGHT']
-        comments += ['Delta field', 'Pixel weights']
-        units += ["", ""]
+        if self.deltas is None:
+            cols += [np.zeros(array_size, dtype=float)]
+        else:
+            cols += [self.deltas]
+        names += ["DELTA"]
+        comments += ["Delta field"]
+        units += [""]
+
+        if self.weights is None:
+            cols += [np.zeros(array_size, dtype=float)]
+        else:
+            cols += [self.weights]
+        names += ["WEIGHT"]
+        comments += ["Pixel weights"]
+        units += [""]
 
         return cols, names, units, comments
 
     def get_header(self):
         """Returns line-of-sight data to be saved as a fits file header
 
-        Adds to specific SDSS keys to general header (defined in class Forsest)
+        Adds to specific Forest keys to general header (defined in class
+        AstronomicalObject)
 
         Returns
         -------
@@ -397,7 +417,7 @@ class Forest(AstronomicalObject):
         header += [
             {
                 'name': 'BAD_CONT',
-                'value': self.bad_continuum_reason,
+                'value': str(self.bad_continuum_reason),
                 'comment': 'Reason as to why the continuum is bad'
             },
             {
@@ -422,12 +442,16 @@ class Forest(AstronomicalObject):
         rebin_ivar: array of float
         Rebinned version of ivar
 
+        orig_ivar: array of float
+        Original version of ivar (before applying the function)
+
         w1: array of bool
         Masking array for the bins solution
 
         w2: array of bool
         Masking array for the rebinned ivar solution
         """
+        orig_ivar = self.ivar.copy()
         # compute bins
         if Forest.wave_solution == "log":
             bins = (np.floor((self.log_lambda - Forest.log_lambda_min) /
@@ -441,7 +465,7 @@ class Forest(AstronomicalObject):
                        Forest.log_lambda_max_rest_frame)
             w1 = w1 & (self.ivar > 0.)
             if w1.sum() == 0:
-                return [], [], [], []
+                return [], [], [], [], []
             bins = bins[w1]
             self.log_lambda = self.log_lambda[w1]
             self.flux = self.flux[w1]
@@ -458,7 +482,7 @@ class Forest(AstronomicalObject):
             w1 = w1 & (self.lambda_ / (1. + self.z) < Forest.lambda_max_rest_frame)
             w1 = w1 & (self.ivar > 0.)
             if w1.sum() == 0:
-                return [], [], [], []
+                return [], [], [], [], []
             bins = bins[w1]
             self.lambda_ = self.lambda_[w1]
             self.flux = self.flux[w1]
@@ -514,4 +538,4 @@ class Forest(AstronomicalObject):
 
         # return weights and binning solution to be used by child classes if
         # required
-        return bins, w1, w2
+        return bins, rebin_ivar, orig_ivar, w1, w2

@@ -2,7 +2,26 @@
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
+from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
+from picca.delta_extraction.utils import ABSORBER_IGM
+
+# reset Forest and Pk1dForest class variables
+def reset_forest():
+    """Resets the class variables of Forest and Pk1dForest"""
+    Forest.delta_log_lambda = None
+    Forest.delta_log_lambda = None
+    Forest.lambda_max = None
+    Forest.lambda_max_rest_frame = None
+    Forest.lambda_min = None
+    Forest.lambda_min_rest_frame = None
+    Forest.log_lambda_max = None
+    Forest.log_lambda_max_rest_frame = None
+    Forest.log_lambda_min = None
+    Forest.log_lambda_min_rest_frame = None
+    Forest.mask_fields = []
+    Pk1dForest.lambda_abs_igm = None
+
 
 # setup Forest class variables
 def setup_forest(wave_solution):
@@ -32,6 +51,19 @@ def setup_forest(wave_solution):
         Forest.lambda_min_rest_frame = 1040.0
 
 setup_forest("log")
+
+# setup Pk1dForest class variables
+def setup_pk1d_forest(absorber):
+    """Sets Pk1dForest class variables
+
+    Arguments
+    ---------
+    absorber: "str"
+    Key of ABSORBER_IGM selecting the absorber
+    """
+    Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(absorber)
+
+setup_pk1d_forest("LYA")
 
 # create SdssForest instance forest1
 # has:

@@ -190,18 +190,18 @@ class DesiForest(Forest):
             },
             {
                 'name': 'NIGHT',
-                'value': self.night,
-                'comment': "Observation night"
+                'value': "-".join(str(night) for night in self.night),
+                'comment': "Observation night(s)"
             },
             {
                 'name': 'PETAL',
-                'value': self.petal,
-                'comment': 'Observation petal'
+                'value': "-".join(str(petal) for petal in self.petal),
+                'comment': 'Observation petal(s)'
             },
             {
                 'name': 'TILE',
-                'value': self.tile,
-                'comment': 'Observation tile'
+                'value': "-".join(str(tile) for tile in self.tile),
+                'comment': 'Observation tile(s)'
             },
         ]
 

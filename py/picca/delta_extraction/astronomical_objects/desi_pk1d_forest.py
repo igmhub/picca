@@ -5,7 +5,7 @@ from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 
 
-class DesiPk1dForest(Pk1dForest, DesiForest):
+class DesiPk1dForest(DesiForest, Pk1dForest):
     """Forest Object
 
     Methods
@@ -64,7 +64,7 @@ class DesiPk1dForest(Pk1dForest, DesiForest):
     mask_fields: list of str (from Forest)
     Names of the fields that are affected by masking. In general it will
     be "flux" and "ivar" but some child classes might add more.
-    
+
     wave_solution: "lin" or "log" (from Forest)
     Determines whether the wavelength solution has linear spacing ("lin") or
     logarithmic spacing ("log").
@@ -139,13 +139,3 @@ class DesiPk1dForest(Pk1dForest, DesiForest):
         # this needs to happen after flux, ivar arrays are initialized by
         # Forest constructor
         super().rebin()
-
-    def get_header(self):
-        """Returns line-of-sight data to be saved as a fits file header
-
-        Returns
-        -------
-        header : list of dict
-        A list of dictionaries containing 'name', 'value' and 'comment' fields
-        """
-        return super().get_header()
