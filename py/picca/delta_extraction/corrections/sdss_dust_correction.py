@@ -81,7 +81,7 @@ class SdssDustCorrection(Correction):
         forest.flux /= correction
         forest.ivar *= correction**2
         if hasattr(forest, "exposures_diff"):
-            exposures_diff /= corr
+            forest.exposures_diff /= correction
 
 # pylint: disable=invalid-name,locally-disabled
 # we keep variable names since this function is adopted from elsewhere
