@@ -117,7 +117,6 @@ assert np.allclose(forest2.ivar, np.ones_like(forest2_log_lambda)*4)
 assert np.allclose(forest2.transmission_correction,
                    np.ones_like(forest2_log_lambda))
 
-
 # create SdssForest instance forest3
 # has:
 # * 0 DLA in dummy_absorbers_cat.fits.gz

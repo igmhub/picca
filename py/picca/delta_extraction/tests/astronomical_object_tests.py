@@ -1,6 +1,7 @@
 """This file contains tests related to AstronomicalObject and its childs"""
 import unittest
 import numpy as np
+import healpy
 
 from picca.delta_extraction.astronomical_object import AstronomicalObject
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -14,8 +15,520 @@ from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import (reset_forest, setup_forest,
                                                      setup_pk1d_forest)
 
+# define auxiliar variables
+FLUX = np.ones(10)
+FLUX2 = np.ones(10) * 3
+FLUX_REBIN = np.ones(5)
+FLUX_COADD = np.ones(5) * 2
+IVAR = np.ones(10) * 4
+IVAR_REBIN = np.ones(5) * 8
+IVAR_COADD = np.ones(5) * 16
+EXPOSURES_DIFF = np.ones(10)
+EXPOSURES_DIFF2 = np.ones(10) * 3
+EXPOSURES_DIFF_REBIN = np.ones(5)
+EXPOSURES_DIFF_COADD = np.ones(5) * 2
+RESO = np.ones(10)
+RESO2 = np.ones(10) * 3
+RESO_REBIN = np.ones(5)
+RESO_COADD = np.ones(5) * 2
+LOG_LAMBDA = np.array([
+    3.5565, 3.55655, 3.5567, 3.55675, 3.5569, 3.55695, 3.5571, 3.55715, 3.5573,
+    3.55735
+])
+LOG_LAMBDA_REBIN = np.array(
+    [3.5565025, 3.5567025, 3.5569025, 3.5571025, 3.5573025])
+LAMBDA_ = np.array(
+    [3610, 3610.4, 3650, 3650.4, 3670, 3670.4, 3680, 3680.4, 3700, 3700.4])
+LAMBDA_REBIN = np.array([3610, 3650, 3670, 3680, 3700])
+
+THINGID = 100000000
+TARGETID = 100000000
+
+# define contructor for AstronomicalObject
+kwargs_astronomical_object = {
+    "los_id": 9999,
+    "ra": 0.15,
+    "dec": 0.0,
+    "z": 2.1,
+}
+
+# define contructors for Forest
+kwargs_forest = kwargs_astronomical_object.copy()
+kwargs_forest.update({
+    "flux": FLUX,
+    "ivar": IVAR,
+})
+
+kwargs_forest2 = kwargs_astronomical_object.copy()
+kwargs_forest2.update({
+    "flux": FLUX2,
+    "ivar": IVAR,
+})
+
+kwargs_forest_log = kwargs_forest.copy()
+kwargs_forest_log.update({
+    "log_lambda": LOG_LAMBDA,
+})
+
+kwargs_forest_log2 = kwargs_forest2.copy()
+kwargs_forest_log2.update({
+    "log_lambda": LOG_LAMBDA,
+})
+
+kwargs_forest_lin = kwargs_forest.copy()
+kwargs_forest_lin.update({
+    "lambda": LAMBDA_,
+})
+
+kwargs_forest_lin2 = kwargs_forest2.copy()
+kwargs_forest_lin2.update({
+    "lambda": LAMBDA_,
+})
+
+kwargs_forest_rebin = kwargs_astronomical_object.copy()
+kwargs_forest_rebin.update({
+    "flux": FLUX_REBIN,
+    "ivar": IVAR_REBIN,
+})
+
+kwargs_forest_log_rebin = kwargs_forest_rebin.copy()
+kwargs_forest_log_rebin.update({
+    "log_lambda": LOG_LAMBDA_REBIN,
+})
+
+kwargs_forest_lin_rebin = kwargs_forest_rebin.copy()
+kwargs_forest_lin_rebin.update({
+    "lambda": LAMBDA_REBIN,
+})
+
+kwargs_forest_coadd = kwargs_astronomical_object.copy()
+kwargs_forest_coadd.update({
+    "flux": FLUX_COADD,
+    "ivar": IVAR_COADD,
+})
+
+kwargs_forest_log_coadd = kwargs_forest_coadd.copy()
+kwargs_forest_log_coadd.update({
+    "log_lambda": LOG_LAMBDA_REBIN,
+})
+
+kwargs_forest_lin_coadd = kwargs_forest_coadd.copy()
+kwargs_forest_lin_coadd.update({
+    "lambda": LAMBDA_REBIN,
+})
+
+# define contructors for Pk1dForest
+kwargs_pk1d_forest = kwargs_forest.copy()
+kwargs_pk1d_forest.update({
+    "exposures_diff": EXPOSURES_DIFF,
+    "reso": RESO,
+})
+
+kwargs_pk1d_forest2 = kwargs_forest2.copy()
+kwargs_pk1d_forest2.update({
+    "exposures_diff": EXPOSURES_DIFF2,
+    "reso": RESO2,
+})
+
+kwargs_pk1d_forest_log = kwargs_pk1d_forest.copy()
+kwargs_pk1d_forest_log.update({
+    "log_lambda": LOG_LAMBDA,
+})
+
+kwargs_pk1d_forest_log2 = kwargs_pk1d_forest2.copy()
+kwargs_pk1d_forest_log2.update({
+    "log_lambda": LOG_LAMBDA,
+})
+
+kwargs_pk1d_forest_lin = kwargs_pk1d_forest.copy()
+kwargs_pk1d_forest_lin.update({
+    "lambda": LAMBDA_,
+})
+
+kwargs_pk1d_forest_lin2 = kwargs_pk1d_forest2.copy()
+kwargs_pk1d_forest_lin2.update({
+    "lambda": LAMBDA_,
+})
+
+kwargs_pk1d_forest_rebin = kwargs_forest_rebin.copy()
+kwargs_pk1d_forest_rebin.update({
+    "exposures_diff": EXPOSURES_DIFF_REBIN,
+    "reso": RESO_REBIN,
+})
+
+kwargs_pk1d_forest_log_rebin = kwargs_pk1d_forest_rebin.copy()
+kwargs_pk1d_forest_log_rebin.update({
+    "log_lambda": LOG_LAMBDA_REBIN,
+})
+
+kwargs_pk1d_forest_lin_rebin = kwargs_pk1d_forest_rebin.copy()
+kwargs_pk1d_forest_lin_rebin.update({
+    "lambda": LAMBDA_REBIN,
+})
+
+kwargs_pk1d_forest_coadd = kwargs_forest_coadd.copy()
+kwargs_pk1d_forest_coadd.update({
+    "exposures_diff": EXPOSURES_DIFF_COADD,
+    "reso": RESO_COADD,
+})
+
+kwargs_pk1d_forest_log_coadd = kwargs_pk1d_forest_coadd.copy()
+kwargs_pk1d_forest_log_coadd.update({
+    "log_lambda": LOG_LAMBDA_REBIN,
+})
+
+kwargs_pk1d_forest_lin_coadd = kwargs_pk1d_forest_coadd.copy()
+kwargs_pk1d_forest_lin_coadd.update({
+    "lambda": LAMBDA_REBIN,
+})
+
+# define contructors for DesiForest
+kwargs_desi_forest = kwargs_forest_lin.copy()
+del kwargs_desi_forest["los_id"]
+kwargs_desi_forest.update({
+    "targetid": TARGETID,
+    "night": 0,
+    "petal": 0,
+    "tile": 0,
+})
+
+kwargs_desi_forest2 = kwargs_forest_lin2.copy()
+del kwargs_desi_forest2["los_id"]
+kwargs_desi_forest2.update({
+    "targetid": TARGETID,
+    "night": 1,
+    "petal": 2,
+    "tile": 3,
+})
+
+kwargs_desi_forest_rebin = kwargs_forest_lin_rebin.copy()
+kwargs_desi_forest_rebin.update({
+    "targetid": TARGETID,
+    "night": [0],
+    "petal": [0],
+    "tile": [0],
+})
+kwargs_desi_forest_rebin["los_id"] = TARGETID
+
+kwargs_desi_forest_coadd = kwargs_forest_lin_coadd.copy()
+kwargs_desi_forest_coadd.update({
+    "targetid": TARGETID,
+    "night": [0, 1],
+    "petal": [0, 2],
+    "tile": [0, 3],
+})
+kwargs_desi_forest_coadd["los_id"] = TARGETID
+
+# define contructors for DesiPk1dForest
+kwargs_desi_pk1d_forest = kwargs_desi_forest.copy()
+kwargs_desi_pk1d_forest.update(kwargs_pk1d_forest_lin)
+del kwargs_desi_pk1d_forest["los_id"]
+
+kwargs_desi_pk1d_forest2 = kwargs_desi_forest2.copy()
+kwargs_desi_pk1d_forest2.update(kwargs_pk1d_forest_lin2)
+del kwargs_desi_pk1d_forest2["los_id"]
+
+kwargs_desi_pk1d_forest_rebin = kwargs_pk1d_forest_rebin.copy()
+kwargs_desi_pk1d_forest_rebin.update(kwargs_desi_forest_rebin)
+
+kwargs_desi_pk1d_forest_coadd = kwargs_pk1d_forest_coadd.copy()
+kwargs_desi_pk1d_forest_coadd.update(kwargs_desi_forest_coadd)
+
+# define contructors for SdssForest
+kwargs_sdss_forest = kwargs_forest_log.copy()
+del kwargs_sdss_forest["los_id"]
+kwargs_sdss_forest.update({
+    "thingid": THINGID,
+    "plate": 0,
+    "fiberid": 0,
+    "mjd": 0,
+})
+
+kwargs_sdss_forest2 = kwargs_forest_log2.copy()
+del kwargs_sdss_forest2["los_id"]
+kwargs_sdss_forest2.update({
+    "thingid": THINGID,
+    "plate": 1,
+    "fiberid": 2,
+    "mjd": 3,
+})
+
+kwargs_sdss_forest_rebin = kwargs_forest_log_rebin.copy()
+kwargs_sdss_forest_rebin.update({
+    "thingid": THINGID,
+    "plate": [0],
+    "fiberid": [0],
+    "mjd": [0],
+})
+kwargs_sdss_forest_rebin["los_id"] = THINGID
+
+kwargs_sdss_forest_coadd = kwargs_forest_log_coadd.copy()
+kwargs_sdss_forest_coadd.update({
+    "thingid": THINGID,
+    "plate": [0, 1],
+    "fiberid": [0, 2],
+    "mjd": [0, 3],
+})
+kwargs_sdss_forest_coadd["los_id"] = THINGID
+
+# define contructors for SdssPk1dForest
+kwargs_sdss_pk1d_forest = kwargs_sdss_forest.copy()
+kwargs_sdss_pk1d_forest.update(kwargs_pk1d_forest_lin)
+del kwargs_sdss_pk1d_forest["los_id"]
+
+kwargs_sdss_pk1d_forest2 = kwargs_sdss_forest2.copy()
+kwargs_sdss_pk1d_forest2.update(kwargs_pk1d_forest_lin2)
+del kwargs_sdss_pk1d_forest2["los_id"]
+
+kwargs_sdss_pk1d_forest_rebin = kwargs_pk1d_forest_rebin.copy()
+kwargs_sdss_pk1d_forest_rebin.update(kwargs_sdss_forest_rebin)
+
+kwargs_sdss_pk1d_forest_coadd = kwargs_pk1d_forest_coadd.copy()
+kwargs_sdss_pk1d_forest_coadd.update(kwargs_sdss_forest_coadd)
+
+# pylint: disable-msg=too-many-public-methods
+# this is a test class
 class AstronomicalObjectTest(AbstractTest):
     """Test AstronomicalObject and its childs."""
+
+    def assert_astronomical_object(self, test_obj, kwargs):
+        """Assert the correct properties of a test AstronomicalObject
+
+        Arguments
+        ---------
+        test_obj: AstronomicalObject
+        The Forest instance to check
+
+        kwargs: dictionary
+        Dictionary used to initialize instance
+        """
+        self.assertTrue(isinstance(test_obj, AstronomicalObject))
+        ra = kwargs.get("ra")
+        dec = kwargs.get("dec")
+        healpix = healpy.ang2pix(16, np.pi / 2 - dec, ra)
+        self.assertTrue(test_obj.los_id == kwargs.get("los_id"))
+        self.assertTrue(test_obj.healpix == healpix)
+        self.assertTrue(test_obj.z == kwargs.get("z"))
+
+    def assert_forest_object(self, test_obj, kwargs):
+        """Assert the correct properties of a test Forest
+
+        Arguments
+        ---------
+        test_obj: Forest
+        The Forest instance to check
+
+        kwargs: dictionary
+        Dictionary used to initialize instance
+        """
+        self.assertTrue(isinstance(test_obj, Forest))
+
+        self.assert_astronomical_object(test_obj, kwargs)
+
+        self.assertTrue(test_obj.bad_continuum_reason is None)
+        if "continuum" in kwargs:
+            self.assertTrue(
+                np.allclose(test_obj.continuum, kwargs.get("continuum")))
+        else:
+            self.assertTrue(test_obj.continuum is None)
+        if "deltas" in kwargs:
+            self.assertTrue(np.allclose(test_obj.deltas, kwargs.get("deltas")))
+        else:
+            self.assertTrue(test_obj.deltas is None)
+        if Forest.wave_solution == "log":
+            self.assertTrue(
+                np.allclose(test_obj.log_lambda, kwargs.get("log_lambda")))
+            self.assertTrue(test_obj.lambda_ is None)
+        elif Forest.wave_solution == "lin":
+            self.assertTrue(test_obj.log_lambda is None)
+            self.assertTrue(np.allclose(test_obj.lambda_, kwargs.get("lambda")))
+        flux = kwargs.get("flux")
+        ivar = kwargs.get("ivar")
+        self.assertTrue(np.allclose(test_obj.flux, flux))
+        self.assertTrue(np.allclose(test_obj.ivar, ivar))
+
+        if isinstance(test_obj, Pk1dForest):
+            self.assertTrue(len(Forest.mask_fields) == 6)
+        else:
+            self.assertTrue(len(Forest.mask_fields) == 4)
+        self.assertTrue(Forest.mask_fields[0] == "flux")
+        self.assertTrue(Forest.mask_fields[1] == "ivar")
+        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
+        if Forest.wave_solution == "log":
+            self.assertTrue(Forest.mask_fields[3] == "log_lambda")
+        elif Forest.wave_solution == "lin":
+            self.assertTrue(Forest.mask_fields[3] == "lambda_")
+        self.assertTrue(
+            np.allclose(test_obj.transmission_correction, np.ones_like(flux)))
+        mean_snr = (flux * np.sqrt(ivar)).mean()
+        self.assertTrue(np.allclose(test_obj.mean_snr, mean_snr))
+
+        if isinstance(test_obj, SdssForest):
+            self.assertTrue(isinstance(test_obj.plate, list))
+            self.assertTrue(test_obj.plate == kwargs.get("plate"))
+            self.assertTrue(isinstance(test_obj.fiberid, list))
+            self.assertTrue(test_obj.fiberid == kwargs.get("fiberid"))
+            self.assertTrue(isinstance(test_obj.mjd, list))
+            self.assertTrue(test_obj.mjd == kwargs.get("mjd"))
+            self.assertTrue(test_obj.thingid == kwargs.get("thingid"))
+
+        if isinstance(test_obj, DesiForest):
+            self.assertTrue(isinstance(test_obj.night, list))
+            self.assertTrue(test_obj.night == kwargs.get("night"))
+            self.assertTrue(isinstance(test_obj.petal, list))
+            self.assertTrue(test_obj.petal == kwargs.get("petal"))
+            self.assertTrue(isinstance(test_obj.tile, list))
+            self.assertTrue(test_obj.tile == kwargs.get("tile"))
+            self.assertTrue(test_obj.targetid == kwargs.get("targetid"))
+
+        if isinstance(test_obj, Pk1dForest):
+            self.assertTrue(Pk1dForest.lambda_abs_igm == 1215.67)
+            self.assertTrue(
+                np.allclose(test_obj.exposures_diff,
+                            kwargs.get("exposures_diff")))
+            self.assertTrue(np.allclose(test_obj.reso, kwargs.get("reso")))
+            if Forest.wave_solution == "log":
+                log_lambda = kwargs.get("log_lambda")
+                mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
+                           np.power(10., log_lambda[0])) / 2. /
+                          Pk1dForest.lambda_abs_igm - 1.0)
+            elif Forest.wave_solution == "lin":
+                lambda_ = kwargs.get("lambda")
+                mean_z = ((lambda_[len(lambda_) - 1] + lambda_[0]) / 2. /
+                          Pk1dForest.lambda_abs_igm - 1.0)
+            if not np.isclose(test_obj.mean_z, mean_z):
+                print(test_obj.mean_z, mean_z)
+                print(log_lambda, test_obj.log_lambda,
+                      log_lambda == test_obj.log_lambda)
+            self.assertTrue(np.isclose(test_obj.mean_z, mean_z))
+            self.assertTrue(
+                np.isclose(test_obj.mean_reso,
+                           kwargs.get("reso").mean()))
+
+    def assert_get_data(self, test_obj):
+        """Assert the correct properties of the return of method get_data
+
+        Arguments
+        ---------
+        test_obj: Forest
+        The Forest instance to check
+        """
+        self.assertTrue(isinstance(test_obj, Forest))
+        cols, names, units, comments = test_obj.get_data()
+
+        if Forest.wave_solution == "log":
+            self.assertTrue(names[0] == "LOGLAM")
+            self.assertTrue(np.allclose(cols[0], test_obj.log_lambda))
+            self.assertTrue(units[0] == "log Angstrom")
+            self.assertTrue(comments[0] == "Log lambda")
+        elif Forest.wave_solution == "lin":
+            self.assertTrue(names[0] == "LAMBDA")
+            self.assertTrue(np.allclose(cols[0], test_obj.lambda_))
+            self.assertTrue(units[0] == "Angstrom")
+            self.assertTrue(comments[0] == "Lambda")
+
+        if test_obj.continuum is None:
+            continuum = np.zeros_like(test_obj.flux)
+        else:
+            continuum = test_obj.continuum
+        self.assertTrue(names[1] == "CONT")
+        self.assertTrue(np.allclose(cols[1], continuum))
+        self.assertTrue(units[1] == "Flux units")
+        self.assertTrue(
+            comments[1] == ("Quasar continuum if BAD_CONT is 'None'. "
+                            "Check input spectra for units"))
+
+        if test_obj.deltas is None:
+            deltas = np.zeros_like(test_obj.flux)
+        else:
+            deltas = test_obj.deltas
+        self.assertTrue(names[2] == "DELTA")
+        self.assertTrue(np.allclose(cols[2], deltas))
+        self.assertTrue(units[2] == "")
+        self.assertTrue(comments[2] == "Delta field")
+
+        if test_obj.weights is None:
+            weights = np.zeros_like(test_obj.flux)
+        else:
+            weights = test_obj.weights
+        self.assertTrue(names[3] == "WEIGHT")
+        self.assertTrue(np.allclose(cols[3], weights))
+        self.assertTrue(units[3] == "")
+        self.assertTrue(comments[3] == "Pixel weights")
+
+        if isinstance(test_obj, Pk1dForest):
+            self.assertTrue(names[4] == "DIFF")
+            self.assertTrue(np.allclose(cols[4], test_obj.exposures_diff))
+            self.assertTrue(units[4] == "Flux units")
+            self.assertTrue(
+                comments[4] == "Difference. Check input spectra for units")
+
+    def assert_get_header(self, test_obj):
+        """Assert the correct properties of the return of method get_data
+
+        Arguments
+        ---------
+        test_obj: Forest
+        The Forest instance to check
+        """
+        self.assertTrue(isinstance(test_obj, AstronomicalObject))
+        header = test_obj.get_header()
+
+        self.assertTrue(header[0].get("name") == "LOS_ID")
+        self.assertTrue(header[0].get("value") == test_obj.los_id)
+        self.assertTrue(header[1].get("name") == "RA")
+        self.assertTrue(header[1].get("value") == test_obj.ra)
+        self.assertTrue(header[2].get("name") == "DEC")
+        self.assertTrue(header[2].get("value") == test_obj.dec)
+        self.assertTrue(header[3].get("name") == "Z")
+        self.assertTrue(header[3].get("value") == test_obj.z)
+
+        index = 3
+        if isinstance(test_obj, Forest):
+            self.assertTrue(header[index + 1].get("name") == "BAD_CONT")
+            if test_obj.bad_continuum_reason is None:
+                bad_continuum_reason = "None"
+            else:
+                bad_continuum_reason = test_obj.bad_continuum_reason
+            self.assertTrue(header[index +
+                                   1].get("value") == bad_continuum_reason)
+            self.assertTrue(header[index + 2].get("name") == "MEANSNR")
+            self.assertTrue(header[index + 2].get("value") == test_obj.mean_snr)
+            index += 2
+        if isinstance(test_obj, Pk1dForest):
+            self.assertTrue(header[index + 1].get("name") == "MEANZ")
+            self.assertTrue(header[index + 1].get("value") == test_obj.mean_z)
+            self.assertTrue(header[index + 2].get("name") == "MEANRESO")
+            self.assertTrue(header[index +
+                                   2].get("value") == test_obj.mean_reso)
+            index += 2
+        if isinstance(test_obj, SdssForest):
+            self.assertTrue(header[index + 1].get("name") == "THING_ID")
+            self.assertTrue(header[index + 1].get("value") == test_obj.thingid)
+            self.assertTrue(header[index + 2].get("name") == "PLATE")
+            plate = "-".join([f"{plate:04d}" for plate in test_obj.plate])
+            self.assertTrue(header[index + 2].get("value") == plate)
+            self.assertTrue(header[index + 3].get("name") == "MJD")
+            mjd = "-".join([f"{mjd:05d}" for mjd in test_obj.mjd])
+            self.assertTrue(header[index + 3].get("value") == mjd)
+            self.assertTrue(header[index + 4].get("name") == "FIBERID")
+            fiberid = "-".join(
+                [f"{fiberid:04d}" for fiberid in test_obj.fiberid])
+            self.assertTrue(header[index + 4].get("value") == fiberid)
+            index += 4
+        if isinstance(test_obj, DesiForest):
+            self.assertTrue(header[index + 1].get("name") == "TARGETID")
+            self.assertTrue(header[index + 1].get("value") == test_obj.targetid)
+            self.assertTrue(header[index + 2].get("name") == "NIGHT")
+            night = "-".join([f"{night}" for night in test_obj.night])
+            self.assertTrue(header[index + 2].get("value") == night)
+            self.assertTrue(header[index + 3].get("name") == "PETAL")
+            petal = "-".join([f"{petal}" for petal in test_obj.petal])
+            self.assertTrue(header[index + 3].get("value") == petal)
+            self.assertTrue(header[index + 4].get("name") == "TILE")
+            tile = "-".join([f"{tile}" for tile in test_obj.tile])
+            self.assertTrue(header[index + 4].get("value") == tile)
+            index += 4
 
     def setUp(self):
         reset_forest()
@@ -25,228 +538,118 @@ class AstronomicalObjectTest(AbstractTest):
 
     def test_astronomical_object(self):
         """Test constructor for AstronomicalObject."""
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-        }
-        test_obj = AstronomicalObject(**kwargs)
-        self.assertTrue(test_obj.los_id == 9999)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
+        test_obj = AstronomicalObject(**kwargs_astronomical_object)
+        self.assert_astronomical_object(test_obj, kwargs_astronomical_object)
 
     def test_astronomical_object_comparison(self):
         """Test comparison between instances of AstronomicalObject."""
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-        }
-        test_obj = AstronomicalObject(**kwargs)
+        test_obj = AstronomicalObject(**kwargs_astronomical_object)
 
         kwargs_gt = {
-            "healpix_ordering": {"los_id": 9999, "ra": 0.0, "dec": 0.0, "z": 2.1},
-            "ra_ordering": {"los_id": 9999, "ra": 0.1, "dec": 0.0, "z": 2.1},
-            "dec_ordering": {"los_id": 9999, "ra": 0.15, "dec": -0.01, "z": 2.1},
-            "z_ordering": {"los_id": 9999, "ra": 0.15, "dec": 0.0, "z": 2.0},
+            "healpix_ordering": {
+                "los_id": 9999,
+                "ra": 0.0,
+                "dec": 0.0,
+                "z": 2.1
+            },
+            "ra_ordering": {
+                "los_id": 9999,
+                "ra": 0.1,
+                "dec": 0.0,
+                "z": 2.1
+            },
+            "dec_ordering": {
+                "los_id": 9999,
+                "ra": 0.15,
+                "dec": -0.01,
+                "z": 2.1
+            },
+            "z_ordering": {
+                "los_id": 9999,
+                "ra": 0.15,
+                "dec": 0.0,
+                "z": 2.0
+            },
         }
-        for kwargs_other in kwargs_gt.values():
-            other = AstronomicalObject(**kwargs_other)
+        for kwargs in kwargs_gt.values():
+            other = AstronomicalObject(**kwargs)
             self.assertTrue(test_obj > other)
             self.assertTrue(test_obj != other)
             self.assertFalse(test_obj == other)
             self.assertFalse(test_obj < other)
 
-        # equal objects
-        kwargs_other = {
+        # equal objects (but with different los_id)
+        # it makes sense that the los_id be different if we combine deltas
+        # from different surveys
+        kwargs = {
             "los_id": 1234,
             "ra": 0.15,
             "dec": 0.0,
             "z": 2.1,
         }
-        other = AstronomicalObject(**kwargs_other)
+        other = AstronomicalObject(**kwargs)
         self.assertFalse(test_obj > other)
         self.assertTrue(test_obj == other)
         self.assertFalse(test_obj < other)
 
     def test_astronomical_object_get_header(self):
         """Test method get_header for AstronomicalObject."""
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-        }
-        test_obj = AstronomicalObject(**kwargs)
+        test_obj = AstronomicalObject(**kwargs_astronomical_object)
 
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 4)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 9999)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-
+        # get header and test
+        self.assert_get_header(test_obj)
 
     def test_desi_forest(self):
         """Test constructor for DesiForest.
         This includes a test of function rebin.
         """
-        # create a DesiForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 0,
-            "petal": 0,
-            "tile": 0,
-        }
         # expected error as class variables are not yet set
         with self.assertRaises(AstronomicalObjectError):
-            DesiForest(**kwargs)
+            DesiForest(**kwargs_desi_forest)
 
         # set Forest class variables
         setup_forest(wave_solution="lin")
 
         # create a DesiForest
-        test_obj = DesiForest(**kwargs)
-
-        self.assertTrue(isinstance(test_obj, Forest))
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
-                                                                3650,
-                                                                3670,
-                                                                3680,
-                                                                3700])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(isinstance(test_obj.night, list))
-        self.assertTrue(test_obj.night[0] == 0)
-        self.assertTrue(isinstance(test_obj.petal, list))
-        self.assertTrue(test_obj.petal[0] == 0)
-        self.assertTrue(isinstance(test_obj.tile, list))
-        self.assertTrue(test_obj.tile[0] == 0)
-        self.assertTrue(test_obj.targetid == 100000000)
+        test_obj = DesiForest(**kwargs_desi_forest)
+        self.assert_forest_object(test_obj, kwargs_desi_forest_rebin)
 
         # create forest with extra variables
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 0,
-            "petal": 0,
-            "tile": 0,
+        kwargs = kwargs_desi_forest.copy()
+        kwargs.update({
             "test variable": "test",
-        }
+        })
         test_obj = DesiForest(**kwargs)
-        self.assertTrue(isinstance(test_obj, Forest))
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
-                                                                3650,
-                                                                3670,
-                                                                3680,
-                                                                3700])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(isinstance(test_obj.night, list))
-        self.assertTrue(test_obj.night[0] == 0)
-        self.assertTrue(isinstance(test_obj.petal, list))
-        self.assertTrue(test_obj.petal[0] == 0)
-        self.assertTrue(isinstance(test_obj.tile, list))
-        self.assertTrue(test_obj.tile[0] == 0)
-        self.assertTrue(test_obj.targetid == 100000000)
+        self.assert_forest_object(test_obj, kwargs_desi_forest_rebin)
 
         # create a DesiForest with missing night, petal and tile
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-        }
-
+        kwargs = kwargs_desi_forest.copy()
+        del kwargs["night"], kwargs["petal"], kwargs["tile"]
         test_obj = DesiForest(**kwargs)
-        self.assertTrue(isinstance(test_obj, Forest))
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
-                                                                3650,
-                                                                3670,
-                                                                3680,
-                                                                3700])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(isinstance(test_obj.night, list))
-        self.assertTrue(len(test_obj.night) == 0)
-        self.assertTrue(isinstance(test_obj.petal, list))
-        self.assertTrue(len(test_obj.petal) == 0)
-        self.assertTrue(isinstance(test_obj.tile, list))
-        self.assertTrue(len(test_obj.tile) == 0)
-        self.assertTrue(test_obj.targetid == 100000000)
 
+        kwargs = kwargs_desi_forest_rebin.copy()
+        kwargs["night"] = []
+        kwargs["petal"] = []
+        kwargs["tile"] = []
+        self.assert_forest_object(test_obj, kwargs)
 
         # create a DesiForest with missing DesiForest variables
         kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
+            "ra":
+                0.15,
+            "dec":
+                0.0,
+            "z":
+                2.1,
+            "flux":
+                np.ones(15),
+            "ivar":
+                np.ones(15) * 4,
+            "lambda":
+                np.array([
+                    3610, 3610.4, 3650, 3650.4, 3670, 3670.4, 3680, 3680.4,
+                    3700, 3700.4
+                ]),
         }
         with self.assertRaises(AstronomicalObjectError):
             DesiForest(**kwargs)
@@ -257,7 +660,7 @@ class AstronomicalObjectTest(AbstractTest):
             "ra": 0.15,
             "dec": 0.0,
             "z": 2.1,
-            "ivar": np.ones(15)*4,
+            "ivar": np.ones(15) * 4,
             "targetid": 100000000,
             "night": 0,
             "petal": 0,
@@ -272,86 +675,20 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
 
         # create a DesiForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 0,
-            "petal": 0,
-            "tile": 0,
-        }
-        test_obj = DesiForest(**kwargs)
+        test_obj = DesiForest(**kwargs_desi_forest)
 
         # create a second DesiForest
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 1,
-            "petal": 2,
-            "tile": 3,
-        }
-        test_obj_other = DesiForest(**kwargs_other)
+        test_obj_other = DesiForest(**kwargs_desi_forest2)
 
         # coadd them
         test_obj.coadd(test_obj_other)
 
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
-                                                                3650,
-                                                                3670,
-                                                                3680,
-                                                                3700])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*16))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 8))
-        self.assertTrue(isinstance(test_obj.night, list))
-        self.assertTrue(test_obj.night[0] == 0)
-        self.assertTrue(test_obj.night[1] == 1)
-        self.assertTrue(isinstance(test_obj.petal, list))
-        self.assertTrue(test_obj.petal[0] == 0)
-        self.assertTrue(test_obj.petal[1] == 2)
-        self.assertTrue(isinstance(test_obj.tile, list))
-        self.assertTrue(test_obj.tile[0] == 0)
-        self.assertTrue(test_obj.tile[1] == 3)
-        self.assertTrue(test_obj.targetid == 100000000)
+        self.assert_forest_object(test_obj, kwargs_desi_forest_coadd)
 
         # create a third DesiForest with different targetid
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000010,
-            "night": 1,
-            "petal": 2,
-            "tile": 3,
-        }
-        test_obj_other = DesiForest(**kwargs_other)
+        kwargs = kwargs_desi_forest2.copy()
+        kwargs["targetid"] = 999
+        test_obj_other = DesiForest(**kwargs)
 
         # coadding them whould raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -363,42 +700,9 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
 
         # create a DesiForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "lambda": np.ones(15),
-            "targetid": 100000000,
-            "night": 1,
-            "petal": 2,
-            "tile": 3,
-        }
-        test_obj = DesiForest(**kwargs)
+        test_obj = DesiForest(**kwargs_desi_forest)
 
-        cols, names, units, comments = test_obj.get_data()
-        self.assertTrue(len(names) == 4)
-        self.assertTrue(len(cols) == 4)
-        self.assertTrue(len(units) == 4)
-        self.assertTrue(len(comments) == 4)
-        self.assertTrue(names[0] == "LAMBDA")
-        self.assertTrue(np.allclose(cols[0], np.ones(15)))
-        self.assertTrue(units[0] == "Angstrom")
-        self.assertTrue(comments[0] == "Lambda")
-        self.assertTrue(names[1] == "CONT")
-        self.assertTrue(np.allclose(cols[1], np.zeros(15)))
-        self.assertTrue(units[1] == "Flux units")
-        self.assertTrue(comments[1] == ("Quasar continuum if BAD_CONT is 'None'. "
-                                        "Check input spectra for units"))
-        self.assertTrue(names[2] == "DELTA")
-        self.assertTrue(np.allclose(cols[2], np.zeros(15)))
-        self.assertTrue(units[2] == "")
-        self.assertTrue(comments[2] == "Delta field")
-        self.assertTrue(names[3] == "WEIGHT")
-        self.assertTrue(np.allclose(cols[3], np.zeros(15)))
-        self.assertTrue(units[3] == "")
-        self.assertTrue(comments[3] == "Pixel weights")
+        self.assert_get_data(test_obj)
 
     def test_desi_forest_get_header(self):
         """Test method get_header for DesiForest."""
@@ -406,290 +710,110 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
 
         # create a DesiForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 1,
-            "petal": 2,
-            "tile": 3,
-        }
-        test_obj = DesiForest(**kwargs)
+        test_obj = DesiForest(**kwargs_desi_forest)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 10)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 100000000)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(np.isclose(header[5].get("value"), 2.828427))
-        self.assertTrue(header[6].get("name") == "TARGETID")
-        self.assertTrue(header[6].get("value") == 100000000)
-        self.assertTrue(header[7].get("name") == "NIGHT")
-        self.assertTrue(header[7].get("value") == "1")
-        self.assertTrue(header[8].get("name") == "PETAL")
-        self.assertTrue(header[8].get("value") == "2")
-        self.assertTrue(header[9].get("name") == "TILE")
-        self.assertTrue(header[9].get("value") == "3")
+        self.assert_get_header(test_obj)
 
         # create a second DesiForest and coadd it to the first
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 1,
-            "petal": 2,
-            "tile": 3,
-        }
-        test_obj_other = DesiForest(**kwargs_other)
+        test_obj_other = DesiForest(**kwargs_desi_forest2)
         test_obj.coadd(test_obj_other)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 10)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 100000000)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(header[5].get("value") == 4)
-        self.assertTrue(header[6].get("name") == "TARGETID")
-        self.assertTrue(header[6].get("value") == 100000000)
-        self.assertTrue(header[7].get("name") == "NIGHT")
-        self.assertTrue(header[7].get("value") == "1-1")
-        self.assertTrue(header[8].get("name") == "PETAL")
-        self.assertTrue(header[8].get("value") == "2-2")
-        self.assertTrue(header[9].get("name") == "TILE")
-        self.assertTrue(header[9].get("value") == "3-3")
+        self.assert_get_header(test_obj)
 
     def test_desi_pk1d_forest(self):
         """Test constructor for DesiPk1dForest.
         This includes a test of function rebin.
         """
-        # create a DesiPk1dForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 0,
-            "petal": 0,
-            "tile": 0,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-
         # create a DesiPk1dForest class variables are not yet set
         with self.assertRaises(AstronomicalObjectError):
-            DesiPk1dForest(**kwargs)
+            DesiPk1dForest(**kwargs_desi_pk1d_forest)
 
         # set class variables
         setup_pk1d_forest("LYA")
 
         # expected error as Forest class variables are not yet set
         with self.assertRaises(AstronomicalObjectError):
-            DesiPk1dForest(**kwargs)
+            DesiPk1dForest(**kwargs_desi_pk1d_forest)
 
         # set class variables
         setup_forest(wave_solution="lin")
 
-        test_obj = DesiPk1dForest(**kwargs)
-
-        self.assertTrue(isinstance(test_obj, Forest))
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
-                                                                3650,
-                                                                3670,
-                                                                3680,
-                                                                3700])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(isinstance(test_obj.night, list))
-        self.assertTrue(test_obj.night[0] == 0)
-        self.assertTrue(isinstance(test_obj.petal, list))
-        self.assertTrue(test_obj.petal[0] == 0)
-        self.assertTrue(isinstance(test_obj.tile, list))
-        self.assertTrue(test_obj.tile[0] == 0)
-        self.assertTrue(test_obj.targetid == 100000000)
-        self.assertTrue(Pk1dForest.lambda_abs_igm == 1215.67)
-        self.assertTrue(np.allclose(test_obj.exposures_diff, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.reso, np.ones(5)))
-        self.assertTrue(np.isclose(test_obj.mean_z, 2.0065725073416303))
-        self.assertTrue(np.isclose(test_obj.mean_reso, 1.0))
+        test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
+        self.assertTrue(isinstance(test_obj, DesiPk1dForest))
+        self.assertTrue(isinstance(test_obj, DesiForest))
+        self.assertTrue(isinstance(test_obj, Pk1dForest))
+        self.assert_forest_object(test_obj, kwargs_desi_pk1d_forest_rebin)
 
         # create forest with extra variables
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 0,
-            "petal": 0,
-            "tile": 0,
-            "test variable": "test",
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
+        kwargs = kwargs_desi_pk1d_forest.copy()
+        kwargs.update({
+            "test_variable": "test",
+        })
+        self.assertTrue(isinstance(test_obj, DesiPk1dForest))
+        self.assertTrue(isinstance(test_obj, DesiForest))
+        self.assertTrue(isinstance(test_obj, Pk1dForest))
         test_obj = DesiPk1dForest(**kwargs)
-        self.assertTrue(isinstance(test_obj, Forest))
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
-                                                                3650,
-                                                                3670,
-                                                                3680,
-                                                                3700])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(isinstance(test_obj.night, list))
-        self.assertTrue(test_obj.night[0] == 0)
-        self.assertTrue(isinstance(test_obj.petal, list))
-        self.assertTrue(test_obj.petal[0] == 0)
-        self.assertTrue(isinstance(test_obj.tile, list))
-        self.assertTrue(test_obj.tile[0] == 0)
-        self.assertTrue(test_obj.targetid == 100000000)
-        self.assertTrue(Pk1dForest.lambda_abs_igm == 1215.67)
-        self.assertTrue(np.allclose(test_obj.exposures_diff, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.reso, np.ones(5)))
-        self.assertTrue(np.isclose(test_obj.mean_z, 2.0065725073416303))
-        self.assertTrue(np.isclose(test_obj.mean_reso, 1.0))
 
         # create a DesiPk1dForest with missing night, petal and tile
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-
+        # create a DesiForest with missing night, petal and tile
+        kwargs = kwargs_desi_pk1d_forest.copy()
+        del kwargs["night"], kwargs["petal"], kwargs["tile"]
         test_obj = DesiPk1dForest(**kwargs)
-        self.assertTrue(isinstance(test_obj, Forest))
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
-                                                                3650,
-                                                                3670,
-                                                                3680,
-                                                                3700])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(isinstance(test_obj.night, list))
-        self.assertTrue(len(test_obj.night) == 0)
-        self.assertTrue(isinstance(test_obj.petal, list))
-        self.assertTrue(len(test_obj.petal) == 0)
-        self.assertTrue(isinstance(test_obj.tile, list))
-        self.assertTrue(len(test_obj.tile) == 0)
-        self.assertTrue(test_obj.targetid == 100000000)
-        self.assertTrue(Pk1dForest.lambda_abs_igm == 1215.67)
-        self.assertTrue(np.allclose(test_obj.exposures_diff, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.reso, np.ones(5)))
-        self.assertTrue(np.isclose(test_obj.mean_z, 2.0065725073416303))
-        self.assertTrue(np.isclose(test_obj.mean_reso, 1.0))
+
+        kwargs = kwargs_desi_pk1d_forest_rebin.copy()
+        kwargs["night"] = []
+        kwargs["petal"] = []
+        kwargs["tile"] = []
+        self.assert_forest_object(test_obj, kwargs)
 
         # create a DesiForest with missing DesiForest variables
         kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
+            "ra":
+                0.15,
+            "dec":
+                0.0,
+            "z":
+                2.1,
+            "flux":
+                np.ones(15),
+            "ivar":
+                np.ones(15) * 4,
+            "lambda":
+                np.array([
+                    3610, 3610.4, 3650, 3650.4, 3670, 3670.4, 3680, 3680.4,
+                    3700, 3700.4
+                ]),
+            "targetid":
+                100000000,
+            "exposures_diff":
+                np.ones(10),
+            "reso":
+                np.ones(10),
         }
         with self.assertRaises(AstronomicalObjectError):
             DesiPk1dForest(**kwargs)
 
         # create a DesiForest with missing Pk1dForest variables
         kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
+            "ra":
+                0.15,
+            "dec":
+                0.0,
+            "z":
+                2.1,
+            "flux":
+                np.ones(15),
+            "ivar":
+                np.ones(15) * 4,
+            "lambda":
+                np.array([
+                    3610, 3610.4, 3650, 3650.4, 3670, 3670.4, 3680, 3680.4,
+                    3700, 3700.4
+                ]),
+            "targetid":
+                100000000,
         }
         with self.assertRaises(AstronomicalObjectError):
             DesiPk1dForest(**kwargs)
@@ -700,7 +824,7 @@ class AstronomicalObjectTest(AbstractTest):
             "ra": 0.15,
             "dec": 0.0,
             "z": 2.1,
-            "ivar": np.ones(15)*4,
+            "ivar": np.ones(15) * 4,
             "targetid": 100000000,
             "night": 0,
             "petal": 0,
@@ -718,98 +842,19 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create a DesiPk1dForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 0,
-            "petal": 0,
-            "tile": 0,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = DesiPk1dForest(**kwargs)
+        test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
 
         # create a second DesiPk1dForest
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 1,
-            "petal": 2,
-            "tile": 3,
-            "exposures_diff": np.ones(10)*3,
-            "reso": np.ones(10),
-        }
-        test_obj_other = DesiPk1dForest(**kwargs_other)
+        test_obj_other = DesiPk1dForest(**kwargs_desi_pk1d_forest2)
 
         # coadd them
         test_obj.coadd(test_obj_other)
-
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
-                                                                3650,
-                                                                3670,
-                                                                3680,
-                                                                3700])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*16))
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 8))
-        self.assertTrue(isinstance(test_obj.night, list))
-        self.assertTrue(test_obj.night[0] == 0)
-        self.assertTrue(test_obj.night[1] == 1)
-        self.assertTrue(isinstance(test_obj.petal, list))
-        self.assertTrue(test_obj.petal[0] == 0)
-        self.assertTrue(test_obj.petal[1] == 2)
-        self.assertTrue(isinstance(test_obj.tile, list))
-        self.assertTrue(test_obj.tile[0] == 0)
-        self.assertTrue(test_obj.tile[1] == 3)
-        self.assertTrue(test_obj.targetid == 100000000)
-        self.assertTrue(Pk1dForest.lambda_abs_igm == 1215.67)
-        self.assertTrue(np.allclose(test_obj.exposures_diff, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.reso, np.ones(5)))
-        self.assertTrue(np.isclose(test_obj.mean_z, 2.0065725073416303))
+        self.assert_forest_object(test_obj, kwargs_desi_pk1d_forest_coadd)
 
         # create a third DesiPk1dForest with different targetid
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000010,
-            "night": 1,
-            "petal": 2,
-            "tile": 3,
-            "exposures_diff": np.ones(10)*3,
-            "reso": np.ones(10),
-        }
-        test_obj_other = DesiPk1dForest(**kwargs_other)
+        kwargs = kwargs_desi_pk1d_forest2.copy()
+        kwargs["targetid"] = 999
+        test_obj_other = DesiPk1dForest(**kwargs)
 
         # coadding them whould raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -822,49 +867,8 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create a DesiPk1dForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "lambda": np.ones(15),
-            "targetid": 100000000,
-            "night": 1,
-            "petal": 2,
-            "tile": 3,
-            "exposures_diff": np.ones(15),
-            "reso": np.ones(15),
-        }
-        test_obj = DesiPk1dForest(**kwargs)
-
-        cols, names, units, comments = test_obj.get_data()
-        self.assertTrue(len(names) == 5)
-        self.assertTrue(len(cols) == 5)
-        self.assertTrue(len(units) == 5)
-        self.assertTrue(len(comments) == 5)
-        self.assertTrue(names[0] == "LAMBDA")
-        self.assertTrue(np.allclose(cols[0], np.ones(15)))
-        self.assertTrue(units[0] == "Angstrom")
-        self.assertTrue(comments[0] == "Lambda")
-        self.assertTrue(names[1] == "CONT")
-        self.assertTrue(np.allclose(cols[1], np.zeros(15)))
-        self.assertTrue(units[1] == "Flux units")
-        self.assertTrue(comments[1] == ("Quasar continuum if BAD_CONT is 'None'. "
-                                        "Check input spectra for units"))
-        self.assertTrue(names[2] == "DELTA")
-        self.assertTrue(np.allclose(cols[2], np.zeros(15)))
-        self.assertTrue(units[2] == "")
-        self.assertTrue(comments[2] == "Delta field")
-        self.assertTrue(names[3] == "WEIGHT")
-        self.assertTrue(np.allclose(cols[3], np.zeros(15)))
-        self.assertTrue(units[3] == "")
-        self.assertTrue(comments[3] == "Pixel weights")
-        self.assertTrue(names[4] == "DIFF")
-        self.assertTrue(np.allclose(cols[4], np.ones(15)))
-        self.assertTrue(units[4] == "Flux units")
-        self.assertTrue(comments[4] == "Difference. Check input spectra for units")
-
+        test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
+        self.assert_get_data(test_obj)
 
     def test_desi_pk1d_forest_get_header(self):
         """Test method get_header for DesiPk1dForest."""
@@ -873,213 +877,52 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create a DesiPk1dForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 1,
-            "petal": 2,
-            "tile": 3,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = DesiPk1dForest(**kwargs)
-
-        # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 12)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 100000000)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(np.isclose(header[5].get("value"), 2.828427))
-        self.assertTrue(header[6].get("name") == "MEANZ")
-        self.assertTrue(header[6].get("value") == 2.0065725073416303)
-        self.assertTrue(header[7].get("name") == "MEANRESO")
-        self.assertTrue(header[7].get("value") == 1.0)
-        self.assertTrue(header[8].get("name") == "TARGETID")
-        self.assertTrue(header[8].get("value") == 100000000)
-        self.assertTrue(header[9].get("name") == "NIGHT")
-        self.assertTrue(header[9].get("value") == "1")
-        self.assertTrue(header[10].get("name") == "PETAL")
-        self.assertTrue(header[10].get("value") == "2")
-        self.assertTrue(header[11].get("name") == "TILE")
-        self.assertTrue(header[11].get("value") == "3")
+        test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
+        self.assert_get_header(test_obj)
 
         # create a second DesiPk1dForest and coadd it to the first
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "targetid": 100000000,
-            "night": 1,
-            "petal": 2,
-            "tile": 3,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj_other = DesiPk1dForest(**kwargs_other)
+        test_obj_other = DesiPk1dForest(**kwargs_desi_pk1d_forest2)
         test_obj.coadd(test_obj_other)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 12)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 100000000)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(header[5].get("value") == 4)
-        self.assertTrue(header[6].get("name") == "MEANZ")
-        self.assertTrue(header[6].get("value") == 2.0065725073416303)
-        self.assertTrue(header[7].get("name") == "MEANRESO")
-        self.assertTrue(header[7].get("value") == 1.0)
-        self.assertTrue(header[8].get("name") == "TARGETID")
-        self.assertTrue(header[8].get("value") == 100000000)
-        self.assertTrue(header[9].get("name") == "NIGHT")
-        self.assertTrue(header[9].get("value") == "1-1")
-        self.assertTrue(header[10].get("name") == "PETAL")
-        self.assertTrue(header[10].get("value") == "2-2")
-        self.assertTrue(header[11].get("name") == "TILE")
-        self.assertTrue(header[11].get("value") == "3-3")
+        self.assert_get_header(test_obj)
 
     def test_forest(self):
-        """Test constructor for Forest object.
-        This includes a test of function rebin."""
-        # create a Forest with missing Forest variables
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-        }
+        """Test constructor for Forest object."""
+        # create a Forest with missing Forest class variables
         with self.assertRaises(AstronomicalObjectError):
-            Forest(**kwargs)
+            Forest(**kwargs_forest_log)
 
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log")
 
         # create a Forest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "log_lambda": np.ones(15),
-        }
-        test_obj = Forest(**kwargs)
+        test_obj = Forest(**kwargs_forest_log)
+        self.assertTrue(isinstance(test_obj, Forest))
         self.assertTrue(isinstance(test_obj, AstronomicalObject))
-        self.assertTrue(test_obj.los_id == 9999)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.ones(15)))
-        self.assertTrue(test_obj.lambda_ is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(15)))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(15)*4))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(15)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2))
+        self.assert_forest_object(test_obj, kwargs_forest_log)
 
         # create a Forest specifying all variables
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
+        kwargs = kwargs_forest_log.copy()
+        kwargs.update({
             "continuum": np.ones(15),
             "deltas": np.zeros(15),
-            "log_lambda": np.ones(15)
-        }
+        })
         test_obj = Forest(**kwargs)
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
-        self.assertTrue(test_obj.los_id == 9999)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(np.allclose(test_obj.continuum, np.ones(15)))
-        self.assertTrue(np.allclose(test_obj.deltas, np.zeros(15)))
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.ones(15)))
-        self.assertTrue(test_obj.lambda_ is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(15)))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(15)*4))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(15)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2))
+        self.assert_forest_object(test_obj, kwargs)
 
         # create a Forest with extra variables
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
+        kwargs = kwargs_forest_log.copy()
+        kwargs.update({
             "test_variable": "test",
-            "log_lambda": np.ones(15)
-        }
+        })
         test_obj = Forest(**kwargs)
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
-        self.assertTrue(test_obj.los_id == 9999)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.ones(15)))
-        self.assertTrue(test_obj.lambda_ is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(15)))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(15)*4))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(15)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2))
+        self.assert_forest_object(test_obj, kwargs)
 
         # create a Forest with missing AstronomicalObject variables
         kwargs = {
             "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
+            "ivar": np.ones(15) * 4,
         }
         with self.assertRaises(AstronomicalObjectError):
             Forest(**kwargs)
@@ -1089,102 +932,51 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
 
         # create a Forest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "lambda": np.ones(15),
-        }
-        test_obj = Forest(**kwargs)
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
-        self.assertTrue(test_obj.los_id == 9999)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(test_obj.log_lambda is None)
-        self.assertTrue(np.allclose(test_obj.lambda_, np.ones(15)))
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(15)))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(15)*4))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(15)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2))
+        test_obj = Forest(**kwargs_forest_lin)
+        self.assert_forest_object(test_obj, kwargs_forest_lin)
 
-    def test_forest_coadd(self):
-        """Test the coadd function in Forest"""
+    def test_forest_rebin(self):
+        """Test the rebin function in Forest."""
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log")
 
         # create a Forest
-        kwargs = {
-            "los_id": 100000000,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-        }
-        test_obj = Forest(**kwargs)
+        test_obj = Forest(**kwargs_forest_log)
+
+        # rebin and test results
+        test_obj.rebin()
+        self.assert_forest_object(test_obj, kwargs_forest_log_rebin)
+
+        # set class variables; case: linear wavelength solution
+        reset_forest()
+        setup_forest(wave_solution="lin")
+
+        # create a Forest
+        test_obj = Forest(**kwargs_forest_lin)
+
+        # rebin and test results
+        test_obj.rebin()
+        self.assert_forest_object(test_obj, kwargs_forest_lin_rebin)
+
+    def test_forest_coadd(self):
+        """Test the coadd function in Forest."""
+        # set class variables; case: logarithmic wavelength solution
+        setup_forest(wave_solution="log")
+
+        # create a Forest
+        test_obj = Forest(**kwargs_forest_log)
 
         # create a second SdssForest
-        kwargs_other = {
-            "los_id": 100000000,
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-        }
-        test_obj_other = Forest(**kwargs_other)
+        test_obj_other = Forest(**kwargs_forest_log2)
 
         # coadd them
         test_obj.coadd(test_obj_other)
-
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.array([3.556525,
-                                                                   3.556725,
-                                                                   3.556925,
-                                                                   3.557125,
-                                                                   3.557325])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*16))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 8))
+        self.assert_forest_object(test_obj, kwargs_forest_log_coadd)
 
         # create a third Forest with different los_id
-        kwargs_other = {
-            "los_id": 999,
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-        }
-        test_obj_other = Forest(**kwargs_other)
+        kwargs = kwargs_forest_log2.copy()
+        kwargs["los_id"] = 999
+        test_obj_other = Forest(**kwargs)
 
         # coadding them whould raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -1195,54 +987,14 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
 
         # create a Forest
-        kwargs = {
-            "los_id": 100000000,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-        }
-        test_obj = Forest(**kwargs)
+        test_obj = Forest(**kwargs_forest_lin)
 
         # create a second Forest
-        kwargs_other = {
-            "los_id": 100000000,
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-        }
-        test_obj_other = Forest(**kwargs_other)
+        test_obj_other = Forest(**kwargs_forest_lin2)
 
         # coadd them
         test_obj.coadd(test_obj_other)
-
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
-                                                                3650,
-                                                                3670,
-                                                                3680,
-                                                                3700])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*16))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 8))
+        self.assert_forest_object(test_obj, kwargs_forest_lin_coadd)
 
     def test_forest_get_data(self):
         """Test method get_data for Forest."""
@@ -1250,78 +1002,16 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log")
 
         # create a Forest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "log_lambda": np.ones(15),
-        }
-        test_obj = Forest(**kwargs)
-
-        cols, names, units, comments = test_obj.get_data()
-        self.assertTrue(len(names) == 4)
-        self.assertTrue(len(cols) == 4)
-        self.assertTrue(len(units) == 4)
-        self.assertTrue(len(comments) == 4)
-        self.assertTrue(names[0] == "LOGLAM")
-        self.assertTrue(np.allclose(cols[0], np.ones(15)))
-        self.assertTrue(units[0] == "log Angstrom")
-        self.assertTrue(comments[0] == "Log lambda")
-        self.assertTrue(names[1] == "CONT")
-        self.assertTrue(np.allclose(cols[1], np.zeros(15)))
-        self.assertTrue(units[1] == "Flux units")
-        self.assertTrue(comments[1] == ("Quasar continuum if BAD_CONT is 'None'. "
-                                        "Check input spectra for units"))
-        self.assertTrue(names[2] == "DELTA")
-        self.assertTrue(np.allclose(cols[2], np.zeros(15)))
-        self.assertTrue(units[2] == "")
-        self.assertTrue(comments[2] == "Delta field")
-        self.assertTrue(names[3] == "WEIGHT")
-        self.assertTrue(np.allclose(cols[3], np.zeros(15)))
-        self.assertTrue(units[3] == "")
-        self.assertTrue(comments[3] == "Pixel weights")
+        test_obj = Forest(**kwargs_forest_log)
+        self.assert_get_data(test_obj)
 
         # set class variables; case: linear wavelength solution
         reset_forest()
         setup_forest(wave_solution="lin")
 
         # create a Forest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "lambda": np.ones(15),
-        }
-        test_obj = Forest(**kwargs)
-
-        cols, names, units, comments = test_obj.get_data()
-        self.assertTrue(len(names) == 4)
-        self.assertTrue(len(cols) == 4)
-        self.assertTrue(len(units) == 4)
-        self.assertTrue(len(comments) == 4)
-        self.assertTrue(names[0] == "LAMBDA")
-        self.assertTrue(np.allclose(cols[0], np.ones(15)))
-        self.assertTrue(units[0] == "Angstrom")
-        self.assertTrue(comments[0] == "Lambda")
-        self.assertTrue(names[1] == "CONT")
-        self.assertTrue(np.allclose(cols[1], np.zeros(15)))
-        self.assertTrue(units[1] == "Flux units")
-        self.assertTrue(comments[1] == ("Quasar continuum if BAD_CONT is 'None'. "
-                                        "Check input spectra for units"))
-        self.assertTrue(names[2] == "DELTA")
-        self.assertTrue(np.allclose(cols[2], np.zeros(15)))
-        self.assertTrue(units[2] == "")
-        self.assertTrue(comments[2] == "Delta field")
-        self.assertTrue(names[3] == "WEIGHT")
-        self.assertTrue(np.allclose(cols[3], np.zeros(15)))
-        self.assertTrue(units[3] == "")
-        self.assertTrue(comments[3] == "Pixel weights")
+        test_obj = Forest(**kwargs_forest_lin)
+        self.assert_get_data(test_obj)
 
     def test_forest_get_header(self):
         """Test method get_header for Forest."""
@@ -1329,140 +1019,41 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log")
 
         # create a Forest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "log_lambda": np.ones(15),
-        }
-        test_obj = Forest(**kwargs)
+        test_obj = Forest(**kwargs_forest_log)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 6)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 9999)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(header[5].get("value") == 2)
+        self.assert_get_header(test_obj)
 
         # set class variables; case: linear wavelength solution
         setup_forest(wave_solution="lin")
 
         # create a Forest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "lambda": np.ones(15),
-        }
-        test_obj = Forest(**kwargs)
+        test_obj = Forest(**kwargs_forest_lin)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 6)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 9999)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(header[5].get("value") == 2)
+        self.assert_get_header(test_obj)
 
     def test_pk1d_forest(self):
         """Test constructor for Pk1dForest object."""
-        # create a Pk1dForest with missing Forest variables
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.ones(10),
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
+        # create a Pk1dForest with missing Forest class variables
         with self.assertRaises(AstronomicalObjectError):
-            Pk1dForest(**kwargs)
+            Pk1dForest(**kwargs_pk1d_forest_log)
 
         # set class variables; case: logarithmic wavelength solution
         setup_forest(wave_solution="log")
 
         # create a Pk1dForest with missing Pk1dForest variables
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.ones(10),
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
         with self.assertRaises(AstronomicalObjectError):
-            Pk1dForest(**kwargs)
+            Pk1dForest(**kwargs_pk1d_forest_log)
 
         # set class variables
         setup_pk1d_forest("LYA")
 
         # create a Pk1dForest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.ones(10),
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = Pk1dForest(**kwargs)
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
-        self.assertTrue(test_obj.los_id == 9999)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(10)))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(10)*4))
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.ones(10)))
-        self.assertTrue(test_obj.lambda_ is None)
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(10)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2))
-        self.assertTrue(Pk1dForest.lambda_abs_igm == 1215.67)
-        self.assertTrue(np.allclose(test_obj.exposures_diff, np.ones(10)))
-        self.assertTrue(np.allclose(test_obj.reso, np.ones(10)))
-        self.assertTrue(np.isclose(test_obj.mean_z, -0.9917740834272459))
-        self.assertTrue(np.isclose(test_obj.mean_reso, 1.0))
+        test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
+        self.assertTrue(isinstance(test_obj, Pk1dForest))
+        self.assertTrue(isinstance(test_obj, Forest))
+        self.assert_forest_object(test_obj, kwargs_pk1d_forest_log)
 
         # set class variables; case: linear wavelength solution
         reset_forest()
@@ -1470,43 +1061,10 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create a Forest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.ones(10),
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = Pk1dForest(**kwargs)
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
-        self.assertTrue(test_obj.los_id == 9999)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(test_obj.log_lambda is None)
-        self.assertTrue(np.allclose(test_obj.lambda_, np.ones(10)))
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(10)))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(10)*4))
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(10)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2))
-        self.assertTrue(Pk1dForest.lambda_abs_igm == 1215.67)
-        self.assertTrue(np.allclose(test_obj.exposures_diff, np.ones(10)))
-        self.assertTrue(np.allclose(test_obj.reso, np.ones(10)))
-        self.assertTrue(np.isclose(test_obj.mean_z, -0.9991774083427246))
-        self.assertTrue(np.isclose(test_obj.mean_reso, 1.0))
+        test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
+        self.assertTrue(isinstance(test_obj, Pk1dForest))
+        self.assertTrue(isinstance(test_obj, Forest))
+        self.assert_forest_object(test_obj, kwargs_pk1d_forest_lin)
 
     def test_pk1d_forest_coadd(self):
         """Test the coadd function in Pk1dForest"""
@@ -1515,79 +1073,19 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create a Pk1dForest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = Pk1dForest(**kwargs)
+        test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
 
         # create a second Pk1dForest
-        kwargs_other = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "exposures_diff": np.ones(10)*3,
-            "reso": np.ones(10),
-        }
-        test_obj_other = Pk1dForest(**kwargs_other)
+        test_obj_other = Pk1dForest(**kwargs_pk1d_forest_log2)
 
         # coadd them
         test_obj.coadd(test_obj_other)
-
-        self.assertTrue(test_obj.los_id == 9999)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.array([3.556525,
-                                                                   3.556725,
-                                                                   3.556925,
-                                                                   3.557125,
-                                                                   3.557325])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*16))
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 8))
-        self.assertTrue(Pk1dForest.lambda_abs_igm == 1215.67)
-        self.assertTrue(np.allclose(test_obj.exposures_diff, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.reso, np.ones(5)))
-        self.assertTrue(np.isclose(test_obj.mean_z, 1.965425))
+        self.assert_forest_object(test_obj, kwargs_pk1d_forest_log_coadd)
 
         # create a third Pk1dForest with different targetid
-        kwargs_other = {
-            "los_id": 9998,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "exposures_diff": np.ones(10)*3,
-            "reso": np.ones(10),
-        }
-        test_obj_other = Pk1dForest(**kwargs_other)
+        kwargs = kwargs_pk1d_forest_log2.copy()
+        kwargs["los_id"] = 999
+        test_obj_other = Pk1dForest(**kwargs)
 
         # coadding them should raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -1599,63 +1097,14 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create a Forest
-        kwargs = {
-            "los_id": 100000000,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = Pk1dForest(**kwargs)
+        test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
 
         # create a second Forest
-        kwargs_other = {
-            "los_id": 100000000,
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "lambda": np.array([3610, 3610.4, 3650, 3650.4, 3670, 3670.4,
-                                3680, 3680.4, 3700, 3700.4]),
-            "exposures_diff": np.ones(10)*3,
-            "reso": np.ones(10),
-        }
-        test_obj_other = Pk1dForest(**kwargs_other)
+        test_obj_other = Pk1dForest(**kwargs_pk1d_forest_lin2)
 
         # coadd them
         test_obj.coadd(test_obj_other)
-
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.lambda_, np.array([3610,
-                                                                3650,
-                                                                3670,
-                                                                3680,
-                                                                3700])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*16))
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "lambda_")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 8))
-        self.assertTrue(np.allclose(test_obj.exposures_diff, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.reso, np.ones(5)))
-        self.assertTrue(np.isclose(test_obj.mean_z, 2.0065725073416303))
+        self.assert_forest_object(test_obj, kwargs_pk1d_forest_lin_coadd)
 
     def test_pk1d_forest_get_data(self):
         """Test method get_data for Pk1dForest."""
@@ -1664,46 +1113,8 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create a Pk1dForest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "log_lambda": np.ones(15),
-            "exposures_diff": np.ones(15),
-            "reso": np.ones(15),
-        }
-        test_obj = Pk1dForest(**kwargs)
-
-        cols, names, units, comments = test_obj.get_data()
-        self.assertTrue(len(names) == 5)
-        self.assertTrue(len(cols) == 5)
-        self.assertTrue(len(units) == 5)
-        self.assertTrue(len(comments) == 5)
-        self.assertTrue(names[0] == "LOGLAM")
-        self.assertTrue(np.allclose(cols[0], np.ones(15)))
-        self.assertTrue(units[0] == "log Angstrom")
-        self.assertTrue(comments[0] == "Log lambda")
-        self.assertTrue(names[1] == "CONT")
-        self.assertTrue(np.allclose(cols[1], np.zeros(15)))
-        self.assertTrue(units[1] == "Flux units")
-        self.assertTrue(comments[1] == ("Quasar continuum if BAD_CONT is 'None'. "
-                                        "Check input spectra for units"))
-        self.assertTrue(names[2] == "DELTA")
-        self.assertTrue(np.allclose(cols[2], np.zeros(15)))
-        self.assertTrue(units[2] == "")
-        self.assertTrue(comments[2] == "Delta field")
-        self.assertTrue(names[3] == "WEIGHT")
-        self.assertTrue(np.allclose(cols[3], np.zeros(15)))
-        self.assertTrue(units[3] == "")
-        self.assertTrue(comments[3] == "Pixel weights")
-        self.assertTrue(names[4] == "DIFF")
-        self.assertTrue(np.allclose(cols[4], np.ones(15)))
-        self.assertTrue(units[4] == "Flux units")
-        self.assertTrue(comments[4] == "Difference. Check input spectra for units")
-
+        test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
+        self.assert_get_data(test_obj)
 
         # set class variables; case: linear wavelength solution
         reset_forest()
@@ -1711,45 +1122,8 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create a Forest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "lambda": np.ones(15),
-            "exposures_diff": np.ones(15),
-            "reso": np.ones(15),
-        }
-        test_obj = Pk1dForest(**kwargs)
-
-        cols, names, units, comments = test_obj.get_data()
-        self.assertTrue(len(names) == 5)
-        self.assertTrue(len(cols) == 5)
-        self.assertTrue(len(units) == 5)
-        self.assertTrue(len(comments) == 5)
-        self.assertTrue(names[0] == "LAMBDA")
-        self.assertTrue(np.allclose(cols[0], np.ones(15)))
-        self.assertTrue(units[0] == "Angstrom")
-        self.assertTrue(comments[0] == "Lambda")
-        self.assertTrue(names[1] == "CONT")
-        self.assertTrue(np.allclose(cols[1], np.zeros(15)))
-        self.assertTrue(units[1] == "Flux units")
-        self.assertTrue(comments[1] == ("Quasar continuum if BAD_CONT is 'None'. "
-                                        "Check input spectra for units"))
-        self.assertTrue(names[2] == "DELTA")
-        self.assertTrue(np.allclose(cols[2], np.zeros(15)))
-        self.assertTrue(units[2] == "")
-        self.assertTrue(comments[2] == "Delta field")
-        self.assertTrue(names[3] == "WEIGHT")
-        self.assertTrue(np.allclose(cols[3], np.zeros(15)))
-        self.assertTrue(units[3] == "")
-        self.assertTrue(comments[3] == "Pixel weights")
-        self.assertTrue(names[4] == "DIFF")
-        self.assertTrue(np.allclose(cols[4], np.ones(15)))
-        self.assertTrue(units[4] == "Flux units")
-        self.assertTrue(comments[4] == "Difference. Check input spectra for units")
+        test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
+        self.assert_get_data(test_obj)
 
     def test_pk1d_forest_get_header(self):
         """Test method get_header for Pk1dForest."""
@@ -1758,177 +1132,44 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create a Pk1dForest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.ones(10),
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = Pk1dForest(**kwargs)
+        test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 8)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 9999)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(header[5].get("value") == 2)
-        self.assertTrue(header[6].get("name") == "MEANZ")
-        self.assertTrue(header[6].get("value") == -0.9917740834272459)
-        self.assertTrue(header[7].get("name") == "MEANRESO")
-        self.assertTrue(header[7].get("value") == 1.0)
+        self.assert_get_header(test_obj)
 
         # set class variables; case: linear wavelength solution
         setup_forest(wave_solution="lin")
 
         # create a Pk1dForest
-        kwargs = {
-            "los_id": 9999,
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "lambda": np.ones(10),
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = Pk1dForest(**kwargs)
+        test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 8)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 9999)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(header[5].get("value") == 2)
-        self.assertTrue(header[6].get("name") == "MEANZ")
-        self.assertTrue(header[6].get("value") == -0.9991774083427246)
-        self.assertTrue(header[7].get("name") == "MEANRESO")
-        self.assertTrue(header[7].get("value") == 1.0)
+        self.assert_get_header(test_obj)
 
     def test_sdss_forest(self):
         """Test constructor for SdssForest.
         This includes a test of function rebin.
         """
-        # create a SdssForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 0,
-            "fiberid": 0,
-            "mjd": 0,
-        }
         # expected error as class variables are not yet set
         with self.assertRaises(AstronomicalObjectError):
-            SdssForest(**kwargs)
+            SdssForest(**kwargs_sdss_forest)
 
         # set class variables
         setup_forest(wave_solution="log")
 
         # create a SdssForest
-        test_obj = SdssForest(**kwargs)
-
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.array([3.556525,
-                                                                   3.556725,
-                                                                   3.556925,
-                                                                   3.557125,
-                                                                   3.557325])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(isinstance(test_obj.plate, list))
-        self.assertTrue(test_obj.plate[0] == 0)
-        self.assertTrue(isinstance(test_obj.fiberid, list))
-        self.assertTrue(test_obj.fiberid[0] == 0)
-        self.assertTrue(isinstance(test_obj.mjd, list))
-        self.assertTrue(test_obj.mjd[0] == 0)
-        self.assertTrue(test_obj.thingid == 100000000)
+        test_obj = SdssForest(**kwargs_sdss_forest)
+        self.assertTrue(isinstance(test_obj, SdssForest))
+        self.assertTrue(isinstance(test_obj, Forest))
+        self.assert_forest_object(test_obj, kwargs_sdss_forest_rebin)
 
         # create forest with extra variables
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 0,
-            "fiberid": 0,
-            "mjd": 0,
-            "test variable": "test",
-        }
+        kwargs = kwargs_sdss_forest.copy()
+        kwargs.update({
+            "test_variable": "test",
+        })
         test_obj = SdssForest(**kwargs)
-        self.assertTrue(isinstance(test_obj, Forest))
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.array([3.556525,
-                                                                   3.556725,
-                                                                   3.556925,
-                                                                   3.557125,
-                                                                   3.557325])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(isinstance(test_obj.plate, list))
-        self.assertTrue(test_obj.plate[0] == 0)
-        self.assertTrue(isinstance(test_obj.fiberid, list))
-        self.assertTrue(test_obj.fiberid[0] == 0)
-        self.assertTrue(isinstance(test_obj.mjd, list))
-        self.assertTrue(test_obj.mjd[0] == 0)
-        self.assertTrue(test_obj.thingid == 100000000)
+        self.assert_forest_object(test_obj, kwargs_sdss_forest_rebin)
 
         # create a SdssForest with missing SdssForest variables
         kwargs = {
@@ -1936,7 +1177,7 @@ class AstronomicalObjectTest(AbstractTest):
             "dec": 0.0,
             "z": 2.1,
             "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
+            "ivar": np.ones(15) * 4,
         }
         with self.assertRaises(AstronomicalObjectError):
             SdssForest(**kwargs)
@@ -1947,7 +1188,7 @@ class AstronomicalObjectTest(AbstractTest):
             "ra": 0.15,
             "dec": 0.0,
             "z": 2.1,
-            "ivar": np.ones(15)*4,
+            "ivar": np.ones(15) * 4,
             "thingid": 100000000,
             "plate": 0,
             "fiberid": 0,
@@ -1962,86 +1203,19 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log")
 
         # create a SdssForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 0,
-            "fiberid": 0,
-            "mjd": 0,
-        }
-        test_obj = SdssForest(**kwargs)
+        test_obj = SdssForest(**kwargs_sdss_forest)
 
         # create a second SdssForest
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 1,
-            "fiberid": 2,
-            "mjd": 3,
-        }
-        test_obj_other = SdssForest(**kwargs_other)
+        test_obj_other = SdssForest(**kwargs_sdss_forest2)
 
         # coadd them
         test_obj.coadd(test_obj_other)
-
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.array([3.556525,
-                                                                   3.556725,
-                                                                   3.556925,
-                                                                   3.557125,
-                                                                   3.557325])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*16))
-        self.assertTrue(len(Forest.mask_fields) == 4)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 8))
-        self.assertTrue(isinstance(test_obj.plate, list))
-        self.assertTrue(test_obj.plate[0] == 0)
-        self.assertTrue(test_obj.plate[1] == 1)
-        self.assertTrue(isinstance(test_obj.fiberid, list))
-        self.assertTrue(test_obj.fiberid[0] == 0)
-        self.assertTrue(test_obj.fiberid[1] == 2)
-        self.assertTrue(isinstance(test_obj.mjd, list))
-        self.assertTrue(test_obj.mjd[0] == 0)
-        self.assertTrue(test_obj.mjd[1] == 3)
-        self.assertTrue(test_obj.thingid == 100000000)
+        self.assert_forest_object(test_obj, kwargs_sdss_forest_coadd)
 
         # create a third SdssForest with different targetid
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100010000,
-            "plate": 1,
-            "fiberid": 2,
-            "mjd": 3,
-        }
-        test_obj_other = SdssForest(**kwargs_other)
+        kwargs = kwargs_sdss_forest2.copy()
+        kwargs["thingid"] = 999
+        test_obj_other = SdssForest(**kwargs)
 
         # coadding them should raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -2053,42 +1227,8 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log")
 
         # create an SdssForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.ones(10),
-            "thingid": 100000000,
-            "plate": 0,
-            "fiberid": 0,
-            "mjd": 0,
-        }
-        test_obj = SdssForest(**kwargs)
-
-        cols, names, units, comments = test_obj.get_data()
-        self.assertTrue(len(names) == 4)
-        self.assertTrue(len(cols) == 4)
-        self.assertTrue(len(units) == 4)
-        self.assertTrue(len(comments) == 4)
-        self.assertTrue(names[0] == "LOGLAM")
-        self.assertTrue(np.allclose(cols[0], np.ones(10)))
-        self.assertTrue(units[0] == "log Angstrom")
-        self.assertTrue(comments[0] == "Log lambda")
-        self.assertTrue(names[1] == "CONT")
-        self.assertTrue(np.allclose(cols[1], np.zeros(10)))
-        self.assertTrue(units[1] == "Flux units")
-        self.assertTrue(comments[1] == ("Quasar continuum if BAD_CONT is 'None'. "
-                                        "Check input spectra for units"))
-        self.assertTrue(names[2] == "DELTA")
-        self.assertTrue(np.allclose(cols[2], np.zeros(10)))
-        self.assertTrue(units[2] == "")
-        self.assertTrue(comments[2] == "Delta field")
-        self.assertTrue(names[3] == "WEIGHT")
-        self.assertTrue(np.allclose(cols[3], np.zeros(10)))
-        self.assertTrue(units[3] == "")
-        self.assertTrue(comments[3] == "Pixel weights")
+        test_obj = SdssForest(**kwargs_sdss_forest)
+        self.assert_get_data(test_obj)
 
     def test_sdss_forest_get_header(self):
         """Test method get_header for SdssForest."""
@@ -2096,215 +1236,72 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log")
 
         # create an SdssForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 0,
-            "fiberid": 0,
-            "mjd": 0,
-        }
-        test_obj = SdssForest(**kwargs)
+        test_obj = SdssForest(**kwargs_sdss_forest)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 10)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 100000000)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(np.isclose(header[5].get("value"), 2.828427))
-        self.assertTrue(header[6].get("name") == "THING_ID")
-        self.assertTrue(header[6].get("value") == 100000000)
-        self.assertTrue(header[7].get("name") == "PLATE")
-        self.assertTrue(header[7].get("value") == "0000")
-        self.assertTrue(header[8].get("name") == "MJD")
-        self.assertTrue(header[8].get("value") == "00000")
-        self.assertTrue(header[9].get("name") == "FIBERID")
-        self.assertTrue(header[9].get("value") == "0000")
+        self.assert_get_header(test_obj)
 
         # create a second SdssForest and coadd it to the first
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 1,
-            "fiberid": 2,
-            "mjd": 3,
-        }
-        test_obj_other = SdssForest(**kwargs_other)
+        test_obj_other = SdssForest(**kwargs_sdss_forest2)
         test_obj.coadd(test_obj_other)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 10)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 100000000)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(header[5].get("value") == 8)
-        self.assertTrue(header[6].get("name") == "THING_ID")
-        self.assertTrue(header[6].get("value") == 100000000)
-        self.assertTrue(header[7].get("name") == "PLATE")
-        self.assertTrue(header[7].get("value") == "0000-0001")
-        self.assertTrue(header[8].get("name") == "MJD")
-        self.assertTrue(header[8].get("value") == "00000-00003")
-        self.assertTrue(header[9].get("name") == "FIBERID")
-        self.assertTrue(header[9].get("value") == "0000-0002")
-
+        self.assert_get_header(test_obj)
 
     def test_sdss_pk1d_forest(self):
         """Test constructor for SdssPk1dForest.
         This includes a test of function rebin.
         """
-        # create a SdssPk1dForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 0,
-            "fiberid": 0,
-            "mjd": 0,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
         # expected error as Pk1dForest class variables are not yet set
         with self.assertRaises(AstronomicalObjectError):
-            SdssPk1dForest(**kwargs)
+            SdssPk1dForest(**kwargs_sdss_pk1d_forest)
 
         # set class variables
         setup_pk1d_forest("LYA")
 
         # expected error as Forest class variables are not yet set
         with self.assertRaises(AstronomicalObjectError):
-            SdssPk1dForest(**kwargs)
+            SdssPk1dForest(**kwargs_sdss_pk1d_forest)
 
         # set class variables
         setup_forest(wave_solution="log")
 
         # create a SdssPk1dForest
-        test_obj = SdssPk1dForest(**kwargs)
-
-        self.assertTrue(isinstance(test_obj, AstronomicalObject))
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.array([3.556525,
-                                                                   3.556725,
-                                                                   3.556925,
-                                                                   3.557125,
-                                                                   3.557325])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(isinstance(test_obj.plate, list))
-        self.assertTrue(test_obj.plate[0] == 0)
-        self.assertTrue(isinstance(test_obj.fiberid, list))
-        self.assertTrue(test_obj.fiberid[0] == 0)
-        self.assertTrue(isinstance(test_obj.mjd, list))
-        self.assertTrue(test_obj.mjd[0] == 0)
-        self.assertTrue(test_obj.thingid == 100000000)
+        test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
+        self.assertTrue(isinstance(test_obj, SdssPk1dForest))
+        self.assertTrue(isinstance(test_obj, SdssForest))
+        self.assertTrue(isinstance(test_obj, Pk1dForest))
+        self.assert_forest_object(test_obj, kwargs_sdss_pk1d_forest_rebin)
 
         # create SdssPk1dForest with extra variables
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 0,
-            "fiberid": 0,
-            "mjd": 0,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-            "test variable": "test",
-        }
-        test_obj = SdssForest(**kwargs)
-        self.assertTrue(isinstance(test_obj, Forest))
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.array([3.556525,
-                                                                   3.556725,
-                                                                   3.556925,
-                                                                   3.557125,
-                                                                   3.557325])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*8))
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 2.8284271247461903))
-        self.assertTrue(isinstance(test_obj.plate, list))
-        self.assertTrue(test_obj.plate[0] == 0)
-        self.assertTrue(isinstance(test_obj.fiberid, list))
-        self.assertTrue(test_obj.fiberid[0] == 0)
-        self.assertTrue(isinstance(test_obj.mjd, list))
-        self.assertTrue(test_obj.mjd[0] == 0)
-        self.assertTrue(test_obj.thingid == 100000000)
+        kwargs = kwargs_sdss_pk1d_forest.copy()
+        kwargs.update({
+            "test_variable": "test",
+        })
+        test_obj = SdssPk1dForest(**kwargs)
+        self.assert_forest_object(test_obj, kwargs_sdss_pk1d_forest_rebin)
 
         # create a SdssPk1dForest with missing SdssForest variables
         kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "exposures_diff": np.ones(15),
-            "reso": np.ones(15),
+            "ra":
+                0.15,
+            "dec":
+                0.0,
+            "z":
+                2.1,
+            "flux":
+                np.ones(15),
+            "ivar":
+                np.ones(15) * 4,
+            "log_lambda":
+                np.array([
+                    3.5565, 3.55655, 3.5567, 3.55675, 3.5569, 3.55695, 3.5571,
+                    3.55715, 3.5573, 3.55735
+                ]),
+            "exposures_diff":
+                np.ones(15),
+            "reso":
+                np.ones(15),
         }
         with self.assertRaises(AstronomicalObjectError):
             SdssPk1dForest(**kwargs)
@@ -2315,7 +1312,7 @@ class AstronomicalObjectTest(AbstractTest):
             "dec": 0.0,
             "z": 2.1,
             "flux": np.ones(15),
-            "ivar": np.ones(15)*4,
+            "ivar": np.ones(15) * 4,
             "thingid": 100000000,
             "plate": 0,
             "fiberid": 0,
@@ -2330,7 +1327,7 @@ class AstronomicalObjectTest(AbstractTest):
             "ra": 0.15,
             "dec": 0.0,
             "z": 2.1,
-            "ivar": np.ones(15)*4,
+            "ivar": np.ones(15) * 4,
             "thingid": 100000000,
             "plate": 0,
             "fiberid": 0,
@@ -2348,98 +1345,19 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create a SdssPk1dForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 0,
-            "fiberid": 0,
-            "mjd": 0,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = SdssPk1dForest(**kwargs)
+        test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
 
         # create a second SdssPk1dForest
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 1,
-            "fiberid": 2,
-            "mjd": 3,
-            "exposures_diff": np.ones(10)*3,
-            "reso": np.ones(10),
-        }
-        test_obj_other = SdssPk1dForest(**kwargs_other)
+        test_obj_other = SdssPk1dForest(**kwargs_sdss_pk1d_forest2)
 
         # coadd them
         test_obj.coadd(test_obj_other)
-
-        self.assertTrue(test_obj.los_id == 100000000)
-        self.assertTrue(test_obj.healpix == 1505)
-        self.assertTrue(test_obj.z == 2.1)
-        self.assertTrue(test_obj.bad_continuum_reason is None)
-        self.assertTrue(test_obj.continuum is None)
-        self.assertTrue(test_obj.deltas is None)
-        self.assertTrue(np.allclose(test_obj.flux, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.log_lambda, np.array([3.556525,
-                                                                   3.556725,
-                                                                   3.556925,
-                                                                   3.557125,
-                                                                   3.557325])))
-        self.assertTrue(np.allclose(test_obj.ivar, np.ones(5)*16))
-        self.assertTrue(len(Forest.mask_fields) == 6)
-        self.assertTrue(Forest.mask_fields[0] == "flux")
-        self.assertTrue(Forest.mask_fields[1] == "ivar")
-        self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        self.assertTrue(Forest.mask_fields[4] == "exposures_diff")
-        self.assertTrue(Forest.mask_fields[5] == "reso")
-        self.assertTrue(np.allclose(test_obj.transmission_correction, np.ones(5)))
-        self.assertTrue(np.allclose(test_obj.mean_snr, 8))
-        self.assertTrue(isinstance(test_obj.plate, list))
-        self.assertTrue(test_obj.plate[0] == 0)
-        self.assertTrue(test_obj.plate[1] == 1)
-        self.assertTrue(isinstance(test_obj.fiberid, list))
-        self.assertTrue(test_obj.fiberid[0] == 0)
-        self.assertTrue(test_obj.fiberid[1] == 2)
-        self.assertTrue(isinstance(test_obj.mjd, list))
-        self.assertTrue(test_obj.mjd[0] == 0)
-        self.assertTrue(test_obj.mjd[1] == 3)
-        self.assertTrue(test_obj.thingid == 100000000)
-        self.assertTrue(Pk1dForest.lambda_abs_igm == 1215.67)
-        self.assertTrue(np.allclose(test_obj.exposures_diff, np.ones(5)*2))
-        self.assertTrue(np.allclose(test_obj.reso, np.ones(5)))
-        self.assertTrue(np.isclose(test_obj.mean_z, 1.965425))
+        self.assert_forest_object(test_obj, kwargs_sdss_pk1d_forest_coadd)
 
         # create a third SdssForest with different targetid
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100010000,
-            "plate": 1,
-            "fiberid": 2,
-            "mjd": 3,
-            "exposures_diff": np.ones(10)*3,
-            "reso": np.ones(10),
-        }
-        test_obj_other = SdssPk1dForest(**kwargs_other)
+        kwargs = kwargs_sdss_pk1d_forest2.copy()
+        kwargs["thingid"] = 999
+        test_obj_other = SdssPk1dForest(**kwargs)
 
         # coadding them should raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -2452,48 +1370,8 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create an SdssPk1dForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.ones(10),
-            "thingid": 100000000,
-            "plate": 0,
-            "fiberid": 0,
-            "mjd": 0,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = SdssPk1dForest(**kwargs)
-
-        cols, names, units, comments = test_obj.get_data()
-        self.assertTrue(len(names) == 5)
-        self.assertTrue(len(cols) == 5)
-        self.assertTrue(len(units) == 5)
-        self.assertTrue(len(comments) == 5)
-        self.assertTrue(names[0] == "LOGLAM")
-        self.assertTrue(np.allclose(cols[0], np.ones(10)))
-        self.assertTrue(units[0] == "log Angstrom")
-        self.assertTrue(comments[0] == "Log lambda")
-        self.assertTrue(names[1] == "CONT")
-        self.assertTrue(np.allclose(cols[1], np.zeros(10)))
-        self.assertTrue(units[1] == "Flux units")
-        self.assertTrue(comments[1] == ("Quasar continuum if BAD_CONT is 'None'. "
-                                        "Check input spectra for units"))
-        self.assertTrue(names[2] == "DELTA")
-        self.assertTrue(np.allclose(cols[2], np.zeros(10)))
-        self.assertTrue(units[2] == "")
-        self.assertTrue(comments[2] == "Delta field")
-        self.assertTrue(names[3] == "WEIGHT")
-        self.assertTrue(np.allclose(cols[3], np.zeros(10)))
-        self.assertTrue(units[3] == "")
-        self.assertTrue(comments[3] == "Pixel weights")
-        self.assertTrue(names[4] == "DIFF")
-        self.assertTrue(np.allclose(cols[4], np.ones(10)))
-        self.assertTrue(units[4] == "Flux units")
-        self.assertTrue(comments[4] == "Difference. Check input spectra for units")
+        test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
+        self.assert_get_data(test_obj)
 
     def test_sdss_pk1d_forest_get_header(self):
         """Test method get_header for SdssPk1dForest."""
@@ -2502,97 +1380,18 @@ class AstronomicalObjectTest(AbstractTest):
         setup_pk1d_forest("LYA")
 
         # create an SdssPk1dForest
-        kwargs = {
-            "ra": 0.15,
-            "dec": 0.0,
-            "z": 2.1,
-            "flux": np.ones(10),
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 0,
-            "fiberid": 0,
-            "mjd": 0,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj = SdssPk1dForest(**kwargs)
+        test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 12)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 100000000)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(np.isclose(header[5].get("value"), 2.828427))
-        self.assertTrue(header[6].get("name") == "MEANZ")
-        self.assertTrue(header[6].get("value") == 1.9654252799454879)
-        self.assertTrue(header[7].get("name") == "MEANRESO")
-        self.assertTrue(header[7].get("value") == 1.0)
-        self.assertTrue(header[8].get("name") == "THING_ID")
-        self.assertTrue(header[8].get("value") == 100000000)
-        self.assertTrue(header[9].get("name") == "PLATE")
-        self.assertTrue(header[9].get("value") == "0000")
-        self.assertTrue(header[10].get("name") == "MJD")
-        self.assertTrue(header[10].get("value") == "00000")
-        self.assertTrue(header[11].get("name") == "FIBERID")
-        self.assertTrue(header[11].get("value") == "0000")
+        self.assert_get_header(test_obj)
 
         # create a second SdssPk1dForest and coadd it to the first
-        kwargs_other = {
-            "ra": 0.1,
-            "dec": 0.01,
-            "z": 2.2,
-            "flux": np.ones(10)*3,
-            "ivar": np.ones(10)*4,
-            "log_lambda": np.array([3.5565, 3.55655, 3.5567, 3.55675, 3.5569,
-                                    3.55695, 3.5571, 3.55715, 3.5573, 3.55735]),
-            "thingid": 100000000,
-            "plate": 1,
-            "fiberid": 2,
-            "mjd": 3,
-            "exposures_diff": np.ones(10),
-            "reso": np.ones(10),
-        }
-        test_obj_other = SdssPk1dForest(**kwargs_other)
+        test_obj_other = SdssPk1dForest(**kwargs_sdss_pk1d_forest2)
         test_obj.coadd(test_obj_other)
 
         # get header and test
-        header = test_obj.get_header()
-        self.assertTrue(len(header) == 12)
-        self.assertTrue(header[0].get("name") == "LOS_ID")
-        self.assertTrue(header[0].get("value") == 100000000)
-        self.assertTrue(header[1].get("name") == "RA")
-        self.assertTrue(header[1].get("value") == 0.15)
-        self.assertTrue(header[2].get("name") == "DEC")
-        self.assertTrue(header[2].get("value") == 0.0)
-        self.assertTrue(header[3].get("name") == "Z")
-        self.assertTrue(header[3].get("value") == 2.1)
-        self.assertTrue(header[4].get("name") == "BAD_CONT")
-        self.assertTrue(header[4].get("value") == "None")
-        self.assertTrue(header[5].get("name") == "MEANSNR")
-        self.assertTrue(header[5].get("value") == 8)
-        self.assertTrue(header[6].get("name") == "MEANZ")
-        self.assertTrue(header[6].get("value") == 1.9654252799454879)
-        self.assertTrue(header[7].get("name") == "MEANRESO")
-        self.assertTrue(header[7].get("value") == 1.0)
-        self.assertTrue(header[8].get("name") == "THING_ID")
-        self.assertTrue(header[8].get("value") == 100000000)
-        self.assertTrue(header[9].get("name") == "PLATE")
-        self.assertTrue(header[9].get("value") == "0000-0001")
-        self.assertTrue(header[10].get("name") == "MJD")
-        self.assertTrue(header[10].get("value") == "00000-00003")
-        self.assertTrue(header[11].get("name") == "FIBERID")
-        self.assertTrue(header[11].get("value") == "0000-0002")
+        self.assert_get_header(test_obj)
+
 
 if __name__ == '__main__':
     unittest.main()
