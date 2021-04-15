@@ -220,6 +220,7 @@ class Config:
         if "expected flux" not in self.config:
             raise ConfigError("Missing section [expected flux]")
         section = self.config["expected flux"]
+        section["out dir"] = self.out_dir
 
         # first load the data class
         expected_flux_name = section.get("type")

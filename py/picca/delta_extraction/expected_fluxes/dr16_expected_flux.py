@@ -7,6 +7,7 @@ from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.userprint import userprint
 
 defaults = {
+    "iter out prefix": "Log/delta_attributes",
     "limit eta": (0.5, 1.5),
     "limit var lss": (0., 0.3),
     "num bins variance": 20,
@@ -82,6 +83,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
     get_var_lss: scipy.interpolate.interp1d
     Interpolation function to compute mapping functions var_lss. See equation 4 of
     du Mas des Bourboux et al. 2020 for details.
+
+    iter_out_prefix: str
+    Prefix of the iteration files. These files contain the statistical properties
+    of deltas at a given iteration step. Intermediate files will add
+    '_iteration{num}.fits.gz' to the prefix for intermediate steps and '.fits.gz'
+    for the final results.
 
     lambda_: array of float or None
     Wavelengths where the variance functions and statistics are
@@ -167,6 +174,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         super().__init__()
 
         # load variables from config
+        self.iter_out_prefix = None
         self.limit_eta = None
         self.limit_var_lss = None
         self.num_bins_variance = None
@@ -329,6 +337,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
         -----
         MeanExpectedFluxError if wavelength solution is not valid
         """
+        self.iter_out_prefix = config.get("iter out prefix")
+        if self.iter_out_prefix is None:
+            self.iter_out_prefix = (config.get("out dir") +
+                                    defaults.get("iter out prefix"))
+
         limit_eta_string = config.get("limit eta")
         if limit_eta_string is None:
             self.limit_eta = defaults.get("limit eta")
@@ -341,7 +354,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.limit_var_lss = defaults.get("limit var lss")
         else:
             self.limit_var_lss = (float(limit_var_lss_string.split(",")[0][1:]),
-                                  float(limit_var_lss_string.split(",")[1][1:]))
+                                  float(limit_var_lss_string.split(",")[1][:1]))
 
         self.num_bins_variance = config.getint("num bins variance")
         if self.num_bins_variance is None:
