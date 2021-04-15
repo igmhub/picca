@@ -254,7 +254,7 @@ class Config:
         if "general" not in self.config:
             raise ConfigError("Missing section [general]")
         section = self.config["general"]
-        self.out_dir = section.get("out dir", None)
+        self.out_dir = section.get("out dir")
         if self.out_dir is None:
             raise ConfigError("In section 'general', variable 'out dir' is required")
         self.overwrite = section.getboolean("overwrite")

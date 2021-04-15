@@ -137,6 +137,8 @@ class Survey:
         """
         if not os.path.exists(self.config.out_dir):
             os.makedirs(self.config.out_dir)
+            os.makedirs(self.config.out_dir+"Delta/")
+            os.makedirs(self.config.out_dir+"Log/")
             self.config.write_config()
         elif self.config.overwrite:
             self.config.write_config()
@@ -252,4 +254,4 @@ class Survey:
 
     def save_deltas(self):
         """Saves the deltas."""
-        self.data.save_deltas(self.config.out_dir)
+        self.data.save_deltas(self.config.out_dir+"Delta/")
