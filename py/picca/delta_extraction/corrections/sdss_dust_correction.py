@@ -38,18 +38,18 @@ class SdssDustCorrection(Correction):
             extinction_conversion_r = defaults.get("extinction_conversion_r")
 
         try:
-            hdu = fitsio.read(filename, ext="EXTINCTION")
+            hdu = fitsio.read(filename, ext="CATALOG")
             thingid = hdu['THING_ID']
             ext = hdu['EXTINCTION'][:, 1] / extinction_conversion_r
         except OSError:
             raise CorrectionError("Error loading SdssDustCorrection. "
                                   f"File {filename} does not have extension "
-                                  "'EXTINCTION'")
+                                  "'CATALOG'")
         except ValueError:
             raise CorrectionError("Error loading SdssDustCorrection. "
                                   f"File {filename} does not have fields "
                                   "'THING_ID' and/or 'EXTINCTION' in HDU "
-                                  "'EXTINCTION'")
+                                  "'CATALOG'")
         self.extinction_bv_map = dict(zip(thingid, ext))
 
     def apply_correction(self, forest):
