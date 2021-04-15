@@ -129,9 +129,9 @@ class DrqCatalogue(QuasarCatalogue):
                                                                "").replace("lite",
                                                                            "").replace("full",
                                                                                        "")
-                filenames = glob.glob(f"{folder}/spAll*.fits")
+                filenames = glob.glob(f"{folder}/spAll-*.fits")
                 if len(filenames) > 1:
-                    warnings.warn("Found multiple 'spAll' files not found. Quiting...",
+                    warnings.warn("Found multiple 'spAll' files. Quiting...",
                                   QuasarCatalogueWarning)
                     for filename in filenames:
                         warnings.warn(f"found: {filename}", QuasarCatalogueWarning)
