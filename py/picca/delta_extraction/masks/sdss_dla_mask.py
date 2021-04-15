@@ -1,4 +1,4 @@
-"""This module defines the abstract classes SdssDlaMask and Dla used in the
+"""This module defines the classes SdssDlaMask and Dla used in the
 masking of DLAs"""
 import numpy as np
 import fitsio
@@ -114,9 +114,11 @@ class SdssDlaMask(Mask):
         MaskError if forest instance does not have the attribute
         'log_lambda'
         """
-        if not hasattr(forest, "log_lambda"):
-            raise MaskError("Mask from SdssDlaMask should only be applied to "
-                            "data with the attribute 'log_lambda'")
+        if Forest.wave_solution != "log":
+            raise MaskError("SdssDlaMask should only be applied when "
+                            "Forest.wave_solution is 'log'. Found: "
+                            f"{Forest.wave_solution}")
+
         # load DLAs
         if self.los_ids.get(forest.los_id) is not None:
             dla_transmission = np.ones(len(forest.log_lambda))

@@ -1,4 +1,4 @@
-"""This module defines the abstract class AbsorberMask in the
+"""This module defines the class SdssAbsorberMask in the
 masking of absorbers"""
 import numpy as np
 import fitsio
@@ -93,9 +93,11 @@ class SdssAbsorberMask(Mask):
         CorrectionError if forest instance does not have the attribute
         'log_lambda'
         """
-        if not hasattr(forest, "log_lambda"):
-            raise MaskError("Mask from SdssAbsorberMask should only be applied "
-                            "to data with the attribute 'log_lambda'")
+        if Forest.wave_solution != "log":
+            raise MaskError("SdssAbsorberMask should only be applied when "
+                            "Forest.wave_solution is 'log'. Found: "
+                            f"{Forest.wave_solution}")
+
         # load DLAs
         if self.los_ids.get(forest.los_id) is not None:
             # find out which pixels to mask
