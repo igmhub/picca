@@ -63,10 +63,6 @@ class Data:
         if self.min_num_pix is None:
             self.min_num_pix = defaults.get("minimum number pixels in forest")
 
-        self.out_dir = config.get("output directory")
-        if self.out_dir is None:
-            raise DataError("Missing argument 'output directory' required by Data")
-
     def filter_forests(self):
         """Removes forests that do not meet quality standards"""
         userprint(f"INFO: Input sample has {len(self.forests)} forests")

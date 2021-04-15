@@ -1,13 +1,14 @@
-"""This module defines the class Dr16MeanExpectedFlux"""
+"""This module defines the class Dr16ExpectedFlux"""
 from scipy.interpolate import interp1d
 from multiprocessing import Pool
 import fitsio
 
 from picca.delta_extraction.expected_flux import ExpectedFlux
+from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.userprint import userprint
 
 defaults = {
-    "iter out prefix": "Log/delta_attributes",
+    "iter out prefix": "delta_attributes",
     "limit eta": (0.5, 1.5),
     "limit var lss": (0., 0.3),
     "num bins variance": 20,
@@ -339,8 +340,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         self.iter_out_prefix = config.get("iter out prefix")
         if self.iter_out_prefix is None:
-            self.iter_out_prefix = (config.get("out dir") +
-                                    defaults.get("iter out prefix"))
+            self.iter_out_prefix = defaults.get("iter out prefix")
+        if "/" in self.iter_out_prefix:
+            raise ExpectedFluxError("Error constructing Dr16ExpectedFlux. "
+                                    "'iter out prefix' should not incude folders. "
+                                    f"Found: {self.iter_out_prefix}")
 
         limit_eta_string = config.get("limit eta")
         if limit_eta_string is None:
@@ -665,7 +669,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                         new_cont,
                                         fill_value="extrapolate")
 
-    def compute_expected_flux(forests):
+    def compute_expected_flux(forests, out_dir):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
         computed iteratively following as explained in du Mas des Bourboux et
@@ -675,6 +679,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ---------
         forests: List of Forest
         A list of Forest from which to compute the deltas.
+
+        out_dir: str
+        Directory where iteration statistics will be saved
 
         Raise
         -----
@@ -706,9 +713,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             # Save the iteration step
             if iteration == num_iterations - 1:
-                self.save_iteration_step(-1)
+                self.save_iteration_step(-1, out_dir)
             else:
-                self.save_iteration_step(iteration)
+                self.save_iteration_step(iteration, out_dir)
 
             userprint(
                 f"Continuum fitting: ending iteration {iteration} of {num_iterations}"
@@ -962,20 +969,24 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 raise MeanExpectedFluxError("Forest.wave_solution must be either "
                                             "'log' or 'linear'")
 
-    def save_iteration_step(self):
+    def save_iteration_step(self, iteration, out_dir):
         """Saves the statistical properties of deltas at a given iteration
         step
 
         Arguments
         ---------
         iteration: int
+        Iteration number. -1 for final iteration
+
+        out_dir: str
+        Directory where data will be saved
         """
         if iteration == - 1:
             iter_out_file = self.iter_out_prefix + ".fits.gz"
         else:
             iter_out_file += self.iter_out_prefix + f"_iteration{iteration}.fits.gz"
 
-        with fitsio.FITS(iter_out_file, 'rw', clobber=True) as results:
+        with fitsio.FITS(out_dir+iter_out_file, 'rw', clobber=True) as results:
             header = {}
             header["FITORDER"] = self.order
             if Forest.wave_solution == "log":
