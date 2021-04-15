@@ -56,7 +56,7 @@ if __name__ == '__main__':
         description=('Compute the delta field '
                      'from a list of spectra'))
 
-    parser.add_argument('config-file',
+    parser.add_argument('config_file',
                         type=str,
                         default=None,
                         help='Configuration file')
