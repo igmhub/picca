@@ -3,12 +3,15 @@ DRQX Catalogues
 """
 import glob
 import warnings
+import logging
 from astropy.table import Table, join
 import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError, QuasarCatalogueWarning
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
-from picca.delta_extraction.userprint import userprint
+
+# create logger
+module_logger = logging.getLogger(__name__)
 
 defaults = {
     "best obs": False,
@@ -66,6 +69,7 @@ class DrqCatalogue(QuasarCatalogue):
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
+        self.logger = logging.getLogger(__name__)
         super().__init__(config)
 
         # load variables from config
@@ -117,13 +121,13 @@ class DrqCatalogue(QuasarCatalogue):
         else:
             self.spall = config.get("spAll")
             if self.spall is None:
-                warnings.warn("Missing argument 'spAll' required by DrqCatalogue. "
-                              "Looking for spAll in input directory...", QuasarCatalogueWarning)
+                self.logger.warning("Missing argument 'spAll' required by DrqCatalogue. "
+                               "Looking for spAll in input directory...")
 
                 if config.get("input directory") is None:
-                    warnings.warn("'spAll' file not found. If you didn't want to load "
-                                  "the spAll file you should pass the option "
-                                  "'best obs = True'. Quiting...", QuasarCatalogueWarning)
+                    self.logger.error("'spAll' file not found. If you didn't want to load "
+                                   "the spAll file you should pass the option "
+                                   "'best obs = True'. Quiting...")
                     raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
                 folder = config.get("input directory").replace("spectra",
                                                                "").replace("lite",
@@ -131,18 +135,17 @@ class DrqCatalogue(QuasarCatalogue):
                                                                                        "")
                 filenames = glob.glob(f"{folder}/spAll-*.fits")
                 if len(filenames) > 1:
-                    warnings.warn("Found multiple 'spAll' files. Quiting...",
-                                  QuasarCatalogueWarning)
+                    self.logger.error("Found multiple 'spAll' files. Quiting...")
                     for filename in filenames:
-                        warnings.warn(f"found: {filename}", QuasarCatalogueWarning)
+                        self.logger.error(f"found: {filename}")
                     raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
                 if len(filenames) == 0:
-                    warnings.warn("'spAll' file not found. If you didn't want to load "
+                    self.logger.error("'spAll' file not found. If you didn't want to load "
                                   "the spAll file you should pass the option "
-                                  "'best obs = True'. Quiting...", QuasarCatalogueWarning)
+                                  "'best obs = True'. Quiting...")
                     raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
                 self.spall = filenames[0]
-                warnings.warn("'spAll' file found. Contining with normal execution.")
+                self.logger.ok_warning("'spAll' file found. Contining with normal execution.")
 
 
     def read_drq(self):
@@ -153,8 +156,8 @@ class DrqCatalogue(QuasarCatalogue):
         catalogue: Astropy.table.Table
         Table with the DRQ catalogue
         """
-        userprint(f"Reading DRQ catalogue from {self.drq_filename}")
-        catalogue = Table.read(self.drq_filename, hdu="CATALOGUE")
+        self.logger.progress(f"Reading DRQ catalogue from {self.drq_filename}")
+        catalogue = Table.read(self.drq_filename, hdu="CATALOG")
 
         keep_columns = ['RA', 'DEC', 'Z', 'THING_ID', 'PLATE', 'MJD', 'FIBERID']
 
@@ -162,7 +165,7 @@ class DrqCatalogue(QuasarCatalogue):
         if 'Z' not in catalogue.colnames:
             if 'Z_VI' in catalogue.colnames:
                 catalogue.rename_column('Z_VI', 'Z')
-                userprint(
+                self.logger.progress(
                     "Z not found (new DRQ >= DRQ14 style), using Z_VI (DRQ <= DRQ12)"
                 )
             else:
@@ -171,42 +174,42 @@ class DrqCatalogue(QuasarCatalogue):
                                            f"{self.drq_filename}")
 
         ## Sanity checks
-        userprint('')
+        self.logger.progress('')
         w = np.ones(len(catalogue), dtype=bool)
-        userprint(f"start                 : nb object in cat = {np.sum(w)}")
+        self.logger.progress(f"start                 : nb object in cat = {np.sum(w)}")
         w &= catalogue["THING_ID"] > 0
-        userprint(f"and THING_ID > 0      : nb object in cat = {np.sum(w)}")
+        self.logger.progress(f"and THING_ID > 0      : nb object in cat = {np.sum(w)}")
         w &= catalogue['RA'] != catalogue['DEC']
-        userprint(f"and ra != dec         : nb object in cat = {np.sum(w)}")
+        self.logger.progress(f"and ra != dec         : nb object in cat = {np.sum(w)}")
         w &= catalogue['RA'] != 0.
-        userprint(f"and ra != 0.          : nb object in cat = {np.sum(w)}")
+        self.logger.progress(f"and ra != 0.          : nb object in cat = {np.sum(w)}")
         w &= catalogue['DEC'] != 0.
-        userprint(f"and dec != 0.         : nb object in cat = {np.sum(w)}")
+        self.logger.progress(f"and dec != 0.         : nb object in cat = {np.sum(w)}")
 
         ## Redshift range
         w &= catalogue['Z'] >= self.z_min
-        userprint(f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
+        self.logger.progress(f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
         w &= catalogue['Z'] < self.z_max
-        userprint(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
+        self.logger.progress(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
 
         ## BAL visual
         if not self.keep_bal and self.bi_max is None:
             if 'BAL_FLAG_VI' in catalogue.colnames:
                 self.bal_flag = catalogue['BAL_FLAG_VI']
                 w &= self.bal_flag == 0
-                userprint(
+                self.logger.progress(
                     f"and BAL_FLAG_VI == 0  : nb object in cat = {np.sum(w)}")
                 keep_columns += ['BAL_FLAG_VI']
             else:
-                warnings.warn(f"BAL_FLAG_VI not found in {self.drq_filename}",
-                              QuasarCatalogueWarning)
+                self.logger.warning(f"BAL_FLAG_VI not found in {self.drq_filename}.")
+                self.logger.ok_warning("Ignoring")
 
         ## BAL CIV
         if self.bi_max is not None:
             if 'BI_CIV' in catalogue.colnames:
                 bi = catalogue['BI_CIV']
                 w &= bi <= self.bi_max
-                userprint(
+                self.logger.progress(
                     f"and BI_CIV <= {self.bi_max}  : nb object in cat = {np.sum(w)}")
                 keep_columns += ['BI_CIV']
             else:
@@ -245,7 +248,7 @@ class DrqCatalogue(QuasarCatalogue):
         -----
         QuasarCatalogueError if spAll file is not found
         """
-        userprint(f"INFO: reading spAll from {self.spall}")
+        self.logger.progress(f"reading spAll from {self.spall}")
         try:
             catalogue = Table.read(self.spall, hdu=1)
             catalogue.keep_columns(["THING_ID", "PLATE", "MJD",
@@ -257,9 +260,9 @@ class DrqCatalogue(QuasarCatalogue):
                                        f"message: {str(error)}")
 
         w = np.in1d(catalogue["THING_ID"], drq_catalogue["THING_ID"])
-        userprint(f"INFO: Found {np.sum(w)} spectra with required THING_ID")
+        self.logger.progress(f"Found {np.sum(w)} spectra with required THING_ID")
         w &= catalogue["PLATEQUALITY"] == "good"
-        userprint(f"INFO: Found {np.sum(w)} spectra with 'good' plate")
+        self.logger.progress(f"Found {np.sum(w)} spectra with 'good' plate")
         ## Removing spectra with the following ZWARNING bits set:
         ## SKY, LITTLE_COVERAGE, UNPLUGGED, BAD_TARGET, NODATA
         ## https://www.sdss.org/dr14/algorithms/bitmasks/#ZWARNING
@@ -273,10 +276,10 @@ class DrqCatalogue(QuasarCatalogue):
         for z_warn_bit, z_warn_bit_name in bad_z_warn_bit.items():
             wbit = (catalogue["ZWARNING"] & 2**z_warn_bit == 0)
             w &= wbit
-            userprint(f"INFO: Found {np.sum(w)} spectra without {z_warn_bit} "
+            self.logger.progress(f"Found {np.sum(w)} spectra without {z_warn_bit} "
                       f"bit set: {z_warn_bit_name}")
-        userprint(f"INFO: # unique objs: {len(drq_catalogue)}")
-        userprint(f"INFO: # spectra: {w.sum()}")
+        self.logger.progress(f"# unique objs: {len(drq_catalogue)}")
+        self.logger.progress(f"# spectra: {w.sum()}")
         catalogue = catalogue[w]
 
         # merge redshift information from DRQ catalogue

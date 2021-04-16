@@ -5,10 +5,14 @@ contains the default configuration.
 import os
 import re
 import warnings
+import logging
 from configparser import ConfigParser
 
 from picca.delta_extraction.errors import ConfigError, ConfigWarning
-from picca.delta_extraction.utils import class_from_string
+from picca.delta_extraction.utils import class_from_string, setup_logger
+
+# create logger
+module_logger = logging.getLogger(__name__)
 
 default_config = {
     "general": {
@@ -25,6 +29,13 @@ default_config = {
     },
     "empty":{
     },
+}
+
+defaults = {
+    # New logging level defined in setup_logger.
+    # Numeric value is PROGRESS_LEVEL_NUM defined in utils.py
+    "logging level console": "PROGRESS",
+    "logging level file": "PROGRESS"
 }
 
 class Config:
@@ -107,6 +118,8 @@ class Config:
         self.overwrite = None
         self.quiet = None
         self.log = None
+        self.logging_level = None
+        self.logging_level_file = None
         self.__format_general_section()
         self.corrections = None
         self.num_corrections = None
@@ -258,7 +271,21 @@ class Config:
             raise ConfigError("In section 'general', variable 'out dir' is required")
         self.overwrite = section.getboolean("overwrite")
         self.quiet = section.getboolean("quiet")
+
         self.log = section.get("log")
+        self.logging_level_console = section.get("logging level console")
+        if self.logging_level_console is None:
+            self.logging_level_console = defaults.get("logging level console")
+        self.logging_level_console = self.logging_level_console.upper()
+
+        self.logging_level_file = section.get("logging level file")
+        if self.logging_level_file is None:
+            self.logging_level_file = defaults.get("logging level file")
+        self.logging_level_file = self.logging_level_file.upper()
+
+        setup_logger(logging_level_console=self.logging_level_console,
+                     log_file=self.log,
+                     logging_level_file=self.logging_level_file)
 
     def __format_masks_section(self):
         """Formats the masks section of the parser into usable data

@@ -1,11 +1,15 @@
 """This module defines the class Dr16ExpectedFlux"""
+import logging
 from scipy.interpolate import interp1d
 from multiprocessing import Pool
 import fitsio
 
 from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.errors import ExpectedFluxError
-from picca.delta_extraction.userprint import userprint
+
+# create logger
+module_logger = logging.getLogger(__name__)
+
 
 defaults = {
     "iter out prefix": "delta_attributes",
@@ -172,6 +176,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
+        self.logger = logging.getLogger(__name__)
         super().__init__()
 
         # load variables from config
@@ -235,12 +240,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
         # print a message to inform the user
         if self.use_ivar_as_weight:
-            userprint(("INFO: using ivar as weights, ignoring eta, "
+            logger.info(("using ivar as weights, ignoring eta, "
                        "var_lss, fudge fits"))
         # if use_constant_weight is set then initialize eta, var_lss, and fudge
         # with values to have constant weights
         elif self.use_constant_weight:
-            userprint(("INFO: using constant weights, ignoring eta, "
+            logger.info(("using constant weights, ignoring eta, "
                        "var_lss, fudge fits"))
             eta = np.zeros(self.num_bins_variance)
             var_lss = np.ones(self.num_bins_variance)
@@ -296,12 +301,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
         # print a message to inform the user
         if self.use_ivar_as_weight:
-            userprint(("INFO: using ivar as weights, ignoring eta, "
+            logger.info(("using ivar as weights, ignoring eta, "
                        "var_lss, fudge fits"))
         # if use_constant_weight is set then initialize eta, var_lss, and fudge
         # with values to have constant weights
         elif self.use_constant_weight:
-            userprint(("INFO: using constant weights, ignoring eta, "
+            logger.info(("using constant weights, ignoring eta, "
                        "var_lss, fudge fits"))
             eta = np.zeros(self.num_bins_variance)
             var_lss = np.ones(self.num_bins_variance)
@@ -690,7 +695,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         context = multiprocessing.get_context('fork')
         for iteration in range(self.num_iterations):
             pool = context.Pool(processes=self.num_processors)
-            userprint(
+            self.logger.progress(
                 f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
             )
 
@@ -717,7 +722,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             else:
                 self.save_iteration_step(iteration, out_dir)
 
-            userprint(
+            self.logger.progress(
                 f"Continuum fitting: ending iteration {iteration} of {num_iterations}"
             )
 
@@ -835,11 +840,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
         chi2_in_bin = np.zeros(self.num_bins_variance)
         fudge_ref = 1e-7
 
-        userprint(" Mean quantities in observer-frame")
+        self.logger.progress(" Mean quantities in observer-frame")
         if Forest.wave_solution == "log":
-            userprint(" loglam    eta      var_lss  fudge    chi2     num_pix ")
+            self.logger.progress(" loglam    eta      var_lss  fudge    chi2     num_pix ")
         elif Forest.wave_solution == "lin":
-            userprint(" lam    eta      var_lss  fudge    chi2     num_pix ")
+            self.logger.progress(" lam    eta      var_lss  fudge    chi2     num_pix ")
         else:
             raise MeanExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'linear'")
@@ -932,7 +937,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             w = num_pixels > 0
 
             if Forest.wave_solution == "log":
-                userprint(f" {self.log_lambda[index]:.3e} "
+                self.logger.progress(f" {self.log_lambda[index]:.3e} "
                           f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "+
                           f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
                           #f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
@@ -949,7 +954,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                           fill_value="extrapolate",
                                           kind="nearest")
             elif Forest.wave_solution == "lin":
-                userprint(f" {self.lambda_[index]:.3e} "
+                self.logger.progress(f" {self.lambda_[index]:.3e} "
                           f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "+
                           f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
                           #f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
@@ -1049,7 +1054,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         for forest in forests:
             if forest.bad_cont is not None:
-                userprint(f"INFO: Rejected forest {forest.thingid} due to "
+                logger.info(f"Rejected forest {forest.los_id} due to "
                           f"{forest.bad_continuum_reason}\n")
             # get the variance functions and statistics
             log_lambda = forest.log_lambda

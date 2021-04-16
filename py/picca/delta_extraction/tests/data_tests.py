@@ -6,8 +6,9 @@ from configparser import ConfigParser
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
-from picca.delta_extraction.userprint import UserPrint
+from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
+from picca.delta_extraction.tests.test_utils import reset_logger
 from picca.delta_extraction.tests.test_utils import forest1
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -45,7 +46,7 @@ class DataTest(AbstractTest):
         test_file = f"{THIS_DIR}/data/data_filter_forests_print.txt"
 
         # setup printing
-        UserPrint.initialize_log(out_file)
+        setup_logger(log_file=out_file)
 
         # create Data instance
         config = ConfigParser()
@@ -76,8 +77,8 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.forests) == 0)
 
         # reset printing
+        reset_logger()
         self.compare_ascii(test_file, out_file, expand_dir=True)
-        UserPrint.reset_log()
 
     def test_sdss_data_spec(self):
         """Tests SdssData when run in spec mode"""

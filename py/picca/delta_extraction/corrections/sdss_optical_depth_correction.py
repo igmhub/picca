@@ -1,10 +1,14 @@
 """This module defines the abstract class SdssCalibrationCorrection"""
+import logging
 import numpy as np
 
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
-from picca.delta_extraction.userprint import userprint
 from picca.delta_extraction.utils import ABSORBER_IGM
+
+# create logger
+module_logger = logging.getLogger(__name__)
+
 
 class SdssOpticalDepthCorrection(Correction):
     """Class to correct for optical depths contribution in SDSS spectra
@@ -29,6 +33,7 @@ class SdssOpticalDepthCorrection(Correction):
     tau_list: list of float
     List of tau factors for each of the optical depth absorbers
     """
+
     def __init__(self, config):
         """Initializes class instance.
 
@@ -41,29 +46,34 @@ class SdssOpticalDepthCorrection(Correction):
         ------
         CorrectionError if the variables 'optical depths tau',
         """
+        self.logger = logging.getLogger(__name__)
+        
         tau_list = config.get("optical depth tau")
         if tau_list is None:
-            raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
-                                  "Missing variable 'optical depth tau'")
+            raise CorrectionError(
+                "Error constructing SdssOpticalDepthCorrection. "
+                "Missing variable 'optical depth tau'")
         self.tau_list = [float(item) for item in tau_list.split()]
         gamma_list = config.get("optical depth gamma")
         if gamma_list is None:
-            raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
-                                  "Missing variable 'optical depth gamma'")
+            raise CorrectionError(
+                "Error constructing SdssOpticalDepthCorrection. "
+                "Missing variable 'optical depth gamma'")
         self.gamma_list = [float(item) for item in gamma_list.split()]
         absorber_list = config.get("optical depth absorber")
         if absorber_list is None:
-            raise CorrectionError("Error constructing SdssOpticalDepthCorrection. "
-                                  "Missing variable 'optical depth absorber'")
+            raise CorrectionError(
+                "Error constructing SdssOpticalDepthCorrection. "
+                "Missing variable 'optical depth absorber'")
         absorber_list = [item.upper() for item in absorber_list.split()]
-        self.lambda_rest_frame_list = [ABSORBER_IGM[absorber]
-                                       for absorber in absorber_list]
+        self.lambda_rest_frame_list = [
+            ABSORBER_IGM[absorber] for absorber in absorber_list
+        ]
         if not (len(self.tau_list) == len(self.gamma_list) and
                 len(self.tau_list) == len(self.lambda_rest_frame_list)):
             raise CorrectionError("Variables 'optical depth tau', 'optical "
                                   "depth gamma' and 'optical depth absorber' "
                                   "should have the same number of entries")
-
 
     def apply_correction(self, forest):
         """Applies the correction. Correction is applied by dividing the
@@ -75,11 +85,10 @@ class SdssOpticalDepthCorrection(Correction):
         forest: Forest
         A Forest instance to which the correction is applied
         """
-        userprint(f"INFO: Adding {len(self.tau_list)} optical depths")
+        self.logger.info(f"Adding {len(self.tau_list)} optical depths")
 
         mean_optical_depth = np.ones(forest.log_lambda.size)
-        for tau, gamma, lambda_rest_frame in zip(self.tau_list,
-                                                 self.gamma_list,
+        for tau, gamma, lambda_rest_frame in zip(self.tau_list, self.gamma_list,
                                                  self.lambda_rest_frame_list):
 
             w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame

@@ -1,15 +1,17 @@
 """This module defines the abstract class Data from which all
 classes loading data must inherit
 """
+import logging
 import numpy as np
 import fitsio
-
-from picca.delta_extraction.userprint import userprint
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import ABSORBER_IGM
+
+# create logger
+module_logger = logging.getLogger(__name__)
 
 defaults = {
     "analysis type": "BAO 3D",
@@ -43,6 +45,7 @@ class Data:
 
     def __init__(self, config):
         """Initialize class instance"""
+        self.logger = logging.getLogger('picca.delta_extraction.data.Data')
         self.forests = []
 
         self.analysis_type = config.get("analysis type")
@@ -65,19 +68,19 @@ class Data:
 
     def filter_forests(self):
         """Removes forests that do not meet quality standards"""
-        userprint(f"INFO: Input sample has {len(self.forests)} forests")
+        self.logger.progress(f"Input sample has {len(self.forests)} forests")
         remove_indexs = []
         for index, forest in enumerate(self.forests):
             if ((Forest.wave_solution == "log" and
                  len(forest.log_lambda) < self.min_num_pix) or
                     (Forest.wave_solution == "lin" and
                      len(forest.lambda_) < self.min_num_pix)):
-                userprint(
-                    f"INFO: Rejected forest with thingid {forest.thingid} "
+                self.logger.progress(
+                    f"Rejected forest with thingid {forest.thingid} "
                     "due to forest being too short")
             elif np.isnan((forest.flux * forest.ivar).sum()):
-                userprint(
-                    f"INFO: Rejected forest with thingid {forest.thingid} "
+                self.logger.progress(
+                    f"Rejected forest with thingid {forest.thingid} "
                     "due to finding nan")
             else:
                 continue
@@ -86,7 +89,7 @@ class Data:
         for index in sorted(remove_indexs, reverse=True):
             del self.forests[index]
 
-        userprint(f"INFO: Remaining sample has {len(self.forests)} forests")
+        self.logger.progress(f"Remaining sample has {len(self.forests)} forests")
 
     def save_deltas(self, out_dir):
         """Saves the deltas.

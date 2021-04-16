@@ -1,4 +1,5 @@
 """This file contains objects used in different tests"""
+import logging
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -142,6 +143,19 @@ assert np.allclose(forest3.log_lambda, forest3_log_lambda)
 assert np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda)*4)
 assert np.allclose(forest3.transmission_correction,
                    np.ones_like(forest3_log_lambda))
+
+
+def reset_logger():
+    """This function resets the logger picca.delta_extraction by closing
+    and removing its handlers.
+    """
+    logger = logging.getLogger("picca.delta_extraction")
+    handlers = logger.handlers
+    for handler in handlers:
+        handler.close()
+        logger.removeHandler(handler)
+    logger.addHandler(logging.NullHandler())
+
 
 if __name__ == '__main__':
     pass

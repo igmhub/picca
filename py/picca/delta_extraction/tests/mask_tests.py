@@ -9,9 +9,9 @@ from picca.delta_extraction.mask import Mask
 
 from picca.delta_extraction.masks.sdss_dla_mask import SdssDlaMask
 from picca.delta_extraction.masks.sdss_absorber_mask import SdssAbsorberMask
-from picca.delta_extraction.userprint import UserPrint
-
+from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
+from picca.delta_extraction.tests.test_utils import reset_logger
 from picca.delta_extraction.tests.test_utils import forest1_log_lambda, forest1
 from picca.delta_extraction.tests.test_utils import forest2_log_lambda, forest2
 from picca.delta_extraction.tests.test_utils import forest3_log_lambda, forest3
@@ -44,18 +44,15 @@ class MaskTest(AbstractTest):
         test_file = f"{THIS_DIR}/data/sdss_absorber_mask_print.txt"
 
         # setup printing
-        UserPrint.initialize_log(out_file)
+        setup_logger(log_file=out_file)
 
         # initialize mask
         config = ConfigParser()
         config.read_dict({"masks": {"absorbers catalogue": in_file}})
         mask = SdssAbsorberMask(config["masks"])
         self.assertTrue(isinstance(mask, Mask))
-        self.compare_ascii(test_file, out_file, expand_dir=True)
         self.assertTrue(mask.absorber_mask_width == 2.5)
 
-        # reset printing
-        UserPrint.reset_log()
 
         # apply mask to forest with 1 absorber
         mask.apply_mask(forest1)
@@ -95,6 +92,9 @@ class MaskTest(AbstractTest):
         mask = SdssAbsorberMask(config["masks"])
         self.assertTrue(mask.absorber_mask_width == 1.5)
 
+        reset_logger()
+        self.compare_ascii(test_file, out_file, expand_dir=True)
+
     def test_dla_mask(self):
         """Tests correct initialisation and inheritance for class
         SdssDlaMask
@@ -107,17 +107,13 @@ class MaskTest(AbstractTest):
         test_file = f"{THIS_DIR}/data/sdss_dla_mask_print.txt"
 
         # setup printing
-        UserPrint.initialize_log(out_file)
+        handlers = setup_logger(log_file=out_file)
 
         # initialize mask
         config = ConfigParser()
         config.read_dict({"masks": {"dla catalogue": in_file}})
         mask = SdssDlaMask(config["masks"])
         self.assertTrue(isinstance(mask, Mask))
-        self.compare_ascii(test_file, out_file, expand_dir=True)
-
-        # reset printing
-        UserPrint.reset_log()
 
         # apply mask to forest with 1 DLA
         mask.apply_mask(forest1)
@@ -135,6 +131,8 @@ class MaskTest(AbstractTest):
         self.assertTrue(np.allclose(forest3.transmission_correction,
                                     np.ones_like(forest3_log_lambda)))
 
+        reset_logger()
+        self.compare_ascii(test_file, out_file, expand_dir=True)
 
 if __name__ == '__main__':
     unittest.main()

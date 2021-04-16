@@ -4,13 +4,14 @@ import unittest
 from configparser import ConfigParser
 from astropy.table import Table
 
-from picca.delta_extraction.errors import QuasarCatalogueError, QuasarCatalogueWarning
+from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
 
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
 
 from picca.delta_extraction.tests.abstract_test import AbstractTest
-from picca.delta_extraction.userprint import UserPrint
+from picca.delta_extraction.tests.test_utils import reset_logger
+from picca.delta_extraction.utils import setup_logger
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -24,7 +25,7 @@ class QuasarCatalogueTest(AbstractTest):
         test_file = f"{THIS_DIR}/data/drq_catalogue_print.txt"
 
         # setup printing
-        UserPrint.initialize_log(out_file)
+        setup_logger(log_file=out_file)
 
         # Case 1: missing spAll file
         config = ConfigParser()
@@ -47,8 +48,7 @@ class QuasarCatalogueTest(AbstractTest):
                     f"{THIS_DIR}/data/"
             }
         })
-        with self.assertWarns(QuasarCatalogueWarning):
-            quasar_catalogue = DrqCatalogue(config["data"])
+        quasar_catalogue = DrqCatalogue(config["data"])
 
         # case 3: with spAll file
         config = ConfigParser()
@@ -63,7 +63,7 @@ class QuasarCatalogueTest(AbstractTest):
         quasar_catalogue = DrqCatalogue(config["data"])
 
         # reset printing
-        UserPrint.reset_log()
+        reset_logger()
         self.compare_ascii(test_file, out_file, expand_dir=True)
 
         self.assertTrue(quasar_catalogue.catalogue is not None)

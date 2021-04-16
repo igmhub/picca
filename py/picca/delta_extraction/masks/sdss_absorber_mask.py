@@ -1,12 +1,16 @@
 """This module defines the class SdssAbsorberMask in the
 masking of absorbers"""
+import logging
 import numpy as np
 import fitsio
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask
-from picca.delta_extraction.userprint import userprint
+
+# create logger
+module_logger = logging.getLogger(__name__)
+
 
 defaults = {
     "absorber mask width": 2.5,
@@ -38,13 +42,14 @@ class SdssAbsorberMask(Mask):
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
+        self.logger = logging.getLogger(__name__)
         # first load the absorbers catalogue
         absorbers_catalogue = config.get("absorbers catalogue")
         if absorbers_catalogue is None:
             raise MaskError("Missing argument 'absorbers catalogue' required by "
                             "AbsorbersMask")
 
-        userprint('Reading absorbers from:', absorbers_catalogue)
+        self.logger.progress(f"Reading absorbers from: {absorbers_catalogue}")
 
         columns_list = ["THING_ID", "LAMBDA_ABS"]
         try:
@@ -69,9 +74,8 @@ class SdssAbsorberMask(Mask):
             self.los_ids[thingid] = list(cat["LAMBDA_ABS"][w])
         num_absorbers = np.sum([len(thingid) for thingid in self.los_ids.values()])
 
-        userprint(" In catalog: {} absorbers".format(num_absorbers))
-        userprint(" In catalog: {} forests have absorbers".format(len(self.los_ids)))
-        userprint("")
+        self.logger.progress(" In catalog: {} absorbers".format(num_absorbers))
+        self.logger.progress(" In catalog: {} forests have absorbers\n".format(len(self.los_ids)))
 
         # setup transmission limit
         # transmissions below this number are masked

@@ -5,11 +5,13 @@ Computes the mean transmission fluctuation field (delta field) for a list of
 spectra for the specified absorption line. Follow the procedure described in
 section 2.4 of du Mas des Bourboux et al. 2020 (In prep).
 """
+import logging
 import time
 import argparse
 
 from picca.delta_extraction.survey import Survey
-from picca.delta_extraction.userprint import userprint
+
+module_logger = logging.getLogger("picca.delta_extraction")
 
 def main(args):
     """Computes delta field"""
@@ -47,8 +49,8 @@ def main(args):
     survey.save_deltas()
 
     t1 = time.time()
-    userprint(f"Total time ellapsed: {t1-t0}")
-    userprint("Done")
+    module_logger.info(f"Total time ellapsed: {t1-t0}")
+    module_logger.info("Done")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

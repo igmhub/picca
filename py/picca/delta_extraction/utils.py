@@ -1,6 +1,9 @@
 """This module define several functions and variables used throughout the
 package"""
 import importlib
+import logging
+
+module_logger = logging.getLogger(__name__)
 
 ABSORBER_IGM = {
     "Halpha"      : 6562.8,
@@ -98,3 +101,86 @@ def class_from_string(class_name, module_name):
     # get the class, will raise
     class_object = getattr(module_object, class_name)
     return class_object
+
+
+PROGRESS_LEVEL_NUM = 15
+logging.addLevelName(PROGRESS_LEVEL_NUM, "PROGRESS")
+def progress(self, message, *args, **kws):
+    if self.isEnabledFor(PROGRESS_LEVEL_NUM):
+        # Yes, logger takes its '*args' as 'args'.
+        self._log(PROGRESS_LEVEL_NUM, message, args, **kws)
+logging.Logger.progress = progress
+
+OK_WARNING_LEVEL_NUM = 31
+logging.addLevelName(OK_WARNING_LEVEL_NUM, "WARNING OK")
+def ok_warning(self, message, *args, **kws):
+    if self.isEnabledFor(OK_WARNING_LEVEL_NUM):
+        # Yes, logger takes its '*args' as 'args'.
+        self._log(OK_WARNING_LEVEL_NUM, message, args, **kws)
+logging.Logger.ok_warning = ok_warning
+
+def setup_logger(logging_level_console=logging.DEBUG, log_file=None,
+                 logging_level_file=logging.DEBUG):
+    """This function sets up the logger for the package
+    picca.delta_extraction
+
+    Arguments
+    ---------
+    logging_level_console: int or str - Default: logging.DEBUG
+    Logging level for the console handler. If str, it should be a Level from
+    the logging module (i.e. CRITICAL, ERROR, WARNING, INFO, DEBU, NOTSET).
+    Additionally, the user-defined level PROGRESS is allowed.
+
+    log_file: str or None
+    Log file for logging
+
+    logging_level_file: int or str - Default: logging.DEBUG
+    Logging level for the file handler. If str, it should be a Level from
+    the logging module (i.e. CRITICAL, ERROR, WARNING, INFO, DEBU, NOTSET).
+    Additionally, the user-defined level PROGRESS is allowed. Ignored if
+    log_file is None.
+
+    Returns
+    -------
+    handlers: list of logging.Handlers
+    A list containing the console handler and (if created) the file handler
+    """
+    if type(logging_level_console) == str:
+        if logging_level_console.upper() == "PROGRESS":
+            logging_level_console = PROGRESS_LEVEL_NUM
+        else:
+            logging_level_console = getattr(logging,
+                                            logging_level_console.upper())
+
+    if type(logging_level_file) == str:
+        if logging_level_file.upper() == "PROGRESS":
+            logging_level_file = PROGRESS_LEVEL_NUM
+        else:
+            logging_level_file = getattr(logging,
+                                            logging_level_file.upper())
+
+    logger = logging.getLogger("picca.delta_extraction")
+    logger.setLevel(logging.DEBUG)
+
+    # logging formatter
+    formatter = logging.Formatter('[%(levelname)s]: %(message)s')
+
+    # create console handler to logs messages
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging_level_console)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    # create file handler which logs messages to file
+    if log_file is not None:
+        file_handler = logging.FileHandler(log_file, mode="w")
+        file_handler.setLevel(logging_level_file)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+        return [console_handler, file_handler]
+
+    # sets up numba logger
+    #logging.getLogger('numba').setLevel(logging.WARNING)
+
+    return [console_handler]

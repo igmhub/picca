@@ -5,6 +5,7 @@ objects.
 """
 import os
 import time
+import logging
 from numba import jit, prange
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -14,7 +15,9 @@ from picca.delta_extraction.data import Data
 from picca.delta_extraction.errors import DeltaExtractionError
 from picca.delta_extraction.mask import Mask
 from picca.delta_extraction.expected_flux import ExpectedFlux
-from picca.delta_extraction.userprint import UserPrint, userprint
+
+# create logger
+module_logger = logging.getLogger(__name__)
 
 class Survey:
     """Class to manage the computation of deltas
@@ -51,6 +54,7 @@ class Survey:
     """
     def __init__(self):
         """Initializes class instance"""
+        self.logger = self.logger.getLogger('picca.delta_extraction.survey.Survey')
         self.config = None
         self.corrections = None
         self.masks = None
@@ -61,6 +65,7 @@ class Survey:
     def extract_deltas(self):
         """Computes the delta fields"""
         t0 = time.time()
+        self.logger.info("Extracting deltas")
         # pylint: disable=not-an-iterable
         # prange is used to signal jit of parallelisation but is otherwise
         # equivalent to range
@@ -68,12 +73,13 @@ class Survey:
             self.expected_flux.extract_delta(self.data.forests[forest_index])
 
         t1 = time.time()
-        userprint(f"Time spent extracting deltas: {t1-t0}")
+        self.logger.info(f"Time spent extracting deltas: {t1-t0}")
 
     @jit(nopython=True, parallel=True)
     def apply_corrections(self):
         """Applies the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
+        self.logger.info("Applying corrections")
 
         # pylint: disable=not-an-iterable
         # prange is used to signal jit of parallelisation but is otherwise
@@ -83,12 +89,13 @@ class Survey:
                 self.corrections[correction_index].apply_correction(self.data.forests[forest_index])
 
         t1 = time.time()
-        userprint(f"Time spent applying corrections: {t1-t0}")
+        self.logger.info(f"Time spent applying corrections: {t1-t0}")
 
     @jit(nopython=True, parallel=True)
     def apply_masks(self):
         """Applies the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
+        self.logger.info("Applying masks")
 
         # pylint: disable=not-an-iterable
         # prange is used to signal jit of parallelisation but is otherwise
@@ -98,7 +105,7 @@ class Survey:
                 self.masks[mask_index].apply_mask(self.data.forests[forest_index])
 
         t1 = time.time()
-        userprint(f"Time spent applying corrections: {t1-t0}")
+        self.logger.info(f"Time spent applying corrections: {t1-t0}")
 
     def compute_expected_flux(self):
         """Computes the expected flux.
@@ -110,7 +117,7 @@ class Survey:
         the correct type
         """
         t0 = time.time()
-        userprint("Computing mean expected flux.")
+        self.logger.info("Computing mean expected flux.")
 
         ExpectedFluxType = self.config.expected_flux[0]
         expected_flux_arguments = self.config.expected_flux[1]
@@ -126,7 +133,7 @@ class Survey:
         self.expected_flux.compute_expected_flux(self.data.forests,
                                                  self.config.out_dir+"Log/")
         t1 = time.time()
-        userprint(f"Time spent computing the mean expected flux: {t1-t0}")
+        self.logger.info(f"Time spent computing the mean expected flux: {t1-t0}")
 
     def initialize_folders(self):
         """Initialize output folders
@@ -162,12 +169,6 @@ class Survey:
         # load configuration
         self.config = Config(config_file)
 
-        # printing setup
-        if self.config.quiet:
-            UserPrint.print_type = "quietprint"
-        if self.config.log is not None:
-            UserPrint.initialize_log(self.config.log)
-
     def read_corrections(self):
         """Reads the spectral corrections.
 
@@ -179,7 +180,7 @@ class Survey:
         self.corrections = []
         t0 = time.time()
         num_corrections = self.config.num_corrections
-        userprint(f"Reading corrections. There are {num_corrections} corrections")
+        self.logger.info(f"Reading corrections. There are {num_corrections} corrections")
 
         for CorrectionType, correction_arguments in self.config.corrections:
             correction = CorrectionType(correction_arguments)
@@ -193,7 +194,7 @@ class Survey:
             self.corrections.append(correction)
 
         t1 = time.time()
-        userprint(f"Time spent reading Corrections: {t1-t0}")
+        self.logger.info(f"Time spent reading Corrections: {t1-t0}")
 
     def read_data(self):
         """Reads the data.
@@ -203,7 +204,7 @@ class Survey:
         DeltaExtractionError when data could not be read
         """
         t0 = time.time()
-        userprint("Reading data")
+        self.logger.info("Reading data")
 
         DataType, data_arguments = self.config.data
         self.data = DataType(data_arguments)
@@ -224,7 +225,7 @@ class Survey:
                                        "inheritance pattern.")
 
         t1 = time.time()
-        userprint(f"Time spent reading data: {t1-t0}")
+        self.logger.info(f"Time spent reading data: {t1-t0}")
 
     def read_masks(self):
         """Reads the spectral masks.
@@ -237,7 +238,7 @@ class Survey:
         self.masks = []
         t0 = time.time()
         num_masks = self.config.num_masks
-        userprint(f"Reading masks. There are {num_masks} corrections")
+        self.logger.info(f"Reading masks. There are {num_masks} masks")
 
         for MaskType, mask_arguments in self.config.masks:
             mask = MaskType(mask_arguments)
@@ -251,8 +252,12 @@ class Survey:
             self.masks.append(mask)
 
         t1 = time.time()
-        userprint(f"Time spent reading masks: {t1-t0}")
+        self.logger.info(f"Time spent reading masks: {t1-t0}")
 
     def save_deltas(self):
         """Saves the deltas."""
+        t0 = time.time()
+        self.logger.info("Saving deltas")
         self.data.save_deltas(self.config.out_dir+"Delta/")
+        t1 = time.time()
+        self.logger.info(f"Time spent saving deltas: {t1-t0}")

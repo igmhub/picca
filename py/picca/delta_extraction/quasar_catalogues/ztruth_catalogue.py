@@ -2,11 +2,14 @@
 files from DESI
 """
 from astropy.table import Table
+import logging
 import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
-from picca.delta_extraction.userprint import userprint
+
+# create logger
+module_logger = logging.getLogger(__name__)
 
 class ZtruthCatalogue(QuasarCatalogue):
     """Reads the z_truth catalogue from DESI
@@ -45,6 +48,7 @@ class ZtruthCatalogue(QuasarCatalogue):
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
+        self.logger = logging.getLogger(__name__)
         super().__init__(config)
 
         # load variables from config
@@ -82,21 +86,21 @@ class ZtruthCatalogue(QuasarCatalogue):
         catalogue: Astropy.table.Table
         Table with the catalogue
         """
-        userprint('Reading catalogue from ', self.filename)
+        self.logger.progress('Reading catalogue from ', self.filename)
         catalogue = Table.read(self.filename, ext=1)
 
         keep_columns = ['RA', 'DEC', 'Z', 'TARGETID', 'FIBER', 'SPECTROGRAPH']
 
         ## Sanity checks
-        userprint('')
+        self.logger.progress('')
         w = np.ones(len(catalogue), dtype=bool)
-        userprint(f"start                 : nb object in cat = {np.sum(w)}")
+        self.logger.progress(f"start                 : nb object in cat = {np.sum(w)}")
 
         ## Redshift range
         w &= catalogue['Z'] >= self.z_min
-        userprint(f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
+        self.logger.progress(f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
         w &= catalogue['Z'] < self.z_max
-        userprint(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
+        self.logger.progress(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
 
         catalogue.keep_columns(keep_columns)
         w = np.where(w)[0]

@@ -1,5 +1,6 @@
 """This module defines the classes SdssDlaMask and Dla used in the
 masking of DLAs"""
+import logging
 import numpy as np
 import fitsio
 from astropy.table import Table
@@ -7,8 +8,10 @@ from astropy.table import Table
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask
-from picca.delta_extraction.userprint import userprint
 from picca.delta_extraction.utils import ABSORBER_IGM
+
+# create logger
+module_logger = logging.getLogger(__name__)
 
 defaults = {
     "dla mask limit": 0.8,
@@ -45,13 +48,13 @@ class SdssDlaMask(Mask):
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
-
+        self.logger = logging.getLogger(__name__)
         # first load the dla catalogue
         dla_catalogue = config.get("dla catalogue")
         if dla_catalogue is None:
             raise MaskError("Missing argument 'dla catalogue' required by DlaMask")
 
-        userprint("Reading DLA catalog from:", dla_catalogue)
+        self.logger.progress(f"Reading DLA catalog from: {dla_catalogue}")
         columns_list = ["THING_ID", "Z", "NHI"]
         try:
             hdul = fitsio.FITS(dla_catalogue)
@@ -73,9 +76,8 @@ class SdssDlaMask(Mask):
             self.los_ids[thingid] = list(zip(cat["Z"][w], cat['NHI'][w]))
         num_dlas = np.sum([len(thingid) for thingid in self.los_ids.values()])
 
-        userprint(' In catalog: {} DLAs'.format(num_dlas))
-        userprint(' In catalog: {} forests have a DLA'.format(len(self.los_ids)))
-        userprint('\n')
+        self.logger.progress(' In catalog: {} DLAs'.format(num_dlas))
+        self.logger.progress(' In catalog: {} forests have a DLA\n'.format(len(self.los_ids)))
 
         # setup transmission limit
         # transmissions below this number are masked

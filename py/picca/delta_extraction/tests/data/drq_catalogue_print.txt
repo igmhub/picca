@@ -1,38 +1,46 @@
-Reading DRQ catalogue from $THIS_DIR/data/cat_for_clustering_plate3655.fits.gz
-
-start                 : nb object in cat = 79
-and THING_ID > 0      : nb object in cat = 79
-and ra != dec         : nb object in cat = 79
-and ra != 0.          : nb object in cat = 79
-and dec != 0.         : nb object in cat = 79
-and z >= 2.1        : nb object in cat = 45
-and z < 3.5         : nb object in cat = 43
-INFO: reading spAll from $THIS_DIR/data/spAll_plate3655.fits
-INFO: Found 55 spectra with required THING_ID
-INFO: Found 55 spectra with 'good' plate
-INFO: Found 55 spectra without 0 bit set: SKY
-INFO: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
-INFO: Found 55 spectra without 7 bit set: UNPLUGGED
-INFO: Found 55 spectra without 8 bit set: BAD_TARGET
-INFO: Found 55 spectra without 9 bit set: NODATA
-INFO: # unique objs: 43
-INFO: # spectra: 55
-Reading DRQ catalogue from $THIS_DIR/data/cat_for_clustering_plate3655.fits.gz
-
-start                 : nb object in cat = 79
-and THING_ID > 0      : nb object in cat = 79
-and ra != dec         : nb object in cat = 79
-and ra != 0.          : nb object in cat = 79
-and dec != 0.         : nb object in cat = 79
-and z >= 2.1        : nb object in cat = 45
-and z < 3.5         : nb object in cat = 43
-INFO: reading spAll from $THIS_DIR/data/spAll_plate3655.fits
-INFO: Found 55 spectra with required THING_ID
-INFO: Found 55 spectra with 'good' plate
-INFO: Found 55 spectra without 0 bit set: SKY
-INFO: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
-INFO: Found 55 spectra without 7 bit set: UNPLUGGED
-INFO: Found 55 spectra without 8 bit set: BAD_TARGET
-INFO: Found 55 spectra without 9 bit set: NODATA
-INFO: # unique objs: 43
-INFO: # spectra: 55
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[ERROR]: 'spAll' file not found. If you didn't want to load the spAll file you should pass the option 'best obs = True'. Quiting...
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iperezra/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iperezra/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iperezra/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: Reading DRQ catalogue from /Users/iperezra/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iperezra/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iperezra/software/picca/py/picca/delta_extraction/tests/data/spAll_plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55

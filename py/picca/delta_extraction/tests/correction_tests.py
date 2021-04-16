@@ -13,13 +13,12 @@ from picca.delta_extraction.corrections.sdss_ivar_correction import SdssIvarCorr
 from picca.delta_extraction.corrections.sdss_optical_depth_correction import (
     SdssOpticalDepthCorrection
 )
-from picca.delta_extraction.userprint import UserPrint
-
+from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
+from picca.delta_extraction.tests.test_utils import reset_logger
 from picca.delta_extraction.tests.test_utils import forest1_log_lambda, forest1
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-
 
 class CorrectionTest(AbstractTest):
     """Test Correction and its childs."""
@@ -136,7 +135,7 @@ class CorrectionTest(AbstractTest):
         test_file = f"{THIS_DIR}/data/sdss_optical_depth_correction_print.txt"
 
         # setup printing
-        UserPrint.initialize_log(out_file)
+        setup_logger(log_file=out_file)
 
         config = ConfigParser()
         config.read_dict({"corrections": {"filename": in_file,
@@ -145,10 +144,6 @@ class CorrectionTest(AbstractTest):
                                           "optical depth absorber": "LYA"}})
         correction = SdssOpticalDepthCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
-        self.compare_ascii(test_file, out_file, expand_dir=True)
-
-        # reset printing
-        UserPrint.reset_log()
 
         # apply the correction
         forest = copy.deepcopy(forest1)
@@ -160,6 +155,8 @@ class CorrectionTest(AbstractTest):
         self.assertTrue(np.allclose(forest.transmission_correction,
                                     np.ones_like(forest1_log_lambda)*0.36787944117144233))
 
+        reset_logger()
+        self.compare_ascii(test_file, out_file, expand_dir=True)
 
 if __name__ == '__main__':
     unittest.main()

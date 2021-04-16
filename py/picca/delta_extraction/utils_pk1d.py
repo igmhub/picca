@@ -7,10 +7,13 @@ This module provides three functions:
     - spectral_resolution_desi
 See the respective documentation for details
 """
+import logging
 import numpy as np
 
 from picca.constants import SPEED_LIGHT
-from picca.utils import userprint
+
+# create logger
+module_logger = logging.getLogger(__name__)
 
 
 def exp_diff(hdul, log_lambda):
@@ -37,7 +40,7 @@ def exp_diff(hdul, log_lambda):
     ivar_total_even = np.zeros(log_lambda.size)
 
     if num_exp_per_col < 2:
-        userprint("DBG : not enough exposures for diff")
+        module_logger.debug("Not enough exposures for diff")
 
     for index_exp in range(num_exp_per_col):
         for index_col in range(2):
