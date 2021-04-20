@@ -75,7 +75,7 @@ class Survey:
         t1 = time.time()
         self.logger.info(f"Time spent extracting deltas: {t1-t0}")
 
-    @jit(nopython=True, parallel=True)
+    #@jit(nopython=True, parallel=True)
     def apply_corrections(self):
         """Applies the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
@@ -91,7 +91,7 @@ class Survey:
         t1 = time.time()
         self.logger.info(f"Time spent applying corrections: {t1-t0}")
 
-    @jit(nopython=True, parallel=True)
+    #@jit(nopython=True, parallel=True)
     def apply_masks(self):
         """Applies the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
