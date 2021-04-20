@@ -676,7 +676,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                         new_cont,
                                         fill_value="extrapolate")
 
-    def compute_expected_flux(forests, out_dir):
+    def compute_expected_flux(self, forests, out_dir):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
         computed iteratively following as explained in du Mas des Bourboux et
