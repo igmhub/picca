@@ -702,7 +702,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
             )
 
-            continua = pool.map(compute_continua, forests)
+            continua = pool.map(self.compute_continua, forests)
             pool.close()
 
             if iteration < num_iterations - 1:
