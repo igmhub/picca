@@ -105,7 +105,7 @@ class Survey:
                 self.masks[mask_index].apply_mask(self.data.forests[forest_index])
 
         t1 = time.time()
-        self.logger.info(f"Time spent applying corrections: {t1-t0}")
+        self.logger.info(f"Time spent applying masks: {t1-t0}")
 
     def compute_expected_flux(self):
         """Computes the expected flux.
