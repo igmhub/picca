@@ -54,7 +54,7 @@ class Survey:
     """
     def __init__(self):
         """Initializes class instance"""
-        self.logger = self.logger.getLogger('picca.delta_extraction.survey.Survey')
+        self.logger = logging.getLogger('picca.delta_extraction.survey.Survey')
         self.config = None
         self.corrections = None
         self.masks = None
