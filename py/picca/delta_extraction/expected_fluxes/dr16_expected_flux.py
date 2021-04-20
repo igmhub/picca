@@ -1,5 +1,6 @@
 """This module defines the class Dr16ExpectedFlux"""
 import logging
+import numpy as np
 from scipy.interpolate import interp1d
 from multiprocessing import Pool
 import fitsio
