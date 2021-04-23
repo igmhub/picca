@@ -300,8 +300,8 @@ class SdssData(Data):
                     forests_by_thingid[thingid].coadd(forest)
                 else:
                     forests_by_thingid[thingid] = forest
-                self.logger.progress(
-                    f"{thingid} read from file {spplate} and fiberid {fiberid}\n"
+                self.logger.debug(
+                    f"{thingid} read from file {spplate} and fiberid {fiberid}"
                 )
 
             num_read = len(group)

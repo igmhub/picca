@@ -61,8 +61,8 @@ class AbstractTest(unittest.TestCase):
             # loop over HDUs
             for hdu_index, _ in enumerate(orig_hdul):
                 # check header
-                orig_header = orig_hdul[1].header
-                new_header = new_hdul[1].header
+                orig_header = orig_hdul[hdu_index].header
+                new_header = new_hdul[hdu_index].header
                 for key in orig_header:
                     self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:

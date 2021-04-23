@@ -10,6 +10,7 @@ from picca.delta_extraction.utils import ABSORBER_IGM
 # reset Forest and Pk1dForest class variables
 def reset_forest():
     """Resets the class variables of Forest and Pk1dForest"""
+    Forest.wave_solution = None
     Forest.delta_log_lambda = None
     Forest.delta_log_lambda = None
     Forest.lambda_max = None
