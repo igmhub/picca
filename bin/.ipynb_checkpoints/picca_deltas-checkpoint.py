@@ -817,6 +817,7 @@ def main():
                               'nqsos', 'chi2'
                           ],
                           extname='VAR')
+    print(eta_save)
     np.savetxt('/global/cscratch1/sd/tanting/picca_convergence/Delta_20bins_mock_test/eta_save.txt',np.transpose(eta_save))
     np.savetxt('/global/cscratch1/sd/tanting/picca_convergence/Delta_20bins_mock_test/var_lss_save.txt',np.transpose(var_lss_save))
     np.savetxt('/global/cscratch1/sd/tanting/picca_convergence/Delta_20bins_mock_test/fudge_save.txt',np.transpose(fudge_save))
