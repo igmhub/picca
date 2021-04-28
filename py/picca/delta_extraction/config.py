@@ -4,11 +4,10 @@ contains the default configuration.
 """
 import os
 import re
-import warnings
 import logging
 from configparser import ConfigParser
 
-from picca.delta_extraction.errors import ConfigError, ConfigWarning
+from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.utils import class_from_string, setup_logger
 
 # create logger
@@ -105,6 +104,8 @@ class Config:
         filename: str
         Name of the config file
         """
+        self.logger = logging.getLogger(__name__)
+
         self.config = ConfigParser()
         # load default configuration
         self.config.read_dict(default_config)
@@ -138,15 +139,11 @@ class Config:
         Raises
         ------
         ConfigError if the config file is not correct
-
-        Warnings
-        --------
-        ConfigWarning if no arguments were found to pass to CorrectionType
         """
         self.corrections = []
         if "corrections" not in self.config:
-            warnings.warn("Missing section [corrections]. No Corrections will"
-                          "be applied to data", ConfigWarning)
+            self.logger.warning("Missing section [corrections]. No Corrections will"
+                                "be applied to data")
         section = self.config["corrections"]
         self.num_corrections = section.getint("num corrections")
         if self.num_corrections is None:
@@ -176,9 +173,9 @@ class Config:
 
             # now load the arguments with which to initialize this class
             if f"correction arguments {correction_index}" not in self.config:
-                warnings.warn(f"Missing section [correction arguments {correction_index}]."
-                              f"Correction {correction_name} will be called without "
-                              "arguments", ConfigWarning)
+                self.logger.warning(f"Missing section [correction arguments {correction_index}]. "
+                                    f"Correction {correction_name} will be called without "
+                                    "arguments")
                 correction_args = self.config["empty"]
             else:
                 correction_args = self.config[f"correction arguments {correction_index}"]
@@ -192,10 +189,6 @@ class Config:
         Raises
         ------
         ConfigError if the config file is not correct
-
-        Warnings
-        --------
-        ConfigWarning if no arguments were found to pass to DataType
         """
         if "data" not in self.config:
             raise ConfigError("Missing section [data]")
@@ -225,10 +218,6 @@ class Config:
         Raises
         ------
         ConfigError if the config file is not correct
-
-        Warnings
-        --------
-        ConfigWarning if no arguments were found to pass to ContinuaType
         """
         if "expected flux" not in self.config:
             raise ConfigError("Missing section [expected flux]")
@@ -258,10 +247,6 @@ class Config:
         Raises
         ------
         ConfigError if the config file is not correct
-
-        Warnings
-        --------
-        ConfigWarning if no arguments were found to pass to MaskType
         """
         if "general" not in self.config:
             raise ConfigError("Missing section [general]")
@@ -296,8 +281,8 @@ class Config:
         """
         self.masks = []
         if "masks" not in self.config:
-            warnings.warn("Missing section [masks]. No Masks will"
-                          "be applied to data", ConfigWarning)
+            self.logger.warning("Missing section [masks]. No Masks will"
+                                "be applied to data")
         section = self.config["masks"]
         self.num_masks = section.getint("num masks")
         for mask_index in range(self.num_masks):
@@ -321,9 +306,9 @@ class Config:
 
             # now load the arguments with which to initialize this class
             if f"mask arguments {mask_index}" not in self.config:
-                warnings.warn(f"Missing section [mask arguments {mask_index}]."
-                              f"Correction {mask_name} will be called without "
-                              "arguments", ConfigWarning)
+                self.logger.warning(f"Missing section [mask arguments {mask_index}]. "
+                                    f"Correction {mask_name} will be called without "
+                                    "arguments")
                 mask_args = self.config["empty"]
             else:
                 mask_args = self.config[f"mask arguments {mask_index}"]

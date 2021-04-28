@@ -1,4 +1,4 @@
-"""This module define the different Error and Warning types related to the
+"""This module define the different Error types related to the
 package picca.delta_extraction
 """
 class AstronomicalObjectError(Exception):
@@ -11,11 +11,6 @@ class ConfigError(Exception):
         Exceptions occurred in class Config
     """
 
-class ConfigWarning(UserWarning):
-    """
-        Warnings occurred in class Config
-    """
-
 class CorrectionError(Exception):
     """
         Exceptions occurred in class Correction
@@ -24,11 +19,6 @@ class CorrectionError(Exception):
 class DataError(Exception):
     """
         Exceptions occurred in class Data
-    """
-
-class DataWarning(UserWarning):
-    """
-        Warnings occurred in class Data
     """
 
 class DeltaExtractionError(Exception):
@@ -50,12 +40,6 @@ class QuasarCatalogueError(Exception):
     """
         Exceptions occurred in class Mask
     """
-
-class QuasarCatalogueWarning(UserWarning):
-    """
-        Warnings occurred in class Data
-    """
-
 
 if __name__ == '__main__':
     raise Exception()

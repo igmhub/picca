@@ -3,9 +3,10 @@ import unittest
 import os
 
 from picca.delta_extraction.config import Config
-from picca.delta_extraction.errors import ConfigWarning
 
 from picca.delta_extraction.tests.abstract_test import AbstractTest
+from picca.delta_extraction.tests.test_utils import reset_logger
+from picca.delta_extraction.utils import setup_logger
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 os.environ["THIS_DIR"] = THIS_DIR
@@ -21,11 +22,17 @@ class ConfigurationTest(AbstractTest):
         in_file = f"{THIS_DIR}/data/config.ini"
         out_file = f"{THIS_DIR}/results/.config.ini"
         test_file = f"{THIS_DIR}/data/config.ini"
+        out_warning_file = f"{THIS_DIR}/results/config_test.txt"
+        test_warning_file = f"{THIS_DIR}/data/config_test.txt"
 
-        with self.assertWarns(ConfigWarning):
-            config = Config(in_file)
+        setup_logger(log_file=out_warning_file)
+
+        config = Config(in_file)
         config.write_config()
         self.compare_ascii(test_file, out_file, expand_dir=True)
+
+        reset_logger()
+        self.compare_ascii(test_warning_file, out_warning_file, expand_dir=True)
 
 if __name__ == '__main__':
     unittest.main()
