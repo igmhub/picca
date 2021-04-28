@@ -94,8 +94,6 @@ class DesiData(Data):
         else:
             self.read_from_desi(catalogue)
 
-        super().filter_forests()
-
     def _parse_config(self, config):
         """Parse the configuration options
 

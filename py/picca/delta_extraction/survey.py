@@ -135,6 +135,10 @@ class Survey:
         t1 = time.time()
         self.logger.info(f"Time spent computing the mean expected flux: {t1-t0}")
 
+    def filter_forests(self):
+        """Removes forests that do not meet quality standards"""
+        self.data.filter_forests()
+
     def initialize_folders(self):
         """Initialize output folders
 

@@ -100,8 +100,6 @@ class SdssData(Data):
             raise DataError(f"Error reading data in SdssData. Mode {self.mode} "
                             "is not supported.")
 
-        super().filter_forests()
-
     def _parse_config(self, config):
         """Parse the configuration options
 

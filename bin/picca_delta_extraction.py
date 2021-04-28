@@ -39,6 +39,9 @@ def main(args):
     survey.apply_corrections()
     survey.apply_masks()
 
+    # filter forests
+    survey.filter_forests()
+    
     # compute forest continua
     survey.compute_expected_flux()
 
