@@ -10,6 +10,7 @@ from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import reset_logger
 from picca.delta_extraction.tests.test_utils import forest1
+from picca.delta_extraction.tests.test_utils import sdss_data_kwargs
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -83,17 +84,10 @@ class DataTest(AbstractTest):
     def test_sdss_data_spec(self):
         """Tests SdssData when run in spec mode"""
         config = ConfigParser()
+        data_kwargs = sdss_data_kwargs.copy()
+        data_kwargs.update({"mode": "spec"})
         config.read_dict({
-            "data": {
-                "input directory":
-                    f"{THIS_DIR}/data",
-                "output directory":
-                    f"{THIS_DIR}/results",
-                "drq catalogue":
-                    f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-                "mode":
-                    "spec",
-            }
+            "data": data_kwargs
         })
         data = SdssData(config["data"])
 
@@ -108,14 +102,7 @@ class DataTest(AbstractTest):
         # using default  value for 'mode'
         config = ConfigParser()
         config.read_dict({
-            "data": {
-                "input directory":
-                    f"{THIS_DIR}/data",
-                "output directory":
-                    f"{THIS_DIR}/results",
-                "drq catalogue":
-                    f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-            }
+            "data": sdss_data_kwargs
         })
         data = SdssData(config["data"])
 
@@ -127,17 +114,10 @@ class DataTest(AbstractTest):
 
         # specifying 'mode'
         config = ConfigParser()
+        data_kwargs = sdss_data_kwargs.copy()
+        data_kwargs.update({"mode": "spplate"})
         config.read_dict({
-            "data": {
-                "input directory":
-                    f"{THIS_DIR}/data",
-                "output directory":
-                    f"{THIS_DIR}/results",
-                "drq catalogue":
-                    f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-                "mode":
-                    "spplate",
-            }
+            "data": data_kwargs
         })
         data = SdssData(config["data"])
 

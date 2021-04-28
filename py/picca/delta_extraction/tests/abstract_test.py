@@ -68,6 +68,8 @@ class AbstractTest(unittest.TestCase):
                     if not key in ["CHECKSUM", "DATASUM"]:
                         self.assertTrue((orig_header[key] == new_header[key]) or
                                         (np.isclose(orig_header[key], new_header[key])))
+                for key in new_header:
+                    self.assertTrue(key in orig_header)
                 # check data
                 orig_data = orig_hdul[hdu_index].data
                 new_data = new_hdul[hdu_index].data

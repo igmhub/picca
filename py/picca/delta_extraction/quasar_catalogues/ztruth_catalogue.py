@@ -1,8 +1,8 @@
 """This module defines the class ZtruthCatalogue to read z_truth
 files from DESI
 """
-from astropy.table import Table
 import logging
+from astropy.table import Table
 import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError

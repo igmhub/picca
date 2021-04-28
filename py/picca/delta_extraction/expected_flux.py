@@ -33,7 +33,7 @@ class ExpectedFlux:
 
     # pylint: disable=no-self-use
     # this method should use self in child classes
-    def compute_expected_flux(self, forests):
+    def compute_expected_flux(self, forests, out_dir):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
         computed iteratively following as explained in du Mas des Bourboux et
@@ -43,6 +43,9 @@ class ExpectedFlux:
         ---------
         forests: List of Forest
         A list of Forest from which to compute the deltas.
+
+        out_dir: str
+        Directory where expected flux information will be saved
 
         Raise
         -----

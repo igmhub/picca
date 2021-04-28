@@ -2,12 +2,11 @@
 DRQX Catalogues
 """
 import glob
-import warnings
 import logging
 from astropy.table import Table, join
 import numpy as np
 
-from picca.delta_extraction.errors import QuasarCatalogueError, QuasarCatalogueWarning
+from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
 
 # create logger
@@ -122,12 +121,12 @@ class DrqCatalogue(QuasarCatalogue):
             self.spall = config.get("spAll")
             if self.spall is None:
                 self.logger.warning("Missing argument 'spAll' required by DrqCatalogue. "
-                               "Looking for spAll in input directory...")
+                                    "Looking for spAll in input directory...")
 
                 if config.get("input directory") is None:
                     self.logger.error("'spAll' file not found. If you didn't want to load "
-                                   "the spAll file you should pass the option "
-                                   "'best obs = True'. Quiting...")
+                                      "the spAll file you should pass the option "
+                                      "'best obs = True'. Quiting...")
                     raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
                 folder = config.get("input directory").replace("spectra",
                                                                "").replace("lite",
@@ -141,8 +140,8 @@ class DrqCatalogue(QuasarCatalogue):
                     raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
                 if len(filenames) == 0:
                     self.logger.error("'spAll' file not found. If you didn't want to load "
-                                  "the spAll file you should pass the option "
-                                  "'best obs = True'. Quiting...")
+                                      "the spAll file you should pass the option "
+                                      "'best obs = True'. Quiting...")
                     raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
                 self.spall = filenames[0]
                 self.logger.ok_warning("'spAll' file found. Contining with normal execution.")
@@ -277,7 +276,7 @@ class DrqCatalogue(QuasarCatalogue):
             wbit = (catalogue["ZWARNING"] & 2**z_warn_bit == 0)
             w &= wbit
             self.logger.progress(f"Found {np.sum(w)} spectra without {z_warn_bit} "
-                      f"bit set: {z_warn_bit_name}")
+                                 f"bit set: {z_warn_bit_name}")
         self.logger.progress(f"# unique objs: {len(drq_catalogue)}")
         self.logger.progress(f"# spectra: {w.sum()}")
         catalogue = catalogue[w]

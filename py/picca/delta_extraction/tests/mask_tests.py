@@ -107,7 +107,7 @@ class MaskTest(AbstractTest):
         test_file = f"{THIS_DIR}/data/sdss_dla_mask_print.txt"
 
         # setup printing
-        handlers = setup_logger(log_file=out_file)
+        setup_logger(log_file=out_file)
 
         # initialize mask
         config = ConfigParser()

@@ -47,7 +47,7 @@ class SdssOpticalDepthCorrection(Correction):
         CorrectionError if the variables 'optical depths tau',
         """
         self.logger = logging.getLogger(__name__)
-        
+
         tau_list = config.get("optical depth tau")
         if tau_list is None:
             raise CorrectionError(
