@@ -173,7 +173,6 @@ class DrqCatalogue(QuasarCatalogue):
                                            f"{self.drq_filename}")
 
         ## Sanity checks
-        self.logger.progress('')
         w = np.ones(len(catalogue), dtype=bool)
         self.logger.progress(f"start                 : nb object in cat = {np.sum(w)}")
         w &= catalogue["THING_ID"] > 0

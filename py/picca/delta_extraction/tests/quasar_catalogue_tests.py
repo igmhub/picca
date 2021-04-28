@@ -57,7 +57,7 @@ class QuasarCatalogueTest(AbstractTest):
                 "drq catalogue":
                     f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
                 "spAll":
-                    f"{THIS_DIR}/data/spAll_plate3655.fits"
+                    f"{THIS_DIR}/data/spAll-plate3655.fits"
             }
         })
         quasar_catalogue = DrqCatalogue(config["data"])

@@ -46,10 +46,23 @@ class QuasarCatalogue:
         self.max_num_spec = config.getint("max num spec")
         self.z_min = config.getfloat("z min")
         if self.z_min is None:
-            self.z_min = defaults.get("z min")
+            if (config.getfloat("lambda min") is None or
+                    config.getfloat("lambda max rest frame") is None):
+                self.z_min = defaults.get("z min")
+            else:
+                self.z_min = max(0., (config.getfloat("lambda min") /
+                                      config.getfloat("lambda max rest frame") -
+                                      1.))
+
         self.z_max = config.getfloat("z max")
         if self.z_max is None:
-            self.z_max = defaults.get("z max")
+            if (config.getfloat("lambda max") is None or
+                    config.getfloat("lambda min rest frame") is None):
+                self.z_max = defaults.get("z max")
+            else:
+                self.z_max = max(0., (config.getfloat("lambda max") /
+                                      config.getfloat("lambda min rest frame") -
+                                      1.))
 
         self.catalogue = None
 
