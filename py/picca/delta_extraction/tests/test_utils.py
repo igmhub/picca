@@ -1,5 +1,6 @@
 """This file contains objects used in different tests"""
 import logging
+import os
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -145,6 +146,17 @@ assert np.allclose(forest3.ivar, np.ones_like(forest3_log_lambda)*4)
 assert np.allclose(forest3.transmission_correction,
                    np.ones_like(forest3_log_lambda))
 
+
+# Dictionary to load SdssData
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+sdss_data_kwargs = {
+    "input directory":
+        f"{THIS_DIR}/data",
+    "output directory":
+        f"{THIS_DIR}/results",
+    "drq catalogue":
+        f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+}
 
 def reset_logger():
     """This function resets the logger picca.delta_extraction by closing

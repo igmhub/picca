@@ -2,9 +2,10 @@
 import os
 import unittest
 import copy
+from configparser import ConfigParser
 import numpy as np
 from scipy.interpolate import interp1d
-from configparser import ConfigParser
+
 
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux
@@ -13,8 +14,10 @@ from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16Expect
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import forest1
 from picca.delta_extraction.tests.test_utils import setup_forest, reset_forest
+from picca.delta_extraction.tests.test_utils import sdss_data_kwargs
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 class ExpectedFluxTest(AbstractTest):
     """Test class ExpectedFlux and its childs."""
@@ -34,7 +37,7 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute_expected_flux should not be defined
         with self.assertRaises(ExpectedFluxError):
-            expected_flux.compute_expected_flux([])
+            expected_flux.compute_expected_flux([], "")
 
         forest = copy.deepcopy(forest1)
         self.assertTrue(forest.deltas is None)
@@ -44,8 +47,12 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(forest.deltas is None)
 
         # los_id in dictionary: extract deltas
-        expected_flux.los_ids = {forest1.los_id: {"mean expected flux": np.ones_like(forest1.flux),
-                                                  "weights": np.ones_like(forest1.flux)}}
+        expected_flux.los_ids = {
+            forest1.los_id: {
+                "mean expected flux": np.ones_like(forest1.flux),
+                "weights": np.ones_like(forest1.flux)
+            }
+        }
         expected_flux.extract_deltas(forest)
         self.assertTrue(all(forest.deltas == np.zeros_like(forest1.flux)))
 
@@ -55,14 +62,19 @@ class ExpectedFluxTest(AbstractTest):
         Load an Dr16ExpectedFlux instance.
         """
         config = ConfigParser()
-        config.read_dict({"expected flux":
-            {"iter out prefix": "results/iter_out_prefix"}})
+        config.read_dict(
+            {"expected flux": {
+                "iter out prefix": "results/iter_out_prefix"
+            }})
         # this should raise an error as iter out prefix should not have a folder
         with self.assertRaises(ExpectedFluxError):
             expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
         config = ConfigParser()
-        config.read_dict({"expected flux": {"iter out prefix": "iter_out_prefix"}})
+        config.read_dict(
+            {"expected flux": {
+                "iter out prefix": "iter_out_prefix"
+            }})
         # this should also raise an error as Forest variables are not defined
         with self.assertRaises(ExpectedFluxError):
             expected_flux = Dr16ExpectedFlux(config["expected flux"])
@@ -78,7 +90,8 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(expected_flux.lambda_ is None)
         self.assertTrue(expected_flux.lambda_rest_frame is None)
         self.assertTrue(isinstance(expected_flux.log_lambda, np.ndarray))
-        self.assertTrue(isinstance(expected_flux.log_lambda_rest_frame, np.ndarray))
+        self.assertTrue(
+            isinstance(expected_flux.log_lambda_rest_frame, np.ndarray))
 
         # setup Forest variables; case: linear wavelength solution
         reset_forest()
@@ -104,15 +117,10 @@ class ExpectedFluxTest(AbstractTest):
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
-        "data": {
-            "input directory":
-                f"{THIS_DIR}/data",
-            "output directory":
-                f"{THIS_DIR}/results",
-            "drq catalogue":
-                f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-        },
-        "expected flux": {"iter out prefix": "iter_out_prefix"},
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix"
+            },
         })
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
@@ -136,8 +144,8 @@ class ExpectedFluxTest(AbstractTest):
         # compare the results
         correct_forests = 0
         for forest in data.forests:
-            self.assertTrue(np.allclose(forest.continuum,
-                                        continua.get(forest.los_id)))
+            self.assertTrue(
+                np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
 
         # check that we loaded all quasars
@@ -146,7 +154,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         reset_forest()
         setup_forest("lin")
-        #TODO: add linear wavelength solution test
+        #TODO: compute_continuum: add linear wavelength solution test
 
     def test_dr16_expected_flux_compute_delta_stack(self):
         """Test method compute_delta_stack for class Dr16ExpectedFlux"""
@@ -158,15 +166,10 @@ class ExpectedFluxTest(AbstractTest):
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
-        "data": {
-            "input directory":
-                f"{THIS_DIR}/data",
-            "output directory":
-                f"{THIS_DIR}/results",
-            "drq catalogue":
-                f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-        },
-        "expected flux": {"iter out prefix": "iter_out_prefix"},
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix"
+            },
         })
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
@@ -185,11 +188,19 @@ class ExpectedFluxTest(AbstractTest):
         stack_delta = expected_flux.get_stack_delta(expectations["log_lambda"])
         self.assertTrue(np.allclose(stack_delta, expectations["delta"]))
 
+        # setup Forest variables; case: linear wavelength solution
+        reset_forest()
+        setup_forest("lin")
+
+        # TODO: compute_delta_stack: add linear wavelength solution test
+
     def test_dr16_expected_flux_compute_mean_cont_lin(self):
         """Test method compute_mean_cont_lin for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("lin")
-        #TODO: add test
+
+        #TODO: add test: compute_mean_cont_lin
+
 
     def test_dr16_expected_flux_compute_mean_cont_log(self):
         """Test method compute_mean_cont_log for class Dr16ExpectedFlux"""
@@ -201,15 +212,10 @@ class ExpectedFluxTest(AbstractTest):
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
-        "data": {
-            "input directory":
-                f"{THIS_DIR}/data",
-            "output directory":
-                f"{THIS_DIR}/results",
-            "drq catalogue":
-                f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-        },
-        "expected flux": {"iter out prefix": "iter_out_prefix"},
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix"
+            },
         })
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
@@ -240,15 +246,10 @@ class ExpectedFluxTest(AbstractTest):
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
-        "data": {
-            "input directory":
-                f"{THIS_DIR}/data",
-            "output directory":
-                f"{THIS_DIR}/results",
-            "drq catalogue":
-                f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-        },
-        "expected flux": {"iter out prefix": "iter_out_prefix_compute_expected_flux"},
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix_compute_expected_flux_log"
+            },
         })
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
@@ -256,30 +257,31 @@ class ExpectedFluxTest(AbstractTest):
         # compute the expected flux
         expected_flux.compute_expected_flux(data.forests, out_dir)
 
-        #TODO: add some tests to check the results
+        for iteration in range(4):
+            self.compare_fits(
+                test_file.replace(".fits", f"_iteration{iteration}.fits"),
+                out_file.replace(".fits", f"_iteration{iteration}.fits"))
+        self.compare_fits(test_file, out_file)
 
         # setup Forest variables; case: linear wavelength solution
         reset_forest()
         setup_forest("lin")
-        #TODO: add linear wavelength solution test
+        #TODO: compute_expected_flux: add linear wavelength solution test
 
     def test_dr16_expected_flux_compute_var_stats(self):
         """Test method compute_var_stats for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
+        test_file = f"{THIS_DIR}/data/eta_var_lss_fudge.txt"
+
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
-        "data": {
-            "input directory":
-                f"{THIS_DIR}/data",
-            "output directory":
-                f"{THIS_DIR}/results",
-            "drq catalogue":
-                f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-        },
-        "expected flux": {"iter out prefix": "iter_out_prefix"},
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix"
+            },
         })
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
@@ -291,36 +293,34 @@ class ExpectedFluxTest(AbstractTest):
         # compute variance functions and statistics
         expected_flux.compute_var_stats(data.forests)
 
-        #TODO: add some tests to check the results
+        # load the expected results
+        expectations = np.genfromtxt(test_file, names=True)
+
+        # compare with obtained results
+        eta = expected_flux.get_eta(expectations["log_lambda"])
+        var_lss = expected_flux.get_var_lss(expectations["log_lambda"])
+        fudge = expected_flux.get_fudge(expectations["log_lambda"])
+        self.assertTrue(np.allclose(eta, expectations["eta"]))
+        self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
+        self.assertTrue(np.allclose(fudge, expectations["fudge"]))
 
         # setup Forest variables; case: linear wavelength solution
         reset_forest()
         setup_forest("lin")
-        #TODO: add linear wavelength solution test
+        #TODO: compute_var_stats: add linear wavelength solution test
 
     def test_dr16_expected_flux_populate_los_ids(self):
         """Test method populate_los_ids for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
-        out_file = f"{THIS_DIR}/results/iter_out_prefix_log_iteration0.fits.gz"
-        out_file2 = f"{THIS_DIR}/results/iter_out_prefix_log.fits.gz"
-        test_file = f"{THIS_DIR}/data/iter_out_prefix_log_iteration0.fits.gz"
-        test_file2 = f"{THIS_DIR}/data/iter_out_prefix_log.fits.gz"
-        out_dir = "results/"
-
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
-        "data": {
-            "input directory":
-                f"{THIS_DIR}/data",
-            "output directory":
-                f"{THIS_DIR}/results",
-            "drq catalogue":
-                f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-        },
-        "expected flux": {"iter out prefix": "iter_out_prefix_log"},
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix_log"
+            },
         })
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
@@ -335,7 +335,7 @@ class ExpectedFluxTest(AbstractTest):
         # save iter_out_prefix for iteration 0
         expected_flux.populate_los_ids(data.forests)
 
-        # TODO: check the results
+        # TODO: populate_los_ids: check the results
 
     def test_dr16_expected_flux_save_iteration_step(self):
         """Test method save_iteration_step for class Dr16ExpectedFlux"""
@@ -351,15 +351,10 @@ class ExpectedFluxTest(AbstractTest):
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
-        "data": {
-            "input directory":
-                f"{THIS_DIR}/data",
-            "output directory":
-                f"{THIS_DIR}/results",
-            "drq catalogue":
-                f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
-        },
-        "expected flux": {"iter out prefix": "iter_out_prefix_log"},
+            "data": sdss_data_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix_log"
+            },
         })
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
@@ -388,7 +383,8 @@ class ExpectedFluxTest(AbstractTest):
         test_file2 = f"{THIS_DIR}/data/iter_out_prefix_lin.fits.gz"
         out_dir = "results/"
 
-        # TODO: add test
+        # TODO: save_iteration_step: add linear wavelength solution test
+
 
 if __name__ == '__main__':
     unittest.main()

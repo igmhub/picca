@@ -106,16 +106,20 @@ def class_from_string(class_name, module_name):
 PROGRESS_LEVEL_NUM = 15
 logging.addLevelName(PROGRESS_LEVEL_NUM, "PROGRESS")
 def progress(self, message, *args, **kws):
+    """Function to log with level PROGRESS"""
     if self.isEnabledFor(PROGRESS_LEVEL_NUM):
-        # Yes, logger takes its '*args' as 'args'.
+        # pylint: disable-msg=protected-access
+        # this method will be attached to logging.Logger
         self._log(PROGRESS_LEVEL_NUM, message, args, **kws)
 logging.Logger.progress = progress
 
 OK_WARNING_LEVEL_NUM = 31
 logging.addLevelName(OK_WARNING_LEVEL_NUM, "WARNING OK")
 def ok_warning(self, message, *args, **kws):
+    """Function to log with level WARNING"""
     if self.isEnabledFor(OK_WARNING_LEVEL_NUM):
-        # Yes, logger takes its '*args' as 'args'.
+        # pylint: disable-msg=protected-access
+        # this method will be attached to logging.Logger
         self._log(OK_WARNING_LEVEL_NUM, message, args, **kws)
 logging.Logger.ok_warning = ok_warning
 
@@ -139,25 +143,20 @@ def setup_logger(logging_level_console=logging.DEBUG, log_file=None,
     the logging module (i.e. CRITICAL, ERROR, WARNING, INFO, DEBU, NOTSET).
     Additionally, the user-defined level PROGRESS is allowed. Ignored if
     log_file is None.
-
-    Returns
-    -------
-    handlers: list of logging.Handlers
-    A list containing the console handler and (if created) the file handler
     """
-    if type(logging_level_console) == str:
+    if isinstance(logging_level_console, str):
         if logging_level_console.upper() == "PROGRESS":
             logging_level_console = PROGRESS_LEVEL_NUM
         else:
             logging_level_console = getattr(logging,
                                             logging_level_console.upper())
 
-    if type(logging_level_file) == str:
+    if isinstance(logging_level_file, str):
         if logging_level_file.upper() == "PROGRESS":
             logging_level_file = PROGRESS_LEVEL_NUM
         else:
             logging_level_file = getattr(logging,
-                                            logging_level_file.upper())
+                                         logging_level_file.upper())
 
     logger = logging.getLogger("picca.delta_extraction")
     logger.setLevel(logging.DEBUG)
@@ -178,9 +177,5 @@ def setup_logger(logging_level_console=logging.DEBUG, log_file=None,
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
-        return [console_handler, file_handler]
-
     # sets up numba logger
     #logging.getLogger('numba').setLevel(logging.WARNING)
-
-    return [console_handler]
