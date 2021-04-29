@@ -234,7 +234,7 @@ class Pk1dForest(Forest):
         """Get the data to be saved in a fits file.
 
         Extends the get_data method of Forest to also include data for
-        exposures_diff.
+        ivar and exposures_diff.
 
         Return
         ------
@@ -252,10 +252,11 @@ class Pk1dForest(Forest):
         """
         cols, names, units, comments = super().get_data()
 
-        cols += [self.exposures_diff]
-        names += ["DIFF"]
-        comments += ["Difference. Check input spectra for units"]
-        units += ["Flux units"]
+        cols += [self.ivar, self.exposures_diff]
+        names += ["IVAR", "DIFF"]
+        comments += ["Inverse variance. Check input spectra for units", 
+                     "Difference. Check input spectra for units"]
+        units += ["Flux units", "Flux units"]
 
         return cols, names, units, comments
 

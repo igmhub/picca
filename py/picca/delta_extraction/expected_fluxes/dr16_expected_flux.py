@@ -48,10 +48,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
     Attributes
     ----------
     los_ids: dict (from ExpectedFlux)
-    A dictionary containing the mean expected flux fraction, the weights, and
+    A dictionary to store the mean expected flux fraction, the weights, and
     the inverse variance for each line of sight. Keys are the identifier for the
     line of sight and values are dictionaries with the keys "mean expected flux",
-    and "weights" pointing to the respective arrays. Arrays must have the same
+    and "weights" pointing to the respective arrays. If the given Forests are
+    also Pk1dForests, then the key "ivar" is be available. Arrays have the same
     size as the flux array for the corresponding line of sight forest instance.
 
     continuum_fit_parameters: dict
@@ -1058,13 +1059,20 @@ class Dr16ExpectedFlux(ExpectedFlux):
             var_pipe = 1. / forest.ivar / mean_expected_flux**2
             variance = eta * var_pipe + var_lss + fudge / var_pipe
             weights = 1. / variance
-            ivar = forest.ivar / (eta + (eta == 0)) * (mean_expected_flux**2)
 
-            self.los_ids[forest.los_id] = {
-                "mean expected flux": mean_expected_flux,
-                "weights": weights,
-                "ivar": ivar,
-            }
+            if isinstance(forest, Pk1dForest):
+                ivar = forest.ivar / (eta + (eta == 0)) * (mean_expected_flux**2)
+
+                self.los_ids[forest.los_id] = {
+                    "mean expected flux": mean_expected_flux,
+                    "weights": weights,
+                    "ivar": ivar,
+                }
+            else:
+                self.los_ids[forest.los_id] = {
+                    "mean expected flux": mean_expected_flux,
+                    "weights": weights,
+                }
 
     def save_iteration_step(self, iteration, out_dir):
         """Save the statistical properties of deltas at a given iteration
