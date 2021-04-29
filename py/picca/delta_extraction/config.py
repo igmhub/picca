@@ -2,16 +2,13 @@
 This class is responsible for managing the options selected for the user and
 contains the default configuration.
 """
+from configparser import ConfigParser
+import logging
 import os
 import re
-import logging
-from configparser import ConfigParser
 
 from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.utils import class_from_string, setup_logger
-
-# create logger
-module_logger = logging.getLogger(__name__)
 
 default_config = {
     "general": {
@@ -43,10 +40,9 @@ class Config:
     Methods
     -------
     __init__
-    __format_continua_section
     __format_correction_section
-    __format_expected_flux
     __format_data_section
+    __format_expected_flux_section
     __format_general_section
     __format_masks_section
     __parse_environ_variables
@@ -57,21 +53,34 @@ class Config:
     config: ConfigParser
     A ConfigParser instance with the user configuration
 
-    continua: (class, dict)
-    Class should be a child of Continua and dict a dictionary with the keyword
-    arguments necesssary to initialize it
-
     corrections: list of (class, dict)
     A list of (class, dict). For each element, class should be a child of
     Correction and dict a dictionary with the keyword arguments necesssary
     to initialize it
 
     data: (class, dict)
-    Class should be a child of Forest and dict a dictionary with the keyword
+    Class should be a child of Data and dict a dictionary with the keyword
+    arguments necesssary to initialize it
+
+    expected_flux: (class, dict)
+    Class should be a child of ExpectedFlux and dict a dictionary with the keyword
     arguments necesssary to initialize it
 
     log: str or None
     Name of the log file. None for no log file
+
+    logger: logging.Logger
+    Logger object
+
+    logging_level_console: str
+    Level of console logging. Messages with lower priorities will not be logged.
+    Accepted values are (in order of priority) NOTSET, DEBUG, PROGRESS, INFO,
+    WARNING, WARNING_OK, ERROR, CRITICAL.
+
+    logging_level_file: str
+    Level of file logging. Messages with lower priorities will not be logged.
+    Accepted values are (in order of priority) NOTSET, DEBUG, PROGRESS, INFO,
+    WARNING, WARNING_OK, ERROR, CRITICAL.
 
     masks: list of (class, dict)
     A list of (class, dict). For each element, class should be a child of
@@ -91,10 +100,6 @@ class Config:
     If True, overwrite a previous run in the saved in the same output
     directory. Does not have any effect if the folder `out_dir` does not
     exist.
-
-    quiet: bool
-    Printing flag. If True, no information will be printed
-
     """
     def __init__(self, filename):
         """Initializes class instance
@@ -117,9 +122,8 @@ class Config:
 
         # format the sections
         self.overwrite = None
-        self.quiet = None
         self.log = None
-        self.logging_level = None
+        self.logging_level_console = None
         self.logging_level_file = None
         self.__format_general_section()
         self.corrections = None
@@ -130,14 +134,14 @@ class Config:
         self.__format_masks_section()
         self.data = None
         self.__format_data_section()
-        self.mean_expected_flux = None
-        self.__format_expected_flux()
+        self.expected_flux = None
+        self.__format_expected_flux_section()
 
     def __format_corrections_section(self):
-        """Formats the corrections section of the parser into usable data
+        """Format the corrections section of the parser into usable data
 
-        Raises
-        ------
+        Raise
+        -----
         ConfigError if the config file is not correct
         """
         self.corrections = []
@@ -184,10 +188,10 @@ class Config:
             self.corrections.append((CorrectionType, correction_args))
 
     def __format_data_section(self):
-        """Formats the data section of the parser into usable data
+        """Format the data section of the parser into usable data
 
-        Raises
-        ------
+        Raise
+        -----
         ConfigError if the config file is not correct
         """
         if "data" not in self.config:
@@ -212,11 +216,11 @@ class Config:
         # finally add the information to self.data
         self.data = (DataType, section)
 
-    def __format_expected_flux(self):
-        """Formats the expected flux section of the parser into usable data
+    def __format_expected_flux_section(self):
+        """Format the expected flux section of the parser into usable data
 
-        Raises
-        ------
+        Raise
+        -----
         ConfigError if the config file is not correct
         """
         if "expected flux" not in self.config:
@@ -242,10 +246,10 @@ class Config:
         self.expected_flux = (ExpectedFluxType, section)
 
     def __format_general_section(self):
-        """Formats the general section of the parser into usable data
+        """Format the general section of the parser into usable data
 
-        Raises
-        ------
+        Raise
+        -----
         ConfigError if the config file is not correct
         """
         if "general" not in self.config:
@@ -255,7 +259,6 @@ class Config:
         if self.out_dir is None:
             raise ConfigError("In section 'general', variable 'out dir' is required")
         self.overwrite = section.getboolean("overwrite")
-        self.quiet = section.getboolean("quiet")
 
         self.log = section.get("log")
         self.logging_level_console = section.get("logging level console")
@@ -273,10 +276,10 @@ class Config:
                      logging_level_file=self.logging_level_file)
 
     def __format_masks_section(self):
-        """Formats the masks section of the parser into usable data
+        """Format the masks section of the parser into usable data
 
-        Raises
-        ------
+        Raise
+        -----
         ConfigError if the config file is not correct
         """
         self.masks = []
@@ -318,12 +321,12 @@ class Config:
             self.masks.append((MaskType, mask_args))
 
     def __parse_environ_variables(self):
-        """Reads all variables and replaces the enviroment variables for their
+        """Read all variables and replaces the enviroment variables for their
         actual values. This assumes that enviroment variables are only used
         at the beggining of the paths.
 
-        Raises
-        ------
+        Raise
+        -----
         ConfigError if an environ variable was not defined
         """
         for section in self.config:

@@ -3,14 +3,12 @@ DRQX Catalogues
 """
 import glob
 import logging
+
 from astropy.table import Table, join
 import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
-
-# create logger
-module_logger = logging.getLogger(__name__)
 
 defaults = {
     "best obs": False,
@@ -18,13 +16,15 @@ defaults = {
 }
 
 class DrqCatalogue(QuasarCatalogue):
-    """Reads the DRQ quasar catalogue SDSS
+    """Read the DRQ quasar catalogue SDSS
 
     Methods
     -------
+    trim_catalogue (from QuasarCatalogue)
     __init__
     _parse_config
-
+    read_drq
+    read_spall
 
     Attributes
     ----------
@@ -34,13 +34,13 @@ class DrqCatalogue(QuasarCatalogue):
     max_num_spec: int or None (from QuasarCatalogue)
     Maximum number of spectra to read. None for no maximum
 
-    z_min: float (from QuasarCatalogue)
-    Minimum redshift. Quasars with redshifts lower than z_min will be
-    discarded
-
     z_max: float (from QuasarCatalogue)
     Maximum redshift. Quasars with redshifts higher than or equal to
     z_max will be discarded
+
+    z_min: float (from QuasarCatalogue)
+    Minimum redshift. Quasars with redshifts lower than z_min will be
+    discarded
 
     best_obs: bool
     If True, reads only the best observation for objects with repeated
@@ -57,6 +57,9 @@ class DrqCatalogue(QuasarCatalogue):
     If False, remove the quasars flagged as having a Broad Absorption
     Line. Ignored if bi_max is not None
 
+    logger: logging.Logger
+    Logger object
+
     spall: str
     Path to the spAll file required for multiple observations
     """
@@ -69,6 +72,7 @@ class DrqCatalogue(QuasarCatalogue):
         Parsed options to initialize class
         """
         self.logger = logging.getLogger(__name__)
+
         super().__init__(config)
 
         # load variables from config
@@ -95,6 +99,7 @@ class DrqCatalogue(QuasarCatalogue):
 
     def _parse_config(self, config):
         """Parse the configuration options
+
         Arguments
         ---------
         config: configparser.SectionProxy
@@ -110,7 +115,8 @@ class DrqCatalogue(QuasarCatalogue):
         self.bi_max = config.getfloat("BI max")
         self.drq_filename = config.get("drq catalogue")
         if self.drq_filename is None:
-            raise QuasarCatalogueError("Missing argument 'drq catalogue' required by DrqCatalogue")
+            raise QuasarCatalogueError("Missing argument 'drq catalogue' "
+                                       "required by DrqCatalogue")
         self.keep_bal = config.getboolean("keep BAL")
         if self.keep_bal is None:
             self.keep_bal = defaults.get("keep BAL")
@@ -120,40 +126,54 @@ class DrqCatalogue(QuasarCatalogue):
         else:
             self.spall = config.get("spAll")
             if self.spall is None:
-                self.logger.warning("Missing argument 'spAll' required by DrqCatalogue. "
-                                    "Looking for spAll in input directory...")
+                self.logger.warning("Missing argument 'spAll' required by "
+                                    "DrqCatalogue. Looking for spAll in input "
+                                    "directory...")
 
                 if config.get("input directory") is None:
-                    self.logger.error("'spAll' file not found. If you didn't want to load "
-                                      "the spAll file you should pass the option "
-                                      "'best obs = True'. Quiting...")
-                    raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
-                folder = config.get("input directory").replace("spectra",
-                                                               "").replace("lite",
-                                                                           "").replace("full",
-                                                                                       "")
+                    self.logger.error("'spAll' file not found. If you didn't "
+                                      "want to load the spAll file you should "
+                                      "pass the option 'best obs = True'. "
+                                      "Quiting...")
+                    raise QuasarCatalogueError("Missing argument 'spAll' "
+                                               "required by DrqCatalogue.")
+                folder = config.get("input directory")
+                folder = folder.replace("spectra",
+                                        "").replace("lite",
+                                                    "").replace("full", "")
                 filenames = glob.glob(f"{folder}/spAll-*.fits")
                 if len(filenames) > 1:
                     self.logger.error("Found multiple 'spAll' files. Quiting...")
                     for filename in filenames:
                         self.logger.error(f"found: {filename}")
-                    raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
+                    raise QuasarCatalogueError("Missing argument 'spAll' "
+                                               "required by DrqCatalogue.")
                 if len(filenames) == 0:
-                    self.logger.error("'spAll' file not found. If you didn't want to load "
-                                      "the spAll file you should pass the option "
-                                      "'best obs = True'. Quiting...")
-                    raise QuasarCatalogueError("Missing argument 'spAll' required by DrqCatalogue.")
+                    self.logger.error("'spAll' file not found. If you didn't "
+                                      "want to load the spAll file you should "
+                                      "pass the option 'best obs = True'. "
+                                      "Quiting...")
+                    raise QuasarCatalogueError("Missing argument 'spAll' "
+                                               "required by DrqCatalogue.")
                 self.spall = filenames[0]
-                self.logger.ok_warning("'spAll' file found. Contining with normal execution.")
+                self.logger.ok_warning("'spAll' file found. Contining with "
+                                       "normal execution.")
 
 
     def read_drq(self):
         """Read the DRQ Catalogue
 
-        Returns
-        -------
+        Return
+        ------
         catalogue: Astropy.table.Table
         Table with the DRQ catalogue
+
+        Raise
+        -----
+        QuasarCatalogueError when no valid column for redshift is found when
+        reading the catalogue
+        QuasarCatalogue when 'BI max' is passed but HDU does not contain BI_CIV
+        field
         """
         self.logger.progress(f"Reading DRQ catalogue from {self.drq_filename}")
         catalogue = Table.read(self.drq_filename, hdu="CATALOG")
@@ -230,15 +250,15 @@ class DrqCatalogue(QuasarCatalogue):
         return catalogue
 
     def read_spall(self, drq_catalogue):
-        """Reads the spAll file and adds
+        """Read the spAll file and adds
 
         Arguments
         ---------
         drq_catalogue: astropy.Table
         Table with the DRQ catalogue
 
-        Returns
-        -------
+        Return
+        ------
         catalogue: Astropy.table.Table
         Table with the spAll + DRQ catalogue
 

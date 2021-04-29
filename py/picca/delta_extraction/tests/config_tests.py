@@ -1,9 +1,8 @@
 """This file contains configuration tests"""
-import unittest
 import os
+import unittest
 
 from picca.delta_extraction.config import Config
-
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import reset_logger
 from picca.delta_extraction.utils import setup_logger
@@ -12,7 +11,15 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 os.environ["THIS_DIR"] = THIS_DIR
 
 class ConfigurationTest(AbstractTest):
-    """Test the configuration."""
+    """Test the configuration.
+
+    Methods
+    -------
+    compare_ascii (from AbstractTest)
+    compare_fits (from AbstractTest)
+    setUp (from AbstractTest)
+    test_config
+    """
 
     def test_config(self):
         """Basic test for config.

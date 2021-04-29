@@ -1,17 +1,15 @@
 """This module defines the classes SdssDlaMask and Dla used in the
 masking of DLAs"""
 import logging
-import numpy as np
-import fitsio
+
 from astropy.table import Table
+import fitsio
+import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask
 from picca.delta_extraction.utils import ABSORBER_IGM
-
-# create logger
-module_logger = logging.getLogger(__name__)
 
 defaults = {
     "dla mask limit": 0.8,
@@ -37,6 +35,9 @@ class SdssDlaMask(Mask):
     Lower limit on the DLA transmission. Transmissions below this number are
     masked
 
+    logger: logging.Logger
+    Logger object
+
     mask: astropy.Table
     Table containing specific intervals of wavelength to be masked for DLAs
     """
@@ -47,8 +48,19 @@ class SdssDlaMask(Mask):
         ---------
         config: configparser.SectionProxy
         Parsed options to initialize class
+
+        Raise
+        -----
+        MaskError if there are missing variables
+        MaskError if input file does not have extension DLACAT
+        MaskError if input file does not have fields THING_ID, Z, NHI in extension
+        DLACAT
+        MaskError upon OsError when reading the mask file
         """
         self.logger = logging.getLogger(__name__)
+
+        super().__init__()
+
         # first load the dla catalogue
         dla_catalogue = config.get("dla catalogue")
         if dla_catalogue is None:
@@ -103,7 +115,7 @@ class SdssDlaMask(Mask):
                                      'log_wave_min', 'log_wave_max'))
 
     def apply_mask(self, forest):
-        """Applies the mask. The mask is done by removing the affected
+        """Apply the mask. The mask is done by removing the affected
         pixels from the arrays in Forest.mask_fields
 
         Arguments
@@ -111,10 +123,9 @@ class SdssDlaMask(Mask):
         forest: Forest
         A Forest instance to which the correction is applied
 
-        Raises
-        ------
-        MaskError if forest instance does not have the attribute
-        'log_lambda'
+        Raise
+        -----
+        MaskError if Forest.wave_solution is not 'log'
         """
         if Forest.wave_solution != "log":
             raise MaskError("SdssDlaMask should only be applied when "
@@ -170,7 +181,7 @@ class DlaProfile:
     Redshift of the absorption
     """
     def __init__(self, log_lambda, z_abs, nhi):
-        """Initializes class instance."""
+        """Initialize class instance."""
         self.z_abs = z_abs
         self.nhi = nhi
 
@@ -181,18 +192,23 @@ class DlaProfile:
 
     @staticmethod
     def profile_lya_absorption(lambda_, z_abs, nhi):
-        """Computes the absorption profile for Lyman-alpha absorption.
+        """Compute the absorption profile for Lyman-alpha absorption.
 
-        Args:
-            lambda_: array of floats
-                Wavelength (in Angs)
-            z_abs: float
-                Redshift of the absorption
-            nhi: float
-                DLA column density in log10(cm^-2)
+        Arguments
+        ---------
+        lambda_: array of floats
+        Wavelength (in Angs)
 
-        Returns:
-            The absorption profile.
+        z_abs: float
+        Redshift of the absorption
+
+        nhi: float
+        DLA column density in log10(cm^-2)
+
+        Return
+        ------
+        profile: array of floats
+        The absorption profile.
         """
         return np.exp(-DlaProfile.tau_lya(lambda_, z_abs, nhi))
 
@@ -200,16 +216,21 @@ class DlaProfile:
     def profile_lyb_absorption(lambda_, z_abs, nhi):
         """Computes the absorption profile for Lyman-beta absorption.
 
-        Args:
-            lambda_: array of floats
-                Wavelength (in Angs)
-            z_abs: float
-                Redshift of the absorption
-            nhi: float
-                DLA column density in log10(cm^-2)
+        Arguments
+        ---------
+        lambda_: array of floats
+        Wavelength (in Angs)
 
-        Returns:
-            The absorption profile.
+        z_abs: float
+        Redshift of the absorption
+
+        nhi: float
+        DLA column density in log10(cm^-2)
+
+        Return
+        ------
+        profile: array of floats
+        The absorption profile.
         """
         return np.exp(-DlaProfile.tau_lyb(lambda_, z_abs, nhi))
 
@@ -217,18 +238,23 @@ class DlaProfile:
     ###     also in Rutten 2003 at 3.3.3
     @staticmethod
     def tau_lya(lambda_, z_abs, nhi):
-        """Computes the optical depth for Lyman-alpha absorption.
+        """Compute the optical depth for Lyman-alpha absorption.
 
-        Args:
-            lambda_: array of floats
-                Wavelength (in Angs)
-            z_abs: float
-                Redshift of the absorption
-            nhi: float
-                DLA column density in log10(cm^-2)
+        Arguments
+        ---------
+        lambda_: array of floats
+        Wavelength (in Angs)
 
-        Returns:
-            The optical depth.
+        z_abs: float
+        Redshift of the absorption
+
+        nhi: float
+        DLA column density in log10(cm^-2)
+
+        Return
+        ------
+        tau: array of float
+        The optical depth.
         """
         lambda_lya = ABSORBER_IGM["LYA"]  ## Lya wavelength [A]
         gamma = 6.625e8  ## damping constant of the transition [s^-1]
@@ -257,18 +283,23 @@ class DlaProfile:
 
     @staticmethod
     def tau_lyb(lambda_, z_abs, nhi):
-        """Computes the optical depth for Lyman-beta absorption.
+        """Compute the optical depth for Lyman-beta absorption.
 
-        Args:
-            lambda_: array of floats
-                Wavelength (in Angs)
-            z_abs: float
-                Redshift of the absorption
-            nhi: float
-                DLA column density in log10(cm^-2)
+        Arguments
+        ---------
+        lambda_: array of floats
+        Wavelength (in Angs)
 
-        Returns:
-            The optical depth.
+        z_abs: float
+        Redshift of the absorption
+
+        nhi: float
+        DLA column density in log10(cm^-2)
+
+        Return
+        ------
+        tau: array of float
+        The optical depth.
         """
         lam_lyb = ABSORBER_IGM["LYB"]
         gamma = 0.079120
@@ -289,17 +320,20 @@ class DlaProfile:
 
     @staticmethod
     def voigt(a_voight, u_voight):
-        """Computes the classical Voigt function
+        """Compute the classical Voigt function
 
-        Args:
-            a_voight: array of floats
-            Voigt damping parameter.
+        Arguments
+        ---------
+        a_voight: array of floats
+        Voigt damping parameter.
 
-            u_voight: array of floats
-            Dimensionless frequency offset in Doppler widths.
+        u_voight: array of floats
+        Dimensionless frequency offset in Doppler widths.
 
-        Returns:
-            The Voigt function for each element in a, u
+        Return
+        ------
+        voigt: array of float
+        The Voigt function for each element in a, u
         """
         nun_points = 1000
         gaussian_dist = np.random.normal(size=nun_points) * np.sqrt(2)

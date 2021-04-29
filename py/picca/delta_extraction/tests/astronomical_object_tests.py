@@ -1,12 +1,13 @@
 """This file contains tests related to AstronomicalObject and its childs"""
 import unittest
-import numpy as np
+
 import healpy
+import numpy as np
 
 from picca.delta_extraction.astronomical_object import AstronomicalObject
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.astronomical_objects.sdss_pk1d_forest import SdssPk1dForest
@@ -289,8 +290,46 @@ kwargs_sdss_pk1d_forest_coadd.update(kwargs_sdss_forest_coadd)
 # pylint: disable-msg=too-many-public-methods
 # this is a test class
 class AstronomicalObjectTest(AbstractTest):
-    """Test AstronomicalObject and its childs."""
+    """Test AstronomicalObject and its childs.
 
+    Methods
+    -------
+    compare_ascii (from AbstractTest)
+    compare_fits (from AbstractTest)
+    assert_astronomical_object
+    assert_forest_object
+    assert_get_data
+    assert_get_header
+    setUp
+    tearDown
+    test_astronomical_object
+    test_astronomical_object_comparison
+    test_astronomical_object_get_header
+    test_desi_forest
+    test_desi_forest_coadd
+    test_desi_forest_get_data
+    test_desi_forest_get_header
+    test_desi_pk1d_forest
+    test_desi_pk1d_forest_coadd
+    test_desi_pk1d_forest_get_data
+    test_desi_pk1d_forest_get_header
+    test_forest
+    test_forest_coadd
+    test_forest_get_data
+    test_forest_get_header
+    test_pk1d_forest
+    test_pk1d_forest_coadd
+    test_pk1d_forest_get_data
+    test_pk1d_forest_get_header
+    test_sdss_forest
+    test_sdss_forest_coadd
+    test_sdss_forest_get_data
+    test_sdss_forest_get_header
+    test_sdss_pk1d_forest
+    test_sdss_pk1d_forest_coadd
+    test_sdss_pk1d_forest_get_data
+    test_sdss_pk1d_forest_get_header
+    """
     def assert_astronomical_object(self, test_obj, kwargs):
         """Assert the correct properties of a test AstronomicalObject
 
@@ -531,6 +570,7 @@ class AstronomicalObjectTest(AbstractTest):
             index += 4
 
     def setUp(self):
+        super().setUp()
         reset_forest()
 
     def tearDown(self):

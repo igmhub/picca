@@ -1,26 +1,34 @@
 """This file contains tests related to Data and its childs"""
+from configparser import ConfigParser
 import os
 import unittest
-from configparser import ConfigParser
+
 from astropy.table import Table
 
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
-
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
-
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import reset_logger
 from picca.delta_extraction.utils import setup_logger
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
 class QuasarCatalogueTest(AbstractTest):
-    """Test the quasar catalogue."""
+    """Test the quasar catalogue.
 
-    def test_drq_quasar(self):
-        """Loads a DrqCatalogue"""
+    Methods
+    -------
+    compare_ascii (from AbstractTest)
+    compare_fits (from AbstractTest)
+    setUp (from AbstractTest)
+    test_drq_catalogue
+    test_quasar_catalogue
+    test_quasar_catalogue_trim_catalogue
+    test_ztruth_catalogue
+    """
+    def test_drq_catalogue(self):
+        """Load a DrqCatalogue"""
         out_file = f"{THIS_DIR}/results/drq_catalogue_print.txt"
         test_file = f"{THIS_DIR}/data/drq_catalogue_print.txt"
 
@@ -148,6 +156,11 @@ class QuasarCatalogueTest(AbstractTest):
         self.assertTrue(all(quasar_catalogue.catalogue["RA"] == ra[::-1][:1]))
         self.assertTrue(all(quasar_catalogue.catalogue["DEC"] == dec[::-1][:1]))
 
+    def test_ztruth_catalogue(self):
+        """Load a ZtruthCatalogue"""
+        # TODO: add test
+        with self.assertRaises(Exception):
+            raise NotImplementedError()
 
 if __name__ == '__main__':
     unittest.main()

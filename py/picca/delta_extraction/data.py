@@ -2,16 +2,13 @@
 classes loading data must inherit
 """
 import logging
+
 import numpy as np
 import fitsio
 
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import ABSORBER_IGM
-
-# create logger
-module_logger = logging.getLogger(__name__)
 
 defaults = {
     "analysis type": "BAO 3D",
@@ -30,6 +27,7 @@ class Data:
     -------
     _parse_config
     filter_forests
+    save_deltas
 
     Attributes
     ----------
@@ -38,6 +36,9 @@ class Data:
 
     forests: list of Forest
     A list of Forest from which to compute the deltas.
+
+    logger: logging.Logger
+    Logger object
 
     min_num_pix: int
     Minimum number of pixels in a forest. Forests with less pixels will be dropped.
@@ -67,7 +68,7 @@ class Data:
             self.min_num_pix = defaults.get("minimum number pixels in forest")
 
     def filter_forests(self):
-        """Removes forests that do not meet quality standards"""
+        """Remove forests that do not meet quality standards"""
         self.logger.progress(f"Input sample has {len(self.forests)} forests")
         remove_indexs = []
         for index, forest in enumerate(self.forests):
@@ -89,7 +90,7 @@ class Data:
         self.logger.progress(f"Remaining sample has {len(self.forests)} forests")
 
     def save_deltas(self, out_dir):
-        """Saves the deltas.
+        """Save the deltas.
 
         Attributes
         ----------

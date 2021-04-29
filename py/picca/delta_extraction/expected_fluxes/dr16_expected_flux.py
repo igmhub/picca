@@ -1,17 +1,15 @@
 """This module defines the class Dr16ExpectedFlux"""
 import logging
 import multiprocessing
+
+import fitsio
+import iminuit
 import numpy as np
 from scipy.interpolate import interp1d
-import iminuit
-import fitsio
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.errors import ExpectedFluxError
-
-# create logger
-module_logger = logging.getLogger(__name__)
+from picca.delta_extraction.expected_flux import ExpectedFlux
 
 defaults = {
     "iter out prefix": "delta_attributes",
@@ -32,6 +30,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
     Methods
     -------
+    extract_deltas (from ExpectedFlux)
     __init__
     _initialize_arrays_lin
     _initialize_arrays_log
@@ -42,7 +41,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
     compute_delta_stack
     compute_mean_cont_lin
     compute_mean_cont_log
-    compute_mean_expected_flux
+    compute_expected_flux
     compute_var_stats
         chi2
 
@@ -83,10 +82,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     Interpolation function to compute the mean delta (from stacking all lines of
     sight). None for no info.
 
-    get_stack_delta_weights: scipy.interpolate.interp1d or None
-    Interpolation function to compute the weights associated to the mean delta
-    (from stacking all lines of sight). None for no info.
-
     get_var_lss: scipy.interpolate.interp1d
     Interpolation function to compute mapping functions var_lss. See equation 4 of
     du Mas des Bourboux et al. 2020 for details.
@@ -100,22 +95,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     lambda_: array of float or None
     Wavelengths where the variance functions and statistics are
     computed. None (and unused) for a logarithmic wavelength solution.
-
-    lambda_max: float or None
-    Upper limit on observed wavelength (in Angstroms). None (and unused) for a
-    logarithmic wavelength solution.
-
-    lambda_max_rest_frame: float or None
-    Upper limit on rest frame wavelength (in Angstroms). None (and unused) for a
-    logarithmic wavelength solution.
-
-    lambda_min: float or None
-    Lower limit on observed wavelength (in Angstroms). None (and unused) for a
-    logarithmic wavelength solution.
-
-    lambda_min_rest_frame: float or None
-    Lower limit on rest frame wavelength (in Angstroms). None (and unused) for a
-    logarithmic wavelength solution.
 
     lambda_rest_frame: array of float or None
     Rest-frame wavelengths where the unabsorbed mean quasar continua is are
@@ -131,22 +110,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     log_lambda: array of float or None
     Logarithm of the rest frame wavelengths where the variance functions and
     statistics are computed. None (and unused) for a linear wavelength solution.
-
-    log_lambda_max: float or None
-    Upper limit on observed wavelength (in log10(Angstrom)). None (and unused)
-    for a linear wavelength solution.
-
-    log_lambda_max_rest_frame: float or None
-    Upper limit on rest frame wavelength (in log10(Angstrom)). None (and unused)
-    for a linear wavelength solution.
-
-    log_lambda_min: float or None
-    Lower limit on observed wavelength (in log10(Angstrom)). None (and unused)
-    for a linear wavelength solution.
-
-    log_lambda_min_rest_frame: float or None
-    Lower limit on rest frame wavelength (in log10(Angstrom)). None (and unused)
-    for a linear wavelength solution.
 
     log_lambda_rest_frame: array of float or None
     Logarithm of the rest-frame wavelengths where the unabsorbed mean quasar
@@ -172,12 +135,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
     """
 
     def __init__(self, config):
-        """Initializes class instance.
+        """Initialize class instance.
 
         Arguments
         ---------
         config: configparser.SectionProxy
         Parsed options to initialize class
+
+        Raise
+        -----
+        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         self.logger = logging.getLogger(__name__)
         super().__init__()
@@ -352,7 +319,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         Raises
         ------
-        ExpectedFluxError if wavelength solution is not valid
+        ExpectedFluxError if iter out prefix is not valid
         """
         self.iter_out_prefix = config.get("iter out prefix")
         if self.iter_out_prefix is None:
@@ -400,7 +367,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.use_ivar_as_weight = defaults.get("use ivar as weight")
 
     def compute_continuum(self, forest):
-        """Computes the forest continuum.
+        """Compute the forest continuum.
 
         Fits a model based on the mean quasar continuum and linear function
         (see equation 2 of du Mas des Bourboux et al. 2020)
@@ -411,10 +378,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
         forest: Forest
         A forest instance where the continuum will be computed
 
-        Returns
-        -------
+        Return
+        ------
         forest: Forest
         The modified forest instance
+
+        Raise
+        -----
+        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         self.continuum_fit_parameters = {}
 
@@ -477,6 +448,15 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             mean_cont: array of floats
             Mean continuum
+
+            Return
+            ------
+            model: array of float
+            The model
+
+            Raise
+            -----
+            ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
             """
             if Forest.wave_solution == "log":
                 line = (p1 * (forest.log_lambda - log_lambda_min) /
@@ -491,7 +471,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             return line * mean_cont
 
         def chi2(p0, p1):
-            """Computes the chi2 of a given model (see function model above).
+            """Compute the chi2 of a given model (see function model above).
 
             Arguments
             ---------
@@ -508,8 +488,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
             Correction factor to the contribution of the pipeline
             estimate of the instrumental noise to the variance.
 
-            Returns
-            -------
+            Return
+            ------
+            chi2: float
             The obtained chi2
             """
             cont_model = get_cont_model(p0, p1)
@@ -562,7 +543,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         return forest
 
     def compute_delta_stack(self, forests, stack_from_deltas=False):
-        """Computes a stack of the delta field as a function of wavelength
+        """Compute a stack of the delta field as a function of wavelength
 
         Arguments
         ---------
@@ -572,9 +553,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         stack_from_deltas: bool - default: False
         Flag to determine whether to stack from deltas or compute them
 
-        Raises
-        ------
-        ExpectedFluxError if wavelength solution is not valid
+        Raise
+        -----
+        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         # TODO: move this to _initialize_variables_lin and
         # _initialize_variables_log (after tests are done)
@@ -648,7 +629,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                     "'log' or 'linear'")
 
     def compute_mean_cont_lin(self, forests):
-        """Computes the mean quasar continuum over the whole sample assuming a
+        """Compute the mean quasar continuum over the whole sample assuming a
         linear wavelength solution. Then updates the value of self.get_mean_cont
         to contain it
 
@@ -697,7 +678,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       fill_value="extrapolate")
 
     def compute_mean_cont_log(self, forests):
-        """Computes the mean quasar continuum over the whole sample assuming a
+        """Compute the mean quasar continuum over the whole sample assuming a
         log-linear wavelength solution. Then updates the value of
         self.get_mean_cont to contain it
 
@@ -758,9 +739,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         out_dir: str
         Directory where iteration statistics will be saved
 
-        Raises
-        ------
-        ExpectedFluxError if wavelength solution is not valid
+        Raise
+        -----
+        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         context = multiprocessing.get_context('fork')
         for iteration in range(self.num_iterations):
@@ -803,7 +784,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.populate_los_ids(forests)
 
     def compute_var_stats(self, forests):
-        """Computes variance functions and statistics
+        """Compute variance functions and statistics
 
         This function computes the statistics required to fit the mapping functions
         eta, var_lss, and fudge. It also computes the functions themselves. See
@@ -814,8 +795,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
 
-        Raises
-        ------
+        Raise
+        -----
         ExpectedFluxError if wavelength solution is not valid
         """
         # initialize arrays
@@ -926,7 +907,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             # pylint: disable-msg=cell-var-from-loop
             # this function is defined differntly at each step of the loop
             def chi2(eta, var_lss, fudge):
-                """Computes the chi2 of the fit of eta, var_lss, and fudge for a
+                """Compute the chi2 of the fit of eta, var_lss, and fudge for a
                 wavelength bin
 
                 Arguments
@@ -963,8 +944,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 num_qso: array of ints
                 Number of quasars in each pipeline variance bin
 
-                Returns
-                -------
+                Return
+                ------
+                chi2: float
                 The obtained chi2
                 """
                 variance = eta * var_pipe_values + var_lss + fudge * fudge_ref / var_pipe_values
@@ -1053,7 +1035,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                     "'log' or 'linear'")
 
     def populate_los_ids(self, forests):
-        """Populates the dictionary los_ids with the mean expected flux, weights,
+        """Populate the dictionary los_ids with the mean expected flux, weights,
         and inverse variance arrays for each line-of-sight.
 
         Arguments
@@ -1085,7 +1067,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             }
 
     def save_iteration_step(self, iteration, out_dir):
-        """Saves the statistical properties of deltas at a given iteration
+        """Save the statistical properties of deltas at a given iteration
         step
 
         Arguments
@@ -1095,6 +1077,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         out_dir: str
         Directory where data will be saved
+
+        Raise
+        -----
+        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         if iteration == -1:
             iter_out_file = self.iter_out_prefix + ".fits.gz"
@@ -1163,3 +1149,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 ],
                               names=['loglam_rest', 'mean_cont'],
                               extname='CONT')
+
+            else:
+                raise ExpectedFluxError("Forest.wave_solution must be either "
+                                        "'log' or 'lin'")

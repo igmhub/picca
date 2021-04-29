@@ -24,8 +24,8 @@ class Correction:
         forest: Forest
         A Forest instance to which the correction is applied
 
-        Raises
-        ------
+        Raise
+        -----
         CorrectionError if function was not overloaded by child class
         """
         raise CorrectionError("Function 'apply_correction' was not overloaded "

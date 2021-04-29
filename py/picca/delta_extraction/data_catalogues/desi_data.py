@@ -1,12 +1,12 @@
-"""This module defines the abstract class Data from which all
-classes loading data must inherit
+"""This module defines the class DesiData to load DESI data
 """
 import os
 import logging
 import glob
-import numpy as np
+
 import fitsio
 import healpy
+import numpy as np
 
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
@@ -25,19 +25,17 @@ defaults = {
     "mini SV": False,
 }
 
-# create logger
-module_logger = logging.getLogger(__name__)
-
-
 class DesiData(Data):
     """Reads the spectra from Quickquasars and formats its data as a list of
     Forest instances.
 
     Methods
     -------
+    filter_forests (from Data)
     __init__
     _parse_config
-
+    read_from_desi
+    read_from_minisv_desi
 
     Attributes
     ----------
@@ -50,16 +48,15 @@ class DesiData(Data):
     min_num_pix: int (from Data)
     Minimum number of pixels in a forest. Forests with less pixels will be dropped.
 
-    delta_lambda: float
-    Variation of the wavelength (in Angs) between two pixels.
-
-    in_dir: str
+    input_directory: str
     Directory to spectra files.
+
+    logger: logging.Logger
+    Logger object
 
     mini_sv: bool
     Read data in Mini SV format.
     """
-
     def __init__(self, config):
         """Initialize class instance
 
@@ -72,6 +69,9 @@ class DesiData(Data):
 
         super().__init__(config)
 
+        # setup Forest class variables
+        Forest.wave_solution = "lin"
+
         # load variables from config
         self.input_directory = None
         self.mini_sv = None
@@ -79,14 +79,6 @@ class DesiData(Data):
 
         # load z_truth catalogue
         catalogue = ZtruthCatalogue(config)
-
-        # setup Forest class variables
-        Forest.wave_solution = "lin"
-        Forest.delta_lambda = self.delta_lambda
-        Forest.lambda_max = self.lambda_max
-        Forest.lambda_max_rest_frame = self.lambda_max_rest_frame
-        Forest.lambda_min = self.lambda_min
-        Forest.lambda_min_rest_frame = self.lambda_min_rest_frame
 
         # read data
         if self.mini_sv:
@@ -106,36 +98,44 @@ class DesiData(Data):
         -----
         DataError upon missing required variables
         """
-        self.delta_lambda = config.get("delta lambda")
-        if self.delta_lambda is None:
-            self.delta_lambda = defaults.get("delta lambda")
+        # Forest class variables
+        Forest.delta_lambda = config.get("delta lambda")
+        if Forest.delta_lambda is None:
+            Forest.delta_lambda = defaults.get("delta lambda")
+        Forest.lambda_max = config.get("lambda max")
+        if Forest.lambda_max is None:
+            Forest.lambda_max = defaults.get("lambda max")
+        Forest.lambda_max_rest_frame = config.get("lambda max rest frame")
+        if Forest.lambda_max_rest_frame is None:
+            Forest.lambda_max_rest_frame = defaults.get("lambda max rest frame")
+        Forest.lambda_min = config.get("lambda min")
+        if Forest.lambda_min is None:
+            Forest.lambda_min = defaults.get("lambda min")
+        Forest.lambda_min_rest_frame = config.get("lambda min rest frame")
+        if Forest.lambda_min_rest_frame is None:
+            Forest.lambda_min_rest_frame = defaults.get("lambda min rest frame")
+
+        # instance variables
         self.input_directory = config.get("input directory")
         if self.input_directory is None:
             raise DataError(
                 "Missing argument 'input directory' required by SdssData")
-        self.lambda_max = config.get("lambda max")
-        if self.lambda_max is None:
-            self.lambda_max = defaults.get("lambda max")
-        self.lambda_max_rest_frame = config.get("lambda max rest frame")
-        if self.lambda_max_rest_frame is None:
-            self.lambda_max_rest_frame = defaults.get("lambda max rest frame")
-        self.lambda_min = config.get("lambda min")
-        if self.lambda_min is None:
-            self.lambda_min = defaults.get("lambda min")
-        self.lambda_min_rest_frame = config.get("lambda min rest frame")
-        if self.lambda_min_rest_frame is None:
-            self.lambda_min_rest_frame = defaults.get("lambda min rest frame")
+
         self.mini_sv = config.getboolean("mini SV")
         if self.mini_sv is None:
             self.mini_sv = defaults.get("mini SV")
 
     def read_from_desi(self, catalogue):
-        """Reads the spectra and formats its data as Forest instances.
+        """Read the spectra and formats its data as Forest instances.
 
         Arguments
         ---------
         catalogue: astropy.Table
         Table with the quasar catalogue
+
+        Raise
+        -----
+        DataError if the analysis type is PK 1D and resolution data is not present
         """
         in_nside = int(
             self.input_directory.split('spectra-')[-1].replace('/', ''))
@@ -268,7 +268,7 @@ class DesiData(Data):
         self.forests = list(forests_by_targetid.values())
 
     def read_from_minisv_desi(self, catalogue):
-        """Reads the spectra and formats its data as Forest instances.
+        """Read the spectra and formats its data as Forest instances.
         Unlike the read_from_desi routine, this orders things by tile/petal
         Routine used to treat the DESI mini-SV data.
 
@@ -276,6 +276,11 @@ class DesiData(Data):
         ---------
         catalogue: astropy.Table
         Table with the quasar catalogue
+
+        Raise
+        -----
+        DataError if the analysis type is PK 1D and resolution data is not present
+        DataError if no quasars were found
         """
 
         forests_by_targetid = {}

@@ -1,6 +1,7 @@
-"""This file contains objects used in different tests"""
+"""This file contains functions and variables used in different tests"""
 import logging
 import os
+
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
@@ -10,7 +11,7 @@ from picca.delta_extraction.utils import ABSORBER_IGM
 
 # reset Forest and Pk1dForest class variables
 def reset_forest():
-    """Resets the class variables of Forest and Pk1dForest"""
+    """Reset the class variables of Forest and Pk1dForest"""
     Forest.wave_solution = None
     Forest.delta_log_lambda = None
     Forest.delta_log_lambda = None
@@ -28,7 +29,7 @@ def reset_forest():
 
 # setup Forest class variables
 def setup_forest(wave_solution):
-    """Sets Forest class variables
+    """Set Forest class variables
 
     Arguments
     ---------
@@ -57,7 +58,7 @@ setup_forest("log")
 
 # setup Pk1dForest class variables
 def setup_pk1d_forest(absorber):
-    """Sets Pk1dForest class variables
+    """Set Pk1dForest class variables
 
     Arguments
     ---------
@@ -159,7 +160,7 @@ sdss_data_kwargs = {
 }
 
 def reset_logger():
-    """This function resets the logger picca.delta_extraction by closing
+    """This function reset the logger picca.delta_extraction by closing
     and removing its handlers.
     """
     logger = logging.getLogger("picca.delta_extraction")

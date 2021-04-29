@@ -1,7 +1,6 @@
-"""This module defines the class SkyMask in the
-masking of (sky) lines"""
-import numpy as np
+"""This module defines the class LinesMask in the masking of (sky) lines"""
 from astropy.table import Table
+import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
@@ -32,13 +31,15 @@ class LinesMask(Mask):
     contains the sky lines.
     """
     def __init__(self, config):
-        """Initializes class instance.
+        """Initialize class instance.
 
         Arguments
         ---------
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
+        super().__init__()
+
         mask_file = config.get("filename")
         try:
             mask = Table.read(mask_file,
@@ -57,7 +58,7 @@ class LinesMask(Mask):
                             f"File {mask_file}")
 
     def apply_mask(self, forest):
-        """Applies the mask. The mask is done by removing the affected
+        """Apply the mask. The mask is done by removing the affected
         pixels from the arrays in Forest.mask_fields
 
         Arguments
@@ -65,10 +66,9 @@ class LinesMask(Mask):
         forest: Forest
         A Forest instance to which the correction is applied
 
-        Raises
-        ------
-        CorrectionError if forest instance does not have the attribute
-        'log_lambda'
+        Raise
+        -----
+        CorrectionError if Forest.wave_solution is not 'lin' or 'log'
         """
         # find masking array
         if Forest.wave_solution == "log":

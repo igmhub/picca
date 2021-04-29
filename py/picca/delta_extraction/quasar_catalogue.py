@@ -15,8 +15,7 @@ class QuasarCatalogue:
     Methods
     -------
     __init__
-    _parse_config
-
+    trim_catalogue
 
     Attributes
     ----------
@@ -67,12 +66,12 @@ class QuasarCatalogue:
         self.catalogue = None
 
     def trim_catalogue(self):
-        """Trims the current catalogue.
+        """Trim the current catalogue.
 
         Keep only max_num_spec objects that are close by. This is achieved by
         first ordering the catalogue through healpix
 
-        If self.catalogue or self.max_num_spec are None, then does nothing
+        If self.catalogue or self.max_num_spec are None, then do nothing
         """
         if self.max_num_spec is not None and self.catalogue is not None:
             # sort forests by healpix

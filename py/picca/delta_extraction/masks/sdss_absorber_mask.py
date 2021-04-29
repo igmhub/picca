@@ -1,16 +1,13 @@
 """This module defines the class SdssAbsorberMask in the
 masking of absorbers"""
 import logging
-import numpy as np
+
 import fitsio
+import numpy as np
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask
-
-# create logger
-module_logger = logging.getLogger(__name__)
-
 
 defaults = {
     "absorber mask width": 2.5,
@@ -33,9 +30,12 @@ class SdssAbsorberMask(Mask):
     absorber_mask_width: float
     Mask width on each side of the absorber central observed wavelength in
     units of 1e4*dlog10(lambda)
+
+    logger: logging.Logger
+    Logger object
     """
     def __init__(self, config):
-        """Initializes class instance.
+        """Initialize class instance.
 
         Arguments
         ---------
@@ -43,6 +43,9 @@ class SdssAbsorberMask(Mask):
         Parsed options to initialize class
         """
         self.logger = logging.getLogger(__name__)
+
+        super().__init__()
+
         # first load the absorbers catalogue
         absorbers_catalogue = config.get("absorbers catalogue")
         if absorbers_catalogue is None:
@@ -92,10 +95,9 @@ class SdssAbsorberMask(Mask):
         forest: Forest
         A Forest instance to which the correction is applied
 
-        Raises
-        ------
-        CorrectionError if forest instance does not have the attribute
-        'log_lambda'
+        Raise
+        -----
+        CorrectionError if Forest.wave_solution is not 'log'
         """
         if Forest.wave_solution != "log":
             raise MaskError("SdssAbsorberMask should only be applied when "

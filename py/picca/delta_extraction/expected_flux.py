@@ -16,6 +16,7 @@ class ExpectedFlux:
     Methods
     -------
     __init__
+    compute_expected_flux
     extract_deltas
 
     Attributes
@@ -55,7 +56,7 @@ class ExpectedFlux:
                                 "overloaded by child class")
 
     def extract_deltas(self, forest):
-        """Applies the continuum to compute the delta field
+        """Apply the continuum to compute the delta field
 
         Arguments
         ---------

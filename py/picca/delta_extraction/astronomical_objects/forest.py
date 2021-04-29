@@ -3,14 +3,14 @@ objects representing a forest must inherit from
 """
 import numpy as np
 
-from picca.delta_extraction.errors import AstronomicalObjectError
-
 from picca.delta_extraction.astronomical_object import AstronomicalObject
+from picca.delta_extraction.errors import AstronomicalObjectError
 
 defaults = {
     "mask fields log": ["flux", "ivar", "transmission_correction", "log_lambda"],
     "mask fields lin": ["flux", "ivar", "transmission_correction", "lambda_"]
 }
+
 class Forest(AstronomicalObject):
     """Forest Object
 
@@ -19,8 +19,11 @@ class Forest(AstronomicalObject):
     __gt__ (from AstronomicalObject)
     __eq__ (from AstronomicalObject)
     __init__
-    __class_variable_check
-    __consistency_check
+    class_variable_check
+    consistency_check
+    coadd
+    get_data
+    get_header
     rebin
 
     Class Attributes
@@ -38,12 +41,12 @@ class Forest(AstronomicalObject):
     Maximum wavelength (in Angs) to be considered in a forest. This should not
     be None if wave_solution is "lin". Ignored if wave_solution is "log".
 
-    lambda_min: float or None
-    Minimum wavelength (in Angs) to be considered in a forest. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
     lambda_max_rest_frame: float or None
     As wavelength_max but for rest-frame wavelength. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+
+    lambda_min: float or None
+    Minimum wavelength (in Angs) to be considered in a forest. This should not
     be None if wave_solution is "lin". Ignored if wave_solution is "log".
 
     lambda_min_rest_frame: float or None
@@ -55,14 +58,14 @@ class Forest(AstronomicalObject):
     This should not be None if wave_solution is "log". Ignored if wave_solution
     is "lin".
 
+    log_lambda_max_rest_frame: float or None
+    As log_lambda_max but for rest-frame wavelength. This should not be None if
+    wave_solution is "log". Ignored if wave_solution is "lin".
+
     log_lambda_min: float or None
     Logarithm of the minimum wavelength (in Angs) to be considered in a forest.
     This should not be None if wave_solution is "log". Ignored if wave_solution
     is "lin".
-
-    log_lambda_max_rest_frame: float or None
-    As log_lambda_max but for rest-frame wavelength. This should not be None if
-    wave_solution is "log". Ignored if wave_solution is "lin".
 
     log_lambda_min_rest_frame: float or None
     As log_lambda_min but for rest-frame wavelength. This should not be None if
@@ -85,9 +88,6 @@ class Forest(AstronomicalObject):
 
     healpix: int (from AstronomicalObject)
     Healpix number associated with (ra, dec)
-
-    lambda_: array of float (from Forest)
-    Wavelength (in Angstroms)
 
     los_id: longint (from AstronomicalObject)
     Line-of-sight id. Same as thingid
@@ -114,7 +114,13 @@ class Forest(AstronomicalObject):
     ivar: array of float
     Inverse variance
 
-    mean_snf: float
+    lambda_: array of float
+    Wavelength (in Angstroms)
+
+    log_lambda: array of float or None
+    Logarithm of the wavelength (in Angstroms)
+
+    mean_snr: float
     Mean signal-to-noise of the forest
 
     transmission_correction: array of float
@@ -144,6 +150,10 @@ class Forest(AstronomicalObject):
         ---------
         **kwargs: dict
         Dictionary contiaing the information
+
+        Raise
+        -----
+        AstronomicalObjectError if there are missing variables
         """
         Forest.class_variable_check()
 
@@ -299,7 +309,7 @@ class Forest(AstronomicalObject):
                                           f"Found: {Forest.wave_solution}")
 
     def coadd(self, other):
-        """Coadds the information of another forest.
+        """Coadd the information of another forest.
 
         Forests are coadded by rebinning
 
@@ -307,7 +317,18 @@ class Forest(AstronomicalObject):
         ---------
         other: Forest
         The forest instance to be coadded.
+
+        Raise
+        -----
+        AstronomicalObjectError if other is not an instance of Forest
+        AstronomicalObjectError if other has a different los_id
+        AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         """
+        if not isinstance(other, Forest):
+            raise AstronomicalObjectError("Error coadding Forest. Expected "
+                                          "Forest instance in other. Found: "
+                                          f"{type(other)}")
+
         if self.los_id != other.los_id:
             raise AstronomicalObjectError("Attempting to coadd two Forests "
                                           "with different los_id. This should "
@@ -339,8 +360,8 @@ class Forest(AstronomicalObject):
         Data also contains the delta field, the weights and the quasar
         continuum.
 
-        Returns
-        -------
+        Return
+        ------
         cols: list of arrays
         Data of the different variables
 
@@ -352,6 +373,10 @@ class Forest(AstronomicalObject):
 
         comments: list of str
         Comments attached to the different variables
+
+        Raise
+        -----
+        AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         """
         cols = []
         names = []
@@ -370,7 +395,7 @@ class Forest(AstronomicalObject):
             units += ["Angstrom"]
             array_size = self.lambda_.size
         else:
-            raise AstronomicalObjectError("Error in coadding Forest. "
+            raise AstronomicalObjectError("Error in getting data from Forest. "
                                           "Class variable 'wave_solution' "
                                           "must be either 'lin' or 'log'. "
                                           f"Found: {Forest.wave_solution}")
@@ -403,13 +428,13 @@ class Forest(AstronomicalObject):
         return cols, names, units, comments
 
     def get_header(self):
-        """Returns line-of-sight data to be saved as a fits file header
+        """Return line-of-sight data to be saved as a fits file header
 
         Adds to specific Forest keys to general header (defined in class
         AstronomicalObject)
 
-        Returns
-        -------
+        Return
+        ------
         header : list of dict
         A list of dictionaries containing 'name', 'value' and 'comment' fields
         """
@@ -434,8 +459,8 @@ class Forest(AstronomicalObject):
         Rebinned arrays are flux, ivar, lambda_ or log_lambda, and
         transmission_correction. Control variables are mean_snr
 
-        Returns
-        -------
+        Return
+        ------
         bins: array of float
         Binning solution to be used for the rebinning
 
@@ -450,6 +475,11 @@ class Forest(AstronomicalObject):
 
         w2: array of bool
         Masking array for the rebinned ivar solution
+
+        Raise
+        -----
+        AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
+        AstronomicalObjectError if ivar only has zeros
         """
         orig_ivar = self.ivar.copy()
         # compute bins

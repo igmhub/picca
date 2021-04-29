@@ -2,6 +2,7 @@
 import os
 import logging
 import time
+
 import numpy as np
 import fitsio
 
@@ -13,9 +14,6 @@ from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
 from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
 
-# create logger
-module_logger = logging.getLogger(__name__)
-
 defaults = {
     "lambda max": 5500.0,
     "lambda max rest frame": 1200.0,
@@ -25,18 +23,17 @@ defaults = {
     "rebin": 3,
 }
 
-
 class SdssData(Data):
     """Reads the spectra from SDSS and formats its data as a list of
     Forest instances.
 
     Methods
     -------
+    filter_forests (from Data)
     __init__
     _parse_config
     read_from_spec
     read_from_spplate
-
 
     Attributes
     ----------
@@ -49,11 +46,11 @@ class SdssData(Data):
     min_num_pix: int (from Data)
     Minimum number of pixels in a forest. Forests with less pixels will be dropped.
 
-    delta_log_lambda: float
-    Variation of the logarithm of the wavelength (in Angs) between two pixels.
-
     in_dir: str
     Directory to spectra files.
+
+    logger: logging.Logger
+    Logger object
 
     mode: str
     Reading mode. Currently supported reading modes are "spplate" and "spec"
@@ -67,29 +64,24 @@ class SdssData(Data):
         config: configparser.SectionProxy
         Parsed options to initialize class
 
-        Raises
-        ------
+        Raise
+        -----
         DataError if the selected reading mode is not supported
         """
         self.logger = logging.getLogger(__name__)
+
         super().__init__(config)
 
+        # setup SdssForest class variables
+        Forest.wave_solution = "log"
+
         # load variables from config
-        self.delta_log_lambda = None
         self.input_directory = None
         self.mode = None
         self._parse_config(config)
 
         # load DRQ Catalogue
         catalogue = DrqCatalogue(config).catalogue
-
-        # setup SdssForest class variables
-        Forest.wave_solution = "log"
-        Forest.delta_log_lambda = self.delta_log_lambda
-        Forest.log_lambda_max = self.log_lambda_max
-        Forest.log_lambda_max_rest_frame = self.log_lambda_max_rest_frame
-        Forest.log_lambda_min = self.log_lambda_min
-        Forest.log_lambda_min_rest_frame = self.log_lambda_min_rest_frame
 
         # read data
         if self.mode == "spplate":
@@ -112,36 +104,41 @@ class SdssData(Data):
         -----
         DataError upon missing required variables
         """
+        # Forest class variables
         rebin = config.getint("rebin")
         if rebin is None:
             rebin = defaults.get("rebin")
-        self.delta_log_lambda = rebin * 1e-4
+        Forest.delta_log_lambda = rebin * 1e-4
+
+        lambda_max = config.getfloat("lambda max")
+        if lambda_max is None:
+            lambda_max = defaults.get("lambda max")
+        Forest.log_lambda_max = np.log10(lambda_max)
+        lambda_max_rest_frame = config.getfloat("lambda max rest frame")
+        if lambda_max_rest_frame is None:
+            lambda_max_rest_frame = defaults.get("lambda max rest frame")
+        Forest.log_lambda_max_rest_frame = np.log10(lambda_max_rest_frame)
+        lambda_min = config.getfloat("lambda min")
+        if lambda_min is None:
+            lambda_min = defaults.get("lambda min")
+        Forest.log_lambda_min = np.log10(lambda_min)
+        lambda_min_rest_frame = config.getfloat("lambda min rest frame")
+        if lambda_min_rest_frame is None:
+            lambda_min_rest_frame = defaults.get("lambda min rest frame")
+        Forest.log_lambda_min_rest_frame = np.log10(lambda_min_rest_frame)
+
+        # instance variables
         self.input_directory = config.get("input directory")
         if self.input_directory is None:
             raise DataError(
                 "Missing argument 'input directory' required by SdssData")
-        lambda_max = config.getfloat("lambda max")
-        if lambda_max is None:
-            lambda_max = defaults.get("lambda max")
-        self.log_lambda_max = np.log10(lambda_max)
-        lambda_max_rest_frame = config.getfloat("lambda max rest frame")
-        if lambda_max_rest_frame is None:
-            lambda_max_rest_frame = defaults.get("lambda max rest frame")
-        self.log_lambda_max_rest_frame = np.log10(lambda_max_rest_frame)
-        lambda_min = config.getfloat("lambda min")
-        if lambda_min is None:
-            lambda_min = defaults.get("lambda min")
-        self.log_lambda_min = np.log10(lambda_min)
-        lambda_min_rest_frame = config.getfloat("lambda min rest frame")
-        if lambda_min_rest_frame is None:
-            lambda_min_rest_frame = defaults.get("lambda min rest frame")
-        self.log_lambda_min_rest_frame = np.log10(lambda_min_rest_frame)
+
         self.mode = config.get("mode")
         if self.mode is None:
             self.mode = defaults.get("mode")
 
     def read_from_spec(self, catalogue):
-        """Reads the spectra and formats its data as Forest instances.
+        """Read the spectra and formats its data as Forest instances.
 
         Arguments
         ---------
@@ -218,7 +215,7 @@ class SdssData(Data):
         self.forests = list(forests_by_thingid.values())
 
     def read_from_spplate(self, catalogue):
-        """Reads the spectra and formats its data as Forest instances.
+        """Read the spectra and formats its data as Forest instances.
 
         Arguments
         ---------

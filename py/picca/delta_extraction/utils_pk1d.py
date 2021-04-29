@@ -8,30 +8,34 @@ This module provides three functions:
 See the respective documentation for details
 """
 import logging
+
 import numpy as np
 
-from picca.constants import SPEED_LIGHT
+from picca.delta_extraction.utils import SPEED_LIGHT
 
 # create logger
 module_logger = logging.getLogger(__name__)
 
-
 def exp_diff(hdul, log_lambda):
-    """Computes the difference between exposures.
+    """Compute the difference between exposures.
 
-    More precisely computes de semidifference between two customized coadded
+    More precisely compute de semidifference between two customized coadded
     spectra obtained from weighted averages of the even-number exposures, for
     the first spectrum, and of the odd-number exposures, for the second one
     (see section 3.2 of Chabanier et al. 2019).
 
-    Args:
-        hdul: fitsio.fitslib.FITS
-            Header Data Unit List opened by fitsio
-        log_lambda: array of floats
-            Array containing the logarithm of the wavelengths (in Angs)
+    Arguments
+    ---------
+    hdul: fitsio.fitslib.FITS
+    Header Data Unit List opened by fitsio
 
-    Returns:
-        The difference between exposures
+    log_lambda: array of floats
+    Array containing the logarithm of the wavelengths (in Angs)
+
+    Return
+    ------
+    exposures_diff: array of float
+    The difference between exposures
     """
     num_exp_per_col = hdul[0].read_header()['NEXP'] // 2
     flux_total_odd = np.zeros(log_lambda.size)
@@ -88,7 +92,7 @@ def spectral_resolution(wdisp,
                         fiberid=None,
                         log_lambda=None):
     # TODO: fix docstring
-    """Computes the spectral resolution
+    """Compute the spectral resolution
 
     Arguments
     ---------
@@ -105,8 +109,8 @@ def spectral_resolution(wdisp,
     log_lambda: array or None - default: None
     Logarithm of the wavelength (in Angstroms)
 
-    Returns
-    -------
+    Return
+    ------
     reso: array of floats
     The spectral resolution
     """
@@ -135,7 +139,7 @@ def spectral_resolution(wdisp,
 
 
 def spectral_resolution_desi(reso_matrix, lambda_):
-    """Computes the spectral resolution for DESI spectra
+    """Compute the spectral resolution for DESI spectra
 
     Arguments
     ---------
@@ -145,8 +149,8 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     lambda_: array or None
     Logarithm of the wavelength (in Angstroms)
 
-    Returns
-    -------
+    Return
+    ------
     reso_in_km_per_s: array
     The spectral resolution
     """

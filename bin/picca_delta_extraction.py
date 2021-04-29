@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Computes delta field from a list of spectra.
+"""Compute delta field from a list of spectra.
 
-Computes the mean transmission fluctuation field (delta field) for a list of
+Compute the mean transmission fluctuation field (delta field) for a list of
 spectra for the specified absorption line. Follow the procedure described in
 section 2.4 of du Mas des Bourboux et al. 2020 (In prep).
 """
@@ -14,7 +14,7 @@ from picca.delta_extraction.survey import Survey
 module_logger = logging.getLogger("picca.delta_extraction")
 
 def main(args):
-    """Computes delta field"""
+    """Compute delta field"""
     t0 = time.time()
 
     # intitialize Survey instance
@@ -41,7 +41,7 @@ def main(args):
 
     # filter forests
     survey.filter_forests()
-    
+
     # compute forest continua
     survey.compute_expected_flux()
 

@@ -1,5 +1,5 @@
-"""This module defines the abstract class Forest from which all
-objects representing a forest must inherit from
+"""This module defines the abstract class Pk1dForest from which all
+objects representing a forest in the Pk1D analysis must inherit from
 """
 import numpy as np
 
@@ -14,8 +14,8 @@ class Pk1dForest(Forest):
     __gt__ (from AstronomicalObject)
     __eq__ (from AstronomicalObject)
     __init__
-    __class_variable_check
-    __consistency_check
+    class_variable_check
+    consistency_check
     rebin
 
     Class Attributes
@@ -33,12 +33,12 @@ class Pk1dForest(Forest):
     Maximum wavelength (in Angs) to be considered in a forest. This should not
     be None if wave_solution is "lin". Ignored if wave_solution is "log".
 
-    lambda_min: float or None (from Forest)
-    Minimum wavelength (in Angs) to be considered in a forest. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
     lambda_max_rest_frame: float or None (from Forest)
     As wavelength_max but for rest-frame wavelength. This should not
+    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+
+    lambda_min: float or None (from Forest)
+    Minimum wavelength (in Angs) to be considered in a forest. This should not
     be None if wave_solution is "lin". Ignored if wave_solution is "log".
 
     lambda_min_rest_frame: float or None (from Forest)
@@ -50,14 +50,14 @@ class Pk1dForest(Forest):
     This should not be None if wave_solution is "log". Ignored if wave_solution
     is "lin".
 
+    log_lambda_max_rest_frame: float or None (from Forest)
+    As log_lambda_max but for rest-frame wavelength. This should not be None if
+    wave_solution is "log". Ignored if wave_solution is "lin".
+
     log_lambda_min: float or None (from Forest)
     Logarithm of the minimum wavelength (in Angs) to be considered in a forest.
     This should not be None if wave_solution is "log". Ignored if wave_solution
     is "lin".
-
-    log_lambda_max_rest_frame: float or None (from Forest)
-    As log_lambda_max but for rest-frame wavelength. This should not be None if
-    wave_solution is "log". Ignored if wave_solution is "lin".
 
     log_lambda_min_rest_frame: float or None (from Forest)
     As log_lambda_min but for rest-frame wavelength. This should not be None if
@@ -84,9 +84,6 @@ class Pk1dForest(Forest):
     healpix: int (from AstronomicalObject)
     Healpix number associated with (ra, dec)
 
-    lambda_: array of float (from Forest)
-    Wavelength (in Angstroms)
-
     los_id: longint (from AstronomicalObject)
     Line-of-sight id. Same as thingid
 
@@ -112,7 +109,13 @@ class Pk1dForest(Forest):
     ivar: array of float (from Forest)
     Inverse variance
 
-    mean_snf: float (from Forest)
+    lambda_: array of float (from Forest)
+    Wavelength (in Angstroms)
+
+    log_lambda: array of float or None
+    Logarithm of the wavelength (in Angstroms)
+
+    mean_snr: float (from Forest)
     Mean signal-to-noise of the forest
 
     transmission_correction: array of float (from Forest)
@@ -140,8 +143,12 @@ class Pk1dForest(Forest):
         ---------
         **kwargs: dict
         Dictionary contiaing the information
+
+        Raise
+        -----
+        AstronomicalObjectError if there are missing variables
         """
-        Pk1dForest.__class_variable_check()
+        Pk1dForest.class_variable_check()
 
         self.exposures_diff = kwargs.get("exposures_diff")
         if self.exposures_diff is None:
@@ -176,7 +183,7 @@ class Pk1dForest(Forest):
         self.consistency_check()
 
     @classmethod
-    def __class_variable_check(cls):
+    def class_variable_check(cls):
         """Check that class variables have been correctly initialized"""
         if cls.lambda_abs_igm is None:
             raise AstronomicalObjectError("Error constructing Pk1DForest. "
@@ -199,16 +206,24 @@ class Pk1dForest(Forest):
 
 
     def coadd(self, other):
-        """Coadds the information of another forest.
+        """Coadd the information of another forest.
 
         Extends the coadd method of Forest to also include information
         about the exposures_diff and reso arrays
 
         Arguments
         ---------
-        other: Forest
+        other: Pk1dForest
         The forest instance to be coadded.
+
+        Raise
+        -----
+        AstronomicalObjectError if other is not a Pk1dForest instance
         """
+        if not isinstance(other, Pk1dForest):
+            raise AstronomicalObjectError("Error coadding Pk1dForest. Expected "
+                                          "Pk1dForest instance in other. Found: "
+                                          f"{type(other)}")
         self.exposures_diff = np.append(self.exposures_diff, other.exposures_diff)
         self.reso = np.append(self.reso, other.reso)
 
@@ -221,8 +236,8 @@ class Pk1dForest(Forest):
         Extends the get_data method of Forest to also include data for
         exposures_diff.
 
-        Returns
-        -------
+        Return
+        ------
         cols: list of arrays
         Data of the different variables
 
@@ -245,13 +260,13 @@ class Pk1dForest(Forest):
         return cols, names, units, comments
 
     def get_header(self):
-        """Returns line-of-sight data to be saved as a fits file header
+        """Return line-of-sight data to be saved as a fits file header
 
         Adds to specific Pk1dForest keys to general header (defined in class
         Forsest)
 
-        Returns
-        -------
+        Return
+        ------
         header : list of dict
         A list of dictionaries containing 'name', 'value' and 'comment' fields
         """
@@ -281,8 +296,8 @@ class Pk1dForest(Forest):
         transmission_correctionm, exposures_diff, and reso. Control variables
         are mean_snr and mean_reso.
 
-        Returns
-        -------
+        Return
+        ------
         bins: array of float
         Binning solution to be used for the rebinning
 
@@ -297,6 +312,10 @@ class Pk1dForest(Forest):
 
         w2: array of bool
         Masking array for the rebinned ivar solution
+
+        Raise
+        -----
+        AstronomicalObjectError if Forest.wave_solution is not 'lin' or 'log'
         """
         bins, rebin_ivar, orig_ivar, w1, w2 = super().rebin()
         if len(rebin_ivar) == 0:

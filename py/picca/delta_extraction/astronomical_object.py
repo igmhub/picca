@@ -1,4 +1,4 @@
-"""This module defines the abstract class AstronomicalObjectError
+"""This module defines the class AstronomicalObjectError
 from which all astronomical objects must inherit
 """
 import healpy
@@ -12,6 +12,9 @@ class AstronomicalObject:
     Methods
     -------
     __init__
+    __gt__
+    __eq__
+    get_header
 
     Attributes
     ----------
@@ -37,6 +40,10 @@ class AstronomicalObject:
         ---------
         **kwargs: dict
         Dictionary contiaing the information
+
+        Raise
+        -----
+        AstronomicalObjectError if there are missing variables
         """
         self.dec = kwargs.get("dec")
         if self.dec is None:
@@ -61,10 +68,15 @@ class AstronomicalObject:
         self.healpix = healpy.ang2pix(16, np.pi / 2 - self.dec, self.ra)
 
     def __gt__(self, other):
-        """Comparares two astronomical_objects
+        """Comparare two astronomical_objects
 
-        Returns
-        -------
+        Arguments
+        ---------
+        other: AstronomicalObject
+        Comparison object
+
+        Return
+        ------
         True if this object is 'greater than' the other object
         """
         is_greater = False
@@ -82,7 +94,12 @@ class AstronomicalObject:
         return is_greater
 
     def __eq__(self, other):
-        """Comparares two astronomical_objects
+        """Comparare two astronomical_objects
+
+        Arguments
+        ---------
+        other: AstronomicalObject
+        Comparison object
 
         Returns
         -------
@@ -92,10 +109,10 @@ class AstronomicalObject:
                 self.dec == other.dec and self.z == other.z)
 
     def get_header(self):
-        """Returns line-of-sight data to be saved as a fits file header
+        """Return line-of-sight data to be saved as a fits file header
 
-        Returns
-        -------
+        Return
+        ------
         header : list of dict
         A list of dictionaries containing 'name', 'value' and 'comment' fields
         """

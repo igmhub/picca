@@ -1,14 +1,14 @@
 """This file contains tests related to Mask and its childs"""
+from configparser import ConfigParser
 import os
 import unittest
-from configparser import ConfigParser
+
 import numpy as np
 
-from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.mask import Mask
-
 from picca.delta_extraction.masks.sdss_dla_mask import SdssDlaMask
 from picca.delta_extraction.masks.sdss_absorber_mask import SdssAbsorberMask
+from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import reset_logger
@@ -19,21 +19,19 @@ from picca.delta_extraction.tests.test_utils import forest3_log_lambda, forest3
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class MaskTest(AbstractTest):
-    """Test class Mask and its childs."""
+    """Test class Mask and its childs.
 
-    def test_mask(self):
-        """Tests Abstract class Mask
-
-        Load a Mask instace and check that method apply_mask is not initialized.
-        """
-        with self.assertRaises(MaskError):
-            mask = Mask()
-
-            # run apply_correction, this should raise MaskError
-            mask.apply_mask(forest1)
-
+    Methods
+    -------
+    compare_ascii (from AbstractTest)
+    compare_fits (from AbstractTest)
+    setUp (from AbstractTest)
+    test_absorber_mask
+    test_dla_mask
+    test_mask
+    """
     def test_absorber_mask(self):
-        """Tests correct initialisation and inheritance for class
+        """Test correct initialisation and inheritance for class
         SdssAbsorberMask
 
         Load a SdssAbsorberMask instace and check that it is
@@ -96,7 +94,7 @@ class MaskTest(AbstractTest):
         self.compare_ascii(test_file, out_file, expand_dir=True)
 
     def test_dla_mask(self):
-        """Tests correct initialisation and inheritance for class
+        """Test correct initialisation and inheritance for class
         SdssDlaMask
 
         Load a SdssDlaMask instace and check that it is
@@ -133,6 +131,16 @@ class MaskTest(AbstractTest):
 
         reset_logger()
         self.compare_ascii(test_file, out_file, expand_dir=True)
+
+    def test_mask(self):
+        """Test Abstract class Mask
+
+        Load a Mask instace and check that method apply_mask is not initialized.
+        """
+        mask = Mask()
+        with self.assertRaises(MaskError):
+            # run apply_correction, this should raise MaskError
+            mask.apply_mask(forest1)
 
 if __name__ == '__main__':
     unittest.main()

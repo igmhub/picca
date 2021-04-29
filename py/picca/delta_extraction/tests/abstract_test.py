@@ -7,12 +7,13 @@ import astropy.io.fits as fits
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class AbstractTest(unittest.TestCase):
-    """Abstrac test class to define functions used in all tests
+    """Abstract test class to define functions used in all tests
 
     Methods
     -------
+    compare_ascii
+    compare_fits
     setUp
-
     """
     def setUp(self):
         """ Check that the results folder exists and create it
@@ -21,7 +22,7 @@ class AbstractTest(unittest.TestCase):
             os.makedirs("{}/results/".format(THIS_DIR))
 
     def compare_ascii(self, orig_file, new_file, expand_dir=False):
-        """Compares two ascii files to check that they are equal
+        """Compare two ascii files to check that they are equal
 
         Arguments
         ---------
@@ -50,7 +51,16 @@ class AbstractTest(unittest.TestCase):
             new.close()
 
     def compare_fits(self, orig_file, new_file):
-        """ Compares two fits files to check that they are equal """
+        """Compare two fits files to check that they are equal
+
+        Arguments
+        ---------
+        orig_file: str
+        Control file
+
+        new_file: str
+        New file
+        """
         # open fits files
         orig_hdul = fits.open(orig_file)
         new_hdul = fits.open(new_file)

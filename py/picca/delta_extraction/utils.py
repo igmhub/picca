@@ -3,7 +3,11 @@ package"""
 import importlib
 import logging
 
+from scipy.constants import speed_of_light as speed_light
+
 module_logger = logging.getLogger(__name__)
+
+SPEED_LIGHT = speed_light/1000. # [km/s]
 
 ABSORBER_IGM = {
     "Halpha"      : 6562.8,
@@ -74,7 +78,7 @@ ABSORBER_IGM = {
 }
 
 def class_from_string(class_name, module_name):
-    """Returns a class from a string. The class must be saved in a module
+    """Return a class from a string. The class must be saved in a module
     under picca.delta_extraction with the same name as the class but
     lowercase and with and underscore. For example class 'MyClass' should
     be in module picca.delta_extraction.my_class
@@ -87,12 +91,12 @@ def class_from_string(class_name, module_name):
     module_name: str
     Name of the module containing the class
 
-    Returns
-    -------
+    Return
+    ------
     The loaded class
 
-    Raises
-    ------
+    Raise
+    -----
     ImportError if module cannot be loaded
     AttributeError if class cannot be found
     """
@@ -116,7 +120,7 @@ logging.Logger.progress = progress
 OK_WARNING_LEVEL_NUM = 31
 logging.addLevelName(OK_WARNING_LEVEL_NUM, "WARNING OK")
 def ok_warning(self, message, *args, **kws):
-    """Function to log with level WARNING"""
+    """Function to log with level WARNING OK"""
     if self.isEnabledFor(OK_WARNING_LEVEL_NUM):
         # pylint: disable-msg=protected-access
         # this method will be attached to logging.Logger
@@ -125,7 +129,7 @@ logging.Logger.ok_warning = ok_warning
 
 def setup_logger(logging_level_console=logging.DEBUG, log_file=None,
                  logging_level_file=logging.DEBUG):
-    """This function sets up the logger for the package
+    """This function set up the logger for the package
     picca.delta_extraction
 
     Arguments

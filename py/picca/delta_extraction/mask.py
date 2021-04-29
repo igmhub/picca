@@ -10,8 +10,18 @@ class Mask:
 
     Methods
     -------
+    __init__
     apply_mask
+
+    Attributes
+    ----------
+    los_ids: dict
+    Empty dictionary to be overloaded by child classes
     """
+    def __init__(self):
+        """Initialize class instance"""
+        self.los_id = {}
+
     # pylint: disable=no-self-use
     # this method should use self in child classes
     def apply_mask(self, forest):

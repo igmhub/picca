@@ -1,7 +1,7 @@
 """This file contains tests related to Data and its childs"""
+from configparser import ConfigParser
 import os
 import unittest
-from configparser import ConfigParser
 
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.data import Data
@@ -16,7 +16,20 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class DataTest(AbstractTest):
-    """Test class Data and its childs."""
+    """Test class Data and its childs.
+
+    Methods
+    -------
+    compare_ascii (from AbstractTest)
+    compare_fits (from AbstractTest)
+    setUp (from AbstractTest)
+    test_data
+    test_data_filter_forests
+    test_desi_data
+    test_desi_data_minisv
+    test_sdss_data_spec
+    test_sdss_data_spplate
+    """
 
     def test_data(self):
         """Test Abstract class Data
@@ -81,8 +94,16 @@ class DataTest(AbstractTest):
         reset_logger()
         self.compare_ascii(test_file, out_file, expand_dir=True)
 
+    def test_desi_data(self):
+        """Test DesiData"""
+        # TODO: add test
+
+    def test_desi_data_minisv(self):
+        """Test DesiData when run using minisv option"""
+        # TODO: add test
+
     def test_sdss_data_spec(self):
-        """Tests SdssData when run in spec mode"""
+        """Test SdssData when run in spec mode"""
         config = ConfigParser()
         data_kwargs = sdss_data_kwargs.copy()
         data_kwargs.update({"mode": "spec"})

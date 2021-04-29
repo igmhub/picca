@@ -1,6 +1,6 @@
-"""This module defines the abstract class SdssCalibrationCorrection"""
-from scipy.interpolate import interp1d
+"""This module defines the class SdssCalibrationCorrection"""
 import fitsio
+from scipy.interpolate import interp1d
 
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
@@ -20,12 +20,18 @@ class SdssCalibrationCorrection(Correction):
     grids of wavelength
     """
     def __init__(self, config):
-        """Initializes class instance.
+        """Initialize class instance.
 
         Arguments
         ---------
         config: configparser.SectionProxy
         Parsed options to initialize class
+
+        Raise
+        -----
+        CorrectionError if input file does not have extension STACK_DELTAS
+        CorrectionError if input file does not have fields loglam and/or stack
+        in extension STACK_DELTAS
         """
         filename = config.get("filename")
         try:
@@ -47,7 +53,7 @@ class SdssCalibrationCorrection(Correction):
                                      kind="nearest")
 
     def apply_correction(self, forest):
-        """Applies the correction. Correction is applied by dividing the
+        """Apply the correction. Correction is applied by dividing the
         data flux by the loaded correction, and the subsequent correction
         of the inverse variance
 
@@ -56,8 +62,8 @@ class SdssCalibrationCorrection(Correction):
         forest: Forest
         A Forest instance to which the correction is applied
 
-        Raises
-        ------
+        Raise
+        -----
         CorrectionError if forest instance does not have the attribute
         'log_lambda'
         """

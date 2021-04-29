@@ -1,14 +1,11 @@
 """This module defines the abstract class SdssCalibrationCorrection"""
 import logging
+
 import numpy as np
 
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
 from picca.delta_extraction.utils import ABSORBER_IGM
-
-# create logger
-module_logger = logging.getLogger(__name__)
-
 
 class SdssOpticalDepthCorrection(Correction):
     """Class to correct for optical depths contribution in SDSS spectra
@@ -35,7 +32,7 @@ class SdssOpticalDepthCorrection(Correction):
     """
 
     def __init__(self, config):
-        """Initializes class instance.
+        """Initialize class instance.
 
         Arguments
         ---------
@@ -76,7 +73,7 @@ class SdssOpticalDepthCorrection(Correction):
                                   "should have the same number of entries")
 
     def apply_correction(self, forest):
-        """Applies the correction. Correction is applied by dividing the
+        """Apply the correction. Correction is applied by dividing the
         data flux by the loaded correction, and the subsequent correction
         of the inverse variance
 

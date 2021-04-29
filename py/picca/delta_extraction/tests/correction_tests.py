@@ -1,18 +1,19 @@
 """This file contains tests related to Correction and its childs"""
+from configparser import ConfigParser
+import copy
 import os
 import unittest
-import copy
-from configparser import ConfigParser
+
 import numpy as np
 
 from picca.delta_extraction.correction import Correction
-from picca.delta_extraction.errors import CorrectionError
 from picca.delta_extraction.corrections.sdss_calibration_correction import SdssCalibrationCorrection
 from picca.delta_extraction.corrections.sdss_dust_correction import SdssDustCorrection
 from picca.delta_extraction.corrections.sdss_ivar_correction import SdssIvarCorrection
 from picca.delta_extraction.corrections.sdss_optical_depth_correction import (
     SdssOpticalDepthCorrection
 )
+from picca.delta_extraction.errors import CorrectionError
 from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import reset_logger
@@ -21,9 +22,21 @@ from picca.delta_extraction.tests.test_utils import forest1_log_lambda, forest1
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class CorrectionTest(AbstractTest):
-    """Test Correction and its childs."""
+    """Test Correction and its childs.
+
+    Methods
+    -------
+    compare_ascii (from AbstractTest)
+    compare_fits (from AbstractTest)
+    setUp (from AbstractTest)
+    test_correction
+    test_sdss_calibration_correction
+    test_sdss_dust_correction
+    test_sdss_ivar_correction
+    test_sdss_optical_depth_correction
+    """
     def test_correction(self):
-        """Tests Abstract class Correction
+        """Test Abstract class Correction
 
         Load a Correction instace and check that method apply_correction is
         not initialized.
@@ -37,7 +50,7 @@ class CorrectionTest(AbstractTest):
             correction.apply_correction(forest)
 
     def test_sdss_calibration_correction(self):
-        """Tests correct initialisation and inheritance for class
+        """Test correct initialisation and inheritance for class
         SdssCalibrationCorrection
 
         Load a SdssCalibrationCorrection instace and check that it is
@@ -62,7 +75,7 @@ class CorrectionTest(AbstractTest):
                                     np.ones_like(forest1_log_lambda)))
 
     def test_sdss_dust_correction(self):
-        """Tests correct initialisation and inheritance for class
+        """Test correct initialisation and inheritance for class
         SdssDustCorrection
 
         Load a SdssDustCorrection instace and check that it is
@@ -99,7 +112,7 @@ class CorrectionTest(AbstractTest):
         self.assertTrue(correction.extinction_bv_map.get(100000) == 1/3.5)
 
     def test_sdss_ivar_correction(self):
-        """Tests correct initialisation and inheritance for class
+        """Test correct initialisation and inheritance for class
         SdssIvarCorrection
 
         Load a SdssIvarCorrection instace and check that it is
@@ -124,7 +137,7 @@ class CorrectionTest(AbstractTest):
                                     np.ones_like(forest1_log_lambda)))
 
     def test_sdss_optical_depth_correction(self):
-        """Tests correct initialisation and inheritance for class
+        """Test correct initialisation and inheritance for class
         OpticalDepthCorrection
 
         Load a SdssIvarCorrection instace and check that it is

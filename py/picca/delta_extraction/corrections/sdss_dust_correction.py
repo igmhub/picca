@@ -1,11 +1,12 @@
-"""This module defines the abstract class SdssCalibrationCorrection"""
+"""This module defines the class SdssCalibrationCorrection. It also defines
+the function unred (https://github.com/sczesla/PyAstronomy in /src/pyasl/asl/unred)
+to compute the reddening correction."""
 import fitsio
 import numpy as np
 from scipy import interpolate
 
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
-
 
 defaults = {
     "extinction_conversion_r": 3.793,
@@ -25,12 +26,18 @@ class SdssDustCorrection(Correction):
     B-V extinction due to dust. Keys are THING_ID
     """
     def __init__(self, config):
-        """Initializes class instance.
+        """Initialize class instance.
 
         Arguments
         ---------
         config: configparser.SectionProxy
         Parsed options to initialize class
+
+        Raise
+        -----
+        CorrectionError if input file does not have extension CATALOG
+        CorrectionError if input file does not have fields THING_ID and/or
+        EXTINCTION in extension CATALOG
         """
         filename = config.get("filename")
         extinction_conversion_r = config.getfloat("extinction_conversion_r")
@@ -53,7 +60,7 @@ class SdssDustCorrection(Correction):
         self.extinction_bv_map = dict(zip(thingid, ext))
 
     def apply_correction(self, forest):
-        """Applies the correction. Correction is computed using the unread
+        """Apply the correction. Correction is computed using the unread
         function and applied by dividing the data flux by the loaded correction,
         and the subsequent correction of the inverse variance. If the forest
         instance has the attribute exposures_diff and it is not None, it is
@@ -64,8 +71,8 @@ class SdssDustCorrection(Correction):
         forest: Forest
         A Forest instance to which the correction is applied
 
-        Raises
-        ------
+        Raise
+        -----
         CorrectionError if forest instance does not have the attribute
         'log_lambda'
         """

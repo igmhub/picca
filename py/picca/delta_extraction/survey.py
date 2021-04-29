@@ -6,7 +6,7 @@ objects.
 import os
 import time
 import logging
-from numba import jit, prange
+from numba import prange#, jit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.config import Config
@@ -27,11 +27,15 @@ class Survey:
     __init__
     apply_corrections
     apply_masks
+    compute_expected_flux
+    extract_deltas
+    filter_forests
+    initialize_folders
     load_config
-    print
     read_corrections
     read_data
     read_masks
+    save_deltas
 
     Attributes
     ----------
@@ -43,17 +47,21 @@ class Survey:
     like calibration correction, ivar correction, dust correction, ...
 
     data: Data
-    A list of Forest from which to compute the deltas.
+    A Data instance containing the loaded Forests
+
+    expected_flux: ExpectedFlux
+    An ExpectedFlux instance to compute the expected flux in each Forest and
+    extract the deltas
+
+    logger: logging.Logger
+    Logger object
 
     masks: list of Mask
     Mask corrections to be applied to individual spectra. This includes things
     like absorber mask, DLA mask, ...
-
-    print: function
-    Print function with the level of verbosity specified in the coniguration
     """
     def __init__(self):
-        """Initializes class instance"""
+        """Initialize class instance"""
         self.logger = logging.getLogger('picca.delta_extraction.survey.Survey')
         self.config = None
         self.corrections = None
@@ -61,23 +69,9 @@ class Survey:
         self.data = None
         self.expected_flux = None
 
-    @jit(nopython=True, parallel=True)
-    def extract_deltas(self):
-        """Computes the delta fields"""
-        t0 = time.time()
-        self.logger.info("Extracting deltas")
-        # pylint: disable=not-an-iterable
-        # prange is used to signal jit of parallelisation but is otherwise
-        # equivalent to range
-        for forest_index in prange(len(self.data.forests)):
-            self.expected_flux.extract_delta(self.data.forests[forest_index])
-
-        t1 = time.time()
-        self.logger.info(f"Time spent extracting deltas: {t1-t0}")
-
     #@jit(nopython=True, parallel=True)
     def apply_corrections(self):
-        """Applies the corrections. To be run after self.read_corrections()"""
+        """Apply the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
         self.logger.info("Applying corrections")
 
@@ -93,7 +87,7 @@ class Survey:
 
     #@jit(nopython=True, parallel=True)
     def apply_masks(self):
-        """Applies the corrections. To be run after self.read_corrections()"""
+        """Apply the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
         self.logger.info("Applying masks")
 
@@ -108,11 +102,11 @@ class Survey:
         self.logger.info(f"Time spent applying masks: {t1-t0}")
 
     def compute_expected_flux(self):
-        """Computes the expected flux.
+        """Compute the expected flux.
         This includes the quasar continua and the mean transimission.
 
-        Raises
-        ------
+        Raise
+        -----
         DeltaExtractionError selected mean expected flux object does not have
         the correct type
         """
@@ -135,15 +129,29 @@ class Survey:
         t1 = time.time()
         self.logger.info(f"Time spent computing the mean expected flux: {t1-t0}")
 
+    #@jit(nopython=True, parallel=True)
+    def extract_deltas(self):
+        """Compute the delta fields"""
+        t0 = time.time()
+        self.logger.info("Extracting deltas")
+        # pylint: disable=not-an-iterable
+        # prange is used to signal jit of parallelisation but is otherwise
+        # equivalent to range
+        for forest_index in prange(len(self.data.forests)):
+            self.expected_flux.extract_delta(self.data.forests[forest_index])
+
+        t1 = time.time()
+        self.logger.info(f"Time spent extracting deltas: {t1-t0}")
+
     def filter_forests(self):
-        """Removes forests that do not meet quality standards"""
+        """Remove forests that do not meet quality standards"""
         self.data.filter_forests()
 
     def initialize_folders(self):
         """Initialize output folders
 
-        Raises
-        ------
+        Raise
+        -----
         DeltaExtractionError if the output path was already used and the
         overwrite is not selected
         """
@@ -162,7 +170,7 @@ class Survey:
                                        "elsewhere")
 
     def load_config(self, config_file):
-        """Loads the configuration of the run, sets up the print function
+        """Load the configuration of the run, sets up the print function
         that will be used to print, and initializes the saving folders
 
         Arguments
@@ -174,10 +182,10 @@ class Survey:
         self.config = Config(config_file)
 
     def read_corrections(self):
-        """Reads the spectral corrections.
+        """Read the spectral corrections.
 
-        Raises
-        ------
+        Raise
+        -----
         DeltaExtractionError when any of the read correction do not have the
         correct type.
         """
@@ -201,11 +209,11 @@ class Survey:
         self.logger.info(f"Time spent reading Corrections: {t1-t0}")
 
     def read_data(self):
-        """Reads the data.
+        """Read the data.
 
-        Raises
-        ------
-        DeltaExtractionError when data could not be read
+        Raise
+        -----
+        DeltaExtractionError when data cannot be read
         """
         t0 = time.time()
         self.logger.info("Reading data")
@@ -232,10 +240,10 @@ class Survey:
         self.logger.info(f"Time spent reading data: {t1-t0}")
 
     def read_masks(self):
-        """Reads the spectral masks.
+        """Read the spectral masks.
 
-        Raises
-        ------
+        Raise
+        -----
         DeltaExtractionError when any of the read correction do not have the
         correct type.
         """
@@ -259,7 +267,7 @@ class Survey:
         self.logger.info(f"Time spent reading masks: {t1-t0}")
 
     def save_deltas(self):
-        """Saves the deltas."""
+        """Save the deltas."""
         t0 = time.time()
         self.logger.info("Saving deltas")
         self.data.save_deltas(self.config.out_dir+"Delta/")

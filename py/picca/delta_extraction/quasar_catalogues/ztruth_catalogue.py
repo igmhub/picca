@@ -2,22 +2,22 @@
 files from DESI
 """
 import logging
+
 from astropy.table import Table
 import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
 
-# create logger
-module_logger = logging.getLogger(__name__)
-
 class ZtruthCatalogue(QuasarCatalogue):
     """Reads the z_truth catalogue from DESI
 
     Methods
     -------
+    trim_catalogue (from QuasarCatalogue)
     __init__
     _parse_config
+    read_catalogue
 
 
     Attributes
@@ -28,17 +28,16 @@ class ZtruthCatalogue(QuasarCatalogue):
     max_num_spec: int or None (from QuasarCatalogue)
     Maximum number of spectra to read. None for no maximum
 
-    z_min: float (from QuasarCatalogue)
-    Minimum redshift. Quasars with redshifts lower than z_min will be
-    discarded
-
     z_max: float (from QuasarCatalogue)
     Maximum redshift. Quasars with redshifts higher than or equal to
     z_max will be discarded
 
+    z_min: float (from QuasarCatalogue)
+    Minimum redshift. Quasars with redshifts lower than z_min will be
+    discarded
+
     filename: str
     Filename of the z_truth catalogue
-
     """
     def __init__(self, config):
         """Initialize class instance
@@ -60,7 +59,10 @@ class ZtruthCatalogue(QuasarCatalogue):
 
         self.catalogue = catalogue
 
-        super().trim_catalogue()
+        # if there is a maximum number of spectra, make sure they are selected
+        # in a contiguous regions
+        if self.max_num_spec is not None:
+            super().trim_catalogue()
 
     def _parse_config(self, config):
         """Parse the configuration options
@@ -72,17 +74,18 @@ class ZtruthCatalogue(QuasarCatalogue):
 
         Raise
         -----
-        DataError upon missing required variables
+        QuasarCatalogueError upon missing required variables
         """
         self.filename = config.get("catalogue")
         if self.filename is None:
-            raise QuasarCatalogueError("Missing argument 'catalogue' required by ZtruthCatalogue")
+            raise QuasarCatalogueError("Missing argument 'catalogue' required "
+                                       "by ZtruthCatalogue")
 
     def read_catalogue(self):
         """Read the z_truth catalogue
 
-        Returns
-        -------
+        Return
+        ------
         catalogue: Astropy.table.Table
         Table with the catalogue
         """
