@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Compute the 1D auto or cross-correlation between delta field from the same
 forest.
 """

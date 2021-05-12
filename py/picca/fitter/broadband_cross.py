@@ -1,10 +1,9 @@
-
-from picca.fitter.utils import L
 import numpy as np
 from scipy import linalg
 import sys
 
-from picca.utils import userprint
+from .utils import L
+from ..utils import userprint
 
 class model:
     def __init__(self,data,imin,imax,istep,ellmin,ellmax,ellstep,distort,bb_rPerp_rParal):

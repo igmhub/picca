@@ -11,7 +11,7 @@ import numpy as np
 from healpy import query_disc
 from numba import jit
 
-from picca.utils import userprint
+from .utils import userprint
 
 num_bins_r_par = None
 num_bins_r_trans = None

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Computes the distortion matrix between two delta fields.
 
 This module follow the procedure described in sections 3.5 of du Mas des

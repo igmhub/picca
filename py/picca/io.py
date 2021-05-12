@@ -27,10 +27,10 @@ import fitsio
 from astropy.table import Table
 import warnings
 
-from picca.utils import userprint
-from picca.data import Forest, Delta, QSO
-from picca.prep_pk1d import exp_diff, spectral_resolution
-from picca.prep_pk1d import spectral_resolution_desi
+from .utils import userprint
+from .data import Forest, Delta, QSO
+from .prep_pk1d import exp_diff, spectral_resolution
+from .prep_pk1d import spectral_resolution_desi
 
 
 def read_dlas(filename):

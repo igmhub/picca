@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Compute the wick covariance for the auto-correlation of forests
 
 The wick covariance is computed as explained in Delubac et al. 2015

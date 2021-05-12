@@ -8,9 +8,9 @@ import numpy as np
 import iminuit
 import fitsio
 
-from picca import constants
-from picca.utils import userprint, unred
-from picca.dla import DLA
+from . import constants
+from .utils import userprint, unred
+from .dla import DLA
 
 class QSO(object):
     """Class to represent quasar objects.
