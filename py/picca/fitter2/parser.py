@@ -8,9 +8,9 @@ if (sys.version_info > (3, 0)):
     import configparser as ConfigParser
 else:
     import ConfigParser
-
 import fitsio
-from picca.utils import userprint
+
+from ..utils import userprint
 from . import data, utils, priors
 
 def parse_chi2(filename):

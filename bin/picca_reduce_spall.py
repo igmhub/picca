@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 from astropy.table import Table
 import argparse
 import numpy as np

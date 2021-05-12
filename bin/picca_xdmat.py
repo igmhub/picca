@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Computes the distortion matrix between of the cross-correlation delta x
 object
 

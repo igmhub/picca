@@ -3,7 +3,7 @@ from . import utils
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
 
-from picca.utils import userprint
+from ..utils import userprint
 
 def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)

@@ -2,9 +2,9 @@ import numpy as np
 import fitsio
 import sys
 
-from picca.utils import userprint
-from picca.fitter import utils
-from picca.fitter.cosmo import model as cosmo_model
+from ..utils import userprint
+from . import utils
+from .cosmo import model as cosmo_model
 
 
 class model:

@@ -1,7 +1,7 @@
-
-from picca.fitter.utils import L
 import numpy as np
 from scipy import linalg
+
+from .utils import L
 
 class model:
     def __init__(self,data,imin,imax,istep,ellmin,ellmax,ellstep,distort):

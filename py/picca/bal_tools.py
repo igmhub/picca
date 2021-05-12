@@ -8,7 +8,8 @@ See the respective docstrings for more details
 
 import fitsio
 import numpy as np
-from picca import constants
+
+from . import constants
 
 
 def read_bal(filename):  ##Based on read_dla from picca/py/picca/io.py

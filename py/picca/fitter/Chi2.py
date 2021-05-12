@@ -1,15 +1,14 @@
 import numpy as np
-from picca.fitter.data import data
 from scipy import stats
 import iminuit
 import types
 import copy
-
-from picca.utils import userprint
-from picca.fitter import broadband
-from picca.fitter import broadband_cross
 import sys
 
+from .data import data
+from ..utils import userprint
+from . import broadband
+from . import broadband_cross
 
 class Chi2:
 
