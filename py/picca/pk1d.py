@@ -13,8 +13,8 @@ See the respective docstrings for more details
 import numpy as np
 from scipy.fftpack import fft
 
-from picca import constants
-from picca.utils import userprint
+from . import constants
+from .utils import userprint
 
 
 def split_forest(num_parts,

@@ -5,7 +5,7 @@ from scipy.interpolate import RegularGridInterpolator
 import numpy.fft as fft
 import time
 
-from picca.utils import userprint
+from ..utils import userprint
 
 def extrap(x, xp, yp):
     """np.interp function with linear extrapolation"""

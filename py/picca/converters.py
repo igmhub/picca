@@ -15,8 +15,8 @@ import numpy as np
 import fitsio
 import healpy
 
-from picca.data import Delta
-from picca.utils import userprint
+from .data import Delta
+from .utils import userprint
 
 
 def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
