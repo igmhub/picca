@@ -13,7 +13,6 @@ from picca.delta_extraction.utils import class_from_string, setup_logger
 default_config = {
     "general": {
         "overwrite": False,
-        "quiet": False,
     },
     "data": {
     },
