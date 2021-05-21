@@ -74,8 +74,8 @@ def picca_deltas(b,time, in_dir, out_dir, drq, email=None,debug=False,mode="desi
     elif 'true' in out_dir:
         header = get_header(time, b.outdir, name="deltas_from_true_cont",  email=email)
         header += "/usr/bin/time -f '%eReal %Uuser %Ssystem %PCPU %M' srun -n 1 -c 64 delta_from_true_cont.py " + \
-                    "--in-dir_trans {} ".format(in_dir.replace("eboss-raw/",'').replace("spectra-16/",'')) + \
-                    "--in-dir_spec {} --zcat {}".format(in_dir, drq) + \
+                    "--in-dir-trans {} ".format(in_dir.replace("eboss-raw/",'').replace("spectra-16/",'')) + \
+                    "--in-dir-spec {} --zcat {} ".format(drq.replace('zcat_desi_drq.fits','/spectra-16/'), drq) + \
                     "--out-dir {}/deltas/ ".format(out_dir)
     else:
         header = get_header(time, b.outdir, name="picca_deltas",  email=email)
@@ -122,7 +122,7 @@ def cf(b,time, zint, outdir, email=None, fidOm = None, fidPk = None, fidOr = Non
         if '0.3' in outdir:
             time_exp = "00:50:00"
         else:
-            time_exp = "00:10:00"
+            time_exp = "00:20:00"
         
         if args.dmat_file is None and 'raw' not in outdir and 'true' not in outdir:
             exp_batch = export(time_exp,
@@ -208,7 +208,7 @@ def xcf(b,time, drq, zint, outdir, email=None,fidOm=None, fidPk=None, fidOr = No
         if '0.3' in outdir:
             time_exp = "00:50:00"
         else:
-            time_exp = "00:10:00"
+            time_exp = "00:20:00"
         
         if args.dmat_file is None and 'raw' not in outdir and 'true' not in outdir:
             exp_batch = export(time_exp,
