@@ -784,8 +784,7 @@ def desi_convert_delta_files_from_true_cont(obj_path,
         (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame))
     
     
-    log_file = open(os.path.expandvars(out_dir+'/input.log'), 'w')
-
+    log_file = open(os.path.expandvars(out_dir.replace('deltas','')+'/input.log'), 'w')
     # Read data
     (data, num_data, nside,
      healpy_pix_ordering) = io.read_data(os.path.expandvars(in_dir_spectra),
@@ -1020,7 +1019,7 @@ def desi_convert_delta_files_from_true_cont(obj_path,
         stack_log_lambda = np.arange(log_lambda_min,log_lambda_max,delta_log_lambda)
     
     results = fitsio.FITS(out_dir.replace('deltas','')+"/iter.fits.gz",'rw',clobber=True)
-    print(results)
+
     if not trans_from_file:
         results.write([np.array(tid)],
                       names=['THINGID'],
