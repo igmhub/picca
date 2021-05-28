@@ -496,11 +496,17 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(comments[3] == "Pixel weights")
 
         if isinstance(test_obj, Pk1dForest):
-            self.assertTrue(names[4] == "DIFF")
-            self.assertTrue(np.allclose(cols[4], test_obj.exposures_diff))
+            self.assertTrue(names[4] == "IVAR")
+            self.assertTrue(np.allclose(cols[4], test_obj.ivar))
             self.assertTrue(units[4] == "Flux units")
             self.assertTrue(
-                comments[4] == "Difference. Check input spectra for units")
+                comments[4] == "Inverse variance. Check input spectra for units")
+
+            self.assertTrue(names[5] == "DIFF")
+            self.assertTrue(np.allclose(cols[5], test_obj.exposures_diff))
+            self.assertTrue(units[5] == "Flux units")
+            self.assertTrue(
+                comments[5] == "Difference. Check input spectra for units")
 
     def assert_get_header(self, test_obj):
         """Assert the correct properties of the return of method get_data

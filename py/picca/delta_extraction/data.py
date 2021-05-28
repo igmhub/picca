@@ -72,6 +72,7 @@ class Data:
         self.logger.progress(f"Input sample has {len(self.forests)} forests")
         remove_indexs = []
         for index, forest in enumerate(self.forests):
+            print(f"Forest {forest.los_id} has length {len(forest.log_lambda)}")
             if forest.flux.size < self.min_num_pix:
                 self.logger.progress(
                     f"Rejected forest with thingid {forest.thingid} "

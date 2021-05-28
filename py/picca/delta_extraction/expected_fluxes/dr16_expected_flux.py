@@ -8,6 +8,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
+from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux
 

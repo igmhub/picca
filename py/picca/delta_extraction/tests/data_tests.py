@@ -102,6 +102,34 @@ class DataTest(AbstractTest):
         """Test DesiData when run using minisv option"""
         # TODO: add test
 
+    def test_sdss_data_filter_forest(self):
+        """Test SdssData when run in spec mode"""
+        config = ConfigParser()
+        data_kwargs = sdss_data_kwargs.copy()
+        data_kwargs.update({"mode": "spec",
+                            #"z min": 0,
+                            #"z max": 10.
+                            "lambda min": 3600.0,
+                            "lambda max": 7235.0,
+                            "lambda min rest frame": 2900.0,
+                            "lambda max rest frame": 3120.0,
+                            })
+        config.read_dict({
+            "data": data_kwargs
+        })
+        data = SdssData(config["data"])
+
+        self.assertTrue(len(data.forests) == 24)
+        self.assertTrue(data.min_num_pix == 50)
+        self.assertTrue(data.analysis_type == "BAO 3D")
+        self.assertTrue(
+            all(isinstance(forest, SdssForest) for forest in data.forests))
+
+        # filter forests
+        data.filter_forests()
+        print("Final number of forests:", len(data.forests))
+        self.assertTrue(len(data.forests) == 22)
+
     def test_sdss_data_spec(self):
         """Test SdssData when run in spec mode"""
         config = ConfigParser()

@@ -248,7 +248,7 @@ class ExpectedFluxTest(AbstractTest):
         for forest in data.forests:
             expected_flux.compute_continuum(forest)
 
-        # compute variance functions and statistics
+        # compute mean quasar continuum
         expected_flux.compute_mean_cont_log(data.forests)
 
         # load the expected results
@@ -360,11 +360,11 @@ class ExpectedFluxTest(AbstractTest):
 
         # save iter_out_prefix for iteration 0
         expected_flux.save_iteration_step(0, out_dir)
-        self.compare_fits(out_file, test_file)
+        self.compare_fits(test_file, out_file)
 
         # save iter_out_prefix for final iteration
         expected_flux.save_iteration_step(-1, out_dir)
-        self.compare_fits(out_file2, test_file2)
+        self.compare_fits(test_file2, out_file2)
 
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin")

@@ -73,12 +73,12 @@ setup_pk1d_forest("LYA")
 # has:
 # * 1 DLA in dummy_absorbers_cat.fits.gz
 # * 1 absorber in dummy_absorbers_cat.fits.gz
-forest1_log_lambda = np.arange(3.556, 3.655, 1e-3)
+forest1_log_lambda = np.arange(3.562, 3.62, 1e-3)
 kwargs1 = {
     "los_id": 9999,
     "ra": 0.15,
     "dec": 0.0,
-    "z": 3.5,
+    "z": 2.5,
     "flux": np.ones_like(forest1_log_lambda),
     "ivar": np.ones_like(forest1_log_lambda)*4,
     "log_lambda": forest1_log_lambda,
@@ -99,12 +99,12 @@ assert np.allclose(forest1.transmission_correction,
 # has:
 # * 1 DLA in dummy_absorbers_cat.fits.gz
 # * 1 absorber in dummy_absorbers_cat.fits.gz
-forest2_log_lambda = np.arange(3.556, 3.655, 1e-3)
+forest2_log_lambda = np.arange(3.562, 3.62, 1e-3)
 kwargs2 = {
     "los_id": 9999,
     "ra": 0.15,
     "dec": 0.0,
-    "z": 3.5,
+    "z": 2.5,
     "flux": np.ones_like(forest2_log_lambda),
     "ivar": np.ones_like(forest2_log_lambda)*4,
     "log_lambda": forest2_log_lambda,
@@ -125,12 +125,12 @@ assert np.allclose(forest2.transmission_correction,
 # has:
 # * 0 DLA in dummy_absorbers_cat.fits.gz
 # * 0 absorber in dummy_absorbers_cat.fits.gz
-forest3_log_lambda = np.arange(3.556, 3.655, 1e-3)
+forest3_log_lambda = np.arange(3.562, 3.62, 1e-3)
 kwargs3 = {
     "los_id": 9999,
     "ra": 0.15,
     "dec": 0.0,
-    "z": 3.5,
+    "z": 2.5,
     "flux": np.ones_like(forest3_log_lambda),
     "ivar": np.ones_like(forest3_log_lambda)*4,
     "log_lambda": forest3_log_lambda,
