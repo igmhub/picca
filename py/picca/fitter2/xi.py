@@ -221,7 +221,7 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     '''
     Implements eq. 7.77 from S. Dodelson's Modern Cosmology book
     '''
-    userprint('Calculating growth factor for Om = {}, OL = {}'.format(Om, OL))
+    userprint('Calculating growth factor')
 
     def hubble(z, Om, OL):
         return np.sqrt(Om*(1+z)**3 + OL + (1-Om-OL)*(1+z)**2)
