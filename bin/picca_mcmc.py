@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import iminuit
 import types
 import configargparse
@@ -7,7 +6,7 @@ import emcee
 import numpy as np
 from numpy import random
 
-from picca.utils import print
+from picca.utils import userprint
 from picca.fitter import parameters, cosmo, Chi2, metals
 
 
@@ -53,10 +52,10 @@ if not dic_init['metals'] is None:
         kw['fix_'+i]=True
 
     for n,v in zip(met.pname,met.pinit):
-        print(n,v)
+        userprint(n,v)
         kw[n]=v
         kw['error_'+n]=0.005
-    print()
+    userprint()
 
 
 m=cosmo.model(dic_init)
@@ -70,7 +69,7 @@ if not dic_init['data_autoQSO'] is None:
 chi2=Chi2.Chi2(dic_init,cosmo=m,met=met)
 
 for n,v in zip(m.pall,m.pinit):
-    #print(n,v)
+    #userprint(n,v)
     kw[n]=v
     if abs(v)!=0:
         kw['error_'+n]=abs(v)/10.

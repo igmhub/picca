@@ -1,17 +1,19 @@
-import scipy as sp
+import numpy as np
 from . import utils
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
+
+from ..utils import userprint
 
 def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
 
     ap, at = utils.cosmo_fit_func(pars)
     rp = r*mu
-    rt = r*sp.sqrt(1-mu**2)
+    rt = r*np.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
-    ar = sp.sqrt(arp**2+art**2)
+    ar = np.sqrt(arp**2+art**2)
     amu = arp/ar
 
     xi_full = utils.Pk2Xi(ar, amu, k, pk_full, ell_max = ell_max)
@@ -38,7 +40,7 @@ def cache_xi_drp(function):
         pair = (name, tracer1['name'], tracer2['name'], hash(t))
 
         recalc = True
-        if pair in cache and sp.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
+        if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at, drp]):
             recalc = False
 
         if not recalc:
@@ -60,10 +62,10 @@ def xi_drp(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, 
         drp = pars['drp_'+tracer2['name']]
     ap, at = utils.cosmo_fit_func(pars)
     rp = r*mu + drp
-    rt = r*sp.sqrt(1-mu**2)
+    rt = r*np.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
-    ar = sp.sqrt(arp**2+art**2)
+    ar = np.sqrt(arp**2+art**2)
     amu = arp/ar
 
     xi_full = utils.Pk2Xi(ar, amu, k, pk_full, ell_max = ell_max)
@@ -89,7 +91,7 @@ def cache_kaiser(function):
         pair = (name, tracer1['name'], tracer2['name'], hash(t))
 
         recalc = True
-        if pair in cache and sp.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
+        if pair in cache and np.allclose(cache[pair][0][2:], [beta1, beta2, ap, at]):
             recalc = False
 
         if not recalc:
@@ -115,13 +117,13 @@ def xi_qso_radiation(r, mu, tracer1, tracer2, **pars):
     elif tracer2['type']=='discrete':
         drp = pars['drp_'+tracer2['name']]
     rp = r*mu + drp
-    rt = r*sp.sqrt(1-mu**2)
-    r_shift = sp.sqrt(rp**2.+rt**2.)
+    rt = r*np.sqrt(1-mu**2)
+    r_shift = np.sqrt(rp**2.+rt**2.)
     mu_shift = rp/r_shift
 
     xi_rad = pars["qso_rad_strength"]/(r_shift**2.)
     xi_rad *= 1.-pars["qso_rad_asymmetry"]*(1.-mu_shift**2.)
-    xi_rad *= sp.exp(-r_shift*( (1.+mu_shift)/pars["qso_rad_lifetime"] + 1./pars["qso_rad_decrease"]) )
+    xi_rad *= np.exp(-r_shift*( (1.+mu_shift)/pars["qso_rad_lifetime"] + 1./pars["qso_rad_decrease"]) )
 
     return xi_rad
 
@@ -150,10 +152,10 @@ def xi_relativistic(r, mu, k, pk_lin, tracer1, tracer2, **pars):
 
     ap, at = utils.cosmo_fit_func(pars)
     rp = r*mu + drp
-    rt = r*sp.sqrt(1-mu**2)
+    rt = r*np.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
-    ar = sp.sqrt(arp**2+art**2)
+    ar = np.sqrt(arp**2+art**2)
     amu = arp/ar
 
     xi_rel = utils.Pk2XiRel(ar, amu, k, pk_lin, pars)
@@ -184,10 +186,10 @@ def xi_asymmetry(r, mu, k, pk_lin, tracer1, tracer2, **pars):
 
     ap, at = utils.cosmo_fit_func(pars)
     rp = r*mu + drp
-    rt = r*sp.sqrt(1-mu**2)
+    rt = r*np.sqrt(1-mu**2)
     arp = ap*rp
     art = at*rt
-    ar = sp.sqrt(arp**2+art**2)
+    ar = np.sqrt(arp**2+art**2)
     amu = arp/ar
 
     xi_asy = utils.Pk2XiAsy(ar, amu, k, pk_lin, pars)
@@ -203,7 +205,7 @@ def cache_growth_factor_de(function):
         Om = kwargs['Om']
         OL = kwargs['OL']
         pair = ('Om', 'OL')
-        if pair not in cache.keys() or not sp.allclose(cache[pair], (Om,OL)):
+        if pair not in cache.keys() or not np.allclose(cache[pair], (Om,OL)):
             cache[pair] = (Om, OL)
             cache[1] = cached_growth_factor_de(*args, **kwargs)
 
@@ -219,10 +221,10 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     '''
     Implements eq. 7.77 from S. Dodelson's Modern Cosmology book
     '''
-    print('Calculating growth factor for Om = {}, OL = {}'.format(Om, OL))
+    userprint('Calculating growth factor for Om = {}, OL = {}'.format(Om, OL))
 
     def hubble(z, Om, OL):
-        return sp.sqrt(Om*(1+z)**3 + OL + (1-Om-OL)*(1+z)**2)
+        return np.sqrt(Om*(1+z)**3 + OL + (1-Om-OL)*(1+z)**2)
 
     def dD1(a, Om, OL):
         z = 1/a-1
@@ -231,8 +233,8 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     ## Calculate D1 in 100 values of z between 0 and zmax, then interpolate
     nbins = 100
     zmax = 5.
-    z = zmax*sp.arange(nbins, dtype=float)/(nbins-1)
-    D1 = sp.zeros(nbins, dtype=float)
+    z = zmax*np.arange(nbins, dtype=float)/(nbins-1)
+    D1 = np.zeros(nbins, dtype=float)
     pars = (Om, OL)
     for i in range(nbins):
         a = 1/(1+z[i])
@@ -270,8 +272,8 @@ def broadband_sky(r, mu, name=None, bin_size_rp=None, *pars, **kwargs):
     '''
 
     rp = r*mu
-    rt = r*sp.sqrt(1-mu**2)
-    cor = kwargs[name+'-scale-sky']/(kwargs[name+'-sigma-sky']*sp.sqrt(2.*sp.pi))*sp.exp(-0.5*(rt/kwargs[name+'-sigma-sky'])**2)
+    rt = r*np.sqrt(1-mu**2)
+    cor = kwargs[name+'-scale-sky']/(kwargs[name+'-sigma-sky']*np.sqrt(2.*np.pi))*np.exp(-0.5*(rt/kwargs[name+'-sigma-sky'])**2)
     w = (rp>=0.) & (rp<bin_size_rp)
     cor[~w] = 0.
 
@@ -305,13 +307,13 @@ def broadband(r, mu, deg_r_min=None, deg_r_max=None,
     r2 = mu
     if rp_rt:
         r1 = (r/100)*mu
-        r2 = (r/100)*sp.sqrt(1-mu**2)
+        r2 = (r/100)*np.sqrt(1-mu**2)
 
-    r1_pows = sp.arange(deg_r_min, deg_r_max+1, ddeg_r)
-    r2_pows = sp.arange(deg_mu_min, deg_mu_max+1, ddeg_mu)
+    r1_pows = np.arange(deg_r_min, deg_r_max+1, ddeg_r)
+    r2_pows = np.arange(deg_mu_min, deg_mu_max+1, ddeg_mu)
     BB = [kwargs['{} ({},{})'.format(name,i,j)] for i in r1_pows
             for j in r2_pows]
-    BB = sp.array(BB).reshape(-1,deg_r_max-deg_r_min+1)
+    BB = np.array(BB).reshape(-1,deg_r_max-deg_r_min+1)
 
     return (BB[:,:,None,None]*r1**r1_pows[:,None,None]*\
             r2**r2_pows[None,:,None]).sum(axis=(0,1,2))

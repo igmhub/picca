@@ -2,7 +2,7 @@
 
 import argparse
 
-from picca import utils
+from picca import converters
 
 if __name__ == '__main__':
 
@@ -26,4 +26,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    utils.desi_from_ztarget_to_drq(args.in_object_cat, args.out_object_cat, spectype=args.spectype, downsampling_z_cut=args.downsampling_z_cut, downsampling_nb=args.downsampling_nb)
+    converters.desi_from_ztarget_to_drq(args.in_object_cat, 
+                                        args.out_object_cat, 
+                                        spec_type=args.spectype, 
+                                        downsampling_z_cut=args.downsampling_z_cut, 
+                                        downsampling_num=args.downsampling_nb)

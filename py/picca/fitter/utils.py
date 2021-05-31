@@ -1,5 +1,4 @@
-
-import scipy as sp
+import numpy as np
 from scipy import special
 
 ### Legendre Polynomial
@@ -25,13 +24,13 @@ def qso_radiation_model(rp,rt,pars):
 
     ###
     rp_shift = rp+pars['drp']
-    r        = sp.sqrt( rp_shift**2. + rt**2.)
+    r        = np.sqrt( rp_shift**2. + rt**2.)
     mur      = rp_shift/r
 
     ###
     xi_rad  = pars['qso_rad_strength']/(r**2.)
     xi_rad *= 1.-pars['qso_rad_asymmetry']*(1.-mur**2.)
-    xi_rad *= sp.exp(-r*( (1.+mur)/pars['qso_rad_lifetime'] + 1./pars['qso_rad_decrease']) )
+    xi_rad *= np.exp(-r*( (1.+mur)/pars['qso_rad_lifetime'] + 1./pars['qso_rad_decrease']) )
 
     return xi_rad
 
@@ -68,22 +67,3 @@ absorber_IGM = {
     'SiII(1190)'  : 1190.4158,
     'LYB'         : 1025.7223,
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -3,12 +3,14 @@
 import os
 import argparse
 import fitsio
-import scipy as sp
-from scipy.constants import speed_of_light
+import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 import camb
 import nbodykit.cosmology.correlation
+
+from picca.utils import userprint
+from picca.constants import SPEED_LIGHT
 
 if __name__ == '__main__':
 
@@ -42,7 +44,7 @@ if __name__ == '__main__':
     maxkh = 1.1525e3
     npoints = 814
 
-    print('INFO: running CAMB on {}'.format(args.ini))
+    userprint('INFO: running CAMB on {}'.format(args.ini))
     pars = camb.read_ini(os.path.expandvars(args.ini))
     pars.Transfer.kmax = maxkh
     if not args.z_ref is None:
@@ -76,12 +78,14 @@ if __name__ == '__main__':
     cat['TCMB'] = pars.TCMB
     cat['NS'] = pars.InitPower.ns
     cat['ZREF'] = pars.Transfer.PK_redshifts[0]
-    cat['SIGMA8'] = results.get_sigma8()[1]
-    cat['F'] = results.get_fsigma8()[0]/results.get_sigma8()[0]
+    cat['SIGMA8_ZREF'] = results.get_sigma8()[0]
+    cat['SIGMA8_Z0'] = results.get_sigma8()[1]
+    cat['F_ZREF'] = results.get_fsigma8()[0]/results.get_sigma8()[0]
+    cat['F_Z0'] = results.get_fsigma8()[1]/results.get_sigma8()[1]
     cat['ZDRAG'] = pars2['zdrag']
     cat['RDRAG'] = pars2['rdrag']
 
-    c = speed_of_light/1000. ## km/s
+    c = SPEED_LIGHT/1000. ## km/s
     h = cat['H0']/100.
     dh = c/(results.hubble_parameter(cat['ZREF'])/h)
     dm = (1.+cat['ZREF'])*results.angular_diameter_distance(cat['ZREF'])*h
@@ -98,23 +102,23 @@ if __name__ == '__main__':
     sb2_rmin = 150.*coef_Planck2015
     sb2_rmax = 190.*coef_Planck2015
     xi = nbodykit.cosmology.correlation.pk_to_xi(k,pk)
-    r = 10**sp.linspace(-7.,3.5,int(1e4))
+    r = np.logspace(-7., 3.5, 10000)
     xi = xi(r)
 
     def f_xiSB(r,am3,am2,am1,a0,a1):
         par = [am3,am2,am1,a0,a1]
-        model = sp.zeros((len(par),r.size))
+        model = np.zeros((len(par),r.size))
         tw = r!=0.
         model[0,tw] = par[0]/r[tw]**3
         model[1,tw] = par[1]/r[tw]**2
         model[2,tw] = par[2]/r[tw]**1
         model[3,tw] = par[3]
         model[4,:] = par[4]*r
-        model = sp.array(model)
+        model = np.array(model)
         return model.sum(axis=0)
 
     w = ((r>=sb1_rmin) & (r<sb1_rmax)) | ((r>=sb2_rmin) & (r<sb2_rmax))
-    sigma = 0.1*sp.ones(xi.size)
+    sigma = 0.1*np.ones(xi.size)
     sigma[(r>=sb1_rmin-2.) & (r<sb1_rmin+2.)] = 1.e-6
     sigma[(r>=sb2_rmax-2.) & (r<sb2_rmax+2.)] = 1.e-6
     popt, pcov = curve_fit(f_xiSB, r[w], xi[w], sigma=sigma[w])

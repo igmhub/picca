@@ -1,12 +1,12 @@
-from __future__ import print_function
 import os.path
-import scipy as sp
+import numpy as np
 import iminuit
 import time
 import h5py
 import sys
 from scipy.linalg import cholesky
 
+from ..utils import userprint
 from . import priors
 
 def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):
@@ -16,7 +16,7 @@ class chi2:
     def __init__(self,dic_init):
         self.zeff = dic_init['data sets']['zeff']
         self.data = dic_init['data sets']['data']
-        self.par_names = sp.unique([name for d in self.data for name in d.par_names])
+        self.par_names = np.unique([name for d in self.data for name in d.par_names])
         self.outfile = os.path.expandvars(dic_init['outfile'])
 
         self.k = dic_init['fiducial']['k']
@@ -41,9 +41,16 @@ class chi2:
             if 'covscaling' in dic_init['fast mc']:
                 self.scalefast_mc = dic_init['fast mc']['covscaling']
             else:
-                self.scalefast_mc = sp.ones(len(self.data))
+                self.scalefast_mc = np.ones(len(self.data))
             self.fidfast_mc = dic_init['fast mc']['fiducial']['values']
             self.fixfast_mc = dic_init['fast mc']['fiducial']['fix']
+            # if set to true, will not add randomness to FastMC mock
+            if 'forecast' in dic_init['fast mc']:
+                self.forecast_mc = dic_init['fast mc']['forecast']
+                if self.nfast_mc != 1:
+                    sys.exit('ERROR: Why forecast more than once?')
+            else:
+                self.forecast_mc = False
 
         if 'minos' in dic_init:
             self.minos_para = dic_init['minos']
@@ -64,10 +71,10 @@ class chi2:
         if self.verbosity == 1:
             del dic['SB']
             for p in sorted(dic.keys()):
-                print(p+" "+str(dic[p]))
+                userprint(p+" "+str(dic[p]))
 
-            print("Chi2: "+str(chi2))
-            print("---\n")
+            userprint("Chi2: "+str(chi2))
+            userprint("---\n")
         return chi2
 
     def _minimize(self):
@@ -98,7 +105,7 @@ class chi2:
         mig.migrad()
         mig.print_param()
 
-        print("INFO: minimized in {}".format(time.time()-t0))
+        userprint("INFO: minimized in {}".format(time.time()-t0))
         sys.stdout.flush()
         return mig
 
@@ -158,7 +165,7 @@ class chi2:
                 best_fit = self._minimize()
                 chi2_result = best_fit.fval
             except:
-                chi2_result = sp.nan
+                chi2_result = np.nan
             tresult = []
             for p in sorted(best_fit.values):
                 tresult += [best_fit.values[p]]
@@ -192,8 +199,8 @@ class chi2:
                         self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
         self.dic_chi2scan_result = {}
-        self.dic_chi2scan_result['params'] = sp.asarray(sp.append(sorted(self.best_fit.values),['fval']))
-        self.dic_chi2scan_result['values'] = sp.asarray(result)
+        self.dic_chi2scan_result['params'] = np.asarray(np.append(sorted(self.best_fit.values),['fval']))
+        self.dic_chi2scan_result['values'] = np.asarray(result)
 
         ### Set all parameters to where they were before
         for d in self.data:
@@ -210,13 +217,15 @@ class chi2:
     def fastMC(self):
         if not hasattr(self,"nfast_mc"): return
 
-        sp.random.seed(self.seedfast_mc)
+        np.random.seed(self.seedfast_mc)
         nfast_mc = self.nfast_mc
 
         for d, s in zip(self.data, self.scalefast_mc):
             d.co = s*d.co
             d.ico = d.ico/s
-            d.cho = cholesky(d.co)
+            # no need to compute Cholesky when computing forecast
+            if not self.forecast_mc:
+                d.cho = cholesky(d.co)
 
         self.fiducial_values = dict(self.best_fit.values).copy()
         for p in self.fidfast_mc:
@@ -246,8 +255,12 @@ class chi2:
         self.fast_mc_data = {}
         for it in range(nfast_mc):
             for d in self.data:
-                g = sp.random.randn(len(d.da))
-                d.da = d.cho.dot(g) + d.fiducial_model
+                # if computing forecast, do not add randomness
+                if self.forecast_mc:
+                    d.da = d.fiducial_model
+                else:
+                    g = np.random.randn(len(d.da))
+                    d.da = d.cho.dot(g) + d.fiducial_model
                 self.fast_mc_data[d.name+'_'+str(it)] = d.da
                 d.da_cut = d.da[d.mask]
 
@@ -271,9 +284,9 @@ class chi2:
                     self.best_fit.minos(var=var,sigma=sigma)
                 else:
                     if var in self.best_fit.list_of_fixed_param():
-                        print('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
+                        userprint('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
                     else:
-                        print('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
+                        userprint('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
 
     def export(self):
         f = h5py.File(self.outfile,"w")
@@ -335,6 +348,7 @@ class chi2:
             g.attrs['niterations'] = self.nfast_mc
             g.attrs['seed'] = self.seedfast_mc
             g.attrs['covscaling'] = self.scalefast_mc
+            g.attrs['forecast'] = self.forecast_mc
             if len(self.fidfast_mc) != 0:
                 fid = []
                 for p in self.fidfast_mc:
@@ -347,7 +361,7 @@ class chi2:
                     fiducial = g.create_dataset("{}_fiducial".format(d.name), d.da.shape, dtype = "f")
                     fiducial[...] = d.fiducial_model
             for p in self.fast_mc:
-                vals = sp.array(self.fast_mc[p])
+                vals = np.array(self.fast_mc[p])
                 if p == 'chi2':
                     d = g.create_dataset("{}".format(p), vals.shape, dtype="f")
                     d[...] = vals

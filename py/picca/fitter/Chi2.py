@@ -1,13 +1,14 @@
-import scipy as sp
-from picca.fitter.data import data
+import numpy as np
 from scipy import stats
 import iminuit
 import types
 import copy
-from picca.fitter import broadband
-from picca.fitter import broadband_cross
 import sys
 
+from .data import data
+from ..utils import userprint
+from . import broadband
+from . import broadband_cross
 
 class Chi2:
 
@@ -57,7 +58,7 @@ class Chi2:
             model += self.met.valueAuto(pars)
 
 
-        v=sp.dot(self.auto.dm,model)
+        v=np.dot(self.auto.dm,model)
 
         v=v[self.auto.cuts]
         v=self.auto.da-v
@@ -66,7 +67,7 @@ class Chi2:
             p,b = self.bb.value(v)
             v -= b
 
-        return sp.dot(v,sp.dot(self.auto.ico,v))
+        return np.dot(v,np.dot(self.auto.ico,v))
 
 
     def chi2_cross(self,pars):
@@ -75,7 +76,7 @@ class Chi2:
         if not self.met is None:
             model += self.met.valueCross(pars)
 
-        v=sp.dot(self.cross.dm,model)
+        v=np.dot(self.cross.dm,model)
         v=v[self.cross.cuts]
         v=self.cross.da-v
 
@@ -83,15 +84,15 @@ class Chi2:
             p,b = self.bb_cross.value(v,pars['drp'])
             v -= b
 
-        return sp.dot(v,sp.dot(self.cross.ico,v))
+        return np.dot(v,np.dot(self.cross.ico,v))
 
     def chi2_autoQSO(self,pars):
         model =  self.cosmo.valueAutoQSO(self.autoQSO.rp,self.autoQSO.rt,self.autoQSO.z,{pcosmo: pars[pcosmo] for pcosmo in self.cosmo.pautoQSO+self.cosmo.pglob})
 
-        v=sp.dot(self.autoQSO.dm,model)
+        v=np.dot(self.autoQSO.dm,model)
         v=v[self.autoQSO.cuts]
         v=self.autoQSO.da-v
-        return sp.dot(v,sp.dot(self.autoQSO.ico,v))
+        return np.dot(v,np.dot(self.autoQSO.ico,v))
 
     def __call__(self,*p):
         pars=dict()
@@ -119,17 +120,17 @@ class Chi2:
                 par_sigma = float(dic_init['gaussian_prior'][i*3+2])
 
                 if (self.verbose):
-                    print("adding prior ",par_name,par_mean,par_sigma)
+                    userprint("adding prior ",par_name,par_mean,par_sigma)
                     sys.stdout.flush()
 
                 chi2+=(pars[par_name]-par_mean)**2/par_sigma**2
 
         if (self.verbose):
-            print("---")
+            userprint("---")
             for pname in self.pname:
-                print(pname,pars[pname])
+                userprint(pname,pars[pname])
 
-            print("Chi2: ",chi2)
+            userprint("Chi2: ",chi2)
             sys.stdout.flush()
 
         return chi2
@@ -140,13 +141,13 @@ class Chi2:
 
         ### Get parameters
         try:
-            if sp.remainder(len(dic_init['fastMonteCarlo']),2)!=0: raise
+            if np.remainder(len(dic_init['fastMonteCarlo']),2)!=0: raise
 
             nb_fMC   = int(dic_init['fastMonteCarlo'][0])
             seed_fMC = int(dic_init['fastMonteCarlo'][1])
-            sp.random.seed(seed=seed_fMC)
+            np.random.seed(seed=seed_fMC)
 
-            nb_expected_values = sp.floor_divide(len(dic_init['fastMonteCarlo'])-2,2)
+            nb_expected_values = np.floor_divide(len(dic_init['fastMonteCarlo'])-2,2)
             for i in range(nb_expected_values):
                 key = dic_init['fastMonteCarlo'][2*(i+1)]
                 val = dic_init['fastMonteCarlo'][2*(i+1)+1]
@@ -160,8 +161,8 @@ class Chi2:
                     mig.values[key] = val
                     kw[key] = val
         except Exception as error :
-            print('  ERROR::picca/py/picca/fitter/Chi2.py:: error in fast Monte-Carlo = ', error)
-            print('  Exit')
+            userprint('  ERROR::picca/py/picca/fitter/Chi2.py:: error in fast Monte-Carlo = ', error)
+            userprint('  Exit')
             sys.exit(0)
 
         ### Get bes fit
@@ -175,14 +176,14 @@ class Chi2:
             if not self.met is None:
                 met = self.met.valueAuto(mig.values)
                 bestFit_auto += met
-            bestFit_auto = sp.dot(self.auto.dm,bestFit_auto)
+            bestFit_auto = np.dot(self.auto.dm,bestFit_auto)
             ### Broadband
             bb = None
             if not self.bb is None:
                 p,b = self.bb.value(self.auto.da-bestFit_auto[self.auto.cuts])
                 bb = self.bb(rt,rp,p)
                 if self.dic_init['distort_bb_auto']:
-                    bb=sp.dot(self.auto.dm,bb)
+                    bb=np.dot(self.auto.dm,bb)
                 bestFit_auto += bb
         if not self.cross is None:
             rp  = self.cross.rp
@@ -194,21 +195,21 @@ class Chi2:
             if not self.met is None:
                 met = self.met.valueCross(mig.values)
                 bestFit_cross += met
-            bestFit_cross = sp.dot(self.cross.dm,bestFit_cross)
+            bestFit_cross = np.dot(self.cross.dm,bestFit_cross)
             ### Broadband
             bb = None
             if not self.bb_cross is None:
                 p,b = self.bb_cross.value(self.cross.da-bestFit_cross[self.cross.cuts],mig.values['drp'])
                 bb = self.bb_cross(rt,rp,mig.values['drp'],p)
                 if self.dic_init['distort_bb_cross']:
-                    bb = sp.dot(self.cross.dm,bb)
+                    bb = np.dot(self.cross.dm,bb)
                 bestFit_cross += bb
         if not self.autoQSO is None:
             rp  = self.autoQSO.rp
             rt  = self.autoQSO.rt
             z   = self.autoQSO.z
             bestFit_autoQSO = self.cosmo.valueAutoQSO(rp,rt,z,{p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pautoQSO})
-            bestFit_autoQSO = sp.dot(self.autoQSO.dm,bestFit_autoQSO)
+            bestFit_autoQSO = np.dot(self.autoQSO.dm,bestFit_autoQSO)
 
         ### File to save into
         output_name = dic_init['output_prefix']
@@ -225,7 +226,7 @@ class Chi2:
         ### Get realisation fastMonteCarlo
         for i in range(nb_fMC):
 
-            print('  fastMonteCarlo: ', i, ' over ', nb_fMC)
+            userprint('  fastMonteCarlo: ', i, ' over ', nb_fMC)
             sys.stdout.flush()
 
             ### Get realisation fastMonteCarlo
@@ -237,12 +238,12 @@ class Chi2:
                 self.autoQSO.get_realisation_fastMonteCarlo(bestFit=bestFit_autoQSO)
 
             ### Fit
-            mig_fMC = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,print_level=0,**kw)
+            mig_fMC = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,userprint_level=0,**kw)
             try:
                 mig_fMC.migrad()
                 chi2_result = mig_fMC.get_fmin().fval
             except:
-                chi2_result = sp.nan
+                chi2_result = np.nan
 
             ### Save
             for p in mig_fMC.parameters:
@@ -260,7 +261,7 @@ class Chi2:
         dic_init = self.dic_init
 
         if len(dic_init['chi2Scan'])%4 != 0:
-            print('ERROR::bin/fit:: chi2 scan syntax is incorrect')
+            userprint('ERROR::bin/fit:: chi2 scan syntax is incorrect')
             return
 
         ### Get the parameters of the scan
@@ -269,7 +270,7 @@ class Chi2:
         for i in range(nb_param):
             dic_param = {}
             if not any(dic_init['chi2Scan'][i*4+0] in el for el in self.pname):
-                print('  ERROR::bin/fit:: Param not fitted: ', dic_init['chi2Scan'][i*4+0])
+                userprint('  ERROR::bin/fit:: Param not fitted: ', dic_init['chi2Scan'][i*4+0])
                 continue
 
             par_name   = dic_init['chi2Scan'][i*4+0]
@@ -281,7 +282,7 @@ class Chi2:
             dic_param['min']    = par_min
             dic_param['max']    = par_max
             dic_param['nb_bin'] = par_nb_bin
-            dic_param['grid']   = sp.linspace(par_min,par_max,num=par_nb_bin,endpoint=True)
+            dic_param['grid']   = np.linspace(par_min,par_max,num=par_nb_bin,endpoint=True)
 
             dic_chi2Scan[str(i)] = dic_param
             kw['fix_'+dic_param['name']] = True
@@ -303,12 +304,12 @@ class Chi2:
 
             for i in range(par_nb_bin):
                 kw[par_name] = grid[i]
-                mig = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,print_level=0,**kw)
+                mig = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,userprint_level=0,**kw)
                 try:
                     mig.migrad()
                     chi2_result = mig.get_fmin().fval
                 except:
-                    chi2_result = sp.nan
+                    chi2_result = np.nan
                 for p in mig.parameters:
                     f.write("{} ".format(mig.values[p]))
                 f.write("{}\n".format(chi2_result))
@@ -328,21 +329,21 @@ class Chi2:
 
             idx1 = []
             for i in range(par_nb_bin1):
-                idx1 = sp.append(idx1,(par_min1+(i+0.5)*par_step1)*sp.ones(par_nb_bin2))
+                idx1 = np.append(idx1,(par_min1+(i+0.5)*par_step1)*np.ones(par_nb_bin2))
             idx2 = []
             for i in range(par_nb_bin1):
-                idx2 = sp.append(idx2,grid2)
+                idx2 = np.append(idx2,grid2)
 
             for i in range(par_nb_bin1):
                 for j in range(par_nb_bin2):
                     kw[par_name1] = grid1[i]
                     kw[par_name2] = grid2[j]
-                    mig = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,print_level=self.verbose,**kw)
+                    mig = iminuit.Minuit(self,forced_parameters=self.pname,errordef=1,userprint_level=self.verbose,**kw)
                     try:
                         mig.migrad()
                         chi2_result = mig.get_fmin().fval
                     except:
-                        chi2_result = sp.nan
+                        chi2_result = np.nan
                     for p in mig.parameters:
                         f.write("{} ".format(mig.values[p]))
                     f.write("{}\n".format(chi2_result))
@@ -365,8 +366,8 @@ class Chi2:
             if not self.met is None:
                 met = self.met.valueAuto(mig.values)
                 fit += met
-                met = sp.dot(self.auto.dm,met)
-            fit = sp.dot(self.auto.dm,fit)
+                met = np.dot(self.auto.dm,met)
+            fit = np.dot(self.auto.dm,fit)
 
             ### Broadband
             bb = None
@@ -374,7 +375,7 @@ class Chi2:
                 p,b = self.bb.value(self.auto.da-fit[self.auto.cuts])
                 bb = self.bb(rt,rp,p)
                 if self.dic_init['distort_bb_auto']:
-                    bb=sp.dot(self.auto.dm,bb)
+                    bb=np.dot(self.auto.dm,bb)
 
                 fit += bb
 
@@ -382,12 +383,12 @@ class Chi2:
             pars_sb={p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pauto}
             pars_sb['bao_amp']=0.
             sb=self.cosmo.valueAuto(rp,rt,z,pars_sb)
-            sb=sp.dot(self.auto.dm,sb)
+            sb=np.dot(self.auto.dm,sb)
 
             ### Other attributes
-            index = sp.arange(len(rp))
+            index = np.arange(len(rp))
             da    = self.auto.da_all
-            err   = sp.sqrt(sp.diagonal(self.auto.co_all))
+            err   = np.sqrt(np.diagonal(self.auto.co_all))
 
             ### Save all bins
             self._exp_res(prefix+"auto_all",index,rp,rt,z,da,err,fit,met=met,bb=bb,sb=sb)
@@ -399,7 +400,7 @@ class Chi2:
             rt    = rt[cuts]
             z     = z[cuts]
             da    = da[cuts]
-            err   = sp.sqrt(sp.diagonal(self.auto.co))
+            err   = np.sqrt(np.diagonal(self.auto.co))
             fit   = fit[cuts]
             if not met is None:
                 met = met[cuts]
@@ -423,7 +424,7 @@ class Chi2:
             if not self.met is None:
                 met = self.met.valueCross(mig.values)
                 fit += met
-            fit = sp.dot(self.cross.dm,fit)
+            fit = np.dot(self.cross.dm,fit)
 
             ### Broadband
             bb = None
@@ -431,19 +432,19 @@ class Chi2:
                 p,b = self.bb_cross.value(self.cross.da-fit[self.cross.cuts],mig.values['drp'])
                 bb = self.bb_cross(rt,rp,mig.values['drp'],p)
                 if self.dic_init['distort_bb_cross']:
-                    bb = sp.dot(self.cross.dm,bb)
+                    bb = np.dot(self.cross.dm,bb)
                 fit += bb
 
             ### Side_bands
             pars_sb = {p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pcross}
             pars_sb['bao_amp']=0.
             sb = self.cosmo.valueCross(rp,rt,z,pars_sb)
-            sb = sp.dot(self.cross.dm,sb)
+            sb = np.dot(self.cross.dm,sb)
 
             ### Other attributes
-            index = sp.arange(len(rp))
+            index = np.arange(len(rp))
             da    = self.cross.da_all
-            err   = sp.sqrt(sp.diagonal(self.cross.co_all))
+            err   = np.sqrt(np.diagonal(self.cross.co_all))
 
             ### Save all bins
             self._exp_res(prefix+"cross_all",index,rp,rt,z,da,err,fit,met=met,bb=bb,sb=sb)
@@ -455,7 +456,7 @@ class Chi2:
             rt    = rt[cuts]
             z     = z[cuts]
             da    = da[cuts]
-            err   = sp.sqrt(sp.diagonal(self.cross.co))
+            err   = np.sqrt(np.diagonal(self.cross.co))
             fit   = fit[cuts]
             if not met is None:
                 met = met[cuts]
@@ -471,20 +472,20 @@ class Chi2:
             z= self.autoQSO.z
 
             ### Save all bins
-            index=sp.arange(len(rp))
+            index=np.arange(len(rp))
             da=self.autoQSO.da_all
-            err=sp.sqrt(sp.diagonal(self.autoQSO.co_all))
+            err=np.sqrt(np.diagonal(self.autoQSO.co_all))
             fit=self.cosmo.valueAutoQSO(rp,rt,z,{p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pautoQSO})
-            fit=sp.dot(self.autoQSO.dm,fit)
+            fit=np.dot(self.autoQSO.dm,fit)
             self._exp_res(prefix+"autoQSO_all",index,rp,rt,z,da,err,fit)
 
             ### Save only fitted bins
             cuts=self.autoQSO.cuts
-            index=sp.arange(len(cuts))[cuts]
+            index=np.arange(len(cuts))[cuts]
             da=self.autoQSO.da
-            err=sp.sqrt(sp.diagonal(self.autoQSO.co))
+            err=np.sqrt(np.diagonal(self.autoQSO.co))
             fit=self.cosmo.valueAutoQSO(rp,rt,z,{p:mig.values[p] for p in self.cosmo.pglob+self.cosmo.pautoQSO})
-            fit=sp.dot(self.autoQSO.dm,fit)
+            fit=np.dot(self.autoQSO.dm,fit)
             rp=rp[cuts]
             rt=rt[cuts]
             z=z[cuts]
@@ -588,7 +589,7 @@ class Chi2:
         f=open(prefix+"_residuals.dat","w")
         nbins=len(da)
 
-        r=sp.sqrt(rp**2+rt**2)
+        r=np.sqrt(rp**2+rt**2)
         mu = rp/r
 
         for i in range(nbins):
@@ -682,8 +683,8 @@ class Chi2:
 
         path_to_save = param.dic_init['output_prefix']+'save.pars.cor'
 
-        matrix = sp.array(mig.matrix(correlation=True))
-        fitted_parameters = sp.array(mig.list_of_vary_param())
+        matrix = np.array(mig.matrix(correlation=True))
+        fitted_parameters = np.array(mig.list_of_vary_param())
 
         f = open(path_to_save,'w')
         f.write(' --- ')
@@ -740,11 +741,3 @@ class Chi2:
                     configfile.write(str(i).ljust(max_len) + ' = ' + str_param + '\n')
 
             configfile.write('\n')
-
-
-
-
-
-
-
-

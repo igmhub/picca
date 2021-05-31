@@ -1,8 +1,6 @@
-from __future__ import print_function
-
 from functools import partial
 import sys
-import scipy as sp
+import numpy as np
 import os.path
 from pkg_resources import resource_filename
 if (sys.version_info > (3, 0)):
@@ -10,8 +8,9 @@ if (sys.version_info > (3, 0)):
     import configparser as ConfigParser
 else:
     import ConfigParser
-
 import fitsio
+
+from ..utils import userprint
 from . import data, utils, priors
 
 def parse_chi2(filename):
@@ -27,7 +26,7 @@ def parse_chi2(filename):
     p = os.path.expandvars(p)
     if not os.path.isfile(p):
         p = resource_filename('picca', 'fitter2')+'/models/{}'.format(p)
-    print('INFO: reading input Pk {}'.format(p))
+    userprint('INFO: reading input Pk {}'.format(p))
 
     h = fitsio.FITS(p)
     zref = h[1].read_header()['ZREF']
@@ -43,7 +42,7 @@ def parse_chi2(filename):
     except (KeyError, AttributeError):
         dic_init['fiducial']['full-shape'] = False
     if dic_init['fiducial']['full-shape']:
-        print('WARNING!!!: Using full-shape fit to the correlation function. Sailor you are reaching unexplored territories, precede at your own risk.')
+        userprint('WARNING!!!: Using full-shape fit to the correlation function. Sailor you are reaching unexplored territories, precede at your own risk.')
 
     zeff = float(cp.get('data sets','zeff'))
     dic_init['data sets'] = {}
@@ -66,11 +65,13 @@ def parse_chi2(filename):
         dic_init['fast mc']['fiducial']['values'] = {}
         dic_init['fast mc']['fiducial']['fix'] = {}
         for item, value in cp.items('fast mc'):
-            if item=='niterations' or item=='seed':
+            if item in ['niterations','seed']:
                 dic_init['fast mc'][item] = int(value)
+            elif item=='forecast':
+                dic_init['fast mc'][item] = bool(value)
             elif item=='covscaling':
                 value = value.split()
-                dic_init['fast mc'][item] = sp.array(value).astype(float)
+                dic_init['fast mc'][item] = np.array(value).astype(float)
                 if not len(dic_init['fast mc'][item])==len(dic_init['data sets']['data']):
                     raise AssertionError()
             else:
@@ -92,6 +93,15 @@ def parse_chi2(filename):
     if cp.has_section('chi2 scan'):
         dic_init['chi2 scan'] = parse_chi2scan(cp.items('chi2 scan'))
 
+    # Extract the settings for the sampler
+    # These are just passed to PolyChord
+    if cp.has_section('Polychord'):
+        dic_init['Polychord'] = cp['Polychord']
+
+    # Extract control settings. Used by the control classes
+    if cp.has_section('control'):
+        dic_init['control'] = cp['control']
+
     return dic_init
 
 def parse_data(filename,zeff,fiducial):
@@ -101,7 +111,7 @@ def parse_data(filename,zeff,fiducial):
 
     dic_init = {}
     dic_init['data'] = {}
-    print("INFO: reading {}".format(filename))
+    userprint("INFO: reading {}".format(filename))
     for item, value in cp.items('data'):
         if item == "rp_binsize" or value == "rt_binsize":
             value = float(value)
@@ -187,9 +197,9 @@ def parse_data(filename,zeff,fiducial):
     if 'priors' in cp.sections():
         for item, value in cp.items('priors'):
             if item in priors.prior_dic.keys():
-                print("WARNING: prior on {} will be overwritten".format(item))
+                userprint("WARNING: prior on {} will be overwritten".format(item))
             value = value.split()
-            priors.prior_dic[item] = partial(getattr(priors, value[0]), prior_pars=sp.array(value[1:]).astype(float), name=item)
+            priors.prior_dic[item] = partial(getattr(priors, value[0]), prior_pars=np.array(value[1:]).astype(float), name=item)
 
     return dic_init
 
@@ -204,7 +214,7 @@ def parse_chi2scan(items):
         dic['min']    = float(value[0])
         dic['max']    = float(value[1])
         dic['nb_bin'] = int(value[2])
-        dic['grid']   = sp.linspace(dic['min'],dic['max'],num=dic['nb_bin'],endpoint=True)
+        dic['grid']   = np.linspace(dic['min'],dic['max'],num=dic['nb_bin'],endpoint=True)
         dic_init[item] = dic
 
     return dic_init

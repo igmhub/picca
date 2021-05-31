@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
+import numpy as np
 import scipy as sp
 import scipy.linalg
 import fitsio
 import argparse
 import copy
 
-from picca.utils import smooth_cov, cov
+from picca.utils import smooth_cov, compute_cov
 
 if __name__ == '__main__':
 
@@ -40,23 +41,23 @@ if __name__ == '__main__':
         h = fitsio.FITS(p)
         head   = h[1].read_header()
         nside  = head['NSIDE']
-        nt     = head['NT']
-        np     = head['NP']
+        ntb     = head['NT']
+        npb     = head['NP']
         rt_max = head['RTMAX']
         rp_min = head['RPMIN']
         rp_max = head['RPMAX']
         head   = h[2].read_header()
         scheme = head['HLPXSCHM']
-        rp  = sp.array(h[1]['RP'][:])
-        rt  = sp.array(h[1]['RT'][:])
-        z   = sp.array(h[1]['Z'][:])
-        nb  = sp.array(h[1]['NB'][:])
-        da  = sp.array(h[2]['DA'][:])
-        we  = sp.array(h[2]['WE'][:])
-        hep = sp.array(h[2]['HEALPID'][:])
+        rp  = np.array(h[1]['RP'][:])
+        rt  = np.array(h[1]['RT'][:])
+        z   = np.array(h[1]['Z'][:])
+        nb  = np.array(h[1]['NB'][:])
+        da  = np.array(h[2]['DA'][:])
+        we  = np.array(h[2]['WE'][:])
+        hep = np.array(h[2]['HEALPID'][:])
         data[i] = {'RP':rp, 'RT':rt, 'Z':z, 'NB':nb, 'DA':da, 'WE':we,'HEALPID':hep,
             'NSIDE':nside, 'HLPXSCHM':scheme,
-            'NP':np, 'NT':nt, 'RTMAX':rt_max, 'RPMIN':rp_min, 'RPMAX':rp_max}
+            'NP':npb, 'NT':ntb, 'RTMAX':rt_max, 'RPMIN':rp_min, 'RPMAX':rp_max}
         h.close()
 
     ###
@@ -81,19 +82,19 @@ if __name__ == '__main__':
     ### Add unshared healpix as empty data
     for i in range(nbData):
         for j in range(nbData):
-            w = sp.logical_not( sp.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
+            w = np.logical_not( np.in1d(data[j]['HEALPID'],data[i]['HEALPID']) )
             if w.sum()>0:
                 new_healpix = data[j]['HEALPID'][w]
                 nb_new_healpix = new_healpix.size
                 nb_bins = data[i]['DA'].shape[1]
                 print("Some healpix are unshared in data {} vs. {}: {}".format(i,j,new_healpix))
-                data[i]['DA']      = sp.append(data[i]['DA'],sp.zeros((nb_new_healpix,nb_bins)),axis=0)
-                data[i]['WE']      = sp.append(data[i]['WE'],sp.zeros((nb_new_healpix,nb_bins)),axis=0)
-                data[i]['HEALPID'] = sp.append(data[i]['HEALPID'],new_healpix)
+                data[i]['DA']      = np.append(data[i]['DA'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+                data[i]['WE']      = np.append(data[i]['WE'],np.zeros((nb_new_healpix,nb_bins)),axis=0)
+                data[i]['HEALPID'] = np.append(data[i]['HEALPID'],new_healpix)
 
     ### Sort the data by the healpix values
     for i in range(nbData):
-        sort = sp.array(data[i]['HEALPID']).argsort()
+        sort = np.array(data[i]['HEALPID']).argsort()
         data[i]['DA']      = data[i]['DA'][sort]
         data[i]['WE']      = data[i]['WE'][sort]
         data[i]['HEALPID'] = data[i]['HEALPID'][sort]
@@ -133,10 +134,10 @@ if __name__ == '__main__':
         binSizeT = (final['RTMAX']-0.) / final['NT']
         if not args.do_not_smooth_cov:
             print('INFO: The covariance will be smoothed')
-            final['CO'] = smooth_cov(final['DA'],final['WE'],final['RP'],final['RT'],drt=binSizeT,drp=binSizeP)
+            final['CO'] = smooth_cov(final['DA'],final['WE'],final['RP'],final['RT'],delta_r_trans=binSizeT,delta_r_par=binSizeP)
         else:
             print('INFO: The covariance will not be smoothed')
-            final['CO'] = cov(final['DA'],final['WE'])
+            final['CO'] = compute_cov(final['DA'],final['WE'])
 
     ### Test covariance matrix
     try:
@@ -167,7 +168,7 @@ if __name__ == '__main__':
             h2.close()
         final['DM'] = dm/wdm[:,None]
     else:
-        final['DM'] = sp.eye(len(final['DA']))
+        final['DM'] = np.eye(len(final['DA']))
 
     h = fitsio.FITS(args.out,'rw',clobber=True)
     head = {}

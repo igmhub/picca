@@ -1,7 +1,7 @@
-
-from picca.fitter.utils import L
-import scipy as sp
+import numpy as np
 from scipy import linalg
+
+from .utils import L
 
 class model:
     def __init__(self,data,imin,imax,istep,ellmin,ellmax,ellstep,distort):
@@ -29,10 +29,10 @@ class model:
         r0 = 100.
         self.r0 = r0
 
-        r = sp.sqrt(rt**2+rp**2)
+        r = np.sqrt(rt**2+rp**2)
         mu = rp/r
 
-        A = sp.zeros([npar,len(r)])
+        A = np.zeros([npar,len(r)])
 
         for ipar in range(npar):
             i = ipar%ni
@@ -44,15 +44,15 @@ class model:
             A[ipar,:]=(r0/r)**i*L(mu,ell)
 
             if distort:
-                A[ipar,:]=sp.dot(data.dm,A[ipar,:])
+                A[ipar,:]=np.dot(data.dm,A[ipar,:])
 
         A = A[:,data.cuts]
 
         self.A = A
-        M = sp.dot(A,sp.dot(ico,A.T))
+        M = np.dot(A,np.dot(ico,A.T))
         IM =linalg.inv(M)
         self.IM = IM
-        self.IMA = sp.dot(IM,A)
+        self.IMA = np.dot(IM,A)
 
         self.ico = ico
 
@@ -64,18 +64,18 @@ class model:
             i   = self.imin + i*self.istep
             ell = self.ellmin + ell*self.ellstep
             self.par_name += ['a_auto_'+str(i)+'_'+str(ell)]
-        self.par_name = sp.array(self.par_name)
+        self.par_name = np.array(self.par_name)
 
     def value(self,data):
-        tmp = sp.dot(data,sp.dot(self.ico,self.A.T))
-        p = sp.dot(self.IM,tmp)
-        d = sp.dot(p,self.A)
+        tmp = np.dot(data,np.dot(self.ico,self.A.T))
+        p = np.dot(self.IM,tmp)
+        d = np.dot(p,self.A)
         return p,d
 
     def __call__(self,rt,rp,pars):
-        r = sp.sqrt(rt**2+rp**2)
+        r = np.sqrt(rt**2+rp**2)
         mu = rp/r
-        bb = sp.zeros(len(r))
+        bb = np.zeros(len(r))
 
 
         for ipar in range(len(pars)):

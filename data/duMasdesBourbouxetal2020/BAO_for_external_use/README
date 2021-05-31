@@ -1,0 +1,56 @@
+1. The official eBOSS DR16 scans that were used for the cosmology paper (https://arxiv.org/abs/2007.08991) can be found here: 
+https://svn.sdss.org/public/data/eboss/DR16cosmo/tags/v1_0_0/likelihoods/
+
+The Lyman-alpha BAO scans are:
+sdss_DR16_LYAUTO_BAO_DMDHgrid.txt
+sdss_DR16_LYxQSO_BAO_DMDHgrid.txt
+
+This is the README for those files:
+The DR16 Lyman-alpha BAO likelihoods are provided separately for the auto (LYAUTO) and cross correlation (LYXQSO). 
+They can be treated as independent. The format for each is:
+
+Column 1:  (DM/rd) at z=2.334
+Column 2:  (DH/rd) at z=2.334
+Column 3:  likelihood (relative to the best point on the grid)
+
+2. Files containing the full scan output in text format with all parameters can be found here: 
+https://github.com/igmhub/picca/tree/master/data/duMasdesBourbouxetal2020. 
+There is a folder with auto results (auto_full_stdFit), one for the cross (cross_full_stdFit) and one for the combined
+results (combined_stdFit). These were used for the Lyman-alpha BAO analysis (https://arxiv.org/pdf/2007.08995.pdf).
+
+3. Attached is a script (get_scan.py) that reads picca fitter2 .h5 output files
+(you can find the raw outputs here as auto_scan.h5 and cross_scan.h5) and writes the scan information to a file. 
+This script can be used to produce the scan files used by CosmoMC, MontePython and Cobaya, or for getting the scan information
+for plotting purposes (see tutorial here https://github.com/igmhub/picca/tree/master/data for more info on plotting contours).
+
+The BAO scans here have been produced with this script. They are:
+sdss_DR16_LYAUTO_bao_chi2.dat
+sdss_DR16_LYAUTO_bao_likelihood.dat
+sdss_DR16_LYxQSO_bao_chi2.dat
+sdss_DR16_LYxQSO_bao_likelihood.dat
+There are scans with the last column as the chi2 or likelihood for both the Lya auto and cross.
+These files can be used with the already existing code in CosmoMC, MontePython and Cobaya.
+If you take them from here make sure you check if the chi2 or the likelihood version is needed for the library you plan to use.
+Also note the order of the BAO parameters: here we use alpha_transverse, alpha_parallel, but in some cases older scans used the reverse order.
+
+The format of these output files is:
+
+Column 1:  alpha_transverse at z=2.334
+Column 2:  alpha_parallel at z=2.334
+Column 3:  likelihood or chi2 (you can choose either by adding the word "chi2" or "lik" when calling the script)
+
+Note that if you ask for the likelihood, the values will be relative to the best point in the grid.
+The likelihood is simply computed by: lik = exp(-0.5 * chi2)
+
+The alpha parameters are defined as:
+alpha_transverse = (DM/rd) / (DM/rd)_fiducial
+alpha_parallel = (DH/rd) / (DH/rd)_fiducial
+
+The fiducial values used to compute the alphas are:
+(DM/rd)_fiducial = 39.2035
+(DH/rd)_fiducial = 8.6011
+
+See Table 2 of https://arxiv.org/pdf/2007.08995.pdf for more information on the fiducial values used.
+For the bestfit chi2 values see https://github.com/igmhub/picca/tree/master/data/duMasdesBourbouxetal2020 or https://arxiv.org/pdf/2007.08995.pdf.
+
+
