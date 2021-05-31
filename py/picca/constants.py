@@ -1,17 +1,14 @@
-<<<<<<< HEAD
-import fitsio
-import scipy as sp
-from scipy import interpolate
-from pkg_resources import resource_filename
-=======
 """This module defines some constants that are used throughout the package.
 
 It includes the class Cosmo, used to store the fiducial cosmology
 """
+import fitsio
+import scipy as sp
 import numpy as np
 from scipy import interpolate
 from scipy.constants import speed_of_light as speed_light
->>>>>>> master
+from pkg_resources import resource_filename
+from picca.utils import userprint
 
 # TODO: this constant is unused. They should be removed at some point
 BOSS_LAMBDA_MIN = 3600. # [Angstrom]
@@ -173,12 +170,13 @@ class Cosmo(object):
             H0: float - default: 100.0
                 Hubble constant at redshift 0 (in km/s/Mpc)
         """
-        m
+
         # Blind data
         if unblind:
-            print("Analysis is not blinded: Om={}".format(Om))
+            userprint(f"Analysis is not blinded: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
         else:
-            print("WARNING: The analysis is blinded ! The value of Om is not {} !".format(Om))
+            userprint("WARNING: The analysis is blinded ! The specified cosmology is "
+                      f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}"
             # blind test small
             filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
             # blind test large
@@ -187,6 +185,9 @@ class Cosmo(object):
             filename = resource_filename('picca', 'fitter2')+'/models/{}'.format(filename)
             hdu = fitsio.FITS(filename)
             Om = hdu[1].read_header()['OM']
+            Or = hdu[1].read_header()['OR']
+            wl = hdu[1].read_header()['W']
+            H0 = hdu[1].read_header()['H0']
             hdu.close()
 
         # Ignore evolution of neutrinos from matter to radiation
