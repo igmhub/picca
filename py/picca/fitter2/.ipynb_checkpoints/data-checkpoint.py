@@ -36,7 +36,9 @@ class data:
         co = h[1]['CO'][:]
         dm = csr_matrix(h[1]['DM'][:])
         rp = h[1]['RP'][:]
+        #rp = rp[(rp<80)|(rp>120)]
         rt = h[1]['RT'][:]
+        #rt = rt[(rt<80)|(rt>120)]
         z = h[1]['Z'][:]
         try:
             dmrp = h[2]['DMRP'][:]
@@ -50,15 +52,20 @@ class data:
         head = h[1].read_header()
 
         h.close()
-
+        
+        
         rp_min = dic_init['cuts']['rp-min']
         rp_max = dic_init['cuts']['rp-max']
-
+        
         rt_min = dic_init['cuts']['rt-min']
         rt_max = dic_init['cuts']['rt-max']
-
+        
         r_min = dic_init['cuts']['r-min']
         r_max = dic_init['cuts']['r-max']
+        
+        if dic_init['cuts']['r-min2']:
+            r_min2 = dic_init['cuts']['r-min2']
+            r_max2 = dic_init['cuts']['r-max2']
 
         mu_min = dic_init['cuts']['mu-min']
         mu_max = dic_init['cuts']['mu-max']
@@ -81,8 +88,13 @@ class data:
         ## select data within cuts
         mask = (bin_center_rp > rp_min) & (bin_center_rp < rp_max)
         mask &= (bin_center_rt > rt_min) & (bin_center_rt < rt_max)
-        mask &= (bin_center_r > r_min) & (bin_center_r < r_max)
+        if dic_init['cuts']['r-min2']:
+            mask &= ((bin_center_r > r_min) & (bin_center_r < r_max))|((bin_center_r > r_min2) & (bin_center_r < r_max2))
+        else:
+            mask &= (bin_center_r > r_min) & (bin_center_r < r_max)
         mask &= (bin_center_mu > mu_min) & (bin_center_mu < mu_max)
+        
+            
 
         self.mask = mask
         self.da = da
@@ -106,6 +118,7 @@ class data:
         # log |C| = sum log diag D, where C = L D L*
         _, d, __ = linalg.ldl(ico)
         self.log_co_det = np.log(d.diagonal()).sum()
+
         self.ico = linalg.inv(ico)
         self.dm = dm
 
@@ -260,6 +273,7 @@ class data:
 
             if self.tracer1 == self.tracer2:
                 assert dic_init['metals']['in tracer1'] == dic_init['metals']['in tracer2']
+
                 for m in dic_init['metals']['in tracer1']:
                     self.z_evol[m] = partial(getattr(xi, dic_init['metals']['z evol']), zref=zeff)
                     self.rp_met[(self.tracer1['name'], m)] = hmet[2]["RP_{}_{}".format(self.tracer1['name'],m)][:]

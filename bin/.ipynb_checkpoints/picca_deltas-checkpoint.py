@@ -412,7 +412,19 @@ def main():
                         default=False,
                         required=False,
                         help=('Use all dir for input spectra (DESI SV)'))
-
+    
+    parser.add_argument('--fix-eta-fudge',
+                        type=str,
+                        default=False,
+                        required=False,
+                        help=('Run picca on mock, eta and fudge are fixed if true'))
+    
+    parser.add_argument('--k-convergence',
+                        type=float,
+                        default=None,
+                        required=False,
+                        help='use the new convergence method: eta = eta_pre + k*(eta-eta_pre)')
+    
     t0 = time.time()
 
     args = parser.parse_args()
@@ -653,11 +665,6 @@ def main():
     # compute fits to the forests iteratively
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
     num_iterations = args.nit
-    
-    eta_save = []
-    var_lss_save = []
-    fudge_save = []
-    mean_cont_save = []
     for iteration in range(num_iterations):
         context = multiprocessing.get_context('fork')
         pool = context.Pool(processes=args.nproc)
@@ -686,12 +693,6 @@ def main():
             w = mean_cont_weight > 0.
             log_lambda_cont = log_lambda_rest_frame[w]
             new_cont = Forest.get_mean_cont(log_lambda_cont) * mean_cont[w]
-            print('for iteration {}:'.format(iteration))
-            print('previous meancontinuum:',Forest.get_mean_cont(log_lambda_cont))
-            print('current meancontinuum:',new_cont)
-            mean_cont_save.append(Forest.get_mean_cont(log_lambda_cont))
-            mean_cont_save.append(new_cont)
-            
             Forest.get_mean_cont = interp1d(log_lambda_cont,
                                             new_cont,
                                             fill_value="extrapolate")
@@ -703,26 +704,23 @@ def main():
                  error_var_lss, error_fudge) = prep_del.compute_var_stats(
                      data, (args.eta_min, args.eta_max),
                      (args.vlss_min, args.vlss_max))
-                
-                eta_pre = Forest.get_eta(log_lambda)
-                print('previous eta:',eta_pre)
-                print('current eta:',eta)
-                eta_save.append(eta_pre)
-                eta_save.append(eta)
-                
-                var_lss_pre = Forest.get_var_lss(log_lambda)
-                print('previous var_lss:',var_lss_pre)
-                print('current var_lss:',var_lss)
-                var_lss_save.append(var_lss_pre)
-                var_lss_save.append(var_lss)
-                
-                fudge_pre = Forest.get_fudge(log_lambda)
-                print('previous fudge:',fudge_pre)
-                print('current fudge:',fudge)
-                fudge_save.append(fudge_pre)
-                fudge_save.append(fudge)
-                
                 w = num_pixels > 0
+                if args.k_convergence is None:
+                    k=1
+                else:
+                    if iteration < 1:
+                        k=1
+                    else:  
+                        k=args.k_convergence
+                eta_pre = Forest.get_eta(log_lambda)
+                eta = eta_pre + k*(eta-eta_pre)
+                var_lss_pre = Forest.get_var_lss(log_lambda)
+                var_lss = var_lss_pre + k*(var_lss-var_lss_pre)
+                fudge_pre = Forest.get_fudge(log_lambda)
+                fudge = fudge_pre + k*(fudge-fudge_pre)
+                if args.mock:
+                    eta = eta*0+1
+                    fudge = fudge*0
                 Forest.get_eta = interp1d(log_lambda[w],
                                           eta[w],
                                           fill_value="extrapolate",
@@ -733,7 +731,7 @@ def main():
                                               kind="nearest")
                 Forest.get_fudge = interp1d(log_lambda[w],
                                             fudge[w],
-                                            fill_value="extrapolate",
+                                            fill_value="extrapolate", 
                                             kind="nearest")
             else:
                 num_bins = 10  # this value is arbitrary
@@ -765,7 +763,22 @@ def main():
                 var2_delta = np.zeros((num_bins, num_bins))
                 count = np.zeros((num_bins, num_bins))
                 num_qso = np.zeros((num_bins, num_bins))
-
+                if args.k_convergence is None:
+                    k=1
+                else:
+                    if iteration < 1:
+                        k=1
+                    else:  
+                        k=args.k_convergence
+                eta_pre = Forest.get_eta(log_lambda)
+                eta = eta_pre + k*(eta-eta_pre)
+                var_lss_pre = Forest.get_var_lss(log_lambda)
+                var_lss = var_lss_pre + k*(var_lss-var_lss_pre)
+                fudge_pre = Forest.get_fudge(log_lambda)
+                fudge = fudge_pre + k*(fudge-fudge_pre)
+                if args.mock:
+                    eta = eta*0+1
+                    fudge = fudge*0
                 Forest.get_eta = interp1d(log_lambda,
                                           eta,
                                           fill_value='extrapolate',
@@ -802,7 +815,7 @@ def main():
                 extname='WEIGHT')
             results.write([
                 log_lambda_rest_frame,
-                Forest.get_mean_cont(log_lambda_rest_frame), mean_cont_weight
+                mean_cont, mean_cont_weight
             ],
                           names=['loglam_rest', 'mean_cont', 'weight'],
                           extname='CONT')
@@ -817,11 +830,6 @@ def main():
                               'nqsos', 'chi2'
                           ],
                           extname='VAR')
-    print(eta_save)
-    np.savetxt('/global/cscratch1/sd/tanting/picca_convergence/Delta_20bins_mock_test/eta_save.txt',np.transpose(eta_save))
-    np.savetxt('/global/cscratch1/sd/tanting/picca_convergence/Delta_20bins_mock_test/var_lss_save.txt',np.transpose(var_lss_save))
-    np.savetxt('/global/cscratch1/sd/tanting/picca_convergence/Delta_20bins_mock_test/fudge_save.txt',np.transpose(fudge_save))
-    np.savetxt('/global/cscratch1/sd/tanting/picca_convergence/Delta_20bins_mock_test/mean_cont_save.txt',np.transpose(mean_cont_save))
 
     ### Read metadata from forests and export it
     if not args.metadata is None:

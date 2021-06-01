@@ -92,7 +92,7 @@ class chi2:
         for name in par_names:
             if name[:4] != "bias":
                 kwargs_init["fix_"+name] = True
-
+        
         mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,print_level=1,**kwargs_init)
         mig_init.migrad()
         mig_init.print_param()

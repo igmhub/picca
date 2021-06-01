@@ -15,7 +15,7 @@ if __name__ == '__main__':
     args = pars.parse_args()
 
     dic_init = parser.parse_chi2(args.config)
-    chi = chi2.chi2(dic_init)
+    chi = chi2.chi2(dic_init) 
     chi.minimize()
     chi.minos()
     chi.chi2scan()
