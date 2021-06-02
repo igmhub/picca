@@ -264,7 +264,8 @@ def read_data(in_dir,
               pk1d=None,
               spall=None,
               useall=False,
-              usesinglenights=False):
+              usesinglenights=False
+              unblind_desi=False):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -305,7 +306,8 @@ def read_data(in_dir,
             In case of DESI SV readin use the all directory
         usesinglenights: bool - default: False
             In case of DESI SV readin use only nights specified within the cat
-        
+        unblind_desi: bool - default: False
+            Unblind DESI data, ignored if other reading modes are used
 
     Returns:
         The following variables:
@@ -337,8 +339,11 @@ def read_data(in_dir,
     num_data = 0
 
     # read data taking the mode into account
+    blinding = False
     if mode in ["desi", "spcframe", "spplate", "spec", "corrected-spec"]:
         if mode == "desi":
+            if not unblind_desi:
+                blinding =True
             pix_data = read_from_desi(in_dir, catalog, pk1d=pk1d)
         elif mode == "spcframe":
             pix_data = read_from_spcframe(in_dir,
@@ -425,7 +430,7 @@ def read_data(in_dir,
         userprint("I don't know mode: {}".format(mode))
         sys.exit(1)
 
-    return data, num_data, nside, "RING"
+    return data, num_data, nside, "RING", blinding
 
 
 def find_nside(ra, dec):
@@ -471,7 +476,7 @@ def read_from_spec(in_dir,
         in_dir: str
             Directory to spectra files
         catalog: astropy.table.Table
-            Table containing catalog with objects 
+            Table containing catalog with objects
         mode: str
             One of 'spec' or 'corrected-spec'. Open mode of the spectra files
         pk1d: str or None - default: None
@@ -690,7 +695,7 @@ def read_from_pix(in_dir, healpix, catalog, log_file=None):
 
 def read_from_spcframe(in_dir, catalog, log_file=None, single_exp=False):
     """ Reads the spectra from SDSS type spCFrame files
-        (individual exposures) 
+        (individual exposures)
         and formats its data as Forest instances.
 
     Args:
@@ -843,7 +848,7 @@ def read_from_spplate(in_dir,
         in_dir: str
             Directory to spectra files
         catalog: astropy.table
-            Table containing metadata of objects 
+            Table containing metadata of objects
         log_file: _io.TextIOWrapper or None - default: None
             Opened file to print log
         best_obs: bool - default: False
@@ -945,7 +950,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
         in_dir: str
             Directory to spectra files
         catalog: astropy.table
-            Table containing metadata of objects 
+            Table containing metadata of objects
         pk1d: str or None - default: None
             Format for Pk 1D: Pk1D
 
@@ -1012,7 +1017,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                         with fitsio.FITS(filename_truth) as hdul_truth:
                             spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
                     except IOError:
-                        userprint(f"Error reading truth file {filename_truth}")   
+                        userprint(f"Error reading truth file {filename_truth}")
                     except KeyError:
                         userprint(f"Error reading resolution from truth file for pix {healpix}")
                     else:
@@ -1083,7 +1088,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         in_dir: str
             Directory to spectra files
         catalog: astropy.table
-            Table containing metadata of objects 
+            Table containing metadata of objects
         pk1d: str or None - default: None
             Format for Pk 1D: Pk1D
 
@@ -1102,7 +1107,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         ]
         #this uniqueness check is to ensure each petal/tile/night combination only appears once in the filelist
         petal_tile_night_unique = np.unique(petal_tile_night)
-    
+
         filenames = []
         for f_in in files_in:
           for ptn in petal_tile_night_unique:
@@ -1129,7 +1134,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 filenames.append(f_in)
                 break
 
-        
+
     #filenames = []
     #for entry in catalog:
     #    fi = (f"{entry['TILEID']}/{entry['NIGHT']}/"+

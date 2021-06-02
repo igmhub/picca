@@ -412,10 +412,18 @@ def main():
                         default=False,
                         required=False,
                         help=('Use all dir for input spectra (DESI SV)'))
+    parser.add_argument('--unblind-desi',
+                        action='store_true',
+                        required=False,
+                        help='Do not blind cosmology when running with desi data')
+
 
     t0 = time.time()
 
     args = parser.parse_args()
+
+    # comment this when ready to unblind
+    args.unblind_desi = False
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
@@ -497,21 +505,23 @@ def main():
 
     # Read data
     (data, num_data, nside,
-     healpy_pix_ordering) = io.read_data(os.path.expandvars(args.in_dir),
-                                         args.drq,
-                                         args.mode,
-                                         z_min=args.zqso_min,
-                                         z_max=args.zqso_max,
-                                         max_num_spec=args.nspec,
-                                         log_file=log_file,
-                                         keep_bal=args.keep_bal,
-                                         bi_max=args.bi_max,
-                                         best_obs=args.best_obs,
-                                         single_exp=args.single_exp,
-                                         pk1d=args.delta_format,
-                                         spall=args.spall,
-                                         useall=args.use_all,
-                                         usesinglenights=args.use_single_nights)
+     healpy_pix_ordering,
+     blinding) = io.read_data(os.path.expandvars(args.in_dir),
+                              args.drq,
+                              args.mode,
+                              z_min=args.zqso_min,
+                              z_max=args.zqso_max,
+                              max_num_spec=args.nspec,
+                              log_file=log_file,
+                              keep_bal=args.keep_bal,
+                              bi_max=args.bi_max,
+                              best_obs=args.best_obs,
+                              single_exp=args.single_exp,
+                              pk1d=args.delta_format,
+                              spall=args.spall,
+                              useall=args.use_all,
+                              usesinglenights=args.use_single_nights,
+                              unblind_desi=args.unblind_desi)
 
     #-- Add order info
     for pix in data:
@@ -911,6 +921,11 @@ def main():
                         'name': 'ORDER',
                         'value': delta.order,
                         'comment': 'Order of the continuum fit'
+                    },
+                    {
+                        'name': 'BLIND',
+                        'value': blinding,
+                        'comment': 'Data is blinded'
                     },
                 ]
 
