@@ -1276,7 +1276,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                             data[in_healpixs[w_t][0]][index]=forest
                             do_append=False
                             break
-                    if doo_append:
+                    if do_append:
                         data[in_healpixs[w_t][0]].append(forest)
 
             num_data += 1
