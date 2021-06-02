@@ -1271,7 +1271,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                     #this might be slow, but would coadd objects with the same targetid even if on multiple tiles
                     do_append=True
                     for index,forest_existing in enumerate(data[in_healpixs[w_t][0]]):
-                        if forest_existing.targetid==forest.targetid:
+                        if forest_existing.thingid==forest.thingid:
                             forest.coadd(forest_existing)
                             data[in_healpixs[w_t][0]][index]=forest
                             do_append=False
@@ -1280,6 +1280,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                         data[in_healpixs[w_t][0]].append(forest)
 
             num_data += 1
+        
     userprint("found {} quasars in input files\n".format(num_data))
 
     if num_data == 0:
