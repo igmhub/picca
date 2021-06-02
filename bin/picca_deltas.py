@@ -718,7 +718,7 @@ def main():
                 var_lss = var_lss_pre + k*(var_lss-var_lss_pre)
                 fudge_pre = Forest.get_fudge(log_lambda)
                 fudge = fudge_pre + k*(fudge-fudge_pre)
-                if args.mock:
+                if args.fix_eta_fudge:
                     eta = eta*0+1
                     fudge = fudge*0
                 Forest.get_eta = interp1d(log_lambda[w],
@@ -776,7 +776,7 @@ def main():
                 var_lss = var_lss_pre + k*(var_lss-var_lss_pre)
                 fudge_pre = Forest.get_fudge(log_lambda)
                 fudge = fudge_pre + k*(fudge-fudge_pre)
-                if args.mock:
+                if args.fix_eta_fudge:
                     eta = eta*0+1
                     fudge = fudge*0
                 Forest.get_eta = interp1d(log_lambda,
