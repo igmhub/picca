@@ -341,7 +341,7 @@ def read_data(in_dir,
         if mode == "desi":
             pix_data = read_from_desi(in_dir, catalog, pk1d=pk1d)
         elif mode == "desiminisv_healpix":
-            pix_data, num_pix_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights)
+            pix_data, num_pix_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights, usehealpix=True)
         elif mode == "spcframe":
             pix_data = read_from_spcframe(in_dir,
                                           catalog,
@@ -1077,7 +1077,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     return data
 
 
-def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, useall=False):
+def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, useall=False, usehealpix=False):
     """Reads the spectra and formats its data as Forest instances.
     Unlike the read_from_desi routine, this orders things by tile/petal
     Routine used to treat the DESI mini-SV data.
@@ -1159,7 +1159,18 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             dec = fibermap['DEC_TARGET']
         ra = np.radians(ra)
         dec = np.radians(dec)
-        
+        if usehealpix:
+            in_nside=8
+            try:
+                in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
+            except ValueError:
+                select_nan_radec=np.logical_not(np.isfinite(dec)&np.isfinite(ra))
+                de[select_nan_radec]=0
+                ra[select_nan_radec]=0
+                in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
+                in_healpixs[select_nan_radec]=-12345
+                userprint("found non-finite ra/dec values, setting their healpix id to -12345")
+
         petal_spec = fibermap['PETAL_LOC'][0]
 
         if 'TILEID' in fibermap_colnames:
@@ -1249,9 +1260,25 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                     forest = copy.deepcopy(forest_temp)
                 else:
                     forest.coadd(forest_temp)
-            if plate_spec not in data:
-                data[plate_spec] = []
-            data[plate_spec].append(forest)
+            if not usehealpix:
+                if plate_spec not in data:
+                    data[plate_spec] = []
+                data[plate_spec].append(forest)
+            else:
+                if in_healpixs[w_t][0] not in data:
+                    data[in_healpixs[w_t][0]] = []
+                else:
+                    #this might be slow, but would coadd objects with the same targetid even if on multiple tiles
+                    do_append=True
+                    for index,forest_existing in enumerate(data[in_healpixs[w_t][0]]):
+                        if forest_existing.targetid==forest.targetid:
+                            forest.coadd(forest_existing)
+                            data[in_healpixs[w_t][0]][index]=forest
+                            do_append=False
+                            break
+                    if doo_append:
+                        data[in_healpixs[w_t][0]].append(forest)
+
             num_data += 1
     userprint("found {} quasars in input files\n".format(num_data))
 
