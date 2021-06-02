@@ -172,11 +172,6 @@ def main():
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--unblind',
-                        action='store_true',
-                        required=False,
-                        help='Do not blind cosmology')
-
     parser.add_argument('--no-project',
                         action='store_true',
                         required=False,
@@ -282,6 +277,9 @@ def main():
     cf.reject = args.rej
     cf.max_diagram = args.max_diagram
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load cosmology
     if (args.fid_Or != 0.) or (args.fid_Ok != 0.) or (args.fid_wl != -1.):
         userprint(("ERROR: Cosmology with other than Omega_m set are not yet "
@@ -291,7 +289,7 @@ def main():
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
                             wl=args.fid_wl,
-                            unblind=args.unblind)
+                            blinding=blinding)
 
     # read data 1
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
@@ -520,15 +518,22 @@ def main():
             'name': 'WL',
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }, {
+            'name': "BLIND_COSMO",
+            'value': blinding,
+            'comment': 'Boolean specifying if cosmology is blinded'
         }
         ]
+    num_pairs_name = "NB"
+    if blinding:
+        num_pairs_name += "_BLIND"
     comment = [
         'Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2', 'T3',
         'T4', 'T5', 'T6'
     ]
     results.write(
         [t_tot, weights_wick, num_pairs_wick, t1, t2, t3, t4, t5, t6],
-        names=['CO', 'WALL', 'NB', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+        names=['CO', 'WALL', num_pairs_name, 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
         comment=comment,
         header=header,
         extname='COV')

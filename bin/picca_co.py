@@ -170,11 +170,6 @@ def main():
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--unblind',
-                        action='store_true',
-                        required=False,
-                        help='Do not blind cosmology')
-
     parser.add_argument(
         '--type-corr',
         type=str,
@@ -220,12 +215,15 @@ def main():
     else:
         co.x_correlation = True
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
                             wl=args.fid_wl,
-                            unblind=args.unblind)
+                            blinding=blinding
 
     ### Read objects 1
     objs, z_min = io.read_objects(args.drq, args.nside, args.z_min_obj,
@@ -335,6 +333,10 @@ def main():
             'name': 'WL',
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }, {
+            'name': "BLIND_COSMO",
+            'value': blinding,
+            'comment': 'Boolean specifying if cosmology is blinded'
         }
         ]
     if co.x_correlation:
@@ -349,10 +351,13 @@ def main():
                 'Number of objects 2'
         }]
 
+    num_pairs_name = "NB"
+    if blinding:
+        num_pairs_name += "_BLIND"
     comment = ['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs']
     units = ['h^-1 Mpc', 'h^-1 Mpc', '', '']
     results.write([r_par, r_trans, z, num_pairs],
-                  names=['RP', 'RT', 'Z', 'NB'],
+                  names=['RP', 'RT', 'Z', num_pairs_name],
                   header=header,
                   comment=comment,
                   units=units,
@@ -365,7 +370,7 @@ def main():
         'comment': 'healpix scheme'
     }]
     results.write([healpix_list, weights_list, num_pairs_list],
-                  names=['HEALPID', 'WE', 'NB'],
+                  names=['HEALPID', 'WE', num_pairs_name],
                   header=header2,
                   comment=comment,
                   extname='COR')

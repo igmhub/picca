@@ -155,7 +155,7 @@ class Cosmo(object):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=100.,unblind=False):
+    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=100.,blinding=False):
         """Initializes the methods for this instance
 
         Args:
@@ -172,7 +172,7 @@ class Cosmo(object):
         """
 
         # Blind data
-        if unblind:
+        if not blinding:
             userprint(f"Analysis is not blinded: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
         else:
             userprint("WARNING: The analysis is blinded ! The specified cosmology is "

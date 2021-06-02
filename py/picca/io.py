@@ -1264,6 +1264,40 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
     return data, num_data
 
 
+def read_blinding(in_dir):
+    """Checks the delta files for blinding settings
+
+    Args:
+        in_dir: str
+            Directory to spectra files. If mode is "spec-mock-1D", then it is
+            the filename of the fits file contianing the mock spectra
+
+    Returns:
+        The following variables:
+            blinding: True if data is blinded and False otherwise
+    """
+    files = []
+    in_dir = os.path.expandvars(in_dir)
+    if len(in_dir) > 8 and in_dir[-8:] == '.fits.gz':
+            files += glob.glob(in_dir)
+    elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
+        files += glob.glob(in_dir)
+    else:
+        files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
+                                                               '/*.fits.gz')                                                            '/*.fits.gz')
+    filename = files[0]
+    hdul = fitsio.FITS(filename)
+    header = hdul[1].read_header()
+    # new runs of picca_deltas should have a blinding keyword
+    if "BLIND" in header:
+        blinding = header["BLIND"]
+    # older runs are not from DESI main survey and should not be blinded
+    else:
+        blinding = False
+
+    return blinding
+
+
 def read_deltas(in_dir,
                 nside,
                 lambda_abs,
@@ -1386,7 +1420,6 @@ def read_deltas(in_dir,
         data[healpix].append(delta)
 
     return data, num_data, z_min, z_max
-
 
 def read_objects(filename,
                  nside,

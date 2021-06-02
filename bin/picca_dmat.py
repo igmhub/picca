@@ -253,12 +253,16 @@ def main():
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
                             wl=args.fid_wl,
-                            unblind=args.unblind)
+                            blinding=blinding)
 
     t0 = time.time()
 
@@ -424,10 +428,17 @@ def main():
             'name': 'WL',
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }, {
+            'name': "BLIND_COSMO",
+            'value': blinding,
+            'comment': 'Boolean specifying if cosmology is blinded'
         }
         ]
+    dmat_name = "DM"
+    if blinding:
+        dmat_name += "_BLIND"
     results.write([weights_dmat, dmat],
-                  names=['WDM', 'DM'],
+                  names=['WDM', dmat_name],
                   comment=['Sum of weight', 'Distortion matrix'],
                   units=['', ''],
                   header=header,

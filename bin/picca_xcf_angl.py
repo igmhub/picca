@@ -190,11 +190,6 @@ def main():
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--unblind',
-                        action='store_true',
-                        required=False,
-                        help='Do not blind cosmology')
-
     parser.add_argument('--no-project',
                         action='store_true',
                         required=False,
@@ -240,12 +235,15 @@ def main():
     xcf.ang_max = args.ang_max
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
                             wl=args.fid_wl,
-                            unblind=args.unblind)
+                            blinding=blinding)
 
     ### Read deltas
     data, num_data, z_min, z_max = io.read_deltas(
@@ -365,9 +363,12 @@ def main():
         'value': xcf.nside,
         'comment': 'Healpix nside'
     }]
+    num_pairs_name = "NB"
+    if blinding:
+        num_pairs_name += "_BLIND"
     results.write(
         [r_par, r_trans, z, num_pairs],
-        names=['RP', 'RT', 'Z', 'NB'],
+        names=['RP', 'RT', 'Z', num_pairs_name],
         units=['', 'rad', '', ''],
         comment=['Wavelength ratio', 'Angle', 'Redshift', 'Number of pairs'],
         header=header,
@@ -378,8 +379,11 @@ def main():
         'value': 'RING',
         'comment': ' Healpix scheme'
     }]
+    xi_list_name = "DA"
+    if blinding:
+        xi_list_name += "_BLIND"
     results.write([healpix_list, weights_list, xi_list],
-                  names=['HEALPID', 'WE', 'DA'],
+                  names=['HEALPID', 'WE', xi_list_name],
                   comment=['Healpix index', 'Sum of weight', 'Correlation'],
                   header=header2,
                   extname='COR')
