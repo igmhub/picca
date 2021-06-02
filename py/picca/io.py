@@ -155,7 +155,7 @@ def read_drq(drq_filename,
         obj_id_name = 'TARGETID'
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
-        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER']
+        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'FIBER']
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
@@ -218,6 +218,14 @@ def read_drq(drq_filename,
     if 'NHI' in catalog.colnames:
         keep_columns += ['NHI']
 
+    if 'LAST_NIGHT' in catalog.colnames:
+        keep_columns += ['LAST_NIGHT']
+        if 'FIRST_NIGHT' in catalog.colnames:
+            keep_columns += ['FIRST_NIGHT']
+    elif 'NIGHT' in catalog.colnames:
+        keep_columns += ['NIGHT']
+
+
     catalog.keep_columns(keep_columns)
     w = np.where(w)[0]
     catalog = catalog[w]
@@ -225,6 +233,10 @@ def read_drq(drq_filename,
     #-- Convert angles to radians
     catalog['RA'] = np.radians(catalog['RA'])
     catalog['DEC'] = np.radians(catalog['DEC'])
+
+    if 'TILEID' in catalog.colnames and  np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
+        print("you are trying to run on DESI survey tiles, this branch is not ready for the task, yet!")
+        sys.exit(10)
 
     return catalog
 
@@ -1096,13 +1108,20 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
 
     data = {}
     num_data = 0
-    if usesinglenights:
+    if usesinglenights or "cumulative" in in_dir:    
         files_in = glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
                          recursive=True)
-        petal_tile_night = [
-            f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
-            for entry in catalog
-        ]
+
+        if "cumulative" in in_dir:
+            petal_tile_night = [
+                f"{entry['PETAL_LOC']}-{entry['TILEID']}-thru{entry['LAST_NIGHT']}"
+                for entry in catalog
+            ]
+        else:
+            petal_tile_night = [
+                f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
+                for entry in catalog
+            ]
         #this uniqueness check is to ensure each petal/tile/night combination only appears once in the filelist
         petal_tile_night_unique = np.unique(petal_tile_night)
     
