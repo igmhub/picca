@@ -719,8 +719,8 @@ def main():
                 fudge_pre = Forest.get_fudge(log_lambda)
                 fudge = fudge_pre + k*(fudge-fudge_pre)
                 if args.fix_eta_fudge:
-                    eta = eta*0+1
-                    fudge = fudge*0
+                    eta = np.ones(len(eta))
+                    fudge = np.zeros(len(eta))
                 Forest.get_eta = interp1d(log_lambda[w],
                                           eta[w],
                                           fill_value="extrapolate",
@@ -777,8 +777,8 @@ def main():
                 fudge_pre = Forest.get_fudge(log_lambda)
                 fudge = fudge_pre + k*(fudge-fudge_pre)
                 if args.fix_eta_fudge:
-                    eta = eta*0+1
-                    fudge = fudge*0
+                    eta = np.ones(len(eta))
+                    fudge = np.zeros(len(eta))
                 Forest.get_eta = interp1d(log_lambda,
                                           eta,
                                           fill_value='extrapolate',
