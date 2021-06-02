@@ -340,6 +340,8 @@ def read_data(in_dir,
     if mode in ["desi", "spcframe", "spplate", "spec", "corrected-spec"]:
         if mode == "desi":
             pix_data = read_from_desi(in_dir, catalog, pk1d=pk1d)
+        elif mode == "desiminisv_healpix":
+            pix_data, num_pix_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights)
         elif mode == "spcframe":
             pix_data = read_from_spcframe(in_dir,
                                           catalog,
@@ -421,6 +423,7 @@ def read_data(in_dir,
     elif mode == "desiminisv":
         nside = 8
         data, num_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights)
+    
     else:
         userprint("I don't know mode: {}".format(mode))
         sys.exit(1)
@@ -1156,7 +1159,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             dec = fibermap['DEC_TARGET']
         ra = np.radians(ra)
         dec = np.radians(dec)
-
+        
         petal_spec = fibermap['PETAL_LOC'][0]
 
         if 'TILEID' in fibermap_colnames:
@@ -1246,7 +1249,6 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                     forest = copy.deepcopy(forest_temp)
                 else:
                     forest.coadd(forest_temp)
-
             if plate_spec not in data:
                 data[plate_spec] = []
             data[plate_spec].append(forest)

@@ -158,7 +158,7 @@ def main():
                         default='pix',
                         required=False,
                         help=('Open mode of the spectra files: pix, spec, '
-                              'spcframe, spplate, desi'))
+                              'spcframe, spplate, desi, desiminisv, desiminisv_healpix'))
 
     parser.add_argument('--best-obs',
                         action='store_true',
