@@ -72,8 +72,14 @@ def main():
     r_trans = np.array(hdul[1]['RT'][:])
     z = np.array(hdul[1]['Z'][:])
     num_pairs = np.array(hdul[1]['NB'][:])
-    xi = np.array(hdul[2]['DA'][:])
     weights = np.array(hdul[2]['WE'][:])
+
+    if 'DA_BLIND' in hdul[2].get_colnames():
+        xi = np.array(hdul[2]['DA_BLIND'][:])
+        data_name = 'DA_BLIND'
+    else:
+        xi = np.array(hdul[2]['DA'][:])
+        data_name = 'DA'
 
     head = hdul[1].read_header()
     num_bins_r_par = head['NP']
@@ -85,7 +91,7 @@ def main():
 
     if not args.remove_shuffled_correlation is None:
         hdul = fitsio.FITS(args.remove_shuffled_correlation)
-        xi_shuffled = hdul['COR']['DA'][:]
+        xi_shuffled = hdul['COR'][data_name][:]
         weight_shuffled = hdul['COR']['WE'][:]
         xi_shuffled = (xi_shuffled * weight_shuffled).sum(axis=1)
         weight_shuffled = weight_shuffled.sum(axis=1)
@@ -207,7 +213,7 @@ def main():
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
     results.write([r_par, r_trans, z, xi, covariance, dmat, num_pairs],
-                  names=['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB'],
+                  names=['RP', 'RT', 'Z', data_name, 'CO', 'DM', 'NB'],
                   comment=comment,
                   header=header,
                   extname='COR')
