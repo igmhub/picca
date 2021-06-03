@@ -19,6 +19,7 @@ from scipy.interpolate import interp1d
 from picca.data import Forest, Delta
 from picca import prep_del, io, constants, bal_tools
 from picca.utils import userprint
+from picca.constants import ACCEPTED_BLINDING_STRATEGIES
 
 
 def cont_fit(forests):
@@ -423,9 +424,12 @@ def main():
 
     args = parser.parse_args()
 
+    assert (args.blinding_desi in ACCEPTED_BLINDING_STRATEGIES)
+
     # comment this when ready to unblind
-    print("WARINING: --blinding-desi is beign ignored")
-    args.blinding_desi = "minimal"
+    if args.blinding_desi == "None":
+        print("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
+        args.blinding_desi = "minimal"
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
