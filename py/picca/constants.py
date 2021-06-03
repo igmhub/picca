@@ -17,7 +17,7 @@ SMALL_ANGLE_CUT_OFF = 2./3600.*np.pi/180. # 2 arcsec
 
 SPEED_LIGHT = speed_light/1000. # [km/s]
 
-ACCEPTED_BLINDING_STRATEGIES = ["minimal", "strategy B", "strategy C",
+ACCEPTED_BLINDING_STRATEGIES = ["None", "minimal", "strategy B", "strategy C",
     "strategy BC"]
 
 class Cosmo(object):
