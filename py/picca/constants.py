@@ -17,8 +17,10 @@ SMALL_ANGLE_CUT_OFF = 2./3600.*np.pi/180. # 2 arcsec
 
 SPEED_LIGHT = speed_light/1000. # [km/s]
 
-ACCEPTED_BLINDING_STRATEGIES = ["None", "minimal", "strategy B", "strategy C",
-    "strategy BC"]
+# different strategies are explained in
+# https://desi.lbl.gov/trac/wiki/keyprojects/y1kp6/Blinding
+ACCEPTED_BLINDING_STRATEGIES = ["none", "minimal", "strategyB", "strategyC",
+    "strategyBC"]
 
 class Cosmo(object):
     """This class defines the fiducial cosmology
@@ -175,7 +177,7 @@ class Cosmo(object):
         """
 
         # Blind data
-        if blinding not in  ["stragtegy B", "strategy BC"]:
+        if blinding not in  ["strategyB", "strategyBC"]:
             userprint(f"Analysis is not blinded: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
         else:
             userprint("WARNING: The analysis is blinded ! The specified cosmology is "

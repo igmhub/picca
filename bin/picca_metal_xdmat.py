@@ -469,7 +469,7 @@ def main():
         extname='ATTRI')
 
     dmat_name = "DM_"
-    if blinding != "None":
+    if blinding != "none":
         dmat_name += "BLIND_"
     names = names.astype(str)
     out_list = []

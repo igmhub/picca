@@ -489,7 +489,7 @@ def main():
         }
         ]
     num_pairs_name = "NB"
-    if blinding != "None":
+    if blinding != "none":
         num_pairs_name += "_BLIND"
     comment = [
         'Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2', 'T3',

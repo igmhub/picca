@@ -435,7 +435,7 @@ def main():
         }
         ]
     dmat_name = "DM"
-    if blinding != "None":
+    if blinding != "none":
         dmat_name += "_BLIND"
     results.write([weights_dmat, dmat],
                   names=['WDM', dmat_name],

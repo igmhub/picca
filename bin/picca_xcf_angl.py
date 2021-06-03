@@ -364,7 +364,7 @@ def main():
         'comment': 'Healpix nside'
     }]
     num_pairs_name = "NB"
-    if blinding != "None":
+    if blinding != "none":
         num_pairs_name += "_BLIND"
     results.write(
         [r_par, r_trans, z, num_pairs],
@@ -380,7 +380,7 @@ def main():
         'comment': ' Healpix scheme'
     }]
     xi_list_name = "DA"
-    if blinding != "None":
+    if blinding != "none":
         xi_list_name += "_BLIND"
     results.write([healpix_list, weights_list, xi_list],
                   names=['HEALPID', 'WE', xi_list_name],

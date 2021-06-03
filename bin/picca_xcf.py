@@ -425,7 +425,7 @@ def main():
     }
     ]
     num_pairs_name = "NB"
-    if blinding != "None":
+    if blinding != "none":
         num_pairs_name += "_BLIND"
     results.write(
         [r_par, r_trans, z, num_pairs],
@@ -441,7 +441,7 @@ def main():
         'comment': 'Healpix scheme'
     }]
     da_name = "DA"
-    if blinding != "None":
+    if blinding != "none":
         da_name += "_BLIND"
     results.write([healpix_list, weights_list, xi_list],
                   names=['HEALPID', 'WE', da_name],

@@ -935,7 +935,7 @@ def main():
                     },
                 ]
 
-                if blinding != "None":
+                if blinding != "none":
                     delta_mame = "DELTA_BLIND"
                 else:
                     delta_name = "DELTA"

@@ -352,7 +352,7 @@ def main():
         }]
 
     num_pairs_name = "NB"
-    if blinding != "None":
+    if blinding != "none":
         num_pairs_name += "_BLIND"
     comment = ['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs']
     units = ['h^-1 Mpc', 'h^-1 Mpc', '', '']
