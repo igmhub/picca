@@ -450,9 +450,9 @@ def main():
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
         }, {
-            'name': "BLIND_COSMO",
+            'name': "BLINDING",
             'value': blinding,
-            'comment': 'Boolean specifying if cosmology is blinded'
+            'comment': 'String specifying the blinding strategy'
         }
         ]
     len_names = np.array([len(name) for name in names]).max()
@@ -469,7 +469,7 @@ def main():
         extname='ATTRI')
 
     dmat_name = "DM_"
-    if blinding:
+    if blinding != "None":
         dmat_name += "BLIND_"
     names = names.astype(str)
     out_list = []

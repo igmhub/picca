@@ -483,13 +483,13 @@ def main():
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
         }, {
-            'name': "BLIND_COSMO",
+            'name': "BLINDING",
             'value': blinding,
-            'comment': 'Boolean specifying if cosmology is blinded'
+            'comment': 'String specifying the blinding strategy'
         }
         ]
     num_pairs_name = "NB"
-    if blinding:
+    if blinding != "None":
         num_pairs_name += "_BLIND"
     comment = [
         'Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2', 'T3',

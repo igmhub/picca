@@ -412,10 +412,11 @@ def main():
                         default=False,
                         required=False,
                         help=('Use all dir for input spectra (DESI SV)'))
-    parser.add_argument('--unblind-desi',
-                        action='store_true',
+    parser.add_argument('--blinding-desi',
+                        type=str,
+                        default="minimal",
                         required=False,
-                        help='Do not blind cosmology when running with desi data')
+                        help='Blinding strategy. "None" for no blinding')
 
 
     t0 = time.time()
@@ -423,7 +424,8 @@ def main():
     args = parser.parse_args()
 
     # comment this when ready to unblind
-    args.unblind_desi = False
+    print("WARINING: --blinding-desi is beign ignored")
+    args.blinding_desi = "minimal"
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
@@ -521,7 +523,7 @@ def main():
                               spall=args.spall,
                               useall=args.use_all,
                               usesinglenights=args.use_single_nights,
-                              unblind_desi=args.unblind_desi)
+                              blinding_desi=args.blinding_desi)
 
     #-- Add order info
     for pix in data:
@@ -923,12 +925,16 @@ def main():
                         'comment': 'Order of the continuum fit'
                     },
                     {
-                        'name': 'BLIND',
+                        'name': "BLINDING",
                         'value': blinding,
-                        'comment': 'Data is blinded'
+                        'comment': 'String specifying the blinding strategy'
                     },
                 ]
 
+                if blinding != "None":
+                    delta_mame = "DELTA_BLIND"
+                else:
+                    delta_name = "DELTA"
                 if args.delta_format == 'Pk1D':
                     header += [
                         {
@@ -966,7 +972,7 @@ def main():
                         delta.log_lambda, delta.delta, delta.ivar,
                         exposures_diff
                     ]
-                    names = ['LOGLAM', 'DELTA', 'IVAR', 'DIFF']
+                    names = ['LOGLAM', delta_name, 'IVAR', 'DIFF']
                     units = ['log Angstrom', '', '', '']
                     comments = [
                         'Log lambda', 'Delta field', 'Inverse variance',
@@ -976,7 +982,7 @@ def main():
                     cols = [
                         delta.log_lambda, delta.delta, delta.weights, delta.cont
                     ]
-                    names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
+                    names = ['LOGLAM', delta_name, 'WEIGHT', 'CONT']
                     units = ['log Angstrom', '', '', '']
                     comments = [
                         'Log lambda', 'Delta field', 'Pixel weights',

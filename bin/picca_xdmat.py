@@ -405,13 +405,13 @@ def main():
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
         }, {
-            'name': "BLIND_COSMO",
+            'name': "BLINDING",
             'value': blinding,
-            'comment': 'Boolean specifying if cosmology is blinded'
+            'comment': 'String specifying the blinding strategy'
         }
         ]
     dmat_name = "DM"
-    if blinding:
+    if blinding != "None":
         dmat_name += "_BLIND"
     results.write([weights_dmat, dmat],
                   names=['WDM', dmat_name],

@@ -376,13 +376,13 @@ def corr_func(healpixs):
         'value': args.fid_wl,
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
     }, {
-        'name': "BLIND_COSMO",
+        'name': "BLINDING",
         'value': blinding,
-        'comment': 'Boolean specifying if cosmology is blinded'
+        'comment': 'String specifying the blinding strategy'
     }
     ]
     num_pairs_name = "NB"
-    if blinding:
+    if blinding != "None":
         num_pairs_name += "_BLIND"
     results.write(
         [r_par, r_trans, z, num_pairs],
@@ -398,7 +398,7 @@ def corr_func(healpixs):
         'comment': 'Healpix scheme'
     }]
     xi_list_name = "DA"
-    if blinding:
+    if blinding != "None":
         xi_list_name += "_BLIND"
     results.write([healpix_list, weights_list, xi_list],
                   names=['HEALPID', 'WE', xi_list_name],

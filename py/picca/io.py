@@ -265,7 +265,7 @@ def read_data(in_dir,
               spall=None,
               useall=False,
               usesinglenights=False
-              unblind_desi=False):
+              blinding_desi="minimal"):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -306,8 +306,8 @@ def read_data(in_dir,
             In case of DESI SV readin use the all directory
         usesinglenights: bool - default: False
             In case of DESI SV readin use only nights specified within the cat
-        unblind_desi: bool - default: False
-            Unblind DESI data, ignored if other reading modes are used
+        blinding_desi: bool - default: "minimal"
+            DESI blinding strategy data, ignored if other reading modes are used
 
     Returns:
         The following variables:
@@ -339,11 +339,10 @@ def read_data(in_dir,
     num_data = 0
 
     # read data taking the mode into account
-    blinding = False
+    blinding = "None"
     if mode in ["desi", "spcframe", "spplate", "spec", "corrected-spec"]:
         if mode == "desi":
-            if not unblind_desi:
-                blinding =True
+            blinding = blinding_desi
             pix_data = read_from_desi(in_dir, catalog, pk1d=pk1d)
         elif mode == "spcframe":
             pix_data = read_from_spcframe(in_dir,
@@ -1289,11 +1288,11 @@ def read_blinding(in_dir):
     hdul = fitsio.FITS(filename)
     header = hdul[1].read_header()
     # new runs of picca_deltas should have a blinding keyword
-    if "BLIND" in header:
-        blinding = header["BLIND"]
+    if "BLINDING" in header:
+        blinding = header["BLINDING"]
     # older runs are not from DESI main survey and should not be blinded
     else:
-        blinding = False
+        blinding = "None"
 
     return blinding
 

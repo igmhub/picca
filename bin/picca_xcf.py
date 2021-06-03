@@ -419,13 +419,13 @@ def main():
         'value': args.fid_wl,
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
     }, {
-        'name': "BLIND_COSMO",
+        'name': "BLINDING",
         'value': blinding,
-        'comment': 'Boolean specifying if cosmology is blinded'
+        'comment': 'String specifying the blinding strategy'
     }
     ]
     num_pairs_name = "NB"
-    if blinding:
+    if blinding != "None":
         num_pairs_name += "_BLIND"
     results.write(
         [r_par, r_trans, z, num_pairs],
@@ -441,7 +441,7 @@ def main():
         'comment': 'Healpix scheme'
     }]
     da_name = "DA"
-    if blinding:
+    if blinding != "None":
         da_name += "_BLIND"
     results.write([healpix_list, weights_list, xi_list],
                   names=['HEALPID', 'WE', da_name],
