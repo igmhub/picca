@@ -223,7 +223,7 @@ def main():
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
                             wl=args.fid_wl,
-                            blinding=blinding
+                            blinding=blinding)
 
     ### Read objects 1
     objs, z_min = io.read_objects(args.drq, args.nside, args.z_min_obj,
