@@ -181,7 +181,7 @@ class Cosmo(object):
             userprint(f"Analysis is not blinded: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
         else:
             userprint("WARNING: The analysis is blinded ! The specified cosmology is "
-                      f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}"
+                      f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
             # blind test small
             filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
             # blind test large
