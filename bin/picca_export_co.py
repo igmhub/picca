@@ -150,6 +150,12 @@ def main():
                 data['NB'] = np.array(hdul[1]['NB'][:])
                 data_name = 'DA'
 
+            if "BLINDING" in header:
+                blinding = header["BLINDING"]
+            # older runs are not from DESI main survey and should not be blinded
+            else:
+                blinding = "none"
+
         data[type_corr] = {}
         data[type_corr]['NSIDE'] = header['NSIDE']
         data[type_corr]['HLPXSCHM'] = hdul[2].read_header()['HLPXSCHM']
@@ -335,6 +341,10 @@ def main():
         'name': 'WL', 
         'value': fid_wl, 
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }, {
+        'name': "BLINDING",
+        'value': blinding,
+        'comment': 'String specifying the blinding strategy'
     }
     ]
     names = ['RP', 'RT', 'Z', data_name, 'CO', 'DM', 'NB']

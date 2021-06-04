@@ -1282,8 +1282,8 @@ def read_blinding(in_dir):
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
         files += glob.glob(in_dir)
     else:
-        files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
-                                                               '/*.fits.gz')                                                            '/*.fits.gz')
+        files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir
+                                                           + '/*.fits.gz')
     filename = files[0]
     hdul = fitsio.FITS(filename)
     header = hdul[1].read_header()
@@ -1292,7 +1292,7 @@ def read_blinding(in_dir):
         blinding = header["BLINDING"]
     # older runs are not from DESI main survey and should not be blinded
     else:
-        blinding = "None"
+        blinding = "none"
 
     return blinding
 
