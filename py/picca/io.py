@@ -339,7 +339,7 @@ def read_data(in_dir,
     num_data = 0
 
     # read data taking the mode into account
-    blinding = "None"
+    blinding = "none"
     if mode in ["desi", "spcframe", "spplate", "spec", "corrected-spec"]:
         if mode == "desi":
             blinding = blinding_desi

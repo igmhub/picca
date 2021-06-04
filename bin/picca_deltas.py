@@ -417,7 +417,7 @@ def main():
                         type=str,
                         default="minimal",
                         required=False,
-                        help='Blinding strategy. "None" for no blinding')
+                        help='Blinding strategy. "none" for no blinding')
 
 
     t0 = time.time()
@@ -427,7 +427,7 @@ def main():
     assert (args.blinding_desi in ACCEPTED_BLINDING_STRATEGIES)
 
     # comment this when ready to unblind
-    if args.blinding_desi == "None":
+    if args.blinding_desi == "none":
         print("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
         args.blinding_desi = "minimal"
 
