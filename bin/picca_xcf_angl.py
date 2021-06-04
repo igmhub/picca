@@ -365,7 +365,7 @@ def main():
     }]
     results.write(
         [r_par, r_trans, z, num_pairs],
-        names=['RP', 'RT', 'Z', "NB"],
+        names=['RP', 'RT', 'Z', 'NB'],
         units=['', 'rad', '', ''],
         comment=['Wavelength ratio', 'Angle', 'Redshift', 'Number of pairs'],
         header=header,

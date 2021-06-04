@@ -56,7 +56,6 @@ def main():
                         default=None,
                         required=False,
                         help='Catalog of objects 2 in DRQ format')
-
     parser.add_argument(
                         '--mode',
                         type=str,
@@ -346,7 +345,7 @@ def main():
     comment = ['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs']
     units = ['h^-1 Mpc', 'h^-1 Mpc', '', '']
     results.write([r_par, r_trans, z, num_pairs],
-                  names=['RP', 'RT', 'Z', "NB"],
+                  names=['RP', 'RT', 'Z', 'NB'],
                   header=header,
                   comment=comment,
                   units=units,
@@ -359,7 +358,7 @@ def main():
         'comment': 'healpix scheme'
     }]
     results.write([healpix_list, weights_list, num_pairs_list],
-                  names=['HEALPID', 'WE', "NB"],
+                  names=['HEALPID', 'WE', 'NB'],
                   header=header2,
                   comment=comment,
                   extname='COR')
