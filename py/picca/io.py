@@ -264,7 +264,7 @@ def read_data(in_dir,
               pk1d=None,
               spall=None,
               useall=False,
-              usesinglenights=False
+              usesinglenights=False,
               blinding_desi="minimal"):
     """Reads the spectra and formats its data as Forest instances.
 
