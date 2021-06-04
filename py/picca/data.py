@@ -1033,9 +1033,9 @@ class Delta(QSO):
             blinding = header["BLIND"]
         # older runs are not from DESI main survey and should not be blinded
         else:
-            blinding = "None"
+            blinding = "none"
 
-        if blinding != "None":
+        if blinding != "none":
             delta_mame = "DELTA_BLIND"
         else:
             delta_name = "DELTA"

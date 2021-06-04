@@ -33,6 +33,13 @@ def corr_func(healpixs):
     correlation_function_data = cf.compute_xi(healpixs)
     return correlation_function_data
 
+
+def main():
+    """Compute the auto and cross-correlation of delta fields"""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Compute the auto and cross-correlation of delta fields')
+
     parser.add_argument('--out',
                         type=str,
                         default=None,

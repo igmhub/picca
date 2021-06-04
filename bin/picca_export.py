@@ -87,6 +87,12 @@ def main():
     r_trans_max = head['RTMAX']
     r_par_min = head['RPMIN']
     r_par_max = head['RPMAX']
+
+    if "BLINDING" in head:
+        blinding = head["BLINDING"]
+    # older runs are not from DESI main survey and should not be blinded
+    else:
+        blinding = "none"
     hdul.close()
 
     if not args.remove_shuffled_correlation is None:
@@ -206,6 +212,10 @@ def main():
         'name': 'WL', 
         'value': head['WL'], 
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+    }, {
+        'name': "BLINDING",
+        'value': blinding,
+        'comment': 'String specifying the blinding strategy'
     }
     ]
     comment = [
