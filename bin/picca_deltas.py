@@ -936,7 +936,7 @@ def main():
                 ]
 
                 if blinding != "none":
-                    delta_mame = "DELTA_BLIND"
+                    delta_name = "DELTA_BLIND"
                 else:
                     delta_name = "DELTA"
                 if args.delta_format == 'Pk1D':
