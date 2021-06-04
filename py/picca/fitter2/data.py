@@ -32,7 +32,14 @@ class data:
 
         fdata = dic_init['data']['filename']
         h = fitsio.FITS(fdata)
-        da = h[1]['DA'][:]
+
+        if 'DA_BLIND' in h[1].get_colnames():
+            da = h[1]['DA_BLIND'][:]
+            self.blind = True
+        else:
+            da = h[1]['DA'][:]
+            self.blind = False
+
         co = h[1]['CO'][:]
         dm = csr_matrix(h[1]['DM'][:])
         rp = h[1]['RP'][:]
@@ -376,6 +383,7 @@ class data:
         return xi
 
     def chi2(self, k, pk_lin, pksb_lin, full_shape, pars):
+        pars['blind'] = self.blind
         xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
 
         pars['SB'] = True & (not full_shape)
@@ -384,6 +392,7 @@ class data:
         pars['sigmaNL_par'] = 0.
         pars['sigmaNL_per'] = 0.
         xi_sb = self.xi_model(k, pksb_lin, pars)
+
         pars['SB'] = False
         pars['sigmaNL_par'] = sigmaNL_par
         pars['sigmaNL_per'] = sigmaNL_per
