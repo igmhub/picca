@@ -140,21 +140,8 @@ def main():
             data['COEF'] = coef
             for item in ['NT', 'NP', 'RTMAX', 'RPMIN', 'RPMAX']:
                 data[item] = header[item]
-            for item in ['RP', 'RT', 'Z']:
+            for item in ['RP', 'RT', 'Z', 'NB']:
                 data[item] = np.array(hdul[1][item][:])
-
-            if 'NB_BLIND' in hdul[1].get_colnames():
-                data['NB'] = np.array(hdul[1]['NB_BLIND'][:])
-                data_name = 'DA_BLIND'
-            else:
-                data['NB'] = np.array(hdul[1]['NB'][:])
-                data_name = 'DA'
-
-            if "BLINDING" in header:
-                blinding = header["BLINDING"]
-            # older runs are not from DESI main survey and should not be blinded
-            else:
-                blinding = "none"
 
         data[type_corr] = {}
         data[type_corr]['NSIDE'] = header['NSIDE']
@@ -186,7 +173,7 @@ def main():
         xi = np.zeros(xi_data_data.size)
         xi[w] = (xi_data_data[w] + xi_random_random[w] - xi_data1_random2[w] -
                  xi_data2_random1[w]) / xi_random_random[w]
-    data[data_name] = xi
+    data['DA'] = xi
     data['corr_DD'] = xi_data_data
     data['corr_RR'] = xi_random_random
 
@@ -292,7 +279,7 @@ def main():
         userprint('WARNING: Matrix is not positive definite')
 
     # Identity distortion matrix
-    data['DM'] = np.eye(data[data_name].size)
+    data['DM'] = np.eye(data['DA'].size)
 
     # Save results
     results = fitsio.FITS(args.out, 'rw', clobber=True)
@@ -341,13 +328,9 @@ def main():
         'name': 'WL', 
         'value': fid_wl, 
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    }, {
-        'name': "BLINDING",
-        'value': blinding,
-        'comment': 'String specifying the blinding strategy'
     }
     ]
-    names = ['RP', 'RT', 'Z', data_name, 'CO', 'DM', 'NB']
+    names = ['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB']
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
@@ -372,7 +355,7 @@ def main():
         }]
         comment = ['Healpix index', 'Sum of weight', 'Correlation']
         results.write([healpix_list, data['HLP_WE'], data['HLP_DA']],
-                      names=['HEALPID', 'WE', data_name],
+                      names=['HEALPID', 'WE', 'DA'],
                       header=header2,
                       comment=comment,
                       extname='SUB_COR')

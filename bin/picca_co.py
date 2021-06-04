@@ -329,10 +329,6 @@ def main():
             'name': 'WL',
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-        }, {
-            'name': "BLINDING",
-            'value': blinding,
-            'comment': 'String specifying the blinding strategy'
         }
         ]
     if co.x_correlation:
