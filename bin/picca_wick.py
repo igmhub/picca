@@ -524,16 +524,13 @@ def main():
             'comment': 'String specifying the blinding strategy'
         }
         ]
-    num_pairs_name = "NB"
-    if blinding != "none":
-        num_pairs_name += "_BLIND"
     comment = [
         'Sum of weight', 'Covariance', 'Nomber of pairs', 'T1', 'T2', 'T3',
         'T4', 'T5', 'T6'
     ]
     results.write(
         [t_tot, weights_wick, num_pairs_wick, t1, t2, t3, t4, t5, t6],
-        names=['CO', 'WALL', num_pairs_name, 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+        names=['CO', 'WALL', "NB", 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
         comment=comment,
         header=header,
         extname='COV')

@@ -215,15 +215,11 @@ def main():
     else:
         co.x_correlation = True
 
-    # read blinding keyword
-    blinding = io.read_blinding(args.in_dir)
-
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl,
-                            blinding=blinding
+                            wl=args.fid_wl)
 
     ### Read objects 1
     objs, z_min = io.read_objects(args.drq, args.nside, args.z_min_obj,
@@ -351,13 +347,10 @@ def main():
                 'Number of objects 2'
         }]
 
-    num_pairs_name = "NB"
-    if blinding != "none":
-        num_pairs_name += "_BLIND"
     comment = ['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs']
     units = ['h^-1 Mpc', 'h^-1 Mpc', '', '']
     results.write([r_par, r_trans, z, num_pairs],
-                  names=['RP', 'RT', 'Z', num_pairs_name],
+                  names=['RP', 'RT', 'Z', "NB"],
                   header=header,
                   comment=comment,
                   units=units,
@@ -370,7 +363,7 @@ def main():
         'comment': 'healpix scheme'
     }]
     results.write([healpix_list, weights_list, num_pairs_list],
-                  names=['HEALPID', 'WE', num_pairs_name],
+                  names=['HEALPID', 'WE', "NB"],
                   header=header2,
                   comment=comment,
                   extname='COR')

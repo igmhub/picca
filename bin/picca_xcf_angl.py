@@ -363,12 +363,9 @@ def main():
         'value': xcf.nside,
         'comment': 'Healpix nside'
     }]
-    num_pairs_name = "NB"
-    if blinding != "none":
-        num_pairs_name += "_BLIND"
     results.write(
         [r_par, r_trans, z, num_pairs],
-        names=['RP', 'RT', 'Z', num_pairs_name],
+        names=['RP', 'RT', 'Z', "NB"],
         units=['', 'rad', '', ''],
         comment=['Wavelength ratio', 'Angle', 'Redshift', 'Number of pairs'],
         header=header,
