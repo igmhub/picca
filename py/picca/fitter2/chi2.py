@@ -93,7 +93,9 @@ class chi2:
             if name[:4] != "bias":
                 kwargs_init["fix_"+name] = True
 
-        mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,print_level=1,**kwargs_init)
+        mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,**kwargs_init)
+        mig_init.errordef = 1
+        mig_init.print_level = 1
         mig_init.migrad()
         mig_init.print_param()
 
@@ -101,7 +103,9 @@ class chi2:
         for name, value in mig_init.values.items():
             kwargs[name] = value
 
-        mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,print_level=1,**kwargs)
+        mig = iminuit.Minuit(self,forced_parameters=self.par_names,**kwargs)
+        mig.errordef = 1
+        mig.print_level = 1
         mig.migrad()
         mig.print_param()
 
