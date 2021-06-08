@@ -180,11 +180,6 @@ def main():
         required=False,
         help='Equation of state of dark energy of fiducial LambdaCDM cosmology')
 
-    parser.add_argument('--unblind',
-                        action='store_true',
-                        required=False,
-                        help='Do not blind cosmology')
-
     parser.add_argument('--no-project',
                         action='store_true',
                         required=False,

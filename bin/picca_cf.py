@@ -390,7 +390,7 @@ def main():
     ]
     results.write(
         [r_par, r_trans, z, num_pairs],
-        names=['RP', 'RT', 'Z', "NB"],
+        names=['RP', 'RT', 'Z', 'NB'],
         comment=['R-parallel', 'R-transverse', 'Redshift', 'Number of pairs'],
         units=['h^-1 Mpc', 'h^-1 Mpc', '', ''],
         header=header,
