@@ -72,7 +72,6 @@ class Data:
         self.logger.progress(f"Input sample has {len(self.forests)} forests")
         remove_indexs = []
         for index, forest in enumerate(self.forests):
-            print(f"Forest {forest.los_id} has length {len(forest.log_lambda)}")
             if forest.flux.size < self.min_num_pix:
                 self.logger.progress(
                     f"Rejected forest with thingid {forest.thingid} "
@@ -100,7 +99,7 @@ class Data:
         """
         healpixs = np.array([forest.healpix for forest in self.forests])
         unique_healpixs = np.unique(healpixs)
-        healpixs_indexs = {healpix: np.where(healpixs == healpix)
+        healpixs_indexs = {healpix: np.where(healpixs == healpix)[0]
                            for healpix in unique_healpixs}
 
         for healpix, indexs in sorted(healpixs_indexs.items()):
