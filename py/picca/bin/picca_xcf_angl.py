@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Compute the cross-correlation between a catalog of objects and a delta field
 as a function of angle and wavelength ratio
 """

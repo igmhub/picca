@@ -8,8 +8,9 @@ See the respective documentation for details
 """
 import numpy as np
 import iminuit
-from picca.data import Forest
-from picca.utils import userprint
+
+from .data import Forest
+from .utils import userprint
 
 
 def compute_mean_cont(data):

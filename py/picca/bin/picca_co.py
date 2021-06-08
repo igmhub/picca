@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Compute the auto and cross-correlation between catalogs of objects
 """
 import argparse

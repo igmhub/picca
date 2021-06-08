@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Writes scripts to send the picca BAO analysis
 
 Once ran, run `./submit.sh` in your terminal. This script works on nersc::cori

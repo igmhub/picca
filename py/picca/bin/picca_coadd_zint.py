@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Coadd correlation function from different redshift intervals"""
 import os
 import sys

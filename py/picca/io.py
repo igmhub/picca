@@ -27,10 +27,10 @@ import fitsio
 from astropy.table import Table
 import warnings
 
-from picca.utils import userprint
-from picca.data import Forest, Delta, QSO
-from picca.prep_pk1d import exp_diff, spectral_resolution
-from picca.prep_pk1d import spectral_resolution_desi
+from .utils import userprint
+from .data import Forest, Delta, QSO
+from .prep_pk1d import exp_diff, spectral_resolution
+from .prep_pk1d import spectral_resolution_desi
 
 
 def read_dlas(filename):
@@ -262,7 +262,9 @@ def read_data(in_dir,
               best_obs=False,
               single_exp=False,
               pk1d=None,
-              spall=None):
+              spall=None,
+              useall=False,
+              usesinglenights=False):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -299,6 +301,11 @@ def read_data(in_dir,
             Format for Pk 1D: Pk1D
         spall: str - default: None
             Path to the spAll file required for multiple observations
+        useall: bool - default: False
+            In case of DESI SV readin use the all directory
+        usesinglenights: bool - default: False
+            In case of DESI SV readin use only nights specified within the cat
+        
 
     Returns:
         The following variables:
@@ -413,7 +420,7 @@ def read_data(in_dir,
 
     elif mode == "desiminisv":
         nside = 8
-        data, num_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d)
+        data, num_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights)
     else:
         userprint("I don't know mode: {}".format(mode))
         sys.exit(1)
@@ -979,6 +986,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
         fibermap = hdul['FIBERMAP'].read()
         targetid_spec = fibermap["TARGETID"]
 
+        reso_from_truth=False
         #-- First read all wavelength, flux, ivar, mask, and resolution
         #-- from this file
         spec_data = {}
@@ -998,6 +1006,19 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                     spec[key][w] = 0.
                 if f"{color}_RESOLUTION" in hdul:
                     spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
+                elif pk1d is not None:
+                    filename_truth=f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits"
+                    try:
+                        with fitsio.FITS(filename_truth) as hdul_truth:
+                            spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
+                    except IOError:
+                        userprint(f"Error reading truth file {filename_truth}")   
+                    except KeyError:
+                        userprint(f"Error reading resolution from truth file for pix {healpix}")
+                    else:
+                        if not reso_from_truth:
+                            userprint('Did not find resolution matrix in spectrum files, using resolution from truth files')
+                            reso_from_truth=True
                 spec_data[color] = spec
             except OSError:
                 userprint(f"ERROR: while reading {color} band from {filename}")
@@ -1026,7 +1047,10 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                 flux = spec['FL'][w_t].copy()
 
                 if not pk1d is None:
-                    reso_sum = spec['RESO'][w_t].copy()
+                    if not reso_from_truth:
+                        reso_sum = spec['RESO'][w_t].copy()
+                    else:
+                        reso_sum = spec['RESO'][:].copy()
                     reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['log_lambda'])
                     exposures_diff = np.zeros(spec['log_lambda'].shape)
@@ -1050,7 +1074,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     return data
 
 
-def read_from_minisv_desi(in_dir, catalog, pk1d=None):
+def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, useall=False):
     """Reads the spectra and formats its data as Forest instances.
     Unlike the read_from_desi routine, this orders things by tile/petal
     Routine used to treat the DESI mini-SV data.
@@ -1069,19 +1093,43 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None):
 
     data = {}
     num_data = 0
-
-    files_in = glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
+    if usesinglenights:
+        files_in = glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
                          recursive=True)
-    petal_tile_night = [
-        f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
-        for entry in catalog
-    ]
-    petal_tile_night_unique = np.unique(petal_tile_night)
-    filenames = []
-    for f_in in files_in:
-        for ptn in petal_tile_night_unique:
+        petal_tile_night = [
+            f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
+            for entry in catalog
+        ]
+        #this uniqueness check is to ensure each petal/tile/night combination only appears once in the filelist
+        petal_tile_night_unique = np.unique(petal_tile_night)
+    
+        filenames = []
+        for f_in in files_in:
+          for ptn in petal_tile_night_unique:
             if ptn in os.path.basename(f_in):
                 filenames.append(f_in)
+                break
+    else:
+        if useall:
+            files_in = glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
+                         recursive=True)
+        else:
+            files_in = glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
+                         recursive=True)
+        petal_tile = [
+            f"{entry['PETAL_LOC']}-{entry['TILEID']}"
+            for entry in catalog
+        ]
+        #this uniqueness check is to ensure each petal/tile combination only appears once in the filelist
+        petal_tile_unique = np.unique(petal_tile)
+        filenames = []
+        for f_in in files_in:
+          for pt in petal_tile_unique:
+            if pt in os.path.basename(f_in):
+                filenames.append(f_in)
+                break
+
+        
     #filenames = []
     #for entry in catalog:
     #    fi = (f"{entry['TILEID']}/{entry['NIGHT']}/"+

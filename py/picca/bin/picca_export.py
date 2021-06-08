@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Export auto and cross-correlation for the fitter."""
 import sys
 import argparse

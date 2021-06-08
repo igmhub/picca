@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Computes delta field from a list of spectra.
 
 Computes the mean transmission fluctuation field (delta field) for a list of
@@ -166,13 +166,12 @@ def main(cmdargs):
                         help=('If mode == spcframe, then use only the best '
                               'observation'))
 
-    parser.add_argument(
-        '--single-exp',
-        action='store_true',
-        required=False,
-        help=('If mode == spcframe, then use only one of the '
-              'available exposures. If best-obs then choose it '
-              'among those contributing to the best obs'))
+    parser.add_argument('--single-exp',
+                        action='store_true',
+                        required=False,
+                        help=('If mode == spcframe, then use only one of the '
+                              'available exposures. If best-obs then choose it '
+                              'among those contributing to the best obs'))
 
     parser.add_argument('--zqso-min',
                         type=float,
@@ -254,14 +253,13 @@ def main(cmdargs):
                         required=False,
                         help='Absorber catalog file')
 
-    parser.add_argument(
-        '--absorber-mask',
-        type=float,
-        default=2.5,
-        required=False,
-        help=('Mask width on each side of the absorber central '
-              'observed wavelength in units of '
-              '1e4*dlog10(lambda)'))
+    parser.add_argument('--absorber-mask',
+                        type=float,
+                        default=2.5,
+                        required=False,
+                        help=('Mask width on each side of the absorber central '
+                              'observed wavelength in units of '
+                              '1e4*dlog10(lambda)'))
 
     parser.add_argument('--mask-file',
                         type=str,
@@ -286,23 +284,21 @@ def main(cmdargs):
                         help=('Path to DRQ catalog of objects for dust map to '
                               'apply the Schlegel correction'))
 
-    parser.add_argument(
-        '--flux-calib',
-        type=str,
-        default=None,
-        required=False,
-        help=('Path to previously produced picca_delta.py file '
-              'to correct for multiplicative errors in the '
-              'pipeline flux calibration'))
+    parser.add_argument('--flux-calib',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help=('Path to previously produced picca_delta.py file '
+                              'to correct for multiplicative errors in the '
+                              'pipeline flux calibration'))
 
-    parser.add_argument(
-        '--ivar-calib',
-        type=str,
-        default=None,
-        required=False,
-        help=('Path to previously produced picca_delta.py file '
-              'to correct for multiplicative errors in the '
-              'pipeline inverse variance calibration'))
+    parser.add_argument('--ivar-calib',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help=('Path to previously produced picca_delta.py file '
+                              'to correct for multiplicative errors in the '
+                              'pipeline inverse variance calibration'))
 
     parser.add_argument('--eta-min',
                         type=float,
@@ -404,6 +400,19 @@ def main(cmdargs):
                         required=False,
                         help=('Name for table containing forests metadata'))
 
+    parser.add_argument(
+        '--use-single-nights',
+        action='store_true',
+        default=False,
+        required=False,
+        help=('Use individual night for input spectra (DESI SV)'))
+
+    parser.add_argument('--use-all',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help=('Use all dir for input spectra (DESI SV)'))
+
     t0 = time.time()
 
     args = parser.parse_args(cmdargs)
@@ -449,8 +458,7 @@ def main(cmdargs):
                                 np.zeros(2),
                                 fill_value="extrapolate",
                                 kind="nearest")
-    Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp,
-                                    1 + np.zeros(2))
+    Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp, 1 + np.zeros(2))
 
 
     #-- Check that the order of the continuum fit is 0 (constant) or 1 (linear).
@@ -502,7 +510,9 @@ def main(cmdargs):
                                          best_obs=args.best_obs,
                                          single_exp=args.single_exp,
                                          pk1d=args.delta_format,
-                                         spall=args.spall)
+                                         spall=args.spall,
+                                         useall=args.use_all,
+                                         usesinglenights=args.use_single_nights)
 
     #-- Add order info
     for pix in data:
@@ -517,14 +527,15 @@ def main(cmdargs):
             mask = Table.read(args.mask_file,
                               names=('type', 'wave_min', 'wave_max', 'frame'),
                               format='ascii')
-            mask['log_wave_min']=np.log10(mask['wave_min'])
-            mask['log_wave_max']=np.log10(mask['wave_max'])
+            mask['log_wave_min'] = np.log10(mask['wave_min'])
+            mask['log_wave_max'] = np.log10(mask['wave_max'])
         except (OSError, ValueError):
             userprint(("ERROR: Error while reading mask_file "
                        "file {}").format(args.mask_file))
             sys.exit(1)
     else:
-        mask = Table(names=('type', 'wave_min', 'wave_max', 'frame','log_wave_min','log_wave_max'))
+        mask = Table(names=('type', 'wave_min', 'wave_max', 'frame',
+                            'log_wave_min', 'log_wave_max'))
 
     ### Mask lines
     for healpix in data:
@@ -594,14 +605,13 @@ def main(cmdargs):
     ## Apply cuts
     log_file.write(
         ("INFO: Input sample has {} "
-         "forests\n").format(np.sum([len(forest)
-                                     for forest in data.values()])))
+         "forests\n").format(np.sum([len(forest) for forest in data.values()])))
     remove_keys = []
     for healpix in data:
         forests = []
         for forest in data[healpix]:
-            if ((forest.log_lambda is None)
-                    or len(forest.log_lambda) < args.npix_min):
+            if ((forest.log_lambda is None) or
+                    len(forest.log_lambda) < args.npix_min):
                 log_file.write(("INFO: Rejected {} due to forest too "
                                 "short\n").format(forest.thingid))
                 continue
@@ -611,8 +621,8 @@ def main(cmdargs):
                                 "found\n").format(forest.thingid))
                 continue
 
-            if (args.use_constant_weight
-                    and (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
+            if (args.use_constant_weight and
+                (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
                 log_file.write(("INFO: Rejected {} due to negative mean or "
                                 "too low SNR found\n").format(forest.thingid))
                 continue
@@ -740,41 +750,49 @@ def main(cmdargs):
                                             fill_value='extrapolate',
                                             kind='nearest')
 
+        stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
+
+        ### Save iter_out_prefix
+        delta_attrib_name = args.iter_out_prefix
+        if iteration == num_iterations - 1:
+            delta_attrib_name += ".fits.gz"
+        else:
+            delta_attrib_name += "_iteration{}.fits.gz".format(iteration + 1)
+        with fitsio.FITS(delta_attrib_name, 'rw', clobber=True) as results:
+            header = {}
+            header["NSIDE"] = nside
+            header["PIXORDER"] = healpy_pix_ordering
+            header["FITORDER"] = args.order
+            results.write([stack_log_lambda, stack_delta, stack_weight],
+                          names=['loglam', 'stack', 'weight'],
+                          header=header,
+                          extname='STACK')
+            results.write(
+                [log_lambda, eta, var_lss, fudge, num_pixels],
+                names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'],
+                extname='WEIGHT')
+            results.write([
+                log_lambda_rest_frame,
+                Forest.get_mean_cont(log_lambda_rest_frame), mean_cont_weight
+            ],
+                          names=['loglam_rest', 'mean_cont', 'weight'],
+                          extname='CONT')
+            var_pipe_values_out = np.broadcast_to(var_pipe_values.reshape(1, -1),
+                                              var_delta.shape)
+            results.write([
+                var_pipe_values_out, var_delta, var2_delta, count, num_qso,
+                chi2_in_bin
+            ],
+                          names=[
+                              'var_pipe', 'var_del', 'var2_del', 'count',
+                              'nqsos', 'chi2'
+                          ],
+                          extname='VAR')
+
     ### Read metadata from forests and export it
     if not args.metadata is None:
         tab_cont = get_metadata(data)
         tab_cont.write(args.metadata, format="fits", overwrite=True)
-
-    stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
-
-    ### Save iter_out_prefix
-    results = fitsio.FITS(args.iter_out_prefix + ".fits.gz",
-                          'rw',
-                          clobber=True)
-    header = {}
-    header["NSIDE"] = nside
-    header["PIXORDER"] = healpy_pix_ordering
-    header["FITORDER"] = args.order
-    results.write([stack_log_lambda, stack_delta, stack_weight],
-                  names=['loglam', 'stack', 'weight'],
-                  header=header,
-                  extname='STACK')
-    results.write([log_lambda, eta, var_lss, fudge, num_pixels],
-                  names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'],
-                  extname='WEIGHT')
-    results.write([
-        log_lambda_rest_frame,
-        Forest.get_mean_cont(log_lambda_rest_frame), mean_cont_weight
-    ],
-                  names=['loglam_rest', 'mean_cont', 'weight'],
-                  extname='CONT')
-    var_pipe_values = np.broadcast_to(var_pipe_values.reshape(1, -1),
-                                      var_delta.shape)
-    results.write(
-        [var_pipe_values, var_delta, var2_delta, count, num_qso, chi2_in_bin],
-        names=['var_pipe', 'var_del', 'var2_del', 'count', 'nqsos', 'chi2'],
-        extname='VAR')
-    results.close()
 
     ### Compute deltas and format them
     get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
@@ -825,8 +843,7 @@ def main(cmdargs):
                         float(len(delta.log_lambda) - 1))
                 else:
                     delta_log_lambda = delta.delta_log_lambda
-                line = '{} {} {} '.format(delta.plate, delta.mjd,
-                                          delta.fiberid)
+                line = '{} {} {} '.format(delta.plate, delta.mjd, delta.fiberid)
                 line += '{} {} {} '.format(delta.ra, delta.dec, delta.z_qso)
                 line += '{} {} {} {} {} '.format(delta.mean_z, delta.mean_snr,
                                                  delta.mean_reso,
@@ -868,10 +885,10 @@ def main(cmdargs):
                     },
                     {
                         'name':
-                        'PMF',
+                            'PMF',
                         'value':
-                        '{}-{}-{}'.format(delta.plate, delta.mjd,
-                                          delta.fiberid)
+                            '{}-{}-{}'.format(delta.plate, delta.mjd,
+                                              delta.fiberid)
                     },
                     {
                         'name': 'THING_ID',
@@ -943,8 +960,7 @@ def main(cmdargs):
                     ]
                 else:
                     cols = [
-                        delta.log_lambda, delta.delta, delta.weights,
-                        delta.cont
+                        delta.log_lambda, delta.delta, delta.weights, delta.cont
                     ]
                     names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
                     units = ['log Angstrom', '', '', '']

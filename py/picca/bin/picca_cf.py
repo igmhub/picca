@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Compute the auto and cross-correlation of delta fields.
 
 This module follow the procedure described in sections 3.1 and 3.2 of du Mas des

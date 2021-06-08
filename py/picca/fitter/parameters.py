@@ -3,7 +3,7 @@ import copy
 import sys
 import subprocess
 
-from picca.utils import userprint
+from ..utils import userprint
 
 
 class parameters:

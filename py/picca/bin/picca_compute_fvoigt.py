@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Computes the convolution term Fvoigt(k) and saves it in an ASCII file. The inputs are a DLA and a QSO catalog (both as fits binary tables). The DLA table must contain the columns "MOCKID" matching qso "THING_ID", and "Z_DLA_RSD". The QSO table must contain the columns "THING_ID", and "Z"
