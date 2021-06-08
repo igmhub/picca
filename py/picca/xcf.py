@@ -18,8 +18,8 @@ import numpy as np
 from healpy import query_disc
 from numba import jit, int32
 
-from picca import constants
-from picca.utils import userprint
+from . import constants
+from .utils import userprint
 
 num_bins_r_par = None
 num_bins_r_trans = None

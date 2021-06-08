@@ -27,10 +27,10 @@ import fitsio
 from astropy.table import Table
 import warnings
 
-from picca.utils import userprint
-from picca.data import Forest, Delta, QSO
-from picca.prep_pk1d import exp_diff, spectral_resolution
-from picca.prep_pk1d import spectral_resolution_desi
+from .utils import userprint
+from .data import Forest, Delta, QSO
+from .prep_pk1d import exp_diff, spectral_resolution
+from .prep_pk1d import spectral_resolution_desi
 
 
 def read_dlas(filename):
@@ -986,6 +986,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
         fibermap = hdul['FIBERMAP'].read()
         targetid_spec = fibermap["TARGETID"]
 
+        reso_from_truth=False
         #-- First read all wavelength, flux, ivar, mask, and resolution
         #-- from this file
         spec_data = {}
@@ -1005,6 +1006,19 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                     spec[key][w] = 0.
                 if f"{color}_RESOLUTION" in hdul:
                     spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
+                elif pk1d is not None:
+                    filename_truth=f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits"
+                    try:
+                        with fitsio.FITS(filename_truth) as hdul_truth:
+                            spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
+                    except IOError:
+                        userprint(f"Error reading truth file {filename_truth}")   
+                    except KeyError:
+                        userprint(f"Error reading resolution from truth file for pix {healpix}")
+                    else:
+                        if not reso_from_truth:
+                            userprint('Did not find resolution matrix in spectrum files, using resolution from truth files')
+                            reso_from_truth=True
                 spec_data[color] = spec
             except OSError:
                 userprint(f"ERROR: while reading {color} band from {filename}")
@@ -1033,7 +1047,10 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                 flux = spec['FL'][w_t].copy()
 
                 if not pk1d is None:
-                    reso_sum = spec['RESO'][w_t].copy()
+                    if not reso_from_truth:
+                        reso_sum = spec['RESO'][w_t].copy()
+                    else:
+                        reso_sum = spec['RESO'][:].copy()
                     reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['log_lambda'])
                     exposures_diff = np.zeros(spec['log_lambda'].shape)

@@ -6,7 +6,7 @@ import h5py
 import sys
 from scipy.linalg import cholesky
 
-from picca.utils import userprint
+from ..utils import userprint
 from . import priors
 
 def _wrap_chi2(d, dic=None, k=None, pk=None, pksb=None):

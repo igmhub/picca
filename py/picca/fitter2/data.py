@@ -4,7 +4,7 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse import csr_matrix
 
-from picca.utils import userprint
+from ..utils import userprint
 from . import pk, xi
 
 

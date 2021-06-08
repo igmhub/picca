@@ -13,7 +13,7 @@ import h5py
 from pkg_resources import resource_filename
 import sys
 
-from picca.utils import userprint
+from ..utils import userprint
 import configparser as ConfigParser
 
 

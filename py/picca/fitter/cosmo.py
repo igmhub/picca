@@ -4,12 +4,11 @@ import scipy as sp
 import scipy.interpolate
 import sys
 
-from picca.utils import userprint
-from picca.fitter import myGamma
-from picca.fitter import utils
+from ..utils import userprint
+from . import myGamma
+from . import utils
 from . import fftlog
-
-from picca.fitter.utils import L
+from .utils import L
 
 class model:
 

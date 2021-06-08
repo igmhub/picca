@@ -5,7 +5,8 @@ This module provides with one class (DLA). See the respective
 docstrings for more details
 """
 import numpy as np
-from picca import constants
+
+from . import constants
 
 
 class DLA:

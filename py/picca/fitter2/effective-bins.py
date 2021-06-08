@@ -15,8 +15,8 @@ if (sys.version_info > (3, 0)):
 else:
     import ConfigParser
 
-from picca.utils import userprint
-from picca.fitter2 import parser as fit_parser
+from ..utils import userprint
+from . import parser as fit_parser
 
 
 labels = {
