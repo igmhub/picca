@@ -994,14 +994,21 @@ class Dr16ExpectedFlux(ExpectedFlux):
             num_pixels[index] = count[index * num_var_bins:(index + 1) *
                                       num_var_bins].sum()
             chi2_in_bin[index] = minimizer.fval
+
+            if Forest.wave_solution == "log":
+                self.logger.progress(
+                    f" {self.log_lambda[index]:.3e} "
+                    f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
+                    f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
+            elif Forest.wave_solution == "lin":
+                self.logger.progress(
+                    f" {self.lambda_[index]:.3e} "
+                    f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
+                    f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
+
         w = num_pixels > 0
 
         if Forest.wave_solution == "log":
-            self.logger.progress(
-                f" {self.log_lambda[index]:.3e} "
-                f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
-                f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
-            #f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
             self.get_eta = interp1d(self.log_lambda[w],
                                     eta[w],
                                     fill_value="extrapolate",
@@ -1015,11 +1022,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       fill_value="extrapolate",
                                       kind="nearest")
         elif Forest.wave_solution == "lin":
-            self.logger.progress(
-                f" {self.lambda_[index]:.3e} "
-                f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
-                f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
-            #f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
             self.get_eta = interp1d(self.lambda_[w],
                                     eta[w],
                                     fill_value="extrapolate",
