@@ -14,16 +14,6 @@ default_config = {
     "general": {
         "overwrite": False,
     },
-    "data": {
-    },
-    "corrections":{
-    },
-    "masks": {
-    },
-    "expected flux":{
-    },
-    "empty":{
-    },
 }
 
 defaults = {
@@ -260,6 +250,9 @@ class Config:
         self.overwrite = section.getboolean("overwrite")
 
         self.log = section.get("log")
+        if self.log is not None and not (self.log.startswith(".") or self.log.startswith("/")):
+            self.log = self.out_dir + "Log/" + self.log
+
         self.logging_level_console = section.get("logging level console")
         if self.logging_level_console is None:
             self.logging_level_console = defaults.get("logging level console")
@@ -270,6 +263,7 @@ class Config:
             self.logging_level_file = defaults.get("logging level file")
         self.logging_level_file = self.logging_level_file.upper()
 
+        self.initialize_folders()
         setup_logger(logging_level_console=self.logging_level_console,
                      log_file=self.log,
                      logging_level_file=self.logging_level_file)
@@ -285,6 +279,7 @@ class Config:
         if "masks" not in self.config:
             self.logger.warning("Missing section [masks]. No Masks will"
                                 "be applied to data")
+            return
         section = self.config["masks"]
         self.num_masks = section.getint("num masks")
         for mask_index in range(self.num_masks):
@@ -338,6 +333,28 @@ class Config:
                                           "was found")
                     self.config[section][key] = value.replace(value[:pos],
                                                               os.getenv(value[1:pos]))
+
+    def initialize_folders(self):
+        """Initialize output folders
+
+        Raise
+        -----
+        DeltaExtractionError if the output path was already used and the
+        overwrite is not selected
+        """
+        if not os.path.exists(self.out_dir):
+            os.makedirs(self.out_dir)
+            os.makedirs(self.out_dir+"Delta/")
+            os.makedirs(self.out_dir+"Log/")
+            self.write_config()
+        elif self.overwrite:
+            self.write_config()
+        else:
+            raise DeltaExtractionError("Specified folder contains a previous run."
+                                       "Pass overwrite option in configuration file"
+                                       "in order to ignore the previous run or"
+                                       "change the output path variable to point "
+                                       "elsewhere")
 
     def write_config(self):
         """This function writes the configuration options for later

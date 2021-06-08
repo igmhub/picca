@@ -138,7 +138,7 @@ class Survey:
         # prange is used to signal jit of parallelisation but is otherwise
         # equivalent to range
         for forest_index in prange(len(self.data.forests)):
-            self.expected_flux.extract_delta(self.data.forests[forest_index])
+            self.expected_flux.extract_deltas(self.data.forests[forest_index])
 
         t1 = time.time()
         self.logger.info(f"Time spent extracting deltas: {t1-t0}")
@@ -146,28 +146,6 @@ class Survey:
     def filter_forests(self):
         """Remove forests that do not meet quality standards"""
         self.data.filter_forests()
-
-    def initialize_folders(self):
-        """Initialize output folders
-
-        Raise
-        -----
-        DeltaExtractionError if the output path was already used and the
-        overwrite is not selected
-        """
-        if not os.path.exists(self.config.out_dir):
-            os.makedirs(self.config.out_dir)
-            os.makedirs(self.config.out_dir+"Delta/")
-            os.makedirs(self.config.out_dir+"Log/")
-            self.config.write_config()
-        elif self.config.overwrite:
-            self.config.write_config()
-        else:
-            raise DeltaExtractionError("Specified folder contains a previous run."
-                                       "Pass overwrite option in configuration file"
-                                       "in order to ignore the previous run or"
-                                       "change the output path variable to point "
-                                       "elsewhere")
 
     def load_config(self, config_file):
         """Load the configuration of the run, sets up the print function

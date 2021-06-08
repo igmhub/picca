@@ -23,9 +23,6 @@ def main(args):
     # load configuration
     survey.load_config(args.config_file)
 
-    # initialize output folders
-    survey.initialize_folders()
-
     # initialize forest corrections and masks
     # this is done prior to reading the data as it is faster and we can
     # save computing time if an error occurs here
