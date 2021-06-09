@@ -400,15 +400,6 @@ class Forest(AstronomicalObject):
                                           "must be either 'lin' or 'log'. "
                                           f"Found: {Forest.wave_solution}")
 
-        if self.continuum is None:
-            cols += [np.zeros(array_size, dtype=float)]
-        else:
-            cols += [self.continuum]
-        names += ["CONT"]
-        comments += ["Quasar continuum if BAD_CONT is 'None'. Check input "
-                     "spectra for units"]
-        units += ["Flux units"]
-
         if self.deltas is None:
             cols += [np.zeros(array_size, dtype=float)]
         else:
@@ -425,6 +416,15 @@ class Forest(AstronomicalObject):
         comments += ["Pixel weights"]
         units += [""]
 
+        if self.continuum is None:
+            cols += [np.zeros(array_size, dtype=float)]
+        else:
+            cols += [self.continuum]
+        names += ["CONT"]
+        comments += ["Quasar continuum. Check input "
+                     "spectra for units"]
+        units += ["Flux units"]
+
         return cols, names, units, comments
 
     def get_header(self):
@@ -440,11 +440,6 @@ class Forest(AstronomicalObject):
         """
         header = super().get_header()
         header += [
-            {
-                'name': 'BAD_CONT',
-                'value': str(self.bad_continuum_reason),
-                'comment': 'Reason as to why the continuum is bad'
-            },
             {
                 'name': 'MEANSNR',
                 'value': self.mean_snr,

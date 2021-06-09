@@ -220,6 +220,7 @@ class SdssForest(Forest):
             {
                 'name': 'PLATE',
                 'value': "-".join(f"{plate:04d}" for plate in self.plate),
+                'comment': 'SDSS plate(s)',
             },
             {
                 'name': 'MJD',
@@ -229,6 +230,7 @@ class SdssForest(Forest):
             {
                 'name': 'FIBERID',
                 'value': "-".join(f"{fiberid:04d}" for fiberid in self.fiberid),
+                'comment': 'SDSS fiber id(s)',
             },
         ]
 
