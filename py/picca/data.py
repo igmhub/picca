@@ -482,8 +482,13 @@ class Forest(QSO):
         rebin_ivar = np.zeros(bins.max() + 1)
         if mean_expected_flux_frac is not None:
             rebin_mean_expected_flux_frac = np.zeros(bins.max() + 1)
-        rebin_flux_aux = np.bincount(bins, weights=ivar * flux)
+        #rebin_flux_aux = np.bincount(bins, weights=ivar * flux)
         rebin_ivar_aux = np.bincount(bins, weights=ivar)
+        
+        rebin_flux_aux = np.bincount(bins, weights=flux)
+        rebin_norm = np.bincount(bins)
+        #rebin_ivar_aux = np.bincount(bins)
+        
         if mean_expected_flux_frac is not None:
             rebin_mean_expected_flux_frac_aux = np.bincount(
                 bins, weights=ivar * mean_expected_flux_frac)
@@ -502,7 +507,8 @@ class Forest(QSO):
         if w.sum() == 0:
             return
         log_lambda = rebin_log_lambda[w]
-        flux = rebin_flux[w] / rebin_ivar[w]
+        #flux = rebin_flux[w] / rebin_ivar[w]
+        flux = rebin_flux[w] / rebin_norm[w]
         ivar = rebin_ivar[w]
         if mean_expected_flux_frac is not None:
             mean_expected_flux_frac = (rebin_mean_expected_flux_frac[w] /
