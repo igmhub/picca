@@ -1294,10 +1294,10 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 else:
                     #this might be slow, but would coadd objects with the same targetid even if on multiple tiles
                     do_append=True
-                    for index,forest_existing in enumerate(data[in_healpixs[w_t][0]]):
+                    for index_coadd,forest_existing in enumerate(data[in_healpixs[w_t][0]]):
                         if forest_existing.thingid==forest.thingid:
                             forest.coadd(forest_existing)
-                            data[in_healpixs[w_t][0]][index]=forest
+                            data[in_healpixs[w_t][0]][index_coadd]=forest
                             do_append=False
                             break
                     if do_append:
