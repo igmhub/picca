@@ -1296,8 +1296,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 do_append=True
                 for index_coadd,forest_existing in enumerate(data[in_healpixs[w_t]]):
                     if forest_existing.thingid==forest.thingid:
-                        forest.coadd(forest_existing)
-                        data[in_healpixs[w_t]][index_coadd]=forest
+                        data[in_healpixs[w_t]][index_coadd].coadd(forest)
                         do_append=False
                         break
                 if do_append:
