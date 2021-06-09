@@ -22,50 +22,6 @@ from picca.utils import userprint
 
 from picca import prep_del, io, constants
 
-def stack_continuum(data):
-    """Computes a stack of the continuum as a function of wavelength
-    Args:
-        data: dict
-            A dictionary with the forests in each healpix. If stack_from_deltas
-            is passed, then the dictionary must contain the deltas in each
-            healpix
-    Returns:
-        The following variables:
-            stack_log_lambda: Logarithm of the wavelengths (in Angs).
-            stack_delta: The stacked delta field.
-            stack_weight: Total weight on the delta_stack
-    """
-    
-    num_bins = int((Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame) /
-                   Forest.delta_log_lambda) + 1
-    stack_log_lambda = (Forest.log_lambda_min_rest_frame +
-                        np.arange(num_bins) * Forest.delta_log_lambda)
-    stack_cont = np.zeros(num_bins)
-    stack_weight = np.zeros(num_bins)
-    for healpix in sorted(list(data.keys())):
-        for forest in data[healpix]:
-            cont = forest.cont
-            weights = forest.weights
-            log_lambda_rest = forest.log_lambda - np.log10(1+forest.mean_z)
-            
-            w = log_lambda_rest <= Forest.log_lambda_max_rest_frame ## limit the continuum to the defined restframe wavelength range
-            log_lambda_rest = log_lambda_rest[w]
-            cont = cont[w]
-            weights = weights[w]
-            
-            bins = ((log_lambda_rest - Forest.log_lambda_min_rest_frame) /
-                    Forest.delta_log_lambda + 0.5).astype(int)
-            
-            rebin = np.bincount(bins, weights=cont * weights)
-            stack_cont[:len(rebin)] += rebin
-            rebin = np.bincount(bins, weights=weights)
-            stack_weight[:len(rebin)] += rebin
-    
-    w = stack_weight > 0
-    stack_cont[w] /= stack_weight[w]
-    
-    return stack_log_lambda, stack_cont, stack_weight
-
 def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
     """Converts Pasquier Noterdaeme ASCII DLA catalog to a fits file
 
