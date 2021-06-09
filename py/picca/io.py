@@ -1241,7 +1241,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
 
         select = ((catalog['TILEID'] == tile_spec) &
                   (catalog['PETAL_LOC'] == petal_spec)
-        if 'NIGHT' in catalog and not "LAST_NIGHT" in catalog:
+        if 'NIGHT' in catalog.colnames and not "LAST_NIGHT" in catalog.colnames:
             select &=(catalog['NIGHT'] == night_spec))
         userprint(
             f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}')
