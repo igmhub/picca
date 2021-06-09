@@ -234,7 +234,7 @@ def read_drq(drq_filename,
     catalog['RA'] = np.radians(catalog['RA'])
     catalog['DEC'] = np.radians(catalog['DEC'])
 
-    if 'desi' in mode and 'TILEID' in catalog.colnames and  np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
+    if ('desi' in mode) and (not "mock" in mode) and ('TILEID' in catalog.colnames) and  np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
         print("you are trying to run on DESI survey tiles, this branch is not ready for the task, yet!")
         sys.exit(10)
 
