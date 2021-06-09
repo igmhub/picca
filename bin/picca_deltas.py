@@ -158,7 +158,9 @@ def main():
                         default='pix',
                         required=False,
                         help=('Open mode of the spectra files: pix, spec, '
-                              'spcframe, spplate, desi, desiminisv, desiminisv_healpix'))
+                              'spcframe, spplate, desi_mocks (formerly known as desi), 
+                              'desi_survey_tilebased (for tilebased data with coadding), '
+                              'desi_sv_no_coadd (without coadding across tiles, will output in tile format)'))
 
     parser.add_argument('--best-obs',
                         action='store_true',
