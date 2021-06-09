@@ -35,26 +35,36 @@ def stack_continuum(data):
             stack_delta: The stacked delta field.
             stack_weight: Total weight on the delta_stack
     """
-    num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
+    
+    num_bins = int((Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame) /
                    Forest.delta_log_lambda) + 1
-    stack_log_lambda = (Forest.log_lambda_min +
+    stack_log_lambda = (Forest.log_lambda_min_rest_frame +
                         np.arange(num_bins) * Forest.delta_log_lambda)
-    stack_delta = np.zeros(num_bins)
+    stack_cont = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
     for healpix in sorted(list(data.keys())):
         for forest in data[healpix]:
-            delta = forest.cont
+            cont = forest.cont
             weights = forest.weights
-
-            bins = ((forest.log_lambda - Forest.log_lambda_min) /
+            log_lambda_rest = forest.log_lambda - np.log10(1+forest.mean_z)
+            
+            w = log_lambda_rest <= Forest.log_lambda_max_rest_frame ## limit the continuum to the defined restframe wavelength range
+            log_lambda_rest = log_lambda_rest[w]
+            cont = cont[w]
+            weights = weights[w]
+            
+            bins = ((log_lambda_rest - Forest.log_lambda_min_rest_frame) /
                     Forest.delta_log_lambda + 0.5).astype(int)
-            rebin = np.bincount(bins, weights=delta * weights)
-            stack_delta[:len(rebin)] += rebin
+            
+            rebin = np.bincount(bins, weights=cont * weights)
+            stack_cont[:len(rebin)] += rebin
             rebin = np.bincount(bins, weights=weights)
             stack_weight[:len(rebin)] += rebin
-
+    
     w = stack_weight > 0
-    stack_delta[w] /= stack_weight[w]
+    stack_cont[w] /= stack_weight[w]
+    
+    return stack_log_lambda, stack_cont, stack_weight
 
 def eboss_convert_dla(in_path, drq_filename, out_path, drq_z_key='Z'):
     """Converts Pasquier Noterdaeme ASCII DLA catalog to a fits file
@@ -1056,17 +1066,17 @@ def desi_convert_delta_files_from_true_cont(obj_path,
             wave_cont = np.log10(np.arange(head['WMIN'],head['WMAX']+head['DWAVE']/2,head['DWAVE']))
             cont_rebin = np.interp(forest.log_lambda, wave_cont, cont)
 
-            #forest.continuum = cont_rebin
-            forest.cont = cont_rebin
+            forest.continuum = cont_rebin
+            #forest.cont = cont_rebin
 
             bins = np.floor((forest.log_lambda - log_lambda_min) /
                             delta_log_lambda + 0.5).astype(int)
             
-            #forest.cont = stack_trans[bins] * forest.continuum
-            mean_flux = stack_trans[bins] * forest.cont
+            forest.cont = stack_trans[bins] * forest.continuum
+            #mean_flux = stack_trans[bins] * forest.cont
             
-            #forest.delta = forest.flux / forest.cont - 1.
-            forest.delta = forest.flux / mean_flux - 1.
+            forest.delta = forest.flux / forest.cont - 1.
+            #forest.delta = forest.flux / mean_flux - 1.
 
             forest.mean_trans = stack_trans[bins]
             
@@ -1082,7 +1092,7 @@ def desi_convert_delta_files_from_true_cont(obj_path,
                  var_delta, var2_delta, count, num_qso, chi2_in_bin, error_eta,
                  error_var_lss, error_fudge) = prep_del.compute_var_stats(
                      data, (eta_min, eta_max),
-                     (vlss_min, vlss_max))
+                     (vlss_min, vlss_max), fix_eta_fudge = True)
         w = num_pixels > 0
 
         Forest.get_eta = interp1d(log_lambda[w],eta[w],fill_value="extrapolate",kind="nearest")
@@ -1117,11 +1127,12 @@ def desi_convert_delta_files_from_true_cont(obj_path,
             var_pipe = stack_trans[bins]**2/forest.ivar
             variance = eta * var_pipe + var_lss + fudge / var_pipe
             forest.weights = 1. / variance
-    '''stack_log_lambda, stack_cont, stack_weight_cont = stack_continuum(data)
-    results.write([stack_log_lambda, stack_cont, stack_weight_cont],
-                  names=['LOGLAM', 'CONT', 'WEIGHT'],
-                  header=header,
-                  extname='MEAN_CONT')'''
+    
+    
+    results.write([log_lambda_rest_frame,
+                   Forest.get_mean_cont(log_lambda_rest_frame), mean_cont_weight],
+                  names=['LOGLAM_REST', 'MEAN_CONT', 'WEIGHT'],
+                  extname='CONT')
     
     
     stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data, stack_from_deltas=True)
@@ -1185,9 +1196,9 @@ def desi_convert_delta_files_from_true_cont(obj_path,
                     },
                 ]
 
-            cols = [forest.log_lambda, forest.delta, forest.weights,forest.cont,forest.mean_trans]
-            names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT','MEAN_TRANS']
-            units = ['log Angstrom', '', '', '','']
+            cols = [forest.log_lambda, forest.delta, forest.weights,forest.cont,forest.mean_trans, forest.continuum]
+            names = ['LOGLAM', 'DELTA', 'WEIGHT', 'MEAN_EXP_FLUX','MEAN_TRANS','CONT']
+            units = ['log Angstrom', '', '', '','','']
 
             results.write(cols,
                           names=names,
