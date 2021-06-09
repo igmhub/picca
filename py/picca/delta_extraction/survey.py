@@ -134,6 +134,10 @@ class Survey:
         """Compute the delta fields"""
         t0 = time.time()
         self.logger.info("Extracting deltas")
+
+        # filter bad_continuum forests
+        self.data.filter_bad_cont_forests()
+
         # pylint: disable=not-an-iterable
         # prange is used to signal jit of parallelisation but is otherwise
         # equivalent to range
@@ -141,7 +145,11 @@ class Survey:
             self.expected_flux.extract_deltas(self.data.forests[forest_index])
 
         t1 = time.time()
+
+
         self.logger.info(f"Time spent extracting deltas: {t1-t0}")
+
+
 
     def filter_forests(self):
         """Remove forests that do not meet quality standards"""
@@ -213,6 +221,7 @@ class Survey:
                                        "the data did not define the correct data "
                                        "type. Please check for correct "
                                        "inheritance pattern.")
+        self.data.find_nside()
 
         t1 = time.time()
         self.logger.info(f"Time spent reading data: {t1-t0}")

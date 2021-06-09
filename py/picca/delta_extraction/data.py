@@ -5,6 +5,7 @@ import logging
 
 import numpy as np
 import fitsio
+import healpy
 
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import DataError
@@ -67,6 +68,22 @@ class Data:
         if self.min_num_pix is None:
             self.min_num_pix = defaults.get("minimum number pixels in forest")
 
+    def filter_bad_cont_forests(self):
+        """Remove forests where continuum could not be computed"""
+        remove_indexs = []
+        for index, forest in enumerate(self.forests):
+            if forest.bad_continuum_reason is not None:
+                self.logger.progress(f"Rejected with thingid {forest.thingid} "
+                                     "due to continuum fitting problems. Reason: "
+                                     f"{forest.bad_continuum_reason}")
+                remove_indexs.append(index)
+
+        for index in sorted(remove_indexs, reverse=True):
+            del self.forests[index]
+
+        self.logger.progress(f"Accepted sample has {len(self.forests)} forests")
+
+
     def filter_forests(self):
         """Remove forests that do not meet quality standards"""
         self.logger.progress(f"Input sample has {len(self.forests)} forests")
@@ -88,6 +105,29 @@ class Data:
             del self.forests[index]
 
         self.logger.progress(f"Remaining sample has {len(self.forests)} forests")
+
+    def find_nside(self):
+        """Determines nside such that there are 500 objs per pixel on average."""
+
+        self.logger.progress("determining nside")
+        nside = 256
+        target_mean_num_obj = 500
+        ra = np.array([forest.ra for forest in self.forests])
+        dec = np.array([forest.dec for forest in self.forests])
+        healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
+
+        mean_num_obj = len(healpixs) / len(np.unique(healpixs))
+        nside_min = 8
+        while mean_num_obj < target_mean_num_obj and nside >= nside_min:
+            nside //= 2
+            healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
+            mean_num_obj = len(healpixs) / len(np.unique(healpixs))
+
+        self.logger.progress("nside = {} -- mean #obj per pixel = {}".format(
+            nside, mean_num_obj))
+
+        for forest, healpix in zip(self.forests, healpixs):
+            forest.healpix = healpix
 
     def save_deltas(self, out_dir):
         """Save the deltas.
