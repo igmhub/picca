@@ -350,6 +350,7 @@ class TestDelta(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += " --best-obs"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
+        cmd += " --use-single-nights"
         
         picca_deltas.main(cmd.split()[1:])
         
