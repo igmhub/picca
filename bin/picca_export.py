@@ -4,9 +4,55 @@ import argparse
 import fitsio
 import numpy as np
 import scipy.linalg
+from scipy.optimize import minimize
 
+from picca import constants
 from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
+
+
+def get_obs_coords(z_arr, rp_arr, rt_arr, cosmo):
+    """Infer the observed coordinates, delta_z and delta_theta,
+    from the comoving coordinates rp/rt."""
+
+    def rp_rt(delta_z, delta_theta, z):
+        """Compute comoving coordinates from observed coordinates. Eq. 8 from 1904.03400."""
+        rp = (cosmo.get_r_comov(z + delta_z/2.) - cosmo.get_r_comov(z - delta_z/2.))
+        rp *= np.cos(delta_theta/2.)
+        rt = (cosmo.get_dist_m(z + delta_z/2.) + cosmo.get_dist_m(z - delta_z/2.))
+        rt *= np.sin(delta_theta/2.)
+        return rp, rt
+
+    def loss_func(params, z_val, rp_val, rt_val):
+        """Compute a loss function between the predicted and measured rp/rt."""
+        rp, rt = rp_rt(params[0], params[1], z_val)
+        loss = (rp - rp_val)**2 + (rt - rt_val)**2
+        return loss
+
+    delta_z_arr = np.zeros(len(z_arr))
+    delta_theta_arr = np.zeros(len(z_arr))
+
+    for i, args in enumerate(zip(z_arr, rp_arr, rt_arr)):
+        # Minimize the loss function
+        result = minimize(loss_func, (0., 0.1), bounds=[(-0.5, 0.5), (0., np.pi)], args=args,
+                          options={'ftol':1e-12, 'maxls':30, 'gtol':1e-12, 'eps':1e-12})
+
+        # Compute rp/rt from the inferred observed coordinates
+        # and check if we achieved the target precision
+        rp, rt = rp_rt(result.x[0], result.x[1], args[0])
+        rp_err = np.abs(rp - args[1])
+        rt_err = np.abs(rt - args[2])
+        if rp_err > 1e-8 or rt_err > 1e-8:
+            print("Warning!!! Target precision of 1e-8 not achieved for rp/rt computation"
+                  " from inferred observed coordinates. The achieved precision is"
+                  " {} for rp and {} for rt".format(rp_err, rt_err))
+
+        # Save the results
+        delta_z_arr[i] = result.x[0]
+        delta_theta_arr[i] = result.x[1]
+
+    return delta_z_arr, delta_theta_arr
+
 
 
 def main():
@@ -163,6 +209,10 @@ def main():
         r_trans_dmat = r_trans.copy()
         z_dmat = z.copy()
 
+    # Compute observed coordinates
+    cosmo = constants.Cosmo(Om=head['OMEGAM'], Or=head['OMEGAR'], Ok=head['OMEGAK'], wl=head['WL'])
+    delta_z_arr, delta_theta_arr = get_obs_coords(z, r_par, r_trans, cosmo)
+
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [{
         'name': 'RPMIN',
@@ -204,10 +254,11 @@ def main():
     ]
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
-        'Covariance matrix', 'Distortion matrix', 'Number of pairs'
+        'Covariance matrix', 'Distortion matrix', 'Number of pairs',
+        'Redshift separation coordinate', 'Angle separation coordinate'
     ]
-    results.write([r_par, r_trans, z, xi, covariance, dmat, num_pairs],
-                  names=['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB'],
+    results.write([r_par, r_trans, z, xi, covariance, dmat, num_pairs, delta_z_arr, delta_theta_arr],
+                  names=['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB', 'DELTA_Z', 'DELTA_THETA'],
                   comment=comment,
                   header=header,
                   extname='COR')
