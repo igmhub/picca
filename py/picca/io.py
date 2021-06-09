@@ -1288,12 +1288,13 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 if plate_spec not in data:
                     data[plate_spec] = []
                 data[plate_spec].append(forest)
+                num_data += 1
             else:
                 if in_healpixs[w_t] not in data:
                     data[in_healpixs[w_t]] = []
                 #this might be slow, but would coadd objects with the same targetid even if on multiple tiles
                 do_append=True
-                for index_coadd,forest_existing in enumerate(data[in_healpixs[w_t][0]]):
+                for index_coadd,forest_existing in enumerate(data[in_healpixs[w_t]]):
                     if forest_existing.thingid==forest.thingid:
                         forest.coadd(forest_existing)
                         data[in_healpixs[w_t]][index_coadd]=forest
