@@ -1184,7 +1184,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
             except ValueError:
                 select_nan_radec=np.logical_not(np.isfinite(dec)&np.isfinite(ra))
-                de[select_nan_radec]=0
+                dec[select_nan_radec]=0
                 ra[select_nan_radec]=0
                 in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
                 in_healpixs[select_nan_radec]=-12345
