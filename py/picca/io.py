@@ -350,7 +350,7 @@ def read_data(in_dir,
 
     # read data taking the mode into account
     if mode in ["desi_mocks","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
-        if mode == "desi" or mode=='desi_mocks':
+        if mode in ["desi", 'desi_mocks']:
             pix_data = read_from_desi(in_dir, catalog, pk1d=pk1d)
         elif mode == "desi_survey_tilebased":
             pix_data, num_pix_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights, usehealpix=True)
@@ -432,7 +432,7 @@ def read_data(in_dir,
                 data[healpix] = pix_data
                 num_data += len(pix_data)
 
-    elif mode == "desi_sv_no_coadd" or mode=='desiminisv': #keeping the old name here for backward compatibility
+    elif mode in ["desi_sv_no_coadd",'desiminisv']: #keeping the old name here for backward compatibility
         nside = 8
         data, num_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights)
     
