@@ -1289,21 +1289,21 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                     data[plate_spec] = []
                 data[plate_spec].append(forest)
             else:
-                if in_healpixs[w_t][0] not in data:
-                    data[in_healpixs[w_t][0]] = []
-                else:
-                    #this might be slow, but would coadd objects with the same targetid even if on multiple tiles
-                    do_append=True
-                    for index_coadd,forest_existing in enumerate(data[in_healpixs[w_t][0]]):
-                        if forest_existing.thingid==forest.thingid:
-                            forest.coadd(forest_existing)
-                            data[in_healpixs[w_t][0]][index_coadd]=forest
-                            do_append=False
-                            break
-                    if do_append:
-                        data[in_healpixs[w_t][0]].append(forest)
+                if in_healpixs[w_t] not in data:
+                    data[in_healpixs[w_t]] = []
+                #this might be slow, but would coadd objects with the same targetid even if on multiple tiles
+                do_append=True
+                for index_coadd,forest_existing in enumerate(data[in_healpixs[w_t][0]]):
+                    if forest_existing.thingid==forest.thingid:
+                        forest.coadd(forest_existing)
+                        data[in_healpixs[w_t]][index_coadd]=forest
+                        do_append=False
+                        break
+                if do_append:
+                    data[in_healpixs[w_t][0]].append(forest)
+                    num_data += 1
 
-            num_data += 1
+
         
     userprint("found {} quasars in input files\n".format(num_data))
 
