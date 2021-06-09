@@ -412,6 +412,12 @@ def main():
                         default=False,
                         required=False,
                         help=('Use all dir for input spectra (DESI SV)'))
+    
+    parser.add_argument('--fix-eta-fudge',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help=('Fix value of eta = 1 and fudge = 0'))
 
     t0 = time.time()
 
@@ -687,12 +693,16 @@ def main():
 
             #-- Compute observer-frame mean quantities (var_lss, eta, fudge)
             if not (args.use_ivar_as_weight or args.use_constant_weight):
+                
                 (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
                  var_delta, var2_delta, count, num_qso, chi2_in_bin, error_eta,
                  error_var_lss, error_fudge) = prep_del.compute_var_stats(
                      data, (args.eta_min, args.eta_max),
-                     (args.vlss_min, args.vlss_max))
+                     (args.vlss_min, args.vlss_max), fix_eta_fudge = args.fix_eta_fudge)
                 w = num_pixels > 0
+                
+                userprint(eta[w])
+                
                 Forest.get_eta = interp1d(log_lambda[w],
                                           eta[w],
                                           fill_value="extrapolate",

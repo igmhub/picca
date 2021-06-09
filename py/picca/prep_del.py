@@ -59,7 +59,7 @@ def compute_mean_cont(data):
     return log_lambda_rest_frame, mean_cont, mean_cont_weight
 
 
-def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
+def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3), fix_eta_fudge=False):
     """Computes variance functions and statistics
 
     This function computes the statistics required to fit the mapping functions
@@ -97,6 +97,7 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
                 Strucure.
             error_fudge: Error on the fudge contribution to the pixel variance.
     """
+
     # initialize arrays
     num_bins = 20
     eta = np.zeros(num_bins)
@@ -108,6 +109,8 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
     num_pixels = np.zeros(num_bins)
     log_lambda = (Forest.log_lambda_min + (np.arange(num_bins) + .5) *
                   (Forest.log_lambda_max - Forest.log_lambda_min) / num_bins)
+    if fix_eta_fudge is True:
+        eta = np.ones(num_bins)
 
     # define an array to contain the possible values of pipeline variances
     # the measured pipeline variance of the deltas will be averaged using the
@@ -227,8 +230,31 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
                                  num_var_bins]
             w = num_qso[index * num_var_bins:(index + 1) * num_var_bins] > 100
             return np.sum(chi2_contribution[w]**2 / weights[w])
-
+        
+        
+        
+        if fix_eta_fudge is True:
+            kwargs = dict(fudge = 0,
+                          fix_eta = True, 
+                          fix_fudge = True)
+        else:
+            kwargs = dict(fudge = 1,
+                          error_eta=0.05,
+                          error_fudge=0.05,
+                          limit_eta=limit_eta,
+                          limit_fudge=(0, None))
+            
         minimizer = iminuit.Minuit(chi2,
+                                   name=("eta", "var_lss", "fudge"),
+                                   var_lss=0.1,
+                                   eta=1.,
+                                   error_var_lss=0.05,
+                                   errordef=1.,
+                                   print_level=0,
+                                   limit_var_lss=limit_var_lss,
+                                    **kwargs)
+
+        '''minimizer = iminuit.Minuit(chi2,
                                    name=("eta", "var_lss", "fudge"),
                                    eta=1.,
                                    var_lss=0.1,
@@ -240,17 +266,30 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
                                    print_level=0,
                                    limit_eta=limit_eta,
                                    limit_var_lss=limit_var_lss,
-                                   limit_fudge=(0, None))
+                                   limit_fudge=(0, None))'''
+
         minimizer.migrad()
 
         if minimizer.migrad_ok():
             minimizer.hesse()
+            userprint(minimizer.values["eta"],minimizer.values["fudge"])
             eta[index] = minimizer.values["eta"]
             var_lss[index] = minimizer.values["var_lss"]
             fudge[index] = minimizer.values["fudge"] * fudge_ref
             error_eta[index] = minimizer.errors["eta"]
             error_var_lss[index] = minimizer.errors["var_lss"]
             error_fudge[index] = minimizer.errors["fudge"] * fudge_ref
+            '''if fix_eta_fudge is True:
+                eta[index] = 1.
+                fudge[index] = 1. * fudge_ref
+                error_eta[index] = 0.
+                error_fudge[index] = 0.
+            else:
+                eta[index] = minimizer.values["eta"]
+                fudge[index] = minimizer.values["fudge"] * fudge_ref
+                error_eta[index] = minimizer.errors["eta"]
+                error_fudge[index] = minimizer.errors["fudge"] * fudge_ref'''
+            
         else:
             eta[index] = 1.
             var_lss[index] = 0.1
