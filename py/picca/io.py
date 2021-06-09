@@ -1199,7 +1199,10 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             tile_spec = filename.split('-')[-2]
 
         if 'NIGHT' in fibermap_colnames or "LAST_NIGHT" in fibermap_colnames:
-            night_spec = fibermap['NIGHT'][0]
+            try:
+                night_spec = fibermap['NIGHT'][0]
+            except ValueError:
+                night_spec = fibermap['LAST_NIGHT'][0]
         else:
             #pre-andes tiles don't have this in the fibermap
             night_spec = int(filename.split('-')[-1].split('.')[0])
