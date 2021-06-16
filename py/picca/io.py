@@ -351,7 +351,7 @@ def read_data(in_dir,
     blinding = "none"
     if mode in ["desi_mocks","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
         if mode in ["desi", 'desi_mocks']:
-            if  ("mocks" not in mode) and  ('TILEID' in catalog.colnames) and  np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
+            if  ('TILEID' in catalog.colnames) and  np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
                 print("you are trying to run on DESI survey tiles!")
                 blinding = blinding_desi
             pix_data = read_from_desi(in_dir, catalog, pk1d=pk1d)
