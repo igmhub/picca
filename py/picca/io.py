@@ -155,7 +155,7 @@ def read_drq(drq_filename,
         obj_id_name = 'TARGETID'
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
-        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'NIGHT', 'FIBER']
+        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'FIBER']
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
@@ -218,6 +218,14 @@ def read_drq(drq_filename,
     if 'NHI' in catalog.colnames:
         keep_columns += ['NHI']
 
+    if 'LAST_NIGHT' in catalog.colnames:
+        keep_columns += ['LAST_NIGHT']
+        if 'FIRST_NIGHT' in catalog.colnames:
+            keep_columns += ['FIRST_NIGHT']
+    elif 'NIGHT' in catalog.colnames:
+        keep_columns += ['NIGHT']
+
+
     catalog.keep_columns(keep_columns)
     w = np.where(w)[0]
     catalog = catalog[w]
@@ -225,6 +233,10 @@ def read_drq(drq_filename,
     #-- Convert angles to radians
     catalog['RA'] = np.radians(catalog['RA'])
     catalog['DEC'] = np.radians(catalog['DEC'])
+
+    if ('desi' in mode) and ("mock" not in mode) and ('TILEID' in catalog.colnames) and  np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
+        print("you are trying to run on DESI survey tiles, this branch is not ready for the task, yet! Exiting...")
+        sys.exit(10)
 
     return catalog
 
@@ -340,10 +352,13 @@ def read_data(in_dir,
 
     # read data taking the mode into account
     blinding = "none"
-    if mode in ["desi", "spcframe", "spplate", "spec", "corrected-spec"]:
-        if mode == "desi":
+    if mode in ["desi_mocks","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
+        if mode in ["desi", 'desi_mocks']:
             blinding = blinding_desi
             pix_data = read_from_desi(in_dir, catalog, pk1d=pk1d)
+        elif mode == "desi_survey_tilebased":
+            blinding = blinding_desi
+            pix_data, num_pix_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights, usehealpix=True)
         elif mode == "spcframe":
             pix_data = read_from_spcframe(in_dir,
                                           catalog,
@@ -422,9 +437,10 @@ def read_data(in_dir,
                 data[healpix] = pix_data
                 num_data += len(pix_data)
 
-    elif mode == "desiminisv":
+    elif mode in ["desi_sv_no_coadd",'desiminisv']: #keeping the old name here for backward compatibility
         nside = 8
         data, num_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights)
+    
     else:
         userprint("I don't know mode: {}".format(mode))
         sys.exit(1)
@@ -1078,7 +1094,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     return data
 
 
-def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, useall=False):
+def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, useall=False, usehealpix=False):
     """Reads the spectra and formats its data as Forest instances.
     Unlike the read_from_desi routine, this orders things by tile/petal
     Routine used to treat the DESI mini-SV data.
@@ -1097,13 +1113,20 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
 
     data = {}
     num_data = 0
-    if usesinglenights:
+    if usesinglenights or "cumulative" in in_dir:    
         files_in = glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
                          recursive=True)
-        petal_tile_night = [
-            f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
-            for entry in catalog
-        ]
+
+        if "cumulative" in in_dir:
+            petal_tile_night = [
+                f"{entry['PETAL_LOC']}-{entry['TILEID']}-thru{entry['LAST_NIGHT']}"
+                for entry in catalog
+            ]
+        else:
+            petal_tile_night = [
+                f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
+                for entry in catalog
+            ]
         #this uniqueness check is to ensure each petal/tile/night combination only appears once in the filelist
         petal_tile_night_unique = np.unique(petal_tile_night)
 
@@ -1160,6 +1183,17 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             dec = fibermap['DEC_TARGET']
         ra = np.radians(ra)
         dec = np.radians(dec)
+        if usehealpix:
+            in_nside=8
+            try:
+                in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
+            except ValueError:
+                select_nan_radec=np.logical_not(np.isfinite(dec)&np.isfinite(ra))
+                dec[select_nan_radec]=0
+                ra[select_nan_radec]=0
+                in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
+                in_healpixs[select_nan_radec]=-12345
+                userprint("found non-finite ra/dec values, setting their healpix id to -12345")
 
         petal_spec = fibermap['PETAL_LOC'][0]
 
@@ -1169,8 +1203,11 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             #pre-andes tiles don't have this in the fibermap
             tile_spec = filename.split('-')[-2]
 
-        if 'NIGHT' in fibermap_colnames:
-            night_spec = fibermap['NIGHT'][0]
+        if 'NIGHT' in fibermap_colnames or "LAST_NIGHT" in fibermap_colnames:
+            try:
+                night_spec = fibermap['NIGHT'][0]
+            except ValueError:
+                night_spec = fibermap['LAST_NIGHT'][0]
         else:
             #pre-andes tiles don't have this in the fibermap
             night_spec = int(filename.split('-')[-1].split('.')[0])
@@ -1208,8 +1245,9 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         plate_spec = int(f"{tile_spec}{petal_spec}")
 
         select = ((catalog['TILEID'] == tile_spec) &
-                  (catalog['PETAL_LOC'] == petal_spec) &
-                  (catalog['NIGHT'] == night_spec))
+                  (catalog['PETAL_LOC'] == petal_spec))
+        if 'NIGHT' in catalog.colnames and not "LAST_NIGHT" in catalog.colnames:
+            select &=(catalog['NIGHT'] == night_spec)
         userprint(
             f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}')
 
@@ -1244,17 +1282,34 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 forest_temp = Forest(spec['log_lambda'], flux, ivar,
                                      entry['TARGETID'], entry['RA'],
                                      entry['DEC'], entry['Z'], entry['TILEID'],
-                                     entry['NIGHT'], entry['FIBER'],
+                                     entry['NIGHT'] if 'NIGHT' in entry.colnames else entry["LAST_NIGHT"] if 'LAST_NIGHT' in entry.colnames else -1,
+                                     entry['FIBER'],
                                      exposures_diff, reso_in_km_per_s)
                 if forest is None:
                     forest = copy.deepcopy(forest_temp)
                 else:
                     forest.coadd(forest_temp)
+            if not usehealpix:
+                if plate_spec not in data:
+                    data[plate_spec] = []
+                data[plate_spec].append(forest)
+                num_data += 1
+            else:
+                if in_healpixs[w_t] not in data:
+                    data[in_healpixs[w_t]] = []
+                #this might be slow, but would coadd objects with the same targetid even if on multiple tiles
+                do_append=True
+                for index_coadd,forest_existing in enumerate(data[in_healpixs[w_t]]):
+                    if forest_existing.thingid==forest.thingid:
+                        data[in_healpixs[w_t]][index_coadd].coadd(forest)
+                        do_append=False
+                        break
+                if do_append:
+                    data[in_healpixs[w_t]].append(forest)
+                    num_data += 1
 
-            if plate_spec not in data:
-                data[plate_spec] = []
-            data[plate_spec].append(forest)
-            num_data += 1
+
+        
     userprint("found {} quasars in input files\n".format(num_data))
 
     if num_data == 0:
