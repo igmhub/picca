@@ -1546,7 +1546,7 @@ def read_objects(filename,
         elif 'NIGHT' in catalog.colnames:
             nightcol='NIGHT'
         else:
-            raise Exeption("The catalog does not have a NIGHT or LAST_NIGHT entry")
+            raise Exception("The catalog does not have a NIGHT or LAST_NIGHT entry")
 
     for index, healpix in enumerate(unique_healpix):
         userprint("{} of {}".format(index, len(unique_healpix)))
