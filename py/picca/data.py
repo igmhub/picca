@@ -1029,14 +1029,14 @@ class Delta(QSO):
         header = hdu.read_header()
 
         # new runs of picca_deltas should have a blinding keyword
-        if "BLIND" in header:
-            blinding = header["BLIND"]
+        if "BLINDING" in header:
+            blinding = header["BLINDING"]
         # older runs are not from DESI main survey and should not be blinded
         else:
             blinding = "none"
 
         if blinding != "none":
-            delta_mame = "DELTA_BLIND"
+            delta_name = "DELTA_BLIND"
         else:
             delta_name = "DELTA"
 
