@@ -177,10 +177,15 @@ class Cosmo(object):
         """
 
         # Blind data
-        if blinding not in  ["strategyB", "strategyBC"]:
-            userprint(f"Analysis is not blinded: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
+        if blinding == "none":
+            userprint("ATTENTION: Analysis is not blinded!")
         else:
-            userprint("WARNING: The analysis is blinded ! The specified cosmology is "
+            userprint(f"ATTENTION: Analysis is blinded with strategy {blinding}")
+
+        if blinding not in  ["strategyB", "strategyBC"]:
+            userprint(f"Om={Om}, Or={Or}, wl={wl}, H0={H0}")
+        else:
+            userprint("The specified cosmology is "
                       f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
             # blind test small
             filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
