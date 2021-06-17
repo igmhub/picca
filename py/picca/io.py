@@ -1302,7 +1302,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 do_append=True
                 for index_coadd,forest_existing in enumerate(data[in_healpixs[w_t]]):
                     if forest_existing.thingid==forest.thingid:
-                        data[in_healpixs[w_t]][index_coadd].coadd(forest)
+                        forest_existing.coadd(forest)
                         do_append=False
                         break
                 if do_append:
@@ -1317,7 +1317,8 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
         raise ValueError("No Quasars found, stopping here")
     if usehealpix:
         #need to hand a list to the routine above
-        data=list(data.values())
+        data=[forest for healpix_list in data.values() for forest in healpix_list]
+
 
     return data, num_data
 
