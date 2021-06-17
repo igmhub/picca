@@ -1315,6 +1315,9 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
 
     if num_data == 0:
         raise ValueError("No Quasars found, stopping here")
+    if usehealpix:
+        #need to hand a list to the routine above
+        data=list(data.values())
 
     return data, num_data
 
