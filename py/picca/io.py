@@ -1540,13 +1540,21 @@ def read_objects(filename,
     userprint("Reading objects ")
 
     unique_healpix = np.unique(healpixs)
+    if 'desi' in mode:
+        if 'LAST_NIGHT' in catalog.colnames:
+            nightcol='LAST_NIGHT'
+        elif 'NIGHT' in catalog.colnames:
+            nightcol='NIGHT'
+        else:
+            raise Exeption("The catalog does not have a NIGHT or LAST_NIGHT entry")
+
     for index, healpix in enumerate(unique_healpix):
         userprint("{} of {}".format(index, len(unique_healpix)))
         w = healpixs == healpix
         if 'desi' in mode:
             objs[healpix] = [
                 QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
-                    entry['TILEID'], entry['NIGHT'], entry['FIBER'])
+                    entry['TILEID'], entry[nightcol], entry['FIBER'])
                 for entry in catalog[w]
             ]
         else:
