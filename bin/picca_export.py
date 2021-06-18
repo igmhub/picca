@@ -155,7 +155,13 @@ def main():
 
     if args.dmat is not None:
         hdul = fitsio.FITS(args.dmat)
-        dmat = hdul[1]['DM'][:]
+        if 'DM_BLIND' in hdul[2].get_colnames():
+            xi = np.array(hdul[2]['DM_BLIND'][:])
+            dmat_name = 'DM_BLIND'
+        else:
+            dmat = hdul[1]['DM'][:]
+            dmat_name = 'DM'
+
         try:
             r_par_dmat = hdul[2]['RP'][:]
             r_trans_dmat = hdul[2]['RT'][:]
@@ -197,20 +203,20 @@ def main():
         'value': num_bins_r_trans,
         'comment': 'Number of bins in r-transverse'
     }, {
-        'name': 'OMEGAM', 
-        'value': head['OMEGAM'], 
+        'name': 'OMEGAM',
+        'value': head['OMEGAM'],
         'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'OMEGAR', 
-        'value': head['OMEGAR'], 
+        'name': 'OMEGAR',
+        'value': head['OMEGAR'],
         'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'OMEGAK', 
-        'value': head['OMEGAK'], 
+        'name': 'OMEGAK',
+        'value': head['OMEGAK'],
         'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'WL', 
-        'value': head['WL'], 
+        'name': 'WL',
+        'value': head['WL'],
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
     }, {
         'name': "BLINDING",
@@ -223,7 +229,7 @@ def main():
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
     results.write([r_par, r_trans, z, xi, covariance, dmat, num_pairs],
-                  names=['RP', 'RT', 'Z', data_name, 'CO', 'DM', 'NB'],
+                  names=['RP', 'RT', 'Z', data_name, 'CO', dmat_name, 'NB'],
                   comment=comment,
                   header=header,
                   extname='COR')
