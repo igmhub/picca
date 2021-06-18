@@ -206,7 +206,7 @@ class ExpectedFluxTest(AbstractTest):
         # compute the expected flux
         expected_flux.compute_expected_flux(data.forests, out_dir)
 
-        for iteration in range(4):
+        for iteration in range(1, 5):
             self.compare_fits(
                 test_file.replace(".fits", f"_iteration{iteration}.fits"),
                 out_file.replace(".fits", f"_iteration{iteration}.fits"))
@@ -334,9 +334,9 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
-        out_file = f"{THIS_DIR}/results/iter_out_prefix_log_iteration0.fits.gz"
+        out_file = f"{THIS_DIR}/results/iter_out_prefix_log_iteration1.fits.gz"
         out_file2 = f"{THIS_DIR}/results/iter_out_prefix_log.fits.gz"
-        test_file = f"{THIS_DIR}/data/iter_out_prefix_log_iteration0.fits.gz"
+        test_file = f"{THIS_DIR}/data/iter_out_prefix_log_iteration1.fits.gz"
         test_file2 = f"{THIS_DIR}/data/iter_out_prefix_log.fits.gz"
         out_dir = "results/"
 
@@ -369,9 +369,9 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin")
 
-        out_file = f"{THIS_DIR}/results/iter_out_prefix_lin_iteration0.fits.gz"
+        out_file = f"{THIS_DIR}/results/iter_out_prefix_lin_iteration1.fits.gz"
         out_file2 = f"{THIS_DIR}/results/iter_out_prefix_lin.fits.gz"
-        test_file = f"{THIS_DIR}/data/iter_out_prefix_lin_iteration0.fits.gz"
+        test_file = f"{THIS_DIR}/data/iter_out_prefix_lin_iteration1.fits.gz"
         test_file2 = f"{THIS_DIR}/data/iter_out_prefix_lin.fits.gz"
         out_dir = "results/"
 

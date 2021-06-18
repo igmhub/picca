@@ -1096,7 +1096,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if iteration == -1:
             iter_out_file = self.iter_out_prefix + ".fits.gz"
         else:
-            iter_out_file = self.iter_out_prefix + f"_iteration{iteration}.fits.gz"
+            iter_out_file = self.iter_out_prefix + f"_iteration{iteration+1}.fits.gz"
 
         with fitsio.FITS(out_dir + iter_out_file, 'rw',
                          clobber=True) as results:

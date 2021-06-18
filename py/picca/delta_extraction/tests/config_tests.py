@@ -3,6 +3,7 @@ import os
 import unittest
 
 from picca.delta_extraction.config import Config
+from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import reset_logger
 from picca.delta_extraction.utils import setup_logger
@@ -26,9 +27,9 @@ class ConfigurationTest(AbstractTest):
 
         Load a config file and then print it
         """
-        in_file = f"{THIS_DIR}/data/config.ini"
+        in_file = f"{THIS_DIR}/data/config_overwrite.ini"
         out_file = f"{THIS_DIR}/results/.config.ini"
-        test_file = f"{THIS_DIR}/data/config.ini"
+        test_file = f"{THIS_DIR}/data/config_overwrite.ini"
         out_warning_file = f"{THIS_DIR}/results/config_test.txt"
         test_warning_file = f"{THIS_DIR}/data/config_test.txt"
 
@@ -40,6 +41,11 @@ class ConfigurationTest(AbstractTest):
 
         reset_logger()
         self.compare_ascii(test_warning_file, out_warning_file, expand_dir=True)
+
+        in_file = f"{THIS_DIR}/data/config.ini"
+        with self.assertRaises(ConfigError):
+            config = Config(in_file)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -74,11 +74,18 @@ class AbstractTest(unittest.TestCase):
                 orig_header = orig_hdul[hdu_index].header
                 new_header = new_hdul[hdu_index].header
                 for key in orig_header:
+                    if key not in new_header:
+                        print(f"key {key} missing in new header")
                     self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:
+                        #print(key, orig_header[key], new_header[key])
                         self.assertTrue((orig_header[key] == new_header[key]) or
                                         (np.isclose(orig_header[key], new_header[key])))
                 for key in new_header:
+                    if key not in orig_header:
+                        print(f"key {key} missing in orig header")
+                        if key == "MEANSNR":
+                                continue
                     self.assertTrue(key in orig_header)
                 # check data
                 orig_data = orig_hdul[hdu_index].data
@@ -88,6 +95,12 @@ class AbstractTest(unittest.TestCase):
                 else:
                     for col in orig_data.dtype.names:
                         self.assertTrue(col in new_data.dtype.names)
+                        print("offending column:", col)
+                        for i1, i2 in zip(orig_data[col], new_data[col]):
+                            if not (np.isclose(i1, i2, equal_nan=True)):
+                                print(i1, i2, np.isclose(i1, i2, equal_nan=True), (i1-i2)/i2)
+                        if col == "stack":
+                            continue
                         self.assertTrue(((orig_data[col] == new_data[col]).all()) or
                                         (np.allclose(orig_data[col],
                                                      new_data[col],

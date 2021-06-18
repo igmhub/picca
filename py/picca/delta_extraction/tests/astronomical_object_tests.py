@@ -466,34 +466,34 @@ class AstronomicalObjectTest(AbstractTest):
             self.assertTrue(units[0] == "Angstrom")
             self.assertTrue(comments[0] == "Lambda")
 
-        if test_obj.continuum is None:
-            continuum = np.zeros_like(test_obj.flux)
-        else:
-            continuum = test_obj.continuum
-        self.assertTrue(names[1] == "CONT")
-        self.assertTrue(np.allclose(cols[1], continuum))
-        self.assertTrue(units[1] == "Flux units")
-        self.assertTrue(
-            comments[1] == ("Quasar continuum if BAD_CONT is 'None'. "
-                            "Check input spectra for units"))
-
         if test_obj.deltas is None:
             deltas = np.zeros_like(test_obj.flux)
         else:
             deltas = test_obj.deltas
-        self.assertTrue(names[2] == "DELTA")
-        self.assertTrue(np.allclose(cols[2], deltas))
-        self.assertTrue(units[2] == "")
-        self.assertTrue(comments[2] == "Delta field")
+        self.assertTrue(names[1] == "DELTA")
+        self.assertTrue(np.allclose(cols[1], deltas))
+        self.assertTrue(units[1] == "")
+        self.assertTrue(comments[1] == "Delta field")
 
         if test_obj.weights is None:
             weights = np.zeros_like(test_obj.flux)
         else:
             weights = test_obj.weights
-        self.assertTrue(names[3] == "WEIGHT")
-        self.assertTrue(np.allclose(cols[3], weights))
-        self.assertTrue(units[3] == "")
-        self.assertTrue(comments[3] == "Pixel weights")
+        self.assertTrue(names[2] == "WEIGHT")
+        self.assertTrue(np.allclose(cols[2], weights))
+        self.assertTrue(units[2] == "")
+        self.assertTrue(comments[2] == "Pixel weights")
+
+        if test_obj.continuum is None:
+            continuum = np.zeros_like(test_obj.flux)
+        else:
+            continuum = test_obj.continuum
+        self.assertTrue(names[3] == "CONT")
+        self.assertTrue(np.allclose(cols[3], continuum))
+        self.assertTrue(units[3] == "Flux units")
+        self.assertTrue(
+            comments[3] == ("Quasar continuum. "
+                            "Check input spectra for units"))
 
         if isinstance(test_obj, Pk1dForest):
             self.assertTrue(names[4] == "IVAR")
@@ -530,16 +530,9 @@ class AstronomicalObjectTest(AbstractTest):
 
         index = 3
         if isinstance(test_obj, Forest):
-            self.assertTrue(header[index + 1].get("name") == "BAD_CONT")
-            if test_obj.bad_continuum_reason is None:
-                bad_continuum_reason = "None"
-            else:
-                bad_continuum_reason = test_obj.bad_continuum_reason
-            self.assertTrue(header[index +
-                                   1].get("value") == bad_continuum_reason)
-            self.assertTrue(header[index + 2].get("name") == "MEANSNR")
-            self.assertTrue(header[index + 2].get("value") == test_obj.mean_snr)
-            index += 2
+            self.assertTrue(header[index + 1].get("name") == "MEANSNR")
+            self.assertTrue(header[index + 1].get("value") == test_obj.mean_snr)
+            index += 1
         if isinstance(test_obj, Pk1dForest):
             self.assertTrue(header[index + 1].get("name") == "MEANZ")
             self.assertTrue(header[index + 1].get("value") == test_obj.mean_z)

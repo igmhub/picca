@@ -339,7 +339,7 @@ class Config:
 
         Raise
         -----
-        DeltaExtractionError if the output path was already used and the
+        ConfigError if the output path was already used and the
         overwrite is not selected
         """
         if not os.path.exists(self.out_dir):
@@ -350,11 +350,11 @@ class Config:
         elif self.overwrite:
             self.write_config()
         else:
-            raise DeltaExtractionError("Specified folder contains a previous run."
-                                       "Pass overwrite option in configuration file"
-                                       "in order to ignore the previous run or"
-                                       "change the output path variable to point "
-                                       "elsewhere")
+            raise ConfigError("Specified folder contains a previous run."
+                              "Pass overwrite option in configuration file"
+                              "in order to ignore the previous run or"
+                              "change the output path variable to point "
+                              "elsewhere")
 
     def write_config(self):
         """This function writes the configuration options for later
