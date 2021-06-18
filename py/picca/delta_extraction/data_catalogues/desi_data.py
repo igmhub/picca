@@ -78,7 +78,7 @@ class DesiData(Data):
         self._parse_config(config)
 
         # load z_truth catalogue
-        catalogue = ZtruthCatalogue(config)
+        catalogue = ZtruthCatalogue(config).catalogue
 
         # read data
         if self.mini_sv:
@@ -286,11 +286,14 @@ class DesiData(Data):
         forests_by_targetid = {}
         num_data = 0
 
+        nightcol='LAST_NIGHT' if 'LAST_NIGHT' in catalogue.colnames else 'NIGHT'
+        thrustr='thru' if 'cumulative' in self.input_directory else ''
+
         files_in = glob.glob(os.path.join(self.input_directory,
                                           "**/coadd-*.fits"),
                              recursive=True)
         petal_tile_night = [
-            f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
+            f"{entry['PETAL_LOC']}-{entry['TILEID']}-{thrustr}{entry[nightcol]}"
             for entry in catalogue
         ]
         petal_tile_night_unique = np.unique(petal_tile_night)
@@ -312,24 +315,24 @@ class DesiData(Data):
 
             fibermap = hdul['FIBERMAP'].read()
             fibermap_colnames = hdul["FIBERMAP"].get_colnames()
-            # pre-Andes
+            # SV releases
             if 'TARGET_RA' in fibermap_colnames:
                 ra = fibermap['TARGET_RA']
                 dec = fibermap['TARGET_DEC']
                 tile_spec = fibermap['TILEID'][0]
-                night_spec = fibermap['NIGHT'][0]
-                colors = ['BRZ']
+                night_spec = fibermap[nightcol][0]
+                colors = ['B','R','Z']
                 if index == 0:
                     logging.warning(
                         "Reading all-band coadd as in minisv pre-Andes "
                         "dataset")
-            # Andes
+            # pre-Andes   #not sure if the ra_target isn't even older
             elif 'RA_TARGET' in fibermap_colnames:
                 ra = fibermap['RA_TARGET']
                 dec = fibermap['DEC_TARGET']
                 tile_spec = filename.split('-')[-2]
                 night_spec = int(filename.split('-')[-1].split('.')[0])
-                colors = ['B', 'R', 'Z']
+                colors = ['BRZ']
                 if index == 0:
                     logging.warning(
                         "Couldn't read the all band-coadd, trying "
@@ -371,7 +374,7 @@ class DesiData(Data):
 
             select = ((catalogue['TILEID'] == tile_spec) &
                       (catalogue['PETAL_LOC'] == petal_spec) &
-                      (catalogue['NIGHT'] == night_spec))
+                      (catalogue[nightcol] == night_spec))
             self.logger.progress(
                 f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}'
             )
@@ -394,8 +397,8 @@ class DesiData(Data):
                     w_t = w_t[0]
 
                 for spec in spectrographs_data.values():
-                    ivar = spec['IV'][w_t].copy()
-                    flux = spec['FL'][w_t].copy()
+                    ivar = spec['IVAR'][w_t].copy()
+                    flux = spec['FLUX'][w_t].copy()
 
                     if self.analysis_type == "BAO 3D":
                         forest = DesiForest(
@@ -409,7 +412,7 @@ class DesiData(Data):
                                 "z": entry['Z'],
                                 "petal": entry["PETAL_LOC"],
                                 "tile": entry["TILEID"],
-                                "night": entry["NIGHT"]
+                                "night": entry[nightcol]
                             })
                     elif self.analysis_type == "PK 1D":
                         reso_sum = spec['RESO'][w_t].copy()
@@ -429,7 +432,7 @@ class DesiData(Data):
                                 "z": entry['Z'],
                                 "petal": entry["PETAL_LOC"],
                                 "tile": entry["TILEID"],
-                                "night": entry["NIGHT"],
+                                "night": entry[nightcol],
                                 "exposures_diff": exposures_diff,
                                 "reso": reso_in_km_per_s
                             })
@@ -444,5 +447,5 @@ class DesiData(Data):
 
         if num_data == 0:
             raise DataError("No Quasars found, stopping here")
-
+        breakpoint()
         self.forests = list(forests_by_targetid.values())

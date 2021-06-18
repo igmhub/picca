@@ -90,10 +90,24 @@ class ZtruthCatalogue(QuasarCatalogue):
         Table with the catalogue
         """
         self.logger.progress('Reading catalogue from ', self.filename)
-        catalogue = Table.read(self.filename, ext=1)
+        catalogue = Table.read(self.filename, hdu=1)
 
-        keep_columns = ['RA', 'DEC', 'Z', 'TARGETID', 'FIBER', 'SPECTROGRAPH']
+        keep_columns = ['RA', 'DEC', 'Z', 'TARGETID', 'FIBER']
 
+        if 'LAST_NIGHT' in catalogue.colnames:
+            keep_columns+=['LAST_NIGHT']
+        elif 'NIGHT' in catalogue.colnames:
+            keep_columns+=['NIGHT']
+        if 'TARGET_RA' in catalogue.colnames:
+            catalogue.rename_column('TARGET_RA','RA')
+        if 'TARGET_DEC' in catalogue.colnames:
+            catalogue.rename_column('TARGET_DEC','DEC')
+        if 'PETAL_LOC' in catalogue.colnames:
+            keep_columns+=['PETAL_LOC']
+        elif 'SPECTROGRAPH' in catalogue.colnames:
+            keep_columns+= ['SPECTROGRAPH']
+        if 'TILEID' in catalogue.colnames:
+            keep_columns+=['TILEID']
         ## Sanity checks
         self.logger.progress('')
         w = np.ones(len(catalogue), dtype=bool)
