@@ -341,7 +341,7 @@ class data:
             hmet.close()
 
     def xi_model(self, k, pk_lin, pars):
-        pars['blind'] = self.blind
+        pars['blind'] = self._blind
 
         xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, \
                     tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
