@@ -156,8 +156,13 @@ def main():
     if args.dmat is not None:
         hdul = fitsio.FITS(args.dmat)
         if data_name == "DA_BLIND" and 'DM_BLIND' in hdul[1].get_colnames():
+<<<<<<< HEAD
             dmat = np.array(hdul[1]['DM_BLIND'][:])
+=======
+            xi = np.array(hdul[1]['DM_BLIND'][:])
+>>>>>>> 86d6d1b437b85ec9fe76581f0e55abe24feabfa3
             dmat_name = 'DM_BLIND'
+            dmat = hdul[1]['DM_BLIND'][:]
         elif data_name == "DA_BlIND":
             userprint("Blinded correlations were given but distortion matrix "
                       "is unblinded. These files should not mix. Exiting...")
