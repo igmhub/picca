@@ -246,8 +246,6 @@ class data:
         if (not self.par_fixed['fix_at']) and self._blind:
             raise ValueError("Running on blind data, please fix ap/at!")
 
-        assert False
-
         self.dm_met = {}
         self.rp_met = {}
         self.rt_met = {}
