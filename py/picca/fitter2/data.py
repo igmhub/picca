@@ -29,19 +29,26 @@ class data:
         Om = dic_init['model']['Om']
         OL = dic_init['model']['OL']
 
-
         fdata = dic_init['data']['filename']
         h = fitsio.FITS(fdata)
+        head = h[1].read_header()
 
-        if 'DA_BLIND' in h[1].get_colnames():
+        blinding = "none"
+        if 'BLINDING' in head:
+            blinding = head["BLINDING"]
+
+        if blinding == "minimial":
             da = h[1]['DA_BLIND'][:]
-            self.blind = True
-        else:
+            dm = csr_matrix(h[1]['DM_BLIND'][:])
+            self._blind = True
+        elif blinding == "none":
             da = h[1]['DA'][:]
-            self.blind = False
+            dm = csr_matrix(h[1]['DM'][:])
+            self._blind = False
+        else:
+            raise ValueError("Unknown blinding strategy. Only 'minimal' implemented.")
 
         co = h[1]['CO'][:]
-        dm = csr_matrix(h[1]['DM'][:])
         rp = h[1]['RP'][:]
         rt = h[1]['RT'][:]
         z = h[1]['Z'][:]
@@ -54,7 +61,6 @@ class data:
             dmrt = rt.copy()
             dmz = z.copy()
         coef_binning_model = np.sqrt(dmrp.size/rp.size)
-        head = h[1].read_header()
 
         h.close()
 
@@ -235,6 +241,13 @@ class data:
         self.par_limit = dic_init['parameters']['limits']
         self.par_fixed = dic_init['parameters']['fix']
 
+        if (not self.par_fixed['fix_ap']) and self._blind:
+            raise ValueError("Running on blind data, please fix ap/at!")
+        if (not self.par_fixed['fix_at']) and self._blind:
+            raise ValueError("Running on blind data, please fix ap/at!")
+
+        assert False
+
         self.dm_met = {}
         self.rp_met = {}
         self.rt_met = {}
@@ -385,7 +398,7 @@ class data:
         return xi
 
     def chi2(self, k, pk_lin, pksb_lin, full_shape, pars):
-        pars['blind'] = self.blind
+        pars['blind'] = self._blind
         xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
 
         pars['SB'] = True & (not full_shape)
