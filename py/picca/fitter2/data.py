@@ -37,7 +37,7 @@ class data:
         if 'BLINDING' in head:
             blinding = head["BLINDING"]
 
-        if blinding == "minimial":
+        if blinding == "minimal":
             da = h[1]['DA_BLIND'][:]
             dm = csr_matrix(h[1]['DM_BLIND'][:])
             self._blind = True
