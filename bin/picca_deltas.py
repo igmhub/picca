@@ -52,6 +52,16 @@ def get_metadata(data):
                     column_values.append(0)
         tab[field] = np.array(column_values)
 
+    mean_delta2_values = []
+    for healpix in data:
+        for forest in data[healpix]:
+            if "delta" in forest.__dict__ and not forest["delta"] is None:
+                mean_delta2 = np.mean(forest["delta"]*forest["delta"])
+                mean_delta2_values.append(mean_delta2)
+            else:
+                mean_delta2_values.append(-100)
+    tab["mean_delta2"] = np.array(mean_delta2_values)
+
     npix = []
     for healpix in data:
         for forest in data[healpix]:
@@ -788,11 +798,6 @@ def main():
                           ],
                           extname='VAR')
 
-    ### Read metadata from forests and export it
-    if not args.metadata is None:
-        tab_cont = get_metadata(data)
-        tab_cont.write(args.metadata, format="fits", overwrite=True)
-
     ### Compute deltas and format them
     get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
                                stack_delta[stack_weight > 0.],
@@ -827,6 +832,11 @@ def main():
     t2 = time.time()
     tmin = (t2 - t1) / 60
     userprint('INFO: time elapsed to fit continuum', tmin, 'minutes')
+
+    ### Read metadata from forests and export it
+    if not args.metadata is None:
+        tab_cont = get_metadata(data)
+        tab_cont.write(args.metadata, format="fits", overwrite=True)
 
     ### Save delta
     for healpix in sorted(deltas.keys()):
