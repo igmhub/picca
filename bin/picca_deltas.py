@@ -406,7 +406,7 @@ def main():
 
     parser.add_argument('--metadata',
                         type=str,
-                        default=None,
+                        default='metadata.fits',
                         required=False,
                         help=('Name for table containing forests metadata'))
 
