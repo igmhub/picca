@@ -55,8 +55,8 @@ def get_metadata(data):
     mean_delta2_values = []
     for healpix in data:
         for forest in data[healpix]:
-            if "delta" in forest.__dict__ and not forest["delta"] is None:
-                mean_delta2 = np.mean(forest["delta"]*forest["delta"])
+            if "delta" in forest.__dict__ and not forest.delta is None:
+                mean_delta2 = np.mean(forest.delta*forest.delta)
                 mean_delta2_values.append(mean_delta2)
             else:
                 mean_delta2_values.append(-100)
