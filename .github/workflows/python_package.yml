@@ -17,10 +17,10 @@ jobs:
       matrix:
         python-version: [3.8]
     env:   
-      OMP_NUM_THREADS: 0
-      MKL_NUM_THREADS: 0
-      OPENBLAS_NUM_THREADS: 0
-      NUMEXPR_NUM_THREADS: 0
+      OMP_NUM_THREADS: 1
+      MKL_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+      NUMEXPR_NUM_THREADS: 1
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
