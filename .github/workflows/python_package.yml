@@ -4,15 +4,21 @@
 name: Pytest
 on:
   [push, pull_request]
+env:
+  SETUP_XVFB: True  # avoid issues if mpl tries to open a GUI window
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+
     timeout-minutes: 60
     strategy:
       matrix:
         python-version: [3.8]
-
+    env:   
+      OMP_NUM_THREADS: 0
+      MKL_NUM_THREADS: 0
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -23,16 +29,40 @@ jobs:
       run: |
         sudo apt-get -y install libbz2-dev
         python -m pip install --upgrade pip
-        pip install flake8 pytest
+        pip install pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install .
-    #- name: Lint with flake8
-    #  run: |
-    #    # stop the build if there are Python syntax errors or undefined names
-    #    flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-    #    # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-    #    flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       timeout-minutes: 30
       run: |
           pytest py/picca/test/test_cor.py -s
+
+
+  # flake8:
+  #   runs-on: ubuntu-latest
+  #   if: "!contains(github.event.head_commit.message, '[ci skip]')"
+  #   steps:
+  #  - name: Lint with flake8
+  #    run: |
+  #      pip install flake8
+  #      # stop the build if there are Python syntax errors or undefined names
+  #      flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+  #      # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+  #      flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  # codestyle:
+  #   runs-on: ubuntu-latest
+  #   if: "!contains(github.event.head_commit.message, '[ci skip]')"
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - name: Python codestyle check
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: 3.8
+  #   - name: Install base dependencies
+  #     run: |
+  #       python -m pip install --upgrade pip
+  #       python -m pip install pycodestyle
+  #   - name: Check for runtime errors using pycodestyle
+  #     run: |
+  #       pycodestyle pypeit --count --select=E9
