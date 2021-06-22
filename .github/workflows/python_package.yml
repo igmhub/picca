@@ -19,6 +19,8 @@ jobs:
     env:   
       OMP_NUM_THREADS: 0
       MKL_NUM_THREADS: 0
+      OPENBLAS_NUM_THREADS: 0
+      NUMEXPR_NUM_THREADS: 0
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
