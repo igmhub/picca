@@ -288,7 +288,7 @@ class data:
                     
                     metal_mat_name = "DM_{}_{}".format(self.tracer1['name'], m)
                     if self._blind:
-                        metal_mat_name += "_BLIND"
+                        metal_mat_name = "DM_BLIND_{}_{}".format(self.tracer1['name'], m)
                     try:
                         self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[2][metal_mat_name][:])
                     except:
@@ -312,7 +312,7 @@ class data:
 
                         metal_mat_name = "DM_{}_{}".format(self.tracer1['name'], m)
                         if self._blind:
-                            metal_mat_name += "_BLIND"
+                            metal_mat_name = "DM_BLIND_{}_{}".format(self.tracer1['name'], m)
                         try:
                             self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[2][metal_mat_name][:])
                         except:
@@ -327,7 +327,7 @@ class data:
                         
                         metal_mat_name = "DM_{}_{}".format(m, self.tracer2['name'])
                         if self._blind:
-                            metal_mat_name += "_BLIND"
+                            metal_mat_name = "DM_BLIND_{}_{}".format(m, self.tracer2['name'])
                         try:
                             self.dm_met[(m, self.tracer2['name'])] = csr_matrix(hmet[2][metal_mat_name][:])
                         except:
@@ -346,7 +346,7 @@ class data:
 
                         metal_mat_name = "DM_{}_{}".format(m1,m2)
                         if self._blind:
-                            metal_mat_name += "_BLIND"
+                            metal_mat_name = "DM_BLIND_{}_{}".format(m1,m2)
                         try:
                             self.dm_met[(m1, m2)] = csr_matrix(hmet[2][metal_mat_name][:])
                         except ValueError:
