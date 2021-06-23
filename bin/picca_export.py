@@ -190,7 +190,13 @@ def main():
         z_dmat = z.copy()
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [{
+    header = [
+    {
+        'name': "BLINDING",
+        'value': blinding,
+        'comment': 'String specifying the blinding strategy'
+    }
+    {
         'name': 'RPMIN',
         'value': r_par_min,
         'comment': 'Minimum r-parallel'
@@ -226,18 +232,14 @@ def main():
         'name': 'WL',
         'value': head['WL'],
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    }, {
-        'name': "BLINDING",
-        'value': blinding,
-        'comment': 'String specifying the blinding strategy'
-    }
+    },
     ]
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
-    results.write([r_par, r_trans, z, xi, covariance, dmat, num_pairs],
-                  names=['RP', 'RT', 'Z', data_name, 'CO', dmat_name, 'NB'],
+    results.write([xi, r_par, r_trans, z, covariance, dmat, num_pairs],
+                  names=[data_name, 'RP', 'RT', 'Z', 'CO', dmat_name, 'NB'],
                   comment=comment,
                   header=header,
                   extname='COR')
