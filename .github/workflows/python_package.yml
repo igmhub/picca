@@ -16,11 +16,11 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
-    env:   
-      OMP_NUM_THREADS: 1
-      MKL_NUM_THREADS: 1
-      OPENBLAS_NUM_THREADS: 1
-      NUMEXPR_NUM_THREADS: 1
+#    env:   
+#      OMP_NUM_THREADS: 1
+#      MKL_NUM_THREADS: 1
+#      OPENBLAS_NUM_THREADS: 1
+#      NUMEXPR_NUM_THREADS: 1
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -31,7 +31,7 @@ jobs:
       run: |
         sudo apt-get -y install libbz2-dev
         python -m pip install --upgrade pip
-        pip install pytest
+        pip install wheel pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install .
     - name: Test with pytest
