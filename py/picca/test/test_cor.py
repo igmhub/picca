@@ -416,13 +416,15 @@ class TestCor(unittest.TestCase):
                         "WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose"
                         .format(nameRun, k))
                     diff = d_m - d_b
+                    diff_abs = np.absolute(diff)
                     w = d_m != 0.
                     diff[w] = np.absolute(diff[w] / d_m[w])
+                    diff[~w] = 0     #this is to not have absolute distances printed when one of the values should be 0
                     allclose = np.allclose(d_m, d_b)
                     self.assertTrue(
                         allclose,
-                        "{}: Header key is {}, maximum relative difference is {}"
-                        .format(nameRun, k, diff.max()))
+                        "{}: Header key is {}, max. rel. difference is {}, max. abs. difference is {}"
+                        .format(nameRun, k, diff.max(), diff_abs.max()))
                     userprint(f"OK, maximum relative difference {diff.max():.2e}")
 
         m.close()

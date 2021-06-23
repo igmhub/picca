@@ -264,9 +264,9 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
         chi2_in_bin[index] = minimizer.fval
 
         #note that this has been changed for debugging purposes
-        userprint(f" {log_lambda[index]:.10e} "
-                  f"{eta[index]:.10e} {var_lss[index]:.10e} {fudge[index]:.10e} "+
-                  f"{chi2_in_bin[index]:.10e} {num_pixels[index]:.10e} ") 
+        userprint(f" {log_lambda[index]:.3e} "
+                  f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "+
+                  f"{chi2_in_bin[index]:.2e} {num_pixels[index]:d} ") 
                   #f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
 
     return (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
