@@ -836,7 +836,7 @@ def main():
     ### Read metadata from forests and export it
     if not args.metadata is None:
         tab_cont = get_metadata(data)
-        tab_cont.write(args.metadata, format="fits", overwrite=True)
+        tab_cont.write(os.path.expandvars(args.metadata), format="fits", overwrite=True)
 
     ### Save delta
     for healpix in sorted(deltas.keys()):
