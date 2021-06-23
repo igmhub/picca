@@ -351,10 +351,12 @@ def read_data(in_dir,
     blinding = "none"
     if mode in ["desi_mocks","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
         if mode in ["desi", 'desi_mocks']:
-            blinding = blinding_desi
-            if  ('TILEID' in catalog.colnames) and  np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
+            pix_data, is_mock = read_from_desi(in_dir, catalog, pk1d=pk1d)
+            if (not is_mock) and ('TILEID' in catalog.colnames) and np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
                 print("you are trying to run on DESI survey tiles!")
-            pix_data = read_from_desi(in_dir, catalog, pk1d=pk1d)
+                blinding = blinding_desi
+
+
         elif mode == "desi_survey_tilebased":
             if np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
                 print("you are trying to run on DESI survey tiles!")
@@ -441,7 +443,7 @@ def read_data(in_dir,
     elif mode in ["desi_sv_no_coadd",'desiminisv']: #keeping the old name here for backward compatibility
         nside = 8
         data, num_data = read_from_minisv_desi(in_dir, catalog, pk1d=pk1d, useall=useall, usesinglenights=usesinglenights)
-    
+
     else:
         userprint("I don't know mode: {}".format(mode))
         sys.exit(1)
@@ -992,9 +994,15 @@ def read_from_desi(in_dir, catalog, pk1d=None):
         fiberid_name = 'FIBERID'
 
     data = []
+    is_mock = True
     for index, healpix in enumerate(unique_in_healpixs):
         filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
-
+        # the truth file is used to check if we are reading in mocks
+        # in case we are, and we are computing pk1d, we also use them to load
+        # the resolution matrix
+        filename_truth=f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits"
+        if not os.path.isfile(filename_truth):
+            is_mock = False
         userprint(
             f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
         try:
@@ -1028,7 +1036,6 @@ def read_from_desi(in_dir, catalog, pk1d=None):
                 if f"{color}_RESOLUTION" in hdul:
                     spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                 elif pk1d is not None:
-                    filename_truth=f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits"
                     try:
                         with fitsio.FITS(filename_truth) as hdul_truth:
                             spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
@@ -1092,7 +1099,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
 
             data.append(forest)
 
-    return data
+    return data, is_mock
 
 
 def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, useall=False, usehealpix=False):
@@ -1114,7 +1121,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
 
     data = {}
     num_data = 0
-    if usesinglenights or "cumulative" in in_dir:    
+    if usesinglenights or "cumulative" in in_dir:
         files_in = glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
                          recursive=True)
 
@@ -1310,7 +1317,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                     num_data += 1
 
 
-        
+
     userprint("found {} quasars in input files\n".format(num_data))
 
     if num_data == 0:
