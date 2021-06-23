@@ -195,7 +195,7 @@ def main():
         'name': "BLINDING",
         'value': blinding,
         'comment': 'String specifying the blinding strategy'
-    }
+    },
     {
         'name': 'RPMIN',
         'value': r_par_min,
