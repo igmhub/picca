@@ -420,7 +420,7 @@ class TestCor(unittest.TestCase):
                     w = d_m != 0.
                     diff[w] = np.absolute(diff[w] / d_m[w])
                     diff[~w] = 0     #this is to not have absolute distances printed when one of the values should be 0
-                    allclose = np.allclose(d_m, d_b)
+                    allclose = np.allclose(d_m, d_b, atol=3e-8)
                     self.assertTrue(
                         allclose,
                         "{}: Header key is {}, max. rel. difference is {}, max. abs. difference is {}"
