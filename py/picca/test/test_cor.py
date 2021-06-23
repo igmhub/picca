@@ -54,6 +54,7 @@ class TestCor(unittest.TestCase):
         np.random.seed(42)
 
         userprint("\n")
+        userprint(f"Floating point precision info:\n{sys.float_info}\n")
         self._test = True
         self._masterFiles = self.picca_base + '/py/picca/test/data/'
         self.produce_folder()
