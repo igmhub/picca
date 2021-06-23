@@ -425,7 +425,7 @@ class TestCor(unittest.TestCase):
                         allclose,
                         "{}: Header key is {}, max. rel. difference is {}, max. abs. difference is {}"
                         .format(nameRun, k, diff.max(), diff_abs.max()))
-                    userprint(f"OK, maximum relative difference {diff.max():.2e}")
+                    userprint(f"OK, maximum relative difference {diff.max():.2e}, max. abs. difference is {diff_abs.max():.2e}")
 
         m.close()
         b.close()
