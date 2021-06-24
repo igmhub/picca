@@ -105,10 +105,10 @@ class TestDelta(AbstractTest):
         logl_step = 1.e-4
         log_lambda = np.arange(logl_min, logl_max, logl_step)
 
-        ###
+        ### Loop over healpix
         for p in np.unique(pixs):
 
-            ###
+            ### Retrieve objects from catalog and produce fake spectra
             p_thid = thid[(pixs == p)]
             p_fl = np.random.normal(loc=1.,
                                     scale=1.,
@@ -121,7 +121,7 @@ class TestDelta(AbstractTest):
                                                p_thid.size)) > 0.90] = 1
             p_om = np.zeros((log_lambda.size, p_thid.size)).astype(int)
 
-            ###
+            ### Save to file
             p_path = self._branchFiles + "/Products/Spectra/pix_" + str(
                 p) + ".fits"
             out = fitsio.FITS(p_path, 'rw', clobber=True)
