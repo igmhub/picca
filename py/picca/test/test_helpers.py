@@ -70,13 +70,15 @@ def compare_fits(self, path1, path2, nameRun=""):
                     "WARNING: {}: Header key is {}, arrays are not exactly equal, using allclose"
                     .format(nameRun, k))
                 diff = d_m - d_b
+                diff_abs = np.absolute(diff)
                 w = d_m != 0.
                 diff[w] = np.absolute(diff[w] / d_m[w])
                 allclose = np.allclose(d_m, d_b)
                 self.assertTrue(
                     allclose,
-                    "{}: Header key is {}, maximum relative difference is {}".
-                    format(nameRun, k, diff.max()))
+                    "{}: Header key is {}, maximum relative difference is {}, maximum absolute difference is {}".
+                    format(nameRun, k, diff.max()), diff_abs.max())
+                userprint(f"OK, maximum relative difference {diff.max():.2e}, max. abs. difference is {diff_abs.max():.2e}")
 
     m.close()
     b.close()
