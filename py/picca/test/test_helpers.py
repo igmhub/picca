@@ -9,7 +9,11 @@ import unittest
 import shutil, tempfile
 from pkg_resources import resource_filename
 
+### Make ConfigParser case sensitive
+class CaseConfigParser(ConfigParser.ConfigParser):
 
+    def optionxform(self, optionstr):
+        return optionstr
 
 class AbstractTest(unittest.TestCase):
     """
@@ -17,13 +21,15 @@ class AbstractTest(unittest.TestCase):
     """    
 
     def update_system_status_values(self, path, section, system, value):
+        """
+            This updates variables in the fitter test
 
-        ### Make ConfigParser case sensitive
-        class CaseConfigParser(ConfigParser.ConfigParser):
-
-            def optionxform(self, optionstr):
-                return optionstr
-
+        Args:
+            path (str): path to fitter configuration
+            section (str): which section to modify
+            system (str): entry to modify
+            value (str): new value
+        """
         cp = CaseConfigParser()
         cp.read(path)
         cf = open(path, 'w')

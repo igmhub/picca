@@ -4,7 +4,7 @@ Test module
 import unittest
 import os
 import glob
-
+import shutil
 
 from picca.utils import userprint
 import picca.bin.picca_fitter2 as picca_fitter2
