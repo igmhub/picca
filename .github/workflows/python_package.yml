@@ -33,7 +33,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install wheel pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install .
+        pip install -e .
     - name: Test with pytest
       timeout-minutes: 30
       run: |
