@@ -115,7 +115,7 @@ def get_delta_from_forest(forest,
     forest.ivar = ivar
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes delta field"""
     parser = argparse.ArgumentParser(
@@ -415,7 +415,7 @@ def main():
 
     t0 = time.time()
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
@@ -459,6 +459,7 @@ def main():
                                 fill_value="extrapolate",
                                 kind="nearest")
     Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp, 1 + np.zeros(2))
+
 
     #-- Check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
@@ -987,4 +988,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

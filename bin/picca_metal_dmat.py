@@ -5,6 +5,7 @@ absorption.
 This module follow the procedure described in sections 4.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+import sys
 import time
 import argparse
 import multiprocessing
@@ -45,7 +46,7 @@ def calc_metal_dmat(abs_igm1, abs_igm2, healpixs):
     return dmat_data
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Compute the auto and cross-correlation of delta fields for a list of IGM
     absorption."""
@@ -255,7 +256,7 @@ def main():
         help=('rp can be positive or negative depending on the relative '
               'position between absorber1 and absorber2'))
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -555,4 +556,5 @@ def main():
     userprint(f'picca_metal_dmat.py - Time total : {(t3-t0)/60:.3f} minutes')
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

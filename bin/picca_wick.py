@@ -35,7 +35,7 @@ def calc_wick_terms(healpixs):
     return wick_data
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes the wick covariance for the auto-correlation of forests"""
     parser = argparse.ArgumentParser(
@@ -254,7 +254,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -414,7 +414,10 @@ def main():
     context = multiprocessing.get_context('fork')
     pool = context.Pool(processes=min(args.nproc, len(cpu_data.values())))
     userprint(" \nStarting\n")
-    wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
+    if args.nproc>1:
+        wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
+    else:
+        wick_data = [calc_wick_terms(arg) for arg in sorted(cpu_data.values())]
     userprint(" \nFinished\n")
     pool.close()
 
@@ -530,4 +533,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)
