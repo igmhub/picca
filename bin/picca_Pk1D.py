@@ -303,9 +303,9 @@ def main():
 
     # Read deltas
     if args.in_format == 'fits':
-        files = glob.glob(args.in_dir + "/*.fits.gz")
+        files = sorted(glob.glob(args.in_dir + "/*.fits.gz"))
     elif args.in_format == 'ascii':
-        files = glob.glob(args.in_dir + "/*.txt")
+        files = sorted(glob.glob(args.in_dir + "/*.txt"))
 
     num_data = 0
 

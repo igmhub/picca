@@ -1094,8 +1094,8 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
     data = {}
     num_data = 0
     if usesinglenights:
-        files_in = glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
-                         recursive=True)
+        files_in = sorted(glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
+                         recursive=True))
         petal_tile_night = [
             f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
             for entry in catalog
@@ -1111,11 +1111,11 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 break
     else:
         if useall:
-            files_in = glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
-                         recursive=True)
+            files_in = sorted(glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
+                         recursive=True))
         else:
-            files_in = glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
-                         recursive=True)
+            files_in = sorted(glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
+                         recursive=True))
         petal_tile = [
             f"{entry['PETAL_LOC']}-{entry['TILEID']}"
             for entry in catalog
@@ -1313,21 +1313,21 @@ def read_deltas(in_dir,
     in_dir = os.path.expandvars(in_dir)
     if from_image is None or len(from_image) == 0:
         if len(in_dir) > 8 and in_dir[-8:] == '.fits.gz':
-            files += glob.glob(in_dir)
+            files += sorted(glob.glob(in_dir))
         elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
-            files += glob.glob(in_dir)
+            files += sorted(glob.glob(in_dir))
         else:
-            files += glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
-                                                               '/*.fits.gz')
+            files += sorted(glob.glob(in_dir + '/*.fits') + glob.glob(in_dir +
+                                                               '/*.fits.gz'))
     else:
         for arg in from_image:
             if len(arg) > 8 and arg[-8:] == '.fits.gz':
-                files += glob.glob(arg)
+                files += sorted(glob.glob(arg))
             elif len(arg) > 5 and arg[-5:] == '.fits':
-                files += glob.glob(arg)
+                files += sorted(glob.glob(arg))
             else:
-                files += glob.glob(arg + '/*.fits') + glob.glob(arg +
-                                                                '/*.fits.gz')
+                files += sorted(glob.glob(arg + '/*.fits') + glob.glob(arg +
+                                                                '/*.fits.gz'))
     files = sorted(files)
 
     deltas = []
@@ -1483,7 +1483,7 @@ def read_spall(in_dir, thingid, spall=None):
     if spall is None:
         folder = in_dir.replace("spectra/", "")
         folder = folder.replace("lite", "").replace("full", "")
-        filenames = glob.glob(folder + "/spAll-*.fits")
+        filenames = sorted(glob.glob(folder + "/spAll-*.fits"))
 
         if len(filenames) > 1:
             userprint("ERROR: found multiple spAll files")

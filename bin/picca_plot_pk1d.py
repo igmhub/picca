@@ -64,7 +64,7 @@ def main():
         k[index_k] = k_min + (index_k + 0.5) * 0.000542
 
     # list of Pk(1D)
-    files = glob.glob(args.in_dir + "/*.fits.gz")
+    files = sorted(glob.glob(args.in_dir + "/*.fits.gz"))
 
     num_data = 0
 
