@@ -221,10 +221,10 @@ class TestDelta(AbstractTest):
 
         lam = {'b': lam_b, 'r': lam_r, 'z': lam_z}
 
-        ###
+        ### Loop over tiles
         for t, n, p in tile_night_petal_combined:
 
-            ###
+            ###  Grab targets from catalog
             selector = ((petal_loc == p) & (tile == t) & (night == n))
 
             cols = [
@@ -263,7 +263,7 @@ class TestDelta(AbstractTest):
             if not os.path.isdir(p_path):
                 os.makedirs(p_path)
             p_file = p_path + f"coadd-{p}-{t}-{n}.fits"
-            ###
+            ### Write to files
             out = fitsio.FITS(p_file, 'rw', clobber=True)
 
             out.write(cols, names=names, extname="FIBERMAP")
