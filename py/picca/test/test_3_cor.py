@@ -3,42 +3,41 @@ Test module
 '''
 
 import unittest
-import numpy as np
-import fitsio
-import healpy
 import os
-import tempfile
-import shutil
-from pkg_resources import resource_filename
-import sys
+import importlib
+import numpy as np
 
 from picca.utils import userprint
 
-from .test_helpers import update_system_status_values, compare_fits, compare_h5py, send_requirements, load_requirements
-import importlib
+### need to load those modules here and later reload
+### as global variables inside will be overwritten
+import picca.cf
+import picca.xcf
 
 
-class TestCor(unittest.TestCase):
-    #TODO: bad style, using it for the moment while transitioning, remove later
-    compare_fits = compare_fits
-    compare_h5py = compare_h5py
+import picca.bin.picca_co
+import picca.bin.picca_cf1d
+import picca.bin.picca_cf_angl
+import picca.bin.picca_cf
+import picca.bin.picca_wick
+import picca.bin.picca_xwick
+import picca.bin.picca_xcf
+import picca.bin.picca_xcf_angl
+import picca.bin.picca_dmat
+import picca.bin.picca_xdmat
+import picca.bin.picca_metal_dmat
+import picca.bin.picca_metal_xdmat
+import picca.bin.picca_export
+import picca.bin.picca_export_cross_covariance
+import picca.bin.picca_export_co
 
-    @classmethod
-    def setUpClass(cls):
-        cls._branchFiles = tempfile.mkdtemp() + "/"
-        cls.produce_folder(cls)
-        cls.picca_base = resource_filename('picca',
-                                           './').replace('py/picca/./', '')
-        send_requirements(load_requirements(cls.picca_base))
-        np.random.seed(42)
-        cls._masterFiles = cls.picca_base + '/py/picca/test/data/'
-        cls._test=True
-        userprint("\n")
+from .test_helpers import AbstractTest
 
-    @classmethod
-    def tearDownClass(cls):
-        if os.path.isdir(cls._branchFiles):
-            shutil.rmtree(cls._branchFiles, ignore_errors=True)
+
+class TestCor(AbstractTest):
+    """
+        Tests the Correlation Function Computations
+    """    
 
 
     def produce_folder(self):
@@ -62,8 +61,9 @@ class TestCor(unittest.TestCase):
         return
 
     def test_cf1d(self):
-        import picca.bin.picca_cf1d as picca_test
-        importlib.reload(picca_test)
+        """
+            Test 1d correlation function
+        """        
 
         userprint("\n")
         ### Send
@@ -72,7 +72,7 @@ class TestCor(unittest.TestCase):
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf1d.fits.gz"
         cmd += " --nproc 1"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_cf1d.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -83,8 +83,9 @@ class TestCor(unittest.TestCase):
         return
 
     def test_cf1d_cross(self):
-        import picca.bin.picca_cf1d as picca_test
-        importlib.reload(picca_test)
+        """
+            Test 1d cross-correlation function
+        """        
 
         userprint("\n")
         ### Send
@@ -94,7 +95,7 @@ class TestCor(unittest.TestCase):
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf1d_cross.fits.gz"
         cmd += " --nproc 1"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_cf1d.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -105,10 +106,10 @@ class TestCor(unittest.TestCase):
         return
 
     def test_cf_angl(self):
-        import picca.bin.picca_cf_angl as picca_test
-        importlib.reload(picca_test.cf)
-        importlib.reload(picca_test)
-
+        """
+            Test angular correlation function
+        """        
+        importlib.reload(picca.cf)
         userprint("\n")
         ### Send
         cmd = "picca_cf_angl.py"
@@ -116,7 +117,7 @@ class TestCor(unittest.TestCase):
         cmd += " --out " + self._branchFiles + "/Products/Correlations/cf_angl.fits.gz"
         cmd += " --nproc 1"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_cf_angl.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -127,9 +128,10 @@ class TestCor(unittest.TestCase):
         return
 
     def test_cf(self):
-        import picca.bin.picca_cf as picca_test
-        importlib.reload(picca_test.cf)
-        importlib.reload(picca_test)
+        """
+            Test correlation function
+        """        
+        importlib.reload(picca.cf)
 
         userprint("\n")
         ### Send
@@ -144,7 +146,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_cf.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -155,9 +157,10 @@ class TestCor(unittest.TestCase):
         return
 
     def test_dmat(self):
-        import picca.bin.picca_dmat as picca_test
-        importlib.reload(picca_test.cf)
-        importlib.reload(picca_test)
+        """
+            Test distortion matrix
+        """      
+        importlib.reload(picca.cf)
 
         userprint("\n")
         ### Send
@@ -173,7 +176,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_dmat.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -184,9 +187,10 @@ class TestCor(unittest.TestCase):
         return
 
     def test_metal_dmat(self):
-        import picca.bin.picca_metal_dmat as picca_test
-        importlib.reload(picca_test.cf)
-        importlib.reload(picca_test)
+        """
+            Test metal distortion matrix
+        """      
+        importlib.reload(picca.cf)
 
         userprint("\n")
         ### Send
@@ -203,7 +207,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += ' --remove-same-half-plate-close-pairs'
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_metal_dmat.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -214,10 +218,10 @@ class TestCor(unittest.TestCase):
         return
 
     def test_wick(self):
-        import picca.bin.picca_wick as picca_test
-        importlib.reload(picca_test.cf)
-        importlib.reload(picca_test)
-
+        """
+            Test wick covariances
+        """      
+        importlib.reload(picca.cf)
 
         userprint("\n")
         ### Send
@@ -233,7 +237,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_wick.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -244,8 +248,9 @@ class TestCor(unittest.TestCase):
         return
 
     def test_export_cf(self):
-        import picca.bin.picca_export as picca_test
-        importlib.reload(picca_test)
+        """
+            Test export of correlation function
+        """      
 
         userprint("\n")
         ### Send
@@ -254,13 +259,14 @@ class TestCor(unittest.TestCase):
         cmd += " --dmat " + self._masterFiles + "/test_cor/dmat.fits.gz"
         cmd += " --out " + self._branchFiles + "/Products/Correlations/exported_cf.fits.gz"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_export.main(cmd.split()[1:])
         return
 
     def test_cf_cross(self):
-        import picca.bin.picca_cf as picca_test
-        importlib.reload(picca_test.cf)
-        importlib.reload(picca_test)
+        """
+            Test export of cross correlation function
+        """      
+        importlib.reload(picca.cf)
 
         userprint("\n")
         ### Send
@@ -277,7 +283,7 @@ class TestCor(unittest.TestCase):
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_cf.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -288,9 +294,11 @@ class TestCor(unittest.TestCase):
         return
 
     def test_dmat_cross(self):
-        import picca.bin.picca_dmat as picca_test
-        importlib.reload(picca_test.cf)
-        importlib.reload(picca_test)
+        """
+            Test cross distortion matrix
+        """        
+        importlib.reload(picca.cf)
+
 
         userprint("\n")
         ### Send
@@ -308,7 +316,7 @@ class TestCor(unittest.TestCase):
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_dmat.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -319,9 +327,10 @@ class TestCor(unittest.TestCase):
         return
 
     def test_metal_dmat_cross(self):
-        import picca.bin.picca_metal_dmat as picca_test
-        importlib.reload(picca_test.cf)
-        importlib.reload(picca_test)
+        """
+            Test metal cross distortion matrix
+        """        
+        importlib.reload(picca.cf)
 
         userprint("\n")
         ### Send
@@ -342,7 +351,7 @@ class TestCor(unittest.TestCase):
         cmd += ' --remove-same-half-plate-close-pairs'
         cmd += " --unfold-cf"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_metal_dmat.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -353,8 +362,9 @@ class TestCor(unittest.TestCase):
         return
 
     def test_export_cf_cross(self):
-        import picca.bin.picca_export as picca_test
-        importlib.reload(picca_test)
+        """
+            Test export of cross correlation function
+        """        
 
         userprint("\n")
         ### Send
@@ -364,13 +374,14 @@ class TestCor(unittest.TestCase):
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_cf_cross.fits.gz"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_export.main(cmd.split()[1:])
 
         return
 
     def test_xcf_angl(self):
-        import picca.bin.picca_xcf_angl as picca_test
-        importlib.reload(picca_test)
+        """
+            Test angular cross correlation function
+        """        
 
         userprint("\n")
         ### Send
@@ -380,7 +391,7 @@ class TestCor(unittest.TestCase):
         cmd += " --out " + self._branchFiles + "/Products/Correlations/xcf_angl.fits.gz"
         cmd += " --nproc 1"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_xcf_angl.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -391,8 +402,9 @@ class TestCor(unittest.TestCase):
         return
 
     def test_xcf(self):
-        import picca.bin.picca_xcf as picca_test
-        importlib.reload(picca_test)
+        """
+            Test cross correlation function
+        """        
 
         userprint("\n")
         ### Send
@@ -407,7 +419,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nt 15"
         cmd += " --nproc 1"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_xcf.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -418,9 +430,11 @@ class TestCor(unittest.TestCase):
         return
 
     def test_xdmat(self):
-        import picca.bin.picca_xdmat as picca_test
-        importlib.reload(picca_test.xcf)
-        importlib.reload(picca_test)
+        """
+            Test cross distortion matrix
+        """        
+        importlib.reload(picca.xcf)
+
 
         userprint("\n")
         ### Send
@@ -436,7 +450,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_xdmat.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -447,9 +461,9 @@ class TestCor(unittest.TestCase):
         return
 
     def test_metal_xdmat(self):
-        import picca.bin.picca_metal_xdmat as picca_test
-        importlib.reload(picca_test)
-
+        """
+            Test metal cross distortion matrix
+        """        
         userprint("\n")
         ### Send
         cmd = "picca_metal_xdmat.py"
@@ -465,7 +479,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_metal_xdmat.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -476,8 +490,9 @@ class TestCor(unittest.TestCase):
         return
 
     def test_xwick(self):
-        import picca.bin.picca_xwick as picca_test
-        importlib.reload(picca_test)
+        """
+            Test wick covariances for cross
+        """        
 
         userprint("\n")
         ### Send
@@ -494,7 +509,7 @@ class TestCor(unittest.TestCase):
         cmd += " --rej 0.99"
         cmd += " --nproc 1"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_xwick.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -505,8 +520,10 @@ class TestCor(unittest.TestCase):
         return
 
     def test_export_xcf(self):
-        import picca.bin.picca_export as picca_test
-        importlib.reload(picca_test)
+        """
+            Test the export of the cross correlation function
+        """
+        
 
         userprint("\n")
         ### Send
@@ -516,13 +533,15 @@ class TestCor(unittest.TestCase):
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_xcf.fits.gz"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_export.main(cmd.split()[1:])
 
         return
 
     def test_export_cross_covariance_cf_xcf(self):
-        import picca.bin.picca_export_cross_covariance as picca_test
-        importlib.reload(picca_test)
+        """
+            Test the export of cross_covariances between correlation function and cross correlation function
+        """        
+        
 
         userprint("\n")
         ### Send
@@ -532,13 +551,14 @@ class TestCor(unittest.TestCase):
         cmd += " --out " + self._branchFiles + \
             "/Products/Correlations/exported_cross_covariance_cf_xcf.fits.gz"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_export_cross_covariance.main(cmd.split()[1:])
 
         return
 
     def test_co(self):
-        import picca.bin.picca_co as picca_test
-        importlib.reload(picca_test)
+        """
+            Test the covariances
+        """        
 
         userprint("\n")
         ### Send
@@ -553,7 +573,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += " --type-corr DD"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_co.main(cmd.split()[1:])
         ### Send
         cmd = "picca_co.py"
         cmd += " --drq " + self._masterFiles + "/test_delta/random.fits"
@@ -567,7 +587,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += " --type-corr RR"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_co.main(cmd.split()[1:])
         ### Send
         cmd = "picca_co.py"
         cmd += " --drq " + self._masterFiles + "/test_delta/cat.fits"
@@ -582,7 +602,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += " --type-corr DR"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_co.main(cmd.split()[1:])
         ### Send
         cmd = "picca_co.py"
         cmd += " --drq " + self._masterFiles + "/test_delta/random.fits"
@@ -597,7 +617,7 @@ class TestCor(unittest.TestCase):
         cmd += " --nproc 1"
         cmd += " --type-corr RD"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_co.main(cmd.split()[1:])
 
         ### Test
         if self._test:
@@ -619,9 +639,10 @@ class TestCor(unittest.TestCase):
 
         return
 
-    def test_export_co(self):
-        import picca.bin.picca_export_co as picca_test
-        importlib.reload(picca_test)
+    def test_export_co(self):       
+        """
+            Test the export of covariances
+        """         
 
         userprint("\n")
         ### Send
@@ -636,7 +657,7 @@ class TestCor(unittest.TestCase):
         cmd += " --out " + self._branchFiles + "/Products/Correlations/exported_co.fits.gz"
         cmd += " --get-cov-from-poisson"
         print(repr(cmd))
-        picca_test.main(cmd.split()[1:])
+        picca.bin.picca_export_co.main(cmd.split()[1:])
 
         return
 

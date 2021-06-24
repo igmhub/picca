@@ -1,43 +1,20 @@
 import unittest
+import os
+import glob
 import numpy as np
 import fitsio
 import healpy
-import os
-import tempfile
-import shutil
-import glob
-from pkg_resources import resource_filename
-import sys
+
 
 from picca.utils import userprint
 
-from .test_helpers import update_system_status_values, compare_fits, compare_h5py, send_requirements, load_requirements
+from .test_helpers import AbstractTest
 
 
-class TestDelta(unittest.TestCase):
-    #TODO: bad style, using it for the moment while transitioning, remove later
-    compare_fits = compare_fits
-    compare_h5py = compare_h5py
-
-    @classmethod
-    def setUpClass(cls):
-        cls._branchFiles = tempfile.mkdtemp() + "/"
-        cls.produce_folder(cls)
-        cls.picca_base = resource_filename('picca',
-                                           './').replace('py/picca/./', '')
-        send_requirements(load_requirements(cls.picca_base))
-        np.random.seed(42)
-        cls._masterFiles = cls.picca_base + '/py/picca/test/data/'
-
-        userprint("\n")
-        cls._test = True
-
-
-    @classmethod
-    def tearDownClass(cls):
-        if os.path.isdir(cls._branchFiles):
-            shutil.rmtree(cls._branchFiles, ignore_errors=True)
-
+class TestDelta(AbstractTest):
+    """
+        Test case for picca_deltas.py
+    """
     def produce_folder(self):
         """
             Create the necessary folders
@@ -61,7 +38,7 @@ class TestDelta(unittest.TestCase):
 
     def produce_cat(self, nObj, name="cat", thidoffset=0):
         """
-
+            produces a fake catalog for testing
         """
 
         userprint("\n")
@@ -94,7 +71,7 @@ class TestDelta(unittest.TestCase):
 
     def produce_forests(self):
         """
-
+            randomly creates Lya forests for testing
         """
         userprint("\n")
         nside = 8
@@ -160,7 +137,7 @@ class TestDelta(unittest.TestCase):
 
     def produce_cat_minisv(self, nObj, name="cat_minisv"):
         """
-
+            produces a fake catalog in DESI SV like format for testing
         """
         userprint("\n")
         userprint("Create cat with number of object = ", nObj)
@@ -202,7 +179,7 @@ class TestDelta(unittest.TestCase):
 
     def produce_forests_minisv(self):
         """
-            Produce random data in MiniSV format
+            Produce random data in DESI SV like format for testing
         """
 
         userprint("\n")
@@ -328,9 +305,9 @@ class TestDelta(unittest.TestCase):
 
     def send_delta_Pk1D_minisv(self):
         """
-            Test of picca_deltas currently only to check if miniSV I/O routines
+            Test of picca_deltas currently only to check if SV I/O routines
             work correctly. The data for this routine is randomly generated as for "send_delta", but
-            in DESI-miniSV format instead of an eBOSS format
+            in DESI SV format instead of an eBOSS format
         """
         import picca.bin.picca_deltas as picca_deltas
 

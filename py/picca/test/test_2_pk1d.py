@@ -1,39 +1,19 @@
 import unittest
+import os
+import glob
 import numpy as np
 import fitsio
 import healpy
-import os
-import tempfile
-import shutil
-from pkg_resources import resource_filename
-import sys
 
 from picca.utils import userprint
 
-from .test_helpers import update_system_status_values, compare_fits, compare_h5py, send_requirements, load_requirements
+from .test_helpers import AbstractTest
 
 
-class TestPk1d(unittest.TestCase):
-    #TODO: bad style, using it for the moment while transitioning, remove later
-    compare_fits = compare_fits
-    compare_h5py = compare_h5py
-
-    @classmethod
-    def setUpClass(cls):
-        cls._branchFiles = tempfile.mkdtemp() + "/"
-        cls.produce_folder(cls)
-        cls.picca_base = resource_filename('picca',
-                                           './').replace('py/picca/./', '')
-        send_requirements(load_requirements(cls.picca_base))
-        np.random.seed(42)
-        cls._masterFiles = cls.picca_base + '/py/picca/test/data/'
-
-        userprint("\n")
-
-    @classmethod
-    def tearDownClass(cls):
-        if os.path.isdir(cls._branchFiles):
-            shutil.rmtree(cls._branchFiles, ignore_errors=True)
+class TestPk1d(AbstractTest):
+    """
+        Test the Pk1d routines
+    """
 
     def produce_folder(self):
         """
@@ -50,6 +30,9 @@ class TestPk1d(unittest.TestCase):
         return
 
     def test_Pk1D(self):
+        """
+            Runs a simple test of Pk1d routines
+        """        
         import picca.bin.picca_Pk1D as picca_Pk1D
 
         self._test = True
