@@ -77,7 +77,7 @@ def compare_fits(self, path1, path2, nameRun=""):
                 self.assertTrue(
                     allclose,
                     "{}: Header key is {}, maximum relative difference is {}, maximum absolute difference is {}".
-                    format(nameRun, k, diff.max()), diff_abs.max())
+                    format(nameRun, k, diff.max(), diff_abs.max()))
                 userprint(f"OK, maximum relative difference {diff.max():.2e}, max. abs. difference is {diff_abs.max():.2e}")
 
     m.close()
