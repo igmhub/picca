@@ -610,6 +610,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 bins = ((forest.log_lambda - Forest.log_lambda_min) /
                         Forest.delta_log_lambda + 0.5).astype(int)
             elif Forest.wave_solution == "lin":
+                #TODO: this is definitely wrong, we do not have log-lambda quantities at this point
+                
                 bins = ((forest.lambda_ - Forest.log_lambda_min) /
                         Forest.delta_log_lambda + 0.5).astype(int)
             else:
