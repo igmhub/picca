@@ -305,7 +305,7 @@ class DesiData(Data):
         filenames = np.unique(filenames)
 
         for index, filename in enumerate(filenames):
-            self.logger.progress(f"read tile {} of {}. ndata: {}".format(
+            self.logger.progress("read tile {} of {}. ndata: {}".format(
                 index, len(filenames), num_data))
             try:
                 hdul = fitsio.FITS(filename)
