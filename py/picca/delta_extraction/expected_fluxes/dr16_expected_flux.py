@@ -688,20 +688,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 tmp_cont=forest.continuum
             else:
                 tmp_cont=forest.continuum[select_bins]
-
-            num_cont = np.bincount(bins)
-            select_cont=num_cont>0
-            cont = np.bincount(bins, weights=weights[select_bins])
-            mean_cont_weight[select_cont] += cont[select_cont]
             cont = np.bincount(bins,
                                weights=forest.flux[select_bins] / tmp_cont * weights[select_bins])
-            mean_cont[select_cont] += cont[select_cont]
+            mean_cont[:len(cont)] += cont
+            cont = np.bincount(bins, weights=weights[select_bins])
+            mean_cont_weight[:len(cont)] += cont
 
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
         mean_cont /= np.nanmean(mean_cont)
         lambda_cont = self.lambda_rest_frame[w]
-        mean_cont_weight=mean_cont_weight[w]
 
         # the new mean continuum is multiplied by the previous one to recover
         # <F/spectrum_dependent_fitting_function>
