@@ -430,8 +430,9 @@ class DesiData(Data):
                                 "tile": entry["TILEID"],
                                 "night": entry[nightcol],
                                 "exposures_diff": exposures_diff,
-                                "reso": reso_in_km_per_s,
-                                #"reso_AA": reso_in_AA
+                                "reso": np.real(reso_in_km_per_s),
+                                "reso_AA": np.real(reso_in_AA),
+                                "reso_matrix": reso_sum
                             })
 
                     if targetid in forests_by_targetid:
@@ -444,5 +445,5 @@ class DesiData(Data):
 
         if num_data == 0:
             raise DataError("No Quasars found, stopping here")
-        breakpoint()
+        #breakpoint()
         self.forests = list(forests_by_targetid.values())
