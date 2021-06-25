@@ -316,10 +316,9 @@ class DesiData(Data):
             fibermap = hdul['FIBERMAP'].read()
             fibermap_colnames = hdul["FIBERMAP"].get_colnames()
             # SV releases
-            ra = fibermap['TARGET_RA']
-            dec = fibermap['TARGET_DEC']
+            ra_spec = fibermap['TARGET_RA']
+            dec_spec = fibermap['TARGET_DEC']
 
-            self.logger.debug(f'max ra (deg) {ra.max()}, max dec (deg) {dec.max()}')
             tile_spec = fibermap['TILEID'][0]
             night_spec = fibermap[nightcol][0]
             try:
@@ -336,9 +335,8 @@ class DesiData(Data):
                     self.logger.warning(
                         "Reading all-band coadd as in minisv pre-Andes "
                         "dataset")
-            ra = np.radians(ra)
-            dec = np.radians(dec)
-            self.logger.debug(f'max ra (radians) {ra.max()}, max dec (radians) {dec.max()}')
+            ra_spec = np.radians(ra_spec)
+            dec_spec = np.radians(dec_spec)
 
             petal_spec = fibermap['PETAL_LOC'][0]
 
@@ -381,9 +379,10 @@ class DesiData(Data):
 
             # Loop over quasars in catalog inside this tile-petal
             for entry in catalogue[select]:
-
                 # Find which row in tile contains this quasar
                 targetid = entry['TARGETID']
+                ra = np.radians(entry['RA'])
+                dec = np.radians(entry['DEC'])
                 w_t = np.where(targetid_spec == targetid)[0]
                 if len(w_t) == 0:
                     self.logger.warning(
@@ -407,8 +406,8 @@ class DesiData(Data):
                                 "flux": flux,
                                 "ivar": ivar,
                                 "targetid": targetid,
-                                "ra": entry['RA'],
-                                "dec": entry['DEC'],
+                                "ra": ra,
+                                "dec": dec,
                                 "z": entry['Z'],
                                 "petal": entry["PETAL_LOC"],
                                 "tile": entry["TILEID"],
