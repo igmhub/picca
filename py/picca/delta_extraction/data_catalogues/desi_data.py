@@ -162,7 +162,7 @@ class DesiData(Data):
             try:
                 hdul = fitsio.FITS(filename)
             except IOError:
-                logging.warning(f"Error reading pix {healpix}. Ignoring file")
+                self.logger.warning(f"Error reading pix {healpix}. Ignoring file")
                 continue
 
             # Read targetid from fibermap to match to catalogue later
@@ -196,7 +196,7 @@ class DesiData(Data):
                                 f"'{color}_RESOLUTION' ")
                     spectrographs_data[color] = spec
                 except OSError:
-                    logging.warning(
+                    self.logger.warning(
                         f"Error while reading {color} band from {filename}."
                         "Ignoring color.")
             hdul.close()
@@ -208,11 +208,11 @@ class DesiData(Data):
                 targetid = row["TARGETID"]
                 w_t = np.where(targetid_spec == targetid)[0]
                 if len(w_t) == 0:
-                    logging.warning(
+                    self.logger.warning(
                         f"Error reading {targetid}. Ignoring object")
                     continue
                 if len(w_t) > 1:
-                    logging.warning(
+                    self.logger.warning(
                         "Warning: more than one spectrum in this file "
                         f"for {targetid}")
                 else:
@@ -305,12 +305,12 @@ class DesiData(Data):
         filenames = np.unique(filenames)
 
         for index, filename in enumerate(filenames):
-            self.logger.progress("read tile {} of {}. ndata: {}".format(
+            self.logger.progress(f"read tile {} of {}. ndata: {}".format(
                 index, len(filenames), num_data))
             try:
                 hdul = fitsio.FITS(filename)
             except IOError:
-                logging.warning(f"Error reading file {filename}. Ignoring file")
+                self.logger.warning(f"Error reading file {filename}. Ignoring file")
                 continue
 
             fibermap = hdul['FIBERMAP'].read()
@@ -325,13 +325,13 @@ class DesiData(Data):
             except OSError:
                 colors = ['B','R','Z']
                 if index == 0:
-                    logging.warning(
+                    self.logger.warning(
                         "Reading single band coadds, picca will coadd the bands,"
                         "as typical since SV")
             else:
                 colors = ['BRZ']
                 if index == 0:
-                    logging.warning(
+                    self.logger.warning(
                         "Reading all-band coadd as in minisv pre-Andes "
                         "dataset")
             ra = np.radians(ra)
@@ -363,7 +363,7 @@ class DesiData(Data):
                         spec[key][w] = 0.
                     spectrographs_data[color] = spec
                 except OSError:
-                    logging.warning(
+                    self.logger.warning(
                         f"Error while reading {color} band from {filename}."
                         "Ignoring color.")
 
@@ -383,11 +383,11 @@ class DesiData(Data):
                 targetid = entry['TARGETID']
                 w_t = np.where(targetid_spec == targetid)[0]
                 if len(w_t) == 0:
-                    logging.warning(
+                    self.logger.warning(
                         f"Error reading {targetid}. Ignoring object")
                     continue
                 if len(w_t) > 1:
-                    logging.warning(
+                    self.logger.warning(
                         "Warning: more than one spectrum in this file "
                         f"for {targetid}")
                 else:
