@@ -692,7 +692,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             cont = np.bincount(bins,
                                weights=forest.flux[select_bins] / tmp_cont * weights[select_bins])
             mean_cont[:len(cont)] += cont
-            cont = np.bincount(bins, weights=weights)
+            cont = np.bincount(bins, weights=weights[select_bins])
             mean_cont_weight[:len(cont)] += cont
 
         w = mean_cont_weight > 0
