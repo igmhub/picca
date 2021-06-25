@@ -197,15 +197,21 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # initialize the mean quasar continuum
         # TODO: maybe we can drop this and compute first the mean quasar
         # continuum on compute_mean_expected_flux
+
+        #TODO: following line is non-ideal and will lead to mean continuum bins that are wider than neccessary
+        #      as rest_frame pixels are only delta_lambda/(1+z) wide (different for each spectrum), i.e. can do
+        #      better by a factor 3 at least
         num_bins = (int(
             (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) /
             Forest.delta_lambda) + 1)
+            
         self.lambda_rest_frame = (
             Forest.lambda_min_rest_frame + (np.arange(num_bins) + .5) *
             (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) /
             num_bins)
         self.get_mean_cont = interp1d(self.lambda_rest_frame,
-                                      np.ones_like(self.lambda_rest_frame))
+                                      np.ones_like(self.lambda_rest_frame),
+                                      fill_value='extrapolate')
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
