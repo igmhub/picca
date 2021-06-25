@@ -415,7 +415,7 @@ class DesiData(Data):
                         reso_sum = spec['RESO'][w_t].copy()
                         reso_in_km_per_s, reso_in_AA = spectral_resolution_desi(
                             reso_sum,spec['WAVELENGTH'])
-                        exposures_diff = np.zeros(spec['log_lambda'].shape)
+                        exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
 
                         forest = DesiPk1dForest(
                             **{
