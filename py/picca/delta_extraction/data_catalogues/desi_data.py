@@ -321,22 +321,20 @@ class DesiData(Data):
                 dec = fibermap['TARGET_DEC']
                 tile_spec = fibermap['TILEID'][0]
                 night_spec = fibermap[nightcol][0]
-                colors = ['B','R','Z']
-                if index == 0:
-                    logging.warning(
-                        "Reading all-band coadd as in minisv pre-Andes "
-                        "dataset")
-            # pre-Andes   #not sure if the ra_target isn't even older
-            elif 'RA_TARGET' in fibermap_colnames:
-                ra = fibermap['RA_TARGET']
-                dec = fibermap['DEC_TARGET']
-                tile_spec = filename.split('-')[-2]
-                night_spec = int(filename.split('-')[-1].split('.')[0])
-                colors = ['BRZ']
-                if index == 0:
-                    logging.warning(
-                        "Couldn't read the all band-coadd, trying "
-                        "single band as introduced in Andes reduction")
+                try:
+                    hdul['BRZ_WAVELENGTH']
+                except OSError:
+                    colors = ['B','R','Z']
+                    if index == 0:
+                        logging.warning(
+                            "Reading single band coadds, picca will coadd the bands,"
+                            "as typical since SV")
+                else:
+                    colors = ['BRZ']
+                    if index == 0:
+                        logging.warning(
+                            "Reading all-band coadd as in minisv pre-Andes "
+                            "dataset")
             ra = np.radians(ra)
             dec = np.radians(dec)
 
