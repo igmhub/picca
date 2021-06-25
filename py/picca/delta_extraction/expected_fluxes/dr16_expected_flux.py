@@ -667,11 +667,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # compute
         #    1/Cont_old * <F/spectrum_dependent_fitting_function>
         for forest in forests:
+
             bins = (
                 (forest.lambda_ /
                  (1 + forest.z) - Forest.lambda_min_rest_frame) /
                 (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) *
                 num_bins).astype(int)
+
+            #this catches issues where a very red forest would fall out of the continuum bin range
+            select_bins=bins>=0
+            bins=bins[select_bins]
 
             var_lss = self.get_var_lss(forest.lambda_)
             eta = self.get_eta(forest.lambda_)
@@ -679,8 +684,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
             var_pipe = 1. / forest.ivar / forest.continuum**2
             variance = eta * var_pipe + var_lss + fudge / var_pipe
             weights = 1 / variance
+
             cont = np.bincount(bins,
-                               weights=forest.flux / forest.continuum * weights)
+                               weights=forest.flux[select_bins] / forest.continuum[select_bins] * weights[select_bins])
             mean_cont[:len(cont)] += cont
             cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont
