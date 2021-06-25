@@ -3,8 +3,16 @@
 from picca.fitter2 import chi2, parser
 import argparse
 
-if __name__ == '__main__':
+def main(config):
+    dic_init = parser.parse_chi2(config)
+    chi = chi2.chi2(dic_init)
+    chi.minimize()
+    chi.minos()
+    chi.chi2scan()
+    chi.fastMC()
+    chi.export()
 
+if __name__ == '__main__':
     pars = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Fit the correlation function.')
 
@@ -13,12 +21,4 @@ if __name__ == '__main__':
 
 
     args = pars.parse_args()
-
-    dic_init = parser.parse_chi2(args.config)
-    chi = chi2.chi2(dic_init) 
-    chi.minimize()
-    chi.minos()
-    chi.chi2scan()
-    chi.fastMC()
-    #chi = {}
-    chi.export()
+    main(args.config)
