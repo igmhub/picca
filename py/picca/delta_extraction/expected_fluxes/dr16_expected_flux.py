@@ -771,8 +771,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.logger.progress(
                 f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
             )
-
-            forests = pool.map(self.compute_continuum, forests)
+            if self.num_processors>1:
+                forests = pool.map(self.compute_continuum, forests)
+            else:
+                forests = [self.compute_continuum(f) for f in forests]
             pool.close()
 
             if iteration < self.num_iterations - 1:
