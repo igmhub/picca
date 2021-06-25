@@ -1137,7 +1137,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                      self.get_stack_delta_weights(stack_log_lambda)],
                     names=['loglam', 'stack', 'weight'],
                     header=header,
-                    extname='STACK')
+                    extname='STACK_DELTAS')
 
                 results.write([
                     self.log_lambda,

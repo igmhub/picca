@@ -63,6 +63,14 @@ class ScriptsTest(AbstractTest):
 
         self.run_delta_extraction(config_file, out_dir, test_dir)
 
+    def test_delta_calib2(self):
+        """End-to-end test using 'calib2' setup"""
+        config_file = "{}/data/delta_calib2.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_calib2".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_calib2".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
+
 
 
 if __name__ == '__main__':
