@@ -706,7 +706,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       new_cont,
                                       fill_value="extrapolate")
         self.get_mean_cont_weight = interp1d(lambda_cont,
-                                      mean_cont_weight,
+                                      mean_cont_weight[w],
                                       fill_value=0.0,
                                       bounds_error=False)
 
