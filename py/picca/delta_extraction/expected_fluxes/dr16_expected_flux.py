@@ -165,6 +165,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_eta = None
         self.get_fudge = None
         self.get_mean_cont = None
+        self.get_mean_cont_weight = None
         self.get_var_lss = None
         self.lambda_ = None
         self.lambda_rest_frame = None
@@ -181,6 +182,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.continuum_fit_parameters = None
 
         self.get_stack_delta = None
+        self.get_stack_delta_weights = None
 
     def _initialize_variables_lin(self):
         """Initialize useful variables assuming a linear wavelength solution.
@@ -621,11 +623,21 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                             stack_delta[stack_weight > 0.],
                                             kind="nearest",
                                             fill_value="extrapolate")
+            self.get_stack_delta_weights = interp1d(stack_log_lambda[stack_weight > 0.],
+                                                    stack_weight[stack_weight > 0.],
+                                                    kind="nearest",
+                                                    fill_value=0.0,
+                                                    bounds_error=False)
         elif Forest.wave_solution == "lin":
             self.get_stack_delta = interp1d(stack_lambda[stack_weight > 0.],
                                             stack_delta[stack_weight > 0.],
                                             kind="nearest",
                                             fill_value="extrapolate")
+            self.get_stack_delta_weights = interp1d(stack_lambda[stack_weight > 0.],
+                                                    stack_weight[stack_weight > 0.],
+                                                    kind="nearest",
+                                                    fill_value=0.0,
+                                                    bounds_error=False)
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either "
                                     "'log' or 'linear'")
@@ -678,6 +690,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_mean_cont = interp1d(lambda_cont,
                                       new_cont,
                                       fill_value="extrapolate")
+        self.get_mean_cont_weight = interp1d(lambda_cont,
+                                      mean_cont_weight,
+                                      fill_value=0.0,
+                                      bounds_error=False)
 
     def compute_mean_cont_log(self, forests):
         """Compute the mean quasar continuum over the whole sample assuming a
@@ -726,6 +742,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_mean_cont = interp1d(log_lambda_cont,
                                       new_cont,
                                       fill_value="extrapolate")
+        self.get_mean_cont_weight = interp1d(log_lambda_cont,
+                                      mean_cont_weight,
+                                      fill_value=0.0,
+                                      bounds_error=False)
 
     def compute_expected_flux(self, forests, out_dir):
         """Compute the mean expected flux of the forests.
@@ -1070,11 +1090,13 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     "mean expected flux": mean_expected_flux,
                     "weights": weights,
                     "ivar": ivar,
+                    "continuum": forest.continuum,
                 }
             else:
                 self.los_ids[forest.los_id] = {
                     "mean expected flux": mean_expected_flux,
                     "weights": weights,
+                    "continuum": forest.continuum,
                 }
 
     def save_iteration_step(self, iteration, out_dir):
@@ -1111,8 +1133,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     np.arange(num_bins) * Forest.delta_log_lambda)
                 results.write(
                     [stack_log_lambda,
-                     self.get_stack_delta(stack_log_lambda)],
-                    names=['loglam', 'stack'],
+                     self.get_stack_delta(stack_log_lambda),
+                     self.get_stack_delta_weights(stack_log_lambda)],
+                    names=['loglam', 'stack', 'weight'],
                     header=header,
                     extname='STACK')
 
@@ -1128,8 +1151,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 results.write([
                     self.log_lambda_rest_frame,
                     self.get_mean_cont(self.log_lambda_rest_frame),
+                    self.get_mean_cont_weight(self.log_lambda_rest_frame),
                 ],
-                              names=['loglam_rest', 'mean_cont'],
+                              names=['loglam_rest', 'mean_cont', 'weight'],
                               extname='CONT')
             elif Forest.wave_solution == "lin":
                 # TODO: update this once the TODO in compute continua is fixed
@@ -1140,8 +1164,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
                 results.write(
                     [stack_lambda,
-                     self.get_stack_delta(stack_lambda)],
-                    names=['loglam', 'stack'],
+                     self.get_stack_delta(stack_lambda),
+                     self.get_stack_delta_weights(stack_lambda)],
+                    names=['loglam', 'stack', 'weight'],
                     header=header,
                     extname='STACK')
 
@@ -1156,9 +1181,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
                 results.write([
                     self.lambda_rest_frame,
-                    self.get_mean_cont(self.lambda_rest_frame)
+                    self.get_mean_cont(self.lambda_rest_frame),
+                    self.get_mean_cont_weight(self.lambda_rest_frame),
                 ],
-                              names=['loglam_rest', 'mean_cont'],
+                              names=['loglam_rest', 'mean_cont', 'weight'],
                               extname='CONT')
 
             else:
