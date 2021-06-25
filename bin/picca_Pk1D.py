@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Compute the 1D power spectrum
 """
+import sys
 import argparse
 import glob
 from array import array
@@ -149,7 +150,7 @@ def compute_mean_delta(log_lambda, delta, ivar, z_qso, hist_delta,
                                                ivar[index])
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Compute the 1D power spectrum"""
     parser = argparse.ArgumentParser(
@@ -253,7 +254,7 @@ def main():
         help=('Name of the absorption line in picca.constants defining the '
               'redshift of the forest pixels'))
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     # Create root file
     if args.out_format == 'root':
@@ -303,9 +304,9 @@ def main():
 
     # Read deltas
     if args.in_format == 'fits':
-        files = glob.glob(args.in_dir + "/*.fits.gz")
+        files = sorted(glob.glob(args.in_dir + "/*.fits.gz"))
     elif args.in_format == 'ascii':
-        files = glob.glob(args.in_dir + "/*.txt")
+        files = sorted(glob.glob(args.in_dir + "/*.txt"))
 
     num_data = 0
 
@@ -531,4 +532,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

@@ -3,6 +3,7 @@
 """
 Computes the convolution term Fvoigt(k) and saves it in an ASCII file. The inputs are a DLA and a QSO catalog (both as fits binary tables). The DLA table must contain the columns "MOCKID" matching qso "THING_ID", and "Z_DLA_RSD". The QSO table must contain the columns "THING_ID", and "Z"
 """
+import sys
 import argparse
 import numpy as np
 import scipy.integrate as integrate
@@ -118,7 +119,7 @@ def compute_dla_prob(wavelength, NHI, dla, qso, weight):
         mean_density[i] = np.sum(f*weight)/np.sum(weight)
     return mean_density
 
-def main() :
+def main(cmdargs) :
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -166,7 +167,7 @@ def main() :
                         help="show some plots")
 
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     if args.debug:
         userprint("read DLA catalog")
@@ -259,4 +260,6 @@ def main() :
         plt.grid()
         plt.show()
 
-main()
+if __name__=='__main__':
+    cmdargs=sys.argv[1:]
+    main(cmdargs)
