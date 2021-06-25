@@ -685,8 +685,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
             variance = eta * var_pipe + var_lss + fudge / var_pipe
             weights = 1 / variance
 
+            if np.asarray(forest.continuum).size==1:
+                tmp_cont=forest.continuum
+            else:
+                tmp_cont=forest.continuum[select_bins]
             cont = np.bincount(bins,
-                               weights=forest.flux[select_bins] / forest.continuum[select_bins] * weights[select_bins])
+                               weights=forest.flux[select_bins] / tmp_cont * weights[select_bins])
             mean_cont[:len(cont)] += cont
             cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont
