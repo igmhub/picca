@@ -241,9 +241,9 @@ class data:
         self.par_limit = dic_init['parameters']['limits']
         self.par_fixed = dic_init['parameters']['fix']
 
-        if (not self.par_fixed['fix_ap']) and self._blind:
+        if self._blind and (('fix_ap' not in self.par_fixed.keys()) or (not self.par_fixed['fix_ap'])):
             raise ValueError("Running on blind data, please fix ap/at!")
-        if (not self.par_fixed['fix_at']) and self._blind:
+        if self._blind and (('fix_at' not in self.par_fixed.keys()) or (not self.par_fixed['fix_at'])):
             raise ValueError("Running on blind data, please fix ap/at!")
 
         self.dm_met = {}
