@@ -370,7 +370,9 @@ def desi_convert_transmission_to_delta_files(obj_path,
                                              lambda_max=5500.,
                                              lambda_min_rest_frame=1040.,
                                              lambda_max_rest_frame=1200.,
-                                             delta_log_lambda=3.e-4,
+                                             delta_log_lambda=None,
+                                             delta_lambda=None,
+                                             lin_spaced=False,
                                              max_num_spec=None):
     """Convert desi transmission files to picca delta files
 
@@ -449,11 +451,23 @@ def desi_convert_transmission_to_delta_files(obj_path,
         files = np.sort(np.array(in_filenames))
     userprint('INFO: Found {} files'.format(files.size))
 
+    # Check if we should compute linear or log spaced deltas
+    # Use the x_min/x_max/delta_x variables to stand in for either 
+    # linear of log spaced parameters
+    if lin_spaced:
+        x_min = lambda_min
+        x_max = lambda_max
+        delta_x = delta_lambda if delta_lambda is not None else 3.
+    else:
+        x_min = np.log10(lambda_min)
+        x_max = np.log10(lambda_max)
+        delta_x = delta_log_lambda if delta_lambda is not None else 3.e-4
+
     # Stack the deltas transmission
-    log_lambda_min = np.log10(lambda_min)
-    log_lambda_max = np.log10(lambda_max)
-    num_bins = int((log_lambda_max - log_lambda_min) / delta_log_lambda) + 1
-    stack_delta = np.zeros(num_bins)
+    # log_lambda_min = np.log10(lambda_min)
+    # log_lambda_max = np.log10(lambda_max)
+    num_bins = int((x_max - x_min) / delta_x) + 1
+    stack_flux = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
 
     deltas = {}
@@ -472,7 +486,13 @@ def desi_convert_transmission_to_delta_files(obj_path,
         ra = hdul['METADATA']['RA'][:].astype(np.float64) * np.pi / 180.
         dec = hdul['METADATA']['DEC'][:].astype(np.float64) * np.pi / 180.
         z = hdul['METADATA']['Z'][:]
-        log_lambda = np.log10(hdul['WAVELENGTH'].read())
+
+        # Use "lambda_array" to store either lambda or log lambda
+        if lin_spaced:
+            lambda_array = hdul['WAVELENGTH'].read()
+        else:
+            lambda_array = np.log10(hdul['WAVELENGTH'].read())
+
         if 'F_LYA' in hdul:
             trans = hdul['F_LYA'].read()
         else:
@@ -484,11 +504,13 @@ def desi_convert_transmission_to_delta_files(obj_path,
         if trans.shape[0] != num_obj:
             trans = trans.transpose()
 
-        bins = np.floor((log_lambda - log_lambda_min) / delta_log_lambda +
+        bins = np.floor((lambda_array - x_min) / delta_x +
                         0.5).astype(int)
-        aux_log_lambda = log_lambda_min + bins * delta_log_lambda
-        lambda_obs_frame =  (10**aux_log_lambda) * np.ones(num_obj)[:, None]
-        lambda_rest_frame = (10**aux_log_lambda) / (1. + z[:, None])
+        aux_lambda = x_min + bins * delta_x
+        if not lin_spaced:
+            aux_lambda = 10**aux_lambda
+        lambda_obs_frame = aux_lambda * np.ones(num_obj)[:, None]
+        lambda_rest_frame = aux_lambda / (1. + z[:, None])
         valid_pixels = np.zeros_like(trans).astype(int)
         valid_pixels[(lambda_obs_frame >= lambda_min) &
                      (lambda_obs_frame < lambda_max) &
@@ -512,22 +534,20 @@ def desi_convert_transmission_to_delta_files(obj_path,
 
         deltas[healpix] = []
         for index2 in range(num_obj):
-            aux_log_lambda = log_lambda[valid_pixels[index2, :] > 0]
+            aux_lambda = lambda_array[valid_pixels[index2, :] > 0]
             aux_trans = trans[index2, :][valid_pixels[index2, :] > 0]
 
-            bins = np.floor((aux_log_lambda - log_lambda_min) /
-                            delta_log_lambda + 0.5).astype(int)
-            rebin_log_lambda = (log_lambda_min +
-                                np.arange(num_bins) * delta_log_lambda)
-            rebin_flux = np.bincount(bins,
-                                     weights=aux_trans,
-                                     minlength=num_bins)
+            bins = np.floor((aux_lambda - x_min) / delta_x + 0.5).astype(int)
+            rebin_log_lambda = (x_min + np.arange(num_bins) * delta_x)
+            if lin_spaced:
+                rebin_log_lambda = np.log10(rebin_log_lambda)
+            rebin_flux = np.bincount(bins, weights=aux_trans, minlength=num_bins)
             rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
 
             w = rebin_ivar > 0.
             if w.sum() < 50:
                 continue
-            stack_delta += rebin_flux
+            stack_flux += rebin_flux
             stack_weight += rebin_ivar
             rebin_log_lambda = rebin_log_lambda[w]
             rebin_flux = rebin_flux[w] / rebin_ivar[w]
@@ -546,7 +566,8 @@ def desi_convert_transmission_to_delta_files(obj_path,
 
     # normalize stacked transmission
     w = stack_weight > 0.
-    stack_delta[w] /= stack_weight[w]
+    mean_flux = stack_flux
+    mean_flux[w] /= stack_weight[w]
 
     #  save results
     for index, healpix in enumerate(sorted(deltas)):
@@ -558,10 +579,12 @@ def desi_convert_transmission_to_delta_files(obj_path,
                               'rw',
                               clobber=True)
         for delta in deltas[healpix]:
-            bins = np.floor((delta.log_lambda - log_lambda_min) /
-                            delta_log_lambda + 0.5).astype(int)
-            delta.delta = delta.delta / stack_delta[bins] - 1.
-            delta.weights *= stack_delta[bins]**2
+            lambda_array = delta.log_lambda
+            if lin_spaced:
+                lambda_array = 10**(lambda_array)
+            bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
+            delta.delta = delta.delta / mean_flux[bins] - 1.
+            delta.weights *= mean_flux[bins]**2
 
             header = {}
             header['RA'] = delta.ra
