@@ -113,6 +113,7 @@ class ZtruthCatalogue(QuasarCatalogue):
         np.radians(catalogue['RA'], out=catalogue['RA'])
         np.radians(catalogue['DEC'], out=catalogue['DEC'])
 
+        self.logger.debug(catalogue['RA'].max())
         ## Sanity checks
         self.logger.progress('')
         w = np.ones(len(catalogue), dtype=bool)
