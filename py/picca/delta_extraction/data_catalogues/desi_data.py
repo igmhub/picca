@@ -318,6 +318,8 @@ class DesiData(Data):
             # SV releases
             ra = fibermap['TARGET_RA']
             dec = fibermap['TARGET_DEC']
+
+            self.logger.debug(f'max ra (deg) {ra.max()}, max dec (deg) {dec.max()}')
             tile_spec = fibermap['TILEID'][0]
             night_spec = fibermap[nightcol][0]
             try:
@@ -336,6 +338,7 @@ class DesiData(Data):
                         "dataset")
             ra = np.radians(ra)
             dec = np.radians(dec)
+            self.logger.debug(f'max ra (radians) {ra.max()}, max dec (radians) {dec.max()}')
 
             petal_spec = fibermap['PETAL_LOC'][0]
 
