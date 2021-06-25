@@ -675,7 +675,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 num_bins).astype(int)
 
             #this catches issues where the spectrum is longer than the range wanted for continuum fitting
-            select_bins=(bins>=0)&(bins<=num_bins)
+            select_bins=(bins>=0)&(bins<num_bins)
             bins=bins[select_bins]
 
             var_lss = self.get_var_lss(forest.lambda_)
