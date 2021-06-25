@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Export auto and cross-correlation for the fitter."""
+import sys
 import argparse
 import fitsio
 import numpy as np
@@ -9,7 +10,7 @@ from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
 
 
-def main():
+def main(cmdargs):
     """Export auto and cross-correlation for the fitter."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -64,7 +65,7 @@ def main():
                         default=False,
                         help='Do not smooth the covariance matrix')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     hdul = fitsio.FITS(args.data)
 
@@ -252,4 +253,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

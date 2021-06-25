@@ -40,7 +40,7 @@ def calc_metal_dmat(abs_igm, healpixs):
     return dmat_data
 
 
-def main():
+def main(cmdargs):
     """Compute the distortion matrix of the cross-correlation delta x object for
      a list of IGM absorption."""
     parser = argparse.ArgumentParser(
@@ -244,7 +244,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
 
     if args.nproc is None:
@@ -514,4 +514,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)
