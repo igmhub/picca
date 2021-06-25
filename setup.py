@@ -8,7 +8,7 @@ scripts = sorted(glob.glob('bin/*'))
 
 description = "Package for Igm Cosmological-Correlations Analyses"
 
-version="4.0"
+version="4.1"
 setup(name="picca",
     version=version,
     description=description,
