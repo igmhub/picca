@@ -94,10 +94,6 @@ class ZtruthCatalogue(QuasarCatalogue):
 
         keep_columns = ['RA', 'DEC', 'Z', 'TARGETID', 'FIBER']
 
-        #convert RA/DEC to radians already here
-        np.radians(catalogue['RA'], out=catalogue['RA'])
-        np.radians(catalogue['DEC'], out=catalogue['DEC'])
-
         if 'LAST_NIGHT' in catalogue.colnames:
             keep_columns+=['LAST_NIGHT']
         elif 'NIGHT' in catalogue.colnames:
@@ -112,6 +108,11 @@ class ZtruthCatalogue(QuasarCatalogue):
             keep_columns+= ['SPECTROGRAPH']
         if 'TILEID' in catalogue.colnames:
             keep_columns+=['TILEID']
+
+        #convert RA/DEC to radians already here
+        np.radians(catalogue['RA'], out=catalogue['RA'])
+        np.radians(catalogue['DEC'], out=catalogue['DEC'])
+
         ## Sanity checks
         self.logger.progress('')
         w = np.ones(len(catalogue), dtype=bool)
