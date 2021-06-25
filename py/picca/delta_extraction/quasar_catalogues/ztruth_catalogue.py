@@ -89,7 +89,7 @@ class ZtruthCatalogue(QuasarCatalogue):
         catalogue: Astropy.table.Table
         Table with the catalogue
         """
-        self.logger.progress('Reading catalogue from ', self.filename)
+        self.logger.progress(f'Reading catalogue from { self.filename}')
         catalogue = Table.read(self.filename, hdu=1)
 
         keep_columns = ['RA', 'DEC', 'Z', 'TARGETID', 'FIBER']
