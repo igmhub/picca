@@ -152,7 +152,9 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     Return
     ------
     reso_in_km_per_s: array
-    The spectral resolution
+    The spectral resolution in units of velocity
+    reso_in_AA
+    The spectral resolution in units of Angstrom
     """
     delta_lambda = ((lambda_[-1] - lambda_[0]) /
                     float(len(lambda_) - 1))
@@ -162,6 +164,7 @@ def spectral_resolution_desi(reso_matrix, lambda_):
             4.0 / 2.0 / np.log(
                 reso[len(reso) // 2][:] / reso[len(reso) // 2 - 2][:]))) / 2.0
 
-    reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_lambda)
+    reso_in_AA = (rms_in_pixel * delta_lambda)
+    reso_in_km_per_s = reso_in_AA * SPEED_LIGHT / lambda_
 
-    return reso_in_km_per_s
+    return reso_in_km_per_s, reso_in_AA 

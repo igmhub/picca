@@ -405,7 +405,7 @@ class DesiData(Data):
                                 "ivar": ivar,
                                 "targetid": targetid,
                                 "ra": entry["RA"],
-                                "dec": entry["RA"],
+                                "dec": entry["DEC"],
                                 "z": entry['Z'],
                                 "petal": entry["PETAL_LOC"],
                                 "tile": entry["TILEID"],
@@ -413,9 +413,8 @@ class DesiData(Data):
                             })
                     elif self.analysis_type == "PK 1D":
                         reso_sum = spec['RESO'][w_t].copy()
-                        reso_in_km_per_s = np.real(
-                            spectral_resolution_desi(reso_sum,
-                                                     spec['WAVELENGTH']))
+                        reso_in_km_per_s, reso_in_AA = spectral_resolution_desi(
+                            reso_sum,spec['WAVELENGTH'])
                         exposures_diff = np.zeros(spec['log_lambda'].shape)
 
                         forest = DesiPk1dForest(
@@ -431,7 +430,8 @@ class DesiData(Data):
                                 "tile": entry["TILEID"],
                                 "night": entry[nightcol],
                                 "exposures_diff": exposures_diff,
-                                "reso": reso_in_km_per_s
+                                "reso_kms": reso_in_km_per_s,
+                                "reso_AA": reso_in_AA
                             })
 
                     if targetid in forests_by_targetid:
