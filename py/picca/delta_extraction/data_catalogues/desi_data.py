@@ -430,8 +430,8 @@ class DesiData(Data):
                                 "tile": entry["TILEID"],
                                 "night": entry[nightcol],
                                 "exposures_diff": exposures_diff,
-                                "reso_kms": reso_in_km_per_s,
-                                "reso_AA": reso_in_AA
+                                "reso": reso_in_km_per_s,
+                                #"reso_AA": reso_in_AA
                             })
 
                     if targetid in forests_by_targetid:
