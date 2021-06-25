@@ -381,8 +381,6 @@ class DesiData(Data):
             for entry in catalogue[select]:
                 # Find which row in tile contains this quasar
                 targetid = entry['TARGETID']
-                ra = np.radians(entry['RA'])
-                dec = np.radians(entry['DEC'])
                 w_t = np.where(targetid_spec == targetid)[0]
                 if len(w_t) == 0:
                     self.logger.warning(
@@ -406,8 +404,8 @@ class DesiData(Data):
                                 "flux": flux,
                                 "ivar": ivar,
                                 "targetid": targetid,
-                                "ra": ra,
-                                "dec": dec,
+                                "ra": entry["RA"],
+                                "dec": entry["RA"],
                                 "z": entry['Z'],
                                 "petal": entry["PETAL_LOC"],
                                 "tile": entry["TILEID"],
