@@ -210,8 +210,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) /
             num_bins)
         self.get_mean_cont = interp1d(self.lambda_rest_frame,
-                                      np.ones_like(self.lambda_rest_frame),
-                                      fill_value='extrapolate')
+                                      np.ones_like(self.lambda_rest_frame))
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
@@ -696,7 +695,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont.mean()
+        mean_cont /= np.nanmean(mean_cont)
         lambda_cont = self.lambda_rest_frame[w]
 
         # the new mean continuum is multiplied by the previous one to recover
