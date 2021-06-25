@@ -211,7 +211,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             num_bins)
         self.get_mean_cont = interp1d(self.lambda_rest_frame,
                                       np.ones_like(self.lambda_rest_frame),
-                                      bounds_error='extrapolate')
+                                      fill_value='extrapolate')
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
