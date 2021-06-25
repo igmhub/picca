@@ -210,7 +210,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) /
             num_bins)
         self.get_mean_cont = interp1d(self.lambda_rest_frame,
-                                      np.ones_like(self.lambda_rest_frame)
+                                      np.ones_like(self.lambda_rest_frame),
                                       bounds_error='extrapolate')
 
         # initialize the variance-related variables (see equation 4 of
