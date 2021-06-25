@@ -418,8 +418,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 # fudge contribution to the variance
                 fudge = self.get_fudge(forest.log_lambda)
         elif Forest.wave_solution == "lin":
-            lambda_max = Forest.lambda_max_rest_frame / (1 + forest.z)
-            lambda_min = Forest.lambda_min_rest_frame / (1 + forest.z)
+            lambda_max = Forest.lambda_max_rest_frame * (1 + forest.z)
+            lambda_min = Forest.lambda_min_rest_frame * (1 + forest.z)
 
             # get mean continuum
             mean_cont = self.get_mean_cont(forest.lambda_ / (1 + forest.z))
