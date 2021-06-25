@@ -242,9 +242,9 @@ class data:
         self.par_fixed = dic_init['parameters']['fix']
 
         if self._blind and (('fix_ap' not in self.par_fixed.keys()) or (not self.par_fixed['fix_ap'])):
-            raise ValueError("Running on blind data, please fix ap/at!")
+            raise ValueError("Running on blind data, please fix ap (and at)!")
         if self._blind and (('fix_at' not in self.par_fixed.keys()) or (not self.par_fixed['fix_at'])):
-            raise ValueError("Running on blind data, please fix ap/at!")
+            raise ValueError("Running on blind data, please fix at (ap is fixed already)!")
 
         self.dm_met = {}
         self.rp_met = {}
