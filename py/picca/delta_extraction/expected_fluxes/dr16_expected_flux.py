@@ -674,8 +674,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) *
                 num_bins).astype(int)
 
-            #this catches issues where a very red forest would fall out of the continuum bin range
-            select_bins=bins>=0
+            #this catches issues where the spectrum is longer than the range wanted for continuum fitting
+            select_bins=(bins>=0)&(bins<=num_bins)
             bins=bins[select_bins]
 
             var_lss = self.get_var_lss(forest.lambda_)
