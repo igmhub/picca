@@ -102,6 +102,8 @@ class DesiData(Data):
         Forest.delta_lambda = config.get("delta lambda")
         if Forest.delta_lambda is None:
             Forest.delta_lambda = defaults.get("delta lambda")
+        else:
+            Forest.delta_lambda = config.getfloat("delta lambda")
         Forest.lambda_max = config.get("lambda max")
         if Forest.lambda_max is None:
             Forest.lambda_max = defaults.get("lambda max")
