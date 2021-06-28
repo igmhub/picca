@@ -546,7 +546,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ## if the continuum is negative or minuit didn't converge, then
         ## set it to a very small number so that this forest is ignored
         else:
-            forest.continuum = np.zeros_like(forest.log_lambda) + 1e-10
+            forest.continuum = np.zeros_like(forest.flux) + 1e-10
             self.continuum_fit_parameters[forest.los_id] = (0.0, 0.0)
 
         return forest
@@ -611,7 +611,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                         Forest.delta_log_lambda + 0.5).astype(int)
             elif Forest.wave_solution == "lin":
                 #TODO: this is definitely wrong, we do not have log-lambda quantities at this point
-                
+
                 bins = ((forest.lambda_ - Forest.log_lambda_min) /
                         Forest.delta_log_lambda + 0.5).astype(int)
             else:
