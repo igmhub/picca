@@ -617,6 +617,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             else:
                 raise ExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'linear'")
+            #the following line excludes pixels at lambda>lambda_max from the stack                                        
+            bins=bins[bins<num_bins]
             rebin = np.bincount(bins, weights=delta * weights)
             stack_delta[:len(rebin)] += rebin
             rebin = np.bincount(bins, weights=weights)
