@@ -613,3 +613,20 @@ def desi_convert_transmission_to_delta_files(obj_path,
                   end="")
 
     userprint("")
+
+    # Output the mean flux and other info
+    results = fitsio.FITS(out_dir + '/stats.fits.gz', 'rw', clobber=True)
+    cols = [mean_flux, stack_weight]
+    names = ['MEANFLUX', 'WEIGHTS']
+    header = {}
+    header['L_MIN'] = lambda_min
+    header['L_MAX'] = lambda_max
+    header['LR_MIN'] = lambda_min_rest_frame
+    header['LR_MAN'] = lambda_max_rest_frame
+    header['DEL_LL'] = delta_log_lambda
+    header['DEL_L'] = delta_lambda
+    header['LINEAR'] = lin_spaced
+    results.write(cols, names=names, header=header, extname='STATS')
+    results.close()
+
+    userprint("")
