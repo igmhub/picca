@@ -99,21 +99,19 @@ class DesiData(Data):
         DataError upon missing required variables
         """
         # Forest class variables
-        Forest.delta_lambda = config.get("delta lambda")
+        Forest.delta_lambda = config.getfloat("delta lambda")
         if Forest.delta_lambda is None:
             Forest.delta_lambda = defaults.get("delta lambda")
-        else:
-            Forest.delta_lambda = config.getfloat("delta lambda")
-        Forest.lambda_max = config.get("lambda max")
+        Forest.lambda_max = config.getfloat("lambda max")
         if Forest.lambda_max is None:
             Forest.lambda_max = defaults.get("lambda max")
-        Forest.lambda_max_rest_frame = config.get("lambda max rest frame")
+        Forest.lambda_max_rest_frame = config.getfloat("lambda max rest frame")
         if Forest.lambda_max_rest_frame is None:
             Forest.lambda_max_rest_frame = defaults.get("lambda max rest frame")
-        Forest.lambda_min = config.get("lambda min")
+        Forest.lambda_min = config.getfloat("lambda min")
         if Forest.lambda_min is None:
             Forest.lambda_min = defaults.get("lambda min")
-        Forest.lambda_min_rest_frame = config.get("lambda min rest frame")
+        Forest.lambda_min_rest_frame = config.getfloat("lambda min rest frame")
         if Forest.lambda_min_rest_frame is None:
             Forest.lambda_min_rest_frame = defaults.get("lambda min rest frame")
 
