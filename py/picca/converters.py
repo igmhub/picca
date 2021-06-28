@@ -615,9 +615,10 @@ def desi_convert_transmission_to_delta_files(obj_path,
     userprint("")
 
     # Output the mean flux and other info
+    rebin_lambda = (x_min + np.arange(num_bins) * delta_x)
     results = fitsio.FITS(out_dir + '/stats.fits.gz', 'rw', clobber=True)
-    cols = [mean_flux, stack_weight]
-    names = ['MEANFLUX', 'WEIGHTS']
+    cols = [rebin_lambda, mean_flux, stack_weight]
+    names = ['LAMBDA', 'MEANFLUX', 'WEIGHTS']
     header = {}
     header['L_MIN'] = lambda_min
     header['L_MAX'] = lambda_max
