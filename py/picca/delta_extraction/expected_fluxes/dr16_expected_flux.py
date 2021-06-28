@@ -1092,11 +1092,18 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 self.logger.info(f"Rejected forest {forest.los_id} due to "
                                  f"{forest.bad_continuum_reason}\n")
             # get the variance functions and statistics
-            log_lambda = forest.log_lambda
-            stack_delta = self.get_stack_delta(log_lambda)
-            var_lss = self.get_var_lss(log_lambda)
-            eta = self.get_eta(log_lambda)
-            fudge = self.get_fudge(log_lambda)
+            if Forest.wave_solution=='log':
+                log_lambda = forest.log_lambda
+                stack_delta = self.get_stack_delta(log_lambda)
+                var_lss = self.get_var_lss(log_lambda)
+                eta = self.get_eta(log_lambda)
+                fudge = self.get_fudge(log_lambda)
+            elif Forest.wave_solution=='lin':
+                lambda_ = forest.lambda_
+                stack_delta = self.get_stack_delta(lambda_)
+                var_lss = self.get_var_lss(lambda_)
+                eta = self.get_eta(lambda_)
+                fudge = self.get_fudge(lambda_)
 
             mean_expected_flux = forest.continuum * stack_delta
             var_pipe = 1. / forest.ivar / mean_expected_flux**2
