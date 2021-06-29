@@ -310,3 +310,62 @@ ABSORBER_IGM = {
     "LY9"         : 920.9631,
     "LY10"        : 919.3514,
 }
+
+# Resample flux function from desispec/interpolation:
+# def resample_flux(xout, x, flux, ivar=None, extrapolate=False):
+
+
+def calcMaps(scale=.95, Om=0.315):
+
+   ###### Definition of Ref cosmological model
+
+   fid_Om = Om
+   fid_Or = 0
+   fid_Ok = 0
+   fid_wl = -1
+
+   cosmo_m = Cosmo(Om=fid_Om,Or=fid_Or,
+           Ok=fid_Ok,wl=fid_wl, blinding=False)
+   lambda_abs = absorber_IGM['LYA']
+
+   ###### Definition of Fake cosmological model
+
+   fid_Om = Om*scale
+   fid_Or = 0
+   fid_Ok = 0
+   fid_wl = -1
+
+   cosmo_m2 = Cosmo(Om=fid_Om,Or=fid_Or,
+           Ok=fid_Ok,wl=fid_wl, blinding=False)
+   lambda_abs = absorber_IGM['LYA']
+
+   #######
+
+   zmax = 11
+   l_max = ( lambda_abs * (zmax + 1) ) - 1.3
+   ll = np.log10( np.linspace(lambda_abs + .5, l_max, 10000) )
+   z = 10**ll/lambda_abs-1.
+
+   r_comov = cosmo_m.get_r_comov(z)
+   r_comov2 = cosmo_m2.get_r_comov(z)
+
+   znew = resample_flux(r_comov, r_comov2, z)
+   zmask = ( z <= 10 )
+
+   z = z[zmask]
+   znew = znew[zmask]
+   r_comov = r_comov[zmask]
+   r_comov2 = r_comov2[zmask]
+   ll = ll[zmask] 
+   
+   llnew = np.log10( lambda_abs * ( znew + 1 ) )
+   zmz = -znew + z
+   lol = 10**ll / (10**llnew)
+
+   return z, zmz, l, lol
+
+
+
+
+
+
