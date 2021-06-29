@@ -326,7 +326,7 @@ def calcMaps(scale=.95, Om=0.315):
 
    cosmo_m = Cosmo(Om=fid_Om,Or=fid_Or,
            Ok=fid_Ok,wl=fid_wl, blinding=False)
-   lambda_abs = absorber_IGM['LYA']
+   lambda_abs = ABSORBER_IGM['LYA']
 
    ###### Definition of Fake cosmological model
 
@@ -337,7 +337,7 @@ def calcMaps(scale=.95, Om=0.315):
 
    cosmo_m2 = Cosmo(Om=fid_Om,Or=fid_Or,
            Ok=fid_Ok,wl=fid_wl, blinding=False)
-   lambda_abs = absorber_IGM['LYA']
+   lambda_abs = ABSORBER_IGM['LYA']
 
    #######
 
