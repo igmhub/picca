@@ -972,7 +972,7 @@ def main():
                         delta.log_lambda, delta.delta, delta.ivar, delta.weights, delta.cont
                     ]
                     names = ['LOGLAM', 'DELTA', 'IVAR', 'WEIGHT', 'CONT']
-                    units = ['log Angstrom', '', '', '']
+                    units = ['log Angstrom', '', '', '', '']
                     comments = [
                         'Log lambda', 'Delta field', 'Inverse variance', 'Pixel weights',
                         'Continuum'
