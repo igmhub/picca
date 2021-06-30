@@ -341,7 +341,7 @@ def calcMaps(scale=.95, Om=0.315):
 
    #######
 
-   zmax = 11
+   zmax = 10.
    l_max = ( lambda_abs * (zmax + 1) ) - 1.3
    ll = np.log10( np.linspace(lambda_abs + .5, l_max, 10000) )
    z = 10**ll/lambda_abs-1.
@@ -362,9 +362,70 @@ def calcMaps(scale=.95, Om=0.315):
    zmz = -znew + z
    lol = 10**ll / (10**llnew)
 
-   return z, zmz, l, lol
+   return z, zmz, 10**ll, lol
 
+def resample_flux(xout, x, flux, ivar=None, extrapolate=False):
+    # Taken from desispec.interpolation 
+    if ivar is None:
+        return _unweighted_resample(xout, x, flux, extrapolate=extrapolate)
+    else:
+        if extrapolate :
+            raise ValueError("Cannot extrapolate ivar. Either set ivar=None and extrapolate=True or the opposite")
+        a = _unweighted_resample(xout, x, flux*ivar, extrapolate=False)
+        b = _unweighted_resample(xout, x, ivar, extrapolate=False)
+        mask = (b>0)
+        outflux = np.zeros(a.shape)
+        outflux[mask] = a[mask] / b[mask]
+        dx = np.gradient(x)
+        dxout = np.gradient(xout)
+        outivar = _unweighted_resample(xout, x, ivar/dx)*dxout
+        
+        return outflux, outivar
 
+def _unweighted_resample(output_x,input_x,input_flux_density, extrapolate=False) :
+    # Taken from desispec.interpolation 
+
+    ix=input_x
+    iy=input_flux_density
+    ox=output_x
+
+    # boundary of output bins
+    bins=np.zeros(ox.size+1)
+    bins[1:-1]=(ox[:-1]+ox[1:])/2.
+    bins[0]=1.5*ox[0]-0.5*ox[1]     # = ox[0]-(ox[1]-ox[0])/2
+    bins[-1]=1.5*ox[-1]-0.5*ox[-2]  # = ox[-1]+(ox[-1]-ox[-2])/2
+    
+    tx=bins.copy()
+    
+    if not extrapolate :
+        # note we have to keep the array sorted here because we are going to use it for interpolation
+        ix = np.append( 2*ix[0]-ix[1] , ix)
+        iy = np.append(0.,iy)
+        ix = np.append(ix, 2*ix[-1]-ix[-2])
+        iy = np.append(iy, 0.)
+
+    ty=np.interp(tx,ix,iy)
+    
+    #  add input nodes which are inside the node array
+    k=np.where((ix>=tx[0])&(ix<=tx[-1]))[0]
+    if k.size :
+        tx=np.append(tx,ix[k])
+        ty=np.append(ty,iy[k])
+        
+    # sort this node array
+    p = tx.argsort()
+    tx=tx[p]
+    ty=ty[p]
+
+    trapeze_integrals=(ty[1:]+ty[:-1])*(tx[1:]-tx[:-1])/2.
+
+    trapeze_centers=(tx[1:]+tx[:-1])/2.
+    binsize = bins[1:]-bins[:-1]
+
+    if np.any(binsize<=0)  :
+        raise ValueError("Zero or negative bin size")
+    
+    return np.histogram(trapeze_centers, bins=bins, weights=trapeze_integrals)[0] / binsize
 
 
 
