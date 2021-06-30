@@ -1,7 +1,7 @@
 """This module defines data structure to deal with line of sight data.
 
 This module provides with three classes (QSO, Forest, Delta)
-to manage the line-of-sight data. 
+to manage the line-of-sight data.
 See the respective docstrings for more details
 """
 import numpy as np
@@ -545,7 +545,7 @@ class Forest(QSO):
 
         error = 1.0 / np.sqrt(ivar)
         snr = flux / error
-        self.mean_snr = sum(snr) / float(len(snr))
+        self.mean_snr = np.average(snr, weights=self.ivar)
         lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
                         np.power(10., log_lambda[0])) / 2. / lambda_abs_igm -
@@ -618,7 +618,7 @@ class Forest(QSO):
             self.mean_reso = self.reso.mean()
         error = 1. / np.sqrt(self.ivar)
         snr = self.flux / error
-        self.mean_snr = snr.mean()
+        self.mean_snr = np.average(snr, weights=self.ivar)
         lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
                         np.power(10., log_lambda[0])) / 2. / lambda_abs_igm -

@@ -56,7 +56,7 @@ def get_metadata(data):
     for healpix in data:
         for forest in data[healpix]:
             if "delta" in forest.__dict__ and not forest.delta is None:
-                mean_delta2 = np.mean(forest.delta*forest.delta)
+                mean_delta2 = np.average(forest.delta*forest.delta, weights=forest.ivar)
                 mean_delta2_values.append(mean_delta2)
             else:
                 mean_delta2_values.append(-100)
@@ -969,12 +969,12 @@ def main():
                     ]
                 else:
                     cols = [
-                        delta.log_lambda, delta.delta, delta.weights, delta.cont
+                        delta.log_lambda, delta.delta, delta.ivar, delta.weights, delta.cont
                     ]
-                    names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
+                    names = ['LOGLAM', 'DELTA', 'IVAR', 'WEIGHT', 'CONT']
                     units = ['log Angstrom', '', '', '']
                     comments = [
-                        'Log lambda', 'Delta field', 'Pixel weights',
+                        'Log lambda', 'Delta field', 'Inverse variance', 'Pixel weights',
                         'Continuum'
                     ]
 
