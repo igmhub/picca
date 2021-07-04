@@ -64,7 +64,7 @@ for filename, new_filename in zip(filenames, new_filenames):
 
 
     data = np.array(hdul[2].data)[["loglam", "eta", "var_lss", "fudge"]]
-    hdu = fits.BinTableHDU(data, name=hdul[2].name, header=hdul[2].header)
+    hdu = fits.BinTableHDU(data, name="VAR_FUNC", header=hdul[2].header)
     hdul[2] = hdu
 
     #data = np.array(hdul[3].data)[["loglam_rest", "mean_cont"]]

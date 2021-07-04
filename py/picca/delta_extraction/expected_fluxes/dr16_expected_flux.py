@@ -206,6 +206,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
             num_bins)
         self.get_mean_cont = interp1d(self.lambda_rest_frame,
                                       np.ones_like(self.lambda_rest_frame))
+        self.get_mean_cont_weight = interp1d(self.lambda_rest_frame,
+                                             np.zeros_like(self.lambda_rest_frame),
+                                             fill_value="extrapolate")
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
@@ -269,6 +272,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_mean_cont = interp1d(self.log_lambda_rest_frame,
                                       np.ones_like(self.log_lambda_rest_frame),
                                       fill_value="extrapolate")
+        self.get_mean_cont_weight = interp1d(self.log_lambda_rest_frame,
+                                             np.zeros_like(self.log_lambda_rest_frame),
+                                             fill_value="extrapolate")
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
@@ -1146,7 +1152,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.get_fudge(self.log_lambda)
                 ],
                               names=['loglam', 'eta', 'var_lss', 'fudge'],
-                              extname='WEIGHT')
+                              extname='VAR_FUNC')
 
                 results.write([
                     self.log_lambda_rest_frame,

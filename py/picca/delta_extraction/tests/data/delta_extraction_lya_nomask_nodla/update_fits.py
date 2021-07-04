@@ -23,13 +23,43 @@ for filename in filenames:
         if "ORDER" in hdu.header:
             del hdu.header["ORDER"]
 
-        if hdu.header["THING_ID"] in [428690499, 429522561]:
+        if hdu.header["THING_ID"] in [428690499, 429522561, 434205493]:
             hdu.header["PLATE"] = "3655-3657"
             hdu.header["MJD"] = "55240-55244"
             if hdu.header["THING_ID"] == 428690499:
                 hdu.header["FIBERID"] = "0054-0660"
             elif hdu.header["THING_ID"] == 429522561:
                 hdu.header["FIBERID"] = "0179-0540"
+            elif hdu.header["THING_ID"] == 434205493:
+                hdu.header["FIBERID"] = "0890-0552"
+        elif hdu.header["THING_ID"] in [428035498, 430151253, 430805392,
+                                        431936632, 427513857, 427878017,
+                                        428707431, 429231814, 429522957]:
+            hdu.header["PLATE"] = "3655-9367"
+            hdu.header["MJD"] = "55240-57758"
+            if hdu.header["THING_ID"] == 428035498:
+                hdu.header["FIBERID"] = "0344-0482"
+            elif hdu.header["THING_ID"] == 430151253:
+                hdu.header["FIBERID"] = "0370-0500"
+            elif hdu.header["THING_ID"] == 430805392:
+                hdu.header["FIBERID"] = "0273-0601"
+            elif hdu.header["THING_ID"] == 431936632:
+                hdu.header["FIBERID"] = "0368-0538"
+            elif hdu.header["THING_ID"] == 427513857:
+                hdu.header["FIBERID"] = "0310-0457"
+            elif hdu.header["THING_ID"] == 427878017:
+                hdu.header["FIBERID"] = "0228-0446"
+            elif hdu.header["THING_ID"] == 428707431:
+                hdu.header["FIBERID"] = "0186-0386"
+            elif hdu.header["THING_ID"] == 429231814:
+                hdu.header["FIBERID"] = "0100-0345"
+            elif hdu.header["THING_ID"] == 429522957:
+                hdu.header["FIBERID"] = "0198-0396"
+        elif hdu.header["THING_ID"] in [434932660]:
+            hdu.header["PLATE"] = "3655-9367-10656"
+            hdu.header["MJD"] = "55240-57758-58163"
+            if hdu.header["THING_ID"] == 434932660:
+                hdu.header["FIBERID"] = "0990-0836-0366"
 
     names = sorted([hdul[i].header["EXTNAME"] for i in range(1, len(hdul))])
     new_hdul = fits.HDUList([hdul[0]]+[hdul[name] for name in names])
