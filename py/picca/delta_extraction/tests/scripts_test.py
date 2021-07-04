@@ -52,11 +52,11 @@ class ScriptsTest(AbstractTest):
             self.assertTrue(test_file.split("/")[-1] == out_file.split("/")[-1])
             self.compare_fits(test_file, out_file)
 
-    def test_delta_calib(self):
+    def test_delta_calib_nomask(self):
         """End-to-end test using 'calib' setup"""
-        config_file = "{}/data/delta_calib.ini".format(THIS_DIR)
-        out_dir = "{}/results/delta_extraction_calib".format(THIS_DIR)
-        test_dir = "{}/data/delta_extraction_calib".format(THIS_DIR)
+        config_file = "{}/data/delta_calib_nomask.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_calib_nomask".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_calib_nomask".format(THIS_DIR)
 
         self.run_delta_extraction(config_file, out_dir, test_dir)
 
