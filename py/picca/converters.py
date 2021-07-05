@@ -551,20 +551,13 @@ def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
     return
 
 
-def desi_convert_transmission_to_delta_files(obj_path,
-                                             out_dir,
-                                             in_dir=None,
-                                             in_filenames=None,
-                                             lambda_min=3600.,
-                                             lambda_max=5500.,
-                                             lambda_min_rest_frame=1040.,
-                                             lambda_max_rest_frame=1200.,
-                                             delta_log_lambda=None,
-                                             delta_lambda=None,
-                                             lin_spaced=False,
-                                             max_num_spec=None,
-                                             nproc=None):
-    """Convert desi transmission files to picca delta files
+def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=None,
+                                   lambda_min=3600., lambda_max=5500.,
+                                   lambda_min_rest_frame=1040.,
+                                   lambda_max_rest_frame=1200.,
+                                   delta_log_lambda=None, delta_lambda=None, lin_spaced=False,
+                                   max_num_spec=None, nproc=None, out_healpix_order='RING'):
+    """Convert transmission files to picca delta files
 
     Args:
         obj_path: str
@@ -789,7 +782,29 @@ def desi_convert_transmission_to_delta_files(obj_path,
     #  save results
     out_filenames = {}
     for healpix in sorted(deltas):
-        out_filenames[healpix] = out_dir + '/delta-{}'.format(healpix) + '.fits.gz'
+        if (nest is None):
+            if (out_healpix_order is None):
+                out_healpix = healpix
+            else:
+                raise ValueError('Input HEALPix scheme not known, cannot convert to scheme {}'.format(out_healpix_order))
+        else:
+            if nest:
+                if out_healpix_order.lower() == 'nest':
+                    out_healpix = healpix
+                elif out_healpix_order.lower() == 'ring':
+                    out_healpix = healpy.nest2ring(int(in_nside), int(healpix))
+                else:
+                    raise ValueError('HEALPix scheme {} not recognised'.format(out_healpix_order))
+            else:
+                if out_healpix_order.lower() == 'nest':
+                    out_healpix = healpy.ring2nest(int(in_nside), int(healpix))
+                elif out_healpix_order.lower() == 'ring':
+                    out_healpix = healpix
+                else:
+                    raise ValueError('HEALPix scheme {} not recognised'.format(out_healpix_order))
+
+        print('Input nested? {} // in_healpix={} // out_healpix={}'.format(nest,healpix,out_healpix))
+        out_filenames[healpix] = out_dir + '/delta-{}'.format(out_healpix) + '.fits.gz'
 
     arguments = [(deltas[hpix], mean_flux, hpix, out_filenames[hpix],
                   x_min, delta_x, lin_spaced) for hpix in deltas.keys()]
