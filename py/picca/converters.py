@@ -14,6 +14,7 @@ import glob
 import numpy as np
 import fitsio
 import healpy
+from multiprocessing import Pool
 
 from .data import Delta
 from .utils import userprint
@@ -362,6 +363,194 @@ def desi_from_ztarget_to_drq(in_path,
     results.close()
 
 
+def read_transmission_file(filename, num_bins, objs_thingid, lambda_min=3600.,
+                           lambda_max=5500., lambda_min_rest_frame=1040., 
+                           lambda_max_rest_frame=1200., delta_log_lambda=None,
+                           delta_lambda=None, lin_spaced=False):
+
+    """Make delta objects from all skewers in a transmission file.
+    Args:
+        filename: str
+            Path to the transmission file to read
+        num_bins: int
+            The number of bins in our wavelength grid.
+        lambda_min: float - default: 3600.
+            Minimum observed wavelength in Angstrom
+        lambda_max: float - default: 5500.
+            Maximum observed wavelength in Angstrom
+        lambda_min_rest_frame: float - default: 1040.
+            Minimum Rest Frame wavelength in Angstrom
+        lambda_max_rest_frame: float - default: 1200.
+            Maximum Rest Frame wavelength in Angstrom
+        delta_log_lambda: float - default: 3.e-4
+            Variation of the logarithm of the wavelength between two pixels
+    Returns:
+        deltas:
+            Dictionary containing delta objects for all the skewers (flux not
+            yet normalised). Keys are HEALPix pixels, values are lists of delta
+            objects.
+        stack_delta:
+            The stacked value of flux across all skewers.
+        stack_weight:
+            The stacked value of weights across all skewers.
+    """
+    if lin_spaced:
+        x_min = lambda_min
+        delta_x = delta_lambda if delta_lambda is not None else 3.
+    else:
+        x_min = np.log10(lambda_min)
+        delta_x = delta_log_lambda if delta_lambda is not None else 3.e-4
+
+    # log_lambda_min = np.log10(lambda_min)
+
+    stack_flux = np.zeros(num_bins)
+    stack_weight = np.zeros(num_bins)
+    deltas = {}
+
+    hdul = fitsio.FITS(filename)
+    thingid = hdul['METADATA']['MOCKID'][:]
+    if np.in1d(thingid, objs_thingid).sum() == 0:
+        hdul.close()
+        return
+    ra = hdul['METADATA']['RA'][:].astype(np.float64) * np.pi / 180.
+    dec = hdul['METADATA']['DEC'][:].astype(np.float64) * np.pi / 180.
+    z = hdul['METADATA']['Z'][:]
+
+    # Use "lambda_array" to store either lambda or log lambda
+    if lin_spaced:
+        lambda_array = hdul['WAVELENGTH'].read()
+    else:
+        lambda_array = np.log10(hdul['WAVELENGTH'].read())
+
+    if 'F_LYA' in hdul:
+        trans = hdul['F_LYA'].read()
+    else:
+        trans = hdul['TRANSMISSION'].read()
+
+    num_obj = z.size
+    healpix = filename.split('-')[-1].split('.')[0]
+
+    if trans.shape[0] != num_obj:
+        trans = trans.transpose()
+
+    bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
+    aux_lambda = x_min + bins * delta_x
+    if not lin_spaced:
+        aux_lambda = 10**aux_lambda
+    lambda_obs_frame = aux_lambda * np.ones(num_obj)[:, None]
+    lambda_rest_frame = aux_lambda / (1. + z[:, None])
+    valid_pixels = np.zeros_like(trans).astype(int)
+    valid_pixels[(lambda_obs_frame >= lambda_min) &
+                 (lambda_obs_frame < lambda_max) &
+                 (lambda_rest_frame > lambda_min_rest_frame) &
+                 (lambda_rest_frame < lambda_max_rest_frame)] = 1
+    num_pixels = np.sum(valid_pixels, axis=1)
+    w = num_pixels >= 50
+    w &= np.in1d(thingid, objs_thingid)
+    if w.sum() == 0:
+        hdul.close()
+        return
+
+    ra = ra[w]
+    dec = dec[w]
+    z = z[w]
+    thingid = thingid[w]
+    trans = trans[w, :]
+    valid_pixels = valid_pixels[w, :]
+    num_obj = z.size
+    hdul.close()
+
+    deltas[healpix] = []
+    for index2 in range(num_obj):
+        aux_lambda = lambda_array[valid_pixels[index2, :] > 0]
+        aux_trans = trans[index2, :][valid_pixels[index2, :] > 0]
+
+        bins = np.floor((aux_lambda - x_min) / delta_x + 0.5).astype(int)
+        rebin_log_lambda = (x_min + np.arange(num_bins) * delta_x)
+        if lin_spaced:
+            rebin_log_lambda = np.log10(rebin_log_lambda)
+        rebin_flux = np.bincount(bins, weights=aux_trans, minlength=num_bins)
+        rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
+
+        w = rebin_ivar > 0.
+        if w.sum() < 50:
+            continue
+        stack_flux += rebin_flux
+        stack_weight += rebin_ivar
+        rebin_log_lambda = rebin_log_lambda[w]
+        rebin_flux = rebin_flux[w] / rebin_ivar[w]
+        rebin_ivar = rebin_ivar[w]
+        deltas[healpix].append(
+            Delta(thingid[index2], ra[index2], dec[index2], z[index2],
+                  thingid[index2], thingid[index2], thingid[index2],
+                  rebin_log_lambda, rebin_ivar, None, rebin_flux, 1, None,
+                  None, None, None, None, None))
+
+    return deltas, stack_flux, stack_weight
+
+
+def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
+                                  x_min, delta_x, lin_spaced=False):
+
+    """Write deltas to file for a given HEALPix pixel.
+    Args:
+        deltas: list
+            List of delta objects contained in the given HEALPix pixel.
+        stack_delta: array
+            Stacked value of deltas across all skewers.
+        healpix: int
+            The HEALPix pixel under consideration.
+        out_filename: str
+            Output filename.
+        lambda_min: float - default: 3600.
+            Minimum observed wavelength in Angstrom
+        delta_log_lambda: float - default: 3.e-4
+            Variation of the logarithm of the wavelength between two pixels
+    """
+
+    # log_lambda_min = np.log10(lambda_min)
+
+    if len(deltas) == 0:
+        userprint('No data in {}'.format(healpix))
+        return
+
+    results = fitsio.FITS(out_filename,
+                          'rw',
+                          clobber=True)
+    for delta in deltas:
+        lambda_array = delta.log_lambda
+        if lin_spaced:
+            lambda_array = 10**(lambda_array)
+        bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
+        delta.delta = delta.delta / mean_flux[bins] - 1.
+        delta.weights *= mean_flux[bins]**2
+
+        header = {}
+        header['RA'] = delta.ra
+        header['DEC'] = delta.dec
+        header['Z'] = delta.z_qso
+        header['PMF'] = '{}-{}-{}'.format(delta.plate, delta.mjd,
+                                          delta.fiberid)
+        header['THING_ID'] = delta.thingid
+        header['PLATE'] = delta.plate
+        header['MJD'] = delta.mjd
+        header['FIBERID'] = delta.fiberid
+        header['ORDER'] = delta.order
+
+        cols = [
+            delta.log_lambda, delta.delta, delta.weights,
+            np.ones(delta.log_lambda.size)
+        ]
+        names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
+        results.write(cols,
+                      names=names,
+                      header=header,
+                      extname=str(delta.thingid))
+    results.close()
+
+    return
+
+
 def desi_convert_transmission_to_delta_files(obj_path,
                                              out_dir,
                                              in_dir=None,
@@ -373,7 +562,9 @@ def desi_convert_transmission_to_delta_files(obj_path,
                                              delta_log_lambda=None,
                                              delta_lambda=None,
                                              lin_spaced=False,
-                                             max_num_spec=None):
+                                             max_num_spec=None,
+                                             out_healpix_order='RING',
+                                             nproc=None):
     """Convert desi transmission files to picca delta files
 
     Args:
@@ -449,6 +640,7 @@ def desi_convert_transmission_to_delta_files(obj_path,
                       for healpix in np.unique(in_healpixs)]))
     else:
         files = np.sort(np.array(in_filenames))
+        nest = None
     userprint('INFO: Found {} files'.format(files.size))
 
     # Check if we should compute linear or log spaced deltas
@@ -462,105 +654,131 @@ def desi_convert_transmission_to_delta_files(obj_path,
         x_min = np.log10(lambda_min)
         x_max = np.log10(lambda_max)
         delta_x = delta_log_lambda if delta_lambda is not None else 3.e-4
-
-    # Stack the deltas transmission
-    # log_lambda_min = np.log10(lambda_min)
-    # log_lambda_max = np.log10(lambda_max)
     num_bins = int((x_max - x_min) / delta_x) + 1
+
+    arguments = [(f, num_bins, objs_thingid, lambda_min, lambda_max,
+                  lambda_min_rest_frame, lambda_max_rest_frame,
+                  delta_log_lambda) for f in files]
+    pool = Pool(processes=nproc)
+    results = pool.starmap(read_transmission_file, arguments)
+    pool.close()
+
     stack_flux = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
-
     deltas = {}
 
-    # read deltas
-    for index, filename in enumerate(files):
-        userprint("\rread {} of {} {}".format(
-            index, files.size,
-            np.sum([len(deltas[healpix]) for healpix in deltas])),
-                  end="")
-        hdul = fitsio.FITS(filename)
-        thingid = hdul['METADATA']['MOCKID'][:]
-        if np.in1d(thingid, objs_thingid).sum() == 0:
-            hdul.close()
-            continue
-        ra = hdul['METADATA']['RA'][:].astype(np.float64) * np.pi / 180.
-        dec = hdul['METADATA']['DEC'][:].astype(np.float64) * np.pi / 180.
-        z = hdul['METADATA']['Z'][:]
+    for res in results:
+        if res is not None:
+            healpix_deltas = res[0]
+            healpix_stack_flux = res[1]
+            healpix_stack_weight = res[2]
 
-        # Use "lambda_array" to store either lambda or log lambda
-        if lin_spaced:
-            lambda_array = hdul['WAVELENGTH'].read()
-        else:
-            lambda_array = np.log10(hdul['WAVELENGTH'].read())
+            for key in healpix_deltas.keys():
+                if key not in deltas.keys():
+                    deltas[key] = []
+                deltas[key] += healpix_deltas[key]
 
-        if 'F_LYA' in hdul:
-            trans = hdul['F_LYA'].read()
-        else:
-            trans = hdul['TRANSMISSION'].read()
+            stack_flux += healpix_stack_flux
+            stack_weight += healpix_stack_weight
 
-        num_obj = z.size
-        healpix = filename.split('-')[-1].split('.')[0]
+            num_spec = np.sum([len(deltas[healpix]) for healpix in deltas])
+            if (max_num_spec is not None and num_spec >= max_num_spec):
+                break
 
-        if trans.shape[0] != num_obj:
-            trans = trans.transpose()
+    # stack_flux = np.zeros(num_bins)
+    # stack_weight = np.zeros(num_bins)
 
-        bins = np.floor((lambda_array - x_min) / delta_x +
-                        0.5).astype(int)
-        aux_lambda = x_min + bins * delta_x
-        if not lin_spaced:
-            aux_lambda = 10**aux_lambda
-        lambda_obs_frame = aux_lambda * np.ones(num_obj)[:, None]
-        lambda_rest_frame = aux_lambda / (1. + z[:, None])
-        valid_pixels = np.zeros_like(trans).astype(int)
-        valid_pixels[(lambda_obs_frame >= lambda_min) &
-                     (lambda_obs_frame < lambda_max) &
-                     (lambda_rest_frame > lambda_min_rest_frame) &
-                     (lambda_rest_frame < lambda_max_rest_frame)] = 1
-        num_pixels = np.sum(valid_pixels, axis=1)
-        w = num_pixels >= 50
-        w &= np.in1d(thingid, objs_thingid)
-        if w.sum() == 0:
-            hdul.close()
-            continue
+    # deltas = {}
 
-        ra = ra[w]
-        dec = dec[w]
-        z = z[w]
-        thingid = thingid[w]
-        trans = trans[w, :]
-        valid_pixels = valid_pixels[w, :]
-        num_obj = z.size
-        hdul.close()
+    # # read deltas
+    # for index, filename in enumerate(files):
+    #     userprint("\rread {} of {} {}".format(
+    #         index, files.size,
+    #         np.sum([len(deltas[healpix]) for healpix in deltas])),
+    #               end="")
+    #     hdul = fitsio.FITS(filename)
+    #     thingid = hdul['METADATA']['MOCKID'][:]
+    #     if np.in1d(thingid, objs_thingid).sum() == 0:
+    #         hdul.close()
+    #         continue
+    #     ra = hdul['METADATA']['RA'][:].astype(np.float64) * np.pi / 180.
+    #     dec = hdul['METADATA']['DEC'][:].astype(np.float64) * np.pi / 180.
+    #     z = hdul['METADATA']['Z'][:]
 
-        deltas[healpix] = []
-        for index2 in range(num_obj):
-            aux_lambda = lambda_array[valid_pixels[index2, :] > 0]
-            aux_trans = trans[index2, :][valid_pixels[index2, :] > 0]
+    #     # Use "lambda_array" to store either lambda or log lambda
+    #     if lin_spaced:
+    #         lambda_array = hdul['WAVELENGTH'].read()
+    #     else:
+    #         lambda_array = np.log10(hdul['WAVELENGTH'].read())
 
-            bins = np.floor((aux_lambda - x_min) / delta_x + 0.5).astype(int)
-            rebin_log_lambda = (x_min + np.arange(num_bins) * delta_x)
-            if lin_spaced:
-                rebin_log_lambda = np.log10(rebin_log_lambda)
-            rebin_flux = np.bincount(bins, weights=aux_trans, minlength=num_bins)
-            rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
+    #     if 'F_LYA' in hdul:
+    #         trans = hdul['F_LYA'].read()
+    #     else:
+    #         trans = hdul['TRANSMISSION'].read()
 
-            w = rebin_ivar > 0.
-            if w.sum() < 50:
-                continue
-            stack_flux += rebin_flux
-            stack_weight += rebin_ivar
-            rebin_log_lambda = rebin_log_lambda[w]
-            rebin_flux = rebin_flux[w] / rebin_ivar[w]
-            rebin_ivar = rebin_ivar[w]
-            deltas[healpix].append(
-                Delta(thingid[index2], ra[index2], dec[index2], z[index2],
-                      thingid[index2], thingid[index2], thingid[index2],
-                      rebin_log_lambda, rebin_ivar, None, rebin_flux, 1, None,
-                      None, None, None, None, None))
-        if (max_num_spec is not None and
-                np.sum([len(deltas[healpix])
-                        for healpix in deltas]) >= max_num_spec):
-            break
+    #     num_obj = z.size
+    #     healpix = filename.split('-')[-1].split('.')[0]
+
+    #     if trans.shape[0] != num_obj:
+    #         trans = trans.transpose()
+
+    #     bins = np.floor((lambda_array - x_min) / delta_x +
+    #                     0.5).astype(int)
+    #     aux_lambda = x_min + bins * delta_x
+    #     if not lin_spaced:
+    #         aux_lambda = 10**aux_lambda
+    #     lambda_obs_frame = aux_lambda * np.ones(num_obj)[:, None]
+    #     lambda_rest_frame = aux_lambda / (1. + z[:, None])
+    #     valid_pixels = np.zeros_like(trans).astype(int)
+    #     valid_pixels[(lambda_obs_frame >= lambda_min) &
+    #                  (lambda_obs_frame < lambda_max) &
+    #                  (lambda_rest_frame > lambda_min_rest_frame) &
+    #                  (lambda_rest_frame < lambda_max_rest_frame)] = 1
+    #     num_pixels = np.sum(valid_pixels, axis=1)
+    #     w = num_pixels >= 50
+    #     w &= np.in1d(thingid, objs_thingid)
+    #     if w.sum() == 0:
+    #         hdul.close()
+    #         continue
+
+    #     ra = ra[w]
+    #     dec = dec[w]
+    #     z = z[w]
+    #     thingid = thingid[w]
+    #     trans = trans[w, :]
+    #     valid_pixels = valid_pixels[w, :]
+    #     num_obj = z.size
+    #     hdul.close()
+
+    #     deltas[healpix] = []
+    #     for index2 in range(num_obj):
+    #         aux_lambda = lambda_array[valid_pixels[index2, :] > 0]
+    #         aux_trans = trans[index2, :][valid_pixels[index2, :] > 0]
+
+    #         bins = np.floor((aux_lambda - x_min) / delta_x + 0.5).astype(int)
+    #         rebin_log_lambda = (x_min + np.arange(num_bins) * delta_x)
+    #         if lin_spaced:
+    #             rebin_log_lambda = np.log10(rebin_log_lambda)
+    #         rebin_flux = np.bincount(bins, weights=aux_trans, minlength=num_bins)
+    #         rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
+
+    #         w = rebin_ivar > 0.
+    #         if w.sum() < 50:
+    #             continue
+    #         stack_flux += rebin_flux
+    #         stack_weight += rebin_ivar
+    #         rebin_log_lambda = rebin_log_lambda[w]
+    #         rebin_flux = rebin_flux[w] / rebin_ivar[w]
+    #         rebin_ivar = rebin_ivar[w]
+    #         deltas[healpix].append(
+    #             Delta(thingid[index2], ra[index2], dec[index2], z[index2],
+    #                   thingid[index2], thingid[index2], thingid[index2],
+    #                   rebin_log_lambda, rebin_ivar, None, rebin_flux, 1, None,
+    #                   None, None, None, None, None))
+    #     if (max_num_spec is not None and
+    #             np.sum([len(deltas[healpix])
+    #                     for healpix in deltas]) >= max_num_spec):
+    #         break
 
     userprint('\n')
 
@@ -570,53 +788,89 @@ def desi_convert_transmission_to_delta_files(obj_path,
     mean_flux[w] /= stack_weight[w]
 
     #  save results
-    for index, healpix in enumerate(sorted(deltas)):
-        if len(deltas[healpix]) == 0:
-            userprint('No data in {}'.format(healpix))
-            continue
-        results = fitsio.FITS(out_dir + '/delta-{}'.format(healpix) +
-                              '.fits.gz',
-                              'rw',
-                              clobber=True)
-        for delta in deltas[healpix]:
-            lambda_array = delta.log_lambda
-            if lin_spaced:
-                lambda_array = 10**(lambda_array)
-            bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
-            delta.delta = delta.delta / mean_flux[bins] - 1.
-            delta.weights *= mean_flux[bins]**2
+    out_filenames = {}
+    for healpix in sorted(deltas):
+        if nest is None:
+            if out_healpix_order is None:
+                out_healpix = healpix
+            else:
+                raise ValueError('Input HEALPix scheme not known, cannot'
+                                 'convert to scheme {}'.format(out_healpix_order))
+        else:
+            if nest:
+                if out_healpix_order.lower() == 'nest':
+                    out_healpix = healpix
+                elif out_healpix_order.lower() == 'ring':
+                    out_healpix = healpy.nest2ring(int(in_nside), int(healpix))
+                else:
+                    raise ValueError('HEALPix scheme {} not recognised'.format(out_healpix_order))
+            else:
+                if out_healpix_order.lower() == 'nest':
+                    out_healpix = healpy.ring2nest(int(in_nside), int(healpix))
+                elif out_healpix_order.lower() == 'ring':
+                    out_healpix = healpix
+                else:
+                    raise ValueError('HEALPix scheme {} not recognised'.format(out_healpix_order))
 
-            header = {}
-            header['RA'] = delta.ra
-            header['DEC'] = delta.dec
-            header['Z'] = delta.z_qso
-            header['PMF'] = '{}-{}-{}'.format(delta.plate, delta.mjd,
-                                              delta.fiberid)
-            header['THING_ID'] = delta.thingid
-            header['PLATE'] = delta.plate
-            header['MJD'] = delta.mjd
-            header['FIBERID'] = delta.fiberid
-            header['ORDER'] = delta.order
+        print('Input nested? {} // in_healpix={} // out_healpix={}'.format(
+                nest, healpix, out_healpix))
+        out_filenames[healpix] = out_dir + '/delta-{}'.format(out_healpix) + '.fits.gz'
 
-            cols = [
-                delta.log_lambda, delta.delta, delta.weights,
-                np.ones(delta.log_lambda.size)
-            ]
-            names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
-            results.write(cols,
-                          names=names,
-                          header=header,
-                          extname=str(delta.thingid))
-        results.close()
-        userprint("\rwrite {} of {}: {} quasars".format(index, len(deltas),
-                                                        len(deltas[healpix])),
-                  end="")
+    arguments = [(deltas[hpix], mean_flux, hpix, out_filenames[hpix],
+                  x_min, delta_x, lin_spaced) for hpix in deltas.keys()]
+    pool = Pool(processes=nproc)
+    results = pool.starmap(write_delta_from_transmission, arguments)
+    pool.close()
+
+    # #  save results
+    # for index, healpix in enumerate(sorted(deltas)):
+    #     if len(deltas[healpix]) == 0:
+    #         userprint('No data in {}'.format(healpix))
+    #         continue
+    #     results = fitsio.FITS(out_dir + '/delta-{}'.format(healpix) +
+    #                           '.fits.gz',
+    #                           'rw',
+    #                           clobber=True)
+    #     for delta in deltas[healpix]:
+    #         lambda_array = delta.log_lambda
+    #         if lin_spaced:
+    #             lambda_array = 10**(lambda_array)
+    #         bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
+    #         delta.delta = delta.delta / mean_flux[bins] - 1.
+    #         delta.weights *= mean_flux[bins]**2
+
+    #         header = {}
+    #         header['RA'] = delta.ra
+    #         header['DEC'] = delta.dec
+    #         header['Z'] = delta.z_qso
+    #         header['PMF'] = '{}-{}-{}'.format(delta.plate, delta.mjd,
+    #                                           delta.fiberid)
+    #         header['THING_ID'] = delta.thingid
+    #         header['PLATE'] = delta.plate
+    #         header['MJD'] = delta.mjd
+    #         header['FIBERID'] = delta.fiberid
+    #         header['ORDER'] = delta.order
+
+    #         cols = [
+    #             delta.log_lambda, delta.delta, delta.weights,
+    #             np.ones(delta.log_lambda.size)
+    #         ]
+    #         names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
+    #         results.write(cols,
+    #                       names=names,
+    #                       header=header,
+    #                       extname=str(delta.thingid))
+    #     results.close()
+    #     userprint("\rwrite {} of {}: {} quasars".format(index, len(deltas),
+    #                                                     len(deltas[healpix])),
+    #               end="")
 
     userprint("")
 
     # Output the mean flux and other info
+    dir_name = os.path.basename(os.path.normpath(out_dir))
     rebin_lambda = (x_min + np.arange(num_bins) * delta_x)
-    results = fitsio.FITS(out_dir + '/stats.fits.gz', 'rw', clobber=True)
+    results = fitsio.FITS(out_dir + '/../{}-stats.fits.gz'.format(dir_name), 'rw', clobber=True)
     cols = [rebin_lambda, mean_flux, stack_weight]
     names = ['LAMBDA', 'MEANFLUX', 'WEIGHTS']
     header = {}
