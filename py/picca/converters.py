@@ -522,9 +522,7 @@ def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
         userprint('No data in {}'.format(healpix))
         return
 
-    results = fitsio.FITS(out_filename,
-                          'rw',
-                          clobber=True)
+    results = fitsio.FITS(out_filename, 'rw', clobber=True)
     for delta in deltas:
         lambda_array = delta.log_lambda
         if lin_spaced:
@@ -537,8 +535,7 @@ def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
         header['RA'] = delta.ra
         header['DEC'] = delta.dec
         header['Z'] = delta.z_qso
-        header['PMF'] = '{}-{}-{}'.format(delta.plate, delta.mjd,
-                                          delta.fiberid)
+        header['PMF'] = '{}-{}-{}'.format(delta.plate, delta.mjd, delta.fiberid)
         header['THING_ID'] = delta.thingid
         header['PLATE'] = delta.plate
         header['MJD'] = delta.mjd
@@ -665,7 +662,7 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     # Read the transmission files in parallel
     arguments = [(f, num_bins, objs_thingid, lambda_min, lambda_max,
                   lambda_min_rest_frame, lambda_max_rest_frame,
-                  delta_log_lambda) for f in files]
+                  delta_log_lambda, delta_lambda, lin_spaced) for f in files]
     pool = Pool(processes=nproc)
     results = pool.starmap(read_transmission_file, arguments)
     pool.close()
