@@ -586,10 +586,16 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
             Minimum Rest Frame wavelength in Angstrom
         lambda_max_rest_frame: float - default: 1200.
             Maximum Rest Frame wavelength in Angstrom
-        delta_log_lambda: float - default: 3.e-4
+        delta_log_lambda: float - default: None
             Variation of the logarithm of the wavelength between two pixels
+        delta_lambda: float - default: None
+            Variation of the wavelength between two pixels
+        lin_spaced: float - default: False
+            Whether to use linear spacing for the wavelength binning
         max_num_spec: int or None - default: None
             Maximum number of spectra to read. 'None' for no maximum
+        nproc: int or None - default: None
+            Number of cpus to use for I/O operations. If None, defaults to os.cpu_count().
     """
     # read catalog of objects
     hdul = fitsio.FITS(obj_path)
@@ -656,6 +662,7 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
         delta_x = delta_log_lambda if delta_lambda is not None else 3.e-4
     num_bins = int((x_max - x_min) / delta_x) + 1
 
+    # Read the transmission files in parallel
     arguments = [(f, num_bins, objs_thingid, lambda_min, lambda_max,
                   lambda_min_rest_frame, lambda_max_rest_frame,
                   delta_log_lambda) for f in files]
@@ -663,10 +670,10 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     results = pool.starmap(read_transmission_file, arguments)
     pool.close()
 
+    # Read and merge the results
     stack_flux = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
     deltas = {}
-
     for res in results:
         if res is not None:
             healpix_deltas = res[0]
@@ -684,101 +691,6 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
             num_spec = np.sum([len(deltas[healpix]) for healpix in deltas])
             if (max_num_spec is not None and num_spec >= max_num_spec):
                 break
-
-    # stack_flux = np.zeros(num_bins)
-    # stack_weight = np.zeros(num_bins)
-
-    # deltas = {}
-
-    # # read deltas
-    # for index, filename in enumerate(files):
-    #     userprint("\rread {} of {} {}".format(
-    #         index, files.size,
-    #         np.sum([len(deltas[healpix]) for healpix in deltas])),
-    #               end="")
-    #     hdul = fitsio.FITS(filename)
-    #     thingid = hdul['METADATA']['MOCKID'][:]
-    #     if np.in1d(thingid, objs_thingid).sum() == 0:
-    #         hdul.close()
-    #         continue
-    #     ra = hdul['METADATA']['RA'][:].astype(np.float64) * np.pi / 180.
-    #     dec = hdul['METADATA']['DEC'][:].astype(np.float64) * np.pi / 180.
-    #     z = hdul['METADATA']['Z'][:]
-
-    #     # Use "lambda_array" to store either lambda or log lambda
-    #     if lin_spaced:
-    #         lambda_array = hdul['WAVELENGTH'].read()
-    #     else:
-    #         lambda_array = np.log10(hdul['WAVELENGTH'].read())
-
-    #     if 'F_LYA' in hdul:
-    #         trans = hdul['F_LYA'].read()
-    #     else:
-    #         trans = hdul['TRANSMISSION'].read()
-
-    #     num_obj = z.size
-    #     healpix = filename.split('-')[-1].split('.')[0]
-
-    #     if trans.shape[0] != num_obj:
-    #         trans = trans.transpose()
-
-    #     bins = np.floor((lambda_array - x_min) / delta_x +
-    #                     0.5).astype(int)
-    #     aux_lambda = x_min + bins * delta_x
-    #     if not lin_spaced:
-    #         aux_lambda = 10**aux_lambda
-    #     lambda_obs_frame = aux_lambda * np.ones(num_obj)[:, None]
-    #     lambda_rest_frame = aux_lambda / (1. + z[:, None])
-    #     valid_pixels = np.zeros_like(trans).astype(int)
-    #     valid_pixels[(lambda_obs_frame >= lambda_min) &
-    #                  (lambda_obs_frame < lambda_max) &
-    #                  (lambda_rest_frame > lambda_min_rest_frame) &
-    #                  (lambda_rest_frame < lambda_max_rest_frame)] = 1
-    #     num_pixels = np.sum(valid_pixels, axis=1)
-    #     w = num_pixels >= 50
-    #     w &= np.in1d(thingid, objs_thingid)
-    #     if w.sum() == 0:
-    #         hdul.close()
-    #         continue
-
-    #     ra = ra[w]
-    #     dec = dec[w]
-    #     z = z[w]
-    #     thingid = thingid[w]
-    #     trans = trans[w, :]
-    #     valid_pixels = valid_pixels[w, :]
-    #     num_obj = z.size
-    #     hdul.close()
-
-    #     deltas[healpix] = []
-    #     for index2 in range(num_obj):
-    #         aux_lambda = lambda_array[valid_pixels[index2, :] > 0]
-    #         aux_trans = trans[index2, :][valid_pixels[index2, :] > 0]
-
-    #         bins = np.floor((aux_lambda - x_min) / delta_x + 0.5).astype(int)
-    #         rebin_log_lambda = (x_min + np.arange(num_bins) * delta_x)
-    #         if lin_spaced:
-    #             rebin_log_lambda = np.log10(rebin_log_lambda)
-    #         rebin_flux = np.bincount(bins, weights=aux_trans, minlength=num_bins)
-    #         rebin_ivar = np.bincount(bins, minlength=num_bins).astype(float)
-
-    #         w = rebin_ivar > 0.
-    #         if w.sum() < 50:
-    #             continue
-    #         stack_flux += rebin_flux
-    #         stack_weight += rebin_ivar
-    #         rebin_log_lambda = rebin_log_lambda[w]
-    #         rebin_flux = rebin_flux[w] / rebin_ivar[w]
-    #         rebin_ivar = rebin_ivar[w]
-    #         deltas[healpix].append(
-    #             Delta(thingid[index2], ra[index2], dec[index2], z[index2],
-    #                   thingid[index2], thingid[index2], thingid[index2],
-    #                   rebin_log_lambda, rebin_ivar, None, rebin_flux, 1, None,
-    #                   None, None, None, None, None))
-    #     if (max_num_spec is not None and
-    #             np.sum([len(deltas[healpix])
-    #                     for healpix in deltas]) >= max_num_spec):
-    #         break
 
     userprint('\n')
 
@@ -823,49 +735,6 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     pool = Pool(processes=nproc)
     results = pool.starmap(write_delta_from_transmission, arguments)
     pool.close()
-
-    # #  save results
-    # for index, healpix in enumerate(sorted(deltas)):
-    #     if len(deltas[healpix]) == 0:
-    #         userprint('No data in {}'.format(healpix))
-    #         continue
-    #     results = fitsio.FITS(out_dir + '/delta-{}'.format(healpix) +
-    #                           '.fits.gz',
-    #                           'rw',
-    #                           clobber=True)
-    #     for delta in deltas[healpix]:
-    #         lambda_array = delta.log_lambda
-    #         if lin_spaced:
-    #             lambda_array = 10**(lambda_array)
-    #         bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
-    #         delta.delta = delta.delta / mean_flux[bins] - 1.
-    #         delta.weights *= mean_flux[bins]**2
-
-    #         header = {}
-    #         header['RA'] = delta.ra
-    #         header['DEC'] = delta.dec
-    #         header['Z'] = delta.z_qso
-    #         header['PMF'] = '{}-{}-{}'.format(delta.plate, delta.mjd,
-    #                                           delta.fiberid)
-    #         header['THING_ID'] = delta.thingid
-    #         header['PLATE'] = delta.plate
-    #         header['MJD'] = delta.mjd
-    #         header['FIBERID'] = delta.fiberid
-    #         header['ORDER'] = delta.order
-
-    #         cols = [
-    #             delta.log_lambda, delta.delta, delta.weights,
-    #             np.ones(delta.log_lambda.size)
-    #         ]
-    #         names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
-    #         results.write(cols,
-    #                       names=names,
-    #                       header=header,
-    #                       extname=str(delta.thingid))
-    #     results.close()
-    #     userprint("\rwrite {} of {}: {} quasars".format(index, len(deltas),
-    #                                                     len(deltas[healpix])),
-    #               end="")
 
     userprint("")
 
