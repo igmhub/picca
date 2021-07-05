@@ -374,6 +374,8 @@ def read_transmission_file(filename, num_bins, objs_thingid, lambda_min=3600.,
             Path to the transmission file to read
         num_bins: int
             The number of bins in our wavelength grid.
+        objs_thingid: array
+            Array of object thing id.
         lambda_min: float - default: 3600.
             Minimum observed wavelength in Angstrom
         lambda_max: float - default: 5500.
@@ -382,14 +384,18 @@ def read_transmission_file(filename, num_bins, objs_thingid, lambda_min=3600.,
             Minimum Rest Frame wavelength in Angstrom
         lambda_max_rest_frame: float - default: 1200.
             Maximum Rest Frame wavelength in Angstrom
-        delta_log_lambda: float - default: 3.e-4
+        delta_log_lambda: float - default: None
             Variation of the logarithm of the wavelength between two pixels
+        delta_lambda: float - default: None
+            Variation of the wavelength between two pixels
+        lin_spaced: float - default: False
+            Whether to use linear spacing for the wavelength binning
     Returns:
         deltas:
             Dictionary containing delta objects for all the skewers (flux not
             yet normalised). Keys are HEALPix pixels, values are lists of delta
             objects.
-        stack_delta:
+        stack_flux:
             The stacked value of flux across all skewers.
         stack_weight:
             The stacked value of weights across all skewers.
@@ -496,16 +502,18 @@ def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
     Args:
         deltas: list
             List of delta objects contained in the given HEALPix pixel.
-        stack_delta: array
-            Stacked value of deltas across all skewers.
+        mean_flux: array
+            Average flux over all skewers.
         healpix: int
             The HEALPix pixel under consideration.
         out_filename: str
             Output filename.
-        lambda_min: float - default: 3600.
-            Minimum observed wavelength in Angstrom
-        delta_log_lambda: float - default: 3.e-4
-            Variation of the logarithm of the wavelength between two pixels
+        x_min: float
+            Minimum observed wavelength or log wavelength in Angstrom
+        delta_x: float
+            Variation of the wavelength (or log wavelength) between two pixels
+        lin_spaced: float - default: False
+            Whether to use linear spacing for the wavelength binning
     """
 
     # log_lambda_min = np.log10(lambda_min)
@@ -636,7 +644,7 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     userprint('INFO: Found {} files'.format(files.size))
 
     # Check if we should compute linear or log spaced deltas
-    # Use the x_min/x_max/delta_x variables to stand in for either 
+    # Use the x_min/x_max/delta_x variables to stand in for either
     # linear of log spaced parameters
     if lin_spaced:
         x_min = lambda_min
@@ -782,11 +790,12 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     #  save results
     out_filenames = {}
     for healpix in sorted(deltas):
-        if (nest is None):
-            if (out_healpix_order is None):
+        if nest is None:
+            if out_healpix_order is None:
                 out_healpix = healpix
             else:
-                raise ValueError('Input HEALPix scheme not known, cannot convert to scheme {}'.format(out_healpix_order))
+                raise ValueError('Input HEALPix scheme not known, cannot'
+                                 'convert to scheme {}'.format(out_healpix_order))
         else:
             if nest:
                 if out_healpix_order.lower() == 'nest':
@@ -794,16 +803,19 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
                 elif out_healpix_order.lower() == 'ring':
                     out_healpix = healpy.nest2ring(int(in_nside), int(healpix))
                 else:
-                    raise ValueError('HEALPix scheme {} not recognised'.format(out_healpix_order))
+                    raise ValueError('HEALPix scheme {} not recognised'.format(
+                        out_healpix_order))
             else:
                 if out_healpix_order.lower() == 'nest':
                     out_healpix = healpy.ring2nest(int(in_nside), int(healpix))
                 elif out_healpix_order.lower() == 'ring':
                     out_healpix = healpix
                 else:
-                    raise ValueError('HEALPix scheme {} not recognised'.format(out_healpix_order))
+                    raise ValueError('HEALPix scheme {} not recognised'.format(
+                        out_healpix_order))
 
-        print('Input nested? {} // in_healpix={} // out_healpix={}'.format(nest,healpix,out_healpix))
+        print('Input nested? {} // in_healpix={} // out_healpix={}'.format(
+            nest, healpix, out_healpix))
         out_filenames[healpix] = out_dir + '/delta-{}'.format(out_healpix) + '.fits.gz'
 
     arguments = [(deltas[hpix], mean_flux, hpix, out_filenames[hpix],
