@@ -563,7 +563,6 @@ def desi_convert_transmission_to_delta_files(obj_path,
                                              delta_lambda=None,
                                              lin_spaced=False,
                                              max_num_spec=None,
-                                             out_healpix_order='RING',
                                              nproc=None):
     """Convert desi transmission files to picca delta files
 
@@ -790,31 +789,7 @@ def desi_convert_transmission_to_delta_files(obj_path,
     #  save results
     out_filenames = {}
     for healpix in sorted(deltas):
-        if nest is None:
-            if out_healpix_order is None:
-                out_healpix = healpix
-            else:
-                raise ValueError('Input HEALPix scheme not known, cannot'
-                                 'convert to scheme {}'.format(out_healpix_order))
-        else:
-            if nest:
-                if out_healpix_order.lower() == 'nest':
-                    out_healpix = healpix
-                elif out_healpix_order.lower() == 'ring':
-                    out_healpix = healpy.nest2ring(int(in_nside), int(healpix))
-                else:
-                    raise ValueError('HEALPix scheme {} not recognised'.format(out_healpix_order))
-            else:
-                if out_healpix_order.lower() == 'nest':
-                    out_healpix = healpy.ring2nest(int(in_nside), int(healpix))
-                elif out_healpix_order.lower() == 'ring':
-                    out_healpix = healpix
-                else:
-                    raise ValueError('HEALPix scheme {} not recognised'.format(out_healpix_order))
-
-        print('Input nested? {} // in_healpix={} // out_healpix={}'.format(
-                nest, healpix, out_healpix))
-        out_filenames[healpix] = out_dir + '/delta-{}'.format(out_healpix) + '.fits.gz'
+        out_filenames[healpix] = out_dir + '/delta-{}'.format(healpix) + '.fits.gz'
 
     arguments = [(deltas[hpix], mean_flux, hpix, out_filenames[hpix],
                   x_min, delta_x, lin_spaced) for hpix in deltas.keys()]
