@@ -427,6 +427,35 @@ def _unweighted_resample(output_x,input_x,input_flux_density, extrapolate=False)
     
     return np.histogram(trapeze_centers, bins=bins, weights=trapeze_integrals)[0] / binsize
 
+def blindData(data, z, zmz, l, lol):
+    """Ads AP blinding (strategy A) to the deltas data
 
+    Args:
+        data: dict
+            A dictionary with the forests in each healpix.
+        z, zmz: map to blind the qso redshift value
+        l, lol: map to blind the qso lambda values
 
+    Returns:
+        The following variables:
+            data: dict
+            A dictionary with the forests in each healpix after the blinding ha
+            been applied
+    """
+    for healpix in sorted(list(data.keys())):
+        for forest in data[healpix]:
+            # Z QSO ap shift
+            Za = forest.z_qso
+            Z_rebin = np.interp( Za, z, zmz_ )
+            forest.z_qso = Za + Z_rebin
+            
+            # QSO forest ap shift with interval conservation
+            l = 10**( forest.log_lambda )
+            lol_rebin = resample_flux( l, l_, lol_ )
 
+            l_rebin = lol_rebin*l
+            l2 = l-( l[0]-l_rebin[0] )
+            forest.flux, forest.ivar = resample_flux(l2, l_rebin, forest.flux, ivar=forest.ivar )
+            forest.delta, forest.weights = resample_flux(l2, l_rebin, forest.delta, ivar=forest.weights ) 
+            
+    return data
