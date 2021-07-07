@@ -521,6 +521,7 @@ def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
         return
 
     stack_variance = np.zeros(len(mean_flux))
+    var_weights = np.zeros(len(mean_flux))
     results = fitsio.FITS(out_filename, 'rw', clobber=True)
     for delta in deltas:
         lambda_array = delta.log_lambda
@@ -529,6 +530,7 @@ def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
         bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
 
         stack_variance[bins] += (delta.delta - mean_flux[bins])**2
+        var_weights[bins] += np.ones(len(bins))
         delta.delta = delta.delta / mean_flux[bins] - 1.
         delta.weights *= mean_flux[bins]**2
 
@@ -554,7 +556,7 @@ def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
                       extname=str(delta.thingid))
     results.close()
 
-    return stack_variance
+    return stack_variance, var_weights
 
 
 def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=None,
@@ -735,12 +737,15 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     pool.close()
 
     stack_variance = np.zeros(num_bins)
+    var_weights = np.zeros(num_bins)
     for res in write_results:
         if res is not None:
-            stack_variance += res
+            stack_variance += res[0]
+            var_weights += res[1]
 
+    w = var_weights > 0.
     flux_variance = stack_variance
-    flux_variance[w] /= stack_weight[w]
+    flux_variance[w] /= var_weights[w]
 
     userprint("")
 
@@ -748,8 +753,8 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     dir_name = os.path.basename(os.path.normpath(out_dir))
     rebin_lambda = (x_min + np.arange(num_bins) * delta_x)
     results = fitsio.FITS(out_dir + '/../{}-stats.fits.gz'.format(dir_name), 'rw', clobber=True)
-    cols = [rebin_lambda, mean_flux, flux_variance, stack_weight]
-    names = ['LAMBDA', 'MEANFLUX', 'VAR', 'WEIGHTS']
+    cols = [rebin_lambda, mean_flux, stack_weight, flux_variance, var_weights]
+    names = ['LAMBDA', 'MEANFLUX', 'WEIGHTS', 'VAR', 'VARWEIGHTS']
     header = {}
     header['L_MIN'] = lambda_min
     header['L_MAX'] = lambda_max
