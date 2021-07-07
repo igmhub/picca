@@ -516,18 +516,19 @@ def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
             Whether to use linear spacing for the wavelength binning
     """
 
-    # log_lambda_min = np.log10(lambda_min)
-
     if len(deltas) == 0:
         userprint('No data in {}'.format(healpix))
         return
 
+    stack_variance = np.zeros(len(mean_flux))
     results = fitsio.FITS(out_filename, 'rw', clobber=True)
     for delta in deltas:
         lambda_array = delta.log_lambda
         if lin_spaced:
             lambda_array = 10**(lambda_array)
         bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
+
+        stack_variance[bins] += (delta.delta - mean_flux[bins])**2
         delta.delta = delta.delta / mean_flux[bins] - 1.
         delta.weights *= mean_flux[bins]**2
 
@@ -553,7 +554,7 @@ def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
                       extname=str(delta.thingid))
     results.close()
 
-    return
+    return stack_variance
 
 
 def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=None,
@@ -664,14 +665,14 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
                   lambda_min_rest_frame, lambda_max_rest_frame,
                   delta_log_lambda, delta_lambda, lin_spaced) for f in files]
     pool = Pool(processes=nproc)
-    results = pool.starmap(read_transmission_file, arguments)
+    read_results = pool.starmap(read_transmission_file, arguments)
     pool.close()
 
     # Read and merge the results
     stack_flux = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
     deltas = {}
-    for res in results:
+    for res in read_results:
         if res is not None:
             healpix_deltas = res[0]
             healpix_stack_flux = res[1]
@@ -730,8 +731,16 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     arguments = [(deltas[hpix], mean_flux, hpix, out_filenames[hpix],
                   x_min, delta_x, lin_spaced) for hpix in deltas.keys()]
     pool = Pool(processes=nproc)
-    results = pool.starmap(write_delta_from_transmission, arguments)
+    write_results = pool.starmap(write_delta_from_transmission, arguments)
     pool.close()
+
+    stack_variance = np.zeros(num_bins)
+    for res in write_results:
+        if res is not None:
+            stack_variance += res
+
+    flux_variance = stack_variance
+    flux_variance[w] /= stack_weight[w]
 
     userprint("")
 
@@ -739,8 +748,8 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     dir_name = os.path.basename(os.path.normpath(out_dir))
     rebin_lambda = (x_min + np.arange(num_bins) * delta_x)
     results = fitsio.FITS(out_dir + '/../{}-stats.fits.gz'.format(dir_name), 'rw', clobber=True)
-    cols = [rebin_lambda, mean_flux, stack_weight]
-    names = ['LAMBDA', 'MEANFLUX', 'WEIGHTS']
+    cols = [rebin_lambda, mean_flux, flux_variance, stack_weight]
+    names = ['LAMBDA', 'MEANFLUX', 'VAR', 'WEIGHTS']
     header = {}
     header['L_MIN'] = lambda_min
     header['L_MAX'] = lambda_max
