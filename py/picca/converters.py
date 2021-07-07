@@ -471,7 +471,9 @@ def read_transmission_file(filename, num_bins, objs_thingid, lambda_min=3600.,
         aux_lambda = lambda_array[valid_pixels[index2, :] > 0]
         aux_trans = trans[index2, :][valid_pixels[index2, :] > 0]
 
-        bins = np.floor((aux_lambda - x_min) / delta_x + 0.5).astype(int)
+        norm_lambda = (aux_lambda - x_min) / delta_x + 0.5
+        bins = np.floor(np.around(norm_lambda, decimals=3)).astype(int)
+        # bins = np.floor((aux_lambda - x_min) / delta_x + 0.5).astype(int)
         rebin_log_lambda = (x_min + np.arange(num_bins) * delta_x)
         if lin_spaced:
             rebin_log_lambda = np.log10(rebin_log_lambda)
@@ -527,7 +529,10 @@ def write_delta_from_transmission(deltas, mean_flux, healpix, out_filename,
         lambda_array = delta.log_lambda
         if lin_spaced:
             lambda_array = 10**(lambda_array)
-        bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
+
+        norm_lambda = (lambda_array - x_min) / delta_x + 0.5
+        bins = np.floor(np.around(norm_lambda, decimals=3)).astype(int)
+        # bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
 
         stack_variance[bins] += (delta.delta - mean_flux[bins])**2
         var_weights[bins] += np.ones(len(bins))
