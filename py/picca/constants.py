@@ -315,7 +315,7 @@ ABSORBER_IGM = {
 # def resample_flux(xout, x, flux, ivar=None, extrapolate=False):
 
 
-def calcMaps(scale=.95, Om=0.315):
+def calcMaps(scale=1, Om=0.315):
 
    ###### Definition of Ref cosmological model
 
@@ -427,7 +427,7 @@ def _unweighted_resample(output_x,input_x,input_flux_density, extrapolate=False)
     
     return np.histogram(trapeze_centers, bins=bins, weights=trapeze_integrals)[0] / binsize
 
-def blindData(data, z, zmz, l, lol):
+def blindData(data, z_, zmz_, l_, lol_):
     """Ads AP blinding (strategy A) to the deltas data
 
     Args:
@@ -446,7 +446,7 @@ def blindData(data, z, zmz, l, lol):
         for forest in data[healpix]:
             # Z QSO ap shift
             Za = forest.z_qso
-            Z_rebin = np.interp( Za, z, zmz_ )
+            Z_rebin = np.interp( Za, z_, zmz_ )
             forest.z_qso = Za + Z_rebin
             
             # QSO forest ap shift with interval conservation
@@ -456,6 +456,8 @@ def blindData(data, z, zmz, l, lol):
             l_rebin = lol_rebin*l
             l2 = l-( l[0]-l_rebin[0] )
             forest.flux, forest.ivar = resample_flux(l2, l_rebin, forest.flux, ivar=forest.ivar )
-            forest.delta, forest.weights = resample_flux(l2, l_rebin, forest.delta, ivar=forest.weights ) 
+            #print(vars(forest), dir(forest))
+            #userprint(vars(forest), dir(forest))
+            # forest.delta, forest.weights = resample_flux(l2, l_rebin, forest.delta, ivar=forest.weights ) 
             
     return data

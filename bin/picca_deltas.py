@@ -20,6 +20,7 @@ from picca.data import Forest, Delta
 from picca import prep_del, io, constants, bal_tools
 from picca.utils import userprint
 from picca.constants import ACCEPTED_BLINDING_STRATEGIES
+import picca.constants as constants
 
 
 def cont_fit(forests):
@@ -421,18 +422,17 @@ def main(cmdargs):
                         required=False,
                         help='Blinding strategy. "none" for no blinding')
 
-
     t0 = time.time()
 
     args = parser.parse_args(cmdargs)
 
     assert (args.blinding_desi in ACCEPTED_BLINDING_STRATEGIES)
-
+    print("\nBlinding ver 0.07.08.16.40\n")
     # comment this when ready to unblind
     if args.blinding_desi == "none":
         print("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
         args.blinding_desi = "minimal"
-
+    
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
     Forest.log_lambda_max = np.log10(args.lambda_max)
@@ -692,6 +692,15 @@ def main(cmdargs):
         )
 
         pool.close()
+
+        if (iteration == num_iterations - 2 and args.blinding_desi == "strategyA"):
+           userprint('Entering to blinding strategyA')
+           print('Entering to blinding strategyA')
+           z, zmz, l, lol = constants.calcMaps(scale=0.95)
+           data = constants.blindData(data, z, zmz, l, lol)
+        else:
+           print(args.blinding_desi)
+           userprint("not entering: ",args.blinding_desi)
 
         if iteration < num_iterations - 1:
             #-- Compute mean continuum (stack in rest-frame)
