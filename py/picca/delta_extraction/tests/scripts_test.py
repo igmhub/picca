@@ -52,6 +52,14 @@ class ScriptsTest(AbstractTest):
             self.assertTrue(test_file.split("/")[-1] == out_file.split("/")[-1])
             self.compare_fits(test_file, out_file)
 
+    def test_delta_calib(self):
+        """End-to-end test using 'calib' setup including the sky mask"""
+        config_file = "{}/data/delta_calib.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_calib".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_calib".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
+
     def test_delta_calib_nomask(self):
         """End-to-end test using 'calib' setup"""
         config_file = "{}/data/delta_calib_nomask.ini".format(THIS_DIR)
@@ -68,6 +76,13 @@ class ScriptsTest(AbstractTest):
 
         self.run_delta_extraction(config_file, out_dir, test_dir)
 
+    def test_delta_calib2(self):
+        """End-to-end test using 'calib2' setup"""
+        config_file = "{}/data/delta_calib2.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_calib2".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_calib2".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
 
     def test_delta_lya_nomask_nodla(self):
         """End-to-end test using 'LYA' setup wihtout masking sky lines nor DLAs"""
