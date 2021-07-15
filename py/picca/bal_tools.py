@@ -31,8 +31,7 @@ def read_bal(filename):  ##Based on read_dla from picca/py/picca/io.py
         'VMAX_CIV_2000'
     ]
     hdul = fitsio.FITS(filename)
-   # bal_dict = {col: hdul['BALCAT'][col][:] for col in column_list}
-    bal_dict = {col: hdul[1][col][:] for col in column_list}
+    bal_dict = {col: hdul['BALCAT'][col][:] for col in column_list}
     hdul.close()
 
     return bal_dict
