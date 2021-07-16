@@ -1,7 +1,7 @@
 """This module defines data structure to deal with line of sight data.
 
 This module provides with three classes (QSO, Forest, Delta)
-to manage the line-of-sight data. 
+to manage the line-of-sight data.
 See the respective docstrings for more details
 """
 import numpy as np
@@ -443,13 +443,6 @@ class Forest(QSO):
         """
         QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
 
-        # apply dust extinction correction
-        if Forest.extinction_bv_map is not None:
-            corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
-            flux /= corr
-            ivar *= corr**2
-            if not exposures_diff is None:
-                exposures_diff /= corr
 
         ## cut to specified range
         bins = (np.floor((log_lambda - Forest.log_lambda_min) /
@@ -511,6 +504,14 @@ class Forest(QSO):
             exposures_diff = rebin_exposures_diff[w] / rebin_ivar[w]
         if reso is not None:
             reso = rebin_reso[w] / rebin_ivar[w]
+
+        # apply dust extinction correction
+        if Forest.extinction_bv_map is not None:
+            corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
+            flux /= corr
+            ivar *= corr**2
+            if not exposures_diff is None:
+                exposures_diff /= corr
 
         # Flux calibration correction
         try:

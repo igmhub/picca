@@ -11,9 +11,6 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 PICCA_BIN = THIS_DIR.split("py/picca")[0]+"bin/"
 
-print(THIS_DIR)
-print(PICCA_BIN)
-
 class ScriptsTest(AbstractTest):
     """Test script
     picca_delta_extraction.py under $PICCA_HOME/bin
@@ -56,10 +53,50 @@ class ScriptsTest(AbstractTest):
             self.compare_fits(test_file, out_file)
 
     def test_delta_calib(self):
-        """End-to-end test using 'calib' setup"""
+        """End-to-end test using 'calib' setup including the sky mask"""
         config_file = "{}/data/delta_calib.ini".format(THIS_DIR)
         out_dir = "{}/results/delta_extraction_calib".format(THIS_DIR)
         test_dir = "{}/data/delta_extraction_calib".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
+
+    def test_delta_calib_nomask(self):
+        """End-to-end test using 'calib' setup"""
+        config_file = "{}/data/delta_calib_nomask.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_calib_nomask".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_calib_nomask".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
+
+    def test_delta_calib2_nomask(self):
+        """End-to-end test using 'calib2' setup without sky masking"""
+        config_file = "{}/data/delta_calib2_nomask.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_calib2_nomask".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_calib2_nomask".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
+
+    def test_delta_calib2(self):
+        """End-to-end test using 'calib2' setup"""
+        config_file = "{}/data/delta_calib2.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_calib2".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_calib2".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
+
+    def test_delta_lya_nomask_nodla(self):
+        """End-to-end test using 'LYA' setup wihtout masking DLAs"""
+        config_file = "{}/data/delta_lya_nodla.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lya_nodla".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_lya_nodla".format(THIS_DIR)
+
+        self.run_delta_extraction(config_file, out_dir, test_dir)
+
+    def test_delta_lya_nomask_nodla(self):
+        """End-to-end test using 'LYA' setup wihtout masking sky lines nor DLAs"""
+        config_file = "{}/data/delta_lya_nomask_nodla.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lya_nomask_nodla".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_lya_nomask_nodla".format(THIS_DIR)
 
         self.run_delta_extraction(config_file, out_dir, test_dir)
 

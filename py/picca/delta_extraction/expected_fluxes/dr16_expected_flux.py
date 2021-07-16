@@ -212,6 +212,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_mean_cont = interp1d(self.lambda_rest_frame,
                                       np.ones_like(self.lambda_rest_frame),
                                       fill_value='extrapolate')
+        self.get_mean_cont_weight = interp1d(self.lambda_rest_frame,
+                                             np.zeros_like(self.lambda_rest_frame),
+                                             fill_value="extrapolate"
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
@@ -273,7 +276,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
              Forest.log_lambda_min_rest_frame) / num_bins)
 
         self.get_mean_cont = interp1d(self.log_lambda_rest_frame,
-                                      np.ones_like(self.log_lambda_rest_frame))
+                                      np.ones_like(self.log_lambda_rest_frame),
+                                      fill_value="extrapolate")
+        self.get_mean_cont_weight = interp1d(self.log_lambda_rest_frame,
+                                             np.zeros_like(self.log_lambda_rest_frame),
+                                             fill_value="extrapolate")
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
@@ -584,6 +591,29 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         stack_delta = np.zeros(num_bins)
         stack_weight = np.zeros(num_bins)
+
+        f = open("/Users/iperezra/Desktop/new.txt", "w")
+        for thingid in [430539695,429693702,432208475,429836983,
+                        429444060,430290017,431504349,432488140,
+                        437193652,434388717,433045751,440638148,
+                        428690499,430090823,430357317,429534213,
+                        432002130,429522561,429782569,430087750,
+                        436880007,435883886]:
+
+            for forest in forests:
+                if forest.thingid == thingid:
+                    delta = forest.flux / forest.continuum
+                    var_lss = self.get_var_lss(forest.log_lambda)
+                    eta = self.get_eta(forest.log_lambda)
+                    fudge = self.get_fudge(forest.log_lambda)
+                    var = 1. / forest.ivar / forest.continuum**2
+                    variance = eta * var + var_lss + fudge / var
+                    weights = 1. / variance
+                    f.write(f"THING_ID: {forest.thingid} 0 0 0 0\n")
+                    for loglam, fl, iv, c, d, we in zip(forest.log_lambda, forest.flux,
+                                              forest.ivar, forest.continuum, delta, weights):
+                        f.write(f"{loglam} {fl} {iv} {c} {d} {we}\n")
+
         for forest in forests:
             if stack_from_deltas:
                 delta = forest.delta
@@ -625,6 +655,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         w = stack_weight > 0
         stack_delta[w] /= stack_weight[w]
+
+        for wl, d, we in zip(stack_log_lambda, stack_delta, stack_weight):
+            f.write(f"{wl} {d} {we} 0 0 0\n")
+        f.close()
 
         if Forest.wave_solution == "log":
             self.get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
@@ -1164,7 +1198,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                      self.get_stack_delta_weights(stack_log_lambda)],
                     names=['loglam', 'stack', 'weight'],
                     header=header,
-                    extname='STACK')
+                    extname='STACK_DELTAS')
 
                 results.write([
                     self.log_lambda,
@@ -1173,7 +1207,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.get_fudge(self.log_lambda)
                 ],
                               names=['loglam', 'eta', 'var_lss', 'fudge'],
-                              extname='WEIGHT')
+                              extname='VAR_FUNC')
 
                 results.write([
                     self.log_lambda_rest_frame,

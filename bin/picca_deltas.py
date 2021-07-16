@@ -750,6 +750,15 @@ def main():
                                             kind='nearest')
 
         stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
+        get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
+                                   stack_delta[stack_weight > 0.],
+                                   kind="nearest",
+                                   fill_value="extrapolate")
+        get_stack_delta_weights = interp1d(stack_log_lambda[stack_weight > 0.],
+                                           stack_weight[stack_weight > 0.],
+                                           kind="nearest",
+                                           fill_value=0.0,
+                                           bounds_error=False)
 
         ### Save iter_out_prefix
         delta_attrib_name = args.iter_out_prefix
@@ -762,7 +771,8 @@ def main():
             header["NSIDE"] = nside
             header["PIXORDER"] = healpy_pix_ordering
             header["FITORDER"] = args.order
-            results.write([stack_log_lambda, stack_delta, stack_weight],
+            results.write([stack_log_lambda, get_stack_delta(stack_log_lambda),
+                           get_stack_delta_weights(stack_log_lambda)],
                           names=['loglam', 'stack', 'weight'],
                           header=header,
                           extname='STACK')
@@ -794,10 +804,6 @@ def main():
         tab_cont.write(args.metadata, format="fits", overwrite=True)
 
     ### Compute deltas and format them
-    get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
-                               stack_delta[stack_weight > 0.],
-                               kind="nearest",
-                               fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
     for healpix in sorted(data.keys()):
