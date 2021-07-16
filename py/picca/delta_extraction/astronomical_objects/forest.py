@@ -90,7 +90,8 @@ class Forest(AstronomicalObject):
     Healpix number associated with (ra, dec)
 
     los_id: longint (from AstronomicalObject)
-    Line-of-sight id. Same as thingid
+    Line-of-sight id. Same as thingid for SDSS data, and same as targetid for
+    DESI data
 
     ra: float (from AstronomicalObject)
     Right ascention (in rad)
