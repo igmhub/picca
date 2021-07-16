@@ -545,10 +545,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.continuum_fit_parameters[forest.los_id] = (
                 minimizer.values["p0"], minimizer.values["p1"])
         ## if the continuum is negative or minuit didn't converge, then
-        ## set it to a very small number so that this forest is ignored
+        ## set it to None
         else:
-            forest.continuum = np.zeros_like(forest.log_lambda) + 1e-10
-            self.continuum_fit_parameters[forest.los_id] = (0.0, 0.0)
+            forest.continuum = None
+            self.continuum_fit_parameters[forest.los_id] = (np.nan, np.nan)
 
         return forest
 
@@ -694,6 +694,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # compute
         #    1/Cont_old * <F/spectrum_dependent_fitting_function>
         for forest in forests:
+            if forest.bad_continuum_reason is not None:
+                continue
             bins = (
                 (forest.lambda_ /
                  (1 + forest.z) - Forest.lambda_min_rest_frame) /
@@ -747,6 +749,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # compute
         #    1/Cont_old * <F/spectrum_dependent_fitting_function>
         for forest in forests:
+            if forest.bad_continuum_reason is not None:
+                continue
             bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
                      np.log10(1 + forest.z)) /
                     (Forest.log_lambda_max_rest_frame -
