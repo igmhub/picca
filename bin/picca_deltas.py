@@ -616,7 +616,7 @@ def main(cmdargs):
                     mask_obs_frame_bal = []
                     mask_rest_frame_bal = bal_tools.add_bal_rest_frame(
                         bal_cat, forest.thingid, args.bal_index)
-                    forest.mask(mask_obs_frame_bal, mask_rest_frame_bal)
+                    forest.mask(mask_rest_frame_bal)
                     num_bal += 1
         log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
 

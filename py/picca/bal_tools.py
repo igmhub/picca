@@ -8,6 +8,7 @@ See the respective docstrings for more details
 
 import fitsio
 import numpy as np
+from astropy.table import Table
 
 from . import constants
 
@@ -54,6 +55,11 @@ def add_bal_rest_frame(bal_catalog, thingid, bal_index):
         "lCIV": 1549,
         "lNV": 1240.81,
         "lLya": 1216.1,
+        "lCIII": 1175, 
+        "lPV1": 1117,
+        "lPV2": 1128,
+        "lSIV1": 1062,
+        "lSIV2": 1074,
         "lLyb": 1020,
         "lOIV": 1031,
         "lOVI": 1037,
@@ -65,10 +71,10 @@ def add_bal_rest_frame(bal_catalog, thingid, bal_index):
     else:  ##AI, the default
         velocity_list = ['VMIN_CIV_450', 'VMAX_CIV_450']
 
-    mask_rest_frame_bal = []
 
     light_speed = constants.SPEED_LIGHT
 
+    mask_rest_frame_bal = Table(names=['log_wave_min','log_wave_max','frame'], dtype=['f4','f4','S2'])
     min_velocities = []  ##list of minimum velocities
     max_velocities = []  ##list of maximum velocities
 
@@ -91,10 +97,9 @@ def add_bal_rest_frame(bal_catalog, thingid, bal_index):
     ##Calculate mask width for each velocity pair, for each emission line
     for vel in range(len(min_velocities)):
         for line in lines.values():
-            min_wavelength = line * (1 - min_velocities[vel] / light_speed)
-            max_wavelength = line * (1 - max_velocities[vel] / light_speed)
-            mask_rest_frame_bal += [[min_wavelength, max_wavelength]]
+            min_wavelength = np.log10(line * (1 - min_velocities[vel] / light_speed))
+            max_wavelength = np.log10(line * (1 - max_velocities[vel] / light_speed))
+            mask_rest_frame_bal.add_row([min_wavelength,max_wavelength,'RF'])
 
-    mask_rest_frame_bal = np.log10(np.asarray(mask_rest_frame_bal))
 
     return mask_rest_frame_bal
