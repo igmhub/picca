@@ -73,8 +73,14 @@ def main(cmdargs):
     r_trans = np.array(hdul[1]['RT'][:])
     z = np.array(hdul[1]['Z'][:])
     num_pairs = np.array(hdul[1]['NB'][:])
-    xi = np.array(hdul[2]['DA'][:])
     weights = np.array(hdul[2]['WE'][:])
+
+    if 'DA_BLIND' in hdul[2].get_colnames():
+        xi = np.array(hdul[2]['DA_BLIND'][:])
+        data_name = 'DA_BLIND'
+    else:
+        xi = np.array(hdul[2]['DA'][:])
+        data_name = 'DA'
 
     head = hdul[1].read_header()
     num_bins_r_par = head['NP']
@@ -82,11 +88,17 @@ def main(cmdargs):
     r_trans_max = head['RTMAX']
     r_par_min = head['RPMIN']
     r_par_max = head['RPMAX']
+
+    if "BLINDING" in head:
+        blinding = head["BLINDING"]
+    # older runs are not from DESI main survey and should not be blinded
+    else:
+        blinding = "none"
     hdul.close()
 
     if not args.remove_shuffled_correlation is None:
         hdul = fitsio.FITS(args.remove_shuffled_correlation)
-        xi_shuffled = hdul['COR']['DA'][:]
+        xi_shuffled = hdul['COR'][data_name][:]
         weight_shuffled = hdul['COR']['WE'][:]
         xi_shuffled = (xi_shuffled * weight_shuffled).sum(axis=1)
         weight_shuffled = weight_shuffled.sum(axis=1)
@@ -144,7 +156,21 @@ def main(cmdargs):
 
     if args.dmat is not None:
         hdul = fitsio.FITS(args.dmat)
-        dmat = hdul[1]['DM'][:]
+        if data_name == "DA_BLIND" and 'DM_BLIND' in hdul[1].get_colnames():
+            dmat = np.array(hdul[1]['DM_BLIND'][:])
+            dmat_name = 'DM_BLIND'
+        elif data_name == "DA_BlIND":
+            userprint("Blinded correlations were given but distortion matrix "
+                      "is unblinded. These files should not mix. Exiting...")
+            sys.exit(1)
+        elif 'DM_BLIND' in hdul[1].get_colnames():
+            userprint("Non-blinded correlations were given but distortion matrix "
+                      "is blinded. These files should not mix. Exiting...")
+            sys.exit(1)
+        else:
+            dmat = hdul[1]['DM'][:]
+            dmat_name = 'DM'
+
         try:
             r_par_dmat = hdul[2]['RP'][:]
             r_trans_dmat = hdul[2]['RT'][:]
@@ -165,7 +191,13 @@ def main(cmdargs):
         z_dmat = z.copy()
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
-    header = [{
+    header = [
+    {
+        'name': "BLINDING",
+        'value': blinding,
+        'comment': 'String specifying the blinding strategy'
+    },
+    {
         'name': 'RPMIN',
         'value': r_par_min,
         'comment': 'Minimum r-parallel'
@@ -186,29 +218,29 @@ def main(cmdargs):
         'value': num_bins_r_trans,
         'comment': 'Number of bins in r-transverse'
     }, {
-        'name': 'OMEGAM', 
-        'value': head['OMEGAM'], 
+        'name': 'OMEGAM',
+        'value': head['OMEGAM'],
         'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'OMEGAR', 
-        'value': head['OMEGAR'], 
+        'name': 'OMEGAR',
+        'value': head['OMEGAR'],
         'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'OMEGAK', 
-        'value': head['OMEGAK'], 
+        'name': 'OMEGAK',
+        'value': head['OMEGAK'],
         'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
     }, {
-        'name': 'WL', 
-        'value': head['WL'], 
+        'name': 'WL',
+        'value': head['WL'],
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    }
+    },
     ]
     comment = [
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
-    results.write([r_par, r_trans, z, xi, covariance, dmat, num_pairs],
-                  names=['RP', 'RT', 'Z', 'DA', 'CO', 'DM', 'NB'],
+    results.write([xi, r_par, r_trans, z, covariance, dmat, num_pairs],
+                  names=[data_name, 'RP', 'RT', 'Z', 'CO', dmat_name, 'NB'],
                   comment=comment,
                   header=header,
                   extname='COR')

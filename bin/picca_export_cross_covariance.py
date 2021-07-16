@@ -46,9 +46,14 @@ def main(cmdargs):
         nside = header['NSIDE']
         header2 = hdul[2].read_header()
         healpix_scheme = header2['HLPXSCHM']
-        xi = np.array(hdul[2]['DA'][:])
         weights = np.array(hdul[2]['WE'][:])
         healpix_list = np.array(hdul[2]['HEALPID'][:])
+
+        if 'DA_BLIND' in hdul[2].get_colnames():
+            xi = np.array(hdul[2]['DA_BLIND'][:])
+        else:
+            xi = np.array(hdul[2]['DA'][:])
+
         data[index] = {
             'DA': xi,
             'WE': weights,

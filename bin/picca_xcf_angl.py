@@ -236,11 +236,15 @@ def main(cmdargs):
     xcf.ang_max = args.ang_max
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            blinding=blinding)
 
     ### Read deltas
     data, num_data, z_min, z_max = io.read_deltas(
@@ -373,8 +377,11 @@ def main(cmdargs):
         'value': 'RING',
         'comment': ' Healpix scheme'
     }]
+    xi_list_name = "DA"
+    if blinding != "none":
+        xi_list_name += "_BLIND"
     results.write([healpix_list, weights_list, xi_list],
-                  names=['HEALPID', 'WE', 'DA'],
+                  names=['HEALPID', 'WE', xi_list_name],
                   comment=['Healpix index', 'Sum of weight', 'Correlation'],
                   header=header2,
                   extname='COR')

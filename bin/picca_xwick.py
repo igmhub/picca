@@ -258,6 +258,9 @@ def main(cmdargs):
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.max_diagram = args.max_diagram
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load fiducial cosmology
     if (args.fid_Or != 0.) or (args.fid_Ok != 0.) or (args.fid_wl != -1.):
         userprint(("ERROR: Cosmology with other than Omega_m set are not yet "
@@ -266,7 +269,8 @@ def main(cmdargs):
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            blinding=blinding)
 
     ### Read deltas
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
@@ -478,6 +482,10 @@ def main(cmdargs):
             'name': 'WL',
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }, {
+            'name': "BLINDING",
+            'value': blinding,
+            'comment': 'String specifying the blinding strategy'
         }
         ]
     comment = [

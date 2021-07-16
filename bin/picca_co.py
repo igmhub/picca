@@ -56,7 +56,6 @@ def main(cmdargs):
                         default=None,
                         required=False,
                         help='Catalog of objects 2 in DRQ format')
-    
     parser.add_argument(
                         '--mode',
                         type=str,
