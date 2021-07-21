@@ -454,10 +454,21 @@ def blindData(data, z_, zmz_, l_, lol_):
             lol_rebin = resample_flux( l, l_, lol_ )
 
             l_rebin = lol_rebin*l
-            l2 = l-( l[0]-l_rebin[0] )
-            forest.flux, forest.ivar = resample_flux(l2, l_rebin, forest.flux, ivar=forest.ivar )
+            l2 = 10**( np.arange(np.log10( np.min(l_rebin)), np.log10(np.max(l_rebin)) , forest.delta_log_lambda)   )
+            # l2 = l-( l[0]-l_rebin[0] )
+            flux, ivar = resample_flux(l2, l_rebin, forest.flux, ivar=forest.ivar )
+            # delta, weights = resample_flux(l2, l_rebin, forest.delta, ivar=forest.weights ) 
+            lnrest = np.log10(   l2 / (1+forest.z_qso)   )
+            
+            lmask = (lnrest > forest.log_lambda_min_rest_frame) & (lnrest < forest.log_lambda_max_rest_frame) & (np.log10(l2) > forest.log_lambda_min ) & (  (l2) < ( 10**forest.log_lambda_max - 1) )
+            forest.log_lambda = np.log10( l2[lmask]  )
+            forest.flux = flux[lmask]
+            forest.ivar = ivar[lmask]
+            #forest.delta = delta[lmask]
+            #forest.weights = weights[lmask]
+            #forest.cont = forest.cont[lmask]
+
             #print(vars(forest), dir(forest))
             #userprint(vars(forest), dir(forest))
-            # forest.delta, forest.weights = resample_flux(l2, l_rebin, forest.delta, ivar=forest.weights ) 
             
     return data

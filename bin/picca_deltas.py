@@ -427,7 +427,7 @@ def main(cmdargs):
     args = parser.parse_args(cmdargs)
 
     assert (args.blinding_desi in ACCEPTED_BLINDING_STRATEGIES)
-    print("\nBlinding ver 0.07.08.16.40\n")
+    print("\nBlinding ver 0.07.20.13.47\n")
     # comment this when ready to unblind
     if args.blinding_desi == "none":
         print("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
@@ -673,6 +673,16 @@ def main(cmdargs):
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
     num_iterations = args.nit
     for iteration in range(num_iterations):
+
+        if (iteration == num_iterations - 2 and args.blinding_desi == "strategyA"):
+           userprint('Entering to blinding strategyA')
+           print('Entering to blinding strategyA')
+           z, zmz, l, lol = constants.calcMaps(scale=0.95, Om=0.315)
+           data = constants.blindData(data, z, zmz, l, lol)
+        else:
+           print(args.blinding_desi)
+           userprint("not entering: ",args.blinding_desi)
+
         context = multiprocessing.get_context('fork')
         pool = context.Pool(processes=args.nproc)
         userprint(
@@ -692,15 +702,6 @@ def main(cmdargs):
         )
 
         pool.close()
-
-        if (iteration == num_iterations - 2 and args.blinding_desi == "strategyA"):
-           userprint('Entering to blinding strategyA')
-           print('Entering to blinding strategyA')
-           z, zmz, l, lol = constants.calcMaps(scale=0.95)
-           data = constants.blindData(data, z, zmz, l, lol)
-        else:
-           print(args.blinding_desi)
-           userprint("not entering: ",args.blinding_desi)
 
         if iteration < num_iterations - 1:
             #-- Compute mean continuum (stack in rest-frame)
