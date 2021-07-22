@@ -185,6 +185,7 @@ def main(cmdargs):
             z_dmat = z.copy()
         hdul.close()
     else:
+        dmat_name = 'DM'
         dmat = np.eye(len(xi))
         r_par_dmat = r_par.copy()
         r_trans_dmat = r_trans.copy()
