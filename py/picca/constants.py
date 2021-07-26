@@ -442,6 +442,8 @@ def blindData(data, z_, zmz_, l_, lol_):
             A dictionary with the forests in each healpix after the blinding ha
             been applied
     """
+    lpix = []
+
     for healpix in sorted(list(data.keys())):
         for forest in data[healpix]:
             # Z QSO ap shift
@@ -460,6 +462,9 @@ def blindData(data, z_, zmz_, l_, lol_):
             # delta, weights = resample_flux(l2, l_rebin, forest.delta, ivar=forest.weights ) 
             lnrest = np.log10(   l2 / (1+forest.z_qso)   )
             
+            lrebinrest = np.log10( l_rebin / ( 1 + forest.z_qso ) )
+            lrebinmask = ( lrebinrest > forest.log_lambda_min_rest_frame) & ( lrebinrest < forest.log_lambda_max_rest_frame) & (np.log10(l_rebin) > forest.log_lambda_min ) & (  (l_rebin) < ( 10**forest.log_lambda_max - 1) )
+
             lmask = (lnrest > forest.log_lambda_min_rest_frame) & (lnrest < forest.log_lambda_max_rest_frame) & (np.log10(l2) > forest.log_lambda_min ) & (  (l2) < ( 10**forest.log_lambda_max - 1) )
             forest.log_lambda = np.log10( l2[lmask]  )
             forest.flux = flux[lmask]
@@ -467,8 +472,12 @@ def blindData(data, z_, zmz_, l_, lol_):
             #forest.delta = delta[lmask]
             #forest.weights = weights[lmask]
             #forest.cont = forest.cont[lmask]
+            
+            diff = len(l_rebin) - sum(lrebinmask)
+
+            lpix.append( np.hstack(( Za, forest.z_qso, diff, len(l_rebin) ))  )
 
             #print(vars(forest), dir(forest))
             #userprint(vars(forest), dir(forest))
-            
+    np.save('/global/homes/s/sfbeltr/respaldo/losspixels.picca', lpix)        
     return data

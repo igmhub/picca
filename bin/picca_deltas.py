@@ -427,7 +427,7 @@ def main(cmdargs):
     args = parser.parse_args(cmdargs)
 
     assert (args.blinding_desi in ACCEPTED_BLINDING_STRATEGIES)
-    print("\nBlinding ver 0.07.20.13.47\n")
+    print("\nBlinding ver 0.07.21.20.31\n")
     # comment this when ready to unblind
     if args.blinding_desi == "none":
         print("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
