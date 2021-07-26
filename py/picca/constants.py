@@ -182,7 +182,7 @@ class Cosmo(object):
         else:
             userprint(f"ATTENTION: Analysis is blinded with strategy {blinding}")
 
-        if blinding not in  ["strategyB", "strategyBC"]:
+        if blinding not in  ["strategyA", "strategyB", "strategyBC", "strategyABC"]:
             userprint(f"Om={Om}, Or={Or}, wl={wl}, H0={H0}")
         else:
             userprint("The specified cosmology is "
