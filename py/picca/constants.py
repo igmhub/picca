@@ -455,29 +455,26 @@ def blindData(data, z_, zmz_, l_, lol_):
             l = 10**( forest.log_lambda )
             lol_rebin = resample_flux( l, l_, lol_ )
 
-            l_rebin = lol_rebin*l
+            l_rebin = lol_rebin*l     #this new vector is not linearly spaced in lambda
+            # creating new linear loglam interval to save all data
             l2 = 10**( np.arange(np.log10( np.min(l_rebin)), np.log10(np.max(l_rebin)) , forest.delta_log_lambda)   )
-            # l2 = l-( l[0]-l_rebin[0] )
-            flux, ivar = resample_flux(l2, l_rebin, forest.flux, ivar=forest.ivar )
-            # delta, weights = resample_flux(l2, l_rebin, forest.delta, ivar=forest.weights ) 
+            # l2 = l-( l[0]-l_rebin[0] )  #to use original picca interval, just shifting it (more data loss)
+            flux, ivar = resample_flux(l2, l_rebin, forest.flux, ivar=forest.ivar )   #rebbining while conserving flux
             lnrest = np.log10(   l2 / (1+forest.z_qso)   )
             
-            lrebinrest = np.log10( l_rebin / ( 1 + forest.z_qso ) )
-            lrebinmask = ( lrebinrest > forest.log_lambda_min_rest_frame) & ( lrebinrest < forest.log_lambda_max_rest_frame) & (np.log10(l_rebin) > forest.log_lambda_min ) & (  (l_rebin) < ( 10**forest.log_lambda_max - 1) )
+            # to calc pixel loss
+            #lrebinrest = np.log10( l_rebin / ( 1 + forest.z_qso ) )
+            #lrebinmask = ( lrebinrest > forest.log_lambda_min_rest_frame) & ( lrebinrest < forest.log_lambda_max_rest_frame) & (np.log10(l_rebin) > forest.log_lambda_min ) & (  (l_rebin) < ( 10**forest.log_lambda_max - 1) )
 
+            # mask: first two for restframe lya range, last two to prep_del obs frame stacks  
             lmask = (lnrest > forest.log_lambda_min_rest_frame) & (lnrest < forest.log_lambda_max_rest_frame) & (np.log10(l2) > forest.log_lambda_min ) & (  (l2) < ( 10**forest.log_lambda_max - 1) )
             forest.log_lambda = np.log10( l2[lmask]  )
             forest.flux = flux[lmask]
             forest.ivar = ivar[lmask]
-            #forest.delta = delta[lmask]
-            #forest.weights = weights[lmask]
-            #forest.cont = forest.cont[lmask]
             
-            diff = len(l_rebin) - sum(lrebinmask)
-
-            lpix.append( np.hstack(( Za, forest.z_qso, diff, len(l_rebin) ))  )
-
-            #print(vars(forest), dir(forest))
-            #userprint(vars(forest), dir(forest))
-    np.save('/global/homes/s/sfbeltr/respaldo/losspixels.picca', lpix)        
+            # pixel loss
+            #diff = len(l_rebin) - sum(lrebinmask)
+            #lpix.append( np.hstack(( Za, forest.z_qso, diff, len(l_rebin) ))  )
+    # pixel loss
+    #np.save('/global/homes/s/sfbeltr/respaldo/losspixels.picca', lpix)        
     return data
