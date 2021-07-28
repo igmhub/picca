@@ -5,6 +5,7 @@ object
 This module follow the procedure described in sections 3.5 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+import sys
 import time
 import argparse
 import multiprocessing
@@ -36,7 +37,7 @@ def calc_dmat(healpixs):
     return dmat_data
 
 
-def main():
+def main(cmdargs):
     """Computes the distortion matrix of the cross-correlation delta x
     object."""
     parser = argparse.ArgumentParser(
@@ -218,7 +219,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -240,11 +241,15 @@ def main():
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.reject = args.rej
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            blinding=blinding)
 
     t0 = time.time()
 
@@ -400,10 +405,17 @@ def main():
             'name': 'WL',
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }, {
+            'name': "BLINDING",
+            'value': blinding,
+            'comment': 'String specifying the blinding strategy'
         }
         ]
+    dmat_name = "DM"
+    if blinding != "none":
+        dmat_name += "_BLIND"
     results.write([weights_dmat, dmat],
-                  names=['WDM', 'DM'],
+                  names=['WDM', dmat_name],
                   comment=['Sum of weight', 'Distortion matrix'],
                   units=['', ''],
                   header=header,
@@ -419,4 +431,5 @@ def main():
     userprint(f'picca_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes')
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

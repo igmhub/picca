@@ -5,6 +5,7 @@ delta field.
 This module follow the procedure described in sections 3.1 and 3.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the 3D Lyman-alpha auto-correlation.
 """
+import sys
 import time
 import argparse
 import multiprocessing
@@ -36,7 +37,7 @@ def corr_func(healpixs):
     return correlation_function_data
 
 
-def main():
+def main(cmdargs):
     """Compute the cross-correlation between a catalog of objects and a delta
     field."""
     parser = argparse.ArgumentParser(
@@ -236,7 +237,7 @@ def main():
         help=('Shuffle the distribution of forests on the sky following the '
               'given seed. Do not shuffle if None'))
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -251,14 +252,18 @@ def main():
     xcf.nside = args.nside
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            blinding=blinding)
 
     t0 = time.time()
-    
+
     # Find the redshift range
     if args.z_min_obj is None:
         r_comov_min = cosmo.get_r_comov(z_min)
@@ -276,7 +281,7 @@ def main():
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
                                    cosmo, mode=args.mode)
     xcf.objs = objs
-    
+
     ### Read deltas
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
                                                   args.nside,
@@ -414,7 +419,12 @@ def main():
         'name': 'WL',
         'value': args.fid_wl,
         'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-    }]
+    }, {
+        'name': "BLINDING",
+        'value': blinding,
+        'comment': 'String specifying the blinding strategy'
+    }
+    ]
     results.write(
         [r_par, r_trans, z, num_pairs],
         names=['RP', 'RT', 'Z', 'NB'],
@@ -428,8 +438,11 @@ def main():
         'value': 'RING',
         'comment': 'Healpix scheme'
     }]
+    da_name = "DA"
+    if blinding != "none":
+        da_name += "_BLIND"
     results.write([healpix_list, weights_list, xi_list],
-                  names=['HEALPID', 'WE', 'DA'],
+                  names=['HEALPID', 'WE', da_name],
                   comment=['Healpix index', 'Sum of weight', 'Correlation'],
                   header=header2,
                   extname='COR')
@@ -440,4 +453,5 @@ def main():
     userprint(f'picca_xcf.py - Time total: {(t3-t0)/60:.3f} minutes')
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

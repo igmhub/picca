@@ -35,7 +35,7 @@ def calc_wick_terms(healpixs):
     return wick_data
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes the wick covariance for the auto-correlation of forests"""
     parser = argparse.ArgumentParser(
@@ -254,7 +254,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -277,6 +277,9 @@ def main():
     cf.reject = args.rej
     cf.max_diagram = args.max_diagram
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load cosmology
     if (args.fid_Or != 0.) or (args.fid_Ok != 0.) or (args.fid_wl != -1.):
         userprint(("ERROR: Cosmology with other than Omega_m set are not yet "
@@ -285,7 +288,8 @@ def main():
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            blinding=blinding)
 
     # read data 1
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
@@ -414,7 +418,10 @@ def main():
     context = multiprocessing.get_context('fork')
     pool = context.Pool(processes=min(args.nproc, len(cpu_data.values())))
     userprint(" \nStarting\n")
-    wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
+    if args.nproc>1:
+        wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
+    else:
+        wick_data = [calc_wick_terms(arg) for arg in sorted(cpu_data.values())]
     userprint(" \nFinished\n")
     pool.close()
 
@@ -514,6 +521,10 @@ def main():
             'name': 'WL',
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }, {
+            'name': "BLINDING",
+            'value': blinding,
+            'comment': 'String specifying the blinding strategy'
         }
         ]
     comment = [
@@ -530,4 +541,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

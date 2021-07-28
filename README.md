@@ -51,9 +51,11 @@ picca_deltas.py
 --mode pix
 ```
 
-*   `--mode` can be `pix` (Anze/Jose format), `spec` (spec- files) or `corrected-spec` (corrected-spec files)
-*   `--in-dir` points to the directory containing the data
+*   for eBOSS, currently `--mode` can be  `spplate`, `spec`, `pix`, or `spcframe`, all but the first 2 are about to be retired
 *   NOTE: reading the spec files is *very* slow
+*   for DESI currently `--mode` can be `desi_mocks` (for reading healpix based mocks), `desi_survey_tilebased` (for reading cumulative tiles directories and coadding data across tiles) or `desi_sv_no_coadd` (for reading tile based directories without coadding, will probably be retired)
+*   `--in-dir` points to the directory containing the data (in case of `desi_survey_tilebased` the full path until and including `cumulative` is needed, in case of `desi-mocks` the full path until `spectra-16`)
+*   the `--drq` points towards a quasar catalog in either the DESI format or eBOSS format
 
 ### correlation function
 
