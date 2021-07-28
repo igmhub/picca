@@ -324,6 +324,8 @@ class TestDelta(AbstractTest):
         cmd += " --iter-out-prefix " + self._branchFiles + \
             "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes"
         cmd += " --log " + self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Log/input.log"
+        cmd += " --metadata " + self._branchFiles + \
+            "/Products/Delta_LYA/Log/metadata.fits"
         cmd += " --delta-format Pk1D --mode desiminisv --order 0 --use-constant-weight"
         cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
         cmd += " --nproc 1"
@@ -386,6 +388,8 @@ class TestDelta(AbstractTest):
         cmd += " --iter-out-prefix " + self._branchFiles + \
             "/Products/Delta_Pk1D/Log/delta_attributes"
         cmd += " --log " + self._branchFiles + "/Products/Delta_Pk1D/Log/input.log"
+        cmd += " --metadata " + self._branchFiles + \
+            "/Products/Delta_LYA/Log/metadata.fits"
         cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight"
         cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
         cmd += " --nproc 1"
