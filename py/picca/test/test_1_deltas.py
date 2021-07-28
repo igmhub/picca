@@ -345,7 +345,7 @@ class TestDelta(AbstractTest):
             path2 = self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes.fits.gz"
             self.compare_fits(path1, path2, "picca_deltas.py")
 
-            path1 = self._masterFiles + "/test_delta/metadata_Pk1D_MiniSV.fits.gz"
+            path1 = self._masterFiles + "/test_delta/metadata_Pk1D_MiniSV.fits"
             path2 = self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Log/metadata.fits"
             self.compare_fits(path1, path2, "picca_deltas.py")
 
