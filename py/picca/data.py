@@ -545,7 +545,13 @@ class Forest(QSO):
 
         error = 1.0 / np.sqrt(ivar)
         snr = flux / error
-        self.mean_snr = np.average(snr, weights=self.ivar)
+        # TODO: change mean_snr_save to mean_snr.
+        # Begore that, check implications on the different computation of mean_snr
+        # a 'more correct' way of computed is stored in mean_snr_save and
+        # saved in the metadata file, but we need to check how changes
+        # are propagated through the analysis.
+        self.mean_snr_save = np.average(snr, weights=self.ivar)
+        self.mean_snr = snr.mean()
         lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
                         np.power(10., log_lambda[0])) / 2. / lambda_abs_igm -
@@ -618,7 +624,9 @@ class Forest(QSO):
             self.mean_reso = self.reso.mean()
         error = 1. / np.sqrt(self.ivar)
         snr = self.flux / error
-        self.mean_snr = np.average(snr, weights=self.ivar)
+        # TODO: change mean_snr_save to mean_snr.
+        self.mean_snr_save = np.average(snr, weights=self.ivar)
+        self.mean_snr = snr.mean()
         lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
                         np.power(10., log_lambda[0])) / 2. / lambda_abs_igm -

@@ -38,9 +38,11 @@ def get_metadata(data):
     ''' Constructs an astropy.table from all forests' metadata
     '''
     tab = Table()
+    # TODO: change mean_snr_save to mean_snr once this is properly treated
+    # in data.py
     for field in [
             'ra', 'dec', 'z_qso', 'thingid', 'plate', 'mjd', 'fiberid',
-            'mean_snr', 'p0', 'p1'
+            'mean_snr_save', 'p0', 'p1'
     ]:
         column_values = []
         for healpix in data:
