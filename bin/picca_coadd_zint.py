@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Coadd correlation function from different redshift intervals"""
 import os
+import sys
 import argparse
 import fitsio
 import numpy as np
@@ -380,7 +381,7 @@ def coadd_dmats(input_files,output_file):
 
     return
 
-def main():
+def main(cmdargs):
     """Coadds correlation function from different redshift intervals"""
     parser = argparse.ArgumentParser()
 
@@ -406,7 +407,7 @@ def main():
                         required=False,
                         help="name of dmat output file")
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     if args.data is None and args.dmats is None:
         raise IOError('No input correlations or dmats provided!')
@@ -427,4 +428,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

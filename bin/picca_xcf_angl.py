@@ -2,6 +2,7 @@
 """Compute the cross-correlation between a catalog of objects and a delta field
 as a function of angle and wavelength ratio
 """
+import sys
 import argparse
 import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
@@ -32,7 +33,7 @@ def corr_func(healpixs):
     return correlation_function_data
 
 
-def main():
+def main(cmdargs):
     """Computes the cross-correlation between a catalog of objects and a delta
     field as a function of angle and wavelength ratio"""
     parser = argparse.ArgumentParser(
@@ -218,7 +219,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -235,11 +236,15 @@ def main():
     xcf.ang_max = args.ang_max
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            blinding=blinding)
 
     ### Read deltas
     data, num_data, z_min, z_max = io.read_deltas(
@@ -372,8 +377,11 @@ def main():
         'value': 'RING',
         'comment': ' Healpix scheme'
     }]
+    xi_list_name = "DA"
+    if blinding != "none":
+        xi_list_name += "_BLIND"
     results.write([healpix_list, weights_list, xi_list],
-                  names=['HEALPID', 'WE', 'DA'],
+                  names=['HEALPID', 'WE', xi_list_name],
                   comment=['Healpix index', 'Sum of weight', 'Correlation'],
                   header=header2,
                   extname='COR')
@@ -382,4 +390,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

@@ -19,6 +19,7 @@ from scipy.interpolate import interp1d
 from picca.data import Forest, Delta
 from picca import prep_del, io, constants, bal_tools
 from picca.utils import userprint
+from picca.constants import ACCEPTED_BLINDING_STRATEGIES
 
 
 def cont_fit(forests):
@@ -127,7 +128,7 @@ def get_delta_from_forest(forest,
     forest.ivar = ivar
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes delta field"""
     parser = argparse.ArgumentParser(
@@ -169,8 +170,10 @@ def main():
                         type=str,
                         default='pix',
                         required=False,
-                        help=('Open mode of the spectra files: pix, spec, '
-                              'spcframe, spplate, desi'))
+                        help=('''Open mode of the spectra files: pix, spec, 
+                              spcframe, spplate, desi_mocks (formerly known as desi), 
+                              desi_survey_tilebased (for tilebased data with coadding), 
+                              desi_sv_no_coadd (without coadding across tiles, will output in tile format)'''))
 
     parser.add_argument('--best-obs',
                         action='store_true',
@@ -424,10 +427,23 @@ def main():
                         default=False,
                         required=False,
                         help=('Use all dir for input spectra (DESI SV)'))
+    parser.add_argument('--blinding-desi',
+                        type=str,
+                        default="minimal",
+                        required=False,
+                        help='Blinding strategy. "none" for no blinding')
+
 
     t0 = time.time()
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
+
+    assert (args.blinding_desi in ACCEPTED_BLINDING_STRATEGIES)
+
+    # comment this when ready to unblind
+    if args.blinding_desi == "none":
+        print("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
+        args.blinding_desi = "minimal"
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
@@ -472,6 +488,7 @@ def main():
                                 kind="nearest")
     Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp, 1 + np.zeros(2))
 
+
     #-- Check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
         if (args.order != 0) and (args.order != 1):
@@ -509,21 +526,23 @@ def main():
 
     # Read data
     (data, num_data, nside,
-     healpy_pix_ordering) = io.read_data(os.path.expandvars(args.in_dir),
-                                         args.drq,
-                                         args.mode,
-                                         z_min=args.zqso_min,
-                                         z_max=args.zqso_max,
-                                         max_num_spec=args.nspec,
-                                         log_file=log_file,
-                                         keep_bal=args.keep_bal,
-                                         bi_max=args.bi_max,
-                                         best_obs=args.best_obs,
-                                         single_exp=args.single_exp,
-                                         pk1d=args.delta_format,
-                                         spall=args.spall,
-                                         useall=args.use_all,
-                                         usesinglenights=args.use_single_nights)
+     healpy_pix_ordering,
+     blinding) = io.read_data(os.path.expandvars(args.in_dir),
+                              args.drq,
+                              args.mode,
+                              z_min=args.zqso_min,
+                              z_max=args.zqso_max,
+                              max_num_spec=args.nspec,
+                              log_file=log_file,
+                              keep_bal=args.keep_bal,
+                              bi_max=args.bi_max,
+                              best_obs=args.best_obs,
+                              single_exp=args.single_exp,
+                              pk1d=args.delta_format,
+                              spall=args.spall,
+                              useall=args.use_all,
+                              usesinglenights=args.use_single_nights,
+                              blinding_desi=args.blinding_desi)
 
     #-- Add order info
     for pix in data:
@@ -609,7 +628,7 @@ def main():
                     mask_obs_frame_bal = []
                     mask_rest_frame_bal = bal_tools.add_bal_rest_frame(
                         bal_cat, forest.thingid, args.bal_index)
-                    forest.mask(mask_obs_frame_bal, mask_rest_frame_bal)
+                    forest.mask(mask_rest_frame_bal)
                     num_bal += 1
         log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
 
@@ -924,8 +943,17 @@ def main():
                         'value': delta.order,
                         'comment': 'Order of the continuum fit'
                     },
+                    {
+                        'name': "BLINDING",
+                        'value': blinding,
+                        'comment': 'String specifying the blinding strategy'
+                    },
                 ]
 
+                if blinding != "none":
+                    delta_name = "DELTA_BLIND"
+                else:
+                    delta_name = "DELTA"
                 if args.delta_format == 'Pk1D':
                     header += [
                         {
@@ -963,7 +991,7 @@ def main():
                         delta.log_lambda, delta.delta, delta.ivar,
                         exposures_diff
                     ]
-                    names = ['LOGLAM', 'DELTA', 'IVAR', 'DIFF']
+                    names = ['LOGLAM', delta_name, 'IVAR', 'DIFF']
                     units = ['log Angstrom', '', '', '']
                     comments = [
                         'Log lambda', 'Delta field', 'Inverse variance',
@@ -973,7 +1001,7 @@ def main():
                     cols = [
                         delta.log_lambda, delta.delta, delta.ivar, delta.weights, delta.cont
                     ]
-                    names = ['LOGLAM', 'DELTA', 'IVAR', 'WEIGHT', 'CONT']
+                    names = ['LOGLAM', delta_name, 'IVAR', 'WEIGHT', 'CONT']
                     units = ['log Angstrom', '', '', '', '']
                     comments = [
                         'Log lambda', 'Delta field', 'Inverse variance', 'Pixel weights',
@@ -999,4 +1027,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

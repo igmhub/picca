@@ -29,12 +29,26 @@ class data:
         Om = dic_init['model']['Om']
         OL = dic_init['model']['OL']
 
-
         fdata = dic_init['data']['filename']
         h = fitsio.FITS(fdata)
-        da = h[1]['DA'][:]
+        head = h[1].read_header()
+
+        blinding = "none"
+        if 'BLINDING' in head:
+            blinding = head["BLINDING"]
+
+        if blinding == "minimal":
+            da = h[1]['DA_BLIND'][:]
+            dm = csr_matrix(h[1]['DM_BLIND'][:])
+            self._blind = True
+        elif blinding == "none":
+            da = h[1]['DA'][:]
+            dm = csr_matrix(h[1]['DM'][:])
+            self._blind = False
+        else:
+            raise ValueError("Unknown blinding strategy. Only 'minimal' implemented.")
+
         co = h[1]['CO'][:]
-        dm = csr_matrix(h[1]['DM'][:])
         rp = h[1]['RP'][:]
         rt = h[1]['RT'][:]
         z = h[1]['Z'][:]
@@ -47,7 +61,6 @@ class data:
             dmrt = rt.copy()
             dmz = z.copy()
         coef_binning_model = np.sqrt(dmrp.size/rp.size)
-        head = h[1].read_header()
 
         h.close()
 
@@ -228,6 +241,11 @@ class data:
         self.par_limit = dic_init['parameters']['limits']
         self.par_fixed = dic_init['parameters']['fix']
 
+        if self._blind and (('fix_ap' not in self.par_fixed.keys()) or (not self.par_fixed['fix_ap'])):
+            raise ValueError("Running on blind data, please fix ap (and at)!")
+        if self._blind and (('fix_at' not in self.par_fixed.keys()) or (not self.par_fixed['fix_at'])):
+            raise ValueError("Running on blind data, please fix at (ap is fixed already)!")
+
         self.dm_met = {}
         self.rp_met = {}
         self.rt_met = {}
@@ -267,19 +285,22 @@ class data:
                     self.rp_met[(self.tracer1['name'], m)] = hmet[2]["RP_{}_{}".format(self.tracer1['name'],m)][:]
                     self.rt_met[(self.tracer1['name'], m)] = hmet[2]["RT_{}_{}".format(self.tracer1['name'],m)][:]
                     self.z_met[(self.tracer1['name'], m)] = hmet[2]["Z_{}_{}".format(self.tracer1['name'],m)][:]
-
+                    
+                    metal_mat_name = "DM_{}_{}".format(self.tracer1['name'], m)
+                    if self._blind:
+                        metal_mat_name = "DM_BLIND_{}_{}".format(self.tracer1['name'], m)
                     try:
-                        self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1['name'],m)][:])
+                        self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[2][metal_mat_name][:])
                     except:
-                        self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[3]["DM_{}_{}".format(self.tracer1['name'],m)][:])
+                        self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[3][metal_mat_name][:])
 
                     self.rp_met[(m, self.tracer1['name'])] = hmet[2]["RP_{}_{}".format(self.tracer1['name'],m)][:]
                     self.rt_met[(m, self.tracer1['name'])] = hmet[2]["RT_{}_{}".format(self.tracer1['name'],m)][:]
                     self.z_met[(m, self.tracer1['name'])] = hmet[2]["Z_{}_{}".format(self.tracer1['name'],m)][:]
                     try:
-                        self.dm_met[(m, self.tracer1['name'])] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1['name'],m)][:])
+                        self.dm_met[(m, self.tracer1['name'])] = csr_matrix(hmet[2][metal_mat_name][:])
                     except:
-                        self.dm_met[(m, self.tracer1['name'])] = csr_matrix(hmet[3]["DM_{}_{}".format(self.tracer1['name'],m)][:])
+                        self.dm_met[(m, self.tracer1['name'])] = csr_matrix(hmet[3][metal_mat_name][:])
 
             else:
                 if 'in tracer2' in dic_init['metals']:
@@ -288,10 +309,14 @@ class data:
                         self.rp_met[(self.tracer1['name'], m)] = hmet[2]["RP_{}_{}".format(self.tracer1['name'],m)][:]
                         self.rt_met[(self.tracer1['name'], m)] = hmet[2]["RT_{}_{}".format(self.tracer1['name'],m)][:]
                         self.z_met[(self.tracer1['name'], m)] = hmet[2]["Z_{}_{}".format(self.tracer1['name'],m)][:]
+
+                        metal_mat_name = "DM_{}_{}".format(self.tracer1['name'], m)
+                        if self._blind:
+                            metal_mat_name = "DM_BLIND_{}_{}".format(self.tracer1['name'], m)
                         try:
-                            self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[2]["DM_{}_{}".format(self.tracer1['name'],m)][:])
+                            self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[2][metal_mat_name][:])
                         except:
-                            self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[3]["DM_{}_{}".format(self.tracer1['name'],m)][:])
+                            self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[3][metal_mat_name][:])
 
                 if 'in tracer1' in dic_init['metals']:
                     for m in dic_init['metals']['in tracer1']:
@@ -299,11 +324,14 @@ class data:
                         self.rp_met[(m, self.tracer2['name'])] = hmet[2]["RP_{}_{}".format(m, self.tracer2['name'])][:]
                         self.rt_met[(m, self.tracer2['name'])] = hmet[2]["RT_{}_{}".format(m, self.tracer2['name'])][:]
                         self.z_met[(m, self.tracer2['name'])] = hmet[2]["Z_{}_{}".format(m, self.tracer2['name'])][:]
-
+                        
+                        metal_mat_name = "DM_{}_{}".format(m, self.tracer2['name'])
+                        if self._blind:
+                            metal_mat_name = "DM_BLIND_{}_{}".format(m, self.tracer2['name'])
                         try:
-                            self.dm_met[(m, self.tracer2['name'])] = csr_matrix(hmet[2]["DM_{}_{}".format(m, self.tracer2['name'])][:])
+                            self.dm_met[(m, self.tracer2['name'])] = csr_matrix(hmet[2][metal_mat_name][:])
                         except:
-                            self.dm_met[(m, self.tracer2['name'])] = csr_matrix(hmet[3]["DM_{}_{}".format(m, self.tracer2['name'])][:])
+                            self.dm_met[(m, self.tracer2['name'])] = csr_matrix(hmet[3][metal_mat_name][:])
 
             ## add metal-metal cross correlations
             if 'in tracer1' in dic_init['metals'] and 'in tracer2' in dic_init['metals']:
@@ -315,14 +343,20 @@ class data:
                         self.rp_met[(m1, m2)] = hmet[2]["RP_{}_{}".format(m1,m2)][:]
                         self.rt_met[(m1, m2)] = hmet[2]["RT_{}_{}".format(m1,m2)][:]
                         self.z_met[(m1, m2)] = hmet[2]["Z_{}_{}".format(m1,m2)][:]
+
+                        metal_mat_name = "DM_{}_{}".format(m1,m2)
+                        if self._blind:
+                            metal_mat_name = "DM_BLIND_{}_{}".format(m1,m2)
                         try:
-                            self.dm_met[(m1, m2)] = csr_matrix(hmet[2]["DM_{}_{}".format(m1,m2)][:])
+                            self.dm_met[(m1, m2)] = csr_matrix(hmet[2][metal_mat_name][:])
                         except ValueError:
-                            self.dm_met[(m1, m2)] = csr_matrix(hmet[3]["DM_{}_{}".format(m1,m2)][:])
+                            self.dm_met[(m1, m2)] = csr_matrix(hmet[3][metal_mat_name][:])
 
             hmet.close()
 
     def xi_model(self, k, pk_lin, pars):
+        pars['blind'] = self._blind
+
         xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, \
                     tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
 
@@ -376,6 +410,7 @@ class data:
         return xi
 
     def chi2(self, k, pk_lin, pksb_lin, full_shape, pars):
+        pars['blind'] = self._blind
         xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
 
         pars['SB'] = True & (not full_shape)
@@ -384,6 +419,7 @@ class data:
         pars['sigmaNL_par'] = 0.
         pars['sigmaNL_per'] = 0.
         xi_sb = self.xi_model(k, pksb_lin, pars)
+
         pars['SB'] = False
         pars['sigmaNL_par'] = sigmaNL_par
         pars['sigmaNL_per'] = sigmaNL_per
