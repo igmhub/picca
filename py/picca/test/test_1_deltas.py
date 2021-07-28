@@ -290,6 +290,8 @@ class TestDelta(AbstractTest):
         cmd += " --out-dir " + self._branchFiles + "/Products/Delta_LYA/Delta/"
         cmd += " --iter-out-prefix " + self._branchFiles + \
             "/Products/Delta_LYA/Log/delta_attributes"
+        cmd += " --metadata " + self._branchFiles + \
+            "/Products/Delta_LYA/Log/metadata.fits"
         cmd += " --log " + self._branchFiles + "/Products/Delta_LYA/Log/input.log"
         cmd += " --nproc 1"
         picca_deltas.main(cmd.split()[1:])

@@ -999,8 +999,8 @@ def main(cmdargs):
                     cols = [
                         delta.log_lambda, delta.delta, delta.ivar, delta.weights, delta.cont
                     ]
-                    names = ['LOGLAM', delta_name, 'WEIGHT', 'CONT']
-                    units = ['log Angstrom', '', '', '']
+                    names = ['LOGLAM', delta_name, 'IVAR', 'WEIGHT', 'CONT']
+                    units = ['log Angstrom', '', '', '', '']
                     comments = [
                         'Log lambda', 'Delta field', 'Inverse variance', 'Pixel weights',
                         'Continuum'
