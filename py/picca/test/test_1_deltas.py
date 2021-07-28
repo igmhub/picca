@@ -302,6 +302,10 @@ class TestDelta(AbstractTest):
             path2 = self._branchFiles + "/Products/Delta_LYA/Log/delta_attributes.fits.gz"
             self.compare_fits(path1, path2, "picca_deltas.py")
 
+            path1 = self._masterFiles + "/test_delta/metadata.fits"
+            path2 = self._branchFiles + "/Products/Delta_LYA/Log/metadata.fits"
+            self.compare_fits(path1, path2, "picca_deltas.py")
+
         return
 
 
@@ -325,7 +329,7 @@ class TestDelta(AbstractTest):
             "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes"
         cmd += " --log " + self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Log/input.log"
         cmd += " --metadata " + self._branchFiles + \
-            "/Products/Delta_LYA/Log/metadata.fits"
+            "/Products/Delta_Pk1D_MiniSV/Log/metadata.fits"
         cmd += " --delta-format Pk1D --mode desiminisv --order 0 --use-constant-weight"
         cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
         cmd += " --nproc 1"
@@ -339,6 +343,10 @@ class TestDelta(AbstractTest):
         if self._test:
             path1 = self._masterFiles + "/test_delta/delta_attributes_Pk1D_MiniSV.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Log/delta_attributes.fits.gz"
+            self.compare_fits(path1, path2, "picca_deltas.py")
+
+            path1 = self._masterFiles + "/test_delta/metadata_Pk1D_MiniSV.fits.gz"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D_MiniSV/Log/metadata.fits"
             self.compare_fits(path1, path2, "picca_deltas.py")
 
             #this checks if any of the output delta files changed
@@ -389,7 +397,7 @@ class TestDelta(AbstractTest):
             "/Products/Delta_Pk1D/Log/delta_attributes"
         cmd += " --log " + self._branchFiles + "/Products/Delta_Pk1D/Log/input.log"
         cmd += " --metadata " + self._branchFiles + \
-            "/Products/Delta_LYA/Log/metadata.fits"
+            "/Products/Delta_Pk1D/Log/metadata.fits"
         cmd += " --delta-format Pk1D --mode spec --order 0 --use-constant-weight"
         cmd += " --rebin 1 --lambda-min 3650. --lambda-max 7200.0 --lambda-rest-min 1050.0 --lambda-rest-max 1180"
         cmd += " --nproc 1"
@@ -402,6 +410,10 @@ class TestDelta(AbstractTest):
         if self._test:
             path1 = self._masterFiles + "/test_delta/delta_attributes_Pk1D.fits.gz"
             path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/delta_attributes.fits.gz"
+            self.compare_fits(path1, path2, "picca_deltas.py")
+
+            path1 = self._masterFiles + "/test_delta/metadata_Pk1D.fits"
+            path2 = self._branchFiles + "/Products/Delta_Pk1D/Log/metadata.fits"
             self.compare_fits(path1, path2, "picca_deltas.py")
 
             path1 = self._masterFiles + "/test_delta/delta-64_Pk1D.fits.gz"
