@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-
+import sys
 from astropy.io import fits
 import numpy as np
 import argparse
 
-if __name__ == '__main__':
-
+def main(cmdargs):
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--prefix-pk', type=str, default=None, required=True,
@@ -39,7 +38,7 @@ if __name__ == '__main__':
         help='Sound horizon at the drag epoch')
 
 
-    args=parser.parse_args()
+    args=parser.parse_args(cmdargs)
 
     pk=np.loadtxt(args.prefix_pk+'_matterpower.dat')
     pkSB=np.loadtxt(args.prefix_pk+'SB_matterpower.dat')
@@ -59,3 +58,8 @@ if __name__ == '__main__':
     head['rdrag']=args.rdrag
     tbhdu=fits.BinTableHDU.from_columns(cols,header=head)
     tbhdu.writeto(args.out,clobber=True)
+
+
+if __name__ == '__main__':
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

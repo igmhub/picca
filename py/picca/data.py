@@ -1,7 +1,7 @@
 """This module defines data structure to deal with line of sight data.
 
 This module provides with three classes (QSO, Forest, Delta)
-to manage the line-of-sight data. 
+to manage the line-of-sight data.
 See the respective docstrings for more details
 """
 import numpy as np
@@ -573,7 +573,10 @@ class Forest(QSO):
             The coadded forest.
         """
         if self.log_lambda is None or other.log_lambda is None:
-            return self
+            if other.log_lambda is None:
+                return self
+            else:
+                return other
 
         # this should contain all quantities that are to be coadded using
         # ivar weighting
@@ -1028,7 +1031,19 @@ class Delta(QSO):
         """
         header = hdu.read_header()
 
-        delta = hdu['DELTA'][:].astype(float)
+        # new runs of picca_deltas should have a blinding keyword
+        if "BLINDING" in header:
+            blinding = header["BLINDING"]
+        # older runs are not from DESI main survey and should not be blinded
+        else:
+            blinding = "none"
+
+        if blinding != "none":
+            delta_name = "DELTA_BLIND"
+        else:
+            delta_name = "DELTA"
+
+        delta = hdu[delta_name][:].astype(float)
         log_lambda = hdu['LOGLAM'][:].astype(float)
 
         if pk1d_type:
