@@ -99,6 +99,10 @@ class AbstractTest(unittest.TestCase):
                                         (np.allclose(orig_data[col],
                                                      new_data[col],
                                                      equal_nan=True)))
+                    for col in new_data.dtype.names:
+                        if col not in orig_data:
+                            print(f"Column {col} missing in orig header")
+                        self.assertTrue(col in orig_data.dtype.names)
         finally:
             orig_hdul.close()
             new_hdul.close()
