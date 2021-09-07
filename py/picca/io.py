@@ -1296,7 +1296,8 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 if forest is None:
                     forest = copy.deepcopy(forest_temp)
                 else:
-                    forest.coadd(forest_temp)
+                    #need to do the function call here to allow passing back forest_temp if forest is invalid
+                    forest = forest.coadd(forest_temp)
             if not usehealpix:
                 if plate_spec not in data:
                     data[plate_spec] = []
@@ -1307,16 +1308,16 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                     data[in_healpixs[w_t]] = []
                 #this might be slow, but would coadd objects with the same targetid even if on multiple tiles
                 do_append=True
-                for index_coadd,forest_existing in enumerate(data[in_healpixs[w_t]]):
+                for forest_existing in data[in_healpixs[w_t]]:
                     if forest_existing.thingid==forest.thingid:
+                        #the method call works as long as only valid forests are stored below
                         forest_existing.coadd(forest)
                         do_append=False
                         break
-                if do_append:
+                #need to make sure that the forest is valid and the object isn't already in
+                if do_append and forest.log_lambda is not None:
                     data[in_healpixs[w_t]].append(forest)
                     num_data += 1
-
-
 
     userprint("found {} quasars in input files\n".format(num_data))
 

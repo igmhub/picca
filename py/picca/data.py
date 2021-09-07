@@ -573,7 +573,10 @@ class Forest(QSO):
             The coadded forest.
         """
         if self.log_lambda is None or other.log_lambda is None:
-            return self
+            if other.log_lambda is None:
+                return self
+            else:
+                return other
 
         # this should contain all quantities that are to be coadded using
         # ivar weighting
