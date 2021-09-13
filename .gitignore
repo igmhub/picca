@@ -10,3 +10,5 @@
 \build/
 
 py/picca\.egg-info/
+
+.ipynb_checkpoints
