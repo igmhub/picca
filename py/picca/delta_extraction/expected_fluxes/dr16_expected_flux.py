@@ -591,6 +591,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 delta = forest.delta
                 weights = forest.weights
             else:
+                # ignore forest if continuum could not be computed
+                if forest.continuum is None:
+                    continue
                 delta = forest.flux / forest.continuum
                 if Forest.wave_solution == "log":
                     var_lss = self.get_var_lss(forest.log_lambda)
