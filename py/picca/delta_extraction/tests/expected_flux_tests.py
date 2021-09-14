@@ -53,7 +53,7 @@ class ExpectedFluxTest(AbstractTest):
         config = ConfigParser()
         config.read_dict(
             {"expected flux": {
-                "iter out prefix": "results/iter_out_prefix"
+                "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix"
             }})
         # this should raise an error as iter out prefix should not have a folder
         with self.assertRaises(ExpectedFluxError):
@@ -190,7 +190,7 @@ class ExpectedFluxTest(AbstractTest):
 
         out_file = f"{THIS_DIR}/results/iter_out_prefix_compute_expected_flux_log.fits.gz"
         test_file = f"{THIS_DIR}/data/iter_out_prefix_compute_expected_flux_log.fits.gz"
-        out_dir = "results/"
+        out_dir = f"{THIS_DIR}/results/"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -338,7 +338,7 @@ class ExpectedFluxTest(AbstractTest):
         out_file2 = f"{THIS_DIR}/results/iter_out_prefix_log.fits.gz"
         test_file = f"{THIS_DIR}/data/iter_out_prefix_log_iteration1.fits.gz"
         test_file2 = f"{THIS_DIR}/data/iter_out_prefix_log.fits.gz"
-        out_dir = "results/"
+        out_dir = f"{THIS_DIR}/results/"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -373,7 +373,7 @@ class ExpectedFluxTest(AbstractTest):
         out_file2 = f"{THIS_DIR}/results/iter_out_prefix_lin.fits.gz"
         test_file = f"{THIS_DIR}/data/iter_out_prefix_lin_iteration1.fits.gz"
         test_file2 = f"{THIS_DIR}/data/iter_out_prefix_lin.fits.gz"
-        out_dir = "results/"
+        out_dir = f"{THIS_DIR}/results/"
 
         # TODO: save_iteration_step: add linear wavelength solution test
 

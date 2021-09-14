@@ -100,7 +100,7 @@ class AbstractTest(unittest.TestCase):
                                                      new_data[col],
                                                      equal_nan=True)))
                     for col in new_data.dtype.names:
-                        if col not in orig_data:
+                        if col not in orig_data.dtype.names:
                             print(f"Column {col} missing in orig header")
                         self.assertTrue(col in orig_data.dtype.names)
         finally:

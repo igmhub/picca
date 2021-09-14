@@ -12,6 +12,7 @@ from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import reset_logger
+from picca.delta_extraction.tests.test_utils import setup_forest, reset_forest
 from picca.delta_extraction.tests.test_utils import forest1_log_lambda, forest1
 from picca.delta_extraction.tests.test_utils import forest2_log_lambda, forest2
 from picca.delta_extraction.tests.test_utils import forest3_log_lambda, forest3
@@ -30,6 +31,14 @@ class MaskTest(AbstractTest):
     test_dla_mask
     test_mask
     """
+    def setUp(self):
+        reset_forest()
+        setup_forest("log")
+        super().setUp()
+
+    def tearDown(self):
+        reset_forest()
+
     def test_absorber_mask(self):
         """Test correct initialisation and inheritance for class
         SdssAbsorberMask
