@@ -628,10 +628,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         w = stack_weight > 0
         stack_delta[w] /= stack_weight[w]
 
-        for wl, d, we in zip(stack_log_lambda, stack_delta, stack_weight):
-            f.write(f"{wl} {d} {we} 0 0 0\n")
-        f.close()
-
         if Forest.wave_solution == "log":
             self.get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
                                             stack_delta[stack_weight > 0.],
