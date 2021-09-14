@@ -1088,6 +1088,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             if forest.bad_continuum_reason is not None:
                 self.logger.info(f"Rejected forest {forest.los_id} due to "
                                  f"{forest.bad_continuum_reason}\n")
+                continue
             # get the variance functions and statistics
             log_lambda = forest.log_lambda
             stack_delta = self.get_stack_delta(log_lambda)
