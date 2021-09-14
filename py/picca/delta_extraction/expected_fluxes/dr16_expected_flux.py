@@ -814,7 +814,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             self.logger.progress(
                 f"Continuum fitting: ending iteration {iteration} of "
-                "{self.num_iterations}")
+                f"{self.num_iterations}")
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
