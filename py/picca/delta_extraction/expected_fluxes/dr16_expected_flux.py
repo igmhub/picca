@@ -1087,7 +1087,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 self.logger.info(f"Rejected forest {forest.los_id} due to "
-                                 f"{forest.bad_continuum_reason}\n")
+                                 f"{forest.bad_continuum_reason}")
                 continue
             # get the variance functions and statistics
             log_lambda = forest.log_lambda
