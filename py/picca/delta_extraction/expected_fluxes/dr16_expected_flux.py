@@ -887,6 +887,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         # compute delta statistics, binning the variance according to 'ivar'
         for forest in forests:
+            # ignore forest if continuum could not be computed
+            if forest.continuum is None:
+                continue
             var_pipe = 1 / forest.ivar / forest.continuum**2
             w = ((np.log10(var_pipe) > var_pipe_min) &
                  (np.log10(var_pipe) < var_pipe_max))
