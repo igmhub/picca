@@ -586,28 +586,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         stack_delta = np.zeros(num_bins)
         stack_weight = np.zeros(num_bins)
 
-        f = open("/Users/iperezra/Desktop/new.txt", "w")
-        for thingid in [430539695,429693702,432208475,429836983,
-                        429444060,430290017,431504349,432488140,
-                        437193652,434388717,433045751,440638148,
-                        428690499,430090823,430357317,429534213,
-                        432002130,429522561,429782569,430087750,
-                        436880007,435883886]:
-
-            for forest in forests:
-                if forest.thingid == thingid:
-                    delta = forest.flux / forest.continuum
-                    var_lss = self.get_var_lss(forest.log_lambda)
-                    eta = self.get_eta(forest.log_lambda)
-                    fudge = self.get_fudge(forest.log_lambda)
-                    var = 1. / forest.ivar / forest.continuum**2
-                    variance = eta * var + var_lss + fudge / var
-                    weights = 1. / variance
-                    f.write(f"THING_ID: {forest.thingid} 0 0 0 0\n")
-                    for loglam, fl, iv, c, d, we in zip(forest.log_lambda, forest.flux,
-                                              forest.ivar, forest.continuum, delta, weights):
-                        f.write(f"{loglam} {fl} {iv} {c} {d} {we}\n")
-
         for forest in forests:
             if stack_from_deltas:
                 delta = forest.delta
