@@ -12,7 +12,8 @@ from picca.delta_extraction.data_catalogues.sdss_data import SdssData
 from picca.delta_extraction.data_catalogues.sdss_data import defaults as defaults_sdss_data
 from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
-from picca.delta_extraction.expected_fluxes.dr16_expected_flux import defaults as defaults_dr16_expected_flux
+from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
+    defaults as defaults_dr16_expected_flux)
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import forest1
 from picca.delta_extraction.tests.test_utils import setup_forest, reset_forest

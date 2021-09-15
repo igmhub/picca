@@ -6,6 +6,7 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import AstronomicalObjectError
 
+
 class Pk1dForest(Forest):
     """Forest Object
 
@@ -168,12 +169,14 @@ class Pk1dForest(Forest):
         # compute mean quality variables
         self.mean_reso = self.reso.mean()
         if Forest.wave_solution == "log":
-            self.mean_z = ((np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-                            np.power(10., self.log_lambda[0])) / 2. /
-                           Pk1dForest.lambda_abs_igm - 1.0)
+            self.mean_z = (
+                (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
+                 np.power(10., self.log_lambda[0])) / 2. /
+                Pk1dForest.lambda_abs_igm - 1.0)
         elif Forest.wave_solution == "lin":
-            self.mean_z = ((self.lambda_[len(self.lambda_) - 1] +
-                            self.lambda_[0]) / 2. / Pk1dForest.lambda_abs_igm - 1.0)
+            self.mean_z = (
+                (self.lambda_[len(self.lambda_) - 1] + self.lambda_[0]) / 2. /
+                Pk1dForest.lambda_abs_igm - 1.0)
         else:
             raise AstronomicalObjectError("Error in constructing Pk1dForest. "
                                           "Class variable 'wave_solution' "
@@ -195,15 +198,14 @@ class Pk1dForest(Forest):
         """Consistency checks after __init__"""
         super().consistency_check()
         if self.flux.size != self.exposures_diff.size:
-            raise AstronomicalObjectError("Error constructing Pk1dForest. 'flux', "
-                                          "and 'exposures_diff' don't have the "
-                                          "same size")
+            raise AstronomicalObjectError(
+                "Error constructing Pk1dForest. 'flux', "
+                "and 'exposures_diff' don't have the "
+                "same size")
         if "exposures_diff" not in Forest.mask_fields:
             Forest.mask_fields += ["exposures_diff"]
         if "reso" not in Forest.mask_fields:
             Forest.mask_fields += ["reso"]
-
-
 
     def coadd(self, other):
         """Coadd the information of another forest.
@@ -221,10 +223,12 @@ class Pk1dForest(Forest):
         AstronomicalObjectError if other is not a Pk1dForest instance
         """
         if not isinstance(other, Pk1dForest):
-            raise AstronomicalObjectError("Error coadding Pk1dForest. Expected "
-                                          "Pk1dForest instance in other. Found: "
-                                          f"{type(other)}")
-        self.exposures_diff = np.append(self.exposures_diff, other.exposures_diff)
+            raise AstronomicalObjectError(
+                "Error coadding Pk1dForest. Expected "
+                "Pk1dForest instance in other. Found: "
+                f"{type(other)}")
+        self.exposures_diff = np.append(self.exposures_diff,
+                                        other.exposures_diff)
         self.reso = np.append(self.reso, other.reso)
 
         # coadd the deltas by rebinning
@@ -254,8 +258,10 @@ class Pk1dForest(Forest):
 
         cols += [self.ivar, self.exposures_diff]
         names += ["IVAR", "DIFF"]
-        comments += ["Inverse variance. Check input spectra for units", 
-                     "Difference. Check input spectra for units"]
+        comments += [
+            "Inverse variance. Check input spectra for units",
+            "Difference. Check input spectra for units"
+        ]
         units += ["Flux units", "Flux units"]
 
         return cols, names, units, comments
@@ -329,24 +335,29 @@ class Pk1dForest(Forest):
         # rebin exposures_diff and reso
         rebin_exposures_diff = np.zeros(bins.max() + 1)
         rebin_reso = np.zeros(bins.max() + 1)
-        rebin_exposures_diff_aux = np.bincount(bins, weights=orig_ivar[w1] * self.exposures_diff)
+        rebin_exposures_diff_aux = np.bincount(bins,
+                                               weights=orig_ivar[w1] *
+                                               self.exposures_diff)
         rebin_reso_aux = np.bincount(bins, weights=orig_ivar[w1] * self.reso)
-        rebin_exposures_diff[:len(rebin_exposures_diff_aux)] += rebin_exposures_diff_aux
+        rebin_exposures_diff[:len(rebin_exposures_diff_aux
+                                 )] += rebin_exposures_diff_aux
         rebin_reso[:len(rebin_reso_aux)] += rebin_reso_aux
 
         # apply mask due to rebinned inverse vairane
-        self.exposures_diff = rebin_exposures_diff[w2]/rebin_ivar[w2]
-        self.reso = rebin_reso[w2]/rebin_ivar[w2]
+        self.exposures_diff = rebin_exposures_diff[w2] / rebin_ivar[w2]
+        self.reso = rebin_reso[w2] / rebin_ivar[w2]
 
         # finally update control variables
         self.mean_reso = self.reso.mean()
         if Forest.wave_solution == "log":
-            self.mean_z = ((np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-                            np.power(10., self.log_lambda[0])) / 2. /
-                           Pk1dForest.lambda_abs_igm - 1.0)
+            self.mean_z = (
+                (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
+                 np.power(10., self.log_lambda[0])) / 2. /
+                Pk1dForest.lambda_abs_igm - 1.0)
         elif Forest.wave_solution == "lin":
-            self.mean_z = ((self.lambda_[len(self.lambda_) - 1] +
-                            self.lambda_[0]) / 2. / Pk1dForest.lambda_abs_igm - 1.0)
+            self.mean_z = (
+                (self.lambda_[len(self.lambda_) - 1] + self.lambda_[0]) / 2. /
+                Pk1dForest.lambda_abs_igm - 1.0)
         else:
             raise AstronomicalObjectError("Error in rebinning Pk1dForest. "
                                           "Class variable 'wave_solution' "

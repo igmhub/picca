@@ -46,10 +46,9 @@ class QuasarCatalogue:
                     config.getfloat("lambda max rest frame") is None):
                 raise QuasarCatalogueError("Missing argument 'z min' "
                                            "required by QuasarCatalogue")
-            else:
-                self.z_min = max(0., (config.getfloat("lambda min") /
-                                      config.getfloat("lambda max rest frame") -
-                                      1.))
+            self.z_min = max(0., (config.getfloat("lambda min") /
+                                  config.getfloat("lambda max rest frame") -
+                                  1.))
 
         self.z_max = config.getfloat("z max")
         if self.z_max is None:
@@ -57,10 +56,9 @@ class QuasarCatalogue:
                     config.getfloat("lambda min rest frame") is None):
                 raise QuasarCatalogueError("Missing argument 'z max' "
                                            "required by QuasarCatalogue")
-            else:
-                self.z_max = max(0., (config.getfloat("lambda max") /
-                                      config.getfloat("lambda min rest frame") -
-                                      1.))
+            self.z_max = max(0., (config.getfloat("lambda max") /
+                                  config.getfloat("lambda min rest frame") -
+                                  1.))
         self.catalogue = None
 
     def trim_catalogue(self):

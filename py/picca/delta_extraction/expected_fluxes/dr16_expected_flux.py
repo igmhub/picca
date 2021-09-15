@@ -61,14 +61,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     Keys are the identifier for the line of sight and values are tuples with
     the best-fit zero point and slope of the linear part of the fit.
 
-    delta_lambda: float or None
-    Pixel width (in Angstroms) for a linear wavelength solution. None (and unused)
-    for a logarithmic wavelength solution.
-
-    delta_log_lambda: float or None
-    Pixel width (in log10(Angstroms)) for a logarithmic wavelength solution. None
-    (and unused) for a linear wavelength solution.
-
     get_eta: scipy.interpolate.interp1d
     Interpolation function to compute mapping function eta. See equation 4 of
     du Mas des Bourboux et al. 2020 for details.
@@ -207,7 +199,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_mean_cont = interp1d(self.lambda_rest_frame,
                                       np.ones_like(self.lambda_rest_frame))
         self.get_mean_cont_weight = interp1d(self.lambda_rest_frame,
-                                             np.zeros_like(self.lambda_rest_frame),
+                                             np.zeros_like(
+                                                 self.lambda_rest_frame),
                                              fill_value="extrapolate")
 
         # initialize the variance-related variables (see equation 4 of
@@ -273,7 +266,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       np.ones_like(self.log_lambda_rest_frame),
                                       fill_value="extrapolate")
         self.get_mean_cont_weight = interp1d(self.log_lambda_rest_frame,
-                                             np.zeros_like(self.log_lambda_rest_frame),
+                                             np.zeros_like(
+                                                 self.log_lambda_rest_frame),
                                              fill_value="extrapolate")
 
         # initialize the variance-related variables (see equation 4 of
@@ -333,7 +327,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         self.iter_out_prefix = config.get("iter out prefix")
         if self.iter_out_prefix is None:
-            raise ExpectedFluxError("Missing argument 'iter out prefix' required by Dr16ExpectedFlux")
+            raise ExpectedFluxError(
+                "Missing argument 'iter out prefix' required "
+                "by Dr16ExpectedFlux")
         if "/" in self.iter_out_prefix:
             raise ExpectedFluxError(
                 "Error constructing Dr16ExpectedFlux. "
@@ -342,33 +338,33 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         limit_eta_string = config.get("limit eta")
         if limit_eta_string is None:
-            raise ExpectedFluxError("Missing argument 'limit eta' required by Dr16ExpectedFlux")
+            raise ExpectedFluxError(
+                "Missing argument 'limit eta' required by Dr16ExpectedFlux")
+        limit_eta = limit_eta_string.split(",")
+        if limit_eta[0].startswith("(") or limit_eta[0].startswith("["):
+            eta_min = float(limit_eta[0][1:])
         else:
-            limit_eta = limit_eta_string.split(",")
-            if limit_eta[0].startswith("(") or limit_eta[0].startswith("["):
-                eta_min = float(limit_eta[0][1:])
-            else:
-                eta_min = float(limit_eta_string_split[0])
-            if limit_eta[1].endswith(")") or limit_eta[0].endswith("]"):
-                eta_max = float(limit_eta[1][:-1])
-            else:
-                eta_max = float(limit_eta_string_split[1])
-            self.limit_eta = (eta_min, eta_max)
+            eta_min = float(limit_eta[0])
+        if limit_eta[1].endswith(")") or limit_eta[0].endswith("]"):
+            eta_max = float(limit_eta[1][:-1])
+        else:
+            eta_max = float(limit_eta[1])
+        self.limit_eta = (eta_min, eta_max)
 
         limit_var_lss_string = config.get("limit var lss")
         if limit_var_lss_string is None:
-            raise ExpectedFluxError("Missing argument 'limit var lss' required by Dr16ExpectedFlux")
+            raise ExpectedFluxError(
+                "Missing argument 'limit var lss' required by Dr16ExpectedFlux")
+        limit_var_lss = limit_eta_string.split(",")
+        if limit_var_lss[0].startswith("(") or limit_var_lss[0].startswith("["):
+            var_lss_min = float(limit_var_lss[0][1:])
         else:
-            limit_var_lss = limit_eta_string.split(",")
-            if limit_var_lss[0].startswith("(") or limit_var_lss[0].startswith("["):
-                var_lss_min = float(limit_var_lss[0][1:])
-            else:
-                var_lss_min = float(limit_var_lss[0])
-            if limit_var_lss[1].endswith(")") or limit_var_lss[0].endswith("]"):
-                var_lss_max = float(limit_var_lss[1][:-1])
-            else:
-                var_lss_max = float(limit_eta_string_split[1])
-            self.limit_var_lss = (var_lss_min, var_lss_max)
+            var_lss_min = float(limit_var_lss[0])
+        if limit_var_lss[1].endswith(")") or limit_var_lss[0].endswith("]"):
+            var_lss_max = float(limit_var_lss[1][:-1])
+        else:
+            var_lss_max = float(limit_var_lss[1])
+        self.limit_var_lss = (var_lss_min, var_lss_max)
 
         self.num_bins_variance = config.getint("num bins variance")
         if self.num_bins_variance is None:
@@ -649,21 +645,23 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                             stack_delta[stack_weight > 0.],
                                             kind="nearest",
                                             fill_value="extrapolate")
-            self.get_stack_delta_weights = interp1d(stack_log_lambda[stack_weight > 0.],
-                                                    stack_weight[stack_weight > 0.],
-                                                    kind="nearest",
-                                                    fill_value=0.0,
-                                                    bounds_error=False)
+            self.get_stack_delta_weights = interp1d(
+                stack_log_lambda[stack_weight > 0.],
+                stack_weight[stack_weight > 0.],
+                kind="nearest",
+                fill_value=0.0,
+                bounds_error=False)
         elif Forest.wave_solution == "lin":
             self.get_stack_delta = interp1d(stack_lambda[stack_weight > 0.],
                                             stack_delta[stack_weight > 0.],
                                             kind="nearest",
                                             fill_value="extrapolate")
-            self.get_stack_delta_weights = interp1d(stack_lambda[stack_weight > 0.],
-                                                    stack_weight[stack_weight > 0.],
-                                                    kind="nearest",
-                                                    fill_value=0.0,
-                                                    bounds_error=False)
+            self.get_stack_delta_weights = interp1d(
+                stack_lambda[stack_weight > 0.],
+                stack_weight[stack_weight > 0.],
+                kind="nearest",
+                fill_value=0.0,
+                bounds_error=False)
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either "
                                     "'log' or 'linear'")
@@ -719,9 +717,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       new_cont,
                                       fill_value="extrapolate")
         self.get_mean_cont_weight = interp1d(lambda_cont,
-                                      mean_cont_weight,
-                                      fill_value=0.0,
-                                      bounds_error=False)
+                                             mean_cont_weight,
+                                             fill_value=0.0,
+                                             bounds_error=False)
 
     def compute_mean_cont_log(self, forests):
         """Compute the mean quasar continuum over the whole sample assuming a
@@ -773,9 +771,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       new_cont,
                                       fill_value="extrapolate")
         self.get_mean_cont_weight = interp1d(log_lambda_cont,
-                                      mean_cont_weight,
-                                      fill_value=0.0,
-                                      bounds_error=False)
+                                             mean_cont_weight,
+                                             fill_value=0.0,
+                                             bounds_error=False)
 
     def compute_expected_flux(self, forests, out_dir):
         """Compute the mean expected flux of the forests.
@@ -913,9 +911,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 # compute overall bin
                 bins = var_pipe_bins + num_var_bins * lambda_bins
             else:
-                raise ExpectedFluxError(
-                    "Forest.wave_solution must be either "
-                    "'log' or 'linear'")
+                raise ExpectedFluxError("Forest.wave_solution must be either "
+                                        "'log' or 'linear'")
 
             # compute deltas
             delta = (forest.flux / forest.continuum - 1)
@@ -1051,13 +1048,13 @@ class Dr16ExpectedFlux(ExpectedFlux):
             if Forest.wave_solution == "log":
                 self.logger.progress(
                     f" {self.log_lambda[index]:.3e} "
-                    f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
-                    f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
+                    f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
+                    + f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
             elif Forest.wave_solution == "lin":
                 self.logger.progress(
                     f" {self.lambda_[index]:.3e} "
-                    f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
-                    f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
+                    f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
+                    + f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
 
         w = num_pixels > 0
 
@@ -1118,7 +1115,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             weights = 1. / variance
 
             if isinstance(forest, Pk1dForest):
-                ivar = forest.ivar / (eta + (eta == 0)) * (mean_expected_flux**2)
+                ivar = forest.ivar / (eta +
+                                      (eta == 0)) * (mean_expected_flux**2)
 
                 self.los_ids[forest.los_id] = {
                     "mean expected flux": mean_expected_flux,
@@ -1165,13 +1163,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 stack_log_lambda = (
                     Forest.log_lambda_min +
                     np.arange(num_bins) * Forest.delta_log_lambda)
-                results.write(
-                    [stack_log_lambda,
-                     self.get_stack_delta(stack_log_lambda),
-                     self.get_stack_delta_weights(stack_log_lambda)],
-                    names=['loglam', 'stack', 'weight'],
-                    header=header,
-                    extname='STACK_DELTAS')
+                results.write([
+                    stack_log_lambda,
+                    self.get_stack_delta(stack_log_lambda),
+                    self.get_stack_delta_weights(stack_log_lambda)
+                ],
+                              names=['loglam', 'stack', 'weight'],
+                              header=header,
+                              extname='STACK_DELTAS')
 
                 results.write([
                     self.log_lambda,
@@ -1196,13 +1195,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 stack_lambda = (Forest.lambda_min +
                                 np.arange(num_bins) * Forest.delta_lambda)
 
-                results.write(
-                    [stack_lambda,
-                     self.get_stack_delta(stack_lambda),
-                     self.get_stack_delta_weights(stack_lambda)],
-                    names=['loglam', 'stack', 'weight'],
-                    header=header,
-                    extname='STACK')
+                results.write([
+                    stack_lambda,
+                    self.get_stack_delta(stack_lambda),
+                    self.get_stack_delta_weights(stack_lambda)
+                ],
+                              names=['loglam', 'stack', 'weight'],
+                              header=header,
+                              extname='STACK')
 
                 results.write([
                     self.lambda_,

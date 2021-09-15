@@ -104,7 +104,7 @@ class DesiData(Data):
             raise DataError("Missing argument 'delta lambda' required by DesiData")
         Forest.lambda_max = config.get("lambda max")
         if Forest.lambda_max is None:
-            raise DataError("Missing argument 'lambda max' required by DesiData"
+            raise DataError("Missing argument 'lambda max' required by DesiData")
         Forest.lambda_max_rest_frame = config.get("lambda max rest frame")
         if Forest.lambda_max_rest_frame is None:
             raise DataError("Missing argument 'lambda max rest frame' required by DesiData")

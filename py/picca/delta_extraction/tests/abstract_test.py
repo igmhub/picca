@@ -85,7 +85,7 @@ class AbstractTest(unittest.TestCase):
                     if key not in orig_header:
                         print(f"key {key} missing in orig header")
                         if key == "MEANSNR":
-                                continue
+                            continue
                     self.assertTrue(key in orig_header)
                 # check data
                 orig_data = orig_hdul[hdu_index].data
