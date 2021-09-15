@@ -8,6 +8,7 @@ from astropy.table import Table
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
+from picca.delta_extraction.quasar_catalogues.drq_catalogue import defaults as defaults_drq
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import reset_logger
 from picca.delta_extraction.utils import setup_logger
@@ -35,14 +36,34 @@ class QuasarCatalogueTest(AbstractTest):
         # setup printing
         setup_logger(log_file=out_file)
 
+        # Case 0: missing redshift variables
+        config = ConfigParser()
+        config.read_dict({
+            "data": {
+                "drq catalogue":
+                    f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+            }
+        })
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        with self.assertRaises(QuasarCatalogueError):
+            quasar_catalogue = DrqCatalogue(config["data"])
+
         # Case 1: missing spAll file
         config = ConfigParser()
         config.read_dict({
             "data": {
                 "drq catalogue":
-                    f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz"
+                    f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+                "z max": 3.5,
+                "z min": 2.1,
             }
         })
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         with self.assertRaises(QuasarCatalogueError):
             quasar_catalogue = DrqCatalogue(config["data"])
 
@@ -53,9 +74,14 @@ class QuasarCatalogueTest(AbstractTest):
                 "drq catalogue":
                     f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
                 "input directory":
-                    f"{THIS_DIR}/data/"
+                    f"{THIS_DIR}/data/",
+                "z max": 3.5,
+                "z min": 2.1,
             }
         })
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         quasar_catalogue = DrqCatalogue(config["data"])
 
         # case 3: with spAll file
@@ -65,9 +91,14 @@ class QuasarCatalogueTest(AbstractTest):
                 "drq catalogue":
                     f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
                 "spAll":
-                    f"{THIS_DIR}/data/spAll-plate3655.fits"
+                    f"{THIS_DIR}/data/spAll-plate3655.fits",
+                "z max": 3.5,
+                "z min": 2.1,
             }
         })
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         quasar_catalogue = DrqCatalogue(config["data"])
 
         # reset printing
@@ -87,12 +118,8 @@ class QuasarCatalogueTest(AbstractTest):
         """
         config = ConfigParser()
         config.read_dict({"data": {}})
-        quasar_catalogue = QuasarCatalogue(config["data"])
-
-        self.assertTrue(quasar_catalogue.catalogue is None)
-        self.assertTrue(quasar_catalogue.z_min == 2.1)
-        self.assertTrue(quasar_catalogue.z_max == 3.5)
-        self.assertTrue(quasar_catalogue.max_num_spec is None)
+        with self.assertRaises(QuasarCatalogueError):
+            quasar_catalogue = QuasarCatalogue(config["data"])
 
         config = ConfigParser()
         config.read_dict(
@@ -116,7 +143,11 @@ class QuasarCatalogueTest(AbstractTest):
 
         # load instance without maximum number of objects
         config = ConfigParser()
-        config.read_dict({"data": {}})
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+            }})
         quasar_catalogue = QuasarCatalogue(config["data"])
         quasar_catalogue.catalogue = catalogue.copy()
         # trimming function does nothing

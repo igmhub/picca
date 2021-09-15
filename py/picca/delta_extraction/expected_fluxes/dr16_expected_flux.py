@@ -10,9 +10,9 @@ from scipy.interpolate import interp1d
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
-from picca.delta_extraction.expected_flux import ExpectedFlux
+from picca.delta_extraction.expected_flux import ExpectedFlux, defaults
 
-defaults = {
+defaults.update({
     "iter out prefix": "delta_attributes",
     "limit eta": (0.5, 1.5),
     "limit var lss": (0., 0.3),
@@ -21,7 +21,7 @@ defaults = {
     "order": 1,
     "use_constant_weight": False,
     "use_ivar_as_weight": False,
-}
+})
 
 
 class Dr16ExpectedFlux(ExpectedFlux):
@@ -333,7 +333,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         self.iter_out_prefix = config.get("iter out prefix")
         if self.iter_out_prefix is None:
-            self.iter_out_prefix = defaults.get("iter out prefix")
+            raise ExpectedFluxError("Missing argument 'iter out prefix' required by Dr16ExpectedFlux")
         if "/" in self.iter_out_prefix:
             raise ExpectedFluxError(
                 "Error constructing Dr16ExpectedFlux. "
@@ -342,17 +342,33 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         limit_eta_string = config.get("limit eta")
         if limit_eta_string is None:
-            self.limit_eta = defaults.get("limit eta")
+            raise ExpectedFluxError("Missing argument 'limit eta' required by Dr16ExpectedFlux")
         else:
-            self.limit_eta = (float(limit_eta_string.split(",")[0][1:]),
-                              float(limit_eta_string.split(",")[1][1:]))
+            limit_eta = limit_eta_string.split(",")
+            if limit_eta[0].startswith("(") or limit_eta[0].startswith("["):
+                eta_min = float(limit_eta[0][1:])
+            else:
+                eta_min = float(limit_eta_string_split[0])
+            if limit_eta[1].endswith(")") or limit_eta[0].endswith("]"):
+                eta_max = float(limit_eta[1][:-1])
+            else:
+                eta_max = float(limit_eta_string_split[1])
+            self.limit_eta = (eta_min, eta_max)
 
         limit_var_lss_string = config.get("limit var lss")
         if limit_var_lss_string is None:
-            self.limit_var_lss = defaults.get("limit var lss")
+            raise ExpectedFluxError("Missing argument 'limit var lss' required by Dr16ExpectedFlux")
         else:
-            self.limit_var_lss = (float(limit_var_lss_string.split(",")[0][1:]),
-                                  float(limit_var_lss_string.split(",")[1][:1]))
+            limit_var_lss = limit_eta_string.split(",")
+            if limit_var_lss[0].startswith("(") or limit_var_lss[0].startswith("["):
+                var_lss_min = float(limit_var_lss[0][1:])
+            else:
+                var_lss_min = float(limit_var_lss[0])
+            if limit_var_lss[1].endswith(")") or limit_var_lss[0].endswith("]"):
+                var_lss_max = float(limit_var_lss[1][:-1])
+            else:
+                var_lss_max = float(limit_eta_string_split[1])
+            self.limit_var_lss = (var_lss_min, var_lss_max)
 
         self.num_bins_variance = config.getint("num bins variance")
         if self.num_bins_variance is None:

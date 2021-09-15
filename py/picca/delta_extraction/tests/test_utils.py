@@ -157,7 +157,24 @@ sdss_data_kwargs = {
         f"{THIS_DIR}/results",
     "drq catalogue":
         f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+    "z max": 3.5,
+    "z min": 2.1,
 }
+sdss_data_kwargs_filter_forest = {
+    "input directory":
+        f"{THIS_DIR}/data",
+    "output directory":
+        f"{THIS_DIR}/results",
+    "drq catalogue":
+        f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+    "mode": "spec",
+    "lambda min": 3600.0,
+    "lambda max": 7235.0,
+    "lambda min rest frame": 2900.0,
+    "lambda max rest frame": 3120.0,
+}
+
+
 
 def reset_logger():
     """This function reset the logger picca.delta_extraction by closing

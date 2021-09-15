@@ -9,8 +9,10 @@ from scipy.interpolate import interp1d
 
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
+from picca.delta_extraction.data_catalogues.sdss_data import defaults as defaults_sdss_data
 from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
+from picca.delta_extraction.expected_fluxes.dr16_expected_flux import defaults as defaults_dr16_expected_flux
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import forest1
 from picca.delta_extraction.tests.test_utils import setup_forest, reset_forest
@@ -55,6 +57,9 @@ class ExpectedFluxTest(AbstractTest):
             {"expected flux": {
                 "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix"
             }})
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
         # this should raise an error as iter out prefix should not have a folder
         with self.assertRaises(ExpectedFluxError):
             expected_flux = Dr16ExpectedFlux(config["expected flux"])
@@ -64,6 +69,9 @@ class ExpectedFluxTest(AbstractTest):
             {"expected flux": {
                 "iter out prefix": "iter_out_prefix"
             }})
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
         # this should also raise an error as Forest variables are not defined
         with self.assertRaises(ExpectedFluxError):
             expected_flux = Dr16ExpectedFlux(config["expected flux"])
@@ -111,6 +119,12 @@ class ExpectedFluxTest(AbstractTest):
                 "iter out prefix": "iter_out_prefix"
             },
         })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
@@ -160,6 +174,12 @@ class ExpectedFluxTest(AbstractTest):
                 "iter out prefix": "iter_out_prefix"
             },
         })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
@@ -200,6 +220,12 @@ class ExpectedFluxTest(AbstractTest):
                 "iter out prefix": "iter_out_prefix_compute_expected_flux_log"
             },
         })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
@@ -241,6 +267,12 @@ class ExpectedFluxTest(AbstractTest):
                 "iter out prefix": "iter_out_prefix"
             },
         })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
@@ -273,6 +305,12 @@ class ExpectedFluxTest(AbstractTest):
                 "iter out prefix": "iter_out_prefix"
             },
         })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
@@ -312,6 +350,12 @@ class ExpectedFluxTest(AbstractTest):
                 "iter out prefix": "iter_out_prefix_log"
             },
         })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
@@ -348,6 +392,12 @@ class ExpectedFluxTest(AbstractTest):
                 "iter out prefix": "iter_out_prefix_log"
             },
         })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 

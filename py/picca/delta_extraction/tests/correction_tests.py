@@ -9,6 +9,7 @@ import numpy as np
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.corrections.sdss_calibration_correction import SdssCalibrationCorrection
 from picca.delta_extraction.corrections.sdss_dust_correction import SdssDustCorrection
+from picca.delta_extraction.corrections.sdss_dust_correction import defaults as default_args_sdss_dust_correction
 from picca.delta_extraction.corrections.sdss_ivar_correction import SdssIvarCorrection
 from picca.delta_extraction.corrections.sdss_optical_depth_correction import (
     SdssOpticalDepthCorrection
@@ -90,6 +91,9 @@ class CorrectionTest(AbstractTest):
         # create SdssDustCorrection instance
         config = ConfigParser()
         config.read_dict({"corrections": {"filename": in_file}})
+        for key, value in default_args_sdss_dust_correction.items():
+            if key not in config["corrections"]:
+                config["corrections"][key] = str(value)
         correction = SdssDustCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
 

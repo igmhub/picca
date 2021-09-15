@@ -29,7 +29,7 @@ class ConfigurationTest(AbstractTest):
         """
         in_file = f"{THIS_DIR}/data/config_overwrite.ini"
         out_file = f"{THIS_DIR}/results/.config.ini"
-        test_file = f"{THIS_DIR}/data/config_overwrite.ini"
+        test_file = f"{THIS_DIR}/data/.config.ini"
         out_warning_file = f"{THIS_DIR}/results/config_test.txt"
         test_warning_file = f"{THIS_DIR}/data/config_test.txt"
 

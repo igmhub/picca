@@ -11,19 +11,19 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.data import Data
+from picca.delta_extraction.data import Data, defaults
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.ztruth_catalogue import ZtruthCatalogue
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 
-defaults = {
+defaults.update({
     "delta lambda": 1.0,  # TODO: update this value to the read from DESI files
     "lambda max": 5500.0,
     "lambda max rest frame": 1200.0,
     "lambda min": 3600.0,
     "lambda min rest frame": 1040.0,
     "mini SV": False,
-}
+})
 
 class DesiData(Data):
     """Reads the spectra from Quickquasars and formats its data as a list of
@@ -101,29 +101,29 @@ class DesiData(Data):
         # Forest class variables
         Forest.delta_lambda = config.get("delta lambda")
         if Forest.delta_lambda is None:
-            Forest.delta_lambda = defaults.get("delta lambda")
+            raise DataError("Missing argument 'delta lambda' required by DesiData")
         Forest.lambda_max = config.get("lambda max")
         if Forest.lambda_max is None:
-            Forest.lambda_max = defaults.get("lambda max")
+            raise DataError("Missing argument 'lambda max' required by DesiData"
         Forest.lambda_max_rest_frame = config.get("lambda max rest frame")
         if Forest.lambda_max_rest_frame is None:
-            Forest.lambda_max_rest_frame = defaults.get("lambda max rest frame")
+            raise DataError("Missing argument 'lambda max rest frame' required by DesiData")
         Forest.lambda_min = config.get("lambda min")
         if Forest.lambda_min is None:
-            Forest.lambda_min = defaults.get("lambda min")
+            raise DataError("Missing argument 'lambda min' required by DesiData")
         Forest.lambda_min_rest_frame = config.get("lambda min rest frame")
         if Forest.lambda_min_rest_frame is None:
-            Forest.lambda_min_rest_frame = defaults.get("lambda min rest frame")
+            raise DataError("Missing argument 'lambda min rest frame' required by DesiData")
 
         # instance variables
         self.input_directory = config.get("input directory")
         if self.input_directory is None:
             raise DataError(
-                "Missing argument 'input directory' required by SdssData")
+                "Missing argument 'input directory' required by DesiData")
 
         self.mini_sv = config.getboolean("mini SV")
         if self.mini_sv is None:
-            self.mini_sv = defaults.get("mini SV")
+            raise DataError("Missing argument 'mini SV' required by DesiData")
 
     def read_from_desi(self, catalogue):
         """Read the spectra and formats its data as Forest instances.

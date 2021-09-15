@@ -93,7 +93,11 @@ def class_from_string(class_name, module_name):
 
     Return
     ------
+    class_object: Class
     The loaded class
+
+    deafult_args: dict
+    A dictionary with the default options (empty for no default options)
 
     Raise
     -----
@@ -102,9 +106,14 @@ def class_from_string(class_name, module_name):
     """
     # load module
     module_object = importlib.import_module(module_name)
-    # get the class, will raise
+    # get the class
     class_object = getattr(module_object, class_name)
-    return class_object
+    # get the dictionary with the default arguments
+    try:
+        default_args = getattr(module_object, "defaults")
+    except AttributeError:
+        default_args = {}
+    return class_object, default_args
 
 
 PROGRESS_LEVEL_NUM = 15
