@@ -328,7 +328,7 @@ class Config:
                 self.logger.warning(f"Missing section [mask arguments {mask_index}]. "
                                     f"Correction {mask_name} will be called without "
                                     "arguments")
-                self.config.read_dict({f"mak arguments {mask_index}":{}})
+                self.config.read_dict({f"mask arguments {mask_index}":{}})
             mask_args = self.config[f"mask arguments {mask_index}"]
 
             # update the section adding the default choices when necessary
