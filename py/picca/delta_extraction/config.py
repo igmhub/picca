@@ -6,9 +6,14 @@ from configparser import ConfigParser
 import logging
 import os
 import re
+import git
+from datetime import datetime
 
 from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.utils import class_from_string, setup_logger
+
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+PICCA_BASE = THIS_DIR.split("py/picca")[0]
 
 default_config = {
     "general": {
@@ -18,6 +23,10 @@ default_config = {
         "logging level console": "PROGRESS",
         "logging level file": "PROGRESS"
     },
+    "run specs": {
+        "git hash": git.Repo(PICCA_BASE).head.object.hexsha,
+        "timestamp": str(datetime.now()),
+    }
 }
 
 class Config:
