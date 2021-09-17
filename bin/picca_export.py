@@ -189,6 +189,7 @@ def main(cmdargs):
         r_par_dmat = r_par.copy()
         r_trans_dmat = r_trans.copy()
         z_dmat = z.copy()
+        dmat_name = 'DM_EMPTY'
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
