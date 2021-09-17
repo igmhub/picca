@@ -132,6 +132,9 @@ class Config:
         self.expected_flux = None
         self.__format_expected_flux_section()
 
+        # initialize folders where data will be saved
+        self.initialize_folders()
+
     def __format_corrections_section(self):
         """Format the corrections section of the parser into usable data
 
@@ -285,7 +288,6 @@ class Config:
             raise ConfigError("In section 'general', variable 'logging level file' is required")
         self.logging_level_file = self.logging_level_file.upper()
 
-        self.initialize_folders()
         setup_logger(logging_level_console=self.logging_level_console,
                      log_file=self.log,
                      logging_level_file=self.logging_level_file)
