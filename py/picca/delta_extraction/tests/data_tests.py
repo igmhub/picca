@@ -108,7 +108,7 @@ class DataTest(AbstractTest):
 
         # reset printing
         reset_logger()
-        self.compare_ascii(test_file, out_file, expand_dir=True)
+        self.compare_ascii(test_file, out_file)
 
     def test_desi_data(self):
         """Test DesiData"""

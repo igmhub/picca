@@ -100,7 +100,7 @@ class MaskTest(AbstractTest):
         self.assertTrue(mask.absorber_mask_width == 1.5)
 
         reset_logger()
-        self.compare_ascii(test_file, out_file, expand_dir=True)
+        self.compare_ascii(test_file, out_file)
 
     def test_dla_mask(self):
         """Test correct initialisation and inheritance for class
@@ -139,7 +139,7 @@ class MaskTest(AbstractTest):
                                     np.ones_like(forest3_log_lambda)))
 
         reset_logger()
-        self.compare_ascii(test_file, out_file, expand_dir=True)
+        self.compare_ascii(test_file, out_file)
 
     def test_mask(self):
         """Test Abstract class Mask

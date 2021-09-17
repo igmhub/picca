@@ -103,7 +103,7 @@ class QuasarCatalogueTest(AbstractTest):
 
         # reset printing
         reset_logger()
-        self.compare_ascii(test_file, out_file, expand_dir=True)
+        self.compare_ascii(test_file, out_file)
 
         self.assertTrue(quasar_catalogue.catalogue is not None)
         self.assertTrue(quasar_catalogue.z_min == 2.1)

@@ -80,7 +80,7 @@ class ConfigurationTest(AbstractTest):
         self.compare_config(test_file, out_file)
 
         reset_logger()
-        self.compare_ascii(test_warning_file, out_warning_file, expand_dir=True)
+        self.compare_ascii(test_warning_file, out_warning_file)
 
         in_file = f"{THIS_DIR}/data/config.ini"
         with self.assertRaises(ConfigError):

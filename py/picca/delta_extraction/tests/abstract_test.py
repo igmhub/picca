@@ -1,5 +1,6 @@
 """This file contains an abstract class to define functions common to all tests"""
 import unittest
+import re
 import os
 import numpy as np
 import astropy.io.fits as fits
@@ -21,7 +22,7 @@ class AbstractTest(unittest.TestCase):
         if not os.path.exists("{}/results/".format(THIS_DIR)):
             os.makedirs("{}/results/".format(THIS_DIR))
 
-    def compare_ascii(self, orig_file, new_file, expand_dir=False):
+    def compare_ascii(self, orig_file, new_file):
         """Compare two ascii files to check that they are equal
 
         Arguments
@@ -42,9 +43,14 @@ class AbstractTest(unittest.TestCase):
         try:
             for orig_line, new_line in zip(orig.readlines(),
                                            new.readlines()):
-                if expand_dir:
-                    new_line = new_line.replace("$THIS_DIR", THIS_DIR)
-                    orig_line = orig_line.replace("$THIS_DIR", THIS_DIR)
+                # this is necessary to remove the system dependent bits of
+                # the paths
+                if "py/picca/delta_extraction/tests" in orig_line:
+                    orig_line = re.sub(r"\/[^ ]*\/py\/picca\/delta_extraction\/tests\/",
+                                 "", orig_line)
+                    new_line = re.sub(r"\/[^ ]*\/py\/picca\/delta_extraction\/tests\/",
+                                 "", new_line)
+
                 self.assertTrue(orig_line == new_line)
         finally:
             orig.close()

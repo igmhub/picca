@@ -197,7 +197,7 @@ class CorrectionTest(AbstractTest):
                         np.ones_like(forest1_log_lambda) * 0.36787944117144233))
 
         reset_logger()
-        self.compare_ascii(test_file, out_file, expand_dir=True)
+        self.compare_ascii(test_file, out_file)
 
 
 if __name__ == '__main__':
