@@ -1221,7 +1221,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
             print(f'{filename} does not have a NIGHT')
             try:
                 night_spec = int(filename.split('-')[-1].split('.')[0])
-            except:
+            except ValueError:
                 night_spec = int(filename.split('thru')[-1].split('.')[0])
 
         targetid_spec = fibermap['TARGETID']
