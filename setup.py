@@ -15,11 +15,7 @@ setup(name="picca",
     url="https://github.com/igmhub/picca",
     author="Nicolas Busca, Helion du Mas des Bourboux et al",
     author_email="nbusca@lpnhe.in2p3.fr",
-<<<<<<< HEAD
-    packages=['picca','picca.delta_extraction', 'picca.fitter2'],
-=======
-    packages=['picca','picca.fitter2','picca.bin'],
->>>>>>> master
+    packages=['picca','picca.delta_extraction', 'picca.fitter2', 'picca.bin'],
     package_dir = {'': 'py'},
     package_data = {'picca': ['fitter2/models/*/*.fits']},
     install_requires=['numpy','scipy','iminuit','healpy','fitsio',
