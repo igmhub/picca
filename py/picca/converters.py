@@ -423,7 +423,7 @@ def desi_convert_transmission_to_delta_files(obj_path,
                    "'in_filenames' given"))
         sys.exit()
     elif in_dir is not None:
-        files = glob.glob(in_dir + '/*/*/transmission*.fits*')
+        files = sorted(glob.glob(in_dir + '/*/*/transmission*.fits*'))
         files = np.sort(np.array(files))
         hdul = fitsio.FITS(files[0])
         in_nside = hdul['METADATA'].read_header()['HPXNSIDE']

@@ -2,9 +2,13 @@
 
 It includes the class Cosmo, used to store the fiducial cosmology
 """
+import fitsio
+import scipy as sp
 import numpy as np
 from scipy import interpolate
 from scipy.constants import speed_of_light as speed_light
+from pkg_resources import resource_filename
+from picca.utils import userprint
 
 # TODO: this constant is unused. They should be removed at some point
 BOSS_LAMBDA_MIN = 3600. # [Angstrom]
@@ -12,6 +16,11 @@ BOSS_LAMBDA_MIN = 3600. # [Angstrom]
 SMALL_ANGLE_CUT_OFF = 2./3600.*np.pi/180. # 2 arcsec
 
 SPEED_LIGHT = speed_light/1000. # [km/s]
+
+# different strategies are explained in
+# https://desi.lbl.gov/trac/wiki/keyprojects/y1kp6/Blinding
+ACCEPTED_BLINDING_STRATEGIES = ["none", "minimal", "strategyB", "strategyC",
+    "strategyBC"]
 
 class Cosmo(object):
     """This class defines the fiducial cosmology
@@ -151,7 +160,7 @@ class Cosmo(object):
         """
         raise NotImplementedError("Function should be specified at run-time")
 
-    def __init__(self, Om=0.3, Ok=0., Or=0., wl=-1., H0=100.):
+    def __init__(self,Om,Ok=0.,Or=0.,wl=-1.,H0=100.,blinding=False):
         """Initializes the methods for this instance
 
         Args:
@@ -166,6 +175,30 @@ class Cosmo(object):
             H0: float - default: 100.0
                 Hubble constant at redshift 0 (in km/s/Mpc)
         """
+
+        # Blind data
+        if blinding == "none":
+            userprint("ATTENTION: Analysis is not blinded!")
+        else:
+            userprint(f"ATTENTION: Analysis is blinded with strategy {blinding}")
+
+        if blinding not in  ["strategyB", "strategyBC"]:
+            userprint(f"Om={Om}, Or={Or}, wl={wl}, H0={H0}")
+        else:
+            userprint("The specified cosmology is "
+                      f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
+            # blind test small
+            filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
+            # blind test large
+            #filename = "DR16_blind_test_small/DR16_blind_test_large.fits"
+            # load Om
+            filename = resource_filename('picca', 'fitter2')+'/models/{}'.format(filename)
+            hdu = fitsio.FITS(filename)
+            Om = hdu[1].read_header()['OM']
+            Or = hdu[1].read_header()['OR']
+            wl = hdu[1].read_header()['W']
+            H0 = hdu[1].read_header()['H0']
+            hdu.close()
 
         # Ignore evolution of neutrinos from matter to radiation
         Ol = 1. - Ok - Om - Or

@@ -40,7 +40,7 @@ def calc_metal_dmat(abs_igm, healpixs):
     return dmat_data
 
 
-def main():
+def main(cmdargs):
     """Compute the distortion matrix of the cross-correlation delta x object for
      a list of IGM absorption."""
     parser = argparse.ArgumentParser(
@@ -244,7 +244,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
 
     if args.nproc is None:
@@ -270,11 +270,15 @@ def main():
     for metal in args.abs_igm:
         xcf.alpha_abs[metal] = args.metal_alpha
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            blinding=blinding)
     xcf.cosmo = cosmo
 
     t0 = time.time()
@@ -445,9 +449,12 @@ def main():
             'name': 'WL',
             'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }, {
+            'name': "BLINDING",
+            'value': blinding,
+            'comment': 'String specifying the blinding strategy'
         }
         ]
-
     len_names = np.array([len(name) for name in names]).max()
     names = np.array(names, dtype='S' + str(len_names))
     results.write(
@@ -461,6 +468,9 @@ def main():
         comment=['Number of pairs', 'Number of used pairs', 'Absorption name'],
         extname='ATTRI')
 
+    dmat_name = "DM_"
+    if blinding != "none":
+        dmat_name += "BLIND_"
     names = names.astype(str)
     out_list = []
     out_names = []
@@ -482,7 +492,7 @@ def main():
         out_comment += ['Redshift']
         out_units += ['']
 
-        out_names += ['DM_' + args.obj_name + '_' + name]
+        out_names += [dmat_name + args.obj_name + '_' + name]
         out_list += [dmat_all[index]]
         out_comment += ['Distortion matrix']
         out_units += ['']
@@ -504,4 +514,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)
