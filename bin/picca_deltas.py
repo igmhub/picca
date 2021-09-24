@@ -423,13 +423,13 @@ def main(cmdargs):
     
     parser.add_argument('--desi_nside',
                         type=int,
-                        default=None,
+                        default=64,
                         required=False,
                         help='Nside to use to read DESI survey or mock data in pixel-based format.')
     
     parser.add_argument('--desi_prefix',
                         type=str,
-                        default=None,
+                        default='coadd-main-dark',
                         required=False,
                         help='Prefix used for coadded spectra files in DESI survey or mock data in pixel-based format.')
 

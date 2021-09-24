@@ -157,9 +157,9 @@ def read_drq(drq_filename,
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
         if 'TILEID' in catalog.colnames:
-            keep_columns += ['TARGETID','TILEID', 'PETAL_LOC', 'FIBER']
+            keep_columns += ['TARGETID','TILEID', 'PETAL_LOC', 'FIBER','DESI_TARGET']
         else:
-            keep_columns += ['TARGETID']
+            keep_columns += ['TARGETID','DESI_TARGET']
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
