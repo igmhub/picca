@@ -420,6 +420,18 @@ def main(cmdargs):
                         default="minimal",
                         required=False,
                         help='Blinding strategy. "none" for no blinding')
+    
+    parser.add_argument('--desi_nside',
+                        type=int,
+                        default=None,
+                        required=False,
+                        help='Nside to use to read DESI survey or mock data in pixel-based format.')
+    
+    parser.add_argument('--desi_prefix',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='Prefix used for coadded spectra files in DESI survey or mock data in pixel-based format.')
 
 
     t0 = time.time()
@@ -530,7 +542,8 @@ def main(cmdargs):
                               spall=args.spall,
                               useall=args.use_all,
                               usesinglenights=args.use_single_nights,
-                              blinding_desi=args.blinding_desi)
+                              blinding_desi=args.blinding_desi,
+                              desi_nside=args.desi_nside,desi_prefix=args.desi_prefix)
 
     #-- Add order info
     for pix in data:

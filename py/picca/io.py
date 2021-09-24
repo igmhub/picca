@@ -151,11 +151,15 @@ def read_drq(drq_filename,
     catalog = Table(fitsio.read(drq_filename, ext=1))
 
     keep_columns = ['RA', 'DEC', 'Z']
+
     if 'desi' in mode and 'TARGETID' in catalog.colnames:
         obj_id_name = 'TARGETID'
         catalog.rename_column('TARGET_RA', 'RA')
         catalog.rename_column('TARGET_DEC', 'DEC')
-        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'FIBER']
+        if 'TILEID' in catalog.colnames:
+            keep_columns += ['TARGETID','TILEID', 'PETAL_LOC', 'FIBER']
+        else:
+            keep_columns += ['TARGETID']
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
@@ -225,7 +229,6 @@ def read_drq(drq_filename,
     elif 'NIGHT' in catalog.colnames:
         keep_columns += ['NIGHT']
 
-
     catalog.keep_columns(keep_columns)
     w = np.where(w)[0]
     catalog = catalog[w]
@@ -274,6 +277,8 @@ def read_data(in_dir,
               spall=None,
               useall=False,
               usesinglenights=False,
+              desi_nside=64,
+              desi_prefix='coadd-main-dark',
               blinding_desi="minimal"):
     """Reads the spectra and formats its data as Forest instances.
 
@@ -350,12 +355,12 @@ def read_data(in_dir,
     # read data taking the mode into account
     blinding = "none"
     if mode in ["desi_mocks","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
-        if mode in ["desi", 'desi_mocks']:
-            pix_data, is_mock = read_from_desi(in_dir, catalog, pk1d=pk1d)
-            if (not is_mock) and ('TILEID' in catalog.colnames) and np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
+        if mode in ["desi", 'desi_mocks']: #I don't think we need two different modes since we are checking if truth files exist...
+            pix_data, is_mock = read_from_desi(in_dir, catalog, desi_nside, desi_prefix, pk1d=pk1d)
+            if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any((catalog['DESI_TARGET']>0)): 
+                #I would suggest we check for DESI_TARGET instead of TILEID. 
                 print("you are trying to run on DESI survey tiles!")
                 blinding = blinding_desi
-
 
         elif mode == "desi_survey_tilebased":
             if np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
@@ -961,7 +966,7 @@ def read_from_spplate(in_dir,
     return data
 
 
-def read_from_desi(in_dir, catalog, pk1d=None):
+def read_from_desi(in_dir, catalog, in_nside, spec_prefix, pk1d=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -975,7 +980,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     Returns:
         List of read spectra for all the healpixs
     """
-    in_nside = int(in_dir.split('spectra-')[-1].replace('/', ''))
+            
     ra = catalog['RA'].data
     dec = catalog['DEC'].data
     in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
@@ -984,9 +989,17 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     #-- This is making it compatible with quickquasars on eBOSS mode
     if 'TARGETID' in catalog.colnames:
         id_name = 'TARGETID'
-        plate_name = 'TILEID'
-        mjd_name = 'NIGHT'
-        fiberid_name = 'FIBER'
+        if 'TILEID' in catalog.colnames:
+            plate_name = 'TILEID'
+            mjd_name = 'NIGHT'
+            fiberid_name = 'FIBER'
+        else:
+            plate_name = 'TARGETID'
+            mjd_name = 'TARGETID'
+            fiberid_name = 'TARGETID'
+    ##We should decide what to do in this case as there is no NIGTH, FIBER or TILEID information...
+    
+        
     else:
         id_name = 'THING_ID'
         plate_name = 'PLATE'
@@ -996,7 +1009,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     data = []
     is_mock = True
     for index, healpix in enumerate(unique_in_healpixs):
-        filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
+        filename = f"{in_dir}/{healpix//100}/{healpix}/{spec_prefix}-{healpix}.fits"#spectra-{in_nside}-{healpix}.fits"
         # the truth file is used to check if we are reading in mocks
         # in case we are, and we are computing pk1d, we also use them to load
         # the resolution matrix
@@ -1006,6 +1019,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
         userprint(
             f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
         try:
+            userprint(f"Reading {filename}")
             hdul = fitsio.FITS(filename)
         except IOError:
             userprint(f"Error reading pix {healpix}")
