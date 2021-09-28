@@ -77,6 +77,8 @@ ABSORBER_IGM = {
     "LY10"        : 919.3514,
 }
 
+ACCEPTED_BLINDING_STRATEGIES = ["none", "minimal", "corr_yshift"]
+
 def class_from_string(class_name, module_name):
     """Return a class from a string. The class must be saved in a module
     under picca.delta_extraction with the same name as the class but

@@ -74,9 +74,6 @@ class SdssData(Data):
 
         super().__init__(config)
 
-        # setup SdssForest class variables
-        Forest.wave_solution = "log"
-
         # load variables from config
         self.input_directory = None
         self.mode = None
@@ -106,7 +103,9 @@ class SdssData(Data):
         -----
         DataError upon missing required variables
         """
-        # Forest class variables
+        # setup SdssForest class variables
+        Forest.wave_solution = "log"
+
         rebin = config.getint("rebin")
         if rebin is None:
             raise DataError("Missing argument 'rebin' required by SdssData")

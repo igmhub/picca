@@ -14,7 +14,9 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data import Data, defaults
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.ztruth_catalogue import ZtruthCatalogue
+from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
+
 
 defaults.update({
     "delta lambda": 1.0,  # TODO: update this value to the read from DESI files
@@ -23,6 +25,10 @@ defaults.update({
     "lambda min": 3600.0,
     "lambda min rest frame": 1040.0,
     "mini SV": False,
+    "blinding": "corr_yshift",
+    # TODO: update this to "lin" when we are sure that the linear binning work
+    "logarithmic wavelength step": "log",
+    "rebin": 3,
 })
 
 class DesiData(Data):
@@ -69,9 +75,6 @@ class DesiData(Data):
 
         super().__init__(config)
 
-        # setup Forest class variables
-        Forest.wave_solution = "lin"
-
         # load variables from config
         self.input_directory = None
         self.mini_sv = None
@@ -98,22 +101,69 @@ class DesiData(Data):
         -----
         DataError upon missing required variables
         """
-        # Forest class variables
-        Forest.delta_lambda = config.get("delta lambda")
-        if Forest.delta_lambda is None:
-            raise DataError("Missing argument 'delta lambda' required by DesiData")
-        Forest.lambda_max = config.get("lambda max")
-        if Forest.lambda_max is None:
-            raise DataError("Missing argument 'lambda max' required by DesiData")
-        Forest.lambda_max_rest_frame = config.get("lambda max rest frame")
-        if Forest.lambda_max_rest_frame is None:
-            raise DataError("Missing argument 'lambda max rest frame' required by DesiData")
-        Forest.lambda_min = config.get("lambda min")
-        if Forest.lambda_min is None:
-            raise DataError("Missing argument 'lambda min' required by DesiData")
-        Forest.lambda_min_rest_frame = config.get("lambda min rest frame")
-        if Forest.lambda_min_rest_frame is None:
-            raise DataError("Missing argument 'lambda min rest frame' required by DesiData")
+        # setup Forest class variables
+        wave_solution = config.get("wave solution")
+        if wave_solution is None:
+            raise DataError("Missing argument 'wave solution' required by DesiData")
+        if wave_solution not in ["lin", "log"]:
+            raise DataError("Unrecognised value for 'wave solution'. Expected either "
+                            f"'lin' or 'lof'. Found {wave_solution}")
+        Forest.wave_solution = wave_solution
+
+        if Forest.wave_solution == "log":
+            rebin = config.getint("rebin")
+            if rebin is None:
+                raise DataError("Missing argument 'rebin' required by DesiData when "
+                                "'wave solution' is set to 'log'")
+            Forest.delta_log_lambda = rebin * 1e-4
+
+            lambda_max = config.getfloat("lambda max")
+            if lambda_max is None:
+                raise DataError("Missing argument 'lambda max' required by DesiData")
+            Forest.log_lambda_max = np.log10(lambda_max)
+            lambda_max_rest_frame = config.getfloat("lambda max rest frame")
+            if lambda_max_rest_frame is None:
+                raise DataError("Missing argument 'lambda max rest frame' required by DesiData")
+            Forest.log_lambda_max_rest_frame = np.log10(lambda_max_rest_frame)
+            lambda_min = config.getfloat("lambda min")
+            if lambda_min is None:
+                raise DataError("Missing argument 'lambda min' required by DesiData")
+            Forest.log_lambda_min = np.log10(lambda_min)
+            lambda_min_rest_frame = config.getfloat("lambda min rest frame")
+            if lambda_min_rest_frame is None:
+                raise DataError("Missing argument 'lambda min rest frame' required by DesiData")
+            Forest.log_lambda_min_rest_frame = np.log10(lambda_min_rest_frame)
+
+        elif Forest.wave_solution == "lin":
+            Forest.delta_lambda = config.get("delta lambda")
+            if Forest.delta_lambda is None:
+                raise DataError("Missing argument 'delta lambda' required by DesiData")
+            Forest.lambda_max = config.get("lambda max")
+            if Forest.lambda_max is None:
+                raise DataError("Missing argument 'lambda max' required by DesiData")
+            Forest.lambda_max_rest_frame = config.get("lambda max rest frame")
+            if Forest.lambda_max_rest_frame is None:
+                raise DataError("Missing argument 'lambda max rest frame' required by DesiData")
+            Forest.lambda_min = config.get("lambda min")
+            if Forest.lambda_min is None:
+                raise DataError("Missing argument 'lambda min' required by DesiData")
+            Forest.lambda_min_rest_frame = config.get("lambda min rest frame")
+            if Forest.lambda_min_rest_frame is None:
+                raise DataError("Missing argument 'lambda min rest frame' required by DesiData")
+        else:
+            raise DataError("Forest.wave_solution must be either "
+                            "'log' or 'lin'")
+
+        # set blinding strategy
+        blinding = config.get("blinding")
+        if blinding is None:
+            raise DataError("Missing argument 'blinding' required by DesiData")
+        if blinding not in ACCEPTED_BLINDING_STRATEGIES:
+            raise DataError("Unrecognized blinding strategy. Accepted strategies "
+                            f"are {ACCEPTED_BLINDING_STRATEGIES}. Found {blinding}")
+        # TODO: remove this when we are ready to unblind
+        blinding = "corr_yshift"
+        Forest.blinding = blinding
 
         # instance variables
         self.input_directory = config.get("input directory")

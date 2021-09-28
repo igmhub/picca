@@ -28,6 +28,9 @@ class Forest(AstronomicalObject):
 
     Class Attributes
     ----------------
+    blinding: str
+    Name of the blinding strategy used
+
     delta_lambda: float or None
     Variation of the wavelength (in Angs) between two pixels. This should not
     be None if wave_solution is "lin". Ignored if wave_solution is "log".
@@ -130,7 +133,7 @@ class Forest(AstronomicalObject):
     weights: array of float or None
     Weights associated to the delta field. None for no information
     """
-
+    blinding = "none"
     delta_lambda = None
     delta_log_lambda = None
     lambda_max = None
@@ -405,7 +408,10 @@ class Forest(AstronomicalObject):
             cols += [np.zeros(array_size, dtype=float)]
         else:
             cols += [self.deltas]
-        names += ["DELTA"]
+        if Forest.blinding = "none":
+            names += ["DELTA"]
+        else:
+            names += ["DELTA_BLIND"]
         comments += ["Delta field"]
         units += [""]
 
@@ -446,6 +452,11 @@ class Forest(AstronomicalObject):
                 'value': self.mean_snr,
                 'comment': 'Mean SNR'
             },
+            {
+                'name': 'BLINDING',
+                'value': Forest.blinding,
+                'comment': "String specifying the blinding strategy"
+            }
         ]
 
         return header
