@@ -315,9 +315,6 @@ class DesiData(Data):
 
             fibermap = hdul['FIBERMAP'].read()
             fibermap_colnames = hdul["FIBERMAP"].get_colnames()
-            # SV releases
-            ra_spec = fibermap['TARGET_RA']
-            dec_spec = fibermap['TARGET_DEC']
 
             tile_spec = fibermap['TILEID'][0]
             night_spec = fibermap[nightcol][0]
@@ -335,9 +332,6 @@ class DesiData(Data):
                     self.logger.warning(
                         "Reading all-band coadd as in minisv pre-Andes "
                         "dataset")
-            ra_spec = np.radians(ra_spec)
-            dec_spec = np.radians(dec_spec)
-
             petal_spec = fibermap['PETAL_LOC'][0]
 
             targetid_spec = fibermap['TARGETID']
@@ -445,5 +439,5 @@ class DesiData(Data):
 
         if num_data == 0:
             raise DataError("No Quasars found, stopping here")
-        #breakpoint()
+
         self.forests = list(forests_by_targetid.values())
