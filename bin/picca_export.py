@@ -256,7 +256,7 @@ def main(cmdargs):
                 blind_corr = 'lyaxlya'
         elif len(xi) == 100:
             assert 'qso' in args.data
-            if 'lyb' in args.data:
+            if 'lyb' in args.data or 'Lyb' in args.data:
                 blind_corr = 'qsoxlyb'
             else:
                 blind_corr = 'qsoxlya'
