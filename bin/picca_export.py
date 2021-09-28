@@ -242,6 +242,7 @@ def main(cmdargs):
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
 
+    # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
         if blinding != 'corr_yshift':
             print('Only strategy E called "corr_yshift" is allowed for now.'
@@ -263,15 +264,19 @@ def main(cmdargs):
             raise ValueError('Unknown binning. Cannot blind. Please raise an issue'
                              ' or contact picca developers.')
 
+        # Read the blinding file and get the right template
         blinding_path = ('/global/cfs/projectdirs/desi/users/acuceu/notebooks/'
                          'vega_models/blinding/blinding_file/test_2.h5')
         blinding_file = h5py.File(blinding_path, 'r')
         hex_diff = np.array(blinding_file['blinding'][blind_corr]).astype(str)
         diff = np.array([float.fromhex(x) for x in hex_diff])
 
+        # Check that the shapes match
         if np.shape(xi) != np.shape(diff):
             raise ValueError('Unknown binning. Cannot blind. Please raise an issue'
                              ' or contact picca developers.')
+
+        # Add blinding
         xi = xi + diff
 
     results.write([xi, r_par, r_trans, z, covariance, dmat, num_pairs],
