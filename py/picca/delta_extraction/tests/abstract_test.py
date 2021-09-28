@@ -90,7 +90,7 @@ class AbstractTest(unittest.TestCase):
                 for key in new_header:
                     if key not in orig_header:
                         print(f"key {key} missing in orig header")
-                        if key == "MEANSNR":
+                        if key in ["MEANSNR", "BLINDING"]:
                             continue
                     self.assertTrue(key in orig_header)
                 # check data
