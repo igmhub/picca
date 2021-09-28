@@ -405,7 +405,7 @@ def read_transmission_file(filename, num_bins, objs_thingid, lambda_min=3600.,
         delta_x = delta_lambda if delta_lambda is not None else 3.
     else:
         x_min = np.log10(lambda_min)
-        delta_x = delta_log_lambda if delta_lambda is not None else 3.e-4
+        delta_x = delta_log_lambda if delta_log_lambda is not None else 3.e-4
 
     # log_lambda_min = np.log10(lambda_min)
 
