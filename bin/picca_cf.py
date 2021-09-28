@@ -11,6 +11,7 @@ import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
+from scipy import interpolate
 
 from picca import constants, cf, utils, io
 from picca.utils import userprint
@@ -33,6 +34,49 @@ def corr_func(healpixs):
     cf.fill_neighs(healpixs)
     correlation_function_data = cf.compute_xi(healpixs)
     return correlation_function_data
+
+
+def get_mean_delta_rest(data):
+    """Compute mean of delta residuals, in rest-frame wavelength"""
+
+    # figure out range of (rest-frame) wavelengths covered
+    log_lambda_min=1e10
+    log_lambda_max=0
+    for healpix in sorted(list(data.keys())):
+        for forest in data[healpix]:
+            log_lambda_rest = forest.log_lambda - np.log10(1 + forest.z_qso)
+            log_lambda_min = min(log_lambda_min,np.amin(log_lambda_rest))
+            log_lambda_max = max(log_lambda_max,np.amax(log_lambda_rest))
+    userprint("{} < lambda_rest < {}".format(10**log_lambda_min,
+                                             10**log_lambda_max), end="")
+
+    # define binning (in rest-frame), with some extra room
+    delta_log_lambda = 0.001
+    log_lambda_min -= 0.5*delta_log_lambda
+    log_lambda_max += 0.5*delta_log_lambda
+    nbins = int((log_lambda_max - log_lambda_min) / delta_log_lambda) + 1
+    log_lambda = (log_lambda_min + np.arange(nbins) * delta_log_lambda)
+
+    # set up empty arrays to compute stack
+    stack_delta = np.zeros(nbins)
+    stack_weight = np.zeros(nbins)
+
+    for healpix in sorted(list(data.keys())):
+        for forest in data[healpix]:
+            delta = forest.delta
+            weights = forest.weights
+            log_lambda_rest = forest.log_lambda - np.log10(1 + forest.z_qso)
+            bins = ((log_lambda_rest - log_lambda_min) / delta_log_lambda + 0.5).astype(int)
+            # take into account contributions to mean delta
+            rebin = np.bincount(bins, weights=delta * weights)
+            stack_delta[:len(rebin)] += rebin
+            rebin = np.bincount(bins, weights=weights)
+            stack_weight[:len(rebin)] += rebin
+    w = stack_weight > 0
+    stack_delta[w] /= stack_weight[w]
+
+    # setup scipy interpolator, in log10(lambda_rest)
+    return interpolate.interp1d(log_lambda,stack_delta)
 
 
 def main(cmdargs):
@@ -178,6 +222,11 @@ def main(cmdargs):
                         required=False,
                         help='Do not project out continuum fitting modes')
 
+    parser.add_argument('--remove-mean-lambda-rest',
+                        action='store_true',
+                        required=False,
+                        help='Remove mean delta versus lambda_rest')
+
     parser.add_argument('--remove-same-half-plate-close-pairs',
                         action='store_true',
                         required=False,
@@ -265,6 +314,18 @@ def main(cmdargs):
     userprint("")
     userprint("done, npix = {}".format(len(data)))
 
+    ### Remove <delta> vs. lambda_rest
+    if args.remove_mean_lambda_rest:
+        # compute <delta>_rest, an interpolator in log10(lambda_rest)
+        mean_delta_rest_interp=get_mean_delta_rest(cf.data)
+        # loop over skewers, and correct for <delta>_rest
+        for healpix in cf.data:
+            for delta in cf.data[healpix]:
+                # get rest-frame wavelengths
+                log_lambda = delta.log_lambda - np.log10(1 + delta.z_qso)
+                mean_delta_rest = mean_delta_rest_interp(log_lambda)
+                delta.delta -= mean_delta_rest
+
     ### Read data 2
     if args.in_dir2 or args.lambda_abs2:
         if args.lambda_abs2 or args.unfold_cf:
@@ -293,6 +354,18 @@ def main(cmdargs):
         cf.ang_max = utils.compute_ang_max(cosmo, cf.r_trans_max, z_min, z_min2)
         userprint("")
         userprint("done, npix = {}".format(len(data2)))
+
+        ### Remove <delta> vs. lambda_rest
+        if args.remove_mean_lambda_rest:
+            # compute <delta>_rest, an interpolator in log10(lambda_rest)
+            mean_delta_rest_interp=get_mean_delta_rest(cf.data)
+            # loop over skewers, and correct for <delta>_rest
+            for healpix in cf.data:
+                for delta in cf.data[healpix]:
+                    # get rest-frame wavelengths
+                    log_lambda = delta.log_lambda - np.log10(1 + delta.z_qso)
+                    mean_delta_rest = mean_delta_rest_interp(log_lambda)
+                    delta.delta -= mean_delta_rest
 
     # shuffle forests
     if args.shuffle_distrib_forest_seed is not None:
