@@ -6,6 +6,7 @@ import fitsio
 import numpy as np
 import scipy.linalg
 import h5py
+import os.path
 
 from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
@@ -265,9 +266,13 @@ def main(cmdargs):
                              ' or contact picca developers.')
 
         # Read the blinding file and get the right template
-        blinding_path = ('/global/cfs/projectdirs/desi/users/acuceu/notebooks/'
-                         'vega_models/blinding/blinding_file/test_2.h5')
-        blinding_file = h5py.File(blinding_path, 'r')
+        blinding_filename = ('/global/cfs/projectdirs/desi/users/acuceu/notebooks/'
+                             'vega_models/blinding/blinding_file/test_2.h5')
+        if not os.path.isfile(blinding_filename):
+            raise ValueError('Missing blinding file. Make sure you are running at'
+                             ' NERSC or contact picca developers')
+
+        blinding_file = h5py.File(blinding_filename, 'r')
         hex_diff = np.array(blinding_file['blinding'][blind_corr]).astype(str)
         diff = np.array([float.fromhex(x) for x in hex_diff])
 
