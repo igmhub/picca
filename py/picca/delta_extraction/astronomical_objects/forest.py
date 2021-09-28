@@ -408,7 +408,7 @@ class Forest(AstronomicalObject):
             cols += [np.zeros(array_size, dtype=float)]
         else:
             cols += [self.deltas]
-        if Forest.blinding = "none":
+        if Forest.blinding == "none":
             names += ["DELTA"]
         else:
             names += ["DELTA_BLIND"]
