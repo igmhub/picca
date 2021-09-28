@@ -5,6 +5,7 @@ import argparse
 import fitsio
 import numpy as np
 import scipy.linalg
+import h5py
 
 from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
@@ -240,6 +241,39 @@ def main(cmdargs):
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
+
+    if 'BLIND' in data_name or blinding != 'none':
+        if blinding != 'corr_yshift':
+            print('Only strategy E called "corr_yshift" is allowed for now.'
+                  ' This will be applied automatilly.')
+
+        # Figure out what which correlation it is
+        if len(xi) == 50:
+            if 'lyb' in args.data or 'Lyb' in args.data:
+                blind_corr = 'lyaxlyb'
+            else:
+                blind_corr = 'lyaxlya'
+        elif len(xi) == 100:
+            assert 'qso' in args.data
+            if 'lyb' in args.data:
+                blind_corr = 'qsoxlyb'
+            else:
+                blind_corr = 'qsoxlya'
+        else:
+            raise ValueError('Unknown binning. Cannot blind. Please raise an issue'
+                             ' or contact picca developers.')
+
+        blinding_path = ('/global/cfs/projectdirs/desi/users/acuceu/notebooks/'
+                         'vega_models/blinding/blinding_file/test_2.h5')
+        blinding_file = h5py.File(blinding_path, 'r')
+        hex_diff = np.array(blinding_file['blinding'][blind_corr]).astype(str)
+        diff = np.array([float.fromhex(x) for x in hex_diff])
+
+        if np.shape(xi) != np.shape(diff):
+            raise ValueError('Unknown binning. Cannot blind. Please raise an issue'
+                             ' or contact picca developers.')
+        xi = xi + diff
+
     results.write([xi, r_par, r_trans, z, covariance, dmat, num_pairs],
                   names=[data_name, 'RP', 'RT', 'Z', 'CO', dmat_name, 'NB'],
                   comment=comment,
