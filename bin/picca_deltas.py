@@ -17,7 +17,7 @@ from astropy.table import Table
 from scipy.interpolate import interp1d
 
 from picca.data import Forest, Delta
-from picca import prep_del, io, constants, bal_tools
+from picca import prep_del, io, bal_tools
 from picca.utils import userprint
 from picca.constants import ACCEPTED_BLINDING_STRATEGIES
 import picca.constants as constants
@@ -159,9 +159,9 @@ def main(cmdargs):
                         type=str,
                         default='pix',
                         required=False,
-                        help=('''Open mode of the spectra files: pix, spec, 
-                              spcframe, spplate, desi_mocks (formerly known as desi), 
-                              desi_survey_tilebased (for tilebased data with coadding), 
+                        help=('''Open mode of the spectra files: pix, spec,
+                              spcframe, spplate, desi_mocks (formerly known as desi),
+                              desi_survey_tilebased (for tilebased data with coadding),
                               desi_sv_no_coadd (without coadding across tiles, will output in tile format)'''))
 
     parser.add_argument('--best-obs',
@@ -427,12 +427,16 @@ def main(cmdargs):
     args = parser.parse_args(cmdargs)
 
     assert (args.blinding_desi in ACCEPTED_BLINDING_STRATEGIES)
-    print("\nBlinding ver 0.07.26.16.29\n")
     # comment this when ready to unblind
     if args.blinding_desi == "none":
-        print("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
+        userprint("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
         args.blinding_desi = "minimal"
-    
+
+    # info about strategy A
+    if args.blinding_desi == "strategyA":
+        userprint("\nBlinding ver 0.07.26.16.29\n")
+
+
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
     Forest.log_lambda_max = np.log10(args.lambda_max)
@@ -674,14 +678,12 @@ def main(cmdargs):
     num_iterations = args.nit
     for iteration in range(num_iterations):
 
+        # if blinding strategy A is engaged, blind now and then run the weights
+        # computation once more
         if (iteration == num_iterations - 2 and args.blinding_desi == "strategyA"):
-           userprint('Entering to blinding strategyA')
-           print('Entering to blinding strategyA')
+           userprint('Entering blinding strategyA')
            z, zmz, l, lol = constants.calcMaps(scale=0.95, Om=0.315)
            data = constants.blindData(data, z, zmz, l, lol)
-        else:
-           print(args.blinding_desi)
-           userprint("not entering: ",args.blinding_desi)
 
         context = multiprocessing.get_context('fork')
         pool = context.Pool(processes=args.nproc)
