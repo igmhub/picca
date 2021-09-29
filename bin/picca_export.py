@@ -25,11 +25,12 @@ def main(cmdargs):
         required=True,
         help='Correlation produced via picca_cf.py, picca_xcf.py, ...')
 
-    parser.add_argument('--out',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Output file name')
+    parser.add_argument(
+        '--out',
+        type=str,
+        default=None,
+        required=True,
+        help='Output file name')
 
     parser.add_argument(
         '--dmat',
@@ -62,10 +63,17 @@ def main(cmdargs):
         required=False,
         help='Remove a correlation from shuffling the distribution of los')
 
-    parser.add_argument('--do-not-smooth-cov',
-                        action='store_true',
-                        default=False,
-                        help='Do not smooth the covariance matrix')
+    parser.add_argument(
+        '--do-not-smooth-cov',
+        action='store_true',
+        default=False,
+        help='Do not smooth the covariance matrix')
+
+    parser.add_argument(
+        '--blind_corr_type',
+        default=None,
+        choices=['lyaxlya', 'lyaxlyb', 'qsoxlya', 'qsoxlyb'],
+        help='Type of correlation. Required to apply blinding in DESI')
 
     args = parser.parse_args(cmdargs)
 
@@ -246,40 +254,28 @@ def main(cmdargs):
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
         if blinding != 'corr_yshift':
-            print('Only strategy E called "corr_yshift" is allowed for now.'
-                  ' This will be applied automatilly.')
+            print("Only strategy E called 'corr_yshift' is allowed for now."
+                  " This will be applied automatilly.")
 
-        # Figure out what which correlation it is
-        if len(xi) == 50:
-            if 'lyb' in args.data or 'Lyb' in args.data:
-                blind_corr = 'lyaxlyb'
-            else:
-                blind_corr = 'lyaxlya'
-        elif len(xi) == 100:
-            assert 'qso' in args.data
-            if 'lyb' in args.data or 'Lyb' in args.data:
-                blind_corr = 'qsoxlyb'
-            else:
-                blind_corr = 'qsoxlya'
-        else:
-            raise ValueError('Unknown binning. Cannot blind. Please raise an issue'
-                             ' or contact picca developers.')
+        if args.blind_corr_type is None:
+            raise argparse.ArgumentError("Blinding strategy 'corr_yshift' requires"
+                                         " argument --blind_corr_type.")
 
         # Read the blinding file and get the right template
         blinding_filename = ('/global/cfs/projectdirs/desi/users/acuceu/notebooks/'
                              'vega_models/blinding/blinding_file/test_2.h5')
         if not os.path.isfile(blinding_filename):
-            raise ValueError('Missing blinding file. Make sure you are running at'
-                             ' NERSC or contact picca developers')
+            raise RuntimeError("Missing blinding file. Make sure you are running at"
+                               " NERSC or contact picca developers")
 
         blinding_file = h5py.File(blinding_filename, 'r')
-        hex_diff = np.array(blinding_file['blinding'][blind_corr]).astype(str)
+        hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
         diff = np.array([float.fromhex(x) for x in hex_diff])
 
         # Check that the shapes match
         if np.shape(xi) != np.shape(diff):
-            raise ValueError('Unknown binning. Cannot blind. Please raise an issue'
-                             ' or contact picca developers.')
+            raise RuntimeError("Unknown binning or wrong correlation type. Cannot blind."
+                               " Please raise an issue or contact picca developers.")
 
         # Add blinding
         xi = xi + diff
