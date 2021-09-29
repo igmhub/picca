@@ -7,7 +7,10 @@ import numpy as np
 
 from picca.delta_extraction.mask import Mask
 from picca.delta_extraction.masks.sdss_dla_mask import SdssDlaMask
+from picca.delta_extraction.masks.sdss_dla_mask import defaults as defaults_sdss_dla_mask
 from picca.delta_extraction.masks.sdss_absorber_mask import SdssAbsorberMask
+from picca.delta_extraction.masks.sdss_absorber_mask import (
+    defaults as defaults_sdss_absorber_mask)
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
@@ -55,8 +58,11 @@ class MaskTest(AbstractTest):
 
         # initialize mask
         config = ConfigParser()
-        config.read_dict({"masks": {"absorbers catalogue": in_file}})
-        mask = SdssAbsorberMask(config["masks"])
+        config.read_dict({"mask": {"filename": in_file}})
+        for key, value in defaults_sdss_absorber_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = SdssAbsorberMask(config["mask"])
         self.assertTrue(isinstance(mask, Mask))
         self.assertTrue(mask.absorber_mask_width == 2.5)
 
@@ -94,9 +100,12 @@ class MaskTest(AbstractTest):
 
         # initialize mask specifying variables
         config = ConfigParser()
-        config.read_dict({"masks": {"absorbers catalogue": in_file,
-                                    "absorber mask width": 1.5,}})
-        mask = SdssAbsorberMask(config["masks"])
+        config.read_dict({"mask": {"filename": in_file,
+                                   "absorber mask width": 1.5,}})
+        for key, value in defaults_sdss_absorber_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = SdssAbsorberMask(config["mask"])
         self.assertTrue(mask.absorber_mask_width == 1.5)
 
         reset_logger()
@@ -118,8 +127,11 @@ class MaskTest(AbstractTest):
 
         # initialize mask
         config = ConfigParser()
-        config.read_dict({"masks": {"dla catalogue": in_file}})
-        mask = SdssDlaMask(config["masks"])
+        config.read_dict({"mask": {"filename": in_file}})
+        for key, value in defaults_sdss_dla_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = SdssDlaMask(config["mask"])
         self.assertTrue(isinstance(mask, Mask))
 
         # apply mask to forest with 1 DLA

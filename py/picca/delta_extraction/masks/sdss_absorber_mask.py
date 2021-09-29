@@ -47,25 +47,25 @@ class SdssAbsorberMask(Mask):
         super().__init__()
 
         # first load the absorbers catalogue
-        absorbers_catalogue = config.get("absorbers catalogue")
-        if absorbers_catalogue is None:
-            raise MaskError("Missing argument 'absorbers catalogue' required by "
-                            "AbsorbersMask")
+        filename = config.get("filename")
+        if filename is None:
+            raise MaskError("Missing argument 'filename' required by "
+                            "SdssAbsorbersMask")
 
-        self.logger.progress(f"Reading absorbers from: {absorbers_catalogue}")
+        self.logger.progress(f"Reading absorbers from: {filename}")
 
         columns_list = ["THING_ID", "LAMBDA_ABS"]
         try:
-            hdul = fitsio.FITS(absorbers_catalogue)
+            hdul = fitsio.FITS(filename)
             cat = {col: hdul["ABSORBERCAT"][col][:] for col in columns_list}
         except OSError:
             raise MaskError("Error loading SdssAbsorberMask. File "
-                            f"{absorbers_catalogue} does not have extension "
+                            f"{filename} does not have extension "
                             "'ABSORBERCAT'")
         except ValueError:
             aux = "', '".join(columns_list)
             raise MaskError("Error loading SdssAbsorberMask. File "
-                            f"{absorbers_catalogue} does not have fields '{aux}' "
+                            f"{filename} does not have fields '{aux}' "
                             "in HDU 'ABSORBERCAT'")
         finally:
             hdul.close()
@@ -84,7 +84,8 @@ class SdssAbsorberMask(Mask):
         # transmissions below this number are masked
         self.absorber_mask_width = config.getfloat("absorber mask width")
         if self.absorber_mask_width is None:
-            self.absorber_mask_width = defaults.get("absorber mask width")
+            raise MaskError("Missing argument 'absorber mask width' required by "
+                            "SdssAbsorbersMask")
 
     def apply_mask(self, forest):
         """Applies the mask. The mask is done by removing the affected
