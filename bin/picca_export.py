@@ -254,6 +254,7 @@ def main(cmdargs):
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
         if blinding != 'corr_yshift':
+            blinding = 'corr_yshift'
             print("Only strategy E called 'corr_yshift' is allowed for now."
                   " This will be applied automatilly.")
 
