@@ -47,9 +47,9 @@ class AbstractTest(unittest.TestCase):
                 # the paths
                 if "py/picca/delta_extraction/tests" in orig_line:
                     orig_line = re.sub(r"\/[^ ]*\/py\/picca\/delta_extraction\/tests\/",
-                                 "", orig_line)
+                                       "", orig_line)
                     new_line = re.sub(r"\/[^ ]*\/py\/picca\/delta_extraction\/tests\/",
-                                 "", new_line)
+                                      "", new_line)
 
                 self.assertTrue(orig_line == new_line)
         finally:

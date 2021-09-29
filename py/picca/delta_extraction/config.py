@@ -6,8 +6,8 @@ from configparser import ConfigParser
 import logging
 import os
 import re
-import git
 from datetime import datetime
+import git
 
 from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.utils import class_from_string, setup_logger
