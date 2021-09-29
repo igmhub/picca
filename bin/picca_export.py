@@ -253,10 +253,15 @@ def main(cmdargs):
 
     # Check if we need blinding and apply it
     if 'BLIND' in data_name or blinding != 'none':
-        if blinding != 'corr_yshift':
+        if blinding == 'corr_yshift':
+            userprint("Blinding using strategy corr_yshift.")
+        elif blinding == 'minimal':
             blinding = 'corr_yshift'
-            print("Only strategy E called 'corr_yshift' is allowed for now."
-                  " This will be applied automatilly.")
+            userprint("Only strategy E called 'corr_yshift' is allowed for now."
+                      " This will be applied automatilly.")
+        else:
+            raise ValueError("Expected blinding to be 'corr_yshift' or 'minimal'."
+                             " Found {}.".format(blinding))
 
         if args.blind_corr_type is None:
             raise argparse.ArgumentError("Blinding strategy 'corr_yshift' requires"
@@ -264,7 +269,7 @@ def main(cmdargs):
 
         # Read the blinding file and get the right template
         blinding_filename = ('/global/cfs/projectdirs/desi/users/acuceu/notebooks/'
-                             'vega_models/blinding/blinding_file/test_2.h5')
+                             'vega_models/blinding/blinding_file/blinding_model_2.h5')
         if not os.path.isfile(blinding_filename):
             raise RuntimeError("Missing blinding file. Make sure you are running at"
                                " NERSC or contact picca developers")
