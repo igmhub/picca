@@ -151,11 +151,12 @@ def read_drq(drq_filename,
     catalog = Table(fitsio.read(drq_filename, ext=1))
 
     keep_columns = ['RA', 'DEC', 'Z']
-
+    print(mode)
     if 'desi' in mode and 'TARGETID' in catalog.colnames:
         obj_id_name = 'TARGETID'
-        catalog.rename_column('TARGET_RA', 'RA')
-        catalog.rename_column('TARGET_DEC', 'DEC')
+        if 'TARGET_RA' in catalog.colnames:
+            catalog.rename_column('TARGET_RA', 'RA')
+            catalog.rename_column('TARGET_DEC', 'DEC')
         keep_columns += ['TARGETID']
         if 'TILEID' in catalog.colnames:
             keep_columns += ['TILEID', 'PETAL_LOC', 'FIBER']
@@ -165,6 +166,7 @@ def read_drq(drq_filename,
             keep_columns += ['SV1_DESI_TARGET']
         if 'SV3_DESI_TARGET' in catalog.colnames:
             keep_columns += ['SV3_DESI_TARGET']
+            
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
@@ -358,8 +360,8 @@ def read_data(in_dir,
     # read data taking the mode into account
     blinding = "none"
     if mode in ["desi_mock","desi_healpix","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
-        if mode =='desi_mock': #I still don't think we need two different modes since we are checking if truth files exist...
-            desi_prefix = 'spectra'
+        if mode in ['desi_mock', 'desi']: #I still don't think we need two different modes since we are checking if truth files exist...
+            desi_prefix = 'spectra-16'
             desi_nside = 16
             pix_data, is_mock = read_from_desi(in_dir, catalog, desi_prefix, desi_nside, pk1d=pk1d)
             
