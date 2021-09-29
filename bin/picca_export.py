@@ -273,7 +273,6 @@ def main(cmdargs):
         if not os.path.isfile(blinding_filename):
             raise RuntimeError("Missing blinding file. Make sure you are running at"
                                " NERSC or contact picca developers")
-
         blinding_file = h5py.File(blinding_filename, 'r')
         hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
         diff = np.array([float.fromhex(x) for x in hex_diff])
