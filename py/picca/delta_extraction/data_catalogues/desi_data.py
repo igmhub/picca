@@ -54,6 +54,10 @@ class DesiData(Data):
     min_num_pix: int (from Data)
     Minimum number of pixels in a forest. Forests with less pixels will be dropped.
 
+    blinding: str
+    A string specifying the chosen blinding strategies. Must be one of the
+    accepted values in ACCEPTED_BLINDING_STRATEGIES
+
     input_directory: str
     Directory to spectra files.
 
@@ -84,10 +88,23 @@ class DesiData(Data):
         catalogue = ZtruthCatalogue(config)
 
         # read data
+        is_mock = False
         if self.mini_sv:
             self.read_from_minisv_desi(catalogue)
         else:
-            self.read_from_desi(catalogue)
+            is_mock = self.read_from_desi(catalogue)
+
+        # TODO: remove this when we are ready to unblind
+        if not is_mock:
+            if self.blinding != "corr_yshift":
+                self.logger.warning(f"Selected blinding, {self.blinding} is "
+                                    "being ignored. 'corr_yshift' blinding "
+                                    "engaged")
+                self.blinding = "corr_yshift"
+
+        # set blinding strategy
+        Forest.blinding = self.blinding
+
 
     def _parse_config(self, config):
         """Parse the configuration options
@@ -154,18 +171,14 @@ class DesiData(Data):
             raise DataError("Forest.wave_solution must be either "
                             "'log' or 'lin'")
 
-        # set blinding strategy
-        blinding = config.get("blinding")
-        if blinding is None:
-            raise DataError("Missing argument 'blinding' required by DesiData")
-        if blinding not in ACCEPTED_BLINDING_STRATEGIES:
-            raise DataError("Unrecognized blinding strategy. Accepted strategies "
-                            f"are {ACCEPTED_BLINDING_STRATEGIES}. Found {blinding}")
-        # TODO: remove this when we are ready to unblind
-        blinding = "corr_yshift"
-        Forest.blinding = blinding
-
         # instance variables
+        self.blinding = config.get("blinding")
+        if self.blinding is None:
+            raise DataError("Missing argument 'blinding' required by DesiData")
+        if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
+            raise DataError("Unrecognized blinding strategy. Accepted strategies "
+                            f"are {ACCEPTED_BLINDING_STRATEGIES}. Found {self.blinding}")
+
         self.input_directory = config.get("input directory")
         if self.input_directory is None:
             raise DataError(
@@ -183,6 +196,12 @@ class DesiData(Data):
         catalogue: astropy.Table
         Table with the quasar catalogue
 
+        Return
+        ------
+        is_mock: bool
+        True if mocks were loaded (i.e. there is a truth file in the folder) and
+        Flase otherwise
+
         Raise
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
@@ -199,12 +218,22 @@ class DesiData(Data):
         grouped_catalogue = catalogue.group_by("healpix")
 
         forests_by_targetid = {}
+        is_mock = True
         for (index,
              healpix), group in zip(enumerate(grouped_catalogue.groups.keys),
                                     grouped_catalogue.groups):
             filename = (
                 f"{self.input_directory}/{healpix//100}/{healpix}/spectra"
                 f"-{in_nside}-{healpix}.fits")
+
+            # the truth file is used to check if we are reading in mocks
+            # in case we are, and we are computing pk1d, we also use them to load
+            # the resolution matrix
+            filename_truth=(
+                f"{self.input_directory}/{healpix//100}/{healpix}/truth-"
+                f"{in_nside}-{healpix}.fits")
+            if not os.path.isfile(filename_truth):
+                is_mock = False
 
             self.logger.progress(
                 f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
@@ -316,6 +345,8 @@ class DesiData(Data):
                         forests_by_targetid[targetid] = forest
 
         self.forests = list(forests_by_targetid.values())
+
+        return is_mock
 
     def read_from_minisv_desi(self, catalogue):
         """Read the spectra and formats its data as Forest instances.
