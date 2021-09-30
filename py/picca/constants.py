@@ -182,9 +182,9 @@ class Cosmo(object):
         else:
             userprint(f"ATTENTION: Analysis is blinded with strategy {blinding}")
 
-        if blinding in ["strategyA", "strategyB", "strategyBC", "strategyABC"]:
+        if blinding in ["strategyB", "strategyBC"]:
             userprint("The specified cosmology is "
-                      f"not used")
+                      f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
             # blind test small
             filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
             # blind test large
@@ -197,6 +197,8 @@ class Cosmo(object):
             wl = hdu[1].read_header()['W']
             H0 = hdu[1].read_header()['H0']
             hdu.close()
+        elif blinding in ["strategyA"]:
+            userprint("Using blind cosmology")
         else:
             userprint(f"Om={Om}, Or={Or}, wl={wl}, H0={H0}")
 
