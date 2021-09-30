@@ -432,11 +432,6 @@ def main(cmdargs):
         userprint("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
         args.blinding_desi = "minimal"
 
-    # info about strategy A
-    if args.blinding_desi == "strategyA":
-        userprint("\nBlinding ver 0.07.26.16.29\n")
-
-
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
     Forest.log_lambda_max = np.log10(args.lambda_max)
@@ -678,13 +673,6 @@ def main(cmdargs):
     num_iterations = args.nit
     for iteration in range(num_iterations):
 
-        # if blinding strategy A is engaged, blind now and then run the weights
-        # computation once more
-        if (iteration == num_iterations - 2 and args.blinding_desi == "strategyA"):
-           userprint('Entering blinding strategyA')
-           z, zmz, l, lol = constants.calcMaps(scale=0.95, Om=0.315)
-           data = constants.blindData(data, z, zmz, l, lol)
-
         context = multiprocessing.get_context('fork')
         pool = context.Pool(processes=args.nproc)
         userprint(
@@ -818,6 +806,14 @@ def main(cmdargs):
                               'nqsos', 'chi2'
                           ],
                           extname='VAR')
+
+    # if blinding strategy A is engaged, blind with a minimal change to weights
+    if ( args.blinding_desi == "strategyA"):
+        print('StrategyA Ver 210929:1743')
+        from picca import blinding_a # I think this line should with the other imports or in constants
+        z_grid, z_map, l_grid, l_map = blinding_a.calcMaps(scale=0.95, Om=0.315)
+        data = blinding_a.blindData(data, z_grid, z_map, l_grid, l_map)
+
 
     ### Read metadata from forests and export it
     if not args.metadata is None:
