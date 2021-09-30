@@ -62,21 +62,21 @@ class SdssDlaMask(Mask):
         super().__init__()
 
         # first load the dla catalogue
-        dla_catalogue = config.get("dla catalogue")
-        if dla_catalogue is None:
-            raise MaskError("Missing argument 'dla catalogue' required by DlaMask")
+        filename = config.get("filename")
+        if filename is None:
+            raise MaskError("Missing argument 'filename' required by SdssDlaMask")
 
-        self.logger.progress(f"Reading DLA catalog from: {dla_catalogue}")
+        self.logger.progress(f"Reading DLA catalog from: {filename}")
         columns_list = ["THING_ID", "Z", "NHI"]
         try:
-            hdul = fitsio.FITS(dla_catalogue)
+            hdul = fitsio.FITS(filename)
             cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
         except OSError:
-            raise MaskError(f"Error loading SdssDlaMask. File {dla_catalogue} does "
+            raise MaskError(f"Error loading SdssDlaMask. File {filename} does "
                             "not have extension 'DLACAT'")
         except ValueError:
             aux = "', '".join(columns_list)
-            raise MaskError(f"Error loading SdssDlaMask. File {dla_catalogue} does "
+            raise MaskError(f"Error loading SdssDlaMask. File {filename} does "
                             f"not have fields '{aux}' in HDU 'DLACAT'")
         finally:
             hdul.close()
@@ -88,14 +88,15 @@ class SdssDlaMask(Mask):
             self.los_ids[thingid] = list(zip(cat["Z"][w], cat['NHI'][w]))
         num_dlas = np.sum([len(thingid) for thingid in self.los_ids.values()])
 
-        self.logger.progress(' In catalog: {} DLAs'.format(num_dlas))
-        self.logger.progress(' In catalog: {} forests have a DLA\n'.format(len(self.los_ids)))
+        self.logger.progress('In catalog: {} DLAs'.format(num_dlas))
+        self.logger.progress('In catalog: {} forests have a DLA\n'.format(len(self.los_ids)))
 
         # setup transmission limit
         # transmissions below this number are masked
         self.dla_mask_limit = config.getfloat("dla mask limit")
         if self.dla_mask_limit is None:
-            self.dla_mask_limit = defaults.get("dla mask limit")
+            raise MaskError("Missing argument 'dla mask limit' "
+                            "required by SdssDlaMask")
 
         # load mask
         mask_file = config.get("mask file")

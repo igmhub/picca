@@ -3,7 +3,6 @@ This class is responsible for managing the workflow of the computation
 of deltas. It thus manages the interactions between the different
 objects.
 """
-import os
 import time
 import logging
 from numba import prange#, jit

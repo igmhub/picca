@@ -111,7 +111,8 @@ class DrqCatalogue(QuasarCatalogue):
         """
         self.best_obs = config.getboolean("best obs")
         if self.best_obs is None:
-            self.best_obs = defaults.get("best obs")
+            raise QuasarCatalogueError("Missing argument 'best obs' "
+                                       "required by DrqCatalogue")
         self.bi_max = config.getfloat("BI max")
         self.drq_filename = config.get("drq catalogue")
         if self.drq_filename is None:
@@ -119,7 +120,8 @@ class DrqCatalogue(QuasarCatalogue):
                                        "required by DrqCatalogue")
         self.keep_bal = config.getboolean("keep BAL")
         if self.keep_bal is None:
-            self.keep_bal = defaults.get("keep BAL")
+            raise QuasarCatalogueError("Missing argument 'keep BAL' "
+                                       "required by DrqCatalogue")
 
         if self.best_obs:
             self.spall = None
@@ -158,7 +160,6 @@ class DrqCatalogue(QuasarCatalogue):
                 self.spall = filenames[0]
                 self.logger.ok_warning("'spAll' file found. Contining with "
                                        "normal execution.")
-
 
     def read_drq(self):
         """Read the DRQ Catalogue

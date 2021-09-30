@@ -5,12 +5,15 @@ import unittest
 
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.data import Data
+from picca.delta_extraction.data import defaults as defaults_data
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
+from picca.delta_extraction.data_catalogues.sdss_data import defaults as defaults_sdss_data
 from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import reset_logger
 from picca.delta_extraction.tests.test_utils import forest1
 from picca.delta_extraction.tests.test_utils import sdss_data_kwargs
+from picca.delta_extraction.tests.test_utils import sdss_data_kwargs_filter_forest
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -39,6 +42,10 @@ class DataTest(AbstractTest):
         config = ConfigParser()
         config.read_dict({"data": {"output directory": f"{THIS_DIR}/results"},
                          })
+        for key, value in defaults_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
         data = Data(config["data"])
 
         self.assertTrue(len(data.forests) == 0)
@@ -48,6 +55,9 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {"minimum number pixels in forest": 40,
                                    "output directory": f"{THIS_DIR}/results",},
                          })
+        for key, value in defaults_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = Data(config["data"])
 
         self.assertTrue(len(data.forests) == 0)
@@ -65,6 +75,9 @@ class DataTest(AbstractTest):
         # create Data instance
         config = ConfigParser()
         config.read_dict({"data": {"output directory": f"{THIS_DIR}/results"}})
+        for key, value in defaults_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = Data(config["data"])
 
         # add dummy forest
@@ -80,6 +93,9 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {"minimum number pixels in forest": 10000,
                                    "output directory": f"{THIS_DIR}/results"}
                          })
+        for key, value in defaults_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = Data(config["data"])
 
         # add dummy forest
@@ -92,7 +108,7 @@ class DataTest(AbstractTest):
 
         # reset printing
         reset_logger()
-        self.compare_ascii(test_file, out_file, expand_dir=True)
+        self.compare_ascii(test_file, out_file)
 
     def test_desi_data(self):
         """Test DesiData"""
@@ -105,18 +121,13 @@ class DataTest(AbstractTest):
     def test_sdss_data_filter_forest(self):
         """Test SdssData when run in spec mode"""
         config = ConfigParser()
-        data_kwargs = sdss_data_kwargs.copy()
-        data_kwargs.update({"mode": "spec",
-                            #"z min": 0,
-                            #"z max": 10.
-                            "lambda min": 3600.0,
-                            "lambda max": 7235.0,
-                            "lambda min rest frame": 2900.0,
-                            "lambda max rest frame": 3120.0,
-                            })
+        data_kwargs = sdss_data_kwargs_filter_forest.copy()
         config.read_dict({
             "data": data_kwargs
         })
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
 
         self.assertTrue(len(data.forests) == 24)
@@ -127,7 +138,6 @@ class DataTest(AbstractTest):
 
         # filter forests
         data.filter_forests()
-        print("Final number of forests:", len(data.forests))
         self.assertTrue(len(data.forests) == 22)
 
     def test_sdss_data_spec(self):
@@ -138,6 +148,9 @@ class DataTest(AbstractTest):
         config.read_dict({
             "data": data_kwargs
         })
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
 
         self.assertTrue(len(data.forests) == 43)
@@ -153,6 +166,9 @@ class DataTest(AbstractTest):
         config.read_dict({
             "data": sdss_data_kwargs
         })
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
 
         self.assertTrue(len(data.forests) == 43)
@@ -168,6 +184,9 @@ class DataTest(AbstractTest):
         config.read_dict({
             "data": data_kwargs
         })
+        for key, value in defaults_sdss_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
         data = SdssData(config["data"])
 
         self.assertTrue(len(data.forests) == 43)

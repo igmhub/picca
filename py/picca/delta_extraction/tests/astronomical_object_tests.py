@@ -532,7 +532,9 @@ class AstronomicalObjectTest(AbstractTest):
         if isinstance(test_obj, Forest):
             self.assertTrue(header[index + 1].get("name") == "MEANSNR")
             self.assertTrue(header[index + 1].get("value") == test_obj.mean_snr)
-            index += 1
+            self.assertTrue(header[index + 2].get("name") == "BLINDING")
+            self.assertTrue(header[index + 2].get("value") == "none")
+            index += 2
         if isinstance(test_obj, Pk1dForest):
             self.assertTrue(header[index + 1].get("name") == "MEANZ")
             self.assertTrue(header[index + 1].get("value") == test_obj.mean_z)

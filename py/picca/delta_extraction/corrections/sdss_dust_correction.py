@@ -42,7 +42,8 @@ class SdssDustCorrection(Correction):
         filename = config.get("filename")
         extinction_conversion_r = config.getfloat("extinction_conversion_r")
         if extinction_conversion_r is None:
-            extinction_conversion_r = defaults.get("extinction_conversion_r")
+            raise CorrectionError("Error loading SdssDustCorrection. Missing "
+                                  "variable 'extinction_conversion_r'")
 
         try:
             hdu = fitsio.read(filename, ext="CATALOG")

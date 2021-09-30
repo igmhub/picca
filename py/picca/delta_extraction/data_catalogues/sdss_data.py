@@ -9,19 +9,21 @@ import fitsio
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.astronomical_objects.sdss_pk1d_forest import SdssPk1dForest
-from picca.delta_extraction.data import Data
+from picca.delta_extraction.data import Data, defaults
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
+from picca.delta_extraction.quasar_catalogues.drq_catalogue import defaults as defaults_drq
 from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
 
-defaults = {
+defaults.update({
     "lambda max": 5500.0,
     "lambda max rest frame": 1200.0,
     "lambda min": 3600.0,
     "lambda min rest frame": 1040.0,
     "mode": "spplate",
     "rebin": 3,
-}
+})
+defaults.update(defaults_drq)
 
 class SdssData(Data):
     """Reads the spectra from SDSS and formats its data as a list of
@@ -72,9 +74,6 @@ class SdssData(Data):
 
         super().__init__(config)
 
-        # setup SdssForest class variables
-        Forest.wave_solution = "log"
-
         # load variables from config
         self.input_directory = None
         self.mode = None
@@ -104,27 +103,29 @@ class SdssData(Data):
         -----
         DataError upon missing required variables
         """
-        # Forest class variables
+        # setup SdssForest class variables
+        Forest.wave_solution = "log"
+
         rebin = config.getint("rebin")
         if rebin is None:
-            rebin = defaults.get("rebin")
+            raise DataError("Missing argument 'rebin' required by SdssData")
         Forest.delta_log_lambda = rebin * 1e-4
 
         lambda_max = config.getfloat("lambda max")
         if lambda_max is None:
-            lambda_max = defaults.get("lambda max")
+            raise DataError("Missing argument 'lambda max' required by SdssData")
         Forest.log_lambda_max = np.log10(lambda_max)
         lambda_max_rest_frame = config.getfloat("lambda max rest frame")
         if lambda_max_rest_frame is None:
-            lambda_max_rest_frame = defaults.get("lambda max rest frame")
+            raise DataError("Missing argument 'lambda max rest frame' required by SdssData")
         Forest.log_lambda_max_rest_frame = np.log10(lambda_max_rest_frame)
         lambda_min = config.getfloat("lambda min")
         if lambda_min is None:
-            lambda_min = defaults.get("lambda min")
+            raise DataError("Missing argument 'lambda min' required by SdssData")
         Forest.log_lambda_min = np.log10(lambda_min)
         lambda_min_rest_frame = config.getfloat("lambda min rest frame")
         if lambda_min_rest_frame is None:
-            lambda_min_rest_frame = defaults.get("lambda min rest frame")
+            raise DataError("Missing argument 'lambda min rest frame' required by SdssData")
         Forest.log_lambda_min_rest_frame = np.log10(lambda_min_rest_frame)
 
         # instance variables
@@ -135,7 +136,7 @@ class SdssData(Data):
 
         self.mode = config.get("mode")
         if self.mode is None:
-            self.mode = defaults.get("mode")
+            raise DataError("Missing argument 'mode' required by SdssData")
 
     def read_from_spec(self, catalogue):
         """Read the spectra and formats its data as Forest instances.

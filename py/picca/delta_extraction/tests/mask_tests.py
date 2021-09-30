@@ -7,11 +7,15 @@ import numpy as np
 
 from picca.delta_extraction.mask import Mask
 from picca.delta_extraction.masks.sdss_dla_mask import SdssDlaMask
+from picca.delta_extraction.masks.sdss_dla_mask import defaults as defaults_sdss_dla_mask
 from picca.delta_extraction.masks.sdss_absorber_mask import SdssAbsorberMask
+from picca.delta_extraction.masks.sdss_absorber_mask import (
+    defaults as defaults_sdss_absorber_mask)
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
 from picca.delta_extraction.tests.test_utils import reset_logger
+from picca.delta_extraction.tests.test_utils import setup_forest, reset_forest
 from picca.delta_extraction.tests.test_utils import forest1_log_lambda, forest1
 from picca.delta_extraction.tests.test_utils import forest2_log_lambda, forest2
 from picca.delta_extraction.tests.test_utils import forest3_log_lambda, forest3
@@ -30,6 +34,14 @@ class MaskTest(AbstractTest):
     test_dla_mask
     test_mask
     """
+    def setUp(self):
+        reset_forest()
+        setup_forest("log")
+        super().setUp()
+
+    def tearDown(self):
+        reset_forest()
+
     def test_absorber_mask(self):
         """Test correct initialisation and inheritance for class
         SdssAbsorberMask
@@ -46,8 +58,11 @@ class MaskTest(AbstractTest):
 
         # initialize mask
         config = ConfigParser()
-        config.read_dict({"masks": {"absorbers catalogue": in_file}})
-        mask = SdssAbsorberMask(config["masks"])
+        config.read_dict({"mask": {"filename": in_file}})
+        for key, value in defaults_sdss_absorber_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = SdssAbsorberMask(config["mask"])
         self.assertTrue(isinstance(mask, Mask))
         self.assertTrue(mask.absorber_mask_width == 2.5)
 
@@ -85,13 +100,16 @@ class MaskTest(AbstractTest):
 
         # initialize mask specifying variables
         config = ConfigParser()
-        config.read_dict({"masks": {"absorbers catalogue": in_file,
-                                    "absorber mask width": 1.5,}})
-        mask = SdssAbsorberMask(config["masks"])
+        config.read_dict({"mask": {"filename": in_file,
+                                   "absorber mask width": 1.5,}})
+        for key, value in defaults_sdss_absorber_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = SdssAbsorberMask(config["mask"])
         self.assertTrue(mask.absorber_mask_width == 1.5)
 
         reset_logger()
-        self.compare_ascii(test_file, out_file, expand_dir=True)
+        self.compare_ascii(test_file, out_file)
 
     def test_dla_mask(self):
         """Test correct initialisation and inheritance for class
@@ -109,8 +127,11 @@ class MaskTest(AbstractTest):
 
         # initialize mask
         config = ConfigParser()
-        config.read_dict({"masks": {"dla catalogue": in_file}})
-        mask = SdssDlaMask(config["masks"])
+        config.read_dict({"mask": {"filename": in_file}})
+        for key, value in defaults_sdss_dla_mask.items():
+            if key not in config["mask"]:
+                config["mask"][key] = str(value)
+        mask = SdssDlaMask(config["mask"])
         self.assertTrue(isinstance(mask, Mask))
 
         # apply mask to forest with 1 DLA
@@ -130,7 +151,7 @@ class MaskTest(AbstractTest):
                                     np.ones_like(forest3_log_lambda)))
 
         reset_logger()
-        self.compare_ascii(test_file, out_file, expand_dir=True)
+        self.compare_ascii(test_file, out_file)
 
     def test_mask(self):
         """Test Abstract class Mask

@@ -6,21 +6,27 @@ from configparser import ConfigParser
 import logging
 import os
 import re
+from datetime import datetime
+import git
 
 from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.utils import class_from_string, setup_logger
 
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+PICCA_BASE = THIS_DIR.split("py/picca")[0]
+
 default_config = {
     "general": {
         "overwrite": False,
+        # New logging level defined in setup_logger.
+        # Numeric value is PROGRESS_LEVEL_NUM defined in utils.py
+        "logging level console": "PROGRESS",
+        "logging level file": "PROGRESS"
     },
-}
-
-defaults = {
-    # New logging level defined in setup_logger.
-    # Numeric value is PROGRESS_LEVEL_NUM defined in utils.py
-    "logging level console": "PROGRESS",
-    "logging level file": "PROGRESS"
+    "run specs": {
+        "git hash": git.Repo(PICCA_BASE).head.object.hexsha,
+        "timestamp": str(datetime.now()),
+    }
 }
 
 class Config:
@@ -126,6 +132,9 @@ class Config:
         self.expected_flux = None
         self.__format_expected_flux_section()
 
+        # initialize folders where data will be saved
+        self.initialize_folders()
+
     def __format_corrections_section(self):
         """Format the corrections section of the parser into usable data
 
@@ -156,7 +165,8 @@ class Config:
                 module_name = re.sub('(?<!^)(?=[A-Z])', '_', correction_name).lower()
                 module_name = f"picca.delta_extraction.corrections.{module_name.lower()}"
             try:
-                CorrectionType = class_from_string(correction_name, module_name)
+                CorrectionType, default_args = class_from_string(correction_name,
+                                                                 module_name)
             except ImportError:
                 raise ConfigError(f"Error loading class {correction_name}, "
                                   f"module {module_name} could not be loaded")
@@ -169,9 +179,13 @@ class Config:
                 self.logger.warning(f"Missing section [correction arguments {correction_index}]. "
                                     f"Correction {correction_name} will be called without "
                                     "arguments")
-                correction_args = self.config["empty"]
-            else:
-                correction_args = self.config[f"correction arguments {correction_index}"]
+                self.config.read_dict({f"correction arguments {correction_index}":{}})
+            correction_args = self.config[f"correction arguments {correction_index}"]
+
+            # update the section adding the default choices when necessary
+            for key, value in default_args.items():
+                if key not in correction_args:
+                    correction_args[key] = str(value)
 
             # finally add the correction to self.corrections
             self.corrections.append((CorrectionType, correction_args))
@@ -194,13 +208,18 @@ class Config:
             module_name = re.sub('(?<!^)(?=[A-Z])', '_', data_name).lower()
             module_name = f"picca.delta_extraction.data_catalogues.{module_name.lower()}"
         try:
-            DataType = class_from_string(data_name, module_name)
+            DataType, default_args = class_from_string(data_name, module_name)
         except ImportError:
             raise ConfigError(f"Error loading class {data_name}, "
                               f"module {module_name} could not be loaded")
         except AttributeError:
             raise ConfigError(f"Error loading class {data_name}, "
                               f"module {module_name} did not contain class")
+
+        # update the section adding the default choices when necessary
+        for key, value in default_args.items():
+            if key not in section:
+                section[key] = str(value)
 
         # finally add the information to self.data
         self.data = (DataType, section)
@@ -223,13 +242,19 @@ class Config:
             module_name = re.sub('(?<!^)(?=[A-Z])', '_', expected_flux_name).lower()
             module_name = f"picca.delta_extraction.expected_fluxes.{module_name.lower()}"
         try:
-            ExpectedFluxType = class_from_string(expected_flux_name, module_name)
+            ExpectedFluxType, default_args = class_from_string(expected_flux_name,
+                                                               module_name)
         except ImportError:
             raise ConfigError(f"Error loading class {expected_flux_name}, "
                               f"module {module_name} could not be loaded")
         except AttributeError:
             raise ConfigError(f"Error loading class {expected_flux_name}, "
                               f"module {module_name} did not contain class")
+
+        # update the section adding the default choices when necessary
+        for key, value in default_args.items():
+            if key not in section:
+                section[key] = str(value)
 
         # finally add the information to self.continua
         self.expected_flux = (ExpectedFluxType, section)
@@ -255,15 +280,14 @@ class Config:
 
         self.logging_level_console = section.get("logging level console")
         if self.logging_level_console is None:
-            self.logging_level_console = defaults.get("logging level console")
+            raise ConfigError("In section 'general', variable 'logging level console' is required")
         self.logging_level_console = self.logging_level_console.upper()
 
         self.logging_level_file = section.get("logging level file")
         if self.logging_level_file is None:
-            self.logging_level_file = defaults.get("logging level file")
+            raise ConfigError("In section 'general', variable 'logging level file' is required")
         self.logging_level_file = self.logging_level_file.upper()
 
-        self.initialize_folders()
         setup_logger(logging_level_console=self.logging_level_console,
                      log_file=self.log,
                      logging_level_file=self.logging_level_file)
@@ -293,7 +317,7 @@ class Config:
                 module_name = re.sub('(?<!^)(?=[A-Z])', '_', mask_name).lower()
                 module_name = f"picca.delta_extraction.masks.{module_name.lower()}"
             try:
-                MaskType = class_from_string(mask_name, module_name)
+                MaskType, default_args = class_from_string(mask_name, module_name)
             except ImportError:
                 raise ConfigError(f"Error loading class {mask_name}, "
                                   f"module {module_name} could not be loaded")
@@ -306,12 +330,15 @@ class Config:
                 self.logger.warning(f"Missing section [mask arguments {mask_index}]. "
                                     f"Correction {mask_name} will be called without "
                                     "arguments")
-                mask_args = self.config["empty"]
-            else:
-                mask_args = self.config[f"mask arguments {mask_index}"]
+                self.config.read_dict({f"mask arguments {mask_index}":{}})
+            mask_args = self.config[f"mask arguments {mask_index}"]
 
-            # finally add the correction to self.corrections
-            #mask = MaskType(**mask_args)
+            # update the section adding the default choices when necessary
+            for key, value in default_args.items():
+                if key not in mask_args:
+                    mask_args[key] = str(value)
+
+            # finally add the correction to self.masks
             self.masks.append((MaskType, mask_args))
 
     def __parse_environ_variables(self):

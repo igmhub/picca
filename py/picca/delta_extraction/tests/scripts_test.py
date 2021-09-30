@@ -84,7 +84,7 @@ class ScriptsTest(AbstractTest):
 
         self.run_delta_extraction(config_file, out_dir, test_dir)
 
-    def test_delta_lya_nomask_nodla(self):
+    def test_delta_lya_nodla(self):
         """End-to-end test using 'LYA' setup wihtout masking DLAs"""
         config_file = "{}/data/delta_lya_nodla.ini".format(THIS_DIR)
         out_dir = "{}/results/delta_extraction_lya_nodla".format(THIS_DIR)

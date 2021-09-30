@@ -72,6 +72,8 @@ class SdssOpticalDepthCorrection(Correction):
                                   "depth gamma' and 'optical depth absorber' "
                                   "should have the same number of entries")
 
+        self.logger.info(f"Adding {len(self.tau_list)} optical depths")
+
     def apply_correction(self, forest):
         """Apply the correction. Correction is applied by dividing the
         data flux by the loaded correction, and the subsequent correction
@@ -82,8 +84,6 @@ class SdssOpticalDepthCorrection(Correction):
         forest: Forest
         A Forest instance to which the correction is applied
         """
-        self.logger.info(f"Adding {len(self.tau_list)} optical depths")
-
         mean_optical_depth = np.ones(forest.log_lambda.size)
         for tau, gamma, lambda_rest_frame in zip(self.tau_list, self.gamma_list,
                                                  self.lambda_rest_frame_list):
