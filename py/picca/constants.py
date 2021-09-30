@@ -184,7 +184,7 @@ class Cosmo(object):
 
         if blinding in ["strategyA", "strategyB", "strategyBC", "strategyABC"]:
             userprint("The specified cosmology is "
-                      f"not used: Om={Om}, Or={Or}, wl={wl}, H0={H0}")
+                      f"not used")
             # blind test small
             filename = "DR16_blind_test_small/DR16_blind_test_small.fits"
             # blind test large
