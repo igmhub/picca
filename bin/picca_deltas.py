@@ -21,6 +21,7 @@ from picca import prep_del, io, bal_tools
 from picca.utils import userprint
 from picca.constants import ACCEPTED_BLINDING_STRATEGIES
 import picca.constants as constants
+import picca.blinding_a as blinding_a
 
 
 def cont_fit(forests):
@@ -682,8 +683,8 @@ def main(cmdargs):
         # computation once more
         if (iteration == num_iterations - 2 and args.blinding_desi == "strategyA"):
            userprint('Entering blinding strategyA')
-           z, zmz, l, lol = constants.calcMaps(scale=0.95, Om=0.315)
-           data = constants.blindData(data, z, zmz, l, lol)
+           z, zmz, l, lol = blinding_a.calcMaps(scale=0.95, Om=0.315)
+           data = blinding_a.blindData(data, z, zmz, l, lol)
 
         context = multiprocessing.get_context('fork')
         pool = context.Pool(processes=args.nproc)
