@@ -21,6 +21,7 @@ from picca import prep_del, io, bal_tools
 from picca.utils import userprint
 from picca.constants import ACCEPTED_BLINDING_STRATEGIES
 import picca.constants as constants
+import picca.blinding_a as blinding_a
 
 
 def cont_fit(forests):
