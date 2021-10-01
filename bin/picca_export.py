@@ -101,8 +101,12 @@ def main(cmdargs):
 
     if "BLINDING" in head:
         blinding = head["BLINDING"]
-    # older runs are not from DESI main survey and should not be blinded
+        if blinding == 'minimal':
+            blinding = 'corr_yshift'
+            userprint("The minimal strategy is no longer supported."
+                        "Automatically switch to corr_yshift.")
     else:
+        # if BLINDING keyword not present (old file), ignore blinding
         blinding = "none"
     hdul.close()
 
@@ -255,10 +259,6 @@ def main(cmdargs):
     if 'BLIND' in data_name or blinding != 'none':
         if blinding == 'corr_yshift':
             userprint("Blinding using strategy corr_yshift.")
-        elif blinding == 'minimal':
-            blinding = 'corr_yshift'
-            userprint("Only strategy E called 'corr_yshift' is allowed for now."
-                      " This will be applied automatilly.")
         else:
             raise ValueError("Expected blinding to be 'corr_yshift' or 'minimal'."
                              " Found {}.".format(blinding))
