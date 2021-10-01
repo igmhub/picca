@@ -379,9 +379,9 @@ def read_data(in_dir,
                 pix_data.extend(pix_data_)
 
 
-            if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any((catalog['DESI_TARGET']>0)):
-                print("your catalog contains DESI survey tiles!")
-                blinding = blinding_desi
+        if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any((catalog['DESI_TARGET']>0)):
+            print("your catalog contains DESI survey tiles!")
+            blinding = blinding_desi
 
         elif mode == "desi_survey_tilebased":
             if np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
