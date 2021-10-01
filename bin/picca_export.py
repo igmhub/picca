@@ -70,7 +70,7 @@ def main(cmdargs):
         help='Do not smooth the covariance matrix')
 
     parser.add_argument(
-        '--blind_corr_type',
+        '--blind-corr-type',
         default=None,
         choices=['lyaxlya', 'lyaxlyb', 'qsoxlya', 'qsoxlyb'],
         help='Type of correlation. Required to apply blinding in DESI')
