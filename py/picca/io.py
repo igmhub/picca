@@ -151,7 +151,7 @@ def read_drq(drq_filename,
     catalog = Table(fitsio.read(drq_filename, ext=1))
 
     keep_columns = ['RA', 'DEC', 'Z']
-    print(mode)
+
     if 'desi' in mode and 'TARGETID' in catalog.colnames:
         obj_id_name = 'TARGETID'
         if 'TARGET_RA' in catalog.colnames:
@@ -160,13 +160,15 @@ def read_drq(drq_filename,
         keep_columns += ['TARGETID']
         if 'TILEID' in catalog.colnames:
             keep_columns += ['TILEID', 'PETAL_LOC', 'FIBER']
+        if 'SURVEY' in catalog.colnames:
+            keep_columns += ['SURVEY']
         if 'DESI_TARGET' in catalog.colnames:
             keep_columns += ['DESI_TARGET']
         if 'SV1_DESI_TARGET' in catalog.colnames:
             keep_columns += ['SV1_DESI_TARGET']
         if 'SV3_DESI_TARGET' in catalog.colnames:
             keep_columns += ['SV3_DESI_TARGET']
-            
+
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
@@ -360,33 +362,24 @@ def read_data(in_dir,
     # read data taking the mode into account
     blinding = "none"
     if mode in ["desi_mock","desi_healpix","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
-        if mode in ['desi_mock', 'desi']: #I still don't think we need two different modes since we are checking if truth files exist...
-            desi_prefix = 'spectra-16'
+        if mode in ["desi_mock", "desi"]: #I still don't think we need two different modes since we are checking if truth files exist...
             desi_nside = 16
+            desi_prefix = f'spectra-{desi_nside}'
             pix_data, is_mock = read_from_desi(in_dir, catalog, desi_prefix, desi_nside, pk1d=pk1d)
-            
-        elif mode == 'desi_healpix':
+
+        elif mode == "desi_healpix":
             pix_data=[]
-            for survey_type in ['SV1','SV3','DESI'] :
-                desi_nside = 64
-                if survey_type == 'DESI':
-                    catalog_ = catalog[catalog['DESI_TARGET']>0]
-                    desi_prefix=f'coadd-main-dark'
-                    in_dir_=f'{in_dir}/main/dark/'
-                else:
-                    #The target bit 562949953421312 correspond to no target
-                    w=(catalog['DESI_TARGET']==0) & (catalog[f'{survey_type}_DESI_TARGET']!=562949953421312)
-                    catalog_ = catalog[w]
-                    desi_prefix=f'coadd-{survey_type.lower()}-dark'
-                    in_dir_=f'{in_dir}/{survey_type.lower()}/dark/'
-            
+            desi_nside = 64
+            survey_type=np.unique(catalog['SURVEY'])
+            for survey in survey_type :
+                catalog_ = catalog[catalog['SURVEY']==survey]
+                desi_prefix=f'coadd-{survey}-dark'
+                in_dir_=f'{in_dir}/{survey}/dark'
                 pix_data_, is_mock = read_from_desi(in_dir_, catalog_, desi_prefix, desi_nside, pk1d=pk1d)
-                
                 pix_data.extend(pix_data_)
 
-            
-            if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any((catalog['DESI_TARGET']>0)): 
-                #I would suggest we check for DESI_TARGET instead of TILEID. 
+
+            if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any((catalog['DESI_TARGET']>0)):
                 print("your catalog contains DESI survey tiles!")
                 blinding = blinding_desi
 
@@ -1008,7 +1001,7 @@ def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
     Returns:
         List of read spectra for all the healpixs
     """
-    
+
     ra = catalog['RA'].data
     dec = catalog['DEC'].data
     in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
@@ -1031,7 +1024,7 @@ def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
         plate_name = 'PLATE'
         mjd_name = 'MJD'
         fiberid_name = 'FIBERID'
-        
+
     data = []
     is_mock = True
     for index, healpix in enumerate(unique_in_healpixs):
@@ -1051,7 +1044,7 @@ def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
         except IOError:
             userprint(f"Error reading pix {healpix}")
             continue
-        
+
         #-- Read targetid from fibermap to match to catalog later
         fibermap = hdul['FIBERMAP'].read()
         targetid_spec = fibermap["TARGETID"]
@@ -1126,7 +1119,7 @@ def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
                 else:
                     reso_in_km_per_s = None
                     exposures_diff = None
-                
+
                 forest_temp = Forest(spec['log_lambda'], flux, ivar,
                                      entry[id_name], entry['RA'], entry['DEC'],
                                      entry['Z'], entry[plate_name],
@@ -1480,7 +1473,7 @@ def read_deltas(in_dir,
     deltas = []
     num_data = 0
     for index, filename in enumerate(files):
-        userprint("\rread {} of {} {}".format(index, len(files), num_data))
+        userprint("\rread {} of {} {}".format(filename,index, len(files), num_data))
         if from_image is None:
             hdul = fitsio.FITS(filename)
             deltas += [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
@@ -1589,11 +1582,14 @@ def read_objects(filename,
     userprint("Reading objects ")
 
     unique_healpix = np.unique(healpixs)
+
     if 'desi' in mode:
         if 'LAST_NIGHT' in catalog.colnames:
             nightcol='LAST_NIGHT'
         elif 'NIGHT' in catalog.colnames:
             nightcol='NIGHT'
+        elif 'SURVEY' in catalog.colnames:
+            nightcol='TARGETID'
         else:
             raise Exception("The catalog does not have a NIGHT or LAST_NIGHT entry")
 
@@ -1601,11 +1597,18 @@ def read_objects(filename,
         userprint("{} of {}".format(index, len(unique_healpix)))
         w = healpixs == healpix
         if 'desi' in mode:
-            objs[healpix] = [
-                QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
+            if 'TILEID' in catalog.colnames:
+                objs[healpix] = [
+                    QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
                     entry['TILEID'], entry[nightcol], entry['FIBER'])
-                for entry in catalog[w]
-            ]
+                    for entry in catalog[w]
+                ]
+            else:
+                objs[healpix] = [
+                    QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
+                    entry['TARGETID'], entry[nightcol], entry['TARGETID'])
+                    for entry in catalog[w]
+                ]
         else:
             objs[healpix] = [
                 QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],
