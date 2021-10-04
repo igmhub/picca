@@ -361,8 +361,8 @@ def read_data(in_dir,
 
     # read data taking the mode into account
     blinding = "none"
-    if mode in ["desi_mock","desi_healpix","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
-        if mode in ["desi_mock", "desi"]: #I still don't think we need two different modes since we are checking if truth files exist...
+    if mode in ["desi_mocks","desi_healpix","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
+        if mode in ["desi_mocks", "desi"]: #I still don't think we need two different modes since we are checking if truth files exist...
             desi_nside = 16
             desi_prefix = f'spectra-{desi_nside}'
             pix_data, is_mock = read_from_desi(in_dir, catalog, desi_prefix, desi_nside, pk1d=pk1d)
