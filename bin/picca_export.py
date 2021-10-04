@@ -104,13 +104,13 @@ def main(cmdargs):
         if blinding == 'minimal':
             blinding = 'corr_yshift'
             userprint("The minimal strategy is no longer supported."
-                        "Automatically switch to corr_yshift.")
+                      "Automatically switch to corr_yshift.")
     else:
         # if BLINDING keyword not present (old file), ignore blinding
         blinding = "none"
     hdul.close()
 
-    if not args.remove_shuffled_correlation is None:
+    if args.remove_shuffled_correlation is not None:
         hdul = fitsio.FITS(args.remove_shuffled_correlation)
         xi_shuffled = hdul['COR'][data_name][:]
         weight_shuffled = hdul['COR']['WE'][:]
@@ -264,12 +264,12 @@ def main(cmdargs):
                              " Found {}.".format(blinding))
 
         if args.blind_corr_type is None:
-            raise argparse.ArgumentError("Blinding strategy 'corr_yshift' requires"
-                                         " argument --blind_corr_type.")
+            raise ValueError("Blinding strategy 'corr_yshift' requires"
+                             " argument --blind_corr_type.")
 
         # Read the blinding file and get the right template
-        blinding_filename = ('/global/cfs/projectdirs/desi/users/acuceu/notebooks/'
-                             'vega_models/blinding/blinding_file/blinding_model_2.h5')
+        blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
+                             'blinding/y1_blinding_v1_standard_04_10_2021.h5')
         if not os.path.isfile(blinding_filename):
             raise RuntimeError("Missing blinding file. Make sure you are running at"
                                " NERSC or contact picca developers")
@@ -299,5 +299,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)
