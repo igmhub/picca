@@ -104,13 +104,13 @@ def main(cmdargs):
         if blinding == 'minimal':
             blinding = 'corr_yshift'
             userprint("The minimal strategy is no longer supported."
-                        "Automatically switch to corr_yshift.")
+                      "Automatically switch to corr_yshift.")
     else:
         # if BLINDING keyword not present (old file), ignore blinding
         blinding = "none"
     hdul.close()
 
-    if not args.remove_shuffled_correlation is None:
+    if args.remove_shuffled_correlation is not None:
         hdul = fitsio.FITS(args.remove_shuffled_correlation)
         xi_shuffled = hdul['COR'][data_name][:]
         weight_shuffled = hdul['COR']['WE'][:]
@@ -299,5 +299,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)
