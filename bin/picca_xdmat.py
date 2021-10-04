@@ -67,7 +67,7 @@ def main(cmdargs):
                         '--mode',
                         type=str,
                         default='sdss',
-                        choices=['sdss','desi'],
+                        choices=['sdss','desi','desi_mocks','desi_healpix'],
                         required=False,
                         help='type of catalog supplied, default sdss')
 

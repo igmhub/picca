@@ -421,7 +421,6 @@ def main(cmdargs):
                         required=False,
                         help='Blinding strategy. "none" for no blinding')
 
-
     t0 = time.time()
 
     args = parser.parse_args(cmdargs)
