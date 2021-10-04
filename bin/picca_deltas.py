@@ -417,7 +417,7 @@ def main(cmdargs):
                         help=('Use all dir for input spectra (DESI SV)'))
     parser.add_argument('--blinding-desi',
                         type=str,
-                        default="minimal",
+                        default="corr_yshift",
                         required=False,
                         help='Blinding strategy. "none" for no blinding')
 
@@ -430,8 +430,8 @@ def main(cmdargs):
 
     # comment this when ready to unblind
     if args.blinding_desi == "none":
-        print("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
-        args.blinding_desi = "minimal"
+        userprint("WARINING: --blinding-desi is being ignored. 'corr_yshift' blinding engaged")
+        args.blinding_desi = "corr_yshift"
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
