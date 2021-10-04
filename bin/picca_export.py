@@ -264,8 +264,8 @@ def main(cmdargs):
                              " Found {}.".format(blinding))
 
         if args.blind_corr_type is None:
-            raise argparse.ArgumentError("Blinding strategy 'corr_yshift' requires"
-                                         " argument --blind_corr_type.")
+            raise ValueError("Blinding strategy 'corr_yshift' requires"
+                             " argument --blind_corr_type.")
 
         # Read the blinding file and get the right template
         blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
