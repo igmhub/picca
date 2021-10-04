@@ -268,8 +268,8 @@ def main(cmdargs):
                                          " argument --blind_corr_type.")
 
         # Read the blinding file and get the right template
-        blinding_filename = ('/global/cfs/projectdirs/desi/users/acuceu/notebooks/'
-                             'vega_models/blinding/blinding_file/blinding_model_2.h5')
+        blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
+                             'blinding/y1_blinding_v1_standard_04_10_2021.h5')
         if not os.path.isfile(blinding_filename):
             raise RuntimeError("Missing blinding file. Make sure you are running at"
                                " NERSC or contact picca developers")
