@@ -812,8 +812,8 @@ def main(cmdargs):
     if ( args.blinding_desi == "strategyA"):
         print('StrategyA Ver 210929:1743')
         from picca import blinding_a # I think this line should with the other imports or in constants
-        z_grid, z_map, l_grid, l_map = blinding_a.calcMaps(scale=0.95, Om=0.315)
-        data = blinding_a.blindData(data, z_grid, z_map, l_grid, l_map)
+        z_grid, z_map, lambda_grid, lambda_map = blinding_a.calcMaps(scale=0.95, Om=0.315)
+        data = blinding_a.blindData(data, z_grid, z_map, lambda_grid, lambda_map)
 
 
     ### Read metadata from forests and export it
