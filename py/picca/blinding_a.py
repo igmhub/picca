@@ -83,9 +83,9 @@ def resample_flux(x_out, x, flux, ivar=None, extrapolate=False):
         extrapolate: if true borders will be extrapolated to 
             "improve" the edge resampling
     Returns:
-        out_flux: new flux resampled to xout, i.e. flux(xout)
+        out_flux: new flux resampled to x_out, i.e. flux(x_out)
         out_ivar: -only if ivar given as arg- new ivar values 
-            for outflux
+            for out_flux
 
     """
     if ivar is None:
@@ -116,7 +116,7 @@ def _unweighted_resample(x_out, x, flux_density, extrapolate=False) :
         extrapolate: if true borders will be extrapolated to 
             "improve" the edge resampling
     Returns:
-        histogram: new flux resampled to output_x, i.e. 
+        histogram: new flux resampled to x_out, i.e. 
             flux_density(x_out)
     """
     ix=x
