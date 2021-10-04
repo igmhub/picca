@@ -1480,7 +1480,7 @@ def read_deltas(in_dir,
     deltas = []
     num_data = 0
     for index, filename in enumerate(files):
-        userprint("\rread {} of {} {}".format(filename,index, len(files), num_data))
+        userprint("\rread {} of {} {}".format(index, len(files), num_data))
         if from_image is None:
             hdul = fitsio.FITS(filename)
             deltas += [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
