@@ -286,7 +286,7 @@ class data:
                     self.z_met[(self.tracer1['name'], m)] = hmet[2]["Z_{}_{}".format(self.tracer1['name'],m)][:]
                     
                     metal_mat_name = "DM_{}_{}".format(self.tracer1['name'], m)
-                    if not self._blinding == 'none':
+                    if self._blinding != 'none':
                         metal_mat_name = "DM_BLIND_{}_{}".format(self.tracer1['name'], m)
                     try:
                         self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[2][metal_mat_name][:])
@@ -310,7 +310,7 @@ class data:
                         self.z_met[(self.tracer1['name'], m)] = hmet[2]["Z_{}_{}".format(self.tracer1['name'],m)][:]
 
                         metal_mat_name = "DM_{}_{}".format(self.tracer1['name'], m)
-                        if not self._blinding == 'none':
+                        if self._blinding != 'none':
                             metal_mat_name = "DM_BLIND_{}_{}".format(self.tracer1['name'], m)
                         try:
                             self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[2][metal_mat_name][:])
@@ -325,7 +325,7 @@ class data:
                         self.z_met[(m, self.tracer2['name'])] = hmet[2]["Z_{}_{}".format(m, self.tracer2['name'])][:]
                         
                         metal_mat_name = "DM_{}_{}".format(m, self.tracer2['name'])
-                        if not self._blinding == 'none':
+                        if self._blinding != 'none':
                             metal_mat_name = "DM_BLIND_{}_{}".format(m, self.tracer2['name'])
                         try:
                             self.dm_met[(m, self.tracer2['name'])] = csr_matrix(hmet[2][metal_mat_name][:])
@@ -344,7 +344,7 @@ class data:
                         self.z_met[(m1, m2)] = hmet[2]["Z_{}_{}".format(m1,m2)][:]
 
                         metal_mat_name = "DM_{}_{}".format(m1,m2)
-                        if not self._blinding == 'none':
+                        if self._blinding != 'none':
                             metal_mat_name = "DM_BLIND_{}_{}".format(m1,m2)
                         try:
                             self.dm_met[(m1, m2)] = csr_matrix(hmet[2][metal_mat_name][:])
