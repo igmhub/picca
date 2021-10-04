@@ -188,10 +188,10 @@ def blindData(data, z_grid, z_map, lambda_grid, lambda_map):
             forest.z_qso = z_qso + z_rebin
             
             # QSO forest ap shift with interval conservation
-            lambda = 10**( forest.log_lambda )
-            lambda_map_rebin = resample_flux( lambda, lambda_grid, lambda_map )
+            lambda_ = 10**( forest.log_lambda )
+            lambda_map_rebin = resample_flux( lambda_, lambda_grid, lambda_map )
 
-            lambda_rebin = lambda_map_rebin*lambda     # this new lambda' vector is not linearly spaced in lambda
+            lambda_rebin = lambda_map_rebin*lambda_     # this new lambda' vector is not linearly spaced in lambda
             # creating new linear loglam interval to save lambda'
             lambda_prime = 10**( np.arange(np.log10( np.min(lambda_rebin)), np.log10(np.max(lambda_rebin)) , forest.delta_log_lambda)   )
             # lambda_prime = lambda-( lambda[0]-lambda_rebin[0] )  #to use original picca interval, just shifting it to store lambda' (more data loss)
