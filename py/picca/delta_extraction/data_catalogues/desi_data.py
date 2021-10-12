@@ -435,8 +435,6 @@ class DesiData(Data):
                     ivar = spec['IVAR'][w_t].copy()
                     flux = spec['FLUX'][w_t].copy()
 
-                    ivar = spec['IV'][w_t].copy()
-                    flux = spec['FL'][w_t].copy()
                     forest_dict={
                         "flux": flux,
                         "ivar": ivar,
