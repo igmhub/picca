@@ -207,7 +207,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_mean_cont_weight = interp1d(self.lambda_rest_frame,
                                              np.zeros_like(
                                                  self.lambda_rest_frame),
-                                             fill_value="extrapolate"
+                                             fill_value="extrapolate")
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
