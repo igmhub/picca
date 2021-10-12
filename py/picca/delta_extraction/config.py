@@ -21,7 +21,8 @@ default_config = {
         # New logging level defined in setup_logger.
         # Numeric value is PROGRESS_LEVEL_NUM defined in utils.py
         "logging level console": "PROGRESS",
-        "logging level file": "PROGRESS"
+        "logging level file": "PROGRESS",
+        "log": "run.log",
     },
     "run specs": {
         "git hash": git.Repo(PICCA_BASE).head.object.hexsha,
@@ -134,6 +135,11 @@ class Config:
 
         # initialize folders where data will be saved
         self.initialize_folders()
+
+        # setup logger
+        setup_logger(logging_level_console=self.logging_level_console,
+                     log_file=self.log,
+                     logging_level_file=self.logging_level_file)
 
     def __format_corrections_section(self):
         """Format the corrections section of the parser into usable data
@@ -277,6 +283,7 @@ class Config:
         self.log = section.get("log")
         if self.log is not None and not (self.log.startswith(".") or self.log.startswith("/")):
             self.log = self.out_dir + "Log/" + self.log
+            section["log"] = self.log
 
         self.logging_level_console = section.get("logging level console")
         if self.logging_level_console is None:
@@ -287,10 +294,6 @@ class Config:
         if self.logging_level_file is None:
             raise ConfigError("In section 'general', variable 'logging level file' is required")
         self.logging_level_file = self.logging_level_file.upper()
-
-        setup_logger(logging_level_console=self.logging_level_console,
-                     log_file=self.log,
-                     logging_level_file=self.logging_level_file)
 
     def __format_masks_section(self):
         """Format the masks section of the parser into usable data

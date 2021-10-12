@@ -39,6 +39,8 @@ class ConfigurationTest(AbstractTest):
         new_config.read(new_file)
 
         for section in orig_config.sections():
+            if not section in new_config.sections():
+                print(f"Section {section} missing on {new_file}")
             self.assertTrue(section in new_config.sections())
             orig_section = orig_config[section]
             new_section = new_config[section]
@@ -55,11 +57,19 @@ class ConfigurationTest(AbstractTest):
                         new_value = new_value.split("py/picca/delta_extraction/tests")[-1]
                         orig_value = orig_value.split("py/picca/delta_extraction/tests")[-1]
 
+                    if not orig_value == new_value:
+                        print(f"For key {key} found orig value = {orig_value} but new value = {new_value}")
                     self.assertTrue(orig_value == new_value)
             for key in new_section.keys():
+                if not key in orig_section.keys():
+                    print(f"key {key} in section {section} missing on {new_file}")
+
                 self.assertTrue(key in orig_section.keys())
 
         for section in new_config.sections():
+            if not section in orig_config.sections():
+                print(f"Section {section} missing on {orig_file}")
+
             self.assertTrue(section in orig_config.sections())
 
     def test_config(self):
@@ -68,12 +78,12 @@ class ConfigurationTest(AbstractTest):
         Load a config file and then print it
         """
         in_file = f"{THIS_DIR}/data/config_overwrite.ini"
-        out_file = f"{THIS_DIR}/results/.config.ini"
+        out_file = f"{THIS_DIR}/results/config_tests/.config.ini"
         test_file = f"{THIS_DIR}/data/.config.ini"
-        out_warning_file = f"{THIS_DIR}/results/config_test.txt"
+        out_warning_file = f"{THIS_DIR}/results/config_tests/Log/run.log"
         test_warning_file = f"{THIS_DIR}/data/config_test.txt"
 
-        setup_logger(log_file=out_warning_file)
+        #setup_logger(log_file=out_warning_file)
 
         config = Config(in_file)
         config.write_config()
