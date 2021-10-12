@@ -444,7 +444,7 @@ class DesiData(Data):
                         "z": entry['Z'],
                         "petal": entry["PETAL_LOC"],
                         "tile": entry["TILEID"],
-                        "night": entry["NIGHT"]
+                        "night": entry[nightcol]
                         }
                     if Forest.wave_solution=='lin':
                         forest_dict['lambda']= spec['WAVELENGTH']
