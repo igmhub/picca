@@ -273,42 +273,36 @@ class DesiData(Data):
                 for spec in spectrographs_data.values():
                     ivar = spec['IV'][w_t].copy()
                     flux = spec['FL'][w_t].copy()
-
+                    forest_dict={
+                        "flux": flux,
+                        "ivar": ivar,
+                        "targetid": targetid,
+                        "ra": row['RA'],
+                        "dec": row['DEC'],
+                        "z": row['Z'],
+                        "petal": row["PETAL_LOC"],
+                        "tile": row["TILEID"],
+                        "night": row["NIGHT"]
+                        }
+                    if Forest.wave_solution=='lin':
+                        forest_dict['lambda']= spec['WAVELENGTH']
+                    elif Forest.wave_solution=='log':
+                        forest_dict['log_lambda']= np.log10(spec['WAVELENGTH'])
+                    else:
+                        raise ValueError("check wave solution")
                     if self.analysis_type == "BAO 3D":
-                        forest = DesiForest(
-                            **{
-                                "lambda": spec['WAVELENGTH'],
-                                "flux": flux,
-                                "ivar": ivar,
-                                "targetid": targetid,
-                                "ra": row['RA'],
-                                "dec": row['DEC'],
-                                "z": row['Z'],
-                                "petal": row["PETAL_LOC"],
-                                "tile": row["TILEID"],
-                                "night": row["NIGHT"]
-                            })
+                        forest = DesiForest(**forest_dict)
                     elif self.analysis_type == "PK 1D":
                         reso_sum = spec['RESO'][w_t].copy()
                         reso_in_km_per_s = spectral_resolution_desi(
                             reso_sum, spec['WAVELENGTH'])
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
 
-                        forest = DesiPk1dForest(
-                            **{
-                                "lambda": spec['WAVELENGTH'],
-                                "flux": flux,
-                                "ivar": ivar,
-                                "targetid": targetid,
-                                "ra": row['RA'],
-                                "dec": row['DEC'],
-                                "z": row['Z'],
-                                "petal": row["PETAL_LOC"],
-                                "tile": row["TILEID"],
-                                "night": row["NIGHT"],
-                                "exposures_diff": exposures_diff,
-                                "reso": reso_in_km_per_s
-                            })
+                        forest_dict['exposures_diff']=exposures_diff
+                        forest_dict['reso']=reso_in_km_per_s
+                        
+                        forest= DesiPk1dForest(
+                            **forest_dict)
 
                     if targetid in forests_by_targetid:
                         forests_by_targetid[targetid].coadd(forest)
