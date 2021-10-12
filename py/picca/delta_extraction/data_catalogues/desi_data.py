@@ -435,16 +435,18 @@ class DesiData(Data):
                     ivar = spec['IVAR'][w_t].copy()
                     flux = spec['FLUX'][w_t].copy()
 
+                    ivar = spec['IV'][w_t].copy()
+                    flux = spec['FL'][w_t].copy()
                     forest_dict={
                         "flux": flux,
                         "ivar": ivar,
                         "targetid": targetid,
-                        "ra": row['RA'],
-                        "dec": row['DEC'],
-                        "z": row['Z'],
-                        "petal": row["PETAL_LOC"],
-                        "tile": row["TILEID"],
-                        "night": row["NIGHT"]
+                        "ra": entry['RA'],
+                        "dec": entry['DEC'],
+                        "z": entry['Z'],
+                        "petal": entry["PETAL_LOC"],
+                        "tile": entry["TILEID"],
+                        "night": entry["NIGHT"]
                         }
                     if Forest.wave_solution=='lin':
                         forest_dict['lambda']= spec['WAVELENGTH']
