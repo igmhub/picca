@@ -1590,7 +1590,9 @@ def read_objects(filename,
 
     unique_healpix = np.unique(healpixs)
 
-    if 'desi' in mode:
+    if mode == 'desi_mocks':
+        nightcol='TARGETID'
+    elif 'desi_' in mode:
         if 'LAST_NIGHT' in catalog.colnames:
             nightcol='LAST_NIGHT'
         elif 'NIGHT' in catalog.colnames:
