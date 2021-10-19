@@ -611,7 +611,7 @@ def main(cmdargs):
         num_bal = 0
         for healpix in data:
             for forest in data[healpix]:
-                if forest.thingid in bal_cat["THING_ID"]:
+                if forest.thingid in bal_cat["TARGETID"]:
                     mask_obs_frame_bal = []
                     mask_rest_frame_bal = bal_tools.add_bal_rest_frame(
                         bal_cat, forest.thingid, args.bal_index)
@@ -908,7 +908,7 @@ def main(cmdargs):
                                               delta.fiberid)
                     },
                     {
-                        'name': 'THING_ID',
+                       'name': 'THING_ID',
                         'value': delta.thingid,
                         'comment': 'Object identification'
                     },

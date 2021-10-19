@@ -27,11 +27,11 @@ def read_bal(filename):  ##Based on read_dla from picca/py/picca/io.py
 
     """
     column_list = [
-        'THING_ID', 'VMIN_CIV_450', 'VMAX_CIV_450', 'VMIN_CIV_2000',
+        'TARGETID', 'VMIN_CIV_450', 'VMAX_CIV_450', 'VMIN_CIV_2000',
         'VMAX_CIV_2000'
     ]
     hdul = fitsio.FITS(filename)
-    bal_dict = {col: hdul['BALCAT'][col][:] for col in column_list}
+    bal_dict = {col: hdul[1][col][:] for col in column_list}
     hdul.close()
 
     return bal_dict
@@ -79,7 +79,7 @@ def add_bal_rest_frame(bal_catalog, thingid, bal_index):
     max_velocities = []  ##list of maximum velocities
 
     ##Match thing_id of object to BAL catalog index
-    match_index = np.where(bal_catalog['THING_ID'] == thingid)[0][0]
+    match_index = np.where(bal_catalog['TARGETID'] == thingid)[0][0]
 
     #Store the min/max velocity pairs from the BAL catalog
     for col in velocity_list:
