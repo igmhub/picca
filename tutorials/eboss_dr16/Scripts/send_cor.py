@@ -9,7 +9,7 @@ import glob
 import time
 import matplotlib.pyplot as plt
 
-from picca.constants import absorber_IGM
+from picca.constants import ABSORBER_IGM
 
 
 path_here = os.environ['DR16_BASE']
