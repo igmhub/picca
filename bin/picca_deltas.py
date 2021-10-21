@@ -158,7 +158,7 @@ def main(cmdargs):
                         type=str,
                         choices=['pix', 'spec','spcframe','spplate','desi',
                                  'desi_healpix','desi_survey_tilebased',
-                                 'desi_sv_no_coadd','desi_mocks'],
+                                 'desi_sv_no_coadd','desi_mocks','desiminisv'],
                         default='pix',
                         required=False,
                         help=('''Open mode of the spectra files: pix, spec, 
