@@ -33,7 +33,7 @@ from .prep_pk1d import exp_diff, spectral_resolution
 from .prep_pk1d import spectral_resolution_desi
 
 
-def read_dlas(filename):
+def read_dlas(filename,obj_id_name='THING_ID'):
     """Reads the DLA catalog from a fits file.
 
     ASCII or DESI files can be converted using:
@@ -50,7 +50,8 @@ def read_dlas(filename):
         column density.
     """
     userprint('Reading DLA catalog from:', filename)
-    columns_list = ['THING_ID', 'Z', 'NHI']
+
+    columns_list = [obj_id_name, 'Z', 'NHI']
     hdul = fitsio.FITS(filename)
     cat = {col: hdul['DLACAT'][col][:] for col in columns_list}
     hdul.close()
@@ -59,14 +60,14 @@ def read_dlas(filename):
     w = np.argsort(cat['Z'])
     for key in cat.keys():
         cat[key] = cat[key][w]
-    w = np.argsort(cat['THING_ID'])
+    w = np.argsort(cat[obj_id_name])
     for key in cat.keys():
         cat[key] = cat[key][w]
 
     # group DLAs on the same line of sight together
     dlas = {}
-    for thingid in np.unique(cat['THING_ID']):
-        w = (thingid == cat['THING_ID'])
+    for thingid in np.unique(cat[obj_id_name]):
+        w = (thingid == cat[obj_id_name])
         dlas[thingid] = list(zip(cat['Z'][w], cat['NHI'][w]))
     num_dlas = np.sum([len(dla) for dla in dlas.values()])
 
