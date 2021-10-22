@@ -170,9 +170,14 @@ def read_drq(drq_filename,
         if 'SV3_DESI_TARGET' in catalog.colnames:
             keep_columns += ['SV3_DESI_TARGET']
 
+
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
+
+    if mode == "desi_mocks":
+        for key in ['RA', 'DEC']:
+            catalog[key] = catalog[key].astype('float64')
 
     ## Redshift
     if 'Z' not in catalog.colnames:
@@ -1591,7 +1596,9 @@ def read_objects(filename,
 
     unique_healpix = np.unique(healpixs)
 
-    if 'desi' in mode:
+    if mode == 'desi_mocks':
+        nightcol='TARGETID'
+    elif 'desi_' in mode:
         if 'LAST_NIGHT' in catalog.colnames:
             nightcol='LAST_NIGHT'
         elif 'NIGHT' in catalog.colnames:
@@ -1623,6 +1630,7 @@ def read_objects(filename,
                     entry['PLATE'], entry['MJD'], entry['FIBERID'])
                 for entry in catalog[w]
             ]
+
         for obj in objs[healpix]:
             obj.weights = ((1. + obj.z_qso) / (1. + z_ref))**(alpha - 1.)
             if not cosmo is None:
