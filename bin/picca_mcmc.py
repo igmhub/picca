@@ -116,7 +116,12 @@ for i in kw:
     if not kw[i]: continue
     kw[ 'error_'+i[4:] ] = 0.
 
-mig = iminuit.Minuit(chi2, throw_nan=True ,forced_parameters=chi2.pname,print_level=dic_init['verbose'],errordef=1,**kw)
+mig = iminuit.Minuit(chi2,
+                     throw_nan=True,
+                     forced_parameters=chi2.pname,
+                     **kw)
+mig.errordef = 1.
+mig.print_level = 1
 mig.migrad()
 chi2.export(mig,param)
 

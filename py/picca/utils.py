@@ -263,14 +263,14 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
     for index_delta_r_par in range(num_bins_r_par):
         minimizer = iminuit.Minuit(chi2,
                                    length=5.,
-                                   error_length=0.2,
-                                   limit_length=(1., 400.),
                                    amp=1.,
-                                   error_amp=0.2,
                                    index_delta_r_par=index_delta_r_par,
-                                   fix_index_delta_r_par=True,
-                                   userprint_level=1,
-                                   errordef=1.)
+                                   fix_index_delta_r_par=True)
+        minimizer.errors['length'] = 0.2
+        minimizer.errors['amp'] = 0.2
+        minimizer.errordef = 1.
+        minimizer.print_level = 1
+        minimizer.limits['length'] = (1., 400.)
         minimizer.migrad()
         length_fit[index_delta_r_par] = minimizer.values['length']
         amp_fit[index_delta_r_par] = minimizer.values['amp']

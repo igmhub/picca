@@ -80,6 +80,15 @@ class chi2:
     def _minimize(self):
         t0 = time.time()
         par_names = [name for d in self.data for name in d.pars_init]
+        ## SY
+        #par_val = {name:val for d in self.data for name, val in d.par_error.items()}
+        par_val = [f"{name}={val}" for d in self.data for name, val in d.par_error.items()]
+        print(par_val.value)
+        par_err = [err for d in self.data for err in d.par_error.items()]
+        par_lim = [lim for d in self.data for lim in d.par_limit.items()]
+        par_fix = [fix for d in self.data for fix in d.par_fixed.items()]
+        templistfix = []
+        
         kwargs = {name:val for d in self.data for name, val in d.pars_init.items()}
         kwargs.update({name:err for d in self.data for name, err in d.par_error.items()})
         kwargs.update({name:lim for d in self.data for name, lim in d.par_limit.items()})
@@ -92,18 +101,29 @@ class chi2:
         for name in par_names:
             if name[:4] != "bias":
                 kwargs_init["fix_"+name] = True
-
-        mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,**kwargs_init)
+                templistfix.append(True)
+            else:
+                templistfix.append(False)
+                
+        #mig_init = iminuit.Minuit(self, self.par_names, **kwargs_init)
+        ## this needs to be in a format like:
+        ## mig_init = iminuit.Minuit(chi2, name=("a","b","c"), a=0.1, b=0.2,c=0.3)
+        mig_init = iminuit.Minuit(self, self.par_names, par_val)
+        for i, name in enumerate(par_names):
+            mig_init.errors[name] = par_err[i][1]
+            mig_init.limits[name] = par_lim[i][1]
+            mig_init.fixed[name]  = templistfix[i]
         mig_init.errordef = 1
         mig_init.print_level = 1
         mig_init.migrad()
         mig_init.print_param()
-
+        
         ## now get the best fit values for the biases and start a full minimization
         for name, value in mig_init.values.items():
             kwargs[name] = value
+            print(kwargs)
 
-        mig = iminuit.Minuit(self,forced_parameters=self.par_names,**kwargs)
+        mig = iminuit.Minuit(self,**namelist,**kwargs)
         mig.errordef = 1
         mig.print_level = 1
         mig.migrad()
