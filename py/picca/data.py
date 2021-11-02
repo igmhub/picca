@@ -873,7 +873,7 @@ class Forest(QSO):
                                    p0=p0,
                                    p1=p1)
         minimizer.errors["p0"] = p0 / 2.
-        minimizer.errors["p1"] = p1/2.
+        minimizer.errors["p1"] = p0 / 2.
         minimizer.errordef = 1.
         minimizer.print_level = 0
         minimizer.fixed["p1"] = self.order == 0
