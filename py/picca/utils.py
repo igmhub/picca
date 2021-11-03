@@ -264,8 +264,8 @@ def smooth_cov_wick(filename, wick_filename, results_filename):
         minimizer = iminuit.Minuit(chi2,
                                    length=5.,
                                    amp=1.,
-                                   index_delta_r_par=index_delta_r_par,
-                                   fix_index_delta_r_par=True)
+                                   index_delta_r_par=index_delta_r_par)
+        minimizer.fixed['index_delta_r_par']=True
         minimizer.errors['length'] = 0.2
         minimizer.errors['amp'] = 0.2
         minimizer.errordef = 1.

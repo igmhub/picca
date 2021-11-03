@@ -5,6 +5,7 @@ import time
 import h5py
 import sys
 from scipy.linalg import cholesky
+import scipy.stats
 
 from ..utils import userprint
 from . import priors
@@ -285,15 +286,15 @@ class chi2:
 
     def minos(self):
         if not hasattr(self,"minos_para"): return
-
         sigma = self.minos_para['sigma']
+        cl=scipy.stats.norm.cdf(sigma, loc=0, scale=1)-scipy.stats.norm.cdf(-sigma, loc=0, scale=1)
         if 'all' in self.minos_para['parameters']:
-            self.best_fit.minos(cl=68.3 if sigma==1 else 95.5 if sigma==2 else None)
+            self.best_fit.minos(cl=cl)
         else:
             for var in self.minos_para['parameters']:
                 if var in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]:   #testing for varied parameters
                     try:
-                        self.best_fit.minos(var,cl=68.3 if sigma==1 else 95.5 if sigma==2 else None)    #this should be modified to actually get the contour of whatever sigma is wanted
+                        self.best_fit.minos(var,cl=cl)
                     except ValueError:
                         print(f"error running minos on {var}")
                 else:
@@ -317,8 +318,10 @@ class chi2:
 
         for i1, p1 in enumerate(self.best_fit.values.to_dict().keys()):
             for i2, p2 in enumerate(self.best_fit.values.to_dict().keys()):
-                #(p1, p2), cov in self.best_fit.covariance.items():
-                g.attrs["cov[{}, {}]".format(p1,p2)] = self.best_fit.covariance[i1,i2] #cov
+                if (p1 in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix] and
+                   p2 in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]):
+                    #only store correlations for params that have been varied
+                    g.attrs["cov[{}, {}]".format(p1,p2)] = self.best_fit.covariance[i1,i2] #cov
 
         if len(priors.prior_dic) != 0:
             for prior in priors.prior_dic.values():
@@ -344,6 +347,9 @@ class chi2:
         dic_fmin = {k:getattr(self.best_fit.fmin,k) for k in fmin_keys}
         for item, value in dic_fmin.items():
             g.attrs[item] = value
+        g.attrs['ncalls']=self.best_fit.nfcn #this should probably be changed to new nomenclature in the outputs instead of using the old kw; note that fmin.nfcn is the same now, but has been different before
+        g.attrs['tolerance']=self.best_fit.tol
+        g.attrs['up']=self.best_fit.errordef  #this should probably be changed to new nomenclature in the outputs instead of using the old kw
 
         values = self.best_fit.values.to_dict()
         values['SB'] = False
@@ -401,7 +407,8 @@ class chi2:
             minos_results = self.best_fit.merrors # self.best_fit.get_merrors()
             for par in list(minos_results.keys()):
                 subgrp = g.create_group(par)
-                dic_minos = minos_results[par]
+                minos_keys = ['at_lower_limit', 'at_lower_max_fcn', 'at_upper_limit', 'at_upper_max_fcn', 'is_valid', 'lower', 'lower_new_min', 'lower_valid', 'min', 'name', 'nfcn', 'number', 'upper', 'upper_new_min', 'upper_valid']
+                dic_minos = {k:getattr(minos_results[par],k) for k in minos_keys}
                 for item, value in dic_minos.items():
                     if item=='name': value = str(value) ###TODO: Fix h5py not handling numpy.str_
                     subgrp.attrs[item] = value
