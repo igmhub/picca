@@ -407,7 +407,7 @@ class chi2:
             minos_results = self.best_fit.merrors # self.best_fit.get_merrors()
             for par in list(minos_results.keys()):
                 subgrp = g.create_group(par)
-                minos_keys = ['at_lower_limit', 'at_lower_max_fcn', 'at_upper_limit', 'at_upper_max_fcn', 'is_valid', 'lower', 'lower_new_min', 'lower_valid', 'min', 'name', 'nfcn', 'number', 'upper', 'upper_new_min', 'upper_valid']
+                minos_keys = ['at_lower_limit', 'at_lower_max_fcn', 'at_upper_limit', 'at_upper_max_fcn', 'is_valid', 'lower', 'lower_new_min', 'lower_valid', 'min', 'name', 'nfcn', 'upper', 'upper_new_min', 'upper_valid']
                 dic_minos = {k:getattr(minos_results[par],k) for k in minos_keys}
                 for item, value in dic_minos.items():
                     if item=='name': value = str(value) ###TODO: Fix h5py not handling numpy.str_
