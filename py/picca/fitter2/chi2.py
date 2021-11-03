@@ -81,13 +81,9 @@ class chi2:
         t0 = time.time()
         par_names = [name for d in self.data for name in d.pars_init]
         par_val_init = {name:val for d in self.data for name, val in d.pars_init.items()}
-        print(par_val_init)
         par_err = {k.split('error_')[1]:err for d in self.data for k,err in d.par_error.items()}
         par_lim = {k.split('limit_')[1]:lim for d in self.data for k,lim in d.par_limit.items()}
         par_fix = {k.split('fix_')[1]:fix for d in self.data for k,fix in d.par_fixed.items()}
-        print(par_err)
-        print(par_lim)
-        print(par_fix)
 
         ## do an initial "fast" minimization fixing everything except the biases
         mig_init = iminuit.Minuit(self, name=self.par_names, **par_val_init)
@@ -101,13 +97,13 @@ class chi2:
         mig_init.errordef = 1
         mig_init.print_level = 1
         mig_init.migrad()
+        print(mig_init.fmin)
         print(mig_init.params)
         
         ## now get the best fit values for the biases and start a full minimization
         par_val={}
         for name, value in mig_init.values.to_dict().items():
             par_val[name] = value
-        print(par_val)
 
         mig = iminuit.Minuit(self, name=self.par_names,**par_val)
         for name in par_names:
@@ -117,6 +113,7 @@ class chi2:
         mig.errordef = 1
         mig.print_level = 1
         mig.migrad()
+        print(mig.fmin)
         print(mig.params)
 
         userprint("INFO: minimized in {}".format(time.time()-t0))
