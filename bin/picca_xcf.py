@@ -73,7 +73,7 @@ def main(cmdargs):
     parser.add_argument('--mode',
                         type=str,
                         required=False,
-                        choices=['desi', 'sdss'],
+                        choices=['desi','desi_healpix','desi_mocks','sdss'],
                         default='sdss',
                         help='Mode for reading the catalog (default sdss)'
                         )

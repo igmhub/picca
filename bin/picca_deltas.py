@@ -156,10 +156,14 @@ def main(cmdargs):
 
     parser.add_argument('--mode',
                         type=str,
+                        choices=['pix', 'spec','spcframe','spplate','desi',
+                                 'desi_healpix','desi_survey_tilebased',
+                                 'desi_sv_no_coadd','desi_mocks','desiminisv'],
                         default='pix',
                         required=False,
                         help=('''Open mode of the spectra files: pix, spec, 
                               spcframe, spplate, desi_mocks (formerly known as desi), 
+                              desi_healpix (for healpix based coadded data),
                               desi_survey_tilebased (for tilebased data with coadding), 
                               desi_sv_no_coadd (without coadding across tiles, will output in tile format)'''))
 
@@ -417,10 +421,9 @@ def main(cmdargs):
                         help=('Use all dir for input spectra (DESI SV)'))
     parser.add_argument('--blinding-desi',
                         type=str,
-                        default="minimal",
+                        default="corr_yshift",
                         required=False,
                         help='Blinding strategy. "none" for no blinding')
-
 
     t0 = time.time()
 
@@ -430,8 +433,8 @@ def main(cmdargs):
 
     # comment this when ready to unblind
     if args.blinding_desi == "none":
-        print("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
-        args.blinding_desi = "minimal"
+        userprint("WARINING: --blinding-desi is being ignored. 'corr_yshift' blinding engaged")
+        args.blinding_desi = "corr_yshift"
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
@@ -595,7 +598,10 @@ def main(cmdargs):
     if not args.dla_vac is None:
         userprint("INFO: Adding DLAs")
         np.random.seed(0)
-        dlas = io.read_dlas(args.dla_vac)
+        if 'desi' in args.mode:
+            dlas= io.read_dlas(args.dla_vac, obj_id_name='TARGETID')
+        else:
+            dlas = io.read_dlas(args.dla_vac)
         num_dlas = 0
         for healpix in data:
             for forest in data[healpix]:

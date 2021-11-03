@@ -5,6 +5,8 @@ import argparse
 import fitsio
 import numpy as np
 import scipy.linalg
+import h5py
+import os.path
 
 from picca.utils import smooth_cov, compute_cov
 from picca.utils import userprint
@@ -23,11 +25,12 @@ def main(cmdargs):
         required=True,
         help='Correlation produced via picca_cf.py, picca_xcf.py, ...')
 
-    parser.add_argument('--out',
-                        type=str,
-                        default=None,
-                        required=True,
-                        help='Output file name')
+    parser.add_argument(
+        '--out',
+        type=str,
+        default=None,
+        required=True,
+        help='Output file name')
 
     parser.add_argument(
         '--dmat',
@@ -60,10 +63,17 @@ def main(cmdargs):
         required=False,
         help='Remove a correlation from shuffling the distribution of los')
 
-    parser.add_argument('--do-not-smooth-cov',
-                        action='store_true',
-                        default=False,
-                        help='Do not smooth the covariance matrix')
+    parser.add_argument(
+        '--do-not-smooth-cov',
+        action='store_true',
+        default=False,
+        help='Do not smooth the covariance matrix')
+
+    parser.add_argument(
+        '--blind-corr-type',
+        default=None,
+        choices=['lyaxlya', 'lyaxlyb', 'qsoxlya', 'qsoxlyb'],
+        help='Type of correlation. Required to apply blinding in DESI')
 
     args = parser.parse_args(cmdargs)
 
@@ -91,12 +101,16 @@ def main(cmdargs):
 
     if "BLINDING" in head:
         blinding = head["BLINDING"]
-    # older runs are not from DESI main survey and should not be blinded
+        if blinding == 'minimal':
+            blinding = 'corr_yshift'
+            userprint("The minimal strategy is no longer supported."
+                      "Automatically switch to corr_yshift.")
     else:
+        # if BLINDING keyword not present (old file), ignore blinding
         blinding = "none"
     hdul.close()
 
-    if not args.remove_shuffled_correlation is None:
+    if args.remove_shuffled_correlation is not None:
         hdul = fitsio.FITS(args.remove_shuffled_correlation)
         xi_shuffled = hdul['COR'][data_name][:]
         weight_shuffled = hdul['COR']['WE'][:]
@@ -190,6 +204,7 @@ def main(cmdargs):
         r_par_dmat = r_par.copy()
         r_trans_dmat = r_trans.copy()
         z_dmat = z.copy()
+        dmat_name = 'DM_EMPTY'
 
     results = fitsio.FITS(args.out, 'rw', clobber=True)
     header = [
@@ -240,6 +255,37 @@ def main(cmdargs):
         'R-parallel', 'R-transverse', 'Redshift', 'Correlation',
         'Covariance matrix', 'Distortion matrix', 'Number of pairs'
     ]
+
+    # Check if we need blinding and apply it
+    if 'BLIND' in data_name or blinding != 'none':
+        if blinding == 'corr_yshift':
+            userprint("Blinding using strategy corr_yshift.")
+        else:
+            raise ValueError("Expected blinding to be 'corr_yshift' or 'minimal'."
+                             " Found {}.".format(blinding))
+
+        if args.blind_corr_type is None:
+            raise ValueError("Blinding strategy 'corr_yshift' requires"
+                             " argument --blind_corr_type.")
+
+        # Read the blinding file and get the right template
+        blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
+                             'blinding/y1_blinding_v1_standard_04_10_2021.h5')
+        if not os.path.isfile(blinding_filename):
+            raise RuntimeError("Missing blinding file. Make sure you are running at"
+                               " NERSC or contact picca developers")
+        blinding_file = h5py.File(blinding_filename, 'r')
+        hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
+        diff = np.array([float.fromhex(x) for x in hex_diff])
+
+        # Check that the shapes match
+        if np.shape(xi) != np.shape(diff):
+            raise RuntimeError("Unknown binning or wrong correlation type. Cannot blind."
+                               " Please raise an issue or contact picca developers.")
+
+        # Add blinding
+        xi = xi + diff
+
     results.write([xi, r_par, r_trans, z, covariance, dmat, num_pairs],
                   names=[data_name, 'RP', 'RT', 'Z', 'CO', dmat_name, 'NB'],
                   comment=comment,
@@ -254,5 +300,5 @@ def main(cmdargs):
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)

@@ -34,7 +34,7 @@ from .prep_pk1d import exp_diff, spectral_resolution
 from .prep_pk1d import spectral_resolution_desi
 
 
-def read_dlas(filename):
+def read_dlas(filename,obj_id_name='THING_ID'):
     """Reads the DLA catalog from a fits file.
 
     ASCII or DESI files can be converted using:
@@ -51,7 +51,8 @@ def read_dlas(filename):
         column density.
     """
     userprint('Reading DLA catalog from:', filename)
-    columns_list = ['THING_ID', 'Z', 'NHI']
+
+    columns_list = [obj_id_name, 'Z', 'NHI']
     hdul = fitsio.FITS(filename)
     cat = {col: hdul['DLACAT'][col][:] for col in columns_list}
     hdul.close()
@@ -60,14 +61,14 @@ def read_dlas(filename):
     w = np.argsort(cat['Z'])
     for key in cat.keys():
         cat[key] = cat[key][w]
-    w = np.argsort(cat['THING_ID'])
+    w = np.argsort(cat[obj_id_name])
     for key in cat.keys():
         cat[key] = cat[key][w]
 
     # group DLAs on the same line of sight together
     dlas = {}
-    for thingid in np.unique(cat['THING_ID']):
-        w = (thingid == cat['THING_ID'])
+    for thingid in np.unique(cat[obj_id_name]):
+        w = (thingid == cat[obj_id_name])
         dlas[thingid] = list(zip(cat['Z'][w], cat['NHI'][w]))
     num_dlas = np.sum([len(dla) for dla in dlas.values()])
 
@@ -152,14 +153,32 @@ def read_drq(drq_filename,
     catalog = Table(fitsio.read(drq_filename, ext=1))
 
     keep_columns = ['RA', 'DEC', 'Z']
+
     if 'desi' in mode and 'TARGETID' in catalog.colnames:
         obj_id_name = 'TARGETID'
-        catalog.rename_column('TARGET_RA', 'RA')
-        catalog.rename_column('TARGET_DEC', 'DEC')
-        keep_columns += ['TARGETID', 'TILEID', 'PETAL_LOC', 'FIBER']
+        if 'TARGET_RA' in catalog.colnames:
+            catalog.rename_column('TARGET_RA', 'RA')
+            catalog.rename_column('TARGET_DEC', 'DEC')
+        keep_columns += ['TARGETID']
+        if 'TILEID' in catalog.colnames:
+            keep_columns += ['TILEID', 'PETAL_LOC', 'FIBER']
+        if 'SURVEY' in catalog.colnames:
+            keep_columns += ['SURVEY']
+        if 'DESI_TARGET' in catalog.colnames:
+            keep_columns += ['DESI_TARGET']
+        if 'SV1_DESI_TARGET' in catalog.colnames:
+            keep_columns += ['SV1_DESI_TARGET']
+        if 'SV3_DESI_TARGET' in catalog.colnames:
+            keep_columns += ['SV3_DESI_TARGET']
+
+
     else:
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
+
+    if mode == "desi_mocks":
+        for key in ['RA', 'DEC']:
+            catalog[key] = catalog[key].astype('float64')
 
     ## Redshift
     if 'Z' not in catalog.colnames:
@@ -225,7 +244,6 @@ def read_drq(drq_filename,
             keep_columns += ['FIRST_NIGHT']
     elif 'NIGHT' in catalog.colnames:
         keep_columns += ['NIGHT']
-
 
     catalog.keep_columns(keep_columns)
     w = np.where(w)[0]
@@ -350,13 +368,30 @@ def read_data(in_dir,
 
     # read data taking the mode into account
     blinding = "none"
-    if mode in ["desi_mocks","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
-        if mode in ["desi", 'desi_mocks']:
-            pix_data, is_mock = read_from_desi(in_dir, catalog, pk1d=pk1d)
-            if (not is_mock) and ('TILEID' in catalog.colnames) and np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
-                print("you are trying to run on DESI survey tiles!")
+    if mode in ["desi_mocks","desi_healpix","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
+        if mode in ["desi_mocks", "desi"]: #I still don't think we need two different modes since we are checking if truth files exist...
+            desi_nside = 16
+            desi_prefix = f'spectra-{desi_nside}'
+            pix_data, is_mock = read_from_desi(in_dir, catalog, desi_prefix, desi_nside, pk1d=pk1d)
+
+            if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any((catalog['DESI_TARGET']>0)):
+                print("your catalog contains DESI survey tiles!")
                 blinding = blinding_desi
 
+        elif mode == "desi_healpix":
+            pix_data=[]
+            desi_nside = 64
+            survey_type=np.unique(catalog['SURVEY'])
+            for survey in survey_type :
+                catalog_ = catalog[catalog['SURVEY']==survey]
+                desi_prefix=f'coadd-{survey}-dark'
+                in_dir_=f'{in_dir}/{survey}/dark'
+                pix_data_, is_mock = read_from_desi(in_dir_, catalog_, desi_prefix, desi_nside, pk1d=pk1d)
+                pix_data.extend(pix_data_)
+
+            if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any((catalog['DESI_TARGET']>0)):
+                print("your catalog contains DESI survey tiles!")
+                blinding = blinding_desi
 
         elif mode == "desi_survey_tilebased":
             if np.any((catalog['TILEID']<60000)&(catalog['TILEID']>=1000)):
@@ -962,7 +997,7 @@ def read_from_spplate(in_dir,
     return data
 
 
-def read_from_desi(in_dir, catalog, pk1d=None):
+def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
     """Reads the spectra and formats its data as Forest instances.
 
     Args:
@@ -976,7 +1011,7 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     Returns:
         List of read spectra for all the healpixs
     """
-    in_nside = int(in_dir.split('spectra-')[-1].replace('/', ''))
+
     ra = catalog['RA'].data
     dec = catalog['DEC'].data
     in_healpixs = healpy.ang2pix(in_nside, np.pi / 2. - dec, ra, nest=True)
@@ -985,9 +1020,15 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     #-- This is making it compatible with quickquasars on eBOSS mode
     if 'TARGETID' in catalog.colnames:
         id_name = 'TARGETID'
-        plate_name = 'TILEID'
-        mjd_name = 'NIGHT'
-        fiberid_name = 'FIBER'
+        if 'TILEID' in catalog.colnames:
+            plate_name = 'TILEID'
+            mjd_name = 'NIGHT'
+            fiberid_name = 'FIBER'
+        else:
+            plate_name = 'TARGETID'
+            mjd_name = 'TARGETID'
+            fiberid_name = 'TARGETID'
+            ##I'll put this to none but needs to modify the forest class to accept it...
     else:
         id_name = 'THING_ID'
         plate_name = 'PLATE'
@@ -997,16 +1038,18 @@ def read_from_desi(in_dir, catalog, pk1d=None):
     data = []
     is_mock = True
     for index, healpix in enumerate(unique_in_healpixs):
-        filename = f"{in_dir}/{healpix//100}/{healpix}/spectra-{in_nside}-{healpix}.fits"
+        filename = f"{in_dir}/{healpix//100}/{healpix}/{desi_prefix}-{healpix}.fits"
         # the truth file is used to check if we are reading in mocks
         # in case we are, and we are computing pk1d, we also use them to load
         # the resolution matrix
         filename_truth=f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits"
         if not os.path.isfile(filename_truth):
             is_mock = False
-        userprint(
-            f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
+            userprint(f"Read {index} of {len(unique_in_healpixs)}. num_data: {len(data)}")
+        else:
+            filename = f"{in_dir}/{healpix//100}/{healpix}/{desi_prefix}-{healpix}.fits"#spectra-{in_nside}-{healpix}.fits"
         try:
+            userprint(f"Reading {filename}")
             hdul = fitsio.FITS(filename)
         except IOError:
             userprint(f"Error reading pix {healpix}")
@@ -1219,7 +1262,11 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 night_spec = fibermap['LAST_NIGHT'][0]
         else:
             #pre-andes tiles don't have this in the fibermap
-            night_spec = int(filename.split('-')[-1].split('.')[0])
+            print(f'{filename} does not have a NIGHT')
+            try:
+                night_spec = int(filename.split('-')[-1].split('.')[0])
+            except ValueError:
+                night_spec = int(filename.split('thru')[-1].split('.')[0])
 
         targetid_spec = fibermap['TARGETID']
 
@@ -1297,7 +1344,8 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                 if forest is None:
                     forest = copy.deepcopy(forest_temp)
                 else:
-                    forest.coadd(forest_temp)
+                    #need to do the function call here to allow passing back forest_temp if forest is invalid
+                    forest = forest.coadd(forest_temp)
             if not usehealpix:
                 if plate_spec not in data:
                     data[plate_spec] = []
@@ -1308,16 +1356,16 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                     data[in_healpixs[w_t]] = []
                 #this might be slow, but would coadd objects with the same targetid even if on multiple tiles
                 do_append=True
-                for index_coadd,forest_existing in enumerate(data[in_healpixs[w_t]]):
+                for forest_existing in data[in_healpixs[w_t]]:
                     if forest_existing.thingid==forest.thingid:
+                        #the method call works as long as only valid forests are stored below
                         forest_existing.coadd(forest)
                         do_append=False
                         break
-                if do_append:
+                #need to make sure that the forest is valid and the object isn't already in
+                if do_append and forest.log_lambda is not None:
                     data[in_healpixs[w_t]].append(forest)
                     num_data += 1
-
-
 
     userprint("found {} quasars in input files\n".format(num_data))
 
@@ -1587,11 +1635,16 @@ def read_objects(filename,
     userprint("Reading objects ")
 
     unique_healpix = np.unique(healpixs)
-    if 'desi' in mode:
+
+    if mode == 'desi_mocks':
+        nightcol='TARGETID'
+    elif 'desi_' in mode:
         if 'LAST_NIGHT' in catalog.colnames:
             nightcol='LAST_NIGHT'
         elif 'NIGHT' in catalog.colnames:
             nightcol='NIGHT'
+        elif 'SURVEY' in catalog.colnames:
+            nightcol='TARGETID'
         else:
             raise Exception("The catalog does not have a NIGHT or LAST_NIGHT entry")
 
@@ -1599,17 +1652,25 @@ def read_objects(filename,
         userprint("{} of {}".format(index, len(unique_healpix)))
         w = healpixs == healpix
         if 'desi' in mode:
-            objs[healpix] = [
-                QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
+            if 'TILEID' in catalog.colnames:
+                objs[healpix] = [
+                    QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
                     entry['TILEID'], entry[nightcol], entry['FIBER'])
-                for entry in catalog[w]
-            ]
+                    for entry in catalog[w]
+                ]
+            else:
+                objs[healpix] = [
+                    QSO(entry['TARGETID'], entry['RA'], entry['DEC'], entry['Z'],
+                    entry['TARGETID'], entry[nightcol], entry['TARGETID'])
+                    for entry in catalog[w]
+                ]
         else:
             objs[healpix] = [
                 QSO(entry['THING_ID'], entry['RA'], entry['DEC'], entry['Z'],
                     entry['PLATE'], entry['MJD'], entry['FIBERID'])
                 for entry in catalog[w]
             ]
+
         for obj in objs[healpix]:
             obj.weights = ((1. + obj.z_qso) / (1. + z_ref))**(alpha - 1.)
             if not cosmo is None:
