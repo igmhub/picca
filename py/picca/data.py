@@ -877,7 +877,7 @@ class Forest(QSO):
         minimizer.errordef = 1.
         minimizer.print_level = 0
         minimizer.fixed["p1"] = self.order == 0
-        _ = minimizer.migrad()
+        minimizer.migrad()
 
         self.cont = get_cont_model(minimizer.values["p0"],
                                    minimizer.values["p1"])
