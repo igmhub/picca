@@ -1521,23 +1521,6 @@ def read_deltas(in_dir,
             num_data = len(deltas)
             if (max_num_spec is not None) and (num_data > max_num_spec):
                 break
-    deltas = deltas[:max_num_spec]
-
-    # deltas = []
-    # num_data = 0
-    # for index, filename in enumerate(files):
-    #     userprint("\rread {} of {} {}".format(index, len(files), num_data))
-    #     if from_image is None:
-    #         hdul = fitsio.FITS(filename)
-    #         deltas += [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
-    #         hdul.close()
-    #     else:
-    #         deltas += Delta.from_image(filename)
-
-    #     num_data = len(deltas)
-    #     if max_num_spec is not None:
-    #         if num_data > max_num_spec:
-    #             break
 
     # truncate the deltas if we load too many lines of sight
     if max_num_spec is not None:
