@@ -407,8 +407,6 @@ def read_transmission_file(filename, num_bins, objs_thingid, lambda_min=3600.,
         x_min = np.log10(lambda_min)
         delta_x = delta_log_lambda if delta_log_lambda is not None else 3.e-4
 
-    # log_lambda_min = np.log10(lambda_min)
-
     stack_flux = np.zeros(num_bins)
     stack_weight = np.zeros(num_bins)
     deltas = {}
@@ -522,9 +520,9 @@ def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out
         userprint('No data in {}'.format(healpix))
         return
 
-    # stack_variance = np.zeros(len(mean_flux))
-    # var_weights = np.zeros(len(mean_flux))
-    sigma_lss_sq = flux_variance / mean_flux**2
+    sigma_lss_sq = None
+    if flux_variance is not None:
+        sigma_lss_sq = flux_variance / mean_flux**2
 
     results = fitsio.FITS(out_filename, 'rw', clobber=True)
     for delta in deltas:
@@ -536,11 +534,12 @@ def write_delta_from_transmission(deltas, mean_flux, flux_variance, healpix, out
         bins = np.floor(np.around(norm_lambda, decimals=3)).astype(int)
         # bins = np.floor((lambda_array - x_min) / delta_x + 0.5).astype(int)
 
-        # stack_variance[bins] += (delta.delta - mean_flux[bins])**2
-        # var_weights[bins] += np.ones(len(bins))
         delta.delta = delta.delta / mean_flux[bins] - 1.
-        delta.weights = 1 / sigma_lss_sq[bins]
-        # delta.weights *= mean_flux[bins]**2
+
+        if sigma_lss_sq is not None:
+            delta.weights = 1 / sigma_lss_sq[bins]
+        else:
+            delta.weights *= mean_flux[bins]**2
 
         header = {}
         header['RA'] = delta.ra
@@ -572,7 +571,8 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
                                    lambda_min_rest_frame=1040.,
                                    lambda_max_rest_frame=1200.,
                                    delta_log_lambda=None, delta_lambda=None, lin_spaced=False,
-                                   max_num_spec=None, nproc=None, out_healpix_order='RING'):
+                                   max_num_spec=None, nproc=None, use_old_weights=False,
+                                   out_healpix_order='RING'):
     """Convert transmission files to picca delta files
 
     Args:
@@ -604,6 +604,10 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
             Maximum number of spectra to read. 'None' for no maximum
         nproc: int or None - default: None
             Number of cpus to use for I/O operations. If None, defaults to os.cpu_count().
+        use_old_weights: boolean - default: False
+            Whether to use the old weights based only on the bin size
+        out_healpix_order: string: 'RING' or 'NEST' - default: 'RING'
+            Healpix numbering scheme for output files.
     """
     # read catalog of objects
     hdul = fitsio.FITS(obj_path)
@@ -738,37 +742,33 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
             nest, healpix, out_healpix))
         out_filenames[healpix] = out_dir + '/delta-{}'.format(out_healpix) + '.fits.gz'
 
-    # Compute variance
-    stack_variance = np.zeros(len(mean_flux))
-    var_weights = np.zeros(len(mean_flux))
-    for hpix_deltas in deltas.values():
-        for delta in hpix_deltas:
-            lambda_array = delta.log_lambda
-            if lin_spaced:
-                lambda_array = 10**(lambda_array)
+    if use_old_weights:
+        flux_variance = None
+    else:
+        # Compute variance
+        stack_variance = np.zeros(len(mean_flux))
+        var_weights = np.zeros(len(mean_flux))
+        for hpix_deltas in deltas.values():
+            for delta in hpix_deltas:
+                lambda_array = delta.log_lambda
+                if lin_spaced:
+                    lambda_array = 10**(lambda_array)
 
-            norm_lambda = (lambda_array - x_min) / delta_x + 0.5
-            bins = np.floor(np.around(norm_lambda, decimals=3)).astype(int)
+                norm_lambda = (lambda_array - x_min) / delta_x + 0.5
+                bins = np.floor(np.around(norm_lambda, decimals=3)).astype(int)
 
-            stack_variance[bins] += (delta.delta - mean_flux[bins])**2
-            var_weights[bins] += np.ones(len(bins))
+                stack_variance[bins] += (delta.delta - mean_flux[bins])**2
+                var_weights[bins] += np.ones(len(bins))
 
-    w = var_weights > 0.
-    flux_variance = stack_variance
-    flux_variance[w] /= var_weights[w]
+        w = var_weights > 0.
+        flux_variance = stack_variance
+        flux_variance[w] /= var_weights[w]
 
     arguments = [(deltas[hpix], mean_flux, flux_variance, hpix, out_filenames[hpix],
                   x_min, delta_x, lin_spaced) for hpix in deltas.keys()]
     pool = Pool(processes=nproc)
     _ = pool.starmap(write_delta_from_transmission, arguments)
     pool.close()
-
-    # stack_variance = np.zeros(num_bins)
-    # var_weights = np.zeros(num_bins)
-    # for res in write_results:
-    #     if res is not None:
-    #         stack_variance += res[0]
-    #         var_weights += res[1]
 
     userprint("")
 
