@@ -80,54 +80,44 @@ class chi2:
     def _minimize(self):
         t0 = time.time()
         par_names = [name for d in self.data for name in d.pars_init]
-        ## SY
-        #par_val = {name:val for d in self.data for name, val in d.par_error.items()}
-        par_val = [f"{name}={val}" for d in self.data for name, val in d.par_error.items()]
-        print(par_val.value)
-        par_err = [err for d in self.data for err in d.par_error.items()]
-        par_lim = [lim for d in self.data for lim in d.par_limit.items()]
-        par_fix = [fix for d in self.data for fix in d.par_fixed.items()]
-        templistfix = []
-        
-        kwargs = {name:val for d in self.data for name, val in d.pars_init.items()}
-        kwargs.update({name:err for d in self.data for name, err in d.par_error.items()})
-        kwargs.update({name:lim for d in self.data for name, lim in d.par_limit.items()})
-        kwargs.update({name:fix for d in self.data for name, fix in d.par_fixed.items()})
+        par_val_init = {name:val for d in self.data for name, val in d.pars_init.items()}
+        print(par_val_init)
+        par_err = {k.split('error_')[1]:err for d in self.data for k,err in d.par_error.items()}
+        par_lim = {k.split('limit_')[1]:lim for d in self.data for k,lim in d.par_limit.items()}
+        par_fix = {k.split('fix_')[1]:fix for d in self.data for k,fix in d.par_fixed.items()}
+        print(par_err)
+        print(par_lim)
+        print(par_fix)
 
         ## do an initial "fast" minimization fixing everything except the biases
-        kwargs_init = {}
-        for k,v in kwargs.items():
-            kwargs_init[k] = v
+        mig_init = iminuit.Minuit(self, name=self.par_names, **par_val_init)
         for name in par_names:
-            if name[:4] != "bias":
-                kwargs_init["fix_"+name] = True
-                templistfix.append(True)
+            mig_init.errors[name] = par_err[name]
+            mig_init.limits[name] = par_lim[name]
+            if name[:4] == "bias":
+                mig_init.fixed[name] = False
             else:
-                templistfix.append(False)
-                
-        #mig_init = iminuit.Minuit(self, self.par_names, **kwargs_init)
-        ## this needs to be in a format like:
-        ## mig_init = iminuit.Minuit(chi2, name=("a","b","c"), a=0.1, b=0.2,c=0.3)
-        mig_init = iminuit.Minuit(self, self.par_names, par_val)
-        for i, name in enumerate(par_names):
-            mig_init.errors[name] = par_err[i][1]
-            mig_init.limits[name] = par_lim[i][1]
-            mig_init.fixed[name]  = templistfix[i]
+                mig_init.fixed[name] = True
         mig_init.errordef = 1
         mig_init.print_level = 1
         mig_init.migrad()
-        mig_init.print_param()
+        print(mig_init.params)
         
         ## now get the best fit values for the biases and start a full minimization
-        for name, value in mig_init.values.items():
-            kwargs[name] = value
-            print(kwargs)
+        par_val={}
+        for name, value in mig_init.values.to_dict().items():
+            par_val[name] = value
+        print(par_val)
 
-        mig = iminuit.Minuit(self,**namelist,**kwargs)
+        mig = iminuit.Minuit(self, name=self.par_names,**par_val)
+        for name in par_names:
+            mig.errors[name] = par_err[name]
+            mig.limits[name] = par_lim[name]
+            mig.fixed[name]  = par_fix[name]
         mig.errordef = 1
         mig.print_level = 1
         mig.migrad()
-        mig.print_param()
+        print(mig.params)
 
         userprint("INFO: minimized in {}".format(time.time()-t0))
         sys.stdout.flush()
@@ -139,7 +129,7 @@ class chi2:
             self.best_fit.hesse()
             self.best_fit.print_fmin()
 
-        values = dict(self.best_fit.values)
+        values = self.best_fit.values.to_dict()
         values['SB'] = False
         for d in self.data:
             d.best_fit_model = values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, values)
@@ -191,7 +181,7 @@ class chi2:
             except:
                 chi2_result = np.nan
             tresult = []
-            for p in sorted(best_fit.values):
+            for p in sorted(best_fit.values.to_dict().keys()):
                 tresult += [best_fit.values[p]]
             tresult += [chi2_result]
             return tresult
@@ -223,7 +213,7 @@ class chi2:
                         self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
         self.dic_chi2scan_result = {}
-        self.dic_chi2scan_result['params'] = np.asarray(np.append(sorted(self.best_fit.values),['fval']))
+        self.dic_chi2scan_result['params'] = np.asarray(np.append(sorted(self.best_fit.values.to_dict().keys()),['fval']))
         self.dic_chi2scan_result['values'] = np.asarray(result)
 
         ### Set all parameters to where they were before
@@ -251,7 +241,7 @@ class chi2:
             if not self.forecast_mc:
                 d.cho = cholesky(d.co)
 
-        self.fiducial_values = dict(self.best_fit.values).copy()
+        self.fiducial_values = self.best_fit.values.to_dict().copy()
         for p in self.fidfast_mc:
             self.fiducial_values[p] = self.fidfast_mc[p]
             for d in self.data:
@@ -289,7 +279,7 @@ class chi2:
                 d.da_cut = d.da[d.mask]
 
             best_fit = self._minimize()
-            for p, v in best_fit.values.items():
+            for p, v in best_fit.values.to_dict().items():
                 if not p in self.fast_mc:
                     self.fast_mc[p] = []
                 self.fast_mc[p].append([v, best_fit.errors[p]])
@@ -301,13 +291,16 @@ class chi2:
 
         sigma = self.minos_para['sigma']
         if 'all' in self.minos_para['parameters']:
-            self.best_fit.minos(var=None,sigma=sigma)
+            self.best_fit.minos(cl=68.3 if sigma==1 else 95.5 if sigma==2 else None)
         else:
             for var in self.minos_para['parameters']:
-                if var in self.best_fit.list_of_vary_param():
-                    self.best_fit.minos(var=var,sigma=sigma)
+                if var in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]:   #testing for varied parameters
+                    try:
+                        self.best_fit.minos(var,cl=68.3 if sigma==1 else 95.5 if sigma==2 else None)    #this should be modified to actually get the contour of whatever sigma is wanted
+                    except ValueError:
+                        print(f"error running minos on {var}")
                 else:
-                    if var in self.best_fit.list_of_fixed_param():
+                    if var in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]:   #testing for fixed parameters
                         userprint('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
                     else:
                         userprint('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
@@ -318,15 +311,17 @@ class chi2:
         g=f.create_group("best fit")
 
         ## write down all parameters
-        for i, p in enumerate(self.best_fit.values):
+        for i, p in enumerate(self.best_fit.values.to_dict().keys()):
             v = self.best_fit.values[p]
             e = self.best_fit.errors[p]
-            if p in self.best_fit.list_of_fixed_param():
+            if p in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]:
                 e = 0
             g.attrs[p] = (v, e)
 
-        for (p1, p2), cov in self.best_fit.covariance.items():
-            g.attrs["cov[{}, {}]".format(p1,p2)] = cov
+        for i1, p1 in enumerate(self.best_fit.values.to_dict().keys()):
+            for i2, p2 in enumerate(self.best_fit.values.to_dict().keys()):
+                #(p1, p2), cov in self.best_fit.covariance.items():
+                g.attrs["cov[{}, {}]".format(p1,p2)] = self.best_fit.covariance[i1,i2] #cov
 
         if len(priors.prior_dic) != 0:
             for prior in priors.prior_dic.values():
@@ -339,18 +334,19 @@ class chi2:
         ndata = sum(ndata)
         g.attrs['zeff'] = self.zeff
         g.attrs['ndata'] = ndata
-        g.attrs['npar'] = len(self.best_fit.list_of_vary_param())
-        g.attrs['list of free pars'] = [a.encode('utf8') for a in self.best_fit.list_of_vary_param()]
-        g.attrs['list of fixed pars'] = [a.encode('utf8') for a in self.best_fit.list_of_fixed_param()]
+        g.attrs['npar'] = len([name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix])
+        g.attrs['list of free pars'] = [a.encode('utf8') for a in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]]
+        g.attrs['list of fixed pars'] = [a.encode('utf8') for a in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]]
         if len(priors.prior_dic) != 0:
             g.attrs['list of prior pars'] = [a.encode('utf8') for a in priors.prior_dic.keys()]
 
         ## write down all attributes of the minimum
-        dic_fmin = self.best_fit.get_fmin()
+        fmin_keys=['algorithm', 'edm', 'edm_goal', 'errordef', 'fval', 'has_accurate_covar', 'has_covariance', 'has_made_posdef_covar', 'has_parameters_at_limit', 'has_posdef_covar', 'has_reached_call_limit', 'has_valid_parameters', 'hesse_failed', 'is_above_max_edm', 'is_valid', 'nfcn', 'ngrad', 'reduced_chi2']
+        dic_fmin = {k:getattr(self.best_fit.fmin,k) for k in fmin_keys}
         for item, value in dic_fmin.items():
             g.attrs[item] = value
 
-        values = dict(self.best_fit.values)
+        values = self.best_fit.values.to_dict()
         values['SB'] = False
         for d in self.data:
             g = f.create_group(d.name)
@@ -403,7 +399,7 @@ class chi2:
         if hasattr(self, "minos_para"):
             g = f.create_group("minos")
             g.attrs['sigma'] = self.minos_para['sigma']
-            minos_results = self.best_fit.get_merrors()
+            minos_results = self.best_fit.merrors # self.best_fit.get_merrors()
             for par in list(minos_results.keys()):
                 subgrp = g.create_group(par)
                 dic_minos = minos_results[par]
