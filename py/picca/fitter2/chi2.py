@@ -341,7 +341,9 @@ class chi2:
             g.attrs['list of prior pars'] = [a.encode('utf8') for a in priors.prior_dic.keys()]
 
         ## write down all attributes of the minimum
-        fmin_keys=['algorithm', 'edm', 'edm_goal', 'errordef', 'fval', 'has_accurate_covar', 'has_covariance', 'has_made_posdef_covar', 'has_parameters_at_limit', 'has_posdef_covar', 'has_reached_call_limit', 'has_valid_parameters', 'hesse_failed', 'is_above_max_edm', 'is_valid', 'nfcn', 'ngrad', 'reduced_chi2']
+        fmin_keys=[ 'edm', 'fval', 'has_accurate_covar', 'has_covariance', 'has_made_posdef_covar', 
+         'has_posdef_covar', 'has_reached_call_limit', 'has_valid_parameters', 'hesse_failed', 'is_above_max_edm', 
+         'is_valid', 'nfcn']
         dic_fmin = {k:getattr(self.best_fit.fmin,k) for k in fmin_keys}
         for item, value in dic_fmin.items():
             g.attrs[item] = value
