@@ -428,9 +428,9 @@ def main(cmdargs):
     assert (args.blinding_desi in ACCEPTED_BLINDING_STRATEGIES)
 
     # comment this when ready to unblind
-    if args.blinding_desi == "none":
-        userprint("WARINING: --blinding-desi is being ignored. 'corr_yshift' blinding engaged")
-        args.blinding_desi = "corr_yshift"
+    #if args.blinding_desi == "none":
+    #    userprint("WARINING: --blinding-desi is being ignored. 'corr_yshift' blinding engaged")
+    #    args.blinding_desi = "corr_yshift"
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
@@ -531,7 +531,7 @@ def main(cmdargs):
                               usesinglenights=args.use_single_nights,
                               blinding_desi=args.blinding_desi)
 
-    #-- Add order info
+     #-- Add order info
     for pix in data:
         for forest in data[pix]:
             if not forest is None:
@@ -606,17 +606,26 @@ def main(cmdargs):
 
     ### Mask BALs
     if not args.bal_catalog is None:
-        userprint("INFO: Adding BALs found in BAL catalog")
-        bal_cat = bal_tools.read_bal(args.bal_catalog)
+        userprint("INFO: Masking BALs from BAL catalog")
+        bal_cat = bal_tools.read_bal(args.bal_catalog,'EBOSS')
         num_bal = 0
         for healpix in data:
             for forest in data[healpix]:
-                if forest.thingid in bal_cat["TARGETID"]:
-                    mask_obs_frame_bal = []
-                    mask_rest_frame_bal = bal_tools.add_bal_rest_frame(
-                        bal_cat, forest.thingid, args.bal_index)
-                    forest.mask(mask_rest_frame_bal)
+                if forest.thingid in bal_cat["THING_ID"]:
+                    bal_mask = bal_tools.add_bal_mask(
+                        bal_cat, forest.thingid, args.bal_index, 'THING_ID')
+                    forest.mask(bal_mask)
                     num_bal += 1
+        log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
+    elif (args.keep_bal is True) & (args.bal_catalog is None):
+        userprint("INFO: Masking BALs")
+        bal_cat = bal_tools.read_bal(args.drq)
+        num_bal = 0
+        for healpix in data:
+            for forest in data[healpix]:
+                bal_mask = bal_tools.add_bal_mask(bal_cat, forest.thingid, args.bal_index)
+                forest.mask(bal_mask)
+                num_bal += 1
         log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
 
     ## Apply cuts
