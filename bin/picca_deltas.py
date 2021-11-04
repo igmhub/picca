@@ -432,9 +432,9 @@ def main(cmdargs):
     assert (args.blinding_desi in ACCEPTED_BLINDING_STRATEGIES)
 
     # comment this when ready to unblind
-    #if args.blinding_desi == "none":
-    #    userprint("WARINING: --blinding-desi is being ignored. 'corr_yshift' blinding engaged")
-    #    args.blinding_desi = "corr_yshift"
+    if args.blinding_desi == "none":
+        userprint("WARINING: --blinding-desi is being ignored. 'corr_yshift' blinding engaged")
+        args.blinding_desi = "corr_yshift"
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
