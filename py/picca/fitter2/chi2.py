@@ -287,16 +287,19 @@ class chi2:
     def minos(self):
         if not hasattr(self,"minos_para"): return
         sigma = self.minos_para['sigma']
-        cl=scipy.stats.norm.cdf(sigma, loc=0, scale=1)-scipy.stats.norm.cdf(-sigma, loc=0, scale=1)
+        cl=scipy.stats.norm.cdf(sigma, loc=0, scale=1)-scipy.stats.norm.cdf(-sigma, loc=0, scale=1)    
+        #TODO: it might be more complicated to select the right cl than this, as this is for the 1d-case only
+        #if old minos actually did sigmas in the n-d parameter space and new minos is doing the correct cl for that
+        #dimensionality this would not be giving the correct results; I think the test case only checks 1d
         if 'all' in self.minos_para['parameters']:
             self.best_fit.minos(cl=cl)
         else:
             for var in self.minos_para['parameters']:
                 if var in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]:   #testing for varied parameters
-                    try:
+#                    try:
                         self.best_fit.minos(var,cl=cl)
-                    except ValueError:
-                        print(f"error running minos on {var}")
+#                    except ValueError:
+#                        print(f"error running minos on {var}")
                 else:
                     if var in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]:   #testing for fixed parameters
                         userprint('WARNING: Can not run minos on a fixed parameter: {}'.format(var))

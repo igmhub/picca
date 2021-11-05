@@ -145,7 +145,7 @@ class AbstractTest(unittest.TestCase):
                     nequal = atts1[item] != atts2[item]
                 if nequal:
                     userprint(
-                        "WARNING: {}: not exactly equal, using allclose for {}".
+                        "WARNING: {}: not exactly equal, using allclose for attribute {}".
                         format(nameRun, item))
                     userprint(atts1[item], atts2[item])
                     allclose = np.allclose(atts1[item], atts2[item])
@@ -157,10 +157,15 @@ class AbstractTest(unittest.TestCase):
 
         def compare_values(val1, val2, namelist):
             if not np.array_equal(val1, val2):
-                userprint("WARNING: {}: not exactly equal, using allclose".format(
-                    nameRun))
+                userprint("WARNING: {}: {} not exactly equal, using allclose".format(
+                    nameRun,'/'.join(namelist)))
                 allclose = np.allclose(val1, val2)
-                self.assertTrue(allclose, f"{nameRun} results changed for output values for {'/'.join(namelist)}")
+                self.assertTrue(allclose, "{} results changed for output values for {}:\n val1:{}\n\n val2:{}\n\n\n".format(
+                    nameRun,
+                    '/'.join(namelist),
+                    ' '.join([f'{v:.5g}' for v in val1]),
+                    ' '.join([f'{v:.5g}' for v in val2]),
+                ))
             return
 
         userprint("\n")
