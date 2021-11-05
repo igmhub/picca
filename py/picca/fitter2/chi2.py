@@ -91,9 +91,8 @@ class chi2:
         for name in par_names:
             mig_init.errors[name] = par_err[name]
             mig_init.limits[name] = par_lim[name]
-            if name[:4] == "bias":
-                mig_init.fixed[name] = False
-            else:
+            mig_init.fixed[name]  = par_fix[name]
+            if name[:4] != "bias":
                 mig_init.fixed[name] = True
         mig_init.errordef = 1
         mig_init.print_level = 1

@@ -160,11 +160,11 @@ class AbstractTest(unittest.TestCase):
                 userprint("WARNING: {}: {} not exactly equal, using allclose".format(
                     nameRun,'/'.join(namelist)))
                 allclose = np.allclose(val1, val2)
-                self.assertTrue(allclose, "{} results changed for output values for {}:\n val1:{}\n\n val2:{}\n\n\n".format(
+                self.assertTrue(allclose, "{} results changed for output values for {}:\n expected:{}\n\n got:{}\n\n\n".format(
                     nameRun,
                     '/'.join(namelist),
-                    ' '.join([f'{v:.5g}' for v in val1]),
-                    ' '.join([f'{v:.5g}' for v in val2]),
+                    ' '.join([f'{v:6.5g}' for v in val1.flatten()]),
+                    ' '.join([f'{v:6.5g}' for v in val2.flatten()]),
                 ))
             return
 
