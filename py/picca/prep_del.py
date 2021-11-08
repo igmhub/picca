@@ -239,8 +239,8 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
         minimizer.errors["fudge"] = 0.05
         minimizer.errordef = 1.
         minimizer.print_level = 0
-        minimizer.limits["eta"] = (0, None)
-        minimizer.limits["var_lss"] = (0, None)
+        minimizer.limits["eta"] = limit_eta
+        minimizer.limits["var_lss"] = limit_var_lss
         minimizer.limits["fudge"] = (0, None)
         minimizer.migrad()
 
