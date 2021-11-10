@@ -310,15 +310,16 @@ class chi2:
         g=f.create_group("best fit")
 
         ## write down all parameters
+        fixed_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]
+        varied_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]
+
         for i, p in enumerate(self.best_fit.values.to_dict().keys()):
             v = self.best_fit.values[p]
             e = self.best_fit.errors[p]
-            if p in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]:
+            if p in fixed_pars:
                 e = 0
             g.attrs[p] = (v, e)
 
-        fixed_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]
-        varied_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]
         for i1, p1 in enumerate(self.best_fit.values.to_dict().keys()):
             for i2, p2 in enumerate(self.best_fit.values.to_dict().keys()):
                 if (p1 in varied_pars and
@@ -337,9 +338,7 @@ class chi2:
         ndata = sum(ndata)
         g.attrs['zeff'] = self.zeff
         g.attrs['ndata'] = ndata
-        g.attrs['npar'] = len([name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix])
-        fixed_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]
-        varied_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]                   
+        g.attrs['npar'] = len(varied_pars)                 
         g.attrs['list of free pars'] = [a.encode('utf8') for a in varied_pars]
         g.attrs['list of fixed pars'] = [a.encode('utf8') for a in fixed_pars]
         if len(priors.prior_dic) != 0:
