@@ -296,10 +296,10 @@ class chi2:
             fixed_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]
             varied_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]
             for var in self.minos_para['parameters']:
-                if var in [name for (name,fix) in fixed_pars:   #testing for varied parameters
+                if var in varied_pars:   #testing for varied parameters
                     self.best_fit.minos(var,cl=cl)
                 else:
-                    if var in [name for (name,fix) in varied_pars]:   #testing for fixed parameters
+                    if var in fixed_pars:   #testing for fixed parameters
                         userprint('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
                     else:
                         userprint('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
