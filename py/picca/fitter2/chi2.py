@@ -293,14 +293,13 @@ class chi2:
         if 'all' in self.minos_para['parameters']:
             self.best_fit.minos(cl=cl)
         else:
+            fixed_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]
+            varied_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]
             for var in self.minos_para['parameters']:
-                if var in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]:   #testing for varied parameters
-#                    try:
-                        self.best_fit.minos(var,cl=cl)
-#                    except ValueError:
-#                        print(f"error running minos on {var}")
+                if var in [name for (name,fix) in fixed_pars:   #testing for varied parameters
+                    self.best_fit.minos(var,cl=cl)
                 else:
-                    if var in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]:   #testing for fixed parameters
+                    if var in [name for (name,fix) in varied_pars]:   #testing for fixed parameters
                         userprint('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
                     else:
                         userprint('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
@@ -318,10 +317,12 @@ class chi2:
                 e = 0
             g.attrs[p] = (v, e)
 
+        fixed_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]
+        varied_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]
         for i1, p1 in enumerate(self.best_fit.values.to_dict().keys()):
             for i2, p2 in enumerate(self.best_fit.values.to_dict().keys()):
-                if (p1 in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix] and
-                   p2 in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]):
+                if (p1 in varied_pars and
+                   p2 in varied_pars):
                     #only store correlations for params that have been varied
                     g.attrs["cov[{}, {}]".format(p1,p2)] = self.best_fit.covariance[i1,i2] #cov
 
@@ -337,8 +338,10 @@ class chi2:
         g.attrs['zeff'] = self.zeff
         g.attrs['ndata'] = ndata
         g.attrs['npar'] = len([name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix])
-        g.attrs['list of free pars'] = [a.encode('utf8') for a in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]]
-        g.attrs['list of fixed pars'] = [a.encode('utf8') for a in [name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]]
+        fixed_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]
+        varied_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]                   
+        g.attrs['list of free pars'] = [a.encode('utf8') for a in varied_pars]
+        g.attrs['list of fixed pars'] = [a.encode('utf8') for a in fixed_pars]
         if len(priors.prior_dic) != 0:
             g.attrs['list of prior pars'] = [a.encode('utf8') for a in priors.prior_dic.keys()]
 
@@ -406,7 +409,7 @@ class chi2:
         if hasattr(self, "minos_para"):
             g = f.create_group("minos")
             g.attrs['sigma'] = self.minos_para['sigma']
-            minos_results = self.best_fit.merrors # self.best_fit.get_merrors()
+            minos_results = self.best_fit.merrors
             for par in list(minos_results.keys()):
                 subgrp = g.create_group(par)
                 minos_keys = ['at_lower_limit', 'at_lower_max_fcn', 'at_upper_limit', 'at_upper_max_fcn', 'is_valid', 'lower', 'lower_new_min', 'lower_valid', 'min', 'name', 'nfcn', 'upper', 'upper_new_min', 'upper_valid']
