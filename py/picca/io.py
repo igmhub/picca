@@ -388,8 +388,8 @@ def read_data(in_dir,
                 pix_data_, is_mock = read_from_desi(in_dir_, catalog_, desi_prefix, desi_nside, pk1d=pk1d)
                 pix_data.extend(pix_data_)
 
-            if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any((catalog['DESI_TARGET']>0)):
-                print("your catalog contains DESI survey tiles!")
+            if (not is_mock) and ('main' in survey_type):
+                print("your catalog contains main survey quasars!")
                 blinding = blinding_desi
 
         elif mode == "desi_survey_tilebased":
