@@ -20,7 +20,7 @@ SPEED_LIGHT = speed_light/1000. # [km/s]
 # different strategies are explained in
 # https://desi.lbl.gov/trac/wiki/keyprojects/y1kp6/Blinding
 ACCEPTED_BLINDING_STRATEGIES = ["none", "minimal", "strategyB", "strategyC",
-    "strategyBC"]
+    "strategyBC", "corr_yshift"]
 
 class Cosmo(object):
     """This class defines the fiducial cosmology

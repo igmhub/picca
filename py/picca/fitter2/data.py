@@ -33,20 +33,18 @@ class data:
         h = fitsio.FITS(fdata)
         head = h[1].read_header()
 
-        blinding = "none"
+        self._blinding = "none"
         if 'BLINDING' in head:
-            blinding = head["BLINDING"]
+            self._blinding = head["BLINDING"]
 
-        if blinding == "minimal":
+        if self._blinding in ["minimal","corr_yshift"]:
             da = h[1]['DA_BLIND'][:]
             dm = csr_matrix(h[1]['DM_BLIND'][:])
-            self._blind = True
-        elif blinding == "none":
+        elif self._blinding == "none":
             da = h[1]['DA'][:]
             dm = csr_matrix(h[1]['DM'][:])
-            self._blind = False
         else:
-            raise ValueError("Unknown blinding strategy. Only 'minimal' implemented.")
+            raise ValueError("Unknown blinding strategy",self._blinding)
 
         co = h[1]['CO'][:]
         rp = h[1]['RP'][:]
@@ -241,10 +239,11 @@ class data:
         self.par_limit = dic_init['parameters']['limits']
         self.par_fixed = dic_init['parameters']['fix']
 
-        if self._blind and (('fix_ap' not in self.par_fixed.keys()) or (not self.par_fixed['fix_ap'])):
-            raise ValueError("Running on blind data, please fix ap (and at)!")
-        if self._blind and (('fix_at' not in self.par_fixed.keys()) or (not self.par_fixed['fix_at'])):
-            raise ValueError("Running on blind data, please fix at (ap is fixed already)!")
+        if (self._blinding == 'minimal') and (('fix_ap' not in self.par_fixed.keys()) or (not self.par_fixed['fix_ap'])):
+            raise ValueError("Running with minimal blinding, please fix ap (and at)!")
+
+        if (self._blinding == 'minimal') and (('fix_at' not in self.par_fixed.keys()) or (not self.par_fixed['fix_at'])):
+            raise ValueError("Running with minimal blinding, please fix at (ap is fixed already)!")
 
         self.dm_met = {}
         self.rp_met = {}
@@ -287,7 +286,7 @@ class data:
                     self.z_met[(self.tracer1['name'], m)] = hmet[2]["Z_{}_{}".format(self.tracer1['name'],m)][:]
                     
                     metal_mat_name = "DM_{}_{}".format(self.tracer1['name'], m)
-                    if self._blind:
+                    if self._blinding != 'none':
                         metal_mat_name = "DM_BLIND_{}_{}".format(self.tracer1['name'], m)
                     try:
                         self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[2][metal_mat_name][:])
@@ -311,7 +310,7 @@ class data:
                         self.z_met[(self.tracer1['name'], m)] = hmet[2]["Z_{}_{}".format(self.tracer1['name'],m)][:]
 
                         metal_mat_name = "DM_{}_{}".format(self.tracer1['name'], m)
-                        if self._blind:
+                        if self._blinding != 'none':
                             metal_mat_name = "DM_BLIND_{}_{}".format(self.tracer1['name'], m)
                         try:
                             self.dm_met[(self.tracer1['name'], m)] = csr_matrix(hmet[2][metal_mat_name][:])
@@ -326,7 +325,7 @@ class data:
                         self.z_met[(m, self.tracer2['name'])] = hmet[2]["Z_{}_{}".format(m, self.tracer2['name'])][:]
                         
                         metal_mat_name = "DM_{}_{}".format(m, self.tracer2['name'])
-                        if self._blind:
+                        if self._blinding != 'none':
                             metal_mat_name = "DM_BLIND_{}_{}".format(m, self.tracer2['name'])
                         try:
                             self.dm_met[(m, self.tracer2['name'])] = csr_matrix(hmet[2][metal_mat_name][:])
@@ -345,7 +344,7 @@ class data:
                         self.z_met[(m1, m2)] = hmet[2]["Z_{}_{}".format(m1,m2)][:]
 
                         metal_mat_name = "DM_{}_{}".format(m1,m2)
-                        if self._blind:
+                        if self._blinding != 'none':
                             metal_mat_name = "DM_BLIND_{}_{}".format(m1,m2)
                         try:
                             self.dm_met[(m1, m2)] = csr_matrix(hmet[2][metal_mat_name][:])
@@ -355,7 +354,7 @@ class data:
             hmet.close()
 
     def xi_model(self, k, pk_lin, pars):
-        pars['blind'] = self._blind
+        pars['blinding'] = self._blinding
 
         xi = self.xi(self.r, self.mu, k, pk_lin, self.pk, \
                     tracer1 = self.tracer1, tracer2 = self.tracer2, ell_max = self.ell_max, **pars)
@@ -410,7 +409,7 @@ class data:
         return xi
 
     def chi2(self, k, pk_lin, pksb_lin, full_shape, pars):
-        pars['blind'] = self._blind
+        pars['blinding'] = self._blinding
         xi_peak = self.xi_model(k, pk_lin-pksb_lin, pars)
 
         pars['SB'] = True & (not full_shape)
