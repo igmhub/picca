@@ -244,7 +244,7 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
         minimizer.limits["fudge"] = (0, None)
         minimizer.migrad()
 
-        if minimizer.accurate:
+        if minimizer.valid: #minimizer.accurate:
             minimizer.hesse()
             eta[index] = minimizer.values["eta"]
             var_lss[index] = minimizer.values["var_lss"]
