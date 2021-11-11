@@ -18,8 +18,8 @@ class CaseConfigParser(ConfigParser.ConfigParser):
 class AbstractTest(unittest.TestCase):
     """
         Class with Helper functions for the picca unit tests
-    """    
-
+    """  
+      
     def update_system_status_values(self, path, section, system, value):
         """
             This updates variables in the fitter test
@@ -116,6 +116,7 @@ class AbstractTest(unittest.TestCase):
             path2 (str): path of the second hdf5 file
             nameRun (str, optional): A name of the current run for identification. Defaults to "".
         """
+
         def compare_attributes(atts1, atts2):
             self.assertEqual(len(atts1.keys()), len(atts2.keys()),
                             "{}".format(nameRun))
@@ -252,6 +253,10 @@ class AbstractTest(unittest.TestCase):
     def tearDownClass(cls):
         """
             removes directory structure in tmp
-        """        
+        """    
+        os.makedirs('/tmp/last_run_picca_test/',exist_ok=True)
+        #copy the outputs for later debugging, ditch spectra
+        shutil.copytree(cls._branchFiles, '/tmp/last_run_picca_test/', ignore=lambda path,fnames: [fname for fname in fnames if 'spectra' in fname.lower() or 'spectra' in path.lower()],dirs_exist_ok=True)
+
         if os.path.isdir(cls._branchFiles):
             shutil.rmtree(cls._branchFiles, ignore_errors=True)

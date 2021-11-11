@@ -43,7 +43,7 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: test-results
-        path: /tmp/tmp*
+        path: /tmp/last_run_picca_test
 
 
   # flake8:

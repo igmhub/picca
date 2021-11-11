@@ -304,19 +304,7 @@ class TestDelta(AbstractTest):
 
             path1 = self._masterFiles + "/test_delta/metadata.fits"
             path2 = self._branchFiles + "/Products/Delta_LYA/Log/metadata.fits"
-            try:
-                self.compare_fits(path1, path2, "picca_deltas.py")
-            except AssertionError:
-                print("#################################################################################")
-                print("#################################################################################")
-                print("#################################################################################")
-                print("TODO: There is an AssertionError for metadata values of p1 in the github action only, the reason is unclear.")
-                print("      We are proceeding anyway for the moment, allowing the metadata file to potentially change")
-                print("#################################################################################")
-                print("#################################################################################")
-                print("#################################################################################")
-                raise
-
+            self.compare_fits(path1, path2, "picca_deltas.py")
         return
 
 
