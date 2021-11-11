@@ -38,6 +38,12 @@ jobs:
       timeout-minutes: 30
       run: |
           pytest --capture=tee-sys . 
+    - name: Archive Test Results
+      if: failure()
+      uses: actions/upload-artifact@v1
+      with:
+        name: test-results
+        path: /tmp/tmp*
 
 
   # flake8:
