@@ -256,7 +256,14 @@ class AbstractTest(unittest.TestCase):
         """    
         os.makedirs('/tmp/last_run_picca_test/',exist_ok=True)
         #copy the outputs for later debugging, ditch spectra
-        shutil.copytree(cls._branchFiles, '/tmp/last_run_picca_test/', ignore=lambda path,fnames: [fname for fname in fnames if 'spectra' in fname.lower() or 'spectra' in path.lower()],dirs_exist_ok=True)
+        try:
+            shutil.copytree(cls._branchFiles, '/tmp/last_run_picca_test/', ignore=lambda path,fnames: [fname for fname in fnames if 'spectra' in fname.lower() or 'spectra' in path.lower()],dirs_exist_ok=True)
+        except TypeError:
+            try:
+                shutil.copytree(cls._branchFiles, '/tmp/last_run_picca_test/', ignore=lambda path,fnames: [fname for fname in fnames if 'spectra' in fname.lower() or 'spectra' in path.lower()])
+            except FileExistsError:
+                print("Files Exist, could not copy last run files, added random number to output filename")
+                shutil.copytree(cls._branchFiles, f'/tmp/last_run_picca_test/{np.random.randint(1000000)}', ignore=lambda path,fnames: [fname for fname in fnames if 'spectra' in fname.lower() or 'spectra' in path.lower()])
 
         if os.path.isdir(cls._branchFiles):
             shutil.rmtree(cls._branchFiles, ignore_errors=True)
