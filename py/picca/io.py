@@ -26,6 +26,7 @@ import healpy
 import fitsio
 from astropy.table import Table
 import warnings
+from multiprocessing import Pool
 
 from .utils import userprint
 from .data import Forest, Delta, QSO
@@ -388,8 +389,8 @@ def read_data(in_dir,
                 pix_data_, is_mock = read_from_desi(in_dir_, catalog_, desi_prefix, desi_nside, pk1d=pk1d)
                 pix_data.extend(pix_data_)
 
-            if (not is_mock) and ('DESI_TARGET' in catalog.colnames) and np.any((catalog['DESI_TARGET']>0)):
-                print("your catalog contains DESI survey tiles!")
+            if (not is_mock) and ('main' in survey_type):
+                print("your catalog contains main survey quasars!")
                 blinding = blinding_desi
 
         elif mode == "desi_survey_tilebased":
@@ -1393,7 +1394,7 @@ def read_blinding(in_dir):
     files = []
     in_dir = os.path.expandvars(in_dir)
     if len(in_dir) > 8 and in_dir[-8:] == '.fits.gz':
-            files += glob.glob(in_dir)
+        files += glob.glob(in_dir)
     elif len(in_dir) > 5 and in_dir[-5:] == '.fits':
         files += glob.glob(in_dir)
     else:
@@ -1412,6 +1413,29 @@ def read_blinding(in_dir):
     return blinding
 
 
+def read_delta_file(filename, from_image=False):
+    """Extracts deltas from a single file.
+    Args:
+        filename: str
+            Path to the file to read
+        from_image: bool - default: False
+            Whether to use the from_image method.
+    Returns:
+        deltas:
+            A dictionary with the data. Keys are the healpix numbers of each
+                spectrum. Values are lists of delta instances.
+    """
+
+    if from_image is None:
+        hdul = fitsio.FITS(filename)
+        deltas = [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
+        hdul.close()
+    else:
+        deltas = Delta.from_image(filename)
+
+    return deltas
+
+
 def read_deltas(in_dir,
                 nside,
                 lambda_abs,
@@ -1420,7 +1444,8 @@ def read_deltas(in_dir,
                 cosmo,
                 max_num_spec=None,
                 no_project=False,
-                from_image=None):
+                from_image=None,
+                nproc=None):
     """Reads deltas and computes their redshifts.
 
     Fills the fields delta.z and multiplies the weights by
@@ -1483,20 +1508,18 @@ def read_deltas(in_dir,
                                                                 '/*.fits.gz'))
     files = sorted(files)
 
+    arguments = [(f, from_image) for f in files]
+    pool = Pool(processes=nproc)
+    results = pool.starmap(read_delta_file, arguments)
+    pool.close()
+
     deltas = []
     num_data = 0
-    for index, filename in enumerate(files):
-        userprint("\rread {} of {} {}".format(index, len(files), num_data))
-        if from_image is None:
-            hdul = fitsio.FITS(filename)
-            deltas += [Delta.from_fitsio(hdu) for hdu in hdul[1:]]
-            hdul.close()
-        else:
-            deltas += Delta.from_image(filename)
-
-        num_data = len(deltas)
-        if max_num_spec is not None:
-            if num_data > max_num_spec:
+    for delta in results:
+        if delta is not None:
+            deltas += delta
+            num_data = len(deltas)
+            if (max_num_spec is not None) and (num_data > max_num_spec):
                 break
 
     # truncate the deltas if we load too many lines of sight
