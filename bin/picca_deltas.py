@@ -390,16 +390,9 @@ def main(cmdargs):
                         type=str,
                         default=None,
                         required=False,
-                        help=('BAL catalog location. Use with --keep-bal to '
-                              'mask BAL features'))
-
-    parser.add_argument('--bal-index',
-                        type=str,
-                        default='ai',
-                        required=False,
-                        help=('BAL index type, choose either ai or bi. Use '
-                              'with --bal-catalog and -keep-bal. This will '
-                              'set which velocity the BAL mask uses.'))
+                        help=('BAL catalog location, required for working with '
+                              'eBOSS data. Do not use with DESI catalogs. Use '
+                              'with --keep-bal to mask BAL features'))
 
     parser.add_argument('--metadata',
                         type=str,
