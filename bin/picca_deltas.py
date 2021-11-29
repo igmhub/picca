@@ -624,7 +624,7 @@ def main(cmdargs):
                     forest.mask(bal_mask)
                     num_bal += 1
         log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
-    elif (args.keep_bal is True) & (args.bal_catalog is None):
+    elif args.keep_bal is True:
         userprint("INFO: Masking BALs")
         bal_cat = bal_tools.read_bal(args.drq)
         num_bal = 0
@@ -632,7 +632,8 @@ def main(cmdargs):
             for forest in data[healpix]:
                 bal_mask = bal_tools.add_bal_mask(bal_cat, forest.thingid, args.bal_index)
                 forest.mask(bal_mask)
-                num_bal += 1
+                if len(bal_mask) > 0:
+                    num_bal += 1
         log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
 
     ## Apply cuts
@@ -924,7 +925,7 @@ def main(cmdargs):
                                               delta.fiberid)
                     },
                     {
-                       'name': 'THING_ID',
+                        'name': 'THING_ID',
                         'value': delta.thingid,
                         'comment': 'Object identification'
                     },
