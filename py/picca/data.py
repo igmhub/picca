@@ -879,13 +879,13 @@ class Forest(QSO):
 
         minimizer = iminuit.Minuit(chi2,
                                    p0=p0,
-                                   p1=p1,
-                                   error_p0=p0 / 2.,
-                                   error_p1=p0 / 2.,
-                                   errordef=1.,
-                                   print_level=0,
-                                   fix_p1=(self.order == 0))
-        minimizer_result, _ = minimizer.migrad()
+                                   p1=p1)
+        minimizer.errors["p0"] = p0 / 2.
+        minimizer.errors["p1"] = p0 / 2.
+        minimizer.errordef = 1.
+        minimizer.print_level = 0
+        minimizer.fixed["p1"] = self.order == 0
+        minimizer.migrad()
 
         self.cont = get_cont_model(minimizer.values["p0"],
                                    minimizer.values["p1"])
@@ -893,7 +893,7 @@ class Forest(QSO):
         self.p1 = minimizer.values["p1"]
 
         self.bad_cont = None
-        if not minimizer_result.is_valid:
+        if not minimizer.valid:
             self.bad_cont = "minuit didn't converge"
         if np.any(self.cont <= 0):
             self.bad_cont = "negative continuum"

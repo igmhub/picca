@@ -146,19 +146,27 @@ class AbstractTest(unittest.TestCase):
                     nequal = atts1[item] != atts2[item]
                 if nequal:
                     userprint(
-                        "WARNING: {}: not exactly equal, using allclose for {}".
+                        "WARNING: {}: not exactly equal, using allclose for attribute {}".
                         format(nameRun, item))
                     userprint(atts1[item], atts2[item])
                     allclose = np.allclose(atts1[item], atts2[item])
-                    self.assertTrue(allclose, "{}".format(nameRun))
+                    if item=='nfcn' and not allclose:
+                        print("'nfcn' definition changed between iminuit1 (unclear what this was) and iminuit2 (total number of calls)")
+                    else:
+                        self.assertTrue(allclose, "{} results changed for attribute {}".format(nameRun, item))
             return
 
-        def compare_values(val1, val2):
+        def compare_values(val1, val2, namelist):
             if not np.array_equal(val1, val2):
-                userprint("WARNING: {}: not exactly equal, using allclose".format(
-                    nameRun))
+                userprint("WARNING: {}: {} not exactly equal, using allclose".format(
+                    nameRun,'/'.join(namelist)))
                 allclose = np.allclose(val1, val2)
-                self.assertTrue(allclose, "{}".format(nameRun))
+                self.assertTrue(allclose, "{} results changed for output values for {}:\n expected:{}\n\n got:{}\n\n\n".format(
+                    nameRun,
+                    '/'.join(namelist),
+                    ' '.join([f'{v:6.5g}' for v in val1.flatten()]),
+                    ' '.join([f'{v:6.5g}' for v in val2.flatten()]),
+                ))
             return
 
         userprint("\n")
@@ -178,7 +186,7 @@ class AbstractTest(unittest.TestCase):
             if k in ['best fit', 'fast mc', 'minos', 'chi2 scan']:
                 continue
             compare_attributes(m[k].attrs, b[k].attrs)
-            compare_values(m[k]['fit'][()], b[k]['fit'][()])
+            compare_values(m[k]['fit'][()], b[k]['fit'][()],[k,'fit'])
 
         ### minos
         k = 'minos'
@@ -191,7 +199,7 @@ class AbstractTest(unittest.TestCase):
         for p in m[k].keys():
             compare_attributes(m[k][p].attrs, b[k][p].attrs)
             if p == 'result':
-                compare_values(m[k][p]['values'][()], b[k][p]['values'][()])
+                compare_values(m[k][p]['values'][()], b[k][p]['values'][()],[k,p,'values'])
 
         return
 
