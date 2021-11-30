@@ -43,7 +43,7 @@ jobs:
       if: failure()
       uses: actions/upload-artifact@v1
       with:
-        name: test-results
+        name: test-results_v${{ matrix.python-version }}
         path: /tmp/last_run_picca_test
 
 
