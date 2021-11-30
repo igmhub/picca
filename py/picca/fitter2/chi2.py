@@ -5,7 +5,6 @@ import time
 import h5py
 import sys
 from scipy.linalg import cholesky
-import scipy.stats
 
 from ..utils import userprint
 from . import priors
@@ -81,40 +80,30 @@ class chi2:
     def _minimize(self):
         t0 = time.time()
         par_names = [name for d in self.data for name in d.pars_init]
-        par_val_init = {name:val for d in self.data for name, val in d.pars_init.items()}
-        par_err = {k.split('error_')[1]:err for d in self.data for k,err in d.par_error.items()}
-        par_lim = {k.split('limit_')[1]:lim for d in self.data for k,lim in d.par_limit.items()}
-        par_fix = {k.split('fix_')[1]:fix for d in self.data for k,fix in d.par_fixed.items()}
+        kwargs = {name:val for d in self.data for name, val in d.pars_init.items()}
+        kwargs.update({name:err for d in self.data for name, err in d.par_error.items()})
+        kwargs.update({name:lim for d in self.data for name, lim in d.par_limit.items()})
+        kwargs.update({name:fix for d in self.data for name, fix in d.par_fixed.items()})
 
         ## do an initial "fast" minimization fixing everything except the biases
-        mig_init = iminuit.Minuit(self, name=self.par_names, **par_val_init)
+        kwargs_init = {}
+        for k,v in kwargs.items():
+            kwargs_init[k] = v
         for name in par_names:
-            mig_init.errors[name] = par_err[name]
-            mig_init.limits[name] = par_lim[name]
-            mig_init.fixed[name]  = par_fix[name]
             if name[:4] != "bias":
-                mig_init.fixed[name] = True
-        mig_init.errordef = 1
-        mig_init.print_level = 1
-        mig_init.migrad()
-        print(mig_init.fmin)
-        print(mig_init.params)
-        
-        ## now get the best fit values for the biases and start a full minimization
-        par_val={}
-        for name, value in mig_init.values.to_dict().items():
-            par_val[name] = value
+                kwargs_init["fix_"+name] = True
 
-        mig = iminuit.Minuit(self, name=self.par_names,**par_val)
-        for name in par_names:
-            mig.errors[name] = par_err[name]
-            mig.limits[name] = par_lim[name]
-            mig.fixed[name]  = par_fix[name]
-        mig.errordef = 1
-        mig.print_level = 1
+        mig_init = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,print_level=1,**kwargs_init)
+        mig_init.migrad()
+        mig_init.print_param()
+
+        ## now get the best fit values for the biases and start a full minimization
+        for name, value in mig_init.values.items():
+            kwargs[name] = value
+
+        mig = iminuit.Minuit(self,forced_parameters=self.par_names,errordef=1,print_level=1,**kwargs)
         mig.migrad()
-        print(mig.fmin)
-        print(mig.params)
+        mig.print_param()
 
         userprint("INFO: minimized in {}".format(time.time()-t0))
         sys.stdout.flush()
@@ -126,7 +115,7 @@ class chi2:
             self.best_fit.hesse()
             self.best_fit.print_fmin()
 
-        values = self.best_fit.values.to_dict()
+        values = dict(self.best_fit.values)
         values['SB'] = False
         for d in self.data:
             d.best_fit_model = values['bao_amp']*d.xi_model(self.k, self.pk_lin-self.pksb_lin, values)
@@ -178,7 +167,7 @@ class chi2:
             except:
                 chi2_result = np.nan
             tresult = []
-            for p in sorted(best_fit.values.to_dict().keys()):
+            for p in sorted(best_fit.values):
                 tresult += [best_fit.values[p]]
             tresult += [chi2_result]
             return tresult
@@ -210,7 +199,7 @@ class chi2:
                         self.dic_chi2scan[par1]['grid'].size*self.dic_chi2scan[par2]['grid'].size))
 
         self.dic_chi2scan_result = {}
-        self.dic_chi2scan_result['params'] = np.asarray(np.append(sorted(self.best_fit.values.to_dict().keys()),['fval']))
+        self.dic_chi2scan_result['params'] = np.asarray(np.append(sorted(self.best_fit.values),['fval']))
         self.dic_chi2scan_result['values'] = np.asarray(result)
 
         ### Set all parameters to where they were before
@@ -238,7 +227,7 @@ class chi2:
             if not self.forecast_mc:
                 d.cho = cholesky(d.co)
 
-        self.fiducial_values = self.best_fit.values.to_dict().copy()
+        self.fiducial_values = dict(self.best_fit.values).copy()
         for p in self.fidfast_mc:
             self.fiducial_values[p] = self.fidfast_mc[p]
             for d in self.data:
@@ -276,7 +265,7 @@ class chi2:
                 d.da_cut = d.da[d.mask]
 
             best_fit = self._minimize()
-            for p, v in best_fit.values.to_dict().items():
+            for p, v in best_fit.values.items():
                 if not p in self.fast_mc:
                     self.fast_mc[p] = []
                 self.fast_mc[p].append([v, best_fit.errors[p]])
@@ -285,21 +274,16 @@ class chi2:
 
     def minos(self):
         if not hasattr(self,"minos_para"): return
+
         sigma = self.minos_para['sigma']
-        cl=scipy.stats.norm.cdf(sigma, loc=0, scale=1)-scipy.stats.norm.cdf(-sigma, loc=0, scale=1)    
-        #TODO: it might be more complicated to select the right cl than this, as this is for the 1d-case only
-        #if old minos actually did sigmas in the n-d parameter space and new minos is doing the correct cl for that
-        #dimensionality this would not be giving the correct results; I think the test case only checks 1d
         if 'all' in self.minos_para['parameters']:
-            self.best_fit.minos(cl=cl)
+            self.best_fit.minos(var=None,sigma=sigma)
         else:
-            fixed_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]
-            varied_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]
             for var in self.minos_para['parameters']:
-                if var in varied_pars:   #testing for varied parameters
-                    self.best_fit.minos(var,cl=cl)
+                if var in self.best_fit.list_of_vary_param():
+                    self.best_fit.minos(var=var,sigma=sigma)
                 else:
-                    if var in fixed_pars:   #testing for fixed parameters
+                    if var in self.best_fit.list_of_fixed_param():
                         userprint('WARNING: Can not run minos on a fixed parameter: {}'.format(var))
                     else:
                         userprint('WARNING: Can not run minos on a unknown parameter: {}'.format(var))
@@ -310,22 +294,15 @@ class chi2:
         g=f.create_group("best fit")
 
         ## write down all parameters
-        fixed_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if fix]
-        varied_pars=[name for (name,fix) in self.best_fit.fixed.to_dict().items() if not fix]
-
-        for i, p in enumerate(self.best_fit.values.to_dict().keys()):
+        for i, p in enumerate(self.best_fit.values):
             v = self.best_fit.values[p]
             e = self.best_fit.errors[p]
-            if p in fixed_pars:
+            if p in self.best_fit.list_of_fixed_param():
                 e = 0
             g.attrs[p] = (v, e)
 
-        for i1, p1 in enumerate(self.best_fit.values.to_dict().keys()):
-            for i2, p2 in enumerate(self.best_fit.values.to_dict().keys()):
-                if (p1 in varied_pars and
-                   p2 in varied_pars):
-                    #only store correlations for params that have been varied
-                    g.attrs["cov[{}, {}]".format(p1,p2)] = self.best_fit.covariance[i1,i2] #cov
+        for (p1, p2), cov in self.best_fit.covariance.items():
+            g.attrs["cov[{}, {}]".format(p1,p2)] = cov
 
         if len(priors.prior_dic) != 0:
             for prior in priors.prior_dic.values():
@@ -338,24 +315,18 @@ class chi2:
         ndata = sum(ndata)
         g.attrs['zeff'] = self.zeff
         g.attrs['ndata'] = ndata
-        g.attrs['npar'] = len(varied_pars)                 
-        g.attrs['list of free pars'] = [a.encode('utf8') for a in varied_pars]
-        g.attrs['list of fixed pars'] = [a.encode('utf8') for a in fixed_pars]
+        g.attrs['npar'] = len(self.best_fit.list_of_vary_param())
+        g.attrs['list of free pars'] = [a.encode('utf8') for a in self.best_fit.list_of_vary_param()]
+        g.attrs['list of fixed pars'] = [a.encode('utf8') for a in self.best_fit.list_of_fixed_param()]
         if len(priors.prior_dic) != 0:
             g.attrs['list of prior pars'] = [a.encode('utf8') for a in priors.prior_dic.keys()]
 
         ## write down all attributes of the minimum
-        fmin_keys=[ 'edm', 'fval', 'has_accurate_covar', 'has_covariance', 'has_made_posdef_covar', 
-         'has_posdef_covar', 'has_reached_call_limit', 'has_valid_parameters', 'hesse_failed', 'is_above_max_edm', 
-         'is_valid', 'nfcn']
-        dic_fmin = {k:getattr(self.best_fit.fmin,k) for k in fmin_keys}
+        dic_fmin = self.best_fit.get_fmin()
         for item, value in dic_fmin.items():
             g.attrs[item] = value
-        g.attrs['ncalls']=self.best_fit.nfcn #this should probably be changed to new nomenclature in the outputs instead of using the old kw; note that fmin.nfcn is the same now, but has been different before
-        g.attrs['tolerance']=self.best_fit.tol
-        g.attrs['up']=self.best_fit.errordef  #this should probably be changed to new nomenclature in the outputs instead of using the old kw
 
-        values = self.best_fit.values.to_dict()
+        values = dict(self.best_fit.values)
         values['SB'] = False
         for d in self.data:
             g = f.create_group(d.name)
@@ -408,11 +379,10 @@ class chi2:
         if hasattr(self, "minos_para"):
             g = f.create_group("minos")
             g.attrs['sigma'] = self.minos_para['sigma']
-            minos_results = self.best_fit.merrors
+            minos_results = self.best_fit.get_merrors()
             for par in list(minos_results.keys()):
                 subgrp = g.create_group(par)
-                minos_keys = ['at_lower_limit', 'at_lower_max_fcn', 'at_upper_limit', 'at_upper_max_fcn', 'is_valid', 'lower', 'lower_new_min', 'lower_valid', 'min', 'name', 'nfcn', 'upper', 'upper_new_min', 'upper_valid']
-                dic_minos = {k:getattr(minos_results[par],k) for k in minos_keys}
+                dic_minos = minos_results[par]
                 for item, value in dic_minos.items():
                     if item=='name': value = str(value) ###TODO: Fix h5py not handling numpy.str_
                     subgrp.attrs[item] = value

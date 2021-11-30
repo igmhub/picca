@@ -233,18 +233,18 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
                                    name=("eta", "var_lss", "fudge"),
                                    eta=1.,
                                    var_lss=0.1,
-                                   fudge=1.)
-        minimizer.errors["eta"] = 0.05
-        minimizer.errors["var_lss"] = 0.05
-        minimizer.errors["fudge"] = 0.05
-        minimizer.errordef = 1.
-        minimizer.print_level = 0
-        minimizer.limits["eta"] = limit_eta
-        minimizer.limits["var_lss"] = limit_var_lss
-        minimizer.limits["fudge"] = (0, None)
+                                   fudge=1.,
+                                   error_eta=0.05,
+                                   error_var_lss=0.05,
+                                   error_fudge=0.05,
+                                   errordef=1.,
+                                   print_level=0,
+                                   limit_eta=limit_eta,
+                                   limit_var_lss=limit_var_lss,
+                                   limit_fudge=(0, None))
         minimizer.migrad()
 
-        if minimizer.valid:
+        if minimizer.migrad_ok():
             minimizer.hesse()
             eta[index] = minimizer.values["eta"]
             var_lss[index] = minimizer.values["var_lss"]
