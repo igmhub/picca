@@ -14,14 +14,14 @@ from . import constants
 
 #Use args.survey instead
 
-def read_bal(filename,survey='DESI'):  ##Based on read_dla from picca/py/picca/io.py
+def read_bal(filename,survey):  ##Based on read_dla from picca/py/picca/io.py
     """Copies just the BAL information from the catalog.
 
     Args:
         filename: str
             Catalog name
         survey: str
-           'DESI' or 'EBOSS'
+           from args.survey, either 'desi' or 'eboss'
 
     Returns:
         A dictionary with BAL information. Keys are the TARGETID
@@ -29,7 +29,7 @@ def read_bal(filename,survey='DESI'):  ##Based on read_dla from picca/py/picca/i
         (*_CIV_450) and BI (*_CIV_2000) velocity.
 
     """
-    if survey == 'EBOSS':
+    if survey == 'eboss':
         id_name = 'THING_ID'
         ext_name = 'BALCAT'
     else:
@@ -46,13 +46,13 @@ def read_bal(filename,survey='DESI'):  ##Based on read_dla from picca/py/picca/i
 
     return bal_catalog
 
-def add_bal_mask(bal_catalog, targetid, id_name='TARGETID'):
+def add_bal_mask(bal_catalog, objectid, id_name='TARGETID'):
     """Creates a list of wavelengths to be masked out by forest.mask
 
     Args:
         bal_catalog: str
             Catalog of BALs
-        targetid: str
+        objectid: str
             Identifier of quasar
         id_name: str
             Column name of quasar identification ("THING_ID" in EBOSS)
@@ -75,15 +75,14 @@ def add_bal_mask(bal_catalog, targetid, id_name='TARGETID'):
 
     velocity_list = ['VMIN_CIV_450', 'VMAX_CIV_450']
 
-
     light_speed = constants.SPEED_LIGHT
 
     bal_mask = Table(names=['log_wave_min','log_wave_max','frame'], dtype=['f4','f4','S2'])
     min_velocities = []  ##list of minimum velocities
     max_velocities = []  ##list of maximum velocities
 
-    ##Match targetid of object to BAL catalog index
-    match_index = np.where(bal_catalog[id_name] == targetid)[0][0]
+    ##Match objectid of object to BAL catalog index
+    match_index = np.where(bal_catalog[id_name] == objectid)[0][0]
 
     #Store the min/max velocity pairs from the BAL catalog
     for col in velocity_list:
