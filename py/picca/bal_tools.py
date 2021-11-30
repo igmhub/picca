@@ -12,8 +12,6 @@ from astropy.table import Table
 
 from . import constants
 
-#Use args.survey instead
-
 def read_bal(filename,survey):  ##Based on read_dla from picca/py/picca/io.py
     """Copies just the BAL information from the catalog.
 
@@ -46,7 +44,7 @@ def read_bal(filename,survey):  ##Based on read_dla from picca/py/picca/io.py
 
     return bal_catalog
 
-def add_bal_mask(bal_catalog, objectid, id_name='TARGETID'):
+def add_bal_mask(bal_catalog, objectid, survey):
     """Creates a list of wavelengths to be masked out by forest.mask
 
     Args:
@@ -54,9 +52,14 @@ def add_bal_mask(bal_catalog, objectid, id_name='TARGETID'):
             Catalog of BALs
         objectid: str
             Identifier of quasar
-        id_name: str
-            Column name of quasar identification ("THING_ID" in EBOSS)
+        survey: str
+            Survey catalog comes from. 
     """
+    if survey == 'eboss':
+        id_name = 'THING_ID'
+    else:
+        id_name = 'TARGETID'
+
     ### Wavelengths in Angstroms
     lines = {
         "lCIV": 1549,
@@ -102,6 +105,9 @@ def add_bal_mask(bal_catalog, objectid, id_name='TARGETID'):
         for line in lines.values():
             min_wavelength = np.log10(line * (1 - min_velocities[vel] / light_speed))
             max_wavelength = np.log10(line * (1 - max_velocities[vel] / light_speed))
-            bal_mask.add_row([max_wavelength,min_wavelength,'RF'])
+            if survey == 'eboss':
+                bal_mask.add_row([min_wavelength,max_wavelength,'RF'])
+            else:
+                bal_mask.add_row([max_wavelength,min_wavelength,'RF'])
 
     return bal_mask
