@@ -40,7 +40,7 @@ class AbstractTest(unittest.TestCase):
         return
 
 
-    def compare_fits(self, path1, path2, nameRun=""):
+    def compare_fits(self, path1, path2, nameRun="", rel_tolerance=1e-05, abs_tolerance=1e-08):
         """
             Compares all fits files in 2 directories against each other
 
@@ -48,6 +48,8 @@ class AbstractTest(unittest.TestCase):
             path1 (str): path where first set of fits files lies
             path2 (str): path where second set of fits files lies
             nameRun (str, optional): A name of the current run for identification. Defaults to "".
+            rel_tolerance: relative difference to be allowed, see np.allclose, defaults from there
+            abs_tolerance: absolute difference to be allowed, see np.allclose, defaults from there
         """
         userprint("\n")
         m = fitsio.FITS(path1)
@@ -94,7 +96,7 @@ class AbstractTest(unittest.TestCase):
                     diff_abs = np.absolute(diff)
                     w = d_m != 0.
                     diff[w] = np.absolute(diff[w] / d_m[w])
-                    allclose = np.allclose(d_m, d_b)
+                    allclose = np.allclose(d_m, d_b,atol=abs_tolerance,rtol=rel_tolerance)
                     self.assertTrue(
                         allclose,
                         "{}: Header key is {}, maximum relative difference is {}, maximum absolute difference is {}".
