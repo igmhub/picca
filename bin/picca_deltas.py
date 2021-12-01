@@ -625,7 +625,7 @@ def main(cmdargs):
             for forest in data[healpix]:
                 bal_mask = bal_tools.add_bal_mask(bal_cat, forest.thingid,
                         args.survey)
-            forest.mask(bal_mask)
+                forest.mask(bal_mask)
             if len(bal_mask) > 0:
                     num_bal += 1
         log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
