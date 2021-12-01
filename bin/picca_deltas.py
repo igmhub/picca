@@ -613,18 +613,18 @@ def main(cmdargs):
         log_file.write("Found {} DLAs in forests\n".format(num_dlas))
 
     ### Mask BALs
-    if args.survey == 'eboss':
-            bal_catalog_to_read = args.bal_catalog
-    else:
+    if 'desi' in args.mode:
             bal_catalog_to_read = args.drq
+    else:
+            bal_catalog_to_read = args.bal_catalog
     if args.keep_bal is True:
         userprint("INFO: Masking BALs")
-        bal_cat = bal_tools.read_bal(bal_catalog_to_read,args.survey)
+        bal_cat = bal_tools.read_bal(bal_catalog_to_read,args.mode)
         num_bal = 0
         for healpix in data:
             for forest in data[healpix]:
                 bal_mask = bal_tools.add_bal_mask(bal_cat, forest.thingid,
-                        args.survey)
+                        args.mode)
                 forest.mask(bal_mask)
             if len(bal_mask) > 0:
                     num_bal += 1

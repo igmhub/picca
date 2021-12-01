@@ -12,14 +12,14 @@ from astropy.table import Table
 
 from . import constants
 
-def read_bal(filename,survey):  ##Based on read_dla from picca/py/picca/io.py
+def read_bal(filename,mode):  ##Based on read_dla from picca/py/picca/io.py
     """Copies just the BAL information from the catalog.
 
     Args:
         filename: str
             Catalog name
-        survey: str
-           from args.survey, either 'desi' or 'eboss'
+        mode: str
+            From args.mode, sets catalog type
 
     Returns:
         A dictionary with BAL information. Keys are the TARGETID
@@ -27,12 +27,13 @@ def read_bal(filename,survey):  ##Based on read_dla from picca/py/picca/io.py
         (*_CIV_450) and BI (*_CIV_2000) velocity.
 
     """
-    if survey == 'eboss':
-        id_name = 'THING_ID'
-        ext_name = 'BALCAT'
-    else:
+    if 'desi' in mode:
         id_name = 'TARGETID'
         ext_name = 'ZCATALOG'
+    
+    else:
+        id_name = 'THING_ID'
+        ext_name = 'BALCAT'
 
     column_list = [
         id_name, 'VMIN_CIV_450', 'VMAX_CIV_450', 'AI_CIV'
@@ -44,7 +45,7 @@ def read_bal(filename,survey):  ##Based on read_dla from picca/py/picca/io.py
 
     return bal_catalog
 
-def add_bal_mask(bal_catalog, objectid, survey):
+def add_bal_mask(bal_catalog, objectid, mode):
     """Creates a list of wavelengths to be masked out by forest.mask
 
     Args:
@@ -52,15 +53,14 @@ def add_bal_mask(bal_catalog, objectid, survey):
             Catalog of BALs
         objectid: str
             Identifier of quasar
-        survey: str
-            Survey catalog comes from. 
+        mode: str
+            From args.mode, sets catalog type
     """
-    if survey == 'eboss':
-        id_name = 'THING_ID'
-    elif survey == 'desi':
+
+    if 'desi' in mode:
         id_name = 'TARGETID'
     else:
-        raise RuntimeException(f'Unkown survey: {survey}')
+        id_name = 'THING_ID'
 
     ### Wavelengths in Angstroms
     lines = {
@@ -107,9 +107,10 @@ def add_bal_mask(bal_catalog, objectid, survey):
         for line in lines.values():
             min_wavelength = np.log10(line * (1 - min_velocities[vel] / light_speed))
             max_wavelength = np.log10(line * (1 - max_velocities[vel] / light_speed))
-            if survey == 'eboss':
-                bal_mask.add_row([min_wavelength,max_wavelength,'RF'])
-            else:
+            #VMIN and VMAX were switched between the eBOSS and DESI BAL catalogs.
+            if 'desi' in mode:
                 bal_mask.add_row([max_wavelength,min_wavelength,'RF'])
+            else:
+                bal_mask.add_row([min_wavelength,max_wavelength,'RF'])
 
     return bal_mask
