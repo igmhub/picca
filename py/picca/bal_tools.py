@@ -57,8 +57,10 @@ def add_bal_mask(bal_catalog, objectid, survey):
     """
     if survey == 'eboss':
         id_name = 'THING_ID'
-    else:
+    elif survey == 'desi':
         id_name = 'TARGETID'
+    else:
+        raise RuntimeException(f'Unkown survey: {survey}')
 
     ### Wavelengths in Angstroms
     lines = {
