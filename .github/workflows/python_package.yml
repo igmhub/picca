@@ -15,7 +15,8 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9"]
+        #, "3.10"]
 #    env:   
 #      OMP_NUM_THREADS: 1
 #      MKL_NUM_THREADS: 1
@@ -38,6 +39,12 @@ jobs:
       timeout-minutes: 30
       run: |
           pytest --capture=tee-sys . 
+    - name: Archive Test Results
+      if: failure()
+      uses: actions/upload-artifact@v1
+      with:
+        name: test-results_v${{ matrix.python-version }}
+        path: /tmp/last_run_picca_test
 
 
   # flake8:

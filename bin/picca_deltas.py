@@ -39,9 +39,11 @@ def get_metadata(data):
     ''' Constructs an astropy.table from all forests' metadata
     '''
     tab = Table()
+    # TODO: change mean_snr_save to mean_snr once this is properly treated
+    # in data.py
     for field in [
             'ra', 'dec', 'z_qso', 'thingid', 'plate', 'mjd', 'fiberid',
-            'mean_snr', 'p0', 'p1'
+            'mean_snr_save', 'p0', 'p1'
     ]:
         column_values = []
         for healpix in data:
@@ -52,6 +54,16 @@ def get_metadata(data):
                 else:
                     column_values.append(0)
         tab[field] = np.array(column_values)
+
+    mean_delta2_values = []
+    for healpix in data:
+        for forest in data[healpix]:
+            if "delta" in forest.__dict__ and not forest.delta is None:
+                mean_delta2 = np.average(forest.delta*forest.delta, weights=forest.ivar)
+                mean_delta2_values.append(mean_delta2)
+            else:
+                mean_delta2_values.append(-100)
+    tab["mean_delta2"] = np.array(mean_delta2_values)
 
     npix = []
     for healpix in data:
@@ -403,7 +415,7 @@ def main(cmdargs):
 
     parser.add_argument('--metadata',
                         type=str,
-                        default=None,
+                        default='metadata.fits',
                         required=False,
                         help=('Name for table containing forests metadata'))
 
@@ -813,11 +825,6 @@ def main(cmdargs):
                           ],
                           extname='VAR')
 
-    ### Read metadata from forests and export it
-    if not args.metadata is None:
-        tab_cont = get_metadata(data)
-        tab_cont.write(args.metadata, format="fits", overwrite=True)
-
     ### Compute deltas and format them
     get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
                                stack_delta[stack_weight > 0.],
@@ -852,6 +859,11 @@ def main(cmdargs):
     t2 = time.time()
     tmin = (t2 - t1) / 60
     userprint('INFO: time elapsed to fit continuum', tmin, 'minutes')
+
+    ### Read metadata from forests and export it
+    if not args.metadata is None:
+        tab_cont = get_metadata(data)
+        tab_cont.write(os.path.expandvars(args.metadata), format="fits", overwrite=True)
 
     ### Save delta
     for healpix in sorted(deltas.keys()):
@@ -993,12 +1005,12 @@ def main(cmdargs):
                     ]
                 else:
                     cols = [
-                        delta.log_lambda, delta.delta, delta.weights, delta.cont
+                        delta.log_lambda, delta.delta, delta.ivar, delta.weights, delta.cont
                     ]
-                    names = ['LOGLAM', delta_name, 'WEIGHT', 'CONT']
-                    units = ['log Angstrom', '', '', '']
+                    names = ['LOGLAM', delta_name, 'IVAR', 'WEIGHT', 'CONT']
+                    units = ['log Angstrom', '', '', '', '']
                     comments = [
-                        'Log lambda', 'Delta field', 'Pixel weights',
+                        'Log lambda', 'Delta field', 'Inverse variance', 'Pixel weights',
                         'Continuum'
                     ]
 
