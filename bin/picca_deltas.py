@@ -402,16 +402,9 @@ def main(cmdargs):
                         type=str,
                         default=None,
                         required=False,
-                        help=('BAL catalog location. Use with --keep-bal to '
-                              'mask BAL features'))
-
-    parser.add_argument('--bal-index',
-                        type=str,
-                        default='ai',
-                        required=False,
-                        help=('BAL index type, choose either ai or bi. Use '
-                              'with --bal-catalog and -keep-bal. This will '
-                              'set which velocity the BAL mask uses.'))
+                        help=('BAL catalog location, used if BAL information is'
+                            ' not included in the quasar catalog.  Use with '
+                            '--keep-bal to mask BAL features'))
 
     parser.add_argument('--metadata',
                         type=str,
@@ -419,18 +412,26 @@ def main(cmdargs):
                         required=False,
                         help=('Name for table containing forests metadata'))
 
-    parser.add_argument(
-        '--use-single-nights',
-        action='store_true',
-        default=False,
-        required=False,
-        help=('Use individual night for input spectra (DESI SV)'))
+    parser.add_argument('--survey',
+                        type=str.lower,
+                        choices=('desi','eboss'),
+                        default='desi',
+                        required=False,
+                        help=('Survey the catalog comes from. Defines which ' 
+                            'naming conventions to use when masking BALs.'))
+
+    parser.add_argument('--use-single-nights',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Use individual night for input spectra (DESI SV)')
 
     parser.add_argument('--use-all',
                         action='store_true',
                         default=False,
                         required=False,
                         help=('Use all dir for input spectra (DESI SV)'))
+
     parser.add_argument('--blinding-desi',
                         type=str,
                         default="corr_yshift",
@@ -547,7 +548,7 @@ def main(cmdargs):
                               usesinglenights=args.use_single_nights,
                               blinding_desi=args.blinding_desi)
 
-    #-- Add order info
+     #-- Add order info
     for pix in data:
         for forest in data[pix]:
             if not forest is None:
@@ -624,17 +625,20 @@ def main(cmdargs):
         log_file.write("Found {} DLAs in forests\n".format(num_dlas))
 
     ### Mask BALs
-    if not args.bal_catalog is None:
-        userprint("INFO: Adding BALs found in BAL catalog")
-        bal_cat = bal_tools.read_bal(args.bal_catalog)
+    if 'desi' in args.mode:
+            bal_catalog_to_read = args.drq
+    else:
+            bal_catalog_to_read = args.bal_catalog
+    if args.keep_bal is True:
+        userprint("INFO: Masking BALs")
+        bal_cat = bal_tools.read_bal(bal_catalog_to_read,args.mode)
         num_bal = 0
         for healpix in data:
             for forest in data[healpix]:
-                if forest.thingid in bal_cat["THING_ID"]:
-                    mask_obs_frame_bal = []
-                    mask_rest_frame_bal = bal_tools.add_bal_rest_frame(
-                        bal_cat, forest.thingid, args.bal_index)
-                    forest.mask(mask_rest_frame_bal)
+                bal_mask = bal_tools.add_bal_mask(bal_cat, forest.thingid,
+                        args.mode)
+                forest.mask(bal_mask)
+            if len(bal_mask) > 0:
                     num_bal += 1
         log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
 
