@@ -546,7 +546,13 @@ class Forest(QSO):
 
         error = 1.0 / np.sqrt(ivar)
         snr = flux / error
-        self.mean_snr = sum(snr) / float(len(snr))
+        # TODO: change mean_snr_save to mean_snr.
+        # Begore that, check implications on the different computation of mean_snr
+        # a 'more correct' way of computed is stored in mean_snr_save and
+        # saved in the metadata file, but we need to check how changes
+        # are propagated through the analysis.
+        self.mean_snr_save = np.average(snr, weights=self.ivar)
+        self.mean_snr = snr.mean()
         lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
                         np.power(10., log_lambda[0])) / 2. / lambda_abs_igm -
@@ -622,6 +628,8 @@ class Forest(QSO):
             self.mean_reso = self.reso.mean()
         error = 1. / np.sqrt(self.ivar)
         snr = self.flux / error
+        # TODO: change mean_snr_save to mean_snr.
+        self.mean_snr_save = np.average(snr, weights=self.ivar)
         self.mean_snr = snr.mean()
         lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
@@ -872,13 +880,13 @@ class Forest(QSO):
 
         minimizer = iminuit.Minuit(chi2,
                                    p0=p0,
-                                   p1=p1,
-                                   error_p0=p0 / 2.,
-                                   error_p1=p0 / 2.,
-                                   errordef=1.,
-                                   print_level=0,
-                                   fix_p1=(self.order == 0))
-        minimizer_result, _ = minimizer.migrad()
+                                   p1=p1)
+        minimizer.errors["p0"] = p0 / 2.
+        minimizer.errors["p1"] = p0 / 2.
+        minimizer.errordef = 1.
+        minimizer.print_level = 0
+        minimizer.fixed["p1"] = self.order == 0
+        minimizer.migrad()
 
         self.cont = get_cont_model(minimizer.values["p0"],
                                    minimizer.values["p1"])
@@ -886,7 +894,7 @@ class Forest(QSO):
         self.p1 = minimizer.values["p1"]
 
         self.bad_cont = None
-        if not minimizer_result.is_valid:
+        if not minimizer.valid:
             self.bad_cont = "minuit didn't converge"
         if np.any(self.cont <= 0):
             self.bad_cont = "negative continuum"

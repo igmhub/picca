@@ -5,6 +5,7 @@ list of IGM absorption.
 This module follow the procedure described in sections 4.3 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+import sys
 import time
 import argparse
 from functools import partial
@@ -70,7 +71,7 @@ def main(cmdargs):
                         '--mode',
                         type=str,
                         default='sdss',
-                        choices=['sdss','desi'],
+                        choices=['sdss','desi','desi_mocks','desi_healpix'],
                         required=False,
                         help='type of catalog supplied, default sdss')
 
