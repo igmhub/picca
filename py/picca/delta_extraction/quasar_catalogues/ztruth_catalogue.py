@@ -4,6 +4,7 @@ files from DESI
 import logging
 
 from astropy.table import Table
+import fitsio
 import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError
@@ -90,7 +91,7 @@ class ZtruthCatalogue(QuasarCatalogue):
         Table with the catalogue
         """
         self.logger.progress('Reading catalogue from ', self.filename)
-        catalogue = Table.read(self.filename, ext=1)
+        catalogue = Table(fitsio.read(self.filename, ext=1))
 
         if 'TARGET_RA' in catalog.colnames:
             catalogue.rename_column('TARGET_RA', 'RA')
