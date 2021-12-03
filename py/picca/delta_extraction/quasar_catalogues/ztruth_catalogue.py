@@ -93,7 +93,7 @@ class ZtruthCatalogue(QuasarCatalogue):
         self.logger.progress('Reading catalogue from ', self.filename)
         catalogue = Table(fitsio.read(self.filename, ext=1))
 
-        if 'TARGET_RA' in catalog.colnames:
+        if 'TARGET_RA' in catalogue.colnames:
             catalogue.rename_column('TARGET_RA', 'RA')
             catalogue.rename_column('TARGET_DEC', 'DEC')
 
