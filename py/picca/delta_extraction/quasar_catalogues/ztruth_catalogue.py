@@ -92,7 +92,21 @@ class ZtruthCatalogue(QuasarCatalogue):
         self.logger.progress('Reading catalogue from ', self.filename)
         catalogue = Table.read(self.filename, ext=1)
 
-        keep_columns = ['RA', 'DEC', 'Z', 'TARGETID', 'FIBER', 'SPECTROGRAPH']
+        if 'TARGET_RA' in catalog.colnames:
+            catalogue.rename_column('TARGET_RA', 'RA')
+            catalogue.rename_column('TARGET_DEC', 'DEC')
+
+        keep_columns = ['RA', 'DEC', 'Z', 'TARGETID']
+        if 'TILEID' in catalog.colnames:
+            keep_columns += ['TILEID', 'PETAL_LOC', 'FIBER']
+        if 'SURVEY' in catalog.colnames:
+            keep_columns += ['SURVEY']
+        if 'DESI_TARGET' in catalog.colnames:
+            keep_columns += ['DESI_TARGET']
+        if 'SV1_DESI_TARGET' in catalog.colnames:
+            keep_columns += ['SV1_DESI_TARGET']
+        if 'SV3_DESI_TARGET' in catalog.colnames:
+            keep_columns += ['SV3_DESI_TARGET']
 
         ## Sanity checks
         self.logger.progress('')
