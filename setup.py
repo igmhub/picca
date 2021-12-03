@@ -8,7 +8,9 @@ scripts = sorted(glob.glob('bin/picca*'))
 
 description = "Package for Igm Cosmological-Correlations Analyses"
 
-version="4.1"
+exec(open('py/picca/_version.py').read())
+version = __version__
+
 setup(name="picca",
     version=version,
     description=description,

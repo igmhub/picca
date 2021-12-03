@@ -39,9 +39,11 @@ def get_metadata(data):
     ''' Constructs an astropy.table from all forests' metadata
     '''
     tab = Table()
+    # TODO: change mean_snr_save to mean_snr once this is properly treated
+    # in data.py
     for field in [
             'ra', 'dec', 'z_qso', 'thingid', 'plate', 'mjd', 'fiberid',
-            'mean_snr', 'p0', 'p1'
+            'mean_snr_save', 'p0', 'p1'
     ]:
         column_values = []
         for healpix in data:
@@ -52,6 +54,16 @@ def get_metadata(data):
                 else:
                     column_values.append(0)
         tab[field] = np.array(column_values)
+
+    mean_delta2_values = []
+    for healpix in data:
+        for forest in data[healpix]:
+            if "delta" in forest.__dict__ and not forest.delta is None:
+                mean_delta2 = np.average(forest.delta*forest.delta, weights=forest.ivar)
+                mean_delta2_values.append(mean_delta2)
+            else:
+                mean_delta2_values.append(-100)
+    tab["mean_delta2"] = np.array(mean_delta2_values)
 
     npix = []
     for healpix in data:
@@ -156,10 +168,14 @@ def main(cmdargs):
 
     parser.add_argument('--mode',
                         type=str,
+                        choices=['pix', 'spec','spcframe','spplate','desi',
+                                 'desi_healpix','desi_survey_tilebased',
+                                 'desi_sv_no_coadd','desi_mocks','desiminisv'],
                         default='pix',
                         required=False,
                         help=('''Open mode of the spectra files: pix, spec, 
                               spcframe, spplate, desi_mocks (formerly known as desi), 
+                              desi_healpix (for healpix based coadded data),
                               desi_survey_tilebased (for tilebased data with coadding), 
                               desi_sv_no_coadd (without coadding across tiles, will output in tile format)'''))
 
@@ -386,41 +402,41 @@ def main(cmdargs):
                         type=str,
                         default=None,
                         required=False,
-                        help=('BAL catalog location. Use with --keep-bal to '
-                              'mask BAL features'))
-
-    parser.add_argument('--bal-index',
-                        type=str,
-                        default='ai',
-                        required=False,
-                        help=('BAL index type, choose either ai or bi. Use '
-                              'with --bal-catalog and -keep-bal. This will '
-                              'set which velocity the BAL mask uses.'))
+                        help=('BAL catalog location, used if BAL information is'
+                            ' not included in the quasar catalog.  Use with '
+                            '--keep-bal to mask BAL features'))
 
     parser.add_argument('--metadata',
                         type=str,
-                        default=None,
+                        default='metadata.fits',
                         required=False,
                         help=('Name for table containing forests metadata'))
 
-    parser.add_argument(
-        '--use-single-nights',
-        action='store_true',
-        default=False,
-        required=False,
-        help=('Use individual night for input spectra (DESI SV)'))
+    parser.add_argument('--survey',
+                        type=str.lower,
+                        choices=('desi','eboss'),
+                        default='desi',
+                        required=False,
+                        help=('Survey the catalog comes from. Defines which ' 
+                            'naming conventions to use when masking BALs.'))
+
+    parser.add_argument('--use-single-nights',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Use individual night for input spectra (DESI SV)')
 
     parser.add_argument('--use-all',
                         action='store_true',
                         default=False,
                         required=False,
                         help=('Use all dir for input spectra (DESI SV)'))
+
     parser.add_argument('--blinding-desi',
                         type=str,
-                        default="minimal",
+                        default="corr_yshift",
                         required=False,
                         help='Blinding strategy. "none" for no blinding')
-
 
     t0 = time.time()
 
@@ -430,8 +446,8 @@ def main(cmdargs):
 
     # comment this when ready to unblind
     if args.blinding_desi == "none":
-        print("WARINING: --blinding-desi is being ignored. 'minimal' blinding engaged")
-        args.blinding_desi = "minimal"
+        userprint("WARINING: --blinding-desi is being ignored. 'corr_yshift' blinding engaged")
+        args.blinding_desi = "corr_yshift"
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
@@ -532,7 +548,7 @@ def main(cmdargs):
                               usesinglenights=args.use_single_nights,
                               blinding_desi=args.blinding_desi)
 
-    #-- Add order info
+     #-- Add order info
     for pix in data:
         for forest in data[pix]:
             if not forest is None:
@@ -595,7 +611,10 @@ def main(cmdargs):
     if not args.dla_vac is None:
         userprint("INFO: Adding DLAs")
         np.random.seed(0)
-        dlas = io.read_dlas(args.dla_vac)
+        if 'desi' in args.mode:
+            dlas= io.read_dlas(args.dla_vac, obj_id_name='TARGETID')
+        else:
+            dlas = io.read_dlas(args.dla_vac)
         num_dlas = 0
         for healpix in data:
             for forest in data[healpix]:
@@ -606,17 +625,20 @@ def main(cmdargs):
         log_file.write("Found {} DLAs in forests\n".format(num_dlas))
 
     ### Mask BALs
-    if not args.bal_catalog is None:
-        userprint("INFO: Adding BALs found in BAL catalog")
-        bal_cat = bal_tools.read_bal(args.bal_catalog)
+    if 'desi' in args.mode:
+            bal_catalog_to_read = args.drq
+    else:
+            bal_catalog_to_read = args.bal_catalog
+    if args.keep_bal is True:
+        userprint("INFO: Masking BALs")
+        bal_cat = bal_tools.read_bal(bal_catalog_to_read,args.mode)
         num_bal = 0
         for healpix in data:
             for forest in data[healpix]:
-                if forest.thingid in bal_cat["THING_ID"]:
-                    mask_obs_frame_bal = []
-                    mask_rest_frame_bal = bal_tools.add_bal_rest_frame(
-                        bal_cat, forest.thingid, args.bal_index)
-                    forest.mask(mask_rest_frame_bal)
+                bal_mask = bal_tools.add_bal_mask(bal_cat, forest.thingid,
+                        args.mode)
+                forest.mask(bal_mask)
+            if len(bal_mask) > 0:
                     num_bal += 1
         log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
 
@@ -817,11 +839,6 @@ def main(cmdargs):
                           ],
                           extname='VAR')
 
-    ### Read metadata from forests and export it
-    if not args.metadata is None:
-        tab_cont = get_metadata(data)
-        tab_cont.write(args.metadata, format="fits", overwrite=True)
-
     ### Compute deltas and format them
     deltas = {}
     data_bad_cont = []
@@ -852,6 +869,11 @@ def main(cmdargs):
     t2 = time.time()
     tmin = (t2 - t1) / 60
     userprint('INFO: time elapsed to fit continuum', tmin, 'minutes')
+
+    ### Read metadata from forests and export it
+    if not args.metadata is None:
+        tab_cont = get_metadata(data)
+        tab_cont.write(os.path.expandvars(args.metadata), format="fits", overwrite=True)
 
     ### Save delta
     for healpix in sorted(deltas.keys()):
@@ -993,12 +1015,12 @@ def main(cmdargs):
                     ]
                 else:
                     cols = [
-                        delta.log_lambda, delta.delta, delta.weights, delta.cont
+                        delta.log_lambda, delta.delta, delta.ivar, delta.weights, delta.cont
                     ]
-                    names = ['LOGLAM', delta_name, 'WEIGHT', 'CONT']
-                    units = ['log Angstrom', '', '', '']
+                    names = ['LOGLAM', delta_name, 'IVAR', 'WEIGHT', 'CONT']
+                    units = ['log Angstrom', '', '', '', '']
                     comments = [
-                        'Log lambda', 'Delta field', 'Pixel weights',
+                        'Log lambda', 'Delta field', 'Inverse variance', 'Pixel weights',
                         'Continuum'
                     ]
 

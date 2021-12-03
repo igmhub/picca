@@ -12,50 +12,62 @@ from astropy.table import Table
 
 from . import constants
 
-
-def read_bal(filename):  ##Based on read_dla from picca/py/picca/io.py
-    """Reads the BAL catalog from a fits file.
+def read_bal(filename,mode):  ##Based on read_dla from picca/py/picca/io.py
+    """Copies just the BAL information from the catalog.
 
     Args:
         filename: str
-            Catalog of BALs
+            Catalog name
+        mode: str
+            From args.mode, sets catalog type
 
     Returns:
-        A dictionary with BAL information. Keys are the THING_ID
+        A dictionary with BAL information. Keys are the TARGETID
         associated with the BALs. Values are a tuple with its AI
         (*_CIV_450) and BI (*_CIV_2000) velocity.
 
     """
+    if 'desi' in mode:
+        id_name = 'TARGETID'
+        ext_name = 'ZCATALOG'
+    
+    else:
+        id_name = 'THING_ID'
+        ext_name = 'BALCAT'
+
     column_list = [
-        'THING_ID', 'VMIN_CIV_450', 'VMAX_CIV_450', 'VMIN_CIV_2000',
-        'VMAX_CIV_2000'
+        id_name, 'VMIN_CIV_450', 'VMAX_CIV_450', 'AI_CIV'
     ]
+
     hdul = fitsio.FITS(filename)
-    bal_dict = {col: hdul['BALCAT'][col][:] for col in column_list}
+    bal_catalog = {col: hdul[ext_name][col][:] for col in column_list}
     hdul.close()
 
-    return bal_dict
+    return bal_catalog
 
-
-def add_bal_rest_frame(bal_catalog, thingid, bal_index):
+def add_bal_mask(bal_catalog, objectid, mode):
     """Creates a list of wavelengths to be masked out by forest.mask
 
     Args:
         bal_catalog: str
             Catalog of BALs
-        thingid: str
-            thingid of quasar (eBOSS)
-        bal_index: str
-            which index to use (AI or BI). In picca_deltas.py, AI is
-            used as the default.
-
+        objectid: str
+            Identifier of quasar
+        mode: str
+            From args.mode, sets catalog type
     """
+
+    if 'desi' in mode:
+        id_name = 'TARGETID'
+    else:
+        id_name = 'THING_ID'
+
     ### Wavelengths in Angstroms
     lines = {
         "lCIV": 1549,
         "lNV": 1240.81,
         "lLya": 1216.1,
-        "lCIII": 1175, 
+        "lCIII": 1175,
         "lPV1": 1117,
         "lPV2": 1128,
         "lSIV1": 1062,
@@ -66,20 +78,16 @@ def add_bal_rest_frame(bal_catalog, thingid, bal_index):
         "lOI": 1039
     }
 
-    if bal_index == 'bi':
-        velocity_list = ['VMIN_CIV_2000', 'VMAX_CIV_2000']
-    else:  ##AI, the default
-        velocity_list = ['VMIN_CIV_450', 'VMAX_CIV_450']
-
+    velocity_list = ['VMIN_CIV_450', 'VMAX_CIV_450']
 
     light_speed = constants.SPEED_LIGHT
 
-    mask_rest_frame_bal = Table(names=['log_wave_min','log_wave_max','frame'], dtype=['f4','f4','S2'])
+    bal_mask = Table(names=['log_wave_min','log_wave_max','frame'], dtype=['f4','f4','S2'])
     min_velocities = []  ##list of minimum velocities
     max_velocities = []  ##list of maximum velocities
 
-    ##Match thing_id of object to BAL catalog index
-    match_index = np.where(bal_catalog['THING_ID'] == thingid)[0][0]
+    ##Match objectid of object to BAL catalog index
+    match_index = np.where(bal_catalog[id_name] == objectid)[0][0]
 
     #Store the min/max velocity pairs from the BAL catalog
     for col in velocity_list:
@@ -99,7 +107,10 @@ def add_bal_rest_frame(bal_catalog, thingid, bal_index):
         for line in lines.values():
             min_wavelength = np.log10(line * (1 - min_velocities[vel] / light_speed))
             max_wavelength = np.log10(line * (1 - max_velocities[vel] / light_speed))
-            mask_rest_frame_bal.add_row([min_wavelength,max_wavelength,'RF'])
+            #VMIN and VMAX were switched between the eBOSS and DESI BAL catalogs.
+            if 'desi' in mode:
+                bal_mask.add_row([max_wavelength,min_wavelength,'RF'])
+            else:
+                bal_mask.add_row([min_wavelength,max_wavelength,'RF'])
 
-
-    return mask_rest_frame_bal
+    return bal_mask

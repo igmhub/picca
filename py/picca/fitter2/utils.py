@@ -123,7 +123,7 @@ def bias_beta(kwargs, tracer1, tracer2):
     return bias1, beta1, bias2, beta2
 
 def ap_at(kwargs):
-    if kwargs['blind'] or kwargs['SB']:
+    if (kwargs['blinding'] == 'minimal') or kwargs['SB']:
         ap = 1.
         at = 1.
     else:
@@ -132,7 +132,7 @@ def ap_at(kwargs):
     return ap, at
 
 def aiso_epsilon(kwargs):
-    if kwargs['blind'] or kwargs['SB']:
+    if (kwargs['blinding'] == 'minimal') or kwargs['SB']:
         ap = 1.
         at = 1.
     else:

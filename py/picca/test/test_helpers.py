@@ -18,7 +18,7 @@ class CaseConfigParser(ConfigParser.ConfigParser):
 class AbstractTest(unittest.TestCase):
     """
         Class with Helper functions for the picca unit tests
-    """    
+    """  
 
     def update_system_status_values(self, path, section, system, value):
         """
@@ -40,7 +40,7 @@ class AbstractTest(unittest.TestCase):
         return
 
 
-    def compare_fits(self, path1, path2, nameRun=""):
+    def compare_fits(self, path1, path2, nameRun="", rel_tolerance=1e-05, abs_tolerance=1e-08):
         """
             Compares all fits files in 2 directories against each other
 
@@ -48,6 +48,8 @@ class AbstractTest(unittest.TestCase):
             path1 (str): path where first set of fits files lies
             path2 (str): path where second set of fits files lies
             nameRun (str, optional): A name of the current run for identification. Defaults to "".
+            rel_tolerance: relative difference to be allowed, see np.allclose, defaults from there
+            abs_tolerance: absolute difference to be allowed, see np.allclose, defaults from there
         """
         userprint("\n")
         m = fitsio.FITS(path1)
@@ -94,7 +96,7 @@ class AbstractTest(unittest.TestCase):
                     diff_abs = np.absolute(diff)
                     w = d_m != 0.
                     diff[w] = np.absolute(diff[w] / d_m[w])
-                    allclose = np.allclose(d_m, d_b)
+                    allclose = np.allclose(d_m, d_b,atol=abs_tolerance,rtol=rel_tolerance)
                     self.assertTrue(
                         allclose,
                         "{}: Header key is {}, maximum relative difference is {}, maximum absolute difference is {}".
@@ -116,6 +118,7 @@ class AbstractTest(unittest.TestCase):
             path2 (str): path of the second hdf5 file
             nameRun (str, optional): A name of the current run for identification. Defaults to "".
         """
+
         def compare_attributes(atts1, atts2):
             self.assertEqual(len(atts1.keys()), len(atts2.keys()),
                             "{}".format(nameRun))
@@ -145,19 +148,27 @@ class AbstractTest(unittest.TestCase):
                     nequal = atts1[item] != atts2[item]
                 if nequal:
                     userprint(
-                        "WARNING: {}: not exactly equal, using allclose for {}".
+                        "WARNING: {}: not exactly equal, using allclose for attribute {}".
                         format(nameRun, item))
                     userprint(atts1[item], atts2[item])
                     allclose = np.allclose(atts1[item], atts2[item])
-                    self.assertTrue(allclose, "{}".format(nameRun))
+                    if item=='nfcn' and not allclose:
+                        print("'nfcn' definition changed between iminuit1 (unclear what this was) and iminuit2 (total number of calls)")
+                    else:
+                        self.assertTrue(allclose, "{} results changed for attribute {}".format(nameRun, item))
             return
 
-        def compare_values(val1, val2):
+        def compare_values(val1, val2, namelist):
             if not np.array_equal(val1, val2):
-                userprint("WARNING: {}: not exactly equal, using allclose".format(
-                    nameRun))
+                userprint("WARNING: {}: {} not exactly equal, using allclose".format(
+                    nameRun,'/'.join(namelist)))
                 allclose = np.allclose(val1, val2)
-                self.assertTrue(allclose, "{}".format(nameRun))
+                self.assertTrue(allclose, "{} results changed for output values for {}:\n expected:{}\n\n got:{}\n\n\n".format(
+                    nameRun,
+                    '/'.join(namelist),
+                    ' '.join([f'{v:6.5g}' for v in val1.flatten()]),
+                    ' '.join([f'{v:6.5g}' for v in val2.flatten()]),
+                ))
             return
 
         userprint("\n")
@@ -177,7 +188,7 @@ class AbstractTest(unittest.TestCase):
             if k in ['best fit', 'fast mc', 'minos', 'chi2 scan']:
                 continue
             compare_attributes(m[k].attrs, b[k].attrs)
-            compare_values(m[k]['fit'][()], b[k]['fit'][()])
+            compare_values(m[k]['fit'][()], b[k]['fit'][()],[k,'fit'])
 
         ### minos
         k = 'minos'
@@ -190,7 +201,7 @@ class AbstractTest(unittest.TestCase):
         for p in m[k].keys():
             compare_attributes(m[k][p].attrs, b[k][p].attrs)
             if p == 'result':
-                compare_values(m[k][p]['values'][()], b[k][p]['values'][()])
+                compare_values(m[k][p]['values'][()], b[k][p]['values'][()],[k,p,'values'])
 
         return
 
@@ -252,6 +263,17 @@ class AbstractTest(unittest.TestCase):
     def tearDownClass(cls):
         """
             removes directory structure in tmp
-        """        
+        """    
+        os.makedirs('/tmp/last_run_picca_test/',exist_ok=True)
+        #copy the outputs for later debugging, ditch spectra
+        try:
+            shutil.copytree(cls._branchFiles, '/tmp/last_run_picca_test/', ignore=lambda path,fnames: [fname for fname in fnames if 'spectra' in fname.lower() or 'spectra' in path.lower()],dirs_exist_ok=True)
+        except TypeError:
+            try:
+                shutil.copytree(cls._branchFiles, '/tmp/last_run_picca_test/', ignore=lambda path,fnames: [fname for fname in fnames if 'spectra' in fname.lower() or 'spectra' in path.lower()])
+            except FileExistsError:
+                print("Files Exist, could not copy last run files, added random number to output filename")
+                shutil.copytree(cls._branchFiles, f'/tmp/last_run_picca_test/{np.random.randint(1000000)}', ignore=lambda path,fnames: [fname for fname in fnames if 'spectra' in fname.lower() or 'spectra' in path.lower()])
+
         if os.path.isdir(cls._branchFiles):
             shutil.rmtree(cls._branchFiles, ignore_errors=True)
