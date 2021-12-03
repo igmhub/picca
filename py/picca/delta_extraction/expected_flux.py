@@ -27,7 +27,7 @@ class ExpectedFlux:
     the inverse variance for each line of sight. Keys are the identifier for the
     line of sight and values are dictionaries with the keys "mean expected flux",
     and "weights" pointing to the respective arrays. If the given Forests are
-    also Pk1dForests, then the key "ivar" is be available. Arrays have the same
+    also Pk1dForests, then the key "ivar" must be available. Arrays have the same
     size as the flux array for the corresponding line of sight forest instance.
     """
     def __init__(self):
