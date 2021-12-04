@@ -92,7 +92,7 @@ class DesiData(Data):
         catalogue = ZtruthCatalogue(config)
 
         # read data
-        if sel.mode == "healpix":
+        if self.mode == "healpix":
             is_mock = self.read_from_healpix(catalogue)
         elif self.mode == "tile":
             self.read_from_tile(catalogue)
