@@ -322,35 +322,36 @@ class DesiData(Data):
                     ivar = spec['IVAR'][w_t].copy()
                     flux = spec['FLUX'][w_t].copy()
 
+                    args = {
+                        "flux": flux,
+                        "ivar": ivar,
+                        "targetid": targetid,
+                        "ra": row['RA'],
+                        "dec": row['DEC'],
+                        "z": row['Z'],
+                    }
+                    if Forest.wave_solution == "log":
+                        args["log_lambda"] = np.log(spec['WAVELENGTH'])
+                    elif Forest.wave_solution == "lin":
+                        args["lambda"] = spec['WAVELENGTH']
+                    else:
+                        raise DataError("Forest.wave_solution must be either "
+                                        "'log' or 'lin'")
+
                     if self.analysis_type == "BAO 3D":
-                        forest = DesiForest(
-                            **{
-                                "lambda": spec['WAVELENGTH'],
-                                "flux": flux,
-                                "ivar": ivar,
-                                "targetid": targetid,
-                                "ra": row['RA'],
-                                "dec": row['DEC'],
-                                "z": row['Z'],
-                            })
+                        forest = DesiForest(**args)
                     elif self.analysis_type == "PK 1D":
                         reso_sum = spec['RESO'][w_t].copy()
                         reso_in_km_per_s = spectral_resolution_desi(
                             reso_sum, spec['WAVELENGTH'])
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
 
-                        forest = DesiPk1dForest(
-                            **{
-                                "lambda": spec['WAVELENGTH'],
-                                "flux": flux,
-                                "ivar": ivar,
-                                "targetid": targetid,
-                                "ra": row['RA'],
-                                "dec": row['DEC'],
-                                "z": row['Z'],
-                                "exposures_diff": exposures_diff,
-                                "reso": reso_in_km_per_s
-                            })
+                        args["exposures_diff"] = exposures_diff
+                        args["reso"] = reso_in_km_per_s
+                        forest = DesiPk1dForest(**args)
+                    else:
+                        raise DataError("Unkown analysis type. Expected 'BAO 3D'"
+                                        f"or 'PK 1D'. Found '{self.analysis_type}'")
 
                     if targetid in forests_by_targetid:
                         forests_by_targetid[targetid].coadd(forest)
@@ -508,23 +509,30 @@ class DesiData(Data):
                     w_t = w_t[0]
 
                 for spec in spectrographs_data.values():
-                    ivar = spec['IV'][w_t].copy()
-                    flux = spec['FL'][w_t].copy()
+                    ivar = spec['IVAR'][w_t].copy()
+                    flux = spec['FLUX'][w_t].copy()
+
+                    rgs = {
+                        "flux": flux,
+                        "ivar": ivar,
+                        "targetid": targetid,
+                        "ra": entry['RA'],
+                        "dec": entry['DEC'],
+                        "z": entry['Z'],
+                        "petal": entry["PETAL_LOC"],
+                        "tile": entry["TILEID"],
+                        "night": entry["NIGHT"],
+                    }
+                    if Forest.wave_solution == "log":
+                        args["log_lambda"] = np.log(spec['WAVELENGTH'])
+                    elif Forest.wave_solution == "lin":
+                        args["lambda"] = spec['WAVELENGTH']
+                    else:
+                        raise DataError("Forest.wave_solution must be either "
+                                        "'log' or 'lin'")
 
                     if self.analysis_type == "BAO 3D":
-                        forest = DesiForest(
-                            **{
-                                "lambda": spec['WAVELENGTH'],
-                                "flux": flux,
-                                "ivar": ivar,
-                                "targetid": targetid,
-                                "ra": entry['RA'],
-                                "dec": entry['DEC'],
-                                "z": entry['Z'],
-                                "petal": entry["PETAL_LOC"],
-                                "tile": entry["TILEID"],
-                                "night": entry["NIGHT"]
-                            })
+                        forest = DesiForest(**args)
                     elif self.analysis_type == "PK 1D":
                         reso_sum = spec['RESO'][w_t].copy()
                         reso_in_km_per_s = np.real(
@@ -532,21 +540,12 @@ class DesiData(Data):
                                                      spec['WAVELENGTH']))
                         exposures_diff = np.zeros(spec['log_lambda'].shape)
 
-                        forest = DesiPk1dForest(
-                            **{
-                                "lambda": spec['WAVELENGTH'],
-                                "flux": flux,
-                                "ivar": ivar,
-                                "targetid": targetid,
-                                "ra": entry['RA'],
-                                "dec": entry['DEC'],
-                                "z": entry['Z'],
-                                "petal": entry["PETAL_LOC"],
-                                "tile": entry["TILEID"],
-                                "night": entry["NIGHT"],
-                                "exposures_diff": exposures_diff,
-                                "reso": reso_in_km_per_s
-                            })
+                        args["exposures_diff"] = exposures_diff
+                        args["reso"] = reso_in_km_per_s
+                        forest = DesiPk1dForest(**args)
+                    else:
+                        raise DataError("Unkown analysis type. Expected 'BAO 3D'"
+                                        f"or 'PK 1D'. Found '{self.analysis_type}'")
 
                     if targetid in forests_by_targetid:
                         forests_by_targetid[targetid].coadd(forest)
