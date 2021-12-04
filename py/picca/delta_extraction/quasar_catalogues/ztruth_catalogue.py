@@ -90,7 +90,7 @@ class ZtruthCatalogue(QuasarCatalogue):
         catalogue: Astropy.table.Table
         Table with the catalogue
         """
-        self.logger.progress('Reading catalogue from ', self.filename)
+        self.logger.progress(f'Reading catalogue from {self.filename}')
         catalogue = Table(fitsio.read(self.filename, ext=1))
 
         if 'TARGET_RA' in catalogue.colnames:
