@@ -231,7 +231,7 @@ class DesiData(Data):
         ]
         catalogue["HEALPIX"] = healpix
         catalogue.sort("HEALPIX")
-        grouped_catalogue = catalogue.group_by("HEALPIX", "SURVEY")
+        grouped_catalogue = catalogue.group_by(["HEALPIX", "SURVEY"])
 
         forests_by_targetid = {}
         is_mock = True
