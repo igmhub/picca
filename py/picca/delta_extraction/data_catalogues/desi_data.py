@@ -226,7 +226,7 @@ class DesiData(Data):
         in_nside = 64
 
         healpix = [
-            healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"])
+            healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"], nest=True)
             for row in catalogue
         ]
         catalogue["HEALPIX"] = healpix
