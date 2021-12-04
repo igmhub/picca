@@ -330,7 +330,7 @@ class DesiData(Data):
                         "z": row['Z'],
                     }
                     if Forest.wave_solution == "log":
-                        args["log_lambda"] = np.log(spec['WAVELENGTH'])
+                        args["log_lambda"] = np.log10(spec['WAVELENGTH'])
                     elif Forest.wave_solution == "lin":
                         args["lambda"] = spec['WAVELENGTH']
                     else:
@@ -523,7 +523,7 @@ class DesiData(Data):
                         "night": entry["NIGHT"],
                     }
                     if Forest.wave_solution == "log":
-                        args["log_lambda"] = np.log(spec['WAVELENGTH'])
+                        args["log_lambda"] = np.log10(spec['WAVELENGTH'])
                     elif Forest.wave_solution == "lin":
                         args["lambda"] = spec['WAVELENGTH']
                     else:
