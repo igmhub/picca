@@ -92,7 +92,11 @@ class DesiData(Data):
         catalogue = ZtruthCatalogue(config)
 
         # read data
-        is_mock = self.read_from_desi(catalogue)
+        if sel.mode == "healpix":
+            is_mock = self.read_from_healpix(catalogue)
+        elif self.mode == "tile":
+            self.read_from_tile(catalogue)
+            is_mock = True
 
         # TODO: remove this when we are ready to unblind
         if not is_mock:
@@ -372,12 +376,6 @@ class DesiData(Data):
         catalogue: astropy.Table
         Table with the quasar catalogue
 
-        Return
-        ------
-        is_mock: bool
-        True if mocks were loaded (i.e. there is a truth file in the folder) and
-        Flase otherwise
-
         Raise
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
@@ -567,5 +565,3 @@ class DesiData(Data):
             raise DataError("No Quasars found, stopping here")
 
         self.forests = list(forests_by_targetid.values())
-
-        return is_mock
