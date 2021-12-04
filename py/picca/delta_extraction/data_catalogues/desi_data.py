@@ -184,7 +184,7 @@ class DesiData(Data):
             raise DataError(
                 "Missing argument 'input directory' required by DesiData")
 
-        self.mode = config.getboolean("mode")
+        self.mode = config.get("mode")
         if self.mode is None:
             raise DataError("Missing argument 'mode' required by DesiData")
         if self.mode not in ["healpix", "tile"]:
