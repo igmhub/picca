@@ -93,20 +93,20 @@ class ZtruthCatalogue(QuasarCatalogue):
         self.logger.progress('Reading catalogue from ', self.filename)
         catalogue = Table(fitsio.read(self.filename, ext=1))
 
-        if 'TARGET_RA' in catalog.colnames:
+        if 'TARGET_RA' in catalogue.colnames:
             catalogue.rename_column('TARGET_RA', 'RA')
             catalogue.rename_column('TARGET_DEC', 'DEC')
 
         keep_columns = ['RA', 'DEC', 'Z', 'TARGETID']
-        if 'TILEID' in catalog.colnames:
+        if 'TILEID' in catalogue.colnames:
             keep_columns += ['TILEID', 'PETAL_LOC', 'FIBER']
-        if 'SURVEY' in catalog.colnames:
+        if 'SURVEY' in catalogue.colnames:
             keep_columns += ['SURVEY']
-        if 'DESI_TARGET' in catalog.colnames:
+        if 'DESI_TARGET' in catalogue.colnames:
             keep_columns += ['DESI_TARGET']
-        if 'SV1_DESI_TARGET' in catalog.colnames:
+        if 'SV1_DESI_TARGET' in catalogue.colnames:
             keep_columns += ['SV1_DESI_TARGET']
-        if 'SV3_DESI_TARGET' in catalog.colnames:
+        if 'SV3_DESI_TARGET' in catalogue.colnames:
             keep_columns += ['SV3_DESI_TARGET']
 
         ## Sanity checks

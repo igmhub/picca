@@ -24,11 +24,13 @@ defaults.update({
     "lambda max rest frame": 1200.0,
     "lambda min": 3600.0,
     "lambda min rest frame": 1040.0,
-    "mini SV": False,
+    "mode": 'healpix',
     "blinding": "corr_yshift",
     # TODO: update this to "lin" when we are sure that the linear binning work
     "logarithmic wavelength step": "log",
     "rebin": 3,
+    "use all": False,
+    "use single nights": False,
 })
 
 class DesiData(Data):
@@ -82,17 +84,15 @@ class DesiData(Data):
         # load variables from config
         self.input_directory = None
         self.mini_sv = None
+        self.use_all = None
+        self.use_single_nights = None
         self._parse_config(config)
 
         # load z_truth catalogue
         catalogue = ZtruthCatalogue(config)
 
         # read data
-        is_mock = False
-        if self.mini_sv:
-            self.read_from_minisv_desi(catalogue)
-        else:
-            is_mock = self.read_from_desi(catalogue)
+        is_mock = self.read_from_desi(catalogue)
 
         # TODO: remove this when we are ready to unblind
         if not is_mock:
@@ -184,12 +184,25 @@ class DesiData(Data):
             raise DataError(
                 "Missing argument 'input directory' required by DesiData")
 
-        self.mini_sv = config.getboolean("mini SV")
-        if self.mini_sv is None:
-            raise DataError("Missing argument 'mini SV' required by DesiData")
+        self.mode = config.getboolean("mode")
+        if self.mode is None:
+            raise DataError("Missing argument 'mode' required by DesiData")
+        if self.mode not in ["healpix", "tile"]:
+            raise DataError("Invalid argument 'mode'. Expected: 'healpix' or 'tile',"
+                            f"Found: {self.mode}")
 
-    def read_from_desi(self, catalogue):
+        self.use_all = config.getboolean("use all")
+        if self.use_all is None:
+            raise DataError("Missing argument 'use all' required by DesiData")
+
+        self.use_single_nights = config.getboolean("use single nights")
+        if self.use_single_nights is None:
+            raise DataError("Missing argument 'use single nights' required by DesiData")
+
+    def read_from_healpix(self, catalogue):
         """Read the spectra and formats its data as Forest instances.
+
+        Method used to read healpix-based survey data.
 
         Arguments
         ---------
@@ -206,32 +219,33 @@ class DesiData(Data):
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         """
-        in_nside = int(
-            self.input_directory.split('spectra-')[-1].replace('/', ''))
+        in_nside = 64
 
         healpix = [
-            healpy.ang2pix(16, np.pi / 2 - row["DEC"], row["RA"])
+            healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"])
             for row in catalogue
         ]
-        catalogue["healpix"] = healpix
-        catalogue.sort("healpix")
-        grouped_catalogue = catalogue.group_by("healpix")
+        catalogue["HEALPIX"] = healpix
+        catalogue.sort("HEALPIX")
+        grouped_catalogue = catalogue.group_by("HEALPIX", "SURVEY")
 
         forests_by_targetid = {}
         is_mock = True
         for (index,
-             healpix), group in zip(enumerate(grouped_catalogue.groups.keys),
+             (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
                                     grouped_catalogue.groups):
+
+            input_directory = f'{self.input_directory}/{survey}/dark'
             filename = (
-                f"{self.input_directory}/{healpix//100}/{healpix}/spectra"
-                f"-{in_nside}-{healpix}.fits")
+                f"{input_directory}/{healpix//100}/{healpix}/coadd-{survey}-"
+                f"dark-{healpix}.fits")
 
             # the truth file is used to check if we are reading in mocks
             # in case we are, and we are computing pk1d, we also use them to load
             # the resolution matrix
-            filename_truth=(
-                f"{self.input_directory}/{healpix//100}/{healpix}/truth-"
-                f"{in_nside}-{healpix}.fits")
+            filename_truth = (
+                f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-"
+                f"{healpix}.fits")
             if not os.path.isfile(filename_truth):
                 is_mock = False
 
@@ -348,33 +362,59 @@ class DesiData(Data):
 
         return is_mock
 
-    def read_from_minisv_desi(self, catalogue):
+    def read_from_tile(self, catalogue):
         """Read the spectra and formats its data as Forest instances.
-        Unlike the read_from_desi routine, this orders things by tile/petal
-        Routine used to treat the DESI mini-SV data.
+
+        Method used to read tile-based survey data.
 
         Arguments
         ---------
         catalogue: astropy.Table
         Table with the quasar catalogue
 
+        Return
+        ------
+        is_mock: bool
+        True if mocks were loaded (i.e. there is a truth file in the folder) and
+        Flase otherwise
+
         Raise
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         DataError if no quasars were found
         """
-
         forests_by_targetid = {}
         num_data = 0
 
-        files_in = glob.glob(os.path.join(self.input_directory,
-                                          "**/coadd-*.fits"),
-                             recursive=True)
-        petal_tile_night = [
-            f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
-            for entry in catalogue
-        ]
+        if self.use_single_nights or "cumulative" in in_dir:
+            files_in = sorted(glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
+                              recursive=True))
+
+            if "cumulative" in in_dir:
+                petal_tile_night = [
+                    f"{entry['PETAL_LOC']}-{entry['TILEID']}-thru{entry['LAST_NIGHT']}"
+                    for entry in catalog
+                ]
+            else:
+                petal_tile_night = [
+                    f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
+                    for entry in catalogue
+                ]
+        else:
+            if self.use_all:
+                files_in = sorted(glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
+                             recursive=True))
+            else:
+                files_in = sorted(glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
+                             recursive=True))
+            petal_tile = [
+                f"{entry['PETAL_LOC']}-{entry['TILEID']}"
+                for entry in catalogue
+            ]
+        # this uniqueness check is to ensure each petal/tile/night combination
+        # only appears once in the filelist
         petal_tile_night_unique = np.unique(petal_tile_night)
+
         filenames = []
         for f_in in files_in:
             for ptn in petal_tile_night_unique:
@@ -527,3 +567,5 @@ class DesiData(Data):
             raise DataError("No Quasars found, stopping here")
 
         self.forests = list(forests_by_targetid.values())
+
+        return is_mock
