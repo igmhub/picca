@@ -27,7 +27,7 @@ defaults.update({
     "mode": 'healpix',
     "blinding": "corr_yshift",
     # TODO: update this to "lin" when we are sure that the linear binning work
-    "logarithmic wavelength step": "log",
+    "wave solution": "log",
     "rebin": 3,
     "use all": False,
     "use single nights": False,
