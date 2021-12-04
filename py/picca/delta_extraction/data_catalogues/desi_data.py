@@ -89,7 +89,7 @@ class DesiData(Data):
         self._parse_config(config)
 
         # load z_truth catalogue
-        catalogue = ZtruthCatalogue(config)
+        catalogue = ZtruthCatalogue(config).catalogue
 
         # read data
         if self.mode == "healpix":
