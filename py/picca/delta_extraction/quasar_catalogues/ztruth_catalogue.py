@@ -120,6 +120,10 @@ class ZtruthCatalogue(QuasarCatalogue):
         w &= catalogue['Z'] < self.z_max
         self.logger.progress(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
 
+        # Convert angles to radians
+        np.radians(catalogue['RA'], out=catalogue['RA'])
+        np.radians(catalogue['DEC'], out=catalogue['DEC'])
+
         catalogue.keep_columns(keep_columns)
         w = np.where(w)[0]
         catalogue = catalogue[w]
