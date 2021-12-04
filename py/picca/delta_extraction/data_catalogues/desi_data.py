@@ -319,8 +319,8 @@ class DesiData(Data):
                 # Construct DesiForest instance
                 # Fluxes from the different spectrographs will be coadded
                 for spec in spectrographs_data.values():
-                    ivar = spec['IV'][w_t].copy()
-                    flux = spec['FL'][w_t].copy()
+                    ivar = spec['IVAR'][w_t].copy()
+                    flux = spec['FLUX'][w_t].copy()
 
                     if self.analysis_type == "BAO 3D":
                         forest = DesiForest(
