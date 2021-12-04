@@ -248,7 +248,7 @@ class DesiData(Data):
             # in case we are, and we are computing pk1d, we also use them to load
             # the resolution matrix
             filename_truth = (
-                f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-"
+                f"{input_directory}/{healpix//100}/{healpix}/truth-{in_nside}-"
                 f"{healpix}.fits")
             if not os.path.isfile(filename_truth):
                 is_mock = False
@@ -384,11 +384,11 @@ class DesiData(Data):
         forests_by_targetid = {}
         num_data = 0
 
-        if self.use_single_nights or "cumulative" in in_dir:
-            files_in = sorted(glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
+        if self.use_single_nights or "cumulative" in self.input_directory:
+            files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/coadd-*.fits"),
                               recursive=True))
 
-            if "cumulative" in in_dir:
+            if "cumulative" in self.input_directory:
                 petal_tile_night = [
                     f"{entry['PETAL_LOC']}-{entry['TILEID']}-thru{entry['LAST_NIGHT']}"
                     for entry in catalog
@@ -400,10 +400,10 @@ class DesiData(Data):
                 ]
         else:
             if self.use_all:
-                files_in = sorted(glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
+                files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/all/**/coadd-*.fits"),
                              recursive=True))
             else:
-                files_in = sorted(glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
+                files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/deep/**/coadd-*.fits"),
                              recursive=True))
             petal_tile = [
                 f"{entry['PETAL_LOC']}-{entry['TILEID']}"
