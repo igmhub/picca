@@ -332,9 +332,6 @@ class DesiData(Data):
                                 "ra": row['RA'],
                                 "dec": row['DEC'],
                                 "z": row['Z'],
-                                "petal": row["PETAL_LOC"],
-                                "tile": row["TILEID"],
-                                "night": row["NIGHT"]
                             })
                     elif self.analysis_type == "PK 1D":
                         reso_sum = spec['RESO'][w_t].copy()
@@ -351,9 +348,6 @@ class DesiData(Data):
                                 "ra": row['RA'],
                                 "dec": row['DEC'],
                                 "z": row['Z'],
-                                "petal": row["PETAL_LOC"],
-                                "tile": row["TILEID"],
-                                "night": row["NIGHT"],
                                 "exposures_diff": exposures_diff,
                                 "reso": reso_in_km_per_s
                             })
