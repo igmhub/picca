@@ -90,7 +90,7 @@ class ZtruthCatalogue(QuasarCatalogue):
         catalogue: Astropy.table.Table
         Table with the catalogue
         """
-        self.logger.progress('Reading catalogue from ', self.filename)
+        self.logger.progress(f'Reading catalogue from {self.filename}')
         catalogue = Table(fitsio.read(self.filename, ext=1))
 
         if 'TARGET_RA' in catalogue.colnames:
@@ -119,6 +119,10 @@ class ZtruthCatalogue(QuasarCatalogue):
         self.logger.progress(f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
         w &= catalogue['Z'] < self.z_max
         self.logger.progress(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
+
+        # Convert angles to radians
+        np.radians(catalogue['RA'], out=catalogue['RA'])
+        np.radians(catalogue['DEC'], out=catalogue['DEC'])
 
         catalogue.keep_columns(keep_columns)
         w = np.where(w)[0]

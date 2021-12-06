@@ -27,7 +27,7 @@ defaults.update({
     "mode": 'healpix',
     "blinding": "corr_yshift",
     # TODO: update this to "lin" when we are sure that the linear binning work
-    "logarithmic wavelength step": "log",
+    "wave solution": "log",
     "rebin": 3,
     "use all": False,
     "use single nights": False,
@@ -89,10 +89,14 @@ class DesiData(Data):
         self._parse_config(config)
 
         # load z_truth catalogue
-        catalogue = ZtruthCatalogue(config)
+        catalogue = ZtruthCatalogue(config).catalogue
 
         # read data
-        is_mock = self.read_from_desi(catalogue)
+        if self.mode == "healpix":
+            is_mock = self.read_from_healpix(catalogue)
+        elif self.mode == "tile":
+            self.read_from_tile(catalogue)
+            is_mock = True
 
         # TODO: remove this when we are ready to unblind
         if not is_mock:
@@ -184,7 +188,7 @@ class DesiData(Data):
             raise DataError(
                 "Missing argument 'input directory' required by DesiData")
 
-        self.mode = config.getboolean("mode")
+        self.mode = config.get("mode")
         if self.mode is None:
             raise DataError("Missing argument 'mode' required by DesiData")
         if self.mode not in ["healpix", "tile"]:
@@ -222,12 +226,12 @@ class DesiData(Data):
         in_nside = 64
 
         healpix = [
-            healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"])
+            healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"], nest=True)
             for row in catalogue
         ]
         catalogue["HEALPIX"] = healpix
         catalogue.sort("HEALPIX")
-        grouped_catalogue = catalogue.group_by("HEALPIX", "SURVEY")
+        grouped_catalogue = catalogue.group_by(["HEALPIX", "SURVEY"])
 
         forests_by_targetid = {}
         is_mock = True
@@ -244,7 +248,7 @@ class DesiData(Data):
             # in case we are, and we are computing pk1d, we also use them to load
             # the resolution matrix
             filename_truth = (
-                f"{in_dir}/{healpix//100}/{healpix}/truth-{in_nside}-"
+                f"{input_directory}/{healpix//100}/{healpix}/truth-{in_nside}-"
                 f"{healpix}.fits")
             if not os.path.isfile(filename_truth):
                 is_mock = False
@@ -255,7 +259,7 @@ class DesiData(Data):
             try:
                 hdul = fitsio.FITS(filename)
             except IOError:
-                logging.warning(f"Error reading pix {healpix}. Ignoring file")
+                self.logger.warning(f"Error reading pix {healpix}. Ignoring file")
                 continue
 
             # Read targetid from fibermap to match to catalogue later
@@ -289,7 +293,7 @@ class DesiData(Data):
                                 f"'{color}_RESOLUTION' ")
                     spectrographs_data[color] = spec
                 except OSError:
-                    logging.warning(
+                    self.logger.warning(
                         f"Error while reading {color} band from {filename}."
                         "Ignoring color.")
             hdul.close()
@@ -301,11 +305,11 @@ class DesiData(Data):
                 targetid = row["TARGETID"]
                 w_t = np.where(targetid_spec == targetid)[0]
                 if len(w_t) == 0:
-                    logging.warning(
+                    self.logger.warning(
                         f"Error reading {targetid}. Ignoring object")
                     continue
                 if len(w_t) > 1:
-                    logging.warning(
+                    self.logger.warning(
                         "Warning: more than one spectrum in this file "
                         f"for {targetid}")
                 else:
@@ -314,44 +318,39 @@ class DesiData(Data):
                 # Construct DesiForest instance
                 # Fluxes from the different spectrographs will be coadded
                 for spec in spectrographs_data.values():
-                    ivar = spec['IV'][w_t].copy()
-                    flux = spec['FL'][w_t].copy()
+                    ivar = spec['IVAR'][w_t].copy()
+                    flux = spec['FLUX'][w_t].copy()
+
+                    args = {
+                        "flux": flux,
+                        "ivar": ivar,
+                        "targetid": targetid,
+                        "ra": row['RA'],
+                        "dec": row['DEC'],
+                        "z": row['Z'],
+                    }
+                    if Forest.wave_solution == "log":
+                        args["log_lambda"] = np.log10(spec['WAVELENGTH'])
+                    elif Forest.wave_solution == "lin":
+                        args["lambda"] = spec['WAVELENGTH']
+                    else:
+                        raise DataError("Forest.wave_solution must be either "
+                                        "'log' or 'lin'")
 
                     if self.analysis_type == "BAO 3D":
-                        forest = DesiForest(
-                            **{
-                                "lambda": spec['WAVELENGTH'],
-                                "flux": flux,
-                                "ivar": ivar,
-                                "targetid": targetid,
-                                "ra": row['RA'],
-                                "dec": row['DEC'],
-                                "z": row['Z'],
-                                "petal": row["PETAL_LOC"],
-                                "tile": row["TILEID"],
-                                "night": row["NIGHT"]
-                            })
+                        forest = DesiForest(**args)
                     elif self.analysis_type == "PK 1D":
                         reso_sum = spec['RESO'][w_t].copy()
                         reso_in_km_per_s = spectral_resolution_desi(
                             reso_sum, spec['WAVELENGTH'])
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
 
-                        forest = DesiPk1dForest(
-                            **{
-                                "lambda": spec['WAVELENGTH'],
-                                "flux": flux,
-                                "ivar": ivar,
-                                "targetid": targetid,
-                                "ra": row['RA'],
-                                "dec": row['DEC'],
-                                "z": row['Z'],
-                                "petal": row["PETAL_LOC"],
-                                "tile": row["TILEID"],
-                                "night": row["NIGHT"],
-                                "exposures_diff": exposures_diff,
-                                "reso": reso_in_km_per_s
-                            })
+                        args["exposures_diff"] = exposures_diff
+                        args["reso"] = reso_in_km_per_s
+                        forest = DesiPk1dForest(**args)
+                    else:
+                        raise DataError("Unkown analysis type. Expected 'BAO 3D'"
+                                        f"or 'PK 1D'. Found '{self.analysis_type}'")
 
                     if targetid in forests_by_targetid:
                         forests_by_targetid[targetid].coadd(forest)
@@ -372,12 +371,6 @@ class DesiData(Data):
         catalogue: astropy.Table
         Table with the quasar catalogue
 
-        Return
-        ------
-        is_mock: bool
-        True if mocks were loaded (i.e. there is a truth file in the folder) and
-        Flase otherwise
-
         Raise
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
@@ -386,11 +379,11 @@ class DesiData(Data):
         forests_by_targetid = {}
         num_data = 0
 
-        if self.use_single_nights or "cumulative" in in_dir:
-            files_in = sorted(glob.glob(os.path.join(in_dir, "**/coadd-*.fits"),
+        if self.use_single_nights or "cumulative" in self.input_directory:
+            files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/coadd-*.fits"),
                               recursive=True))
 
-            if "cumulative" in in_dir:
+            if "cumulative" in self.input_directory:
                 petal_tile_night = [
                     f"{entry['PETAL_LOC']}-{entry['TILEID']}-thru{entry['LAST_NIGHT']}"
                     for entry in catalog
@@ -402,10 +395,10 @@ class DesiData(Data):
                 ]
         else:
             if self.use_all:
-                files_in = sorted(glob.glob(os.path.join(in_dir, "**/all/**/coadd-*.fits"),
+                files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/all/**/coadd-*.fits"),
                              recursive=True))
             else:
-                files_in = sorted(glob.glob(os.path.join(in_dir, "**/deep/**/coadd-*.fits"),
+                files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/deep/**/coadd-*.fits"),
                              recursive=True))
             petal_tile = [
                 f"{entry['PETAL_LOC']}-{entry['TILEID']}"
@@ -428,7 +421,7 @@ class DesiData(Data):
             try:
                 hdul = fitsio.FITS(filename)
             except IOError:
-                logging.warning(f"Error reading file {filename}. Ignoring file")
+                self.logger.warning(f"Error reading file {filename}. Ignoring file")
                 continue
 
             fibermap = hdul['FIBERMAP'].read()
@@ -441,7 +434,7 @@ class DesiData(Data):
                 night_spec = fibermap['NIGHT'][0]
                 colors = ['BRZ']
                 if index == 0:
-                    logging.warning(
+                    self.logger.warning(
                         "Reading all-band coadd as in minisv pre-Andes "
                         "dataset")
             # Andes
@@ -452,7 +445,7 @@ class DesiData(Data):
                 night_spec = int(filename.split('-')[-1].split('.')[0])
                 colors = ['B', 'R', 'Z']
                 if index == 0:
-                    logging.warning(
+                    self.logger.warning(
                         "Couldn't read the all band-coadd, trying "
                         "single band as introduced in Andes reduction")
             ra = np.radians(ra)
@@ -484,7 +477,7 @@ class DesiData(Data):
                         spec[key][w] = 0.
                     spectrographs_data[color] = spec
                 except OSError:
-                    logging.warning(
+                    self.logger.warning(
                         f"Error while reading {color} band from {filename}."
                         "Ignoring color.")
 
@@ -504,34 +497,41 @@ class DesiData(Data):
                 targetid = entry['TARGETID']
                 w_t = np.where(targetid_spec == targetid)[0]
                 if len(w_t) == 0:
-                    logging.warning(
+                    self.logger.warning(
                         f"Error reading {targetid}. Ignoring object")
                     continue
                 if len(w_t) > 1:
-                    logging.warning(
+                    self.logger.warning(
                         "Warning: more than one spectrum in this file "
                         f"for {targetid}")
                 else:
                     w_t = w_t[0]
 
                 for spec in spectrographs_data.values():
-                    ivar = spec['IV'][w_t].copy()
-                    flux = spec['FL'][w_t].copy()
+                    ivar = spec['IVAR'][w_t].copy()
+                    flux = spec['FLUX'][w_t].copy()
+
+                    rgs = {
+                        "flux": flux,
+                        "ivar": ivar,
+                        "targetid": targetid,
+                        "ra": entry['RA'],
+                        "dec": entry['DEC'],
+                        "z": entry['Z'],
+                        "petal": entry["PETAL_LOC"],
+                        "tile": entry["TILEID"],
+                        "night": entry["NIGHT"],
+                    }
+                    if Forest.wave_solution == "log":
+                        args["log_lambda"] = np.log10(spec['WAVELENGTH'])
+                    elif Forest.wave_solution == "lin":
+                        args["lambda"] = spec['WAVELENGTH']
+                    else:
+                        raise DataError("Forest.wave_solution must be either "
+                                        "'log' or 'lin'")
 
                     if self.analysis_type == "BAO 3D":
-                        forest = DesiForest(
-                            **{
-                                "lambda": spec['WAVELENGTH'],
-                                "flux": flux,
-                                "ivar": ivar,
-                                "targetid": targetid,
-                                "ra": entry['RA'],
-                                "dec": entry['DEC'],
-                                "z": entry['Z'],
-                                "petal": entry["PETAL_LOC"],
-                                "tile": entry["TILEID"],
-                                "night": entry["NIGHT"]
-                            })
+                        forest = DesiForest(**args)
                     elif self.analysis_type == "PK 1D":
                         reso_sum = spec['RESO'][w_t].copy()
                         reso_in_km_per_s = np.real(
@@ -539,21 +539,12 @@ class DesiData(Data):
                                                      spec['WAVELENGTH']))
                         exposures_diff = np.zeros(spec['log_lambda'].shape)
 
-                        forest = DesiPk1dForest(
-                            **{
-                                "lambda": spec['WAVELENGTH'],
-                                "flux": flux,
-                                "ivar": ivar,
-                                "targetid": targetid,
-                                "ra": entry['RA'],
-                                "dec": entry['DEC'],
-                                "z": entry['Z'],
-                                "petal": entry["PETAL_LOC"],
-                                "tile": entry["TILEID"],
-                                "night": entry["NIGHT"],
-                                "exposures_diff": exposures_diff,
-                                "reso": reso_in_km_per_s
-                            })
+                        args["exposures_diff"] = exposures_diff
+                        args["reso"] = reso_in_km_per_s
+                        forest = DesiPk1dForest(**args)
+                    else:
+                        raise DataError("Unkown analysis type. Expected 'BAO 3D'"
+                                        f"or 'PK 1D'. Found '{self.analysis_type}'")
 
                     if targetid in forests_by_targetid:
                         forests_by_targetid[targetid].coadd(forest)
@@ -567,5 +558,3 @@ class DesiData(Data):
             raise DataError("No Quasars found, stopping here")
 
         self.forests = list(forests_by_targetid.values())
-
-        return is_mock
