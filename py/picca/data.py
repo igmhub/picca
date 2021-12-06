@@ -1201,7 +1201,12 @@ class Delta(QSO):
         fitiing. See equations 5 and 6 of du Mas des Bourboux et al. 2020
         """
         # 2nd term in equation 6
-        mean_delta = np.average(self.delta, weights=self.weights)
+        sum_weights=np.sum(self.weights)
+        if sum_weights > 0.0:
+            mean_delta = np.average(self.delta, weights=self.weights)
+        else:
+            # should probably write a warning
+            return
 
         # 3rd term in equation 6
         res = 0
