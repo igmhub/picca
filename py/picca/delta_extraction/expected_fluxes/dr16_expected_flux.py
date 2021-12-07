@@ -355,7 +355,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if limit_var_lss_string is None:
             raise ExpectedFluxError(
                 "Missing argument 'limit var lss' required by Dr16ExpectedFlux")
-        limit_var_lss = limit_eta_string.split(",")
+        limit_var_lss = limit_var_lss_string.split(",")
         if limit_var_lss[0].startswith("(") or limit_var_lss[0].startswith("["):
             var_lss_min = float(limit_var_lss[0][1:])
         else:
