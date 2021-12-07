@@ -1012,20 +1012,18 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
 
             minimizer = iminuit.Minuit(chi2,
-                                            name=("eta", "var_lss", "fudge"),
-                                            eta=1.,
-                                            var_lss=0.1,
-                                            fudge=1.)
-                    minimizer.errors["eta"] = 0.05
-                    minimizer.errors["var_lss"] = 0.05
-                    minimizer.errors["fudge"] = 0.05
-                    minimizer.errordef = 1.
-                    minimizer.print_level = 0
-                    minimizer.limits["eta"] = self.limit_eta
-                    minimizer.limits["var_lss"] = self.limit_var_lss
-                    minimizer.limits["fudge"] = (0, None)
-                    minimizer.migrad()
-            
+                                       name=("eta", "var_lss", "fudge"),
+                                       eta=1.,
+                                       var_lss=0.1,
+                                       fudge=1.)
+            minimizer.errors["eta"] = 0.05
+            minimizer.errors["var_lss"] = 0.05
+            minimizer.errors["fudge"] = 0.05
+            minimizer.errordef = 1.
+            minimizer.print_level = 0
+            minimizer.limits["eta"] = self.limit_eta
+            minimizer.limits["var_lss"] = self.limit_var_lss
+            minimizer.limits["fudge"] = (0, None)
             minimizer.migrad()
 
             if minimizer.valid:
