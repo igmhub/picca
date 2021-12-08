@@ -400,7 +400,7 @@ class TrueContinuum(ExpectedFlux):
             var_lss = self.get_var_lss(log_lambda)
 
 
-            mean_expected_flux = forest.continuum * stack_delta
+            mean_expected_flux = forest.continuum #* stack_delta ##not sure of this stack_delta 
             var_pipe = 1. / forest.ivar / mean_expected_flux**2
             variance = var_pipe + var_lss
             weights = 1. / variance
