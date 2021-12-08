@@ -1413,7 +1413,7 @@ def read_blinding(in_dir):
     return blinding
 
 
-def read_delta_file(filename, from_image=False):
+def read_delta_file(filename, from_image=None):
     """Extracts deltas from a single file.
     Args:
         filename: str

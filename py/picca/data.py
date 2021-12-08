@@ -1073,19 +1073,28 @@ class Delta(QSO):
             weights = hdu['WEIGHT'][:].astype(float)
             cont = hdu['CONT'][:].astype(float)
 
-        thingid = header['THING_ID']
+        if 'THING_ID' in header:
+            los_id = header['THING_ID']
+            plate = header['PLATE']
+            mjd = header['MJD']
+            fiberid = header['FIBERID']
+        elif 'LOS_ID' in header:
+            los_id = header['LOS_ID']
+            plate=los_id
+            mjd=los_id
+            fiberid=los_id
+        else:
+            raise Exception("Could not find THING_ID or LOS_ID")
+
         ra = header['RA']
         dec = header['DEC']
         z_qso = header['Z']
-        plate = header['PLATE']
-        mjd = header['MJD']
-        fiberid = header['FIBERID']
         try:
             order = header['ORDER']
         except KeyError:
             order = 1
 
-        return cls(thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
+        return cls(los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                    mean_reso, mean_z, delta_log_lambda)
 
@@ -1192,7 +1201,12 @@ class Delta(QSO):
         fitiing. See equations 5 and 6 of du Mas des Bourboux et al. 2020
         """
         # 2nd term in equation 6
-        mean_delta = np.average(self.delta, weights=self.weights)
+        sum_weights=np.sum(self.weights)
+        if sum_weights > 0.0:
+            mean_delta = np.average(self.delta, weights=self.weights)
+        else:
+            # should probably write a warning
+            return
 
         # 3rd term in equation 6
         res = 0
