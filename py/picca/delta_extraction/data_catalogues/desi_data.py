@@ -223,7 +223,8 @@ class DesiData(Data):
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         """
-        in_nside = 64
+        in_nside = 16
+        is_mock = True
 
         healpix = [
             healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"], nest=True)
@@ -231,27 +232,36 @@ class DesiData(Data):
         ]
         catalogue["HEALPIX"] = healpix
         catalogue.sort("HEALPIX")
+
+        if not "SURVEY" in catalogue.colnames:
+            catalogue["SURVEY"]=np.ma.masked
+
         grouped_catalogue = catalogue.group_by(["HEALPIX", "SURVEY"])
 
         forests_by_targetid = {}
-        is_mock = True
+
         for (index,
              (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
                                     grouped_catalogue.groups):
-
-            input_directory = f'{self.input_directory}/{survey}/dark'
-            filename = (
-                f"{input_directory}/{healpix//100}/{healpix}/coadd-{survey}-"
-                f"dark-{healpix}.fits")
-
-            # the truth file is used to check if we are reading in mocks
-            # in case we are, and we are computing pk1d, we also use them to load
-            # the resolution matrix
+            input_directory = f'{self.input_directory}/'
             filename_truth = (
                 f"{input_directory}/{healpix//100}/{healpix}/truth-{in_nside}-"
                 f"{healpix}.fits")
             if not os.path.isfile(filename_truth):
                 is_mock = False
+                input_directory = f'{self.input_directory}/{survey}/dark'
+                filename = (
+                f"{input_directory}/{healpix//100}/{healpix}/coadd-{survey}-"
+                f"dark-{healpix}.fits")
+            else:
+                filename = (
+                f"{input_directory}/{healpix//100}/{healpix}/spectra-"
+                f"{in_nside}-{healpix}.fits")
+
+            # the truth file is used to check if we are reading in mocks
+            # in case we are, and we are computing pk1d, we also use them to load
+            # the resolution matrix
+
 
             self.logger.progress(
                 f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
