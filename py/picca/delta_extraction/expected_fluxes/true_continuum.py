@@ -57,21 +57,6 @@ class TrueContinuum(ExpectedFlux):
     also Pk1dForests, then the key "ivar" must be available. Arrays have the same
     size as the flux array for the corresponding line of sight forest instance.
 
-    continuum_fit_parameters: dict
-    A dictionary containing the continuum fit parameters for each line of sight.
-    Keys are the identifier for the line of sight and values are tuples with
-    the best-fit zero point and slope of the linear part of the fit.
-
-    get_eta: scipy.interpolate.interp1d
-    Interpolation function to compute mapping function eta. See equation 4 of
-    du Mas des Bourboux et al. 2020 for details.
-
-    get_fudge: scipy.interpolate.interp1d
-    Interpolation function to compute mapping function fudge. See equation 4 of
-    du Mas des Bourboux et al. 2020 for details.
-
-    get_mean_cont: scipy.interpolate.interp1d
-    Interpolation function to compute the unabsorbed mean quasar continua
 
     get_stack_delta: scipy.interpolate.interp1d or None
     Interpolation function to compute the mean delta (from stacking all lines of
@@ -79,7 +64,7 @@ class TrueContinuum(ExpectedFlux):
 
     get_var_lss: scipy.interpolate.interp1d
     Interpolation function to compute mapping functions var_lss. See equation 4 of
-    du Mas des Bourboux et al. 2020 for details.
+    du Mas des Bourboux et al. 2020 for details. Data for interpolation is read from a file.
 
     iter_out_prefix: str
     Prefix of the iteration files. These files contain the statistical properties
@@ -95,13 +80,6 @@ class TrueContinuum(ExpectedFlux):
     Rest-frame wavelengths where the unabsorbed mean quasar continua is are
     computed. None (and unused) for a logarithmic wavelength solution.
 
-    limit_eta: tuple of floats
-    Limits on the correction factor to the contribution of the pipeline estimate
-    of the instrumental noise to the variance.
-
-    limit_var_lss: tuple of floats
-    Limits on the pixel variance due to Large Scale Structure
-
     log_lambda: array of float or None
     Logarithm of the rest frame wavelengths where the variance functions and
     statistics are computed. None (and unused) for a linear wavelength solution.
@@ -110,23 +88,14 @@ class TrueContinuum(ExpectedFlux):
     Logarithm of the rest-frame wavelengths where the unabsorbed mean quasar
     continua is are computed. None (and unused) for a linear wavelength solution.
 
-    num_bins_variance: int
-    Number of bins to be used to compute variance functions and statistics as
-    a function of wavelength.
-
     num_iterations: int
-    Number of iterations to determine the mean continuum shape, LSS variances, etc.
+    Number of iterations to determine the mean continuum shape, LSS variances, etc. 
+    Left for now in case there is some iteration to do
 
     num_processors: int or None
     Number of processors to be used to compute the mean continua. None for no
     specified number (subprocess will take its default value).
 
-    use_constant_weight: boolean
-    If "True", set all the delta weights to one (implemented as eta = 0,
-    sigma_lss = 1, fudge = 0)
-
-    use_ivar_as_weight: boolean
-    If "True", use ivar as weights (implemented as eta = 1, sigma_lss = fudge = 0)
     """
 
     def __init__(self, config):
