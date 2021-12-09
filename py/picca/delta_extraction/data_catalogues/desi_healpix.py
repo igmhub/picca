@@ -1,8 +1,6 @@
 """This module defines the class DesiData to load DESI data
 """
-import os
 import logging
-import glob
 
 import fitsio
 import healpy
@@ -13,8 +11,6 @@ from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.desi_data import DesiData
 from picca.delta_extraction.errors import DataError
-from picca.delta_extraction.quasar_catalogues.ztruth_catalogue import ZtruthCatalogue
-from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 
 class DesiHealpix(DesiData):
@@ -86,7 +82,7 @@ class DesiHealpix(DesiData):
 
         Raise
         -----
-        DataError if the analysis type is PK 1D and resolution data is not present
+        DataError if no quasars were found
         """
         in_nside = 64
 
@@ -116,19 +112,30 @@ class DesiHealpix(DesiData):
                 f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
                 f"num_data: {len(forests_by_targetid)}")
 
-            self.read_file(filename)
+            self.read_file(filename, forests_by_targetid)
+
+        if len(forests_by_targetid) == 0:
+            raise DataError("No Quasars found, stopping here")
 
         self.forests = list(forests_by_targetid.values())
 
         return False, is_sv
 
-    def read_file(self, filename):
+    def read_file(self, filename, forests_by_targetid):
         """Read the spectra and formats its data as Forest instances.
 
         Arguments
         ---------
         filename: str
         Name of the file to read
+
+        forests_by_targetid: dict
+        Dictionary were forests are stored. Its content is modified by this
+        function with the new forests.
+
+        Raise
+        -----
+        DataError if the analysis type is PK 1D and resolution data is not present
         """
         try:
             hdul = fitsio.FITS(filename)

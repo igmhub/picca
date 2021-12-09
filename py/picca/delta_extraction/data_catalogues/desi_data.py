@@ -181,7 +181,6 @@ class DesiData(Data):
 
         Raise
         -----
-        DataError if the analysis type is PK 1D and resolution data is not present
         DataError if no quasars were found
         """
         raise DataError("Function 'read_data' was not overloaded by child class")

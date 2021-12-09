@@ -1,21 +1,13 @@
 """This module defines the class DesiData to load DESI data
 """
-import os
 import logging
-import glob
 
 import fitsio
 import healpy
 import numpy as np
 
-from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
-from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.desi_data import DesiHealpix
 from picca.delta_extraction.errors import DataError
-from picca.delta_extraction.quasar_catalogues.ztruth_catalogue import ZtruthCatalogue
-from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
-from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 
 class DesisimMocks(DesiHealpix):
     """Reads the spectra from DESI using healpix mode and formats its data as a
@@ -83,7 +75,7 @@ class DesisimMocks(DesiHealpix):
 
         Raise
         -----
-        DataError if the analysis type is PK 1D and resolution data is not present
+        DataError if no quasars were found
         """
         in_nside = 16
 
@@ -108,7 +100,10 @@ class DesisimMocks(DesiHealpix):
                 f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
                 f"num_data: {len(forests_by_targetid)}")
 
-            self.read_file(filename)
+            self.read_file(filename, forests_by_targetid)
+
+        if len(forests_by_targetid) == 0:
+            raise DataError("No Quasars found, stopping here")
 
         self.forests = list(forests_by_targetid.values())
 
