@@ -114,8 +114,16 @@ class DataTest(AbstractTest):
         """Test DesiData"""
         # TODO: add test
 
-    def test_desi_data_minisv(self):
-        """Test DesiData when run using minisv option"""
+    def test_desi_healpix(self):
+        """Test DesiHealpix"""
+        # TODO: add test
+
+    def test_desi_tile(self):
+        """Test DesiTile"""
+        # TODO: add test
+
+    def test_desisim_mocks(self):
+        """Test DesisimMocks"""
         # TODO: add test
 
     def test_sdss_data_filter_forest(self):
