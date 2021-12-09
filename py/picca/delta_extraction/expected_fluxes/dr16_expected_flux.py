@@ -355,7 +355,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if limit_var_lss_string is None:
             raise ExpectedFluxError(
                 "Missing argument 'limit var lss' required by Dr16ExpectedFlux")
-        limit_var_lss = limit_eta_string.split(",")
+        limit_var_lss = limit_var_lss_string.split(",")
         if limit_var_lss[0].startswith("(") or limit_var_lss[0].startswith("["):
             var_lss_min = float(limit_var_lss[0][1:])
         else:
@@ -535,25 +535,24 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         minimizer = iminuit.Minuit(chi2,
                                    p0=p0,
-                                   p1=p1,
-                                   error_p0=p0 / 2.,
-                                   error_p1=p0 / 2.,
-                                   errordef=1.,
-                                   print_level=0,
-                                   fix_p1=(self.order == 0))
+                                   p1=p1)
+        minimizer.errors["p0"] = p0 / 2.
+        minimizer.errors["p1"] = p0 / 2.
+        minimizer.errordef = 1.
+        minimizer.print_level = 0
+        minimizer.fixed["p1"] = self.order == 0
         minimizer.migrad()
 
         forest.bad_continuum_reason = None
+
+        temp_cont_model=get_cont_model(minimizer.values["p0"], minimizer.values["p1"])
         if not minimizer.valid:
             forest.bad_continuum_reason = "minuit didn't converge"
-        if np.any(
-                get_cont_model(minimizer.values["p0"], minimizer.values["p1"]) <
-                0):
+        if np.any(temp_cont_model < 0):
             forest.bad_continuum_reason = "negative continuum"
 
         if forest.bad_continuum_reason is None:
-            forest.continuum = get_cont_model(minimizer.values["p0"],
-                                              minimizer.values["p1"])
+            forest.continuum = temp_cont_model
             self.continuum_fit_parameters[forest.los_id] = (
                 minimizer.values["p0"], minimizer.values["p1"])
         ## if the continuum is negative or minuit didn't converge, then
@@ -1011,19 +1010,20 @@ class Dr16ExpectedFlux(ExpectedFlux):
                             num_var_bins] > 100
                 return np.sum(chi2_contribution[w]**2 / weights[w])
 
+
             minimizer = iminuit.Minuit(chi2,
                                        name=("eta", "var_lss", "fudge"),
                                        eta=1.,
                                        var_lss=0.1,
-                                       fudge=1.,
-                                       error_eta=0.05,
-                                       error_var_lss=0.05,
-                                       error_fudge=0.05,
-                                       errordef=1.,
-                                       print_level=0,
-                                       limit_eta=self.limit_eta,
-                                       limit_var_lss=self.limit_var_lss,
-                                       limit_fudge=(0, None))
+                                       fudge=1.)
+            minimizer.errors["eta"] = 0.05
+            minimizer.errors["var_lss"] = 0.05
+            minimizer.errors["fudge"] = 0.05
+            minimizer.errordef = 1.
+            minimizer.print_level = 0
+            minimizer.limits["eta"] = self.limit_eta
+            minimizer.limits["var_lss"] = self.limit_var_lss
+            minimizer.limits["fudge"] = (0, None)
             minimizer.migrad()
 
             if minimizer.valid:
@@ -1103,11 +1103,20 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                  f"due to {forest.bad_continuum_reason}")
                 continue
             # get the variance functions and statistics
-            log_lambda = forest.log_lambda
-            stack_delta = self.get_stack_delta(log_lambda)
-            var_lss = self.get_var_lss(log_lambda)
-            eta = self.get_eta(log_lambda)
-            fudge = self.get_fudge(log_lambda)
+            if Forest.wave_solution == "log":
+                stack_delta = self.get_stack_delta(forest.log_lambda)
+                var_lss = self.get_var_lss(forest.log_lambda)
+                eta = self.get_eta(forest.log_lambda)
+                fudge = self.get_fudge(forest.log_lambda)
+            elif Forest.wave_solution == "lin":
+                stack_delta = self.get_stack_delta(forest.lambda_)
+                var_lss = self.get_var_lss(forest.lambda_)
+                eta = self.get_eta(forest.lambda_)
+                fudge = self.get_fudge(forest.lambda_)
+            else:
+                raise ExpectedFluxError("Forest.wave_solution must be either "
+                                        "'log' or 'lin'")
+
 
             mean_expected_flux = forest.continuum * stack_delta
             var_pipe = 1. / forest.ivar / mean_expected_flux**2
