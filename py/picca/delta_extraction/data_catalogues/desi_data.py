@@ -223,7 +223,7 @@ class DesiData(Data):
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         """
-        in_nside = 64
+        in_nside = 16
         is_mock = True
 
         healpix = [
