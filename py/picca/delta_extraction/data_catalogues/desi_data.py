@@ -98,12 +98,19 @@ class DesiData(Data):
             self.read_from_tile(catalogue)
             is_mock = True
 
+
+        if is_mock:
+            if self.blinding != "none":
+                self.logger.warning(f"Selected blinding, {self.blinding} is "
+                                    "being ignored as mocks should not be "
+                                    "blinded. 'none' blinding engaged")
+                self.blinding = "none"
         # TODO: remove this when we are ready to unblind
-        if not is_mock:
+        else:
             if self.blinding != "corr_yshift":
                 self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored. 'corr_yshift' blinding "
-                                    "engaged")
+                                    "being ignored as data should be blinded. "
+                                    "'corr_yshift' blinding engaged")
                 self.blinding = "corr_yshift"
 
         # set blinding strategy
