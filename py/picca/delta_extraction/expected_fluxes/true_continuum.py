@@ -350,10 +350,17 @@ class TrueContinuum(ExpectedFlux):
                 self.logger.info(f"Rejected forest with los_id {forest.los_id} "
                                  f"due to {forest.bad_continuum_reason}")
                 continue
+
             # get the variance functions and statistics
-            log_lambda = forest.log_lambda
-            stack_delta = self.get_stack_delta(log_lambda)
-            var_lss = self.get_var_lss(log_lambda)
+            if Forest.wave_solution == "log":
+                stack_delta = self.get_stack_delta(forest.log_lambda)
+                var_lss = self.get_var_lss(forest.log_lambda)
+            elif Forest.wave_solution == "lin":
+                stack_delta = self.get_stack_delta(forest.lambda_)
+                var_lss = self.get_var_lss(forest.lambda_)
+            else:
+                raise ExpectedFluxError("Forest.wave_solution must be either "
+                                        "'log' or 'lin'")
 
             mean_expected_flux = forest.continuum #* stack_delta ##not sure of this stack_delta
             var_pipe = 1. / forest.ivar / mean_expected_flux**2
