@@ -794,13 +794,15 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         context = multiprocessing.get_context('fork')
         for iteration in range(self.num_iterations):
-            pool = context.Pool(processes=self.num_processors)
             self.logger.progress(
                 f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
             )
-
-            forests = pool.map(self.compute_continuum, forests)
-            pool.close()
+            if self.num_processors > 1:
+                pool = context.Pool(processes=self.num_processors)
+                forests = pool.map(self.compute_continuum, forests)
+                pool.close()
+            else:
+                forests = [self.compute_continuum(f) for f in forests]
 
             if iteration < self.num_iterations - 1:
                 # Compute mean continuum (stack in rest-frame)
