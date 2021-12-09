@@ -174,8 +174,7 @@ class DesiData(Data):
         Return
         ------
         is_mock: bool
-        True if mocks were loaded (i.e. there is a truth file in the folder) and
-        Flase otherwise
+        True if mocks are read, False otherwise
 
         is_sv: bool
         True if all the read data belong to SV. False otherwise

@@ -57,7 +57,7 @@ class DesiTile(DesiData):
     If True, read using the all directory.
 
     use_single_nights: bool
-    If True,  read using only nights specified within the cat 
+    If True,  read using only nights specified within the cat
 
     logger: logging.Logger
     Logger object
@@ -80,9 +80,10 @@ class DesiTile(DesiData):
         self._parse_config(config)
 
         # read data
-        is_mock, is_sv = self.read_from_tile()
+        is_sv = self.read_from_tile()
 
         # set blinding
+        is_mock = False
         self.set_blinding(is_mock, is_sv)
 
     def _parse_config(self, config):
@@ -110,8 +111,8 @@ class DesiTile(DesiData):
 
         Return
         ------
-        is_mock: bool
-        False, as this class do not support reading of mocks
+        is_mock: bool 
+        False as DESI data are not mocks
 
         is_sv: bool
         True if all the read data belong to SV. False otherwise
