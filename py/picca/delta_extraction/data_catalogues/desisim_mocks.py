@@ -11,7 +11,7 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.desi_data import DesiData, defaults
+from picca.delta_extraction.desi_data import DesiHealpix
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.ztruth_catalogue import ZtruthCatalogue
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
@@ -28,8 +28,8 @@ class DesisimMocks(DesiHealpix):
     -------
     filter_forests (from Data)
     set_blinding (from Data)
+    read_file (from DesiHealpix)
     __init__
-    _parse_config
     read_data
 
     Attributes

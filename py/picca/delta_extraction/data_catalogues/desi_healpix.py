@@ -26,8 +26,8 @@ class DesiHealpix(DesiData):
     filter_forests (from Data)
     set_blinding (from Data)
     __init__
-    _parse_config
     read_data
+    read_file
 
     Attributes
     ----------
