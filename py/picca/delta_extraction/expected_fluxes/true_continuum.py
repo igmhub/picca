@@ -3,8 +3,6 @@ import logging
 import multiprocessing
 
 from astropy.io import fits
-from astropy.table import Table,vstack
-import iminuit
 import numpy as np
 from scipy.interpolate import interp1d
 import healpy
@@ -37,15 +35,11 @@ class TrueContinuum(ExpectedFlux):
     _initialize_arrays_lin
     _initialize_arrays_log
     _parse_config
-    compute_continuum
-        get_cont_model
-        chi2
     compute_delta_stack
-    compute_mean_cont_lin
-    compute_mean_cont_log
     compute_expected_flux
-    compute_var_stats
-        chi2
+    read_true_continuum
+    read_var_lss
+    populate_los_ids
 
     Attributes
     ----------
@@ -66,36 +60,18 @@ class TrueContinuum(ExpectedFlux):
     Interpolation function to compute mapping functions var_lss. See equation 4 of
     du Mas des Bourboux et al. 2020 for details. Data for interpolation is read from a file.
 
+    input_directory: str
+    Directory where true continum data is store
+
     iter_out_prefix: str
-    Prefix of the iteration files. These files contain the statistical properties
+    Prefix of the iteration files. These file contain the statistical properties
     of deltas at a given iteration step. Intermediate files will add
     '_iteration{num}.fits.gz' to the prefix for intermediate steps and '.fits.gz'
     for the final results.
 
-    lambda_: array of float or None
-    Wavelengths where the variance functions and statistics are
-    computed. None (and unused) for a logarithmic wavelength solution.
-
-    lambda_rest_frame: array of float or None
-    Rest-frame wavelengths where the unabsorbed mean quasar continua is are
-    computed. None (and unused) for a logarithmic wavelength solution.
-
-    log_lambda: array of float or None
-    Logarithm of the rest frame wavelengths where the variance functions and
-    statistics are computed. None (and unused) for a linear wavelength solution.
-
-    log_lambda_rest_frame: array of float or None
-    Logarithm of the rest-frame wavelengths where the unabsorbed mean quasar
-    continua is are computed. None (and unused) for a linear wavelength solution.
-
-    num_iterations: int
-    Number of iterations to determine the mean continuum shape, LSS variances, etc. 
-    Left for now in case there is some iteration to do
-
     num_processors: int or None
     Number of processors to be used to compute the mean continua. None for no
     specified number (subprocess will take its default value).
-
     """
 
     def __init__(self, config):
@@ -114,14 +90,18 @@ class TrueContinuum(ExpectedFlux):
         super().__init__()
 
         # load variables from config
+        self.input_directory = None
+        self.iter_out_prefix = None
+        self.num_iterations = None
+        self.num_processors = None
         self._parse_config(config)
 
-        # initialize variables
-
-        self.continuum_fit_parameters = None
-
+        # initialize stack variables
         self.get_stack_delta = None
         self.get_stack_delta_weights = None
+
+        # read large scale structure variance
+        self.get_var_lss = None
         self.read_var_lss()
 
     def _parse_config(self, config):
@@ -140,83 +120,24 @@ class TrueContinuum(ExpectedFlux):
         if self.input_directory is None:
             raise ExpectedFluxError(
                 "Missing argument 'input directory' required "
-                "by true_continuum")
+                "by TrueContinuum")
 
         self.iter_out_prefix = config.get("iter out prefix")
-        self.num_processors = config.getint("num processors")
+        if self.iter_out_prefix is None:
+            raise ExpectedFluxError(
+                "Missing argument 'iter out prefix' required "
+                "by TrueContinuum")
+        if "/" in self.iter_out_prefix:
+            raise ExpectedFluxError(
+                "Error constructing TrueContinuum. "
+                "'iter out prefix' should not incude folders. "
+                f"Found: {self.iter_out_prefix}")
+
         self.num_iterations = config.getint("num iterations")
         if self.num_iterations is None:
             self.num_iterations = defaults.get("num iterations")
 
-
-
-
-    def read_true_continuum(self, forest):
-        """Read the forest continuum and insert it into
-
-        Arguments
-        ---------
-        forest: Forest
-        A forest instance where the continuum will be computed
-
-        Return
-        ------
-        forest: Forest
-        The modified forest instance
-
-        Raise
-        -----
-        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
-        """
-        input_directory=self.input_directory
-        in_nside = 16
-        healpix = healpy.ang2pix(in_nside, np.pi / 2 - forest.dec, forest.ra, nest=True)
-        filename_truth = (
-                    f"{input_directory}/{healpix//100}/{healpix}/truth-{in_nside}-{healpix}.fits")
-        hdul = fits.open(filename_truth)
-        wmin = hdul["TRUE_CONT"].header["WMIN"]
-        wmax = hdul["TRUE_CONT"].header["WMAX"]
-        dwave = hdul["TRUE_CONT"].header["DWAVE"]
-        twave = np.arange(wmin,wmax+dwave,dwave)
-        true_cont = hdul["TRUE_CONT"].data
-        hdul.close()
-        indx = np.where(true_cont["TARGETID"]==forest.targetid)
-        true_continuum = interp1d(twave,true_cont["TRUE_CONT"][indx])
-
-        if Forest.wave_solution == "log":
-            forest.continuum = true_continuum(10**forest.log_lambda)[0]
-        elif Forest.wave_solution == "lin":
-            forest.continuum = true_continuum(forest.lambda_)[0]
-        else:
-            raise ExpectedFluxError("Forest.wave_solution must be "
-                                            "either 'log' or 'linear'")
-
-        #multiply by mean flux model for now, it might be changed for computing the mean flux or reading it from file
-        mean_optical_depth = np.ones(forest.log_lambda.size)
-        tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
-        w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
-        z = 10.**forest.log_lambda / lambda_rest_frame - 1.
-        mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
-
-        forest.continuum *= mean_optical_depth
-        return forest
-
-    def read_var_lss(self):
-        """
-
-        Arguments
-        ---------
-        TO BE MODIFIED TO READ ANDREI's var_lss
-        Raise
-        -----
-
-        """
-        var_lss_file=resource_filename('picca', 'delta_extraction')+'/expected_fluxes/var_lss.dat'
-        var_lss_lambda,var_lss=np.loadtxt(var_lss_file).T
-        self.get_var_lss = interp1d(var_lss_lambda,
-                                    var_lss,
-                                    fill_value='extrapolate',
-                                    kind='nearest')
+        self.num_processors = config.getint("num processors")
 
     def compute_delta_stack(self, forests, stack_from_deltas=False):
         """Compute a stack of the delta field as a function of wavelength
@@ -233,8 +154,6 @@ class TrueContinuum(ExpectedFlux):
         -----
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
-        # TODO: move this to _initialize_variables_lin and
-        # _initialize_variables_log (after tests are done)
         if Forest.wave_solution == "log":
             num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
                            Forest.delta_log_lambda) + 1
@@ -314,8 +233,7 @@ class TrueContinuum(ExpectedFlux):
                 bounds_error=False)
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either "
-                                    "'log' or 'linear'")
-
+                                    "'log' or 'lin'")
 
     def compute_expected_flux(self, forests, out_dir):
         """
@@ -343,11 +261,80 @@ class TrueContinuum(ExpectedFlux):
             pool.close()
 
 
-        # now loop over forests to populate los_ids
+        # now compute the mean delta
         self.compute_delta_stack(forests)
+
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
 
+    def read_true_continuum(self, forest):
+        """Read the forest continuum and insert it into
+
+        Arguments
+        ---------
+        forest: Forest
+        A forest instance where the continuum will be computed
+
+        Return
+        ------
+        forest: Forest
+        The modified forest instance
+
+        Raise
+        -----
+        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
+        """
+        in_nside = 16
+        healpix = healpy.ang2pix(in_nside, np.pi / 2 - forest.dec, forest.ra,
+                                 nest=True)
+        filename_truth = (
+            f"{self.input_directory}/{healpix//100}/{healpix}/truth-{in_nside}-"
+            f"{healpix}.fits")
+        hdul = fits.open(filename_truth)
+        wmin = hdul["TRUE_CONT"].header["WMIN"]
+        wmax = hdul["TRUE_CONT"].header["WMAX"]
+        dwave = hdul["TRUE_CONT"].header["DWAVE"]
+        twave = np.arange(wmin, wmax + dwave, dwave)
+        true_cont = hdul["TRUE_CONT"].data
+        hdul.close()
+        indx = np.where(true_cont["TARGETID"]==forest.targetid)
+        true_continuum = interp1d(twave, true_cont["TRUE_CONT"][indx])
+
+        if Forest.wave_solution == "log":
+            forest.continuum = true_continuum(10**forest.log_lambda)[0]
+        elif Forest.wave_solution == "lin":
+            forest.continuum = true_continuum(forest.lambda_)[0]
+        else:
+            raise ExpectedFluxError("Forest.wave_solution must be either 'log' "
+                                    "or 'lin'")
+
+        # multiply by mean flux model for now, it might be changed for
+        # computing the mean flux or reading it from file
+        mean_optical_depth = np.ones(forest.log_lambda.size)
+        tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
+        w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
+        z = 10.**forest.log_lambda / lambda_rest_frame - 1.
+        mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
+
+        forest.continuum *= mean_optical_depth
+        return forest
+
+    def read_var_lss(self):
+        """
+
+        Arguments
+        ---------
+        TO BE MODIFIED TO READ ANDREI's var_lss
+        Raise
+        -----
+
+        """
+        var_lss_file = resource_filename('picca', 'delta_extraction')+'/expected_fluxes/var_lss.dat'
+        var_lss_lambda,var_lss = np.loadtxt(var_lss_file).T
+        self.get_var_lss = interp1d(var_lss_lambda,
+                                    var_lss,
+                                    fill_value='extrapolate',
+                                    kind='nearest')
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
@@ -368,8 +355,7 @@ class TrueContinuum(ExpectedFlux):
             stack_delta = self.get_stack_delta(log_lambda)
             var_lss = self.get_var_lss(log_lambda)
 
-
-            mean_expected_flux = forest.continuum #* stack_delta ##not sure of this stack_delta 
+            mean_expected_flux = forest.continuum #* stack_delta ##not sure of this stack_delta
             var_pipe = 1. / forest.ivar / mean_expected_flux**2
             variance = var_pipe + var_lss
             weights = 1. / variance
@@ -389,4 +375,3 @@ class TrueContinuum(ExpectedFlux):
                     "weights": weights,
                     "continuum": forest.continuum,
                 }
-
