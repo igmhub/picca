@@ -1010,7 +1010,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
                             num_var_bins] > 100
                 return np.sum(chi2_contribution[w]**2 / weights[w])
 
-
             minimizer = iminuit.Minuit(chi2,
                                        name=("eta", "var_lss", "fudge"),
                                        eta=1.,
