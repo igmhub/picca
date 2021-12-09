@@ -124,7 +124,7 @@ class chi2:
         self.best_fit = self._minimize()
         if self.hesse:
             self.best_fit.hesse()
-            self.best_fit.print_fmin()
+            #self.best_fit.print_fmin()
 
         values = self.best_fit.values.to_dict()
         values['SB'] = False
