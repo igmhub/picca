@@ -94,9 +94,6 @@ class DesiHealpix(DesiData):
         -----
         DataError upon missing required variables
         """
-
-
-        # instance variables
         mode = config.get("mode")
         if mode is not None:
             raise DataError("Missing argument 'mode' required by DesiHealpix")

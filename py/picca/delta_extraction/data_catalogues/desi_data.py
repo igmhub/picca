@@ -40,6 +40,7 @@ class DesiData(Data):
     __init__
     _parse_config
     read_data
+    set_blinding
 
     Attributes
     ----------
