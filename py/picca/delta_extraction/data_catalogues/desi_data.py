@@ -156,19 +156,19 @@ class DesiData(Data):
             Forest.log_lambda_min_rest_frame = np.log10(lambda_min_rest_frame)
 
         elif Forest.wave_solution == "lin":
-            Forest.delta_lambda = config.get("delta lambda")
+            Forest.delta_lambda = config.getfloat("delta lambda")
             if Forest.delta_lambda is None:
                 raise DataError("Missing argument 'delta lambda' required by DesiData")
-            Forest.lambda_max = config.get("lambda max")
+            Forest.lambda_max = config.getfloat("lambda max")
             if Forest.lambda_max is None:
                 raise DataError("Missing argument 'lambda max' required by DesiData")
-            Forest.lambda_max_rest_frame = config.get("lambda max rest frame")
+            Forest.lambda_max_rest_frame = config.getfloat("lambda max rest frame")
             if Forest.lambda_max_rest_frame is None:
                 raise DataError("Missing argument 'lambda max rest frame' required by DesiData")
-            Forest.lambda_min = config.get("lambda min")
+            Forest.lambda_min = config.getfloat("lambda min")
             if Forest.lambda_min is None:
                 raise DataError("Missing argument 'lambda min' required by DesiData")
-            Forest.lambda_min_rest_frame = config.get("lambda min rest frame")
+            Forest.lambda_min_rest_frame = config.getfloat("lambda min rest frame")
             if Forest.lambda_min_rest_frame is None:
                 raise DataError("Missing argument 'lambda min rest frame' required by DesiData")
         else:
