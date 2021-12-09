@@ -1053,7 +1053,14 @@ class Delta(QSO):
             delta_name = "DELTA"
 
         delta = hdu[delta_name][:].astype(float)
-        log_lambda = hdu['LOGLAM'][:].astype(float)
+
+        if 'LOGLAM' in hdu.get_colnames():
+            log_lambda = hdu['LOGLAM'][:].astype(float)
+        elif 'LAMBDA' in hdu.get_colnames():
+            userprint("no LOGLAM found, trying to read linear_binned_lambda")
+            log_lambda = np.log10(hdu['LAMBDA'][:].astype(float))
+        else:
+            raise KeyError("Did not find LOGLAM or LAMBDA in delta file")
 
         if pk1d_type:
             ivar = hdu['IVAR'][:].astype(float)
