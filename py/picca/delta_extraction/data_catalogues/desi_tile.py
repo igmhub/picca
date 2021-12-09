@@ -53,6 +53,12 @@ class DesiTile(DesiData):
     input_directory: str (from DesiData)
     Directory to spectra files.
 
+    use_all: bool
+    If True, read using the all directory.
+
+    use_single_nights: bool
+    If True,  read using only nights specified within the cat 
+
     logger: logging.Logger
     Logger object
     """
