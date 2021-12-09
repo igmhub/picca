@@ -80,10 +80,9 @@ class DesiTile(DesiData):
         self._parse_config(config)
 
         # read data
-        is_sv = self.read_from_tile()
+        is_mock, is_sv = self.read_data()
 
         # set blinding
-        is_mock = False
         self.set_blinding(is_mock, is_sv)
 
     def _parse_config(self, config):
@@ -111,7 +110,7 @@ class DesiTile(DesiData):
 
         Return
         ------
-        is_mock: bool 
+        is_mock: bool
         False as DESI data are not mocks
 
         is_sv: bool
