@@ -64,8 +64,6 @@ class DesiData(Data):
 
     logger: logging.Logger
     Logger object
-
-
     """
     def __init__(self, config):
         """Initialize class instance
