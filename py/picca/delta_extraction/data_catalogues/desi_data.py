@@ -24,17 +24,14 @@ defaults.update({
     "lambda max rest frame": 1200.0,
     "lambda min": 3600.0,
     "lambda min rest frame": 1040.0,
-    "mode": 'healpix',
     "blinding": "corr_yshift",
     # TODO: update this to "lin" when we are sure that the linear binning work
     "wave solution": "log",
     "rebin": 3,
-    "use all": False,
-    "use single nights": False,
 })
 
 class DesiData(Data):
-    """Reads the spectra from Quickquasars and formats its data as a list of
+    """Abstract class to read DESI data and format it as a list of
     Forest instances.
 
     Methods
@@ -42,8 +39,7 @@ class DesiData(Data):
     filter_forests (from Data)
     __init__
     _parse_config
-    read_from_desi
-    read_from_minisv_desi
+    read_data
 
     Attributes
     ----------
@@ -60,14 +56,16 @@ class DesiData(Data):
     A string specifying the chosen blinding strategies. Must be one of the
     accepted values in ACCEPTED_BLINDING_STRATEGIES
 
+    catalogue: astropy.table.Table
+    The quasar catalogue
+
     input_directory: str
     Directory to spectra files.
 
     logger: logging.Logger
     Logger object
 
-    mini_sv: bool
-    Read data in Mini SV format.
+
     """
     def __init__(self, config):
         """Initialize class instance
@@ -83,39 +81,11 @@ class DesiData(Data):
 
         # load variables from config
         self.input_directory = None
-        self.mini_sv = None
-        self.use_all = None
-        self.use_single_nights = None
+        self.blinding = None
         self._parse_config(config)
 
         # load z_truth catalogue
-        catalogue = ZtruthCatalogue(config).catalogue
-
-        # read data
-        if self.mode == "healpix":
-            is_mock = self.read_from_healpix(catalogue)
-        elif self.mode == "tile":
-            self.read_from_tile(catalogue)
-            is_mock = True
-
-
-        if is_mock:
-            if self.blinding != "none":
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as mocks should not be "
-                                    "blinded. 'none' blinding engaged")
-                self.blinding = "none"
-        # TODO: remove this when we are ready to unblind
-        else:
-            if self.blinding != "corr_yshift":
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as data should be blinded. "
-                                    "'corr_yshift' blinding engaged")
-                self.blinding = "corr_yshift"
-
-        # set blinding strategy
-        Forest.blinding = self.blinding
-
+        self.catalogue = ZtruthCatalogue(config).catalogue
 
     def _parse_config(self, config):
         """Parse the configuration options
@@ -195,30 +165,12 @@ class DesiData(Data):
             raise DataError(
                 "Missing argument 'input directory' required by DesiData")
 
-        self.mode = config.get("mode")
-        if self.mode is None:
-            raise DataError("Missing argument 'mode' required by DesiData")
-        if self.mode not in ["healpix", "tile"]:
-            raise DataError("Invalid argument 'mode'. Expected: 'healpix' or 'tile',"
-                            f"Found: {self.mode}")
-
-        self.use_all = config.getboolean("use all")
-        if self.use_all is None:
-            raise DataError("Missing argument 'use all' required by DesiData")
-
-        self.use_single_nights = config.getboolean("use single nights")
-        if self.use_single_nights is None:
-            raise DataError("Missing argument 'use single nights' required by DesiData")
-
-    def read_from_healpix(self, catalogue):
+    # pylint: disable=no-self-use
+    # this method should use self in child classes
+    def read_data(self):
         """Read the spectra and formats its data as Forest instances.
 
-        Method used to read healpix-based survey data.
-
-        Arguments
-        ---------
-        catalogue: astropy.Table
-        Table with the quasar catalogue
+        Method to be implemented by child classes.
 
         Return
         ------
@@ -226,342 +178,49 @@ class DesiData(Data):
         True if mocks were loaded (i.e. there is a truth file in the folder) and
         Flase otherwise
 
-        Raise
-        -----
-        DataError if the analysis type is PK 1D and resolution data is not present
-        """
-        in_nside = 64
-
-        healpix = [
-            healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"], nest=True)
-            for row in catalogue
-        ]
-        catalogue["HEALPIX"] = healpix
-        catalogue.sort("HEALPIX")
-        grouped_catalogue = catalogue.group_by(["HEALPIX", "SURVEY"])
-
-        forests_by_targetid = {}
-        is_mock = True
-        for (index,
-             (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                    grouped_catalogue.groups):
-
-            input_directory = f'{self.input_directory}/{survey}/dark'
-            filename = (
-                f"{input_directory}/{healpix//100}/{healpix}/coadd-{survey}-"
-                f"dark-{healpix}.fits")
-
-            # the truth file is used to check if we are reading in mocks
-            # in case we are, and we are computing pk1d, we also use them to load
-            # the resolution matrix
-            filename_truth = (
-                f"{input_directory}/{healpix//100}/{healpix}/truth-{in_nside}-"
-                f"{healpix}.fits")
-            if not os.path.isfile(filename_truth):
-                is_mock = False
-
-            self.logger.progress(
-                f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
-                f"num_data: {len(forests_by_targetid)}")
-            try:
-                hdul = fitsio.FITS(filename)
-            except IOError:
-                self.logger.warning(f"Error reading pix {healpix}. Ignoring file")
-                continue
-
-            # Read targetid from fibermap to match to catalogue later
-            fibermap = hdul['FIBERMAP'].read()
-            targetid_spec = fibermap["TARGETID"]
-
-            # First read all wavelength, flux, ivar, mask, and resolution
-            # from this file
-            spectrographs_data = {}
-            colors = ["B", "R"]
-            if "Z_FLUX" in hdul:
-                colors.append("Z")
-            for color in colors:
-                spec = {}
-                try:
-                    spec["WAVELENGTH"] = hdul[f"{color}_WAVELENGTH"].read()
-                    spec["FLUX"] = hdul[f"{color}_FLUX"].read()
-                    spec["IVAR"] = (hdul[f"{color}_IVAR"].read() *
-                                    (hdul[f"{color}_MASK"].read() == 0))
-                    w = np.isnan(spec["FLUX"]) | np.isnan(spec["IVAR"])
-                    for key in ["FLUX", "IVAR"]:
-                        spec[key][w] = 0.
-                    if self.analysis_type == "PK 1D":
-                        if f"{color}_RESOLUTION" in hdul:
-                            spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
-                        else:
-                            raise DataError(
-                                "Error while reading {color} band from "
-                                "{filename}. Analysis type is  'PK 1D', "
-                                "but file does not contain HDU "
-                                f"'{color}_RESOLUTION' ")
-                    spectrographs_data[color] = spec
-                except OSError:
-                    self.logger.warning(
-                        f"Error while reading {color} band from {filename}."
-                        "Ignoring color.")
-            hdul.close()
-
-            # Loop over quasars in catalogue inside this healpixel
-            for row in group:
-                # Find which row in tile contains this quasar
-                # It should be there by construction
-                targetid = row["TARGETID"]
-                w_t = np.where(targetid_spec == targetid)[0]
-                if len(w_t) == 0:
-                    self.logger.warning(
-                        f"Error reading {targetid}. Ignoring object")
-                    continue
-                if len(w_t) > 1:
-                    self.logger.warning(
-                        "Warning: more than one spectrum in this file "
-                        f"for {targetid}")
-                else:
-                    w_t = w_t[0]
-
-                # Construct DesiForest instance
-                # Fluxes from the different spectrographs will be coadded
-                for spec in spectrographs_data.values():
-                    ivar = spec['IVAR'][w_t].copy()
-                    flux = spec['FLUX'][w_t].copy()
-
-                    args = {
-                        "flux": flux,
-                        "ivar": ivar,
-                        "targetid": targetid,
-                        "ra": row['RA'],
-                        "dec": row['DEC'],
-                        "z": row['Z'],
-                    }
-                    if Forest.wave_solution == "log":
-                        args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-                    elif Forest.wave_solution == "lin":
-                        args["lambda"] = spec['WAVELENGTH']
-                    else:
-                        raise DataError("Forest.wave_solution must be either "
-                                        "'log' or 'lin'")
-
-                    if self.analysis_type == "BAO 3D":
-                        forest = DesiForest(**args)
-                    elif self.analysis_type == "PK 1D":
-                        reso_sum = spec['RESO'][w_t].copy()
-                        reso_in_km_per_s = spectral_resolution_desi(
-                            reso_sum, spec['WAVELENGTH'])
-                        exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
-
-                        args["exposures_diff"] = exposures_diff
-                        args["reso"] = reso_in_km_per_s
-                        forest = DesiPk1dForest(**args)
-                    else:
-                        raise DataError("Unkown analysis type. Expected 'BAO 3D'"
-                                        f"or 'PK 1D'. Found '{self.analysis_type}'")
-
-                    if targetid in forests_by_targetid:
-                        forests_by_targetid[targetid].coadd(forest)
-                    else:
-                        forests_by_targetid[targetid] = forest
-
-        self.forests = list(forests_by_targetid.values())
-
-        return is_mock
-
-    def read_from_tile(self, catalogue):
-        """Read the spectra and formats its data as Forest instances.
-
-        Method used to read tile-based survey data.
-
-        Arguments
-        ---------
-        catalogue: astropy.Table
-        Table with the quasar catalogue
+        is_sv: bool
+        True if all the read data belong to SV. False otherwise
 
         Raise
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         DataError if no quasars were found
         """
-        forests_by_targetid = {}
-        num_data = 0
+        raise DataError("Function 'read_data' was not overloaded by child class")
 
-        if self.use_single_nights or "cumulative" in self.input_directory:
-            files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/coadd-*.fits"),
-                              recursive=True))
+    def set_blinding(self, is_mock, is_sv):
+        """Set the blinding in Forest.
 
-            if "cumulative" in self.input_directory:
-                petal_tile_night = [
-                    f"{entry['PETAL_LOC']}-{entry['TILEID']}-thru{entry['LAST_NIGHT']}"
-                    for entry in catalog
-                ]
-            else:
-                petal_tile_night = [
-                    f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
-                    for entry in catalogue
-                ]
+        Update the stored value if necessary.
+
+        Attributes
+        ----------
+        is_mock: boolean
+        True if reading mocks, False otherwise
+
+        is_sv: boolean
+        True if reading SV data only, False otherwise
+        """
+        # blinding checks
+        if is_mock:
+            if self.blinding != "none":
+                self.logger.warning(f"Selected blinding, {self.blinding} is "
+                                    "being ignored as mocks should not be "
+                                    "blinded. 'none' blinding engaged")
+                self.blinding = "none"
+        if is_sv:
+            if self.blinding != "none":
+                self.logger.warning(f"Selected blinding, {self.blinding} is "
+                                    "being ignored as SV data should not be "
+                                    "blinded. 'none' blinding engaged")
+                self.blinding = "none"
+        # TODO: remove this when we are ready to unblind
         else:
-            if self.use_all:
-                files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/all/**/coadd-*.fits"),
-                             recursive=True))
-            else:
-                files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/deep/**/coadd-*.fits"),
-                             recursive=True))
-            petal_tile = [
-                f"{entry['PETAL_LOC']}-{entry['TILEID']}"
-                for entry in catalogue
-            ]
-        # this uniqueness check is to ensure each petal/tile/night combination
-        # only appears once in the filelist
-        petal_tile_night_unique = np.unique(petal_tile_night)
+            if self.blinding != "corr_yshift":
+                self.logger.warning(f"Selected blinding, {self.blinding} is "
+                                    "being ignored as data should be blinded. "
+                                    "'corr_yshift' blinding engaged")
+                self.blinding = "corr_yshift"
 
-        filenames = []
-        for f_in in files_in:
-            for ptn in petal_tile_night_unique:
-                if ptn in os.path.basename(f_in):
-                    filenames.append(f_in)
-        filenames = np.unique(filenames)
-
-        for index, filename in enumerate(filenames):
-            self.logger.progress("read tile {} of {}. ndata: {}".format(
-                index, len(filenames), num_data))
-            try:
-                hdul = fitsio.FITS(filename)
-            except IOError:
-                self.logger.warning(f"Error reading file {filename}. Ignoring file")
-                continue
-
-            fibermap = hdul['FIBERMAP'].read()
-            fibermap_colnames = hdul["FIBERMAP"].get_colnames()
-            # pre-Andes
-            if 'TARGET_RA' in fibermap_colnames:
-                ra = fibermap['TARGET_RA']
-                dec = fibermap['TARGET_DEC']
-                tile_spec = fibermap['TILEID'][0]
-                night_spec = fibermap['NIGHT'][0]
-                colors = ['BRZ']
-                if index == 0:
-                    self.logger.warning(
-                        "Reading all-band coadd as in minisv pre-Andes "
-                        "dataset")
-            # Andes
-            elif 'RA_TARGET' in fibermap_colnames:
-                ra = fibermap['RA_TARGET']
-                dec = fibermap['DEC_TARGET']
-                tile_spec = filename.split('-')[-2]
-                night_spec = int(filename.split('-')[-1].split('.')[0])
-                colors = ['B', 'R', 'Z']
-                if index == 0:
-                    self.logger.warning(
-                        "Couldn't read the all band-coadd, trying "
-                        "single band as introduced in Andes reduction")
-            ra = np.radians(ra)
-            dec = np.radians(dec)
-
-            petal_spec = fibermap['PETAL_LOC'][0]
-
-            targetid_spec = fibermap['TARGETID']
-
-            spectrographs_data = {}
-            for color in colors:
-                try:
-                    spec = {}
-                    spec['WAVELENGTH'] = hdul[f'{color}_WAVELENGTH'].read()
-                    spec['FLUX'] = hdul[f'{color}_FLUX'].read()
-                    spec['IVAR'] = (hdul[f'{color}_IVAR'].read() *
-                                    (hdul[f'{color}_MASK'].read() == 0))
-                    if self.analysis_type == "PK 1D":
-                        if f"{color}_RESOLUTION" in hdul:
-                            spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
-                        else:
-                            raise DataError(
-                                "Error while reading {color} band from "
-                                "{filename}. Analysis type is  'PK 1D', "
-                                "but file does not contain HDU "
-                                f"'{color}_RESOLUTION' ")
-                    w = np.isnan(spec['FLUX']) | np.isnan(spec['IVAR'])
-                    for key in ['FLUX', 'IVAR']:
-                        spec[key][w] = 0.
-                    spectrographs_data[color] = spec
-                except OSError:
-                    self.logger.warning(
-                        f"Error while reading {color} band from {filename}."
-                        "Ignoring color.")
-
-            hdul.close()
-
-            select = ((catalogue['TILEID'] == tile_spec) &
-                      (catalogue['PETAL_LOC'] == petal_spec) &
-                      (catalogue['NIGHT'] == night_spec))
-            self.logger.progress(
-                f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}'
-            )
-
-            # Loop over quasars in catalog inside this tile-petal
-            for entry in catalogue[select]:
-
-                # Find which row in tile contains this quasar
-                targetid = entry['TARGETID']
-                w_t = np.where(targetid_spec == targetid)[0]
-                if len(w_t) == 0:
-                    self.logger.warning(
-                        f"Error reading {targetid}. Ignoring object")
-                    continue
-                if len(w_t) > 1:
-                    self.logger.warning(
-                        "Warning: more than one spectrum in this file "
-                        f"for {targetid}")
-                else:
-                    w_t = w_t[0]
-
-                for spec in spectrographs_data.values():
-                    ivar = spec['IVAR'][w_t].copy()
-                    flux = spec['FLUX'][w_t].copy()
-
-                    rgs = {
-                        "flux": flux,
-                        "ivar": ivar,
-                        "targetid": targetid,
-                        "ra": entry['RA'],
-                        "dec": entry['DEC'],
-                        "z": entry['Z'],
-                        "petal": entry["PETAL_LOC"],
-                        "tile": entry["TILEID"],
-                        "night": entry["NIGHT"],
-                    }
-                    if Forest.wave_solution == "log":
-                        args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-                    elif Forest.wave_solution == "lin":
-                        args["lambda"] = spec['WAVELENGTH']
-                    else:
-                        raise DataError("Forest.wave_solution must be either "
-                                        "'log' or 'lin'")
-
-                    if self.analysis_type == "BAO 3D":
-                        forest = DesiForest(**args)
-                    elif self.analysis_type == "PK 1D":
-                        reso_sum = spec['RESO'][w_t].copy()
-                        reso_in_km_per_s = np.real(
-                            spectral_resolution_desi(reso_sum,
-                                                     spec['WAVELENGTH']))
-                        exposures_diff = np.zeros(spec['log_lambda'].shape)
-
-                        args["exposures_diff"] = exposures_diff
-                        args["reso"] = reso_in_km_per_s
-                        forest = DesiPk1dForest(**args)
-                    else:
-                        raise DataError("Unkown analysis type. Expected 'BAO 3D'"
-                                        f"or 'PK 1D'. Found '{self.analysis_type}'")
-
-                    if targetid in forests_by_targetid:
-                        forests_by_targetid[targetid].coadd(forest)
-                    else:
-                        forests_by_targetid[targetid] = forest
-
-                num_data += 1
-        self.logger.progress("Found {} quasars in input files".format(num_data))
-
-        if num_data == 0:
-            raise DataError("No Quasars found, stopping here")
-
-        self.forests = list(forests_by_targetid.values())
+        # set blinding strategy
+        Forest.blinding = self.blinding
