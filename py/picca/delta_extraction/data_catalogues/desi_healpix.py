@@ -141,7 +141,7 @@ class DesiHealpix(DesiData):
             hdul = fitsio.FITS(filename)
         except IOError:
             self.logger.warning(f"Error reading pix {healpix}. Ignoring file")
-            continue
+            return
 
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
