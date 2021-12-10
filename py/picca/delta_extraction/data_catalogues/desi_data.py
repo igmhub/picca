@@ -17,7 +17,6 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import DesiQ
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 
-
 defaults.update({
     "delta lambda": 1.0,  # TODO: update this value to the read from DESI files
     "lambda max": 5500.0,
@@ -91,7 +90,7 @@ class DesiData(Data):
 
         # set blinding
         self.set_blinding(is_mock, is_sv)
-        
+
     def _parse_config(self, config):
         """Parse the configuration options
 
