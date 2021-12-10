@@ -18,6 +18,7 @@ defaults.update({
     "limit var lss": (0., 0.3),
     "num bins variance": 20,
     "num iterations": 5,
+    "num processors": 1,
     "order": 1,
     "use_constant_weight": False,
     "use_ivar_as_weight": False,
@@ -116,7 +117,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
     num_iterations: int
     Number of iterations to determine the mean continuum shape, LSS variances, etc.
 
-    num_processors: int or None
+    num_processors: int
     Number of processors to be used to compute the mean continua. None for no
     specified number (subprocess will take its default value).
 
@@ -369,25 +370,33 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         self.num_bins_variance = config.getint("num bins variance")
         if self.num_bins_variance is None:
-            self.num_bins_variance = defaults.get("num bins variance")
+            raise ExpectedFluxError(
+                "Missing argument 'num bins variance' required by Dr16ExpectedFlux")
 
         self.num_iterations = config.getint("num iterations")
         if self.num_iterations is None:
-            self.num_iterations = defaults.get("num iterations")
+            raise ExpectedFluxError(
+                "Missing argument 'num iterations' required by Dr16ExpectedFlux")
 
         self.num_processors = config.getint("num processors")
+        if self.num_processors is None:
+            raise ExpectedFluxError(
+                "Missing argument 'num processors' required by Dr16ExpectedFlux")
 
         self.order = config.getint("order")
         if self.order is None:
-            self.order = defaults.get("order")
+            raise ExpectedFluxError(
+                "Missing argument 'order' required by Dr16ExpectedFlux")
 
         self.use_constant_weight = config.getboolean("use constant weight")
         if self.use_constant_weight is None:
-            self.use_constant_weight = config.getboolean("use constant weight")
+            raise ExpectedFluxError(
+                "Missing argument 'use constant weight' required by Dr16ExpectedFlux")
 
         self.use_ivar_as_weight = config.getboolean("use ivar as weight")
         if self.use_ivar_as_weight is None:
-            self.use_ivar_as_weight = defaults.get("use ivar as weight")
+            raise ExpectedFluxError(
+                "Missing argument 'use ivar as weight' required by Dr16ExpectedFlux")
 
     def compute_continuum(self, forest):
         """Compute the forest continuum.
