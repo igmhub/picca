@@ -100,7 +100,7 @@ class DesisimMocks(DesiHealpix):
                 f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
                 f"num_data: {len(forests_by_targetid)}")
 
-            self.read_file(filename, forests_by_targetid)
+            self.read_file(filename, group, forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")

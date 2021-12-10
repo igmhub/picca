@@ -106,7 +106,7 @@ class DesiHealpix(DesiData):
                 f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
                 f"num_data: {len(forests_by_targetid)}")
 
-            self.read_file(filename, forests_by_targetid)
+            self.read_file(filename, group, forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")
@@ -115,13 +115,16 @@ class DesiHealpix(DesiData):
 
         return False, is_sv
 
-    def read_file(self, filename, forests_by_targetid):
+    def read_file(self, filename, catalogue, forests_by_targetid):
         """Read the spectra and formats its data as Forest instances.
 
         Arguments
         ---------
         filename: str
         Name of the file to read
+
+        catalogue: astropy.table.Table
+        The quasar catalogue fragment associated with this file
 
         forests_by_targetid: dict
         Dictionary were forests are stored. Its content is modified by this
@@ -174,7 +177,7 @@ class DesiHealpix(DesiData):
         hdul.close()
 
         # Loop over quasars in catalogue inside this healpixel
-        for row in group:
+        for row in catalogue:
             # Find which row in tile contains this quasar
             # It should be there by construction
             targetid = row["TARGETID"]
