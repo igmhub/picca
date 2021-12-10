@@ -42,7 +42,7 @@ class DesiHealpix(DesiData):
 
     catalogue: astropy.table.Table (from DesiData)
     The quasar catalogue
-    
+
     input_directory: str (from DesiData)
     Directory to spectra files.
 
@@ -97,7 +97,7 @@ class DesiHealpix(DesiData):
              (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
                                     grouped_catalogue.groups):
 
-            if 'main' in survey:
+            if survey not in ["sv", "sv1", "sv2", "sv3"]:
                 is_sv = False
 
             input_directory = f'{self.input_directory}/{survey}/dark'
