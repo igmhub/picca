@@ -1,0 +1,1003 @@
+[INFO]: Adding 1 optical depths
+[PROGRESS]: Input sample has 1 forests
+[PROGRESS]: Remaining sample has 1 forests
+[PROGRESS]: Input sample has 1 forests
+[PROGRESS]: Rejected forest with los_id 10000 due to forest being too short
+[PROGRESS]: Remaining sample has 0 forests
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 0.15384615384615374        : nb object in cat = 79
+[PROGRESS]: and z < 1.4948275862068967         : nb object in cat = 24
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 26 spectra with required THING_ID
+[PROGRESS]: Found 26 spectra with 'good' plate
+[PROGRESS]: Found 26 spectra without 0 bit set: SKY
+[PROGRESS]: Found 26 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 26 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 26 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 26 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 24
+[PROGRESS]: # spectra: 26
+[PROGRESS]: Reading 26 objects
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0184.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0054.fits
+[WARNING]: Error reading /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spec-3657-55244-0660.fits. Ignoring file
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0436.fits
+[WARNING]: Error reading /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spec-3657-55244-0540.fits. Ignoring file
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0179.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0258.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0138.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0332.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0256.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0404.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0262.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0066.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0438.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0104.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0330.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0446.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0154.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0340.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0540.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0780.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0774.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0994.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0960.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0630.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0872.fits
+[PROGRESS]: Input sample has 24 forests
+[PROGRESS]: Rejected forest with los_id 427104307 due to forest being too short
+[PROGRESS]: Rejected forest with los_id 429527830 due to forest being too short
+[PROGRESS]: Remaining sample has 22 forests
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: Reading 55 objects
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0310.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spec-9367-57758-0457.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0228.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spec-9367-57758-0446.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0170.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0344.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spec-9367-57758-0482.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0186.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spec-9367-57758-0386.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0388.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0352.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0100.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spec-9367-57758-0345.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spec-9367-57758-0396.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0198.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0234.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0026.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spec-9367-57758-0500.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0370.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0110.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0208.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0410.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spec-9367-57758-0601.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0273.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0472.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0030.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0070.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0156.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0434.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spec-9367-57758-0538.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0368.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0114.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0002.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0881.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0728.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0650.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spec-3657-55244-0552.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0890.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0734.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0972.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/10656/spec-10656-58163-0366.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0990.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spec-9367-57758-0836.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0686.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0764.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0554.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0635.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0638.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0958.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0714.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0941.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0743.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0710.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0864.fits
+[PROGRESS]: Read /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spec-3655-55240-0744.fits
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.003 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.073 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.009 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.040 per spec. Progress: 55 of 55
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.002 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.025 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.004 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.016 per spec. Progress: 55 of 55
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.002 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.025 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.006 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.015 per spec. Progress: 55 of 55
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.002 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.023 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.004 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.015 per spec. Progress: 55 of 55
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.002 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.025 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.004 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.015 per spec. Progress: 55 of 55
+[PROGRESS]: Continuum fitting: starting iteration 0 of 5
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix 
+[PROGRESS]:  3.561e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.79e+02 
+[PROGRESS]:  3.570e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 8.14e+02 
+[PROGRESS]:  3.579e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 8.93e+02 
+[PROGRESS]:  3.589e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.26e+02 
+[PROGRESS]:  3.598e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.08e+02 
+[PROGRESS]:  3.607e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.40e+02 
+[PROGRESS]:  3.616e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.12e+02 
+[PROGRESS]:  3.625e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.15e+02 
+[PROGRESS]:  3.635e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.29e+02 
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.29e+02 
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 2.07e+02 
+[PROGRESS]:  3.662e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.86e+02 
+[PROGRESS]:  3.671e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.80e+02 
+[PROGRESS]:  3.681e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.73e+02 
+[PROGRESS]:  3.690e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.24e+02 
+[PROGRESS]:  3.699e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.60e+01 
+[PROGRESS]:  3.708e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.00e+01 
+[PROGRESS]:  3.717e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]:  3.727e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]:  3.736e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]: Continuum fitting: ending iteration 0 of 5
+[PROGRESS]: Continuum fitting: starting iteration 1 of 5
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix 
+[PROGRESS]:  3.561e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 6.23e+02 
+[PROGRESS]:  3.570e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 8.31e+02 
+[PROGRESS]:  3.579e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.00e+02 
+[PROGRESS]:  3.589e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.26e+02 
+[PROGRESS]:  3.598e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.08e+02 
+[PROGRESS]:  3.607e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.40e+02 
+[PROGRESS]:  3.616e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.12e+02 
+[PROGRESS]:  3.625e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.15e+02 
+[PROGRESS]:  3.635e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.29e+02 
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.29e+02 
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 2.07e+02 
+[PROGRESS]:  3.662e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.86e+02 
+[PROGRESS]:  3.671e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.80e+02 
+[PROGRESS]:  3.681e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.73e+02 
+[PROGRESS]:  3.690e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.24e+02 
+[PROGRESS]:  3.699e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.60e+01 
+[PROGRESS]:  3.708e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.00e+01 
+[PROGRESS]:  3.717e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]:  3.727e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]:  3.736e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]: Continuum fitting: ending iteration 1 of 5
+[PROGRESS]: Continuum fitting: starting iteration 2 of 5
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix 
+[PROGRESS]:  3.561e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 6.35e+02 
+[PROGRESS]:  3.570e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 8.33e+02 
+[PROGRESS]:  3.579e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.02e+02 
+[PROGRESS]:  3.589e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.26e+02 
+[PROGRESS]:  3.598e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.08e+02 
+[PROGRESS]:  3.607e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.40e+02 
+[PROGRESS]:  3.616e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.12e+02 
+[PROGRESS]:  3.625e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.15e+02 
+[PROGRESS]:  3.635e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.29e+02 
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.29e+02 
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 2.07e+02 
+[PROGRESS]:  3.662e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.86e+02 
+[PROGRESS]:  3.671e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.80e+02 
+[PROGRESS]:  3.681e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.73e+02 
+[PROGRESS]:  3.690e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.24e+02 
+[PROGRESS]:  3.699e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.60e+01 
+[PROGRESS]:  3.708e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.00e+01 
+[PROGRESS]:  3.717e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]:  3.727e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]:  3.736e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]: Continuum fitting: ending iteration 2 of 5
+[PROGRESS]: Continuum fitting: starting iteration 3 of 5
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix 
+[PROGRESS]:  3.561e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 6.37e+02 
+[PROGRESS]:  3.570e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 8.33e+02 
+[PROGRESS]:  3.579e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.02e+02 
+[PROGRESS]:  3.589e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.26e+02 
+[PROGRESS]:  3.598e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.08e+02 
+[PROGRESS]:  3.607e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.40e+02 
+[PROGRESS]:  3.616e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.12e+02 
+[PROGRESS]:  3.625e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.15e+02 
+[PROGRESS]:  3.635e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.29e+02 
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.29e+02 
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 2.07e+02 
+[PROGRESS]:  3.662e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.86e+02 
+[PROGRESS]:  3.671e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.80e+02 
+[PROGRESS]:  3.681e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.73e+02 
+[PROGRESS]:  3.690e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.24e+02 
+[PROGRESS]:  3.699e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.60e+01 
+[PROGRESS]:  3.708e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.00e+01 
+[PROGRESS]:  3.717e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]:  3.727e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]:  3.736e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]: Continuum fitting: ending iteration 3 of 5
+[PROGRESS]: Continuum fitting: starting iteration 4 of 5
+[PROGRESS]: Continuum fitting: ending iteration 4 of 5
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.002 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.029 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.005 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.017 per spec. Progress: 55 of 55
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.002 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.026 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.004 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.015 per spec. Progress: 55 of 55
+[PROGRESS]:  Mean quantities in observer-frame
+[PROGRESS]:  loglam    eta      var_lss  fudge    chi2     num_pix 
+[PROGRESS]:  3.561e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.79e+02 
+[PROGRESS]:  3.570e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 8.14e+02 
+[PROGRESS]:  3.579e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 8.93e+02 
+[PROGRESS]:  3.589e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.26e+02 
+[PROGRESS]:  3.598e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 7.08e+02 
+[PROGRESS]:  3.607e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 5.40e+02 
+[PROGRESS]:  3.616e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.12e+02 
+[PROGRESS]:  3.625e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 4.15e+02 
+[PROGRESS]:  3.635e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.29e+02 
+[PROGRESS]:  3.644e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.29e+02 
+[PROGRESS]:  3.653e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 2.07e+02 
+[PROGRESS]:  3.662e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.86e+02 
+[PROGRESS]:  3.671e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.80e+02 
+[PROGRESS]:  3.681e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.73e+02 
+[PROGRESS]:  3.690e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 1.24e+02 
+[PROGRESS]:  3.699e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 9.60e+01 
+[PROGRESS]:  3.708e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 3.00e+01 
+[PROGRESS]:  3.717e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]:  3.727e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[PROGRESS]:  3.736e+00 1.00e+00 1.00e-01 1.00e-07 0.00e+00 0.00e+00 
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.002 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.025 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.004 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.016 per spec. Progress: 55 of 55
+[WARNING]: Missing argument 'spAll' required by DrqCatalogue. Looking for spAll in input directory...
+[WARNING OK]: 'spAll' file found. Contining with normal execution.
+[PROGRESS]: Reading DRQ catalogue from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz
+[PROGRESS]: start                 : nb object in cat = 79
+[PROGRESS]: and THING_ID > 0      : nb object in cat = 79
+[PROGRESS]: and ra != dec         : nb object in cat = 79
+[PROGRESS]: and ra != 0.          : nb object in cat = 79
+[PROGRESS]: and dec != 0.         : nb object in cat = 79
+[PROGRESS]: and z >= 2.1        : nb object in cat = 45
+[PROGRESS]: and z < 3.5         : nb object in cat = 43
+[WARNING]: BAL_FLAG_VI not found in /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/cat_for_clustering_plate3655.fits.gz.
+[WARNING OK]: Ignoring
+[PROGRESS]: reading spAll from /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/spAll-plate3655.fits
+[PROGRESS]: Found 55 spectra with required THING_ID
+[PROGRESS]: Found 55 spectra with 'good' plate
+[PROGRESS]: Found 55 spectra without 0 bit set: SKY
+[PROGRESS]: Found 55 spectra without 1 bit set: LITTLE_COVERAGE
+[PROGRESS]: Found 55 spectra without 7 bit set: UNPLUGGED
+[PROGRESS]: Found 55 spectra without 8 bit set: BAD_TARGET
+[PROGRESS]: Found 55 spectra without 9 bit set: NODATA
+[PROGRESS]: # unique objs: 43
+[PROGRESS]: # spectra: 55
+[PROGRESS]: reading 4 plates
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 310
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 228
+[DEBUG]: 427921106 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 170
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 344
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 186
+[DEBUG]: 428720862 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 388
+[DEBUG]: 428997970 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 352
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 100
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 198
+[DEBUG]: 429783036 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 234
+[DEBUG]: 430098888 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 26
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 370
+[DEBUG]: 430357124 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 110
+[DEBUG]: 430361273 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 208
+[DEBUG]: 430674534 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 410
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 273
+[DEBUG]: 430834865 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 472
+[DEBUG]: 430866389 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 30
+[DEBUG]: 431097125 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 70
+[DEBUG]: 431170836 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 156
+[DEBUG]: 431651700 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 434
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 368
+[DEBUG]: 431968283 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 114
+[DEBUG]: 432118404 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 2
+[DEBUG]: 433325951 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 881
+[DEBUG]: 433540455 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 728
+[DEBUG]: 434097549 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 650
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 890
+[DEBUG]: 434388245 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 734
+[DEBUG]: 434394693 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 972
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 990
+[DEBUG]: 434964246 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 686
+[DEBUG]: 435305990 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 764
+[DEBUG]: 435955073 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 554
+[DEBUG]: 436284172 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 635
+[DEBUG]: 436284377 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 638
+[DEBUG]: 437143231 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 958
+[DEBUG]: 438812555 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 714
+[DEBUG]: 439574847 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 941
+[DEBUG]: 439999648 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 743
+[DEBUG]: 440158915 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 710
+[DEBUG]: 441488267 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 864
+[DEBUG]: 442100624 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3655/spPlate-3655-55240.fits and fiberid 744
+[PROGRESS]: read 43 from spPlate-3655-55240.fits in 0.002 per spec. Progress: 43 of 55
+[DEBUG]: 434205493 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/3657/spPlate-3657-55244.fits and fiberid 552
+[PROGRESS]: read 1 from spPlate-3657-55244.fits in 0.024 per spec. Progress: 44 of 55
+[DEBUG]: 427513857 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 457
+[DEBUG]: 427878017 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 446
+[DEBUG]: 428035498 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 482
+[DEBUG]: 428707431 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 386
+[DEBUG]: 429231814 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 345
+[DEBUG]: 429522957 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 396
+[DEBUG]: 430151253 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 500
+[DEBUG]: 430805392 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 601
+[DEBUG]: 431936632 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 538
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/9367/spPlate-9367-57758.fits and fiberid 836
+[PROGRESS]: read 10 from spPlate-9367-57758.fits in 0.004 per spec. Progress: 54 of 55
+[DEBUG]: 434932660 read from file /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/10656/spPlate-10656-58163.fits and fiberid 366
+[PROGRESS]: read 1 from spPlate-10656-58163.fits in 0.016 per spec. Progress: 55 of 55
+[PROGRESS]: Reading absorbers from: /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]:  In catalog: 3 absorbers
+[PROGRESS]:  In catalog: 2 forests have absorbers
+
+[PROGRESS]: Reading absorbers from: /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]:  In catalog: 3 absorbers
+[PROGRESS]:  In catalog: 2 forests have absorbers
+

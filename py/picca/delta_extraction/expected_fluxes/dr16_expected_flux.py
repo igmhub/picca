@@ -197,7 +197,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) /
             num_bins)
         self.get_mean_cont = interp1d(self.lambda_rest_frame,
-                                      np.ones_like(self.lambda_rest_frame))
+                                      np.ones_like(self.lambda_rest_frame),
+                                      fill_value="extrapolate")
         self.get_mean_cont_weight = interp1d(self.lambda_rest_frame,
                                              np.zeros_like(
                                                  self.lambda_rest_frame),
@@ -430,8 +431,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 # fudge contribution to the variance
                 fudge = self.get_fudge(forest.log_lambda)
         elif Forest.wave_solution == "lin":
-            lambda_max = Forest.lambda_max_rest_frame / (1 + forest.z)
-            lambda_min = Forest.lambda_min_rest_frame / (1 + forest.z)
+            lambda_max = Forest.lambda_max_rest_frame * (1 + forest.z)
+            lambda_min = Forest.lambda_min_rest_frame * (1 + forest.z)
 
             # get mean continuum
             mean_cont = self.get_mean_cont(forest.lambda_ / (1 + forest.z))
@@ -626,8 +627,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 bins = ((forest.log_lambda - Forest.log_lambda_min) /
                         Forest.delta_log_lambda + 0.5).astype(int)
             elif Forest.wave_solution == "lin":
-                bins = ((forest.lambda_ - Forest.log_lambda_min) /
-                        Forest.delta_log_lambda + 0.5).astype(int)
+                bins = ((forest.lambda_ - Forest.lambda_min) /
+                        Forest.delta_lambda + 0.5).astype(int)
             else:
                 raise ExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'linear'")
@@ -794,13 +795,15 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         context = multiprocessing.get_context('fork')
         for iteration in range(self.num_iterations):
-            pool = context.Pool(processes=self.num_processors)
             self.logger.progress(
                 f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
             )
-
-            forests = pool.map(self.compute_continuum, forests)
-            pool.close()
+            if self.num_processors > 1:
+                pool = context.Pool(processes=self.num_processors)
+                forests = pool.map(self.compute_continuum, forests)
+                pool.close()
+            else:
+                forests = [self.compute_continuum(f) for f in forests]
 
             if iteration < self.num_iterations - 1:
                 # Compute mean continuum (stack in rest-frame)
@@ -1009,7 +1012,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 w = num_qso[index * num_var_bins:(index + 1) *
                             num_var_bins] > 100
                 return np.sum(chi2_contribution[w]**2 / weights[w])
-
 
             minimizer = iminuit.Minuit(chi2,
                                        name=("eta", "var_lss", "fudge"),
