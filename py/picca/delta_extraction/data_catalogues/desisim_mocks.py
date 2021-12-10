@@ -6,7 +6,7 @@ import fitsio
 import healpy
 import numpy as np
 
-from picca.delta_extraction.desi_data import DesiHealpix
+from picca.delta_extraction.data_catalogues.desi_data import DesiHealpix
 from picca.delta_extraction.errors import DataError
 
 class DesisimMocks(DesiHealpix):
