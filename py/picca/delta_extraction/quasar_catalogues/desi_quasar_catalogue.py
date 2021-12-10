@@ -55,10 +55,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self.filename = None
         self._parse_config(config)
 
-        # read DRQ Catalogue
-        catalogue = self.read_catalogue()
-
-        self.catalogue = catalogue
+        # read quasar catalogue
+        self.catalogue = self.read_catalogue()
 
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
