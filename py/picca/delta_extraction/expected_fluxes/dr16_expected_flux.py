@@ -20,8 +20,8 @@ defaults.update({
     "num iterations": 5,
     "num processors": 1,
     "order": 1,
-    "use_constant_weight": False,
-    "use_ivar_as_weight": False,
+    "use constant weight": False,
+    "use ivar as weight": False,
 })
 
 
