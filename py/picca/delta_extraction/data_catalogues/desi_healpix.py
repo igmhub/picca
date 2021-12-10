@@ -61,12 +61,6 @@ class DesiHealpix(DesiData):
 
         super().__init__(config)
 
-        # read data
-        is_mock, is_sv = self.read_data()
-
-        # set blinding
-        self.set_blinding(is_mock, is_sv)
-
     def read_data(self):
         """Read the data.
 

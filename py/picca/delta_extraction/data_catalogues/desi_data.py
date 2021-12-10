@@ -86,6 +86,12 @@ class DesiData(Data):
         # load z_truth catalogue
         self.catalogue = DesiQuasarCatalogue(config).catalogue
 
+        # read data
+        is_mock, is_sv = self.read_data()
+
+        # set blinding
+        self.set_blinding(is_mock, is_sv)
+        
     def _parse_config(self, config):
         """Parse the configuration options
 

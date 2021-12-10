@@ -70,18 +70,12 @@ class DesiTile(DesiData):
         """
         self.logger = logging.getLogger(__name__)
 
-        super().__init__(config)
-
         # load variables from config
         self.use_all = None
         self.use_single_nights = None
         self._parse_config(config)
 
-        # read data
-        is_mock, is_sv = self.read_data()
-
-        # set blinding
-        self.set_blinding(is_mock, is_sv)
+        super().__init__(config)
 
     def _parse_config(self, config):
         """Parse the configuration options
