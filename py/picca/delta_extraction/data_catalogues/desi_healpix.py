@@ -40,6 +40,9 @@ class DesiHealpix(DesiData):
     A string specifying the chosen blinding strategies. Must be one of the
     accepted values in ACCEPTED_BLINDING_STRATEGIES
 
+    catalogue: astropy.table.Table (from DesiData)
+    The quasar catalogue
+    
     input_directory: str (from DesiData)
     Directory to spectra files.
 

@@ -39,11 +39,11 @@ class DesisimMocks(DesiHealpix):
     A string specifying the chosen blinding strategies. Must be one of the
     accepted values in ACCEPTED_BLINDING_STRATEGIES
 
+    catalogue: astropy.table.Table (from DesiData)
+    The quasar catalogue
+
     input_directory: str (from DesiData)
     Directory to spectra files.
-
-    in_nside: 64 or 16
-    Nside used in the folder structure (64 for data and 16 for mocks)
 
     logger: logging.Logger
     Logger object
