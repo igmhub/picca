@@ -188,7 +188,7 @@ class QuasarCatalogueTest(AbstractTest):
         self.assertTrue(all(quasar_catalogue.catalogue["DEC"] == dec[::-1][:1]))
 
     def test_ztruth_catalogue(self):
-        """Load a ZtruthCatalogue"""
+        """Load a DesiQuasarCatalogue"""
         # TODO: add test
         with self.assertRaises(Exception):
             raise NotImplementedError()
