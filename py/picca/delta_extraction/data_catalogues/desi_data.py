@@ -13,7 +13,7 @@ from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data import Data, defaults
 from picca.delta_extraction.errors import DataError
-from DesiQuasarCatalogpicca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import DesiQuasarCatalogue
+from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import DesiQuasarCatalogue
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 
