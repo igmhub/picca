@@ -138,6 +138,7 @@ class TrueContinuum(ExpectedFlux):
             self.num_iterations = defaults.get("num iterations")
 
         self.num_processors = config.getint("num processors")
+        self.var_lss_binning = config.get("var_lss_binning", 'log')
 
     def compute_delta_stack(self, forests, stack_from_deltas=False):
         """Compute a stack of the delta field as a function of wavelength
@@ -320,19 +321,32 @@ class TrueContinuum(ExpectedFlux):
         return forest
 
     def read_var_lss(self):
-        """
-
-        Arguments
-        ---------
-        TO BE MODIFIED TO READ ANDREI's var_lss
-        Raise
-        -----
+        """Read the LSS delta variance from files (written by the raw analysis)
 
         """
-        var_lss_file = resource_filename('picca', 'delta_extraction')+'/expected_fluxes/var_lss.dat'
-        var_lss_lambda,var_lss = np.loadtxt(var_lss_file).T
-        self.get_var_lss = interp1d(var_lss_lambda,
-                                    var_lss,
+        if self.var_lss_binning == 'log':
+            filename = 'deltas_lya_stats_log_bins.fits.gz'
+        elif self.var_lss_binning == 'lin_2.4':
+            filename = 'deltas_lya_stats_lin_bins_2.4.fits.gz'
+        elif self.var_lss_binning == 'lin_3.2':
+            filename = 'deltas_lya_stats_lin_bins_3.2.fits.gz'
+        else:
+            raise ValueError('Unknown var_lss_binning {}.'.format(self.var_lss_binning))
+
+        var_lss_file = resource_filename('picca', 'delta_extraction')
+        var_lss_file += '/expected_fluxes/var_lss/' + filename
+
+        hdul = fits.open(var_lss_file)
+        log_lambda = hdul[1].data['LAMBDA']
+        flux_variance = hdul[1].data['VAR']
+        mean_flux = hdul[1].data['MEANFLUX']
+        hdul.close()
+
+        if 'lin' in self.var_lss_binning:
+            log_lambda = np.log10(log_lambda)
+
+        self.get_var_lss = interp1d(log_lambda,
+                                    flux_variance/mean_flux**2,
                                     fill_value='extrapolate',
                                     kind='nearest')
 
