@@ -6,7 +6,7 @@ import fitsio
 import healpy
 import numpy as np
 
-from picca.delta_extraction.desi_data import DesiHealpix
+from picca.delta_extraction.data_catalogues.desi_data import DesiHealpix, defaults
 from picca.delta_extraction.errors import DataError
 
 class DesisimMocks(DesiHealpix):
@@ -39,11 +39,11 @@ class DesisimMocks(DesiHealpix):
     A string specifying the chosen blinding strategies. Must be one of the
     accepted values in ACCEPTED_BLINDING_STRATEGIES
 
+    catalogue: astropy.table.Table (from DesiData)
+    The quasar catalogue
+
     input_directory: str (from DesiData)
     Directory to spectra files.
-
-    in_nside: 64 or 16
-    Nside used in the folder structure (64 for data and 16 for mocks)
 
     logger: logging.Logger
     Logger object
@@ -100,7 +100,7 @@ class DesisimMocks(DesiHealpix):
                 f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
                 f"num_data: {len(forests_by_targetid)}")
 
-            self.read_file(filename, forests_by_targetid)
+            self.read_file(filename, group, forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")

@@ -11,7 +11,7 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.desi_data import DesiData, defaults
+from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 
@@ -48,6 +48,9 @@ class DesiTile(DesiData):
     A string specifying the chosen blinding strategies. Must be one of the
     accepted values in ACCEPTED_BLINDING_STRATEGIES
 
+    catalogue: astropy.table.Table (from DesiData)
+    The quasar catalogue
+
     input_directory: str (from DesiData)
     Directory to spectra files.
 
@@ -70,18 +73,12 @@ class DesiTile(DesiData):
         """
         self.logger = logging.getLogger(__name__)
 
-        super().__init__(config)
-
         # load variables from config
         self.use_all = None
         self.use_single_nights = None
         self._parse_config(config)
 
-        # read data
-        is_mock, is_sv = self.read_data()
-
-        # set blinding
-        self.set_blinding(is_mock, is_sv)
+        super().__init__(config)
 
     def _parse_config(self, config):
         """Parse the configuration options

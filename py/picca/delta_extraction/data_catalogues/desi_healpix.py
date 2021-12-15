@@ -9,7 +9,7 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.desi_data import DesiData
+from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 
@@ -40,6 +40,9 @@ class DesiHealpix(DesiData):
     A string specifying the chosen blinding strategies. Must be one of the
     accepted values in ACCEPTED_BLINDING_STRATEGIES
 
+    catalogue: astropy.table.Table (from DesiData)
+    The quasar catalogue
+
     input_directory: str (from DesiData)
     Directory to spectra files.
 
@@ -60,12 +63,6 @@ class DesiHealpix(DesiData):
         self.logger = logging.getLogger(__name__)
 
         super().__init__(config)
-
-        # read data
-        is_mock, is_sv = self.read_data()
-
-        # set blinding
-        self.set_blinding(is_mock, is_sv)
 
     def read_data(self):
         """Read the data.
@@ -100,7 +97,7 @@ class DesiHealpix(DesiData):
              (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
                                     grouped_catalogue.groups):
 
-            if 'main' in survey:
+            if survey not in ["sv", "sv1", "sv2", "sv3"]:
                 is_sv = False
 
             input_directory = f'{self.input_directory}/{survey}/dark'
@@ -112,7 +109,7 @@ class DesiHealpix(DesiData):
                 f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
                 f"num_data: {len(forests_by_targetid)}")
 
-            self.read_file(filename, forests_by_targetid)
+            self.read_file(filename, group, forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")
@@ -121,13 +118,16 @@ class DesiHealpix(DesiData):
 
         return False, is_sv
 
-    def read_file(self, filename, forests_by_targetid):
+    def read_file(self, filename, catalogue, forests_by_targetid):
         """Read the spectra and formats its data as Forest instances.
 
         Arguments
         ---------
         filename: str
         Name of the file to read
+
+        catalogue: astropy.table.Table
+        The quasar catalogue fragment associated with this file
 
         forests_by_targetid: dict
         Dictionary were forests are stored. Its content is modified by this
@@ -141,7 +141,7 @@ class DesiHealpix(DesiData):
             hdul = fitsio.FITS(filename)
         except IOError:
             self.logger.warning(f"Error reading pix {healpix}. Ignoring file")
-            continue
+            return
 
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
@@ -180,7 +180,7 @@ class DesiHealpix(DesiData):
         hdul.close()
 
         # Loop over quasars in catalogue inside this healpixel
-        for row in group:
+        for row in catalogue:
             # Find which row in tile contains this quasar
             # It should be there by construction
             targetid = row["TARGETID"]

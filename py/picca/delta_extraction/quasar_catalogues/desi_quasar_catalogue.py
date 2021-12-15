@@ -1,4 +1,4 @@
-"""This module defines the class ZtruthCatalogue to read z_truth
+"""This module defines the class DesiQuasarCatalogue to read z_truth
 files from DESI
 """
 import logging
@@ -10,7 +10,7 @@ import numpy as np
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
 
-class ZtruthCatalogue(QuasarCatalogue):
+class DesiQuasarCatalogue(QuasarCatalogue):
     """Reads the z_truth catalogue from DESI
 
     Methods
@@ -55,10 +55,8 @@ class ZtruthCatalogue(QuasarCatalogue):
         self.filename = None
         self._parse_config(config)
 
-        # read DRQ Catalogue
-        catalogue = self.read_catalogue()
-
-        self.catalogue = catalogue
+        # read quasar catalogue
+        self.catalogue = self.read_catalogue()
 
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
@@ -80,7 +78,7 @@ class ZtruthCatalogue(QuasarCatalogue):
         self.filename = config.get("catalogue")
         if self.filename is None:
             raise QuasarCatalogueError("Missing argument 'catalogue' required "
-                                       "by ZtruthCatalogue")
+                                       "by DesiQuasarCatalogue")
 
     def read_catalogue(self):
         """Read the z_truth catalogue

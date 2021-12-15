@@ -13,10 +13,9 @@ from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data import Data, defaults
 from picca.delta_extraction.errors import DataError
-from picca.delta_extraction.quasar_catalogues.ztruth_catalogue import ZtruthCatalogue
+from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import DesiQuasarCatalogue
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
-
 
 defaults.update({
     "delta lambda": 1.0,  # TODO: update this value to the read from DESI files
@@ -84,7 +83,13 @@ class DesiData(Data):
         self._parse_config(config)
 
         # load z_truth catalogue
-        self.catalogue = ZtruthCatalogue(config).catalogue
+        self.catalogue = DesiQuasarCatalogue(config).catalogue
+
+        # read data
+        is_mock, is_sv = self.read_data()
+
+        # set blinding
+        self.set_blinding(is_mock, is_sv)
 
     def _parse_config(self, config):
         """Parse the configuration options
