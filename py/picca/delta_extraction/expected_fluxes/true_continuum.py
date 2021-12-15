@@ -138,7 +138,7 @@ class TrueContinuum(ExpectedFlux):
             self.num_iterations = defaults.get("num iterations")
 
         self.num_processors = config.getint("num processors")
-        self.var_lss_binning = config.get("var_lss_binning", 'log')
+        self.var_lss_binning = config.get("var lss binning", 'log')
 
     def compute_delta_stack(self, forests, stack_from_deltas=False):
         """Compute a stack of the delta field as a function of wavelength
@@ -197,8 +197,8 @@ class TrueContinuum(ExpectedFlux):
                 bins = ((forest.log_lambda - Forest.log_lambda_min) /
                         Forest.delta_log_lambda + 0.5).astype(int)
             elif Forest.wave_solution == "lin":
-                bins = ((forest.lambda_ - Forest.log_lambda_min) /
-                        Forest.delta_log_lambda + 0.5).astype(int)
+                bins = ((forest.lambda_ - Forest.lambda_min) /
+                        Forest.delta_lambda + 0.5).astype(int)
             else:
                 raise ExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'linear'")
@@ -303,20 +303,25 @@ class TrueContinuum(ExpectedFlux):
 
         if Forest.wave_solution == "log":
             forest.continuum = true_continuum(10**forest.log_lambda)[0]
+            mean_optical_depth = np.ones(forest.log_lambda.size)
+            tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
+            w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
+            z = 10.**forest.log_lambda / lambda_rest_frame - 1.
+
         elif Forest.wave_solution == "lin":
             forest.continuum = true_continuum(forest.lambda_)[0]
+            mean_optical_depth = np.ones(forest.lambda_.size)
+            tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
+            w = forest.lambda_ / (1. + forest.z) <= lambda_rest_frame
+            z = forest.lambda_ / lambda_rest_frame - 1.
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either 'log' "
                                     "or 'lin'")
 
         # multiply by mean flux model for now, it might be changed for
         # computing the mean flux or reading it from file
-        mean_optical_depth = np.ones(forest.log_lambda.size)
-        tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
-        w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
-        z = 10.**forest.log_lambda / lambda_rest_frame - 1.
-        mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
 
+        mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
         forest.continuum *= mean_optical_depth
         return forest
 
@@ -324,6 +329,7 @@ class TrueContinuum(ExpectedFlux):
         """Read the LSS delta variance from files (written by the raw analysis)
 
         """
+
         if self.var_lss_binning == 'log':
             filename = 'deltas_lya_stats_log_bins.fits.gz'
         elif self.var_lss_binning == 'lin_2.4':
@@ -376,7 +382,7 @@ class TrueContinuum(ExpectedFlux):
                 raise ExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'lin'")
 
-            mean_expected_flux = forest.continuum #* stack_delta ##not sure of this stack_delta
+            mean_expected_flux = forest.continuum 
             var_pipe = 1. / forest.ivar / mean_expected_flux**2
             variance = var_pipe + var_lss
             weights = 1. / variance

@@ -6,7 +6,7 @@ import fitsio
 import healpy
 import numpy as np
 
-from picca.delta_extraction.data_catalogues.desi_data import DesiHealpix, defaults
+from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix, defaults
 from picca.delta_extraction.errors import DataError
 
 class DesisimMocks(DesiHealpix):
@@ -85,6 +85,12 @@ class DesisimMocks(DesiHealpix):
         ]
         self.catalogue["HEALPIX"] = healpix
         self.catalogue.sort("HEALPIX")
+
+        #Current mocks don't have this "SURVEY" column in the catalog
+        #but its not clear future ones will not have it, so I think is good to leave it for now.
+        if not "SURVEY" in self.catalogue.colnames:
+             self.catalogue["SURVEY"]=np.ma.masked
+
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
 
         forests_by_targetid = {}
