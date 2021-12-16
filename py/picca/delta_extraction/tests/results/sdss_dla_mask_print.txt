@@ -1,4 +1,0 @@
-[PROGRESS]: Reading DLA catalog from: /Users/iprafols/software/picca/py/picca/delta_extraction/tests/data/dummy_absorbers_cat.fits.gz
-[PROGRESS]: In catalog: 3 DLAs
-[PROGRESS]: In catalog: 2 forests have a DLA
-
