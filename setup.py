@@ -2,7 +2,7 @@
 
 import glob
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 scripts = sorted(glob.glob('bin/picca*'))
 
@@ -17,7 +17,7 @@ setup(name="picca",
     url="https://github.com/igmhub/picca",
     author="Nicolas Busca, Helion du Mas des Bourboux et al",
     author_email="nbusca@lpnhe.in2p3.fr",
-    packages=['picca','picca.delta_extraction', 'picca.fitter2', 'picca.bin'],
+    packages=['picca','picca.delta_extraction', 'picca.fitter2', 'picca.bin', 'picca.delta_extraction.astronomical_objects', 'picca.delta_extraction.corrections', 'picca.delta_extraction.data_catalogues', 'picca.delta_extraction.expected_fluxes', 'picca.delta_extraction.masks', 'picca.delta_extraction.quasar_catalogues'],
     package_dir = {'': 'py'},
     package_data = {'picca': ['fitter2/models/*/*.fits']},
     install_requires=['numpy','scipy','iminuit','healpy','fitsio',
