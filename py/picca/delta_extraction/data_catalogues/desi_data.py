@@ -210,7 +210,7 @@ class DesiData(Data):
                                     "being ignored as mocks should not be "
                                     "blinded. 'none' blinding engaged")
                 self.blinding = "none"
-        if is_sv:
+        elif is_sv:
             if self.blinding != "none":
                 self.logger.warning(f"Selected blinding, {self.blinding} is "
                                     "being ignored as SV data should not be "
