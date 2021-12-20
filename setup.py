@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 import glob
+import git
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 scripts = sorted(glob.glob('bin/picca*'))
 
-description = "Package for Igm Cosmological-Correlations Analyses"
+description = f"Package for Igm Cosmological-Correlations Analyses\ncommit hash: {git.Repo('.').head.object.hexsha}"
 
 exec(open('py/picca/_version.py').read())
 version = __version__
