@@ -264,7 +264,7 @@ class TrueContinuum(ExpectedFlux):
 
 
         # now compute the mean delta
-        #self.compute_delta_stack(forests)
+        self.compute_delta_stack(forests)
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
@@ -376,10 +376,10 @@ class TrueContinuum(ExpectedFlux):
 
             # get the variance functions and statistics
             if Forest.wave_solution == "log":
-                #stack_delta = self.get_stack_delta(forest.log_lambda)
+                stack_delta = self.get_stack_delta(forest.log_lambda)
                 var_lss = self.get_var_lss(forest.log_lambda)
             elif Forest.wave_solution == "lin":
-                #stack_delta = self.get_stack_delta(forest.lambda_)
+                stack_delta = self.get_stack_delta(forest.lambda_)
                 var_lss = self.get_var_lss(forest.lambda_)
             else:
                 raise ExpectedFluxError("Forest.wave_solution must be either "
