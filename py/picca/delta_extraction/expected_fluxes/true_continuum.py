@@ -138,6 +138,7 @@ class TrueContinuum(ExpectedFlux):
             self.num_iterations = defaults.get("num iterations")
 
         self.num_processors = config.getint("num processors")
+
         self.var_lss_binning = config.get("var lss binning", 'log')
 
     def compute_delta_stack(self, forests, stack_from_deltas=False):
@@ -202,11 +203,11 @@ class TrueContinuum(ExpectedFlux):
             else:
                 raise ExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'linear'")
+
             rebin = np.bincount(bins, weights=delta * weights)
             stack_delta[:len(rebin)] += rebin
             rebin = np.bincount(bins, weights=weights)
             stack_weight[:len(rebin)] += rebin
-
         w = stack_weight > 0
         stack_delta[w] /= stack_weight[w]
 
@@ -255,7 +256,7 @@ class TrueContinuum(ExpectedFlux):
         for iteration in range(1):
             pool = context.Pool(processes=self.num_processors)
             self.logger.progress(
-                f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
+                f"Continuum fitting: starting iteration {iteration} of {self.num_iterations} with {self.num_processors} processors"
             )
 
             forests = pool.map(self.read_true_continuum, forests)
@@ -263,7 +264,7 @@ class TrueContinuum(ExpectedFlux):
 
 
         # now compute the mean delta
-        self.compute_delta_stack(forests)
+        #self.compute_delta_stack(forests)
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
@@ -323,6 +324,7 @@ class TrueContinuum(ExpectedFlux):
 
         mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
         forest.continuum *= mean_optical_depth
+        forest.hpcont = healpix
         return forest
 
     def read_var_lss(self):
@@ -365,6 +367,7 @@ class TrueContinuum(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
         """
+
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 self.logger.info(f"Rejected forest with los_id {forest.los_id} "
@@ -373,10 +376,10 @@ class TrueContinuum(ExpectedFlux):
 
             # get the variance functions and statistics
             if Forest.wave_solution == "log":
-                stack_delta = self.get_stack_delta(forest.log_lambda)
+                #stack_delta = self.get_stack_delta(forest.log_lambda)
                 var_lss = self.get_var_lss(forest.log_lambda)
             elif Forest.wave_solution == "lin":
-                stack_delta = self.get_stack_delta(forest.lambda_)
+                #stack_delta = self.get_stack_delta(forest.lambda_)
                 var_lss = self.get_var_lss(forest.lambda_)
             else:
                 raise ExpectedFluxError("Forest.wave_solution must be either "

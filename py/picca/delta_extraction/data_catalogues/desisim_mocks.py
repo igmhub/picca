@@ -1,5 +1,6 @@
 """This module defines the class DesiData to load DESI data
 """
+import multiprocessing
 import logging
 
 import fitsio
@@ -56,10 +57,9 @@ class DesisimMocks(DesiHealpix):
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
+
         self.logger = logging.getLogger(__name__)
-
         super().__init__(config)
-
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
 
@@ -92,8 +92,14 @@ class DesisimMocks(DesiHealpix):
              self.catalogue["SURVEY"]=np.ma.masked
 
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
+        arguments=[]
 
-        forests_by_targetid = {}
+        self.num_processors = multiprocessing.cpu_count() // 2
+        context = multiprocessing.get_context('fork')
+        pool = context.Pool(processes=self.num_processors)
+        manager =  multiprocessing.Manager()
+        forests_by_targetid = manager.dict()
+
         for (index,
              (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
                                     grouped_catalogue.groups):
@@ -101,16 +107,14 @@ class DesisimMocks(DesiHealpix):
             filename = (
                 f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
                 f"{in_nside}-{healpix}.fits")
+            arguments.append((filename,group,forests_by_targetid))
 
-            self.logger.progress(
-                f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
-                f"num_data: {len(forests_by_targetid)}")
+        self.logger.info(f"reading data from {len(arguments)} files")
+        pool.starmap(self.read_file,arguments)
 
-            self.read_file(filename, group, forests_by_targetid)
-
+        pool.close()
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")
-
         self.forests = list(forests_by_targetid.values())
 
         return True, False

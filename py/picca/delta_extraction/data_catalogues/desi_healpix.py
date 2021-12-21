@@ -83,6 +83,7 @@ class DesiHealpix(DesiData):
         """
         in_nside = 64
 
+
         healpix = [
             healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"], nest=True)
             for row in self.catalogue
@@ -118,7 +119,7 @@ class DesiHealpix(DesiData):
 
         return False, is_sv
 
-    def read_file(self, filename, catalogue, forests_by_targetid):
+    def read_file(self, filename, catalogue,forests_by_targetid):
         """Read the spectra and formats its data as Forest instances.
 
         Arguments
@@ -140,13 +141,11 @@ class DesiHealpix(DesiData):
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
-            self.logger.warning(f"Error reading pix {healpix}. Ignoring file")
+            self.logger.warning(f"Error reading  {filename}. Ignoring file")
             return
-
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
         targetid_spec = fibermap["TARGETID"]
-
         # First read all wavelength, flux, ivar, mask, and resolution
         # from this file
         spectrographs_data = {}
@@ -186,8 +185,8 @@ class DesiHealpix(DesiData):
             targetid = row["TARGETID"]
             w_t = np.where(targetid_spec == targetid)[0]
             if len(w_t) == 0:
-                self.logger.warning(
-                    f"Error reading {targetid}. Ignoring object")
+                #self.logger.warning(
+                 #   f"Error reading {targetid}. Ignoring object")
                 continue
             if len(w_t) > 1:
                 self.logger.warning(
@@ -195,7 +194,6 @@ class DesiHealpix(DesiData):
                     f"for {targetid}")
             else:
                 w_t = w_t[0]
-
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
             for spec in spectrographs_data.values():
@@ -208,7 +206,7 @@ class DesiHealpix(DesiData):
                     "targetid": targetid,
                     "ra": row['RA'],
                     "dec": row['DEC'],
-                    "z": row['Z'],
+                    "z": row['Z']
                 }
                 if Forest.wave_solution == "log":
                     args["log_lambda"] = np.log10(spec['WAVELENGTH'])
