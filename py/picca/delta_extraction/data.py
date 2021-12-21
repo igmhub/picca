@@ -143,8 +143,7 @@ class Data:
                            for healpix in unique_healpixs}
 
         for healpix, indexs in sorted(healpixs_indexs.items()):
-            results = fitsio.FITS(out_dir + "/delta-{}".format(healpix) +
-                                  ".fits.gz",
+            results = fitsio.FITS(out_dir + "/delta-{}".format(healpix) + ".fits.gz",
                                   'rw',
                                   clobber=True)
             for index in indexs:

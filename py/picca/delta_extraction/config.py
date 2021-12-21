@@ -16,7 +16,7 @@ from picca.delta_extraction.utils import class_from_string, setup_logger
 try:
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     PICCA_BASE = THIS_DIR.split("py/picca")[0]
-    git_hash = git.Repo(PICCA_BASE).head.object.heshxa
+    git_hash = git.Repo(PICCA_BASE).head.object.hexsha
 except git.exc.InvalidGitRepositoryError:
     git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
 
@@ -378,11 +378,13 @@ class Config:
         overwrite is not selected
         """
         if not os.path.exists(self.out_dir):
-            os.makedirs(self.out_dir)
-            os.makedirs(self.out_dir+"Delta/")
-            os.makedirs(self.out_dir+"Log/")
+            os.makedirs(self.out_dir, exist_ok=True)
+            os.makedirs(self.out_dir+"Delta/", exist_ok=True)
+            os.makedirs(self.out_dir+"Log/", exist_ok=True)
             self.write_config()
         elif self.overwrite:
+            os.makedirs(self.out_dir+"Delta/", exist_ok=True)
+            os.makedirs(self.out_dir+"Log/", exist_ok=True)
             self.write_config()
         else:
             raise ConfigError("Specified folder contains a previous run."

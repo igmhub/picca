@@ -49,7 +49,9 @@ class ConfigurationTest(AbstractTest):
                     self.assertTrue(key in new_section.keys())
             else:
                 for key, orig_value in orig_section.items():
-                    self.assertTrue(key in new_section.keys())
+                    if key not in new_section.keys():
+                        print(f"key {key} in section {new_section} missing in new file")
+                        self.assertTrue(key in new_section.keys())
                     new_value = new_section.get(key)
                     # this is necessary to remove the system dependent bits of
                     # the paths
@@ -64,7 +66,9 @@ class ConfigurationTest(AbstractTest):
                 if not key in orig_section.keys():
                     print(f"key {key} in section {section} missing on {new_file}")
 
-                self.assertTrue(key in orig_section.keys())
+                if key not in orig_section.keys():
+                    print(f"key {key} in section {new_section} missing in original file")
+                    self.assertTrue(key in orig_section.keys())
 
         for section in new_config.sections():
             if not section in orig_config.sections():
