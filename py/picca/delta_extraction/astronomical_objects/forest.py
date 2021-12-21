@@ -523,6 +523,10 @@ class Forest(AstronomicalObject):
             w1 = w1 & (self.lambda_ / (1. + self.z) < Forest.lambda_max_rest_frame)
             w1 = w1 & (self.ivar > 0.)
             if w1.sum() == 0:
+                self.lambda_ = np.array([])
+                self.flux = np.array([])
+                self.ivar = np.array([])
+                self.transmission_correction = np.array([])
                 return [], [], [], [], []
             bins = bins[w1]
             self.lambda_ = self.lambda_[w1]
