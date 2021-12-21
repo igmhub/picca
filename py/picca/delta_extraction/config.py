@@ -2,6 +2,7 @@
 This class is responsible for managing the options selected for the user and
 contains the default configuration.
 """
+from importlib import metadata
 from configparser import ConfigParser
 import logging
 import os
@@ -12,8 +13,12 @@ import git
 from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.utils import class_from_string, setup_logger
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-PICCA_BASE = THIS_DIR.split("py/picca")[0]
+try:
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+    PICCA_BASE = THIS_DIR.split("py/picca")[0]
+    git_hash = git.Repo(PICCA_BASE).head.object.heshxa
+except git.exc.InvalidGitRepositoryError:
+    git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
 
 default_config = {
     "general": {
@@ -25,7 +30,7 @@ default_config = {
         "log": "run.log",
     },
     "run specs": {
-        "git hash": git.Repo(PICCA_BASE).head.object.hexsha,
+        "git hash": git_hash,
         "timestamp": str(datetime.now()),
     }
 }
