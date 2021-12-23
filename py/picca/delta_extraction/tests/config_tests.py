@@ -186,6 +186,14 @@ class ConfigTest(AbstractTest):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [expected flux]"))
 
+        # check arguments of TrueContinuum
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_true_continuum.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [expected flux]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [expected flux]"))
+
     def test_config_invalid_general_options(self):
         """ Test that passing invalid options to the general section raise errors """
         in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_general.ini"

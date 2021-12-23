@@ -11,16 +11,16 @@ from pkg_resources import resource_filename
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
-from picca.delta_extraction.expected_flux import ExpectedFlux, defaults
+from picca.delta_extraction.expected_flux import ExpectedFlux
 
 accepted_options = ["input directory", "iter out prefix",
                     "num iterations", "num processors",
                     "var lss binning"]
 
-defaults.update({
+defaults = {
     "iter out prefix": "delta_attributes",
     "num iterations": 5,
-})
+}
 
 
 class TrueContinuum(ExpectedFlux):
