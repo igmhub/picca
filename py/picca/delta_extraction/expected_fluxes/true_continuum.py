@@ -13,13 +13,13 @@ from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux, defaults
 
+accepted_options = ["input directory", "iter out prefix",
+                    "num iterations", "num processors",
+                    "var lss binning"]
+
 defaults.update({
     "iter out prefix": "delta_attributes",
-    "num bins variance": 20,
     "num iterations": 5,
-    "order": 1,
-    "use_constant_weight": False,
-    "use_ivar_as_weight": False,
 })
 
 
@@ -385,7 +385,7 @@ class TrueContinuum(ExpectedFlux):
                 raise ExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'lin'")
 
-            mean_expected_flux = forest.continuum 
+            mean_expected_flux = forest.continuum
             var_pipe = 1. / forest.ivar / mean_expected_flux**2
             variance = var_pipe + var_lss
             weights = 1. / variance
