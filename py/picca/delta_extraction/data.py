@@ -11,6 +11,8 @@ from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import ABSORBER_IGM
 
+accepted_options = ["analysis type", "lambda abs IGM", "minimum number pixels in forest"]
+
 defaults = {
     "analysis type": "BAO 3D",
     "lambda abs IGM": ABSORBER_IGM.get("LYA"),

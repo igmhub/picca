@@ -12,7 +12,7 @@ from picca.delta_extraction.utils import setup_logger
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 os.environ["THIS_DIR"] = THIS_DIR
 
-class ConfigurationTest(AbstractTest):
+class ConfigTest(AbstractTest):
     """Test the configuration.
 
     Methods
@@ -87,8 +87,6 @@ class ConfigurationTest(AbstractTest):
         out_warning_file = f"{THIS_DIR}/results/config_tests/Log/run.log"
         test_warning_file = f"{THIS_DIR}/data/config_test.txt"
 
-        #setup_logger(log_file=out_warning_file)
-
         config = Config(in_file)
         config.write_config()
         self.compare_config(test_file, out_file)
@@ -99,6 +97,147 @@ class ConfigurationTest(AbstractTest):
         in_file = f"{THIS_DIR}/data/config.ini"
         with self.assertRaises(ConfigError):
             config = Config(in_file)
+
+    def test_config_invalid_correction_options(self):
+        """ Test that passing invalid options to the correction classes raise errors """
+
+        # firt check corrections section
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_corrections.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [corrections]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [corrections]"))
+
+        # check arguments of SdssCalibrationCorrection
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_calibration_correction.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
+
+        # check arguments of SdssDustCorrection
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_dust_correction.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
+
+        # check arguments of SdssIvarCorrection
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_ivar_correction.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
+
+        # check arguments of SdssOpticalDepthCorrection
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_optical_depth_correction.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
+
+    def test_config_invalid_data_options(self):
+        """ Test that passing invalid options to the data classes raise errors """
+
+        # check arguments of DesiHealpix
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_desi_healpix.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [data]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [data]"))
+
+        # check arguments of DesiTile
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_desi_tile.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [data]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [data]"))
+
+        # check arguments of DesisimMocks
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_desisim_mocks.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [data]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [data]"))
+
+        # check arguments of SdssData
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_dr16_expected_flux.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [data]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [data]"))
+
+    def test_config_invalid_expected_flux_options(self):
+        """ Test that passing invalid options to the expected flux classes raise errors """
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_general.ini"
+
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [general]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [general]"))
+
+    def test_config_invalid_general_options(self):
+        """ Test that passing invalid options to the general section raise errors """
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_general.ini"
+
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [general]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [general]"))
+
+    def test_config_invalid_mask_options(self):
+        """ Test that passing invalid options to the mask classes raise errors """
+
+        # firt check masks section
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_masks.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [masks]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [masks]"))
+
+        # check arguments of LinesMask
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_lines_mask.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
+
+        # check arguments of SdssAbsorberMask
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_absorber_mask.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
+
+        # check arguments of SdssBalMask
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_bal_mask.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
+
+        # check arguments of SdssDlaMask
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_dla_mask.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
 
 
 if __name__ == '__main__':

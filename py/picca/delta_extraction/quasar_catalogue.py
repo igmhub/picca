@@ -6,6 +6,9 @@ import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError
 
+accepted_options = ["lambda max", "lambda max rest frame", "lambda min",
+                    "lambda min rest frame", "max num spec", "z max", "z min"]
+
 class QuasarCatalogue:
     """Abstract class to contain a general quasar catalogue
 

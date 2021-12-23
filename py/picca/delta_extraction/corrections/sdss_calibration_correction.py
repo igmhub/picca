@@ -5,6 +5,8 @@ from scipy.interpolate import interp1d
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
 
+accepted_options = ["filename"]
+
 class SdssCalibrationCorrection(Correction):
     """Class to correct calibration errors in SDSS spectra
 
@@ -34,6 +36,8 @@ class SdssCalibrationCorrection(Correction):
         in extension STACK_DELTAS
         """
         filename = config.get("filename")
+        if filename is None:
+            raise CorrectionError("Missing argument 'filename' required by SdssCalibrationCorrection")
         try:
             hdu = fitsio.read(filename, ext="STACK_DELTAS")
             stack_log_lambda = hdu['loglam']

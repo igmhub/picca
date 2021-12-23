@@ -153,6 +153,21 @@ class MaskTest(AbstractTest):
         reset_logger()
         self.compare_ascii(test_file, out_file)
 
+    def test_lines_mask(self):
+        """Test LinesMask"""
+        # TODO: add test
+
+    def test_lines_mask_missing_options(self):
+            """Test correct error reporting when initializing with missing options
+            for class LinesMask
+            """
+            # create SdssCalibrationCorrection instance with missing options
+            config = ConfigParser()
+            config.read_dict({"masks": {}})
+            with self.assertRaises(CorrectionError) as context_manager:
+                correction = SdssDustCorrection(config["masks"])
+            self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
+
     def test_mask(self):
         """Test Abstract class Mask
 

@@ -10,6 +10,8 @@ defaults = {
     "absorber mask width": 2.5,
 }
 
+accepted_options = ["filename"]
+
 class LinesMask(Mask):
     """Class to mask (sky) lines
 
@@ -41,6 +43,8 @@ class LinesMask(Mask):
         super().__init__()
 
         mask_file = config.get("filename")
+        if mask_file is None:
+            raise CorrectionError("Missing argument 'filename' required by LinesMask")
         try:
             mask = Table.read(mask_file,
                               names=('type', 'wave_min', 'wave_max', 'frame'),

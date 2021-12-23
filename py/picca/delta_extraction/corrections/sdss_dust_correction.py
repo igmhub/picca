@@ -8,6 +8,8 @@ from scipy import interpolate
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
 
+accepted_options = ["extinction_conversion_r", "filename"]
+
 defaults = {
     "extinction_conversion_r": 3.793,
 }
@@ -39,12 +41,15 @@ class SdssDustCorrection(Correction):
         CorrectionError if input file does not have fields THING_ID and/or
         EXTINCTION in extension CATALOG
         """
-        filename = config.get("filename")
         extinction_conversion_r = config.getfloat("extinction_conversion_r")
         if extinction_conversion_r is None:
-            raise CorrectionError("Error loading SdssDustCorrection. Missing "
-                                  "variable 'extinction_conversion_r'")
+            raise CorrectionError("Missing argument 'extinction_conversion_r' "
+                                  "required by SdssDustCorrection")
 
+        filename = config.get("filename")
+        if filename is None:
+            raise CorrectionError("Missing argument 'filename' "
+                                  "required by SdssDustCorrection")
         try:
             hdu = fitsio.read(filename, ext="CATALOG")
             thingid = hdu['THING_ID']

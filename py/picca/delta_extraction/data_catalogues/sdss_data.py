@@ -9,11 +9,16 @@ import fitsio
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.astronomical_objects.sdss_pk1d_forest import SdssPk1dForest
-from picca.delta_extraction.data import Data, defaults
+from picca.delta_extraction.data import Data, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import defaults as defaults_drq
+from picca.delta_extraction.quasar_catalogues.drq_catalogue import accepted_options as accepted_options_quasar_catalogue
 from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
+
+accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_catalogue +[
+    "input directory", "mode", "lambda max", "lambda max rest frame", "lambda min",
+    "lambda min rest frame", "rebin"])))
 
 defaults.update({
     "lambda max": 5500.0,
