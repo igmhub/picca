@@ -13,6 +13,8 @@ defaults = {
     "absorber mask width": 2.5,
 }
 
+accepted_options = ["absorber mask width", "filename"]
+
 class SdssAbsorberMask(Mask):
     """Class to mask Absorbers
 

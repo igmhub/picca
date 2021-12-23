@@ -5,6 +5,8 @@ from scipy.interpolate import interp1d
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
 
+accepted_options = ["filename"]
+
 class SdssIvarCorrection(Correction):
     """Class to correct inverse variance errors in SDSS spectra
 
@@ -34,6 +36,8 @@ class SdssIvarCorrection(Correction):
         in extension VAR_FUNC
         """
         filename = config.get("filename")
+        if filename is None:
+            raise CorrectionError("Missing argument 'filename' required by SdssIvarCorrection")
         try:
             hdu = fitsio.read(filename, ext="VAR_FUNC")
             log_lambda = hdu['loglam']

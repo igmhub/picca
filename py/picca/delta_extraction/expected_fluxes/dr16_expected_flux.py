@@ -10,9 +10,13 @@ from scipy.interpolate import interp1d
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
-from picca.delta_extraction.expected_flux import ExpectedFlux, defaults
+from picca.delta_extraction.expected_flux import ExpectedFlux
 
-defaults.update({
+accepted_options = ["iter out prefix", "limit eta", "limit var lss",
+                    "num bins variance", "num iterations", "num processors",
+                    "order", "use constant weight", "use ivar as weight"]
+
+defaults = {
     "iter out prefix": "delta_attributes",
     "limit eta": (0.5, 1.5),
     "limit var lss": (0., 0.3),
@@ -22,8 +26,7 @@ defaults.update({
     "order": 1,
     "use constant weight": False,
     "use ivar as weight": False,
-})
-
+}
 
 class Dr16ExpectedFlux(ExpectedFlux):
     """Class to the expected flux as done in the DR16 SDSS analysys

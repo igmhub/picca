@@ -7,6 +7,9 @@ from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
 from picca.delta_extraction.utils import ABSORBER_IGM
 
+accepted_options = ["optical depth absorber", "optical depth gamma",
+                    "optical depth tau"]
+
 class SdssOpticalDepthCorrection(Correction):
     """Class to correct for optical depths contribution in SDSS spectra
 
@@ -41,27 +44,26 @@ class SdssOpticalDepthCorrection(Correction):
 
         Raises
         ------
-        CorrectionError if the variables 'optical depths tau',
+        CorrectionError if any of the variables 'optical depths tau', 'optical
+        depth gamma' and 'optical depth absorber' are not present or have
+        different lengths
         """
         self.logger = logging.getLogger(__name__)
 
         tau_list = config.get("optical depth tau")
         if tau_list is None:
             raise CorrectionError(
-                "Error constructing SdssOpticalDepthCorrection. "
-                "Missing variable 'optical depth tau'")
+                "Missing argument 'optical depth tau' required by SdssOpticalDepthCorrection")
         self.tau_list = [float(item) for item in tau_list.split()]
         gamma_list = config.get("optical depth gamma")
         if gamma_list is None:
             raise CorrectionError(
-                "Error constructing SdssOpticalDepthCorrection. "
-                "Missing variable 'optical depth gamma'")
+                "Missing argument 'optical depth gamma' required by SdssOpticalDepthCorrection")
         self.gamma_list = [float(item) for item in gamma_list.split()]
         absorber_list = config.get("optical depth absorber")
         if absorber_list is None:
             raise CorrectionError(
-                "Error constructing SdssOpticalDepthCorrection. "
-                "Missing variable 'optical depth absorber'")
+                "Missing argument 'optical depth absorber' required by SdssOpticalDepthCorrection")
         absorber_list = [item.upper() for item in absorber_list.split()]
         self.lambda_rest_frame_list = [
             ABSORBER_IGM[absorber] for absorber in absorber_list

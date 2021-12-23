@@ -11,11 +11,17 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.data import Data, defaults
+from picca.delta_extraction.data import Data, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import DesiQuasarCatalogue
+from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import accepted_options as accepted_options_quasar_catalogue
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
+
+accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_catalogue + [
+    "blinding", "delta lambda", "input directory", "lambda max",
+    "lambda max rest frame", "lambda min", "lambda min rest frame",
+    "rebin", "wave solution"])))
 
 defaults.update({
     "delta lambda": 1.0,  # TODO: update this value to the read from DESI files

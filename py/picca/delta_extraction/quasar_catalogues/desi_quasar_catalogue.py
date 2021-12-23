@@ -8,7 +8,10 @@ import fitsio
 import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError
-from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
+from picca.delta_extraction.quasar_catalogue import QuasarCatalogue, accepted_options
+
+accepted_options = sorted(list(set(accepted_options + [
+    "catalogue"])))
 
 class DesiQuasarCatalogue(QuasarCatalogue):
     """Reads the z_truth catalogue from DESI

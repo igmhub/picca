@@ -5,10 +5,6 @@ is the product of the unabsorbed quasar continuum and the mean transmission
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 
-defaults = {
-    "minimum number pixels in forest": 50,
-}
-
 class ExpectedFlux:
     """Abstract class from which all classes computing the expected flux
     must inherit. Classes that inherit from this should be initialized using

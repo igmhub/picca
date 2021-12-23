@@ -15,6 +15,8 @@ defaults = {
     "bal index type": "ai",
 }
 
+accepted_options = ["bal index type", "filename"]
+
 # Wavelengths in Angstroms
 lines = {
     "lCIV": 1549,

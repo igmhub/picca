@@ -101,6 +101,9 @@ def class_from_string(class_name, module_name):
     deafult_args: dict
     A dictionary with the default options (empty for no default options)
 
+    accepted_options: list
+    A list with the names of the accepted options
+
     Raise
     -----
     ImportError if module cannot be loaded
@@ -115,7 +118,12 @@ def class_from_string(class_name, module_name):
         default_args = getattr(module_object, "defaults")
     except AttributeError:
         default_args = {}
-    return class_object, default_args
+    # get the list with the valid options
+    try:
+        accepted_options = getattr(module_object, "accepted_options")
+    except AttributeError:
+        accepted_options = []
+    return class_object, default_args, accepted_options
 
 
 PROGRESS_LEVEL_NUM = 15
@@ -147,17 +155,17 @@ def setup_logger(logging_level_console=logging.DEBUG, log_file=None,
     ---------
     logging_level_console: int or str - Default: logging.DEBUG
     Logging level for the console handler. If str, it should be a Level from
-    the logging module (i.e. CRITICAL, ERROR, WARNING, INFO, DEBU, NOTSET).
-    Additionally, the user-defined level PROGRESS is allowed.
+    the logging module (i.e. CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET).
+    Additionally, the user-defined levels PROGRESS and WARNING_OK are allowed.
 
     log_file: str or None
     Log file for logging
 
     logging_level_file: int or str - Default: logging.DEBUG
     Logging level for the file handler. If str, it should be a Level from
-    the logging module (i.e. CRITICAL, ERROR, WARNING, INFO, DEBU, NOTSET).
-    Additionally, the user-defined level PROGRESS is allowed. Ignored if
-    log_file is None.
+    the logging module (i.e. CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET).
+    Additionally, the user-defined level PROGRESS and WARNING_OK are allowed.
+    Ignored if log_file is None.
     """
     if isinstance(logging_level_console, str):
         if logging_level_console.upper() == "PROGRESS":

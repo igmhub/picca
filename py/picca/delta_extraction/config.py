@@ -2,6 +2,7 @@
 This class is responsible for managing the options selected for the user and
 contains the default configuration.
 """
+from importlib import metadata
 from configparser import ConfigParser
 import logging
 import os
@@ -12,20 +13,31 @@ import git
 from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.utils import class_from_string, setup_logger
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-PICCA_BASE = THIS_DIR.split("py/picca")[0]
+try:
+    THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+    PICCA_BASE = THIS_DIR.split("py/picca")[0]
+    git_hash = git.Repo(PICCA_BASE).head.object.hexsha
+except git.exc.InvalidGitRepositoryError:
+    git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
+
+accepted_corrections_options = ["num corrections", "type {int}", "module name {int}"]
+accepted_data_options = ["type", "module name"]
+accepted_expected_flux_options = ["type", "module name"]
+accepted_general_options = ["overwrite", "logging level console",
+                            "logging level file", "log", "out dir"]
+accepted_masks_options = ["num masks", "type {int}", "module name {int}"]
 
 default_config = {
     "general": {
         "overwrite": False,
         # New logging level defined in setup_logger.
         # Numeric value is PROGRESS_LEVEL_NUM defined in utils.py
+        "log": "run.log",
         "logging level console": "PROGRESS",
         "logging level file": "PROGRESS",
-        "log": "run.log",
     },
     "run specs": {
-        "git hash": git.Repo(PICCA_BASE).head.object.hexsha,
+        "git hash": git_hash,
         "timestamp": str(datetime.now()),
     }
 }
@@ -111,7 +123,10 @@ class Config:
         # load default configuration
         self.config.read_dict(default_config)
         # now read the configuration file
-        self.config.read(filename)
+        if os.path.isfile(filename):
+            self.config.read(filename)
+        else:
+            raise ConfigError(f"Config file not found: {filename}")
 
         # parse the environ variables
         self.__parse_environ_variables()
@@ -152,7 +167,9 @@ class Config:
         if "corrections" not in self.config:
             self.logger.warning("Missing section [corrections]. No Corrections will"
                                 "be applied to data")
+            return
         section = self.config["corrections"]
+
         self.num_corrections = section.getint("num corrections")
         if self.num_corrections is None:
             raise ConfigError("In section 'corrections', variable 'num corrections' "
@@ -160,6 +177,28 @@ class Config:
         if self.num_corrections < 0:
             raise ConfigError("In section 'corrections', variable 'num corrections' "
                               "must be a non-negative integer")
+
+        # check that arguments are valid
+        for key in section.keys():
+            if key not in accepted_corrections_options:
+                if key.startswith("type") or key.startswith("module name"):
+                    try:
+                        aux_str = key.replace("type", "").replace("module name", "")
+                        assert int(aux_str) < self.num_corrections
+                        continue
+                    except ValueError as e:
+                        pass
+                    except AssertionError as e:
+                        raise ConfigError("In section [corrections] found option "
+                                          f"{key}, but 'num corrections' is "
+                                          f"'{self.num_corrections}' (keep in mind "
+                                          "python zero indexing)")
+
+                raise ConfigError("Unrecognised option in section [corrections]. "
+                                  f"Found: '{key}'. Accepted options are "
+                                  f"{accepted_corrections_options}")
+
+
         for correction_index in range(self.num_corrections):
             # first load the correction class
             correction_name = section.get(f"type {correction_index}")
@@ -171,8 +210,10 @@ class Config:
                 module_name = re.sub('(?<!^)(?=[A-Z])', '_', correction_name).lower()
                 module_name = f"picca.delta_extraction.corrections.{module_name.lower()}"
             try:
-                CorrectionType, default_args = class_from_string(correction_name,
-                                                                 module_name)
+                (CorrectionType,
+                 default_args,
+                 accepted_options) = class_from_string(correction_name,
+                                                       module_name)
             except ImportError:
                 raise ConfigError(f"Error loading class {correction_name}, "
                                   f"module {module_name} could not be loaded")
@@ -187,6 +228,14 @@ class Config:
                                     "arguments")
                 self.config.read_dict({f"correction arguments {correction_index}":{}})
             correction_args = self.config[f"correction arguments {correction_index}"]
+
+            # check that arguments are valid
+            for key in correction_args:
+                if key not in accepted_options:
+                    raise ConfigError("Unrecognised option in section [correction "
+                                      f"arguments {correction_index}]. "
+                                      f"Found: '{key}'. Accepted options are "
+                                      f"{accepted_options}")
 
             # update the section adding the default choices when necessary
             for key, value in default_args.items():
@@ -214,13 +263,23 @@ class Config:
             module_name = re.sub('(?<!^)(?=[A-Z])', '_', data_name).lower()
             module_name = f"picca.delta_extraction.data_catalogues.{module_name.lower()}"
         try:
-            DataType, default_args = class_from_string(data_name, module_name)
+            (DataType,
+             default_args,
+             accepted_options) = class_from_string(data_name, module_name)
         except ImportError:
             raise ConfigError(f"Error loading class {data_name}, "
                               f"module {module_name} could not be loaded")
         except AttributeError:
             raise ConfigError(f"Error loading class {data_name}, "
                               f"module {module_name} did not contain class")
+
+        # check that arguments are valid)
+        accepted_options += accepted_data_options
+        for key in section:
+            if key not in accepted_options:
+                raise ConfigError("Unrecognised option in section [data]. "
+                                  f"Found: '{key}'. Accepted options are "
+                                  f"{accepted_options}")
 
         # update the section adding the default choices when necessary
         for key, value in default_args.items():
@@ -248,14 +307,24 @@ class Config:
             module_name = re.sub('(?<!^)(?=[A-Z])', '_', expected_flux_name).lower()
             module_name = f"picca.delta_extraction.expected_fluxes.{module_name.lower()}"
         try:
-            ExpectedFluxType, default_args = class_from_string(expected_flux_name,
-                                                               module_name)
+            (ExpectedFluxType,
+             default_args,
+             accepted_options) = class_from_string(expected_flux_name,
+                                                   module_name)
         except ImportError:
             raise ConfigError(f"Error loading class {expected_flux_name}, "
                               f"module {module_name} could not be loaded")
         except AttributeError:
             raise ConfigError(f"Error loading class {expected_flux_name}, "
                               f"module {module_name} did not contain class")
+
+        # check that arguments are valid)
+        accepted_options += accepted_expected_flux_options
+        for key in section:
+            if key not in accepted_options:
+                raise ConfigError("Unrecognised option in section [expected flux]. "
+                                  f"Found: '{key}'. Accepted options are "
+                                  f"{accepted_options}")
 
         # update the section adding the default choices when necessary
         for key, value in default_args.items():
@@ -275,24 +344,37 @@ class Config:
         if "general" not in self.config:
             raise ConfigError("Missing section [general]")
         section = self.config["general"]
+
+        # check that arguments are valid
+        for key in section.keys():
+            if key not in accepted_general_options:
+                raise ConfigError("Unrecognised option in section [general]. "
+                                  f"Found: '{key}'. Accepted options are "
+                                  f"{accepted_general_options}")
+
         self.out_dir = section.get("out dir")
         if self.out_dir is None:
-            raise ConfigError("In section 'general', variable 'out dir' is required")
+            raise ConfigError("Missing variable 'out dir' in section [general]")
+
         self.overwrite = section.getboolean("overwrite")
+        if self.out_dir is None:
+            raise ConfigError("Missing variable 'overwrite' in section [general]")
 
         self.log = section.get("log")
-        if self.log is not None and not (self.log.startswith(".") or self.log.startswith("/")):
+        if self.out_dir is None:
+            raise ConfigError("Missing variable 'log' in section [general]")
+        elif not (self.log.startswith(".") or self.log.startswith("/")):
             self.log = self.out_dir + "Log/" + self.log
             section["log"] = self.log
 
         self.logging_level_console = section.get("logging level console")
         if self.logging_level_console is None:
-            raise ConfigError("In section 'general', variable 'logging level console' is required")
+            raise ConfigError("Missing variable 'logging level console' in section [general]")
         self.logging_level_console = self.logging_level_console.upper()
 
         self.logging_level_file = section.get("logging level file")
         if self.logging_level_file is None:
-            raise ConfigError("In section 'general', variable 'logging level file' is required")
+            raise ConfigError("In section 'logging level file' in section [general]")
         self.logging_level_file = self.logging_level_file.upper()
 
     def __format_masks_section(self):
@@ -308,7 +390,35 @@ class Config:
                                 "be applied to data")
             return
         section = self.config["masks"]
+
         self.num_masks = section.getint("num masks")
+        if self.num_masks is None:
+            raise ConfigError("In section 'masks', variable 'num masks' "
+                              "is required")
+        if self.num_masks < 0:
+            raise ConfigError("In section 'masks', variable 'num masks' "
+                              "must be a non-negative integer")
+
+        # check that arguments are valid
+        for key in section.keys():
+            if key not in accepted_masks_options:
+                if key.startswith("type") or key.startswith("module name"):
+                    try:
+                        aux_str = key.replace("type", "").replace("module name", "")
+                        assert int(aux_str) < self.num_corrections
+                        continue
+                    except ValueError as e:
+                        pass
+                    except AssertionError as e:
+                        raise ConfigError("In section [masks] found option "
+                                          f"{key}, but 'num corrections' is "
+                                          f"'{self.num_masks}' (keep in mind "
+                                          "python zero indexing)")
+
+                raise ConfigError("Unrecognised option in section [masks]. "
+                                  f"Found: '{key}'. Accepted options are "
+                                  f"{accepted_masks_options}")
+
         for mask_index in range(self.num_masks):
             # first load the mask class
             mask_name = section.get(f"type {mask_index}")
@@ -320,7 +430,9 @@ class Config:
                 module_name = re.sub('(?<!^)(?=[A-Z])', '_', mask_name).lower()
                 module_name = f"picca.delta_extraction.masks.{module_name.lower()}"
             try:
-                MaskType, default_args = class_from_string(mask_name, module_name)
+                (MaskType,
+                 default_args,
+                 accepted_options) = class_from_string(mask_name, module_name)
             except ImportError:
                 raise ConfigError(f"Error loading class {mask_name}, "
                                   f"module {module_name} could not be loaded")
@@ -335,6 +447,14 @@ class Config:
                                     "arguments")
                 self.config.read_dict({f"mask arguments {mask_index}":{}})
             mask_args = self.config[f"mask arguments {mask_index}"]
+
+            # check that arguments are valid
+            for key in mask_args:
+                if key not in accepted_options:
+                    raise ConfigError("Unrecognised option in section [mask "
+                                      f"arguments {mask_index}]. "
+                                      f"Found: '{key}'. Accepted options are "
+                                      f"{accepted_options}")
 
             # update the section adding the default choices when necessary
             for key, value in default_args.items():
@@ -373,11 +493,13 @@ class Config:
         overwrite is not selected
         """
         if not os.path.exists(self.out_dir):
-            os.makedirs(self.out_dir)
-            os.makedirs(self.out_dir+"Delta/")
-            os.makedirs(self.out_dir+"Log/")
+            os.makedirs(self.out_dir, exist_ok=True)
+            os.makedirs(self.out_dir+"Delta/", exist_ok=True)
+            os.makedirs(self.out_dir+"Log/", exist_ok=True)
             self.write_config()
         elif self.overwrite:
+            os.makedirs(self.out_dir+"Delta/", exist_ok=True)
+            os.makedirs(self.out_dir+"Log/", exist_ok=True)
             self.write_config()
         else:
             raise ConfigError("Specified folder contains a previous run."

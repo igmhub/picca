@@ -82,6 +82,17 @@ class CorrectionTest(AbstractTest):
             np.allclose(forest.transmission_correction,
                         np.ones_like(forest1_log_lambda)))
 
+    def test_sdss_calibration_correction_missing_options(self):
+        """Test correct error reporting when initializing with missing options
+        for class SdssCalibrationCorrection
+        """
+        # create SdssCalibrationCorrection instance with missing options
+        config = ConfigParser()
+        config.read_dict({"corrections": {}})
+        with self.assertRaises(CorrectionError) as context_manager:
+            correction = SdssCalibrationCorrection(config["corrections"])
+        self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
+
     def test_sdss_dust_correction(self):
         """Test correct initialisation and inheritance for class
         SdssDustCorrection
@@ -127,6 +138,17 @@ class CorrectionTest(AbstractTest):
         self.assertTrue(len(correction.extinction_bv_map) == 1)
         self.assertTrue(correction.extinction_bv_map.get(100000) == 1 / 3.5)
 
+    def test_sdss_dust_correction_missing_options(self):
+        """Test correct error reporting when initializing with missing options
+        for class SdssDustCorrection
+        """
+        # create SdssCalibrationCorrection instance with missing options
+        config = ConfigParser()
+        config.read_dict({"corrections": {}})
+        with self.assertRaises(CorrectionError) as context_manager:
+            correction = SdssDustCorrection(config["corrections"])
+        self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
+
     def test_sdss_ivar_correction(self):
         """Test correct initialisation and inheritance for class
         SdssIvarCorrection
@@ -155,6 +177,17 @@ class CorrectionTest(AbstractTest):
         self.assertTrue(
             np.allclose(forest.transmission_correction,
                         np.ones_like(forest1_log_lambda)))
+
+    def test_sdss_ivar_correction_missing_options(self):
+        """Test correct error reporting when initializing with missing options
+        for class SdssIvarCorrection
+        """
+        # create SdssCalibrationCorrection instance with missing options
+        config = ConfigParser()
+        config.read_dict({"corrections": {}})
+        with self.assertRaises(CorrectionError) as context_manager:
+            correction = SdssIvarCorrection(config["corrections"])
+        self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
 
     def test_sdss_optical_depth_correction(self):
         """Test correct initialisation and inheritance for class
@@ -198,6 +231,17 @@ class CorrectionTest(AbstractTest):
 
         reset_logger()
         self.compare_ascii(test_file, out_file)
+
+    def test_sdss_optical_depth_correction_missing_options(self):
+        """Test correct error reporting when initializing with missing options
+        for class SdssOpticalDepthCorrection
+        """
+        # create SdssCalibrationCorrection instance with missing options
+        config = ConfigParser()
+        config.read_dict({"corrections": {}})
+        with self.assertRaises(CorrectionError) as context_manager:
+            correction = SdssOpticalDepthCorrection(config["corrections"])
+        self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
 
 
 if __name__ == '__main__':

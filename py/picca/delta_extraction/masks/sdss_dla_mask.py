@@ -15,6 +15,8 @@ defaults = {
     "dla mask limit": 0.8,
 }
 
+accepted_options = ["dla mask limit", "mask file", "filename"]
+
 np.random.seed(0)
 
 class SdssDlaMask(Mask):
