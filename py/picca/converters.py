@@ -273,7 +273,8 @@ def desi_from_ztarget_to_drq(in_path,
                              out_path,
                              spec_type='QSO',
                              downsampling_z_cut=None,
-                             downsampling_num=None):
+                             downsampling_num=None,
+                             gauss_sigma_v=None):
     """Transforms a catalog of object in desi format to a catalog in DRQ format
 
     Args:
@@ -288,6 +289,9 @@ def desi_from_ztarget_to_drq(in_path,
         downsampling_num: int
             Target number of object above redshift downsampling-z-cut.
             'None' for no downsampling
+        gauss_sigma_v: int
+            Gaussian random error to be added to redshift (in kms)
+            'None' for no error
     """
 
     ## Info of the primary observation
@@ -319,6 +323,13 @@ def desi_from_ztarget_to_drq(in_path,
 
     for key in ['RA', 'DEC']:
         cat[key] = cat[key].astype('float64')
+
+    # apply error to z
+    if gauss_sigma_v is not None:
+        c = 299792
+        np.random.seed(0)
+        dz = gauss_sigma_v/c*(1.+cat['Z'])*np.random.normal(0, 1, cat['Z'].size)
+        cat['Z'] += dz
 
     # apply downsampling
     if downsampling_z_cut is not None and downsampling_num is not None:
