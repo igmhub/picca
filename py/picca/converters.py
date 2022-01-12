@@ -10,7 +10,7 @@ See the respective docstrings for more details
 import os
 import numpy as np
 import fitsio
-
+from scipy.constants import speed_of_light as speed_light
 from .utils import userprint
 
 
@@ -326,9 +326,9 @@ def desi_from_ztarget_to_drq(in_path,
 
     # apply error to z
     if gauss_sigma_v is not None:
-        c = 299792
+        SPEED_LIGHT = speed_light/1000. # [km/s]
         np.random.seed(0)
-        dz = gauss_sigma_v/c*(1.+cat['Z'])*np.random.normal(0, 1, cat['Z'].size)
+        dz = gauss_sigma_v/SPEED_LIGHT*(1.+cat['Z'])*np.random.normal(0, 1, cat['Z'].size)
         cat['Z'] += dz
 
     # apply downsampling
