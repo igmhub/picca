@@ -34,7 +34,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install wheel pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip uninstall fitsio
+        pip cache purge
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install -e .
+      #note that above we need to reinstall fitsio to ensure it's being compiled against the right numpy version
     - name: Test with pytest
       timeout-minutes: 30
       run: |
