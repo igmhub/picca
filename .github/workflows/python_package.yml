@@ -34,7 +34,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install wheel pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip uninstall fitsio
+        pip uninstall fitsio -y
         pip cache purge
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install -e .
