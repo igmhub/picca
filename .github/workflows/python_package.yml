@@ -33,19 +33,27 @@ jobs:
         python -m pip install --upgrade pip
         pip install wheel pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip uninstall fitsio -y
+        pip cache purge
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install -e .
     - name: Test with pytest
       timeout-minutes: 30
       run: |
           pytest --capture=tee-sys . 
+    - name: Debug with tmate on failure
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3 
+      with:
+        limit-access-to-actor: true
     - name: Archive Test Results
       if: failure()
       uses: actions/upload-artifact@v1
       with:
         name: test-results_v${{ matrix.python-version }}
         path: /tmp/last_run_picca_test
-
-
+    
+    
   # flake8:
   #   runs-on: ubuntu-latest
   #   if: "!contains(github.event.head_commit.message, '[ci skip]')"
