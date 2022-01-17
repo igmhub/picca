@@ -24,8 +24,8 @@ if __name__ == '__main__':
     parser.add_argument('--downsampling-nb', type = int, default = 700000, required = False,
             help = "Target number of object above redshift downsampling-z-cut, if 'None' no downsampling")
 
-    parser.add_argument('--gauss_sigma_v', type = int, required = False,
-            help = "Mean Gaussian velocity of redshift errors in km/s, if None, no errors")
+    parser.add_argument('--gauss_redshift_error', type = int, required = False,
+            help = "RMS of Gaussian velocity of redshift errors in km/s, if None, no errors")
 
     args = parser.parse_args()
 
@@ -34,4 +34,4 @@ if __name__ == '__main__':
                                         spec_type=args.spectype, 
                                         downsampling_z_cut=args.downsampling_z_cut, 
                                         downsampling_num=args.downsampling_nb,
-                                        gauss_sigma_v=args.gauss_sigma_v)
+                                        gauss_redshift_error=args.gauss_redshift_error)

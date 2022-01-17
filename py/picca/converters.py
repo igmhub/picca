@@ -274,7 +274,7 @@ def desi_from_ztarget_to_drq(in_path,
                              spec_type='QSO',
                              downsampling_z_cut=None,
                              downsampling_num=None,
-                             gauss_sigma_v=None):
+                             gauss_redshift_error=None):
     """Transforms a catalog of object in desi format to a catalog in DRQ format
 
     Args:
@@ -289,8 +289,9 @@ def desi_from_ztarget_to_drq(in_path,
         downsampling_num: int
             Target number of object above redshift downsampling-z-cut.
             'None' for no downsampling
-        gauss_sigma_v: int
-            Gaussian random error to be added to redshift (in kms)
+        gauss_redshift_error: int
+            Gaussian random error to be added to redshift (in km/s)
+            Mimics uncertainties in estimation of z in classifiers
             'None' for no error
     """
 
@@ -325,10 +326,10 @@ def desi_from_ztarget_to_drq(in_path,
         cat[key] = cat[key].astype('float64')
 
     # apply error to z
-    if gauss_sigma_v is not None:
+    if gauss_redshift_error is not None:
         SPEED_LIGHT = speed_light/1000. # [km/s]
         np.random.seed(0)
-        dz = gauss_sigma_v/SPEED_LIGHT*(1.+cat['Z'])*np.random.normal(0, 1, cat['Z'].size)
+        dz = gauss_redshift_error/SPEED_LIGHT*(1.+cat['Z'])*np.random.normal(0, 1, cat['Z'].size)
         cat['Z'] += dz
 
     # apply downsampling
