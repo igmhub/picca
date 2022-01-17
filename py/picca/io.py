@@ -176,7 +176,7 @@ def read_drq(drq_filename,
         obj_id_name = 'THING_ID'
         keep_columns += ['THING_ID', 'PLATE', 'MJD', 'FIBERID']
 
-    if mode == "desi_mocks":
+    if mode in ["desi_mocks", "eboss_mocks"]:
         for key in ['RA', 'DEC']:
             catalog[key] = catalog[key].astype('float64')
 
@@ -368,8 +368,9 @@ def read_data(in_dir,
 
     # read data taking the mode into account
     blinding = "none"
-    if mode in ["desi_mocks","desi_healpix","desi","desi_survey_tilebased", "spcframe", "spplate", "spec", "corrected-spec"]:
-        if mode in ["desi_mocks", "desi"]: #I still don't think we need two different modes since we are checking if truth files exist...
+    if mode in ["desi_mocks", "desi_healpix", "desi_survey_tilebased", "eboss_mocks", "spcframe", "spplate", "spec", "corrected-spec"]:
+        if mode in ["desi_mocks", "eboss_mocks"]:
+
             desi_nside = 16
             desi_prefix = f'spectra-{desi_nside}'
             pix_data, is_mock = read_from_desi(in_dir, catalog, desi_prefix, desi_nside, pk1d=pk1d)

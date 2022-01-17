@@ -73,7 +73,7 @@ def main(cmdargs):
     parser.add_argument('--mode',
                         type=str,
                         required=False,
-                        choices=['desi','desi_healpix','desi_mocks','sdss'],
+                        choices=['eboss_mocks','desi_healpix','desi_mocks','desi','sdss'],
                         default='sdss',
                         help='Mode for reading the catalog (default sdss)'
                         )
@@ -277,6 +277,10 @@ def main(cmdargs):
         userprint("z_max_obj = {}".format(args.z_max_obj), end="")
 
     ### Read objects
+    if args.mode == "desi":
+        args.mode="eboss_mocks"
+        userprint("WARNING: 'desi' mode is deprecated, changing to use 'eboss_mock' for quickquasar mocks using eBOSS naming convention")
+
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
                                    cosmo, mode=args.mode)

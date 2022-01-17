@@ -168,14 +168,14 @@ def main(cmdargs):
 
     parser.add_argument('--mode',
                         type=str,
-                        choices=['pix', 'spec','spcframe','spplate','desi',
+                        choices=['pix', 'spec','spcframe','spplate','eboss_mocks','desi',
                                  'desi_healpix','desi_survey_tilebased',
                                  'desi_sv_no_coadd','desi_mocks','desiminisv'],
                         default='pix',
                         required=False,
                         help=('''Open mode of the spectra files: pix, spec, 
-                              spcframe, spplate, desi_mocks (formerly known as desi), 
-                              desi_healpix (for healpix based coadded data),
+                              spcframe, spplate, eboss_mocks (formerly known as desi, cover quickquasar mocks using eBOSS naming
+                              convention), desi_mock, desi_healpix (for healpix based coadded data),
                               desi_survey_tilebased (for tilebased data with coadding), 
                               desi_sv_no_coadd (without coadding across tiles, will output in tile format)'''))
 
@@ -527,6 +527,10 @@ def main(cmdargs):
         Forest.extinction_bv_map = io.read_dust_map(args.dust_map)
 
     log_file = open(os.path.expandvars(args.log), 'w')
+
+    if args.mode == "desi":
+        args.mode="eboss_mock"
+        userprint("WARNING: 'desi' mode is deprecated, changing to use 'eboss_mock' for quickquasar mocks using eBOSS naming convention")
 
     # Read data
     (data, num_data, nside,
