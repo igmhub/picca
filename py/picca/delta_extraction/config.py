@@ -405,13 +405,13 @@ class Config:
                 if key.startswith("type") or key.startswith("module name"):
                     try:
                         aux_str = key.replace("type", "").replace("module name", "")
-                        assert int(aux_str) < self.num_corrections
+                        assert int(aux_str) < self.num_masks
                         continue
                     except ValueError as e:
                         pass
                     except AssertionError as e:
                         raise ConfigError("In section [masks] found option "
-                                          f"{key}, but 'num corrections' is "
+                                          f"{key}, but 'num masks' is "
                                           f"'{self.num_masks}' (keep in mind "
                                           "python zero indexing)")
 
