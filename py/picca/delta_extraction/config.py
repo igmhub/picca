@@ -120,6 +120,8 @@ class Config:
         self.logger = logging.getLogger(__name__)
 
         self.config = ConfigParser()
+        # with this we allow options to use capital letters
+        self.config.optionxform = lambda option: option
         # load default configuration
         self.config.read_dict(default_config)
         # now read the configuration file
