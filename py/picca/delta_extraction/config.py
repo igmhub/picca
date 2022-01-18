@@ -508,7 +508,7 @@ class Config:
                               "Pass overwrite option in configuration file"
                               "in order to ignore the previous run or"
                               "change the output path variable to point "
-                              "elsewhere")
+                              f"elsewhere. Folder: {self.out_dir}")
 
     def write_config(self):
         """This function writes the configuration options for later
