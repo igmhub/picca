@@ -819,7 +819,7 @@ def main(cmdargs):
                           extname='STACK')
             results.write(
                 [log_lambda,
-                 Forests.get_eta(log_lambda),
+                 Forest.get_eta(log_lambda),
                  Forest.get_var_lss(log_lambda),
                  Forest.get_fudge(log_lambda),
                  num_pixels],
