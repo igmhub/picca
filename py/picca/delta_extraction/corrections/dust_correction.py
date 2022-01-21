@@ -1,10 +1,11 @@
-"""This module defines the class SdssCalibrationCorrection. It also defines
+"""This module defines the class DustCorrection. It also defines
 the function unred (https://github.com/sczesla/PyAstronomy in /src/pyasl/asl/unred)
 to compute the reddening correction."""
 import fitsio
 import numpy as np
 from scipy import interpolate
 
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
 
@@ -14,8 +15,8 @@ defaults = {
     "extinction_conversion_r": 3.793,
 }
 
-class SdssDustCorrection(Correction):
-    """Class to correct for dust absortpion in SDSS spectra
+class DustCorrection(Correction):
+    """Class to correct for dust absortpion
 
     Methods
     -------
@@ -82,15 +83,18 @@ class SdssDustCorrection(Correction):
         CorrectionError if forest instance does not have the attribute
         'log_lambda'
         """
-        if not hasattr(forest, "log_lambda"):
-            raise CorrectionError("Correction from SdssDustCorrection "
-                                  "should only be applied to data with the "
-                                  "attribute 'log_lambda'")
         thingid = forest.los_id
         extinction = self.extinction_bv_map.get(thingid)
         if extinction is None:
             return
-        correction = unred(10**forest.log_lambda, extinction)
+
+        if Forest.wave_solution == "log":
+            correction = unred(10**forest.log_lambda, extinction)
+        elif Forsest.wave_solution == "lin":
+            correction = unred(forest.lambda_, extinction)
+        else:
+            raise CorrectionError("Forest.wave_solution must be either "
+                                  "'log' or 'lin'")
         forest.flux /= correction
         forest.ivar *= correction**2
         if hasattr(forest, "exposures_diff"):

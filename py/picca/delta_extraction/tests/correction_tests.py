@@ -6,14 +6,15 @@ import unittest
 
 import numpy as np
 
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.correction import Correction
-from picca.delta_extraction.corrections.sdss_calibration_correction import SdssCalibrationCorrection
-from picca.delta_extraction.corrections.sdss_dust_correction import SdssDustCorrection
-from picca.delta_extraction.corrections.sdss_dust_correction import (
-    defaults as defaults_sdss_dust_correction)
-from picca.delta_extraction.corrections.sdss_ivar_correction import SdssIvarCorrection
-from picca.delta_extraction.corrections.sdss_optical_depth_correction import (
-    SdssOpticalDepthCorrection)
+from picca.delta_extraction.corrections.calibration_correction import CalibrationCorrection
+from picca.delta_extraction.corrections.dust_correction import DustCorrection
+from picca.delta_extraction.corrections.dust_correction import (
+    defaults as defaults_dust_correction)
+from picca.delta_extraction.corrections.ivar_correction import IvarCorrection
+from picca.delta_extraction.corrections.optical_depth_correction import (
+    OpticalDepthCorrection)
 from picca.delta_extraction.errors import CorrectionError
 from picca.delta_extraction.utils import setup_logger
 from picca.delta_extraction.tests.abstract_test import AbstractTest
@@ -32,10 +33,10 @@ class CorrectionTest(AbstractTest):
     compare_fits (from AbstractTest)
     setUp (from AbstractTest)
     test_correction
-    test_sdss_calibration_correction
-    test_sdss_dust_correction
-    test_sdss_ivar_correction
-    test_sdss_optical_depth_correction
+    test_calibration_correction
+    test_dust_correction
+    test_ivar_correction
+    test_optical_depth_correction
     """
 
     def test_correction(self):
@@ -52,19 +53,19 @@ class CorrectionTest(AbstractTest):
             forest = copy.deepcopy(forest1)
             correction.apply_correction(forest)
 
-    def test_sdss_calibration_correction(self):
+    def test_calibration_correction(self):
         """Test correct initialisation and inheritance for class
-        SdssCalibrationCorrection
+        CalibrationCorrection
 
-        Load a SdssCalibrationCorrection instace and check that it is
+        Load a CalibrationCorrection instace and check that it is
         correctly initialized.
         """
         in_file = f"{THIS_DIR}/data/dummy_corrections.fits.gz"
 
-        # create SdssCalibrationCorrection instance
+        # create CalibrationCorrection instance
         config = ConfigParser()
         config.read_dict({"corrections": {"filename": in_file}})
-        correction = SdssCalibrationCorrection(config["corrections"])
+        correction = CalibrationCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
 
         # apply the correction
@@ -82,22 +83,22 @@ class CorrectionTest(AbstractTest):
             np.allclose(forest.transmission_correction,
                         np.ones_like(forest1_log_lambda)))
 
-    def test_sdss_calibration_correction_missing_options(self):
+    def test_calibration_correction_missing_options(self):
         """Test correct error reporting when initializing with missing options
-        for class SdssCalibrationCorrection
+        for class CalibrationCorrection
         """
-        # create SdssCalibrationCorrection instance with missing options
+        # create CalibrationCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
         with self.assertRaises(CorrectionError) as context_manager:
-            correction = SdssCalibrationCorrection(config["corrections"])
+            correction = CalibrationCorrection(config["corrections"])
         self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
 
-    def test_sdss_dust_correction(self):
+    def test_dust_correction(self):
         """Test correct initialisation and inheritance for class
-        SdssDustCorrection
+        DustCorrection
 
-        Load a SdssDustCorrection instace and check that it is
+        Load a DustCorrection instace and check that it is
         correctly initialized.
 
         #TODO:Check that the function apply_correction
@@ -106,13 +107,13 @@ class CorrectionTest(AbstractTest):
         """
         in_file = f"{THIS_DIR}/data/dummy_corrections.fits.gz"
 
-        # create SdssDustCorrection instance
+        # create DustCorrection instance
         config = ConfigParser()
         config.read_dict({"corrections": {"filename": in_file}})
-        for key, value in defaults_sdss_dust_correction.items():
+        for key, value in defaults_dust_correction.items():
             if key not in config["corrections"]:
                 config["corrections"][key] = str(value)
-        correction = SdssDustCorrection(config["corrections"])
+        correction = DustCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
 
         # apply the correction
@@ -125,7 +126,7 @@ class CorrectionTest(AbstractTest):
             np.allclose(forest.transmission_correction,
                         np.ones_like(forest1_log_lambda)))
 
-        # create SdssDustCorrection instance specifying the extinction conversion
+        # create DustCorrection instance specifying the extinction conversion
         # factor
         config = ConfigParser()
         config.read_dict({
@@ -134,34 +135,34 @@ class CorrectionTest(AbstractTest):
                 "extinction_conversion_r": 3.5
             }
         })
-        correction = SdssDustCorrection(config["corrections"])
+        correction = DustCorrection(config["corrections"])
         self.assertTrue(len(correction.extinction_bv_map) == 1)
         self.assertTrue(correction.extinction_bv_map.get(100000) == 1 / 3.5)
 
-    def test_sdss_dust_correction_missing_options(self):
+    def test_dust_correction_missing_options(self):
         """Test correct error reporting when initializing with missing options
-        for class SdssDustCorrection
+        for class DustCorrection
         """
-        # create SdssCalibrationCorrection instance with missing options
+        # create DustCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
         with self.assertRaises(CorrectionError) as context_manager:
-            correction = SdssDustCorrection(config["corrections"])
+            correction = DustCorrection(config["corrections"])
         self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
 
-    def test_sdss_ivar_correction(self):
+    def test_ivar_correction(self):
         """Test correct initialisation and inheritance for class
-        SdssIvarCorrection
+        IvarCorrection
 
-        Load a SdssIvarCorrection instace and check that it is
+        Load a IvarCorrection instace and check that it is
         correctly initialized.
         """
         in_file = f"{THIS_DIR}/data/dummy_corrections.fits.gz"
 
-        # create SdssIvarCorrection instance
+        # create IvarCorrection instance
         config = ConfigParser()
         config.read_dict({"corrections": {"filename": in_file}})
-        correction = SdssIvarCorrection(config["corrections"])
+        correction = IvarCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
 
         # apply the correction
@@ -178,30 +179,31 @@ class CorrectionTest(AbstractTest):
             np.allclose(forest.transmission_correction,
                         np.ones_like(forest1_log_lambda)))
 
-    def test_sdss_ivar_correction_missing_options(self):
+    def test_ivar_correction_missing_options(self):
         """Test correct error reporting when initializing with missing options
-        for class SdssIvarCorrection
+        for class IvarCorrection
         """
-        # create SdssCalibrationCorrection instance with missing options
+        # create IvarCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
         with self.assertRaises(CorrectionError) as context_manager:
-            correction = SdssIvarCorrection(config["corrections"])
+            correction = IvarCorrection(config["corrections"])
         self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
 
-    def test_sdss_optical_depth_correction(self):
+    def test_optical_depth_correction(self):
         """Test correct initialisation and inheritance for class
         OpticalDepthCorrection
 
-        Load a SdssIvarCorrection instace and check that it is
+        Load a IvarCorrection instace and check that it is
         correctly initialized.
         """
         in_file = f"{THIS_DIR}/data/dummy_corrections.fits.gz"
-        out_file = f"{THIS_DIR}/results/sdss_optical_depth_correction_print.txt"
-        test_file = f"{THIS_DIR}/data/sdss_optical_depth_correction_print.txt"
+        out_file = f"{THIS_DIR}/results/optical_depth_correction_print.txt"
+        test_file = f"{THIS_DIR}/data/optical_depth_correction_print.txt"
 
         # setup printing
         setup_logger(log_file=out_file)
+        Forest.wave_solution = "log"
 
         config = ConfigParser()
         config.read_dict({
@@ -212,7 +214,7 @@ class CorrectionTest(AbstractTest):
                 "optical depth absorber": "LYA"
             }
         })
-        correction = SdssOpticalDepthCorrection(config["corrections"])
+        correction = OpticalDepthCorrection(config["corrections"])
         self.assertTrue(isinstance(correction, Correction))
 
         # apply the correction
@@ -232,15 +234,15 @@ class CorrectionTest(AbstractTest):
         reset_logger()
         self.compare_ascii(test_file, out_file)
 
-    def test_sdss_optical_depth_correction_missing_options(self):
+    def test_optical_depth_correction_missing_options(self):
         """Test correct error reporting when initializing with missing options
-        for class SdssOpticalDepthCorrection
+        for class OpticalDepthCorrection
         """
-        # create SdssCalibrationCorrection instance with missing options
+        # create OpticalDepthCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
         with self.assertRaises(CorrectionError) as context_manager:
-            correction = SdssOpticalDepthCorrection(config["corrections"])
+            correction = OpticalDepthCorrection(config["corrections"])
         self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
 
 

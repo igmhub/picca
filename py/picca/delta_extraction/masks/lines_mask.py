@@ -44,7 +44,7 @@ class LinesMask(Mask):
 
         mask_file = config.get("filename")
         if mask_file is None:
-            raise CorrectionError("Missing argument 'filename' required by LinesMask")
+            raise MaskError("Missing argument 'filename' required by LinesMask")
         try:
             mask = Table.read(mask_file,
                               names=('type', 'wave_min', 'wave_max', 'frame'),

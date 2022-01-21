@@ -1,8 +1,9 @@
-"""This module defines the abstract class SdssCalibrationCorrection"""
+"""This module defines the abstract class OpticalDepthCorrection"""
 import logging
 
 import numpy as np
 
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
 from picca.delta_extraction.utils import ABSORBER_IGM
@@ -10,8 +11,8 @@ from picca.delta_extraction.utils import ABSORBER_IGM
 accepted_options = ["optical depth absorber", "optical depth gamma",
                     "optical depth tau"]
 
-class SdssOpticalDepthCorrection(Correction):
-    """Class to correct for optical depths contribution in SDSS spectra
+class OpticalDepthCorrection(Correction):
+    """Class to correct for optical depths contribution
 
     Methods
     -------
@@ -86,12 +87,24 @@ class SdssOpticalDepthCorrection(Correction):
         forest: Forest
         A Forest instance to which the correction is applied
         """
-        mean_optical_depth = np.ones(forest.log_lambda.size)
-        for tau, gamma, lambda_rest_frame in zip(self.tau_list, self.gamma_list,
-                                                 self.lambda_rest_frame_list):
+        if Forest.wave_solution == "log":
+            mean_optical_depth = np.ones(forest.log_lambda.size)
+            for tau, gamma, lambda_rest_frame in zip(self.tau_list, self.gamma_list,
+                                                     self.lambda_rest_frame_list):
 
-            w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
-            z = 10.**forest.log_lambda / lambda_rest_frame - 1.
-            mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
+                w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
+                z = 10.**forest.log_lambda / lambda_rest_frame - 1.
+                mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
+        elif Forest.wave_solution == "log":
+            mean_optical_depth = np.ones(forest.lambda_.size)
+            for tau, gamma, lambda_rest_frame in zip(self.tau_list, self.gamma_list,
+                                                     self.lambda_rest_frame_list):
+
+                w = forest.lambda_ / (1. + forest.z) <= lambda_rest_frame
+                z = forest.lambda_ / lambda_rest_frame - 1.
+                mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
+        else:
+            raise CorrectionError("Forest.wave_solution must be either "
+                                  "'log' or 'lin'")
 
         forest.transmission_correction *= mean_optical_depth

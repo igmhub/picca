@@ -109,32 +109,32 @@ class ConfigTest(AbstractTest):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [corrections]"))
 
-        # check arguments of SdssCalibrationCorrection
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_calibration_correction.ini"
+        # check arguments of CalibrationCorrection
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_calibration_correction.ini"
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
         if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
 
-        # check arguments of SdssDustCorrection
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_dust_correction.ini"
+        # check arguments of DustCorrection
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_dust_correction.ini"
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
         if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
 
-        # check arguments of SdssIvarCorrection
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_ivar_correction.ini"
+        # check arguments of IvarCorrection
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_ivar_correction.ini"
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
         if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
 
-        # check arguments of SdssOpticalDepthCorrection
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_optical_depth_correction.ini"
+        # check arguments of OpticalDepthCorrection
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_optical_depth_correction.ini"
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
         if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):

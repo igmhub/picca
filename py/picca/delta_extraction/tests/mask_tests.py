@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 
 from picca.delta_extraction.mask import Mask
+from picca.delta_extraction.masks.lines_mask import LinesMask
 from picca.delta_extraction.masks.sdss_dla_mask import SdssDlaMask
 from picca.delta_extraction.masks.sdss_dla_mask import defaults as defaults_sdss_dla_mask
 from picca.delta_extraction.masks.sdss_absorber_mask import SdssAbsorberMask
@@ -161,11 +162,11 @@ class MaskTest(AbstractTest):
             """Test correct error reporting when initializing with missing options
             for class LinesMask
             """
-            # create SdssCalibrationCorrection instance with missing options
+            # create LinesMask instance with missing options
             config = ConfigParser()
             config.read_dict({"masks": {}})
-            with self.assertRaises(CorrectionError) as context_manager:
-                correction = SdssDustCorrection(config["masks"])
+            with self.assertRaises(MaskError) as context_manager:
+                correction = LinesMask(config["masks"])
             self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
 
     def test_mask(self):

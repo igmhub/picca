@@ -1223,7 +1223,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.get_stack_delta(stack_lambda),
                     self.get_stack_delta_weights(stack_lambda)
                 ],
-                              names=['loglam', 'stack', 'weight'],
+                              names=['lambda', 'stack', 'weight'],
                               header=header,
                               extname='STACK')
 
@@ -1233,7 +1233,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.get_var_lss(self.lambda_),
                     self.get_fudge(self.lambda_)
                 ],
-                              names=['loglam', 'eta', 'var_lss', 'fudge'],
+                              names=['lambda', 'eta', 'var_lss', 'fudge'],
                               extname='WEIGHT')
 
                 results.write([
@@ -1241,7 +1241,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.get_mean_cont(self.lambda_rest_frame),
                     self.get_mean_cont_weight(self.lambda_rest_frame),
                 ],
-                              names=['loglam_rest', 'mean_cont', 'weight'],
+                              names=['lambda_rest_frame', 'mean_cont', 'weight'],
                               extname='CONT')
 
             else:
