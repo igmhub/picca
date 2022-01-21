@@ -357,6 +357,8 @@ class Config:
         self.out_dir = section.get("out dir")
         if self.out_dir is None:
             raise ConfigError("Missing variable 'out dir' in section [general]")
+        if not self.out_dir.endswith("/"):
+            self.out_dir += "/"
 
         self.overwrite = section.getboolean("overwrite")
         if self.out_dir is None:
