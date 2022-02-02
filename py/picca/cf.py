@@ -156,7 +156,7 @@ def compute_xi(healpixs):
             for delta2 in delta1.neighbours:
                 ang = delta1.get_angle_between(delta2)
                 if remove_same_half_plate_close_pairs:
-                    if isinstance(delta1.fiberid, str) or isinstance(delta2.fiberid, str)):
+                    if isinstance(delta1.fiberid, str) or isinstance(delta2.fiberid, str):
                         raise RuntimeException("Trying to figure out if two spectra"
                                                "come from the same half plate but "
                                                "combined reobservations were given")
@@ -431,7 +431,7 @@ def compute_dmat(healpixs):
             num_pairs_used += w.sum()
             for delta2 in np.array(delta1.neighbours)[w]:
                 if remove_same_half_plate_close_pairs:
-                    if isinstance(delta1.fiberid, str) or isinstance(delta2.fiberid, str)):
+                    if isinstance(delta1.fiberid, str) or isinstance(delta2.fiberid, str):
                         raise RuntimeException("Trying to figure out if two spectra"
                                                "come from the same half plate but "
                                                "combined reobservations were given")
@@ -982,7 +982,7 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 z1_abs1 = z1_abs1[w]
 
                 if remove_same_half_plate_close_pairs:
-                    if isinstance(delta1.fiberid, str) or isinstance(delta2.fiberid, str)):
+                    if isinstance(delta1.fiberid, str) or isinstance(delta2.fiberid, str):
                         raise RuntimeException("Trying to figure out if two spectra"
                                                "come from the same half plate but "
                                                "combined reobservations were given")
