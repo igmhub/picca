@@ -652,9 +652,13 @@ def main(cmdargs):
         for forest in data[healpix]:
             if ((forest.log_lambda is None) or
                     len(forest.log_lambda) < args.npix_min):
+                if forest.log_lambda is None:
+                    forest_size = 0
+                else:
+                    forest_size = len(forest.log_lambda)
                 log_file.write(("INFO: Rejected {} due to forest too "
                                 "short ({})\n").format(forest.thingid,
-                                                       len(forest.log_lambda)))
+                                                       forest_size))
                 continue
 
             if np.isnan((forest.flux * forest.ivar).sum()):
