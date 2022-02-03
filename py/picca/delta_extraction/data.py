@@ -75,7 +75,7 @@ class Data:
         remove_indexs = []
         for index, forest in enumerate(self.forests):
             if forest.bad_continuum_reason is not None:
-                self.logger.progress(f"Rejected with los_id {forest.los_id} "
+                self.logger.progress(f"Rejected forest with los_id {forest.los_id} "
                                      "due to continuum fitting problems. Reason: "
                                      f"{forest.bad_continuum_reason}")
                 remove_indexs.append(index)
@@ -94,7 +94,7 @@ class Data:
             if forest.flux.size < self.min_num_pix:
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
-                    "due to forest being too short")
+                    f"due to forest being too short ({forest.flux.size})")
             elif np.isnan((forest.flux * forest.ivar).sum()):
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "

@@ -653,7 +653,8 @@ def main(cmdargs):
             if ((forest.log_lambda is None) or
                     len(forest.log_lambda) < args.npix_min):
                 log_file.write(("INFO: Rejected {} due to forest too "
-                                "short\n").format(forest.thingid))
+                                "short ({})\n").format(forest.thingid,
+                                                       len(forest.log_lambda)))
                 continue
 
             if np.isnan((forest.flux * forest.ivar).sum()):

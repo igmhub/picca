@@ -76,6 +76,10 @@ class OpticalDepthCorrection(Correction):
                                   "should have the same number of entries")
 
         self.logger.info(f"Adding {len(self.tau_list)} optical depths")
+        for tau, gamma, lambda_rest_frame in zip(self.tau_list, self.gamma_list,
+                                                 self.lambda_rest_frame_list):
+            self.logger.info(f"   tau = {tau}, gamma = {gamma}, "
+                             f"lambda_rest_frame = {lambda_rest_frame}")
 
     def apply_correction(self, forest):
         """Apply the correction. Correction is applied by dividing the

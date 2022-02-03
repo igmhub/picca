@@ -1113,8 +1113,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         for forest in forests:
             if forest.bad_continuum_reason is not None:
-                self.logger.info(f"Rejected forest with los_id {forest.los_id} "
-                                 f"due to {forest.bad_continuum_reason}")
                 continue
             # get the variance functions and statistics
             if Forest.wave_solution == "log":
