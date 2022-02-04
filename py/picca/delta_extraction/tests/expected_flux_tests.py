@@ -68,7 +68,8 @@ class ExpectedFluxTest(AbstractTest):
         config = ConfigParser()
         config.read_dict(
             {"expected flux": {
-                "iter out prefix": "iter_out_prefix"
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
             }})
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
@@ -117,7 +118,8 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({
             "data": sdss_data_kwargs,
             "expected flux": {
-                "iter out prefix": "iter_out_prefix"
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -172,7 +174,8 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({
             "data": sdss_data_kwargs,
             "expected flux": {
-                "iter out prefix": "iter_out_prefix"
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -209,16 +212,16 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
-        out_file = f"{THIS_DIR}/results/iter_out_prefix_compute_expected_flux_log.fits.gz"
+        out_file = f"{THIS_DIR}/results/Log/iter_out_prefix_compute_expected_flux_log.fits.gz"
         test_file = f"{THIS_DIR}/data/iter_out_prefix_compute_expected_flux_log.fits.gz"
-        out_dir = f"{THIS_DIR}/results/"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
             "data": sdss_data_kwargs,
             "expected flux": {
-                "iter out prefix": "iter_out_prefix_compute_expected_flux_log"
+                "iter out prefix": "iter_out_prefix_compute_expected_flux_log",
+                "out dir": f"{THIS_DIR}/results/",
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -231,7 +234,7 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
         # compute the expected flux
-        expected_flux.compute_expected_flux(data.forests, out_dir)
+        expected_flux.compute_expected_flux(data.forests)
 
         for iteration in range(1, 5):
             self.compare_fits(
@@ -265,7 +268,8 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({
             "data": sdss_data_kwargs,
             "expected flux": {
-                "iter out prefix": "iter_out_prefix"
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -303,7 +307,8 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({
             "data": sdss_data_kwargs,
             "expected flux": {
-                "iter out prefix": "iter_out_prefix"
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -348,7 +353,8 @@ class ExpectedFluxTest(AbstractTest):
         config.read_dict({
             "data": sdss_data_kwargs,
             "expected flux": {
-                "iter out prefix": "iter_out_prefix_log"
+                "iter out prefix": "iter_out_prefix_log",
+                "out dir": f"{THIS_DIR}/results/",
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -379,18 +385,18 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
-        out_file = f"{THIS_DIR}/results/iter_out_prefix_log_iteration1.fits.gz"
-        out_file2 = f"{THIS_DIR}/results/iter_out_prefix_log.fits.gz"
+        out_file = f"{THIS_DIR}/results/Log/iter_out_prefix_log_iteration1.fits.gz"
+        out_file2 = f"{THIS_DIR}/results/Log/iter_out_prefix_log.fits.gz"
         test_file = f"{THIS_DIR}/data/iter_out_prefix_log_iteration1.fits.gz"
         test_file2 = f"{THIS_DIR}/data/iter_out_prefix_log.fits.gz"
-        out_dir = f"{THIS_DIR}/results/"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
             "data": sdss_data_kwargs,
             "expected flux": {
-                "iter out prefix": "iter_out_prefix_log"
+                "iter out prefix": "iter_out_prefix_log",
+                "out dir": f"{THIS_DIR}/results/",
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -410,11 +416,11 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.compute_delta_stack(data.forests)
 
         # save iter_out_prefix for iteration 0
-        expected_flux.save_iteration_step(0, out_dir)
+        expected_flux.save_iteration_step(0)
         self.compare_fits(test_file, out_file)
 
         # save iter_out_prefix for final iteration
-        expected_flux.save_iteration_step(-1, out_dir)
+        expected_flux.save_iteration_step(-1)
         self.compare_fits(test_file2, out_file2)
 
         # setup Forest variables; case: linear wavelength solution

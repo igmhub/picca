@@ -21,6 +21,8 @@ class AbstractTest(unittest.TestCase):
             if it does not."""
         if not os.path.exists("{}/results/".format(THIS_DIR)):
             os.makedirs("{}/results/".format(THIS_DIR))
+        if not os.path.exists("{}/results/Log/".format(THIS_DIR)):
+            os.makedirs("{}/results/Log/".format(THIS_DIR))
 
     def compare_ascii(self, orig_file, new_file):
         """Compare two ascii files to check that they are equal

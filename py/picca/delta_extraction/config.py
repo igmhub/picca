@@ -138,6 +138,7 @@ class Config:
         self.log = None
         self.logging_level_console = None
         self.logging_level_file = None
+        self.out_dir = None
         self.__format_general_section()
         self.corrections = None
         self.num_corrections = None
@@ -332,6 +333,10 @@ class Config:
         for key, value in default_args.items():
             if key not in section:
                 section[key] = str(value)
+
+        # add output directory if necesssary
+        if "out dir" in accepted_options:
+            section["out dir"] = self.out_dir
 
         # finally add the information to self.continua
         self.expected_flux = (ExpectedFluxType, section)

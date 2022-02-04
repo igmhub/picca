@@ -123,8 +123,7 @@ class Survey:
                                        "from 'ExpectedFlux'. Please check "
                                        "for correct inheritance pattern.")
 
-        self.expected_flux.compute_expected_flux(self.data.forests,
-                                                 self.config.out_dir+"Log/")
+        self.expected_flux.compute_expected_flux(self.data.forests)
         t1 = time.time()
         self.logger.info(f"Time spent computing the mean expected flux: {t1-t0}")
 
