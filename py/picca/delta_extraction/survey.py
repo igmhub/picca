@@ -255,6 +255,6 @@ class Survey:
         """Save the deltas."""
         t0 = time.time()
         self.logger.info("Saving deltas")
-        self.data.save_deltas(self.config.out_dir+"Delta/")
+        self.data.save_deltas()
         t1 = time.time()
         self.logger.info(f"Time spent saving deltas: {t1-t0}")

@@ -289,6 +289,9 @@ class Config:
             if key not in section:
                 section[key] = str(value)
 
+        # add output directory
+        section["out dir"] = self.out_dir
+
         # finally add the information to self.data
         self.data = (DataType, section)
 

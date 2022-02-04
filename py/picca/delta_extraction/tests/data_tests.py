@@ -40,7 +40,7 @@ class DataTest(AbstractTest):
         Load a Data instace.
         """
         config = ConfigParser()
-        config.read_dict({"data": {"output directory": f"{THIS_DIR}/results"},
+        config.read_dict({"data": {"out dir": f"{THIS_DIR}/results/"},
                          })
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -53,7 +53,7 @@ class DataTest(AbstractTest):
 
         config = ConfigParser()
         config.read_dict({"data": {"minimum number pixels in forest": 40,
-                                   "output directory": f"{THIS_DIR}/results",},
+                                   "out dir": f"{THIS_DIR}/results/",},
                          })
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -74,7 +74,7 @@ class DataTest(AbstractTest):
 
         # create Data instance
         config = ConfigParser()
-        config.read_dict({"data": {"output directory": f"{THIS_DIR}/results"}})
+        config.read_dict({"data": {"out dir": f"{THIS_DIR}/results/"}})
         for key, value in defaults_data.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
@@ -91,7 +91,7 @@ class DataTest(AbstractTest):
         # create Data instance with insane forest requirements
         config = ConfigParser()
         config.read_dict({"data": {"minimum number pixels in forest": 10000,
-                                   "output directory": f"{THIS_DIR}/results"}
+                                   "out dir": f"{THIS_DIR}/results/"}
                          })
         for key, value in defaults_data.items():
             if key not in config["data"]:

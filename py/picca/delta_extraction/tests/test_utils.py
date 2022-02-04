@@ -153,7 +153,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 sdss_data_kwargs = {
     "input directory":
         f"{THIS_DIR}/data",
-    "output directory":
+    "out dir":
         f"{THIS_DIR}/results",
     "drq catalogue":
         f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
@@ -163,7 +163,7 @@ sdss_data_kwargs = {
 sdss_data_kwargs_filter_forest = {
     "input directory":
         f"{THIS_DIR}/data",
-    "output directory":
+    "out dir":
         f"{THIS_DIR}/results",
     "drq catalogue":
         f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",

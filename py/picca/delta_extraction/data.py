@@ -11,11 +11,13 @@ from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import ABSORBER_IGM
 
-accepted_options = ["analysis type", "lambda abs IGM", "minimum number pixels in forest"]
+accepted_options = ["analysis type", "lambda abs IGM",
+                    "minimum number pixels in forest",
+                    "out dir"]
 
 defaults = {
     "analysis type": "BAO 3D",
-    "lambda abs IGM": ABSORBER_IGM.get("LYA"),
+    "lambda abs IGM": "LYA",
     "minimum number pixels in forest": 50,
 }
 
@@ -45,6 +47,10 @@ class Data:
 
     min_num_pix: int
     Minimum number of pixels in a forest. Forests with less pixels will be dropped.
+
+    out_dir: str
+    Directory where data will be saved. Log info will be saved in out_dir+"Log/"
+    and deltas will be saved in out_dir+"Delta/"
     """
 
     def __init__(self, config):
@@ -54,21 +60,27 @@ class Data:
 
         self.analysis_type = config.get("analysis type")
         if self.analysis_type is None:
-            self.analysis_type = defaults.get("analysis type")
+            raise DataError("Missing argument 'analysis type' required by Data")
         if self.analysis_type not in accepted_analysis_type:
             raise DataError("Invalid argument 'analysis type' required by "
                             "DesiData. Accepted values: " +
                             ",".join(accepted_analysis_type))
 
         if self.analysis_type == "BAO 3D":
-            if config.get("absorber IGM") is None:
-                Pk1dForest.lambda_abs_igm = defaults.get("lambda abs IGM")
-            else:
-                Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(config.get("absorber IGM"))
+            Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(config.get("lambda abs IGM"))
+            if Pk1dForest.lambda_abs_igm is None:
+                raise DataError("Missing argument 'lambda abs IGM' required by Data "
+                                "when 'analysys type' is 'BAO 3D'")
+
 
         self.min_num_pix = config.getint("minimum number pixels in forest")
         if self.min_num_pix is None:
-            self.min_num_pix = defaults.get("minimum number pixels in forest")
+            raise DataError("Missing argument 'minimum number pixels in forest' "
+                            "required by Data")
+
+        self.out_dir = config.get("out dir")
+        if self.out_dir is None:
+            raise DataError("Missing argument 'out dir' required by Data")
 
     def filter_bad_cont_forests(self):
         """Remove forests where continuum could not be computed"""
@@ -131,21 +143,15 @@ class Data:
         for forest, healpix in zip(self.forests, healpixs):
             forest.healpix = healpix
 
-    def save_deltas(self, out_dir):
-        """Save the deltas.
-
-        Attributes
-        ----------
-        out_dir: str
-        Directory where data will be saved
-        """
+    def save_deltas(self):
+        """Save the deltas."""
         healpixs = np.array([forest.healpix for forest in self.forests])
         unique_healpixs = np.unique(healpixs)
         healpixs_indexs = {healpix: np.where(healpixs == healpix)[0]
                            for healpix in unique_healpixs}
 
         for healpix, indexs in sorted(healpixs_indexs.items()):
-            results = fitsio.FITS(out_dir + "/delta-{}".format(healpix) + ".fits.gz",
+            results = fitsio.FITS(self.out_dir+"Delta/" + "/delta-{}".format(healpix) + ".fits.gz",
                                   'rw',
                                   clobber=True)
             for index in indexs:
