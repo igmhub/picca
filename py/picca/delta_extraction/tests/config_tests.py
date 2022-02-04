@@ -63,9 +63,6 @@ class ConfigTest(AbstractTest):
                         print(f"For key {key} found orig value = {orig_value} but new value = {new_value}")
                     self.assertTrue(orig_value == new_value)
             for key in new_section.keys():
-                if not key in orig_section.keys():
-                    print(f"key {key} in section {section} missing on {new_file}")
-
                 if key not in orig_section.keys():
                     print(f"key {key} in section {new_section} missing in original file")
                     self.assertTrue(key in orig_section.keys())

@@ -155,6 +155,7 @@ sdss_data_kwargs = {
         f"{THIS_DIR}/data",
     "out dir":
         f"{THIS_DIR}/results",
+    "rejection log file": "rejection_log.fits.gz",
     "drq catalogue":
         f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
     "z max": 3.5,
@@ -165,6 +166,7 @@ sdss_data_kwargs_filter_forest = {
         f"{THIS_DIR}/data",
     "out dir":
         f"{THIS_DIR}/results",
+    "rejection log file": "sdss_data_rejection_log.fits.gz",
     "drq catalogue":
         f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
     "mode": "spec",
