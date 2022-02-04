@@ -80,8 +80,8 @@ class LinesMask(Mask):
             for mask_range in self.mask_obs_frame:
                 w &= ((forest.log_lambda < mask_range['log_wave_min']) |
                       (forest.log_lambda > mask_range['log_wave_max']))
+            log_lambda_rest_frame = forest.log_lambda - np.log10(1.0 + forest.z)
             for mask_range in self.mask_rest_frame:
-                log_lambda_rest_frame = forest.log_lambda - np.log10(1.0 + forest.z)
                 w &= ((log_lambda_rest_frame < mask_range['log_wave_min']) |
                       (log_lambda_rest_frame > mask_range['log_wave_max']))
         elif Forest.wave_solution == "lin":
@@ -89,8 +89,8 @@ class LinesMask(Mask):
             for mask_range in self.mask_obs_frame:
                 w &= ((forest.lambda_ < mask_range['wave_min']) |
                       (forest.lambda_ > mask_range['wave_max']))
+            lambda_rest_frame = forest.lambda_/(1.0 + forest.z)
             for mask_range in self.mask_rest_frame:
-                lambda_rest_frame = forest.lambda_/(1.0 + forest.z)
                 w &= ((lambda_rest_frame < mask_range['wave_min']) |
                       (lambda_rest_frame > mask_range['wave_max']))
         else:
