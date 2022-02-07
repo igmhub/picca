@@ -53,7 +53,11 @@ class AbstractTest(unittest.TestCase):
                     new_line = re.sub(r"\/[^ ]*\/py\/picca\/delta_extraction\/tests\/",
                                       "", new_line)
 
-                self.assertTrue(orig_line == new_line)
+                if not orig_line == new_line:
+                    print("Lines not equal")
+                    print("Original line" + orig_line)
+                    print("New line" + new_line)
+                    self.assertTrue(orig_line == new_line)
         finally:
             orig.close()
             new.close()
