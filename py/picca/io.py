@@ -611,7 +611,7 @@ def read_from_spec(in_dir,
             if deltas is None:
                 deltas = forest
             else:
-                deltas.coadd(forest)
+                deltas = deltas.coadd(forest)
             hdul.close()
 
         if deltas is not None:
@@ -868,7 +868,7 @@ def read_from_spcframe(in_dir, catalog, log_file=None, single_exp=False):
                 z = metadata['z_qso']
                 f = metadata['fiberid']
                 if t in pix_data:
-                    pix_data[t].coadd(
+                    pix_data[t] = pix_data[t].coadd(
                         Forest(log_lambda[index], flux[index], ivar[index], t,
                                r, d, z, p, m, f))
                 else:
@@ -1139,7 +1139,7 @@ def read_from_desi(in_dir, catalog, desi_prefix, in_nside=64, pk1d=None):
                 if forest is None:
                     forest = copy.deepcopy(forest_temp)
                 else:
-                    forest.coadd(forest_temp)
+                    forest = forest.coadd(forest_temp)
 
             data.append(forest)
 
@@ -1363,7 +1363,7 @@ def read_from_minisv_desi(in_dir, catalog, pk1d=None, usesinglenights=False, use
                         do_append=False
                         break
                 #need to make sure that the forest is valid and the object isn't already in
-                if do_append and forest.log_lambda is not None:
+                if do_append and forest.log_lambda is not None and len(forest.log_lambda)>0:
                     data[in_healpixs[w_t]].append(forest)
                     num_data += 1
 
