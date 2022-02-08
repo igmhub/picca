@@ -980,7 +980,7 @@ def read_from_spplate(in_dir,
                             metadata['PLATE'], metadata['MJD'],
                             metadata['FIBERID'])
             if t in pix_data:
-                pix_data[t].coadd(forest)
+                pix_data[t] = pix_data[t].coadd(forest)
             else:
                 pix_data[t] = forest
             if log_file is not None:
