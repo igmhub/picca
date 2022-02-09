@@ -267,13 +267,13 @@ class SdssData(Data):
                             "log_lambda": log_lambda,
                             "flux": flux[array_index],
                             "ivar": ivar[array_index],
-                            "thingid": row["THING_ID"],
+                            "thingid": thingid,
                             "ra": row["RA"],
                             "dec": row["DEC"],
                             "z": row["Z"],
-                            "plate": row["PLATE"],
-                            "mjd": row["MJD"],
-                            "fiberid": row["FIBERID"]
+                            "plate": plate,
+                            "mjd": mjd,
+                            "fiberid": fiberid
                         })
                 elif self.analysis_type == "PK 1D":
                     # compute difference between exposure
@@ -285,8 +285,8 @@ class SdssData(Data):
                     forest = SdssPk1dForest(
                         **{
                             "log_lambda": log_lambda,
-                            "flux": flux,
-                            "ivar": ivar,
+                            "flux": flux[array_index],
+                            "ivar": ivar[array_index],
                             "thingid": thingid,
                             "ra": row["RA"],
                             "dec": row["DEC"],
