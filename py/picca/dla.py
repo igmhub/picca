@@ -166,7 +166,7 @@ class DLA:
         Returns:
             The Voigt function for each element in a, u
         """
-        nun_points = 1000000
+        nun_points = 10000
         gaussian_dist = np.random.normal(size=nun_points) * np.sqrt(2)
         unnormalized_voigt = np.mean(
             1 / (a_voight**2 + (gaussian_dist[:, None] - u_voight)**2), axis=0)
