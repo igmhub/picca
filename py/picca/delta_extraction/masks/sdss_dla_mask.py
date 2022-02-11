@@ -18,8 +18,8 @@ defaults = {
 accepted_options = ["dla mask limit", "mask file", "filename"]
 
 np.random.seed(0)
-nun_points = 100000
-gaussian_dist = np.random.normal(size=nun_points) * np.sqrt(2)
+num_points = 10000
+gaussian_dist = np.random.normal(size=num_points) * np.sqrt(2)
 
 class SdssDlaMask(Mask):
     """Class to mask DLAs

@@ -9,8 +9,8 @@ import numpy as np
 from . import constants
 
 np.random.seed(0)
-nun_points = 100000
-gaussian_dist = np.random.normal(size=nun_points) * np.sqrt(2)
+num_points = 10000
+gaussian_dist = np.random.normal(size=num_points) * np.sqrt(2)
 
 class DLA:
     """Class to represent Damped Lyman-alpha Absorbers.
