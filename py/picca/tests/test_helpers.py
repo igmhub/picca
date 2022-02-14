@@ -99,8 +99,10 @@ class AbstractTest(unittest.TestCase):
                     allclose = np.allclose(d_m, d_b,atol=abs_tolerance,rtol=rel_tolerance)
                     self.assertTrue(
                         allclose,
-                        "{}: Header key is {}, maximum relative difference is {}, maximum absolute difference is {}".
-                        format(nameRun, k, diff.max(), diff_abs.max()))
+                        (f"{nameRun}: Header key is {k}, maximum relative difference is {diff.max()}, "
+                         f"maximum absolute difference is {diff_abs.max()}\n"
+                         f"file1: {path1}\nfile2: {path2}")
+                        )
                     userprint(f"OK, maximum relative difference {diff.max():.2e}, max. abs. difference is {diff_abs.max():.2e}")
 
         m.close()
