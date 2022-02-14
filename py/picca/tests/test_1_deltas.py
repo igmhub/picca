@@ -8,7 +8,7 @@ import healpy
 
 from picca.utils import userprint
 
-from .test_helpers import AbstractTest
+from picca.tests.test_helpers import AbstractTest
 
 
 class TestDelta(AbstractTest):
@@ -338,9 +338,9 @@ class TestDelta(AbstractTest):
         cmd += " --best-obs"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
         cmd += " --use-single-nights"
-        
+
         picca_deltas.main(cmd.split()[1:])
-        
+
         ### Test
         if self._test:
             path1 = self._masterFiles + "/test_delta/delta_attributes_Pk1D_MiniSV.fits.gz"
@@ -405,7 +405,7 @@ class TestDelta(AbstractTest):
         cmd += " --nproc 1"
         cmd += " --best-obs"
         cmd += " --mask-file " + path_to_etc + "/list_veto_line_Pk1D.txt"
-        
+
         picca_deltas.main(cmd.split()[1:])
 
         ### Test

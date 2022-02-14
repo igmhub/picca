@@ -9,7 +9,7 @@ import shutil
 from picca.utils import userprint
 import picca.bin.picca_fitter2 as picca_fitter2
 
-from .test_helpers import AbstractTest
+from picca.tests.test_helpers import AbstractTest
 
 
 class TestFitter(AbstractTest):
@@ -79,7 +79,7 @@ class TestFitter(AbstractTest):
         value = self._masterFiles + '/test_cor/metal_xdmat.fits.gz'
         self.update_system_status_values(path, 'metals', 'filename', value)
 
-        ### Send            
+        ### Send
         picca_fitter2.main(self._branchFiles+'/Products/Correlations/Fit/chi2.ini')
 
         ###These commented lines are to simplify accessing test outputs if needed

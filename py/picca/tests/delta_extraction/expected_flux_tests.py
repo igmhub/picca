@@ -14,10 +14,10 @@ from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
     defaults as defaults_dr16_expected_flux)
-from picca.delta_extraction.tests.abstract_test import AbstractTest
-from picca.delta_extraction.tests.test_utils import forest1
-from picca.delta_extraction.tests.test_utils import setup_forest, reset_forest
-from picca.delta_extraction.tests.test_utils import sdss_data_kwargs
+from picca.tests.delta_extraction.abstract_test import AbstractTest
+from picca.tests.delta_extraction.test_utils import forest1
+from picca.tests.delta_extraction.test_utils import setup_forest, reset_forest
+from picca.tests.delta_extraction.test_utils import sdss_data_kwargs
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

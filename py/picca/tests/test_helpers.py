@@ -18,7 +18,7 @@ class CaseConfigParser(ConfigParser.ConfigParser):
 class AbstractTest(unittest.TestCase):
     """
         Class with Helper functions for the picca unit tests
-    """  
+    """
 
     def update_system_status_values(self, path, section, system, value):
         """
@@ -209,7 +209,7 @@ class AbstractTest(unittest.TestCase):
     def load_requirements(cls, picca_base):
         """
             Loads reqirements file from picca_base
-        """        
+        """
         req = {}
 
         if sys.version_info > (3, 0):
@@ -243,19 +243,19 @@ class AbstractTest(unittest.TestCase):
                 userprint("WARNING: Module {} can't be found".format(req_lib))
 
         return
-    
+
     @classmethod
     def setUpClass(cls):
         """
             sets up directory structure in tmp
-        """        
+        """
         cls._branchFiles = tempfile.mkdtemp() + "/"
         cls.produce_folder(cls)
         cls.picca_base = resource_filename('picca',
                                            './').replace('py/picca/./', '')
         cls.send_requirements(cls.load_requirements(cls.picca_base))
         np.random.seed(42)
-        cls._masterFiles = cls.picca_base + '/py/picca/test/data/'
+        cls._masterFiles = cls.picca_base + '/py/picca/tests/data/'
         cls._test=True
         userprint("\n")
 
@@ -263,7 +263,7 @@ class AbstractTest(unittest.TestCase):
     def tearDownClass(cls):
         """
             removes directory structure in tmp
-        """    
+        """
         os.makedirs('/tmp/last_run_picca_test/',exist_ok=True)
         #copy the outputs for later debugging, ditch spectra
         try:

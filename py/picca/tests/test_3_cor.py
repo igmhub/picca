@@ -31,13 +31,13 @@ import picca.bin.picca_export
 import picca.bin.picca_export_cross_covariance
 import picca.bin.picca_export_co
 
-from .test_helpers import AbstractTest
+from picca.tests.test_helpers import AbstractTest
 
 
 class TestCor(AbstractTest):
     """
         Tests the Correlation Function Computations
-    """    
+    """
 
 
     def produce_folder(self):
@@ -63,7 +63,7 @@ class TestCor(AbstractTest):
     def test_cf1d(self):
         """
             Test 1d correlation function
-        """        
+        """
 
         userprint("\n")
         ### Send
@@ -85,7 +85,7 @@ class TestCor(AbstractTest):
     def test_cf1d_cross(self):
         """
             Test 1d cross-correlation function
-        """        
+        """
 
         userprint("\n")
         ### Send
@@ -108,7 +108,7 @@ class TestCor(AbstractTest):
     def test_cf_angl(self):
         """
             Test angular correlation function
-        """        
+        """
         importlib.reload(picca.cf)
         userprint("\n")
         ### Send
@@ -130,7 +130,7 @@ class TestCor(AbstractTest):
     def test_cf(self):
         """
             Test correlation function
-        """        
+        """
         importlib.reload(picca.cf)
 
         userprint("\n")
@@ -159,7 +159,7 @@ class TestCor(AbstractTest):
     def test_dmat(self):
         """
             Test distortion matrix
-        """      
+        """
         importlib.reload(picca.cf)
 
         userprint("\n")
@@ -189,7 +189,7 @@ class TestCor(AbstractTest):
     def test_metal_dmat(self):
         """
             Test metal distortion matrix
-        """      
+        """
         importlib.reload(picca.cf)
 
         userprint("\n")
@@ -220,7 +220,7 @@ class TestCor(AbstractTest):
     def test_wick(self):
         """
             Test wick covariances
-        """      
+        """
         importlib.reload(picca.cf)
 
         userprint("\n")
@@ -250,7 +250,7 @@ class TestCor(AbstractTest):
     def test_export_cf(self):
         """
             Test export of correlation function
-        """      
+        """
 
         userprint("\n")
         ### Send
@@ -265,7 +265,7 @@ class TestCor(AbstractTest):
     def test_cf_cross(self):
         """
             Test export of cross correlation function
-        """      
+        """
         importlib.reload(picca.cf)
 
         userprint("\n")
@@ -296,7 +296,7 @@ class TestCor(AbstractTest):
     def test_dmat_cross(self):
         """
             Test cross distortion matrix
-        """        
+        """
         importlib.reload(picca.cf)
 
 
@@ -329,7 +329,7 @@ class TestCor(AbstractTest):
     def test_metal_dmat_cross(self):
         """
             Test metal cross distortion matrix
-        """        
+        """
         importlib.reload(picca.cf)
 
         userprint("\n")
@@ -364,7 +364,7 @@ class TestCor(AbstractTest):
     def test_export_cf_cross(self):
         """
             Test export of cross correlation function
-        """        
+        """
 
         userprint("\n")
         ### Send
@@ -381,7 +381,7 @@ class TestCor(AbstractTest):
     def test_xcf_angl(self):
         """
             Test angular cross correlation function
-        """        
+        """
 
         userprint("\n")
         ### Send
@@ -404,7 +404,7 @@ class TestCor(AbstractTest):
     def test_xcf(self):
         """
             Test cross correlation function
-        """        
+        """
 
         userprint("\n")
         ### Send
@@ -432,7 +432,7 @@ class TestCor(AbstractTest):
     def test_xdmat(self):
         """
             Test cross distortion matrix
-        """        
+        """
         importlib.reload(picca.xcf)
 
 
@@ -463,7 +463,7 @@ class TestCor(AbstractTest):
     def test_metal_xdmat(self):
         """
             Test metal cross distortion matrix
-        """        
+        """
         userprint("\n")
         ### Send
         cmd = "picca_metal_xdmat.py"
@@ -492,7 +492,7 @@ class TestCor(AbstractTest):
     def test_xwick(self):
         """
             Test wick covariances for cross
-        """        
+        """
 
         userprint("\n")
         ### Send
@@ -523,7 +523,7 @@ class TestCor(AbstractTest):
         """
             Test the export of the cross correlation function
         """
-        
+
 
         userprint("\n")
         ### Send
@@ -540,8 +540,8 @@ class TestCor(AbstractTest):
     def test_export_cross_covariance_cf_xcf(self):
         """
             Test the export of cross_covariances between correlation function and cross correlation function
-        """        
-        
+        """
+
 
         userprint("\n")
         ### Send
@@ -558,7 +558,7 @@ class TestCor(AbstractTest):
     def test_co(self):
         """
             Test the covariances
-        """        
+        """
 
         userprint("\n")
         ### Send
@@ -639,10 +639,10 @@ class TestCor(AbstractTest):
 
         return
 
-    def test_export_co(self):       
+    def test_export_co(self):
         """
             Test the export of covariances
-        """         
+        """
 
         userprint("\n")
         ### Send

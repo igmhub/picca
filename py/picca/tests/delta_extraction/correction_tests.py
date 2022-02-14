@@ -17,9 +17,9 @@ from picca.delta_extraction.corrections.optical_depth_correction import (
     OpticalDepthCorrection)
 from picca.delta_extraction.errors import CorrectionError
 from picca.delta_extraction.utils import setup_logger
-from picca.delta_extraction.tests.abstract_test import AbstractTest
-from picca.delta_extraction.tests.test_utils import reset_logger
-from picca.delta_extraction.tests.test_utils import forest1_log_lambda, forest1
+from picca.tests.delta_extraction.abstract_test import AbstractTest
+from picca.tests.delta_extraction.test_utils import reset_logger
+from picca.tests.delta_extraction.test_utils import forest1_log_lambda, forest1
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

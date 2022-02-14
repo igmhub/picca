@@ -12,8 +12,8 @@ from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.astronomical_objects.sdss_pk1d_forest import SdssPk1dForest
 from picca.delta_extraction.errors import AstronomicalObjectError
-from picca.delta_extraction.tests.abstract_test import AbstractTest
-from picca.delta_extraction.tests.test_utils import (reset_forest, setup_forest,
+from picca.tests.delta_extraction.abstract_test import AbstractTest
+from picca.tests.delta_extraction.test_utils import (reset_forest, setup_forest,
                                                      setup_pk1d_forest)
 
 # define auxiliar variables
@@ -51,6 +51,34 @@ kwargs_astronomical_object = {
     "ra": 0.15,
     "dec": 0.0,
     "z": 2.1,
+}
+
+# define contructor for AstronomicalObject comparison objects
+kwargs_astronomical_object_gt = {
+    "healpix_ordering": {
+        "los_id": 9999,
+        "ra": 0.0,
+        "dec": 0.0,
+        "z": 2.1
+    },
+    "ra_ordering": {
+        "los_id": 9999,
+        "ra": 0.1,
+        "dec": 0.0,
+        "z": 2.1
+    },
+    "dec_ordering": {
+        "los_id": 9999,
+        "ra": 0.15,
+        "dec": -0.01,
+        "z": 2.1
+    },
+    "z_ordering": {
+        "los_id": 9999,
+        "ra": 0.15,
+        "dec": 0.0,
+        "z": 2.0
+    },
 }
 
 # define contructors for Forest
@@ -586,33 +614,7 @@ class AstronomicalObjectTest(AbstractTest):
         """Test comparison between instances of AstronomicalObject."""
         test_obj = AstronomicalObject(**kwargs_astronomical_object)
 
-        kwargs_gt = {
-            "healpix_ordering": {
-                "los_id": 9999,
-                "ra": 0.0,
-                "dec": 0.0,
-                "z": 2.1
-            },
-            "ra_ordering": {
-                "los_id": 9999,
-                "ra": 0.1,
-                "dec": 0.0,
-                "z": 2.1
-            },
-            "dec_ordering": {
-                "los_id": 9999,
-                "ra": 0.15,
-                "dec": -0.01,
-                "z": 2.1
-            },
-            "z_ordering": {
-                "los_id": 9999,
-                "ra": 0.15,
-                "dec": 0.0,
-                "z": 2.0
-            },
-        }
-        for kwargs in kwargs_gt.values():
+        for kwargs in kwargs_astronomical_object_gt.values():
             other = AstronomicalObject(**kwargs)
             self.assertTrue(test_obj > other)
             self.assertTrue(test_obj != other)
@@ -975,6 +977,44 @@ class AstronomicalObjectTest(AbstractTest):
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
         self.assert_forest_object(test_obj, kwargs_forest_lin)
+
+    def test_forest_comparison(self):
+        """Test comparison is properly inheried in Forest."""
+        setup_forest(wave_solution="log")
+
+        test_obj = Forest(**kwargs_forest_log)
+
+        kwargs_forest_gt = kwargs_astronomical_object_gt.copy()
+        for kwargs in kwargs_forest_gt.values():
+            kwargs.update({
+                "flux": FLUX,
+                "ivar": IVAR,
+                "log_lambda": LOG_LAMBDA,
+            })
+
+        for kwargs in kwargs_forest_gt.values():
+            other = Forest(**kwargs)
+            self.assertTrue(test_obj > other)
+            self.assertTrue(test_obj != other)
+            self.assertFalse(test_obj == other)
+            self.assertFalse(test_obj < other)
+
+        # equal objects (but with different los_id)
+        # it makes sense that the los_id be different if we combine deltas
+        # from different surveys
+        kwargs = {
+            "los_id": 1234,
+            "ra": 0.15,
+            "dec": 0.0,
+            "z": 2.1,
+            "flux": FLUX,
+            "ivar": IVAR,
+            "log_lambda": LOG_LAMBDA,
+        }
+        other = Forest(**kwargs)
+        self.assertFalse(test_obj > other)
+        self.assertTrue(test_obj == other)
+        self.assertFalse(test_obj < other)
 
     def test_forest_rebin(self):
         """Test the rebin function in Forest."""

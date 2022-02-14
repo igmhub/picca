@@ -9,8 +9,8 @@ from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import defaults as defaults_drq
-from picca.delta_extraction.tests.abstract_test import AbstractTest
-from picca.delta_extraction.tests.test_utils import reset_logger
+from picca.tests.delta_extraction.abstract_test import AbstractTest
+from picca.tests.delta_extraction.test_utils import reset_logger
 from picca.delta_extraction.utils import setup_logger
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))

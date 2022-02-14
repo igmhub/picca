@@ -7,7 +7,7 @@ import healpy
 
 from picca.utils import userprint
 
-from .test_helpers import AbstractTest
+from picca.tests.test_helpers import AbstractTest
 
 
 class TestPk1d(AbstractTest):
@@ -32,7 +32,7 @@ class TestPk1d(AbstractTest):
     def test_Pk1D(self):
         """
             Runs a simple test of Pk1d routines
-        """        
+        """
         import picca.bin.picca_Pk1D as picca_Pk1D
 
         self._test = True

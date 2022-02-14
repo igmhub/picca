@@ -14,12 +14,12 @@ from picca.delta_extraction.masks.sdss_absorber_mask import (
     defaults as defaults_sdss_absorber_mask)
 from picca.delta_extraction.errors import MaskError
 from picca.delta_extraction.utils import setup_logger
-from picca.delta_extraction.tests.abstract_test import AbstractTest
-from picca.delta_extraction.tests.test_utils import reset_logger
-from picca.delta_extraction.tests.test_utils import setup_forest, reset_forest
-from picca.delta_extraction.tests.test_utils import forest1_log_lambda, forest1
-from picca.delta_extraction.tests.test_utils import forest2_log_lambda, forest2
-from picca.delta_extraction.tests.test_utils import forest3_log_lambda, forest3
+from picca.tests.delta_extraction.abstract_test import AbstractTest
+from picca.tests.delta_extraction.test_utils import reset_logger
+from picca.tests.delta_extraction.test_utils import setup_forest, reset_forest
+from picca.tests.delta_extraction.test_utils import forest1_log_lambda, forest1
+from picca.tests.delta_extraction.test_utils import forest2_log_lambda, forest2
+from picca.tests.delta_extraction.test_utils import forest3_log_lambda, forest3
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

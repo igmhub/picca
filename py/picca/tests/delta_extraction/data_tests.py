@@ -9,11 +9,11 @@ from picca.delta_extraction.data import defaults as defaults_data
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
 from picca.delta_extraction.data_catalogues.sdss_data import defaults as defaults_sdss_data
 from picca.delta_extraction.utils import setup_logger
-from picca.delta_extraction.tests.abstract_test import AbstractTest
-from picca.delta_extraction.tests.test_utils import reset_logger
-from picca.delta_extraction.tests.test_utils import forest1
-from picca.delta_extraction.tests.test_utils import sdss_data_kwargs
-from picca.delta_extraction.tests.test_utils import sdss_data_kwargs_filter_forest
+from picca.tests.delta_extraction.abstract_test import AbstractTest
+from picca.tests.delta_extraction.test_utils import reset_logger
+from picca.tests.delta_extraction.test_utils import forest1
+from picca.tests.delta_extraction.test_utils import sdss_data_kwargs
+from picca.tests.delta_extraction.test_utils import sdss_data_kwargs_filter_forest
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 

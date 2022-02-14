@@ -5,7 +5,7 @@ import os
 import unittest
 import subprocess
 
-from picca.delta_extraction.tests.abstract_test import AbstractTest
+from picca.tests.delta_extraction.abstract_test import AbstractTest
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
