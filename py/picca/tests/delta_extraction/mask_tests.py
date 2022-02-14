@@ -7,8 +7,8 @@ import numpy as np
 
 from picca.delta_extraction.mask import Mask
 from picca.delta_extraction.masks.lines_mask import LinesMask
-from picca.delta_extraction.masks.sdss_dla_mask import SdssDlaMask
-from picca.delta_extraction.masks.sdss_dla_mask import defaults as defaults_sdss_dla_mask
+from picca.delta_extraction.masks.dla_mask import DlaMask
+from picca.delta_extraction.masks.dla_mask import defaults as defaults_dla_mask
 from picca.delta_extraction.masks.sdss_absorber_mask import SdssAbsorberMask
 from picca.delta_extraction.masks.sdss_absorber_mask import (
     defaults as defaults_sdss_absorber_mask)
@@ -114,14 +114,14 @@ class MaskTest(AbstractTest):
 
     def test_dla_mask(self):
         """Test correct initialisation and inheritance for class
-        SdssDlaMask
+        DlaMask
 
-        Load a SdssDlaMask instace and check that it is
+        Load a DlaMask instace and check that it is
         correctly initialized.
         """
         in_file = f"{THIS_DIR}/data/dummy_absorbers_cat.fits.gz"
-        out_file = f"{THIS_DIR}/results/sdss_dla_mask_print.txt"
-        test_file = f"{THIS_DIR}/data/sdss_dla_mask_print.txt"
+        out_file = f"{THIS_DIR}/results/dla_mask_print.txt"
+        test_file = f"{THIS_DIR}/data/dla_mask_print.txt"
 
         # setup printing
         setup_logger(log_file=out_file)
@@ -129,10 +129,10 @@ class MaskTest(AbstractTest):
         # initialize mask
         config = ConfigParser()
         config.read_dict({"mask": {"filename": in_file}})
-        for key, value in defaults_sdss_dla_mask.items():
+        for key, value in defaults_dla_mask.items():
             if key not in config["mask"]:
                 config["mask"][key] = str(value)
-        mask = SdssDlaMask(config["mask"])
+        mask = DlaMask(config["mask"])
         self.assertTrue(isinstance(mask, Mask))
 
         # apply mask to forest with 1 DLA

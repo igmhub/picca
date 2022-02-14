@@ -13,13 +13,14 @@ from picca.delta_extraction.utils import ABSORBER_IGM
 
 defaults = {
     "dla mask limit": 0.8,
+    "los_id_name": "THING_ID"
 }
 
-accepted_options = ["dla mask limit", "mask file", "filename"]
+accepted_options = ["dla mask limit", "los_id_name", "mask file", "filename"]
 
 np.random.seed(0)
 
-class SdssDlaMask(Mask):
+class DlaMask(Mask):
     """Class to mask DLAs
 
     Methods
@@ -66,10 +67,14 @@ class SdssDlaMask(Mask):
         # first load the dla catalogue
         filename = config.get("filename")
         if filename is None:
-            raise MaskError("Missing argument 'filename' required by SdssDlaMask")
+            raise MaskError("Missing argument 'filename' required by DlaMask")
+
+        los_id_name = config.get("los_id_name")
+        if los_id_name is None:
+            raise MaskError("Missing argument 'los_id_name' required by DlaMask")
 
         self.logger.progress(f"Reading DLA catalog from: {filename}")
-        columns_list = ["THING_ID", "Z", "NHI"]
+        columns_list = [los_id_name, "Z", "NHI"]
         try:
             hdul = fitsio.FITS(filename)
             cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
@@ -85,10 +90,10 @@ class SdssDlaMask(Mask):
 
         # group DLAs on the same line of sight together
         self.los_ids = {}
-        for thingid in np.unique(cat["THING_ID"]):
-            w = (thingid == cat["THING_ID"])
-            self.los_ids[thingid] = list(zip(cat["Z"][w], cat['NHI'][w]))
-        num_dlas = np.sum([len(thingid) for thingid in self.los_ids.values()])
+        for los_id in np.unique(cat[los_id_name]):
+            w = (los_id == cat[los_id_name])
+            self.los_ids[los_id] = list(zip(cat["Z"][w], cat['NHI'][w]))
+        num_dlas = np.sum([len(los_id) for los_id in self.los_ids.values()])
 
         self.logger.progress('In catalog: {} DLAs'.format(num_dlas))
         self.logger.progress('In catalog: {} forests have a DLA\n'.format(len(self.los_ids)))
@@ -130,16 +135,18 @@ class SdssDlaMask(Mask):
         -----
         MaskError if Forest.wave_solution is not 'log'
         """
-        if Forest.wave_solution != "log":
-            raise MaskError("SdssDlaMask should only be applied when "
-                            "Forest.wave_solution is 'log'. Found: "
-                            f"{Forest.wave_solution}")
+        if Forest.wave_solution == "log":
+            lambda_ = 10**forest.log_lambda
+        elif Forest.wave_solution === "lin":
+            lambda_ = forest.lambda_
+        else:
+            raise MaskError("Forest.wave_solution must be either 'log' or 'lin'")
 
         # load DLAs
         if self.los_ids.get(forest.los_id) is not None:
             dla_transmission = np.ones(len(forest.log_lambda))
             for (z_abs, nhi) in self.los_ids.get(forest.los_id):
-                dla_transmission *= DlaProfile(forest.log_lambda, z_abs, nhi).transmission
+                dla_transmission *= DlaProfile(lambda_, z_abs, nhi).transmission
 
             # find out which pixels to mask
             w = dla_transmission > self.dla_mask_limit
@@ -183,15 +190,27 @@ class DlaProfile:
     z_abs: float
     Redshift of the absorption
     """
-    def __init__(self, log_lambda, z_abs, nhi):
-        """Initialize class instance."""
+    def __init__(self, lambda_, z_abs, nhi):
+        """Initialize class instance.
+
+        Arguments
+        ---------
+        lambda_: array of floats
+        Wavelength (in Angs)
+
+        z_abs: float
+        Redshift of the absorption
+
+        nhi: float
+        DLA column density in log10(cm^-2)
+        """
         self.z_abs = z_abs
         self.nhi = nhi
 
-        self.transmission = self.profile_lya_absorption(10**log_lambda,
+        self.transmission = self.profile_lya_absorption(lambda_,
                                                         z_abs, nhi)
         self.transmission *= self.profile_lyb_absorption(
-            10**log_lambda, z_abs, nhi)
+            lambda_, z_abs, nhi)
 
     @staticmethod
     def profile_lya_absorption(lambda_, z_abs, nhi):
