@@ -1,4 +1,4 @@
-"""This module defines the classes SdssDlaMask and Dla used in the
+"""This module defines the classes DlaMask and Dla used in the
 masking of DLAs"""
 import logging
 
@@ -13,10 +13,10 @@ from picca.delta_extraction.utils import ABSORBER_IGM
 
 defaults = {
     "dla mask limit": 0.8,
-    "los_id_name": "THING_ID"
+    "los_id name": "THING_ID",
 }
 
-accepted_options = ["dla mask limit", "los_id_name", "mask file", "filename"]
+accepted_options = ["dla mask limit", "los_id name", "mask file", "filename"]
 
 np.random.seed(0)
 
@@ -69,9 +69,9 @@ class DlaMask(Mask):
         if filename is None:
             raise MaskError("Missing argument 'filename' required by DlaMask")
 
-        los_id_name = config.get("los_id_name")
+        los_id_name = config.get("los_id name")
         if los_id_name is None:
-            raise MaskError("Missing argument 'los_id_name' required by DlaMask")
+            raise MaskError("Missing argument 'los_id name' required by DlaMask")
 
         self.logger.progress(f"Reading DLA catalog from: {filename}")
         columns_list = [los_id_name, "Z", "NHI"]
@@ -79,11 +79,11 @@ class DlaMask(Mask):
             hdul = fitsio.FITS(filename)
             cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
         except OSError:
-            raise MaskError(f"Error loading SdssDlaMask. File {filename} does "
+            raise MaskError(f"Error loading DlaMask. File {filename} does "
                             "not have extension 'DLACAT'")
         except ValueError:
             aux = "', '".join(columns_list)
-            raise MaskError(f"Error loading SdssDlaMask. File {filename} does "
+            raise MaskError(f"Error loading DlaMask. File {filename} does "
                             f"not have fields '{aux}' in HDU 'DLACAT'")
         finally:
             hdul.close()
@@ -103,7 +103,7 @@ class DlaMask(Mask):
         self.dla_mask_limit = config.getfloat("dla mask limit")
         if self.dla_mask_limit is None:
             raise MaskError("Missing argument 'dla mask limit' "
-                            "required by SdssDlaMask")
+                            "required by DlaMask")
 
         # load mask
         mask_file = config.get("mask file")
