@@ -36,8 +36,12 @@ class ScriptsTest(AbstractTest):
                    ]
         print("Running command: ", " ".join(command))
 
-        subprocess.check_call(command,
-                              env=dict(os.environ, THIS_DIR=THIS_DIR))
+        try:
+            subprocess.run(command, check=True, capture_output=True,
+                           env=dict(os.environ, THIS_DIR=THIS_DIR))
+        except CalledProcessError as e:
+            print(e.stderr)
+            raise e
 
         # compare attributes
         test_file = f"{test_dir}/delta_attributes.fits.gz"
