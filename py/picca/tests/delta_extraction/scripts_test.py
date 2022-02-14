@@ -4,6 +4,7 @@ import glob
 import os
 import unittest
 import subprocess
+from subprocess import CalledProcessError
 
 from picca.tests.delta_extraction.abstract_test import AbstractTest
 
