@@ -185,8 +185,8 @@ class DesiHealpix(DesiData):
             targetid = row["TARGETID"]
             w_t = np.where(targetid_spec == targetid)[0]
             if len(w_t) == 0:
-                #self.logger.warning(
-                 #   f"Error reading {targetid}. Ignoring object")
+                self.logger.warning(
+                    f"Error reading {targetid}. Ignoring object")
                 continue
             if len(w_t) > 1:
                 self.logger.warning(
