@@ -140,105 +140,6 @@ class TrueContinuum(ExpectedFlux):
 
         self.var_lss_binning = config.get("var lss binning", 'log')
 
-    def compute_delta_stack(self, forests, stack_from_deltas=False):
-        """Compute a stack of the delta field as a function of wavelength
-
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-
-        stack_from_deltas: bool - default: False
-        Flag to determine whether to stack from deltas or compute them
-
-        Raise
-        -----
-        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
-        """
-        if Forest.wave_solution == "log":
-            num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
-                           Forest.delta_log_lambda) + 1
-            stack_log_lambda = (Forest.log_lambda_min +
-                                np.arange(num_bins) * Forest.delta_log_lambda)
-
-        elif Forest.wave_solution == "lin":
-            num_bins = int((Forest.lambda_max - Forest.lambda_min) /
-                           Forest.delta_lambda) + 1
-            stack_lambda = (Forest.lambda_min +
-                            np.arange(num_bins) * Forest.delta_lambda)
-        else:
-            raise ExpectedFluxError("Forest.wave_solution must be either "
-                                    "'log' or 'linear'")
-
-        stack_delta = np.zeros(num_bins)
-        stack_weight = np.zeros(num_bins)
-
-        for forest in forests:
-            if stack_from_deltas:
-                expected_flux = self.los_ids.get(forest.los_id).get("mean expected flux")
-                delta = forest.flux/expected_flux
-                weights = self.los_ids.get(forest.los_id).get("weights")
-            else:
-                # ignore forest if continuum could not be computed
-                if forest.continuum is None:
-                    continue
-                delta = forest.flux / forest.continuum
-                if Forest.wave_solution == "log":
-                    var_lss = self.get_var_lss(forest.log_lambda)
-                elif Forest.wave_solution == "lin":
-                    var_lss = self.get_var_lss(forest.lambda_)
-                else:
-                    raise ExpectedFluxError(
-                        "Forest.wave_solution must be either "
-                        "'log' or 'linear'")
-
-                var_pipe = 1. / forest.ivar
-                variance = var_pipe + var_lss*forest.continuum**2
-                weights = 1./ variance
-
-            if Forest.wave_solution == "log":
-                bins = ((forest.log_lambda - Forest.log_lambda_min) /
-                        Forest.delta_log_lambda + 0.5).astype(int)
-            elif Forest.wave_solution == "lin":
-                bins = ((forest.lambda_ - Forest.lambda_min) /
-                        Forest.delta_lambda + 0.5).astype(int)
-            else:
-                raise ExpectedFluxError("Forest.wave_solution must be either "
-                                        "'log' or 'linear'")
-
-            rebin = np.bincount(bins, weights=delta*weights)
-            stack_delta[:len(rebin)] += rebin/rebin.mean()
-            rebin = np.bincount(bins, weights=weights)
-            stack_weight[:len(rebin)] += rebin/rebin.mean()
-
-        w = stack_weight > 0
-        stack_delta[w] /= stack_weight[w]
-
-        if Forest.wave_solution == "log":
-            self.get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
-                                            stack_delta[stack_weight > 0.],
-                                            kind="nearest",
-                                            fill_value="extrapolate")
-            self.get_stack_delta_weights = interp1d(
-                stack_log_lambda[stack_weight > 0.],
-                stack_weight[stack_weight > 0.],
-                kind="nearest",
-                fill_value=0.0,
-                bounds_error=False)
-        elif Forest.wave_solution == "lin":
-            self.get_stack_delta = interp1d(stack_lambda[stack_weight > 0.],
-                                            stack_delta[stack_weight > 0.],
-                                            kind="nearest",
-                                            fill_value="extrapolate")
-            self.get_stack_delta_weights = interp1d(
-                stack_lambda[stack_weight > 0.],
-                stack_weight[stack_weight > 0.],
-                kind="nearest",
-                fill_value=0.0,
-                bounds_error=False)
-        else:
-            raise ExpectedFluxError("Forest.wave_solution must be either "
-                                    "'log' or 'linear'")
 
     def compute_expected_flux(self, forests, out_dir):
         """
@@ -248,20 +149,34 @@ class TrueContinuum(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
 
-        out_dir: str
-        Directory where iteration statistics will be saved
-
-        Raise
+         Raise
         -----
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
-        num_bins = (int(
+
+        if Forest.wave_solution == "log":
+            num_bins = (int(
             (Forest.log_lambda_max_rest_frame -
              Forest.log_lambda_min_rest_frame) / Forest.delta_log_lambda) + 1)
-        self.log_lambda_rest_frame = (
+
+            self.log_lambda_rest_frame = (
             Forest.log_lambda_min_rest_frame + (np.arange(num_bins) + 0.5) *
             (Forest.log_lambda_max_rest_frame -
              Forest.log_lambda_min_rest_frame) / num_bins)
+
+        elif Forest.wave_solution == "lin":
+            num_bins = (int(
+            (Forest.lambda_max_rest_frame -
+             Forest.lambda_min_rest_frame) / Forest.delta_lambda) + 1)
+
+            self.lambda_rest_frame = (
+            Forest.lambda_min_rest_frame + (np.arange(num_bins) + 0.5) *
+            (Forest.lambda_max_rest_frame -
+             Forest.lambda_min_rest_frame) / num_bins)
+        else:
+            raise ExpectedFluxError("Forest.wave_solution must be "
+                                            "either 'log' or 'linear'")
+
 
         context = multiprocessing.get_context('fork')
         for iteration in range(1):
@@ -280,11 +195,8 @@ class TrueContinuum(ExpectedFlux):
         else:
             raise ExpectedFluxError("Forest.wave_solution must be "
                                             "either 'log' or 'linear'")
-
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
-        # now compute the mean delta
-        self.compute_delta_stack(forests,stack_from_deltas=True)
         # Save delta atributes
         self.save_delta_attributes(out_dir)
 
@@ -338,9 +250,6 @@ class TrueContinuum(ExpectedFlux):
             raise ExpectedFluxError("Forest.wave_solution must be either 'log' "
                                     "or 'lin'")
 
-        # multiply by mean flux model for now, it might be changed for
-        # computing the mean flux or reading it from file
-
         mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
         forest.continuum *= mean_optical_depth
         forest.hpcont = healpix
@@ -358,22 +267,29 @@ class TrueContinuum(ExpectedFlux):
         elif self.var_lss_binning == 'lin_3.2':
             filename = 'deltas_lya_stats_lin_bins_3.2.fits.gz'
         else:
-            raise ValueError('Unknown var_lss_binning {}.'.format(self.var_lss_binning))
+            self.logger.info(f'Trying to use costume var_lss file from {self.var_lss_binning}')
+            filename = self.var_lss_binning
 
-        var_lss_file = resource_filename('picca', 'delta_extraction')
-        var_lss_file += '/expected_fluxes/var_lss/' + filename
+        if filename == self.var_lss_binning:
+            var_lss_file = self.var_lss_binning
+        else:
+            var_lss_file = resource_filename('picca', 'delta_extraction')
+            var_lss_file += '/expected_fluxes/var_lss/' + filename
 
-        hdul = fits.open(var_lss_file)
-        log_lambda = hdul[1].data['LAMBDA']
+        self.logger.info(f"Using var_lss from: {var_lss_file}")
+        try:
+            hdul = fits.open(var_lss_file)
+        except:
+            raise ExpectedFluxError(f"var_lss from {var_lss_file} couldn't be loaded")
+
+        _lambda = hdul[1].data['LAMBDA']
         flux_variance = hdul[1].data['VAR']
         mean_flux = hdul[1].data['MEANFLUX']
         hdul.close()
 
-        if 'lin' in self.var_lss_binning:
-            log_lambda = np.log10(log_lambda)
-
         var_lss=flux_variance/mean_flux**2
-        self.get_var_lss = interp1d(log_lambda,
+
+        self.get_var_lss = interp1d(_lambda,
                                     var_lss,
                                     fill_value='extrapolate',
                                     kind='nearest')
@@ -402,9 +318,9 @@ class TrueContinuum(ExpectedFlux):
                 num_bins).astype(int)
 
             var_lss = self.get_var_lss(forest.lambda_)
-            var_pipe = 1. / forest.ivar
-            variance = var_pipe + var_lss*forest.continuum**2
-            weights = 1 / var_pipe
+            var_pipe = 1. / forest.ivar / forest.continuum**2
+            variance = var_lss + var_pipe
+            weights = 1 / variance
             cont = np.bincount(bins,
                                weights=forest.continuum * weights)
             mean_cont[:len(cont)] += cont
@@ -416,9 +332,6 @@ class TrueContinuum(ExpectedFlux):
         mean_cont[w] /= mean_cont_weight[w]
         mean_cont /= mean_cont.mean()
         lambda_cont = self.lambda_rest_frame[w]
-
-        # the new mean continuum is multiplied by the previous one to recover
-        # <F/spectrum_dependent_fitting_function>
 
         self.get_mean_cont = interp1d(lambda_cont,
                                       mean_cont,
@@ -451,9 +364,9 @@ class TrueContinuum(ExpectedFlux):
                      Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
 
             var_lss = self.get_var_lss(forest.log_lambda)
-            var_pipe = 1. / forest.ivar
-            variance = var_pipe + var_lss*forest.continuum**2
-            weights = 1 / var_pipe
+            var_pipe = 1. / forest.ivar/ forest.continuum**2
+            variance = var_lss + var_pipe
+            weights = 1 / variance
             cont = np.bincount(bins, weights= forest.continuum * weights)
             mean_cont[:len(cont)] += cont
 
@@ -500,8 +413,8 @@ class TrueContinuum(ExpectedFlux):
                                         "'log' or 'lin'")
 
             mean_expected_flux = forest.continuum
-            var_pipe = 1. / forest.ivar
-            variance = var_pipe + var_lss*mean_expected_flux**2
+            var_pipe = 1. / forest.ivar/ forest.continuum**2
+            variance =  var_lss + var_pipe
             weights = 1. / variance
 
             if isinstance(forest, Pk1dForest):
@@ -521,13 +434,10 @@ class TrueContinuum(ExpectedFlux):
                 }
 
     def save_delta_attributes(self,out_dir):
-        """Save the statistical properties of deltas at a given iteration
-        step
+        """Save mean continuum in the delta attributes file
 
         Arguments
         ---------
-        iteration: int
-        Iteration number. -1 for final iteration
 
         out_dir: str
         Directory where data will be saved
@@ -543,21 +453,11 @@ class TrueContinuum(ExpectedFlux):
             header = {}
             header["FITORDER"] = -1
             if Forest.wave_solution == "log":
-                # TODO: update this once the TODO in compute continua is fixed
                 num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
                                Forest.delta_log_lambda) + 1
                 stack_log_lambda = (
                     Forest.log_lambda_min +
                     np.arange(num_bins) * Forest.delta_log_lambda)
-                results.write([
-                    stack_log_lambda,
-                    self.get_stack_delta(stack_log_lambda),
-                    self.get_stack_delta_weights(stack_log_lambda)
-                ],
-                              names=['loglam', 'stack', 'weight'],
-                              header=header,
-                              extname='STACK_DELTAS')
-
 
                 results.write([
                     self.log_lambda_rest_frame,
@@ -572,16 +472,6 @@ class TrueContinuum(ExpectedFlux):
                                Forest.delta_lambda) + 1
                 stack_lambda = (Forest.lambda_min +
                                 np.arange(num_bins) * Forest.delta_lambda)
-
-                results.write([
-                    stack_lambda,
-                    self.get_stack_delta(stack_lambda),
-                    self.get_stack_delta_weights(stack_lambda)
-                ],
-                              names=['lam', 'stack', 'weight'],
-                              header=header,
-                              extname='STACK')
-
 
                 results.write([
                     self.lambda_rest_frame,

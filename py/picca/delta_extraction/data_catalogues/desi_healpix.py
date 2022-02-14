@@ -206,7 +206,7 @@ class DesiHealpix(DesiData):
                     "targetid": targetid,
                     "ra": row['RA'],
                     "dec": row['DEC'],
-                    "z": row['Z']
+                    "z": row['Z'],
                 }
                 if Forest.wave_solution == "log":
                     args["log_lambda"] = np.log10(spec['WAVELENGTH'])
