@@ -1,4 +1,4 @@
-"""This module defines the class SdssAbsorberMask in the
+"""This module defines the class AbsorberMask in the
 masking of absorbers"""
 import logging
 
@@ -15,7 +15,7 @@ defaults = {
 
 accepted_options = ["absorber mask width", "filename"]
 
-class SdssAbsorberMask(Mask):
+class AbsorberMask(Mask):
     """Class to mask Absorbers
 
     Methods
@@ -52,21 +52,25 @@ class SdssAbsorberMask(Mask):
         filename = config.get("filename")
         if filename is None:
             raise MaskError("Missing argument 'filename' required by "
-                            "SdssAbsorbersMask")
+                            "AbsorbersMask")
 
         self.logger.progress(f"Reading absorbers from: {filename}")
 
-        columns_list = ["THING_ID", "LAMBDA_ABS"]
+        los_id_name = config.get("los_id name")
+        if los_id_name is None:
+            raise MaskError("Missing argument 'los_id name' required by AbsorberMask")
+
+        columns_list = [los_id_name, "LAMBDA_ABS"]
         try:
             hdul = fitsio.FITS(filename)
             cat = {col: hdul["ABSORBERCAT"][col][:] for col in columns_list}
         except OSError:
-            raise MaskError("Error loading SdssAbsorberMask. File "
+            raise MaskError("Error loading AbsorberMask. File "
                             f"{filename} does not have extension "
                             "'ABSORBERCAT'")
         except ValueError:
             aux = "', '".join(columns_list)
-            raise MaskError("Error loading SdssAbsorberMask. File "
+            raise MaskError("Error loading AbsorberMask. File "
                             f"{filename} does not have fields '{aux}' "
                             "in HDU 'ABSORBERCAT'")
         finally:
@@ -74,10 +78,10 @@ class SdssAbsorberMask(Mask):
 
         # group absorbers on the same line of sight together
         self.los_ids = {}
-        for thingid in np.unique(cat["THING_ID"]):
-            w = (thingid == cat["THING_ID"])
-            self.los_ids[thingid] = list(cat["LAMBDA_ABS"][w])
-        num_absorbers = np.sum([len(thingid) for thingid in self.los_ids.values()])
+        for los_id in np.unique(cat[los_id_name]):
+            w = (los_id == cat[los_id_name])
+            self.los_ids[los_id] = list(cat[los_id_name][w])
+        num_absorbers = np.sum([len(los_id) for los_id in self.los_ids.values()])
 
         self.logger.progress(" In catalog: {} absorbers".format(num_absorbers))
         self.logger.progress(" In catalog: {} forests have absorbers\n".format(len(self.los_ids)))
@@ -87,7 +91,7 @@ class SdssAbsorberMask(Mask):
         self.absorber_mask_width = config.getfloat("absorber mask width")
         if self.absorber_mask_width is None:
             raise MaskError("Missing argument 'absorber mask width' required by "
-                            "SdssAbsorbersMask")
+                            "AbsorbersMask")
 
     def apply_mask(self, forest):
         """Applies the mask. The mask is done by removing the affected
@@ -102,17 +106,19 @@ class SdssAbsorberMask(Mask):
         -----
         CorrectionError if Forest.wave_solution is not 'log'
         """
-        if Forest.wave_solution != "log":
-            raise MaskError("SdssAbsorberMask should only be applied when "
-                            "Forest.wave_solution is 'log'. Found: "
-                            f"{Forest.wave_solution}")
+        if Forest.wave_solution == "log":
+            log_lambda = forest.log_lambda
+        elif Forest.wave_solution == "lin":
+            log_labmda = np.log10(forest.lambda_)
+        else:
+            raise MaskError("Forest.wave_solution must be either 'log' or 'lin'")
 
         # load DLAs
         if self.los_ids.get(forest.los_id) is not None:
             # find out which pixels to mask
-            w = np.ones(forest.log_lambda.size, dtype=bool)
+            w = np.ones(log_lambda.size, dtype=bool)
             for lambda_absorber in self.los_ids.get(forest.los_id):
-                w &= (np.fabs(1.e4 * (forest.log_lambda - np.log10(lambda_absorber))) >
+                w &= (np.fabs(1.e4 * (log_lambda - np.log10(lambda_absorber))) >
                       self.absorber_mask_width)
 
             # do the actual masking
