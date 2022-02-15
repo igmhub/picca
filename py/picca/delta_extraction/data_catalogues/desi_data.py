@@ -24,7 +24,7 @@ accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_ca
     "rebin", "wave solution"])))
 
 defaults.update({
-    "delta lambda": 1.0,  # TODO: update this value to the read from DESI files
+    "delta lambda": 0.8,
     "lambda max": 5500.0,
     "lambda max rest frame": 1200.0,
     "lambda min": 3600.0,

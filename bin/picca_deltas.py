@@ -173,10 +173,10 @@ def main(cmdargs):
                                  'desi_sv_no_coadd','desi_mocks','desiminisv'],
                         default='pix',
                         required=False,
-                        help=('''Open mode of the spectra files: pix, spec, 
-                              spcframe, spplate, desi_mocks (formerly known as desi), 
+                        help=('''Open mode of the spectra files: pix, spec,
+                              spcframe, spplate, desi_mocks (formerly known as desi),
                               desi_healpix (for healpix based coadded data),
-                              desi_survey_tilebased (for tilebased data with coadding), 
+                              desi_survey_tilebased (for tilebased data with coadding),
                               desi_sv_no_coadd (without coadding across tiles, will output in tile format)'''))
 
     parser.add_argument('--best-obs',
@@ -417,7 +417,7 @@ def main(cmdargs):
                         choices=('desi','eboss'),
                         default='desi',
                         required=False,
-                        help=('Survey the catalog comes from. Defines which ' 
+                        help=('Survey the catalog comes from. Defines which '
                             'naming conventions to use when masking BALs.'))
 
     parser.add_argument('--use-single-nights',
@@ -610,7 +610,6 @@ def main(cmdargs):
     ### Mask DLAs
     if not args.dla_vac is None:
         userprint("INFO: Adding DLAs")
-        np.random.seed(0)
         if 'desi' in args.mode:
             dlas= io.read_dlas(args.dla_vac, obj_id_name='TARGETID')
         else:
@@ -652,8 +651,13 @@ def main(cmdargs):
         for forest in data[healpix]:
             if ((forest.log_lambda is None) or
                     len(forest.log_lambda) < args.npix_min):
+                if forest.log_lambda is None:
+                    forest_size = 0
+                else:
+                    forest_size = len(forest.log_lambda)
                 log_file.write(("INFO: Rejected {} due to forest too "
-                                "short\n").format(forest.thingid))
+                                "short ({})\n").format(forest.thingid,
+                                                       forest_size))
                 continue
 
             if np.isnan((forest.flux * forest.ivar).sum()):
@@ -818,7 +822,11 @@ def main(cmdargs):
                           header=header,
                           extname='STACK')
             results.write(
-                [log_lambda, eta, var_lss, fudge, num_pixels],
+                [log_lambda,
+                 Forest.get_eta(log_lambda),
+                 Forest.get_var_lss(log_lambda),
+                 Forest.get_fudge(log_lambda),
+                 num_pixels],
                 names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'],
                 extname='WEIGHT')
             results.write([

@@ -120,6 +120,8 @@ class Config:
         self.logger = logging.getLogger(__name__)
 
         self.config = ConfigParser()
+        # with this we allow options to use capital letters
+        self.config.optionxform = lambda option: option
         # load default configuration
         self.config.read_dict(default_config)
         # now read the configuration file
@@ -136,6 +138,7 @@ class Config:
         self.log = None
         self.logging_level_console = None
         self.logging_level_file = None
+        self.out_dir = None
         self.__format_general_section()
         self.corrections = None
         self.num_corrections = None
@@ -286,6 +289,9 @@ class Config:
             if key not in section:
                 section[key] = str(value)
 
+        # add output directory
+        section["out dir"] = self.out_dir
+
         # finally add the information to self.data
         self.data = (DataType, section)
 
@@ -331,6 +337,10 @@ class Config:
             if key not in section:
                 section[key] = str(value)
 
+        # add output directory if necesssary
+        if "out dir" in accepted_options:
+            section["out dir"] = self.out_dir
+
         # finally add the information to self.continua
         self.expected_flux = (ExpectedFluxType, section)
 
@@ -355,6 +365,8 @@ class Config:
         self.out_dir = section.get("out dir")
         if self.out_dir is None:
             raise ConfigError("Missing variable 'out dir' in section [general]")
+        if not self.out_dir.endswith("/"):
+            self.out_dir += "/"
 
         self.overwrite = section.getboolean("overwrite")
         if self.out_dir is None:
@@ -405,13 +417,13 @@ class Config:
                 if key.startswith("type") or key.startswith("module name"):
                     try:
                         aux_str = key.replace("type", "").replace("module name", "")
-                        assert int(aux_str) < self.num_corrections
+                        assert int(aux_str) < self.num_masks
                         continue
                     except ValueError as e:
                         pass
                     except AssertionError as e:
                         raise ConfigError("In section [masks] found option "
-                                          f"{key}, but 'num corrections' is "
+                                          f"{key}, but 'num masks' is "
                                           f"'{self.num_masks}' (keep in mind "
                                           "python zero indexing)")
 
@@ -506,7 +518,7 @@ class Config:
                               "Pass overwrite option in configuration file"
                               "in order to ignore the previous run or"
                               "change the output path variable to point "
-                              "elsewhere")
+                              f"elsewhere. Folder: {self.out_dir}")
 
     def write_config(self):
         """This function writes the configuration options for later

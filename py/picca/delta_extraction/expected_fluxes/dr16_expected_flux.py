@@ -14,7 +14,8 @@ from picca.delta_extraction.expected_flux import ExpectedFlux
 
 accepted_options = ["iter out prefix", "limit eta", "limit var lss",
                     "num bins variance", "num iterations", "num processors",
-                    "order", "use constant weight", "use ivar as weight"]
+                    "order", "out dir", "use constant weight",
+                    "use ivar as weight"]
 
 defaults = {
     "iter out prefix": "delta_attributes",
@@ -124,12 +125,18 @@ class Dr16ExpectedFlux(ExpectedFlux):
     Number of processors to be used to compute the mean continua. None for no
     specified number (subprocess will take its default value).
 
+    order: int
+    Order of the polynomial for the continuum fit.
+
+    out_dir: str
+    Directory where logs will be saved.
+
     use_constant_weight: boolean
     If "True", set all the delta weights to one (implemented as eta = 0,
-    sigma_lss = 1, fudge = 0)
+    sigma_lss = 1, fudge = 0).
 
     use_ivar_as_weight: boolean
-    If "True", use ivar as weights (implemented as eta = 1, sigma_lss = fudge = 0)
+    If "True", use ivar as weights (implemented as eta = 1, sigma_lss = fudge = 0).
     """
 
     def __init__(self, config):
@@ -151,6 +158,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.iter_out_prefix = None
         self.limit_eta = None
         self.limit_var_lss = None
+        self.order = None
+        self.out_dir = None
         self.num_bins_variance = None
         self.num_iterations = None
         self.num_processors = None
@@ -390,6 +399,13 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.order is None:
             raise ExpectedFluxError(
                 "Missing argument 'order' required by Dr16ExpectedFlux")
+
+        self.out_dir = config.get("out dir")
+        if self.out_dir is None:
+            raise ExpectedFluxError(
+                "Missing argument 'out dir' required by Dr16ExpectedFlux")
+        else:
+            self.out_dir += "Log/"
 
         self.use_constant_weight = config.getboolean("use constant weight")
         if self.use_constant_weight is None:
@@ -787,7 +803,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                              fill_value=0.0,
                                              bounds_error=False)
 
-    def compute_expected_flux(self, forests, out_dir):
+    def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
         computed iteratively following as explained in du Mas des Bourboux et
@@ -797,9 +813,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ---------
         forests: List of Forest
         A list of Forest from which to compute the deltas.
-
-        out_dir: str
-        Directory where iteration statistics will be saved
 
         Raise
         -----
@@ -836,9 +849,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             # Save the iteration step
             if iteration == self.num_iterations - 1:
-                self.save_iteration_step(-1, out_dir)
+                self.save_iteration_step(-1)
             else:
-                self.save_iteration_step(iteration, out_dir)
+                self.save_iteration_step(iteration)
 
             self.logger.progress(
                 f"Continuum fitting: ending iteration {iteration} of "
@@ -1113,8 +1126,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         for forest in forests:
             if forest.bad_continuum_reason is not None:
-                self.logger.info(f"Rejected forest with los_id {forest.los_id} "
-                                 f"due to {forest.bad_continuum_reason}")
                 continue
             # get the variance functions and statistics
             if Forest.wave_solution == "log":
@@ -1154,7 +1165,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     "continuum": forest.continuum,
                 }
 
-    def save_iteration_step(self, iteration, out_dir):
+    def save_iteration_step(self, iteration):
         """Save the statistical properties of deltas at a given iteration
         step
 
@@ -1162,9 +1173,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ---------
         iteration: int
         Iteration number. -1 for final iteration
-
-        out_dir: str
-        Directory where data will be saved
 
         Raise
         -----
@@ -1175,7 +1183,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         else:
             iter_out_file = self.iter_out_prefix + f"_iteration{iteration+1}.fits.gz"
 
-        with fitsio.FITS(out_dir + iter_out_file, 'rw',
+        with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
                          clobber=True) as results:
             header = {}
             header["FITORDER"] = self.order
@@ -1223,7 +1231,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.get_stack_delta(stack_lambda),
                     self.get_stack_delta_weights(stack_lambda)
                 ],
-                              names=['loglam', 'stack', 'weight'],
+                              names=['lambda', 'stack', 'weight'],
                               header=header,
                               extname='STACK')
 
@@ -1233,7 +1241,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.get_var_lss(self.lambda_),
                     self.get_fudge(self.lambda_)
                 ],
-                              names=['loglam', 'eta', 'var_lss', 'fudge'],
+                              names=['lambda', 'eta', 'var_lss', 'fudge'],
                               extname='WEIGHT')
 
                 results.write([
@@ -1241,7 +1249,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.get_mean_cont(self.lambda_rest_frame),
                     self.get_mean_cont_weight(self.lambda_rest_frame),
                 ],
-                              names=['loglam_rest', 'mean_cont', 'weight'],
+                              names=['lambda_rest_frame', 'mean_cont', 'weight'],
                               extname='CONT')
 
             else:

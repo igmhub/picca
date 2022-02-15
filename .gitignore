@@ -15,3 +15,5 @@ py/picca\.egg-info/
 *checkpoint.ipynb
 
 *.log
+
+py/picca/tests/delta_extraction/results/
