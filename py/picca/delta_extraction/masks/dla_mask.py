@@ -139,7 +139,7 @@ class DlaMask(Mask):
         """
         if Forest.wave_solution == "log":
             lambda_ = 10**forest.log_lambda
-        elif Forest.wave_solution === "lin":
+        elif Forest.wave_solution == "lin":
             lambda_ = forest.lambda_
         else:
             raise MaskError("Forest.wave_solution must be either 'log' or 'lin'")
