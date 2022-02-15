@@ -610,7 +610,6 @@ def main(cmdargs):
     ### Mask DLAs
     if not args.dla_vac is None:
         userprint("INFO: Adding DLAs")
-        np.random.seed(0)
         if 'desi' in args.mode:
             dlas= io.read_dlas(args.dla_vac, obj_id_name='TARGETID')
         else:

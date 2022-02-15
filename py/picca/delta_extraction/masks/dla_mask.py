@@ -19,6 +19,8 @@ defaults = {
 accepted_options = ["dla mask limit", "los_id name", "mask file", "filename"]
 
 np.random.seed(0)
+num_points = 10000
+gaussian_dist = np.random.normal(size=num_points) * np.sqrt(2)
 
 class DlaMask(Mask):
     """Class to mask DLAs
@@ -357,8 +359,6 @@ class DlaProfile:
         voigt: array of float
         The Voigt function for each element in a, u
         """
-        nun_points = 1000
-        gaussian_dist = np.random.normal(size=nun_points) * np.sqrt(2)
         unnormalized_voigt = np.mean(
             1 / (a_voight**2 + (gaussian_dist[:, None] - u_voight)**2), axis=0)
         return unnormalized_voigt * a_voight / np.sqrt(np.pi)
