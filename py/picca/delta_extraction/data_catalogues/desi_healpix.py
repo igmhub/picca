@@ -119,7 +119,7 @@ class DesiHealpix(DesiData):
 
         return False, is_sv
 
-    def read_file(self, filename, catalogue,forests_by_targetid):
+    def read_file(self, filename, catalogue, forests_by_targetid):
         """Read the spectra and formats its data as Forest instances.
 
         Arguments
