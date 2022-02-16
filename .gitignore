@@ -1,5 +1,6 @@
 **/*.pyc
 *~
+**/.DS_Store
 
 \.vscode/
 
@@ -8,3 +9,11 @@
 \build/
 
 py/picca\.egg-info/
+
+.ipynb_checkpoints
+
+*checkpoint.ipynb
+
+*.log
+
+py/picca/tests/delta_extraction/results/

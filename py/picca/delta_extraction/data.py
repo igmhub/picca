@@ -1,0 +1,299 @@
+"""This module defines the abstract class Data from which all
+classes loading data must inherit
+"""
+import logging
+
+import numpy as np
+import fitsio
+import healpy
+
+from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
+from picca.delta_extraction.errors import DataError
+from picca.delta_extraction.utils import ABSORBER_IGM
+
+accepted_options = ["analysis type", "lambda abs IGM",
+                    "minimum number pixels in forest",
+                    "out dir", "rejection log file"]
+
+defaults = {
+    "analysis type": "BAO 3D",
+    "lambda abs IGM": "LYA",
+    "minimum number pixels in forest": 50,
+    "rejection log file": "rejection_log.fits.gz",
+}
+
+accepted_analysis_type = ["BAO 3D", "PK 1D"]
+
+class Data:
+    """Abstract class from which all classes loading data must inherit.
+    Classes that inherit from this should be initialized using
+    a configparser.SectionProxy instance.
+
+    Methods
+    -------
+    _parse_config
+    add_to_rejection_log
+    initialize_rejection_log
+    filter_bad_cont_forests
+    filter_forests
+    find_nside
+    save_deltas
+    save_rejection_log
+
+    Attributes
+    ----------
+    analysis_type: str
+    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
+
+    forests: list of Forest
+    A list of Forest from which to compute the deltas.
+
+    logger: logging.Logger
+    Logger object
+
+    min_num_pix: int
+    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
+
+    out_dir: str
+    Directory where data will be saved. Log info will be saved in out_dir+"Log/"
+    and deltas will be saved in out_dir+"Delta/"
+
+    rejection_log_file: str
+    Filelame of the rejection log
+
+    rejection_log_initialized: bool
+    Flag specifying if the rejection log has been initialized
+
+    rejection_log_cols: list of list
+    Each list contains the data of each of the fields saved in the rejection log
+
+    rejection_log_comments: list of list
+    Description of each of the fields saved in the rejection log
+
+    rejection_log_names: list of list
+    Name of each of the fields saved in the rejection log
+    """
+    def __init__(self, config):
+        """Initialize class instance"""
+        self.logger = logging.getLogger('picca.delta_extraction.data.Data')
+        self.forests = []
+
+        self.analysis_type = config.get("analysis type")
+        if self.analysis_type is None:
+            raise DataError("Missing argument 'analysis type' required by Data")
+        if self.analysis_type not in accepted_analysis_type:
+            raise DataError("Invalid argument 'analysis type' required by "
+                            "DesiData. Accepted values: " +
+                            ",".join(accepted_analysis_type))
+
+        if self.analysis_type == "PK 1D":
+            Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(config.get("lambda abs IGM"))
+            if Pk1dForest.lambda_abs_igm is None:
+                raise DataError("Missing argument 'lambda abs IGM' required by Data "
+                                "when 'analysys type' is 'BAO 3D'")
+
+
+        self.min_num_pix = config.getint("minimum number pixels in forest")
+        if self.min_num_pix is None:
+            raise DataError("Missing argument 'minimum number pixels in forest' "
+                            "required by Data")
+
+        self.out_dir = config.get("out dir")
+        if self.out_dir is None:
+            raise DataError("Missing argument 'out dir' required by Data")
+
+        self.rejection_log_file = config.get("rejection log file")
+        if self.rejection_log_file is None:
+            raise DataError("Missing argument 'rejection log file' required by Data")
+        elif not (self.rejection_log_file.endswith(".fits") or
+              self.rejection_log_file.endswith(".fits.gz")):
+            raise DataError("Invalid extension for 'rejection log file'. Filename "
+                            "should en with '.fits' or '.fits.gz'. Found "
+                            f"'{self.rejection_log_file}'")
+
+        # rejection log arays
+        self.rejection_log_initialized = False
+        self.rejection_log_cols = []
+        self.rejection_log_names = []
+        self.rejection_log_comments = []
+
+    def add_to_rejection_log(self, header, size, rejection_status):
+        """Adds to the rejection log arrays.
+        In the log forest headers will be saved along with the forest size and
+        the rejection status.
+
+        Arguments
+        ---------
+        header: list of dict
+        Output of forest.get_header()
+
+        size: int
+        Size of the forest
+
+        rejection_status: str
+        Rejection status
+        """
+        for col, name in zip(self.rejection_log_cols, self.rejection_log_names):
+            if name == "FOREST_SIZE":
+                col.append(size)
+            elif name == "REJECTION_STATUS":
+                col.append(rejection_status)
+            else:
+                for item in header:
+                    if item.get("name") == name:
+                        col.append(item.get("value"))
+                        break
+
+    def initialize_rejection_log(self, header):
+        """Initializes the rejection log arrays.
+        In the log forest headers will be saved along with the forest size and
+        the rejection status.
+
+        Arguments
+        ---------
+        header: list of dict
+        Output of forest.get_header()
+        """
+        self.rejection_log_cols = [[], []]
+        self.rejection_log_names = ["FOREST_SIZE", "REJECTION_STATUS"]
+        self.rejection_log_comments = ["num pixels in forest",
+                                      "rejection status"]
+
+        for item in self.forests[0].get_header():
+            self.rejection_log_cols.append([])
+            self.rejection_log_names.append(item.get("name"))
+            self.rejection_log_comments.append(item.get("comment"))
+        self.rejection_log_initialized = True
+
+    def filter_bad_cont_forests(self):
+        """Remove forests where continuum could not be computed"""
+        # if necessary initialize arrays to save rejected quasars in the log
+        if len(self.forests) > 0 and not self.rejection_log_initialized:
+            self.initialize_rejection_log(self.forests[0].get_header())
+
+        remove_indexs = []
+        for index, forest in enumerate(self.forests):
+            if forest.bad_continuum_reason is not None:
+                # store information for logs
+                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
+                                          forest.bad_continuum_reason)
+
+                self.logger.progress(f"Rejected forest with los_id {forest.los_id} "
+                                     "due to continuum fitting problems. Reason: "
+                                     f"{forest.bad_continuum_reason}")
+
+                remove_indexs.append(index)
+
+        for index in sorted(remove_indexs, reverse=True):
+            del self.forests[index]
+
+        self.logger.progress(f"Accepted sample has {len(self.forests)} forests")
+
+
+    def filter_forests(self):
+        """Remove forests that do not meet quality standards"""
+        self.logger.progress(f"Input sample has {len(self.forests)} forests")
+
+        # if necessary initialize arrays to save rejected quasars in the log
+        if len(self.forests) > 0 and not self.rejection_log_initialized:
+            self.initialize_rejection_log(self.forests[0].get_header())
+
+        remove_indexs = []
+        for index, forest in enumerate(self.forests):
+            if forest.flux.size < self.min_num_pix:
+                # store information for logs
+                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
+                                          "short_forest")
+                self.logger.progress(
+                    f"Rejected forest with los_id {forest.los_id} "
+                    f"due to forest being too short ({forest.flux.size})")
+            elif np.isnan((forest.flux * forest.ivar).sum()):
+                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
+                                          "nan_forest")
+                self.logger.progress(
+                    f"Rejected forest with los_id {forest.los_id} "
+                    "due to finding nan")
+            else:
+                continue
+
+            remove_indexs.append(index)
+
+        # remove forests
+        for index in sorted(remove_indexs, reverse=True):
+            del self.forests[index]
+
+        self.logger.progress("Removed forest that are too short")
+        self.logger.progress(f"Remaining sample has {len(self.forests)} forests")
+
+    def find_nside(self):
+        """Determines nside such that there are 500 objs per pixel on average."""
+
+        self.logger.progress("determining nside")
+        nside = 256
+        target_mean_num_obj = 500
+        ra = np.array([forest.ra for forest in self.forests])
+        dec = np.array([forest.dec for forest in self.forests])
+        healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
+
+        mean_num_obj = len(healpixs) / len(np.unique(healpixs))
+        nside_min = 8
+        while mean_num_obj < target_mean_num_obj and nside >= nside_min:
+            nside //= 2
+            healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
+            mean_num_obj = len(healpixs) / len(np.unique(healpixs))
+
+        self.logger.progress("nside = {} -- mean #obj per pixel = {}".format(
+            nside, mean_num_obj))
+
+        for forest, healpix in zip(self.forests, healpixs):
+            forest.healpix = healpix
+
+    def save_deltas(self):
+        """Save the deltas."""
+        # if necessary initialize arrays to save rejected quasars in the log
+        if len(self.forests) > 0 and not self.rejection_log_initialized:
+            self.initialize_rejection_log(self.forests[0].get_header())
+
+        healpixs = np.array([forest.healpix for forest in self.forests])
+        unique_healpixs = np.unique(healpixs)
+        healpixs_indexs = {healpix: np.where(healpixs == healpix)[0]
+                           for healpix in unique_healpixs}
+
+        for healpix, indexs in sorted(healpixs_indexs.items()):
+            results = fitsio.FITS(self.out_dir+"Delta/" + "/delta-{}".format(healpix) + ".fits.gz",
+                                  'rw',
+                                  clobber=True)
+            for index in indexs:
+                forest = self.forests[index]
+                header = forest.get_header()
+                cols, names, units, comments = forest.get_data()
+                results.write(cols,
+                              names=names,
+                              header=header,
+                              comment=comments,
+                              units=units,
+                              extname=str(forest.los_id))
+
+                # store information for logs
+                self.add_to_rejection_log(header, forest.flux.size,
+                                          "accepted")
+            results.close()
+
+        self.save_rejection_log()
+
+    def save_rejection_log(self):
+        """Initializes the rejection log arrays.
+        In the log forest headers will be saved along with the forest size and
+        the rejection status.
+        """
+        rejection_log = fitsio.FITS(self.out_dir+"Log/"+self.rejection_log_file,
+                                    'rw',
+                                    clobber=True)
+
+        rejection_log.write([np.array(item)
+                                   for item in self.rejection_log_cols],
+                            names=self.rejection_log_names,
+                            comment=self.rejection_log_comments,
+                            extname="rejection_log")
+
+        rejection_log.close()

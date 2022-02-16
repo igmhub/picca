@@ -1,8 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Compute the 1D auto or cross-correlation between delta field from the same
 forest.
 """
+import sys
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
@@ -30,7 +32,7 @@ def corr_func(p):
     return correlation_function_data
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Compute the 1D auto or cross-correlation between delta field from the same
     forest."""
@@ -134,7 +136,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -209,7 +211,8 @@ def main():
     # Compute the correlation function, use pool to parallelize
     cf.counter = Value('i', 0)
     cf.lock = Lock()
-    pool = Pool(processes=args.nproc)
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=args.nproc)
 
     if cf.x_correlation:
         healpixs = sorted([
@@ -327,4 +330,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

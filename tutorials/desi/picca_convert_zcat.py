@@ -24,10 +24,14 @@ if __name__ == '__main__':
     parser.add_argument('--downsampling-nb', type = int, default = 700000, required = False,
             help = "Target number of object above redshift downsampling-z-cut, if 'None' no downsampling")
 
+    parser.add_argument('--gauss_redshift_error', type = int, required = False,
+            help = "RMS of Gaussian velocity of redshift errors in km/s, if None, no errors")
+
     args = parser.parse_args()
 
     converters.desi_from_ztarget_to_drq(args.in_object_cat, 
                                         args.out_object_cat, 
                                         spec_type=args.spectype, 
                                         downsampling_z_cut=args.downsampling_z_cut, 
-                                        downsampling_nb=args.downsampling_nb)
+                                        downsampling_num=args.downsampling_nb,
+                                        gauss_redshift_error=args.gauss_redshift_error)

@@ -5,8 +5,12 @@ This module provides with one class (DLA). See the respective
 docstrings for more details
 """
 import numpy as np
-from picca import constants
 
+from . import constants
+
+np.random.seed(0)
+num_points = 10000
+gaussian_dist = np.random.normal(size=num_points) * np.sqrt(2)
 
 class DLA:
     """Class to represent Damped Lyman-alpha Absorbers.
@@ -165,8 +169,6 @@ class DLA:
         Returns:
             The Voigt function for each element in a, u
         """
-        nun_points = 1000
-        gaussian_dist = np.random.normal(size=nun_points) * np.sqrt(2)
         unnormalized_voigt = np.mean(
             1 / (a_voight**2 + (gaussian_dist[:, None] - u_voight)**2), axis=0)
         return unnormalized_voigt * a_voight / np.sqrt(np.pi)

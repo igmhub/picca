@@ -1,9 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Writes scripts to send the picca BAO analysis
 
 Once ran, run `./submit.sh` in your terminal. This script works on nersc::cori
 not on nersc::edison.
 """
+import sys
 import os
 from os.path import basename, dirname, stat
 import argparse
@@ -568,7 +569,7 @@ def submit(batch):
     os.chmod(out_name, stat.S_IRWXU | stat.S_IRWXG)
 
 
-def main():
+def main(cmdargs):
     """Writes scripts to send the picca BAO analysis. Once ran, run
     `./submit.sh` in your terminal.
 
@@ -664,7 +665,7 @@ def main():
                         required=False,
                         help='Upper limit on rest frame wavelength [Angstrom]')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     try:
         os.makedirs(args.out_dir + "/deltas")
@@ -744,4 +745,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Computes delta field from a list of spectra.
 
 Computes the mean transmission fluctuation field (delta field) for a list of
@@ -17,8 +17,9 @@ from astropy.table import Table
 from scipy.interpolate import interp1d
 
 from picca.data import Forest, Delta
-from picca import prep_del, io, constants
+from picca import prep_del, io, constants, bal_tools
 from picca.utils import userprint
+from picca.constants import ACCEPTED_BLINDING_STRATEGIES
 
 
 def cont_fit(forests):
@@ -38,16 +39,31 @@ def get_metadata(data):
     ''' Constructs an astropy.table from all forests' metadata
     '''
     tab = Table()
-    for field in ['ra', 'dec', 'z_qso', 'thingid', 'plate',
-                  'mjd', 'fiberid', 'mean_snr', 'p0', 'p1']:
+    # TODO: change mean_snr_save to mean_snr once this is properly treated
+    # in data.py
+    for field in [
+            'ra', 'dec', 'z_qso', 'thingid', 'plate', 'mjd', 'fiberid',
+            'mean_snr_save', 'p0', 'p1'
+    ]:
         column_values = []
         for healpix in data:
             for forest in data[healpix]:
-                if field in forest.__dict__ and not forest.__dict__[field] is None:
+                if field in forest.__dict__ and not forest.__dict__[
+                        field] is None:
                     column_values.append(forest.__dict__[field])
                 else:
                     column_values.append(0)
         tab[field] = np.array(column_values)
+
+    mean_delta2_values = []
+    for healpix in data:
+        for forest in data[healpix]:
+            if "delta" in forest.__dict__ and not forest.delta is None:
+                mean_delta2 = np.average(forest.delta*forest.delta, weights=forest.ivar)
+                mean_delta2_values.append(mean_delta2)
+            else:
+                mean_delta2_values.append(-100)
+    tab["mean_delta2"] = np.array(mean_delta2_values)
 
     npix = []
     for healpix in data:
@@ -60,7 +76,59 @@ def get_metadata(data):
 
     return tab
 
-def main():
+
+def get_delta_from_forest(forest,
+                          get_stack_delta,
+                          get_var_lss,
+                          get_eta,
+                          get_fudge,
+                          use_mock_cont=False):
+    """Computes delta field from forest
+
+    Args:
+        forest: Forest
+            A forest instance from which to initialize the deltas
+        get_stack_delta: function
+            Interpolates the stacked delta field for a given redshift.
+        get_var_lss: Interpolates the pixel variance due to the Large Scale
+            Strucure on the wavelength array.
+        get_eta: Interpolates the correction factor to the contribution of the
+            pipeline estimate of the instrumental noise to the variance on the
+            wavelength array.
+        get_fudge: Interpolates the fudge contribution to the variance on the
+            wavelength array.
+        use_mock_cont: bool - default: False
+            Flag to use the mock continuum to compute the mean expected
+            flux fraction
+    """
+    log_lambda = forest.log_lambda
+    stack_delta = get_stack_delta(log_lambda)
+    var_lss = get_var_lss(log_lambda)
+    eta = get_eta(log_lambda)
+    fudge = get_fudge(log_lambda)
+
+    #-- if use_mock_cont is True use the mock continuum to compute the mean
+    #-- expected flux fraction
+    if use_mock_cont:
+        mean_expected_flux_frac = forest.mean_expected_flux_frac
+    else:
+        mean_expected_flux_frac = forest.cont * stack_delta
+    delta = forest.flux / mean_expected_flux_frac - 1.
+    var_pipe = 1. / forest.ivar / mean_expected_flux_frac**2
+    variance = eta * var_pipe + var_lss + fudge / var_pipe
+    weights = 1. / variance
+    exposures_diff = forest.exposures_diff
+    if forest.exposures_diff is not None:
+        exposures_diff /= mean_expected_flux_frac
+    ivar = forest.ivar / (eta + (eta == 0)) * (mean_expected_flux_frac**2)
+
+    forest.delta = delta
+    forest.weights = weights
+    forest.exposures_diff = exposures_diff
+    forest.ivar = ivar
+
+
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes delta field"""
     parser = argparse.ArgumentParser(
@@ -100,10 +168,16 @@ def main():
 
     parser.add_argument('--mode',
                         type=str,
+                        choices=['pix', 'spec','spcframe','spplate','desi',
+                                 'desi_healpix','desi_survey_tilebased',
+                                 'desi_sv_no_coadd','desi_mocks','desiminisv'],
                         default='pix',
                         required=False,
-                        help=('Open mode of the spectra files: pix, spec, '
-                              'spcframe, spplate, desi'))
+                        help=('''Open mode of the spectra files: pix, spec,
+                              spcframe, spplate, desi_mocks (formerly known as desi),
+                              desi_healpix (for healpix based coadded data),
+                              desi_survey_tilebased (for tilebased data with coadding),
+                              desi_sv_no_coadd (without coadding across tiles, will output in tile format)'''))
 
     parser.add_argument('--best-obs',
                         action='store_true',
@@ -324,15 +398,56 @@ def main():
                         required=False,
                         help=('Path to spAll file'))
 
-    parser.add_argument('--metadata',
+    parser.add_argument('--bal-catalog',
                         type=str,
                         default=None,
                         required=False,
+                        help=('BAL catalog location, used if BAL information is'
+                            ' not included in the quasar catalog.  Use with '
+                            '--keep-bal to mask BAL features'))
+
+    parser.add_argument('--metadata',
+                        type=str,
+                        default='metadata.fits',
+                        required=False,
                         help=('Name for table containing forests metadata'))
+
+    parser.add_argument('--survey',
+                        type=str.lower,
+                        choices=('desi','eboss'),
+                        default='desi',
+                        required=False,
+                        help=('Survey the catalog comes from. Defines which '
+                            'naming conventions to use when masking BALs.'))
+
+    parser.add_argument('--use-single-nights',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help='Use individual night for input spectra (DESI SV)')
+
+    parser.add_argument('--use-all',
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help=('Use all dir for input spectra (DESI SV)'))
+
+    parser.add_argument('--blinding-desi',
+                        type=str,
+                        default="corr_yshift",
+                        required=False,
+                        help='Blinding strategy. "none" for no blinding')
 
     t0 = time.time()
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
+
+    assert (args.blinding_desi in ACCEPTED_BLINDING_STRATEGIES)
+
+    # comment this when ready to unblind
+    if args.blinding_desi == "none":
+        userprint("WARINING: --blinding-desi is being ignored. 'corr_yshift' blinding engaged")
+        args.blinding_desi = "corr_yshift"
 
     # setup forest class variables
     Forest.log_lambda_min = np.log10(args.lambda_min)
@@ -353,68 +468,58 @@ def main():
         args.zqso_max = max(0., args.lambda_max / args.lambda_rest_min - 1.)
         userprint("zqso_max = {}".format(args.zqso_max))
 
-    Forest.get_var_lss = interp1d(
-        (Forest.log_lambda_min + np.arange(2) *
-         (Forest.log_lambda_max - Forest.log_lambda_min)),
-        0.2 + np.zeros(2),
-        fill_value="extrapolate",
-        kind="nearest")
-    Forest.get_eta = interp1d((Forest.log_lambda_min + np.arange(2) *
-                               (Forest.log_lambda_max - Forest.log_lambda_min)),
+    #-- Create interpolators for mean quantities, such as
+    #-- Large-scale structure variance : var_lss
+    #-- Pipeline ivar correction error: eta
+    #-- Pipeline ivar correction term : fudge
+    #-- Mean continuum : mean_cont
+    log_lambda_temp = (Forest.log_lambda_min + np.arange(2) *
+                       (Forest.log_lambda_max - Forest.log_lambda_min))
+    log_lambda_rest_frame_temp = (
+        Forest.log_lambda_min_rest_frame + np.arange(2) *
+        (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame))
+    Forest.get_var_lss = interp1d(log_lambda_temp,
+                                  0.2 + np.zeros(2),
+                                  fill_value="extrapolate",
+                                  kind="nearest")
+    Forest.get_eta = interp1d(log_lambda_temp,
                               np.ones(2),
                               fill_value="extrapolate",
                               kind="nearest")
-    Forest.get_fudge = interp1d(
-        (Forest.log_lambda_min + np.arange(2) *
-         (Forest.log_lambda_max - Forest.log_lambda_min)),
-        np.zeros(2),
-        fill_value="extrapolate",
-        kind="nearest")
-    Forest.get_mean_cont = interp1d(
-        (Forest.log_lambda_min_rest_frame + np.arange(2) *
-         (Forest.log_lambda_max_rest_frame - Forest.log_lambda_min_rest_frame)),
-        1 + np.zeros(2))
-    # end of setup forest class variables
+    Forest.get_fudge = interp1d(log_lambda_temp,
+                                np.zeros(2),
+                                fill_value="extrapolate",
+                                kind="nearest")
+    Forest.get_mean_cont = interp1d(log_lambda_rest_frame_temp, 1 + np.zeros(2))
 
-    ### check that the order of the continuum fit is 0 (constant) or 1 (linear).
+
+    #-- Check that the order of the continuum fit is 0 (constant) or 1 (linear).
     if args.order:
         if (args.order != 0) and (args.order != 1):
             userprint(("ERROR : invalid value for order, must be eqal to 0 or"
                        "1. Here order = {:d}").format(args.order))
             sys.exit(12)
 
-    ### Correct multiplicative pipeline flux calibration
+    #-- Correct multiplicative pipeline flux calibration
     if args.flux_calib is not None:
-        try:
-            hdul = fitsio.FITS(args.flux_calib)
-            stack_log_lambda = hdul[1]['loglam'][:]
-            stack_delta = hdul[1]['stack'][:]
-            w = (stack_delta != 0.)
-            Forest.correct_flux = interp1d(stack_log_lambda[w],
-                                           stack_delta[w],
-                                           fill_value="extrapolate",
-                                           kind="nearest")
-            hdul.close()
-        except (OSError, ValueError):
-            userprint(("ERROR: Error while reading flux_calib"
-                       "file {}".format(args.flux_calib)))
-            sys.exit(1)
+        hdu = fitsio.read(args.flux_calib, ext=1)
+        stack_log_lambda = hdu['loglam']
+        stack_delta = hdu['stack']
+        w = (stack_delta != 0.)
+        Forest.correct_flux = interp1d(stack_log_lambda[w],
+                                       stack_delta[w],
+                                       fill_value="extrapolate",
+                                       kind="nearest")
 
-    ### Correct multiplicative pipeline inverse variance calibration
+    #-- Correct multiplicative pipeline inverse variance calibration
     if args.ivar_calib is not None:
-        try:
-            hdul = fitsio.FITS(args.ivar_calib)
-            log_lambda = hdul[2]['LOGLAM'][:]
-            eta = hdul[2]['ETA'][:]
-            Forest.correct_ivar = interp1d(log_lambda,
-                                           eta,
-                                           fill_value="extrapolate",
-                                           kind="nearest")
-            hdul.close()
-        except (OSError, ValueError):
-            userprint(("ERROR: Error while reading ivar_calib"
-                       "file {}".format(args.ivar_calib)))
-            sys.exit(1)
+        hdu = fitsio.read(args.ivar_calib, ext=2)
+        log_lambda = hdu['loglam']
+        eta = hdu['eta']
+        Forest.correct_ivar = interp1d(log_lambda,
+                                       eta,
+                                       fill_value="extrapolate",
+                                       kind="nearest")
 
     ### Apply dust correction
     if not args.dust_map is None:
@@ -425,64 +530,51 @@ def main():
 
     # Read data
     (data, num_data, nside,
-     healpy_pix_ordering) = io.read_data(os.path.expandvars(args.in_dir),
-                                         args.drq,
-                                         args.mode,
-                                         z_min=args.zqso_min,
-                                         z_max=args.zqso_max,
-                                         max_num_spec=args.nspec,
-                                         log_file=log_file,
-                                         keep_bal=args.keep_bal,
-                                         bi_max=args.bi_max,
-                                         order=args.order,
-                                         best_obs=args.best_obs,
-                                         single_exp=args.single_exp,
-                                         pk1d=args.delta_format,
-                                         spall=args.spall)
+     healpy_pix_ordering,
+     blinding) = io.read_data(os.path.expandvars(args.in_dir),
+                              args.drq,
+                              args.mode,
+                              z_min=args.zqso_min,
+                              z_max=args.zqso_max,
+                              max_num_spec=args.nspec,
+                              log_file=log_file,
+                              keep_bal=args.keep_bal,
+                              bi_max=args.bi_max,
+                              best_obs=args.best_obs,
+                              single_exp=args.single_exp,
+                              pk1d=args.delta_format,
+                              spall=args.spall,
+                              useall=args.use_all,
+                              usesinglenights=args.use_single_nights,
+                              blinding_desi=args.blinding_desi)
+
+     #-- Add order info
+    for pix in data:
+        for forest in data[pix]:
+            if not forest is None:
+                forest.order = args.order
 
     ### Read masks
-    mask_obs_frame = None
-    mask_rest_frame = None
-    mask_rest_frame_dla = None
     if args.mask_file is not None:
         args.mask_file = os.path.expandvars(args.mask_file)
         try:
-            mask_obs_frame = []
-            mask_rest_frame = []
-            mask_rest_frame_dla = []
-            with open(args.mask_file, 'r') as file:
-                loop = True
-                for line in file:
-                    if line[0] == '#':
-                        continue
-                    cols = line.split()
-                    if cols[3] == 'OBS':
-                        mask_obs_frame += [[float(cols[1]), float(cols[2])]]
-                    elif cols[3] == 'RF':
-                        mask_rest_frame += [[float(cols[1]), float(cols[2])]]
-                    elif cols[3] == 'RF_DLA':
-                        mask_rest_frame_dla += [[
-                            float(cols[1]), float(cols[2])
-                        ]]
-                    else:
-                        raise ValueError("Invalid value found in mask")
-            mask_obs_frame = np.log10(np.asarray(mask_obs_frame))
-            mask_rest_frame = np.log10(np.asarray(mask_rest_frame))
-            mask_rest_frame_dla = np.log10(np.asarray(mask_rest_frame_dla))
-            if mask_rest_frame_dla.size == 0:
-                mask_rest_frame_dla = None
-
+            mask = Table.read(args.mask_file,
+                              names=('type', 'wave_min', 'wave_max', 'frame'),
+                              format='ascii')
+            mask['log_wave_min'] = np.log10(mask['wave_min'])
+            mask['log_wave_max'] = np.log10(mask['wave_max'])
         except (OSError, ValueError):
             userprint(("ERROR: Error while reading mask_file "
                        "file {}").format(args.mask_file))
             sys.exit(1)
+    else:
+        mask = Table(names=('type', 'wave_min', 'wave_max', 'frame',
+                            'log_wave_min', 'log_wave_max'))
 
     ### Mask lines
-    if not mask_obs_frame is None:
-        if mask_obs_frame.size + mask_rest_frame.size != 0:
-            for healpix in data:
-                for forest in data[healpix]:
-                    forest.mask(mask_obs_frame, mask_rest_frame)
+    for healpix in data:
+        for forest in data[healpix]:
+            forest.mask(mask)
 
     ### Mask absorbers
     if not args.absorber_vac is None:
@@ -518,16 +610,36 @@ def main():
     ### Mask DLAs
     if not args.dla_vac is None:
         userprint("INFO: Adding DLAs")
-        np.random.seed(0)
-        dlas = io.read_dlas(args.dla_vac)
+        if 'desi' in args.mode:
+            dlas= io.read_dlas(args.dla_vac, obj_id_name='TARGETID')
+        else:
+            dlas = io.read_dlas(args.dla_vac)
         num_dlas = 0
         for healpix in data:
             for forest in data[healpix]:
                 if forest.thingid in dlas:
                     for dla in dlas[forest.thingid]:
-                        forest.add_dla(dla[0], dla[1], mask_rest_frame_dla)
+                        forest.add_dla(dla[0], dla[1], mask)
                         num_dlas += 1
         log_file.write("Found {} DLAs in forests\n".format(num_dlas))
+
+    ### Mask BALs
+    if 'desi' in args.mode:
+            bal_catalog_to_read = args.drq
+    else:
+            bal_catalog_to_read = args.bal_catalog
+    if args.keep_bal is True:
+        userprint("INFO: Masking BALs")
+        bal_cat = bal_tools.read_bal(bal_catalog_to_read,args.mode)
+        num_bal = 0
+        for healpix in data:
+            for forest in data[healpix]:
+                bal_mask = bal_tools.add_bal_mask(bal_cat, forest.thingid,
+                        args.mode)
+                forest.mask(bal_mask)
+            if len(bal_mask) > 0:
+                    num_bal += 1
+        log_file.write("Found {} BAL quasars in forests\n".format(num_bal))
 
     ## Apply cuts
     log_file.write(
@@ -539,8 +651,13 @@ def main():
         for forest in data[healpix]:
             if ((forest.log_lambda is None) or
                     len(forest.log_lambda) < args.npix_min):
+                if forest.log_lambda is None:
+                    forest_size = 0
+                else:
+                    forest_size = len(forest.log_lambda)
                 log_file.write(("INFO: Rejected {} due to forest too "
-                                "short\n").format(forest.thingid))
+                                "short ({})\n").format(forest.thingid,
+                                                       forest_size))
                 continue
 
             if np.isnan((forest.flux * forest.ivar).sum()):
@@ -549,7 +666,7 @@ def main():
                 continue
 
             if (args.use_constant_weight and
-                    (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
+                (forest.flux.mean() <= 0.0 or forest.mean_snr <= 1.0)):
                 log_file.write(("INFO: Rejected {} due to negative mean or "
                                 "too low SNR found\n").format(forest.thingid))
                 continue
@@ -564,9 +681,10 @@ def main():
     for healpix in remove_keys:
         del data[healpix]
 
-    log_file.write(
-        ("INFO: Remaining sample has {} "
-         "forests\n").format(np.sum([len(forest) for forest in data.values()])))
+    num_forests = np.sum([len(forest) for forest in data.values()])
+    log_file.write(("INFO: Remaining sample has {} "
+                    "forests\n").format(num_forests))
+    userprint(f"Remaining sample has {num_forests} forests")
 
     # Sanity check: all forests must have the attribute log_lambda
     for healpix in data:
@@ -574,49 +692,62 @@ def main():
             assert forest.log_lambda is not None
 
     t1 = time.time()
-    tmin = (t1-t0)/60
+    tmin = (t1 - t0) / 60
     userprint('INFO: time elapsed to read data', tmin, 'minutes')
 
     # compute fits to the forests iteratively
     # (see equations 2 to 4 in du Mas des Bourboux et al. 2020)
     num_iterations = args.nit
     for iteration in range(num_iterations):
-        pool = Pool(processes=args.nproc)
-        userprint("iteration: ", iteration)
-        sort = np.array(list(data.keys())).argsort()
-        data_fit_cont = pool.map(cont_fit, np.array(list(data.values()))[sort])
-        for index, healpix in enumerate(sorted(list(data.keys()))):
+        context = multiprocessing.get_context('fork')
+        pool = context.Pool(processes=args.nproc)
+        userprint(
+            f"Continuum fitting: starting iteration {iteration} of {num_iterations}"
+        )
+
+        #-- Sorting healpix pixels before giving to pool (for some reason)
+        pixels = np.array([k for k in data])
+        sort = pixels.argsort()
+        sorted_data = [data[k] for k in pixels[sort]]
+        data_fit_cont = pool.map(cont_fit, sorted_data)
+        for index, healpix in enumerate(pixels[sort]):
             data[healpix] = data_fit_cont[index]
 
-        userprint("done")
+        userprint(
+            f"Continuum fitting: ending iteration {iteration} of {num_iterations}"
+        )
 
         pool.close()
 
         if iteration < num_iterations - 1:
+            #-- Compute mean continuum (stack in rest-frame)
             (log_lambda_rest_frame, mean_cont,
              mean_cont_weight) = prep_del.compute_mean_cont(data)
-            Forest.get_mean_cont = interp1d(
-                log_lambda_rest_frame[mean_cont_weight > 0.],
-                Forest.get_mean_cont(
-                    log_lambda_rest_frame[mean_cont_weight > 0.]) *
-                mean_cont[mean_cont_weight > 0.],
-                fill_value="extrapolate")
+            w = mean_cont_weight > 0.
+            log_lambda_cont = log_lambda_rest_frame[w]
+            new_cont = Forest.get_mean_cont(log_lambda_cont) * mean_cont[w]
+            Forest.get_mean_cont = interp1d(log_lambda_cont,
+                                            new_cont,
+                                            fill_value="extrapolate")
+
+            #-- Compute observer-frame mean quantities (var_lss, eta, fudge)
             if not (args.use_ivar_as_weight or args.use_constant_weight):
                 (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
                  var_delta, var2_delta, count, num_qso, chi2_in_bin, error_eta,
                  error_var_lss, error_fudge) = prep_del.compute_var_stats(
                      data, (args.eta_min, args.eta_max),
                      (args.vlss_min, args.vlss_max))
-                Forest.get_eta = interp1d(log_lambda[num_pixels > 0],
-                                          eta[num_pixels > 0],
+                w = num_pixels > 0
+                Forest.get_eta = interp1d(log_lambda[w],
+                                          eta[w],
                                           fill_value="extrapolate",
                                           kind="nearest")
-                Forest.get_var_lss = interp1d(log_lambda[num_pixels > 0],
-                                              var_lss[num_pixels > 0.],
+                Forest.get_var_lss = interp1d(log_lambda[w],
+                                              var_lss[w],
                                               fill_value="extrapolate",
                                               kind="nearest")
-                Forest.get_fudge = interp1d(log_lambda[num_pixels > 0],
-                                            fudge[num_pixels > 0],
+                Forest.get_fudge = interp1d(log_lambda[w],
+                                            fudge[w],
                                             fill_value="extrapolate",
                                             kind="nearest")
             else:
@@ -663,55 +794,74 @@ def main():
                                             fill_value='extrapolate',
                                             kind='nearest')
 
-    ### Read metadata from forests and export it
-    if not args.metadata is None:
-        tab_cont = get_metadata(data)
-        tab_cont.write(args.metadata, format="fits", overwrite=True)
+        stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
+        get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
+                                   stack_delta[stack_weight > 0.],
+                                   kind="nearest",
+                                   fill_value="extrapolate")
+        get_stack_delta_weights = interp1d(stack_log_lambda[stack_weight > 0.],
+                                           stack_weight[stack_weight > 0.],
+                                           kind="nearest",
+                                           fill_value=0.0,
+                                           bounds_error=False)
 
-    stack_log_lambda, stack_delta, stack_weight = prep_del.stack(data)
-
-    ### Save iter_out_prefix
-    results = fitsio.FITS(args.iter_out_prefix + ".fits.gz", 'rw', clobber=True)
-    header = {}
-    header["NSIDE"] = nside
-    header["PIXORDER"] = healpy_pix_ordering
-    header["FITORDER"] = args.order
-    results.write([stack_log_lambda, stack_delta, stack_weight],
-                  names=['loglam', 'stack', 'weight'],
-                  header=header,
-                  extname='STACK')
-    results.write([log_lambda, eta, var_lss, fudge, num_pixels],
-                  names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'],
-                  extname='WEIGHT')
-    results.write([
-        log_lambda_rest_frame,
-        Forest.get_mean_cont(log_lambda_rest_frame), mean_cont_weight
-    ],
-                  names=['loglam_rest', 'mean_cont', 'weight'],
-                  extname='CONT')
-    var_pipe_values = np.broadcast_to(var_pipe_values.reshape(1, -1),
-                                      var_delta.shape)
-    results.write(
-        [var_pipe_values, var_delta, var2_delta, count, num_qso, chi2_in_bin],
-        names=['var_pipe', 'var_del', 'var2_del', 'count', 'nqsos', 'chi2'],
-        extname='VAR')
-    results.close()
+        ### Save iter_out_prefix
+        delta_attrib_name = args.iter_out_prefix
+        if iteration == num_iterations - 1:
+            delta_attrib_name += ".fits.gz"
+        else:
+            delta_attrib_name += "_iteration{}.fits.gz".format(iteration + 1)
+        with fitsio.FITS(delta_attrib_name, 'rw', clobber=True) as results:
+            header = {}
+            header["NSIDE"] = nside
+            header["PIXORDER"] = healpy_pix_ordering
+            header["FITORDER"] = args.order
+            results.write([stack_log_lambda, get_stack_delta(stack_log_lambda),
+                           get_stack_delta_weights(stack_log_lambda)],
+                          names=['loglam', 'stack', 'weight'],
+                          header=header,
+                          extname='STACK')
+            results.write(
+                [log_lambda,
+                 Forest.get_eta(log_lambda),
+                 Forest.get_var_lss(log_lambda),
+                 Forest.get_fudge(log_lambda),
+                 num_pixels],
+                names=['loglam', 'eta', 'var_lss', 'fudge', 'nb_pixels'],
+                extname='WEIGHT')
+            results.write([
+                log_lambda_rest_frame,
+                Forest.get_mean_cont(log_lambda_rest_frame), mean_cont_weight
+            ],
+                          names=['loglam_rest', 'mean_cont', 'weight'],
+                          extname='CONT')
+            var_pipe_values_out = np.broadcast_to(var_pipe_values.reshape(1, -1),
+                                              var_delta.shape)
+            results.write([
+                var_pipe_values_out, var_delta, var2_delta, count, num_qso,
+                chi2_in_bin
+            ],
+                          names=[
+                              'var_pipe', 'var_del', 'var2_del', 'count',
+                              'nqsos', 'chi2'
+                          ],
+                          extname='VAR')
 
     ### Compute deltas and format them
-    get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
-                               stack_delta[stack_weight > 0.],
-                               kind="nearest",
-                               fill_value="extrapolate")
     deltas = {}
     data_bad_cont = []
     for healpix in sorted(data.keys()):
-        deltas[healpix] = [
-            Delta.from_forest(forest, get_stack_delta, Forest.get_var_lss,
-                              Forest.get_eta, Forest.get_fudge,
-                              args.use_mock_continuum)
-            for forest in data[healpix]
-            if forest.bad_cont is None
-        ]
+        for forest in data[healpix]:
+            if not forest.bad_cont is None:
+                continue
+            #-- Compute delta field from flux, continuum and various quantites
+            get_delta_from_forest(forest, get_stack_delta, Forest.get_var_lss,
+                                  Forest.get_eta, Forest.get_fudge,
+                                  args.use_mock_continuum)
+            if healpix in deltas:
+                deltas[healpix].append(forest)
+            else:
+                deltas[healpix] = [forest]
         data_bad_cont = data_bad_cont + [
             forest for forest in data[healpix] if forest.bad_cont is not None
         ]
@@ -725,16 +875,17 @@ def main():
          "forests\n").format(np.sum([len(p) for p in deltas.values()])))
 
     t2 = time.time()
-    tmin = (t2-t1)/60
+    tmin = (t2 - t1) / 60
     userprint('INFO: time elapsed to fit continuum', tmin, 'minutes')
 
-    #log_file.close()
+    ### Read metadata from forests and export it
+    if not args.metadata is None:
+        tab_cont = get_metadata(data)
+        tab_cont.write(os.path.expandvars(args.metadata), format="fits", overwrite=True)
 
     ### Save delta
     for healpix in sorted(deltas.keys()):
 
-        if len(deltas[healpix]) == 0:
-            continue
         if args.delta_format == 'Pk1D_ascii':
             results = open(args.out_dir + "/delta-{}".format(healpix) + ".txt",
                            'w')
@@ -816,8 +967,17 @@ def main():
                         'value': delta.order,
                         'comment': 'Order of the continuum fit'
                     },
+                    {
+                        'name': "BLINDING",
+                        'value': blinding,
+                        'comment': 'String specifying the blinding strategy'
+                    },
                 ]
 
+                if blinding != "none":
+                    delta_name = "DELTA_BLIND"
+                else:
+                    delta_name = "DELTA"
                 if args.delta_format == 'Pk1D':
                     header += [
                         {
@@ -855,7 +1015,7 @@ def main():
                         delta.log_lambda, delta.delta, delta.ivar,
                         exposures_diff
                     ]
-                    names = ['LOGLAM', 'DELTA', 'IVAR', 'DIFF']
+                    names = ['LOGLAM', delta_name, 'IVAR', 'DIFF']
                     units = ['log Angstrom', '', '', '']
                     comments = [
                         'Log lambda', 'Delta field', 'Inverse variance',
@@ -863,12 +1023,12 @@ def main():
                     ]
                 else:
                     cols = [
-                        delta.log_lambda, delta.delta, delta.weights, delta.cont
+                        delta.log_lambda, delta.delta, delta.ivar, delta.weights, delta.cont
                     ]
-                    names = ['LOGLAM', 'DELTA', 'WEIGHT', 'CONT']
-                    units = ['log Angstrom', '', '', '']
+                    names = ['LOGLAM', delta_name, 'IVAR', 'WEIGHT', 'CONT']
+                    units = ['log Angstrom', '', '', '', '']
                     comments = [
-                        'Log lambda', 'Delta field', 'Pixel weights',
+                        'Log lambda', 'Delta field', 'Inverse variance', 'Pixel weights',
                         'Continuum'
                     ]
 
@@ -882,12 +1042,14 @@ def main():
             results.close()
 
     t3 = time.time()
-    tmin = (t3-t2)/60
+    tmin = (t3 - t2) / 60
     userprint('INFO: time elapsed to write deltas', tmin, 'minutes')
-    ttot = (t3-t0)/60
+    ttot = (t3 - t0) / 60
     userprint('INFO: total elapsed time', ttot, 'minutes')
 
     log_file.close()
 
+
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

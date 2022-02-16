@@ -1,12 +1,14 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Computes the distortion matrix between of the cross-correlation delta x
 object
 
 This module follow the procedure described in sections 3.5 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+import sys
 import time
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
@@ -35,7 +37,7 @@ def calc_dmat(healpixs):
     return dmat_data
 
 
-def main():
+def main(cmdargs):
     """Computes the distortion matrix of the cross-correlation delta x
     object."""
     parser = argparse.ArgumentParser(
@@ -60,6 +62,14 @@ def main():
                         default=None,
                         required=True,
                         help='Catalog of objects in DRQ format')
+
+    parser.add_argument(
+                        '--mode',
+                        type=str,
+                        default='sdss',
+                        choices=['sdss','desi','desi_mocks','desi_healpix'],
+                        required=False,
+                        help='type of catalog supplied, default sdss')
 
     parser.add_argument('--rp-min',
                         type=float,
@@ -101,13 +111,13 @@ def main():
 
     parser.add_argument('--z-min-obj',
                         type=float,
-                        default=None,
+                        default=0,
                         required=False,
                         help='Min redshift for object field')
 
     parser.add_argument('--z-max-obj',
                         type=float,
-                        default=None,
+                        default=10,
                         required=False,
                         help='Max redshift for object field')
 
@@ -209,7 +219,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -231,11 +241,15 @@ def main():
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.reject = args.rej
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            blinding=blinding)
 
     t0 = time.time()
 
@@ -257,17 +271,17 @@ def main():
         r_comov_min = cosmo.get_r_comov(z_min)
         r_comov_min = max(0., r_comov_min + xcf.r_par_min)
         args.z_min_obj = cosmo.distance_to_redshift(r_comov_min)
-        userprint("\r z_min_obj = {}\r".format(args.z_min_obj), end="")
+        userprint("z_min_obj = {}".format(args.z_min_obj), end="")
     if args.z_max_obj is None:
         r_comov_max = cosmo.get_r_comov(z_max)
         r_comov_max = max(0., r_comov_max + xcf.r_par_max)
         args.z_max_obj = cosmo.distance_to_redshift(r_comov_max)
-        userprint("\r z_max_obj = {}\r".format(args.z_max_obj), end="")
+        userprint("z_max_obj = {}".format(args.z_max_obj), end="")
 
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
+                                   cosmo, mode=args.mode)
     userprint("\n")
     xcf.objs = objs
 
@@ -288,7 +302,8 @@ def main():
 
     # compute the distortion matrix
     if args.nproc > 1:
-        pool = Pool(processes=args.nproc)
+        context = multiprocessing.get_context('fork')
+        pool = context.Pool(processes=args.nproc)
         dmat_data = pool.map(calc_dmat, sorted(cpu_data.values()))
         pool.close()
     elif args.nproc == 1:
@@ -375,25 +390,32 @@ def main():
             'value': num_pairs_used,
             'comment': 'Number of used pairs'
         }, {
-            'name': 'OMEGAM', 
-            'value': args.fid_Om, 
+            'name': 'OMEGAM',
+            'value': args.fid_Om,
             'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAR', 
-            'value': args.fid_Or, 
+            'name': 'OMEGAR',
+            'value': args.fid_Or,
             'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAK', 
-            'value': args.fid_Ok, 
+            'name': 'OMEGAK',
+            'value': args.fid_Ok,
             'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'WL', 
-            'value': args.fid_wl, 
+            'name': 'WL',
+            'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }, {
+            'name': "BLINDING",
+            'value': blinding,
+            'comment': 'String specifying the blinding strategy'
         }
         ]
+    dmat_name = "DM"
+    if blinding != "none":
+        dmat_name += "_BLIND"
     results.write([weights_dmat, dmat],
-                  names=['WDM', 'DM'],
+                  names=['WDM', dmat_name],
                   comment=['Sum of weight', 'Distortion matrix'],
                   units=['', ''],
                   header=header,
@@ -409,4 +431,5 @@ def main():
     userprint(f'picca_xdmat.py - Time total: {(t3-t0)/60:.3f} minutes')
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

@@ -1,40 +1,16 @@
 """This module defines data structure to deal with line of sight data.
 
-This module provides with three classes (QSO, Forest, Delta) and one
-function (get_variance) to manage the line-of-sight data. See the respective
-docstrings for more details
+This module provides with three classes (QSO, Forest, Delta)
+to manage the line-of-sight data.
+See the respective docstrings for more details
 """
 import numpy as np
 import iminuit
 import fitsio
 
-from picca import constants
-from picca.utils import userprint, unred
-from picca.dla import DLA
-
-
-def get_variance(var_pipe, eta, var_lss, fudge):
-    """Computes the total variance.
-
-    This includes contributions from pipeline noise, Large Scale Structure
-    variance, and a fudge contribution.
-
-    Args:
-        var_pipe: array of floats
-            Pipeline variance
-        eta: array of floats
-            Correction factor to the contribution of the pipeline estimate of
-            the instrumental noise to the variance.
-        var_lss: array of floats
-            Pixel variance due to the Large Scale Strucure
-        fudge: array of floats
-            Fudge contribution to the pixel variance
-
-    Returns:
-        The total variance
-    """
-    return eta * var_pipe + var_lss + fudge / var_pipe
-
+from . import constants
+from .utils import userprint, unred
+from .dla import DLA
 
 class QSO(object):
     """Class to represent quasar objects.
@@ -428,7 +404,6 @@ class Forest(QSO):
                  plate,
                  mjd,
                  fiberid,
-                 order,
                  exposures_diff=None,
                  reso=None,
                  mean_expected_flux_frac=None,
@@ -456,8 +431,6 @@ class Forest(QSO):
                 Modified Julian Date of the observation.
             fiberid: integer
                 Fiberid of the observation.
-            order: 1 or 0
-                Renamed to make meaning more explicit.
             exposures_diff: array of floats or None - default: None
                 Difference between exposures.
             reso: array of floats or None - default: None
@@ -470,13 +443,6 @@ class Forest(QSO):
         """
         QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
 
-        # apply dust extinction correction
-        if Forest.extinction_bv_map is not None:
-            corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
-            flux /= corr
-            ivar *= corr**2
-            if not exposures_diff is None:
-                exposures_diff /= corr
 
         ## cut to specified range
         bins = (np.floor((log_lambda - Forest.log_lambda_min) /
@@ -539,6 +505,14 @@ class Forest(QSO):
         if reso is not None:
             reso = rebin_reso[w] / rebin_ivar[w]
 
+        # apply dust extinction correction
+        if Forest.extinction_bv_map is not None:
+            corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
+            flux /= corr
+            ivar *= corr**2
+            if not exposures_diff is None:
+                exposures_diff /= corr
+
         # Flux calibration correction
         try:
             correction = Forest.correct_flux(log_lambda)
@@ -560,7 +534,6 @@ class Forest(QSO):
         self.flux = flux
         self.ivar = ivar
         self.mean_expected_flux_frac = mean_expected_flux_frac
-        self.order = order
         self.exposures_diff = exposures_diff
         self.reso = reso
         self.abs_igm = abs_igm
@@ -573,7 +546,13 @@ class Forest(QSO):
 
         error = 1.0 / np.sqrt(ivar)
         snr = flux / error
-        self.mean_snr = sum(snr) / float(len(snr))
+        # TODO: change mean_snr_save to mean_snr.
+        # Begore that, check implications on the different computation of mean_snr
+        # a 'more correct' way of computed is stored in mean_snr_save and
+        # saved in the metadata file, but we need to check how changes
+        # are propagated through the analysis.
+        self.mean_snr_save = np.average(snr, weights=self.ivar)
+        self.mean_snr = snr.mean()
         lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
                         np.power(10., log_lambda[0])) / 2. / lambda_abs_igm -
@@ -584,6 +563,7 @@ class Forest(QSO):
         self.p0 = None
         self.p1 = None
         self.bad_cont = None
+        self.order = None
 
     def coadd(self, other):
         """Coadds the information of another forest.
@@ -600,7 +580,10 @@ class Forest(QSO):
             The coadded forest.
         """
         if self.log_lambda is None or other.log_lambda is None:
-            return self
+            if other.log_lambda is None:
+                return self
+            else:
+                return other
 
         # this should contain all quantities that are to be coadded using
         # ivar weighting
@@ -645,6 +628,8 @@ class Forest(QSO):
             self.mean_reso = self.reso.mean()
         error = 1. / np.sqrt(self.ivar)
         snr = self.flux / error
+        # TODO: change mean_snr_save to mean_snr.
+        self.mean_snr_save = np.average(snr, weights=self.ivar)
         self.mean_snr = snr.mean()
         lambda_abs_igm = constants.ABSORBER_IGM[self.abs_igm]
         self.mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
@@ -653,7 +638,7 @@ class Forest(QSO):
 
         return self
 
-    def mask(self, mask_obs_frame, mask_rest_frame):
+    def mask(self, mask_table):
         """Applies wavelength masking.
 
         Pixels are masked according to a set of lines both in observed frame
@@ -662,26 +647,33 @@ class Forest(QSO):
         log_lambda set.
 
         Args:
-            mask_obs_frame: array of arrays
-                Each element of the array must contain an array of two floats
-                that specify the range of wavelength to mask. Values given are
-                the logarithm of the wavelength in Angstroms, and both values
-                are included in the masking. These wavelengths are given at the
-                obseved frame.
-            mask_rest_frame: array of arrays
-                Same as mask_obs_frame but for rest-frame wavelengths.
+            mask_table: astropy table
+                Table containing minimum and maximum wavelenths of absorption
+                lines to mask (in both rest frame and observed frame)
         """
+        if len(mask_table)==0:
+            return
+
+        select_rest_frame_mask = mask_table['frame'] == 'RF'
+        select_obs_mask = mask_table['frame'] == 'OBS'
+
+        mask_rest_frame = mask_table[select_rest_frame_mask]
+        mask_obs_frame = mask_table[select_obs_mask]
+
+        if len(mask_rest_frame)+len(mask_obs_frame)==0:
+            return
+
         if self.log_lambda is None:
             return
 
         w = np.ones(self.log_lambda.size, dtype=bool)
         for mask_range in mask_obs_frame:
-            w &= ((self.log_lambda < mask_range[0]) |
-                  (self.log_lambda > mask_range[1]))
+            w &= ((self.log_lambda < mask_range['log_wave_min']) |
+                  (self.log_lambda > mask_range['log_wave_max']))
         for mask_range in mask_rest_frame:
             rest_frame_log_lambda = self.log_lambda - np.log10(1. + self.z_qso)
-            w &= ((rest_frame_log_lambda < mask_range[0]) |
-                  (rest_frame_log_lambda > mask_range[1]))
+            w &= ((rest_frame_log_lambda < mask_range['log_wave_min']) |
+                  (rest_frame_log_lambda > mask_range['log_wave_max']))
 
         parameters = [
             'ivar', 'log_lambda', 'flux', 'dla_transmission',
@@ -725,7 +717,7 @@ class Forest(QSO):
 
         return
 
-    def add_dla(self, z_abs, nhi, mask=None):
+    def add_dla(self, z_abs, nhi, mask_table=None):
         """Adds DLA to forest. Masks it by removing the afffected pixels.
 
         Args:
@@ -735,9 +727,11 @@ class Forest(QSO):
             nhi : float
             DLA column density in log10(cm^-2)
 
-            mask : list or None - Default None
+            mask_table : astropy table for masking
             Wavelengths to be masked in DLA rest-frame wavelength
         """
+
+
         if self.log_lambda is None:
             return
         if self.dla_transmission is None:
@@ -746,10 +740,13 @@ class Forest(QSO):
         self.dla_transmission *= DLA(self, z_abs, nhi).transmission
 
         w = self.dla_transmission > Forest.dla_mask_limit
-        if not mask is None:
-            for mask_range in mask:
-                w &= ((self.log_lambda - np.log10(1. + z_abs) < mask_range[0]) |
-                      (self.log_lambda - np.log10(1. + z_abs) > mask_range[1]))
+        if len(mask_table)>0:
+            select_dla_mask = mask_table['frame'] == 'RF_DLA'
+            mask = mask_table[select_dla_mask]
+            if len(mask)>0:
+                for mask_range in mask:
+                    w &= ((self.log_lambda - np.log10(1. + z_abs) < mask_range['log_wave_min']) |
+                          (self.log_lambda - np.log10(1. + z_abs) > mask_range['log_wave_max']))
 
         # do the actual masking
         parameters = [
@@ -867,7 +864,7 @@ class Forest(QSO):
             ## prep_del.variance is the variance of delta
             ## we want here the weights = ivar(flux)
 
-            variance = get_variance(var_pipe, eta, var_lss, fudge)
+            variance = eta * var_pipe + var_lss + fudge / var_pipe
             weights = 1.0 / cont_model**2 / variance
 
             # force weights=1 when use-constant-weight
@@ -883,13 +880,13 @@ class Forest(QSO):
 
         minimizer = iminuit.Minuit(chi2,
                                    p0=p0,
-                                   p1=p1,
-                                   error_p0=p0 / 2.,
-                                   error_p1=p0 / 2.,
-                                   errordef=1.,
-                                   print_level=0,
-                                   fix_p1=(self.order == 0))
-        minimizer_result, _ = minimizer.migrad()
+                                   p1=p1)
+        minimizer.errors["p0"] = p0 / 2.
+        minimizer.errors["p1"] = p0 / 2.
+        minimizer.errordef = 1.
+        minimizer.print_level = 0
+        minimizer.fixed["p1"] = self.order == 0
+        minimizer.migrad()
 
         self.cont = get_cont_model(minimizer.values["p0"],
                                    minimizer.values["p1"])
@@ -897,7 +894,7 @@ class Forest(QSO):
         self.p1 = minimizer.values["p1"]
 
         self.bad_cont = None
-        if not minimizer_result.is_valid:
+        if not minimizer.valid:
             self.bad_cont = "minuit didn't converge"
         if np.any(self.cont <= 0):
             self.bad_cont = "negative continuum"
@@ -953,7 +950,6 @@ class Delta(QSO):
 
     Methods:
         __init__: Initializes class instances.
-        from_forest: Initialize instance from Forest data.
         from_fitsio: Initialize instance from a fits file.
         from_ascii: Initialize instance from an ascii file.
         from_image: Initialize instance from an ascii file.
@@ -1030,61 +1026,6 @@ class Delta(QSO):
         self.fname = None
 
     @classmethod
-    def from_forest(cls,
-                    forest,
-                    get_stack_delta,
-                    get_var_lss,
-                    get_eta,
-                    get_fudge,
-                    use_mock_cont=False):
-        """Initialize instance from Forest data.
-
-        Args:
-            forest: Forest
-                A forest instance from which to initialize the deltas
-            get_stack_delta: function
-                Interpolates the stacked delta field for a given redshift.
-            get_var_lss: Interpolates the pixel variance due to the Large Scale
-                Strucure on the wavelength array.
-            get_eta: Interpolates the correction factor to the contribution of the
-                pipeline estimate of the instrumental noise to the variance on the
-                wavelength array.
-            get_fudge: Interpolates the fudge contribution to the variance on the
-                wavelength array.
-            use_mock_cont: bool - default: False
-                Flag to use the mock continuum to compute the mean expected
-                flux fraction
-
-        Returns:
-            a Delta instance
-        """
-        log_lambda = forest.log_lambda
-        stack_delta = get_stack_delta(log_lambda)
-        var_lss = get_var_lss(log_lambda)
-        eta = get_eta(log_lambda)
-        fudge = get_fudge(log_lambda)
-
-        #if mc is True use the mock continuum to compute the mean
-        # expected flux fraction
-        if use_mock_cont:
-            mean_expected_flux_frac = forest.mean_expected_flux_frac
-        else:
-            mean_expected_flux_frac = forest.cont * stack_delta
-        delta = forest.flux / mean_expected_flux_frac - 1.
-        var_pipe = 1. / forest.ivar / mean_expected_flux_frac**2
-        weights = 1. / get_variance(var_pipe, eta, var_lss, fudge)
-        exposures_diff = forest.exposures_diff
-        if forest.exposures_diff is not None:
-            exposures_diff /= mean_expected_flux_frac
-        ivar = forest.ivar / (eta + (eta == 0)) * (mean_expected_flux_frac**2)
-
-        return cls(forest.thingid, forest.ra, forest.dec, forest.z_qso,
-                   forest.plate, forest.mjd, forest.fiberid, log_lambda,
-                   weights, forest.cont, delta, forest.order, ivar,
-                   exposures_diff, forest.mean_snr, forest.mean_reso,
-                   forest.mean_z, forest.delta_log_lambda)
-
-    @classmethod
     def from_fitsio(cls, hdu, pk1d_type=False):
         """Initialize instance from a fits file.
 
@@ -1099,8 +1040,27 @@ class Delta(QSO):
         """
         header = hdu.read_header()
 
-        delta = hdu['DELTA'][:].astype(float)
-        log_lambda = hdu['LOGLAM'][:].astype(float)
+        # new runs of picca_deltas should have a blinding keyword
+        if "BLINDING" in header:
+            blinding = header["BLINDING"]
+        # older runs are not from DESI main survey and should not be blinded
+        else:
+            blinding = "none"
+
+        if blinding != "none":
+            delta_name = "DELTA_BLIND"
+        else:
+            delta_name = "DELTA"
+
+        delta = hdu[delta_name][:].astype(float)
+
+        if 'LOGLAM' in hdu.get_colnames():
+            log_lambda = hdu['LOGLAM'][:].astype(float)
+        elif 'LAMBDA' in hdu.get_colnames():
+            userprint("no LOGLAM found, trying to read linear_binned_lambda")
+            log_lambda = np.log10(hdu['LAMBDA'][:].astype(float))
+        else:
+            raise KeyError("Did not find LOGLAM or LAMBDA in delta file")
 
         if pk1d_type:
             ivar = hdu['IVAR'][:].astype(float)
@@ -1121,19 +1081,28 @@ class Delta(QSO):
             weights = hdu['WEIGHT'][:].astype(float)
             cont = hdu['CONT'][:].astype(float)
 
-        thingid = header['THING_ID']
+        if 'THING_ID' in header:
+            los_id = header['THING_ID']
+            plate = header['PLATE']
+            mjd = header['MJD']
+            fiberid = header['FIBERID']
+        elif 'LOS_ID' in header:
+            los_id = header['LOS_ID']
+            plate=los_id
+            mjd=los_id
+            fiberid=los_id
+        else:
+            raise Exception("Could not find THING_ID or LOS_ID")
+
         ra = header['RA']
         dec = header['DEC']
         z_qso = header['Z']
-        plate = header['PLATE']
-        mjd = header['MJD']
-        fiberid = header['FIBERID']
         try:
             order = header['ORDER']
         except KeyError:
             order = 1
 
-        return cls(thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
+        return cls(los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                    mean_reso, mean_z, delta_log_lambda)
 
@@ -1240,7 +1209,12 @@ class Delta(QSO):
         fitiing. See equations 5 and 6 of du Mas des Bourboux et al. 2020
         """
         # 2nd term in equation 6
-        mean_delta = np.average(self.delta, weights=self.weights)
+        sum_weights=np.sum(self.weights)
+        if sum_weights > 0.0:
+            mean_delta = np.average(self.delta, weights=self.weights)
+        else:
+            # should probably write a warning
+            return
 
         # 3rd term in equation 6
         res = 0

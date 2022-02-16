@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Compute the wick covariance for the cross-correlation of object x forests.
 
 The wick covariance is computed as explained in Delubac et al. 2015
 """
 import sys
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import fitsio
 import numpy as np
@@ -33,7 +34,7 @@ def calc_wick_terms(healpixs):
     return wick_data
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes the wick covariance for the cross-correlation of object x
     forests."""
@@ -67,6 +68,14 @@ def main():
                         required=True,
                         help='Catalog of objects in DRQ format')
 
+    parser.add_argument(
+                        '--mode',
+                        type=str,
+                        default='sdss',
+                        choices=['sdss','desi'],
+                        required=False,
+                        help='type of catalog supplied, default sdss')
+
     parser.add_argument('--rp-min',
                         type=float,
                         default=-200.,
@@ -99,13 +108,13 @@ def main():
 
     parser.add_argument('--z-min-obj',
                         type=float,
-                        default=None,
+                        default=0,
                         required=False,
                         help='Min redshift for object field')
 
     parser.add_argument('--z-max-obj',
                         type=float,
-                        default=None,
+                        default=10,
                         required=False,
                         help='Max redshift for object field')
 
@@ -229,7 +238,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -249,6 +258,9 @@ def main():
     xcf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     xcf.max_diagram = args.max_diagram
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
     # load fiducial cosmology
     if (args.fid_Or != 0.) or (args.fid_Ok != 0.) or (args.fid_wl != -1.):
         userprint(("ERROR: Cosmology with other than Omega_m set are not yet "
@@ -257,7 +269,8 @@ def main():
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            blinding=blinding)
 
     ### Read deltas
     data, num_data, z_min, z_max = io.read_deltas(args.in_dir,
@@ -296,7 +309,7 @@ def main():
     ### Read objects
     objs, z_min2 = io.read_objects(args.drq, args.nside, args.z_min_obj,
                                    args.z_max_obj, args.z_evol_obj, args.z_ref,
-                                   cosmo)
+                                   cosmo, mode=args.mode)
     xcf.objs = objs
     sys.stderr.write("\n")
     userprint("done, npix = {}".format(len(objs)))
@@ -368,7 +381,8 @@ def main():
             cf.fill_neighs(healpixs)
 
     # compute the covariance matrix
-    pool = Pool(processes=min(args.nproc, len(cpu_data.values())))
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=min(args.nproc, len(cpu_data.values())))
     userprint(" \nStarting\n")
     wick_data = pool.map(calc_wick_terms, sorted(cpu_data.values()))
     userprint(" \nFinished\n")
@@ -453,21 +467,25 @@ def main():
             'value': npairs_used,
             'comment': 'Number of used pairs'
         }, {
-            'name': 'OMEGAM', 
-            'value': args.fid_Om, 
+            'name': 'OMEGAM',
+            'value': args.fid_Om,
             'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAR', 
-            'value': args.fid_Or, 
+            'name': 'OMEGAR',
+            'value': args.fid_Or,
             'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAK', 
-            'value': args.fid_Ok, 
+            'name': 'OMEGAK',
+            'value': args.fid_Ok,
             'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'WL', 
-            'value': args.fid_wl, 
+            'name': 'WL',
+            'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
+        }, {
+            'name': "BLINDING",
+            'value': blinding,
+            'comment': 'String specifying the blinding strategy'
         }
         ]
     comment = [
@@ -484,4 +502,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

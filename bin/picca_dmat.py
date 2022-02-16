@@ -1,11 +1,13 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Computes the distortion matrix between two delta fields.
 
 This module follow the procedure described in sections 3.5 of du Mas des
 Bourboux et al. 2020 (In prep) to compute the distortion matrix
 """
+import sys
 import time
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
@@ -34,7 +36,7 @@ def calc_dmat(healpixs):
     return dmat_data
 
 
-def main():
+def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
     """Computes the distortion matrix"""
     parser = argparse.ArgumentParser(
@@ -223,7 +225,7 @@ def main():
         help=('rp can be positive or negative depending on the relative '
               'position between absorber1 and absorber2'))
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -247,11 +249,16 @@ def main():
     cf.lambda_abs = constants.ABSORBER_IGM[args.lambda_abs]
     cf.remove_same_half_plate_close_pairs = args.remove_same_half_plate_close_pairs
 
+    # read blinding keyword
+    blinding = io.read_blinding(args.in_dir)
+
+
     # load fiducial cosmology
     cosmo = constants.Cosmo(Om=args.fid_Om,
                             Or=args.fid_Or,
                             Ok=args.fid_Ok,
-                            wl=args.fid_wl)
+                            wl=args.fid_wl,
+                            blinding=blinding)
 
     t0 = time.time()
 
@@ -313,7 +320,8 @@ def main():
 
     # compute the distortion matrix
     if args.nproc > 1:
-        pool = Pool(processes=args.nproc)
+        context = multiprocessing.get_context('fork')
+        pool = context.Pool(processes=args.nproc)
         dmat_data = pool.map(calc_dmat, sorted(cpu_data.values()))
         pool.close()
     elif args.nproc == 1:
@@ -401,25 +409,32 @@ def main():
             'value': num_pairs_used,
             'comment': 'Number of used pairs'
         }, {
-            'name': 'OMEGAM', 
-            'value': args.fid_Om, 
+            'name': 'OMEGAM',
+            'value': args.fid_Om,
             'comment': 'Omega_matter(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAR', 
-            'value': args.fid_Or, 
+            'name': 'OMEGAR',
+            'value': args.fid_Or,
             'comment': 'Omega_radiation(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'OMEGAK', 
-            'value': args.fid_Ok, 
+            'name': 'OMEGAK',
+            'value': args.fid_Ok,
             'comment': 'Omega_k(z=0) of fiducial LambdaCDM cosmology'
         }, {
-            'name': 'WL', 
-            'value': args.fid_wl, 
+            'name': 'WL',
+            'value': args.fid_wl,
             'comment': 'Equation of state of dark energy of fiducial LambdaCDM cosmology'
-        }    
+        }, {
+            'name': "BLINDING",
+            'value': blinding,
+            'comment': 'String specifying the blinding strategy'
+        }
         ]
+    dmat_name = "DM"
+    if blinding != "none":
+        dmat_name += "_BLIND"
     results.write([weights_dmat, dmat],
-                  names=['WDM', 'DM'],
+                  names=['WDM', dmat_name],
                   comment=['Sum of weight', 'Distortion matrix'],
                   units=['', ''],
                   header=header,
@@ -436,4 +451,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

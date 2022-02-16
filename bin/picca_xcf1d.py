@@ -1,9 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Compute the 1D auto or cross-correlation between a catalog of objects and a
 delta field as a function of wavelength ratio
 """
 import argparse
 import sys
+import multiprocessing
 from multiprocessing import Pool, cpu_count
 import numpy as np
 import fitsio
@@ -26,7 +27,7 @@ def corr_func(healpixs):
     return correlation_function_data
 
 
-def main():
+def main(cmdargs):
     """Compute the 1D cross-correlation between a catalog of objects and a delta
     field as a function of wavelength ratio"""
     parser = argparse.ArgumentParser(
@@ -53,6 +54,14 @@ def main():
                         required=True,
                         help='Catalog of objects in DRQ format')
 
+    parser.add_argument(
+                        '--mode',
+                        type=str,
+                        default='sdss',
+                        choices=['sdss','desi'],
+                        required=False,
+                        help='type of catalog supplied, default sdss')
+
     parser.add_argument('--wr-min',
                         type=float,
                         default=0.9,
@@ -73,13 +82,13 @@ def main():
 
     parser.add_argument('--z-min-obj',
                         type=float,
-                        default=None,
+                        default=0,
                         required=False,
                         help='Min redshift for object field')
 
     parser.add_argument('--z-max-obj',
                         type=float,
-                        default=None,
+                        default=10,
                         required=False,
                         help='Max redshift for object field')
 
@@ -165,7 +174,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
     if args.nproc is None:
         args.nproc = cpu_count() // 2
 
@@ -230,7 +239,8 @@ def main():
                                    args.z_max_obj,
                                    args.z_evol_obj,
                                    args.z_ref,
-                                   cosmo=None)
+                                   cosmo=None,
+                                   mode=args.mode)
     del z_min2
     xcf.objs = objs
     for healpix in xcf.objs:
@@ -240,7 +250,8 @@ def main():
     sys.stderr.write("\n")
 
     # Compute the correlation function, use pool to parallelize
-    pool = Pool(processes=args.nproc)
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=args.nproc)
     healpixs = [[healpix] for healpix in sorted(data) if healpix in xcf.objs]
     correlation_function_data = pool.map(corr_func, healpixs)
     pool.close()
@@ -310,4 +321,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

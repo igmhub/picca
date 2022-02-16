@@ -1,0 +1,2 @@
+[WARNING]: Missing section [correction arguments 2]. Correction SdssDustCorrection will be called without arguments
+[WARNING]: Missing section [correction arguments 3]. Correction Correction will be called without arguments

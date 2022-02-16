@@ -8,8 +8,9 @@ See the respective documentation for details
 """
 import numpy as np
 import iminuit
-from picca.data import Forest, get_variance
-from picca.utils import userprint
+
+from .data import Forest
+from .utils import userprint
 
 
 def compute_mean_cont(data):
@@ -45,7 +46,8 @@ def compute_mean_cont(data):
             eta = Forest.get_eta(forest.log_lambda)
             fudge = Forest.get_fudge(forest.log_lambda)
             var_pipe = 1. / forest.ivar / forest.cont**2
-            weights = 1 / get_variance(var_pipe, eta, var_lss, fudge)
+            variance = eta * var_pipe + var_lss + fudge / var_pipe
+            weights = 1 / variance
             cont = np.bincount(bins,
                                weights=forest.flux / forest.cont * weights)
             mean_cont[:len(cont)] += cont
@@ -179,6 +181,9 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
     # fit the functions eta, var_lss, and fudge
     chi2_in_bin = np.zeros(num_bins)
     fudge_ref = 1e-7
+
+    userprint(" Mean quantities in observer-frame")
+    userprint(" loglam    eta      var_lss  fudge    chi2     num_pix ")
     for index in range(num_bins):
         # pylint: disable-msg=cell-var-from-loop
         # this function is defined differntly at each step of the loop
@@ -216,31 +221,30 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
             Returns:
                 The obtained chi2
             """
+            variance = eta * var_pipe_values + var_lss + fudge*fudge_ref / var_pipe_values
             chi2_contribution = (
-                var_delta[index * num_var_bins:(index + 1) * num_var_bins] -
-                get_variance(var_pipe_values, eta, var_lss, fudge * fudge_ref))
+                var_delta[index * num_var_bins:(index + 1) * num_var_bins] - variance)
             weights = var2_delta[index * num_var_bins:(index + 1) *
                                  num_var_bins]
             w = num_qso[index * num_var_bins:(index + 1) * num_var_bins] > 100
             return np.sum(chi2_contribution[w]**2 / weights[w])
 
         minimizer = iminuit.Minuit(chi2,
-                                   forced_parameters=("eta", "var_lss",
-                                                      "fudge"),
+                                   name=("eta", "var_lss", "fudge"),
                                    eta=1.,
                                    var_lss=0.1,
-                                   fudge=1.,
-                                   error_eta=0.05,
-                                   error_var_lss=0.05,
-                                   error_fudge=0.05,
-                                   errordef=1.,
-                                   print_level=0,
-                                   limit_eta=limit_eta,
-                                   limit_var_lss=limit_var_lss,
-                                   limit_fudge=(0, None))
+                                   fudge=1.)
+        minimizer.errors["eta"] = 0.05
+        minimizer.errors["var_lss"] = 0.05
+        minimizer.errors["fudge"] = 0.05
+        minimizer.errordef = 1.
+        minimizer.print_level = 0
+        minimizer.limits["eta"] = limit_eta
+        minimizer.limits["var_lss"] = limit_var_lss
+        minimizer.limits["fudge"] = (0, None)
         minimizer.migrad()
 
-        if minimizer.migrad_ok():
+        if minimizer.valid:
             minimizer.hesse()
             eta[index] = minimizer.values["eta"]
             var_lss[index] = minimizer.values["var_lss"]
@@ -258,9 +262,12 @@ def compute_var_stats(data, limit_eta=(0.5, 1.5), limit_var_lss=(0., 0.3)):
         num_pixels[index] = count[index * num_var_bins:(index + 1) *
                                   num_var_bins].sum()
         chi2_in_bin[index] = minimizer.fval
-        userprint(eta[index], var_lss[index], fudge[index], chi2_in_bin[index],
-                  num_pixels[index], error_eta[index], error_var_lss[index],
-                  error_fudge[index])
+
+        #note that this has been changed for debugging purposes
+        userprint(f" {log_lambda[index]:.3e} "
+                  f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "+
+                  f"{chi2_in_bin[index]:.2e} {int(num_pixels[index]):d} ") 
+                  #f"{error_eta[index]:.2e} {error_var_lss[index]:.2e} {error_fudge[index]:.2e}")
 
     return (log_lambda, eta, var_lss, fudge, num_pixels, var_pipe_values,
             var_delta.reshape(num_bins, -1), var2_delta.reshape(num_bins, -1),
@@ -302,7 +309,8 @@ def stack(data, stack_from_deltas=False):
                 eta = Forest.get_eta(forest.log_lambda)
                 fudge = Forest.get_fudge(forest.log_lambda)
                 var = 1. / forest.ivar / forest.cont**2
-                weights = 1. / get_variance(var, eta, var_lss, fudge)
+                variance = eta * var + var_lss + fudge / var
+                weights = 1. / variance
 
             bins = ((forest.log_lambda - Forest.log_lambda_min) /
                     Forest.delta_log_lambda + 0.5).astype(int)

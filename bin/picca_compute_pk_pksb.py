@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
+import sys
 import os
 import argparse
 import fitsio
@@ -12,8 +13,7 @@ import nbodykit.cosmology.correlation
 from picca.utils import userprint
 from picca.constants import SPEED_LIGHT
 
-if __name__ == '__main__':
-
+def main(cmdargs):
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('-i','--ini', type=str, required=True,
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('--plot', action='store_true', required=False,
         help='Plot the resulting correlation functions and power-spectra')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     ### Parameters kmin and kmax to get exactly same as DR12
     minkh = 1.e-4
@@ -78,8 +78,10 @@ if __name__ == '__main__':
     cat['TCMB'] = pars.TCMB
     cat['NS'] = pars.InitPower.ns
     cat['ZREF'] = pars.Transfer.PK_redshifts[0]
-    cat['SIGMA8'] = results.get_sigma8()[1]
-    cat['F'] = results.get_fsigma8()[0]/results.get_sigma8()[0]
+    cat['SIGMA8_ZREF'] = results.get_sigma8()[0]
+    cat['SIGMA8_Z0'] = results.get_sigma8()[1]
+    cat['F_ZREF'] = results.get_fsigma8()[0]/results.get_sigma8()[0]
+    cat['F_Z0'] = results.get_fsigma8()[1]/results.get_sigma8()[1]
     cat['ZDRAG'] = pars2['zdrag']
     cat['RDRAG'] = pars2['rdrag']
 
@@ -100,7 +102,7 @@ if __name__ == '__main__':
     sb2_rmin = 150.*coef_Planck2015
     sb2_rmax = 190.*coef_Planck2015
     xi = nbodykit.cosmology.correlation.pk_to_xi(k,pk)
-    r = 10**np.linspace(-7.,3.5,1e4)
+    r = np.logspace(-7., 3.5, 10000)
     xi = xi(r)
 
     def f_xiSB(r,am3,am2,am1,a0,a1):
@@ -165,3 +167,8 @@ if __name__ == '__main__':
         plt.legend()
         plt.grid()
         plt.show()
+
+
+if __name__ == '__main__':
+    cmdargs=sys.argv[1:]
+    main(cmdargs)

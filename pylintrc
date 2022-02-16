@@ -139,7 +139,8 @@ disable=print-statement,
         deprecated-sys-function,
         exception-escape,
         comprehension-escape,
-        useless-object-inheritance
+        useless-object-inheritance,
+        logging-fstring-interpolation
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -355,10 +356,10 @@ ignore-comments=yes
 ignore-docstrings=yes
 
 # Ignore imports when computing similarities.
-ignore-imports=no
+ignore-imports=yes
 
 # Minimum lines number of a similarity.
-min-similarity-lines=4
+min-similarity-lines=5
 
 
 [BASIC]
@@ -425,6 +426,8 @@ good-names=i,
            Run,
            _,
      w,
+     w1,
+     w2,
 	   ra,
      p0,
      p1,
@@ -447,7 +450,12 @@ good-names=i,
      t5,
      t6,
      pk,
-     ax
+     ax,
+     ExpectedFluxType,
+     CorrectionType,
+     DataType,
+     MaskType,
+
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
@@ -571,13 +579,13 @@ valid-metaclass-classmethod-first-arg=cls
 max-args=20
 
 # Maximum number of attributes for a class (see R0902).
-max-attributes=20
+max-attributes=25
 
 # Maximum number of boolean expressions in an if statement (see R0916).
 max-bool-expr=10
 
 # Maximum number of branch for function / method body.
-max-branches=20
+max-branches=30
 
 # Maximum number of locals for function / method body.
 max-locals=50

@@ -1,8 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Compute the auto and cross-correlation of delta fields as a function of
 angle and wavelength ratio
 """
+import sys
 import argparse
+import multiprocessing
 from multiprocessing import Pool, Lock, cpu_count, Value
 import numpy as np
 import fitsio
@@ -30,7 +32,7 @@ def corr_func(healpixs):
     return correlation_function_data
 
 
-def main():
+def main(cmdargs):
     """Compute the auto and cross-correlation of delta fields as a function of
     angle and wavelength ratio"""
 
@@ -177,7 +179,7 @@ def main():
                         required=False,
                         help='Maximum number of spectra to read')
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmdargs)
 
     if args.nproc is None:
         args.nproc = cpu_count() // 2
@@ -244,7 +246,8 @@ def main():
     cf.counter = Value('i', 0)
     cf.lock = Lock()
     cpu_data = {healpix: [healpix] for healpix in data}
-    pool = Pool(processes=args.nproc)
+    context = multiprocessing.get_context('fork')
+    pool = context.Pool(processes=args.nproc)
     correlation_function_data = pool.map(corr_func, sorted(cpu_data.values()))
     pool.close()
 
@@ -325,4 +328,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cmdargs=sys.argv[1:]
+    main(cmdargs)
