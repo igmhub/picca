@@ -19,12 +19,15 @@ class ExpectedFlux:
     Attributes
     ----------
     los_ids: dict
-    A dictionary to store the mean expected flux fraction, the weights, and
-    the inverse variance for each line of sight. Keys are the identifier for the
-    line of sight and values are dictionaries with the keys "mean expected flux",
-    and "weights" pointing to the respective arrays. If the given Forests are
-    also Pk1dForests, then the key "ivar" must be available. Arrays have the same
-    size as the flux array for the corresponding line of sight forest instance.
+    A dictionary to store the mean expected flux and the weights for each line
+    of sight. Keys are the identifier for the line of sight and values are
+    dictionaries with the keys "mean expected flux" (continuum times stack of
+    1+delta), "weights", and "continuum" pointing to the respective arrays. If
+    the given Forests are also Pk1dForests, then the key "ivar" (inverse noise
+    variance from the pipeline) must be available.
+
+    Arrays must have the same size as the flux array for the corresponding line
+    of sight forest instance.
     """
     def __init__(self):
         """Initialize class instance"""
