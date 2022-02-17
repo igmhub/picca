@@ -46,7 +46,7 @@ jobs:
     - name: Test with pytest
       timeout-minutes: 30
       run: |
-          pytest --capture=tee-sys .
+          pytest --capture=tee-sys --cov --cov-report xml .
 
     # allow connecting to the github action run via ssh if [ci debug] has been in the commit msg
     - name: Debug with tmate
@@ -62,7 +62,17 @@ jobs:
       with:
         name: test-results_v${{ matrix.python-version }}
         path: /tmp/last_run_picca_test
-
+  
+  finish:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.github_token }}
+        parallel-finished: true
+        path-to-lcov: coverage.xml
 
   # flake8:
   #   runs-on: ubuntu-latest
