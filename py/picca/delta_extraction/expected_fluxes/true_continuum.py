@@ -1,4 +1,4 @@
-"""This module defines the class Dr16ExpectedFlux"""
+"""This module defines the class TrueContinuum"""
 import logging
 import multiprocessing
 
@@ -25,20 +25,20 @@ defaults = {
 
 class TrueContinuum(ExpectedFlux):
     """Class to the expected flux calculated used the true continuum unabsorbed contiuum
-    for mocks. It uses var_lss pre-computed from mocks and the mean flux estimated from 
+    for mocks. It uses var_lss pre-computed from mocks and the mean flux estimated from
 
     Methods
     -------
     extract_deltas (from ExpectedFlux)
     __init__
-    _initialize_arrays_lin
-    _initialize_arrays_log
     _parse_config
-    compute_delta_stack
     compute_expected_flux
+    compute_mean_cont_lin
+    compute_mean_cont_log
     read_true_continuum
     read_var_lss
     populate_los_ids
+    save_delta_attributes
 
     Attributes
     ----------
@@ -50,10 +50,8 @@ class TrueContinuum(ExpectedFlux):
     also Pk1dForests, then the key "ivar" must be available. Arrays have the same
     size as the flux array for the corresponding line of sight forest instance.
 
-
-    get_stack_delta: scipy.interpolate.interp1d or None
-    Interpolation function to compute the mean delta (from stacking all lines of
-    sight). None for no info.
+    out_dir: str (from ExpectedFlux)
+    Directory where logs will be saved.
 
     get_var_lss: scipy.interpolate.interp1d
     Interpolation function to compute mapping functions var_lss. See equation 4 of
@@ -86,21 +84,13 @@ class TrueContinuum(ExpectedFlux):
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         self.logger = logging.getLogger(__name__)
-        super().__init__()
+        super().__init__(config)
 
         # load variables from config
         self.input_directory = None
         self.iter_out_prefix = None
-        self.num_iterations = None
         self.num_processors = None
         self._parse_config(config)
-
-        # initialize stack variables
-        self.get_stack_delta = None
-        self.get_stack_delta_weights = None
-        #initialize mean cont variables
-        self.get_mean_cont = None
-        self.get_mean_cont_weight = None
 
         # read large scale structure variance
         self.get_var_lss = None
@@ -141,7 +131,7 @@ class TrueContinuum(ExpectedFlux):
         self.var_lss_binning = config.get("var lss binning", 'log')
 
 
-    def compute_expected_flux(self, forests, out_dir):
+    def compute_expected_flux(self, forests):
         """
 
         Arguments
@@ -149,7 +139,7 @@ class TrueContinuum(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
 
-         Raise
+        Raise
         -----
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
@@ -198,7 +188,99 @@ class TrueContinuum(ExpectedFlux):
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
         # Save delta atributes
-        self.save_delta_attributes(out_dir)
+        self.save_delta_attributes()
+
+    def compute_mean_cont_lin(self, forests):
+        """Compute the mean quasar continuum over the whole sample assuming a
+        linear wavelength solution. Then updates the value of self.get_mean_cont
+        to contain it
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+        """
+        num_bins = self.lambda_rest_frame.size
+        mean_cont = np.zeros(num_bins)
+        mean_cont_weight = np.zeros(num_bins)
+
+        for forest in forests:
+            if forest.bad_continuum_reason is not None:
+                continue
+            bins = (
+                (forest.lambda_ /
+                 (1 + forest.z) - Forest.lambda_min_rest_frame) /
+                (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) *
+                num_bins).astype(int)
+
+            var_lss = self.get_var_lss(forest.lambda_)
+            var_pipe = 1. / forest.ivar / forest.continuum**2
+            variance = var_lss + var_pipe
+            weights = 1 / variance
+            cont = np.bincount(bins,
+                               weights=forest.continuum * weights)
+            mean_cont[:len(cont)] += cont
+
+            cont = np.bincount(bins, weights=weights)
+            mean_cont_weight[:len(cont)] += cont
+
+        w = mean_cont_weight > 0
+        mean_cont[w] /= mean_cont_weight[w]
+        mean_cont /= mean_cont.mean()
+        lambda_cont = self.lambda_rest_frame[w]
+
+        self.get_mean_cont = interp1d(lambda_cont,
+                                      mean_cont,
+                                      fill_value="extrapolate")
+        self.get_mean_cont_weight = interp1d(lambda_cont,
+                                             mean_cont_weight,
+                                             fill_value=0.0,
+                                             bounds_error=False)
+
+    def compute_mean_cont_log(self, forests):
+        """Compute the mean quasar continuum over the whole sample assuming a
+        log-linear wavelength solution. Then updates the value of
+        self.get_mean_cont to contain it
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+        """
+        num_bins = self.log_lambda_rest_frame.size
+        mean_cont = np.zeros(num_bins)
+        mean_cont_weight = np.zeros(num_bins)
+
+        for forest in forests:
+            if forest.bad_continuum_reason is not None:
+                continue
+            bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
+                     np.log10(1 + forest.z)) /
+                    (Forest.log_lambda_max_rest_frame -
+                     Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
+
+            var_lss = self.get_var_lss(forest.log_lambda)
+            var_pipe = 1. / forest.ivar/ forest.continuum**2
+            variance = var_lss + var_pipe
+            weights = 1 / variance
+            cont = np.bincount(bins, weights= forest.continuum * weights)
+            mean_cont[:len(cont)] += cont
+
+            cont = np.bincount(bins, weights=weights)
+            mean_cont_weight[:len(cont)] += cont
+
+        w = mean_cont_weight > 0
+        mean_cont[w] /= mean_cont_weight[w]
+        mean_cont /= mean_cont.mean()
+        log_lambda_cont = self.log_lambda_rest_frame[w]
+
+        self.get_mean_cont = interp1d(log_lambda_cont,
+                                      mean_cont,
+                                      fill_value="extrapolate")
+        self.get_mean_cont_weight = interp1d(log_lambda_cont,
+                                             mean_cont_weight,
+                                             fill_value=0.0,
+                                             bounds_error=False)
 
     def read_true_continuum(self, forest):
         """Read the forest continuum and insert it into
@@ -294,99 +376,6 @@ class TrueContinuum(ExpectedFlux):
                                     fill_value='extrapolate',
                                     kind='nearest')
 
-    def compute_mean_cont_lin(self, forests):
-        """Compute the mean quasar continuum over the whole sample assuming a
-        linear wavelength solution. Then updates the value of self.get_mean_cont
-        to contain it
-
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-        """
-        num_bins = self.lambda_rest_frame.size
-        mean_cont = np.zeros(num_bins)
-        mean_cont_weight = np.zeros(num_bins)
-
-        for forest in forests:
-            if forest.bad_continuum_reason is not None:
-                continue
-            bins = (
-                (forest.lambda_ /
-                 (1 + forest.z) - Forest.lambda_min_rest_frame) /
-                (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) *
-                num_bins).astype(int)
-
-            var_lss = self.get_var_lss(forest.lambda_)
-            var_pipe = 1. / forest.ivar / forest.continuum**2
-            variance = var_lss + var_pipe
-            weights = 1 / variance
-            cont = np.bincount(bins,
-                               weights=forest.continuum * weights)
-            mean_cont[:len(cont)] += cont
-
-            cont = np.bincount(bins, weights=weights)
-            mean_cont_weight[:len(cont)] += cont
-
-        w = mean_cont_weight > 0
-        mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont.mean()
-        lambda_cont = self.lambda_rest_frame[w]
-
-        self.get_mean_cont = interp1d(lambda_cont,
-                                      mean_cont,
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(lambda_cont,
-                                             mean_cont_weight,
-                                             fill_value=0.0,
-                                             bounds_error=False)
-
-    def compute_mean_cont_log(self, forests):
-        """Compute the mean quasar continuum over the whole sample assuming a
-        log-linear wavelength solution. Then updates the value of
-        self.get_mean_cont to contain it
-
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-        """
-        num_bins = self.log_lambda_rest_frame.size
-        mean_cont = np.zeros(num_bins)
-        mean_cont_weight = np.zeros(num_bins)
-
-        for forest in forests:
-            if forest.bad_continuum_reason is not None:
-                continue
-            bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
-                     np.log10(1 + forest.z)) /
-                    (Forest.log_lambda_max_rest_frame -
-                     Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
-
-            var_lss = self.get_var_lss(forest.log_lambda)
-            var_pipe = 1. / forest.ivar/ forest.continuum**2
-            variance = var_lss + var_pipe
-            weights = 1 / variance
-            cont = np.bincount(bins, weights= forest.continuum * weights)
-            mean_cont[:len(cont)] += cont
-
-            cont = np.bincount(bins, weights=weights)
-            mean_cont_weight[:len(cont)] += cont
-
-        w = mean_cont_weight > 0
-        mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont.mean()
-        log_lambda_cont = self.log_lambda_rest_frame[w]
-
-        self.get_mean_cont = interp1d(log_lambda_cont,
-                                      mean_cont,
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(log_lambda_cont,
-                                             mean_cont_weight,
-                                             fill_value=0.0,
-                                             bounds_error=False)
-
-
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
         and inverse variance arrays for each line-of-sight.
@@ -396,13 +385,9 @@ class TrueContinuum(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
         """
-
         for forest in forests:
             if forest.bad_continuum_reason is not None:
-                self.logger.info(f"Rejected forest with los_id {forest.los_id} "
-                                 f"due to {forest.bad_continuum_reason}")
                 continue
-
             # get the variance functions and statistics
             if Forest.wave_solution == "log":
                 var_lss = self.get_var_lss(forest.log_lambda)
@@ -433,14 +418,8 @@ class TrueContinuum(ExpectedFlux):
                     "continuum": forest.continuum,
                 }
 
-    def save_delta_attributes(self,out_dir):
+    def save_delta_attributes(self):
         """Save mean continuum in the delta attributes file
-
-        Arguments
-        ---------
-
-        out_dir: str
-        Directory where data will be saved
 
         Raise
         -----
@@ -448,7 +427,7 @@ class TrueContinuum(ExpectedFlux):
         """
         iter_out_file = self.iter_out_prefix + ".fits.gz"
 
-        with fitsio.FITS(out_dir + iter_out_file, 'rw',
+        with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
                          clobber=True) as results:
             header = {}
             header["FITORDER"] = -1

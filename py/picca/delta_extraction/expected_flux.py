@@ -25,10 +25,21 @@ class ExpectedFlux:
     and "weights" pointing to the respective arrays. If the given Forests are
     also Pk1dForests, then the key "ivar" must be available. Arrays have the same
     size as the flux array for the corresponding line of sight forest instance.
+
+    out_dir: str (from ExpectedFlux)
+    Directory where logs will be saved.
     """
-    def __init__(self):
+    def __init__(self, config):
         """Initialize class instance"""
         self.los_ids = {}
+
+        self.out_dir = config.get("out dir")
+        if self.out_dir is None:
+            raise ExpectedFluxError(
+                "Missing argument 'out dir' required by Dr16ExpectedFlux")
+        else:
+            self.out_dir += "Log/"
+
 
     # pylint: disable=no-self-use
     # this method should use self in child classes
