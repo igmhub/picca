@@ -24,8 +24,9 @@ defaults = {
 
 
 class TrueContinuum(ExpectedFlux):
-    """Class to the expected flux calculated used the true continuum unabsorbed contiuum
-    for mocks. It uses var_lss pre-computed from mocks and the mean flux estimated from
+    """Class to compute the expected flux using the true unabsorbed contiuum
+    for mocks.
+    It uses var_lss pre-computed from mocks and the mean flux modeled from a 2nd order polinomial in effective optical depth.
 
     Methods
     -------
@@ -43,7 +44,7 @@ class TrueContinuum(ExpectedFlux):
     Attributes
     ----------
     los_ids: dict (from ExpectedFlux)
-    A dictionary to store the mean expected flux fraction, the weights, and
+    A dictionary to store the mean expected flux, the weights, and
     the inverse variance for each line of sight. Keys are the identifier for the
     line of sight and values are dictionaries with the keys "mean expected flux",
     and "weights" pointing to the respective arrays. If the given Forests are
@@ -339,15 +340,15 @@ class TrueContinuum(ExpectedFlux):
 
     def read_var_lss(self):
         """Read the LSS delta variance from files (written by the raw analysis)
-
         """
+        #var_lss files are only for lya so far, this will need to be updated so that regions other than Lya are available
 
         if self.var_lss_binning == 'log':
-            filename = 'deltas_lya_stats_log_bins.fits.gz'
+            filename = 'colore_v9_lya_log.fits.gz'
         elif self.var_lss_binning == 'lin_2.4':
-            filename = 'deltas_lya_stats_lin_bins_2.4.fits.gz'
+            filename = 'colore_v9_lya_lin_2.4.fits.gz'
         elif self.var_lss_binning == 'lin_3.2':
-            filename = 'deltas_lya_stats_lin_bins_3.2.fits.gz'
+            filename = 'colore_v9_lya_lin_3.2.fits.gz'
         else:
             self.logger.info(f'Trying to use costume var_lss file from {self.var_lss_binning}')
             filename = self.var_lss_binning
@@ -388,7 +389,7 @@ class TrueContinuum(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
-            # get the variance functions and statistics
+            # get the variance functions
             if Forest.wave_solution == "log":
                 var_lss = self.get_var_lss(forest.log_lambda)
             elif Forest.wave_solution == "lin":
@@ -419,7 +420,7 @@ class TrueContinuum(ExpectedFlux):
                 }
 
     def save_delta_attributes(self):
-        """Save mean continuum in the delta attributes file
+        """Save mean continuum in the delta attributes file.
 
         Raise
         -----
@@ -434,9 +435,6 @@ class TrueContinuum(ExpectedFlux):
             if Forest.wave_solution == "log":
                 num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
                                Forest.delta_log_lambda) + 1
-                stack_log_lambda = (
-                    Forest.log_lambda_min +
-                    np.arange(num_bins) * Forest.delta_log_lambda)
 
                 results.write([
                     self.log_lambda_rest_frame,
@@ -449,8 +447,6 @@ class TrueContinuum(ExpectedFlux):
             elif Forest.wave_solution == "lin":
                 num_bins = int((Forest.lambda_max - Forest.lambda_min) /
                                Forest.delta_lambda) + 1
-                stack_lambda = (Forest.lambda_min +
-                                np.arange(num_bins) * Forest.delta_lambda)
 
                 results.write([
                     self.lambda_rest_frame,
