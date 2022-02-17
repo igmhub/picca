@@ -61,6 +61,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
     also Pk1dForests, then the key "ivar" must be available. Arrays have the same
     size as the flux array for the corresponding line of sight forest instance.
 
+    out_dir: str (from ExpectedFlux)
+    Directory where logs will be saved.
+
     continuum_fit_parameters: dict
     A dictionary containing the continuum fit parameters for each line of sight.
     Keys are the identifier for the line of sight and values are tuples with
@@ -128,9 +131,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     order: int
     Order of the polynomial for the continuum fit.
 
-    out_dir: str
-    Directory where logs will be saved.
-
     use_constant_weight: boolean
     If "True", set all the delta weights to one (implemented as eta = 0,
     sigma_lss = 1, fudge = 0).
@@ -152,14 +152,13 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         self.logger = logging.getLogger(__name__)
-        super().__init__()
+        super().__init__(config)
 
         # load variables from config
         self.iter_out_prefix = None
         self.limit_eta = None
         self.limit_var_lss = None
         self.order = None
-        self.out_dir = None
         self.num_bins_variance = None
         self.num_iterations = None
         self.num_processors = None
@@ -399,13 +398,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.order is None:
             raise ExpectedFluxError(
                 "Missing argument 'order' required by Dr16ExpectedFlux")
-
-        self.out_dir = config.get("out dir")
-        if self.out_dir is None:
-            raise ExpectedFluxError(
-                "Missing argument 'out dir' required by Dr16ExpectedFlux")
-        else:
-            self.out_dir += "Log/"
 
         self.use_constant_weight = config.getboolean("use constant weight")
         if self.use_constant_weight is None:
