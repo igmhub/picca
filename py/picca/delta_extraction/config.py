@@ -168,7 +168,7 @@ class Config:
         """
         self.corrections = []
         if "corrections" not in self.config:
-            self.logger.warning("Missing section [corrections]. No Corrections will"
+            self.logger.warning("Missing section [corrections]. No Corrections will "
                                 "be applied to data")
             return
         section = self.config["corrections"]
@@ -398,7 +398,7 @@ class Config:
         """
         self.masks = []
         if "masks" not in self.config:
-            self.logger.warning("Missing section [masks]. No Masks will"
+            self.logger.warning("Missing section [masks]. No Masks will "
                                 "be applied to data")
             return
         section = self.config["masks"]

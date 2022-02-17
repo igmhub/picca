@@ -55,16 +55,16 @@ class ConfigTest(AbstractTest):
                     new_value = new_section.get(key)
                     # this is necessary to remove the system dependent bits of
                     # the paths
-                    if "py/picca/delta_extraction/tests" in new_value:
-                        new_value = new_value.split("py/picca/delta_extraction/tests")[-1]
-                        orig_value = orig_value.split("py/picca/delta_extraction/tests")[-1]
+                    if "py/picca/tests/delta_extraction" in new_value:
+                        new_value = new_value.split("py/picca/tests/delta_extraction")[-1]
+                        orig_value = orig_value.split("py/picca/tests/delta_extraction")[-1]
 
                     if not orig_value == new_value:
-                        print(f"For key {key} found orig value = {orig_value} but new value = {new_value}")
+                        print(f"In section [{section}], for key {key} found orig value = {orig_value} but new value = {new_value}")
                     self.assertTrue(orig_value == new_value)
             for key in new_section.keys():
                 if key not in orig_section.keys():
-                    print(f"key {key} in section {new_section} missing in original file")
+                    print(f"key {key} in section {section} missing in original file")
                     self.assertTrue(key in orig_section.keys())
 
         for section in new_config.sections():
