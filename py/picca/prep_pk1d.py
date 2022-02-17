@@ -126,6 +126,7 @@ def spectral_resolution(wdisp,
 
 def spectral_resolution_desi(reso_matrix, log_lambda):
     """Computes the spectral resolution for DESI spectra
+    Note that this is only giving rough estimates, it relies on a Gaussian resolution matrix
 
     Args:
         reso_matrix: array
@@ -139,12 +140,16 @@ def spectral_resolution_desi(reso_matrix, log_lambda):
     delta_log_lambda = ((log_lambda[-1] - log_lambda[0]) /
                         float(len(log_lambda) - 1))
     reso = np.clip(reso_matrix, 1.0e-6, 1.0e6)
-    rms_in_pixel = (np.sqrt(1.0 / 2.0 / np.log(
-        reso[len(reso) // 2][:] / reso[len(reso) // 2 - 1][:])) + np.sqrt(
-            4.0 / 2.0 / np.log(
-                reso[len(reso) // 2][:] / reso[len(reso) // 2 - 2][:]))) / 2.0
 
-    reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
-                        np.log(10.0))
+    #
+    rms_in_pixel = (
+        np.sqrt(1.0/2.0/np.log(reso[len(reso)//2][:]/reso[len(reso)//2-1][:])) +
+        np.sqrt(4.0/2.0/np.log(reso[len(reso)//2][:]/reso[len(reso)//2-2][:])) +
+        np.sqrt(1.0/2.0/np.log(reso[len(reso)//2][:]/reso[len(reso)//2+1][:])) +
+        np.sqrt(4.0/2.0/np.log(reso[len(reso)//2][:]/reso[len(reso)//2+2][:]))
+        )/4.0
 
-    return reso_in_km_per_s
+    avg_reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT *
+        delta_log_lambda * np.log(10.0))
+
+    return  rms_in_pixel, avg_reso_in_km_per_s

@@ -12,6 +12,9 @@ See the respective docstrings for more details
 """
 import numpy as np
 from scipy.fftpack import fft
+import scipy.interpolate as spint
+from numpy.fft import fft, fftfreq, rfft, rfftfreq
+
 
 from . import constants
 from .utils import userprint
@@ -24,7 +27,8 @@ def split_forest(num_parts,
                  exposures_diff,
                  ivar,
                  first_pixel_index,
-                 abs_igm="LYA"):
+                 abs_igm="LYA",
+                 reso_matrix=None):
     """Splits the forest in n parts
 
     Args:
@@ -47,6 +51,8 @@ def split_forest(num_parts,
         abs_igm: string - default: "LYA"
             Name of the absorption in picca.constants defining the
             redshift of the forest pixels
+        reso_matrix: 2d-array of floats
+            The resolution matrix used for corrections
 
     Returns:
         The following variables:
@@ -67,6 +73,8 @@ def split_forest(num_parts,
     delta_array = []
     exposures_diff_array = []
     ivar_array = []
+    if reso_matrix is not None:
+        reso_matrix_array = []
 
     for index in range(1, num_parts):
         log_lambda_limit.append(log_lambda[num_bins * index +
@@ -81,31 +89,44 @@ def split_forest(num_parts,
 
         log_lambda_part = log_lambda[selection].copy()
         lambda_abs_igm = constants.ABSORBER_IGM[abs_igm]
-        mean_z = (np.power(10., log_lambda_part[len(log_lambda_part) - 1]) +
-                  np.power(10., log_lambda_part[0])) / 2. / lambda_abs_igm - 1.0
+        
+        mean_z = np.mean(10**log_lambda_part)/lambda_abs_igm -1.0
+
+        if reso_matrix is not None:
+            reso_matrix_part = reso_matrix[:, selection].copy()
 
         mean_z_array.append(mean_z)
         log_lambda_array.append(log_lambda_part)
         delta_array.append(delta[selection].copy())
         exposures_diff_array.append(exposures_diff[selection].copy())
         ivar_array.append(ivar[selection].copy())
+        if reso_matrix is not None:
+            reso_matrix_array.append(reso_matrix_part)
 
-    return (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
-            ivar_array)
+    out = [mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
+            ivar_array]
+    if reso_matrix is not None:
+        out.append(reso_matrix_array)
+    return out
 
 
 def rebin_diff_noise(delta_log_lambda, log_lambda, exposures_diff):
     """Rebin the semidifference between two customized coadded spectra to
     construct the noise array
 
+    Note that inputs can be either linear or log-lambda spaced units (but 
+    delta_log_lambda and log_lambda need the same unit)
+
     The rebinning is done by combining 3 of the original pixels into analysis
     pixels.
 
     Args:
         delta_log_lambda: float
-            Variation of the logarithm of the wavelength between two pixels
+            Variation of the logarithm of the wavelength between two pixels 
+            for linear binnings this would need to be the wavelength difference
         log_lambda: array of floats
             Array containing the logarithm of the wavelengths (in Angs)
+            for linear binnings this would need to be just wavelength
         exposures_diff: array of floats
             Semidifference between two customized coadded spectra obtained from
             weighted averages of the even-number exposures, for the first
@@ -148,6 +169,9 @@ def rebin_diff_noise(delta_log_lambda, log_lambda, exposures_diff):
 def fill_masked_pixels(delta_log_lambda, log_lambda, delta, exposures_diff,
                        ivar, no_apply_filling):
     """Fills the masked pixels with zeros
+
+    Note that inputs can be either linear or log-lambda spaced units (but 
+    delta_log_lambda and log_lambda need the same unit)
 
     Args:
         delta_log_lambda: float
@@ -207,14 +231,16 @@ def fill_masked_pixels(delta_log_lambda, log_lambda, delta, exposures_diff,
             num_masked_pixels)
 
 
-def compute_pk_raw(delta_log_lambda, delta):
+def compute_pk_raw(delta_lam, delta, linear_binning=False):
     """Computes the raw power spectrum
 
     Args:
-        delta_log_lambda: float
-            Variation of the logarithm of the wavelength between two pixels
+        delta_lam: float
+            Variation of (the logarithm of) the wavelength between two pixels
         delta: array of floats
             Mean transmission fluctuation (delta field)
+        linear_binning: if set then inputs need to be in AA, outputs will be 1/AA
+                        else inputs will be in log(AA) and outputs in s/km
 
     Returns:
         The following variables
@@ -222,30 +248,32 @@ def compute_pk_raw(delta_log_lambda, delta):
             pk: the Power Spectrum
     """
     # spectral length in km/s
-    length_lambda = (delta_log_lambda * constants.SPEED_LIGHT * np.log(10.) *
+    if linear_binning:
+        length_lambda = (delta_lam * len(delta))
+    else:    # spectral length in km/s
+        length_lambda = (delta_lam * constants.SPEED_LIGHT * np.log(10.) *
                      len(delta))
 
     # make 1D FFT
     num_pixels = len(delta)
-    num_bins_fft = num_pixels // 2 + 1
-    fft_delta = fft(delta)
+    fft_delta = rfft(delta)
 
     # compute power spectrum
-    fft_delta = fft_delta[:num_bins_fft]
-    pk = (fft_delta.real**2 + fft_delta.imag**2) * length_lambda / num_pixels**2
-    k = np.arange(num_bins_fft, dtype=float) * 2 * np.pi / length_lambda
-
+    pk = (fft_delta.real ** 2 + fft_delta.imag ** 2) * length_lambda / num_pixels ** 2
+    k = 2 * np.pi * rfftfreq(num_pixels, length_lambda / num_pixels)
+    
     return k, pk
 
 
-def compute_pk_noise(delta_log_lambda, ivar, exposures_diff, run_noise):
+def compute_pk_noise(delta_lam, ivar, exposures_diff, run_noise, num_noise_exposures=10, 
+                     linear_binning=False):
     """Computes the noise power spectrum
 
     Two noise power spectrum are computed: one using the pipeline noise and
     another one using the noise derived from exposures_diff
 
     Args:
-        delta_log_lambda: float
+        delta_lam: float
             Variation of the logarithm of the wavelength between two pixels
         ivar: array of floats
             Array containing the inverse variance
@@ -256,6 +284,8 @@ def compute_pk_noise(delta_log_lambda, ivar, exposures_diff, run_noise):
         run_noise: boolean
             If False the noise power spectrum using the pipeline noise is not
             computed and an array filled with zeros is returned instead
+        num_noise_exposures: int
+            Number of exposures to average for noise power estimate
 
     Returns:
         The following variables
@@ -266,7 +296,6 @@ def compute_pk_noise(delta_log_lambda, ivar, exposures_diff, run_noise):
     num_pixels = len(ivar)
     num_bins_fft = num_pixels // 2 + 1
 
-    num_noise_exposures = 10
     pk_noise = np.zeros(num_bins_fft)
     error = np.zeros(num_pixels)
     w = ivar > 0
@@ -276,12 +305,12 @@ def compute_pk_noise(delta_log_lambda, ivar, exposures_diff, run_noise):
         for _ in range(num_noise_exposures):
             delta_exp = np.zeros(num_pixels)
             delta_exp[w] = np.random.normal(0., error[w])
-            _, pk_exp = compute_pk_raw(delta_log_lambda, delta_exp)
+            _, pk_exp = compute_pk_raw(delta_lam, delta_exp, linear_binning=linear_binning)
             pk_noise += pk_exp
 
         pk_noise /= float(num_noise_exposures)
 
-    _, pk_diff = compute_pk_raw(delta_log_lambda, exposures_diff)
+    _, pk_diff = compute_pk_raw(delta_lam, exposures_diff)
 
     return pk_noise, pk_diff
 
@@ -292,7 +321,7 @@ def compute_correction_reso(delta_pixel, mean_reso, k):
     Args:
         delta_pixel: float
             Variation of the logarithm of the wavelength between two pixels
-            (in km/s)
+            (in km/s or Ang depending on the units of k submitted)
         mean_reso: float
             Mean resolution of the forest
         k: array of floats
@@ -304,12 +333,54 @@ def compute_correction_reso(delta_pixel, mean_reso, k):
     num_bins_fft = len(k)
     correction = np.ones(num_bins_fft)
 
-    sinc = np.ones(num_bins_fft)
-    sinc[k > 0.] = (np.sin(k[k > 0.] * delta_pixel / 2.0) /
-                    (k[k > 0.] * delta_pixel / 2.0))**2
+    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))** 2
 
     correction *= np.exp(-(k * mean_reso)**2)
-    correction *= sinc
+    correction *= pixelization_factor
+    return correction
+
+
+
+def compute_correction_reso_matrix(reso_matrix, k, npix, delta_pixel):
+    """Computes the resolution correction based on the resolution matrix using linear binning
+
+    Args:
+        delta_pixel: float
+            Variation of the logarithm of the wavelength between two pixels
+            (in km/s or Ang depending on the units of k submitted)
+        mean_reso: float
+            Mean resolution of the forest
+        k: array of floats
+            Fourier modes
+
+    Returns:
+        The resolution correction
+    """
+
+    if len(reso_matrix.shape)==1:
+        #assume you got a mean reso_matrix
+        reso_matrix=reso_matrix[sp.newaxis,:]
+
+    W2arr=[]
+    #first compute the power in the resmat for each pixel, then average
+    for resmat in reso_matrix:
+        r = np.append(resmat, np.zeros(npix-resmat.size))
+        k_resmat, W2 = compute_pk_raw(delta_pixel, r, linear_binning=True) 
+        try:
+            assert k_resmat==k
+        except AssertionError:
+            raise("for some reason the resolution matrix correction has "
+            "different k scaling than the pk")
+        W2arr.append(W2)
+    
+    Wres2 = np.mean(W2arr, axis=0)
+    Wres2 /= Wres2[0]
+
+    #the following assumes that the resolution matrix is storing the actual resolution convolved with the pixelization kernel along each matrix axis
+    correction = np.ones(len(k))
+    correction *= Wres2
+    correction /= np.sinc(k * delta_pixel / (2 * np.pi))**2
+    
     return correction
 
 
