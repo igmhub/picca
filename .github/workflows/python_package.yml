@@ -33,7 +33,7 @@ jobs:
       run: |
         sudo apt-get -y install libbz2-dev
         python -m pip install --upgrade pip
-        pip install wheel pytest pytest-cov
+        pip install wheel pytest pytest-cov coveralls
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     # TODO: the section below can be removed if the compile step is fixed otherwise
     - name: Reinstall fitsio to ensure the numpy version during compilation matches the one at runtime
@@ -46,7 +46,7 @@ jobs:
     - name: Test with pytest
       timeout-minutes: 30
       run: |
-          pytest --capture=tee-sys --cov --cov-report xml --cov-append .
+          pytest --capture=tee-sys --cov --cov-report xml .
 
     # allow connecting to the github action run via ssh if [ci debug] has been in the commit msg
     - name: Debug with tmate
