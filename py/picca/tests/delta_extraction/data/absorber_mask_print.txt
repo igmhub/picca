@@ -1,8 +1,7 @@
-[PROGRESS]: Reading absorbers from: /Users/iperezra/software/picca/py/picca/delta_extraction/tests/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]: Reading absorbers from: /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
 [PROGRESS]:  In catalog: 3 absorbers
 [PROGRESS]:  In catalog: 2 forests have absorbers
 
-[PROGRESS]: Reading absorbers from: /Users/iperezra/software/picca/py/picca/delta_extraction/tests/data/dummy_absorbers_cat.fits.gz
+[PROGRESS]: Reading absorbers from: /Users/iperezra/software/picca/py/picca/tests/delta_extraction/data/dummy_absorbers_cat.fits.gz
 [PROGRESS]:  In catalog: 3 absorbers
 [PROGRESS]:  In catalog: 2 forests have absorbers
-
