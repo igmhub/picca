@@ -33,7 +33,7 @@ jobs:
       run: |
         sudo apt-get -y install libbz2-dev
         python -m pip install --upgrade pip
-        pip install wheel pytest
+        pip install wheel pytest pytest-cov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     # TODO: the section below can be removed if the compile step is fixed otherwise
     - name: Reinstall fitsio to ensure the numpy version during compilation matches the one at runtime
