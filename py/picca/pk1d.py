@@ -365,7 +365,7 @@ def compute_correction_reso_matrix(reso_matrix, k, npix, delta_pixel):
     #first compute the power in the resmat for each pixel, then average
     for resmat in reso_matrix:
         r = np.append(resmat, np.zeros(npix-resmat.size))
-        k_resmat, W2 = compute_pk_raw(delta_pixel, r, linear_binning=True) 
+        k_resmat, W2 = compute_pk_raw(delta_pixel, r, linear_binning=True)
         try:
             assert k_resmat==k
         except AssertionError:
