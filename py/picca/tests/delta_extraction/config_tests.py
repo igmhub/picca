@@ -212,24 +212,24 @@ class ConfigTest(AbstractTest):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
 
-        # check arguments of SdssAbsorberMask
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_absorber_mask.ini"
+        # check arguments of AbsorberMask
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_absorber_mask.ini"
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
         if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
 
-        # check arguments of SdssBalMask
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_bal_mask.ini"
+        # check arguments of BalMask
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_bal_mask.ini"
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
         if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
 
-        # check arguments of SdssDlaMask
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_dla_mask.ini"
+        # check arguments of DlaMask
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_dla_mask.ini"
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
         if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
