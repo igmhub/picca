@@ -47,10 +47,10 @@ class AbstractTest(unittest.TestCase):
                                            new.readlines()):
                 # this is necessary to remove the system dependent bits of
                 # the paths
-                if "py/picca/delta_extraction/tests" in orig_line:
-                    orig_line = re.sub(r"\/[^ ]*\/py\/picca\/delta_extraction\/tests\/",
+                if "py/picca/tests/delta_extraction" in orig_line:
+                    orig_line = re.sub(r"\/[^ ]*\/py\/picca\/tests\/delta_extraction\/",
                                        "", orig_line)
-                    new_line = re.sub(r"\/[^ ]*\/py\/picca\/delta_extraction\/tests\/",
+                    new_line = re.sub(r"\/[^ ]*\/py\/picca\/tests\/delta_extraction\/",
                                       "", new_line)
 
                 if not orig_line == new_line:
