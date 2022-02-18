@@ -308,7 +308,7 @@ def main(cmdargs):
                     mean_pk_diff = (sum(pk_diff[selection]) /
                                     float(len(pk_diff[selection])))
                     pk = (pk_raw - mean_pk_diff) / correction_reso
-                pk_list.append([k, pk_raw, pk_noise, pk_diff, correction_reso, pk])
+                pk_list.append([k, pk_raw, pk_noise, pk_diff, correction_reso, pk, mean_z_array[part_index],num_masked_pixels])
             return pk_list
 
 
@@ -321,7 +321,7 @@ def main(cmdargs):
         for delta, pk_list in zip(deltas, pk_list_of_lists):
             if pk_list is None:
                 continue
-            for k, pk_raw, pk_noise, pk_diff, correction_reso, pk in pk_list:
+            for k, pk_raw, pk_noise, pk_diff, correction_reso, pk, mean_z, num_masked_pixels in pk_list:
 
                 # save in fits format
                 if args.out_format == 'fits':
@@ -339,7 +339,7 @@ def main(cmdargs):
                         'comment': "QSO's redshift"
                     }, {
                         'name': 'MEANZ',
-                        'value': mean_z_array[index2],
+                        'value': mean_z,
                         'comment': "Absorbers mean redshift"
                     }, {
                         'name': 'MEANRESO',
