@@ -187,15 +187,16 @@ def main(cmdargs):
 
     # initialize randoms
     np.random.seed(4)
+    userprint(f"Computing Pk1d for {args.in_dir}")
 
 
     if args.num_processors>1:
         pool=Pool(args.num_processors)
 
     # loop over input files
-    for index, file in enumerate(files):
-        if index % 1 == 0:
-            userprint("\rread {} of {} {}".format(index, len(files), num_data),
+    for file_index, file in enumerate(files):
+        if file_index % 1 == 0:
+            userprint("\rread {} of {} {}".format(file_index, len(files), num_data),
                       end="")
 
         # read fits or ascii file
@@ -210,7 +211,7 @@ def main(cmdargs):
 
         #add the check for linear binning on first spectrum only (assuming homogeneity within the file)
         delta = deltas[0]
-        if index=0:
+        if file_index==0:
             linear_binning, delta_lam = check_linear_binning(delta)
             if linear_binning:
                 userprint("\n Using linear binning, results will have units of AA")
@@ -258,21 +259,21 @@ def main(cmdargs):
                                         first_pixel_index)
 
             pk_list=[]
-            for index2 in range(num_parts):
+            for part_index in range(num_parts):
 
                 # rebin exposures_diff spectrum
                 if (args.noise_estimate == 'rebin_diff' or
                         args.noise_estimate == 'mean_rebin_diff'):
-                    exposures_diff_array[index2] = rebin_diff_noise(
-                        delta.delta_log_lambda, log_lambda_array[index2],
-                        exposures_diff_array[index2])
+                    exposures_diff_array[part_index] = rebin_diff_noise(
+                        delta.delta_log_lambda, log_lambda_array[part_index],
+                        exposures_diff_array[part_index])
 
                 # Fill masked pixels with 0.
                 (log_lambda_new, delta_new, exposures_diff_new, ivar_new,
                  num_masked_pixels) = fill_masked_pixels(
-                     delta.delta_log_lambda, log_lambda_array[index2],
-                     delta_array[index2], exposures_diff_array[index2],
-                     ivar_array[index2], args.no_apply_filling)
+                     delta.delta_log_lambda, log_lambda_array[part_index],
+                     delta_array[part_index], exposures_diff_array[part_index],
+                     ivar_array[part_index], args.no_apply_filling)
                 if num_masked_pixels > args.nb_pixel_masked_max:
                     continue
                 
@@ -390,7 +391,7 @@ def main(cmdargs):
                                       units=units)
                     except AttributeError:
                         results = fitsio.FITS(
-                            (args.out_dir + '/Pk1D-' + str(index) + '.fits.gz'),
+                            (args.out_dir + '/Pk1D-' + str(file_index) + '.fits.gz'),
                             'rw',
                             clobber=True)
                         results.write(cols,
