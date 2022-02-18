@@ -236,7 +236,7 @@ def main(cmdargs):
             # Selection over the SNR and the resolution
             if (delta.mean_snr <= args.SNR_min or
                     delta.mean_reso >= args.reso_max):
-                continue
+                return None
 
             # first pixel in forest
             selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
@@ -246,7 +246,7 @@ def main(cmdargs):
             # minimum number of pixel in forest
             min_num_pixels = args.nb_pixel_min
             if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
-                continue
+                return None
 
             # Split in n parts the forest
             max_num_parts = (len(delta.log_lambda) -
@@ -319,6 +319,8 @@ def main(cmdargs):
             pk_list_of_lists=[process_file(delta)]
 
         for delta, pk_list in zip(deltas, pk_list_of_lists):
+            if pk_list is None:
+                continue
             for k, pk_raw, pk_noise, pk_diff, correction_reso, pk in pk_list:
 
                 # save in fits format
