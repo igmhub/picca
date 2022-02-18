@@ -113,6 +113,26 @@ def main(cmdargs):
         help=('Name of the absorption line in picca.constants defining the '
               'redshift of the forest pixels'))
 
+    #additional options
+    parser.add_argument(
+        '--num-noise-exp',
+        default = 10,
+        type=int,
+        required=False,
+        help='number of pipeline noise realizations to generate per spectrum')
+    
+    parser.add_argument(
+        '--disable-reso_matrix',
+        default = False,
+        action='store_true',
+        required=False,
+        help=('do not use the resolution matrix even '
+              'if it exists and we are on linear binning'))
+
+
+    #use resolution matrix automatically when doing linear binning and resolution matrix is available, else use Gaussian (which was the previous default)
+
+
     args = parser.parse_args(cmdargs)
     
     # Read deltas
@@ -141,6 +161,25 @@ def main(cmdargs):
         elif args.in_format == 'ascii':
             ascii_file = open(file, 'r')
             deltas = [Delta.from_ascii(line) for line in ascii_file]
+
+        #add the check for linear binning on first spectrum of first file only
+        if index==0:
+            delta = deltas[0]
+            diff_lambda = np.diff(10**delta.log_lambda)
+            diff_log_lambda = np.diff(delta.log_lambda)
+            q25_lambda, q75_lambda = np.percentile(diff_lambda,[25,75])
+            q25_log_lambda, q75_log_lambda = np.percentile(diff_lambda,[25,75])
+            if (q75_lambda-q25_lambda)<1e-6:
+                #we can assume linear binning for this case
+                linear_binning=True
+                delta_lambda = np.median(diff_lambda)
+            elif (q75_log_lambda-q25_log_lambda)<1e-6:
+                #we can assume log_linear binning for this case
+                linear_binning=False
+                delta_log_lambda = np.median(diff_log_lambda)
+            else:
+                raise ValueError("Could not figure out if linear or log wavelength binning was used")
+
 
         num_data += len(deltas)
         userprint("\n ndata =  ", num_data)
