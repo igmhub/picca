@@ -15,7 +15,6 @@ from scipy.fftpack import fft
 import scipy.interpolate as spint
 from numpy.fft import fft, fftfreq, rfft, rfftfreq
 
-
 from . import constants
 from .utils import userprint
 
@@ -89,8 +88,8 @@ def split_forest(num_parts,
 
         log_lambda_part = log_lambda[selection].copy()
         lambda_abs_igm = constants.ABSORBER_IGM[abs_igm]
-        
-        mean_z = np.mean(10**log_lambda_part)/lambda_abs_igm -1.0
+
+        mean_z = np.mean(10**log_lambda_part) / lambda_abs_igm - 1.0
 
         if reso_matrix is not None:
             reso_matrix_part = reso_matrix[:, selection].copy()
@@ -103,8 +102,10 @@ def split_forest(num_parts,
         if reso_matrix is not None:
             reso_matrix_array.append(reso_matrix_part)
 
-    out = [mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
-            ivar_array]
+    out = [
+        mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
+        ivar_array
+    ]
     if reso_matrix is not None:
         out.append(reso_matrix_array)
     return out
@@ -250,22 +251,27 @@ def compute_pk_raw(delta_lam, delta, linear_binning=False):
     # spectral length in km/s
     if linear_binning:
         length_lambda = (delta_lam * len(delta))
-    else:    # spectral length in km/s
+    else:  # spectral length in km/s
         length_lambda = (delta_lam * constants.SPEED_LIGHT * np.log(10.) *
-                     len(delta))
+                         len(delta))
 
     # make 1D FFT
     num_pixels = len(delta)
     fft_delta = rfft(delta)
 
     # compute power spectrum
-    pk = (fft_delta.real ** 2 + fft_delta.imag ** 2) * length_lambda / num_pixels ** 2
+    pk = (fft_delta.real**2 +
+          fft_delta.imag**2) * length_lambda / num_pixels**2
     k = 2 * np.pi * rfftfreq(num_pixels, length_lambda / num_pixels)
-    
+
     return k, pk
 
 
-def compute_pk_noise(delta_lam, ivar, exposures_diff, run_noise, num_noise_exposures=10, 
+def compute_pk_noise(delta_lam,
+                     ivar,
+                     exposures_diff,
+                     run_noise,
+                     num_noise_exposures=10,
                      linear_binning=False):
     """Computes the noise power spectrum
 
@@ -305,7 +311,9 @@ def compute_pk_noise(delta_lam, ivar, exposures_diff, run_noise, num_noise_expos
         for _ in range(num_noise_exposures):
             delta_exp = np.zeros(num_pixels)
             delta_exp[w] = np.random.normal(0., error[w])
-            _, pk_exp = compute_pk_raw(delta_lam, delta_exp, linear_binning=linear_binning)
+            _, pk_exp = compute_pk_raw(delta_lam,
+                                       delta_exp,
+                                       linear_binning=linear_binning)
             pk_noise += pk_exp
 
         pk_noise /= float(num_noise_exposures)
@@ -333,12 +341,11 @@ def compute_correction_reso(delta_pixel, mean_reso, k):
     num_bins_fft = len(k)
     correction = np.ones(num_bins_fft)
 
-    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))** 2
+    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
 
     correction *= np.exp(-(k * mean_reso)**2)
     correction *= pixelization_factor
     return correction
-
 
 
 def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
@@ -359,22 +366,22 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
         The resolution correction
     """
 
-    if len(reso_matrix.shape)==1:
+    if len(reso_matrix.shape) == 1:
         #assume you got a mean reso_matrix
-        reso_matrix = reso_matrix[np.newaxis,:]
+        reso_matrix = reso_matrix[np.newaxis, :]
 
-    W2arr=[]
+    W2arr = []
     #first compute the power in the resmat for each pixel, then average
     for resmat in reso_matrix:
-        r = np.append(resmat, np.zeros(num_pixel-resmat.size))
+        r = np.append(resmat, np.zeros(num_pixel - resmat.size))
         k_resmat, W2 = compute_pk_raw(delta_pixel, r, linear_binning=True)
         try:
-            assert k_resmat==k
+            assert k_resmat == k
         except AssertionError:
-            raise("for some reason the resolution matrix correction has "
-            "different k scaling than the pk")
+            raise ("for some reason the resolution matrix correction has "
+                   "different k scaling than the pk")
         W2arr.append(W2)
-    
+
     Wres2 = np.mean(W2arr, axis=0)
     Wres2 /= Wres2[0]
 
@@ -383,7 +390,7 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
     correction *= Wres2
     pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
     correction /= pixelization_factor
-    
+
     return correction
 
 
@@ -428,7 +435,6 @@ class Pk1D:
         __init__: Initialize class instance.
         from_fitsio: Initialize instance from a fits file.
     """
-
     def __init__(self,
                  ra,
                  dec,

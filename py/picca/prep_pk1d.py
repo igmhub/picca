@@ -52,7 +52,8 @@ def exp_diff(hdul, log_lambda):
 
             # exclude masks 25 (COMBINEREJ), 23 (BRIGHTSKY)?
             rebin_ivar_exp = np.bincount(log_lambda_bins,
-                                         weights=ivar_exp * (mask & 2**25 == 0))
+                                         weights=ivar_exp *
+                                         (mask & 2**25 == 0))
             rebin_flux_exp = np.bincount(log_lambda_bins,
                                          weights=(ivar_exp * flux_exp *
                                                   (mask & 2**25 == 0)))
@@ -61,8 +62,10 @@ def exp_diff(hdul, log_lambda):
                 flux_total_odd[:len(rebin_ivar_exp) - 1] += rebin_flux_exp[:-1]
                 ivar_total_odd[:len(rebin_ivar_exp) - 1] += rebin_ivar_exp[:-1]
             else:
-                flux_total_even[:len(rebin_ivar_exp) - 1] += rebin_flux_exp[:-1]
-                ivar_total_even[:len(rebin_ivar_exp) - 1] += rebin_ivar_exp[:-1]
+                flux_total_even[:len(rebin_ivar_exp) -
+                                1] += rebin_flux_exp[:-1]
+                ivar_total_even[:len(rebin_ivar_exp) -
+                                1] += rebin_ivar_exp[:-1]
 
     w = ivar_total_odd > 0
     flux_total_odd[w] /= ivar_total_odd[w]
@@ -112,11 +115,11 @@ def spectral_resolution(wdisp,
         # fiberids greater than 500 corresponds to the second spectrograph
         fiberid = fiberid % 500
         if fiberid < 100:
-            correction = (1. + (correction - 1) * .25 + (correction - 1) * .75 *
-                          (fiberid) / 100.)
+            correction = (1. + (correction - 1) * .25 +
+                          (correction - 1) * .75 * (fiberid) / 100.)
         elif fiberid > 400:
-            correction = (1. + (correction - 1) * .25 + (correction - 1) * .75 *
-                          (500 - fiberid) / 100.)
+            correction = (1. + (correction - 1) * .25 +
+                          (correction - 1) * .75 * (500 - fiberid) / 100.)
 
         # apply the correction
         reso *= correction
@@ -143,13 +146,16 @@ def spectral_resolution_desi(reso_matrix, log_lambda):
 
     #
     rms_in_pixel = (
-        np.sqrt(1.0/2.0/np.log(reso[len(reso)//2][:]/reso[len(reso)//2-1][:])) +
-        np.sqrt(4.0/2.0/np.log(reso[len(reso)//2][:]/reso[len(reso)//2-2][:])) +
-        np.sqrt(1.0/2.0/np.log(reso[len(reso)//2][:]/reso[len(reso)//2+1][:])) +
-        np.sqrt(4.0/2.0/np.log(reso[len(reso)//2][:]/reso[len(reso)//2+2][:]))
-        )/4.0
+        np.sqrt(1.0 / 2.0 / np.log(
+            reso[len(reso) // 2][:] / reso[len(reso) // 2 - 1][:])) +
+        np.sqrt(4.0 / 2.0 /
+                np.log(reso[len(reso) // 2][:] / reso[len(reso) // 2 - 2][:]))
+        + np.sqrt(1.0 / 2.0 / np.log(
+            reso[len(reso) // 2][:] / reso[len(reso) // 2 + 1][:])) +
+        np.sqrt(4.0 / 2.0 / np.log(
+            reso[len(reso) // 2][:] / reso[len(reso) // 2 + 2][:]))) / 4.0
 
-    avg_reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT *
-        delta_log_lambda * np.log(10.0))
+    avg_reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
+                            np.log(10.0))
 
-    return  rms_in_pixel, avg_reso_in_km_per_s
+    return rms_in_pixel, avg_reso_in_km_per_s
