@@ -168,7 +168,8 @@ class Pk1dForest(Forest):
         #if self.resolution_matrix is None:
         #    raise AstronomicalObjectError("Error constructing Pk1dForest. "
         #                                    "Missing variable 'resolution_matrix'")
-        del kwargs["resolution_matrix"]
+        if "resolution_matrix" in kwargs:
+            del kwargs["resolution_matrix"]
         
         # call parent constructor
         super().__init__(**kwargs)
