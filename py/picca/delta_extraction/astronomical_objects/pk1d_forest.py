@@ -275,6 +275,14 @@ class Pk1dForest(Forest):
         ]
         units += ["Flux units", "Flux units"]
 
+        if self.resolution_matrix is not None:
+            cols += [self.resolution_matrix]
+            names += ["RESOMAT"]
+            comments += [
+                "Masked resolution matrix"
+            ]
+        units += [""]
+
         return cols, names, units, comments
 
     def get_header(self):
