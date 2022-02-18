@@ -19,5 +19,5 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        pylint `ls -R delta_extraction/|grep .py$|xargs`
+        pylint `ls -R |grep .py$|xargs`
       working-directory: py/picca/delta_extraction
