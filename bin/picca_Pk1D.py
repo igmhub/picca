@@ -228,7 +228,7 @@ def main(cmdargs):
                     "\n\nUsing linear binning, results will have units of AA")
                 delta_lambda = delta_lam
                 if (args.disable_reso_matrix or 'reso_matrix' not in dir(delta)
-                        or delta.reso_matrix is None):
+                        or delta.resolution_matrix is None):
                     userprint(
                         "Resolution matrix not found or disabled, using Gaussian resolution correction\n"
                     )
@@ -305,7 +305,7 @@ def main(cmdargs):
                      delta.exposures_diff,
                      delta.ivar,
                      first_pixel_index,
-                     reso_matrix=(delta.reso_matrix
+                     reso_matrix=(delta.resolution_matrix
                                   if reso_correction == 'matrix' else None))
             else:
                 (mean_z_array, log_lambda_array, delta_array,
@@ -317,7 +317,7 @@ def main(cmdargs):
                      delta.exposures_diff,
                      delta.ivar,
                      first_pixel_index,
-                     reso_matrix=(delta.reso_matrix
+                     reso_matrix=(delta.resolution_matrix
                                   if reso_correction == 'matrix' else None))
 
             pk_list = []
@@ -385,14 +385,18 @@ def main(cmdargs):
                     #in this case all is in AA space
                     if reso_correction == 'matrix':
                         correction_reso = compute_correction_reso_matrix(
-                            reso_matrix=delta.reso_matrix,
+                            reso_matrix=delta.resolution_matrix,
                             k=k,
                             delta_pixel=delta_lambda,
                             num_pixel=len(lambda_new))
                     elif reso_correction == 'Gaussian':
+                        #this is roughly converting the mean resolution estimate back to pixels
+                        #and then multiplying with pixel size
+                        mean_reso_AA = (delta_lambda * delta.mean_reso / 
+                                        np.log(10.) / constants.speed_light * 1000.)
                         correction_reso = compute_correction_reso(
                             delta_pixel=delta_lambda,
-                            mean_reso=delta.mean_reso_AA,
+                            mean_reso=mean_reso_AA ,
                             k=k)
                 else:
                     #in this case all is in velocity space

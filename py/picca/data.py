@@ -959,7 +959,8 @@ class Delta(QSO):
 
     def __init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                  weights, cont, delta, order, ivar, exposures_diff, mean_snr,
-                 mean_reso, mean_z, delta_log_lambda):
+                 mean_reso, mean_z, delta_log_lambda, resolution_matrix=None,
+                 mean_resolution_matrix=None):
         """Initializes class instances.
 
         Args:
@@ -1012,6 +1013,8 @@ class Delta(QSO):
         self.mean_reso = mean_reso
         self.mean_z = mean_z
         self.delta_log_lambda = delta_log_lambda
+        self.resolution_matrix = resolution_matrix
+        self.mean_resolution_matrix = mean_resolution_matrix
 
         # variables computed in function io.read_deltas
         self.z = None
@@ -1069,6 +1072,12 @@ class Delta(QSO):
             mean_reso = header['MEANRESO']
             mean_z = header['MEANZ']
             delta_log_lambda = header['DLL']
+            try:
+                resolution_matrix = hdu['RESOMAT'][:].T.astype(float)
+                mean_resolution_matrix = np.mean(resolution_matrix, axis=1)
+            except (KeyError, ValueError):
+                resolution_matrix = None
+                mean_resolution_matrix = None
             weights = None
             cont = None
         else:
@@ -1078,6 +1087,7 @@ class Delta(QSO):
             mean_reso = None
             delta_log_lambda = None
             mean_z = None
+            resolution_matrix = None
             weights = hdu['WEIGHT'][:].astype(float)
             cont = hdu['CONT'][:].astype(float)
 
@@ -1104,7 +1114,8 @@ class Delta(QSO):
 
         return cls(los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
-                   mean_reso, mean_z, delta_log_lambda)
+                   mean_reso, mean_z, delta_log_lambda, resolution_matrix,
+                   mean_resolution_matrix)
 
     @classmethod
     def from_ascii(cls, line):
