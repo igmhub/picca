@@ -155,9 +155,16 @@ def compute_xi(healpixs):
 
             for delta2 in delta1.neighbours:
                 ang = delta1.get_angle_between(delta2)
-                same_half_plate = ((delta1.plate == delta2.plate) and (
-                    (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
-                    (delta1.fiberid > 500 and delta2.fiberid > 500)))
+                if remove_same_half_plate_close_pairs:
+                    if isinstance(delta1.fiberid, str) or isinstance(delta2.fiberid, str):
+                        raise RuntimeException("Trying to figure out if two spectra"
+                                               "come from the same half plate but "
+                                               "combined reobservations were given")
+                    same_half_plate = ((delta1.plate == delta2.plate) and (
+                        (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
+                        (delta1.fiberid > 500 and delta2.fiberid > 500)))
+                else:
+                    same_half_plate = False
                 if ang_correlation:
                     compute_xi_forest_pairs_fast(
                         delta1.z, 10.**delta1.log_lambda,
@@ -423,9 +430,16 @@ def compute_dmat(healpixs):
             num_pairs += len(delta1.neighbours)
             num_pairs_used += w.sum()
             for delta2 in np.array(delta1.neighbours)[w]:
-                same_half_plate = ((delta1.plate == delta2.plate) and (
-                    (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
-                    (delta1.fiberid > 500 and delta2.fiberid > 500)))
+                if remove_same_half_plate_close_pairs:
+                    if isinstance(delta1.fiberid, str) or isinstance(delta2.fiberid, str):
+                        raise RuntimeException("Trying to figure out if two spectra"
+                                               "come from the same half plate but "
+                                               "combined reobservations were given")
+                    same_half_plate = ((delta1.plate == delta2.plate) and (
+                        (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
+                        (delta1.fiberid > 500 and delta2.fiberid > 500)))
+                else:
+                    same_half_plate = False
                 order2 = delta2.order
                 ang = delta1.get_angle_between(delta2)
                 r_comov2 = delta2.r_comov
@@ -967,9 +981,16 @@ def compute_metal_dmat(healpixs, abs_igm1="LYA", abs_igm2="SiIII(1207)"):
                 dist_m1_abs1 = dist_m1_abs1[w]
                 z1_abs1 = z1_abs1[w]
 
-                same_half_plate = ((delta1.plate == delta2.plate) and (
-                    (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
-                    (delta1.fiberid > 500 and delta2.fiberid > 500)))
+                if remove_same_half_plate_close_pairs:
+                    if isinstance(delta1.fiberid, str) or isinstance(delta2.fiberid, str):
+                        raise RuntimeException("Trying to figure out if two spectra"
+                                               "come from the same half plate but "
+                                               "combined reobservations were given")
+                    same_half_plate = ((delta1.plate == delta2.plate) and (
+                        (delta1.fiberid <= 500 and delta2.fiberid <= 500) or
+                        (delta1.fiberid > 500 and delta2.fiberid > 500)))
+                else:
+                    same_half_plate = False
                 ang = delta1.get_angle_between(delta2)
                 r_comov2 = delta2.r_comov
                 dist_m2 = delta2.dist_m

@@ -1,4 +1,5 @@
 # picca
+[![Coverage Status](https://coveralls.io/repos/github/igmhub/picca/badge.svg?branch=master)](https://coveralls.io/github/igmhub/picca?branch=master)
 
 Package for Igm Cosmological-Correlations Analyses.
 

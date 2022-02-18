@@ -443,13 +443,6 @@ class Forest(QSO):
         """
         QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
 
-        # apply dust extinction correction
-        if Forest.extinction_bv_map is not None:
-            corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
-            flux /= corr
-            ivar *= corr**2
-            if not exposures_diff is None:
-                exposures_diff /= corr
 
         ## cut to specified range
         bins = (np.floor((log_lambda - Forest.log_lambda_min) /
@@ -511,6 +504,14 @@ class Forest(QSO):
             exposures_diff = rebin_exposures_diff[w] / rebin_ivar[w]
         if reso is not None:
             reso = rebin_reso[w] / rebin_ivar[w]
+
+        # apply dust extinction correction
+        if Forest.extinction_bv_map is not None:
+            corr = unred(10**log_lambda, Forest.extinction_bv_map[thingid])
+            flux /= corr
+            ivar *= corr**2
+            if not exposures_diff is None:
+                exposures_diff /= corr
 
         # Flux calibration correction
         try:
@@ -1052,7 +1053,14 @@ class Delta(QSO):
             delta_name = "DELTA"
 
         delta = hdu[delta_name][:].astype(float)
-        log_lambda = hdu['LOGLAM'][:].astype(float)
+
+        if 'LOGLAM' in hdu.get_colnames():
+            log_lambda = hdu['LOGLAM'][:].astype(float)
+        elif 'LAMBDA' in hdu.get_colnames():
+            userprint("no LOGLAM found, trying to read linear_binned_lambda")
+            log_lambda = np.log10(hdu['LAMBDA'][:].astype(float))
+        else:
+            raise KeyError("Did not find LOGLAM or LAMBDA in delta file")
 
         if pk1d_type:
             ivar = hdu['IVAR'][:].astype(float)

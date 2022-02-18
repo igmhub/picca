@@ -8,3 +8,4 @@ numba>=0.53.1
 h5py>=3.2.1
 future>=0.18.2
 setuptools>=56.2.0
+gitpython>=3.1.18
