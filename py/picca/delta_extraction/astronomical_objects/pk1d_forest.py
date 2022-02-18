@@ -331,6 +331,9 @@ class Pk1dForest(Forest):
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
         self.reso = self.reso[w1]
+        if "resolution_matrix" in dir(self):
+            self.resolution_matrix = self.resolution_matrix[:, w1]
+
 
         # rebin exposures_diff and reso
         rebin_exposures_diff = np.zeros(bins.max() + 1)
@@ -343,6 +346,11 @@ class Pk1dForest(Forest):
                                  )] += rebin_exposures_diff_aux
         rebin_reso[:len(rebin_reso_aux)] += rebin_reso_aux
 
+        if "resolution_matrix" in dir(self):
+            rebin_reso_matrix_aux = np.zeros((self.resolution_matrix.shape[0], bins.max() + 1))
+            for index, reso_matrix_col in enumerate(self.resolution_matrix):
+                rebin_reso_matrix_aux[index, :] = np.bincount(bins, weights=orig_ivar[w1] * reso_matrix_col)
+            self.resolution_matrix = rebin_reso_matrix_aux[:,w2] / rebin_ivar[np.newaxis, w2]
         # apply mask due to rebinned inverse vairane
         self.exposures_diff = rebin_exposures_diff[w2] / rebin_ivar[w2]
         self.reso = rebin_reso[w2] / rebin_ivar[w2]

@@ -145,6 +145,9 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
 
     reso: array of floats or None (from Pk1dForest)
     Resolution of the forest
+    
+    resolution_matrix: array of floats or None (from Pk1dForest)
+    Resolution matrix of the forests
     """
     def __init__(self, **kwargs):
         """Initialize instance

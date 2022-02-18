@@ -226,6 +226,7 @@ class DesiHealpix(DesiData):
 
                     args["exposures_diff"] = exposures_diff
                     args["reso"] = reso_in_km_per_s
+                    args["resolution_matrix"] = reso_sum
                     forest = DesiPk1dForest(**args)
                 else:
                     raise DataError("Unkown analysis type. Expected 'BAO 3D'"
