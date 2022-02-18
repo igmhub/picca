@@ -56,7 +56,8 @@ class ExpectedFluxTest(AbstractTest):
         config = ConfigParser()
         config.read_dict(
             {"expected flux": {
-                "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix"
+                "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results"
             }})
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
@@ -439,7 +440,14 @@ class ExpectedFluxTest(AbstractTest):
 
         Load an ExpectedFlux instance.
         """
-        expected_flux = ExpectedFlux()
+        # initialize ExpectedFlux instance
+        config = ConfigParser()
+        config.read_dict({
+            "expected flux": {
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+        expected_flux = ExpectedFlux(config["expected flux"])
 
         # compute_expected_flux should not be defined
         with self.assertRaises(ExpectedFluxError):
