@@ -341,13 +341,15 @@ def compute_correction_reso(delta_pixel, mean_reso, k):
 
 
 
-def compute_correction_reso_matrix(reso_matrix, k, npix, delta_pixel):
+def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
     """Computes the resolution correction based on the resolution matrix using linear binning
 
     Args:
         delta_pixel: float
             Variation of the logarithm of the wavelength between two pixels
             (in km/s or Ang depending on the units of k submitted)
+        num_pixel: int
+            Length  of the spectrum in pixels
         mean_reso: float
             Mean resolution of the forest
         k: array of floats
@@ -359,12 +361,12 @@ def compute_correction_reso_matrix(reso_matrix, k, npix, delta_pixel):
 
     if len(reso_matrix.shape)==1:
         #assume you got a mean reso_matrix
-        reso_matrix=reso_matrix[sp.newaxis,:]
+        reso_matrix = reso_matrix[np.newaxis,:]
 
     W2arr=[]
     #first compute the power in the resmat for each pixel, then average
     for resmat in reso_matrix:
-        r = np.append(resmat, np.zeros(npix-resmat.size))
+        r = np.append(resmat, np.zeros(num_pixel-resmat.size))
         k_resmat, W2 = compute_pk_raw(delta_pixel, r, linear_binning=True)
         try:
             assert k_resmat==k
@@ -379,7 +381,8 @@ def compute_correction_reso_matrix(reso_matrix, k, npix, delta_pixel):
     #the following assumes that the resolution matrix is storing the actual resolution convolved with the pixelization kernel along each matrix axis
     correction = np.ones(len(k))
     correction *= Wres2
-    correction /= np.sinc(k * delta_pixel / (2 * np.pi))**2
+    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
+    correction /= pixelization_factor
     
     return correction
 
