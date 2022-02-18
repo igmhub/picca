@@ -312,7 +312,7 @@ def main(cmdargs):
             return pk_list
 
 
-        if args.num_processes>1:
+        if args.num_processors>1:
             pk_list_of_lists=pool.map(process_file(delta))
 
         else:
