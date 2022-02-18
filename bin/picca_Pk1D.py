@@ -10,12 +10,12 @@ import fitsio
 
 from picca import constants
 from picca.data import Delta
-from picca.pk1d import (compute_correction_reso, compute_correction_reso_matrix, compute_pk_noise,
+from picca.pk1d import (compute_correction_reso,
+                        compute_correction_reso_matrix, compute_pk_noise,
                         compute_pk_raw, fill_masked_pixels, rebin_diff_noise,
                         split_forest)
 from picca.utils import userprint
 from multiprocessing import Pool
-
 
 
 def check_linear_binning(delta):
@@ -34,22 +34,27 @@ def check_linear_binning(delta):
 
     diff_lambda = np.diff(10**delta.log_lambda)
     diff_log_lambda = np.diff(delta.log_lambda)
-    q5_lambda, q25_lambda = np.percentile(diff_lambda,[5,25])
-    q5_log_lambda, q25_log_lambda = np.percentile(diff_log_lambda,[5,25])
-    if (q25_lambda-q5_lambda)<1e-6:
+    q5_lambda, q25_lambda = np.percentile(diff_lambda, [5, 25])
+    q5_log_lambda, q25_log_lambda = np.percentile(diff_log_lambda, [5, 25])
+    if (q25_lambda - q5_lambda) < 1e-6:
         #we can assume linear binning for this case
-        linear_binning=True
+        linear_binning = True
         delta_lam = np.median(diff_lambda)
-    elif (q25_log_lambda-q5_log_lambda)<1e-6 and q5_log_lambda<0.01:
+    elif (q25_log_lambda - q5_log_lambda) < 1e-6 and q5_log_lambda < 0.01:
         #we can assume log_linear binning for this case
-        linear_binning=False
+        linear_binning = False
         delta_lam = np.median(diff_log_lambda)
-    elif (q5_log_lambda>=0.01):
-        raise ValueError("Could not figure out if linear or log wavelength binning was used, probably submitted lambda as log_lambda")
+    elif (q5_log_lambda >= 0.01):
+        raise ValueError(
+            "Could not figure out if linear or log wavelength binning was used, probably submitted lambda as log_lambda"
+        )
     else:
-        raise ValueError("Could not figure out if linear or log wavelength binning was used")
+        raise ValueError(
+            "Could not figure out if linear or log wavelength binning was used"
+        )
 
     return linear_binning, delta_lam
+
 
 def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
@@ -64,12 +69,11 @@ def main(cmdargs):
                         required=True,
                         help='Output directory')
 
-    parser.add_argument(
-        '--out-format',
-        type=str,
-        default='fits',
-        required=False,
-        help='Output format: ascii or fits')
+    parser.add_argument('--out-format',
+                        type=str,
+                        default='fits',
+                        required=False,
+                        help='Output format: ascii or fits')
 
     parser.add_argument('--in-dir',
                         type=str,
@@ -158,32 +162,31 @@ def main(cmdargs):
 
     parser.add_argument(
         '--num-noise-exp',
-        default = 10,
+        default=10,
         type=int,
         required=False,
         help='number of pipeline noise realizations to generate per spectrum')
-    
-    parser.add_argument(
-        '--disable-reso-matrix',
-        default = False,
-        action='store_true',
-        required=False,
-        help=('do not use the resolution matrix even '
-              'if it exists and we are on linear binning'))
+
+    parser.add_argument('--disable-reso-matrix',
+                        default=False,
+                        action='store_true',
+                        required=False,
+                        help=('do not use the resolution matrix even '
+                              'if it exists and we are on linear binning'))
 
     parser.add_argument(
         '--force-output-in-velocity',
-        default = False,
+        default=False,
         action='store_true',
         required=False,
-        help=('store outputs in units of velocity even for linear binning computations'))
-
+        help=
+        ('store outputs in units of velocity even for linear binning computations'
+         ))
 
     #use resolution matrix automatically when doing linear binning and resolution matrix is available, else use Gaussian (which was the previous default)
 
-
     args = parser.parse_args(cmdargs)
-    
+
     # Read deltas
     if args.in_format == 'fits':
         files = sorted(glob.glob(args.in_dir + "/*.fits.gz"))
@@ -196,14 +199,14 @@ def main(cmdargs):
     np.random.seed(4)
     userprint(f"Computing Pk1d for {args.in_dir}")
 
-
-    if args.num_processors>1:
-        pool=Pool(args.num_processors)
+    if args.num_processors > 1:
+        pool = Pool(args.num_processors)
 
     # loop over input files
     for file_index, file in enumerate(files):
         if file_index % 5 == 0:
-            userprint("\rread {} of {} {}".format(file_index, len(files), num_data),
+            userprint("\rread {} of {} {}".format(file_index, len(files),
+                                                  num_data),
                       end="")
 
         # read fits or ascii file
@@ -218,22 +221,27 @@ def main(cmdargs):
 
         #add the check for linear binning on first spectrum only (assuming homogeneity within the file)
         delta = deltas[0]
-        if file_index==0:
+        if file_index == 0:
             linear_binning, delta_lam = check_linear_binning(delta)
             if linear_binning:
-                userprint("\n\nUsing linear binning, results will have units of AA")
+                userprint(
+                    "\n\nUsing linear binning, results will have units of AA")
                 delta_lambda = delta_lam
-                if (args.disable_reso_matrix or 'reso_matrix' not in dir(delta) 
-                    or delta.reso_matrix is None):
-                    userprint("Resolution matrix not found or disabled, using Gaussian resolution correction\n")
-                    reso_correction="Gaussian"
+                if (args.disable_reso_matrix or 'reso_matrix' not in dir(delta)
+                        or delta.reso_matrix is None):
+                    userprint(
+                        "Resolution matrix not found or disabled, using Gaussian resolution correction\n"
+                    )
+                    reso_correction = "Gaussian"
                 else:
-                    userprint("Using Resolution matrix for resolution correction\n")
-                    reso_correction="matrix"
+                    userprint(
+                        "Using Resolution matrix for resolution correction\n")
+                    reso_correction = "matrix"
             else:
-                userprint("\n\nUsing log binning, results will have units of km/s")
+                userprint(
+                    "\n\nUsing log binning, results will have units of km/s")
                 delta_log_lambda = delta_lam
-                reso_correction="Gaussian"
+                reso_correction = "Gaussian"
                 userprint("Using Gaussian resolution correction\n")
 
         else:
@@ -242,8 +250,7 @@ def main(cmdargs):
                 assert linear_binning2 == linear_binning
                 assert delta_lam2 == delta_lam
             except AssertionError:
-                raise("inhomogeneous wavelength binning between input files")
-
+                raise ("inhomogeneous wavelength binning between input files")
 
         num_data += len(deltas)
         userprint("\n ndata =  ", num_data)
@@ -267,16 +274,17 @@ def main(cmdargs):
                 num_masked_pixels: number of masked pixels within the spectral part
             """
             # Selection over the SNR and the resolution
-            if (delta.mean_snr <= args.SNR_min or
-                    delta.mean_reso >= args.reso_max):
+            if (delta.mean_snr <= args.SNR_min
+                    or delta.mean_reso >= args.reso_max):
                 return None
 
             # first pixel in forest
             selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
-            #this works as selected_pixels returns a bool and argmax points 
+            #this works as selected_pixels returns a bool and argmax points
             #towards the first occurance for equal values
             first_pixel_index = (np.argmax(selected_pixels)
-                                 if np.any(selected_pixels) else len(selected_pixels))
+                                 if np.any(selected_pixels) else
+                                 len(selected_pixels))
 
             # minimum number of pixel in forest
             min_num_pixels = args.nb_pixel_min
@@ -289,25 +297,35 @@ def main(cmdargs):
             num_parts = min(args.nb_part, max_num_parts)
             if linear_binning:
                 (mean_z_array, lambda_array, delta_array, exposures_diff_array,
-                ivar_array) = split_forest(num_parts, delta_lambda,
-                                           10**delta.log_lambda, delta.delta,
-                                           delta.exposures_diff, delta.ivar,
-                                           first_pixel_index,
-                                           reso_matrix=(delta.reso_matrix if reso_correction=='matrix' else None))
+                 ivar_array) = split_forest(
+                     num_parts,
+                     delta_lambda,
+                     10**delta.log_lambda,
+                     delta.delta,
+                     delta.exposures_diff,
+                     delta.ivar,
+                     first_pixel_index,
+                     reso_matrix=(delta.reso_matrix
+                                  if reso_correction == 'matrix' else None))
             else:
-                (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
-                ivar_array) = split_forest(num_parts, delta_log_lambda,
-                                           delta.log_lambda, delta.delta,
-                                           delta.exposures_diff, delta.ivar,
-                                           first_pixel_index,
-                                           reso_matrix=(delta.reso_matrix if reso_correction=='matrix' else None))
+                (mean_z_array, log_lambda_array, delta_array,
+                 exposures_diff_array, ivar_array) = split_forest(
+                     num_parts,
+                     delta_log_lambda,
+                     delta.log_lambda,
+                     delta.delta,
+                     delta.exposures_diff,
+                     delta.ivar,
+                     first_pixel_index,
+                     reso_matrix=(delta.reso_matrix
+                                  if reso_correction == 'matrix' else None))
 
-            pk_list=[]
+            pk_list = []
             for part_index in range(num_parts):
 
                 # rebin exposures_diff spectrum
-                if (args.noise_estimate == 'rebin_diff' or
-                        args.noise_estimate == 'mean_rebin_diff'):
+                if (args.noise_estimate == 'rebin_diff'
+                        or args.noise_estimate == 'mean_rebin_diff'):
                     if linear_binning:
                         exposures_diff_array[part_index] = rebin_diff_noise(
                             delta_lambda, lambda_array[part_index],
@@ -320,24 +338,30 @@ def main(cmdargs):
                 # Fill masked pixels with 0.
                 if linear_binning:
                     (lambda_new, delta_new, exposures_diff_new, ivar_new,
-                    num_masked_pixels) = fill_masked_pixels(
-                        delta_lambda, 10**log_lambda_array[part_index],
-                        delta_array[part_index], exposures_diff_array[part_index],
-                        ivar_array[part_index], args.no_apply_filling)
+                     num_masked_pixels) = fill_masked_pixels(
+                         delta_lambda, lambda_array[part_index],
+                         delta_array[part_index],
+                         exposures_diff_array[part_index],
+                         ivar_array[part_index], args.no_apply_filling)
                 else:
                     (log_lambda_new, delta_new, exposures_diff_new, ivar_new,
-                    num_masked_pixels) = fill_masked_pixels(
-                        delta_log_lambda, log_lambda_array[part_index],
-                        delta_array[part_index], exposures_diff_array[part_index],
-                        ivar_array[part_index], args.no_apply_filling)
+                     num_masked_pixels) = fill_masked_pixels(
+                         delta_log_lambda, log_lambda_array[part_index],
+                         delta_array[part_index],
+                         exposures_diff_array[part_index],
+                         ivar_array[part_index], args.no_apply_filling)
                 if num_masked_pixels > args.nb_pixel_masked_max:
                     continue
-                
+
                 # Compute pk_raw
                 if linear_binning:
-                    k, pk_raw = compute_pk_raw(delta_lambda, delta_new, linear_binning=True)
+                    k, pk_raw = compute_pk_raw(delta_lambda,
+                                               delta_new,
+                                               linear_binning=True)
                 else:
-                    k, pk_raw = compute_pk_raw(delta_log_lambda, delta_new, linear_binning=False)
+                    k, pk_raw = compute_pk_raw(delta_log_lambda,
+                                               delta_new,
+                                               linear_binning=False)
 
                 # Compute pk_noise
                 run_noise = False
@@ -345,16 +369,16 @@ def main(cmdargs):
                     run_noise = True
                 if linear_binning:
                     pk_noise, pk_diff = compute_pk_noise(delta_lambda,
-                                                     ivar_new,
-                                                     exposures_diff_new,
-                                                     run_noise,
-                                                     linear_binning=True)
+                                                         ivar_new,
+                                                         exposures_diff_new,
+                                                         run_noise,
+                                                         linear_binning=True)
                 else:
                     pk_noise, pk_diff = compute_pk_noise(delta_log_lambda,
-                                                     ivar_new,
-                                                     exposures_diff_new,
-                                                     run_noise,
-                                                     linear_binning=False)
+                                                         ivar_new,
+                                                         exposures_diff_new,
+                                                         run_noise,
+                                                         linear_binning=False)
 
                 # Compute resolution correction
                 if linear_binning:
@@ -379,15 +403,14 @@ def main(cmdargs):
                         mean_reso=delta.mean_reso,
                         k=k)
 
-                
                 # Compute 1D Pk
                 if args.noise_estimate == 'pipeline':
                     pk = (pk_raw - pk_noise) / correction_reso
-                elif (args.noise_estimate == 'diff' or
-                      args.noise_estimate == 'rebin_diff'):
+                elif (args.noise_estimate == 'diff'
+                      or args.noise_estimate == 'rebin_diff'):
                     pk = (pk_raw - pk_diff) / correction_reso
-                elif (args.noise_estimate == 'mean_diff' or
-                      args.noise_estimate == 'mean_rebin_diff'):
+                elif (args.noise_estimate == 'mean_diff'
+                      or args.noise_estimate == 'mean_rebin_diff'):
                     selection = (k > 0) & (k < 0.02)
                     if args.noise_estimate == 'mean_rebin_diff':
                         selection = (k > 0.003) & (k < 0.02)
@@ -395,19 +418,20 @@ def main(cmdargs):
                     pk = (pk_raw - mean_pk_diff) / correction_reso
 
                 if args.force_output_in_velocity and linear_binning:
-                     pk*=constants.speed_light/1000/np.mean(lambda_new)
-                     k/=constants.speed_light/1000/np.mean(lambda_new)
-                pk_list.append([k, pk_raw, pk_noise, pk_diff, correction_reso, pk, mean_z_array[part_index], num_masked_pixels])
+                    pk *= constants.speed_light / 1000 / np.mean(lambda_new)
+                    k /= constants.speed_light / 1000 / np.mean(lambda_new)
+                pk_list.append([
+                    k, pk_raw, pk_noise, pk_diff, correction_reso, pk,
+                    mean_z_array[part_index], num_masked_pixels
+                ])
             return pk_list
 
-
-        if args.num_processors>1:
+        if args.num_processors > 1:
             pk_list_of_lists = pool.map(process_file(delta))
 
         else:
             pk_list_of_lists = [process_file(delta) for delta in deltas]
 
-        
         #all that follows is writing files only
 
         for delta, pk_list in zip(deltas, pk_list_of_lists):
@@ -436,24 +460,27 @@ def main(cmdargs):
                     }, {
                         'name': 'MEANRESO',
                         'value': delta.mean_reso,
-                        'comment': f'Mean resolution {"[km/s]"}'
+                        'comment': 'Mean resolution [km/s]'
                     }, {
                         'name': 'MEANSNR',
                         'value': delta.mean_snr,
                         'comment': 'Mean signal to noise ratio'
                     }, {
-                        'name': 'NBMASKPIX',
-                        'value': num_masked_pixels,
-                        'comment': 'Number of masked pixels in the section'
+                        'name':
+                        'NBMASKPIX',
+                        'value':
+                        num_masked_pixels,
+                        'comment':
+                        'Number of masked pixels in the section'
                     }, {
                         'name': 'PLATE',
                         'value': delta.plate,
                         'comment': "Spectrum's plate id"
                     }, {
                         'name':
-                            'MJD',
+                        'MJD',
                         'value':
-                            delta.mjd,
+                        delta.mjd,
                         'comment': ('Modified Julian Date,date the spectrum '
                                     'was taken')
                     }, {
@@ -474,9 +501,9 @@ def main(cmdargs):
                         'Corrected power spectrum (resolution and noise)'
                     ]
                     if linear_binning and not args.force_output_in_velocity:
-                        baseunit="AA"
+                        baseunit = "AA"
                     else:
-                        baseunit="km/s"
+                        baseunit = "km/s"
                     units = [
                         f'({baseunit})^-1', f'{baseunit}', f'{baseunit}',
                         f'{baseunit}', f'{baseunit}', f'{baseunit}'
@@ -489,26 +516,22 @@ def main(cmdargs):
                                       comments=comments,
                                       units=units)
                     except AttributeError:
-                        results = fitsio.FITS(
-                            (args.out_dir + '/Pk1D-' + str(file_index) + '.fits.gz'),
-                            'rw',
-                            clobber=True)
+                        results = fitsio.FITS((args.out_dir + '/Pk1D-' +
+                                               str(file_index) + '.fits.gz'),
+                                              'rw',
+                                              clobber=True)
                         results.write(cols,
                                       names=names,
                                       header=header,
                                       comment=comments,
                                       units=units)
 
-
-
         if (args.out_format == 'fits' and results is not None):
             results.close()
-
-        
 
     userprint("all done ")
 
 
 if __name__ == '__main__':
-    cmdargs=sys.argv[1:]
+    cmdargs = sys.argv[1:]
     main(cmdargs)
