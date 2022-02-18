@@ -313,10 +313,10 @@ def main(cmdargs):
 
 
         if args.num_processors>1:
-            pk_list_of_lists=pool.map(process_file(delta))
+            pk_list_of_lists = pool.map(process_file(delta))
 
         else:
-            pk_list_of_lists=[process_file(delta)]
+            pk_list_of_lists = [process_file(delta) for delta in deltas]
 
         for delta, pk_list in zip(deltas, pk_list_of_lists):
             if pk_list is None:
