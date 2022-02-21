@@ -19,30 +19,10 @@ class SdssForest(Forest):
 
     Class Attributes
     ----------------
-    delta_lambda: float or None (from Forest)
-    Variation of the wavelength (in Angs) between two pixels. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    delta_log_lambda: float or None (from Forest)
+    delta_log_lambda: float (from Forest)
     Variation of the logarithm of the wavelength (in Angs) between two pixels.
     This should not be None if wave_solution is "log". Ignored if wave_solution
     is "lin".
-
-    lambda_max: float or None (from Forest)
-    Maximum wavelength (in Angs) to be considered in a forest. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    lambda_max_rest_frame: float or None (from Forest)
-    As wavelength_max but for rest-frame wavelength. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    lambda_min: float or None (from Forest)
-    Minimum wavelength (in Angs) to be considered in a forest. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    lambda_min_rest_frame: float or None (from Forest)
-    As wavelength_min but for rest-frame wavelength. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
 
     log_lambda_max: float or None (from Forest)
     Logarithm of the maximum wavelength (in Angs) to be considered in a forest.
@@ -102,9 +82,6 @@ class SdssForest(Forest):
 
     ivar: array of float (from Forest)
     Inverse variance
-
-    lambda_: array of float or None (from Forest)
-    Wavelength (in Angstroms)
 
     log_lambda: array of float or None (from Forest)
     Logarithm of the wavelength (in Angstroms)

@@ -95,20 +95,6 @@ class CalibrationCorrection(Correction):
         CorrectionError if forest instance does not have the attribute
         'log_lambda'
         """
-        if self.wave_solution == "log":
-            if not hasattr(forest, "log_lambda"):
-                raise CorrectionError("Forest instance is missing "
-                                      "attribute 'log_lambda' required by "
-                                      "CalibrationCorrection")
-            correction = self.correct_flux(forest.log_lambda)
-        elif self.wave_solution == "lin":
-            if not hasattr(forest, "lambda_"):
-                raise CorrectionError("Forest instance is missing "
-                                      "attribute 'lambda_' required by "
-                                      "CalibrationCorrection")
-            correction = self.correct_flux(forest.lambda_)
-        else:
-            raise CorrectionError("In CalibrationCorrection wave_solution must "
-                                  "be either 'log' or 'lin'")
+        correction = self.correct_flux(forest.log_lambda)
         forest.flux /= correction
         forest.ivar *= correction**2

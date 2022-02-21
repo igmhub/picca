@@ -75,28 +75,14 @@ class LinesMask(Mask):
         CorrectionError if Forest.wave_solution is not 'lin' or 'log'
         """
         # find masking array
-        if Forest.wave_solution == "log":
-            w = np.ones(forest.log_lambda.size, dtype=bool)
-            for mask_range in self.mask_obs_frame:
-                w &= ((forest.log_lambda < mask_range['log_wave_min']) |
-                      (forest.log_lambda > mask_range['log_wave_max']))
-            log_lambda_rest_frame = forest.log_lambda - np.log10(1.0 + forest.z)
-            for mask_range in self.mask_rest_frame:
-                w &= ((log_lambda_rest_frame < mask_range['log_wave_min']) |
-                      (log_lambda_rest_frame > mask_range['log_wave_max']))
-        elif Forest.wave_solution == "lin":
-            w = np.ones(forest.lambda_.size, dtype=bool)
-            for mask_range in self.mask_obs_frame:
-                w &= ((forest.lambda_ < mask_range['wave_min']) |
-                      (forest.lambda_ > mask_range['wave_max']))
-            lambda_rest_frame = forest.lambda_/(1.0 + forest.z)
-            for mask_range in self.mask_rest_frame:
-                w &= ((lambda_rest_frame < mask_range['wave_min']) |
-                      (lambda_rest_frame > mask_range['wave_max']))
-        else:
-            raise MaskError("Unable to apply SkyMask. Forest.wave_solution is "
-                            "required to be either 'log' or 'lin'. Found "
-                            f"{Forest.wave_solution}")
+        w = np.ones(forest.log_lambda.size, dtype=bool)
+        for mask_range in self.mask_obs_frame:
+            w &= ((forest.log_lambda < mask_range['log_wave_min']) |
+                  (forest.log_lambda > mask_range['log_wave_max']))
+        log_lambda_rest_frame = forest.log_lambda - np.log10(1.0 + forest.z)
+        for mask_range in self.mask_rest_frame:
+            w &= ((log_lambda_rest_frame < mask_range['log_wave_min']) |
+                  (log_lambda_rest_frame > mask_range['log_wave_max']))
 
         # do the actual masking
         for param in Forest.mask_fields:

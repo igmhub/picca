@@ -14,11 +14,6 @@ def reset_forest():
     """Reset the class variables of Forest and Pk1dForest"""
     Forest.wave_solution = None
     Forest.delta_log_lambda = None
-    Forest.delta_log_lambda = None
-    Forest.lambda_max = None
-    Forest.lambda_max_rest_frame = None
-    Forest.lambda_min = None
-    Forest.lambda_min_rest_frame = None
     Forest.log_lambda_max = None
     Forest.log_lambda_max_rest_frame = None
     Forest.log_lambda_min = None
@@ -42,17 +37,13 @@ def setup_forest(wave_solution):
     if wave_solution == "log":
         Forest.wave_solution = "log"
         Forest.delta_log_lambda = 1e-4
-        Forest.log_lambda_max = np.log10(5500.0)
-        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
-        Forest.log_lambda_min = np.log10(3600.0)
-        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
     elif wave_solution == "lin":
         Forest.wave_solution = "lin"
-        Forest.delta_lambda = 1.
-        Forest.lambda_max = 5500.0
-        Forest.lambda_max_rest_frame = 1200.0
-        Forest.lambda_min = 3600.0
-        Forest.lambda_min_rest_frame = 1040.0
+        Forest.delta_log_lambda = np.log10(1.)
+    Forest.log_lambda_max = np.log10(5500.0)
+    Forest.log_lambda_max_rest_frame = np.log10(1200.0)
+    Forest.log_lambda_min = np.log10(3600.0)
+    Forest.log_lambda_min_rest_frame = np.log10(1040.0)
 
 setup_forest("log")
 

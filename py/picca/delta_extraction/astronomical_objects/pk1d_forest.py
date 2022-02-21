@@ -21,30 +21,10 @@ class Pk1dForest(Forest):
 
     Class Attributes
     ----------------
-    delta_lambda: float or None (from Forest)
-    Variation of the wavelength (in Angs) between two pixels. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    delta_log_lambda: float or None (from Forest)
+    delta_log_lambda: float (from Forest)
     Variation of the logarithm of the wavelength (in Angs) between two pixels.
     This should not be None if wave_solution is "log". Ignored if wave_solution
     is "lin".
-
-    lambda_max: float or None (from Forest)
-    Maximum wavelength (in Angs) to be considered in a forest. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    lambda_max_rest_frame: float or None (from Forest)
-    As wavelength_max but for rest-frame wavelength. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    lambda_min: float or None (from Forest)
-    Minimum wavelength (in Angs) to be considered in a forest. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    lambda_min_rest_frame: float or None (from Forest)
-    As wavelength_min but for rest-frame wavelength. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
 
     log_lambda_max: float or None (from Forest)
     Logarithm of the maximum wavelength (in Angs) to be considered in a forest.
@@ -110,9 +90,6 @@ class Pk1dForest(Forest):
     ivar: array of float (from Forest)
     Inverse variance
 
-    lambda_: array of float (from Forest)
-    Wavelength (in Angstroms)
-
     log_lambda: array of float or None
     Logarithm of the wavelength (in Angstroms)
 
@@ -168,20 +145,10 @@ class Pk1dForest(Forest):
 
         # compute mean quality variables
         self.mean_reso = self.reso.mean()
-        if Forest.wave_solution == "log":
-            self.mean_z = (
-                (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-                 np.power(10., self.log_lambda[0])) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        elif Forest.wave_solution == "lin":
-            self.mean_z = (
-                (self.lambda_[len(self.lambda_) - 1] + self.lambda_[0]) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        else:
-            raise AstronomicalObjectError("Error in constructing Pk1dForest. "
-                                          "Class variable 'wave_solution' "
-                                          "must be either 'lin' or 'log'. "
-                                          f"Found: '{Forest.wave_solution}'")
+        self.mean_z = (
+            (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
+             np.power(10., self.log_lambda[0])) / 2. /
+            Pk1dForest.lambda_abs_igm - 1.0)
 
         self.consistency_check()
 
@@ -349,20 +316,10 @@ class Pk1dForest(Forest):
 
         # finally update control variables
         self.mean_reso = self.reso.mean()
-        if Forest.wave_solution == "log":
-            self.mean_z = (
-                (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-                 np.power(10., self.log_lambda[0])) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        elif Forest.wave_solution == "lin":
-            self.mean_z = (
-                (self.lambda_[len(self.lambda_) - 1] + self.lambda_[0]) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        else:
-            raise AstronomicalObjectError("Error in rebinning Pk1dForest. "
-                                          "Class variable 'wave_solution' "
-                                          "must be either 'lin' or 'log'. "
-                                          f"Found: {Forest.wave_solution}")
+        self.mean_z = (
+            (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
+             np.power(10., self.log_lambda[0])) / 2. /
+            Pk1dForest.lambda_abs_igm - 1.0)
 
         # return weights and binning solution to be used by child classes if
         # required

@@ -5,7 +5,6 @@ import fitsio
 import numpy as np
 from scipy import interpolate
 
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.errors import CorrectionError
 
@@ -45,22 +44,22 @@ class DustCorrection(Correction):
         extinction_conversion_r = config.getfloat("extinction_conversion_r")
         if extinction_conversion_r is None:
             raise CorrectionError("Missing argument 'extinction_conversion_r' "
-                                  "required by SdssDustCorrection")
+                                  "required by DustCorrection")
 
         filename = config.get("filename")
         if filename is None:
             raise CorrectionError("Missing argument 'filename' "
-                                  "required by SdssDustCorrection")
+                                  "required by DustCorrection")
         try:
             hdu = fitsio.read(filename, ext="CATALOG")
             thingid = hdu['THING_ID']
             ext = hdu['EXTINCTION'][:, 1] / extinction_conversion_r
         except OSError:
-            raise CorrectionError("Error loading SdssDustCorrection. "
+            raise CorrectionError("Error loading DustCorrection. "
                                   f"File {filename} does not have extension "
                                   "'CATALOG'")
         except ValueError:
-            raise CorrectionError("Error loading SdssDustCorrection. "
+            raise CorrectionError("Error loading DustCorrection. "
                                   f"File {filename} does not have fields "
                                   "'THING_ID' and/or 'EXTINCTION' in HDU "
                                   "'CATALOG'")
@@ -88,13 +87,7 @@ class DustCorrection(Correction):
         if extinction is None:
             return
 
-        if Forest.wave_solution == "log":
-            correction = unred(10**forest.log_lambda, extinction)
-        elif Forsest.wave_solution == "lin":
-            correction = unred(forest.lambda_, extinction)
-        else:
-            raise CorrectionError("Forest.wave_solution must be either "
-                                  "'log' or 'lin'")
+        correction = unred(10**forest.log_lambda, extinction)
         forest.flux /= correction
         forest.ivar *= correction**2
         if hasattr(forest, "exposures_diff"):

@@ -87,8 +87,6 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_fudge, interp1d))
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
-        self.assertTrue(expected_flux.lambda_ is None)
-        self.assertTrue(expected_flux.lambda_rest_frame is None)
         self.assertTrue(isinstance(expected_flux.log_lambda, np.ndarray))
         self.assertTrue(
             isinstance(expected_flux.log_lambda_rest_frame, np.ndarray))
@@ -102,10 +100,8 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_fudge, interp1d))
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
-        self.assertTrue(isinstance(expected_flux.lambda_, np.ndarray))
-        self.assertTrue(isinstance(expected_flux.lambda_rest_frame, np.ndarray))
-        self.assertTrue(expected_flux.log_lambda is None)
-        self.assertTrue(expected_flux.log_lambda_rest_frame is None)
+        self.assertTrue(isinstance(expected_flux.log_lambda, np.ndarray))
+        self.assertTrue(isinstance(expected_flux.log_lambda_rest_frame, np.ndarray))
 
     def test_dr16_expected_flux_compute_continuum(self):
         """Test method compute_continuum for class Dr16ExpectedFlux"""
@@ -287,7 +283,7 @@ class ExpectedFluxTest(AbstractTest):
             expected_flux.compute_continuum(forest)
 
         # compute mean quasar continuum
-        expected_flux.compute_mean_cont_log(data.forests)
+        expected_flux.compute_mean_cont(data.forests)
 
         # load the expected results
         expectations = np.genfromtxt(test_file, names=True)
