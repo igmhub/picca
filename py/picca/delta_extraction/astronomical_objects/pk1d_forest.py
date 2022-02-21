@@ -347,6 +347,8 @@ class Pk1dForest(Forest):
         if len(rebin_ivar) == 0:
             self.exposures_diff = np.array([])
             self.reso = np.array([])
+            if self.resolution_matrix is not None:
+                self.resolution_matrix = np.array([])
             return [], [], [], [], []
 
         # apply mask due to cuts in bin
