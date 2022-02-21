@@ -1074,7 +1074,10 @@ class Delta(QSO):
             delta_log_lambda = header['DLL']
             try:
                 resolution_matrix = hdu['RESOMAT'][:].T.astype(float)
-                mean_resolution_matrix = np.mean(resolution_matrix, axis=1)
+                if resolution_matrix is not None:
+                    mean_resolution_matrix = np.mean(resolution_matrix, axis=1)
+                else:
+                    mean_resolution_matrix = None
             except (KeyError, ValueError):
                 resolution_matrix = None
                 mean_resolution_matrix = None
@@ -1088,6 +1091,7 @@ class Delta(QSO):
             delta_log_lambda = None
             mean_z = None
             resolution_matrix = None
+            mean_resolution_matrix = None
             weights = hdu['WEIGHT'][:].astype(float)
             cont = hdu['CONT'][:].astype(float)
 
