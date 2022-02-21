@@ -227,7 +227,7 @@ def main(cmdargs):
                 userprint(
                     "\n\nUsing linear binning, results will have units of AA")
                 delta_lambda = delta_lam
-                if (args.disable_reso_matrix or 'reso_matrix' not in dir(delta)
+                if (args.disable_reso_matrix or not hasattr(delta,'reso_matrix')
                         or delta.resolution_matrix is None):
                     userprint(
                         "Resolution matrix not found or disabled, using Gaussian resolution correction\n"
