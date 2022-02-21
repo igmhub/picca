@@ -326,6 +326,8 @@ class Pk1dForest(Forest):
         """
         bins, rebin_ivar, orig_ivar, w1, w2 = super().rebin()
         if len(rebin_ivar) == 0:
+            self.exposures_diff = np.array([])
+            self.reso = np.array([])
             return [], [], [], [], []
 
         # apply mask due to cuts in bin
