@@ -240,7 +240,11 @@ class Pk1dForest(Forest):
         self.reso = np.append(self.reso, other.reso)
 
         if self.resolution_matrix is not None:
-            self.resolution_matrix = np.append(self.resolution_matrix, other.resolution_matrix, axis=1)
+            if other.resolution_matrix.size>0 and self.resolution_matrix.size>0:
+                self.resolution_matrix = np.append(self.resolution_matrix, other.resolution_matrix, axis=1)
+            elif self.resolution_matrix.size==0:
+                self.resolution_matrix = other.resolution_matrix
+
 
         # coadd the deltas by rebinning
         super().coadd(other)
