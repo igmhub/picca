@@ -214,6 +214,15 @@ class Pk1dForest(Forest):
             Forest.mask_fields += ["exposures_diff"]
         if "reso" not in Forest.mask_fields:
             Forest.mask_fields += ["reso"]
+        if self.resolution_matrix is not None:
+            if self.resolution_matrix.shape[1] != self.flux.shape[0]:
+                raise AstronomicalObjectError(
+                    "Error constructing Pk1dForest. 'resolution_matrix', "
+                    "and 'flux' don't have the "
+                    "same size")
+            if "resolution_matrix" not in Forest.mask_fields:
+                Forest.mask_fields += ["resolution_matrix"]
+        
 
     def coadd(self, other):
         """Coadd the information of another forest.
@@ -382,10 +391,6 @@ class Pk1dForest(Forest):
         self.reso = rebin_reso[w2] / rebin_ivar[w2]
         if self.resolution_matrix is not None:
             self.resolution_matrix = rebin_reso_matrix_aux[:, w2] / rebin_ivar[np.newaxis, w2]
-
-        if self.resolution_matrix.shape[1] != self.ivar.shape[0]:
-            breakpoint()
-
 
         # finally update control variables
         self.mean_reso = self.reso.mean()

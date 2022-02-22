@@ -163,7 +163,10 @@ class DlaMask(Mask):
             # do the actual masking
             forest.transmission_correction *= dla_transmission
             for param in Forest.mask_fields:
-                setattr(forest, param, getattr(forest, param)[w])
+                if param!='resolution_matrix':
+                    setattr(forest, param, getattr(forest, param)[w])
+                else:
+                    setattr(forest, param, getattr(forest, param)[:, w])
 
 
 class DlaProfile:
