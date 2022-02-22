@@ -92,9 +92,9 @@ def split_forest(num_parts,
         lambda_abs_igm = constants.ABSORBER_IGM[abs_igm]
 
         if linear_binning:
-            mean_z = np.mean(10**log_lambda_part) / lambda_abs_igm - 1.0
-        else:
             mean_z = np.mean(log_lambda_part) / lambda_abs_igm - 1.0
+        else:
+            mean_z = np.mean(10**log_lambda_part) / lambda_abs_igm - 1.0
 
         if reso_matrix is not None:
             reso_matrix_part = reso_matrix[:, selection].copy()
