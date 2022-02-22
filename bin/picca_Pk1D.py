@@ -58,7 +58,8 @@ def check_linear_binning(delta):
 
 def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
-    """Compute the 1D power spectrum"""
+    """Compute the 1D power spectrum
+    Uses the resolution matrix correction for DESI data"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Compute the 1D power spectrum')
@@ -183,8 +184,6 @@ def main(cmdargs):
         ('store outputs in units of velocity even for linear binning computations'
          ))
 
-    #use resolution matrix automatically when doing linear binning and resolution matrix is available, else use Gaussian (which was the previous default)
-
     args = parser.parse_args(cmdargs)
 
     # Read deltas
@@ -200,7 +199,9 @@ def main(cmdargs):
     userprint(f"Computing Pk1d for {args.in_dir}")
 
     # loop over input files
-    for file_index, file in enumerate(files):
+    def process_all_files(index_file):
+        global num_data
+        file_index, file = index_file
         if file_index % 5 == 0:
             userprint("\rread {} of {} {}".format(file_index, len(files),
                                                   num_data),
@@ -218,36 +219,28 @@ def main(cmdargs):
 
         #add the check for linear binning on first spectrum only (assuming homogeneity within the file)
         delta = deltas[0]
-        if file_index == 0:
-            linear_binning, delta_lam = check_linear_binning(delta)
-            if linear_binning:
+        linear_binning, delta_lam = check_linear_binning(delta)
+        if linear_binning:
+            userprint(
+                "\n\nUsing linear binning, results will have units of AA")
+            delta_lambda = delta_lam
+            if (args.disable_reso_matrix or not hasattr(delta, 'resolution_matrix')
+                    or delta.resolution_matrix is None):
                 userprint(
-                    "\n\nUsing linear binning, results will have units of AA")
-                delta_lambda = delta_lam
-                if (args.disable_reso_matrix or not hasattr(delta, 'resolution_matrix')
-                        or delta.resolution_matrix is None):
-                    userprint(
-                        "Resolution matrix not found or disabled, using Gaussian resolution correction\n"
-                    )
-                    reso_correction = "Gaussian"
-                else:
-                    userprint(
-                        "Using Resolution matrix for resolution correction\n")
-                    reso_correction = "matrix"
+                    "Resolution matrix not found or disabled, using Gaussian resolution correction\n"
+                )
+                reso_correction = "Gaussian"
             else:
                 userprint(
-                    "\n\nUsing log binning, results will have units of km/s")
-                delta_log_lambda = delta_lam
-                reso_correction = "Gaussian"
-                userprint("Using Gaussian resolution correction\n")
-
+                    "Using Resolution matrix for resolution correction\n")
+                reso_correction = "matrix"
         else:
-            linear_binning2, delta_lam2 = check_linear_binning(delta)
-            try:
-                assert np.all(linear_binning2 == linear_binning)
-                assert np.all(delta_lam2 == delta_lam)
-            except AssertionError:
-                raise ("inhomogeneous wavelength binning between input files")
+            userprint(
+                "\n\nUsing log binning, results will have units of km/s")
+            delta_log_lambda = delta_lam
+            reso_correction = "Gaussian"
+            userprint("Using Gaussian resolution correction\n")
+
 
         num_data += len(deltas)
         userprint("\n ndata =  ", num_data)
@@ -432,13 +425,7 @@ def main(cmdargs):
                 ])
             return pk_list
 
-        if args.num_processors > 1:
-            pool = Pool(args.num_processors)
-        if args.num_processors > 1:
-            pk_list_of_lists = pool.map(process_file, deltas)
-
-        else:
-            pk_list_of_lists = [process_file(delta) for delta in deltas]
+        pk_list_of_lists = [process_file(delta) for delta in deltas]
 
         #all that follows is writing files only
 
@@ -537,7 +524,14 @@ def main(cmdargs):
         if (args.out_format == 'fits' and results is not None):
             results.close()
 
-    userprint("all done ")
+        userprint("all done ")
+
+
+    if args.num_processors>1:
+        pool=Pool(args.num_processors)
+        pool.map(process_all_files,list(enumerate(files)))
+    else:
+        [process_all_files(index_file) for index_file in enumerate(files)]
 
 
 if __name__ == '__main__':
