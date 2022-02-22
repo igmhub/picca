@@ -55,6 +55,334 @@ def check_linear_binning(delta):
 
     return linear_binning, delta_lam
 
+# loop over input files
+def process_all_files(index_file_args):
+    file_index, file,args = index_file_args
+    if file_index % 5 == 0:
+        userprint("\rread {} of {} {}".format(file_index, len(files),
+                                                num_data),
+                    end="")
+
+    # read fits or ascii file
+    if args.in_format == 'fits':
+        hdul = fitsio.FITS(file)
+        deltas = [
+            Delta.from_fitsio(hdu, pk1d_type=True) for hdu in hdul[1:]
+        ]
+    elif args.in_format == 'ascii':
+        ascii_file = open(file, 'r')
+        deltas = [Delta.from_ascii(line) for line in ascii_file]
+
+    #add the check for linear binning on first spectrum only (assuming homogeneity within the file)
+    delta = deltas[0]
+    linear_binning, delta_lam = check_linear_binning(delta)
+    if linear_binning:
+        userprint(
+            "\n\nUsing linear binning, results will have units of AA")
+        delta_lambda = delta_lam
+        if (args.disable_reso_matrix or not hasattr(delta, 'resolution_matrix')
+                or delta.resolution_matrix is None):
+            userprint(
+                "Resolution matrix not found or disabled, using Gaussian resolution correction\n"
+            )
+            reso_correction = "Gaussian"
+        else:
+            userprint(
+                "Using Resolution matrix for resolution correction\n")
+            reso_correction = "matrix"
+    else:
+        userprint(
+            "\n\nUsing log binning, results will have units of km/s")
+        delta_log_lambda = delta_lam
+        reso_correction = "Gaussian"
+        userprint("Using Gaussian resolution correction\n")
+
+
+    num_data += len(deltas)
+    userprint("\n ndata =  ", num_data)
+    results = None
+
+    def process_file(delta):
+        """_summary_
+
+        Args:
+            delta (Delta): a single delta object
+
+        Returns:
+            list containing the following for each spectral part
+            k: mode
+            pk_raw: raw power spectrum
+            pk_noise: noise power spectrum from pipeline noise
+            pk_diff: noise power spectrum from difference spectra
+            correction_reso: resolution correction
+            pk: final power spectrum measurement
+            mean_z_array[part_index]: mean redshift within the spectral part
+            num_masked_pixels: number of masked pixels within the spectral part
+        """
+        # Selection over the SNR and the resolution
+        if (delta.mean_snr <= args.SNR_min
+                or delta.mean_reso >= args.reso_max):
+            return None
+
+        # first pixel in forest
+        selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
+        #this works as selected_pixels returns a bool and argmax points
+        #towards the first occurance for equal values
+        first_pixel_index = (np.argmax(selected_pixels)
+                                if np.any(selected_pixels) else
+                                len(selected_pixels))
+
+        # minimum number of pixel in forest
+        min_num_pixels = args.nb_pixel_min
+        if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
+            return None
+
+        # Split the forest in n parts
+        max_num_parts = (len(delta.log_lambda) -
+                            first_pixel_index) // min_num_pixels
+        num_parts = min(args.nb_part, max_num_parts)
+        if linear_binning:
+            split_array = split_forest(
+                    num_parts,
+                    delta_lambda,
+                    10**delta.log_lambda,
+                    delta.delta,
+                    delta.exposures_diff,
+                    delta.ivar,
+                    first_pixel_index,
+                    reso_matrix=(delta.resolution_matrix
+                                if reso_correction == 'matrix' else None),
+                    linear_binning=True)
+            if reso_correction == 'matrix':
+                (mean_z_array, lambda_array, delta_array, exposures_diff_array,
+                    ivar_array, reso_matrix_array) = split_array
+            else:
+                (mean_z_array, lambda_array, delta_array, exposures_diff_array,
+                    ivar_array) = split_array
+        else:
+            (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
+                    ivar_array) = split_forest(
+                    num_parts,
+                    delta_log_lambda,
+                    delta.log_lambda,
+                    delta.delta,
+                    delta.exposures_diff,
+                    delta.ivar,
+                    first_pixel_index)
+
+
+        pk_list = []
+        for part_index in range(num_parts):
+            # rebin exposures_diff spectrum
+            if (args.noise_estimate == 'rebin_diff'
+                    or args.noise_estimate == 'mean_rebin_diff'):
+                if linear_binning:
+                    exposures_diff_array[part_index] = rebin_diff_noise(
+                        delta_lambda, lambda_array[part_index],
+                        exposures_diff_array[part_index])
+                else:
+                    exposures_diff_array[part_index] = rebin_diff_noise(
+                        delta_log_lambda, log_lambda_array[part_index],
+                        exposures_diff_array[part_index])
+
+            # Fill masked pixels with 0.
+            if linear_binning:
+                #the resolution matrix does not need to have pixels filled in any way...
+                (lambda_new, delta_new, exposures_diff_new, ivar_new,
+                    num_masked_pixels) = fill_masked_pixels(
+                        delta_lambda, lambda_array[part_index],
+                        delta_array[part_index],
+                        exposures_diff_array[part_index],
+                        ivar_array[part_index], args.no_apply_filling)
+            else:
+                (log_lambda_new, delta_new, exposures_diff_new, ivar_new,
+                    num_masked_pixels) = fill_masked_pixels(
+                        delta_log_lambda, log_lambda_array[part_index],
+                        delta_array[part_index],
+                        exposures_diff_array[part_index],
+                        ivar_array[part_index], args.no_apply_filling)
+            if num_masked_pixels > args.nb_pixel_masked_max:
+                continue
+
+            # Compute pk_raw
+            if linear_binning:
+                k, pk_raw = compute_pk_raw(delta_lambda,
+                                            delta_new,
+                                            linear_binning=True)
+            else:
+                k, pk_raw = compute_pk_raw(delta_log_lambda,
+                                            delta_new,
+                                            linear_binning=False)
+
+            # Compute pk_noise
+            run_noise = False
+            if args.noise_estimate == 'pipeline':
+                run_noise = True
+            if linear_binning:
+                pk_noise, pk_diff = compute_pk_noise(delta_lambda,
+                                                        ivar_new,
+                                                        exposures_diff_new,
+                                                        run_noise,
+                                                        linear_binning=True)
+            else:
+                pk_noise, pk_diff = compute_pk_noise(delta_log_lambda,
+                                                        ivar_new,
+                                                        exposures_diff_new,
+                                                        run_noise,
+                                                        linear_binning=False)
+
+            # Compute resolution correction
+            if linear_binning:
+                #in this case all is in AA space
+                if reso_correction == 'matrix':
+                    correction_reso = compute_correction_reso_matrix(
+                        reso_matrix=np.mean(reso_matrix_array[part_index], axis=1),
+                        k=k,
+                        delta_pixel=delta_lambda,
+                        num_pixel=len(lambda_new))
+                elif reso_correction == 'Gaussian':
+                    #this is roughly converting the mean resolution estimate back to pixels
+                    #and then multiplying with pixel size
+                    mean_reso_AA = (delta_lambda * delta.mean_reso / 
+                                    np.log(10.) / constants.speed_light * 1000.)
+                    correction_reso = compute_correction_reso(
+                        delta_pixel=delta_lambda,
+                        mean_reso=mean_reso_AA,
+                        k=k)
+            else:
+                #in this case all is in velocity space
+                delta_pixel = (delta_log_lambda * np.log(10.) *
+                                constants.speed_light / 1000.)
+                correction_reso = compute_correction_reso(
+                    delta_pixel=delta_pixel,
+                    mean_reso=delta.mean_reso,
+                    k=k)
+
+            # Compute 1D Pk
+            if args.noise_estimate == 'pipeline':
+                pk = (pk_raw - pk_noise) / correction_reso
+            elif (args.noise_estimate == 'diff'
+                    or args.noise_estimate == 'rebin_diff'):
+                pk = (pk_raw - pk_diff) / correction_reso
+            elif (args.noise_estimate == 'mean_diff'
+                    or args.noise_estimate == 'mean_rebin_diff'):
+                selection = (k > 0) & (k < 0.02)
+                if args.noise_estimate == 'mean_rebin_diff':
+                    selection = (k > 0.003) & (k < 0.02)
+                mean_pk_diff = np.mean(pk_diff[selection])
+                pk = (pk_raw - mean_pk_diff) / correction_reso
+
+            if args.force_output_in_velocity and linear_binning:
+                pk *= constants.speed_light / 1000 / np.mean(lambda_new)
+                k /= constants.speed_light / 1000 / np.mean(lambda_new)
+            pk_list.append([
+                k, pk_raw, pk_noise, pk_diff, correction_reso, pk,
+                mean_z_array[part_index], num_masked_pixels
+            ])
+        return pk_list
+
+    pk_list_of_lists = [process_file(delta) for delta in deltas]
+
+    #all that follows is writing files only
+
+    for delta, pk_list in zip(deltas, pk_list_of_lists):
+        if pk_list is None:
+            continue
+        for k, pk_raw, pk_noise, pk_diff, correction_reso, pk, mean_z, num_masked_pixels in pk_list:
+
+            # save in fits format
+            if args.out_format == 'fits':
+                header = [{
+                    'name': 'RA',
+                    'value': delta.ra,
+                    'comment': "QSO's Right Ascension [degrees]"
+                }, {
+                    'name': 'DEC',
+                    'value': delta.dec,
+                    'comment': "QSO's Declination [degrees]"
+                }, {
+                    'name': 'Z',
+                    'value': delta.z_qso,
+                    'comment': "QSO's redshift"
+                }, {
+                    'name': 'MEANZ',
+                    'value': mean_z,
+                    'comment': "Absorbers mean redshift"
+                }, {
+                    'name': 'MEANRESO',
+                    'value': delta.mean_reso,
+                    'comment': 'Mean resolution [km/s]'
+                }, {
+                    'name': 'MEANSNR',
+                    'value': delta.mean_snr,
+                    'comment': 'Mean signal to noise ratio'
+                }, {
+                    'name':
+                    'NBMASKPIX',
+                    'value':
+                    num_masked_pixels,
+                    'comment':
+                    'Number of masked pixels in the section'
+                }, {
+                    'name': 'PLATE',
+                    'value': delta.plate,
+                    'comment': "Spectrum's plate id"
+                }, {
+                    'name':
+                    'MJD',
+                    'value':
+                    delta.mjd,
+                    'comment': ('Modified Julian Date,date the spectrum '
+                                'was taken')
+                }, {
+                    'name': 'FIBER',
+                    'value': delta.fiberid,
+                    'comment': "Spectrum's fiber number"
+                }]
+
+                cols = [k, pk_raw, pk_noise, pk_diff, correction_reso, pk]
+                names = [
+                    'k', 'Pk_raw', 'Pk_noise', 'Pk_diff', 'cor_reso', 'Pk'
+                ]
+                comments = [
+                    'Wavenumber', 'Raw power spectrum',
+                    "Noise's power spectrum",
+                    'Noise coadd difference power spectrum',
+                    'Correction resolution function',
+                    'Corrected power spectrum (resolution and noise)'
+                ]
+                if linear_binning and not args.force_output_in_velocity:
+                    baseunit = "AA"
+                else:
+                    baseunit = "km/s"
+                units = [
+                    f'({baseunit})^-1', f'{baseunit}', f'{baseunit}',
+                    f'{baseunit}', f'{baseunit}', f'{baseunit}'
+                ]
+
+                try:
+                    results.write(cols,
+                                    names=names,
+                                    header=header,
+                                    comments=comments,
+                                    units=units)
+                except AttributeError:
+                    results = fitsio.FITS((args.out_dir + '/Pk1D-' +
+                                            str(file_index) + '.fits.gz'),
+                                            'rw',
+                                            clobber=True)
+                    results.write(cols,
+                                    names=names,
+                                    header=header,
+                                    comment=comments,
+                                    units=units)
+
+    if (args.out_format == 'fits' and results is not None):
+        results.close()
+
+    userprint("all done ")
+    return 0
+
 
 def main(cmdargs):
     # pylint: disable-msg=too-many-locals,too-many-branches,too-many-statements
@@ -192,346 +520,19 @@ def main(cmdargs):
     elif args.in_format == 'ascii':
         files = sorted(glob.glob(args.in_dir + "/*.txt"))
 
-    num_data = 0
+    global num_data = 0
 
     # initialize randoms
     np.random.seed(4)
     userprint(f"Computing Pk1d for {args.in_dir}")
 
-    # loop over input files
-    def process_all_files(index_file):
-        global num_data
-        file_index, file = index_file
-        if file_index % 5 == 0:
-            userprint("\rread {} of {} {}".format(file_index, len(files),
-                                                  num_data),
-                      end="")
-
-        # read fits or ascii file
-        if args.in_format == 'fits':
-            hdul = fitsio.FITS(file)
-            deltas = [
-                Delta.from_fitsio(hdu, pk1d_type=True) for hdu in hdul[1:]
-            ]
-        elif args.in_format == 'ascii':
-            ascii_file = open(file, 'r')
-            deltas = [Delta.from_ascii(line) for line in ascii_file]
-
-        #add the check for linear binning on first spectrum only (assuming homogeneity within the file)
-        delta = deltas[0]
-        linear_binning, delta_lam = check_linear_binning(delta)
-        if linear_binning:
-            userprint(
-                "\n\nUsing linear binning, results will have units of AA")
-            delta_lambda = delta_lam
-            if (args.disable_reso_matrix or not hasattr(delta, 'resolution_matrix')
-                    or delta.resolution_matrix is None):
-                userprint(
-                    "Resolution matrix not found or disabled, using Gaussian resolution correction\n"
-                )
-                reso_correction = "Gaussian"
-            else:
-                userprint(
-                    "Using Resolution matrix for resolution correction\n")
-                reso_correction = "matrix"
-        else:
-            userprint(
-                "\n\nUsing log binning, results will have units of km/s")
-            delta_log_lambda = delta_lam
-            reso_correction = "Gaussian"
-            userprint("Using Gaussian resolution correction\n")
-
-
-        num_data += len(deltas)
-        userprint("\n ndata =  ", num_data)
-        results = None
-
-        def process_file(delta):
-            """_summary_
-
-            Args:
-                delta (Delta): a single delta object
-
-            Returns:
-                list containing the following for each spectral part
-                k: mode
-                pk_raw: raw power spectrum
-                pk_noise: noise power spectrum from pipeline noise
-                pk_diff: noise power spectrum from difference spectra
-                correction_reso: resolution correction
-                pk: final power spectrum measurement
-                mean_z_array[part_index]: mean redshift within the spectral part
-                num_masked_pixels: number of masked pixels within the spectral part
-            """
-            # Selection over the SNR and the resolution
-            if (delta.mean_snr <= args.SNR_min
-                    or delta.mean_reso >= args.reso_max):
-                return None
-
-            # first pixel in forest
-            selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
-            #this works as selected_pixels returns a bool and argmax points
-            #towards the first occurance for equal values
-            first_pixel_index = (np.argmax(selected_pixels)
-                                 if np.any(selected_pixels) else
-                                 len(selected_pixels))
-
-            # minimum number of pixel in forest
-            min_num_pixels = args.nb_pixel_min
-            if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
-                return None
-
-            # Split the forest in n parts
-            max_num_parts = (len(delta.log_lambda) -
-                             first_pixel_index) // min_num_pixels
-            num_parts = min(args.nb_part, max_num_parts)
-            if linear_binning:
-                split_array = split_forest(
-                     num_parts,
-                     delta_lambda,
-                     10**delta.log_lambda,
-                     delta.delta,
-                     delta.exposures_diff,
-                     delta.ivar,
-                     first_pixel_index,
-                     reso_matrix=(delta.resolution_matrix
-                                  if reso_correction == 'matrix' else None),
-                     linear_binning=True)
-                if reso_correction == 'matrix':
-                    (mean_z_array, lambda_array, delta_array, exposures_diff_array,
-                        ivar_array, reso_matrix_array) = split_array
-                else:
-                    (mean_z_array, lambda_array, delta_array, exposures_diff_array,
-                        ivar_array) = split_array
-            else:
-                (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
-                        ivar_array) = split_forest(
-                     num_parts,
-                     delta_log_lambda,
-                     delta.log_lambda,
-                     delta.delta,
-                     delta.exposures_diff,
-                     delta.ivar,
-                     first_pixel_index)
-
-
-            pk_list = []
-            for part_index in range(num_parts):
-                # rebin exposures_diff spectrum
-                if (args.noise_estimate == 'rebin_diff'
-                        or args.noise_estimate == 'mean_rebin_diff'):
-                    if linear_binning:
-                        exposures_diff_array[part_index] = rebin_diff_noise(
-                            delta_lambda, lambda_array[part_index],
-                            exposures_diff_array[part_index])
-                    else:
-                        exposures_diff_array[part_index] = rebin_diff_noise(
-                            delta_log_lambda, log_lambda_array[part_index],
-                            exposures_diff_array[part_index])
-
-                # Fill masked pixels with 0.
-                if linear_binning:
-                    #the resolution matrix does not need to have pixels filled in any way...
-                    (lambda_new, delta_new, exposures_diff_new, ivar_new,
-                     num_masked_pixels) = fill_masked_pixels(
-                         delta_lambda, lambda_array[part_index],
-                         delta_array[part_index],
-                         exposures_diff_array[part_index],
-                         ivar_array[part_index], args.no_apply_filling)
-                else:
-                    (log_lambda_new, delta_new, exposures_diff_new, ivar_new,
-                     num_masked_pixels) = fill_masked_pixels(
-                         delta_log_lambda, log_lambda_array[part_index],
-                         delta_array[part_index],
-                         exposures_diff_array[part_index],
-                         ivar_array[part_index], args.no_apply_filling)
-                if num_masked_pixels > args.nb_pixel_masked_max:
-                    continue
-
-                # Compute pk_raw
-                if linear_binning:
-                    k, pk_raw = compute_pk_raw(delta_lambda,
-                                               delta_new,
-                                               linear_binning=True)
-                else:
-                    k, pk_raw = compute_pk_raw(delta_log_lambda,
-                                               delta_new,
-                                               linear_binning=False)
-
-                # Compute pk_noise
-                run_noise = False
-                if args.noise_estimate == 'pipeline':
-                    run_noise = True
-                if linear_binning:
-                    pk_noise, pk_diff = compute_pk_noise(delta_lambda,
-                                                         ivar_new,
-                                                         exposures_diff_new,
-                                                         run_noise,
-                                                         linear_binning=True)
-                else:
-                    pk_noise, pk_diff = compute_pk_noise(delta_log_lambda,
-                                                         ivar_new,
-                                                         exposures_diff_new,
-                                                         run_noise,
-                                                         linear_binning=False)
-
-                # Compute resolution correction
-                if linear_binning:
-                    #in this case all is in AA space
-                    if reso_correction == 'matrix':
-                        correction_reso = compute_correction_reso_matrix(
-                            reso_matrix=np.mean(reso_matrix_array[part_index], axis=1),
-                            k=k,
-                            delta_pixel=delta_lambda,
-                            num_pixel=len(lambda_new))
-                    elif reso_correction == 'Gaussian':
-                        #this is roughly converting the mean resolution estimate back to pixels
-                        #and then multiplying with pixel size
-                        mean_reso_AA = (delta_lambda * delta.mean_reso / 
-                                        np.log(10.) / constants.speed_light * 1000.)
-                        correction_reso = compute_correction_reso(
-                            delta_pixel=delta_lambda,
-                            mean_reso=mean_reso_AA,
-                            k=k)
-                else:
-                    #in this case all is in velocity space
-                    delta_pixel = (delta_log_lambda * np.log(10.) *
-                                   constants.speed_light / 1000.)
-                    correction_reso = compute_correction_reso(
-                        delta_pixel=delta_pixel,
-                        mean_reso=delta.mean_reso,
-                        k=k)
-
-                # Compute 1D Pk
-                if args.noise_estimate == 'pipeline':
-                    pk = (pk_raw - pk_noise) / correction_reso
-                elif (args.noise_estimate == 'diff'
-                      or args.noise_estimate == 'rebin_diff'):
-                    pk = (pk_raw - pk_diff) / correction_reso
-                elif (args.noise_estimate == 'mean_diff'
-                      or args.noise_estimate == 'mean_rebin_diff'):
-                    selection = (k > 0) & (k < 0.02)
-                    if args.noise_estimate == 'mean_rebin_diff':
-                        selection = (k > 0.003) & (k < 0.02)
-                    mean_pk_diff = np.mean(pk_diff[selection])
-                    pk = (pk_raw - mean_pk_diff) / correction_reso
-
-                if args.force_output_in_velocity and linear_binning:
-                    pk *= constants.speed_light / 1000 / np.mean(lambda_new)
-                    k /= constants.speed_light / 1000 / np.mean(lambda_new)
-                pk_list.append([
-                    k, pk_raw, pk_noise, pk_diff, correction_reso, pk,
-                    mean_z_array[part_index], num_masked_pixels
-                ])
-            return pk_list
-
-        pk_list_of_lists = [process_file(delta) for delta in deltas]
-
-        #all that follows is writing files only
-
-        for delta, pk_list in zip(deltas, pk_list_of_lists):
-            if pk_list is None:
-                continue
-            for k, pk_raw, pk_noise, pk_diff, correction_reso, pk, mean_z, num_masked_pixels in pk_list:
-
-                # save in fits format
-                if args.out_format == 'fits':
-                    header = [{
-                        'name': 'RA',
-                        'value': delta.ra,
-                        'comment': "QSO's Right Ascension [degrees]"
-                    }, {
-                        'name': 'DEC',
-                        'value': delta.dec,
-                        'comment': "QSO's Declination [degrees]"
-                    }, {
-                        'name': 'Z',
-                        'value': delta.z_qso,
-                        'comment': "QSO's redshift"
-                    }, {
-                        'name': 'MEANZ',
-                        'value': mean_z,
-                        'comment': "Absorbers mean redshift"
-                    }, {
-                        'name': 'MEANRESO',
-                        'value': delta.mean_reso,
-                        'comment': 'Mean resolution [km/s]'
-                    }, {
-                        'name': 'MEANSNR',
-                        'value': delta.mean_snr,
-                        'comment': 'Mean signal to noise ratio'
-                    }, {
-                        'name':
-                        'NBMASKPIX',
-                        'value':
-                        num_masked_pixels,
-                        'comment':
-                        'Number of masked pixels in the section'
-                    }, {
-                        'name': 'PLATE',
-                        'value': delta.plate,
-                        'comment': "Spectrum's plate id"
-                    }, {
-                        'name':
-                        'MJD',
-                        'value':
-                        delta.mjd,
-                        'comment': ('Modified Julian Date,date the spectrum '
-                                    'was taken')
-                    }, {
-                        'name': 'FIBER',
-                        'value': delta.fiberid,
-                        'comment': "Spectrum's fiber number"
-                    }]
-
-                    cols = [k, pk_raw, pk_noise, pk_diff, correction_reso, pk]
-                    names = [
-                        'k', 'Pk_raw', 'Pk_noise', 'Pk_diff', 'cor_reso', 'Pk'
-                    ]
-                    comments = [
-                        'Wavenumber', 'Raw power spectrum',
-                        "Noise's power spectrum",
-                        'Noise coadd difference power spectrum',
-                        'Correction resolution function',
-                        'Corrected power spectrum (resolution and noise)'
-                    ]
-                    if linear_binning and not args.force_output_in_velocity:
-                        baseunit = "AA"
-                    else:
-                        baseunit = "km/s"
-                    units = [
-                        f'({baseunit})^-1', f'{baseunit}', f'{baseunit}',
-                        f'{baseunit}', f'{baseunit}', f'{baseunit}'
-                    ]
-
-                    try:
-                        results.write(cols,
-                                      names=names,
-                                      header=header,
-                                      comments=comments,
-                                      units=units)
-                    except AttributeError:
-                        results = fitsio.FITS((args.out_dir + '/Pk1D-' +
-                                               str(file_index) + '.fits.gz'),
-                                              'rw',
-                                              clobber=True)
-                        results.write(cols,
-                                      names=names,
-                                      header=header,
-                                      comment=comments,
-                                      units=units)
-
-        if (args.out_format == 'fits' and results is not None):
-            results.close()
-
-        userprint("all done ")
-
-
     if args.num_processors>1:
         pool=Pool(args.num_processors)
-        pool.map(process_all_files,list(enumerate(files)))
+        index_file_args=[(i,f,args) for i,f in enumerate(files)]
+        pool.map(process_all_files, index_file_args)
     else:
-        [process_all_files(index_file) for index_file in enumerate(files)]
+        [process_all_files(i,f,args) for i,f in enumerate(files)]
+
 
 
 if __name__ == '__main__':
