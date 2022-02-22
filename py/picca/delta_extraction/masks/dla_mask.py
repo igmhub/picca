@@ -146,7 +146,7 @@ class DlaMask(Mask):
 
         # load DLAs
         if self.los_ids.get(forest.los_id) is not None:
-            dla_transmission = np.ones(len(forest.log_lambda))
+            dla_transmission = np.ones(len(lambda_))
             for (z_abs, nhi) in self.los_ids.get(forest.los_id):
                 dla_transmission *= DlaProfile(lambda_, z_abs, nhi).transmission
 
@@ -155,10 +155,10 @@ class DlaMask(Mask):
             if len(self.mask) > 0:
                 for mask_range in self.mask:
                     for (z_abs, nhi) in self.los_ids.get(forest.los_id):
-                        w &= ((forest.log_lambda - np.log10(1. + z_abs) <
-                               mask_range['log_wave_min']) |
-                              (forest.log_lambda - np.log10(1. + z_abs) >
-                               mask_range['log_wave_max']))
+                        w &= ((lambda_ / (1. + z_abs) <
+                               10**mask_range['log_wave_min']) |
+                              (lambda_ / (1. + z_abs) >
+                               10**mask_range['log_wave_max']))
 
             # do the actual masking
             forest.transmission_correction *= dla_transmission
