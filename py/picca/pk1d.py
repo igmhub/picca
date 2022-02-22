@@ -376,7 +376,7 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
         r = np.append(resmat, np.zeros(num_pixel - resmat.size))
         k_resmat, W2 = compute_pk_raw(delta_pixel, r, linear_binning=True)
         try:
-            assert k_resmat == k
+            assert np.all(k_resmat == k)
         except AssertionError:
             raise ("for some reason the resolution matrix correction has "
                    "different k scaling than the pk")
