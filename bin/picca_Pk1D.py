@@ -199,9 +199,6 @@ def main(cmdargs):
     np.random.seed(4)
     userprint(f"Computing Pk1d for {args.in_dir}")
 
-    if args.num_processors > 1:
-        pool = Pool(args.num_processors)
-
     # loop over input files
     for file_index, file in enumerate(files):
         if file_index % 5 == 0:
@@ -435,6 +432,8 @@ def main(cmdargs):
                 ])
             return pk_list
 
+        if args.num_processors > 1:
+            pool = Pool(args.num_processors)
         if args.num_processors > 1:
             pk_list_of_lists = pool.map(process_file, deltas)
 
