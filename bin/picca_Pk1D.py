@@ -520,7 +520,8 @@ def main(cmdargs):
     elif args.in_format == 'ascii':
         files = sorted(glob.glob(args.in_dir + "/*.txt"))
 
-    global num_data = 0
+    global num_data 
+    num_data = 0
 
     # initialize randoms
     np.random.seed(4)
