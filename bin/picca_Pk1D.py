@@ -7,6 +7,7 @@ import glob
 from array import array
 import numpy as np
 import fitsio
+import os
 
 from picca import constants
 from picca.data import Delta
@@ -509,6 +510,8 @@ def main(cmdargs):
     np.random.seed(4)
     userprint(f"Computing Pk1d for {args.in_dir}")
     args.len_files = len(files)
+    #create output dir if it does not exist
+    os.makedirs(args.out_dir, exist_ok=True)
 
     if args.num_processors > 1:
         pool = Pool(args.num_processors)
