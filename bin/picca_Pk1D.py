@@ -381,7 +381,6 @@ def process_all_files(index_file_args):
     if (args.out_format == 'fits' and results is not None):
         results.close()
 
-    userprint("all done ")
     return 0
 
 
@@ -535,6 +534,7 @@ def main(cmdargs):
         pool.map(process_all_files, index_file_args)
     else:
         [process_all_files((i,f,args)) for i,f in enumerate(files)]
+    userprint("all done ")
 
 
 
