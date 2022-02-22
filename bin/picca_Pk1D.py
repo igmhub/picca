@@ -59,7 +59,7 @@ def check_linear_binning(delta):
 def process_all_files(index_file_args):
     file_index, file,args = index_file_args
     if file_index % 5 == 0:
-        userprint("\rread {} of {} {}".format(file_index, len(files),
+        userprint("\rread {} of {} {}".format(file_index, args.len_files,
                                                 num_data),
                     end="")
 
@@ -526,6 +526,7 @@ def main(cmdargs):
     # initialize randoms
     np.random.seed(4)
     userprint(f"Computing Pk1d for {args.in_dir}")
+    args.len_files=len(files)
 
     if args.num_processors>1:
         pool=Pool(args.num_processors)
