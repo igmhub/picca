@@ -959,7 +959,7 @@ class Delta(QSO):
 
     def __init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                  weights, cont, delta, order, ivar, exposures_diff, mean_snr,
-                 mean_reso, mean_z, delta_log_lambda, resolution_matrix=None,
+                 mean_reso, mean_z, resolution_matrix=None,
                  mean_resolution_matrix=None):
         """Initializes class instances.
 
@@ -1012,7 +1012,6 @@ class Delta(QSO):
         self.mean_snr = mean_snr
         self.mean_reso = mean_reso
         self.mean_z = mean_z
-        self.delta_log_lambda = delta_log_lambda
         self.resolution_matrix = resolution_matrix
         self.mean_resolution_matrix = mean_resolution_matrix
 
@@ -1090,7 +1089,6 @@ class Delta(QSO):
             exposures_diff = None
             mean_snr = None
             mean_reso = None
-            delta_log_lambda = None
             mean_z = None
             resolution_matrix = None
             mean_resolution_matrix = None
@@ -1120,7 +1118,7 @@ class Delta(QSO):
 
         return cls(los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
-                   mean_reso, mean_z, delta_log_lambda, resolution_matrix,
+                   mean_reso, mean_z, resolution_matrix,
                    mean_resolution_matrix)
 
     @classmethod
