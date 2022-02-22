@@ -15,7 +15,7 @@ from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux
 
 accepted_options = ["input directory", "iter out prefix",
-                    "num processors",
+                    "num processors", "out dir",
                     "var lss binning"]
 
 defaults = {
