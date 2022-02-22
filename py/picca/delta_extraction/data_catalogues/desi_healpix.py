@@ -231,8 +231,7 @@ class DesiHealpix(DesiData):
 
                     args["exposures_diff"] = exposures_diff
                     args["reso"] = reso_in_km_per_s
-                    #store resolution matrix in transposed form as this is what we need later when storing to fits
-                    args["resolution_matrix"] = reso_sum.T
+                    args["resolution_matrix"] = reso_sum
                     args["reso_AA"] = reso_in_AA
 
                     forest = DesiPk1dForest(**args)
