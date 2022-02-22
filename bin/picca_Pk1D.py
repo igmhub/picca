@@ -57,6 +57,7 @@ def check_linear_binning(delta):
 
 # loop over input files
 def process_all_files(index_file_args):
+    global num_data
     file_index, file,args = index_file_args
     if file_index % 5 == 0:
         userprint("\rread {} of {} {}".format(file_index, args.len_files,
