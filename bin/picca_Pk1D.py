@@ -55,21 +55,20 @@ def check_linear_binning(delta):
 
     return linear_binning, delta_lam
 
+
 # loop over input files
 def process_all_files(index_file_args):
     global num_data
-    file_index, file,args = index_file_args
+    file_index, file, args = index_file_args
     if file_index % 5 == 0:
         userprint("\rread {} of {} {}".format(file_index, args.len_files,
-                                                num_data),
-                    end="")
+                                              num_data),
+                  end="")
 
     # read fits or ascii file
     if args.in_format == 'fits':
         hdul = fitsio.FITS(file)
-        deltas = [
-            Delta.from_fitsio(hdu, pk1d_type=True) for hdu in hdul[1:]
-        ]
+        deltas = [Delta.from_fitsio(hdu, pk1d_type=True) for hdu in hdul[1:]]
     elif args.in_format == 'ascii':
         ascii_file = open(file, 'r')
         deltas = [Delta.from_ascii(line) for line in ascii_file]
@@ -78,8 +77,7 @@ def process_all_files(index_file_args):
     delta = deltas[0]
     linear_binning, delta_lam = check_linear_binning(delta)
     if linear_binning:
-        userprint(
-            "\n\nUsing linear binning, results will have units of AA")
+        userprint("\n\nUsing linear binning, results will have units of AA")
         delta_lambda = delta_lam
         if (args.disable_reso_matrix or not hasattr(delta, 'resolution_matrix')
                 or delta.resolution_matrix is None):
@@ -88,16 +86,13 @@ def process_all_files(index_file_args):
             )
             reso_correction = "Gaussian"
         else:
-            userprint(
-                "Using Resolution matrix for resolution correction\n")
+            userprint("Using Resolution matrix for resolution correction\n")
             reso_correction = "matrix"
     else:
-        userprint(
-            "\n\nUsing log binning, results will have units of km/s")
+        userprint("\n\nUsing log binning, results will have units of km/s")
         delta_log_lambda = delta_lam
         reso_correction = "Gaussian"
         userprint("Using Gaussian resolution correction\n")
-
 
     num_data += len(deltas)
     userprint("\n ndata =  ", num_data)
@@ -129,9 +124,8 @@ def process_all_files(index_file_args):
         selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
         #this works as selected_pixels returns a bool and argmax points
         #towards the first occurance for equal values
-        first_pixel_index = (np.argmax(selected_pixels)
-                                if np.any(selected_pixels) else
-                                len(selected_pixels))
+        first_pixel_index = (np.argmax(selected_pixels) if
+                             np.any(selected_pixels) else len(selected_pixels))
 
         # minimum number of pixel in forest
         min_num_pixels = args.nb_pixel_min
@@ -140,37 +134,32 @@ def process_all_files(index_file_args):
 
         # Split the forest in n parts
         max_num_parts = (len(delta.log_lambda) -
-                            first_pixel_index) // min_num_pixels
+                         first_pixel_index) // min_num_pixels
         num_parts = min(args.nb_part, max_num_parts)
         if linear_binning:
             split_array = split_forest(
-                    num_parts,
-                    delta_lambda,
-                    10**delta.log_lambda,
-                    delta.delta,
-                    delta.exposures_diff,
-                    delta.ivar,
-                    first_pixel_index,
-                    reso_matrix=(delta.resolution_matrix
-                                if reso_correction == 'matrix' else None),
-                    linear_binning=True)
+                num_parts,
+                delta_lambda,
+                10**delta.log_lambda,
+                delta.delta,
+                delta.exposures_diff,
+                delta.ivar,
+                first_pixel_index,
+                reso_matrix=(delta.resolution_matrix
+                             if reso_correction == 'matrix' else None),
+                linear_binning=True)
             if reso_correction == 'matrix':
                 (mean_z_array, lambda_array, delta_array, exposures_diff_array,
-                    ivar_array, reso_matrix_array) = split_array
+                 ivar_array, reso_matrix_array) = split_array
             else:
                 (mean_z_array, lambda_array, delta_array, exposures_diff_array,
-                    ivar_array) = split_array
+                 ivar_array) = split_array
         else:
             (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
-                    ivar_array) = split_forest(
-                    num_parts,
-                    delta_log_lambda,
-                    delta.log_lambda,
-                    delta.delta,
-                    delta.exposures_diff,
-                    delta.ivar,
-                    first_pixel_index)
-
+             ivar_array) = split_forest(num_parts, delta_log_lambda,
+                                        delta.log_lambda, delta.delta,
+                                        delta.exposures_diff, delta.ivar,
+                                        first_pixel_index)
 
         pk_list = []
         for part_index in range(num_parts):
@@ -190,30 +179,28 @@ def process_all_files(index_file_args):
             if linear_binning:
                 #the resolution matrix does not need to have pixels filled in any way...
                 (lambda_new, delta_new, exposures_diff_new, ivar_new,
-                    num_masked_pixels) = fill_masked_pixels(
-                        delta_lambda, lambda_array[part_index],
-                        delta_array[part_index],
-                        exposures_diff_array[part_index],
-                        ivar_array[part_index], args.no_apply_filling)
+                 num_masked_pixels) = fill_masked_pixels(
+                     delta_lambda, lambda_array[part_index],
+                     delta_array[part_index], exposures_diff_array[part_index],
+                     ivar_array[part_index], args.no_apply_filling)
             else:
                 (log_lambda_new, delta_new, exposures_diff_new, ivar_new,
-                    num_masked_pixels) = fill_masked_pixels(
-                        delta_log_lambda, log_lambda_array[part_index],
-                        delta_array[part_index],
-                        exposures_diff_array[part_index],
-                        ivar_array[part_index], args.no_apply_filling)
+                 num_masked_pixels) = fill_masked_pixels(
+                     delta_log_lambda, log_lambda_array[part_index],
+                     delta_array[part_index], exposures_diff_array[part_index],
+                     ivar_array[part_index], args.no_apply_filling)
             if num_masked_pixels > args.nb_pixel_masked_max:
                 continue
 
             # Compute pk_raw
             if linear_binning:
                 k, pk_raw = compute_pk_raw(delta_lambda,
-                                            delta_new,
-                                            linear_binning=True)
+                                           delta_new,
+                                           linear_binning=True)
             else:
                 k, pk_raw = compute_pk_raw(delta_log_lambda,
-                                            delta_new,
-                                            linear_binning=False)
+                                           delta_new,
+                                           linear_binning=False)
 
             # Compute pk_noise
             run_noise = False
@@ -221,52 +208,50 @@ def process_all_files(index_file_args):
                 run_noise = True
             if linear_binning:
                 pk_noise, pk_diff = compute_pk_noise(delta_lambda,
-                                                        ivar_new,
-                                                        exposures_diff_new,
-                                                        run_noise,
-                                                        linear_binning=True)
+                                                     ivar_new,
+                                                     exposures_diff_new,
+                                                     run_noise,
+                                                     linear_binning=True)
             else:
                 pk_noise, pk_diff = compute_pk_noise(delta_log_lambda,
-                                                        ivar_new,
-                                                        exposures_diff_new,
-                                                        run_noise,
-                                                        linear_binning=False)
+                                                     ivar_new,
+                                                     exposures_diff_new,
+                                                     run_noise,
+                                                     linear_binning=False)
 
             # Compute resolution correction
             if linear_binning:
                 #in this case all is in AA space
                 if reso_correction == 'matrix':
                     correction_reso = compute_correction_reso_matrix(
-                        reso_matrix=np.mean(reso_matrix_array[part_index], axis=1),
+                        reso_matrix=np.mean(reso_matrix_array[part_index],
+                                            axis=1),
                         k=k,
                         delta_pixel=delta_lambda,
                         num_pixel=len(lambda_new))
                 elif reso_correction == 'Gaussian':
                     #this is roughly converting the mean resolution estimate back to pixels
                     #and then multiplying with pixel size
-                    mean_reso_AA = (delta_lambda * delta.mean_reso / 
-                                    np.log(10.) / constants.speed_light * 1000.)
+                    mean_reso_AA = (delta_lambda * delta.mean_reso /
+                                    np.log(10.) / constants.speed_light *
+                                    1000.)
                     correction_reso = compute_correction_reso(
-                        delta_pixel=delta_lambda,
-                        mean_reso=mean_reso_AA,
-                        k=k)
+                        delta_pixel=delta_lambda, mean_reso=mean_reso_AA, k=k)
             else:
                 #in this case all is in velocity space
                 delta_pixel = (delta_log_lambda * np.log(10.) *
-                                constants.speed_light / 1000.)
+                               constants.speed_light / 1000.)
                 correction_reso = compute_correction_reso(
-                    delta_pixel=delta_pixel,
-                    mean_reso=delta.mean_reso,
-                    k=k)
+                    delta_pixel=delta_pixel, mean_reso=delta.mean_reso, k=k)
 
             # Compute 1D Pk
             if args.noise_estimate == 'pipeline':
                 pk = (pk_raw - pk_noise) / correction_reso
             elif (args.noise_estimate == 'diff'
-                    or args.noise_estimate == 'rebin_diff'):
+                  or args.noise_estimate == 'rebin_diff'):
                 pk = (pk_raw - pk_diff) / correction_reso
             elif (args.noise_estimate == 'mean_diff'
-                    or args.noise_estimate == 'mean_rebin_diff'):
+                  or args.noise_estimate == 'mean_rebin_diff'):
                 selection = (k > 0) & (k < 0.02)
                 if args.noise_estimate == 'mean_rebin_diff':
                     selection = (k > 0.003) & (k < 0.02)
@@ -318,12 +303,9 @@ def process_all_files(index_file_args):
                     'value': delta.mean_snr,
                     'comment': 'Mean signal to noise ratio'
                 }, {
-                    'name':
-                    'NBMASKPIX',
-                    'value':
-                    num_masked_pixels,
-                    'comment':
-                    'Number of masked pixels in the section'
+                    'name': 'NBMASKPIX',
+                    'value': num_masked_pixels,
+                    'comment': 'Number of masked pixels in the section'
                 }, {
                     'name': 'PLATE',
                     'value': delta.plate,
@@ -363,20 +345,20 @@ def process_all_files(index_file_args):
 
                 try:
                     results.write(cols,
-                                    names=names,
-                                    header=header,
-                                    comments=comments,
-                                    units=units)
+                                  names=names,
+                                  header=header,
+                                  comments=comments,
+                                  units=units)
                 except AttributeError:
                     results = fitsio.FITS((args.out_dir + '/Pk1D-' +
-                                            str(file_index) + '.fits.gz'),
-                                            'rw',
-                                            clobber=True)
+                                           str(file_index) + '.fits.gz'),
+                                          'rw',
+                                          clobber=True)
                     results.write(cols,
-                                    names=names,
-                                    header=header,
-                                    comment=comments,
-                                    units=units)
+                                  names=names,
+                                  header=header,
+                                  comment=comments,
+                                  units=units)
 
     if (args.out_format == 'fits' and results is not None):
         results.close()
@@ -520,22 +502,21 @@ def main(cmdargs):
     elif args.in_format == 'ascii':
         files = sorted(glob.glob(args.in_dir + "/*.txt"))
 
-    global num_data 
+    global num_data
     num_data = 0
 
     # initialize randoms
     np.random.seed(4)
     userprint(f"Computing Pk1d for {args.in_dir}")
-    args.len_files=len(files)
+    args.len_files = len(files)
 
-    if args.num_processors>1:
-        pool=Pool(args.num_processors)
-        index_file_args=[(i,f,args) for i,f in enumerate(files)]
+    if args.num_processors > 1:
+        pool = Pool(args.num_processors)
+        index_file_args = [(i, f, args) for i, f in enumerate(files)]
         pool.map(process_all_files, index_file_args)
     else:
-        [process_all_files((i,f,args)) for i,f in enumerate(files)]
+        [process_all_files((i, f, args)) for i, f in enumerate(files)]
     userprint("all done ")
-
 
 
 if __name__ == '__main__':
