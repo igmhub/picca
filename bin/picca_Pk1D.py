@@ -247,8 +247,8 @@ def main(cmdargs):
         else:
             linear_binning2, delta_lam2 = check_linear_binning(delta)
             try:
-                assert linear_binning2 == linear_binning
-                assert delta_lam2 == delta_lam
+                assert np.all(linear_binning2 == linear_binning)
+                assert np.all(delta_lam2 == delta_lam)
             except AssertionError:
                 raise ("inhomogeneous wavelength binning between input files")
 
