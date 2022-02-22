@@ -383,6 +383,9 @@ class Pk1dForest(Forest):
         if self.resolution_matrix is not None:
             self.resolution_matrix = rebin_reso_matrix_aux[:, w2] / rebin_ivar[np.newaxis, w2]
 
+        if self.resolution_matrix.shape[1] != self.ivar.shape:
+            breakpoint()
+
 
         # finally update control variables
         self.mean_reso = self.reso.mean()
