@@ -389,7 +389,7 @@ def main(cmdargs):
                     #in this case all is in AA space
                     if reso_correction == 'matrix':
                         correction_reso = compute_correction_reso_matrix(
-                            reso_matrix=np.mean(reso_matrix_array[part_index],axis=0),
+                            reso_matrix=np.mean(reso_matrix_array[part_index],axis=1),
                             k=k,
                             delta_pixel=delta_lambda,
                             num_pixel=len(lambda_new))
