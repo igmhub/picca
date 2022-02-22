@@ -296,8 +296,7 @@ def main(cmdargs):
                              first_pixel_index) // min_num_pixels
             num_parts = min(args.nb_part, max_num_parts)
             if linear_binning:
-                (mean_z_array, lambda_array, delta_array, exposures_diff_array,
-                 ivar_array) = split_forest(
+                split_array = split_forest(
                      num_parts,
                      delta_lambda,
                      10**delta.log_lambda,
@@ -307,22 +306,26 @@ def main(cmdargs):
                      first_pixel_index,
                      reso_matrix=(delta.resolution_matrix
                                   if reso_correction == 'matrix' else None))
+                if reso_correction == 'matrix':
+                    (mean_z_array, lambda_array, delta_array, exposures_diff_array,
+                        ivar_array, reso_matrix_array) = split_array
+                else:
+                    (mean_z_array, lambda_array, delta_array, exposures_diff_array,
+                        ivar_array) = split_array
             else:
-                (mean_z_array, log_lambda_array, delta_array,
-                 exposures_diff_array, ivar_array) = split_forest(
+                (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
+                        ivar_array) = split_forest(
                      num_parts,
                      delta_log_lambda,
                      delta.log_lambda,
                      delta.delta,
                      delta.exposures_diff,
                      delta.ivar,
-                     first_pixel_index,
-                     reso_matrix=(delta.resolution_matrix
-                                  if reso_correction == 'matrix' else None))
+                     first_pixel_index)
+
 
             pk_list = []
             for part_index in range(num_parts):
-
                 # rebin exposures_diff spectrum
                 if (args.noise_estimate == 'rebin_diff'
                         or args.noise_estimate == 'mean_rebin_diff'):
@@ -337,6 +340,7 @@ def main(cmdargs):
 
                 # Fill masked pixels with 0.
                 if linear_binning:
+                    #the resolution matrix does not need to have pixels filled in any way...
                     (lambda_new, delta_new, exposures_diff_new, ivar_new,
                      num_masked_pixels) = fill_masked_pixels(
                          delta_lambda, lambda_array[part_index],
@@ -385,7 +389,7 @@ def main(cmdargs):
                     #in this case all is in AA space
                     if reso_correction == 'matrix':
                         correction_reso = compute_correction_reso_matrix(
-                            reso_matrix=delta.resolution_matrix,
+                            reso_matrix=np.mean(reso_matrix_array[part_index],axis=0),
                             k=k,
                             delta_pixel=delta_lambda,
                             num_pixel=len(lambda_new))
