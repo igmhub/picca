@@ -533,7 +533,7 @@ def main(cmdargs):
         index_file_args=[(i,f,args) for i,f in enumerate(files)]
         pool.map(process_all_files, index_file_args)
     else:
-        [process_all_files(i,f,args) for i,f in enumerate(files)]
+        [process_all_files((i,f,args)) for i,f in enumerate(files)]
 
 
 
