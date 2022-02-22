@@ -244,8 +244,6 @@ class Pk1dForest(Forest):
                 self.resolution_matrix = np.append(self.resolution_matrix, other.resolution_matrix, axis=1)
             elif self.resolution_matrix.size==0:
                 self.resolution_matrix = other.resolution_matrix
-
-
         # coadd the deltas by rebinning
         super().coadd(other)
 
@@ -280,10 +278,11 @@ class Pk1dForest(Forest):
         units += ["Flux units", "Flux units"]
 
         if self.resolution_matrix is not None:
-            cols += [self.resolution_matrix]
+            #transposing here is necessary to store in fits file
+            cols += [self.resolution_matrix.T]
             names += ["RESOMAT"]
             comments += [
-                "Masked resolution matrix"
+                "Transposed Masked resolution matrix"
             ]
         units += [""]
 
