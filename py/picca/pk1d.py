@@ -27,7 +27,8 @@ def split_forest(num_parts,
                  ivar,
                  first_pixel_index,
                  abs_igm="LYA",
-                 reso_matrix=None):
+                 reso_matrix=None,
+                 linear_binning=False):
     """Splits the forest in n parts
 
     Args:
@@ -52,6 +53,7 @@ def split_forest(num_parts,
             redshift of the forest pixels
         reso_matrix: 2d-array of floats
             The resolution matrix used for corrections
+        linear_binning: assume linear wavelength binning, log_lambda vectors will be actual lambda
 
     Returns:
         The following variables:
@@ -89,7 +91,10 @@ def split_forest(num_parts,
         log_lambda_part = log_lambda[selection].copy()
         lambda_abs_igm = constants.ABSORBER_IGM[abs_igm]
 
-        mean_z = np.mean(10**log_lambda_part) / lambda_abs_igm - 1.0
+        if linear_binning:
+            mean_z = np.mean(10**log_lambda_part) / lambda_abs_igm - 1.0
+        else:
+            mean_z = np.mean(log_lambda_part) / lambda_abs_igm - 1.0
 
         if reso_matrix is not None:
             reso_matrix_part = reso_matrix[:, selection].copy()

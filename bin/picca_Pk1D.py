@@ -305,7 +305,8 @@ def main(cmdargs):
                      delta.ivar,
                      first_pixel_index,
                      reso_matrix=(delta.resolution_matrix
-                                  if reso_correction == 'matrix' else None))
+                                  if reso_correction == 'matrix' else None),
+                     linear_binning=True)
                 if reso_correction == 'matrix':
                     (mean_z_array, lambda_array, delta_array, exposures_diff_array,
                         ivar_array, reso_matrix_array) = split_array
@@ -389,7 +390,7 @@ def main(cmdargs):
                     #in this case all is in AA space
                     if reso_correction == 'matrix':
                         correction_reso = compute_correction_reso_matrix(
-                            reso_matrix=np.mean(reso_matrix_array[part_index],axis=1),
+                            reso_matrix=np.mean(reso_matrix_array[part_index], axis=1),
                             k=k,
                             delta_pixel=delta_lambda,
                             num_pixel=len(lambda_new))
