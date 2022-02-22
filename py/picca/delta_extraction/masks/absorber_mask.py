@@ -123,7 +123,7 @@ class AbsorberMask(Mask):
 
             # do the actual masking
             for param in Forest.mask_fields:
-            if param!='resolution_matrix':
-                setattr(forest, param, getattr(forest, param)[w])
-            else:
-                setattr(forest, param, getattr(forest, param)[:,w])
+                if param!='resolution_matrix':
+                    setattr(forest, param, getattr(forest, param)[w])
+                else:
+                    setattr(forest, param, getattr(forest, param)[:,w])
