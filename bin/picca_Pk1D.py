@@ -396,7 +396,7 @@ def main(cmdargs):
                                         np.log(10.) / constants.speed_light * 1000.)
                         correction_reso = compute_correction_reso(
                             delta_pixel=delta_lambda,
-                            mean_reso=mean_reso_AA ,
+                            mean_reso=mean_reso_AA,
                             k=k)
                 else:
                     #in this case all is in velocity space
@@ -431,7 +431,7 @@ def main(cmdargs):
             return pk_list
 
         if args.num_processors > 1:
-            pk_list_of_lists = pool.map(process_file(delta))
+            pk_list_of_lists = pool.map(process_file, deltas)
 
         else:
             pk_list_of_lists = [process_file(delta) for delta in deltas]
