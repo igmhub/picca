@@ -163,8 +163,8 @@ class Pk1dForest(Forest):
                                           "Missing variable 'reso'")
         del kwargs["reso"]
 
-        self.reso = kwargs.get("reso_pix")
-        if self.reso is None:
+        self.reso_pix = kwargs.get("reso_pix")
+        if self.reso_pix is None:
             raise AstronomicalObjectError("Error constructing Pk1dForest. "
                                           "Missing variable 'reso_pix'")
         del kwargs["reso_pix"]
