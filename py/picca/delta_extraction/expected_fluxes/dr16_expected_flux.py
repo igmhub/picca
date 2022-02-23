@@ -1225,7 +1225,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 ],
                               names=['lambda', 'stack', 'weight'],
                               header=header,
-                              extname='STACK')
+                              extname='STACK_DELTAS')
 
                 results.write([
                     self.lambda_,
@@ -1234,7 +1234,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.get_fudge(self.lambda_)
                 ],
                               names=['lambda', 'eta', 'var_lss', 'fudge'],
-                              extname='WEIGHT')
+                              extname='VAR_FUNC')
 
                 results.write([
                     self.lambda_rest_frame,
