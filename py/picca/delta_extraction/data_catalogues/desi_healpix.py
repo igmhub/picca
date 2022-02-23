@@ -222,17 +222,12 @@ class DesiHealpix(DesiData):
                     reso_sum = spec['RESO'][w_t].copy()
                     reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['WAVELENGTH'])
-                    if Forest.wave_solution == "lin":
-                        reso_in_AA = reso_in_pix * (spec['WAVELENGTH'][1]-spec['WAVELENGTH'][0])
-                        #TODO: might be useful to treat this more properly, but probably only needed for debugging anyway
-                    else:
-                        reso_in_AA = None
                     exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
 
                     args["exposures_diff"] = exposures_diff
                     args["reso"] = reso_in_km_per_s
                     args["resolution_matrix"] = reso_sum
-                    args["reso_AA"] = reso_in_AA
+                    args["reso_pix"] = reso_in_pix
 
                     forest = DesiPk1dForest(**args)
                 else:

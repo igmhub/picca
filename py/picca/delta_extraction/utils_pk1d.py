@@ -154,8 +154,12 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     reso_in_km_per_s: array
     The spectral resolution
     """
-    delta_log_lambda = ((lambda_[-1] - lambda_[0]) /
-                    float(len(lambda_) - 1))
+    delta_log_lambda = np.diff(np.log(lambda_))
+    #note that this would be the same result as before (except for the missing bug) in
+    #case of log-uniform binning, but for linear binning pixel size chenges wrt lambda
+    delta_log_lambda = np.append(delta_log_lambda,
+                                 [delta_log_lambda[-1]+
+                                  (delta_log_lambda[-1]-delta_log_lambda[-2])])
     reso = np.clip(reso_matrix, 1.0e-6, 1.0e6)
     rms_in_pixel = (
         np.sqrt(1.0 / 2.0 / np.log(
@@ -167,7 +171,7 @@ def spectral_resolution_desi(reso_matrix, lambda_):
         np.sqrt(4.0 / 2.0 / np.log(
             reso[len(reso) // 2][:] / reso[len(reso) // 2 + 2][:]))) / 4.0
 
-    avg_reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
+    reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
                             np.log(10.0))
 
-    return rms_in_pixel, avg_reso_in_km_per_s
+    return rms_in_pixel, reso_in_km_per_s
