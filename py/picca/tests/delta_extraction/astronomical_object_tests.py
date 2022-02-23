@@ -30,8 +30,12 @@ EXPOSURES_DIFF_REBIN = np.ones(5)
 EXPOSURES_DIFF_COADD = np.ones(5) * 2
 RESO = np.ones(10)
 RESO2 = np.ones(10) * 3
+RESO_PIX = np.ones(10)
+RESO_PIX2 = np.ones(10) * 3
 RESO_REBIN = np.ones(5)
+RESO_PIX_REBIN = np.ones(5)
 RESO_COADD = np.ones(5) * 2
+RESO_PIX_COADD = np.ones(5) * 2
 LOG_LAMBDA = np.array([
     3.5565, 3.55655, 3.5567, 3.55675, 3.5569, 3.55695, 3.5571, 3.55715, 3.5573,
     3.55735
@@ -151,12 +155,15 @@ kwargs_pk1d_forest = kwargs_forest.copy()
 kwargs_pk1d_forest.update({
     "exposures_diff": EXPOSURES_DIFF,
     "reso": RESO,
+    "reso_pix": RESO_PIX
 })
 
 kwargs_pk1d_forest2 = kwargs_forest2.copy()
 kwargs_pk1d_forest2.update({
     "exposures_diff": EXPOSURES_DIFF2,
     "reso": RESO2,
+    "reso_pix": RESO_PIX2
+
 })
 
 kwargs_pk1d_forest_log = kwargs_pk1d_forest.copy()
@@ -183,6 +190,7 @@ kwargs_pk1d_forest_rebin = kwargs_forest_rebin.copy()
 kwargs_pk1d_forest_rebin.update({
     "exposures_diff": EXPOSURES_DIFF_REBIN,
     "reso": RESO_REBIN,
+    "reso_pix": RESO_PIX_REBIN
 })
 
 kwargs_pk1d_forest_log_rebin = kwargs_pk1d_forest_rebin.copy()
@@ -199,6 +207,7 @@ kwargs_pk1d_forest_coadd = kwargs_forest_coadd.copy()
 kwargs_pk1d_forest_coadd.update({
     "exposures_diff": EXPOSURES_DIFF_COADD,
     "reso": RESO_COADD,
+    "reso_pix": RESO_PIX_COADD
 })
 
 kwargs_pk1d_forest_log_coadd = kwargs_pk1d_forest_coadd.copy()
@@ -415,7 +424,7 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(np.allclose(test_obj.ivar, ivar))
 
         if isinstance(test_obj, Pk1dForest):
-            self.assertTrue(len(Forest.mask_fields) == 6)
+            self.assertTrue(len(Forest.mask_fields) == 7)
         else:
             self.assertTrue(len(Forest.mask_fields) == 4)
         self.assertTrue(Forest.mask_fields[0] == "flux")
@@ -454,6 +463,8 @@ class AstronomicalObjectTest(AbstractTest):
                 np.allclose(test_obj.exposures_diff,
                             kwargs.get("exposures_diff")))
             self.assertTrue(np.allclose(test_obj.reso, kwargs.get("reso")))
+            self.assertTrue(np.allclose(test_obj.reso_pix, kwargs.get("reso_pix")))
+
             if Forest.wave_solution == "log":
                 log_lambda = kwargs.get("log_lambda")
                 mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
@@ -569,7 +580,11 @@ class AstronomicalObjectTest(AbstractTest):
             self.assertTrue(header[index + 2].get("name") == "MEANRESO")
             self.assertTrue(header[index +
                                    2].get("value") == test_obj.mean_reso)
-            index += 2
+            self.assertTrue(header[index + 3].get("name") == "MEANRESO_PIX")
+            self.assertTrue(header[index +
+                                   3].get("value") == test_obj.mean_reso_pix)
+            
+            index += 3
         if isinstance(test_obj, SdssForest):
             self.assertTrue(header[index + 1].get("name") == "THING_ID")
             self.assertTrue(header[index + 1].get("value") == test_obj.thingid)
@@ -834,6 +849,8 @@ class AstronomicalObjectTest(AbstractTest):
                 np.ones(10),
             "reso":
                 np.ones(10),
+            "reso_pix":
+                np.ones(15)
         }
         with self.assertRaises(AstronomicalObjectError):
             DesiPk1dForest(**kwargs)
@@ -874,6 +891,7 @@ class AstronomicalObjectTest(AbstractTest):
             "fiber": 0,
             "exposures_diff": np.ones(10),
             "reso": np.ones(10),
+            "reso_pix": np.ones(15)
         }
         with self.assertRaises(AstronomicalObjectError):
             DesiPk1dForest(**kwargs)
@@ -1383,6 +1401,8 @@ class AstronomicalObjectTest(AbstractTest):
                 np.ones(15),
             "reso":
                 np.ones(15),
+            "reso_pix":
+                np.ones(15),
         }
         with self.assertRaises(AstronomicalObjectError):
             SdssPk1dForest(**kwargs)
@@ -1415,6 +1435,7 @@ class AstronomicalObjectTest(AbstractTest):
             "mjd": 0,
             "exposures_diff": np.ones(15),
             "reso": np.ones(15),
+            "reso_pix": np.ones(15),
         }
         with self.assertRaises(AstronomicalObjectError):
             SdssPk1dForest(**kwargs)
