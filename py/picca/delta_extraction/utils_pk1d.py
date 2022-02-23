@@ -16,6 +16,7 @@ from picca.delta_extraction.utils import SPEED_LIGHT
 # create logger
 module_logger = logging.getLogger(__name__)
 
+
 def exp_diff(hdul, log_lambda):
     """Compute the difference between exposures.
 
@@ -59,7 +60,8 @@ def exp_diff(hdul, log_lambda):
 
             # exclude masks 25 (COMBINEREJ), 23 (BRIGHTSKY)?
             rebin_ivar_exp = np.bincount(log_lambda_bins,
-                                         weights=ivar_exp * (mask & 2**25 == 0))
+                                         weights=ivar_exp *
+                                         (mask & 2**25 == 0))
             rebin_flux_exp = np.bincount(log_lambda_bins,
                                          weights=(ivar_exp * flux_exp *
                                                   (mask & 2**25 == 0)))
@@ -68,8 +70,10 @@ def exp_diff(hdul, log_lambda):
                 flux_total_odd[:len(rebin_ivar_exp) - 1] += rebin_flux_exp[:-1]
                 ivar_total_odd[:len(rebin_ivar_exp) - 1] += rebin_ivar_exp[:-1]
             else:
-                flux_total_even[:len(rebin_ivar_exp) - 1] += rebin_flux_exp[:-1]
-                ivar_total_even[:len(rebin_ivar_exp) - 1] += rebin_ivar_exp[:-1]
+                flux_total_even[:len(rebin_ivar_exp) -
+                                1] += rebin_flux_exp[:-1]
+                ivar_total_even[:len(rebin_ivar_exp) -
+                                1] += rebin_ivar_exp[:-1]
 
     w = ivar_total_odd > 0
     flux_total_odd[w] /= ivar_total_odd[w]
@@ -126,11 +130,11 @@ def spectral_resolution(wdisp,
         # fiberids greater than 500 corresponds to the second spectrograph
         fiberid = fiberid % 500
         if fiberid < 100:
-            correction = (1. + (correction - 1) * .25 + (correction - 1) * .75 *
-                          (fiberid) / 100.)
+            correction = (1. + (correction - 1) * .25 +
+                          (correction - 1) * .75 * (fiberid) / 100.)
         elif fiberid > 400:
-            correction = (1. + (correction - 1) * .25 + (correction - 1) * .75 *
-                          (500 - fiberid) / 100.)
+            correction = (1. + (correction - 1) * .25 +
+                          (correction - 1) * .75 * (500 - fiberid) / 100.)
 
         # apply the correction
         reso *= correction
@@ -157,21 +161,26 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     delta_log_lambda = np.diff(np.log(lambda_))
     #note that this would be the same result as before (except for the missing bug) in
     #case of log-uniform binning, but for linear binning pixel size chenges wrt lambda
-    delta_log_lambda = np.append(delta_log_lambda,
-                                 [delta_log_lambda[-1]+
-                                  (delta_log_lambda[-1]-delta_log_lambda[-2])])
+    delta_log_lambda = np.append(
+        delta_log_lambda,
+        [delta_log_lambda[-1] + (delta_log_lambda[-1] - delta_log_lambda[-2])])
     reso = np.clip(reso_matrix, 1.0e-6, 1.0e6)
+    #assume reso = A*exp(-(x-central_pixel_pos)**2 / 2 / sigma**2)
+    #=> sigma = sqrt((x-central_pixel_pos)/2)**2 / log(A/reso)
+    #   A = reso(central_pixel_pos)  
+    # the following averages over estimates for four symmetric values of x
     rms_in_pixel = (
-        np.sqrt(1.0 / 2.0 / np.log(
-            reso[len(reso) // 2][:] / reso[len(reso) // 2 - 1][:])) +
-        np.sqrt(4.0 / 2.0 /
-                np.log(reso[len(reso) // 2][:] / reso[len(reso) // 2 - 2][:]))
-        + np.sqrt(1.0 / 2.0 / np.log(
-            reso[len(reso) // 2][:] / reso[len(reso) // 2 + 1][:])) +
-        np.sqrt(4.0 / 2.0 / np.log(
-            reso[len(reso) // 2][:] / reso[len(reso) // 2 + 2][:]))) / 4.0
+        (np.sqrt(1.0 / 2.0 / np.log(
+            reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 1, :])) +
+         np.sqrt(4.0 / 2.0 / np.log(
+             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 2, :])) +
+         np.sqrt(1.0 / 2.0 / np.log(
+             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 1, :])) +
+         np.sqrt(4.0 / 2.0 / np.log(
+             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 2, :])))
+        / 4.0) #this is rms
 
     reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
-                            np.log(10.0))
+                        np.log(10.0))   #this is FWHM
 
     return rms_in_pixel, reso_in_km_per_s

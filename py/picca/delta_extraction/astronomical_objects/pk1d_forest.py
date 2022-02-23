@@ -293,8 +293,8 @@ class Pk1dForest(Forest):
         comments += [
             "Inverse variance. Check input spectra for units",
             "Difference. Check input spectra for units",
-            "Resolution estimate for each pixel in units of km/s"
-            "Resolution estimate for each pixel in units of pixel size"
+            "Resolution estimate (FWHM) for each pixel in units of km/s"
+            "Resolution estimate (sigma) for each pixel in units of pixel size"
         ]
         units += ["Flux units", "Flux units", "", ""]
 
