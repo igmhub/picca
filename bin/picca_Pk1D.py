@@ -314,7 +314,7 @@ def process_all_files(index_file_args):
                 }, {
                     'name': 'LOS_ID',
                     'value': (delta.targetid if hasattr(delta, "targetid")
-                              else delta.thing_id if hasattr(delta, "thing_id")
+                              else delta.thingid if hasattr(delta, "thingid")
                               else delta.los_id if hasattr(delta, "los_id")
                               else "NOTFOUND"),
                     'comment': "line of sight identifier, e.g. THING_ID or TARGETID"
