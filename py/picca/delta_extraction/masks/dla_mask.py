@@ -114,15 +114,12 @@ class DlaMask(Mask):
                 self.mask = Table.read(mask_file,
                                        names=('type', 'wave_min', 'wave_max', 'frame'),
                                        format='ascii')
-                self.mask['log_wave_min'] = np.log10(self.mask['wave_min'])
-                self.mask['log_wave_max'] = np.log10(self.mask['wave_max'])
                 self.mask = self.mask['frame'] == 'RF_DLA'
             except (OSError, ValueError):
                 raise MaskError("ERROR: Error while reading mask_file file "
                                 f"{mask_file}")
         else:
-            self.mask = Table(names=('type', 'wave_min', 'wave_max', 'frame',
-                                     'log_wave_min', 'log_wave_max'))
+            self.mask = Table(names=('type', 'wave_min', 'wave_max', 'frame'))
 
     def apply_mask(self, forest):
         """Apply the mask. The mask is done by removing the affected
@@ -156,10 +153,10 @@ class DlaMask(Mask):
                 for mask_range in self.mask:
                     for (z_abs, nhi) in self.los_ids.get(forest.los_id):
                         w &= ((lambda_ / (1. + z_abs) <
-                               10**mask_range['log_wave_min']) |
+                               mask_range['wave_min']) |
                               (lambda_ / (1. + z_abs) >
-                               10**mask_range['log_wave_max']))
-
+                               mask_range['wave_max']))
+                        
             # do the actual masking
             forest.transmission_correction *= dla_transmission
             for param in Forest.mask_fields:
