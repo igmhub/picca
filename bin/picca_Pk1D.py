@@ -308,21 +308,15 @@ def process_all_files(index_file_args):
                     'value': num_masked_pixels,
                     'comment': 'Number of masked pixels in the section'
                 }, {
-                    'name': 'PLATE',
-                    'value': delta.plate,
-                    'comment': "Spectrum's plate id"
+                    'name': 'LIN_BIN',
+                    'value': linear_binning,
+                    'comment': "analysis was performed on delta with linear binned lambda"
                 }, {
-                    'name':
-                    'MJD',
-                    'value':
-                    delta.mjd,
-                    'comment': ('Modified Julian Date,date the spectrum '
-                                'was taken')
-                }, {
-                    'name': 'FIBER',
-                    'value': delta.fiberid,
-                    'comment': "Spectrum's fiber number"
-                }]
+                    'name': 'LOS_ID',
+                    'value': delta.los_id,
+                    'comment': "line of sight identifier, e.g. THING_ID or TARGETID"
+                },
+                ]
 
                 cols = [k, pk_raw, pk_noise, pk_diff, correction_reso, pk]
                 names = [
