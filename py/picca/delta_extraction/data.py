@@ -213,6 +213,13 @@ class Data:
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to finding nan")
+            elif self.analysis_type=='PK 1D' and forest.mean_snr<1:
+                #TODO: add variable for the SNR cut
+                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
+                                          "low SNR")
+                self.logger.progress(
+                    f"Rejected forest with los_id {forest.los_id} "
+                    "due to low SNR")
             else:
                 continue
 
