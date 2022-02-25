@@ -40,11 +40,11 @@ def check_linear_binning(delta):
     if (q25_lambda - q5_lambda) < 1e-6:
         #we can assume linear binning for this case
         linear_binning = True
-        delta_lam = np.median(diff_lambda)
+        delta_lam = np.minimum(diff_lambda)
     elif (q25_log_lambda - q5_log_lambda) < 1e-6 and q5_log_lambda < 0.01:
         #we can assume log_linear binning for this case
         linear_binning = False
-        delta_lam = np.median(diff_log_lambda)
+        delta_lam = np.minimum(diff_log_lambda)
     elif (q5_log_lambda >= 0.01):
         raise ValueError(
             "Could not figure out if linear or log wavelength binning was used, probably submitted lambda as log_lambda"
