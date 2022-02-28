@@ -259,7 +259,7 @@ class DesiTile(DesiData):
                     ivar = spec['IVAR'][w_t].copy()
                     flux = spec['FLUX'][w_t].copy()
 
-                    rgs = {
+                    args = {
                         "flux": flux,
                         "ivar": ivar,
                         "targetid": targetid,
