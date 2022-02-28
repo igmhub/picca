@@ -11,7 +11,7 @@ from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
-from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
+from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
 class DesiHealpix(DesiData):
     """Reads the spectra from DESI using healpix mode and formats its data as a
@@ -105,6 +105,9 @@ class DesiHealpix(DesiData):
             filename = (
                 f"{input_directory}/{healpix//100}/{healpix}/coadd-{survey}-"
                 f"dark-{healpix}.fits")
+
+            #TODO: probably need a way to operate directly on spectra files and not just on the coadd
+            #TODO: not sure if we want the dark survey to be hard coded in here, probably won't run on anything else, but still
 
             self.logger.progress(
                 f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
@@ -222,7 +225,11 @@ class DesiHealpix(DesiData):
                     reso_sum = spec['RESO'][w_t].copy()
                     reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['WAVELENGTH'])
-                    exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
+                    
+                    exposures_diff = exp_diff_desi(hdul, w_t)
+                    #TODO: @corentin: please check this is doing what it should do...
+                    if exposures_diff is None:
+                        exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
 
                     args["exposures_diff"] = exposures_diff
                     args["reso"] = reso_in_km_per_s

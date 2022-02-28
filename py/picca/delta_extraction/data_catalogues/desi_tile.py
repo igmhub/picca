@@ -13,7 +13,7 @@ from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
-from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
+from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
 accepted_options = sorted(list(set(accepted_options+[
     "use all", "use single nights"])))
@@ -148,10 +148,15 @@ class DesiTile(DesiData):
             else:
                 files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/deep/**/coadd-*.fits"),
                              recursive=True))
+
             petal_tile = [
                 f"{entry['PETAL_LOC']}-{entry['TILEID']}"
                 for entry in self.catalogue
             ]
+
+        #TODO: probably need a way to operate directly on spectra files and not just on the coadd
+
+
         # this uniqueness check is to ensure each petal/tile/night combination
         # only appears once in the filelist
         petal_tile_night_unique = np.unique(petal_tile_night)
@@ -285,7 +290,11 @@ class DesiTile(DesiData):
                         reso_in_pix, reso_in_km_per_s = np.real(
                             spectral_resolution_desi(reso_sum,
                                                      spec['WAVELENGTH']))
-                        exposures_diff = np.zeros(spec['log_lambda'].shape)
+
+                        exposures_diff = exp_diff_desi(hdul, w_t)
+                        #TODO: @corentin: please check this is doing what it should do...
+                        if exposures_diff is None:
+                            exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
 
                         args["exposures_diff"] = exposures_diff
                         args["reso"] = reso_in_km_per_s

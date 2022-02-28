@@ -169,14 +169,6 @@ class Pk1dForest(Forest):
                                           "Missing variable 'reso_pix'")
         del kwargs["reso_pix"]
 
-        self.resolution_matrix = kwargs.get("resolution_matrix")
-        #this should be optional as it only applies to desi data
-        #if self.resolution_matrix is None:
-        #    raise AstronomicalObjectError("Error constructing Pk1dForest. "
-        #                                    "Missing variable 'resolution_matrix'")
-        if "resolution_matrix" in kwargs:
-            del kwargs["resolution_matrix"]
-        
         # call parent constructor
         super().__init__(**kwargs)
 
@@ -223,14 +215,6 @@ class Pk1dForest(Forest):
             Forest.mask_fields += ["reso"]
         if "reso_pix" not in Forest.mask_fields:
             Forest.mask_fields += ["reso_pix"]
-        if self.resolution_matrix is not None:
-            if self.resolution_matrix.shape[1] != self.flux.shape[0]:
-                raise AstronomicalObjectError(
-                    "Error constructing Pk1dForest. 'resolution_matrix', "
-                    "and 'flux' don't have the "
-                    "same size")
-            if "resolution_matrix" not in Forest.mask_fields:
-                Forest.mask_fields += ["resolution_matrix"]
         
 
     def coadd(self, other):
@@ -257,12 +241,6 @@ class Pk1dForest(Forest):
                                         other.exposures_diff)
         self.reso = np.append(self.reso, other.reso)
         self.reso_pix = np.append(self.reso_pix, other.reso_pix)
-
-        if self.resolution_matrix is not None:
-            if other.resolution_matrix.size>0 and self.resolution_matrix.size>0:
-                self.resolution_matrix = np.append(self.resolution_matrix, other.resolution_matrix, axis=1)
-            elif self.resolution_matrix.size==0:
-                self.resolution_matrix = other.resolution_matrix
         # coadd the deltas by rebinning
         super().coadd(other)
 
@@ -297,15 +275,6 @@ class Pk1dForest(Forest):
             "Resolution estimate (sigma) for each pixel in units of pixel size"
         ]
         units += ["Flux units", "Flux units", "", ""]
-
-        if self.resolution_matrix is not None:
-            #transposing here is necessary to store in fits file
-            cols += [self.resolution_matrix.T]
-            names += ["RESOMAT"]
-            comments += [
-                "Transposed Masked resolution matrix"
-            ]
-        units += [""]
 
         return cols, names, units, comments
 
@@ -377,17 +346,12 @@ class Pk1dForest(Forest):
             self.exposures_diff = np.array([])
             self.reso = np.array([])
             self.reso_pix = np.array([])
-            if self.resolution_matrix is not None:
-                self.resolution_matrix = np.array([[]])
             return [], [], [], [], []
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
         self.reso = self.reso[w1]
         self.reso_pix = self.reso_pix[w1]
-        if self.resolution_matrix is not None:
-            self.resolution_matrix = self.resolution_matrix[:, w1]
-
 
         # rebin exposures_diff and reso
         rebin_exposures_diff = np.zeros(bins.max() + 1)
@@ -403,17 +367,11 @@ class Pk1dForest(Forest):
         rebin_reso[:len(rebin_reso_aux)] += rebin_reso_aux
         rebin_reso_pix[:len(rebin_reso_pix_aux)] += rebin_reso_pix_aux
 
-        if self.resolution_matrix is not None:
-            rebin_reso_matrix_aux = np.zeros((self.resolution_matrix.shape[0], bins.max() + 1))
-            for index, reso_matrix_col in enumerate(self.resolution_matrix):
-                rebin_reso_matrix_aux[index, :] = np.bincount(bins, weights=orig_ivar[w1] * reso_matrix_col)
 
         # apply mask due to rebinned inverse vairane
         self.exposures_diff = rebin_exposures_diff[w2] / rebin_ivar[w2]
         self.reso = rebin_reso[w2] / rebin_ivar[w2]
         self.reso_pix = rebin_reso_pix[w2] / rebin_ivar[w2]
-        if self.resolution_matrix is not None:
-            self.resolution_matrix = rebin_reso_matrix_aux[:, w2] / rebin_ivar[np.newaxis, w2]
 
         # finally update control variables
         self.mean_reso = self.reso.mean()

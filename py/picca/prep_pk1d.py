@@ -83,6 +83,72 @@ def exp_diff(hdul, log_lambda):
     return exposures_diff
 
 
+def exp_diff_desi(hdul, mask_targetid):
+    """Computes the difference between exposures.
+
+    More precisely computes de semidifference between two customized coadded
+    spectra obtained from weighted averages of the even-number exposures, for
+    the first spectrum, and of the odd-number exposures, for the second one
+    (see section 3.2 of Chabanier et al. 2019).
+
+    Args:
+        hdul: fitsio.fitslib.FITS
+            Header Data Unit List opened by fitsio
+        mask targetid: array of ints
+            Targetids to select for calculating the exp differences
+
+    Returns:
+        The difference between exposures
+    """
+    argsort = np.flip(np.argsort(hdul["TEFF_LYA"][mask_targetid][:]))
+    flux = hdul["FL"][mask_targetid][argsort, :]
+    ivar = hdul["IV"][mask_targetid][argsort, :]
+    teff_lya = hdul["TEFF_LYA"][mask_targetid][argsort]
+
+    num_exp = len(flux)
+    if (num_exp < 2):
+        userprint("DBG : not enough exposures for diff, spectra rejected")
+        return None
+    flux_total_odd = np.zeros(flux.shape[1])
+    ivar_total_odd = np.zeros(flux.shape[1])
+    flux_total_even = np.zeros(flux.shape[1])
+    ivar_total_even = np.zeros(flux.shape[1])
+    teff_even = 0
+    teff_odd = 0
+    teff_total = np.sum(teff_lya)
+    teff_last = teff_lya[-1]
+    for index_exp in range(2 * (num_exp // 2)):
+        flexp = flux[index_exp]
+        ivexp = ivar[index_exp]
+        teff_lya_exp = teff_lya[index_exp]
+        if index_exp % 2 == 1:
+            flux_total_odd += flexp * ivexp
+            ivar_total_odd += ivexp
+            teff_odd += teff_lya_exp
+        else:
+            flux_total_even += flexp * ivexp
+            ivar_total_even += ivexp
+            teff_even += teff_lya_exp
+
+    w = ivar_total_odd > 0
+    flux_total_odd[w] /= ivar_total_odd[w]
+    w = ivar_total_even > 0
+    flux_total_even[w] /= ivar_total_even[w]
+
+    alpha = 1
+    if (num_exp % 2 == 1):
+        n_even = (num_exp - 1) // 2
+        alpha_N_old = np.sqrt(4. * n_even * (num_exp - n_even)) / num_exp
+        # alpha_N = np.sqrt(4.*t_even*(t_exp-t_even))/t_exp
+        alpha_C_new = np.sqrt((teff_total - teff_last) / teff_total)
+        alpha_N_new = np.sqrt(
+            (teff_total - teff_last) * (teff_total + teff_last)) / teff_total
+        alpha = alpha_N_new
+    diff = 0.5 * (flux_total_even - flux_total_odd) * alpha
+
+    return diff
+
+
 def spectral_resolution(wdisp,
                         with_correction=False,
                         fiberid=None,
