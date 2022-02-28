@@ -187,8 +187,17 @@ class QuasarCatalogueTest(AbstractTest):
         self.assertTrue(all(quasar_catalogue.catalogue["RA"] == ra[::-1][:1]))
         self.assertTrue(all(quasar_catalogue.catalogue["DEC"] == dec[::-1][:1]))
 
-    def test_ztruth_catalogue(self):
+    def test_desi_quasar_catalogue(self):
         """Load a DesiQuasarCatalogue"""
+        config = ConfigParser()
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+                "catalogue": "QSO_cat_guadalupe_healpix.fits",
+                "keep surveys": "all"
+            }})
+
         # TODO: add test
         with self.assertRaises(Exception):
             raise NotImplementedError()
