@@ -259,8 +259,7 @@ def compute_pk_raw(delta_lambda_or_log_lambda, delta, linear_binning=False):
             k: the Fourier modes the Power Spectrum is measured on
             pk: the Power Spectrum
     """
-    # spectral length in km/s
-    if linear_binning:
+    if linear_binning:  # spectral length in AA
         length_lambda = (delta_lambda_or_log_lambda * len(delta))
     else:  # spectral length in km/s
         length_lambda = (delta_lambda_or_log_lambda * constants.SPEED_LIGHT *
