@@ -189,8 +189,8 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
                 "Error constructing DesiPk1dForest. 'resolution_matrix', "
                 "and 'flux' don't have the "
                 "same size")
-        if "resolution_matrix" not in Pk1dForest.mask_fields:
-            Pk1dForest.mask_fields += ["resolution_matrix"]
+        if "resolution_matrix" not in Forest.mask_fields:
+            Forest.mask_fields += ["resolution_matrix"]
 
     def coadd(self, other):
         """Coadd the information of another forest.

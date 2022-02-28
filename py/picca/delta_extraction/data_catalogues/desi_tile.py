@@ -16,11 +16,12 @@ from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
 accepted_options = sorted(list(set(accepted_options+[
-    "use all", "use single nights"])))
+    "use all", "use single nights", "use non-coadded spectra"])))
 
 defaults.update({
     "use all": False,
     "use single nights": False,
+    "use non-coadded spectra": False,
 })
 
 class DesiTile(DesiData):
@@ -102,6 +103,10 @@ class DesiTile(DesiData):
         if self.use_single_nights is None:
             raise DataError("Missing argument 'use single nights' required by DesiTile")
 
+        self.use_non_coadded_spectra = config.getboolean("use non-coadded spectra")
+        if self.use_single_nights is None:
+            raise DataError("Missing argument 'use non-coadded spectra' required by DesiTile")
+
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
 
@@ -127,8 +132,10 @@ class DesiTile(DesiData):
         forests_by_targetid = {}
         num_data = 0
 
+        coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
+
         if self.use_single_nights or "cumulative" in self.input_directory:
-            files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/coadd-*.fits"),
+            files_in = sorted(glob.glob(os.path.join(self.input_directory, f"**/{coadd_name}-*.fits"),
                               recursive=True))
 
             if "cumulative" in self.input_directory:
@@ -143,10 +150,10 @@ class DesiTile(DesiData):
                 ]
         else:
             if self.use_all:
-                files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/all/**/coadd-*.fits"),
+                files_in = sorted(glob.glob(os.path.join(self.input_directory, f"**/all/**/{coadd_name}-*.fits"),
                              recursive=True))
             else:
-                files_in = sorted(glob.glob(os.path.join(self.input_directory, "**/deep/**/coadd-*.fits"),
+                files_in = sorted(glob.glob(os.path.join(self.input_directory, f"**/deep/**/{coadd_name}-*.fits"),
                              recursive=True))
 
             petal_tile = [
@@ -154,7 +161,6 @@ class DesiTile(DesiData):
                 for entry in self.catalogue
             ]
 
-        #TODO: probably need a way to operate directly on spectra files and not just on the coadd
 
 
         # this uniqueness check is to ensure each petal/tile/night combination

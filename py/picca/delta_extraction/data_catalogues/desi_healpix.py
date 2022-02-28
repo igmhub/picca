@@ -13,6 +13,13 @@ from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults,
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
+accepted_options = sorted(list(set(accepted_options+[
+    "use non-coadded spectra"])))
+
+defaults.update({
+    "use non-coadded spectra": False,
+})
+
 class DesiHealpix(DesiData):
     """Reads the spectra from DESI using healpix mode and formats its data as a
     list of Forest instances.
@@ -62,6 +69,10 @@ class DesiHealpix(DesiData):
         """
         self.logger = logging.getLogger(__name__)
 
+        self.use_non_coadded_spectra = config.getboolean("use non-coadded spectra")
+        if self.use_single_nights is None:
+            raise DataError("Missing argument 'use non-coadded spectra' required by DesiTile")
+
         super().__init__(config)
 
     def read_data(self):
@@ -102,11 +113,11 @@ class DesiHealpix(DesiData):
                 is_sv = False
 
             input_directory = f'{self.input_directory}/{survey}/dark'
+            coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
             filename = (
-                f"{input_directory}/{healpix//100}/{healpix}/coadd-{survey}-"
+                f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
                 f"dark-{healpix}.fits")
 
-            #TODO: probably need a way to operate directly on spectra files and not just on the coadd
             #TODO: not sure if we want the dark survey to be hard coded in here, probably won't run on anything else, but still
 
             self.logger.progress(
