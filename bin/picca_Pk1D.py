@@ -116,7 +116,9 @@ def process_all_files(index_file_args):
             mean_z_array[part_index]: mean redshift within the spectral part
             num_masked_pixels: number of masked pixels within the spectral part
         """
-        # Selection over the SNR and the resolution
+        # Selection over the SNR and the resolution, note that some selection is
+        # already performed when computing deltas as e.g. continuum fitting does not 
+        # converge elsewise with constant weights
         if (delta.mean_snr <= args.SNR_min
                 or delta.mean_reso >= args.reso_max):
             return None
@@ -137,6 +139,8 @@ def process_all_files(index_file_args):
         max_num_parts = (len(delta.log_lambda) -
                          first_pixel_index) // min_num_pixels
         num_parts = min(args.nb_part, max_num_parts)
+
+        #the split_forest function works with either binning, but needs to be uniform
         if linear_binning:
             split_array = split_forest(
                 num_parts,
@@ -163,6 +167,7 @@ def process_all_files(index_file_args):
                                         first_pixel_index)
 
         pk_list = []
+        #the rebin_diff_noise function works with either binning, but needs to be uniform
         for part_index in range(num_parts):
             # rebin exposures_diff spectrum
             if (args.noise_estimate == 'rebin_diff'
@@ -177,6 +182,7 @@ def process_all_files(index_file_args):
                         exposures_diff_array[part_index])
 
             # Fill masked pixels with 0.
+            #the fill_masked_pixels function works with either binning, but needs to be uniform
             if linear_binning:
                 #the resolution matrix does not need to have pixels filled in any way...
                 (lambda_new, delta_new, exposures_diff_new, ivar_new,
@@ -193,7 +199,7 @@ def process_all_files(index_file_args):
             if num_masked_pixels > args.nb_pixel_masked_max:
                 continue
 
-            # Compute pk_raw
+            # Compute pk_raw, needs uniform binning
             if linear_binning:
                 k, pk_raw = compute_pk_raw(delta_lambda,
                                            delta_new,
@@ -220,7 +226,7 @@ def process_all_files(index_file_args):
                                                      run_noise,
                                                      linear_binning=False)
 
-            # Compute resolution correction
+            # Compute resolution correction, needs uniform binning
             if linear_binning:
                 #in this case all is in AA space
                 if reso_correction == 'matrix':

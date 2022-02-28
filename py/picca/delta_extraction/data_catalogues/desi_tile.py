@@ -104,7 +104,7 @@ class DesiTile(DesiData):
             raise DataError("Missing argument 'use single nights' required by DesiTile")
 
         self.use_non_coadded_spectra = config.getboolean("use non-coadded spectra")
-        if self.use_single_nights is None:
+        if self.use_non_coadded_spectra is None:
             raise DataError("Missing argument 'use non-coadded spectra' required by DesiTile")
 
     def read_data(self):

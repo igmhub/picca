@@ -13,12 +13,13 @@ from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults,
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
-accepted_options = sorted(list(set(accepted_options+[
-    "use non-coadded spectra"])))
+accepted_options = sorted(
+    list(set(accepted_options + ["use non-coadded spectra"])))
 
 defaults.update({
     "use non-coadded spectra": False,
 })
+
 
 class DesiHealpix(DesiData):
     """Reads the spectra from DESI using healpix mode and formats its data as a
@@ -68,12 +69,27 @@ class DesiHealpix(DesiData):
         Parsed options to initialize class
         """
         self.logger = logging.getLogger(__name__)
-
-        self.use_non_coadded_spectra = config.getboolean("use non-coadded spectra")
-        if self.use_single_nights is None:
-            raise DataError("Missing argument 'use non-coadded spectra' required by DesiTile")
-
+        self._parse_config(config)
         super().__init__(config)
+
+    def _parse_config(self, config):
+        """Parse the configuration options
+
+        Arguments
+        ---------
+        config: configparser.SectionProxy
+        Parsed options to initialize class
+
+        Raise
+        -----
+        DataError upon missing required variables
+        """
+        self.use_non_coadded_spectra = config.getboolean(
+            "use non-coadded spectra")
+        if self.use_non_coadded_spectra is None:
+            raise DataError(
+                "Missing argument 'use non-coadded spectra' required by DesiHealpix"
+            )
 
     def read_data(self):
         """Read the data.
@@ -94,10 +110,11 @@ class DesiHealpix(DesiData):
         """
         in_nside = 64
 
-
         healpix = [
-            healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"], nest=True)
-            for row in self.catalogue
+            healpy.ang2pix(in_nside,
+                           np.pi / 2 - row["DEC"],
+                           row["RA"],
+                           nest=True) for row in self.catalogue
         ]
         self.catalogue["HEALPIX"] = healpix
         self.catalogue.sort("HEALPIX")
@@ -106,8 +123,9 @@ class DesiHealpix(DesiData):
         forests_by_targetid = {}
         is_sv = True
         for (index,
-             (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                    grouped_catalogue.groups):
+             (healpix,
+              survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
+                                     grouped_catalogue.groups):
 
             if survey not in ["sv", "sv1", "sv2", "sv3"]:
                 is_sv = False
@@ -236,7 +254,7 @@ class DesiHealpix(DesiData):
                     reso_sum = spec['RESO'][w_t].copy()
                     reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['WAVELENGTH'])
-                    
+
                     exposures_diff = exp_diff_desi(hdul, w_t)
                     #TODO: @corentin: please check this is doing what it should do...
                     if exposures_diff is None:
@@ -249,8 +267,9 @@ class DesiHealpix(DesiData):
 
                     forest = DesiPk1dForest(**args)
                 else:
-                    raise DataError("Unkown analysis type. Expected 'BAO 3D'"
-                                    f"or 'PK 1D'. Found '{self.analysis_type}'")
+                    raise DataError(
+                        "Unkown analysis type. Expected 'BAO 3D'"
+                        f"or 'PK 1D'. Found '{self.analysis_type}'")
 
                 if targetid in forests_by_targetid:
                     forests_by_targetid[targetid].coadd(forest)
