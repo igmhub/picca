@@ -7,6 +7,8 @@ from astropy.table import Table
 
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue
+from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import DesiQuasarCatalogue
+from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import defaults as defaults_desi_quasar_cat
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import defaults as defaults_drq
 from picca.tests.delta_extraction.abstract_test import AbstractTest
@@ -189,18 +191,97 @@ class QuasarCatalogueTest(AbstractTest):
 
     def test_desi_quasar_catalogue(self):
         """Load a DesiQuasarCatalogue"""
+        out_file = f"{THIS_DIR}/results/desi_catalogue_print.txt"
+        test_file = f"{THIS_DIR}/data/desi_catalogue_print.txt"
+
+        # setup printing
+        setup_logger(log_file=out_file)
+
         config = ConfigParser()
         config.read_dict(
             {"data": {
                 "z min": 2.15,
                 "z max": 3.2,
-                "catalogue": "QSO_cat_guadalupe_healpix.fits",
+                "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits",
                 "keep surveys": "all"
             }})
 
-        # TODO: add test
-        with self.assertRaises(Exception):
-            raise NotImplementedError()
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        quasar_catalogue = DesiQuasarCatalogue(config["data"])
+
+        # reset printing
+        reset_logger()
+        self.compare_ascii(test_file, out_file)
+
+        self.assertTrue(quasar_catalogue.catalogue is not None)
+        self.assertTrue(len(quasar_catalogue.catalogue) == 3)
+        self.assertTrue(quasar_catalogue.z_min == 2.15)
+        self.assertTrue(quasar_catalogue.z_max == 3.2)
+        self.assertTrue(quasar_catalogue.max_num_spec is None)
+
+    def test_desi_quasar_catalogue_filter_surveys(self):
+        """Load a DesiQuasarCatalogue filtering by survey"""
+        # setup printing
+        setup_logger(log_file=None)
+
+        config = ConfigParser()
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+                "max_num_spec": 1,
+                "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys": "sv2 sv3"
+            }})
+
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        quasar_catalogue = DesiQuasarCatalogue(config["data"])
+
+        # reset printing
+        reset_logger()
+
+        self.assertTrue(quasar_catalogue.catalogue is not None)
+        self.assertTrue(len(quasar_catalogue.catalogue) == 2)
+        self.assertTrue(quasar_catalogue.z_min == 2.15)
+        self.assertTrue(quasar_catalogue.z_max == 3.2)
+        self.assertTrue(quasar_catalogue.max_num_spec is None)
+
+    def test_desi_quasar_catalogue_trim_catalogue(self):
+        """Load a DesiQuasarCatalogue trimming the catalogue"""
+        # setup printing
+        setup_logger(log_file=None)
+
+        config = ConfigParser()
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+                "max num spec": 1,
+                "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys": "all"
+            }})
+
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        quasar_catalogue = DesiQuasarCatalogue(config["data"])
+
+        # reset printing
+        reset_logger()
+
+        self.assertTrue(quasar_catalogue.catalogue is not None)
+        print(len(quasar_catalogue.catalogue))
+        self.assertTrue(len(quasar_catalogue.catalogue) == 1)
+        self.assertTrue(quasar_catalogue.z_min == 2.15)
+        self.assertTrue(quasar_catalogue.z_max == 3.2)
+        self.assertTrue(quasar_catalogue.max_num_spec == 1)
 
 if __name__ == '__main__':
     unittest.main()
