@@ -167,6 +167,8 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         """
 
         self.resolution_matrix = kwargs.get("resolution_matrix")
+        #potentially change this in case we ever want log-binning with DESI Pk1d data
+        #then would need a check of self.wave_solution
         if self.resolution_matrix is None:
             raise AstronomicalObjectError(
                 "Error constructing DesiPk1dForest. "
@@ -176,10 +178,9 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
 
         # call parent constructors
         super().__init__(**kwargs)
-
         self.consistency_check()
+        #super().rebin()
 
-        super().rebin()
 
     def consistency_check(self):
         """Consistency checks after __init__"""
@@ -291,13 +292,12 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         # apply mask due to cuts in bin
         self.resolution_matrix = self.resolution_matrix[:, w1]
 
-        # rebin exposures_diff and reso
+        # rebin resolution_matrix
         rebin_reso_matrix_aux = np.zeros(
             (self.resolution_matrix.shape[0], bins.max() + 1))
         for index, reso_matrix_col in enumerate(self.resolution_matrix):
             rebin_reso_matrix_aux[index, :] = np.bincount(
                 bins, weights=orig_ivar[w1] * reso_matrix_col)
-
         # apply mask due to rebinned inverse vairane
         self.resolution_matrix = rebin_reso_matrix_aux[:, w2] / rebin_ivar[
             np.newaxis, w2]
