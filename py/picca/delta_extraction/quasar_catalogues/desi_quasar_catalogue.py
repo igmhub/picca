@@ -14,7 +14,7 @@ accepted_options = sorted(list(set(accepted_options + [
     "catalogue", "keep surveys"])))
 
 defaults = {
-    "keep surveys": "sv1 sv2 sv3 main all"
+    "keep surveys": "sv1 sv2 sv3 main"
 }
 
 class DesiQuasarCatalogue(QuasarCatalogue):
