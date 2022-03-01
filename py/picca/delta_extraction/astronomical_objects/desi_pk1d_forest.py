@@ -179,7 +179,6 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         # call parent constructors
         super().__init__(**kwargs)
         self.consistency_check()
-        #super().rebin()
 
 
     def consistency_check(self):

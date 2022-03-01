@@ -694,6 +694,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
+        test_obj.rebin()
         self.assert_forest_object(test_obj, kwargs_desi_forest_rebin)
 
         # create forest with extra variables
@@ -702,12 +703,14 @@ class AstronomicalObjectTest(AbstractTest):
             "test variable": "test",
         })
         test_obj = DesiForest(**kwargs)
+        test_obj.rebin()
         self.assert_forest_object(test_obj, kwargs_desi_forest_rebin)
 
         # create a DesiForest with missing night, petal and tile
         kwargs = kwargs_desi_forest.copy()
         del kwargs["night"], kwargs["petal"], kwargs["tile"]
         test_obj = DesiForest(**kwargs)
+        test_obj.rebin()
 
         kwargs = kwargs_desi_forest_rebin.copy()
         kwargs["night"] = []
@@ -758,9 +761,11 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
+        test_obj.rebin()
 
         # create a second DesiForest
         test_obj_other = DesiForest(**kwargs_desi_forest2)
+        test_obj_other.rebin()
 
         # coadd them
         test_obj.coadd(test_obj_other)
@@ -771,6 +776,7 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs = kwargs_desi_forest2.copy()
         kwargs["targetid"] = 999
         test_obj_other = DesiForest(**kwargs)
+        test_obj_other.rebin()
 
         # coadding them whould raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -783,6 +789,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
+        test_obj.rebin()
 
         self.assert_get_data(test_obj)
 
@@ -793,12 +800,14 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a DesiForest
         test_obj = DesiForest(**kwargs_desi_forest)
+        test_obj.rebin()
 
         # get header and test
         self.assert_get_header(test_obj)
 
         # create a second DesiForest and coadd it to the first
         test_obj_other = DesiForest(**kwargs_desi_forest2)
+        test_obj_other.rebin()
         test_obj.coadd(test_obj_other)
 
         # get header and test
@@ -823,6 +832,7 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="lin")
 
         test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
+        test_obj.rebin()
         self.assertTrue(isinstance(test_obj, DesiPk1dForest))
         self.assertTrue(isinstance(test_obj, DesiForest))
         self.assertTrue(isinstance(test_obj, Pk1dForest))
@@ -837,12 +847,14 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(isinstance(test_obj, DesiForest))
         self.assertTrue(isinstance(test_obj, Pk1dForest))
         test_obj = DesiPk1dForest(**kwargs)
+        test_obj.rebin()
 
         # create a DesiPk1dForest with missing night, petal and tile
         # create a DesiForest with missing night, petal and tile
         kwargs = kwargs_desi_pk1d_forest.copy()
         del kwargs["night"], kwargs["petal"], kwargs["tile"]
         test_obj = DesiPk1dForest(**kwargs)
+        test_obj.rebin()
 
         kwargs = kwargs_desi_pk1d_forest_rebin.copy()
         kwargs["night"] = []
@@ -960,12 +972,15 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a DesiPk1dForest
         test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
+        test_obj.rebin()
 
         # create a second DesiPk1dForest
         test_obj_other = DesiPk1dForest(**kwargs_desi_pk1d_forest2)
+        test_obj_other.rebin()
 
         # coadd them
         test_obj.coadd(test_obj_other)
+        test_obj.rebin()
         self.assert_forest_object(test_obj, kwargs_desi_pk1d_forest_coadd)
 
         # create a third DesiPk1dForest with different targetid
@@ -985,6 +1000,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a DesiPk1dForest
         test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
+        test_obj.rebin()
         self.assert_get_data(test_obj)
 
     def test_desi_pk1d_forest_get_header(self):
@@ -995,10 +1011,12 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a DesiPk1dForest
         test_obj = DesiPk1dForest(**kwargs_desi_pk1d_forest)
+        test_obj.rebin()
         self.assert_get_header(test_obj)
 
         # create a second DesiPk1dForest and coadd it to the first
         test_obj_other = DesiPk1dForest(**kwargs_desi_pk1d_forest2)
+        test_obj_other.rebin()
         test_obj.coadd(test_obj_other)
 
         # get header and test
@@ -1057,6 +1075,7 @@ class AstronomicalObjectTest(AbstractTest):
         setup_forest(wave_solution="log")
 
         test_obj = Forest(**kwargs_forest_log)
+        test_obj.rebin()
 
         kwargs_forest_gt = kwargs_astronomical_object_gt.copy()
         for kwargs in kwargs_forest_gt.values():
@@ -1120,9 +1139,11 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
+        test_obj.rebin()
 
         # create a second SdssForest
         test_obj_other = Forest(**kwargs_forest_log2)
+        test_obj_other.rebin()
 
         # coadd them
         test_obj.coadd(test_obj_other)
@@ -1132,6 +1153,7 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs = kwargs_forest_log2.copy()
         kwargs["los_id"] = 999
         test_obj_other = Forest(**kwargs)
+        test_obj_other.rebin()
 
         # coadding them whould raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -1143,9 +1165,11 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
+        test_obj.rebin()
 
         # create a second Forest
         test_obj_other = Forest(**kwargs_forest_lin2)
+        test_obj_other.rebin()
 
         # coadd them
         test_obj.coadd(test_obj_other)
@@ -1158,6 +1182,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
+        test_obj.rebin()
         self.assert_get_data(test_obj)
 
         # set class variables; case: linear wavelength solution
@@ -1166,6 +1191,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
+        test_obj.rebin()
         self.assert_get_data(test_obj)
 
     def test_forest_get_header(self):
@@ -1175,6 +1201,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
+        test_obj.rebin()
 
         # get header and test
         self.assert_get_header(test_obj)
@@ -1184,6 +1211,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_lin)
+        test_obj.rebin()
 
         # get header and test
         self.assert_get_header(test_obj)
@@ -1229,9 +1257,11 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
+        test_obj.rebin()
 
         # create a second Pk1dForest
         test_obj_other = Pk1dForest(**kwargs_pk1d_forest_log2)
+        test_obj_other.rebin()
 
         # coadd them
         test_obj.coadd(test_obj_other)
@@ -1241,6 +1271,7 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs = kwargs_pk1d_forest_log2.copy()
         kwargs["los_id"] = 999
         test_obj_other = Pk1dForest(**kwargs)
+        test_obj_other.rebin()
 
         # coadding them should raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -1253,9 +1284,11 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Forest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
+        test_obj.rebin()
 
         # create a second Forest
         test_obj_other = Pk1dForest(**kwargs_pk1d_forest_lin2)
+        test_obj_other.rebin()
 
         # coadd them
         test_obj.coadd(test_obj_other)
@@ -1269,6 +1302,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
+        test_obj.rebin()
         self.assert_get_data(test_obj)
 
         # set class variables; case: linear wavelength solution
@@ -1278,6 +1312,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Forest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
+        test_obj.rebin()
         self.assert_get_data(test_obj)
 
     def test_pk1d_forest_get_header(self):
@@ -1288,6 +1323,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_log)
+        test_obj.rebin()
 
         # get header and test
         self.assert_get_header(test_obj)
@@ -1297,6 +1333,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)
+        test_obj.rebin()
 
         # get header and test
         self.assert_get_header(test_obj)
@@ -1314,6 +1351,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
+        test_obj.rebin()
         self.assertTrue(isinstance(test_obj, SdssForest))
         self.assertTrue(isinstance(test_obj, Forest))
         self.assert_forest_object(test_obj, kwargs_sdss_forest_rebin)
@@ -1324,6 +1362,7 @@ class AstronomicalObjectTest(AbstractTest):
             "test_variable": "test",
         })
         test_obj = SdssForest(**kwargs)
+        test_obj.rebin()
         self.assert_forest_object(test_obj, kwargs_sdss_forest_rebin)
 
         # create a SdssForest with missing SdssForest variables
@@ -1359,9 +1398,11 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
+        test_obj.rebin()
 
         # create a second SdssForest
         test_obj_other = SdssForest(**kwargs_sdss_forest2)
+        test_obj_other.rebin()
 
         # coadd them
         test_obj.coadd(test_obj_other)
@@ -1371,6 +1412,7 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs = kwargs_sdss_forest2.copy()
         kwargs["thingid"] = 999
         test_obj_other = SdssForest(**kwargs)
+        test_obj_other.rebin()
 
         # coadding them should raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -1383,6 +1425,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create an SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
+        test_obj.rebin()
         self.assert_get_data(test_obj)
 
     def test_sdss_forest_get_header(self):
@@ -1392,12 +1435,14 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create an SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
+        test_obj.rebin()
 
         # get header and test
         self.assert_get_header(test_obj)
 
         # create a second SdssForest and coadd it to the first
         test_obj_other = SdssForest(**kwargs_sdss_forest2)
+        test_obj_other.rebin()
         test_obj.coadd(test_obj_other)
 
         # get header and test
@@ -1423,6 +1468,7 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
+        test_obj.rebin()
         self.assertTrue(isinstance(test_obj, SdssPk1dForest))
         self.assertTrue(isinstance(test_obj, SdssForest))
         self.assertTrue(isinstance(test_obj, Pk1dForest))
@@ -1434,6 +1480,7 @@ class AstronomicalObjectTest(AbstractTest):
             "test_variable": "test",
         })
         test_obj = SdssPk1dForest(**kwargs)
+        test_obj.rebin()
         self.assert_forest_object(test_obj, kwargs_sdss_pk1d_forest_rebin)
 
         # create a SdssPk1dForest with missing SdssForest variables
@@ -1504,9 +1551,11 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create a SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
+        test_obj.rebin()
 
         # create a second SdssPk1dForest
         test_obj_other = SdssPk1dForest(**kwargs_sdss_pk1d_forest2)
+        test_obj_other.rebin()
 
         # coadd them
         test_obj.coadd(test_obj_other)
@@ -1516,6 +1565,7 @@ class AstronomicalObjectTest(AbstractTest):
         kwargs = kwargs_sdss_pk1d_forest2.copy()
         kwargs["thingid"] = 999
         test_obj_other = SdssPk1dForest(**kwargs)
+        test_obj_other.rebin()
 
         # coadding them should raise an error
         with self.assertRaises(AstronomicalObjectError):
@@ -1539,12 +1589,14 @@ class AstronomicalObjectTest(AbstractTest):
 
         # create an SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
+        test_obj.rebin()
 
         # get header and test
         self.assert_get_header(test_obj)
 
         # create a second SdssPk1dForest and coadd it to the first
         test_obj_other = SdssPk1dForest(**kwargs_sdss_pk1d_forest2)
+        test_obj_other.rebin()
         test_obj.coadd(test_obj_other)
 
         # get header and test

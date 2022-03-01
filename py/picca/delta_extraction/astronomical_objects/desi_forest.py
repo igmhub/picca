@@ -167,9 +167,6 @@ class DesiForest(Forest):
         kwargs["los_id"] = self.targetid
         super().__init__(**kwargs)
 
-        # rebin arrays
-        self.rebin() #super().rebin()
-
     def coadd(self, other):
         """Coadd the information of another forest.
 

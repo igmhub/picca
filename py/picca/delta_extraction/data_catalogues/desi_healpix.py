@@ -271,6 +271,12 @@ class DesiHealpix(DesiData):
                         "Unkown analysis type. Expected 'BAO 3D'"
                         f"or 'PK 1D'. Found '{self.analysis_type}'")
 
+                # rebin arrays
+                # this needs to happen after all arrays are initialized by
+                # Forest constructor
+                forest.rebin()
+
+                # keep the forest
                 if targetid in forests_by_targetid:
                     forests_by_targetid[targetid].coadd(forest)
                 else:

@@ -214,6 +214,7 @@ class SdssData(Data):
             else:
                 raise DataError(f"analysis_type = {self.analysis_type}")
 
+            forest.rebin()
             if thingid in forests_by_thingid:
                 forests_by_thingid[thingid].coadd(forest)
             else:
@@ -298,6 +299,13 @@ class SdssData(Data):
                             "exposures_diff": exposures_diff,
                             "reso": reso
                         })
+
+                # rebin arrays
+                # this needs to happen after all arrays are initialized by
+                # Forest constructor
+                forest.rebin()
+
+                # keep the forest
                 if thingid in forests_by_thingid:
                     forests_by_thingid[thingid].coadd(forest)
                 else:
