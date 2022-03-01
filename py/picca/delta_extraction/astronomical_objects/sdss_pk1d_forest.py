@@ -154,8 +154,3 @@ class SdssPk1dForest(SdssForest, Pk1dForest):
         AstronomicalObjectError if there are missing variables
         """
         super().__init__(**kwargs)
-
-        # rebin arrays
-        # this needs to happen after flux, ivar arrays are initialized by
-        # Forest constructor
-        super().rebin()
