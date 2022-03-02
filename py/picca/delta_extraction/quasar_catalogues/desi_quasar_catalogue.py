@@ -14,8 +14,10 @@ accepted_options = sorted(list(set(accepted_options + [
     "catalogue", "keep surveys"])))
 
 defaults = {
-    "keep surveys": "sv1 sv2 sv3 main"
+    "keep surveys": "all"
 }
+
+accepted_surveys = ["sv1", "sv2", "sv3", "main", "special", "all"]
 
 class DesiQuasarCatalogue(QuasarCatalogue):
     """Reads the z_truth catalogue from DESI
@@ -50,7 +52,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
     keep surveys: list
     Only keep those items in the catalogue that have a "SURVEY" specified in
     this list. Ignored if "SURVEY" column is not present in the catalogue or
-    if "all" is present in this list
+    if "all" is present in this list. Note that all does not include special
+    tiles, these need to be added separately
     """
     def __init__(self, config):
         """Initialize class instance
@@ -71,8 +74,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self.read_catalogue()
 
         # if not all surveys are specified, then filter the catalogue
-        if "all" not in self.keep_surveys:
-            self.filter_surveys()
+        self.filter_surveys()
 
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
@@ -93,9 +95,18 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         """
         keep_surveys = config.get("keep surveys")
         if keep_surveys is None:
-            raise CorrectionError(
+            raise QuasarCatalogueError(
                 "Missing argument 'keep surveys' required by DesiQuasarCatalogue")
         self.keep_surveys = keep_surveys.split()
+        for survey in self.keep_surveys:
+            if survey not in accepted_surveys:
+                raise QuasarCatalogueError(
+                    f"Unrecognised survey. Expected one of {accepted_surveys}. "
+                    f"Found: {survey}")
+        if "all" in self.keep_surveys:
+            for survey in ["sv1", "sv2", "sv3", "main"]:
+                if survey not in self.keep_surveys:
+                    self.keep_surveys.append(survey)
 
         self.filename = config.get("catalogue")
         if self.filename is None:
@@ -106,9 +117,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         """Filter all the objects in the catalogue not belonging to the specified
         surveys.
         """
-        if 'SURVEY' in self.catalogue.colnames:
-            mask = np.isin(self.catalogue["SURVEY"], self.keep_surveys)
-            self.catalogue = self.catalogue[mask]
+        mask = np.isin(self.catalogue["SURVEY"], self.keep_surveys)
+        self.catalogue = self.catalogue[mask]
 
     def read_catalogue(self):
         """Read the z_truth catalogue

@@ -203,7 +203,7 @@ class QuasarCatalogueTest(AbstractTest):
                 "z min": 2.15,
                 "z max": 3.2,
                 "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits",
-                "keep surveys": "all"
+                "keep surveys": "all special"
             }})
 
         for key, value in defaults_drq.items():
@@ -227,6 +227,7 @@ class QuasarCatalogueTest(AbstractTest):
         # setup printing
         setup_logger(log_file=None)
 
+        # test filtering with one survey
         config = ConfigParser()
         config.read_dict(
             {"data": {
@@ -234,7 +235,7 @@ class QuasarCatalogueTest(AbstractTest):
                 "z max": 3.2,
                 "max_num_spec": 1,
                 "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
-                "keep surveys": "sv2 sv3"
+                "keep surveys": "sv3"
             }})
 
         for key, value in defaults_drq.items():
@@ -243,7 +244,58 @@ class QuasarCatalogueTest(AbstractTest):
 
         quasar_catalogue = DesiQuasarCatalogue(config["data"])
 
-        # reset printing
+        self.assertTrue(quasar_catalogue.catalogue is not None)
+        self.assertTrue(len(quasar_catalogue.catalogue) == 1)
+        self.assertTrue(quasar_catalogue.z_min == 2.15)
+        self.assertTrue(quasar_catalogue.z_max == 3.2)
+        self.assertTrue(quasar_catalogue.max_num_spec is None)
+        self.assertTrue(len(quasar_catalogue.keep_surveys) == 1)
+        self.assertTrue(quasar_catalogue.keep_surveys[0] == "sv3")
+
+        # test filtering with two survey
+        config = ConfigParser()
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+                "max_num_spec": 1,
+                "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys": "main sv3"
+            }})
+
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        quasar_catalogue = DesiQuasarCatalogue(config["data"])
+
+        self.assertTrue(quasar_catalogue.catalogue is not None)
+        self.assertTrue(len(quasar_catalogue.catalogue) == 2)
+        self.assertTrue(quasar_catalogue.z_min == 2.15)
+        self.assertTrue(quasar_catalogue.z_max == 3.2)
+        self.assertTrue(quasar_catalogue.max_num_spec is None)
+        self.assertTrue(len(quasar_catalogue.keep_surveys) == 2)
+        self.assertTrue(quasar_catalogue.keep_surveys[0] == "main")
+        self.assertTrue(quasar_catalogue.keep_surveys[1] == "sv3")
+
+        # now test the behaviour of all
+        config = ConfigParser()
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+                "max_num_spec": 1,
+                "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys": "all"
+            }})
+
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        quasar_catalogue = DesiQuasarCatalogue(config["data"])
+
+        # reset printing after test
         reset_logger()
 
         self.assertTrue(quasar_catalogue.catalogue is not None)
@@ -251,6 +303,79 @@ class QuasarCatalogueTest(AbstractTest):
         self.assertTrue(quasar_catalogue.z_min == 2.15)
         self.assertTrue(quasar_catalogue.z_max == 3.2)
         self.assertTrue(quasar_catalogue.max_num_spec is None)
+        self.assertTrue(len(quasar_catalogue.keep_surveys) == 5)
+        self.assertTrue(quasar_catalogue.keep_surveys[0] == "all")
+        self.assertTrue(quasar_catalogue.keep_surveys[1] == "sv1")
+        self.assertTrue(quasar_catalogue.keep_surveys[2] == "sv2")
+        self.assertTrue(quasar_catalogue.keep_surveys[3] == "sv3")
+        self.assertTrue(quasar_catalogue.keep_surveys[4] == "main")
+
+        # now test the behaviour of sv1 + all
+        config = ConfigParser()
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+                "max_num_spec": 1,
+                "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys": "sv1 all"
+            }})
+
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        quasar_catalogue = DesiQuasarCatalogue(config["data"])
+
+        # reset printing after test
+        reset_logger()
+
+        self.assertTrue(quasar_catalogue.catalogue is not None)
+        self.assertTrue(len(quasar_catalogue.catalogue) == 2)
+        self.assertTrue(quasar_catalogue.z_min == 2.15)
+        self.assertTrue(quasar_catalogue.z_max == 3.2)
+        self.assertTrue(quasar_catalogue.max_num_spec is None)
+        self.assertTrue(len(quasar_catalogue.keep_surveys) == 5)
+        self.assertTrue(quasar_catalogue.keep_surveys[0] == "sv1")
+        self.assertTrue(quasar_catalogue.keep_surveys[1] == "all")
+        self.assertTrue(quasar_catalogue.keep_surveys[2] == "sv2")
+        self.assertTrue(quasar_catalogue.keep_surveys[3] == "sv3")
+        self.assertTrue(quasar_catalogue.keep_surveys[4] == "main")
+
+        # now test the behaviour of all + special
+        config = ConfigParser()
+        config.read_dict(
+            {"data": {
+                "z min": 2.15,
+                "z max": 3.2,
+                "max_num_spec": 1,
+                "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits.gz",
+                "keep surveys": "all special"
+            }})
+
+        for key, value in defaults_drq.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        quasar_catalogue = DesiQuasarCatalogue(config["data"])
+
+        # reset printing after test
+        reset_logger()
+
+        self.assertTrue(quasar_catalogue.catalogue is not None)
+        self.assertTrue(len(quasar_catalogue.catalogue) == 3)
+        self.assertTrue(quasar_catalogue.z_min == 2.15)
+        self.assertTrue(quasar_catalogue.z_max == 3.2)
+        self.assertTrue(quasar_catalogue.max_num_spec is None)
+        self.assertTrue(len(quasar_catalogue.keep_surveys) == 6)
+        self.assertTrue(quasar_catalogue.keep_surveys[0] == "all")
+        self.assertTrue(quasar_catalogue.keep_surveys[1] == "special")
+        self.assertTrue(quasar_catalogue.keep_surveys[2] == "sv1")
+        self.assertTrue(quasar_catalogue.keep_surveys[3] == "sv2")
+        self.assertTrue(quasar_catalogue.keep_surveys[4] == "sv3")
+        self.assertTrue(quasar_catalogue.keep_surveys[5] == "main")
+
+
 
     def test_desi_quasar_catalogue_trim_catalogue(self):
         """Load a DesiQuasarCatalogue trimming the catalogue"""
