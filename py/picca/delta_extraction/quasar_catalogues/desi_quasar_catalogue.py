@@ -101,6 +101,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
                 raise QuasarCatalogueError(
                     f"Unrecognised survey. Expected one of {accepted_surveys}. "
                     f"Found: {survey}")
+        # if "all" is given, then make sure "sv1", "sv2", "sv3" and "main" are present
         if "all" in self.keep_surveys:
             for survey in ["sv1", "sv2", "sv3", "main"]:
                 if survey not in self.keep_surveys:
