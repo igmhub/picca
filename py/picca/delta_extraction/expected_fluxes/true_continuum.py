@@ -221,7 +221,6 @@ class TrueContinuum(ExpectedFlux):
             cont = np.bincount(bins,
                                weights=forest.continuum * weights)
             mean_cont[:len(cont)] += cont
-
             cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont
 
@@ -261,12 +260,12 @@ class TrueContinuum(ExpectedFlux):
                      Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
 
             var_lss = self.get_var_lss(forest.log_lambda)
-            var_pipe = 1. / forest.ivar/ forest.continuum**2
+            var_pipe = 1. / forest.ivar / forest.continuum**2
             variance = var_lss + var_pipe
             weights = 1 / variance
-            cont = np.bincount(bins, weights= forest.continuum * weights)
+            cont = np.bincount(bins,
+                               weights= forest.continuum * weights)
             mean_cont[:len(cont)] += cont
-
             cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont
 
@@ -307,35 +306,28 @@ class TrueContinuum(ExpectedFlux):
             f"{self.input_directory}/{healpix//100}/{healpix}/truth-{in_nside}-"
             f"{healpix}.fits")
         hdul = fits.open(filename_truth)
-        wmin = hdul["TRUE_CONT"].header["WMIN"]
-        wmax = hdul["TRUE_CONT"].header["WMAX"]
-        dwave = hdul["TRUE_CONT"].header["DWAVE"]
-        twave = np.arange(wmin, wmax + dwave, dwave)
+        lambda_min = hdul["TRUE_CONT"].header["WMIN"]
+        lambda_max = hdul["TRUE_CONT"].header["WMAX"]
+        delta_lambda = hdul["TRUE_CONT"].header["DWAVE"]
+        lambda_ = np.arange(lambda_min, lambda_max + delta_lambda, delta_lambda)
         true_cont = hdul["TRUE_CONT"].data
         hdul.close()
         indx = np.where(true_cont["TARGETID"]==forest.targetid)
-        true_continuum = interp1d(twave, true_cont["TRUE_CONT"][indx])
+        true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
 
         if Forest.wave_solution == "log":
             forest.continuum = true_continuum(10**forest.log_lambda)[0]
-            mean_optical_depth = np.ones(forest.log_lambda.size)
-            tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
-            w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
-            z = 10.**forest.log_lambda / lambda_rest_frame - 1.
 
         elif Forest.wave_solution == "lin":
             forest.continuum = true_continuum(forest.lambda_)[0]
-            mean_optical_depth = np.ones(forest.lambda_.size)
-            tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
-            w = forest.lambda_ / (1. + forest.z) <= lambda_rest_frame
-            z = forest.lambda_ / lambda_rest_frame - 1.
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either 'log' "
                                     "or 'lin'")
 
-        mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
-        forest.continuum *= mean_optical_depth
-        forest.hpcont = healpix
+        # this add the optical depth correction if applied
+        # see OpticalDepthCorrection for details
+        forest.continuum *= forest.transmission_correction # César here multiply mean transmitted flux from mocks instead issue #847
+        #forest.hpcont = healpix
         return forest
 
     def read_var_lss(self):
@@ -365,14 +357,14 @@ class TrueContinuum(ExpectedFlux):
         except:
             raise ExpectedFluxError(f"var_lss from {var_lss_file} couldn't be loaded")
 
-        _lambda = hdul[1].data['LAMBDA']
+        lambda_ = hdul[1].data['LAMBDA']
         flux_variance = hdul[1].data['VAR']
         mean_flux = hdul[1].data['MEANFLUX']
         hdul.close()
 
         var_lss=flux_variance/mean_flux**2
 
-        self.get_var_lss = interp1d(_lambda,
+        self.get_var_lss = interp1d(lambda_,
                                     var_lss,
                                     fill_value='extrapolate',
                                     kind='nearest')
@@ -443,7 +435,6 @@ class TrueContinuum(ExpectedFlux):
                 ],
                               names=['loglam_rest', 'mean_cont', 'weight'],
                               extname='CONT')
-
             elif Forest.wave_solution == "lin":
                 num_bins = int((Forest.lambda_max - Forest.lambda_min) /
                                Forest.delta_lambda) + 1
@@ -453,7 +444,7 @@ class TrueContinuum(ExpectedFlux):
                     self.get_mean_cont(self.lambda_rest_frame),
                     self.get_mean_cont_weight(self.lambda_rest_frame),
                 ],
-                              names=['lam_rest', 'mean_cont', 'weight'],
+                              names=['lambda_rest_frame', 'mean_cont', 'weight'],
                               extname='CONT')
 
             else:
