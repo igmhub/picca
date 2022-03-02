@@ -50,10 +50,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
     Filename of the z_truth catalogue
 
     keep surveys: list
-    Only keep those items in the catalogue that have a "SURVEY" specified in
-    this list. Ignored if "SURVEY" column is not present in the catalogue or
-    if "all" is present in this list. Note that all does not include special
-    tiles, these need to be added separately
+    Only keep the entries in the catalogue that have a "SURVEY" specified in
+    this list. Ignored if "SURVEY" column is not present in the catalogue.
     """
     def __init__(self, config):
         """Initialize class instance
@@ -117,8 +115,9 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         """Filter all the objects in the catalogue not belonging to the specified
         surveys.
         """
-        mask = np.isin(self.catalogue["SURVEY"], self.keep_surveys)
-        self.catalogue = self.catalogue[mask]
+        if 'SURVEY' in self.catalogue.colnames:
+            mask = np.isin(self.catalogue["SURVEY"], self.keep_surveys)
+            self.catalogue = self.catalogue[mask]
 
     def read_catalogue(self):
         """Read the z_truth catalogue
