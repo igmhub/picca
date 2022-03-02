@@ -79,6 +79,7 @@ kwargs1 = {
     "mjd": 0,
 }
 forest1 = SdssForest(**kwargs1)
+forest1.rebin()
 # forest 1 properties
 assert np.allclose(forest1.flux, np.ones_like(forest1_log_lambda))
 assert np.allclose(forest1.log_lambda, forest1_log_lambda)
@@ -105,6 +106,7 @@ kwargs2 = {
     "mjd": 0,
 }
 forest2 = SdssForest(**kwargs2)
+forest2.rebin()
 # forest 2 properties
 assert np.allclose(forest2.flux, np.ones_like(forest2_log_lambda))
 assert np.allclose(forest2.log_lambda, forest2_log_lambda)
@@ -131,6 +133,7 @@ kwargs3 = {
     "mjd": 0,
 }
 forest3 = SdssForest(**kwargs3)
+forest3.rebin()
 # forest 2 properties
 assert np.allclose(forest3.flux, np.ones_like(forest3_log_lambda))
 assert np.allclose(forest3.log_lambda, forest3_log_lambda)

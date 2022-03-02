@@ -259,7 +259,7 @@ class DesiTile(DesiData):
                     ivar = spec['IVAR'][w_t].copy()
                     flux = spec['FLUX'][w_t].copy()
 
-                    rgs = {
+                    args = {
                         "flux": flux,
                         "ivar": ivar,
                         "targetid": targetid,
@@ -288,6 +288,12 @@ class DesiTile(DesiData):
                         raise DataError("Unkown analysis type. Expected 'BAO 3D'"
                                         f"or 'PK 1D'. Found '{self.analysis_type}'")
 
+                    # rebin arrays
+                    # this needs to happen after all arrays are initialized by
+                    # Forest constructor
+                    forest.rebin()
+
+                    # add the forest to list
                     if targetid in forests_by_targetid:
                         forests_by_targetid[targetid].coadd(forest)
                     else:

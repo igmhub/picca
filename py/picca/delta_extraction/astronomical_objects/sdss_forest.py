@@ -147,11 +147,6 @@ class SdssForest(Forest):
         kwargs["los_id"] = self.thingid
         super().__init__(**kwargs)
 
-        # rebin arrays
-        # this needs to happen after flux and ivar arrays are initialized by
-        # Forest constructor
-        super().rebin()
-
     def coadd(self, other):
         """Coadd the information of another forest.
 
