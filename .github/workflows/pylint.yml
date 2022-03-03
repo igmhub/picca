@@ -21,6 +21,8 @@ jobs:
       run: |
         ls
         realpath .
+    - name: Install picca
+      run: pip install -e .  
     - name: Analysing the code with pylint
       run: |
         pylint py/picca/deltas_extraction
