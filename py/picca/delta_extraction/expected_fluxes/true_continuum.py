@@ -318,7 +318,7 @@ class TrueContinuum(ExpectedFlux):
 
         if Forest.wave_solution == "log":
             forest.continuum = true_continuum(10**forest.log_lambda)[0]
-            forest.continuum *= self.get_mean_flux(10**forest.log_lambda)[0]
+            forest.continuum *= self.get_mean_flux(10**forest.log_lambda)
 
         elif Forest.wave_solution == "lin":
             forest.continuum = true_continuum(forest.lambda_)[0]
