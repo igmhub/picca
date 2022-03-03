@@ -318,17 +318,15 @@ class TrueContinuum(ExpectedFlux):
 
         if Forest.wave_solution == "log":
             forest.continuum = true_continuum(10**forest.log_lambda)[0]
+            forest.continuum *= self.get_mean_flux(10**forest.log_lambda)[0]
 
         elif Forest.wave_solution == "lin":
             forest.continuum = true_continuum(forest.lambda_)[0]
+            forest.continuum *= self.get_mean_flux(forest.lambda_)
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either 'log' "
                                     "or 'lin'")
 
-        # this add the optical depth correction if applied
-        # see OpticalDepthCorrection for details
-        forest.continuum *= forest.transmission_correction # César here multiply mean transmitted flux from mocks instead issue #847
-        #forest.hpcont = healpix
         return forest
 
     def read_raw_statistics(self):
