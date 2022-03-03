@@ -37,7 +37,7 @@ class TrueContinuum(ExpectedFlux):
     compute_mean_cont_lin
     compute_mean_cont_log
     read_true_continuum
-    read_var_lss
+    read_raw_statistics
     populate_los_ids
     save_delta_attributes
 
@@ -95,7 +95,7 @@ class TrueContinuum(ExpectedFlux):
 
         # read large scale structure variance
         self.get_var_lss = None
-        self.read_var_lss()
+        self.read_raw_statistics()
 
 
     def _parse_config(self, config):
@@ -129,7 +129,8 @@ class TrueContinuum(ExpectedFlux):
 
         self.num_processors = config.getint("num processors")
 
-        self.var_lss_binning = config.get("var lss binning", 'log')
+        self.raw_statistics_binning = config.get("raw statistics binning", 'log')
+        self.raw_statistics_filename = config.get("raw statistics file", None)
 
 
     def compute_expected_flux(self, forests):
@@ -330,44 +331,44 @@ class TrueContinuum(ExpectedFlux):
         #forest.hpcont = healpix
         return forest
 
-    def read_var_lss(self):
-        """Read the LSS delta variance from files (written by the raw analysis)
+    def read_raw_statistics(self):
+        """Read the LSS delta variance and mean transmitted flux from files written by the raw analysis
         """
-        #var_lss files are only for lya so far, this will need to be updated so that regions other than Lya are available
+        #files are only for lya so far, this will need to be updated so that regions other than Lya are available
 
-        if self.var_lss_binning == 'log':
-            filename = 'colore_v9_lya_log.fits.gz'
-        elif self.var_lss_binning == 'lin_2.4':
-            filename = 'colore_v9_lya_lin_2.4.fits.gz'
-        elif self.var_lss_binning == 'lin_3.2':
-            filename = 'colore_v9_lya_lin_3.2.fits.gz'
+        if self.raw_statistics_filename is not None:
+            filename = self.raw_statistics_filename
         else:
-            self.logger.info(f'Trying to use costume var_lss file from {self.var_lss_binning}')
-            filename = self.var_lss_binning
+            filename = resource_filename('picca', 'delta_extraction') + '/expected_fluxes/var_lss/'
+            if self.raw_statistics_binning == 'log':
+                filename += 'colore_v9_lya_log.fits.gz'
+            elif self.raw_statistics_binning == 'lin_2.4':
+                filename += 'colore_v9_lya_lin_2.4.fits.gz'
+            elif self.raw_statistics_binning == 'lin_3.2':
+                filename += 'colore_v9_lya_lin_3.2.fits.gz'
+        self.logger.info(f'Reading raw statistics var_lss and mean_flux from file: ', filename)
 
-        if filename == self.var_lss_binning:
-            var_lss_file = self.var_lss_binning
-        else:
-            var_lss_file = resource_filename('picca', 'delta_extraction')
-            var_lss_file += '/expected_fluxes/var_lss/' + filename
-
-        self.logger.info(f"Using var_lss from: {var_lss_file}")
         try:
-            hdul = fits.open(var_lss_file)
+            hdul = fits.open(filename)
         except:
-            raise ExpectedFluxError(f"var_lss from {var_lss_file} couldn't be loaded")
+            raise ExpectedFluxError(f"raw statistics file {filename} couldn't be loaded")
 
         lambda_ = hdul[1].data['LAMBDA']
         flux_variance = hdul[1].data['VAR']
         mean_flux = hdul[1].data['MEANFLUX']
         hdul.close()
 
-        var_lss=flux_variance/mean_flux**2
+        var_lss = flux_variance/mean_flux**2
 
         self.get_var_lss = interp1d(lambda_,
                                     var_lss,
                                     fill_value='extrapolate',
                                     kind='nearest')
+
+        self.get_mean_flux = interp1d(lambda_,
+                                      mean_flux,
+                                      fill_value='extrapolate',
+                                      kind='nearest')
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
