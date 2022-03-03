@@ -346,7 +346,7 @@ class TrueContinuum(ExpectedFlux):
                 filename += 'colore_v9_lya_lin_2.4.fits.gz'
             elif self.raw_statistics_binning == 'lin_3.2':
                 filename += 'colore_v9_lya_lin_3.2.fits.gz'
-        self.logger.info(f'Reading raw statistics var_lss and mean_flux from file: ', filename)
+        self.logger.info(f'Reading raw statistics var_lss and mean_flux from file: {filename}')
 
         try:
             hdul = fits.open(filename)
