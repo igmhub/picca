@@ -15,14 +15,17 @@ jobs:
         python-version: 3.8
     - name: Install dependencies
       run: |
+      run: |
+        sudo apt-get -y install libbz2-dev
         python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install pylint
     - name: This path
       run: |
         ls
         realpath .
     - name: Install picca
-      run: pip install -e .  
+      run: pip install -e .
     - name: Analysing the code with pylint
       run: |
         pylint py/picca/deltas_extraction
