@@ -95,6 +95,7 @@ class TrueContinuum(ExpectedFlux):
 
         
         # read large scale structure variance and mean flux
+        self.get_var_lss = None
         self.get_mean_flux = None
         self.read_raw_statistics()
 
