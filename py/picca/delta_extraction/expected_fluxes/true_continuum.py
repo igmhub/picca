@@ -355,23 +355,29 @@ class TrueContinuum(ExpectedFlux):
         if Forest.wave_solution == "log":
             if (
                 header['LINEAR'] 
-                or header['L_MIN'] != Forest.log_lambda_min 
-                or header['L_MAX'] != Forest.log_lambda_max 
-                or header['LR_MIN'] != Forest.log_lambda_min_rest_frame
-                or header['LR_MAX'] != Forest.log_lambda_max_rest_frame
-                or header['DEL_LL'] != Forest.delta_log_lambda
+                or not np.isclose(header['L_MIN'], 10**Forest.log_lambda_min, rtol=1e-3) 
+                or not np.isclose(header['L_MAX'], 10**Forest.log_lambda_max, rtol=1e-3)  
+                or not np.isclose(header['LR_MIN'], 10**Forest.log_lambda_min_rest_frame, rtol=1e-3)
+                or not np.isclose(header['LR_MAX'], 10**Forest.log_lambda_max_rest_frame, rtol=1e-3)
+                or not np.isclose(header['DEL_LL'], Forest.delta_log_lambda, rtol=1e-3)
             ):
-                raise ExpectedFluxError('raw statistics file pixelization scheme does not match input pixelization scheme.')
+                raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme. 
+                \t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
+                raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
+                input\t{10**Forest.log_lambda_min}\t{10**Forest.log_lambda_max}\t{10**Forest.log_lambda_min_rest_frame}\t{10**Forest.log_lambda_max_rest_frame}\t{Forest.delta_log_lambda}''')
         elif Forest.wave_solution == "lin":
             if (
                 not header['LINEAR'] 
-                or header['L_MIN'] != Forest.lambda_min 
-                or header['L_MAX'] != Forest.lambda_max 
-                or header['LR_MIN'] != Forest.lambda_min_rest_frame
-                or header['LR_MAX'] != Forest.lambda_max_rest_frame
-                or header['DEL_L'] != Forest.delta_lambda
+                or not np.isclose(header['L_MIN'], Forest.lambda_min , rtol=1e-3)
+                or not np.isclose(header['L_MAX'], Forest.lambda_max , rtol=1e-3)
+                or not np.isclose(header['LR_MIN'], Forest.lambda_min_rest_frame, rtol=1e-3)
+                or not np.isclose(header['LR_MAX'], Forest.lambda_max_rest_frame, rtol=1e-3)
+                or not np.isclose(header['DEL_L'], Forest.delta_lambda, rtol=1e-3)
             ):
-                raise ExpectedFluxError('raw statistics file pixelization scheme does not match input pixelization scheme.')
+                raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme. 
+                \tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
+                raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
+                input\t{Forest.lambda_min}\t{Forest.lambda_max}\t{Forest.lambda_min_rest_frame}\t{Forest.lambda_max_rest_frame}\t{Forest.delta_lambda}''')
 
         lambda_ = hdul[1].data['LAMBDA']
         flux_variance = hdul[1].data['VAR']
