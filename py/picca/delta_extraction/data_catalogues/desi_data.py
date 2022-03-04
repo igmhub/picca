@@ -15,6 +15,7 @@ from picca.delta_extraction.data import Data, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import DesiQuasarCatalogue
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import accepted_options as accepted_options_quasar_catalogue
+from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import defaults as defaults_quasar_catalogue
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 
@@ -34,6 +35,7 @@ defaults.update({
     "wave solution": "log",
     "rebin": 3,
 })
+defaults.update(defaults_quasar_catalogue)
 
 class DesiData(Data):
     """Abstract class to read DESI data and format it as a list of
