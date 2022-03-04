@@ -46,7 +46,7 @@ jobs:
     - name: Test with pytest
       timeout-minutes: 30
       run: |
-          pytest --capture=tee-sys --cov --cov-report xml .
+          pytest --capture=tee-sys --cov --cov-report xml --cov-config=.coveragerc .
 
     # allow connecting to the github action run via ssh if [ci debug] has been in the commit msg
     - name: Debug with tmate
