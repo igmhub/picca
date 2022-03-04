@@ -16,7 +16,7 @@ from picca.delta_extraction.expected_flux import ExpectedFlux
 
 accepted_options = ["input directory", "iter out prefix",
                     "num processors", "out dir",
-                    "var lss binning"]
+                    "raw statistics binning", "raw statistics file"]
 
 defaults = {
     "iter out prefix": "delta_attributes",
