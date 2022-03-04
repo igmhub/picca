@@ -20,7 +20,7 @@ accepted_options = ["input directory", "iter out prefix",
 
 defaults = {
     "iter out prefix": "delta_attributes",
-    "raw statistics file": None,
+    "raw statistics file": "",
 }
 
 
@@ -336,7 +336,7 @@ class TrueContinuum(ExpectedFlux):
         """
         #files are only for lya so far, this will need to be updated so that regions other than Lya are available
 
-        if self.raw_statistics_filename is not None:
+        if self.raw_statistics_filename != "":
             filename = self.raw_statistics_filename
         else:
             filename = resource_filename('picca', 'delta_extraction') + '/expected_fluxes/raw_stats/'
