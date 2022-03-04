@@ -16,10 +16,11 @@ from picca.delta_extraction.expected_flux import ExpectedFlux
 
 accepted_options = ["input directory", "iter out prefix",
                     "num processors", "out dir",
-                    "var lss binning"]
+                    "raw statistics file"]
 
 defaults = {
     "iter out prefix": "delta_attributes",
+    "raw statistics file": "",
 }
 
 
@@ -37,7 +38,7 @@ class TrueContinuum(ExpectedFlux):
     compute_mean_cont_lin
     compute_mean_cont_log
     read_true_continuum
-    read_var_lss
+    read_raw_statistics
     populate_los_ids
     save_delta_attributes
 
@@ -93,9 +94,11 @@ class TrueContinuum(ExpectedFlux):
         self.num_processors = None
         self._parse_config(config)
 
-        # read large scale structure variance
+        
+        # read large scale structure variance and mean flux
         self.get_var_lss = None
-        self.read_var_lss()
+        self.get_mean_flux = None
+        self.read_raw_statistics()
 
 
     def _parse_config(self, config):
@@ -129,7 +132,7 @@ class TrueContinuum(ExpectedFlux):
 
         self.num_processors = config.getint("num processors")
 
-        self.var_lss_binning = config.get("var lss binning", 'log')
+        self.raw_statistics_filename = config.get("raw statistics file")
 
 
     def compute_expected_flux(self, forests):
@@ -221,7 +224,6 @@ class TrueContinuum(ExpectedFlux):
             cont = np.bincount(bins,
                                weights=forest.continuum * weights)
             mean_cont[:len(cont)] += cont
-
             cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont
 
@@ -261,12 +263,12 @@ class TrueContinuum(ExpectedFlux):
                      Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
 
             var_lss = self.get_var_lss(forest.log_lambda)
-            var_pipe = 1. / forest.ivar/ forest.continuum**2
+            var_pipe = 1. / forest.ivar / forest.continuum**2
             variance = var_lss + var_pipe
             weights = 1 / variance
-            cont = np.bincount(bins, weights= forest.continuum * weights)
+            cont = np.bincount(bins,
+                               weights= forest.continuum * weights)
             mean_cont[:len(cont)] += cont
-
             cont = np.bincount(bins, weights=weights)
             mean_cont_weight[:len(cont)] += cont
 
@@ -307,75 +309,98 @@ class TrueContinuum(ExpectedFlux):
             f"{self.input_directory}/{healpix//100}/{healpix}/truth-{in_nside}-"
             f"{healpix}.fits")
         hdul = fits.open(filename_truth)
-        wmin = hdul["TRUE_CONT"].header["WMIN"]
-        wmax = hdul["TRUE_CONT"].header["WMAX"]
-        dwave = hdul["TRUE_CONT"].header["DWAVE"]
-        twave = np.arange(wmin, wmax + dwave, dwave)
+        lambda_min = hdul["TRUE_CONT"].header["WMIN"]
+        lambda_max = hdul["TRUE_CONT"].header["WMAX"]
+        delta_lambda = hdul["TRUE_CONT"].header["DWAVE"]
+        lambda_ = np.arange(lambda_min, lambda_max + delta_lambda, delta_lambda)
         true_cont = hdul["TRUE_CONT"].data
         hdul.close()
         indx = np.where(true_cont["TARGETID"]==forest.targetid)
-        true_continuum = interp1d(twave, true_cont["TRUE_CONT"][indx])
+        true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
 
         if Forest.wave_solution == "log":
             forest.continuum = true_continuum(10**forest.log_lambda)[0]
-            mean_optical_depth = np.ones(forest.log_lambda.size)
-            tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
-            w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
-            z = 10.**forest.log_lambda / lambda_rest_frame - 1.
+            forest.continuum *= self.get_mean_flux(10**forest.log_lambda)
 
         elif Forest.wave_solution == "lin":
             forest.continuum = true_continuum(forest.lambda_)[0]
-            mean_optical_depth = np.ones(forest.lambda_.size)
-            tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
-            w = forest.lambda_ / (1. + forest.z) <= lambda_rest_frame
-            z = forest.lambda_ / lambda_rest_frame - 1.
+            forest.continuum *= self.get_mean_flux(forest.lambda_)
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either 'log' "
                                     "or 'lin'")
 
-        mean_optical_depth[w] *= np.exp(-tau * (1. + z[w])**gamma)
-        forest.continuum *= mean_optical_depth
-        forest.hpcont = healpix
         return forest
 
-    def read_var_lss(self):
-        """Read the LSS delta variance from files (written by the raw analysis)
+    def read_raw_statistics(self):
+        """Read the LSS delta variance and mean transmitted flux from files written by the raw analysis
         """
-        #var_lss files are only for lya so far, this will need to be updated so that regions other than Lya are available
+        #files are only for lya so far, this will need to be updated so that regions other than Lya are available
 
-        if self.var_lss_binning == 'log':
-            filename = 'colore_v9_lya_log.fits.gz'
-        elif self.var_lss_binning == 'lin_2.4':
-            filename = 'colore_v9_lya_lin_2.4.fits.gz'
-        elif self.var_lss_binning == 'lin_3.2':
-            filename = 'colore_v9_lya_lin_3.2.fits.gz'
+        if self.raw_statistics_filename != "":
+            filename = self.raw_statistics_filename
         else:
-            self.logger.info(f'Trying to use costume var_lss file from {self.var_lss_binning}')
-            filename = self.var_lss_binning
+            filename = resource_filename('picca', 'delta_extraction') + '/expected_fluxes/raw_stats/'
+            if Forest.wave_solution == "log":
+                filename += 'colore_v9_lya_log.fits.gz'
+            elif Forest.wave_solution == "lin" and Forest.delta_lambda == 2.4:
+                filename += 'colore_v9_lya_lin_2.4.fits.gz'
+            elif Forest.wave_solution == "lin" and Forest.delta_lambda == 3.2:
+                filename += 'colore_v9_lya_lin_3.2.fits.gz'
+            else:
+                raise ExpectedFluxError("Couldn't find compatible raw satistics file. Provide a custom one using 'raw statistics file' field.")
+        self.logger.info(f'Reading raw statistics var_lss and mean_flux from file: {filename}')
 
-        if filename == self.var_lss_binning:
-            var_lss_file = self.var_lss_binning
-        else:
-            var_lss_file = resource_filename('picca', 'delta_extraction')
-            var_lss_file += '/expected_fluxes/var_lss/' + filename
-
-        self.logger.info(f"Using var_lss from: {var_lss_file}")
         try:
-            hdul = fits.open(var_lss_file)
+            hdul = fits.open(filename)
         except:
-            raise ExpectedFluxError(f"var_lss from {var_lss_file} couldn't be loaded")
+            raise ExpectedFluxError(f"raw statistics file {filename} couldn't be loaded")
 
-        _lambda = hdul[1].data['LAMBDA']
+        header = hdul[1].header
+        if Forest.wave_solution == "log":
+            if (
+                header['LINEAR'] 
+                or not np.isclose(header['L_MIN'], 10**Forest.log_lambda_min, rtol=1e-3) 
+                or not np.isclose(header['L_MAX'], 10**Forest.log_lambda_max, rtol=1e-3)  
+                or not np.isclose(header['LR_MIN'], 10**Forest.log_lambda_min_rest_frame, rtol=1e-3)
+                or not np.isclose(header['LR_MAX'], 10**Forest.log_lambda_max_rest_frame, rtol=1e-3)
+                or not np.isclose(header['DEL_LL'], Forest.delta_log_lambda, rtol=1e-3)
+            ):
+                raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme. 
+                \t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
+                raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
+                input\t{10**Forest.log_lambda_min}\t{10**Forest.log_lambda_max}\t{10**Forest.log_lambda_min_rest_frame}\t{10**Forest.log_lambda_max_rest_frame}\t{Forest.delta_log_lambda}
+                provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
+        elif Forest.wave_solution == "lin":
+            if (
+                not header['LINEAR'] 
+                or not np.isclose(header['L_MIN'], Forest.lambda_min , rtol=1e-3)
+                or not np.isclose(header['L_MAX'], Forest.lambda_max , rtol=1e-3)
+                or not np.isclose(header['LR_MIN'], Forest.lambda_min_rest_frame, rtol=1e-3)
+                or not np.isclose(header['LR_MAX'], Forest.lambda_max_rest_frame, rtol=1e-3)
+                or not np.isclose(header['DEL_L'], Forest.delta_lambda, rtol=1e-3)
+            ):
+                raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme. 
+                \tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
+                raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
+                input\t{Forest.lambda_min}\t{Forest.lambda_max}\t{Forest.lambda_min_rest_frame}\t{Forest.lambda_max_rest_frame}\t{Forest.delta_lambda}
+                provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
+
+        lambda_ = hdul[1].data['LAMBDA']
         flux_variance = hdul[1].data['VAR']
         mean_flux = hdul[1].data['MEANFLUX']
         hdul.close()
 
-        var_lss=flux_variance/mean_flux**2
+        var_lss = flux_variance/mean_flux**2
 
-        self.get_var_lss = interp1d(_lambda,
+        self.get_var_lss = interp1d(lambda_,
                                     var_lss,
                                     fill_value='extrapolate',
                                     kind='nearest')
+
+        self.get_mean_flux = interp1d(lambda_,
+                                      mean_flux,
+                                      fill_value='extrapolate',
+                                      kind='nearest')
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
@@ -443,7 +468,6 @@ class TrueContinuum(ExpectedFlux):
                 ],
                               names=['loglam_rest', 'mean_cont', 'weight'],
                               extname='CONT')
-
             elif Forest.wave_solution == "lin":
                 num_bins = int((Forest.lambda_max - Forest.lambda_min) /
                                Forest.delta_lambda) + 1
@@ -453,7 +477,7 @@ class TrueContinuum(ExpectedFlux):
                     self.get_mean_cont(self.lambda_rest_frame),
                     self.get_mean_cont_weight(self.lambda_rest_frame),
                 ],
-                              names=['lam_rest', 'mean_cont', 'weight'],
+                              names=['lambda_rest_frame', 'mean_cont', 'weight'],
                               extname='CONT')
 
             else:

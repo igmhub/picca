@@ -103,7 +103,7 @@ class IvarCorrection(Correction):
                 raise CorrectionError("Forest instance is missing "
                                       "attribute 'lambda_' required by "
                                       "IvarCorrection")
-            correction = self.correct_ivar(forest.log_lambda)
+            correction = self.correct_ivar(forest.lambda_)
         else:
             raise CorrectionError("In IvarCorrection wave_solution must "
                                   "be either 'log' or 'lin'")
