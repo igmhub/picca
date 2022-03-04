@@ -20,6 +20,7 @@ accepted_options = ["input directory", "iter out prefix",
 
 defaults = {
     "iter out prefix": "delta_attributes",
+    "raw statistics file": None,
 }
 
 
@@ -131,7 +132,7 @@ class TrueContinuum(ExpectedFlux):
 
         self.num_processors = config.getint("num processors")
 
-        self.raw_statistics_filename = config.get("raw statistics file", None)
+        self.raw_statistics_filename = config.get("raw statistics file")
 
 
     def compute_expected_flux(self, forests):
