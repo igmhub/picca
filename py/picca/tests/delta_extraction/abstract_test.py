@@ -89,8 +89,10 @@ class AbstractTest(unittest.TestCase):
                     self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:
                         if orig_header[key] != new_header[key]:
-                            print(orig_file, new_file)
-                            print(orig_header[key], new_header[key])
+                            print(f"Original file: {orig_file}")
+                            print(f"New file: {new_file}")
+                            print(f"Different values found for key {key}: "
+                                  f"orig: {orig_header[key]}, new: {new_header[key]}")
                         self.assertTrue((orig_header[key] == new_header[key]) or
                                         (np.isclose(orig_header[key], new_header[key])))
                 for key in new_header:
@@ -114,6 +116,8 @@ class AbstractTest(unittest.TestCase):
                     for col in new_data.dtype.names:
                         if col not in orig_data.dtype.names:
                             print(f"Column {col} missing in orig header")
+                            if col in ["num_pixels", "valid_fit"]:
+                                continue
                         self.assertTrue(col in orig_data.dtype.names)
         finally:
             orig_hdul.close()
