@@ -336,7 +336,7 @@ class TrueContinuum(ExpectedFlux):
         if self.raw_statistics_filename is not None:
             filename = self.raw_statistics_filename
         else:
-            filename = resource_filename('picca', 'delta_extraction') + '/expected_fluxes/var_lss/'
+            filename = resource_filename('picca', 'delta_extraction') + '/expected_fluxes/raw_stats/'
             if Forest.wave_solution == "log":
                 filename += 'colore_v9_lya_log.fits.gz'
             elif Forest.wave_solution == "lin" and Forest.delta_lambda == 2.4:
