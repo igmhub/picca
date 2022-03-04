@@ -16,7 +16,7 @@ from picca.delta_extraction.expected_flux import ExpectedFlux
 
 accepted_options = ["input directory", "iter out prefix",
                     "num processors", "out dir",
-                    "raw statistics binning", "raw statistics file"]
+                    "raw statistics file"]
 
 defaults = {
     "iter out prefix": "delta_attributes",
@@ -129,7 +129,6 @@ class TrueContinuum(ExpectedFlux):
 
         self.num_processors = config.getint("num processors")
 
-        self.raw_statistics_binning = config.get("raw statistics binning", 'log')
         self.raw_statistics_filename = config.get("raw statistics file", None)
 
 
@@ -338,12 +337,14 @@ class TrueContinuum(ExpectedFlux):
             filename = self.raw_statistics_filename
         else:
             filename = resource_filename('picca', 'delta_extraction') + '/expected_fluxes/var_lss/'
-            if self.raw_statistics_binning == 'log':
+            if Forest.wave_solution == "log":
                 filename += 'colore_v9_lya_log.fits.gz'
-            elif self.raw_statistics_binning == 'lin_2.4':
+            elif Forest.wave_solution == "lin" and Forest.delta_lambda == 2.4:
                 filename += 'colore_v9_lya_lin_2.4.fits.gz'
-            elif self.raw_statistics_binning == 'lin_3.2':
+            elif Forest.wave_solution == "lin" and Forest.delta_lambda == 3.2:
                 filename += 'colore_v9_lya_lin_3.2.fits.gz'
+            else:
+                raise ExpectedFluxError("Couldn't find compatible raw satistics file. Provide a custom one using 'raw statistics file' field.")
         self.logger.info(f'Reading raw statistics var_lss and mean_flux from file: {filename}')
 
         try:
@@ -364,7 +365,8 @@ class TrueContinuum(ExpectedFlux):
                 raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme. 
                 \t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
                 raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
-                input\t{10**Forest.log_lambda_min}\t{10**Forest.log_lambda_max}\t{10**Forest.log_lambda_min_rest_frame}\t{10**Forest.log_lambda_max_rest_frame}\t{Forest.delta_log_lambda}''')
+                input\t{10**Forest.log_lambda_min}\t{10**Forest.log_lambda_max}\t{10**Forest.log_lambda_min_rest_frame}\t{10**Forest.log_lambda_max_rest_frame}\t{Forest.delta_log_lambda}
+                provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
         elif Forest.wave_solution == "lin":
             if (
                 not header['LINEAR'] 
@@ -377,7 +379,8 @@ class TrueContinuum(ExpectedFlux):
                 raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme. 
                 \tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
                 raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
-                input\t{Forest.lambda_min}\t{Forest.lambda_max}\t{Forest.lambda_min_rest_frame}\t{Forest.lambda_max_rest_frame}\t{Forest.delta_lambda}''')
+                input\t{Forest.lambda_min}\t{Forest.lambda_max}\t{Forest.lambda_min_rest_frame}\t{Forest.lambda_max_rest_frame}\t{Forest.delta_lambda}
+                provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
 
         lambda_ = hdul[1].data['LAMBDA']
         flux_variance = hdul[1].data['VAR']
