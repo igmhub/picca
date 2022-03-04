@@ -351,6 +351,28 @@ class TrueContinuum(ExpectedFlux):
         except:
             raise ExpectedFluxError(f"raw statistics file {filename} couldn't be loaded")
 
+        header = hdul[1].header
+        if Forest.wave_solution == "log":
+            if (
+                header['LINEAR'] 
+                or header['L_MIN'] != Forest.log_lambda_min 
+                or header['L_MAX'] != Forest.log_lambda_max 
+                or header['LR_MIN'] != Forest.log_lambda_min_rest_frame
+                or header['LR_MAX'] != Forest.log_lambda_max_rest_frame
+                or header['DEL_LL'] != Forest.delta_log_lambda
+            ):
+                raise ExpectedFluxError('raw statistics file pixelization scheme does not match input pixelization scheme.')
+        elif Forest.wave_solution == "lin":
+            if (
+                not header['LINEAR'] 
+                or header['L_MIN'] != Forest.lambda_min 
+                or header['L_MAX'] != Forest.lambda_max 
+                or header['LR_MIN'] != Forest.lambda_min_rest_frame
+                or header['LR_MAX'] != Forest.lambda_max_rest_frame
+                or header['DEL_L'] != Forest.delta_lambda
+            ):
+                raise ExpectedFluxError('raw statistics file pixelization scheme does not match input pixelization scheme.')
+
         lambda_ = hdul[1].data['LAMBDA']
         flux_variance = hdul[1].data['VAR']
         mean_flux = hdul[1].data['MEANFLUX']
