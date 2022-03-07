@@ -214,7 +214,7 @@ class DesiHealpix(DesiData):
                     else:
                         basename_truth=os.path.basename(filename).replace('spectra-','truth-')
                         pathname_truth=os.path.dirname(filename)
-                        filename_truth=pathname_truth+basename_truth
+                        filename_truth=f"{pathname_truth}/{basename_truth}"
                         if os.path.exists(filename_truth):
                             with fitsio.FITS(filename_truth) as hdul_truth:
                                 spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
