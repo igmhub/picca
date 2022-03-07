@@ -490,6 +490,7 @@ def main(cmdargs):
     #create output dir if it does not exist
     os.makedirs(args.out_dir, exist_ok=True)
 
+    print([[i, f] for i, f in enumerate(files)])
     if args.num_processors > 1:
         pool = Pool(args.num_processors)
         index_file_args = [(i, f, args) for i, f in enumerate(files)]
