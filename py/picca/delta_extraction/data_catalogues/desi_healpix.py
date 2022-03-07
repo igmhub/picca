@@ -1,6 +1,7 @@
 """This module defines the class DesiData to load DESI data
 """
 import logging
+import os
 
 import fitsio
 import healpy
@@ -12,7 +13,6 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
-from picca.delta_extraction.data_catalogues.desisim_mocks import DesisimMocks
 
 accepted_options = sorted(
     list(set(accepted_options + ["use non-coadded spectra"])))
@@ -211,13 +211,20 @@ class DesiHealpix(DesiData):
 
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
-                    elif reso_from_truth or isinstance(self,DesisimMocks):
+                    elif reso_from_truth:
                         filename_truth=filename.replace("/spectra-", '/truth-')
-                        with fitsio.FITS(filename_truth) as hdul_truth:
-                            spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
-                        if not reso_from_truth:
-                            self.logger.info("no resolution in files, reading from truth files")
-                        reso_from_truth=True
+                        if os.path.exists(filename_truth):
+                            with fitsio.FITS(filename_truth) as hdul_truth:
+                                spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
+                            if not reso_from_truth:
+                                self.logger.info("no resolution in files, reading from truth files")
+                            reso_from_truth=True
+                        else:
+                            raise DataError(
+                                "Error while reading {color} band from "
+                                "{filename}. Analysis type is  'PK 1D', "
+                                "but file does not contain HDU "
+                                f"'{color}_RESOLUTION' ")
                     else:
                         raise DataError(
                             "Error while reading {color} band from "
