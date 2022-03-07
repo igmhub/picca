@@ -12,6 +12,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
+from py.picca.delta_extraction.data_catalogues.desisim_mocks import DesisimMocks
 
 accepted_options = sorted(
     list(set(accepted_options + ["use non-coadded spectra"])))
@@ -186,6 +187,8 @@ class DesiHealpix(DesiData):
         if "Z_FLUX" in hdul:
             colors.append("Z")
 
+        reso_from_truth=False
+        no_scores_available=False
         for color in colors:
             spec = {}
             try:
@@ -198,13 +201,22 @@ class DesiHealpix(DesiData):
                     spec[key][w] = 0.
                 if self.analysis_type == "PK 1D":
                     if "SCORES" in hdul:
+                        # Calibration factor given in https://desi.lbl.gov/trac/browser/code/desimodel/trunk/data/tsnr/
                         spec['TEFF_LYA'] = 11.80090901380597 * hdul['SCORES'][f'TSNR2_LYA_{color}'].read()
                     else:
                         spec['TEFF_LYA'] = np.ones(spec["FLUX"].shape[0])
-                        self.logger.info("SCORES are missing, Teff information (and thus DIFF) will be garbage")
+                        if not no_scores_available:
+                            self.logger.info("SCORES are missing, Teff information (and thus DIFF) will be garbage")
+                        no_scores_available=True
 
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
+                    elif reso_from_truth or isinstance(self,DesisimMocks):
+                        filename_truth=filename.replace("/spectra-", '/truth-')
+                        with fitsio.FITS(filename_truth) as hdul_truth:
+                            spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
+                        if not reso_from_truth:
+                            self.logger.info("no resolution in files, reading from truth files")
                     else:
                         raise DataError(
                             "Error while reading {color} band from "
