@@ -91,7 +91,7 @@ def exp_diff(hdul, log_lambda):
     return exposures_diff
 
 
-def exp_diff_desi(hdul, mask_targetid):
+def exp_diff_desi(hdul, mask_targetid, color):
     """Computes the difference between exposures.
 
     More precisely computes de semidifference between two customized coadded
@@ -108,6 +108,7 @@ def exp_diff_desi(hdul, mask_targetid):
     Returns:
         The difference between exposures
     """
+    teff_lya = hdul["scores"][f"tsnr2_lya_{color}"][mask_targetid][:]
     argsort = np.flip(np.argsort(hdul["TEFF_LYA"][mask_targetid][:]))
     flux = hdul["FL"][mask_targetid][argsort, :]
     ivar = hdul["IV"][mask_targetid][argsort, :]

@@ -229,7 +229,7 @@ class DesiHealpix(DesiData):
                 w_t = w_t[0]
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
-            for spec in spectrographs_data.values():
+            for color, spec in spectrographs_data.items():
                 ivar = spec['IVAR'][w_t].copy()
                 flux = spec['FLUX'][w_t].copy()
 
@@ -257,7 +257,7 @@ class DesiHealpix(DesiData):
                         reso_sum, spec['WAVELENGTH'])
                     #currently we need to reopen the file for this
                     with fitsio.FITS(filename) as hdul:
-                        exposures_diff = exp_diff_desi(hdul, w_t)
+                        exposures_diff = exp_diff_desi(hdul, w_t, color)
                     #TODO: @corentin: please check this is doing what it should do...
                     if exposures_diff is None:
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)

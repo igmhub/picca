@@ -268,7 +268,7 @@ class DesiTile(DesiData):
                 else:
                     w_t = w_t[0]
 
-                for spec in spectrographs_data.values():
+                for color, spec in spectrographs_data.items():
                     ivar = spec['IVAR'][w_t].copy()
                     flux = spec['FLUX'][w_t].copy()
 
@@ -299,7 +299,7 @@ class DesiTile(DesiData):
                             spectral_resolution_desi(reso_sum,
                                                      spec['WAVELENGTH']))
 
-                        exposures_diff = exp_diff_desi(hdul, w_t)
+                        exposures_diff = exp_diff_desi(hdul, w_t, color)
                         #TODO: @corentin: please check this is doing what it should do...
                         if exposures_diff is None:
                             exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
