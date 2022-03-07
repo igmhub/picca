@@ -212,7 +212,9 @@ class DesiHealpix(DesiData):
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                     else:
-                        filename_truth=filename.replace("/spectra-", '/truth-')
+                        basename_truth=os.path.basename(filename).replace('spectra-','truth-')
+                        pathname_truth=os.path.dirname(filename)
+                        filename_truth=pathname_truth+basename_truth
                         if os.path.exists(filename_truth):
                             with fitsio.FITS(filename_truth) as hdul_truth:
                                 spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
@@ -282,10 +284,13 @@ class DesiHealpix(DesiData):
                     exposures_diff = exp_diff_desi(spec, w_t)
                     if exposures_diff is None:
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
-                    if len(spec['RESO'][w_t].shape)<3:
-                        reso_sum = spec['RESO'][w_t].copy()
+                    if not reso_from_truth:
+                        if len(spec['RESO'][w_t].shape)<3:
+                            reso_sum = spec['RESO'][w_t].copy()
+                        else:
+                            reso_sum = spec['RESO'][w_t].sum(axis=0)
                     else:
-                        reso_sum = spec['RESO'][w_t].sum(axis=0)
+                        reso_sum = spec['RESO'][:, :]
                     reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['WAVELENGTH'])
                     args["exposures_diff"] = exposures_diff
