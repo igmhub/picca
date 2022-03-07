@@ -12,7 +12,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
-from py.picca.delta_extraction.data_catalogues.desisim_mocks import DesisimMocks
+from picca.delta_extraction.data_catalogues.desisim_mocks import DesisimMocks
 
 accepted_options = sorted(
     list(set(accepted_options + ["use non-coadded spectra"])))
