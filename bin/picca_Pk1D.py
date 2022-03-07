@@ -99,7 +99,7 @@ def process_all_files(index_file_args):
     #add check if diff has ever been set
     for delta in deltas:
         #use this cut if some spectra have exposure_differences calculated
-        if sum(deltas.exposures_diff) > 0:
+        if sum(delta.exposures_diff) > 0:
             use_exp_diff_cut = True
             break
 
