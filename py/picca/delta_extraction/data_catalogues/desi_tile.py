@@ -276,7 +276,7 @@ class DesiTile(DesiData):
                         exposures_diff = exp_diff_desi(spec, w_t)
                         if exposures_diff is None:
                             exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
-                        if (spec['RESO'][w_t].shape)<3:
+                        if len(spec['RESO'][w_t].shape)<3:
                             reso_all = np.array([spec['RESO'][w_t]])
                         else:
                             reso_all = spec['RESO'][w_t].copy()
