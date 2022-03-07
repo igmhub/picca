@@ -328,7 +328,7 @@ def compute_pk_noise(delta_lambda_or_log_lambda,
 
         pk_noise /= float(num_noise_exposures)
 
-    _, pk_diff = compute_pk_raw(delta_lambda_or_log_lambda, exposures_diff)
+    _, pk_diff = compute_pk_raw(delta_lambda_or_log_lambda, exposures_diff, linear_binning=linear_binning)
 
     return pk_noise, pk_diff
 

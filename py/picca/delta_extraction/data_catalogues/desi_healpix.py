@@ -200,7 +200,7 @@ class DesiHealpix(DesiData):
                 for key in ["FLUX", "IVAR"]:
                     spec[key][w] = 0.
                 if self.analysis_type == "PK 1D":
-                    if "SCORES" in hdul:
+                    if self.use_non_coadded_spectra and "SCORES" in hdul:
                         # Calibration factor given in https://desi.lbl.gov/trac/browser/code/desimodel/trunk/data/tsnr/
                         spec['TEFF_LYA'] = 11.80090901380597 * hdul['SCORES'][f'TSNR2_LYA_{color}'].read()
                     else:
