@@ -109,7 +109,7 @@ def exp_diff_desi(hdul, mask_targetid, color):
         The difference between exposures
     """
     teff_lya = hdul["scores"][f"tsnr2_lya_{color}"][mask_targetid][:]
-    argsort = np.flip(np.argsort(hdul["TEFF_LYA"][mask_targetid][:]))
+    argsort = np.flip(np.argsort(teff_lya))
     flux = hdul["FL"][mask_targetid][argsort, :]
     ivar = hdul["IV"][mask_targetid][argsort, :]
     teff_lya = hdul["TEFF_LYA"][mask_targetid][argsort]
