@@ -211,7 +211,7 @@ class DesiHealpix(DesiData):
 
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
-                    elif reso_from_truth:
+                    else:
                         filename_truth=filename.replace("/spectra-", '/truth-')
                         if os.path.exists(filename_truth):
                             with fitsio.FITS(filename_truth) as hdul_truth:
@@ -225,12 +225,6 @@ class DesiHealpix(DesiData):
                                 "{filename}. Analysis type is  'PK 1D', "
                                 "but file does not contain HDU "
                                 f"'{color}_RESOLUTION' ")
-                    else:
-                        raise DataError(
-                            "Error while reading {color} band from "
-                            "{filename}. Analysis type is  'PK 1D', "
-                            "but file does not contain HDU "
-                            f"'{color}_RESOLUTION' ")
                 spectrographs_data[color] = spec
             except OSError:
                 self.logger.warning(
