@@ -225,7 +225,11 @@ class DesiTile(DesiData):
                     spec['IVAR'] = (hdul[f'{color}_IVAR'].read() *
                                     (hdul[f'{color}_MASK'].read() == 0))
                     if self.analysis_type == "PK 1D":
-                        spec['TEFF_LYA'] = 11.80090901380597 * hdul['SCORES'][f'TSNR2_LYA_{color}'].read()
+                        if "SCORES" in hdul:
+                            spec['TEFF_LYA'] = 11.80090901380597 * hdul['SCORES'][f'TSNR2_LYA_{color}'].read()
+                        else:
+                            spec['TEFF_LYA'] = np.ones(spec["FLUX"].shape[0])
+                            self.logger.info("SCORES are missing, Teff information (and thus DIFF) will be garbage")
                         if f"{color}_RESOLUTION" in hdul:
                             spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                         else:
