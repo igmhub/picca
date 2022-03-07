@@ -237,7 +237,10 @@ class DesiHealpix(DesiData):
                     exposures_diff = exp_diff_desi(spec, w_t)
                     if exposures_diff is None:
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
-                for flux,ivar in zip(flux_all,ivar_all):
+                    reso_all = np.atleast_3d(spec['RESO'][w_t].copy())
+                else:
+                    reso_all = [None]*flux_all.shape[0]
+                for flux,ivar, reso in zip(flux_all, ivar_all, reso_all):
                     args = {
                         "flux": flux,
                         "ivar": ivar,
@@ -257,12 +260,11 @@ class DesiHealpix(DesiData):
                     if self.analysis_type == "BAO 3D":
                         forest = DesiForest(**args)
                     elif self.analysis_type == "PK 1D":
-                        reso_sum = spec['RESO'][w_t].copy()
                         reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
-                            reso_sum, spec['WAVELENGTH'])
+                            reso, spec['WAVELENGTH'])
                         args["exposures_diff"] = exposures_diff
                         args["reso"] = reso_in_km_per_s
-                        args["resolution_matrix"] = reso_sum
+                        args["resolution_matrix"] = reso
                         args["reso_pix"] = reso_in_pix
 
                         forest = DesiPk1dForest(**args)
