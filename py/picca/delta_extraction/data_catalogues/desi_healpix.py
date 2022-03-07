@@ -187,8 +187,8 @@ class DesiHealpix(DesiData):
         if "Z_FLUX" in hdul:
             colors.append("Z")
 
-        reso_from_truth=False
-        no_scores_available=False
+        reso_from_truth = False
+        no_scores_available = False
         for color in colors:
             spec = {}
             try:
@@ -281,7 +281,11 @@ class DesiHealpix(DesiData):
                 if self.analysis_type == "BAO 3D":
                     forest = DesiForest(**args)
                 elif self.analysis_type == "PK 1D":
-                    exposures_diff = exp_diff_desi(spec, w_t)
+                    if self.use_non_coadded_spectra not no_scores_available:
+                        exposures_diff = exp_diff_desi(spec, w_t)
+                    else:
+                        exposures_diff = None
+                    
                     if exposures_diff is None:
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
                     if not reso_from_truth:
