@@ -296,10 +296,7 @@ def process_all_files(index_file_args):
                     'comment': "analysis was performed on delta with linear binned lambda"
                 }, {
                     'name': 'LOS_ID',
-                    'value': (delta.targetid if hasattr(delta, "targetid")
-                              else delta.thingid if hasattr(delta, "thingid")
-                              else delta.los_id if hasattr(delta, "los_id")
-                              else "NOTFOUND"),
+                    'value': delta.los_id,
                     'comment': "line of sight identifier, e.g. THING_ID or TARGETID"
                 },
                 ]
