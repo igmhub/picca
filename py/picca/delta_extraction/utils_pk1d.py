@@ -91,7 +91,7 @@ def exp_diff(hdul, log_lambda):
     return exposures_diff
 
 
-def exp_diff_desi(hdul, mask_targetid, color):
+def exp_diff_desi(spec_dict, mask_targetid):
     """Computes the difference between exposures.
 
     More precisely computes de semidifference between two customized coadded
@@ -100,19 +100,19 @@ def exp_diff_desi(hdul, mask_targetid, color):
     (see section 3.2 of Chabanier et al. 2019).
 
     Args:
-        hdul: fitsio.fitslib.FITS
-            Header Data Unit List opened by fitsio
+        spec_dict: dict
+            spec dictionary from desi_healpix/tile
         mask targetid: array of ints
             Targetids to select for calculating the exp differences
 
     Returns:
         The difference between exposures
     """
-    teff_lya = hdul["scores"][f"tsnr2_lya_{color}"][mask_targetid][:]
+    teff_lya = spec_dict["TEFF_LYA"][mask_targetid][:]
     argsort = np.flip(np.argsort(teff_lya))
-    flux = hdul["FL"][mask_targetid][argsort, :]
-    ivar = hdul["IV"][mask_targetid][argsort, :]
-    teff_lya = hdul["TEFF_LYA"][mask_targetid][argsort]
+    flux = spec_dict["FLUX"][mask_targetid][argsort, :]
+    ivar = spec_dict["IVAR"][mask_targetid][argsort, :]
+    teff_lya = teff_lya[argsort]
 
     num_exp = len(flux)
     if (num_exp < 2):

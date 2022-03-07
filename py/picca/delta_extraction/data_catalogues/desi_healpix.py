@@ -196,6 +196,7 @@ class DesiHealpix(DesiData):
                 for key in ["FLUX", "IVAR"]:
                     spec[key][w] = 0.
                 if self.analysis_type == "PK 1D":
+                    spec['TEFF_LYA'] = 11.80090901380597 * hdul['SCORES'][f'TSNR2_LYA_{color}'].read()
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                     else:
@@ -256,8 +257,7 @@ class DesiHealpix(DesiData):
                     reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['WAVELENGTH'])
                     #currently we need to reopen the file for this
-                    with fitsio.FITS(filename) as hdul:
-                        exposures_diff = exp_diff_desi(hdul, w_t, color)
+                    exposures_diff = exp_diff_desi(spec, w_t)
                     #TODO: @corentin: please check this is doing what it should do...
                     if exposures_diff is None:
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)

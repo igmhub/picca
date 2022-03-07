@@ -225,6 +225,7 @@ class DesiTile(DesiData):
                     spec['IVAR'] = (hdul[f'{color}_IVAR'].read() *
                                     (hdul[f'{color}_MASK'].read() == 0))
                     if self.analysis_type == "PK 1D":
+                        spec['TEFF_LYA'] = 11.80090901380597 * hdul['SCORES'][f'TSNR2_LYA_{color}'].read()
                         if f"{color}_RESOLUTION" in hdul:
                             spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                         else:
@@ -299,7 +300,7 @@ class DesiTile(DesiData):
                             spectral_resolution_desi(reso_sum,
                                                      spec['WAVELENGTH']))
 
-                        exposures_diff = exp_diff_desi(hdul, w_t, color)
+                        exposures_diff = exp_diff_desi(spec, w_t)
                         #TODO: @corentin: please check this is doing what it should do...
                         if exposures_diff is None:
                             exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
