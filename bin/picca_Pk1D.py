@@ -306,7 +306,7 @@ def process_all_files(index_file_args):
 
                 cols = [k, pk_raw, pk_noise, pk_diff, correction_reso, pk]
                 names = [
-                    'k', 'Pk_raw', 'Pk_noise', 'Pk_diff', 'cor_reso', 'Pk'
+                    'K', 'PK_RAW', 'PK_NOISE', 'PK_DIFF', 'COR_RESO', 'PK'
                 ]
                 comments = [
                     'Wavenumber', 'Raw power spectrum',
