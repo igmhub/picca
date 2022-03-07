@@ -11,7 +11,13 @@ from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue, accepted_options
 
 accepted_options = sorted(list(set(accepted_options + [
-    "catalogue"])))
+    "catalogue", "keep surveys"])))
+
+defaults = {
+    "keep surveys": "all"
+}
+
+accepted_surveys = ["sv1", "sv2", "sv3", "main", "special", "all"]
 
 class DesiQuasarCatalogue(QuasarCatalogue):
     """Reads the z_truth catalogue from DESI
@@ -21,8 +27,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
     trim_catalogue (from QuasarCatalogue)
     __init__
     _parse_config
+    filter_surveys
     read_catalogue
-
 
     Attributes
     ----------
@@ -42,6 +48,10 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
     filename: str
     Filename of the z_truth catalogue
+
+    keep surveys: list
+    Only keep the entries in the catalogue that have a "SURVEY" specified in
+    this list. Ignored if "SURVEY" column is not present in the catalogue.
     """
     def __init__(self, config):
         """Initialize class instance
@@ -59,7 +69,10 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self._parse_config(config)
 
         # read quasar catalogue
-        self.catalogue = self.read_catalogue()
+        self.read_catalogue()
+
+        # if not all surveys are specified, then filter the catalogue
+        self.filter_surveys()
 
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
@@ -78,10 +91,34 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         -----
         QuasarCatalogueError upon missing required variables
         """
+        keep_surveys = config.get("keep surveys")
+        if keep_surveys is None:
+            raise QuasarCatalogueError(
+                "Missing argument 'keep surveys' required by DesiQuasarCatalogue")
+        self.keep_surveys = keep_surveys.split()
+        for survey in self.keep_surveys:
+            if survey not in accepted_surveys:
+                raise QuasarCatalogueError(
+                    f"Unrecognised survey. Expected one of {accepted_surveys}. "
+                    f"Found: {survey}")
+        # if "all" is given, then make sure "sv1", "sv2", "sv3" and "main" are present
+        if "all" in self.keep_surveys:
+            for survey in ["sv1", "sv2", "sv3", "main"]:
+                if survey not in self.keep_surveys:
+                    self.keep_surveys.append(survey)
+
         self.filename = config.get("catalogue")
         if self.filename is None:
             raise QuasarCatalogueError("Missing argument 'catalogue' required "
                                        "by DesiQuasarCatalogue")
+
+    def filter_surveys(self):
+        """Filter all the objects in the catalogue not belonging to the specified
+        surveys.
+        """
+        if 'SURVEY' in self.catalogue.colnames:
+            mask = np.isin(self.catalogue["SURVEY"], self.keep_surveys)
+            self.catalogue = self.catalogue[mask]
 
     def read_catalogue(self):
         """Read the z_truth catalogue
@@ -127,6 +164,4 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
         catalogue.keep_columns(keep_columns)
         w = np.where(w)[0]
-        catalogue = catalogue[w]
-
-        return catalogue
+        self.catalogue = catalogue[w]
