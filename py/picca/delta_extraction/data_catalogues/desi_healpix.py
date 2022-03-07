@@ -217,6 +217,7 @@ class DesiHealpix(DesiData):
                             spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
                         if not reso_from_truth:
                             self.logger.info("no resolution in files, reading from truth files")
+                        reso_from_truth=True
                     else:
                         raise DataError(
                             "Error while reading {color} band from "
