@@ -93,7 +93,7 @@ class QSO(object):
         self.z_qso = z_qso
         self.los_id = los_id
         #this is for legacy purposes only
-        self.thingid = thingid
+        self.thingid = los_id
 
         # variables computed in function io.read_objects
         self.weight = None
