@@ -108,10 +108,10 @@ def exp_diff_desi(spec_dict, mask_targetid):
     Returns:
         The difference between exposures
     """
-    teff_lya = spec_dict["TEFF_LYA"][mask_targetid][:]
+    teff_lya = np.atleast1d(spec_dict["TEFF_LYA"][mask_targetid])
     argsort = np.flip(np.argsort(teff_lya))
-    flux = spec_dict["FLUX"][mask_targetid][argsort, :]
-    ivar = spec_dict["IVAR"][mask_targetid][argsort, :]
+    flux = np.atleast2d(spec_dict["FLUX"][mask_targetid])[argsort, :]
+    ivar = np.atleast2d(spec_dict["IVAR"][mask_targetid])[argsort, :]
     teff_lya = teff_lya[argsort]
 
     num_exp = len(flux)
