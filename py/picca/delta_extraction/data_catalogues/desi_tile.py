@@ -270,65 +270,67 @@ class DesiTile(DesiData):
                     w_t = w_t[0]
 
                 for spec in spectrographs_data.values():
-                    ivar_all = np.atleast_2d(spec['IVAR'][w_t].copy())
-                    flux_all = np.atleast_2d(spec['FLUX'][w_t].copy())
-                    if self.analysis_type == "PK 1D":
+                    if self.use_non_coadded_spectra:
+                        ivar = np.atleast_2d(spec['IVAR'][w_t])
+                        ivar_coadded_flux = np.atleast_2d(ivar*spec['FLUX'][w_t]).sum(axis=0)
+                        ivar = ivar.sum(axis=0)
+                        flux = (ivar_coadded_flux / ivar)
+                    else:
+                        flux = spec['FLUX'][w_t].copy()
+                        ivar = spec['IVAR'][w_t].copy()
+                    args = {
+                        "flux": flux,
+                        "ivar": ivar,
+                        "targetid": targetid,
+                        "ra": entry['RA'],
+                        "dec": entry['DEC'],
+                        "z": entry['Z'],
+                        "petal": entry["PETAL_LOC"],
+                        "tile": entry["TILEID"],
+                        "night": entry["NIGHT"],
+                    }
+                    if Forest.wave_solution == "log":
+                        args["log_lambda"] = np.log10(spec['WAVELENGTH'])
+                    elif Forest.wave_solution == "lin":
+                        args["lambda"] = spec['WAVELENGTH']
+                    else:
+                        raise DataError("Forest.wave_solution must be either "
+                                        "'log' or 'lin'")
+
+                    if self.analysis_type == "BAO 3D":
+                        forest = DesiForest(**args)
+                    elif self.analysis_type == "PK 1D":
                         exposures_diff = exp_diff_desi(spec, w_t)
                         if exposures_diff is None:
                             exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
                         if len(spec['RESO'][w_t].shape)<3:
-                            reso_all = np.array([spec['RESO'][w_t]])
+                            reso_sum = spec['RESO'][w_t].copy()
                         else:
-                            reso_all = spec['RESO'][w_t].copy()
+                            reso_sum = spec['RESO'][w_t].sum(axis=0)
+                        reso_in_pix, reso_in_km_per_s = np.real(
+                            spectral_resolution_desi(reso_sum,
+                                                    spec['WAVELENGTH']))
+
+                        args["exposures_diff"] = exposures_diff
+                        args["reso"] = reso_in_km_per_s
+                        args["resolution_matrix"] = reso_sum
+                        args["reso_pix"] = reso_in_pix
+
+                        forest = DesiPk1dForest(**args)
                     else:
-                        reso_all = [None]*flux_all.shape[0]
-                    for flux,ivar, reso in zip(flux_all,ivar_all,reso_all):
-                        args = {
-                            "flux": flux,
-                            "ivar": ivar,
-                            "targetid": targetid,
-                            "ra": entry['RA'],
-                            "dec": entry['DEC'],
-                            "z": entry['Z'],
-                            "petal": entry["PETAL_LOC"],
-                            "tile": entry["TILEID"],
-                            "night": entry["NIGHT"],
-                        }
-                        if Forest.wave_solution == "log":
-                            args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-                        elif Forest.wave_solution == "lin":
-                            args["lambda"] = spec['WAVELENGTH']
-                        else:
-                            raise DataError("Forest.wave_solution must be either "
-                                            "'log' or 'lin'")
+                        raise DataError("Unkown analysis type. Expected 'BAO 3D'"
+                                        f"or 'PK 1D'. Found '{self.analysis_type}'")
 
-                        if self.analysis_type == "BAO 3D":
-                            forest = DesiForest(**args)
-                        elif self.analysis_type == "PK 1D":
-                            reso_in_pix, reso_in_km_per_s = np.real(
-                                spectral_resolution_desi(reso,
-                                                        spec['WAVELENGTH']))
+                    # rebin arrays
+                    # this needs to happen after all arrays are initialized by
+                    # Forest constructor
+                    forest.rebin()
 
-                            args["exposures_diff"] = exposures_diff
-                            args["reso"] = reso_in_km_per_s
-                            args["resolution_matrix"] = reso
-                            args["reso_pix"] = reso_in_pix
-
-                            forest = DesiPk1dForest(**args)
-                        else:
-                            raise DataError("Unkown analysis type. Expected 'BAO 3D'"
-                                            f"or 'PK 1D'. Found '{self.analysis_type}'")
-
-                        # rebin arrays
-                        # this needs to happen after all arrays are initialized by
-                        # Forest constructor
-                        forest.rebin()
-
-                        # add the forest to list
-                        if targetid in forests_by_targetid:
-                            forests_by_targetid[targetid].coadd(forest)
-                        else:
-                            forests_by_targetid[targetid] = forest
+                    # add the forest to list
+                    if targetid in forests_by_targetid:
+                        forests_by_targetid[targetid].coadd(forest)
+                    else:
+                        forests_by_targetid[targetid] = forest
 
                 num_data += 1
         self.logger.progress("Found {} quasars in input files".format(num_data))
