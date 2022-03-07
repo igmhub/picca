@@ -281,7 +281,7 @@ class DesiHealpix(DesiData):
                 if self.analysis_type == "BAO 3D":
                     forest = DesiForest(**args)
                 elif self.analysis_type == "PK 1D":
-                    if self.use_non_coadded_spectra not no_scores_available:
+                    if self.use_non_coadded_spectra and not no_scores_available:
                         exposures_diff = exp_diff_desi(spec, w_t)
                     else:
                         exposures_diff = None
