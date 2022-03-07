@@ -255,8 +255,9 @@ class DesiHealpix(DesiData):
                     reso_sum = spec['RESO'][w_t].copy()
                     reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['WAVELENGTH'])
-
-                    exposures_diff = exp_diff_desi(hdul, w_t)
+                    #currently we need to reopen the file for this
+                    with fitsio.FITS(filename) as hdul:
+                        exposures_diff = exp_diff_desi(hdul, w_t)
                     #TODO: @corentin: please check this is doing what it should do...
                     if exposures_diff is None:
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
