@@ -1070,8 +1070,6 @@ class Delta(QSO):
             mean_snr = header['MEANSNR']
             mean_reso = header['MEANRESO']
             mean_z = header['MEANZ']
-            #this is neither stored nor really needed
-            #delta_log_lambda = header['DLL']
             try:
                 #transposing here gives back the actual reso matrix which has been stored transposed
                 resolution_matrix = hdu['RESOMAT'][:].T.astype(float)
