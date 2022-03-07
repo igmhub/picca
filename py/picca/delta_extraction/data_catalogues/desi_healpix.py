@@ -237,7 +237,10 @@ class DesiHealpix(DesiData):
                     exposures_diff = exp_diff_desi(spec, w_t)
                     if exposures_diff is None:
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
-                    reso_all = np.atleast_3d(spec['RESO'][w_t].copy())
+                    if (spec['RESO'][w_t].shape)<3:
+                            reso_all = np.array([spec['RESO'][w_t]])
+                    else:
+                        reso_all = spec['RESO'][w_t].copy()
                 else:
                     reso_all = [None]*flux_all.shape[0]
                 for flux,ivar, reso in zip(flux_all, ivar_all, reso_all):
