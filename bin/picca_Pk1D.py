@@ -98,7 +98,7 @@ def process_all_files(index_file_args):
     use_exp_diff_cut=True
     #add check if diff has ever been set
     for delta in deltas:
-        #use this cut if some spectra have exposure_differences calculated
+        #use this cut if some spectra have exposures_differences calculated
         if sum(delta.exposures_diff) > 0:
             use_exp_diff_cut = True
             break
@@ -112,7 +112,7 @@ def process_all_files(index_file_args):
                 or delta.mean_reso >= args.reso_max):
             continue
         if use_exp_diff_cut:
-            if np.sum(delta.exposure_diff)==0:
+            if np.sum(delta.exposures_diff)==0:
                 continue
 
         # first pixel in forest

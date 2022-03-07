@@ -58,7 +58,7 @@ class QSO(object):
         get_angle_between: Computes the angular separation between two quasars.
     """
 
-    def __init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid):
+    def __init__(self, los_id, ra, dec, z_qso, plate, mjd, fiberid):
         """Initializes class instance.
 
         Args:
@@ -91,6 +91,8 @@ class QSO(object):
         self.cos_dec = np.cos(dec)
 
         self.z_qso = z_qso
+        self.los_id = los_id
+        #this is for legacy purposes only
         self.thingid = thingid
 
         # variables computed in function io.read_objects
@@ -957,15 +959,15 @@ class Delta(QSO):
 
     """
 
-    def __init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
+    def __init__(self, los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                  weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                  mean_reso, mean_z, resolution_matrix=None,
                  mean_resolution_matrix=None):
         """Initializes class instances.
 
         Args:
-            thingid: integer
-                Thingid of the observation.
+            los_id: integer
+                Thingid or Targetid of the observation.
             ra: float
                 Right-ascension of the quasar (in radians).
             dec: float
@@ -1001,7 +1003,7 @@ class Delta(QSO):
             delta_log_lambda: float
                 Variation of the logarithm of the wavelength between two pixels
         """
-        QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
+        QSO.__init__(self, los_id, ra, dec, z_qso, plate, mjd, fiberid)
         self.log_lambda = log_lambda
         self.weights = weights
         self.cont = cont
