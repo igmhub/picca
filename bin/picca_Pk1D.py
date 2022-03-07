@@ -59,7 +59,7 @@ def check_linear_binning(delta):
 
 # loop over input files
 def process_all_files(index_file_args):
-    global num_data
+    global num_data  #this only stores the number of spectra for progress viewing purposes
     file_index, file, args = index_file_args
     if file_index % 5 == 0:
         userprint("\rread {} of {} {}".format(file_index, args.len_files,
