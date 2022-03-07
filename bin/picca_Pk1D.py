@@ -95,33 +95,25 @@ def process_all_files(index_file_args):
         reso_correction = "Gaussian"
         userprint("Using Gaussian resolution correction\n")
 
+    use_exp_diff_cut=True
+    #add check if diff has ever been set
+    for delta in deltas:
+        #use this cut if some spectra have exposure_differences calculated
+        if sum(deltas.exposures_diff) > 0:
+            use_exp_diff_cut = True
+            break
+
     num_data += len(deltas)
     userprint("\n ndata =  ", num_data)
     results = None
 
-    def process_file(delta):
-        """_summary_
-
-        Args:
-            delta (Delta): a single delta object
-
-        Returns:
-            list containing the following for each spectral part
-            k: mode
-            pk_raw: raw power spectrum
-            pk_noise: noise power spectrum from pipeline noise
-            pk_diff: noise power spectrum from difference spectra
-            correction_reso: resolution correction
-            pk: final power spectrum measurement
-            mean_z_array[part_index]: mean redshift within the spectral part
-            num_masked_pixels: number of masked pixels within the spectral part
-        """
-        # Selection over the SNR and the resolution, note that some selection is
-        # already performed when computing deltas as e.g. continuum fitting does not 
-        # converge elsewise with constant weights
+    for delta in deltas:
         if (delta.mean_snr <= args.SNR_min
                 or delta.mean_reso >= args.reso_max):
-            return None
+            continue
+        if use_exp_diff_cut:
+            if np.sum(delta.exposure_diff)==0:
+                continue
 
         # first pixel in forest
         selected_pixels = 10**delta.log_lambda > args.lambda_obs_min
@@ -133,7 +125,7 @@ def process_all_files(index_file_args):
         # minimum number of pixel in forest
         min_num_pixels = args.nb_pixel_min
         if (len(delta.log_lambda) - first_pixel_index) < min_num_pixels:
-            return None
+            continue
 
         # Split the forest in n parts
         max_num_parts = (len(delta.log_lambda) -
@@ -166,7 +158,6 @@ def process_all_files(index_file_args):
                                         delta.exposures_diff, delta.ivar,
                                         first_pixel_index)
 
-        pk_list = []
         #the rebin_diff_noise function works with either binning, but needs to be uniform
         for part_index in range(num_parts):
             # rebin exposures_diff spectrum
@@ -268,21 +259,7 @@ def process_all_files(index_file_args):
             if args.force_output_in_velocity and linear_binning:
                 pk *= constants.speed_light / 1000 / np.mean(lambda_new)
                 k /= constants.speed_light / 1000 / np.mean(lambda_new)
-            pk_list.append([
-                k, pk_raw, pk_noise, pk_diff, correction_reso, pk,
-                mean_z_array[part_index], num_masked_pixels
-            ])
-        return pk_list
-
-    pk_list_of_lists = [process_file(delta) for delta in deltas]
-
-    #all that follows is writing files only
-
-    for delta, pk_list in zip(deltas, pk_list_of_lists):
-        if pk_list is None:
-            continue
-        for k, pk_raw, pk_noise, pk_diff, correction_reso, pk, mean_z, num_masked_pixels in pk_list:
-
+            
             # save in fits format
             if args.out_format == 'fits':
                 header = [{
@@ -299,7 +276,7 @@ def process_all_files(index_file_args):
                     'comment': "QSO's redshift"
                 }, {
                     'name': 'MEANZ',
-                    'value': mean_z,
+                    'value': mean_z_array[part_index],
                     'comment': "Absorbers mean redshift"
                 }, {
                     'name': 'MEANRESO',
