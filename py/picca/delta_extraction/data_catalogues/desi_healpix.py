@@ -69,8 +69,8 @@ class DesiHealpix(DesiData):
         Parsed options to initialize class
         """
         self.logger = logging.getLogger(__name__)
-        self._parse_config(config)
         super().__init__(config)
+        #parse config will be called by base class anyway
 
     def _parse_config(self, config):
         """Parse the configuration options
@@ -84,6 +84,7 @@ class DesiHealpix(DesiData):
         -----
         DataError upon missing required variables
         """
+        super()._parse_config(config)
         self.use_non_coadded_spectra = config.getboolean(
             "use non-coadded spectra")
         if self.use_non_coadded_spectra is None:

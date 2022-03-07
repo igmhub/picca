@@ -79,9 +79,10 @@ class DesiTile(DesiData):
         # load variables from config
         self.use_all = None
         self.use_single_nights = None
-        self._parse_config(config)
 
         super().__init__(config)
+        #parse config will be called by base class anyway
+
 
     def _parse_config(self, config):
         """Parse the configuration options
@@ -95,6 +96,7 @@ class DesiTile(DesiData):
         -----
         DataError upon missing required variables
         """
+        super()._parse_config(config)
         self.use_all = config.getboolean("use all")
         if self.use_all is None:
             raise DataError("Missing argument 'use all' required by DesiTile")
