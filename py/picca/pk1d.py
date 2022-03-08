@@ -375,10 +375,8 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
     Returns:
         The resolution correction
     """
-
-    if len(reso_matrix.shape) == 1:
-        #assume you got a mean reso_matrix
-        reso_matrix = reso_matrix[np.newaxis, :]
+    #this allows either computing the power for each pixel seperately or for the mean
+    reso_matrix = np.atleast_2d(reso_matrix)
 
     W2arr = []
     #first compute the power in the resmat for each pixel, then average
@@ -390,15 +388,15 @@ def compute_correction_reso_matrix(reso_matrix, k, delta_pixel, num_pixel):
         except AssertionError:
             raise ("for some reason the resolution matrix correction has "
                    "different k scaling than the pk")
+        W2 /= W2[0]
         W2arr.append(W2)
 
     Wres2 = np.mean(W2arr, axis=0)
-    Wres2 /= Wres2[0]
+    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
+
 
     #the following assumes that the resolution matrix is storing the actual resolution convolved with the pixelization kernel along each matrix axis
-    correction = np.ones(len(k))
-    correction *= Wres2
-    pixelization_factor = np.sinc(k * delta_pixel / (2 * np.pi))**2
+    correction = Wres2
     correction /= pixelization_factor
 
     return correction
