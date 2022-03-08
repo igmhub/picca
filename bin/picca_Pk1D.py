@@ -335,6 +335,8 @@ def process_all_files(index_file_args):
                                   comments=comments,
                                   units=units)
                 except AttributeError:
+                    userprint("writing to " + args.out_dir + '/Pk1D-' +
+                                           str(file_index) + '.fits.gz')
                     results = fitsio.FITS((args.out_dir + '/Pk1D-' +
                                            str(file_index) + '.fits.gz'),
                                           'rw',
