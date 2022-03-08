@@ -230,9 +230,7 @@ def process_all_files(index_file_args):
                 elif reso_correction == 'Gaussian':
                     #this is roughly converting the mean resolution estimate back to pixels
                     #and then multiplying with pixel size
-                    mean_reso_AA = (delta_lambda * delta.mean_reso /
-                                    np.log(10.) / constants.speed_light *
-                                    1000.)
+                    mean_reso_AA = delta_lambda * delta.mean_reso_pix
                     correction_reso = compute_correction_reso(
                         delta_pixel=delta_lambda, mean_reso=mean_reso_AA, k=k)
             else:
