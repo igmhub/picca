@@ -1072,7 +1072,10 @@ class Delta(QSO):
             exposures_diff = hdu['DIFF'][:].astype(float)
             mean_snr = header['MEANSNR']
             mean_reso = header['MEANRESO']
-            mean_reso = header['MEANRESO_PIX']
+            try:
+                mean_reso_pix = header['MEANRESO_PIX']
+            except (KeyError, ValueError):
+                mean_reso_pix = None
 
             mean_z = header['MEANZ']
             try:
