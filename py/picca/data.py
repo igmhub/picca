@@ -962,7 +962,7 @@ class Delta(QSO):
     def __init__(self, los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                  weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                  mean_reso, mean_z, resolution_matrix=None,
-                 mean_resolution_matrix=None):
+                 mean_resolution_matrix=None, mean_reso_pix=None):
         """Initializes class instances.
 
         Args:
@@ -1016,6 +1016,7 @@ class Delta(QSO):
         self.mean_z = mean_z
         self.resolution_matrix = resolution_matrix
         self.mean_resolution_matrix = mean_resolution_matrix
+        self.mean_reso_pix = mean_reso_pix
 
         # variables computed in function io.read_deltas
         self.z = None
@@ -1071,6 +1072,8 @@ class Delta(QSO):
             exposures_diff = hdu['DIFF'][:].astype(float)
             mean_snr = header['MEANSNR']
             mean_reso = header['MEANRESO']
+            mean_reso = header['MEANRESO_PIX']
+
             mean_z = header['MEANZ']
             try:
                 #transposing here gives back the actual reso matrix which has been stored transposed
@@ -1092,6 +1095,7 @@ class Delta(QSO):
             mean_z = None
             resolution_matrix = None
             mean_resolution_matrix = None
+            mean_reso_pix = None
             weights = hdu['WEIGHT'][:].astype(float)
             cont = hdu['CONT'][:].astype(float)
 
@@ -1119,7 +1123,7 @@ class Delta(QSO):
         return cls(los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
                    mean_reso, mean_z, resolution_matrix,
-                   mean_resolution_matrix)
+                   mean_resolution_matrix, mean_reso_pix)
 
     @classmethod
     def from_ascii(cls, line):
