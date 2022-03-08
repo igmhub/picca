@@ -250,9 +250,18 @@ def process_all_files(index_file_args):
                 pk = (pk_raw - pk_diff) / correction_reso
             elif (args.noise_estimate == 'mean_diff'
                   or args.noise_estimate == 'mean_rebin_diff'):
-                selection = (k > 0) & (k < 0.02)
+                if linear_binning:
+                    #this is roughly the same range as eBOSS analyses for z=2.2
+                    selection = (k > 0) & (k < 1.5)
+                else:
+                    selection = (k > 0) & (k < 0.02)
+
                 if args.noise_estimate == 'mean_rebin_diff':
-                    selection = (k > 0.003) & (k < 0.02)
+                    if linear_binning:
+                        #this is roughly the DESI resolution limit
+                        selection = (k > 0) & (k < 2.3)
+                    else:
+                        selection = (k > 0.003) & (k < 0.02)
                 mean_pk_diff = np.mean(pk_diff[selection])
                 pk = (pk_raw - mean_pk_diff) / correction_reso
 
