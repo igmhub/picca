@@ -205,7 +205,7 @@ class DesiHealpix(DesiData):
                         spec['TEFF_LYA'] = 11.80090901380597 * hdul['SCORES'][f'TSNR2_LYA_{color}'].read()
                     else:
                         spec['TEFF_LYA'] = np.ones(spec["FLUX"].shape[0])
-                        if not no_scores_available:
+                        if self.use_non_coadded_spectra and not no_scores_available:
                             self.logger.info("SCORES are missing, Teff information (and thus DIFF) will be garbage")
                         no_scores_available=True
 
@@ -219,7 +219,7 @@ class DesiHealpix(DesiData):
                             with fitsio.FITS(filename_truth) as hdul_truth:
                                 spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
                             if not reso_from_truth:
-                                self.logger.info("no resolution in files, reading from truth files")
+                                self.logger.debug("no resolution in files, reading from truth files")
                             reso_from_truth=True
                         else:
                             raise DataError(
