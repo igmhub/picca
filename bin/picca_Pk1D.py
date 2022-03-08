@@ -95,11 +95,11 @@ def process_all_files(index_file_args):
         reso_correction = "Gaussian"
         userprint("Using Gaussian resolution correction\n")
 
-    use_exp_diff_cut=True
+    use_exp_diff_cut=False
     #add check if diff has ever been set
     for delta in deltas:
         #use this cut if some spectra have exposures_differences calculated
-        if sum(delta.exposures_diff) != 0:
+        if not np.allclose(sum(delta.exposures_diff), 0):
             use_exp_diff_cut = True
             break
 
@@ -112,7 +112,7 @@ def process_all_files(index_file_args):
                 or delta.mean_reso >= args.reso_max):
             continue
         if use_exp_diff_cut:
-            if np.sum(delta.exposures_diff)==0:
+            if np.allclose(sum(delta.exposures_diff), 0):
                 continue
 
         # first pixel in forest
