@@ -13,6 +13,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux
+from picca.delta_extraction.utils import find_bins
 
 accepted_options = ["input directory", "iter out prefix",
                     "num processors", "out dir",
@@ -187,10 +188,10 @@ class TrueContinuum(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
-            bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
-                     np.log10(1 + forest.z)) /
-                    (Forest.log_lambda_max_rest_frame -
-                     Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
+            bins = find_bins(
+                forest.log_lambda - np.log10(1 + forest.z),
+                self.log_lambda_rest_frame
+            )
 
             var_lss = self.get_var_lss(forest.log_lambda)
             var_pipe = 1. / forest.ivar/ forest.continuum**2

@@ -583,7 +583,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 continue
             bins = find_bins(
                 forest.log_lambda - np.log10(1 + forest.z),
-                Forest.log_lambda_rest_frame_grid
+                self.log_lambda_rest_frame
             )
 
             var_lss = self.get_var_lss(forest.log_lambda)
