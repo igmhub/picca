@@ -2,6 +2,7 @@
 package"""
 import importlib
 import logging
+import os
 
 from scipy.constants import speed_of_light as speed_light
 
@@ -195,6 +196,9 @@ def setup_logger(logging_level_console=logging.DEBUG, log_file=None,
 
     # create file handler which logs messages to file
     if log_file is not None:
+        if os.path.exists(log_file):
+            newfilename = f'{log_file}.{os.path.getmtime(log_file)}'
+            os.rename(log_file, newfilename)
         file_handler = logging.FileHandler(log_file, mode="w")
         file_handler.setLevel(logging_level_file)
         file_handler.setFormatter(formatter)
