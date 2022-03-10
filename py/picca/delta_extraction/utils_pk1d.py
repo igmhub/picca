@@ -229,7 +229,7 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     reso_in_km_per_s: array
     The spectral resolution
     """
-    delta_log_lambda = np.diff(np.log(lambda_))
+    delta_log_lambda = np.diff(np.log10(lambda_))
     #note that this would be the same result as before (except for the missing bug) in
     #case of log-uniform binning, but for linear binning pixel size chenges wrt lambda
     delta_log_lambda = np.append(
