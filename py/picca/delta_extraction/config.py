@@ -528,7 +528,7 @@ class Config:
         outname=f"{self.out_dir}/.config.ini"
         if os.path.exists(outname):
             newname=f"{outname}.{os.path.getmtime(outname)}"
-            os.path.rename(outname, newname)
+            os.rename(outname, newname)
         config_file = open(outname, 'w')
         self.config.write(config_file)
         config_file.close()
