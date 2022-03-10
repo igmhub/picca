@@ -216,7 +216,7 @@ class Data:
             elif self.analysis_type=='PK 1D' and forest.mean_snr<1:
                 #TODO: add variable for the SNR cut, actually only required for constant weights...
                 self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          "low SNR ({forest.mean_snr})")
+                                          f"low SNR ({forest.mean_snr})")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to low SNR")
