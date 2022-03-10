@@ -89,8 +89,12 @@ class AbstractTest(unittest.TestCase):
                     self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:
                         if orig_header[key] != new_header[key]:
-                            print(orig_file, new_file)
-                            print(orig_header[key], new_header[key])
+                            print(f"\n For header {orig_header['EXTNAME']}")
+                            print(f"Different value found for key {key}")
+                            print(f"original file: {orig_file}")
+                            print(f"new file: {new_file}")
+                            print(f"original value: {orig_header[key]}")
+                            print(f"new value: {new_header[key]}")
                         self.assertTrue((orig_header[key] == new_header[key]) or
                                         (np.isclose(orig_header[key], new_header[key])))
                 for key in new_header:

@@ -80,7 +80,7 @@ class ExpectedFluxTest(AbstractTest):
             expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
         # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log")
+        setup_forest("log", rebin=3)
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
         self.assertTrue(isinstance(expected_flux.get_eta, interp1d))
@@ -106,7 +106,7 @@ class ExpectedFluxTest(AbstractTest):
     def test_dr16_expected_flux_compute_continuum(self):
         """Test method compute_continuum for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log")
+        setup_forest("log", rebin=3)
 
         test_file = f"{THIS_DIR}/data/continua_log.txt"
 
@@ -162,7 +162,7 @@ class ExpectedFluxTest(AbstractTest):
     def test_dr16_expected_flux_compute_delta_stack(self):
         """Test method compute_delta_stack for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log")
+        setup_forest("log", rebin=3)
 
         test_file = f"{THIS_DIR}/data/delta_stack_log.txt"
 
@@ -207,7 +207,7 @@ class ExpectedFluxTest(AbstractTest):
     def test_dr16_expected_flux_compute_expected_flux(self):
         """Test method compute_var_stats for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log")
+        setup_forest("log", rebin=3)
 
         out_file = f"{THIS_DIR}/results/Log/iter_out_prefix_compute_expected_flux_log.fits.gz"
         test_file = f"{THIS_DIR}/data/iter_out_prefix_compute_expected_flux_log.fits.gz"
@@ -256,7 +256,7 @@ class ExpectedFluxTest(AbstractTest):
     def test_dr16_expected_flux_compute_mean_cont_log(self):
         """Test method compute_mean_cont_log for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log")
+        setup_forest("log", rebin=3)
 
         test_file = f"{THIS_DIR}/data/mean_cont_log.txt"
 
@@ -295,7 +295,7 @@ class ExpectedFluxTest(AbstractTest):
     def test_dr16_expected_flux_compute_var_stats(self):
         """Test method compute_var_stats for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log")
+        setup_forest("log", rebin=3)
 
         test_file = f"{THIS_DIR}/data/eta_var_lss_fudge.txt"
 
@@ -343,7 +343,7 @@ class ExpectedFluxTest(AbstractTest):
     def test_dr16_expected_flux_populate_los_ids(self):
         """Test method populate_los_ids for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log")
+        setup_forest("log", rebin=3)
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -380,7 +380,7 @@ class ExpectedFluxTest(AbstractTest):
     def test_dr16_expected_flux_save_iteration_step(self):
         """Test method save_iteration_step for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("log")
+        setup_forest("log", rebin=3)
 
         out_file = f"{THIS_DIR}/results/Log/iter_out_prefix_log_iteration1.fits.gz"
         out_file2 = f"{THIS_DIR}/results/Log/iter_out_prefix_log.fits.gz"

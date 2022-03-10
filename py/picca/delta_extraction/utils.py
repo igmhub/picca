@@ -3,6 +3,7 @@ package"""
 import importlib
 import logging
 
+import numpy as np
 from scipy.constants import speed_of_light as speed_light
 
 module_logger = logging.getLogger(__name__)
@@ -125,6 +126,10 @@ def class_from_string(class_name, module_name):
         accepted_options = []
     return class_object, default_args, accepted_options
 
+def find_bins(original_array, grid_array):
+    """For each element in original_array, find the corresponding bin in grid_array"""
+    found_bin = (np.abs(grid_array - original_array[:,None])).argmin(axis=1)
+    return found_bin
 
 PROGRESS_LEVEL_NUM = 15
 logging.addLevelName(PROGRESS_LEVEL_NUM, "PROGRESS")

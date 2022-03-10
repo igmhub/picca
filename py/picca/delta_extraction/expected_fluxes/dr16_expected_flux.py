@@ -11,6 +11,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
 from picca.delta_extraction.expected_flux import ExpectedFlux
+from picca.delta_extraction.utils import find_bins
 
 accepted_options = ["iter out prefix", "limit eta", "limit var lss",
                     "num bins variance", "num iterations", "num processors",
@@ -580,10 +581,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
-            bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
-                     np.log10(1 + forest.z)) /
-                    (Forest.log_lambda_max_rest_frame -
-                     Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
+            bins = find_bins(
+                forest.log_lambda - np.log10(1 + forest.z),
+                Forest.log_lambda_rest_frame_grid
+            )
 
             var_lss = self.get_var_lss(forest.log_lambda)
             eta = self.get_eta(forest.log_lambda)

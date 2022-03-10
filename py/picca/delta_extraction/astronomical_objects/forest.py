@@ -5,6 +5,7 @@ import numpy as np
 
 from picca.delta_extraction.astronomical_object import AstronomicalObject
 from picca.delta_extraction.errors import AstronomicalObjectError
+from picca.delta_extraction.utils import find_bins
 
 defaults = {
     "mask fields": ["flux", "ivar", "transmission_correction", "log_lambda"],
@@ -393,21 +394,8 @@ class Forest(AstronomicalObject):
         AstronomicalObjectError if ivar only has zeros
         """
         orig_ivar = self.ivar.copy()
-        # compute bins
-        if Forest.wave_solution == "log":
-            bins = (np.floor((self.log_lambda - Forest.log_lambda_min) /
-                             Forest.delta_log_lambda + 0.5).astype(int))
-            self.log_lambda = Forest.log_lambda_min + bins * Forest.delta_log_lambda
-        elif Forest.wave_solution == "lin":
-            bins = (np.floor((10**self.log_lambda - 10**Forest.log_lambda_min) /
-                             10**Forest.delta_log_lambda + 0.5).astype(int))
-            self.log_lambda = np.log10(10**Forest.log_lambda_min + bins *
-                                       10**Forest.delta_log_lambda)
-        else:
-            raise AstronomicalObjectError("Error in rebinning Forest. "
-                                          "Class variable 'wave_solution' "
-                                          "must be either 'lin' or 'log'. "
-                                          f"Found: {Forest.wave_solution}")
+
+        # filter arrays
         w1 = (self.log_lambda >= Forest.log_lambda_min)
         w1 = w1 & (self.log_lambda < Forest.log_lambda_max)
         w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >
@@ -421,11 +409,13 @@ class Forest(AstronomicalObject):
             self.ivar = np.array([])
             self.transmission_correction = np.array([])
             return [], [], [], [], []
-        bins = bins[w1]
         self.log_lambda = self.log_lambda[w1]
         self.flux = self.flux[w1]
         self.ivar = self.ivar[w1]
         self.transmission_correction = self.transmission_correction[w1]
+
+        # compute bins
+        bins = find_bins(self.log_lambda, Forest.log_lambda_grid)
 
         # rebin flux, ivar and transmission_correction
         rebin_flux = np.zeros(bins.max() + 1)
@@ -472,3 +462,59 @@ class Forest(AstronomicalObject):
         # return weights and binning solution to be used by child classes if
         # required
         return bins, rebin_ivar, orig_ivar, w1, w2
+
+    @classmethod
+    def set_class_variables(cls, lambda_min, lambda_max,
+                            lambda_min_rest_frame,
+                            lambda_max_rest_frame,
+                            pixel_step, wave_solution):
+        """Set class variables
+
+        Arguments
+        ---------
+        lambda_min: float
+        Logarithm of the minimum wavelength (in Angs) to be considered in a forest.
+
+        lambda_max: float
+        Logarithm of the maximum wavelength (in Angs) to be considered in a forest.
+
+        lambda_min_rest_frame: float or None
+        As lambda_min but for rest-frame wavelength.
+
+        lambda_max_rest_frame: float
+        As lambda_max but for rest-frame wavelength.
+
+        pixel_step: float
+        Wavelength cahnge between two pixels. If pixel_step is "log" this is in
+        units of the logarithm of the wavelength (in Angs). If pixel_step is "lin"
+        this is in units of the wavelength (in Angs).
+
+        wave_solution: "log" or "lin"
+        Specifies whether we want to construct a wavelength grid that is evenly
+        spaced on wavelength (lin) or on the logarithm of the wavelength (log)
+        """
+        if wave_solution == "log":
+            cls.log_lambda_grid = np.arange(
+                np.log10(lambda_min),
+                np.log10(lambda_max)+ pixel_step/2,
+                pixel_step)
+            cls.log_lambda_rest_frame_grid = np.arange(
+                np.log10(lambda_min_rest_frame),
+                np.log10(lambda_max_rest_frame)+ pixel_step/2,
+                pixel_step)
+        elif wave_solution == "lin":
+            cls.log_lambda_grid = np.log10(np.arange(
+                lambda_min,
+                lambda_max+ pixel_step/2,
+                pixel_step))
+            cls.log_lambda_rest_frame_grid = np.log10(np.arange(
+                lambda_min_rest_frame,
+                lambda_max_rest_frame + pixel_step/2,
+                pixel_step))
+        else:
+            raise AstronomicalObjectError("Error in setting Forest class "
+                                          "variables. 'wave_solution' "
+                                          "must be either 'lin' or 'log'. "
+                                          f"Found: {wave_solution}")
+
+        cls.wave_solution = wave_solution
