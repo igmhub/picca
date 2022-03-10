@@ -534,7 +534,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                    aq=aq,
                                    bq=bq)
         minimizer.errors["aq"] = aq / 2.
-        minimizer.errors["bq"] = bq / 2.
+        minimizer.errors["bq"] = aq / 2.
         minimizer.errordef = 1.
         minimizer.print_level = 0
         minimizer.fixed["bq"] = self.order == 0
