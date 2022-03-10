@@ -441,7 +441,7 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     header['L_MIN'] = lambda_min
     header['L_MAX'] = lambda_max
     header['LR_MIN'] = lambda_min_rest_frame
-    header['LR_MAN'] = lambda_max_rest_frame
+    header['LR_MAX'] = lambda_max_rest_frame
     header['DEL_LL'] = delta_log_lambda
     header['DEL_L'] = delta_lambda
     header['LINEAR'] = lin_spaced

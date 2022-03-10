@@ -525,6 +525,10 @@ class Config:
         usages. The file is saved under the name .config.ini and in
         the self.out_dir folder
         """
-        config_file = open(f"{self.out_dir}/.config.ini", 'w')
+        outname=f"{self.out_dir}/.config.ini"
+        if os.path.exists(outname):
+            newname=f"{outname}.{os.path.getmtime(outname)}"
+            os.rename(outname, newname)
+        config_file = open(outname, 'w')
         self.config.write(config_file)
         config_file.close()

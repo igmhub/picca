@@ -77,11 +77,19 @@ class Dr16ExpectedFlux(ExpectedFlux):
     du Mas des Bourboux et al. 2020 for details.
 
     get_mean_cont: scipy.interpolate.interp1d
-    Interpolation function to compute the unabsorbed mean quasar continua
+    Interpolation function to compute the unabsorbed mean quasar continua.
 
-    get_stack_delta: scipy.interpolate.interp1d or None
+    get_num_pixels: scipy.interpolate.interp1d
+    Number of pixels used to fit for eta, var_lss and fudge.
+
+    get_stack_delta: scipy.interpolate.interp1d
     Interpolation function to compute the mean delta (from stacking all lines of
-    sight). None for no info.
+    sight).
+
+    get_valid_fit: scipy.interpolate.interp1d
+    True if the fit for eta, var_lss and fudge is converged, false otherwise.
+    Since the fit is performed independently for eah observed wavelength,
+    this is also given as a function of the observed wavelength.
 
     get_var_lss: scipy.interpolate.interp1d
     Interpolation function to compute mapping functions var_lss. See equation 4 of
@@ -170,6 +178,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_fudge = None
         self.get_mean_cont = None
         self.get_mean_cont_weight = None
+        self.get_num_pixels = None
+        self.get_valid_fit = None
         self.get_var_lss = None
         self.log_lambda = None
         self.log_lambda_rest_frame = None
@@ -186,6 +196,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         - self.get_eta
         - self.get_fudge
         - self.get_mean_cont
+        - self.get_num_pixels
+        - self.get_valid_fit
         - self.get_var_lss
         - self.log_lambda
         - self.log_lambda_rest_frame
@@ -223,6 +235,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                                  self.log_lambda_rest_frame),
                                              fill_value="extrapolate")
 
+
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
         self.log_lambda = (Forest.log_lambda_min +
@@ -238,6 +251,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta = np.ones(self.num_bins_variance)
             var_lss = np.zeros(self.num_bins_variance)
             fudge = np.zeros(self.num_bins_variance)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.ones(self.num_bins_variance)
         # if use_constant_weight is set then initialize eta, var_lss, and fudge
         # with values to have constant weights
         elif self.use_constant_weight:
@@ -246,12 +261,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta = np.zeros(self.num_bins_variance)
             var_lss = np.ones(self.num_bins_variance)
             fudge = np.zeros(self.num_bins_variance)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.ones(self.num_bins_variance, dtype=bool)
         # normal initialization: eta, var_lss, and fudge are ignored in the
         # first iteration
         else:
             eta = np.ones(self.num_bins_variance)
             var_lss = np.zeros(self.num_bins_variance) + 0.2
             fudge = np.zeros(self.num_bins_variance)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
 
         self.get_eta = interp1d(self.log_lambda,
                                 eta,
@@ -265,6 +284,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                   fudge,
                                   fill_value='extrapolate',
                                   kind='nearest')
+        self.get_num_pixels = interp1d(self.log_lambda,
+                                       num_pixels,
+                                       fill_value="extrapolate",
+                                       kind='nearest')
+        self.get_valid_fit = interp1d(self.log_lambda,
+                                      num_pixels,
+                                      fill_value="extrapolate",
+                                      kind='nearest')
 
     def _parse_config(self, config):
         """Parse the configuration options
@@ -689,6 +716,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         error_var_lss = np.zeros(self.num_bins_variance)
         error_fudge = np.zeros(self.num_bins_variance)
         num_pixels = np.zeros(self.num_bins_variance)
+        valid_fit = np.zeros(self.num_bins_variance)
 
         # define an array to contain the possible values of pipeline variances
         # the measured pipeline variance of the deltas will be averaged using the
@@ -854,6 +882,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 error_eta[index] = minimizer.errors["eta"]
                 error_var_lss[index] = minimizer.errors["var_lss"]
                 error_fudge[index] = minimizer.errors["fudge"] * fudge_ref
+                valid_fit[index] = True
             else:
                 eta[index] = 1.
                 var_lss[index] = 0.1
@@ -861,6 +890,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 error_eta[index] = 0.
                 error_var_lss[index] = 0.
                 error_fudge[index] = 0.
+                valid_fit[index] = False
             num_pixels[index] = count[index * num_var_bins:(index + 1) *
                                       num_var_bins].sum()
             chi2_in_bin[index] = minimizer.fval
@@ -947,6 +977,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                          clobber=True) as results:
             header = {}
             header["FITORDER"] = self.order
+            
             # TODO: update this once the TODO in compute continua is fixed
             num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
                            Forest.delta_log_lambda) + 1
@@ -978,3 +1009,4 @@ class Dr16ExpectedFlux(ExpectedFlux):
             ],
                           names=['loglam_rest', 'mean_cont', 'weight'],
                           extname='CONT')
+

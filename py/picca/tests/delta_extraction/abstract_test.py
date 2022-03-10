@@ -118,6 +118,8 @@ class AbstractTest(unittest.TestCase):
                     for col in new_data.dtype.names:
                         if col not in orig_data.dtype.names:
                             print(f"Column {col} missing in orig header")
+                            if col in ["num_pixels", "valid_fit"]:
+                                continue
                         self.assertTrue(col in orig_data.dtype.names)
         finally:
             orig_hdul.close()
