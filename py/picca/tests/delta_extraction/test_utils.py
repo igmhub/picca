@@ -13,16 +13,10 @@ from picca.delta_extraction.utils import ABSORBER_IGM
 def reset_forest():
     """Reset the class variables of Forest and Pk1dForest"""
     Forest.wave_solution = None
-    Forest.delta_log_lambda = None
-    Forest.log_lambda_max = None
-    Forest.log_lambda_max_rest_frame = None
-    Forest.log_lambda_min = None
-    Forest.log_lambda_min_rest_frame = None
     Forest.log_lambda_grid = None
     Forest.log_lambda_rest_frame_grid = None
     Forest.mask_fields = []
     Pk1dForest.lambda_abs_igm = None
-
 
 # setup Forest class variables
 def setup_forest(wave_solution, rebin=1):
@@ -41,16 +35,8 @@ def setup_forest(wave_solution, rebin=1):
 
     if wave_solution == "log":
         pixel_step = 1e-4 * rebin
-        Forest.wave_solution = "log"
-        Forest.delta_log_lambda = 1e-4 * rebin
     elif wave_solution == "lin":
-        pixel_step = 1.0
-        Forest.wave_solution = "lin"
-        Forest.delta_log_lambda = np.log10(1.)
-    Forest.log_lambda_max = np.log10(5500.0)
-    Forest.log_lambda_max_rest_frame = np.log10(1200.0)
-    Forest.log_lambda_min = np.log10(3600.0)
-    Forest.log_lambda_min_rest_frame = np.log10(1040.0)
+        pixel_step = 1.0    
 
     Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step,
                                wave_solution)
