@@ -173,6 +173,7 @@ class Forest(AstronomicalObject):
                 "Error constructing Forest. "
                 "Expected list in class variable 'mask fields'. "
                 f"Found {cls.mask_fields}.")
+
         if cls.wave_solution is None:
             raise AstronomicalObjectError("Error constructing Forest. "
                                           "Class variable 'wave_solution' "
@@ -484,3 +485,5 @@ class Forest(AstronomicalObject):
                                           f"Found: {wave_solution}")
 
         cls.wave_solution = wave_solution
+
+        cls.mask_fields = defaults.get("mask fields").copy()
