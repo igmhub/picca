@@ -88,10 +88,7 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
         self.assertTrue(expected_flux.lambda_ is None)
-        self.assertTrue(expected_flux.lambda_rest_frame is None)
         self.assertTrue(isinstance(expected_flux.log_lambda, np.ndarray))
-        self.assertTrue(
-            isinstance(expected_flux.log_lambda_rest_frame, np.ndarray))
 
         # setup Forest variables; case: linear wavelength solution
         reset_forest()
@@ -103,9 +100,7 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
         self.assertTrue(isinstance(expected_flux.lambda_, np.ndarray))
-        self.assertTrue(isinstance(expected_flux.lambda_rest_frame, np.ndarray))
         self.assertTrue(expected_flux.log_lambda is None)
-        self.assertTrue(expected_flux.log_lambda_rest_frame is None)
 
     def test_dr16_expected_flux_compute_continuum(self):
         """Test method compute_continuum for class Dr16ExpectedFlux"""
@@ -151,6 +146,12 @@ class ExpectedFluxTest(AbstractTest):
         # compare the results
         correct_forests = 0
         for forest in data.forests:
+            if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                print("Difference found in forest.continuum")
+                print(f"forest.los_id: {forest.los_id}")
+                print(f"res test are_close res-test")
+                for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
+                    print(i1, i2, np.isclose(i1, i2), i1-i2)
             self.assertTrue(
                 np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1

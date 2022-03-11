@@ -1133,6 +1133,7 @@ class AstronomicalObjectTest(AbstractTest):
         self.assert_get_header(test_obj)
 
         # set class variables; case: linear wavelength solution
+        reset_forest()
         setup_forest(wave_solution="lin")
 
         # create a Forest
@@ -1255,7 +1256,9 @@ class AstronomicalObjectTest(AbstractTest):
         self.assert_get_header(test_obj)
 
         # set class variables; case: linear wavelength solution
+        reset_forest()
         setup_forest(wave_solution="lin")
+        setup_pk1d_forest("LYA")
 
         # create a Pk1dForest
         test_obj = Pk1dForest(**kwargs_pk1d_forest_lin)

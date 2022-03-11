@@ -7,18 +7,27 @@ import numpy as np
 import fitsio
 import healpy
 
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import ABSORBER_IGM
 
-accepted_options = ["analysis type", "lambda abs IGM",
+accepted_options = ["analysis type", "delta lambda", "input directory",
+                    "lambda abs IGM",
+                    "lambda max", "lambda max rest frame",
+                    "lambda min", "lambda min rest frame",
                     "minimum number pixels in forest",
-                    "out dir", "rejection log file"]
+                    "out dir", "rebin", "rejection log file"]
 
 defaults = {
     "analysis type": "BAO 3D",
     "lambda abs IGM": "LYA",
+    "lambda max": 5500.0,
+    "lambda max rest frame": 1200.0,
+    "lambda min": 3600.0,
+    "lambda min rest frame": 1040.0,
     "minimum number pixels in forest": 50,
+    "rebin": 3,
     "rejection log file": "rejection_log.fits.gz",
 }
 
@@ -78,6 +87,71 @@ class Data:
         self.logger = logging.getLogger('picca.delta_extraction.data.Data')
         self.forests = []
 
+        self.analysis_type = None
+        self.input_directory = None
+        self.min_num_pix = None
+        self.out_dir = None
+        self.rejection_log_file = None
+        self.__parse_config(config)
+
+        # rejection log arays
+        self.rejection_log_initialized = False
+        self.rejection_log_cols = []
+        self.rejection_log_names = []
+        self.rejection_log_comments = []
+
+    def __parse_config(self, config):
+        """Parse the configuration options
+
+        Arguments
+        ---------
+        config: configparser.SectionProxy
+        Parsed options to initialize class
+
+        Raise
+        -----
+        DataError upon missing required variables
+        """
+        # setup SdssForest class variables
+        wave_solution = config.get("wave solution")
+
+        if wave_solution is None:
+            raise DataError("Missing argument 'wave solution' required by Data")
+        if wave_solution not in ["lin", "log"]:
+            raise DataError("Unrecognised value for 'wave solution'. Expected either "
+                            f"'lin' or 'lof'. Found {wave_solution}")
+
+        if wave_solution == "log":
+            rebin = config.getint("rebin")
+            if rebin is None:
+                raise DataError("Missing argument 'rebin' required by Data when "
+                                "'wave solution' is set to 'log'")
+            pixel_step = rebin * 1e-4
+        elif wave_solution == "lin":
+            pixel_step = config.getfloat("delta lambda")
+        else:
+            raise DataError("Forest.wave_solution must be either "
+                            "'log' or 'lin'")
+
+        lambda_max = config.getfloat("lambda max")
+        if lambda_max is None:
+            raise DataError("Missing argument 'lambda max' required by Data")
+        lambda_max_rest_frame = config.getfloat("lambda max rest frame")
+        if lambda_max_rest_frame is None:
+            raise DataError("Missing argument 'lambda max rest frame' required by Data")
+        lambda_min = config.getfloat("lambda min")
+        if lambda_min is None:
+            raise DataError("Missing argument 'lambda min' required by Data")
+        lambda_min_rest_frame = config.getfloat("lambda min rest frame")
+        if lambda_min_rest_frame is None:
+            raise DataError("Missing argument 'lambda min rest frame' required by Data")
+
+        Forest.set_class_variables(lambda_min, lambda_max,
+                                   lambda_min_rest_frame,
+                                   lambda_max_rest_frame,
+                                   pixel_step, wave_solution)
+
+        # instance variables
         self.analysis_type = config.get("analysis type")
         if self.analysis_type is None:
             raise DataError("Missing argument 'analysis type' required by Data")
@@ -92,7 +166,11 @@ class Data:
                 raise DataError("Missing argument 'lambda abs IGM' required by Data "
                                 "when 'analysys type' is 'BAO 3D'")
 
-
+        self.input_directory = config.get("input directory")
+        if self.input_directory is None:
+            raise DataError(
+                "Missing argument 'input directory' required by Data")
+        
         self.min_num_pix = config.getint("minimum number pixels in forest")
         if self.min_num_pix is None:
             raise DataError("Missing argument 'minimum number pixels in forest' "
@@ -110,12 +188,6 @@ class Data:
             raise DataError("Invalid extension for 'rejection log file'. Filename "
                             "should en with '.fits' or '.fits.gz'. Found "
                             f"'{self.rejection_log_file}'")
-
-        # rejection log arays
-        self.rejection_log_initialized = False
-        self.rejection_log_cols = []
-        self.rejection_log_names = []
-        self.rejection_log_comments = []
 
     def add_to_rejection_log(self, header, size, rejection_status):
         """Adds to the rejection log arrays.
