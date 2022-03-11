@@ -109,29 +109,30 @@ class SdssData(Data):
         DataError upon missing required variables
         """
         # setup SdssForest class variables
-        Forest.wave_solution = "log"
+        wave_solution = "log"
 
         rebin = config.getint("rebin")
         if rebin is None:
             raise DataError("Missing argument 'rebin' required by SdssData")
-        Forest.delta_log_lambda = rebin * 1e-4
+        pixel_step = rebin * 1e-4
 
         lambda_max = config.getfloat("lambda max")
         if lambda_max is None:
             raise DataError("Missing argument 'lambda max' required by SdssData")
-        Forest.log_lambda_max = np.log10(lambda_max)
         lambda_max_rest_frame = config.getfloat("lambda max rest frame")
         if lambda_max_rest_frame is None:
             raise DataError("Missing argument 'lambda max rest frame' required by SdssData")
-        Forest.log_lambda_max_rest_frame = np.log10(lambda_max_rest_frame)
         lambda_min = config.getfloat("lambda min")
         if lambda_min is None:
             raise DataError("Missing argument 'lambda min' required by SdssData")
-        Forest.log_lambda_min = np.log10(lambda_min)
         lambda_min_rest_frame = config.getfloat("lambda min rest frame")
         if lambda_min_rest_frame is None:
             raise DataError("Missing argument 'lambda min rest frame' required by SdssData")
-        Forest.log_lambda_min_rest_frame = np.log10(lambda_min_rest_frame)
+
+        Forest.set_class_variables(lambda_min, lambda_max,
+                                   lambda_min_rest_frame,
+                                   lambda_max_rest_frame,
+                                   pixel_step, wave_solution)
 
         # instance variables
         self.input_directory = config.get("input directory")

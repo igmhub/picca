@@ -214,18 +214,18 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # continuum on compute_mean_expected_flux
         try:
             num_bins = (int(
-                (Forest.log_lambda_max_rest_frame -
-                 Forest.log_lambda_min_rest_frame) / Forest.delta_log_lambda) + 1)
+                (Forest.log_lambda_rest_frame_grid[-1] -
+                 Forest.log_lambda_rest_frame_grid[0]) / Forest.delta_log_lambda) + 1)
         except OverflowError:
             # this will happen if, for example, we select linear binning with
             # 1 angstrom wide pixels as in this case delta_log_lambda = 0
             num_bins = (int(
-                (10**Forest.log_lambda_max_rest_frame -
-                 10**Forest.log_lambda_min_rest_frame) / 10**Forest.delta_log_lambda) + 1)
+                (10**Forest.log_lambda_rest_frame_grid[-1] -
+                 10**Forest.log_lambda_rest_frame_grid[0]) / 10**Forest.delta_log_lambda) + 1)
         self.log_lambda_rest_frame = (
-            Forest.log_lambda_min_rest_frame + (np.arange(num_bins) + 0.5) *
-            (Forest.log_lambda_max_rest_frame -
-             Forest.log_lambda_min_rest_frame) / num_bins)
+            Forest.log_lambda_rest_frame_grid[0] + (np.arange(num_bins) + 0.5) *
+            (Forest.log_lambda_rest_frame_grid[-1] -
+             Forest.log_lambda_rest_frame_grid[0]) / num_bins)
 
         self.get_mean_cont = interp1d(self.log_lambda_rest_frame,
                                       np.ones_like(self.log_lambda_rest_frame),
@@ -238,9 +238,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
-        self.log_lambda = (Forest.log_lambda_min +
+        self.log_lambda = (Forest.log_lambda_grid[0] +
                            (np.arange(self.num_bins_variance) + .5) *
-                           (Forest.log_lambda_max - Forest.log_lambda_min) /
+                           (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
                            self.num_bins_variance)
 
         # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
@@ -399,9 +399,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         self.continuum_fit_parameters = {}
 
-        log_lambda_max = (Forest.log_lambda_max_rest_frame +
+        log_lambda_max = (Forest.log_lambda_rest_frame_grid[-1] +
                           np.log10(1 + forest.z))
-        log_lambda_min = (Forest.log_lambda_min_rest_frame +
+        log_lambda_min = (Forest.log_lambda_rest_frame_grid[0] +
                           np.log10(1 + forest.z))
 
         # get mean continuum
@@ -542,9 +542,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         # TODO: move this to _initialize_variables_lin and
         # _initialize_variables_log (after tests are done)
-        num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
+        num_bins = int((Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
                        Forest.delta_log_lambda) + 1
-        stack_log_lambda = (Forest.log_lambda_min +
+        stack_log_lambda = (Forest.log_lambda_grid[0] +
                             np.arange(num_bins) * Forest.delta_log_lambda)
 
         stack_delta = np.zeros(num_bins)
@@ -566,7 +566,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 variance = eta * var + var_lss + fudge / var
                 weights = 1. / variance
 
-            bins = ((forest.log_lambda - Forest.log_lambda_min) /
+            bins = ((forest.log_lambda - Forest.log_lambda_grid[0]) /
                     Forest.delta_log_lambda + 0.5).astype(int)
             rebin = np.bincount(bins, weights=delta * weights)
             stack_delta[:len(rebin)] += rebin
@@ -754,8 +754,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             # select the wavelength bins
             log_lambda_bins = (
-                (forest.log_lambda - Forest.log_lambda_min) /
-                (Forest.log_lambda_max - Forest.log_lambda_min) *
+                (forest.log_lambda - Forest.log_lambda_grid[0]) /
+                (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) *
                 self.num_bins_variance).astype(int)
             # filter the values with a pipeline variance out of range
             log_lambda_bins = log_lambda_bins[w]
@@ -977,12 +977,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
                          clobber=True) as results:
             header = {}
             header["FITORDER"] = self.order
-            
+
             # TODO: update this once the TODO in compute continua is fixed
-            num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
+            num_bins = int((Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
                            Forest.delta_log_lambda) + 1
             stack_log_lambda = (
-                Forest.log_lambda_min +
+                Forest.log_lambda_grid[0] +
                 np.arange(num_bins) * Forest.delta_log_lambda)
             results.write([
                 stack_log_lambda,
@@ -1009,4 +1009,3 @@ class Dr16ExpectedFlux(ExpectedFlux):
             ],
                           names=['loglam_rest', 'mean_cont', 'weight'],
                           extname='CONT')
-

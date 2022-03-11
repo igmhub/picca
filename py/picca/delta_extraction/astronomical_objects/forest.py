@@ -31,28 +31,12 @@ class Forest(AstronomicalObject):
     blinding: str
     Name of the blinding strategy used
 
-    delta_log_lambda: float
-    Variation of the logarithm of the wavelength (in Angs) between two pixels.
-    This should not be None if wave_solution is "log". Ignored if wave_solution
-    is "lin".
+    log_lambda_grid: array of float
+    Common grid in log_lambda based on the specified minimum and maximum
+    wavelengths, the step size and the wavelength solution (lin or log).
 
-    log_lambda_max: float or None
-    Logarithm of the maximum wavelength (in Angs) to be considered in a forest.
-    This should not be None if wave_solution is "log". Ignored if wave_solution
-    is "lin".
-
-    log_lambda_max_rest_frame: float or None
-    As log_lambda_max but for rest-frame wavelength. This should not be None if
-    wave_solution is "log". Ignored if wave_solution is "lin".
-
-    log_lambda_min: float or None
-    Logarithm of the minimum wavelength (in Angs) to be considered in a forest.
-    This should not be None if wave_solution is "log". Ignored if wave_solution
-    is "lin".
-
-    log_lambda_min_rest_frame: float or None
-    As log_lambda_min but for rest-frame wavelength. This should not be None if
-    wave_solution is "log". Ignored if wave_solution is "lin".
+    log_lambda_rest_frame_grid: array of float
+    Same as log_lambda_grid but for rest-frame wavelengths
 
     mask_fields: list of str
     Names of the fields that are affected by masking. In general it will
@@ -110,11 +94,8 @@ class Forest(AstronomicalObject):
     Weights associated to the delta field. None for no information
     """
     blinding = "none"
-    delta_log_lambda = None
-    log_lambda_max = None
-    log_lambda_max_rest_frame = None
-    log_lambda_min = None
-    log_lambda_min_rest_frame = None
+    log_lambda_grid = None
+    log_lambda_rest_frame_grid = None
     mask_fields = []
     wave_solution = None
 
@@ -177,9 +158,14 @@ class Forest(AstronomicalObject):
     @classmethod
     def class_variable_check(cls):
         """Check that class variables have been correctly initialized"""
-        if cls.wave_solution is None:
+        if cls.log_lambda_grid is None:
             raise AstronomicalObjectError("Error constructing Forest. "
-                                          "Class variable 'wave_solution' "
+                                          "Class variable 'log_lambda_grid' "
+                                          "must be set prior to initialize "
+                                          "instances of this type")
+        if cls.log_lambda_rest_frame_grid is None:
+            raise AstronomicalObjectError("Error constructing Forest. "
+                                          "Class variable 'log_lambda_rest_frame_grid' "
                                           "must be set prior to initialize "
                                           "instances of this type")
         if not isinstance(cls.mask_fields, list):
@@ -187,33 +173,11 @@ class Forest(AstronomicalObject):
                 "Error constructing Forest. "
                 "Expected list in class variable 'mask fields'. "
                 f"Found {cls.mask_fields}.")
-        if cls.delta_log_lambda is None:
+        if cls.wave_solution is None:
             raise AstronomicalObjectError("Error constructing Forest. "
-                                          "Class variable 'delta_log_lambda' "
+                                          "Class variable 'wave_solution' "
                                           "must be set prior to initialize "
                                           "instances of this type")
-        if cls.log_lambda_max is None:
-            raise AstronomicalObjectError("Error constructing Forest. "
-                                          "Class variable 'log_lambda_max' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if cls.log_lambda_max_rest_frame is None:
-            raise AstronomicalObjectError("Error constructing Forest. "
-                                          "Class variable 'log_lambda_max_rest_frame' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if cls.log_lambda_min is None:
-            raise AstronomicalObjectError("Error constructing Forest. "
-                                          "Class variable 'log_lambda_min' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if cls.log_lambda_min_rest_frame is None:
-            raise AstronomicalObjectError("Error constructing Forest. "
-                                          "Class variable 'log_lambda_min_rest_frame' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
-        if len(cls.mask_fields) == 0:
-            Forest.mask_fields = defaults.get("mask fields").copy()
 
     def consistency_check(self):
         """Consistency checks after __init__"""
@@ -396,12 +360,12 @@ class Forest(AstronomicalObject):
         orig_ivar = self.ivar.copy()
 
         # filter arrays
-        w1 = (self.log_lambda >= Forest.log_lambda_min)
-        w1 = w1 & (self.log_lambda < Forest.log_lambda_max)
+        w1 = (self.log_lambda >= Forest.log_lambda_grid[0])
+        w1 = w1 & (self.log_lambda < Forest.log_lambda_grid[-1])
         w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >
                    Forest.log_lambda_min_rest_frame)
         w1 = w1 & (self.log_lambda - np.log10(1. + self.z) <
-                   Forest.log_lambda_max_rest_frame)
+                   Forest.log_lambda_rest_frame_grid[-1])
         w1 = w1 & (self.ivar > 0.)
         if w1.sum() == 0:
             self.log_lambda = np.array([])
@@ -444,12 +408,14 @@ class Forest(AstronomicalObject):
 
         # then rebin wavelength
         if self.wave_solution == "log":
-            rebin_log_lambda = (Forest.log_lambda_min +
-                                np.arange(bins.max() + 1) * Forest.delta_log_lambda)
+            pixel_step = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
+            rebin_log_lambda = (Forest.log_lambda_grid[0] +
+                                np.arange(bins.max() + 1) * pixel_step)
             self.log_lambda = rebin_log_lambda[w2]
         elif self.wave_solution == "lin":
-            rebin_lambda = (10**Forest.log_lambda_min +
-                            np.arange(bins.max() + 1) * 10**Forest.delta_log_lambda)
+            pixel_step = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
+            rebin_lambda = (10**Forest.log_lambda_grid[0] +
+                            np.arange(bins.max() + 1) * pixel_step)
             self.log_lambda = np.log10(rebin_lambda[w2])
         else:
             raise AstronomicalObjectError("wavelength solution must be either "
