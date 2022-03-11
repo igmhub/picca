@@ -491,9 +491,6 @@ class Forest(AstronomicalObject):
         orig_ivar = self.ivar.copy()
         # compute bins
         if Forest.wave_solution == "log":
-            bins = (np.floor((self.log_lambda - Forest.log_lambda_min) /
-                             Forest.delta_log_lambda + 0.5).astype(int))
-            self.log_lambda = Forest.log_lambda_min + bins * Forest.delta_log_lambda
             w1 = (self.log_lambda >= Forest.log_lambda_min)
             w1 = w1 & (self.log_lambda < Forest.log_lambda_max)
             w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >
@@ -507,16 +504,16 @@ class Forest(AstronomicalObject):
                 self.ivar = np.array([])
                 self.transmission_correction = np.array([])
                 return [], [], [], [], []
-            bins = bins[w1]
             self.log_lambda = self.log_lambda[w1]
             self.flux = self.flux[w1]
             self.ivar = self.ivar[w1]
             self.transmission_correction = self.transmission_correction[w1]
 
+            bins = (np.floor((self.log_lambda - Forest.log_lambda_min) /
+                             Forest.delta_log_lambda + 0.5).astype(int))
+            self.log_lambda = Forest.log_lambda_min + bins * Forest.delta_log_lambda
+
         elif Forest.wave_solution == "lin":
-            bins = (np.floor((self.lambda_ - Forest.lambda_min) /
-                             Forest.delta_lambda + 0.5).astype(int))
-            self.lambda_ = Forest.lambda_min + bins * Forest.delta_lambda
             w1 = (self.lambda_ >= Forest.lambda_min)
             w1 = w1 & (self.lambda_ < Forest.lambda_max)
             w1 = w1 & (self.lambda_ / (1. + self.z) > Forest.lambda_min_rest_frame)
@@ -528,11 +525,15 @@ class Forest(AstronomicalObject):
                 self.ivar = np.array([])
                 self.transmission_correction = np.array([])
                 return [], [], [], [], []
-            bins = bins[w1]
             self.lambda_ = self.lambda_[w1]
             self.flux = self.flux[w1]
             self.ivar = self.ivar[w1]
             self.transmission_correction = self.transmission_correction[w1]
+
+            bins = (np.floor((self.lambda_ - Forest.lambda_min) /
+                             Forest.delta_lambda + 0.5).astype(int))
+            self.lambda_ = Forest.lambda_min + bins * Forest.delta_lambda
+
         else:
             raise AstronomicalObjectError("Error in rebinning Forest. "
                                           "Class variable 'wave_solution' "
