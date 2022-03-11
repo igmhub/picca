@@ -364,7 +364,7 @@ class Forest(AstronomicalObject):
         w1 = (self.log_lambda >= Forest.log_lambda_grid[0])
         w1 = w1 & (self.log_lambda < Forest.log_lambda_grid[-1])
         w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >
-                   Forest.log_lambda_rest_frame_gridc[0c])
+                   Forest.log_lambda_rest_frame_grid[0])
         w1 = w1 & (self.log_lambda - np.log10(1. + self.z) <
                    Forest.log_lambda_rest_frame_grid[-1])
         w1 = w1 & (self.ivar > 0.)

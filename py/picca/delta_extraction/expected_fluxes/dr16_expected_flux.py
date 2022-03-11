@@ -182,7 +182,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_valid_fit = None
         self.get_var_lss = None
         self.log_lambda = None
-        self.log_lambda_rest_frame = None
         self._initialize_variables()
 
         self.continuum_fit_parameters = None
@@ -200,7 +199,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         - self.get_valid_fit
         - self.get_var_lss
         - self.log_lambda
-        - self.log_lambda_rest_frame
         """
         # check that Forest variables are set
         try:
@@ -212,27 +210,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # initialize the mean quasar continuum
         # TODO: maybe we can drop this and compute first the mean quasar
         # continuum on compute_mean_expected_flux
-        try:
-            num_bins = (int(
-                (Forest.log_lambda_rest_frame_grid[-1] -
-                 Forest.log_lambda_rest_frame_grid[0]) / Forest.delta_log_lambda) + 1)
-        except OverflowError:
-            # this will happen if, for example, we select linear binning with
-            # 1 angstrom wide pixels as in this case delta_log_lambda = 0
-            num_bins = (int(
-                (10**Forest.log_lambda_rest_frame_grid[-1] -
-                 10**Forest.log_lambda_rest_frame_grid[0]) / 10**Forest.delta_log_lambda) + 1)
-        self.log_lambda_rest_frame = (
-            Forest.log_lambda_rest_frame_grid[0] + (np.arange(num_bins) + 0.5) *
-            (Forest.log_lambda_rest_frame_grid[-1] -
-             Forest.log_lambda_rest_frame_grid[0]) / num_bins)
-
-        self.get_mean_cont = interp1d(self.log_lambda_rest_frame,
-                                      np.ones_like(self.log_lambda_rest_frame),
+        self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
+                                      np.ones_like(Forest.log_lambda_rest_frame_grid),
                                       fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(self.log_lambda_rest_frame,
+        self.get_mean_cont_weight = interp1d(Forest.log_lambda_rest_frame_grid,
                                              np.zeros_like(
-                                                 self.log_lambda_rest_frame),
+                                                 Forest.log_lambda_rest_frame_grid),
                                              fill_value="extrapolate")
 
 
@@ -542,13 +525,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         # TODO: move this to _initialize_variables_lin and
         # _initialize_variables_log (after tests are done)
-        num_bins = int((Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
-                       Forest.delta_log_lambda) + 1
-        stack_log_lambda = (Forest.log_lambda_grid[0] +
-                            np.arange(num_bins) * Forest.delta_log_lambda)
-
-        stack_delta = np.zeros(num_bins)
-        stack_weight = np.zeros(num_bins)
+        stack_delta = np.zeros_like(Forest.log_lambda_grid)
+        stack_weight = np.zeros_like(Forest.log_lambda_grid)
 
         for forest in forests:
             if stack_from_deltas:
@@ -566,8 +544,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 variance = eta * var + var_lss + fudge / var
                 weights = 1. / variance
 
-            bins = ((forest.log_lambda - Forest.log_lambda_grid[0]) /
-                    Forest.delta_log_lambda + 0.5).astype(int)
+            bins = find_bins(forest.log_lambda, Forest.log_lambda_grid)
             rebin = np.bincount(bins, weights=delta * weights)
             stack_delta[:len(rebin)] += rebin
             rebin = np.bincount(bins, weights=weights)
@@ -576,12 +553,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
         w = stack_weight > 0
         stack_delta[w] /= stack_weight[w]
 
-        self.get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
+        self.get_stack_delta = interp1d(Forest.log_lambda_grid[stack_weight > 0.],
                                         stack_delta[stack_weight > 0.],
                                         kind="nearest",
                                         fill_value="extrapolate")
         self.get_stack_delta_weights = interp1d(
-            stack_log_lambda[stack_weight > 0.],
+            Forest.log_lambda_grid[stack_weight > 0.],
             stack_weight[stack_weight > 0.],
             kind="nearest",
             fill_value=0.0,
@@ -597,9 +574,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
         """
-        num_bins = self.log_lambda_rest_frame.size
-        mean_cont = np.zeros(num_bins)
-        mean_cont_weight = np.zeros(num_bins)
+        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid)
+        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid)
 
         # first compute <F/C> in bins. C=Cont_old*spectrum_dependent_fitting_fct
         # (and Cont_old is constant for all spectra in a bin), thus we actually
@@ -610,7 +586,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 continue
             bins = find_bins(
                 forest.log_lambda - np.log10(1 + forest.z),
-                self.log_lambda_rest_frame
+                Forest.log_lambda_rest_frame_grid
             )
 
             var_lss = self.get_var_lss(forest.log_lambda)
@@ -628,7 +604,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
         mean_cont /= mean_cont.mean()
-        log_lambda_cont = self.log_lambda_rest_frame[w]
+        log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
 
         # the new mean continuum is multiplied by the previous one to recover
         # <F/spectrum_dependent_fitting_function>
@@ -979,15 +955,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
             header["FITORDER"] = self.order
 
             # TODO: update this once the TODO in compute continua is fixed
-            num_bins = int((Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
-                           Forest.delta_log_lambda) + 1
-            stack_log_lambda = (
-                Forest.log_lambda_grid[0] +
-                np.arange(num_bins) * Forest.delta_log_lambda)
             results.write([
-                stack_log_lambda,
-                self.get_stack_delta(stack_log_lambda),
-                self.get_stack_delta_weights(stack_log_lambda)
+                Forest.log_lambda_grid,
+                self.get_stack_delta(Forest.log_lambda_grid),
+                self.get_stack_delta_weights(Forest.log_lambda_grid)
             ],
                           names=['loglam', 'stack', 'weight'],
                           header=header,
@@ -1003,9 +974,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                           extname='VAR_FUNC')
 
             results.write([
-                self.log_lambda_rest_frame,
-                self.get_mean_cont(self.log_lambda_rest_frame),
-                self.get_mean_cont_weight(self.log_lambda_rest_frame),
+                Forest.log_lambda_rest_frame_grid,
+                self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
+                self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
             ],
                           names=['loglam_rest', 'mean_cont', 'weight'],
                           extname='CONT')
