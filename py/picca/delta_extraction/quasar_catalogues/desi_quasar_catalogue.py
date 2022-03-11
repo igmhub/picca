@@ -119,6 +119,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         if 'SURVEY' in self.catalogue.colnames:
             mask = np.isin(self.catalogue["SURVEY"], self.keep_surveys)
             self.catalogue = self.catalogue[mask]
+            self.logger.progress(f"and in selected surveys {self.keep_surveys}         : nb object in cat = {len(self.catalogue)}")
 
     def read_catalogue(self):
         """Read the z_truth catalogue
