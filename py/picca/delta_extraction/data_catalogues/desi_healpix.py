@@ -70,9 +70,10 @@ class DesiHealpix(DesiData):
         Parsed options to initialize class
         """
         self.logger = logging.getLogger(__name__)
+        super().__init__(config)
+
         self.__parse_config(config)
 
-        super().__init__(config)
 
     def __parse_config(self, config):
         """Parse the configuration options

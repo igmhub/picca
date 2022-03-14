@@ -82,10 +82,9 @@ class DesiTile(DesiData):
         # load variables from config
         self.use_all = None
         self.use_single_nights = None
+        super().__init__(config)
         self.__parse_config(config)
 
-        super().__init__(config)
-        #parse config will be called by base class anyway
 
     def __parse_config(self, config):
         """Parse the configuration options
