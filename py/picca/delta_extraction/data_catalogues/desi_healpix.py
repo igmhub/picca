@@ -70,9 +70,12 @@ class DesiHealpix(DesiData):
         Parsed options to initialize class
         """
         self.logger = logging.getLogger(__name__)
+
+        self.use_non_coadded_spectra = None
+        self.__parse_config(config)
+        #init of DesiData needs to come last, as it contains the actual data reading and thus needs all config
         super().__init__(config)
 
-        self.__parse_config(config)
 
 
     def __parse_config(self, config):
