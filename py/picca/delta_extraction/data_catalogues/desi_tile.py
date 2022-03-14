@@ -36,7 +36,7 @@ class DesiTile(DesiData):
     filter_forests (from Data)
     set_blinding (from Data)
     __init__
-    _parse_config
+    __parse_config
     read_data
 
     Attributes
@@ -82,11 +82,12 @@ class DesiTile(DesiData):
         # load variables from config
         self.use_all = None
         self.use_single_nights = None
+        self.__parse_config(config)
 
         super().__init__(config)
         #parse config will be called by base class anyway
 
-    def _parse_config(self, config):
+    def __parse_config(self, config):
         """Parse the configuration options
 
         Arguments
@@ -98,7 +99,7 @@ class DesiTile(DesiData):
         -----
         DataError upon missing required variables
         """
-        super()._parse_config(config)
+        super().__parse_config(config)
         self.use_all = config.getboolean("use all")
         if self.use_all is None:
             raise DataError("Missing argument 'use all' required by DesiTile")
