@@ -24,6 +24,7 @@ accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_ca
 
 defaults.update({
     "delta lambda": 0.8,
+    "delta log lambda": 3e-4
     "blinding": "corr_yshift",
     # TODO: update this to "lin" when we are sure that the linear binning work
     "wave solution": "log",
@@ -79,7 +80,6 @@ class DesiData(Data):
         super().__init__(config)
 
         # load variables from config
-        self.input_directory = None
         self.blinding = None
         self.__parse_config(config)
 
