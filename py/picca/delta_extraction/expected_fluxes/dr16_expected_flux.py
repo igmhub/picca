@@ -716,8 +716,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
         """
-        mean_cont = np.zeros_like(Forest.lambda_rest_frame_grid.size)
-        mean_cont_weight = np.zeros_like(Forest.lambda_rest_frame_grid.size)
+        mean_cont = np.zeros_like(Forest.lambda_rest_frame_grid)
+        mean_cont_weight = np.zeros_like(Forest.lambda_rest_frame_grid)
 
         # first compute <F/C> in bins. C=Cont_old*spectrum_dependent_fitting_fct
         # (and Cont_old is constant for all spectra in a bin), thus we actually
