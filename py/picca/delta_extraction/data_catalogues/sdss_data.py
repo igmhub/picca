@@ -111,7 +111,7 @@ class SdssData(Data):
         if rebin is None:
             raise DataError("Missing argument 'delta log lambda' required by "
                             "Data when 'wave solution' is set to 'log'")
-        config["delta log lambda"] = str(rebin*1e4)
+        config["delta log lambda"] = str(rebin*1e-4)
         del config["rebin"]
 
         config["wave solution"] = "log"
