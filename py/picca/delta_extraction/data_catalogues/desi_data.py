@@ -80,7 +80,6 @@ class DesiData(Data):
         super().__init__(config)
 
         # load variables from config
-        self.input_directory = None
         self.blinding = None
         self.__parse_config(config)
 
