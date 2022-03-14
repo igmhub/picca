@@ -121,7 +121,7 @@ class Data:
                             f"'lin' or 'lof'. Found {wave_solution}")
 
         if wave_solution == "log":
-            pixel_step = config.getint("delta log lambda")
+            pixel_step = config.getfloat("delta log lambda")
             if pixel_step is None:
                 raise DataError("Missing argument 'delta log lambda' required by "
                                 "Data when 'wave solution' is set to 'log'")
