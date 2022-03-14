@@ -99,7 +99,6 @@ class DesiTile(DesiData):
         -----
         DataError upon missing required variables
         """
-        super().__parse_config(config)
         self.use_all = config.getboolean("use all")
         if self.use_all is None:
             raise DataError("Missing argument 'use all' required by DesiTile")

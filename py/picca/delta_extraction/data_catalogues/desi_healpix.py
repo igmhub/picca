@@ -86,7 +86,6 @@ class DesiHealpix(DesiData):
         -----
         DataError upon missing required variables
         """
-        super().__parse_config(config)
         self.use_non_coadded_spectra = config.getboolean(
             "use non-coadded spectra")
         if self.use_non_coadded_spectra is None:
