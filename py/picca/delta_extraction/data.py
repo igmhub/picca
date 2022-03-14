@@ -27,7 +27,6 @@ defaults = {
     "lambda min": 3600.0,
     "lambda min rest frame": 1040.0,
     "minimum number pixels in forest": 50,
-    "rebin": 3,
     "rejection log file": "rejection_log.fits.gz",
 }
 
@@ -122,13 +121,15 @@ class Data:
                             f"'lin' or 'lof'. Found {wave_solution}")
 
         if wave_solution == "log":
-            rebin = config.getint("rebin")
-            if rebin is None:
-                raise DataError("Missing argument 'rebin' required by Data when "
-                                "'wave solution' is set to 'log'")
-            pixel_step = rebin * 1e-4
+            pixel_step = config.getint("delta log lambda")
+            if pixel_step is None:
+                raise DataError("Missing argument 'delta log lambda' required by "
+                                "Data when 'wave solution' is set to 'log'")
         elif wave_solution == "lin":
             pixel_step = config.getfloat("delta lambda")
+            if pixel_step is None:
+                raise DataError("Missing argument 'delta lambda' required by "
+                                "Data when 'wave solution' is set to 'lin'")
         else:
             raise DataError("Forest.wave_solution must be either "
                             "'log' or 'lin'")
@@ -170,7 +171,7 @@ class Data:
         if self.input_directory is None:
             raise DataError(
                 "Missing argument 'input directory' required by Data")
-        
+
         self.min_num_pix = config.getint("minimum number pixels in forest")
         if self.min_num_pix is None:
             raise DataError("Missing argument 'minimum number pixels in forest' "

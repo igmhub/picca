@@ -21,6 +21,7 @@ accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_ca
 
 defaults.update({
     "mode": "spplate",
+    "rebin": 3,
 })
 defaults.update(defaults_drq)
 
@@ -71,12 +72,11 @@ class SdssData(Data):
         """
         self.logger = logging.getLogger(__name__)
 
-        config["wave solution"] = "log"
-        super().__init__(config)
-
         # load variables from config
         self.mode = None
         self.__parse_config(config)
+
+        super().__init__(config)
 
         # load DRQ Catalogue
         catalogue = DrqCatalogue(config).catalogue
@@ -106,6 +106,15 @@ class SdssData(Data):
         self.mode = config.get("mode")
         if self.mode is None:
             raise DataError("Missing argument 'mode' required by SdssData")
+
+        rebin = config.get("rebin")
+        if pixel_step is None:
+            raise DataError("Missing argument 'delta log lambda' required by "
+                            "Data when 'wave solution' is set to 'log'")
+        config["delta log lambda"] = rebin*1e4
+        del config["rebin"]
+
+        config["wave solution"] = "log"
 
     def read_from_spec(self, catalogue):
         """Read the spectra and formats its data as Forest instances.
