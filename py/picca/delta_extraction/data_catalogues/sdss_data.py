@@ -108,7 +108,7 @@ class SdssData(Data):
             raise DataError("Missing argument 'mode' required by SdssData")
 
         rebin = config.get("rebin")
-        if pixel_step is None:
+        if rebin is None:
             raise DataError("Missing argument 'delta log lambda' required by "
                             "Data when 'wave solution' is set to 'log'")
         config["delta log lambda"] = rebin*1e4
