@@ -149,7 +149,7 @@ class ExpectedFluxTest(AbstractTest):
             if not np.allclose(forest.continuum, continua.get(forest.los_id)):
                 print("Difference found in forest.continuum")
                 print(f"forest.los_id: {forest.los_id}")
-                print(f"res test are_close res-test")
+                print(f"result test are_close result-test")
                 for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
                     print(i1, i2, np.isclose(i1, i2), i1-i2)
             self.assertTrue(
@@ -201,6 +201,11 @@ class ExpectedFluxTest(AbstractTest):
 
         # compare with obtained results
         stack_delta = expected_flux.get_stack_delta(expectations["log_lambda"])
+        if not np.allclose(stack_delta, expectations["delta"]):
+            print("Difference found in delta stack")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(stack_delta, expectations["delta"]):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(stack_delta, expectations["delta"]))
 
         # setup Forest variables; case: linear wavelength solution
@@ -293,8 +298,19 @@ class ExpectedFluxTest(AbstractTest):
         # load the expected results
         expectations = np.genfromtxt(test_file, names=True)
 
+        f = open(f"{THIS_DIR}/results/mean_cont_log.txt", "w")
+        f.write("# log_lambda mean_cont\n")
+        for item in expectations["log_lambda"]:
+            f.write(f"{item} {expected_flux.get_mean_cont(item)}\n")
+        f.close()
+
         # compare with obtained results
         mean_cont = expected_flux.get_mean_cont(expectations["log_lambda"])
+        if not np.allclose(mean_cont, expectations["mean_cont"]):
+            print("Difference found in mean_cont")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont, expectations["mean_cont"]):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
 
     def test_dr16_expected_flux_compute_var_stats(self):
