@@ -40,7 +40,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
     extract_deltas (from ExpectedFlux)
     __init__
     _initialize_arrays
-    _parse_config
+    __parse_config
     compute_continuum
         get_cont_model
         chi2
@@ -105,10 +105,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     Wavelengths where the variance functions and statistics are
     computed. None (and unused) for a logarithmic wavelength solution.
 
-    lambda_rest_frame: array of float or None
-    Rest-frame wavelengths where the unabsorbed mean quasar continua is are
-    computed. None (and unused) for a logarithmic wavelength solution.
-
     limit_eta: tuple of floats
     Limits on the correction factor to the contribution of the pipeline estimate
     of the instrumental noise to the variance.
@@ -119,10 +115,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     log_lambda: array of float or None
     Logarithm of the rest frame wavelengths where the variance functions and
     statistics are computed. None (and unused) for a linear wavelength solution.
-
-    log_lambda_rest_frame: array of float or None
-    Logarithm of the rest-frame wavelengths where the unabsorbed mean quasar
-    continua is are computed. None (and unused) for a linear wavelength solution.
 
     num_bins_variance: int
     Number of bins to be used to compute variance functions and statistics as
@@ -171,7 +163,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.num_processors = None
         self.use_constant_weight = None
         self.use_ivar_as_weight = None
-        self._parse_config(config)
+        self.__parse_config(config)
 
         # initialize variables
         self.get_eta = None
@@ -276,7 +268,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       fill_value="extrapolate",
                                       kind='nearest')
 
-    def _parse_config(self, config):
+    def __parse_config(self, config):
         """Parse the configuration options
 
         Arguments
@@ -565,9 +557,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             bounds_error=False)
 
     def compute_mean_cont(self, forests):
-        """Compute the mean quasar continuum over the whole sample assuming a
-        log-linear wavelength solution. Then updates the value of
-        self.get_mean_cont to contain it
+        """Compute the mean quasar continuum over the whole sample.
+        Then updates the value of self.get_mean_cont to contain it
 
         Arguments
         ---------

@@ -25,7 +25,7 @@ class DrqCatalogue(QuasarCatalogue):
     -------
     trim_catalogue (from QuasarCatalogue)
     __init__
-    _parse_config
+    __parse_config
     read_drq
     read_spall
 
@@ -84,7 +84,7 @@ class DrqCatalogue(QuasarCatalogue):
         self.drq_filename = None
         self.keep_bal = None
         self.spall = None
-        self._parse_config(config)
+        self.__parse_config(config)
 
         # read DRQ Catalogue
         catalogue = self.read_drq()
@@ -100,7 +100,7 @@ class DrqCatalogue(QuasarCatalogue):
         if self.max_num_spec is not None:
             super().trim_catalogue()
 
-    def _parse_config(self, config):
+    def __parse_config(self, config):
         """Parse the configuration options
 
         Arguments

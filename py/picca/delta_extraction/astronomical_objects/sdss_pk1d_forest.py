@@ -21,13 +21,19 @@ class SdssPk1dForest(SdssForest, Pk1dForest):
 
     Class Attributes
     ----------------
-    log_lambda_grid: array of float (from Forest)
+    blinding: str (from Forest)
+    Name of the blinding strategy used
+
+    log_lambda_grid: array of float or None (from Forest)
     Common grid in log_lambda based on the specified minimum and maximum
-    wavelengths, the step size and the wavelength solution (lin or log).
+    wavelengths, and delta_log_lambda.
+
+    log_lambda_rest_frame_grid: array of float or None (from Forest)
+    Same as log_lambda_grid but for rest-frame wavelengths.
 
     log_lambda_rest_frame_grid: array of float (from Forest)
     Same as log_lambda_grid but for rest-frame wavelengths
-    
+
     mask_fields: list of str (from Forest)
     Names of the fields that are affected by masking. In general it will
     be "flux" and "ivar" but some child classes might add more.

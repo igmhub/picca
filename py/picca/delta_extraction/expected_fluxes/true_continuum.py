@@ -34,7 +34,7 @@ class TrueContinuum(ExpectedFlux):
     -------
     extract_deltas (from ExpectedFlux)
     __init__
-    _parse_config
+    __parse_config
     compute_expected_flux
     compute_mean_cont_lin
     compute_mean_cont_log
@@ -93,8 +93,7 @@ class TrueContinuum(ExpectedFlux):
         self.input_directory = None
         self.iter_out_prefix = None
         self.num_processors = None
-        self._parse_config(config)
-
+        self.__parse_config(config)
 
         # read large scale structure variance and mean flux
         self.get_var_lss = None
@@ -102,7 +101,7 @@ class TrueContinuum(ExpectedFlux):
         self.read_raw_statistics()
 
 
-    def _parse_config(self, config):
+    def __parse_config(self, config):
         """Parse the configuration options
 
         Arguments
@@ -148,15 +147,6 @@ class TrueContinuum(ExpectedFlux):
         -----
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
-        num_bins = (int(
-        (Forest.log_lambda_rest_frame_grid[-1] -
-         Forest.log_lambda_rest_frame_grid[0]) / Forest.delta_log_lambda) + 1)
-
-        self.log_lambda_rest_frame = (
-        Forest.log_lambda_rest_frame_grid[0] + (np.arange(num_bins) + 0.5) *
-        (Forest.log_lambda_rest_frame_grid[-1] -
-         Forest.log_lambda_rest_frame_grid[0]) / num_bins)
-
         context = multiprocessing.get_context('fork')
         for iteration in range(1):
             pool = context.Pool(processes=self.num_processors)
@@ -174,19 +164,17 @@ class TrueContinuum(ExpectedFlux):
         # Save delta atributes
         self.save_delta_attributes()
 
-    def compute_mean_cont_log(self, forests):
-        """Compute the mean quasar continuum over the whole sample assuming a
-        log-linear wavelength solution. Then updates the value of
-        self.get_mean_cont to contain it
+    def compute_mean_cont(self, forests):
+        """Compute the mean quasar continuum over the whole sample.
+        Then updates the value of self.get_mean_cont to contain it
 
         Arguments
         ---------
         forests: List of Forest
         A list of Forest from which to compute the deltas.
         """
-        num_bins = self.log_lambda_rest_frame.size
-        mean_cont = np.zeros(num_bins)
-        mean_cont_weight = np.zeros(num_bins)
+        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid.size)
+        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid.size)
 
         for forest in forests:
             if forest.bad_continuum_reason is not None:
@@ -209,7 +197,7 @@ class TrueContinuum(ExpectedFlux):
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
         mean_cont /= mean_cont.mean()
-        log_lambda_cont = self.log_lambda_rest_frame[w]
+        log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
 
         self.get_mean_cont = interp1d(log_lambda_cont,
                                       mean_cont,
@@ -309,9 +297,9 @@ class TrueContinuum(ExpectedFlux):
                 or not np.isclose(header['DEL_L'], Forest.delta_lambda, rtol=1e-3)
             ):
                 raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme.
-                \tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
+                \t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
                 raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
-                input\t{Forest.lambda_min}\t{Forest.lambda_max}\t{Forest.lambda_min_rest_frame}\t{Forest.lambda_max_rest_frame}\t{Forest.delta_lambda}
+                input\t{10**Forest.log_lambda_min}\t{10**Forest.log_lambda_max}\t{10**Forest.log_lambda_min_rest_frame}\t{10**Forest.log_lambda_max_rest_frame}\t{Forest.delta_log_lambda}
                 provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
 
         lambda_ = hdul[1].data['LAMBDA']
@@ -380,13 +368,11 @@ class TrueContinuum(ExpectedFlux):
                          clobber=True) as results:
             header = {}
             header["FITORDER"] = -1
-            num_bins = int((Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
-                           Forest.delta_log_lambda) + 1
-
             results.write([
-                self.log_lambda_rest_frame,
-                self.get_mean_cont(self.log_lambda_rest_frame),
-                self.get_mean_cont_weight(self.log_lambda_rest_frame),
+                Forest.log_lambda_rest_frame_grid,
+                self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
+                self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
             ],
                           names=['loglam_rest', 'mean_cont', 'weight'],
-                          extname='CONT')
+                          extname='CONT',
+                          header=header)

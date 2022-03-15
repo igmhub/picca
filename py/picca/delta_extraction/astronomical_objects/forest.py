@@ -25,18 +25,19 @@ class Forest(AstronomicalObject):
     get_data
     get_header
     rebin
+    set_class_variables
 
     Class Attributes
     ----------------
     blinding: str
     Name of the blinding strategy used
 
-    log_lambda_grid: array of float
+    log_lambda_grid: array of float or None
     Common grid in log_lambda based on the specified minimum and maximum
-    wavelengths, the step size and the wavelength solution (lin or log).
+    wavelengths, and delta_log_lambda.
 
-    log_lambda_rest_frame_grid: array of float
-    Same as log_lambda_grid but for rest-frame wavelengths
+    log_lambda_rest_frame_grid: array of float or None
+    Same as log_lambda_grid but for rest-frame wavelengths.
 
     mask_fields: list of str
     Names of the fields that are affected by masking. In general it will
@@ -168,7 +169,7 @@ class Forest(AstronomicalObject):
                                           "Class variable 'log_lambda_rest_frame_grid' "
                                           "must be set prior to initialize "
                                           "instances of this type")
-        if not isinstance(cls.mask_fields, list):
+        if cls.mask_fields is None:
             raise AstronomicalObjectError(
                 "Error constructing Forest. "
                 "Expected list in class variable 'mask fields'. "

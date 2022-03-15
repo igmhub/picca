@@ -43,6 +43,8 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
                             "out dir": f"{THIS_DIR}/results/",
                             "rejection log file": "rejection_log.fits.gz",
+                            "wave solution": "log",
+                            "input directory": f"{THIS_DIR}/data/",
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -57,6 +59,8 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {"minimum number pixels in forest": 40,
                                    "out dir": f"{THIS_DIR}/results/",
                                    "rejection log file": "rejection_log.fits.gz",
+                                   "wave solution": "log",
+                                   "input directory": f"{THIS_DIR}/data/",
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -80,6 +84,8 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {
                             "out dir": f"{THIS_DIR}/results/",
                             "rejection log file": "rejection_log.fits.gz",
+                            "wave solution": "log",
+                            "input directory": f"{THIS_DIR}/data/",
                         }})
         for key, value in defaults_data.items():
             if key not in config["data"]:
@@ -99,6 +105,8 @@ class DataTest(AbstractTest):
         config.read_dict({"data": {"minimum number pixels in forest": 10000,
                                    "out dir": f"{THIS_DIR}/results/",
                                    "rejection log file": "rejection_log.fits.gz",
+                                   "wave solution": "log",
+                                   "input directory": f"{THIS_DIR}/data/",
                          }})
         for key, value in defaults_data.items():
             if key not in config["data"]:

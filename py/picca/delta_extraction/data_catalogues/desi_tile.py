@@ -32,7 +32,7 @@ class DesiTile(DesiData):
     filter_forests (from Data)
     set_blinding (from Data)
     __init__
-    _parse_config
+    __parse_config
     read_data
 
     Attributes
@@ -78,11 +78,11 @@ class DesiTile(DesiData):
         # load variables from config
         self.use_all = None
         self.use_single_nights = None
-        self._parse_config(config)
+        self.__parse_config(config)
 
         super().__init__(config)
 
-    def _parse_config(self, config):
+    def __parse_config(self, config):
         """Parse the configuration options
 
         Arguments
