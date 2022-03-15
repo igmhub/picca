@@ -959,9 +959,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 self.log_lambda,
                 self.get_eta(self.log_lambda),
                 self.get_var_lss(self.log_lambda),
-                self.get_fudge(self.log_lambda)
+                self.get_fudge(self.log_lambda),
+                self.get_num_pixels(self.log_lambda),
+                self.get_valid_fit(self.log_lambda)
             ],
-                          names=['loglam', 'eta', 'var_lss', 'fudge'],
+                          names=['loglam', 'eta', 'var_lss', 'fudge',
+                                 'num_pixels', 'valid_fit'],
                           extname='VAR_FUNC')
 
             results.write([
