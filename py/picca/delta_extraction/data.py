@@ -12,12 +12,13 @@ from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import ABSORBER_IGM
 
-accepted_options = ["analysis type", "delta lambda", "input directory",
+accepted_options = ["analysis type", "delta lambda", "delta log lambda",
+                    "input directory",
                     "lambda abs IGM",
                     "lambda max", "lambda max rest frame",
                     "lambda min", "lambda min rest frame",
                     "minimum number pixels in forest",
-                    "out dir", "rebin", "rejection log file"]
+                    "out dir", "rejection log file"]
 
 defaults = {
     "analysis type": "BAO 3D",

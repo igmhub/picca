@@ -17,7 +17,7 @@ from picca.delta_extraction.quasar_catalogues.drq_catalogue import accepted_opti
 from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
 
 accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_catalogue +[
-    "mode"])))
+    "rebin", "mode"])))
 
 defaults.update({
     "mode": "spplate",
