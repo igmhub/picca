@@ -761,15 +761,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         fudge_ref = 1e-7
 
         self.logger.progress(" Mean quantities in observer-frame")
-        if Forest.wave_solution == "log":
-            self.logger.progress(
-                " loglam    eta      var_lss  fudge    chi2     num_pix ")
-        elif Forest.wave_solution == "lin":
-            self.logger.progress(
-                " lam    eta      var_lss  fudge    chi2     num_pix ")
-        else:
-            raise ExpectedFluxError("Forest.wave_solution must be either "
-                                    "'log' or 'linear'")
+        self.logger.progress(
+            " loglam    eta      var_lss  fudge    chi2     num_pix ")
         for index in range(self.num_bins_variance):
             # pylint: disable-msg=cell-var-from-loop
             # this function is defined differntly at each step of the loop
