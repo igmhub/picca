@@ -462,7 +462,7 @@ def main(cmdargs):
 
     parser.add_argument(
         '--num-noise-exp',
-        default=10,
+        default=100,
         type=int,
         required=False,
         help='number of pipeline noise realizations to generate per spectrum')
