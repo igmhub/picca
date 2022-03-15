@@ -26,6 +26,7 @@ class Forest(AstronomicalObject):
     get_data
     get_header
     rebin
+    set_class_variables
 
     Class Attributes
     ----------------
