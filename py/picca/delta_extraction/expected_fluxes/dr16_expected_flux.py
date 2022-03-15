@@ -201,7 +201,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         # initialize the mean quasar continuum
         # TODO: maybe we can drop this and compute first the mean quasar
-        # continuum on compute_mean_expected_flux
+        # continuum on compute_expected_flux
         self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
                                       np.ones_like(Forest.log_lambda_rest_frame_grid),
                                       fill_value="extrapolate")
@@ -881,6 +881,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                   fudge[w],
                                   fill_value="extrapolate",
                                   kind="nearest")
+        self.get_num_pixels = interp1d(self.log_lambda[w],
+                                       num_pixels[w],
+                                       fill_value="extrapolate",
+                                       kind="nearest")
+        self.get_valid_fit = interp1d(self.log_lambda[w],
+                                      valid_fit[w],
+                                      fill_value="extrapolate",
+                                      kind="nearest")
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
