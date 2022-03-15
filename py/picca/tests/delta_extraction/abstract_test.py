@@ -110,7 +110,24 @@ class AbstractTest(unittest.TestCase):
                     self.assertTrue(new_data is None)
                 else:
                     for col in orig_data.dtype.names:
+                        if not col in new_data.dtype.names:
+                            print(f"\nFor HDU {orig_hdul[hdu_index].header['EXTNAME']} "
+                                  f"column {col} is found in the original file but "
+                                  "is missing on the new file")
+                            print(f"original file: {orig_file}")
+                            print(f"new file: {new_file}")
                         self.assertTrue(col in new_data.dtype.names)
+                        if not np.allclose(orig_data[col], new_data[col],
+                                           equal_nan=True):
+                            print(f"\nFor HDU {orig_hdul[hdu_index].header['EXTNAME']} "
+                                  f"Different values found for column {col}")
+                            print(f"original file: {orig_file}")
+                            print(f"new file: {new_file}")
+                            print(f"result test is_close result-test")
+                            for i1, i2 in zip(orig_data[col], new_data[col]):
+                                print(f"{i1} {i2} "
+                                      f"{np.isclose(i1, i2, equal_nan=True)} "
+                                      f"{i1-i2}")
                         self.assertTrue(((orig_data[col] == new_data[col]).all()) or
                                         (np.allclose(orig_data[col],
                                                      new_data[col],
