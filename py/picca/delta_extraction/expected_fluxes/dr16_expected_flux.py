@@ -932,7 +932,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 # compute overall bin
                 bins = var_pipe_bins + num_var_bins * log_lambda_bins
             elif Forest.wave_solution == "lin":
-                log_lambda_bins = (
+                lambda_bins = (
                     (forest.lambda_ - Forest.lambda_grid[0]) /
                     (Forest.lambda_grid[-1] - Forest.lambda_grid[0]) *
                     self.num_bins_variance).astype(int)
