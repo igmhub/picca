@@ -214,7 +214,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # du Mas des Bourboux et al. 2020 for details on these variables)
         self.lambda_ = (
             Forest.lambda_grid[0] + (np.arange(self.num_bins_variance) + .5) *
-            (Forest.lambda_grid[0] - Forest.lambda_grid[0]) /
+            (Forest.lambda_grid[-1] - Forest.lambda_grid[0]) /
             self.num_bins_variance)
         # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
         # print a message to inform the user
@@ -923,19 +923,19 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             # select the wavelength bins
             if Forest.wave_solution == "log":
-                log_lambda_bins = (
-                    (forest.log_lambda - Forest.log_lambda_grid[0]) /
-                    (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) *
-                    self.num_bins_variance).astype(int)
+                log_lambda_bins = find_bins(
+                    forest.log_lambda,
+                    self.log_lambda
+                    )
                 # filter the values with a pipeline variance out of range
                 log_lambda_bins = log_lambda_bins[w]
                 # compute overall bin
                 bins = var_pipe_bins + num_var_bins * log_lambda_bins
             elif Forest.wave_solution == "lin":
-                lambda_bins = (
-                    (forest.lambda_ - Forest.lambda_grid[0]) /
-                    (Forest.lambda_grid[-1] - Forest.lambda_grid[0]) *
-                    self.num_bins_variance).astype(int)
+                lambda_bins = find_bins(
+                    forest.lambda_,
+                    self.lambda_,
+                    )
                 # filter the values with a pipeline variance out of range
                 lambda_bins = lambda_bins[w]
                 # compute overall bin
