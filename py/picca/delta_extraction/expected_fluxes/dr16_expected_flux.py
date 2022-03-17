@@ -15,7 +15,7 @@ from picca.delta_extraction.expected_flux import ExpectedFlux
 accepted_options = ["iter out prefix", "limit eta", "limit var lss",
                     "num bins variance", "num iterations", "num processors",
                     "order", "out dir", "use constant weight",
-                    "use ivar as weight", "delta lambda rest frame"]
+                    "use ivar as weight"]
 
 defaults = {
     "iter out prefix": "delta_attributes",
@@ -27,7 +27,6 @@ defaults = {
     "order": 1,
     "use constant weight": False,
     "use ivar as weight": False,
-    "delta lambda rest frame": None,
 }
 
 class Dr16ExpectedFlux(ExpectedFlux):
@@ -173,7 +172,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.num_processors = None
         self.use_constant_weight = None
         self.use_ivar_as_weight = None
-        self.delta_lambda_rest_frame = None
         self._parse_config(config)
 
         self.get_eta = None
@@ -216,7 +214,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # continuum on compute_mean_expected_flux
         num_bins = (int(
             (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) /
-            self.delta_lambda_rest_frame) + 1)
+            Forest.delta_lambda_rest_frame) + 1)
         self.lambda_rest_frame = (
             Forest.lambda_min_rest_frame + (np.arange(num_bins) + .5) *
             (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) /
@@ -456,12 +454,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
             raise ExpectedFluxError(
                 "Missing argument 'use ivar as weight' required by Dr16ExpectedFlux")
         
-        self.delta_lambda_rest_frame = config.getfloat("delta lambda rest frame")
-        if self.delta_lambda_rest_frame is None:
-            self.delta_lambda_rest_frame = Forest.delta_lambda
-            if Forest.wave_solution == "lin":
-                self.logger.info(f"No rest frame delta lambda set, using delta lambda = {self.delta_lambda_rest_frame} for this")
-
 
     def compute_continuum(self, forest):
         """Compute the forest continuum.

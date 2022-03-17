@@ -34,6 +34,7 @@ defaults.update({
     # TODO: update this to "lin" when we are sure that the linear binning work
     "wave solution": "log",
     "rebin": 3,
+    "delta lambda rest frame": None,
 })
 defaults.update(defaults_quasar_catalogue)
 
@@ -160,6 +161,10 @@ class DesiData(Data):
             Forest.lambda_min_rest_frame = config.getfloat("lambda min rest frame")
             if Forest.lambda_min_rest_frame is None:
                 raise DataError("Missing argument 'lambda min rest frame' required by DesiData")
+            Forest.delta_lambda_rest_frame = config.getfloat("delta lambda rest frame")
+            if Forest.delta_lambda_rest_frame is None:
+                Forest.delta_lambda_rest_frame = Forest.delta_lambda
+                self.logger.info(f"'delta lambda rest frame' not set, using delta lambda = {Forest.delta_lambda_rest_frame} for this")
         else:
             raise DataError("Forest.wave_solution must be either "
                             "'log' or 'lin'")
