@@ -267,6 +267,9 @@ def process_all_files(index_file_args):
 
             if args.force_output_in_velocity and linear_binning:
                 pk *= constants.speed_light / 1000 / np.mean(lambda_new)
+                pk_raw *= constants.speed_light / 1000 / np.mean(lambda_new)
+                pk_noise *= constants.speed_light / 1000 / np.mean(lambda_new)
+                pk_diff *= constants.speed_light / 1000 / np.mean(lambda_new)
                 k /= constants.speed_light / 1000 / np.mean(lambda_new)
             
             # save in fits format
