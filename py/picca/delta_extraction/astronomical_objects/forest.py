@@ -27,6 +27,7 @@ class Forest(AstronomicalObject):
     get_data
     get_header
     rebin
+    set_class_variables
 
     Class Attributes
     ----------------
@@ -488,7 +489,6 @@ class Forest(AstronomicalObject):
 
             bins = find_bins(self.lambda_, Forest.lambda_grid)
             self.lambda_ = Forest.lambda_grid[0] + bins * delta_lambda
-
         else:
             raise AstronomicalObjectError("Error in rebinning Forest. "
                                           "Class variable 'wave_solution' "

@@ -128,7 +128,22 @@ def class_from_string(class_name, module_name):
     return class_object, default_args, accepted_options
 
 def find_bins(original_array, grid_array):
-    """For each element in original_array, find the corresponding bin in grid_array"""
+    """For each element in original_array, find the corresponding bin in grid_array
+
+    Arguments
+    ---------
+    original_array: array of float
+    Read array, e.g. forest.log_lambda
+
+    grid_array: array of float
+    Common array, e.g. Forest.log_lambda_grid
+
+    Return
+    ------
+    found_bin: array of int
+    An array of size original_array.size filled with values smaller than
+    grid_array.size with the bins correspondance
+    """
     found_bin = (np.abs(grid_array - original_array[:,np.newaxis])).argmin(axis=1)
     return found_bin
 

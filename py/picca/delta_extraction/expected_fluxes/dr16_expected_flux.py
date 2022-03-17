@@ -107,10 +107,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     Wavelengths where the variance functions and statistics are
     computed. None (and unused) for a logarithmic wavelength solution.
 
-    lambda_rest_frame: array of float or None
-    Rest-frame wavelengths where the unabsorbed mean quasar continua is are
-    computed. None (and unused) for a logarithmic wavelength solution.
-
     limit_eta: tuple of floats
     Limits on the correction factor to the contribution of the pipeline estimate
     of the instrumental noise to the variance.
@@ -121,10 +117,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     log_lambda: array of float or None
     Logarithm of the rest frame wavelengths where the variance functions and
     statistics are computed. None (and unused) for a linear wavelength solution.
-
-    log_lambda_rest_frame: array of float or None
-    Logarithm of the rest-frame wavelengths where the unabsorbed mean quasar
-    continua is are computed. None (and unused) for a linear wavelength solution.
 
     num_bins_variance: int
     Number of bins to be used to compute variance functions and statistics as
@@ -941,7 +933,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 # compute overall bin
                 bins = var_pipe_bins + num_var_bins * log_lambda_bins
             elif Forest.wave_solution == "lin":
-                log_lambda_bins = (
+                lambda_bins = (
                     (forest.lambda_ - Forest.lambda_grid[0]) /
                     (Forest.lambda_grid[-1] - Forest.lambda_grid[0]) *
                     self.num_bins_variance).astype(int)

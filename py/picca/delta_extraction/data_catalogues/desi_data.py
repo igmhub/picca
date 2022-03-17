@@ -26,8 +26,7 @@ defaults.update({
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
     "blinding": "corr_yshift",
-    # TODO: update this to "lin" when we are sure that the linear binning work
-    "wave solution": "log",
+    "wave solution": "lin",
 })
 defaults.update(defaults_quasar_catalogue)
 
