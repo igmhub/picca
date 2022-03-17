@@ -441,12 +441,15 @@ class Forest(AstronomicalObject):
         orig_ivar = self.ivar.copy()
         # compute bins
         if Forest.wave_solution == "log":
-            w1 = (self.log_lambda >= Forest.log_lambda_grid[0])
-            w1 = w1 & (self.log_lambda < Forest.log_lambda_grid[-1])
-            w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >
-                       Forest.log_lambda_rest_frame_grid[0])
+            delta_log_lambda = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
+            delta_log_lambda_rest_frame = Forest.log_lambda_rest_frame_grid[1] - Forest.log_lambda_rest_frame_grid[0]
+
+            w1 = (self.log_lambda >= Forest.log_lambda_grid[0] - delta_log_lambda/2)
+            w1 = w1 & (self.log_lambda < Forest.log_lambda_grid[-1] + delta_log_lambda/2)
+            w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >=
+                       Forest.log_lambda_rest_frame_grid[0] - delta_log_lambda_rest_frame/2)
             w1 = w1 & (self.log_lambda - np.log10(1. + self.z) <
-                       Forest.log_lambda_rest_frame_grid[-1])
+                       Forest.log_lambda_rest_frame_grid[-1] + delta_log_lambda_rest_frame/2)
             w1 = w1 & (self.ivar > 0.)
             if w1.sum() == 0:
                 self.log_lambda = np.array([])
@@ -460,14 +463,15 @@ class Forest(AstronomicalObject):
             self.transmission_correction = self.transmission_correction[w1]
 
             bins = find_bins(self.log_lambda, Forest.log_lambda_grid)
-            delta_log_lambda = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
             self.log_lambda = Forest.log_lambda_grid[0] + bins * delta_log_lambda
 
         elif Forest.wave_solution == "lin":
+            delta_lambda = Forest.lambda_grid[1] - Forest.lambda_grid[0]
+            delta_lambda_rest_frame = Forest.lambda_rest_frame_grid[1] - Forest.lambda_rest_frame_grid[0]
             w1 = (self.lambda_ >= Forest.lambda_grid[0])
             w1 = w1 & (self.lambda_ < Forest.lambda_grid[-1])
-            w1 = w1 & (self.lambda_ / (1. + self.z) > Forest.lambda_rest_frame_grid[0])
-            w1 = w1 & (self.lambda_ / (1. + self.z) < Forest.lambda_rest_frame_grid[-1])
+            w1 = w1 & (self.lambda_ / (1. + self.z) >= Forest.lambda_rest_frame_grid[0] - delta_lambda_rest_frame/2)
+            w1 = w1 & (self.lambda_ / (1. + self.z) < Forest.lambda_rest_frame_grid[-1] + delta_lambda_rest_frame/2)
             w1 = w1 & (self.ivar > 0.)
             if w1.sum() == 0:
                 self.lambda_ = np.array([])
@@ -481,9 +485,7 @@ class Forest(AstronomicalObject):
             self.transmission_correction = self.transmission_correction[w1]
 
             bins = find_bins(self.lambda_, Forest.lambda_grid)
-            delta_lambda = Forest.lambda_grid[1] - Forest.lambda_grid[0]
             self.lambda_ = Forest.lambda_grid[0] + bins * delta_lambda
-
         else:
             raise AstronomicalObjectError("Error in rebinning Forest. "
                                           "Class variable 'wave_solution' "
