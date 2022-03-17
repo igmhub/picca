@@ -448,7 +448,7 @@ class Forest(AstronomicalObject):
 
             w1 = (self.log_lambda >= Forest.log_lambda_grid[0] - delta_log_lambda/2)
             w1 = w1 & (self.log_lambda < Forest.log_lambda_grid[-1] + delta_log_lambda/2)
-            w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >
+            w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >=
                        Forest.log_lambda_rest_frame_grid[0] - delta_log_lambda_rest_frame/2)
             w1 = w1 & (self.log_lambda - np.log10(1. + self.z) <
                        Forest.log_lambda_rest_frame_grid[-1] + delta_log_lambda_rest_frame/2)
@@ -472,7 +472,7 @@ class Forest(AstronomicalObject):
             delta_lambda_rest_frame = Forest.lambda_rest_frame_grid[1] - Forest.lambda_rest_frame_grid[0]
             w1 = (self.lambda_ >= Forest.lambda_grid[0])
             w1 = w1 & (self.lambda_ < Forest.lambda_grid[-1])
-            w1 = w1 & (self.lambda_ / (1. + self.z) > Forest.lambda_rest_frame_grid[0] - delta_lambda_rest_frame/2)
+            w1 = w1 & (self.lambda_ / (1. + self.z) >= Forest.lambda_rest_frame_grid[0] - delta_lambda_rest_frame/2)
             w1 = w1 & (self.lambda_ / (1. + self.z) < Forest.lambda_rest_frame_grid[-1] + delta_lambda_rest_frame/2)
             w1 = w1 & (self.ivar > 0.)
             if w1.sum() == 0:
