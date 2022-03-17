@@ -440,7 +440,7 @@ class Forest(AstronomicalObject):
         """
         orig_ivar = self.ivar.copy()
         # compute bins
-                if Forest.wave_solution == "log":
+        if Forest.wave_solution == "log":
             delta_log_lambda = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
             half_delta_log_lambda = delta_log_lambda / 2.
             
