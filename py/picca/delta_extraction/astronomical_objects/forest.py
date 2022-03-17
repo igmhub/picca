@@ -443,7 +443,7 @@ class Forest(AstronomicalObject):
         if Forest.wave_solution == "log":
             delta_log_lambda = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
             half_delta_log_lambda = delta_log_lambda / 2.
-            
+
             half_delta_log_lambda_rest_frame = (Forest.log_lambda_rest_frame_grid[1] -
                                                 Forest.log_lambda_rest_frame_grid[0]) / 2.
 
@@ -471,7 +471,7 @@ class Forest(AstronomicalObject):
         elif Forest.wave_solution == "lin":
             delta_lambda = Forest.lambda_grid[1] - Forest.lambda_grid[0]
             half_delta_lambda = delta_lambda / 2.
-            
+
             half_delta_lambda_rest_frame = (Forest.lambda_rest_frame_grid[1] -
                                             Forest.lambda_rest_frame_grid[0]) / 2.
             w1 = (self.lambda_ >= Forest.lambda_grid[0] - half_delta_lambda)
@@ -492,7 +492,7 @@ class Forest(AstronomicalObject):
 
             bins = find_bins(self.lambda_, Forest.lambda_grid)
             self.lambda_ = Forest.lambda_grid[0] + bins * delta_lambda
-else:
+        else:
             raise AstronomicalObjectError("Error in rebinning Forest. "
                                           "Class variable 'wave_solution' "
                                           "must be either 'lin' or 'log'. "
