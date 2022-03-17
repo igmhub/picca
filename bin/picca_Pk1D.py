@@ -209,13 +209,15 @@ def process_all_files(index_file_args):
                                                      ivar_new,
                                                      exposures_diff_new,
                                                      run_noise,
-                                                     linear_binning=True)
+                                                     linear_binning=True,
+                                                     num_noise_exposures=args.num_noise_exp)
             else:
                 pk_noise, pk_diff = compute_pk_noise(delta_log_lambda,
                                                      ivar_new,
                                                      exposures_diff_new,
                                                      run_noise,
-                                                     linear_binning=False)
+                                                     linear_binning=False,
+                                                     num_noise_exposures=args.num_noise_exp)
 
             # Compute resolution correction, needs uniform binning
             if linear_binning:
@@ -460,7 +462,7 @@ def main(cmdargs):
 
     parser.add_argument(
         '--num-noise-exp',
-        default=10,
+        default=100,
         type=int,
         required=False,
         help='number of pipeline noise realizations to generate per spectrum')

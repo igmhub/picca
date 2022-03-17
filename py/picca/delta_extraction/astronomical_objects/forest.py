@@ -1,6 +1,7 @@
 """This module defines the abstract class Forest from which all
 objects representing a forest must inherit from
 """
+import logging
 import numpy as np
 
 from picca.delta_extraction.astronomical_object import AstronomicalObject
@@ -125,6 +126,8 @@ class Forest(AstronomicalObject):
         -----
         AstronomicalObjectError if there are missing variables
         """
+        self.logger = logging.getLogger(__name__)
+
         Forest.class_variable_check()
 
         if Forest.wave_solution == "log":
