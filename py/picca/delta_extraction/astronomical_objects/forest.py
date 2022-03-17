@@ -542,7 +542,7 @@ class Forest(AstronomicalObject):
     def set_class_variables(cls, lambda_min, lambda_max,
                             lambda_min_rest_frame,
                             lambda_max_rest_frame,
-                            pixel_step, wave_solution):
+                            pixel_step, pixel_step_rest_frame, wave_solution):
         """Set class variables
         Arguments
         ---------
@@ -570,7 +570,7 @@ class Forest(AstronomicalObject):
             cls.log_lambda_rest_frame_grid = np.arange(
                 np.log10(lambda_min_rest_frame),
                 np.log10(lambda_max_rest_frame)+ pixel_step/2,
-                pixel_step)
+                pixel_step_rest_frame)
             cls.mask_fields = defaults.get("mask fields log").copy()
         elif wave_solution == "lin":
             cls.lambda_grid = np.arange(
@@ -580,7 +580,7 @@ class Forest(AstronomicalObject):
             cls.lambda_rest_frame_grid = np.arange(
                 lambda_min_rest_frame,
                 lambda_max_rest_frame + pixel_step/2,
-                pixel_step)
+                pixel_step_rest_frame)
             cls.mask_fields = defaults.get("mask fields lin").copy()
         else:
             raise AstronomicalObjectError("Error in setting Forest class "
