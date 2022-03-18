@@ -13,6 +13,7 @@ from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import ABSORBER_IGM
 
 accepted_options = ["analysis type", "delta lambda", "delta log lambda",
+                    "delta lambda rest frame",
                     "input directory",
                     "lambda abs IGM",
                     "lambda max", "lambda max rest frame",
