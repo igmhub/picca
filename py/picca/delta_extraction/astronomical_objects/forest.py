@@ -360,14 +360,19 @@ class Forest(AstronomicalObject):
         AstronomicalObjectError if ivar only has zeros
         """
         orig_ivar = self.ivar.copy()
+        # compute bins
+        delta_log_lambda = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
+        half_delta_log_lambda = delta_log_lambda / 2.
 
-        # filter arrays
-        w1 = (self.log_lambda >= Forest.log_lambda_grid[0])
-        w1 = w1 & (self.log_lambda < Forest.log_lambda_grid[-1])
-        w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >
-                   Forest.log_lambda_rest_frame_grid[0])
+        half_delta_log_lambda_rest_frame = (Forest.log_lambda_rest_frame_grid[1] -
+                                            Forest.log_lambda_rest_frame_grid[0]) / 2.
+
+        w1 = (self.log_lambda >= Forest.log_lambda_grid[0] - half_delta_log_lambda)
+        w1 = w1 & (self.log_lambda < Forest.log_lambda_grid[-1] + half_delta_log_lambda)
+        w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >=
+                   Forest.log_lambda_rest_frame_grid[0] - half_delta_log_lambda_rest_frame)
         w1 = w1 & (self.log_lambda - np.log10(1. + self.z) <
-                   Forest.log_lambda_rest_frame_grid[-1])
+                   Forest.log_lambda_rest_frame_grid[-1] + half_delta_log_lambda_rest_frame)
         w1 = w1 & (self.ivar > 0.)
         if w1.sum() == 0:
             self.log_lambda = np.array([])
@@ -380,8 +385,8 @@ class Forest(AstronomicalObject):
         self.ivar = self.ivar[w1]
         self.transmission_correction = self.transmission_correction[w1]
 
-        # compute bins
         bins = find_bins(self.log_lambda, Forest.log_lambda_grid)
+        self.log_lambda = Forest.log_lambda_grid[0] + bins * delta_log_lambda
 
         # rebin flux, ivar and transmission_correction
         rebin_flux = np.zeros(bins.max() + 1)
@@ -464,21 +469,21 @@ class Forest(AstronomicalObject):
         if wave_solution == "log":
             cls.log_lambda_grid = np.arange(
                 np.log10(lambda_min),
-                np.log10(lambda_max)+ pixel_step/2,
+                np.log10(lambda_max) + pixel_step/2,
                 pixel_step)
             cls.log_lambda_rest_frame_grid = np.arange(
-                np.log10(lambda_min_rest_frame),
-                np.log10(lambda_max_rest_frame)+ pixel_step/2,
+                np.log10(lambda_min_rest_frame) + pixel_step/2,
+                np.log10(lambda_max_rest_frame),
                 pixel_step)
         elif wave_solution == "lin":
             cls.log_lambda_grid = np.log10(np.arange(
                 lambda_min,
-                lambda_max+ pixel_step/2,
-                pixel_step))
+                lambda_max + pixel_step/2,
+                pixel_step)
             cls.log_lambda_rest_frame_grid = np.log10(np.arange(
-                lambda_min_rest_frame,
-                lambda_max_rest_frame + pixel_step/2,
-                pixel_step))
+                lambda_min_rest_frame + pixel_step/2,
+                lambda_max_rest_frame,
+                pixel_step)
         else:
             raise AstronomicalObjectError("Error in setting Forest class "
                                           "variables. 'wave_solution' "

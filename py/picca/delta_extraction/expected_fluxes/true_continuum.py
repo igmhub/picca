@@ -180,8 +180,8 @@ class TrueContinuum(ExpectedFlux):
             if forest.bad_continuum_reason is not None:
                 continue
             bins = find_bins(
-                forest.log_lambda - np.log10(1 + forest.z),
-                self.log_lambda_rest_frame
+                forest.log_lambda -  np.log10(1 + forest.z),
+                Forest.log_lambda_rest_frame_grid
             )
 
             var_lss = self.get_var_lss(forest.log_lambda)

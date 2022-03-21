@@ -196,7 +196,7 @@ class DesiHealpix(DesiData):
                 w_t = w_t[0]
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
-            for spec in spectrographs_data.values():
+            for spec_name, spec in spectrographs_data.items():
                 ivar = spec['IVAR'][w_t].copy()
                 flux = spec['FLUX'][w_t].copy()
 

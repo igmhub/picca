@@ -649,15 +649,15 @@ class Dr16ExpectedFlux(ExpectedFlux):
             var_pipe_bins = var_pipe_bins[w]
 
             # select the wavelength bins
-            log_lambda_bins = (
-                (forest.log_lambda - Forest.log_lambda_grid[0]) /
-                (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) *
-                self.num_bins_variance).astype(int)
+            log_lambda_bins = find_bins(
+                forest.log_lambda,
+                self.log_lambda
+                )
             # filter the values with a pipeline variance out of range
             log_lambda_bins = log_lambda_bins[w]
             # compute overall bin
             bins = var_pipe_bins + num_var_bins * log_lambda_bins
-
+            
             # compute deltas
             delta = (forest.flux / forest.continuum - 1)
             delta = delta[w]
