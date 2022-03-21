@@ -44,7 +44,7 @@ def setup_forest(wave_solution, rebin=1):
     Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step,
                                wave_solution)
 
-setup_forest("log")
+setup_forest("log", rebin=3)
 
 # setup Pk1dForest class variables
 def setup_pk1d_forest(absorber):
@@ -63,7 +63,7 @@ setup_pk1d_forest("LYA")
 # has:
 # * 1 DLA in dummy_absorbers_cat.fits.gz
 # * 1 absorber in dummy_absorbers_cat.fits.gz
-forest1_log_lambda = np.arange(3.562, 3.62, 1e-3)
+forest1_log_lambda = np.arange(3.5618525, 3.6200525, 3e-4)
 kwargs1 = {
     "los_id": 9999,
     "ra": 0.15,
@@ -90,7 +90,7 @@ assert np.allclose(forest1.transmission_correction,
 # has:
 # * 1 DLA in dummy_absorbers_cat.fits.gz
 # * 1 absorber in dummy_absorbers_cat.fits.gz
-forest2_log_lambda = np.arange(3.562, 3.62, 1e-3)
+forest2_log_lambda = np.arange(3.5618525, 3.6200525, 3e-4)
 kwargs2 = {
     "los_id": 9999,
     "ra": 0.15,
@@ -117,7 +117,7 @@ assert np.allclose(forest2.transmission_correction,
 # has:
 # * 0 DLA in dummy_absorbers_cat.fits.gz
 # * 0 absorber in dummy_absorbers_cat.fits.gz
-forest3_log_lambda = np.arange(3.562, 3.62, 1e-3)
+forest3_log_lambda = np.arange(3.5618525, 3.6200525, 3e-4)
 kwargs3 = {
     "los_id": 9999,
     "ra": 0.15,
