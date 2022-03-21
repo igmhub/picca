@@ -33,14 +33,14 @@ RESO2 = np.ones(10) * 3
 RESO_REBIN = np.ones(5)
 RESO_COADD = np.ones(5) * 2
 LOG_LAMBDA = np.array([
-    3.5564725, 3.5564325, 3.5567725, 3.5567325, 3.5570725, 3.5570325,
-    3.5573725, 3.5573325, 3.5576725, 3.5576325
+    3.5562825, 3.5563225, 3.5565825, 3.5566225, 3.5568825, 3.5569225,
+    3.5571825, 3.5572225, 3.5574825, 3.5575225
 ])
 LOG_LAMBDA_REBIN = np.array(
-    [3.5564525, 3.5567525, 3.5570525, 3.5573525, 3.5576525])
+    [3.5563025, 3.5566025, 3.5569025, 3.5572025, 3.5575025])
 LAMBDA_ = np.array(
-    [3610.5, 3610.9, 3650.5, 3650.9, 3670.5, 3670.9, 3680.5, 3680.9, 3700.5, 3700.9])
-LAMBDA_REBIN = np.array([3610.5, 3650.5, 3670.5, 3680.5, 3700.5])
+    [3610.0, 3610.4, 3650.0, 3650.4, 3670.0, 3670.4, 3680.0, 3680.4, 3700.0, 3700.4])
+LAMBDA_REBIN = np.array([3610, 3650, 3670, 3680, 3700])
 
 THINGID = 100000000
 TARGETID = 100000000
@@ -403,11 +403,6 @@ class AstronomicalObjectTest(AbstractTest):
         else:
             self.assertTrue(test_obj.deltas is None)
         if Forest.wave_solution == "log":
-            if (test_obj.log_lambda.size != kwargs.get("log_lambda").size):
-                print("\nlog_lambda")
-                print(test_obj.log_lambda)
-                print("compared to")
-                print(kwargs.get("log_lambda"))
             self.assertTrue(
                 np.allclose(test_obj.log_lambda, kwargs.get("log_lambda")))
             self.assertTrue(test_obj.lambda_ is None)
