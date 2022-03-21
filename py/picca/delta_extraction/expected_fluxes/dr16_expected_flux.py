@@ -453,38 +453,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.continuum_fit_parameters = {}
 
         if Forest.wave_solution == "log":
-            log_lambda_max = (Forest.log_lambda_rest_frame_grid[-1] +
-                              np.log10(1 + forest.z))
-            log_lambda_min = (Forest.log_lambda_rest_frame_grid[0] +
-                              np.log10(1 + forest.z))
-
             # get mean continuum
             mean_cont = self.get_mean_cont(forest.log_lambda -
                                            np.log10(1 + forest.z))
-
-            if not self.use_constant_weight:
-                # pixel variance due to the Large Scale Strucure
-                var_lss = self.get_var_lss(forest.log_lambda)
-                # correction factor to the contribution of the pipeline
-                # estimate of the instrumental noise to the variance.
-                eta = self.get_eta(forest.log_lambda)
-                # fudge contribution to the variance
-                fudge = self.get_fudge(forest.log_lambda)
         elif Forest.wave_solution == "lin":
-            lambda_max = Forest.lambda_rest_frame_grid[-1] * (1 + forest.z)
-            lambda_min = Forest.lambda_rest_frame_grid[0] * (1 + forest.z)
-
             # get mean continuum
             mean_cont = self.get_mean_cont(forest.lambda_ / (1 + forest.z))
-
-            if not self.use_constant_weight:
-                # pixel variance due to the Large Scale Strucure
-                var_lss = self.get_var_lss(forest.lambda_)
-                # correction factor to the contribution of the pipeline
-                # estimate of the instrumental noise to the variance.
-                eta = self.get_eta(forest.lambda_)
-                # fudge contribution to the variance
-                fudge = self.get_fudge(forest.lambda_)
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either "
                                     "'log' or 'lin'")
@@ -492,101 +466,44 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # add transmission correction
         # (previously computed using method add_optical_depth)
         mean_cont *= forest.transmission_correction
+        mean_cont_kwargs = {"mean_cont": mean_cont}
 
-        def get_cont_model(p0, p1):
-            """Models the flux continuum by multiplying the mean_continuum
-            by a linear function
+        if Forest.wave_solution == "log":
+            mean_cont_kwargs["log_lambda_max"] = (
+                Forest.log_lambda_rest_frame_grid[-1] + np.log10(1 + forest.z))
+            mean_cont_kwargs["log_lambda_min"] = (
+                Forest.log_lambda_rest_frame_grid[0] + np.log10(1 + forest.z))
 
-            Arguments:
-            ----------
-            p0: float
-            Zero point of the linear function (flux mean)
+        elif Forest.wave_solution == "lin":
+            mean_cont_kwargs["lambda_max"] = (
+                Forest.lambda_rest_frame_grid[-1] * (1 + forest.z))
+            mean_cont_kwargs["lambda_min"] = (
+                Forest.lambda_rest_frame_grid[0] * (1 + forest.z))
 
-            p1: float
-            Slope of the linear function (evolution of the flux)
+        leasts_squares = LeastsSquaresContModel(
+            forest=forest,
+            expected_flux=self,
+            mean_cont_kwargs=mean_cont_kwargs,
+        )
 
-            Global Arguments:
-            ----------------
-            (defined only in the scope of function cont_fit)
+        aq = (forest.flux * forest.ivar).sum() / forest.ivar.sum()
+        bq = 0.0
 
-            mean_cont: array of floats
-            Mean continuum
-
-            Return
-            ------
-            model: array of float
-            The model
-
-            Raise
-            -----
-            ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
-            """
-            if Forest.wave_solution == "log":
-                line = (p1 * (forest.log_lambda - log_lambda_min) /
-                        (log_lambda_max - log_lambda_min) + p0)
-            elif Forest.wave_solution == "lin":
-                line = (p1 * (forest.lambda_ - lambda_min) /
-                        (lambda_max - lambda_min) + p0)
-            else:
-                raise ExpectedFluxError("Forest.wave_solution must be either "
-                                        "'log' or 'lin'")
-
-            return line * mean_cont
-
-        def chi2(p0, p1):
-            """Compute the chi2 of a given model (see function model above).
-
-            Arguments
-            ---------
-            p0: float
-            Zero point of the linear function (see function model above)
-
-            p1: float
-            Slope of the linear function (see function model above)
-
-            Global arguments
-            ----------------
-            (defined only in the scope of function compute_continuum)
-            eta: array of floats
-            Correction factor to the contribution of the pipeline
-            estimate of the instrumental noise to the variance.
-
-            Return
-            ------
-            chi2: float
-            The obtained chi2
-            """
-            cont_model = get_cont_model(p0, p1)
-
-            # force weights=1 when use-constant-weight
-            if self.use_constant_weight:
-                weights = np.ones_like(cont_model)
-            else:
-                var_pipe = 1. / forest.ivar / cont_model**2
-                ## prep_del.variance is the variance of delta
-                ## we want here the weights = ivar(flux)
-                variance = eta * var_pipe + var_lss + fudge / var_pipe
-                weights = 1.0 / cont_model**2 / variance
-
-            chi2_contribution = (forest.flux - cont_model)**2 * weights
-            return chi2_contribution.sum() - np.log(weights).sum()
-
-        p0 = (forest.flux * forest.ivar).sum() / forest.ivar.sum()
-        p1 = 0.0
-
-        minimizer = iminuit.Minuit(chi2,
-                                   p0=p0,
-                                   p1=p1)
-        minimizer.errors["p0"] = p0 / 2.
-        minimizer.errors["p1"] = p0 / 2.
+        minimizer = iminuit.Minuit(leasts_squares,
+                                   aq=aq,
+                                   bq=bq)
+        minimizer.errors["aq"] = aq / 2.
+        minimizer.errors["bq"] = aq / 2.
         minimizer.errordef = 1.
         minimizer.print_level = 0
-        minimizer.fixed["p1"] = self.order == 0
+        minimizer.fixed["bq"] = self.order == 0
         minimizer.migrad()
 
         forest.bad_continuum_reason = None
-
-        temp_cont_model=get_cont_model(minimizer.values["p0"], minimizer.values["p1"])
+        temp_cont_model = self.get_continuum_model(forest,
+                                                   minimizer.values["aq"],
+                                                   minimizer.values["bq"],
+                                                   **mean_cont_kwargs)
         if not minimizer.valid:
             forest.bad_continuum_reason = "minuit didn't converge"
         if np.any(temp_cont_model < 0):
@@ -595,7 +512,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if forest.bad_continuum_reason is None:
             forest.continuum = temp_cont_model
             self.continuum_fit_parameters[forest.los_id] = (
-                minimizer.values["p0"], minimizer.values["p1"])
+                minimizer.values["aq"], minimizer.values["bq"])
         ## if the continuum is negative or minuit didn't converge, then
         ## set it to None
         else:
@@ -1136,6 +1053,133 @@ class Dr16ExpectedFlux(ExpectedFlux):
             raise ExpectedFluxError("Forest.wave_solution must be either "
                                     "'log' or 'linear'")
 
+    # pylint: dissable=no-self-use
+    # We expect this function to be changed by some child classes
+    def get_continuum_model(self, forest, aq, bq, **kwargs):
+        """Get the model for the continuum fit
+
+        Arguments
+        ---------
+        forest: Forest
+        The forest instance we want the model from
+
+        aq: float
+        Zero point of the linear function (flux mean)
+
+        bq: float
+        Slope of the linear function (evolution of the flux)
+
+        Keyword Arguments
+        -----------------
+        mean_cont: array of floats
+        Mean continuum. Required.
+
+        lambda_max: float
+        Maximum lambda_ for this forest. Required only if Forest.wave_solution
+        is lin.
+
+        lambda_min: float
+        Minimum lambda_ for this forest. Required only if Forest.wave_solution
+        is lin.
+
+        log_lambda_max: float
+        Maximum log_lambda for this forest. Required only if Forest.wave_solution
+        is log.
+
+        log_lambda_min: float
+        Minimum log_lambda for this forest. Required only if Forest.wave_solution
+        is log.
+
+        Return
+        ------
+        cont_model: array of float
+        The continuum model
+        """
+        # unpack kwargs
+        if "mean_cont" not in kwargs:
+            raise ExpectedFluxError("Function get_cont_model requires "
+                                    f"'mean_cont' in the **kwargs dictionary")
+        mean_cont = kwargs.get("mean_cont")
+        if Forest.wave_solution == "log":
+            for key in ["log_lambda_max", "log_lambda_min"]:
+                if key not in kwargs:
+                    raise ExpectedFluxError("Function get_cont_model requires "
+                                            f"'{key}' in the **kwargs dictionary")
+            log_lambda_max = kwargs.get("log_lambda_max")
+            log_lambda_min = kwargs.get("log_lambda_min")
+        elif Forest.wave_solution == "lin":
+            for key in ["lambda_max", "lambda_min"]:
+                if key not in kwargs:
+                    raise ExpectedFluxError("Function get_cont_model requires "
+                                            f"'{key}' in the **kwargs dictionary")
+            lambda_max = kwargs.get("lambda_max")
+            lambda_min = kwargs.get("lambda_min")
+        else:
+            raise ExpectedFluxError("Forest.wave_solution must be either "
+                                    "'log' or 'lin'")
+
+        # compute continuum
+        if Forest.wave_solution == "log":
+            line = (bq * (forest.log_lambda - log_lambda_min) /
+                    (log_lambda_max - log_lambda_min) + aq)
+        elif Forest.wave_solution == "lin":
+            line = (bq * (forest.lambda_ - lambda_min) /
+                    (lambda_max - lambda_min) + aq)
+        else:
+            raise ExpectedFluxError("Forest.wave_solution must be either "
+                                    "'log' or 'lin'")
+
+        return line * mean_cont
+
+    # kwargs are passed here in case this is necessary in child classes
+    def get_continuum_weights(self, forest, cont_model, **kwargs):
+        """Get the continuum model weights
+
+        Arguments
+        ---------
+        forest: Forest
+        The forest instance we want the model from
+
+        cont_model: array of float
+        The continuum model
+
+        Return
+        ------
+        weights: array of float
+        The continuum model weights
+        """
+        # force weights=1 when use-constant-weight
+        if self.use_constant_weight:
+            weights = np.ones_like(forest.flux)
+        else:
+            if Forest.wave_solution == "log":
+                # pixel variance due to the Large Scale Strucure
+                var_lss = self.get_var_lss(forest.log_lambda)
+                # correction factor to the contribution of the pipeline
+                # estimate of the instrumental noise to the variance.
+                eta = self.get_eta(forest.log_lambda)
+                # fudge contribution to the variance
+                fudge = self.get_fudge(forest.log_lambda)
+            elif Forest.wave_solution == "lin":
+                # pixel variance due to the Large Scale Strucure
+                var_lss = self.get_var_lss(forest.lambda_)
+                # correction factor to the contribution of the pipeline
+                # estimate of the instrumental noise to the variance.
+                eta = self.get_eta(forest.lambda_)
+                # fudge contribution to the variance
+                fudge = self.get_fudge(forest.lambda_)
+            else:
+                raise ExpectedFluxError("Forest.wave_solution must be either "
+                                        "'log' or 'lin'")
+
+            var_pipe = 1. / forest.ivar / cont_model**2
+            ## prep_del.variance is the variance of delta
+            ## we want here the weights = ivar(flux)
+            variance = eta * var_pipe + var_lss + fudge / var_pipe
+            weights = 1.0 / cont_model**2 / variance
+
+        return weights
+
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
         and inverse variance arrays for each line-of-sight.
@@ -1272,3 +1316,23 @@ class Dr16ExpectedFlux(ExpectedFlux):
             else:
                 raise ExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'lin'")
+
+class LeastsSquaresContModel:
+    def __init__(self, forest, expected_flux,
+                 mean_cont_kwargs=dict(),
+                 weights_kwargs=dict()):
+        self.forest = forest
+        self.expected_flux = expected_flux
+        self.mean_cont_kwargs = mean_cont_kwargs
+        self.weights_kwargs = weights_kwargs
+
+    def __call__(self, aq, bq):
+        cont_model = self.expected_flux.get_continuum_model(self.forest, aq, bq,
+            **self.mean_cont_kwargs)
+
+        weights = self.expected_flux.get_continuum_weights(self.forest,
+                                                           cont_model,
+                                                           **self.weights_kwargs)
+
+        chi2_contribution = (self.forest.flux - cont_model)**2 * weights
+        return chi2_contribution.sum() - np.log(weights).sum()
