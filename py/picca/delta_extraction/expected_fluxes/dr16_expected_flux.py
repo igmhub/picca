@@ -384,9 +384,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         mean_cont_kwargs = {"mean_cont": mean_cont}
         mean_cont_kwargs["log_lambda_max"] = (
-            Forest.log_lambda_max_rest_frame + np.log10(1 + forest.z))
+            Forest.log_lambda_rest_frame_grid[-1] + np.log10(1 + forest.z))
         mean_cont_kwargs["log_lambda_min"] = (
-            Forest.log_lambda_min_rest_frame + np.log10(1 + forest.z))
+            Forest.log_lambda_rest_frame_grid[0] + np.log10(1 + forest.z))
 
         leasts_squares = LeastsSquaresContModel(
             forest=forest,
@@ -657,7 +657,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             log_lambda_bins = log_lambda_bins[w]
             # compute overall bin
             bins = var_pipe_bins + num_var_bins * log_lambda_bins
-            
+
             # compute deltas
             delta = (forest.flux / forest.continuum - 1)
             delta = delta[w]

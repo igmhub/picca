@@ -479,11 +479,11 @@ class Forest(AstronomicalObject):
             cls.log_lambda_grid = np.log10(np.arange(
                 lambda_min,
                 lambda_max + pixel_step/2,
-                pixel_step)
+                pixel_step))
             cls.log_lambda_rest_frame_grid = np.log10(np.arange(
                 lambda_min_rest_frame + pixel_step/2,
                 lambda_max_rest_frame,
-                pixel_step)
+                pixel_step))
         else:
             raise AstronomicalObjectError("Error in setting Forest class "
                                           "variables. 'wave_solution' "
