@@ -128,10 +128,10 @@ class Data:
                 raise DataError("Missing argument 'delta log lambda' required by "
                                 "Data when 'wave solution' is set to 'log'")
             pixel_step_rest_frame = config.getfloat("delta log lambda rest frame")
-            if pixel_step is None:
+            if pixel_step_rest_frame is None:
                 pixel_step_rest_frame = pixel_step
-                self.logger.info(f"'delta log lambda rest frame' not set, using"
-                                  "the same value as for 'delta log lambda' ({pixel_step_rest_frame})")
+                self.logger.info("'delta log lambda rest frame' not set, using "
+                                 f"the same value as for 'delta log lambda' ({pixel_step_rest_frame})")
             
         elif wave_solution == "lin":
             pixel_step = config.getfloat("delta lambda")
@@ -139,10 +139,10 @@ class Data:
                 raise DataError("Missing argument 'delta lambda' required by "
                                 "Data when 'wave solution' is set to 'lin'")
             pixel_step_rest_frame = config.getfloat("delta lambda rest frame")
-            if pixel_step is None:
+            if pixel_step_rest_frame is None:
                 pixel_step_rest_frame = pixel_step
-                self.logger.info(f"'delta lambda rest frame' not set, using"
-                                  "the same value as for 'delta lambda' ({pixel_step_rest_frame})")
+                self.logger.info("'delta lambda rest frame' not set, using"
+                                 f"the same value as for 'delta lambda' ({pixel_step_rest_frame})")
         else:
             raise DataError("Forest.wave_solution must be either "
                             "'log' or 'lin'")
