@@ -573,8 +573,8 @@ class Forest(AstronomicalObject):
         """
         if wave_solution == "log":
             cls.log_lambda_grid = np.arange(
-                np.log10(lambda_min) + pixel_step/2,
-                np.log10(lambda_max),
+                np.log10(lambda_min),
+                np.log10(lambda_max) + pixel_step/2,
                 pixel_step)
             cls.log_lambda_rest_frame_grid = np.arange(
                 np.log10(lambda_min_rest_frame) + pixel_step_rest_frame/2,
@@ -583,8 +583,8 @@ class Forest(AstronomicalObject):
             cls.mask_fields = defaults.get("mask fields log").copy()
         elif wave_solution == "lin":
             cls.lambda_grid = np.arange(
-                lambda_min + pixel_step/2,
-                lambda_max,
+                lambda_min,
+                lambda_max + pixel_step/2,
                 pixel_step)
             cls.lambda_rest_frame_grid = np.arange(
                 lambda_min_rest_frame + pixel_step_rest_frame/2,
