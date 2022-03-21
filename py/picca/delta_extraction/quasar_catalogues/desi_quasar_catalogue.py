@@ -26,7 +26,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
     -------
     trim_catalogue (from QuasarCatalogue)
     __init__
-    _parse_config
+    __parse_config
     filter_surveys
     read_catalogue
 
@@ -66,7 +66,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
         # load variables from config
         self.filename = None
-        self._parse_config(config)
+        self.__parse_config(config)
 
         # read quasar catalogue
         self.read_catalogue()
@@ -79,7 +79,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         if self.max_num_spec is not None:
             super().trim_catalogue()
 
-    def _parse_config(self, config):
+    def __parse_config(self, config):
         """Parse the configuration options
 
         Arguments

@@ -17,14 +17,9 @@ from picca.delta_extraction.quasar_catalogues.drq_catalogue import accepted_opti
 from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
 
 accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_catalogue +[
-    "input directory", "mode", "lambda max", "lambda max rest frame", "lambda min",
-    "lambda min rest frame", "rebin"])))
+    "rebin", "mode"])))
 
 defaults.update({
-    "lambda max": 5500.0,
-    "lambda max rest frame": 1200.0,
-    "lambda min": 3600.0,
-    "lambda min rest frame": 1040.0,
     "mode": "spplate",
     "rebin": 3,
 })
@@ -38,7 +33,7 @@ class SdssData(Data):
     -------
     filter_forests (from Data)
     __init__
-    _parse_config
+    __parse_config
     read_from_spec
     read_from_spplate
 
@@ -77,12 +72,11 @@ class SdssData(Data):
         """
         self.logger = logging.getLogger(__name__)
 
-        super().__init__(config)
-
         # load variables from config
-        self.input_directory = None
         self.mode = None
-        self._parse_config(config)
+        self.__parse_config(config)
+
+        super().__init__(config)
 
         # load DRQ Catalogue
         catalogue = DrqCatalogue(config).catalogue
@@ -96,7 +90,7 @@ class SdssData(Data):
             raise DataError(f"Error reading data in SdssData. Mode {self.mode} "
                             "is not supported.")
 
-    def _parse_config(self, config):
+    def __parse_config(self, config):
         """Parse the configuration options
 
         Arguments
@@ -108,40 +102,19 @@ class SdssData(Data):
         -----
         DataError upon missing required variables
         """
-        # setup SdssForest class variables
-        Forest.wave_solution = "log"
-
-        rebin = config.getint("rebin")
-        if rebin is None:
-            raise DataError("Missing argument 'rebin' required by SdssData")
-        Forest.delta_log_lambda = rebin * 1e-4
-
-        lambda_max = config.getfloat("lambda max")
-        if lambda_max is None:
-            raise DataError("Missing argument 'lambda max' required by SdssData")
-        Forest.log_lambda_max = np.log10(lambda_max)
-        lambda_max_rest_frame = config.getfloat("lambda max rest frame")
-        if lambda_max_rest_frame is None:
-            raise DataError("Missing argument 'lambda max rest frame' required by SdssData")
-        Forest.log_lambda_max_rest_frame = np.log10(lambda_max_rest_frame)
-        lambda_min = config.getfloat("lambda min")
-        if lambda_min is None:
-            raise DataError("Missing argument 'lambda min' required by SdssData")
-        Forest.log_lambda_min = np.log10(lambda_min)
-        lambda_min_rest_frame = config.getfloat("lambda min rest frame")
-        if lambda_min_rest_frame is None:
-            raise DataError("Missing argument 'lambda min rest frame' required by SdssData")
-        Forest.log_lambda_min_rest_frame = np.log10(lambda_min_rest_frame)
-
         # instance variables
-        self.input_directory = config.get("input directory")
-        if self.input_directory is None:
-            raise DataError(
-                "Missing argument 'input directory' required by SdssData")
-
         self.mode = config.get("mode")
         if self.mode is None:
             raise DataError("Missing argument 'mode' required by SdssData")
+
+        rebin = config.getint("rebin")
+        if rebin is None:
+            raise DataError("Missing argument 'delta log lambda' required by "
+                            "Data when 'wave solution' is set to 'log'")
+        config["delta log lambda"] = str(rebin*1e-4)
+        del config["rebin"]
+
+        config["wave solution"] = "log"
 
     def read_from_spec(self, catalogue):
         """Read the spectra and formats its data as Forest instances.
@@ -239,7 +212,6 @@ class SdssData(Data):
         for (plate, mjd), group in zip(grouped_catalogue.groups.keys,
                                        grouped_catalogue.groups):
             spplate = f"{self.input_directory}/{plate}/spPlate-{plate:04d}-{mjd}.fits"
-
             try:
                 hdul = fitsio.FITS(spplate)
                 header = hdul[0].read_header()

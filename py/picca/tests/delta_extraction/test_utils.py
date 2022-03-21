@@ -13,22 +13,16 @@ from picca.delta_extraction.utils import ABSORBER_IGM
 def reset_forest():
     """Reset the class variables of Forest and Pk1dForest"""
     Forest.wave_solution = None
-    Forest.delta_log_lambda = None
-    Forest.delta_log_lambda = None
-    Forest.lambda_max = None
-    Forest.lambda_max_rest_frame = None
-    Forest.lambda_min = None
-    Forest.lambda_min_rest_frame = None
-    Forest.log_lambda_max = None
-    Forest.log_lambda_max_rest_frame = None
-    Forest.log_lambda_min = None
-    Forest.log_lambda_min_rest_frame = None
+    Forest.lambda_grid = None
+    Forest.lambda_rest_frame_grid = None
+    Forest.log_lambda_grid = None
+    Forest.log_lambda_rest_frame_grid = None
     Forest.mask_fields = []
     Pk1dForest.lambda_abs_igm = None
 
 
 # setup Forest class variables
-def setup_forest(wave_solution):
+def setup_forest(wave_solution, rebin=1):
     """Set Forest class variables
 
     Arguments
@@ -36,25 +30,21 @@ def setup_forest(wave_solution):
     wave_solution: "log" or "lin"
     Determines whether the wavelength solution has linear spacing ("lin") or
     logarithmic spacing ("log").
+
+    rebin: int
+    If wave_solution is "log", number of pixels that will be rebinned
     """
     assert wave_solution in ["log", "lin"]
 
     if wave_solution == "log":
-        Forest.wave_solution = "log"
-        Forest.delta_log_lambda = 1e-4
-        Forest.log_lambda_max = np.log10(5500.0)
-        Forest.log_lambda_max_rest_frame = np.log10(1200.0)
-        Forest.log_lambda_min = np.log10(3600.0)
-        Forest.log_lambda_min_rest_frame = np.log10(1040.0)
+        pixel_step = 1e-4 * rebin
     elif wave_solution == "lin":
-        Forest.wave_solution = "lin"
-        Forest.delta_lambda = 1.
-        Forest.lambda_max = 5500.0
-        Forest.lambda_max_rest_frame = 1200.0
-        Forest.lambda_min = 3600.0
-        Forest.lambda_min_rest_frame = 1040.0
+        pixel_step = 1.
 
-setup_forest("log")
+    Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step,
+                               wave_solution)
+
+setup_forest("log", rebin=3)
 
 # setup Pk1dForest class variables
 def setup_pk1d_forest(absorber):
@@ -73,7 +63,7 @@ setup_pk1d_forest("LYA")
 # has:
 # * 1 DLA in dummy_absorbers_cat.fits.gz
 # * 1 absorber in dummy_absorbers_cat.fits.gz
-forest1_log_lambda = np.arange(3.562, 3.62, 1e-3)
+forest1_log_lambda = np.arange(3.5617025, 3.6200525, 3e-4)
 kwargs1 = {
     "los_id": 9999,
     "ra": 0.15,
@@ -100,7 +90,7 @@ assert np.allclose(forest1.transmission_correction,
 # has:
 # * 1 DLA in dummy_absorbers_cat.fits.gz
 # * 1 absorber in dummy_absorbers_cat.fits.gz
-forest2_log_lambda = np.arange(3.562, 3.62, 1e-3)
+forest2_log_lambda = np.arange(3.5617025, 3.6200525, 3e-4)
 kwargs2 = {
     "los_id": 9999,
     "ra": 0.15,
@@ -127,7 +117,7 @@ assert np.allclose(forest2.transmission_correction,
 # has:
 # * 0 DLA in dummy_absorbers_cat.fits.gz
 # * 0 absorber in dummy_absorbers_cat.fits.gz
-forest3_log_lambda = np.arange(3.562, 3.62, 1e-3)
+forest3_log_lambda = np.arange(3.5617025, 3.6200525, 3e-4)
 kwargs3 = {
     "los_id": 9999,
     "ra": 0.15,
