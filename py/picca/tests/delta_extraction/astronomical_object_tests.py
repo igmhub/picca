@@ -41,13 +41,13 @@ RESO_PIX_REBIN = np.ones(5)
 RESO_PIX_COADD = np.ones(5) * 2
 
 LOG_LAMBDA = np.array([
-    3.5565, 3.55655, 3.5567, 3.55675, 3.5569, 3.55695, 3.5571, 3.55715, 3.5573,
-    3.55735
+    3.5562825, 3.5563225, 3.5565825, 3.5566225, 3.5568825, 3.5569225,
+    3.5571825, 3.5572225, 3.5574825, 3.5575225
 ])
 LOG_LAMBDA_REBIN = np.array(
-    [3.5565025, 3.5567025, 3.5569025, 3.5571025, 3.5573025])
+    [3.5563025, 3.5566025, 3.5569025, 3.5572025, 3.5575025])
 LAMBDA_ = np.array(
-    [3610, 3610.4, 3650, 3650.4, 3670, 3670.4, 3680, 3680.4, 3700, 3700.4])
+    [3610.0, 3610.4, 3650.0, 3650.4, 3670.0, 3670.4, 3680.0, 3680.4, 3700.0, 3700.4])
 LAMBDA_REBIN = np.array([3610, 3650, 3670, 3680, 3700])
 
 RESOMAT = np.ones([7, 10])
@@ -1029,7 +1029,7 @@ class AstronomicalObjectTest(AbstractTest):
             Forest(**kwargs_forest_log)
 
         # set class variables; case: logarithmic wavelength solution
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
@@ -1072,7 +1072,7 @@ class AstronomicalObjectTest(AbstractTest):
 
     def test_forest_comparison(self):
         """Test comparison is properly inheried in Forest."""
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         test_obj = Forest(**kwargs_forest_log)
         test_obj.rebin()
@@ -1112,7 +1112,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_forest_rebin(self):
         """Test the rebin function in Forest."""
         # set class variables; case: logarithmic wavelength solution
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
@@ -1135,7 +1135,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_forest_coadd(self):
         """Test the coadd function in Forest."""
         # set class variables; case: logarithmic wavelength solution
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
@@ -1178,7 +1178,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_forest_get_data(self):
         """Test method get_data for Forest."""
         # set class variables; case: logarithmic wavelength solution
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
@@ -1197,7 +1197,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_forest_get_header(self):
         """Test method get_header for Forest."""
         # set class variables; case: logarithmic wavelength solution
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create a Forest
         test_obj = Forest(**kwargs_forest_log)
@@ -1224,7 +1224,7 @@ class AstronomicalObjectTest(AbstractTest):
             Pk1dForest(**kwargs_pk1d_forest_log)
 
         # set class variables; case: logarithmic wavelength solution
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create a Pk1dForest with missing Pk1dForest variables
         with self.assertRaises(AstronomicalObjectError):
@@ -1253,7 +1253,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_pk1d_forest_coadd(self):
         """Test the coadd function in Pk1dForest"""
         # set class variables; case: logarithmic wavelength solution
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
 
         # create a Pk1dForest
@@ -1298,7 +1298,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_pk1d_forest_get_data(self):
         """Test method get_data for Pk1dForest."""
         # set class variables; case: logarithmic wavelength solution
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
 
         # create a Pk1dForest
@@ -1319,7 +1319,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_pk1d_forest_get_header(self):
         """Test method get_header for Pk1dForest."""
         # set class variables; case: logarithmic wavelength solution
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
 
         # create a Pk1dForest
@@ -1350,7 +1350,7 @@ class AstronomicalObjectTest(AbstractTest):
             SdssForest(**kwargs_sdss_forest)
 
         # set class variables
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create a SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
@@ -1397,7 +1397,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_sdss_forest_coadd(self):
         """Test the coadd function in SdssForest"""
         # set class variables
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create a SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
@@ -1424,7 +1424,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_sdss_forest_get_data(self):
         """Test method get_data for SdssForest."""
         # set class variables
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create an SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
@@ -1434,7 +1434,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_sdss_forest_get_header(self):
         """Test method get_header for SdssForest."""
         # set class variables
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create an SdssForest
         test_obj = SdssForest(**kwargs_sdss_forest)
@@ -1467,7 +1467,7 @@ class AstronomicalObjectTest(AbstractTest):
             SdssPk1dForest(**kwargs_sdss_pk1d_forest)
 
         # set class variables
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
 
         # create a SdssPk1dForest
         test_obj = SdssPk1dForest(**kwargs_sdss_pk1d_forest)
@@ -1549,7 +1549,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_sdss_pk1d_forest_coadd(self):
         """Test the coadd function in SdssPk1dForest"""
         # set class variables
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
 
         # create a SdssPk1dForest
@@ -1577,7 +1577,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_sdss_pk1d_forest_get_data(self):
         """Test method get_data for SdssPk1dForest."""
         # set class variables
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
 
         # create an SdssPk1dForest
@@ -1587,7 +1587,7 @@ class AstronomicalObjectTest(AbstractTest):
     def test_sdss_pk1d_forest_get_header(self):
         """Test method get_header for SdssPk1dForest."""
         # set class variables
-        setup_forest(wave_solution="log")
+        setup_forest(wave_solution="log", rebin=3)
         setup_pk1d_forest("LYA")
 
         # create an SdssPk1dForest

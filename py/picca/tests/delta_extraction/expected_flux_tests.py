@@ -221,6 +221,8 @@ class ExpectedFluxTest(AbstractTest):
         # compare with obtained results
         stack_delta = expected_flux.get_stack_delta(expectations["log_lambda"])
         if not np.allclose(stack_delta, expectations["delta"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
             print("Difference found in delta stack")
             print(f"result test are_close result-test")
             for i1, i2 in zip(stack_delta, expectations["delta"]):
@@ -334,6 +336,8 @@ class ExpectedFluxTest(AbstractTest):
         # compare with obtained results
         mean_cont = expected_flux.get_mean_cont(expectations["log_lambda"])
         if not np.allclose(mean_cont, expectations["mean_cont"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
             print("Difference found in mean_cont")
             print(f"result test are_close result-test")
             for i1, i2 in zip(mean_cont, expectations["mean_cont"]):
