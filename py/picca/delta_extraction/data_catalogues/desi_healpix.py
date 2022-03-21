@@ -315,7 +315,45 @@ class DesiHealpix(DesiData):
                 # rebin arrays
                 # this needs to happen after all arrays are initialized by
                 # Forest constructor
+                if forest.los_id in [39633561183060922, 39633485232605672,
+                                     39633487371699188, 39633489464658242,
+                                     39633493583464408, 39633497597413949]:
+                    if Forest.wave_solution == "log":
+                        f = open(f"{self.out_dir}rebin_files/forest_flux_before_rebin_logbin_losid{forest.los_id}_spec{spec_name}.txt", "w")
+                        f.write("# loglambda flux\n")
+                        print("before rebin")
+                        print("los_id", forest.los_id)
+                        print("petal", forest.petal, "tile", forest.tile)
+                        for log_lambda, flux in zip(forest.log_lambda, forest.flux):
+                            print(f"{log_lambda} {flux}")
+                            f.write(f"{log_lambda} {flux}\n")
+                        f.close()
+                    else:
+                        f = open(f"{self.out_dir}rebin_files/forest_flux_before_rebin_linbin_losid{forest.los_id}_spec{spec_name}.txt", "w")
+                        f.write("# wavelength flux\n")
+                        for lambda_, flux in zip(forest.lambda_, forest.flux):
+                            f.write(f"{lambda_} {flux}\n")
+                        f.close()
                 forest.rebin()
+                if forest.los_id in [39633561183060922, 39633485232605672,
+                                     39633487371699188, 39633489464658242,
+                                     39633493583464408, 39633497597413949]:
+                    if Forest.wave_solution == "log":
+                        f = open(f"{self.out_dir}rebin_files/forest_flux_after_rebin_logbin_losid{forest.los_id}_spec{spec_name}.txt", "w")
+                        f.write("# loglambda flux\n")
+                        print("after rebin")
+                        print("los_id", forest.los_id)
+                        print("petal", forest.petal, "tile", forest.tile)
+                        for log_lambda, flux in zip(forest.log_lambda, forest.flux):
+                            print(f"{log_lambda} {flux}")
+                            f.write(f"{log_lambda} {flux}\n")
+                        f.close()
+                    else:
+                        f = open(f"{self.out_dir}rebin_files/forest_flux_after_rebin_linbin_losid{forest.los_id}_spec{spec_name}.txt", "w")
+                        f.write("# wavelength flux\n")
+                        for lambda_, flux in zip(forest.lambda_, forest.flux):
+                            f.write(f"{lambda_} {flux}\n")
+                        f.close()
 
                 # keep the forest
                 if targetid in forests_by_targetid:

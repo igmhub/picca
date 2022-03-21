@@ -89,7 +89,7 @@ class AbstractTest(unittest.TestCase):
                     self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:
                         if orig_header[key] != new_header[key]:
-                            print(f"Original file: {orig_file}")
+                            print(f"\nOriginal file: {orig_file}")
                             print(f"New file: {new_file}")
                             print(f"Different values found for key {key}: "
                                   f"orig: {orig_header[key]}, new: {new_header[key]}")
@@ -108,11 +108,27 @@ class AbstractTest(unittest.TestCase):
                     self.assertTrue(new_data is None)
                 else:
                     for col in orig_data.dtype.names:
+                        if not col in new_data.dtype.names:
+                            print(f"\nOriginal file: {orig_file}")
+                            print(f"New file: {new_file}")
+                            print(f"Column {col} in HDU {orig_header['EXTNAME']} "
+                                  "missing in new file")
                         self.assertTrue(col in new_data.dtype.names)
-                        self.assertTrue(((orig_data[col] == new_data[col]).all()) or
-                                        (np.allclose(orig_data[col],
-                                                     new_data[col],
-                                                     equal_nan=True)))
+                        if not np.allclose(orig_data[col],
+                                     new_data[col],
+                                     equal_nan=True):
+                            print(f"\nOriginal file: {orig_file}")
+                            print(f"New file: {new_file}")
+                            print(f"Different values found for column {col} in"
+                                  f"HDU {orig_header['EXTNAME']}")
+                            print("original new isclose original-new\n")
+                            for new, orig in zip(new_data[col], orig_data[col]):
+                                print(f"{orig} {new} "
+                                      f"{np.isclose(orig, new, equal_nan=True)} "
+                                      f"{orig-new}")
+                        self.assertTrue(np.allclose(orig_data[col],
+                                                    new_data[col],
+                                                    equal_nan=True))
                     for col in new_data.dtype.names:
                         if col not in orig_data.dtype.names:
                             print(f"Column {col} missing in orig header")

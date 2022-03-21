@@ -185,11 +185,10 @@ class TrueContinuum(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
-            bins = (
-                (forest.lambda_ /
-                 (1 + forest.z) - Forest.lambda_min_rest_frame) /
-                (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) *
-                num_bins).astype(int)
+            bins = find_bins(
+                forest.lambda_ / (1 + forest.z),
+                Forest.lambda_rest_frame_grid
+                )
 
             var_lss = self.get_var_lss(forest.lambda_)
             var_pipe = 1. / forest.ivar / forest.continuum**2
@@ -230,10 +229,10 @@ class TrueContinuum(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
-            bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
-                     np.log10(1 + forest.z)) /
-                    (Forest.log_lambda_max_rest_frame -
-                     Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
+            bins = find_bins(
+                forest.log_lambda -  np.log10(1 + forest.z),
+                Forest.log_lambda_rest_frame_grid
+            )
 
             var_lss = self.get_var_lss(forest.log_lambda)
             var_pipe = 1. / forest.ivar / forest.continuum**2
@@ -357,7 +356,7 @@ class TrueContinuum(ExpectedFlux):
                 raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
                 input\t{10**Forest.log_lambda_min}\t{10**Forest.log_lambda_max}\t{10**Forest.log_lambda_min_rest_frame}\t{10**Forest.log_lambda_max_rest_frame}\t{Forest.delta_log_lambda}
                 provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
-                
+
         lambda_ = hdul[1].data['LAMBDA']
         flux_variance = hdul[1].data['VAR']
         mean_flux = hdul[1].data['MEANFLUX']

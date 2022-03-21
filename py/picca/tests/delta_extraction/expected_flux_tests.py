@@ -107,6 +107,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
+        out_file = f"{THIS_DIR}/results/continua_log.txt"
         test_file = f"{THIS_DIR}/data/continua_log.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
@@ -130,6 +131,16 @@ class ExpectedFluxTest(AbstractTest):
         # compute the forest continua
         for forest in data.forests:
             expected_flux.compute_continuum(forest)
+
+        # save the results
+        f = open(out_file, "w")
+        f.write("# thingid cont[0] ... cont[N]\n")
+        for forest in data.forests:
+            f.write(f"{forest.los_id} ")
+            for item in forest.continuum:
+                f.write(f"{item} ")
+            f.write("\n")
+        f.close()
 
         # load expected forest continua
         continua = {}
@@ -169,6 +180,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
+        out_file = f"{THIS_DIR}/results/delta_stack_log.txt"
         test_file = f"{THIS_DIR}/data/delta_stack_log.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
@@ -195,6 +207,13 @@ class ExpectedFluxTest(AbstractTest):
 
         # compute variance functions and statistics
         expected_flux.compute_delta_stack(data.forests)
+
+        # save results
+        f = open(out_file, "w")
+        f.write("# log_lambda delta\n")
+        for log_lambda in np.arange(3.5563025, 3.7123025 + 3e-4, 3e-4):
+            f.write(f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
+        f.close()
 
         # load expected delta stack
         expectations = np.genfromtxt(test_file, names=True)
@@ -243,6 +262,7 @@ class ExpectedFluxTest(AbstractTest):
         # compute the expected flux
         expected_flux.compute_expected_flux(data.forests)
 
+        # check the results
         for iteration in range(1, 5):
             self.compare_fits(
                 test_file.replace(".fits", f"_iteration{iteration}.fits"),
@@ -268,6 +288,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
+        out_file = f"{THIS_DIR}/results/mean_cont_log.txt"
         test_file = f"{THIS_DIR}/data/mean_cont_log.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
@@ -295,9 +316,15 @@ class ExpectedFluxTest(AbstractTest):
         # compute mean quasar continuum
         expected_flux.compute_mean_cont_log(data.forests)
 
+        # save results
+        f = open(out_file, "w")
+        f.write("# log_lambda delta\n")
+        for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
+            f.write(f"{log_lambda} {expected_flux.get_mean_cont(log_lambda)}\n")
+        f.close()
+
         # load the expected results
         expectations = np.genfromtxt(test_file, names=True)
-
         f = open(f"{THIS_DIR}/results/mean_cont_log.txt", "w")
         f.write("# log_lambda mean_cont\n")
         for item in expectations["log_lambda"]:
