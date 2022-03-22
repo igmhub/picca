@@ -554,7 +554,20 @@ class AstronomicalObjectTest(AbstractTest):
             self.assertTrue(header[index + 1].get("value") == test_obj.mean_snr)
             self.assertTrue(header[index + 2].get("name") == "BLINDING")
             self.assertTrue(header[index + 2].get("value") == "none")
-            index += 2
+            self.assertTrue(header[index + 3].get("name") == "WAVE_SOLUTION")
+            if Forest.wave_solution == "log":
+                self.assertTrue(header[index + 3].get("value") == "log")
+                self.assertTrue(header[index + 4].get("name") == "DELTA_LOG_LAMBDA")
+                self.assertTrue(np.isclose(header[index + 4].get("value"), 3e-4))
+            elif Forest.wave_solution == "lin":
+                self.assertTrue(header[index + 3].get("value") == "lin")
+                self.assertTrue(header[index + 4].get("name") == "DELTA_LAMBDA")
+                self.assertTrue(np.isclose(header[index + 4].get("value"), 1.0))
+            else:
+                print(f"Forest.wave_solution={Forest.wave_solution}, expected "
+                      "'log' or 'lin'")
+                self.assertTrue(False)
+            index += 4
         if isinstance(test_obj, Pk1dForest):
             self.assertTrue(header[index + 1].get("name") == "MEANZ")
             self.assertTrue(header[index + 1].get("value") == test_obj.mean_z)

@@ -313,8 +313,35 @@ class Forest(AstronomicalObject):
                 'name': 'BLINDING',
                 'value': Forest.blinding,
                 'comment': "String specifying the blinding strategy"
-            }
+            },
+            {
+                'name': 'WAVE_SOLUTION',
+                'value': Forest.wave_solution,
+                'comment': "Chosen wavelength solution (linnear or logarithmic)"
+            },
         ]
+
+        if Forest.wave_solution == "log":
+            header += [
+                {
+                    'name': 'DELTA_LOG_LAMBDA',
+                    'value': Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0],
+                    'comment': "Pixel step in log lambda [log(Angstrom)]"
+                },
+            ]
+        elif Forest.wave_solution == "lin":
+            header += [
+                {
+                    'name': 'DELTA_LAMBDA',
+                    'value': 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0],
+                    'comment': "Pixel step in lambda [Angstrom]"
+                },
+            ]
+        else:
+            raise AstronomicalObjectError("Error in Forest.get_header(). "
+                                          "Class variable 'wave_solution' "
+                                          "must be either 'lin' or 'log'. "
+                                          f"Found: {Forest.wave_solution}")
 
         return header
 
