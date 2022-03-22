@@ -87,7 +87,7 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_fudge, interp1d))
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
-        self.assertTrue(isinstance(expected_flux.log_lambda, np.ndarray))
+        self.assertTrue(isinstance(expected_flux.log_lambda_var_func_grid, np.ndarray))
 
         # setup Forest variables; case: linear wavelength solution
         reset_forest()
@@ -98,7 +98,7 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_fudge, interp1d))
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
-        self.assertTrue(isinstance(expected_flux.log_lambda, np.ndarray))
+        self.assertTrue(isinstance(expected_flux.log_lambda_var_func_grid, np.ndarray))
 
     def test_dr16_expected_flux_compute_continuum(self):
         """Test method compute_continuum for class Dr16ExpectedFlux"""
