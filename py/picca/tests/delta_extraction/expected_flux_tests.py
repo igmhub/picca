@@ -56,7 +56,8 @@ class ExpectedFluxTest(AbstractTest):
         config = ConfigParser()
         config.read_dict(
             {"expected flux": {
-                "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix"
+                "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results"
             }})
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
@@ -87,10 +88,7 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
         self.assertTrue(expected_flux.lambda_ is None)
-        self.assertTrue(expected_flux.lambda_rest_frame is None)
         self.assertTrue(isinstance(expected_flux.log_lambda, np.ndarray))
-        self.assertTrue(
-            isinstance(expected_flux.log_lambda_rest_frame, np.ndarray))
 
         # setup Forest variables; case: linear wavelength solution
         reset_forest()
@@ -102,15 +100,14 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_mean_cont, interp1d))
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
         self.assertTrue(isinstance(expected_flux.lambda_, np.ndarray))
-        self.assertTrue(isinstance(expected_flux.lambda_rest_frame, np.ndarray))
         self.assertTrue(expected_flux.log_lambda is None)
-        self.assertTrue(expected_flux.log_lambda_rest_frame is None)
 
     def test_dr16_expected_flux_compute_continuum(self):
         """Test method compute_continuum for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
+        out_file = f"{THIS_DIR}/results/continua_log.txt"
         test_file = f"{THIS_DIR}/data/continua_log.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
@@ -135,6 +132,16 @@ class ExpectedFluxTest(AbstractTest):
         for forest in data.forests:
             expected_flux.compute_continuum(forest)
 
+        # save the results
+        f = open(out_file, "w")
+        f.write("# thingid cont[0] ... cont[N]\n")
+        for forest in data.forests:
+            f.write(f"{forest.los_id} ")
+            for item in forest.continuum:
+                f.write(f"{item} ")
+            f.write("\n")
+        f.close()
+
         # load expected forest continua
         continua = {}
         f = open(test_file)
@@ -150,6 +157,12 @@ class ExpectedFluxTest(AbstractTest):
         # compare the results
         correct_forests = 0
         for forest in data.forests:
+            if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                print("Difference found in forest.continuum")
+                print(f"forest.los_id: {forest.los_id}")
+                print(f"result test are_close result-test")
+                for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
+                    print(i1, i2, np.isclose(i1, i2), i1-i2)
             self.assertTrue(
                 np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
@@ -167,6 +180,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
+        out_file = f"{THIS_DIR}/results/delta_stack_log.txt"
         test_file = f"{THIS_DIR}/data/delta_stack_log.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
@@ -194,11 +208,25 @@ class ExpectedFluxTest(AbstractTest):
         # compute variance functions and statistics
         expected_flux.compute_delta_stack(data.forests)
 
+        # save results
+        f = open(out_file, "w")
+        f.write("# log_lambda delta\n")
+        for log_lambda in np.arange(3.5563025, 3.7123025 + 3e-4, 3e-4):
+            f.write(f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
+        f.close()
+
         # load expected delta stack
         expectations = np.genfromtxt(test_file, names=True)
 
         # compare with obtained results
         stack_delta = expected_flux.get_stack_delta(expectations["log_lambda"])
+        if not np.allclose(stack_delta, expectations["delta"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
+            print("Difference found in delta stack")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(stack_delta, expectations["delta"]):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(stack_delta, expectations["delta"]))
 
         # setup Forest variables; case: linear wavelength solution
@@ -236,6 +264,7 @@ class ExpectedFluxTest(AbstractTest):
         # compute the expected flux
         expected_flux.compute_expected_flux(data.forests)
 
+        # check the results
         for iteration in range(1, 5):
             self.compare_fits(
                 test_file.replace(".fits", f"_iteration{iteration}.fits"),
@@ -261,6 +290,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log")
 
+        out_file = f"{THIS_DIR}/results/mean_cont_log.txt"
         test_file = f"{THIS_DIR}/data/mean_cont_log.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
@@ -288,11 +318,30 @@ class ExpectedFluxTest(AbstractTest):
         # compute mean quasar continuum
         expected_flux.compute_mean_cont_log(data.forests)
 
+        # save results
+        f = open(out_file, "w")
+        f.write("# log_lambda delta\n")
+        for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
+            f.write(f"{log_lambda} {expected_flux.get_mean_cont(log_lambda)}\n")
+        f.close()
+
         # load the expected results
         expectations = np.genfromtxt(test_file, names=True)
+        f = open(f"{THIS_DIR}/results/mean_cont_log.txt", "w")
+        f.write("# log_lambda mean_cont\n")
+        for item in expectations["log_lambda"]:
+            f.write(f"{item} {expected_flux.get_mean_cont(item)}\n")
+        f.close()
 
         # compare with obtained results
         mean_cont = expected_flux.get_mean_cont(expectations["log_lambda"])
+        if not np.allclose(mean_cont, expectations["mean_cont"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
+            print("Difference found in mean_cont")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont, expectations["mean_cont"]):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
 
     def test_dr16_expected_flux_compute_var_stats(self):
@@ -439,7 +488,14 @@ class ExpectedFluxTest(AbstractTest):
 
         Load an ExpectedFlux instance.
         """
-        expected_flux = ExpectedFlux()
+        # initialize ExpectedFlux instance
+        config = ConfigParser()
+        config.read_dict({
+            "expected flux": {
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+        expected_flux = ExpectedFlux(config["expected flux"])
 
         # compute_expected_flux should not be defined
         with self.assertRaises(ExpectedFluxError):

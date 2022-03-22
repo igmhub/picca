@@ -27,10 +27,10 @@ setup(name="picca",
               'picca.delta_extraction.masks',
               'picca.delta_extraction.quasar_catalogues'],
     package_dir = {'': 'py'},
-    package_data = {'picca': ['fitter2/models/*/*.fits']},
+    package_data = {'picca': ['fitter2/models/*/*.fits', 'delta_extraction/expected_fluxes/raw_stats/*fits.gz']},
     install_requires=['numpy', 'scipy', 'iminuit', 'healpy', 'fitsio',
                       'llvmlite', 'numba', 'h5py', 'future', 'setuptools',
                       'gitpython'],
-    test_suite='picca.test',
+    #test_suite='picca.test',
     scripts = scripts
     )

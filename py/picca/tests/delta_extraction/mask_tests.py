@@ -59,7 +59,9 @@ class MaskTest(AbstractTest):
 
         # initialize mask
         config = ConfigParser()
-        config.read_dict({"mask": {"filename": in_file}})
+        config.read_dict({"mask": {"filename": in_file,
+                                   "los_id name": "THING_ID"}
+                         })
         for key, value in defaults_absorber_mask.items():
             if key not in config["mask"]:
                 config["mask"][key] = str(value)
@@ -102,7 +104,8 @@ class MaskTest(AbstractTest):
         # initialize mask specifying variables
         config = ConfigParser()
         config.read_dict({"mask": {"filename": in_file,
-                                   "absorber mask width": 1.5,}})
+                                   "absorber mask width": 1.5,
+                                   "los_id name": "THING_ID"}})
         for key, value in defaults_absorber_mask.items():
             if key not in config["mask"]:
                 config["mask"][key] = str(value)
@@ -128,7 +131,9 @@ class MaskTest(AbstractTest):
 
         # initialize mask
         config = ConfigParser()
-        config.read_dict({"mask": {"filename": in_file}})
+        config.read_dict({"mask": {"filename": in_file,
+                                   "los_id name": "THING_ID"}
+                        })
         for key, value in defaults_dla_mask.items():
             if key not in config["mask"]:
                 config["mask"][key] = str(value)

@@ -83,6 +83,7 @@ class DesiHealpix(DesiData):
         """
         in_nside = 64
 
+
         healpix = [
             healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"], nest=True)
             for row in self.catalogue
@@ -140,13 +141,11 @@ class DesiHealpix(DesiData):
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
-            self.logger.warning(f"Error reading pix {healpix}. Ignoring file")
+            self.logger.warning(f"Error reading  {filename}. Ignoring file")
             return
-
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
         targetid_spec = fibermap["TARGETID"]
-
         # First read all wavelength, flux, ivar, mask, and resolution
         # from this file
         spectrographs_data = {}
@@ -195,10 +194,9 @@ class DesiHealpix(DesiData):
                     f"for {targetid}")
             else:
                 w_t = w_t[0]
-
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
-            for spec in spectrographs_data.values():
+            for spec_name, spec in spectrographs_data.items():
                 ivar = spec['IVAR'][w_t].copy()
                 flux = spec['FLUX'][w_t].copy()
 
@@ -233,6 +231,12 @@ class DesiHealpix(DesiData):
                     raise DataError("Unkown analysis type. Expected 'BAO 3D'"
                                     f"or 'PK 1D'. Found '{self.analysis_type}'")
 
+                # rebin arrays
+                # this needs to happen after all arrays are initialized by
+                # Forest constructor
+                forest.rebin()
+
+                # keep the forest
                 if targetid in forests_by_targetid:
                     forests_by_targetid[targetid].coadd(forest)
                 else:

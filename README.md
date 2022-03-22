@@ -1,11 +1,12 @@
 # picca
+[![Coverage Status](https://coveralls.io/repos/github/igmhub/picca/badge.svg?branch=master)](https://coveralls.io/github/igmhub/picca?branch=master)
 
 Package for Igm Cosmological-Correlations Analyses.
 
-This package contains tools used for the analysis of the Lyman-alpha forest sample from the extended Baryon Oscillation Spectroscopic Survey (eBOSS) and the Dark Energy Spectroscopic Instrument (DESI). Here you will find tools to 
+This package contains tools used for the analysis of the Lyman-alpha forest sample from the extended Baryon Oscillation Spectroscopic Survey (eBOSS) and the Dark Energy Spectroscopic Instrument (DESI). Here you will find tools to
 
 - fit continua of forests
-- compute correlation functions (1D and 3D) and power-spectra (1D) 
+- compute correlation functions (1D and 3D) and power-spectra (1D)
 - compute covariance matrices
 - fit models for the correlation functions
 
@@ -41,6 +42,17 @@ Alternatively, you can just add `picca/py/` to your `PYTHONPATH`.
 example run over 1000 spectra (the DLA catalog is not required):
 
 ### delta field
+```
+picca_delta_extraction.py config.ini
+```
+
+* To reproduce the eBOSS analysis (du Mas des Bourboux et al. 2020) this needs to be run four times, two for calibration purposes, one for the Lyman $\alpha$ region and one for the Lyman $\beta$ region
+
+* Check the tutorial `picca_delta_extraction_configuration_tutorial` to review the available options. Find it under `tutorials/delta_extraction`
+
+* Check the folder `examples/delta_extraction` with examples to reproduce the eBOSS analysis
+
+### old delta field (deprecated)
 
 ```
 picca_deltas.py

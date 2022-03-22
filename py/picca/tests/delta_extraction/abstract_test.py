@@ -47,10 +47,10 @@ class AbstractTest(unittest.TestCase):
                                            new.readlines()):
                 # this is necessary to remove the system dependent bits of
                 # the paths
-                if "py/picca/delta_extraction/tests" in orig_line:
-                    orig_line = re.sub(r"\/[^ ]*\/py\/picca\/delta_extraction\/tests\/",
+                if "py/picca/tests/delta_extraction" in orig_line:
+                    orig_line = re.sub(r"\/[^ ]*\/py\/picca\/tests\/delta_extraction\/",
                                        "", orig_line)
-                    new_line = re.sub(r"\/[^ ]*\/py\/picca\/delta_extraction\/tests\/",
+                    new_line = re.sub(r"\/[^ ]*\/py\/picca\/tests\/delta_extraction\/",
                                       "", new_line)
 
                 if not orig_line == new_line:
@@ -89,8 +89,10 @@ class AbstractTest(unittest.TestCase):
                     self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:
                         if orig_header[key] != new_header[key]:
-                            print(orig_file, new_file)
-                            print(orig_header[key], new_header[key])
+                            print(f"\nOriginal file: {orig_file}")
+                            print(f"New file: {new_file}")
+                            print(f"Different values found for key {key}: "
+                                  f"orig: {orig_header[key]}, new: {new_header[key]}")
                         self.assertTrue((orig_header[key] == new_header[key]) or
                                         (np.isclose(orig_header[key], new_header[key])))
                 for key in new_header:
@@ -106,14 +108,32 @@ class AbstractTest(unittest.TestCase):
                     self.assertTrue(new_data is None)
                 else:
                     for col in orig_data.dtype.names:
+                        if not col in new_data.dtype.names:
+                            print(f"\nOriginal file: {orig_file}")
+                            print(f"New file: {new_file}")
+                            print(f"Column {col} in HDU {orig_header['EXTNAME']} "
+                                  "missing in new file")
                         self.assertTrue(col in new_data.dtype.names)
-                        self.assertTrue(((orig_data[col] == new_data[col]).all()) or
-                                        (np.allclose(orig_data[col],
-                                                     new_data[col],
-                                                     equal_nan=True)))
+                        if not np.allclose(orig_data[col],
+                                     new_data[col],
+                                     equal_nan=True):
+                            print(f"\nOriginal file: {orig_file}")
+                            print(f"New file: {new_file}")
+                            print(f"Different values found for column {col} in"
+                                  f"HDU {orig_header['EXTNAME']}")
+                            print("original new isclose original-new\n")
+                            for new, orig in zip(new_data[col], orig_data[col]):
+                                print(f"{orig} {new} "
+                                      f"{np.isclose(orig, new, equal_nan=True)} "
+                                      f"{orig-new}")
+                        self.assertTrue(np.allclose(orig_data[col],
+                                                    new_data[col],
+                                                    equal_nan=True))
                     for col in new_data.dtype.names:
                         if col not in orig_data.dtype.names:
                             print(f"Column {col} missing in orig header")
+                            if col in ["num_pixels", "valid_fit"]:
+                                continue
                         self.assertTrue(col in orig_data.dtype.names)
         finally:
             orig_hdul.close()

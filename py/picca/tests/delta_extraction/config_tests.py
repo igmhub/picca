@@ -55,16 +55,16 @@ class ConfigTest(AbstractTest):
                     new_value = new_section.get(key)
                     # this is necessary to remove the system dependent bits of
                     # the paths
-                    if "py/picca/delta_extraction/tests" in new_value:
-                        new_value = new_value.split("py/picca/delta_extraction/tests")[-1]
-                        orig_value = orig_value.split("py/picca/delta_extraction/tests")[-1]
+                    if "py/picca/tests/delta_extraction" in new_value:
+                        new_value = new_value.split("py/picca/tests/delta_extraction")[-1]
+                        orig_value = orig_value.split("py/picca/tests/delta_extraction")[-1]
 
                     if not orig_value == new_value:
-                        print(f"For key {key} found orig value = {orig_value} but new value = {new_value}")
+                        print(f"In section [{section}], for key {key} found orig value = {orig_value} but new value = {new_value}")
                     self.assertTrue(orig_value == new_value)
             for key in new_section.keys():
                 if key not in orig_section.keys():
-                    print(f"key {key} in section {new_section} missing in original file")
+                    print(f"key {key} in section {section} missing in original file")
                     self.assertTrue(key in orig_section.keys())
 
         for section in new_config.sections():
@@ -183,6 +183,14 @@ class ConfigTest(AbstractTest):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [expected flux]"))
 
+        # check arguments of TrueContinuum
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_true_continuum.ini"
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+        if not str(context_manager.exception).startswith("Unrecognised option in section [expected flux]"):
+            print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [expected flux]"))
+
     def test_config_invalid_general_options(self):
         """ Test that passing invalid options to the general section raise errors """
         in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_general.ini"
@@ -212,24 +220,24 @@ class ConfigTest(AbstractTest):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
 
-        # check arguments of SdssAbsorberMask
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_absorber_mask.ini"
+        # check arguments of AbsorberMask
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_absorber_mask.ini"
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
         if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
 
-        # check arguments of SdssBalMask
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_bal_mask.ini"
+        # check arguments of BalMask
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_bal_mask.ini"
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
         if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
             print(context_manager.exception)
             self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
 
-        # check arguments of SdssDlaMask
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_dla_mask.ini"
+        # check arguments of DlaMask
+        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_dla_mask.ini"
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
         if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):

@@ -32,7 +32,7 @@ class DesiTile(DesiData):
     filter_forests (from Data)
     set_blinding (from Data)
     __init__
-    _parse_config
+    __parse_config
     read_data
 
     Attributes
@@ -78,11 +78,11 @@ class DesiTile(DesiData):
         # load variables from config
         self.use_all = None
         self.use_single_nights = None
-        self._parse_config(config)
+        self.__parse_config(config)
 
         super().__init__(config)
 
-    def _parse_config(self, config):
+    def __parse_config(self, config):
         """Parse the configuration options
 
         Arguments
@@ -259,7 +259,7 @@ class DesiTile(DesiData):
                     ivar = spec['IVAR'][w_t].copy()
                     flux = spec['FLUX'][w_t].copy()
 
-                    rgs = {
+                    args = {
                         "flux": flux,
                         "ivar": ivar,
                         "targetid": targetid,
@@ -294,6 +294,12 @@ class DesiTile(DesiData):
                         raise DataError("Unkown analysis type. Expected 'BAO 3D'"
                                         f"or 'PK 1D'. Found '{self.analysis_type}'")
 
+                    # rebin arrays
+                    # this needs to happen after all arrays are initialized by
+                    # Forest constructor
+                    forest.rebin()
+
+                    # add the forest to list
                     if targetid in forests_by_targetid:
                         forests_by_targetid[targetid].coadd(forest)
                     else:

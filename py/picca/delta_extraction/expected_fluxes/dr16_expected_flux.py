@@ -11,6 +11,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux
+from picca.delta_extraction.utils import find_bins
 
 accepted_options = ["iter out prefix", "limit eta", "limit var lss",
                     "num bins variance", "num iterations", "num processors",
@@ -40,7 +41,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
     __init__
     _initialize_arrays_lin
     _initialize_arrays_log
-    _parse_config
+    __parse_config
     compute_continuum
         get_cont_model
         chi2
@@ -61,6 +62,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
     also Pk1dForests, then the key "ivar" must be available. Arrays have the same
     size as the flux array for the corresponding line of sight forest instance.
 
+    out_dir: str (from ExpectedFlux)
+    Directory where logs will be saved.
+
     continuum_fit_parameters: dict
     A dictionary containing the continuum fit parameters for each line of sight.
     Keys are the identifier for the line of sight and values are tuples with
@@ -75,11 +79,19 @@ class Dr16ExpectedFlux(ExpectedFlux):
     du Mas des Bourboux et al. 2020 for details.
 
     get_mean_cont: scipy.interpolate.interp1d
-    Interpolation function to compute the unabsorbed mean quasar continua
+    Interpolation function to compute the unabsorbed mean quasar continua.
 
-    get_stack_delta: scipy.interpolate.interp1d or None
+    get_num_pixels: scipy.interpolate.interp1d
+    Number of pixels used to fit for eta, var_lss and fudge.
+
+    get_stack_delta: scipy.interpolate.interp1d
     Interpolation function to compute the mean delta (from stacking all lines of
-    sight). None for no info.
+    sight).
+
+    get_valid_fit: scipy.interpolate.interp1d
+    True if the fit for eta, var_lss and fudge is converged, false otherwise.
+    Since the fit is performed independently for eah observed wavelength,
+    this is also given as a function of the observed wavelength.
 
     get_var_lss: scipy.interpolate.interp1d
     Interpolation function to compute mapping functions var_lss. See equation 4 of
@@ -95,10 +107,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     Wavelengths where the variance functions and statistics are
     computed. None (and unused) for a logarithmic wavelength solution.
 
-    lambda_rest_frame: array of float or None
-    Rest-frame wavelengths where the unabsorbed mean quasar continua is are
-    computed. None (and unused) for a logarithmic wavelength solution.
-
     limit_eta: tuple of floats
     Limits on the correction factor to the contribution of the pipeline estimate
     of the instrumental noise to the variance.
@@ -109,10 +117,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     log_lambda: array of float or None
     Logarithm of the rest frame wavelengths where the variance functions and
     statistics are computed. None (and unused) for a linear wavelength solution.
-
-    log_lambda_rest_frame: array of float or None
-    Logarithm of the rest-frame wavelengths where the unabsorbed mean quasar
-    continua is are computed. None (and unused) for a linear wavelength solution.
 
     num_bins_variance: int
     Number of bins to be used to compute variance functions and statistics as
@@ -127,9 +131,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
     order: int
     Order of the polynomial for the continuum fit.
-
-    out_dir: str
-    Directory where logs will be saved.
 
     use_constant_weight: boolean
     If "True", set all the delta weights to one (implemented as eta = 0,
@@ -152,30 +153,29 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         self.logger = logging.getLogger(__name__)
-        super().__init__()
+        super().__init__(config)
 
         # load variables from config
         self.iter_out_prefix = None
         self.limit_eta = None
         self.limit_var_lss = None
         self.order = None
-        self.out_dir = None
         self.num_bins_variance = None
         self.num_iterations = None
         self.num_processors = None
         self.use_constant_weight = None
         self.use_ivar_as_weight = None
-        self._parse_config(config)
+        self.__parse_config(config)
 
         self.get_eta = None
         self.get_fudge = None
         self.get_mean_cont = None
         self.get_mean_cont_weight = None
+        self.get_num_pixels = None
+        self.get_valid_fit = None
         self.get_var_lss = None
         self.lambda_ = None
-        self.lambda_rest_frame = None
         self.log_lambda = None
-        self.log_lambda_rest_frame = None
         if Forest.wave_solution == "log":
             self._initialize_variables_log()
         elif Forest.wave_solution == "lin":
@@ -195,38 +195,37 @@ class Dr16ExpectedFlux(ExpectedFlux):
         - self.get_eta
         - self.get_fudge
         - self.get_mean_cont
+        - self.get_num_pixels
         - self.get_var_lss
         - self.lambda_
-        - self.lambda_rest_frame
         """
         # initialize the mean quasar continuum
         # TODO: maybe we can drop this and compute first the mean quasar
         # continuum on compute_mean_expected_flux
-        num_bins = (int(
-            (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) /
-            Forest.delta_lambda) + 1)
-        self.lambda_rest_frame = (
-            Forest.lambda_min_rest_frame + (np.arange(num_bins) + .5) *
-            (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) /
-            num_bins)
-        self.get_mean_cont = interp1d(self.lambda_rest_frame,
-                                      np.ones_like(self.lambda_rest_frame),
+        self.get_mean_cont = interp1d(Forest.lambda_rest_frame_grid,
+                                      np.ones_like(Forest.lambda_rest_frame_grid),
                                       fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(self.lambda_rest_frame,
+        self.get_mean_cont_weight = interp1d(Forest.lambda_rest_frame_grid,
                                              np.zeros_like(
-                                                 self.lambda_rest_frame),
+                                                 Forest.lambda_rest_frame_grid),
                                              fill_value="extrapolate")
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
         self.lambda_ = (
-            Forest.lambda_min + (np.arange(self.num_bins_variance) + .5) *
-            (Forest.lambda_max - Forest.lambda_min) / self.num_bins_variance)
+            Forest.lambda_grid[0] + (np.arange(self.num_bins_variance) + .5) *
+            (Forest.lambda_grid[-1] - Forest.lambda_grid[0]) /
+            self.num_bins_variance)
         # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
         # print a message to inform the user
         if self.use_ivar_as_weight:
             self.logger.info(("using ivar as weights, ignoring eta, "
                               "var_lss, fudge fits"))
+            eta = np.ones(self.num_bins_variance)
+            var_lss = np.zeros(self.num_bins_variance)
+            fudge = np.zeros(self.num_bins_variance)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.ones(self.num_bins_variance)
         # if use_constant_weight is set then initialize eta, var_lss, and fudge
         # with values to have constant weights
         elif self.use_constant_weight:
@@ -235,12 +234,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta = np.zeros(self.num_bins_variance)
             var_lss = np.ones(self.num_bins_variance)
             fudge = np.zeros(self.num_bins_variance)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.ones(self.num_bins_variance)
         # normal initialization: eta, var_lss, and fudge are ignored in the
         # first iteration
         else:
             eta = np.ones(self.num_bins_variance)
             var_lss = np.zeros(self.num_bins_variance)
             fudge = np.zeros(self.num_bins_variance)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.zeros(self.num_bins_variance)
 
         self.get_eta = interp1d(self.lambda_,
                                 eta,
@@ -254,6 +257,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                   fudge,
                                   fill_value='extrapolate',
                                   kind='nearest')
+        self.get_num_pixels = interp1d(self.lambda_,
+                                       num_pixels,
+                                       fill_value="extrapolate",
+                                       kind='nearest')
+        self.get_valid_fit = interp1d(self.lambda_,
+                                      valid_fit,
+                                      fill_value="extrapolate",
+                                      kind='nearest')
 
     def _initialize_variables_log(self):
         """Initialize useful variables assuming a log-linear wavelength solution.
@@ -261,34 +272,28 @@ class Dr16ExpectedFlux(ExpectedFlux):
         - self.get_eta
         - self.get_fudge
         - self.get_mean_cont
+        - self.get_num_pixels
+        - self.get_valid_fit
         - self.get_var_lss
         - self.log_lambda
-        - self.log_lambda_rest_frame
         """
         # initialize the mean quasar continuum
         # TODO: maybe we can drop this and compute first the mean quasar
         # continuum on compute_mean_expected_flux
-        num_bins = (int(
-            (Forest.log_lambda_max_rest_frame -
-             Forest.log_lambda_min_rest_frame) / Forest.delta_log_lambda) + 1)
-        self.log_lambda_rest_frame = (
-            Forest.log_lambda_min_rest_frame + (np.arange(num_bins) + 0.5) *
-            (Forest.log_lambda_max_rest_frame -
-             Forest.log_lambda_min_rest_frame) / num_bins)
-
-        self.get_mean_cont = interp1d(self.log_lambda_rest_frame,
-                                      np.ones_like(self.log_lambda_rest_frame),
+        self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
+                                      np.ones_like(Forest.log_lambda_rest_frame_grid),
                                       fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(self.log_lambda_rest_frame,
+        self.get_mean_cont_weight = interp1d(Forest.log_lambda_rest_frame_grid,
                                              np.zeros_like(
-                                                 self.log_lambda_rest_frame),
+                                                 Forest.log_lambda_rest_frame_grid),
                                              fill_value="extrapolate")
+
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
-        self.log_lambda = (Forest.log_lambda_min +
+        self.log_lambda = (Forest.log_lambda_grid[0] +
                            (np.arange(self.num_bins_variance) + .5) *
-                           (Forest.log_lambda_max - Forest.log_lambda_min) /
+                           (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
                            self.num_bins_variance)
 
         # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
@@ -299,6 +304,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta = np.ones(self.num_bins_variance)
             var_lss = np.zeros(self.num_bins_variance)
             fudge = np.zeros(self.num_bins_variance)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.ones(self.num_bins_variance)
         # if use_constant_weight is set then initialize eta, var_lss, and fudge
         # with values to have constant weights
         elif self.use_constant_weight:
@@ -307,12 +314,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta = np.zeros(self.num_bins_variance)
             var_lss = np.ones(self.num_bins_variance)
             fudge = np.zeros(self.num_bins_variance)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.ones(self.num_bins_variance, dtype=bool)
         # normal initialization: eta, var_lss, and fudge are ignored in the
         # first iteration
         else:
             eta = np.ones(self.num_bins_variance)
             var_lss = np.zeros(self.num_bins_variance) + 0.2
             fudge = np.zeros(self.num_bins_variance)
+            num_pixels = np.zeros(self.num_bins_variance)
+            valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
 
         self.get_eta = interp1d(self.log_lambda,
                                 eta,
@@ -326,8 +337,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                   fudge,
                                   fill_value='extrapolate',
                                   kind='nearest')
+        self.get_num_pixels = interp1d(self.log_lambda,
+                                       num_pixels,
+                                       fill_value="extrapolate",
+                                       kind='nearest')
+        self.get_valid_fit = interp1d(self.log_lambda,
+                                      num_pixels,
+                                      fill_value="extrapolate",
+                                      kind='nearest')
 
-    def _parse_config(self, config):
+    def __parse_config(self, config):
         """Parse the configuration options
 
         Arguments
@@ -400,13 +419,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
             raise ExpectedFluxError(
                 "Missing argument 'order' required by Dr16ExpectedFlux")
 
-        self.out_dir = config.get("out dir")
-        if self.out_dir is None:
-            raise ExpectedFluxError(
-                "Missing argument 'out dir' required by Dr16ExpectedFlux")
-        else:
-            self.out_dir += "Log/"
-
         self.use_constant_weight = config.getboolean("use constant weight")
         if self.use_constant_weight is None:
             raise ExpectedFluxError(
@@ -441,38 +453,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.continuum_fit_parameters = {}
 
         if Forest.wave_solution == "log":
-            log_lambda_max = (Forest.log_lambda_max_rest_frame +
-                              np.log10(1 + forest.z))
-            log_lambda_min = (Forest.log_lambda_min_rest_frame +
-                              np.log10(1 + forest.z))
-
             # get mean continuum
             mean_cont = self.get_mean_cont(forest.log_lambda -
                                            np.log10(1 + forest.z))
-
-            if not self.use_constant_weight:
-                # pixel variance due to the Large Scale Strucure
-                var_lss = self.get_var_lss(forest.log_lambda)
-                # correction factor to the contribution of the pipeline
-                # estimate of the instrumental noise to the variance.
-                eta = self.get_eta(forest.log_lambda)
-                # fudge contribution to the variance
-                fudge = self.get_fudge(forest.log_lambda)
         elif Forest.wave_solution == "lin":
-            lambda_max = Forest.lambda_max_rest_frame * (1 + forest.z)
-            lambda_min = Forest.lambda_min_rest_frame * (1 + forest.z)
-
             # get mean continuum
             mean_cont = self.get_mean_cont(forest.lambda_ / (1 + forest.z))
-
-            if not self.use_constant_weight:
-                # pixel variance due to the Large Scale Strucure
-                var_lss = self.get_var_lss(forest.lambda_)
-                # correction factor to the contribution of the pipeline
-                # estimate of the instrumental noise to the variance.
-                eta = self.get_eta(forest.lambda_)
-                # fudge contribution to the variance
-                fudge = self.get_fudge(forest.lambda_)
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either "
                                     "'log' or 'lin'")
@@ -480,101 +466,44 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # add transmission correction
         # (previously computed using method add_optical_depth)
         mean_cont *= forest.transmission_correction
+        mean_cont_kwargs = {"mean_cont": mean_cont}
 
-        def get_cont_model(p0, p1):
-            """Models the flux continuum by multiplying the mean_continuum
-            by a linear function
+        if Forest.wave_solution == "log":
+            mean_cont_kwargs["log_lambda_max"] = (
+                Forest.log_lambda_rest_frame_grid[-1] + np.log10(1 + forest.z))
+            mean_cont_kwargs["log_lambda_min"] = (
+                Forest.log_lambda_rest_frame_grid[0] + np.log10(1 + forest.z))
 
-            Arguments:
-            ----------
-            p0: float
-            Zero point of the linear function (flux mean)
+        elif Forest.wave_solution == "lin":
+            mean_cont_kwargs["lambda_max"] = (
+                Forest.lambda_rest_frame_grid[-1] * (1 + forest.z))
+            mean_cont_kwargs["lambda_min"] = (
+                Forest.lambda_rest_frame_grid[0] * (1 + forest.z))
 
-            p1: float
-            Slope of the linear function (evolution of the flux)
+        leasts_squares = LeastsSquaresContModel(
+            forest=forest,
+            expected_flux=self,
+            mean_cont_kwargs=mean_cont_kwargs,
+        )
 
-            Global Arguments:
-            ----------------
-            (defined only in the scope of function cont_fit)
+        aq = (forest.flux * forest.ivar).sum() / forest.ivar.sum()
+        bq = 0.0
 
-            mean_cont: array of floats
-            Mean continuum
-
-            Return
-            ------
-            model: array of float
-            The model
-
-            Raise
-            -----
-            ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
-            """
-            if Forest.wave_solution == "log":
-                line = (p1 * (forest.log_lambda - log_lambda_min) /
-                        (log_lambda_max - log_lambda_min) + p0)
-            elif Forest.wave_solution == "lin":
-                line = (p1 * (forest.lambda_ - lambda_min) /
-                        (lambda_max - lambda_min) + p0)
-            else:
-                raise ExpectedFluxError("Forest.wave_solution must be either "
-                                        "'log' or 'lin'")
-
-            return line * mean_cont
-
-        def chi2(p0, p1):
-            """Compute the chi2 of a given model (see function model above).
-
-            Arguments
-            ---------
-            p0: float
-            Zero point of the linear function (see function model above)
-
-            p1: float
-            Slope of the linear function (see function model above)
-
-            Global arguments
-            ----------------
-            (defined only in the scope of function compute_continuum)
-            eta: array of floats
-            Correction factor to the contribution of the pipeline
-            estimate of the instrumental noise to the variance.
-
-            Return
-            ------
-            chi2: float
-            The obtained chi2
-            """
-            cont_model = get_cont_model(p0, p1)
-
-            # force weights=1 when use-constant-weight
-            if self.use_constant_weight:
-                weights = np.ones_like(cont_model)
-            else:
-                var_pipe = 1. / forest.ivar / cont_model**2
-                ## prep_del.variance is the variance of delta
-                ## we want here the weights = ivar(flux)
-                variance = eta * var_pipe + var_lss + fudge / var_pipe
-                weights = 1.0 / cont_model**2 / variance
-
-            chi2_contribution = (forest.flux - cont_model)**2 * weights
-            return chi2_contribution.sum() - np.log(weights).sum()
-
-        p0 = (forest.flux * forest.ivar).sum() / forest.ivar.sum()
-        p1 = 0.0
-
-        minimizer = iminuit.Minuit(chi2,
-                                   p0=p0,
-                                   p1=p1)
-        minimizer.errors["p0"] = p0 / 2.
-        minimizer.errors["p1"] = p0 / 2.
+        minimizer = iminuit.Minuit(leasts_squares,
+                                   aq=aq,
+                                   bq=bq)
+        minimizer.errors["aq"] = aq / 2.
+        minimizer.errors["bq"] = aq / 2.
         minimizer.errordef = 1.
         minimizer.print_level = 0
-        minimizer.fixed["p1"] = self.order == 0
+        minimizer.fixed["bq"] = self.order == 0
         minimizer.migrad()
 
         forest.bad_continuum_reason = None
-
-        temp_cont_model=get_cont_model(minimizer.values["p0"], minimizer.values["p1"])
+        temp_cont_model = self.get_continuum_model(forest,
+                                                   minimizer.values["aq"],
+                                                   minimizer.values["bq"],
+                                                   **mean_cont_kwargs)
         if not minimizer.valid:
             forest.bad_continuum_reason = "minuit didn't converge"
         if np.any(temp_cont_model < 0):
@@ -583,7 +512,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if forest.bad_continuum_reason is None:
             forest.continuum = temp_cont_model
             self.continuum_fit_parameters[forest.los_id] = (
-                minimizer.values["p0"], minimizer.values["p1"])
+                minimizer.values["aq"], minimizer.values["bq"])
         ## if the continuum is negative or minuit didn't converge, then
         ## set it to None
         else:
@@ -610,21 +539,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # TODO: move this to _initialize_variables_lin and
         # _initialize_variables_log (after tests are done)
         if Forest.wave_solution == "log":
-            num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
-                           Forest.delta_log_lambda) + 1
-            stack_log_lambda = (Forest.log_lambda_min +
-                                np.arange(num_bins) * Forest.delta_log_lambda)
+            stack_delta = np.zeros_like(Forest.log_lambda_grid)
+            stack_weight = np.zeros_like(Forest.log_lambda_grid)
         elif Forest.wave_solution == "lin":
-            num_bins = int((Forest.lambda_max - Forest.lambda_min) /
-                           Forest.delta_lambda) + 1
-            stack_lambda = (Forest.lambda_min +
-                            np.arange(num_bins) * Forest.delta_lambda)
+            stack_delta = np.zeros_like(Forest.lambda_grid)
+            stack_weight = np.zeros_like(Forest.lambda_grid)
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either "
                                     "'log' or 'linear'")
-
-        stack_delta = np.zeros(num_bins)
-        stack_weight = np.zeros(num_bins)
 
         for forest in forests:
             if stack_from_deltas:
@@ -652,11 +574,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 weights = 1. / variance
 
             if Forest.wave_solution == "log":
-                bins = ((forest.log_lambda - Forest.log_lambda_min) /
-                        Forest.delta_log_lambda + 0.5).astype(int)
+                bins = find_bins(forest.log_lambda, Forest.log_lambda_grid)
+
             elif Forest.wave_solution == "lin":
-                bins = ((forest.lambda_ - Forest.lambda_min) /
-                        Forest.delta_lambda + 0.5).astype(int)
+                bins = find_bins(forest.lambda_, Forest.lambda_grid)
             else:
                 raise ExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'linear'")
@@ -669,23 +590,23 @@ class Dr16ExpectedFlux(ExpectedFlux):
         stack_delta[w] /= stack_weight[w]
 
         if Forest.wave_solution == "log":
-            self.get_stack_delta = interp1d(stack_log_lambda[stack_weight > 0.],
+            self.get_stack_delta = interp1d(Forest.log_lambda_grid[stack_weight > 0.],
                                             stack_delta[stack_weight > 0.],
                                             kind="nearest",
                                             fill_value="extrapolate")
             self.get_stack_delta_weights = interp1d(
-                stack_log_lambda[stack_weight > 0.],
+                Forest.log_lambda_grid[stack_weight > 0.],
                 stack_weight[stack_weight > 0.],
                 kind="nearest",
                 fill_value=0.0,
                 bounds_error=False)
         elif Forest.wave_solution == "lin":
-            self.get_stack_delta = interp1d(stack_lambda[stack_weight > 0.],
+            self.get_stack_delta = interp1d(Forest.lambda_grid[stack_weight > 0.],
                                             stack_delta[stack_weight > 0.],
                                             kind="nearest",
                                             fill_value="extrapolate")
             self.get_stack_delta_weights = interp1d(
-                stack_lambda[stack_weight > 0.],
+                Forest.lambda_grid[stack_weight > 0.],
                 stack_weight[stack_weight > 0.],
                 kind="nearest",
                 fill_value=0.0,
@@ -704,9 +625,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
         """
-        num_bins = self.lambda_rest_frame.size
-        mean_cont = np.zeros(num_bins)
-        mean_cont_weight = np.zeros(num_bins)
+        mean_cont = np.zeros_like(Forest.lambda_rest_frame_grid)
+        mean_cont_weight = np.zeros_like(Forest.lambda_rest_frame_grid)
 
         # first compute <F/C> in bins. C=Cont_old*spectrum_dependent_fitting_fct
         # (and Cont_old is constant for all spectra in a bin), thus we actually
@@ -715,11 +635,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
-            bins = (
-                (forest.lambda_ /
-                 (1 + forest.z) - Forest.lambda_min_rest_frame) /
-                (Forest.lambda_max_rest_frame - Forest.lambda_min_rest_frame) *
-                num_bins).astype(int)
+            bins = find_bins(
+                forest.lambda_ / (1 + forest.z),
+                Forest.lambda_rest_frame_grid
+            )
 
             var_lss = self.get_var_lss(forest.lambda_)
             eta = self.get_eta(forest.lambda_)
@@ -736,7 +655,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
         mean_cont /= mean_cont.mean()
-        lambda_cont = self.lambda_rest_frame[w]
+        lambda_cont = Forest.lambda_rest_frame_grid[w]
 
         # the new mean continuum is multiplied by the previous one to recover
         # <F/spectrum_dependent_fitting_function>
@@ -759,9 +678,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
         """
-        num_bins = self.log_lambda_rest_frame.size
-        mean_cont = np.zeros(num_bins)
-        mean_cont_weight = np.zeros(num_bins)
+        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid)
+        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid)
 
         # first compute <F/C> in bins. C=Cont_old*spectrum_dependent_fitting_fct
         # (and Cont_old is constant for all spectra in a bin), thus we actually
@@ -770,10 +688,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
         for forest in forests:
             if forest.bad_continuum_reason is not None:
                 continue
-            bins = ((forest.log_lambda - Forest.log_lambda_min_rest_frame -
-                     np.log10(1 + forest.z)) /
-                    (Forest.log_lambda_max_rest_frame -
-                     Forest.log_lambda_min_rest_frame) * num_bins).astype(int)
+            bins = find_bins(
+                forest.log_lambda - np.log10(1 + forest.z),
+                Forest.log_lambda_rest_frame_grid
+            )
 
             var_lss = self.get_var_lss(forest.log_lambda)
             eta = self.get_eta(forest.log_lambda)
@@ -790,7 +708,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         w = mean_cont_weight > 0
         mean_cont[w] /= mean_cont_weight[w]
         mean_cont /= mean_cont.mean()
-        log_lambda_cont = self.log_lambda_rest_frame[w]
+        log_lambda_cont = Forest.log_lambda_rest_frame_grid[w]
 
         # the new mean continuum is multiplied by the previous one to recover
         # <F/spectrum_dependent_fitting_function>
@@ -884,6 +802,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         error_var_lss = np.zeros(self.num_bins_variance)
         error_fudge = np.zeros(self.num_bins_variance)
         num_pixels = np.zeros(self.num_bins_variance)
+        valid_fit = np.zeros(self.num_bins_variance)
 
         # define an array to contain the possible values of pipeline variances
         # the measured pipeline variance of the deltas will be averaged using the
@@ -921,18 +840,19 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             # select the wavelength bins
             if Forest.wave_solution == "log":
-                log_lambda_bins = (
-                    (forest.log_lambda - Forest.log_lambda_min) /
-                    (Forest.log_lambda_max - Forest.log_lambda_min) *
-                    self.num_bins_variance).astype(int)
+                log_lambda_bins = find_bins(
+                    forest.log_lambda,
+                    self.log_lambda
+                    )
                 # filter the values with a pipeline variance out of range
                 log_lambda_bins = log_lambda_bins[w]
                 # compute overall bin
                 bins = var_pipe_bins + num_var_bins * log_lambda_bins
             elif Forest.wave_solution == "lin":
-                lambda_bins = ((forest.lambda_ - Forest.lambda_min) /
-                               (Forest.lambda_max - Forest.lambda_min) *
-                               self.num_bins_variance).astype(int)
+                lambda_bins = find_bins(
+                    forest.lambda_,
+                    self.lambda_,
+                    )
                 # filter the values with a pipeline variance out of range
                 lambda_bins = lambda_bins[w]
                 # compute overall bin
@@ -1061,6 +981,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 error_eta[index] = minimizer.errors["eta"]
                 error_var_lss[index] = minimizer.errors["var_lss"]
                 error_fudge[index] = minimizer.errors["fudge"] * fudge_ref
+                valid_fit[index] = True
             else:
                 eta[index] = 1.
                 var_lss[index] = 0.1
@@ -1068,6 +989,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 error_eta[index] = 0.
                 error_var_lss[index] = 0.
                 error_fudge[index] = 0.
+                valid_fit[index] = False
             num_pixels[index] = count[index * num_var_bins:(index + 1) *
                                       num_var_bins].sum()
             chi2_in_bin[index] = minimizer.fval
@@ -1098,6 +1020,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       fudge[w],
                                       fill_value="extrapolate",
                                       kind="nearest")
+            self.get_num_pixels = interp1d(self.log_lambda[w],
+                                      num_pixels[w],
+                                      fill_value="extrapolate",
+                                      kind="nearest")
+            self.get_valid_fit = interp1d(self.log_lambda[w],
+                                      valid_fit[w],
+                                      fill_value="extrapolate",
+                                      kind="nearest")
         elif Forest.wave_solution == "lin":
             self.get_eta = interp1d(self.lambda_[w],
                                     eta[w],
@@ -1111,9 +1041,144 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                       fudge[w],
                                       fill_value="extrapolate",
                                       kind="nearest")
+            self.get_num_pixels = interp1d(self.lambda_[w],
+                                      num_pixels[w],
+                                      fill_value="extrapolate",
+                                      kind="nearest")
+            self.get_valid_fit = interp1d(self.lambda_[w],
+                                      valid_fit[w],
+                                      fill_value=0,
+                                      kind="nearest")
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either "
                                     "'log' or 'linear'")
+
+    # pylint: dissable=no-self-use
+    # We expect this function to be changed by some child classes
+    def get_continuum_model(self, forest, aq, bq, **kwargs):
+        """Get the model for the continuum fit
+
+        Arguments
+        ---------
+        forest: Forest
+        The forest instance we want the model from
+
+        aq: float
+        Zero point of the linear function (flux mean)
+
+        bq: float
+        Slope of the linear function (evolution of the flux)
+
+        Keyword Arguments
+        -----------------
+        mean_cont: array of floats
+        Mean continuum. Required.
+
+        lambda_max: float
+        Maximum lambda_ for this forest. Required only if Forest.wave_solution
+        is lin.
+
+        lambda_min: float
+        Minimum lambda_ for this forest. Required only if Forest.wave_solution
+        is lin.
+
+        log_lambda_max: float
+        Maximum log_lambda for this forest. Required only if Forest.wave_solution
+        is log.
+
+        log_lambda_min: float
+        Minimum log_lambda for this forest. Required only if Forest.wave_solution
+        is log.
+
+        Return
+        ------
+        cont_model: array of float
+        The continuum model
+        """
+        # unpack kwargs
+        if "mean_cont" not in kwargs:
+            raise ExpectedFluxError("Function get_cont_model requires "
+                                    f"'mean_cont' in the **kwargs dictionary")
+        mean_cont = kwargs.get("mean_cont")
+        if Forest.wave_solution == "log":
+            for key in ["log_lambda_max", "log_lambda_min"]:
+                if key not in kwargs:
+                    raise ExpectedFluxError("Function get_cont_model requires "
+                                            f"'{key}' in the **kwargs dictionary")
+            log_lambda_max = kwargs.get("log_lambda_max")
+            log_lambda_min = kwargs.get("log_lambda_min")
+        elif Forest.wave_solution == "lin":
+            for key in ["lambda_max", "lambda_min"]:
+                if key not in kwargs:
+                    raise ExpectedFluxError("Function get_cont_model requires "
+                                            f"'{key}' in the **kwargs dictionary")
+            lambda_max = kwargs.get("lambda_max")
+            lambda_min = kwargs.get("lambda_min")
+        else:
+            raise ExpectedFluxError("Forest.wave_solution must be either "
+                                    "'log' or 'lin'")
+
+        # compute continuum
+        if Forest.wave_solution == "log":
+            line = (bq * (forest.log_lambda - log_lambda_min) /
+                    (log_lambda_max - log_lambda_min) + aq)
+        elif Forest.wave_solution == "lin":
+            line = (bq * (forest.lambda_ - lambda_min) /
+                    (lambda_max - lambda_min) + aq)
+        else:
+            raise ExpectedFluxError("Forest.wave_solution must be either "
+                                    "'log' or 'lin'")
+
+        return line * mean_cont
+
+    # kwargs are passed here in case this is necessary in child classes
+    def get_continuum_weights(self, forest, cont_model, **kwargs):
+        """Get the continuum model weights
+
+        Arguments
+        ---------
+        forest: Forest
+        The forest instance we want the model from
+
+        cont_model: array of float
+        The continuum model
+
+        Return
+        ------
+        weights: array of float
+        The continuum model weights
+        """
+        # force weights=1 when use-constant-weight
+        if self.use_constant_weight:
+            weights = np.ones_like(forest.flux)
+        else:
+            if Forest.wave_solution == "log":
+                # pixel variance due to the Large Scale Strucure
+                var_lss = self.get_var_lss(forest.log_lambda)
+                # correction factor to the contribution of the pipeline
+                # estimate of the instrumental noise to the variance.
+                eta = self.get_eta(forest.log_lambda)
+                # fudge contribution to the variance
+                fudge = self.get_fudge(forest.log_lambda)
+            elif Forest.wave_solution == "lin":
+                # pixel variance due to the Large Scale Strucure
+                var_lss = self.get_var_lss(forest.lambda_)
+                # correction factor to the contribution of the pipeline
+                # estimate of the instrumental noise to the variance.
+                eta = self.get_eta(forest.lambda_)
+                # fudge contribution to the variance
+                fudge = self.get_fudge(forest.lambda_)
+            else:
+                raise ExpectedFluxError("Forest.wave_solution must be either "
+                                        "'log' or 'lin'")
+
+            var_pipe = 1. / forest.ivar / cont_model**2
+            ## prep_del.variance is the variance of delta
+            ## we want here the weights = ivar(flux)
+            variance = eta * var_pipe + var_lss + fudge / var_pipe
+            weights = 1.0 / cont_model**2 / variance
+
+        return weights
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
@@ -1189,15 +1254,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
             header["FITORDER"] = self.order
             if Forest.wave_solution == "log":
                 # TODO: update this once the TODO in compute continua is fixed
-                num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
-                               Forest.delta_log_lambda) + 1
-                stack_log_lambda = (
-                    Forest.log_lambda_min +
-                    np.arange(num_bins) * Forest.delta_log_lambda)
                 results.write([
-                    stack_log_lambda,
-                    self.get_stack_delta(stack_log_lambda),
-                    self.get_stack_delta_weights(stack_log_lambda)
+                    Forest.log_lambda_grid,
+                    self.get_stack_delta(Forest.log_lambda_grid),
+                    self.get_stack_delta_weights(Forest.log_lambda_grid)
                 ],
                               names=['loglam', 'stack', 'weight'],
                               header=header,
@@ -1207,47 +1267,48 @@ class Dr16ExpectedFlux(ExpectedFlux):
                     self.log_lambda,
                     self.get_eta(self.log_lambda),
                     self.get_var_lss(self.log_lambda),
-                    self.get_fudge(self.log_lambda)
+                    self.get_fudge(self.log_lambda),
+                    self.get_num_pixels(self.log_lambda),
+                    self.get_valid_fit(self.log_lambda)
                 ],
-                              names=['loglam', 'eta', 'var_lss', 'fudge'],
+                              names=['loglam', 'eta', 'var_lss', 'fudge',
+                                     'num_pixels', 'valid_fit'],
                               extname='VAR_FUNC')
 
                 results.write([
-                    self.log_lambda_rest_frame,
-                    self.get_mean_cont(self.log_lambda_rest_frame),
-                    self.get_mean_cont_weight(self.log_lambda_rest_frame),
+                    Forest.log_lambda_rest_frame_grid,
+                    self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
+                    self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
                 ],
                               names=['loglam_rest', 'mean_cont', 'weight'],
                               extname='CONT')
             elif Forest.wave_solution == "lin":
                 # TODO: update this once the TODO in compute continua is fixed
-                num_bins = int((Forest.lambda_max - Forest.lambda_min) /
-                               Forest.delta_lambda) + 1
-                stack_lambda = (Forest.lambda_min +
-                                np.arange(num_bins) * Forest.delta_lambda)
-
                 results.write([
-                    stack_lambda,
-                    self.get_stack_delta(stack_lambda),
-                    self.get_stack_delta_weights(stack_lambda)
+                    Forest.lambda_grid,
+                    self.get_stack_delta(Forest.lambda_grid),
+                    self.get_stack_delta_weights(Forest.lambda_grid)
                 ],
                               names=['lambda', 'stack', 'weight'],
                               header=header,
-                              extname='STACK')
+                              extname='STACK_DELTAS')
 
                 results.write([
                     self.lambda_,
                     self.get_eta(self.lambda_),
                     self.get_var_lss(self.lambda_),
-                    self.get_fudge(self.lambda_)
+                    self.get_fudge(self.lambda_),
+                    self.get_num_pixels(self.lambda_),
+                    self.get_valid_fit(self.lambda_)
                 ],
-                              names=['lambda', 'eta', 'var_lss', 'fudge'],
-                              extname='WEIGHT')
+                              names=['lambda', 'eta', 'var_lss', 'fudge',
+                                     'num_pixels', 'valid_fit'],
+                              extname='VAR_FUNC')
 
                 results.write([
-                    self.lambda_rest_frame,
-                    self.get_mean_cont(self.lambda_rest_frame),
-                    self.get_mean_cont_weight(self.lambda_rest_frame),
+                    Forest.lambda_rest_frame_grid,
+                    self.get_mean_cont(Forest.lambda_rest_frame_grid),
+                    self.get_mean_cont_weight(Forest.lambda_rest_frame_grid),
                 ],
                               names=['lambda_rest_frame', 'mean_cont', 'weight'],
                               extname='CONT')
@@ -1255,3 +1316,23 @@ class Dr16ExpectedFlux(ExpectedFlux):
             else:
                 raise ExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'lin'")
+
+class LeastsSquaresContModel:
+    def __init__(self, forest, expected_flux,
+                 mean_cont_kwargs=dict(),
+                 weights_kwargs=dict()):
+        self.forest = forest
+        self.expected_flux = expected_flux
+        self.mean_cont_kwargs = mean_cont_kwargs
+        self.weights_kwargs = weights_kwargs
+
+    def __call__(self, aq, bq):
+        cont_model = self.expected_flux.get_continuum_model(self.forest, aq, bq,
+            **self.mean_cont_kwargs)
+
+        weights = self.expected_flux.get_continuum_weights(self.forest,
+                                                           cont_model,
+                                                           **self.weights_kwargs)
+
+        chi2_contribution = (self.forest.flux - cont_model)**2 * weights
+        return chi2_contribution.sum() - np.log(weights).sum()

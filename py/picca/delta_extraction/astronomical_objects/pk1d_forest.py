@@ -21,48 +21,22 @@ class Pk1dForest(Forest):
 
     Class Attributes
     ----------------
-    delta_lambda: float or None (from Forest)
-    Variation of the wavelength (in Angs) between two pixels. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+    blinding: str (from Forest)
+    Name of the blinding strategy used
+    
+    lambda_grid: array of float or None (from Forest)
+    Common grid in lambda_ based on the specified minimum and maximum
+    wavelengths, and delta_lambda.
 
-    delta_log_lambda: float or None (from Forest)
-    Variation of the logarithm of the wavelength (in Angs) between two pixels.
-    This should not be None if wave_solution is "log". Ignored if wave_solution
-    is "lin".
+    lambda_rest_frame_grid: array of float or None (from Forest)
+    Same as lambda_grid but for rest-frame wavelengths
 
-    lambda_max: float or None (from Forest)
-    Maximum wavelength (in Angs) to be considered in a forest. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
+    log_lambda_grid: array of float or None (from Forest)
+    Common grid in log_lambda based on the specified minimum and maximum
+    wavelengths, and delta_log_lambda.
 
-    lambda_max_rest_frame: float or None (from Forest)
-    As wavelength_max but for rest-frame wavelength. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    lambda_min: float or None (from Forest)
-    Minimum wavelength (in Angs) to be considered in a forest. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    lambda_min_rest_frame: float or None (from Forest)
-    As wavelength_min but for rest-frame wavelength. This should not
-    be None if wave_solution is "lin". Ignored if wave_solution is "log".
-
-    log_lambda_max: float or None (from Forest)
-    Logarithm of the maximum wavelength (in Angs) to be considered in a forest.
-    This should not be None if wave_solution is "log". Ignored if wave_solution
-    is "lin".
-
-    log_lambda_max_rest_frame: float or None (from Forest)
-    As log_lambda_max but for rest-frame wavelength. This should not be None if
-    wave_solution is "log". Ignored if wave_solution is "lin".
-
-    log_lambda_min: float or None (from Forest)
-    Logarithm of the minimum wavelength (in Angs) to be considered in a forest.
-    This should not be None if wave_solution is "log". Ignored if wave_solution
-    is "lin".
-
-    log_lambda_min_rest_frame: float or None (from Forest)
-    As log_lambda_min but for rest-frame wavelength. This should not be None if
-    wave_solution is "log". Ignored if wave_solution is "lin".
+    log_lambda_rest_frame_grid: array of float or None (from Forest)
+    Same as log_lambda_grid but for rest-frame wavelengths.
 
     mask_fields: list of str (from Forest)
     Names of the fields that are affected by masking. In general it will
@@ -326,6 +300,8 @@ class Pk1dForest(Forest):
         """
         bins, rebin_ivar, orig_ivar, w1, w2 = super().rebin()
         if len(rebin_ivar) == 0:
+            self.exposures_diff = np.array([])
+            self.reso = np.array([])
             return [], [], [], [], []
 
         # apply mask due to cuts in bin

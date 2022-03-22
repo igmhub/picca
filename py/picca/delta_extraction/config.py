@@ -168,7 +168,7 @@ class Config:
         """
         self.corrections = []
         if "corrections" not in self.config:
-            self.logger.warning("Missing section [corrections]. No Corrections will"
+            self.logger.warning("Missing section [corrections]. No Corrections will "
                                 "be applied to data")
             return
         section = self.config["corrections"]
@@ -398,7 +398,7 @@ class Config:
         """
         self.masks = []
         if "masks" not in self.config:
-            self.logger.warning("Missing section [masks]. No Masks will"
+            self.logger.warning("Missing section [masks]. No Masks will "
                                 "be applied to data")
             return
         section = self.config["masks"]
@@ -525,6 +525,10 @@ class Config:
         usages. The file is saved under the name .config.ini and in
         the self.out_dir folder
         """
-        config_file = open(f"{self.out_dir}/.config.ini", 'w')
+        outname=f"{self.out_dir}/.config.ini"
+        if os.path.exists(outname):
+            newname=f"{outname}.{os.path.getmtime(outname)}"
+            os.rename(outname, newname)
+        config_file = open(outname, 'w')
         self.config.write(config_file)
         config_file.close()
