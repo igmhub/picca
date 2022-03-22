@@ -1,4 +1,6 @@
 """This module defines the abstract class IvarCorrection"""
+import logging
+
 import fitsio
 from scipy.interpolate import interp1d
 
@@ -36,6 +38,8 @@ class IvarCorrection(Correction):
         CorrectionError if input file does not have fields loglam and/or eta
         in extension VAR_FUNC
         """
+        self.logger = logging.getLogger(__name__)
+
         filename = config.get("filename")
         if filename is None:
             raise CorrectionError("Missing argument 'filename' required by SdssIvarCorrection")
@@ -44,6 +48,9 @@ class IvarCorrection(Correction):
             if "loglam" in hdu.dtype.names:
                 log_lambda = hdu['loglam']
             elif "lambda" in hdu.dtype.names:
+                self.logger.warning("DeprecationWarning: Reading correction using 'lambda'. "
+                                    "Newer versions of picca always save 'log_lambda' and "
+                                    "so this option will be removed in the future.")
                 log_lambda = np.log10(hdu['lambda'])
             else:
                 raise CorrectionError("Error loading IvarCorrection. In "
