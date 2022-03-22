@@ -346,64 +346,56 @@ class Forest(AstronomicalObject):
         AstronomicalObjectError if ivar only has zeros
         """
         orig_ivar = self.ivar.copy()
+        w1 = np.ones(self.log_lambda.size, dtype=bool)
+        pixel_step = np.nan
+
         # compute bins
         if Forest.wave_solution == "log":
-            delta_log_lambda = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
-            half_delta_log_lambda = delta_log_lambda / 2.
+            pixel_step = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
+            half_pixel_step = pixel_step / 2.
 
-            half_delta_log_lambda_rest_frame = (Forest.log_lambda_rest_frame_grid[1] -
-                                                Forest.log_lambda_rest_frame_grid[0]) / 2.
+            half_pixel_step_rest_frame = (Forest.log_lambda_rest_frame_grid[1] -
+                                          Forest.log_lambda_rest_frame_grid[0]) / 2.
 
-            w1 = (self.log_lambda >= Forest.log_lambda_grid[0] - half_delta_log_lambda)
-            w1 = w1 & (self.log_lambda < Forest.log_lambda_grid[-1] + half_delta_log_lambda)
-            w1 = w1 & (self.log_lambda - np.log10(1. + self.z) >=
-                       Forest.log_lambda_rest_frame_grid[0] - half_delta_log_lambda_rest_frame)
-            w1 = w1 & (self.log_lambda - np.log10(1. + self.z) <
-                       Forest.log_lambda_rest_frame_grid[-1] + half_delta_log_lambda_rest_frame)
-            w1 = w1 & (self.ivar > 0.)
-            if w1.sum() == 0:
-                self.log_lambda = np.array([])
-                self.flux = np.array([])
-                self.ivar = np.array([])
-                self.transmission_correction = np.array([])
-                return [], [], [], [], []
-            self.log_lambda = self.log_lambda[w1]
-            self.flux = self.flux[w1]
-            self.ivar = self.ivar[w1]
-            self.transmission_correction = self.transmission_correction[w1]
-
-            bins = find_bins(self.log_lambda, Forest.log_lambda_grid)
-            self.log_lambda = Forest.log_lambda_grid[0] + bins * delta_log_lambda
+            w1 &= (self.log_lambda >= Forest.log_lambda_grid[0] - half_pixel_step)
+            w1 &= (self.log_lambda < Forest.log_lambda_grid[-1] + half_pixel_step)
+            w1 &= (self.log_lambda - np.log10(1. + self.z) >=
+                       Forest.log_lambda_rest_frame_grid[0] - half_pixel_step_rest_frame)
+            w1 &= (self.log_lambda - np.log10(1. + self.z) <
+                       Forest.log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
+            w1 &= (self.ivar > 0.)
 
         elif Forest.wave_solution == "lin":
-            delta_lambda = Forest.lambda_grid[1] - Forest.lambda_grid[0]
-            half_delta_lambda = delta_lambda / 2.
+            pixel_step = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
+            half_pixel_step = pixel_step / 2.
 
-            half_delta_lambda_rest_frame = (Forest.lambda_rest_frame_grid[1] -
-                                            Forest.lambda_rest_frame_grid[0]) / 2.
-            w1 = (self.lambda_ >= Forest.lambda_grid[0] - half_delta_lambda)
-            w1 = w1 & (self.lambda_ < Forest.lambda_grid[-1] + half_delta_lambda)
-            w1 = w1 & (self.lambda_ / (1. + self.z) >= Forest.lambda_rest_frame_grid[0] - half_delta_lambda_rest_frame)
-            w1 = w1 & (self.lambda_ / (1. + self.z) < Forest.lambda_rest_frame_grid[-1] + half_delta_lambda_rest_frame)
-            w1 = w1 & (self.ivar > 0.)
-            if w1.sum() == 0:
-                self.lambda_ = np.array([])
-                self.flux = np.array([])
-                self.ivar = np.array([])
-                self.transmission_correction = np.array([])
-                return [], [], [], [], []
-            self.lambda_ = self.lambda_[w1]
-            self.flux = self.flux[w1]
-            self.ivar = self.ivar[w1]
-            self.transmission_correction = self.transmission_correction[w1]
-
-            bins = find_bins(self.lambda_, Forest.lambda_grid)
-            self.lambda_ = Forest.lambda_grid[0] + bins * delta_lambda
+            half_pixel_step_rest_frame = (10**Forest.log_lambda_rest_frame_grid[1] -
+                                          10**Forest.log_lambda_rest_frame_grid[0]) / 2.
+            lambda_ = 10**self.log_lambda
+            w1 &= (lambda_ >= 10**Forest.log_lambda_grid[0] - half_pixel_step)
+            w1 &= (lambda_ < 10**Forest.log_lambda_grid[-1] + half_pixel_step)
+            w1 &= (lambda_ / (1. + self.z) >= 10**Forest.log_lambda_rest_frame_grid[0] - half_pixel_step_rest_frame)
+            w1 &= (lambda_ / (1. + self.z) < 10**Forest.log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
+            w1 &= (self.ivar > 0.)
         else:
             raise AstronomicalObjectError("Error in rebinning Forest. "
                                           "Class variable 'wave_solution' "
                                           "must be either 'lin' or 'log'. "
                                           f"Found: {Forest.wave_solution}")
+
+        if w1.sum() == 0:
+            self.log_lambda = np.array([])
+            self.flux = np.array([])
+            self.ivar = np.array([])
+            self.transmission_correction = np.array([])
+            return [], [], [], [], []
+        self.log_lambda = self.log_lambda[w1]
+        self.flux = self.flux[w1]
+        self.ivar = self.ivar[w1]
+        self.transmission_correction = self.transmission_correction[w1]
+
+        bins = find_bins(self.log_lambda, Forest.log_lambda_grid)
+        self.log_lambda = Forest.log_lambda_grid[0] + bins * pixel_step
 
         # rebin flux, ivar and transmission_correction
         rebin_flux = np.zeros(bins.max() + 1)
@@ -432,13 +424,13 @@ class Forest(AstronomicalObject):
 
         # then rebin wavelength
         if self.wave_solution == "log":
-            rebin_lambda = (Forest.log_lambda_grid[0] +
-                            np.arange(bins.max() + 1) * delta_log_lambda)
-            self.log_lambda = rebin_lambda[w2]
+            rebin_log_lambda = (Forest.log_lambda_grid[0] +
+                            np.arange(bins.max() + 1) * pixel_step)
+            self.log_lambda = rebin_log_lambda[w2]
         elif self.wave_solution == "lin":
-            rebin_lambda = (Forest.lambda_grid[0] +
-                            np.arange(bins.max() + 1) * delta_lambda)
-            self.lambda_ = rebin_lambda[w2]
+            rebin_lambda = (10**Forest.log_lambda_grid[0] +
+                            np.arange(bins.max() + 1) * pixel_step)
+            self.log_lambda = np.log10(rebin_lambda[w2])
         else:
             raise AstronomicalObjectError("wavelength solution must be either "
                                           "'log' or 'linear'")
