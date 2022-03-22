@@ -112,7 +112,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
     limit_var_lss: tuple of floats
     Limits on the pixel variance due to Large Scale Structure
 
-    log_lambda: array of float
+    log_lambda_var_func_grid: array of float
     Logarithm of the wavelengths where the variance functions and
     statistics are computed.
 
@@ -173,7 +173,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_num_pixels = None
         self.get_valid_fit = None
         self.get_var_lss = None
-        self.log_lambda = None
+        self.log_lambda_var_func_grid = None
         self._initialize_variables()
 
         self.continuum_fit_parameters = None
@@ -190,7 +190,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         - self.get_num_pixels
         - self.get_valid_fit
         - self.get_var_lss
-        - self.log_lambda
+        - self.log_lambda_var_func_grid
         """
         # check that Forest variables are set
         try:
@@ -213,10 +213,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
-        self.log_lambda = (Forest.log_lambda_grid[0] +
-                           (np.arange(self.num_bins_variance) + .5) *
-                           (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
-                           self.num_bins_variance)
+        self.log_lambda_var_func_grid = (
+            Forest.log_lambda_grid[0] + (np.arange(self.num_bins_variance) + .5) *
+            (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
+            self.num_bins_variance)
 
         # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
         # print a message to inform the user
@@ -247,23 +247,23 @@ class Dr16ExpectedFlux(ExpectedFlux):
             num_pixels = np.zeros(self.num_bins_variance)
             valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
 
-        self.get_eta = interp1d(self.log_lambda,
+        self.get_eta = interp1d(self.log_lambda_var_func_grid,
                                 eta,
                                 fill_value='extrapolate',
                                 kind='nearest')
-        self.get_var_lss = interp1d(self.log_lambda,
+        self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
                                     var_lss,
                                     fill_value='extrapolate',
                                     kind='nearest')
-        self.get_fudge = interp1d(self.log_lambda,
+        self.get_fudge = interp1d(self.log_lambda_var_func_grid,
                                   fudge,
                                   fill_value='extrapolate',
                                   kind='nearest')
-        self.get_num_pixels = interp1d(self.log_lambda,
+        self.get_num_pixels = interp1d(self.log_lambda_var_func_grid,
                                        num_pixels,
                                        fill_value="extrapolate",
                                        kind='nearest')
-        self.get_valid_fit = interp1d(self.log_lambda,
+        self.get_valid_fit = interp1d(self.log_lambda_var_func_grid,
                                       num_pixels,
                                       fill_value="extrapolate",
                                       kind='nearest')
@@ -651,7 +651,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             # select the wavelength bins
             log_lambda_bins = find_bins(
                 forest.log_lambda,
-                self.log_lambda
+                self.log_lambda_var_func_grid
                 )
             # filter the values with a pipeline variance out of range
             log_lambda_bins = log_lambda_bins[w]
@@ -785,29 +785,29 @@ class Dr16ExpectedFlux(ExpectedFlux):
             chi2_in_bin[index] = minimizer.fval
 
             self.logger.progress(
-                f" {self.log_lambda[index]:.3e} "
+                f" {self.log_lambda_var_func_grid[index]:.3e} "
                 f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
                 + f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
 
         w = num_pixels > 0
 
-        self.get_eta = interp1d(self.log_lambda[w],
+        self.get_eta = interp1d(self.log_lambda_var_func_grid[w],
                                 eta[w],
                                 fill_value="extrapolate",
                                 kind="nearest")
-        self.get_var_lss = interp1d(self.log_lambda[w],
+        self.get_var_lss = interp1d(self.log_lambda_var_func_grid[w],
                                     var_lss[w],
                                     fill_value="extrapolate",
                                     kind="nearest")
-        self.get_fudge = interp1d(self.log_lambda[w],
+        self.get_fudge = interp1d(self.log_lambda_var_func_grid[w],
                                   fudge[w],
                                   fill_value="extrapolate",
                                   kind="nearest")
-        self.get_num_pixels = interp1d(self.log_lambda[w],
+        self.get_num_pixels = interp1d(self.log_lambda_var_func_grid[w],
                                        num_pixels[w],
                                        fill_value="extrapolate",
                                        kind="nearest")
-        self.get_valid_fit = interp1d(self.log_lambda[w],
+        self.get_valid_fit = interp1d(self.log_lambda_var_func_grid[w],
                                       valid_fit[w],
                                       fill_value="extrapolate",
                                       kind="nearest")
@@ -1013,12 +1013,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
                           extname='STACK_DELTAS')
 
             results.write([
-                self.log_lambda,
-                self.get_eta(self.log_lambda),
-                self.get_var_lss(self.log_lambda),
-                self.get_fudge(self.log_lambda),
-                self.get_num_pixels(self.log_lambda),
-                self.get_valid_fit(self.log_lambda)
+                self.log_lambda_var_func_grid,
+                self.get_eta(self.log_lambda_var_func_grid),
+                self.get_var_lss(self.log_lambda_var_func_grid),
+                self.get_fudge(self.log_lambda_var_func_grid),
+                self.get_num_pixels(self.log_lambda_var_func_grid),
+                self.get_valid_fit(self.log_lambda_var_func_grid)
             ],
                           names=['loglam', 'eta', 'var_lss', 'fudge',
                                  'num_pixels', 'valid_fit'],
