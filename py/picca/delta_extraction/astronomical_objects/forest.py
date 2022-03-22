@@ -34,7 +34,7 @@ class Forest(AstronomicalObject):
 
     log_lambda_grid: array of float or None
     Common grid in log_lambda based on the specified minimum and maximum
-    wavelengths, and delta_log_lambda.
+    wavelengths, and pixelisation.
 
     log_lambda_rest_frame_grid: array of float or None
     Same as log_lambda_grid but for rest-frame wavelengths.
@@ -50,22 +50,6 @@ class Forest(AstronomicalObject):
 
     Attributes
     ----------
-    dec: float (from AstronomicalObject)
-    Declination (in rad)
-
-    healpix: int (from AstronomicalObject)
-    Healpix number associated with (ra, dec)
-
-    los_id: longint (from AstronomicalObject)
-    Line-of-sight id. Same as thingid for SDSS data, and same as targetid for
-    DESI data
-
-    ra: float (from AstronomicalObject)
-    Right ascention (in rad)
-
-    z: float (from AstronomicalObject)
-    Redshift
-
     bad_continuum_reason: str or None
     Reason as to why the continuum fit is not acceptable. None for acceptable
     contiuum.
@@ -83,7 +67,9 @@ class Forest(AstronomicalObject):
     Inverse variance
 
     log_lambda: array of float or None
-    Logarithm of the wavelength (in Angstroms)
+    Logarithm of the wavelength (in Angstroms). Differs from log_lambda_grid
+    as the particular instance might not have full wavelength coverage or
+    might have some missing pixels (because they are masked)
 
     mean_snr: float
     Mean signal-to-noise of the forest

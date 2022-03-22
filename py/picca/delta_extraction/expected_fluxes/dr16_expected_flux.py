@@ -112,9 +112,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
     limit_var_lss: tuple of floats
     Limits on the pixel variance due to Large Scale Structure
 
-    log_lambda: array of float or None
-    Logarithm of the rest frame wavelengths where the variance functions and
-    statistics are computed. None (and unused) for a linear wavelength solution.
+    log_lambda: array of float
+    Logarithm of the wavelengths where the variance functions and
+    statistics are computed.
 
     num_bins_variance: int
     Number of bins to be used to compute variance functions and statistics as

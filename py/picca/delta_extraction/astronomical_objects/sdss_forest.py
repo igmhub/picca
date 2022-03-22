@@ -19,68 +19,11 @@ class SdssForest(Forest):
 
     Class Attributes
     ----------------
-    blinding: str (from Forest)
-    Name of the blinding strategy used
-
-    log_lambda_grid: array of float or None (from Forest)
-    Common grid in log_lambda based on the specified minimum and maximum
-    wavelengths, and delta_log_lambda.
-
-    log_lambda_rest_frame_grid: array of float or None (from Forest)
-    Same as log_lambda_grid but for rest-frame wavelengths.
-
-    mask_fields: list of str (from Forest)
-    Names of the fields that are affected by masking. In general it will
-    be "flux" and "ivar" but some child classes might add more.
-
-    wave_solution: "lin" or "log" (from Forest)
-    Determines whether the wavelength solution has linear spacing ("lin") or
-    logarithmic spacing ("log").
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
 
     Attributes
     ----------
-    dec: float (from AstronomicalObject)
-    Declination (in rad)
-
-    healpix: int (from AstronomicalObject)
-    Healpix number associated with (ra, dec)
-
-    los_id: longint (from AstronomicalObject)
-    Line-of-sight id. Same as thingid
-
-    ra: float (from AstronomicalObject)
-    Right ascention (in rad)
-
-    z: float (from AstronomicalObject)
-    Redshift
-
-    bad_continuum_reason: str or None
-    Reason as to why the continuum fit is not acceptable. None for acceptable
-    contiuum.
-
-    continuum: array of float or None (from Forest)
-    Quasar continuum. None for no information
-
-    deltas: array of float or None (from Forest)
-    Flux-transmission field (delta field). None for no information
-
-    flux: array of float (from Forest)
-    Flux
-
-    ivar: array of float (from Forest)
-    Inverse variance
-
-    log_lambda: array of float or None (from Forest)
-    Logarithm of the wavelength (in Angstroms)
-
-    mean_snr: float (from Forest)
-    Mean signal-to-noise of the forest
-
-    transmission_correction: array of float (from Forest)
-    Transmission correction.
-
-    weights: array of float or None (from Forest)
-    Weights associated to the delta field. None for no information
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
 
     fiberid: list of int
     Fiberid of the observation
