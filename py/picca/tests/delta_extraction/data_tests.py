@@ -6,8 +6,13 @@ import unittest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.data import defaults as defaults_data
+from picca.delta_extraction.data_catalogues.desi_data import DesiData
+from picca.delta_extraction.data_catalogues.desi_data import defaults as defaults_desi_data
+from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
+from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
 from picca.delta_extraction.data_catalogues.sdss_data import defaults as defaults_sdss_data
+from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import setup_logger
 from picca.tests.delta_extraction.abstract_test import AbstractTest
 from picca.tests.delta_extraction.test_utils import reset_logger
@@ -130,12 +135,61 @@ class DataTest(AbstractTest):
         self.compare_ascii(test_file, out_file)
 
     def test_desi_data(self):
-        """Test DesiData"""
+        """Test DesiData
+
+        It should not be possible to create a DesiData class
+        # since it is an abstract class.
+        """
+
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits",
+            "keep surveys": "all special",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+        }})
+        for key, value in defaults_desi_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        with self.assertRaises(DataError):
+            try:
+                DesiData(config["data"])
+            except DataError as error:
+                self.assertTrue(str(error) ==
+                    "Function 'read_data' was not overloaded by child class")
+                raise error
+
+    def test_desi_data_parse_config(self):
+        """Test method __parse_config from DesiData"""
+
+        # create a config file with missing options
+        config = ConfigParser()
+        config.read_dict({"data": {
+                        }})
+
         # TODO: add test
 
     def test_desi_healpix(self):
         """Test DesiHealpix"""
-        # TODO: add test
+        # setup printing
+        setup_logger()
+
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_sv1_dark_healpix.fits",
+            "keep surveys": "all special",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiHealpix(config["data"])
+
+        print(len(data.forests))
+        self.assertTrue(len(data.forests) == 62)
 
     def test_desi_tile(self):
         """Test DesiTile"""

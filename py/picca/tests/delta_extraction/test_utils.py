@@ -169,7 +169,7 @@ sdss_data_kwargs_filter_forest = {
     "lambda max rest frame": 3120.0,
 }
 
-
+reset_forest()
 
 def reset_logger():
     """This function reset the logger picca.delta_extraction by closing
