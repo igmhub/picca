@@ -112,7 +112,7 @@ class Data:
         -----
         DataError upon missing required variables
         """
-        # setup SdssForest class variables
+        # setup Forest class variables
         wave_solution = config.get("wave solution")
 
         if wave_solution is None:
