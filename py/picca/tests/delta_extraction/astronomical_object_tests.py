@@ -38,9 +38,10 @@ LOG_LAMBDA = np.array([
 ])
 LOG_LAMBDA_REBIN = np.array(
     [3.5563025, 3.5566025, 3.5569025, 3.5572025, 3.5575025])
-LAMBDA_ = np.array(
-    [3610.0, 3610.4, 3650.0, 3650.4, 3670.0, 3670.4, 3680.0, 3680.4, 3700.0, 3700.4])
-LAMBDA_REBIN = np.array([3610, 3650, 3670, 3680, 3700])
+LOG_LAMBDA_LIN = np.log10(np.array([
+3610.0, 3610.4, 3650.0, 3650.4, 3670.0, 3670.4, 3680.0, 3680.4, 3700.0, 3700.4
+]))
+LOG_LAMBDA_REBIN_LIN = np.log10(np.array([3610, 3650, 3670, 3680, 3700]))
 
 THINGID = 100000000
 TARGETID = 100000000
@@ -106,12 +107,12 @@ kwargs_forest_log2.update({
 
 kwargs_forest_lin = kwargs_forest.copy()
 kwargs_forest_lin.update({
-    "lambda": LAMBDA_,
+    "log_lambda": LOG_LAMBDA_LIN,
 })
 
 kwargs_forest_lin2 = kwargs_forest2.copy()
 kwargs_forest_lin2.update({
-    "lambda": LAMBDA_,
+    "log_lambda": LOG_LAMBDA_LIN,
 })
 
 kwargs_forest_rebin = kwargs_astronomical_object.copy()
@@ -127,7 +128,7 @@ kwargs_forest_log_rebin.update({
 
 kwargs_forest_lin_rebin = kwargs_forest_rebin.copy()
 kwargs_forest_lin_rebin.update({
-    "lambda": LAMBDA_REBIN,
+    "log_lambda": LOG_LAMBDA_REBIN_LIN,
 })
 
 kwargs_forest_coadd = kwargs_astronomical_object.copy()
@@ -143,7 +144,7 @@ kwargs_forest_log_coadd.update({
 
 kwargs_forest_lin_coadd = kwargs_forest_coadd.copy()
 kwargs_forest_lin_coadd.update({
-    "lambda": LAMBDA_REBIN,
+    "log_lambda": LOG_LAMBDA_REBIN_LIN,
 })
 
 # define contructors for Pk1dForest
@@ -171,12 +172,12 @@ kwargs_pk1d_forest_log2.update({
 
 kwargs_pk1d_forest_lin = kwargs_pk1d_forest.copy()
 kwargs_pk1d_forest_lin.update({
-    "lambda": LAMBDA_,
+    "log_lambda": LOG_LAMBDA_LIN,
 })
 
 kwargs_pk1d_forest_lin2 = kwargs_pk1d_forest2.copy()
 kwargs_pk1d_forest_lin2.update({
-    "lambda": LAMBDA_,
+    "log_lambda": LOG_LAMBDA_LIN,
 })
 
 kwargs_pk1d_forest_rebin = kwargs_forest_rebin.copy()
@@ -192,7 +193,7 @@ kwargs_pk1d_forest_log_rebin.update({
 
 kwargs_pk1d_forest_lin_rebin = kwargs_pk1d_forest_rebin.copy()
 kwargs_pk1d_forest_lin_rebin.update({
-    "lambda": LAMBDA_REBIN,
+    "log_lambda": LOG_LAMBDA_REBIN_LIN,
 })
 
 kwargs_pk1d_forest_coadd = kwargs_forest_coadd.copy()
@@ -208,7 +209,7 @@ kwargs_pk1d_forest_log_coadd.update({
 
 kwargs_pk1d_forest_lin_coadd = kwargs_pk1d_forest_coadd.copy()
 kwargs_pk1d_forest_lin_coadd.update({
-    "lambda": LAMBDA_REBIN,
+    "log_lambda": LOG_LAMBDA_REBIN_LIN,
 })
 
 # define contructors for DesiForest
@@ -302,11 +303,11 @@ kwargs_sdss_forest_coadd["los_id"] = THINGID
 
 # define contructors for SdssPk1dForest
 kwargs_sdss_pk1d_forest = kwargs_sdss_forest.copy()
-kwargs_sdss_pk1d_forest.update(kwargs_pk1d_forest_lin)
+kwargs_sdss_pk1d_forest.update(kwargs_pk1d_forest)
 del kwargs_sdss_pk1d_forest["los_id"]
 
 kwargs_sdss_pk1d_forest2 = kwargs_sdss_forest2.copy()
-kwargs_sdss_pk1d_forest2.update(kwargs_pk1d_forest_lin2)
+kwargs_sdss_pk1d_forest2.update(kwargs_pk1d_forest2)
 del kwargs_sdss_pk1d_forest2["los_id"]
 
 kwargs_sdss_pk1d_forest_rebin = kwargs_pk1d_forest_rebin.copy()
@@ -402,13 +403,12 @@ class AstronomicalObjectTest(AbstractTest):
             self.assertTrue(np.allclose(test_obj.deltas, kwargs.get("deltas")))
         else:
             self.assertTrue(test_obj.deltas is None)
-        if Forest.wave_solution == "log":
-            self.assertTrue(
-                np.allclose(test_obj.log_lambda, kwargs.get("log_lambda")))
-            self.assertTrue(test_obj.lambda_ is None)
-        elif Forest.wave_solution == "lin":
-            self.assertTrue(test_obj.log_lambda is None)
-            self.assertTrue(np.allclose(test_obj.lambda_, kwargs.get("lambda")))
+        if len(test_obj.log_lambda) != len(kwargs.get("log_lambda")):
+            print()
+            print(test_obj.log_lambda)
+            print(kwargs.get("log_lambda"))
+        self.assertTrue(
+            np.allclose(test_obj.log_lambda, kwargs.get("log_lambda")))
         flux = kwargs.get("flux")
         ivar = kwargs.get("ivar")
         self.assertTrue(np.allclose(test_obj.flux, flux))
@@ -421,10 +421,7 @@ class AstronomicalObjectTest(AbstractTest):
         self.assertTrue(Forest.mask_fields[0] == "flux")
         self.assertTrue(Forest.mask_fields[1] == "ivar")
         self.assertTrue(Forest.mask_fields[2] == "transmission_correction")
-        if Forest.wave_solution == "log":
-            self.assertTrue(Forest.mask_fields[3] == "log_lambda")
-        elif Forest.wave_solution == "lin":
-            self.assertTrue(Forest.mask_fields[3] == "lambda_")
+        self.assertTrue(Forest.mask_fields[3] == "log_lambda")
         self.assertTrue(
             np.allclose(test_obj.transmission_correction, np.ones_like(flux)))
         mean_snr = (flux * np.sqrt(ivar)).mean()
@@ -454,15 +451,10 @@ class AstronomicalObjectTest(AbstractTest):
                 np.allclose(test_obj.exposures_diff,
                             kwargs.get("exposures_diff")))
             self.assertTrue(np.allclose(test_obj.reso, kwargs.get("reso")))
-            if Forest.wave_solution == "log":
-                log_lambda = kwargs.get("log_lambda")
-                mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
-                           np.power(10., log_lambda[0])) / 2. /
-                          Pk1dForest.lambda_abs_igm - 1.0)
-            elif Forest.wave_solution == "lin":
-                lambda_ = kwargs.get("lambda")
-                mean_z = ((lambda_[len(lambda_) - 1] + lambda_[0]) / 2. /
-                          Pk1dForest.lambda_abs_igm - 1.0)
+            log_lambda = kwargs.get("log_lambda")
+            mean_z = ((np.power(10., log_lambda[len(log_lambda) - 1]) +
+                       np.power(10., log_lambda[0])) / 2. /
+                      Pk1dForest.lambda_abs_igm - 1.0)
             if not np.isclose(test_obj.mean_z, mean_z):
                 print(test_obj.mean_z, mean_z)
                 print(log_lambda, test_obj.log_lambda,
@@ -490,7 +482,7 @@ class AstronomicalObjectTest(AbstractTest):
             self.assertTrue(comments[0] == "Log lambda")
         elif Forest.wave_solution == "lin":
             self.assertTrue(names[0] == "LAMBDA")
-            self.assertTrue(np.allclose(cols[0], test_obj.lambda_))
+            self.assertTrue(np.allclose(cols[0], 10**test_obj.log_lambda))
             self.assertTrue(units[0] == "Angstrom")
             self.assertTrue(comments[0] == "Lambda")
 
@@ -562,7 +554,20 @@ class AstronomicalObjectTest(AbstractTest):
             self.assertTrue(header[index + 1].get("value") == test_obj.mean_snr)
             self.assertTrue(header[index + 2].get("name") == "BLINDING")
             self.assertTrue(header[index + 2].get("value") == "none")
-            index += 2
+            self.assertTrue(header[index + 3].get("name") == "WAVE_SOLUTION")
+            if Forest.wave_solution == "log":
+                self.assertTrue(header[index + 3].get("value") == "log")
+                self.assertTrue(header[index + 4].get("name") == "DELTA_LOG_LAMBDA")
+                self.assertTrue(np.isclose(header[index + 4].get("value"), 3e-4))
+            elif Forest.wave_solution == "lin":
+                self.assertTrue(header[index + 3].get("value") == "lin")
+                self.assertTrue(header[index + 4].get("name") == "DELTA_LAMBDA")
+                self.assertTrue(np.isclose(header[index + 4].get("value"), 1.0))
+            else:
+                print(f"Forest.wave_solution={Forest.wave_solution}, expected "
+                      "'log' or 'lin'")
+                self.assertTrue(False)
+            index += 4
         if isinstance(test_obj, Pk1dForest):
             self.assertTrue(header[index + 1].get("name") == "MEANZ")
             self.assertTrue(header[index + 1].get("value") == test_obj.mean_z)

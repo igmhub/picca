@@ -20,105 +20,15 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
     get_header (from DesiForest, Pk1dForest)
     __init__
 
-
     Class Attributes
     ----------------
-    blinding: str (from Forest)
-    Name of the blinding strategy used
-    
-    lambda_grid: array of float or None (from Forest)
-    Common grid in lambda_ based on the specified minimum and maximum
-    wavelengths, and delta_lambda.
-
-    lambda_rest_frame_grid: array of float or None (from Forest)
-    Same as lambda_grid but for rest-frame wavelengths
-
-    log_lambda_grid: array of float or None (from Forest)
-    Common grid in log_lambda based on the specified minimum and maximum
-    wavelengths, and delta_log_lambda.
-
-    log_lambda_rest_frame_grid: array of float or None (from Forest)
-    Same as log_lambda_grid but for rest-frame wavelengths.
-
-    mask_fields: list of str (from Forest)
-    Names of the fields that are affected by masking. In general it will
-    be "flux" and "ivar" but some child classes might add more.
-
-    wave_solution: "lin" or "log" (from Forest)
-    Determines whether the wavelength solution has linear spacing ("lin") or
-    logarithmic spacing ("log").
-
-    lambda_abs_igm: float (from Pk1dForest)
-    Wavelength of the IGM absorber
+    (see DesiForest in py/picca/delta_extraction/astronomical_objects/desi_forest.py)
+    (see Pk1dForest in py/picca/delta_extraction/astronomical_objects/pk1d_forest.py)
 
     Attributes
     ----------
-    dec: float (from AstronomicalObject)
-    Declination (in rad)
-
-    healpix: int (from AstronomicalObject)
-    Healpix number associated with (ra, dec)
-
-    los_id: longint (from AstronomicalObject)
-    Line-of-sight id. Same as targetid
-
-    ra: float (from AstronomicalObject)
-    Right ascention (in rad)
-
-    z: float (from AstronomicalObject)
-    Redshift
-
-    bad_continuum_reason: str or None
-    Reason as to why the continuum fit is not acceptable. None for acceptable
-    contiuum.
-
-    continuum: array of float or None (from Forest)
-    Quasar continuum. None for no information
-
-    deltas: array of float or None (from Forest)
-    Flux-transmission field (delta field). None for no information
-
-    flux: array of float (from Forest)
-    Flux
-
-    ivar: array of float (from Forest)
-    Inverse variance
-
-    lambda_: array of float or None (from Forest)
-    Wavelength (in Angstroms)
-
-    log_lambda: array of float or None (from Forest)
-    Logarithm of the wavelength (in Angstroms)
-
-    mean_snr: float (from Forest)
-    Mean signal-to-noise of the forest
-
-    transmission_correction: array of float (from Forest)
-    Transmission correction.
-
-    weights: array of float or None (from Forest)
-    Weights associated to the delta field. None for no information
-
-    night: list of int (from DesiForest)
-    Identifier of the night where the observation was made. None for no info
-
-    petal: list of int (from DesiForest)
-    Identifier of the spectrograph used in the observation. None for no info
-
-    targetid: int (from DesiForest)
-    Targetid of the object
-
-    tile: list of int (from DesiForest)
-    Identifier of the tile used in the observation. None for no info
-
-    exposures_diff: array of floats (from Pk1dForest)
-    Difference between exposures
-
-    mean_z: float
-    Mean redshift of the forest (from Pk1dForest)
-
-    reso: array of floats or None (from Pk1dForest)
-    Resolution of the forest
+    (see DesiForest in py/picca/delta_extraction/astronomical_objects/desi_forest.py)
+    (see Pk1dForest in py/picca/delta_extraction/astronomical_objects/pk1d_forest.py)
     """
     def __init__(self, **kwargs):
         """Initialize instance

@@ -106,19 +106,12 @@ class AbsorberMask(Mask):
         -----
         CorrectionError if Forest.wave_solution is not 'log'
         """
-        if Forest.wave_solution == "log":
-            log_lambda = forest.log_lambda
-        elif Forest.wave_solution == "lin":
-            log_labmda = np.log10(forest.lambda_)
-        else:
-            raise MaskError("Forest.wave_solution must be either 'log' or 'lin'")
-
         # load DLAs
         if self.los_ids.get(forest.los_id) is not None:
             # find out which pixels to mask
-            w = np.ones(log_lambda.size, dtype=bool)
+            w = np.ones(forest.log_lambda.size, dtype=bool)
             for lambda_absorber in self.los_ids.get(forest.los_id):
-                w &= (np.fabs(1.e4 * (log_lambda - np.log10(lambda_absorber))) >
+                w &= (np.fabs(1.e4 * (forest.log_lambda - np.log10(lambda_absorber))) >
                       self.absorber_mask_width)
 
             # do the actual masking

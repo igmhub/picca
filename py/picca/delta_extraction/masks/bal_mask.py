@@ -204,20 +204,11 @@ class BalMask(Mask):
         if (mask_table is not None) and len(mask_table) > 0:
 
             # find out which pixels to mask
-            if Forest.wave_solution == "log":
-                w = np.ones(forest.log_lambda.size, dtype=bool)
-                for mask_range in mask_table:
-                    rest_frame_log_lambda = forest.log_lambda - np.log10(1. + forest.z)
-                    w &= ((rest_frame_log_lambda < mask_range['log_lambda_min']) |
-                          (rest_frame_log_lambda > mask_range['log_lambda_max']))
-            elif Forest.wave_solution == "lin":
-                w = np.ones(forest.lambda_.size, dtype=bool)
-                for mask_range in mask_table:
-                    rest_frame_lambda = forest.lambda_/(1. + forest.z)
-                    w &= ((rest_frame_lambda < mask_range['lambda_min']) |
-                          (rest_frame_lambda > mask_range['lambda_max']))
-            else:
-                raise MaskError("Forest.wave_solution must be either 'log' or 'lin'")
+            w = np.ones(forest.log_lambda.size, dtype=bool)
+            for mask_range in mask_table:
+                rest_frame_log_lambda = forest.log_lambda - np.log10(1. + forest.z)
+                w &= ((rest_frame_log_lambda < mask_range['log_lambda_min']) |
+                      (rest_frame_log_lambda > mask_range['log_lambda_max']))
 
             # do the actual masking
             for param in Forest.mask_fields:

@@ -21,83 +21,14 @@ class Pk1dForest(Forest):
 
     Class Attributes
     ----------------
-    blinding: str (from Forest)
-    Name of the blinding strategy used
-    
-    lambda_grid: array of float or None (from Forest)
-    Common grid in lambda_ based on the specified minimum and maximum
-    wavelengths, and delta_lambda.
-
-    lambda_rest_frame_grid: array of float or None (from Forest)
-    Same as lambda_grid but for rest-frame wavelengths
-
-    log_lambda_grid: array of float or None (from Forest)
-    Common grid in log_lambda based on the specified minimum and maximum
-    wavelengths, and delta_log_lambda.
-
-    log_lambda_rest_frame_grid: array of float or None (from Forest)
-    Same as log_lambda_grid but for rest-frame wavelengths.
-
-    mask_fields: list of str (from Forest)
-    Names of the fields that are affected by masking. In general it will
-    be "flux", "ivar", "transmission_correction", "exposures_diff", "reso" and
-    either "log_lambda" if Forest.wave_solution is "log" or "lambda_" if
-    Forests.wave_solution is "lin", but some child classes might add more.
-
-    wave_solution: "lin" or "log" (from Forest)
-    Determines whether the wavelength solution has linear spacing ("lin") or
-    logarithmic spacing ("log").
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
 
     lambda_abs_igm: float
     Wavelength of the IGM absorber
 
     Attributes
     ----------
-    dec: float (from AstronomicalObject)
-    Declination (in rad)
-
-    healpix: int (from AstronomicalObject)
-    Healpix number associated with (ra, dec)
-
-    los_id: longint (from AstronomicalObject)
-    Line-of-sight id. Same as thingid
-
-    ra: float (from AstronomicalObject)
-    Right ascention (in rad)
-
-    z: float (from AstronomicalObject)
-    Redshift
-
-    bad_continuum_reason: str or None (from Forest)
-    Reason as to why the continuum fit is not acceptable. None for acceptable
-    contiuum.
-
-    continuum: array of float or None (from Forest)
-    Quasar continuum. None for no information
-
-    deltas: array of float or None (from Forest)
-    Flux-transmission field (delta field). None for no information
-
-    flux: array of float (from Forest)
-    Flux
-
-    ivar: array of float (from Forest)
-    Inverse variance
-
-    lambda_: array of float (from Forest)
-    Wavelength (in Angstroms)
-
-    log_lambda: array of float or None
-    Logarithm of the wavelength (in Angstroms)
-
-    mean_snr: float (from Forest)
-    Mean signal-to-noise of the forest
-
-    transmission_correction: array of float (from Forest)
-    Transmission correction.
-
-    weights: array of float or None (from Forest)
-    Weights associated to the delta field. None for no information
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
 
     exposures_diff: array of floats
     Difference between exposures
@@ -142,20 +73,10 @@ class Pk1dForest(Forest):
 
         # compute mean quality variables
         self.mean_reso = self.reso.mean()
-        if Forest.wave_solution == "log":
-            self.mean_z = (
-                (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-                 np.power(10., self.log_lambda[0])) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        elif Forest.wave_solution == "lin":
-            self.mean_z = (
-                (self.lambda_[len(self.lambda_) - 1] + self.lambda_[0]) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        else:
-            raise AstronomicalObjectError("Error in constructing Pk1dForest. "
-                                          "Class variable 'wave_solution' "
-                                          "must be either 'lin' or 'log'. "
-                                          f"Found: '{Forest.wave_solution}'")
+        self.mean_z = (
+            (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
+             np.power(10., self.log_lambda[0])) / 2. /
+            Pk1dForest.lambda_abs_igm - 1.0)
 
         self.consistency_check()
 
@@ -325,20 +246,10 @@ class Pk1dForest(Forest):
 
         # finally update control variables
         self.mean_reso = self.reso.mean()
-        if Forest.wave_solution == "log":
-            self.mean_z = (
-                (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-                 np.power(10., self.log_lambda[0])) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        elif Forest.wave_solution == "lin":
-            self.mean_z = (
-                (self.lambda_[len(self.lambda_) - 1] + self.lambda_[0]) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        else:
-            raise AstronomicalObjectError("Error in rebinning Pk1dForest. "
-                                          "Class variable 'wave_solution' "
-                                          "must be either 'lin' or 'log'. "
-                                          f"Found: {Forest.wave_solution}")
+        self.mean_z = (
+            (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
+             np.power(10., self.log_lambda[0])) / 2. /
+            Pk1dForest.lambda_abs_igm - 1.0)
 
         # return weights and binning solution to be used by child classes if
         # required

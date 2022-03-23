@@ -13,6 +13,7 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_flux import ExpectedFlux
+from picca.delta_extraction.utils import find_bins
 
 accepted_options = ["input directory", "iter out prefix",
                     "num processors", "out dir",
@@ -94,7 +95,6 @@ class TrueContinuum(ExpectedFlux):
         self.num_processors = None
         self.__parse_config(config)
 
-
         # read large scale structure variance and mean flux
         self.get_var_lss = None
         self.get_mean_flux = None
@@ -157,66 +157,16 @@ class TrueContinuum(ExpectedFlux):
             forests = pool.map(self.read_true_continuum, forests)
             pool.close()
 
-        if Forest.wave_solution == "log":
-            self.compute_mean_cont_log(forests)
-        elif Forest.wave_solution == "lin":
-            self.compute_mean_cont_lin(forests)
-        else:
-            raise ExpectedFluxError("Forest.wave_solution must be "
-                                            "either 'log' or 'linear'")
+        self.compute_mean_cont(forests)
+
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
         # Save delta atributes
         self.save_delta_attributes()
 
-    def compute_mean_cont_lin(self, forests):
-        """Compute the mean quasar continuum over the whole sample assuming a
-        linear wavelength solution. Then updates the value of self.get_mean_cont
-        to contain it
-
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-        """
-        mean_cont = np.zeros_like(Forest.lambda_rest_frame_grid.size)
-        mean_cont_weight = np.zeros_like(Forest.lambda_rest_frame_grid.size)
-
-        for forest in forests:
-            if forest.bad_continuum_reason is not None:
-                continue
-            bins = find_bins(
-                forest.lambda_ / (1 + forest.z),
-                Forest.lambda_rest_frame_grid
-                )
-
-            var_lss = self.get_var_lss(forest.lambda_)
-            var_pipe = 1. / forest.ivar / forest.continuum**2
-            variance = var_lss + var_pipe
-            weights = 1 / variance
-            cont = np.bincount(bins,
-                               weights=forest.continuum * weights)
-            mean_cont[:len(cont)] += cont
-            cont = np.bincount(bins, weights=weights)
-            mean_cont_weight[:len(cont)] += cont
-
-        w = mean_cont_weight > 0
-        mean_cont[w] /= mean_cont_weight[w]
-        mean_cont /= mean_cont.mean()
-        lambda_cont = Forest.lambda_rest_frame_grid[w]
-
-        self.get_mean_cont = interp1d(lambda_cont,
-                                      mean_cont,
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(lambda_cont,
-                                             mean_cont_weight,
-                                             fill_value=0.0,
-                                             bounds_error=False)
-
-    def compute_mean_cont_log(self, forests):
-        """Compute the mean quasar continuum over the whole sample assuming a
-        log-linear wavelength solution. Then updates the value of
-        self.get_mean_cont to contain it
+    def compute_mean_cont(self, forests):
+        """Compute the mean quasar continuum over the whole sample.
+        Then updates the value of self.get_mean_cont to contain it
 
         Arguments
         ---------
@@ -290,16 +240,11 @@ class TrueContinuum(ExpectedFlux):
         indx = np.where(true_cont["TARGETID"]==forest.targetid)
         true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
 
-        if Forest.wave_solution == "log":
-            forest.continuum = true_continuum(10**forest.log_lambda)[0]
-            forest.continuum *= self.get_mean_flux(10**forest.log_lambda)
-
-        elif Forest.wave_solution == "lin":
-            forest.continuum = true_continuum(forest.lambda_)[0]
-            forest.continuum *= self.get_mean_flux(forest.lambda_)
-        else:
-            raise ExpectedFluxError("Forest.wave_solution must be either 'log' "
-                                    "or 'lin'")
+        forest.continuum = true_continuum(10**forest.log_lambda)[0]
+        mean_optical_depth = np.ones(forest.log_lambda.size)
+        tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
+        w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
+        z = 10.**forest.log_lambda / lambda_rest_frame - 1.
 
         return forest
 
@@ -331,16 +276,16 @@ class TrueContinuum(ExpectedFlux):
         if Forest.wave_solution == "log":
             if (
                 header['LINEAR']
-                or not np.isclose(header['L_MIN'], 10**Forest.log_lambda_min, rtol=1e-3)
-                or not np.isclose(header['L_MAX'], 10**Forest.log_lambda_max, rtol=1e-3)
-                or not np.isclose(header['LR_MIN'], 10**Forest.log_lambda_min_rest_frame, rtol=1e-3)
-                or not np.isclose(header['LR_MAX'], 10**Forest.log_lambda_max_rest_frame, rtol=1e-3)
+                or not np.isclose(header['L_MIN'], 10**Forest.log_lambda_grid[0], rtol=1e-3)
+                or not np.isclose(header['L_MAX'], 10**Forest.log_lambda_grid[-1], rtol=1e-3)
+                or not np.isclose(header['LR_MIN'], 10**Forest.log_lambda_rest_frame_grid[0], rtol=1e-3)
+                or not np.isclose(header['LR_MAX'], 10**Forest.log_lambda_rest_frame_grid[-1], rtol=1e-3)
                 or not np.isclose(header['DEL_LL'], Forest.delta_log_lambda, rtol=1e-3)
             ):
                 raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme.
                 \t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
                 raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
-                input\t{10**Forest.log_lambda_min}\t{10**Forest.log_lambda_max}\t{10**Forest.log_lambda_min_rest_frame}\t{10**Forest.log_lambda_max_rest_frame}\t{Forest.delta_log_lambda}
+                input\t{10**Forest.log_lambda_grid[0]}\t{10**Forest.log_lambda_grid[-1]}\t{10**Forest.log_lambda_rest_frame_grid[0]}\t{10**Forest.log_lambda_rest_frame_grid[-1]}\t{Forest.delta_log_lambda}
                 provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
         elif Forest.wave_solution == "lin":
             if (
@@ -387,13 +332,7 @@ class TrueContinuum(ExpectedFlux):
             if forest.bad_continuum_reason is not None:
                 continue
             # get the variance functions
-            if Forest.wave_solution == "log":
-                var_lss = self.get_var_lss(forest.log_lambda)
-            elif Forest.wave_solution == "lin":
-                var_lss = self.get_var_lss(forest.lambda_)
-            else:
-                raise ExpectedFluxError("Forest.wave_solution must be either "
-                                        "'log' or 'lin'")
+            var_lss = self.get_var_lss(forest.log_lambda)
 
             mean_expected_flux = forest.continuum
             var_pipe = 1. / forest.ivar/ forest.continuum**2
@@ -429,29 +368,11 @@ class TrueContinuum(ExpectedFlux):
                          clobber=True) as results:
             header = {}
             header["FITORDER"] = -1
-            if Forest.wave_solution == "log":
-                num_bins = int((Forest.log_lambda_max - Forest.log_lambda_min) /
-                               Forest.delta_log_lambda) + 1
-
-                results.write([
-                    Forest.log_lambda_rest_frame_grid,
-                    self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
-                    self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
-                ],
-                              names=['loglam_rest', 'mean_cont', 'weight'],
-                              extname='CONT')
-            elif Forest.wave_solution == "lin":
-                num_bins = int((Forest.lambda_max - Forest.lambda_min) /
-                               Forest.delta_lambda) + 1
-
-                results.write([
-                    Forest.lambda_rest_frame_grid,
-                    self.get_mean_cont(Forest.lambda_rest_frame_grid),
-                    self.get_mean_cont_weight(Forest.lambda_rest_frame_grid),
-                ],
-                              names=['lambda_rest_frame', 'mean_cont', 'weight'],
-                              extname='CONT')
-
-            else:
-                raise ExpectedFluxError("Forest.wave_solution must be either "
-                                        "'log' or 'lin'")
+            results.write([
+                Forest.log_lambda_rest_frame_grid,
+                self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
+                self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
+            ],
+                          names=['loglam_rest', 'mean_cont', 'weight'],
+                          extname='CONT',
+                          header=header)
