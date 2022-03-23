@@ -170,11 +170,6 @@ class ExpectedFluxTest(AbstractTest):
         # check that we loaded all quasars
         self.assertTrue(correct_forests == len(continua))
 
-        # setup Forest variables; case: linear wavelength solution
-        reset_forest()
-        setup_forest("lin")
-        #TODO: compute_continuum: add linear wavelength solution test
-
     def test_dr16_expected_flux_compute_delta_stack(self):
         """Test method compute_delta_stack for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
@@ -229,12 +224,6 @@ class ExpectedFluxTest(AbstractTest):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
         self.assertTrue(np.allclose(stack_delta, expectations["delta"]))
 
-        # setup Forest variables; case: linear wavelength solution
-        reset_forest()
-        setup_forest("lin")
-
-        # TODO: compute_delta_stack: add linear wavelength solution test
-
     def test_dr16_expected_flux_compute_expected_flux(self):
         """Test method compute_var_stats for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
@@ -270,20 +259,6 @@ class ExpectedFluxTest(AbstractTest):
                 test_file.replace(".fits", f"_iteration{iteration}.fits"),
                 out_file.replace(".fits", f"_iteration{iteration}.fits"))
         self.compare_fits(test_file, out_file)
-
-        # setup Forest variables; case: linear wavelength solution
-        reset_forest()
-        setup_forest("lin")
-        #TODO: compute_expected_flux: add linear wavelength solution test
-
-    def test_dr16_expected_flux_compute_mean_cont_lin(self):
-        """Test method compute_mean_cont_lin for class Dr16ExpectedFlux"""
-        # setup Forest variables; case: logarithmic wavelength solution
-        setup_forest("lin")
-
-        #TODO: add test: compute_mean_cont_lin
-        with self.assertRaises(Exception):
-            raise NotImplementedError()
 
     def test_dr16_expected_flux_compute_mean_cont_log(self):
         """Test method compute_mean_cont_log for class Dr16ExpectedFlux"""
@@ -387,11 +362,6 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
         self.assertTrue(np.allclose(fudge, expectations["fudge"]))
 
-        # setup Forest variables; case: linear wavelength solution
-        reset_forest()
-        setup_forest("lin")
-        #TODO: compute_var_stats: add linear wavelength solution test
-
     def test_dr16_expected_flux_populate_los_ids(self):
         """Test method populate_los_ids for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
@@ -424,10 +394,6 @@ class ExpectedFluxTest(AbstractTest):
 
         # save iter_out_prefix for iteration 0
         expected_flux.populate_los_ids(data.forests)
-
-        # TODO: populate_los_ids: check the results
-        with self.assertRaises(Exception):
-            raise NotImplementedError()
 
     def test_dr16_expected_flux_save_iteration_step(self):
         """Test method save_iteration_step for class Dr16ExpectedFlux"""
@@ -471,17 +437,6 @@ class ExpectedFluxTest(AbstractTest):
         # save iter_out_prefix for final iteration
         expected_flux.save_iteration_step(-1)
         self.compare_fits(test_file2, out_file2)
-
-        # setup Forest variables; case: linear wavelength solution
-        setup_forest("lin")
-
-        out_file = f"{THIS_DIR}/results/iter_out_prefix_lin_iteration1.fits.gz"
-        out_file2 = f"{THIS_DIR}/results/iter_out_prefix_lin.fits.gz"
-        test_file = f"{THIS_DIR}/data/iter_out_prefix_lin_iteration1.fits.gz"
-        test_file2 = f"{THIS_DIR}/data/iter_out_prefix_lin.fits.gz"
-        out_dir = f"{THIS_DIR}/results/"
-
-        # TODO: save_iteration_step: add linear wavelength solution test
 
     def test_expected_flux(self):
         """Test Abstract class ExpectedFlux
