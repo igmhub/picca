@@ -120,7 +120,8 @@ class DesiHealpix(DesiData):
             healpy.ang2pix(in_nside,
                            np.pi / 2 - row["DEC"],
                            row["RA"],
-                           nest=True) for row in self.catalogue
+                           nest=True)
+            for row in self.catalogue
         ]
         self.catalogue["HEALPIX"] = healpix
         self.catalogue.sort("HEALPIX")
