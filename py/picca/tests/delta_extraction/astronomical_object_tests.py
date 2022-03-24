@@ -1103,6 +1103,38 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj = Forest(**kwargs)
         self.assert_forest_object(test_obj, kwargs)
 
+        # create a Forest with missing log_lambda
+        kwargs = {}
+        expected_message = (
+            "Error constructing Forest. Missing variable 'log_lambda'"
+        )
+        with self.assertRaises(AstronomicalObjectError) as context_manager:
+            Forest(**kwargs)
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Forest with missing flux
+        kwargs = {
+            "log_lambda": np.ones(15),
+        }
+        expected_message = (
+            "Error constructing Forest. Missing variable 'flux'"
+        )
+        with self.assertRaises(AstronomicalObjectError) as context_manager:
+            Forest(**kwargs)
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Forest with missing ivar
+        kwargs = {
+            "log_lambda": np.ones(15),
+            "flux": np.ones(15),
+        }
+        expected_message = (
+            "Error constructing Forest. Missing variable 'ivar'"
+        )
+        with self.assertRaises(AstronomicalObjectError) as context_manager:
+            Forest(**kwargs)
+        self.compare_error_message(context_manager, expected_message)
+
         # create a Forest with missing AstronomicalObject variables
         kwargs = {
             "log_lambda": np.ones(15),
@@ -1115,6 +1147,15 @@ class AstronomicalObjectTest(AbstractTest):
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             Forest(**kwargs)
         self.compare_error_message(context_manager, expected_message)
+
+        # create a Forest with weights defined
+        kwargs = {
+            "log_lambda": np.ones(15),
+            "flux": np.ones(15),
+            "ivar": np.ones(15) * 4,
+            "weights": np.ones(15) * 4,
+        }
+        Forest(**kwargs)    
 
         # set class variables; case: linear wavelength solution
         reset_forest()
