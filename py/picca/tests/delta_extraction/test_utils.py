@@ -15,7 +15,7 @@ def reset_forest():
     Forest.wave_solution = None
     Forest.log_lambda_grid = None
     Forest.log_lambda_rest_frame_grid = None
-    Forest.mask_fields = []
+    Forest.mask_fields = None
     Pk1dForest.lambda_abs_igm = None
 
 # setup Forest class variables

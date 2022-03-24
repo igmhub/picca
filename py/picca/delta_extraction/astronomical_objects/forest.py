@@ -83,7 +83,7 @@ class Forest(AstronomicalObject):
     blinding = "none"
     log_lambda_grid = None
     log_lambda_rest_frame_grid = None
-    mask_fields = []
+    mask_fields = None
     wave_solution = None
 
     def __init__(self, **kwargs):
@@ -133,14 +133,14 @@ class Forest(AstronomicalObject):
         if kwargs.get("weights") is not None:
             del kwargs["weights"]
 
-        # compute mean quality variables
-        snr = self.flux * np.sqrt(self.ivar)
-        self.mean_snr = sum(snr) / float(len(snr))
-
         # call parent constructor
         super().__init__(**kwargs)
 
         self.consistency_check()
+
+        # compute mean quality variables
+        snr = self.flux * np.sqrt(self.ivar)
+        self.mean_snr = sum(snr) / float(len(snr))
 
     @classmethod
     def class_variable_check(cls):
@@ -160,11 +160,17 @@ class Forest(AstronomicalObject):
             )
         if cls.mask_fields is None:
             raise AstronomicalObjectError(
+                "Error constructing Forest. Class variable "
+                "'mask_fields' must be set prior to initialize "
+                "instances of this type. This probably means you did not run "
+                "Forest.set_class_variables"
+            )
+        if not isinstance(cls.mask_fields, list):
+            raise AstronomicalObjectError(
                 "Error constructing Forest. "
                 "Expected list in class variable 'mask fields'. "
-                f"Found {cls.mask_fields}."
+                f"Found '{cls.mask_fields}'."
             )
-
         if cls.wave_solution is None:
             raise AstronomicalObjectError(
                 "Error constructing Forest. Class variable 'wave_solution' "
@@ -175,12 +181,12 @@ class Forest(AstronomicalObject):
     def consistency_check(self):
         """Consistency checks after __init__"""
         if self.flux.size != self.ivar.size:
-            raise AstronomicalObjectError("Error constructing Forest. 'flux', "
+            raise AstronomicalObjectError("Error constructing Forest. 'flux' "
                                           "and 'ivar' don't have the same size")
         if self.log_lambda.size != self.flux.size:
             raise AstronomicalObjectError("Error constructing Forest. "
-                                          "'flux'  and 'log_lambda' don't "
-                                          "have the same  size")
+                                          "'flux' and 'log_lambda' don't "
+                                          "have the same size")
 
     def coadd(self, other):
         """Coadd the information of another forest.
@@ -201,7 +207,7 @@ class Forest(AstronomicalObject):
         if not isinstance(other, Forest):
             raise AstronomicalObjectError("Error coadding Forest. Expected "
                                           "Forest instance in other. Found: "
-                                          f"{type(other)}")
+                                          f"{type(other).__name__}")
 
         if self.los_id != other.los_id:
             raise AstronomicalObjectError("Attempting to coadd two Forests "
@@ -261,10 +267,10 @@ class Forest(AstronomicalObject):
             units += ["Angstrom"]
             array_size = self.log_lambda.size
         else:
-            raise AstronomicalObjectError("Error in getting data from Forest. "
+            raise AstronomicalObjectError("Error in Forest.get_data(). "
                                           "Class variable 'wave_solution' "
                                           "must be either 'lin' or 'log'. "
-                                          f"Found: {Forest.wave_solution}")
+                                          f"Found: '{Forest.wave_solution}'")
 
         if self.deltas is None:
             cols += [np.zeros(array_size, dtype=float)]
@@ -346,7 +352,7 @@ class Forest(AstronomicalObject):
             raise AstronomicalObjectError("Error in Forest.get_header(). "
                                           "Class variable 'wave_solution' "
                                           "must be either 'lin' or 'log'. "
-                                          f"Found: {Forest.wave_solution}")
+                                          f"Found: '{Forest.wave_solution}'")
 
         return header
 
@@ -410,10 +416,10 @@ class Forest(AstronomicalObject):
             w1 &= (lambda_ / (1. + self.z) < 10**Forest.log_lambda_rest_frame_grid[-1] + half_pixel_step_rest_frame)
             w1 &= (self.ivar > 0.)
         else:
-            raise AstronomicalObjectError("Error in rebinning Forest. "
+            raise AstronomicalObjectError("Error in Forest.rebin(). "
                                           "Class variable 'wave_solution' "
                                           "must be either 'lin' or 'log'. "
-                                          f"Found: {Forest.wave_solution}")
+                                          f"Found: '{Forest.wave_solution}'")
 
         if w1.sum() == 0:
             self.log_lambda = np.array([])
@@ -443,6 +449,11 @@ class Forest(AstronomicalObject):
                                          )] += rebin_transmission_correction_aux
         rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
 
+        # this condition should always be true as pixels with 0 ivar have been
+        # filtered out before
+        # TODO: simplify this function by removing w2.
+        # This means we do not need pass this value to the child functions
+        # and so they also need to be fixed
         w2 = (rebin_ivar > 0.)
         if w2.sum() == 0:
             raise AstronomicalObjectError(
@@ -463,10 +474,7 @@ class Forest(AstronomicalObject):
             rebin_lambda = (10**Forest.log_lambda_grid[0] +
                             np.arange(bins.max() + 1) * pixel_step)
             self.log_lambda = np.log10(rebin_lambda[w2])
-        else:
-            raise AstronomicalObjectError("wavelength solution must be either "
-                                          "'log' or 'linear'")
-
+        
         # finally update control variables
         snr = self.flux * np.sqrt(self.ivar)
         self.mean_snr = sum(snr) / float(len(snr))
