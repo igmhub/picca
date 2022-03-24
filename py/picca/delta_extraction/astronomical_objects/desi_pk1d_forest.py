@@ -179,7 +179,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
 
         Raise
         -----
-        AstronomicalObjectError if other is not a Pk1dForest instance
+        AstronomicalObjectError if other is not a DesiPk1dForest instance
         """
         if not isinstance(other, DesiPk1dForest):
             raise AstronomicalObjectError(
