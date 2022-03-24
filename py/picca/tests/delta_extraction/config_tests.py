@@ -3,7 +3,11 @@ import os
 import unittest
 from configparser import ConfigParser
 
+import numpy as np
+
 from picca.delta_extraction.config import Config
+from picca.delta_extraction.config import accepted_corrections_options
+from picca.delta_extraction.config import accepted_masks_options
 from picca.delta_extraction.errors import ConfigError
 from picca.tests.delta_extraction.abstract_test import AbstractTest
 from picca.tests.delta_extraction.test_utils import reset_logger
@@ -22,6 +26,43 @@ class ConfigTest(AbstractTest):
     setUp (from AbstractTest)
     test_config
     """
+    def check_error(self, in_file, expected_message, startswith=False):
+        """Load a Configuration instance expecting an error
+        Check the error message
+
+        Arguments
+        ---------
+        in_file: str
+        Input configuration file to construct the Configuration instance
+
+        expected_message: str
+        Expected error message
+
+        startswith: bool - Default: False
+        If True, check that expected_message is the beginning of the actual error
+        message. Otherwise check that expected_message is the entire message
+        """
+        with self.assertRaises(ConfigError) as context_manager:
+            config = Config(in_file)
+
+        if startswith:
+            if not str(context_manager.exception).startswith(expected_message):
+                print("\nReceived incorrect error message")
+                print("Expected message to start with:")
+                print(expected_message)
+                print("Received:")
+                print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith(
+                expected_message))
+        else:
+            if not str(context_manager.exception) == expected_message:
+                print("\nReceived incorrect error message")
+                print("Expected:")
+                print(expected_message)
+                print("Received:")
+                print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception) == expected_message)
+
     def compare_config(self, orig_file, new_file):
         """Compares two configuration files to check that they are equal
 
@@ -50,21 +91,26 @@ class ConfigTest(AbstractTest):
             else:
                 for key, orig_value in orig_section.items():
                     if key not in new_section.keys():
-                        print(f"key {key} in section {new_section} missing in new file")
+                        print(f"key {key} in section {new_section} missing in "
+                              "new file")
                         self.assertTrue(key in new_section.keys())
                     new_value = new_section.get(key)
                     # this is necessary to remove the system dependent bits of
                     # the paths
-                    if "py/picca/tests/delta_extraction" in new_value:
-                        new_value = new_value.split("py/picca/tests/delta_extraction")[-1]
-                        orig_value = orig_value.split("py/picca/tests/delta_extraction")[-1]
+                    base_path = "py/picca/tests/delta_extraction"
+                    if base_path in new_value:
+                        new_value = new_value.split(base_path)[-1]
+                        orig_value = orig_value.split(base_path)[-1]
 
                     if not orig_value == new_value:
-                        print(f"In section [{section}], for key {key} found orig value = {orig_value} but new value = {new_value}")
+                        print(f"In section [{section}], for key {key} found "
+                              "orig value = {orig_value} but new value = "
+                              f"{new_value}")
                     self.assertTrue(orig_value == new_value)
             for key in new_section.keys():
                 if key not in orig_section.keys():
-                    print(f"key {key} in section {section} missing in original file")
+                    print(f"key {key} in section {section} missing in original "
+                          "file")
                     self.assertTrue(key in orig_section.keys())
 
         for section in new_config.sections():
@@ -91,159 +137,355 @@ class ConfigTest(AbstractTest):
         reset_logger()
         self.compare_ascii(test_warning_file, out_warning_file)
 
+        # this should raise an error as folder exists and overwrite is False
         in_file = f"{THIS_DIR}/data/config.ini"
-        with self.assertRaises(ConfigError):
-            config = Config(in_file)
+        expected_message = (
+            "Specified folder contains a previous run. Pass overwrite "
+            "option in configuration file in order to ignore the "
+            "previous run or change the output path variable to point "
+            f"elsewhere. Folder: {THIS_DIR}/results/config_tests/"
+        )
+        self.check_error(in_file, expected_message)
+
+        # this should not raise an error as folder exists and overwrite is True
+        in_file = f"{THIS_DIR}/data/config_overwrite.ini"
+        config = Config(in_file)
+
+    def test_config_check_defaults_overwrite(self):
+        """ Test that passing default values are not overwriting choices"""
+        folder = f"{THIS_DIR}/data/config_extra/"
+        # check that default values do not overwrite chosen options
+        # corrections section
+        in_file = f"{folder}/config_check_defaults_overwrite.ini"
+        config = Config(in_file)
+
+        # check the corrections section
+        correction_args = config.corrections[2][1]
+        self.assertTrue(np.isclose(
+            correction_args.getfloat("extinction_conversion_r"),
+            2.0
+        ))
+
+        # check that out dir has an ending /
+        self.assertTrue(config.out_dir.endswith("/"))
 
     def test_config_invalid_correction_options(self):
-        """ Test that passing invalid options to the correction classes raise errors """
+        """ Test that passing invalid options to the correction classes
+        raise errors """
+        prefix = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options"
 
-        # firt check corrections section
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_corrections.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [corrections]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [corrections]"))
+        # check corrections section
+        in_file = f"{prefix}_corrections.ini"
+        expected_message = (
+            "Unrecognised option in section [corrections]. "
+            f"Found: 'name 0'. Accepted options are "
+            f"{accepted_corrections_options}"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case num_corrections is missing
+        in_file = f"{prefix}_corrections_no_num_corrections.ini"
+        expected_message = (
+            "In section 'corrections', variable 'num corrections' is required"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case num_corrections is not positive
+        in_file = f"{prefix}_corrections_num_corrections.ini"
+        expected_message = (
+            "In section 'corrections', variable 'num corrections' "
+            "must be a non-negative integer"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case missing type
+        in_file = f"{prefix}_corrections_no_type.ini"
+        expected_message = (
+            "In section [corrections], missing variable [type 0]"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case type is not correct
+        in_file = f"{prefix}_corrections_bad_type.ini"
+        expected_message = (
+            "Unrecognised option in section [corrections]. "
+            f"Found: 'type a'. Accepted options are "
+            f"{accepted_corrections_options}"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case number in type is too large
+        in_file = f"{prefix}_corrections_bad_type2.ini"
+        expected_message = (
+            "In section [corrections] found option 'type 3', but "
+            "'num corrections' is '1' (keep in mind python zero indexing)"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case module name is not correct
+        in_file = f"{prefix}_corrections_bad_module_name.ini"
+        expected_message = (
+            "Unrecognised option in section [corrections]. "
+            f"Found: 'module name a'. Accepted options are "
+            f"{accepted_corrections_options}"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case number in module name is too large
+        in_file = f"{prefix}_corrections_bad_module_name2.ini"
+        expected_message = (
+            "In section [corrections] found option 'module name 3', but "
+            "'num corrections' is '1' (keep in mind python zero indexing)"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case module does not exist
+        in_file = f"{prefix}_corrections_inexistent_module_name.ini"
+        expected_message = (
+            f"Error loading class Correction, "
+            f"module picca.delta_extraction.fake_correction could not be loaded"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case module does not contain the class
+        in_file = f"{prefix}_corrections_module_no_class.ini"
+        expected_message = (
+            "Error loading class DustCorrection, "
+            "module picca.delta_extraction.corrections.calibration_correction "
+            "did not contain requested class"
+        )
+        self.check_error(in_file, expected_message)
+
+        # now check arguments of the different Correction child classes
+        expected_message = (
+            "Unrecognised option in section [correction arguments 0]"
+        )
 
         # check arguments of CalibrationCorrection
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_calibration_correction.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
+        in_file = f"{prefix}_calibration_correction.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
         # check arguments of DustCorrection
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_dust_correction.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
+        in_file = f"{prefix}_dust_correction.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
         # check arguments of IvarCorrection
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_ivar_correction.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
+        in_file = f"{prefix}_ivar_correction.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
         # check arguments of OpticalDepthCorrection
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_optical_depth_correction.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [correction arguments 0]"))
+        in_file = f"{prefix}_optical_depth_correction.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
     def test_config_invalid_data_options(self):
-        """ Test that passing invalid options to the data classes raise errors """
+        """ Test that passing invalid options to the data classes raise errors"""
+        prefix = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options"
+
+        # missing section
+        in_file = f"{prefix}_no_data.ini"
+        expected_message = "Missing section [data]"
+        self.check_error(in_file, expected_message)
+
+        # check case module does not exist
+        in_file = f"{prefix}_data_no_module.ini"
+        expected_message = (
+            f"Error loading class Data, "
+            f"module picca.fake_data could not be loaded"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case module does not contain the class
+        in_file = f"{prefix}_data_module_no_class.ini"
+        expected_message = (
+            "Error loading class SdssData, "
+            "module picca.delta_extraction.data_catalogues.desi_data "
+            "did not contain requested class"
+        )
+        self.check_error(in_file, expected_message)
+
+        # now check arguments of the different Data child classes
+        expected_message = "Unrecognised option in section [data]"
 
         # check arguments of DesiHealpix
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_desi_healpix.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [data]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [data]"))
+        in_file = f"{prefix}_desi_healpix.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
         # check arguments of DesiTile
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_desi_tile.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [data]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [data]"))
+        in_file = f"{prefix}_desi_tile.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
         # check arguments of DesisimMocks
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_desisim_mocks.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [data]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [data]"))
+        in_file = f"{prefix}_desisim_mocks.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
         # check arguments of SdssData
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_sdss_data.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [data]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [data]"))
+        in_file = f"{prefix}_sdss_data.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
     def test_config_invalid_expected_flux_options(self):
-        """ Test that passing invalid options to the expected flux classes raise errors """
+        """ Test that passing invalid options to the expected flux classes
+        raise errors """
+        prefix = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options"
+
+        # missing section
+        in_file = f"{prefix}_no_expected_flux.ini"
+        expected_message = "Missing section [expected flux]"
+        self.check_error(in_file, expected_message)
+
+        # check case module does not exist
+        in_file = f"{prefix}_expected_flux_no_module.ini"
+        expected_message = (
+            f"Error loading class Dr16ExpectedFlux, "
+            f"module picca.fake_expected_flux could not be loaded"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case module does not contain the class
+        in_file = f"{prefix}_expected_flux_module_no_class.ini"
+        expected_message = (
+            "Error loading class Dr16ExpectedFlux, "
+            "module picca.delta_extraction.expected_fluxes.true_continuum "
+            "did not contain requested class"
+        )
+        self.check_error(in_file, expected_message)
+
+        # now check arguments of the different Data child classes
+        expected_message = "Unrecognised option in section [expected flux]"
+
         # check arguments of Dr16ExpectedFlux
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_dr16_expected_flux.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [expected flux]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [expected flux]"))
+        in_file = f"{prefix}_dr16_expected_flux.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
         # check arguments of TrueContinuum
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_true_continuum.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [expected flux]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [expected flux]"))
+        in_file = f"{prefix}_true_continuum.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
     def test_config_invalid_general_options(self):
         """ Test that passing invalid options to the general section raise errors """
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_general.ini"
+        prefix = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options"
 
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [general]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [general]"))
+        # missing out dir
+        in_file = f"{prefix}_general_no_out_dir.ini"
+        expected_message = "Missing variable 'out dir' in section [general]"
+        self.check_error(in_file, expected_message)
+
+        # now check arguments of the general section
+        expected_message = "Unrecognised option in section [general]"
+
+        in_file = f"{prefix}_general.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
     def test_config_invalid_mask_options(self):
         """ Test that passing invalid options to the mask classes raise errors """
+        prefix = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options"
 
         # firt check masks section
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_masks.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [masks]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [masks]"))
+        in_file = f"{prefix}_masks.ini"
+        expected_message = (
+            "Unrecognised option in section [masks]. Found: 'name 0'. Accepted "
+            "options are ['num masks', 'type {int}', 'module name {int}']"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case num_masks is missing
+        in_file = f"{prefix}_masks_no_num_masks.ini"
+        expected_message = (
+            "In section 'masks', variable 'num masks' is required"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case num_masks is not positive
+        in_file = f"{prefix}_masks_num_masks.ini"
+        expected_message = (
+            "In section 'masks', variable 'num masks' "
+            "must be a non-negative integer"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case missing type
+        in_file = f"{prefix}_masks_no_type.ini"
+        expected_message = (
+            "In section [masks], missing variable [type 0]"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case type is not correct
+        in_file = f"{prefix}_masks_bad_type.ini"
+        expected_message = (
+            "Unrecognised option in section [masks]. "
+            f"Found: 'type a'. Accepted options are "
+            f"{accepted_masks_options}"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case number in type is too large
+        in_file = f"{prefix}_masks_bad_type2.ini"
+        expected_message = (
+            "In section [masks] found option 'type 3', but "
+            "'num masks' is '1' (keep in mind python zero indexing)"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case module name is not correct
+        in_file = f"{prefix}_masks_bad_module_name.ini"
+        expected_message = (
+            "Unrecognised option in section [masks]. "
+            f"Found: 'module name a'. Accepted options are "
+            f"{accepted_masks_options}"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case number in module name is too large
+        in_file = f"{prefix}_masks_bad_module_name2.ini"
+        expected_message = (
+            "In section [masks] found option 'module name 3', but "
+            "'num masks' is '1' (keep in mind python zero indexing)"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case module does not exist
+        in_file = f"{prefix}_masks_inexistent_module_name.ini"
+        expected_message = (
+            f"Error loading class Mask, "
+            f"module picca.delta_extraction.fake_mask could not be loaded"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check case module does not contain the class
+        in_file = f"{prefix}_masks_module_no_class.ini"
+        expected_message = (
+            "Error loading class BalMask, "
+            "module picca.delta_extraction.masks.dla_mask "
+            "did not contain requested class"
+        )
+        self.check_error(in_file, expected_message)
+
+        # now check arguments of the different Correction child classes
+        expected_message = (
+            "Unrecognised option in section [mask arguments 0]"
+        )
 
         # check arguments of LinesMask
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_lines_mask.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
+        in_file = f"{prefix}_lines_mask.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
         # check arguments of AbsorberMask
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_absorber_mask.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
+        in_file = f"{prefix}_absorber_mask.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
         # check arguments of BalMask
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_bal_mask.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
+        in_file = f"{prefix}_bal_mask.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
         # check arguments of DlaMask
-        in_file = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options_dla_mask.ini"
-        with self.assertRaises(ConfigError) as context_manager:
-            config = Config(in_file)
-        if not str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"):
-            print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith("Unrecognised option in section [mask arguments 0]"))
+        in_file = f"{prefix}_dla_mask.ini"
+        self.check_error(in_file, expected_message, startswith=True)
 
+    def test_config_no_file(self):
+        """Check behaviour of config when the file is not valid"""
+        in_file = f"{THIS_DIR}/data/non_existent_config_overwrite.ini"
+        expected_message = f"Config file not found: {in_file}"
+        self.check_error(in_file, expected_message)
 
 if __name__ == '__main__':
     unittest.main()

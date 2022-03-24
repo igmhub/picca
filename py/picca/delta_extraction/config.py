@@ -193,7 +193,7 @@ class Config:
                         pass
                     except AssertionError as e:
                         raise ConfigError("In section [corrections] found option "
-                                          f"{key}, but 'num corrections' is "
+                                          f"'{key}', but 'num corrections' is "
                                           f"'{self.num_corrections}' (keep in mind "
                                           "python zero indexing)")
 
@@ -222,7 +222,8 @@ class Config:
                                   f"module {module_name} could not be loaded")
             except AttributeError:
                 raise ConfigError(f"Error loading class {correction_name}, "
-                                  f"module {module_name} did not contain class")
+                                  f"module {module_name} did not contain "
+                                  "requested class")
 
             # now load the arguments with which to initialize this class
             if f"correction arguments {correction_index}" not in self.config:
@@ -232,7 +233,7 @@ class Config:
                 self.config.read_dict({f"correction arguments {correction_index}":{}})
             correction_args = self.config[f"correction arguments {correction_index}"]
 
-            # check that arguments are valid
+            # check that all arguments are valid
             for key in correction_args:
                 if key not in accepted_options:
                     raise ConfigError("Unrecognised option in section [correction "
@@ -274,7 +275,8 @@ class Config:
                               f"module {module_name} could not be loaded")
         except AttributeError:
             raise ConfigError(f"Error loading class {data_name}, "
-                              f"module {module_name} did not contain class")
+                              f"module {module_name} did not contain requested "
+                              "class")
 
         # check that arguments are valid)
         accepted_options += accepted_data_options
@@ -322,7 +324,8 @@ class Config:
                               f"module {module_name} could not be loaded")
         except AttributeError:
             raise ConfigError(f"Error loading class {expected_flux_name}, "
-                              f"module {module_name} did not contain class")
+                              f"module {module_name} did not contain requested "
+                              "class")
 
         # check that arguments are valid)
         accepted_options += accepted_expected_flux_options
@@ -423,7 +426,7 @@ class Config:
                         pass
                     except AssertionError as e:
                         raise ConfigError("In section [masks] found option "
-                                          f"{key}, but 'num masks' is "
+                                          f"'{key}', but 'num masks' is "
                                           f"'{self.num_masks}' (keep in mind "
                                           "python zero indexing)")
 
@@ -450,7 +453,8 @@ class Config:
                                   f"module {module_name} could not be loaded")
             except AttributeError:
                 raise ConfigError(f"Error loading class {mask_name}, "
-                                  f"module {module_name} did not contain class")
+                                  f"module {module_name} did not contain "
+                                  "requested class")
 
             # now load the arguments with which to initialize this class
             if f"mask arguments {mask_index}" not in self.config:
@@ -514,9 +518,9 @@ class Config:
             os.makedirs(self.out_dir+"Log/", exist_ok=True)
             self.write_config()
         else:
-            raise ConfigError("Specified folder contains a previous run."
-                              "Pass overwrite option in configuration file"
-                              "in order to ignore the previous run or"
+            raise ConfigError("Specified folder contains a previous run. "
+                              "Pass overwrite option in configuration file "
+                              "in order to ignore the previous run or "
                               "change the output path variable to point "
                               f"elsewhere. Folder: {self.out_dir}")
 

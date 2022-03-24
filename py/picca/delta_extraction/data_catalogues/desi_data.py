@@ -109,7 +109,8 @@ class DesiData(Data):
             raise DataError("Missing argument 'blinding' required by DesiData")
         if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
             raise DataError("Unrecognized blinding strategy. Accepted strategies "
-                            f"are {ACCEPTED_BLINDING_STRATEGIES}. Found {self.blinding}")
+                            f"are {ACCEPTED_BLINDING_STRATEGIES}. "
+                            f"Found '{self.blinding}'")
 
     # pylint: disable=no-self-use
     # this method should use self in child classes
