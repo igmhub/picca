@@ -7,6 +7,7 @@ See the respective docstrings for more details
 import numpy as np
 import iminuit
 import fitsio
+import warnings
 
 from . import constants
 from .utils import userprint, unred
@@ -94,6 +95,7 @@ class QSO(object):
         self.los_id = los_id
         #this is for legacy purposes only
         self.thingid = los_id
+        warnings.warn("currently a thingid entry is created in QSO.__init__, this feature will be removed", warnings.DeprecationWarning)
 
         # variables computed in function io.read_objects
         self.weight = None
@@ -933,9 +935,15 @@ class Delta(QSO):
         mean_snr: float
             Mean signal-to-noise ratio in the forest
         mean_reso: float
-            Mean resolution of the forest
+            Mean resolution of the forest in units of velocity (FWHM)
         mean_z: float
             Mean redshift of the forest
+        mean_reso_pix: float
+            Mean resolution of the forest in units of pixels (FWHM)
+        mean_resolution_matrix: array of floats or None
+            Mean (over wavelength) resolution matrix for that forest
+        resolution_matrix: 2d array of floats or None
+            Wavelength dependent resolution matrix for that forest
         delta_log_lambda: float
             Variation of the logarithm of the wavelength between two pixels
         z: array of floats or None
@@ -1000,6 +1008,12 @@ class Delta(QSO):
                 Mean resolution of the forest
             mean_z: float
                 Mean redshift of the forest
+            mean_reso_pix: float
+                Mean resolution of the forest in units of pixels (FWHM)
+            mean_resolution_matrix: array of floats or None
+                Mean (over wavelength) resolution matrix for that forest
+            resolution_matrix: 2d array of floats or None
+                Wavelength dependent resolution matrix for that forest
             delta_log_lambda: float
                 Variation of the logarithm of the wavelength between two pixels
         """
@@ -1062,7 +1076,6 @@ class Delta(QSO):
         if 'LOGLAM' in hdu.get_colnames():
             log_lambda = hdu['LOGLAM'][:].astype(float)
         elif 'LAMBDA' in hdu.get_colnames():
-            #userprint("no LOGLAM found, trying to read linear_binned_lambda")
             log_lambda = np.log10(hdu['LAMBDA'][:].astype(float))
         else:
             raise KeyError("Did not find LOGLAM or LAMBDA in delta file")
