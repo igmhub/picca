@@ -245,7 +245,7 @@ class DesiTile(DesiData):
                         else:
                             spec['TEFF_LYA'] = np.ones(spec["FLUX"].shape[0])
                             if self.use_non_coadded_spectra:
-                                self.logger.info(
+                                self.logger.warning(
                                     "SCORES are missing, Teff information (and thus DIFF) will be garbage"
                                 )
                             no_scores_available = True
@@ -328,9 +328,6 @@ class DesiTile(DesiData):
                         if self.use_non_coadded_spectra and not no_scores_available:
                             exposures_diff = exp_diff_desi(spec, w_t)
                         else:
-                            exposures_diff = None
-
-                        if exposures_diff is None:
                             exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
                         if len(spec['RESO'][w_t].shape) < 3:
                             reso_sum = spec['RESO'][w_t].copy()
