@@ -146,26 +146,31 @@ class Forest(AstronomicalObject):
     def class_variable_check(cls):
         """Check that class variables have been correctly initialized"""
         if cls.log_lambda_grid is None:
-            raise AstronomicalObjectError("Error constructing Forest. "
-                                          "Class variable 'log_lambda_grid' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
+            raise AstronomicalObjectError(
+                "Error constructing Forest. Class variable 'log_lambda_grid' "
+                "must be set prior to initialize instances of this type. This "
+                "probably means you did not run Forest.set_class_variables"
+            )
         if cls.log_lambda_rest_frame_grid is None:
-            raise AstronomicalObjectError("Error constructing Forest. "
-                                          "Class variable 'log_lambda_rest_frame_grid' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
+            raise AstronomicalObjectError(
+                "Error constructing Forest. Class variable "
+                "'log_lambda_rest_frame_grid' must be set prior to initialize "
+                "instances of this type. This probably means you did not run "
+                "Forest.set_class_variables"
+            )
         if cls.mask_fields is None:
             raise AstronomicalObjectError(
                 "Error constructing Forest. "
                 "Expected list in class variable 'mask fields'. "
-                f"Found {cls.mask_fields}.")
+                f"Found {cls.mask_fields}."
+            )
 
         if cls.wave_solution is None:
-            raise AstronomicalObjectError("Error constructing Forest. "
-                                          "Class variable 'wave_solution' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
+            raise AstronomicalObjectError(
+                "Error constructing Forest. Class variable 'wave_solution' "
+                "must be set prior to initialize instances of this type. This "
+                "probably means you did not run Forest.set_class_variables"
+            )
 
     def consistency_check(self):
         """Consistency checks after __init__"""

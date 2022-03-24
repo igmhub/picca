@@ -84,10 +84,9 @@ class Pk1dForest(Forest):
     def class_variable_check(cls):
         """Check that class variables have been correctly initialized"""
         if cls.lambda_abs_igm is None:
-            raise AstronomicalObjectError("Error constructing Pk1DForest. "
-                                          "Class variable 'lambda_abs_igm' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
+            raise AstronomicalObjectError(
+                "Error constructing Pk1dForest. Class variable 'lambda_abs_igm' "
+                "must be set prior to initialize instances of this type")
 
     def consistency_check(self):
         """Consistency checks after __init__"""

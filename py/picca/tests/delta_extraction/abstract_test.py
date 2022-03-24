@@ -62,6 +62,40 @@ class AbstractTest(unittest.TestCase):
             orig.close()
             new.close()
 
+    def compare_error_message(self, context_manager, expected_message,
+                              startswith=False):
+        """Check the received error message is the same as the expected
+
+        Arguments
+        ---------
+        context_manager: unittest.case._AssertRaisesContext
+        Context manager when errors are expected to be raised.
+
+        expected_message: str
+        Expected error message
+
+        startswith: bool - Default: False
+        If True, check that expected_message is the beginning of the actual error
+        message. Otherwise check that expected_message is the entire message
+        """
+        if startswith:
+            if not str(context_manager.exception).startswith(expected_message):
+                print("\nReceived incorrect error message")
+                print("Expected message to start with:")
+                print(expected_message)
+                print("Received:")
+                print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception).startswith(
+                expected_message))
+        else:
+            if not str(context_manager.exception) == expected_message:
+                print("\nReceived incorrect error message")
+                print("Expected:")
+                print(expected_message)
+                print("Received:")
+                print(context_manager.exception)
+            self.assertTrue(str(context_manager.exception) == expected_message)
+
     def compare_fits(self, orig_file, new_file):
         """Compare two fits files to check that they are equal
 

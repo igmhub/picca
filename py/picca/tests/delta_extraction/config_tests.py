@@ -45,23 +45,8 @@ class ConfigTest(AbstractTest):
         with self.assertRaises(ConfigError) as context_manager:
             config = Config(in_file)
 
-        if startswith:
-            if not str(context_manager.exception).startswith(expected_message):
-                print("\nReceived incorrect error message")
-                print("Expected message to start with:")
-                print(expected_message)
-                print("Received:")
-                print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith(
-                expected_message))
-        else:
-            if not str(context_manager.exception) == expected_message:
-                print("\nReceived incorrect error message")
-                print("Expected:")
-                print(expected_message)
-                print("Received:")
-                print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception) == expected_message)
+        self.compare_error_message(context_manager, expected_message,
+                                   startswith=startswith)
 
     def compare_config(self, orig_file, new_file):
         """Compares two configuration files to check that they are equal
