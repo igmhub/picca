@@ -477,7 +477,8 @@ class Forest(AstronomicalObject):
     def set_class_variables(cls, lambda_min, lambda_max,
                             lambda_min_rest_frame,
                             lambda_max_rest_frame,
-                            pixel_step, pixel_step_rest_frame, wave_solution):
+                            pixel_step, pixel_step_rest_frame,
+                            wave_solution):
         """Set class variables
 
         Arguments
@@ -512,7 +513,6 @@ class Forest(AstronomicalObject):
                 np.log10(lambda_min_rest_frame) + pixel_step_rest_frame/2,
                 np.log10(lambda_max_rest_frame),
                 pixel_step_rest_frame)
-            cls.mask_fields = defaults.get("mask fields log").copy()
         elif wave_solution == "lin":
             cls.log_lambda_grid = np.log10(np.arange(
                 lambda_min,
