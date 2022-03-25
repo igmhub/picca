@@ -262,7 +262,7 @@ def process_all_files(index_file_args):
             elif (args.noise_estimate == 'diff' or args.noise_estimate == 'rebin_diff'):
                 pk = (pk_raw - pk_diff) / correction_reso
             elif (args.noise_estimate == 'mean_diff' or 'mean_rebin_diff'):
-                if args.kmin_noise_avg is None and and linear_binning:
+                if args.kmin_noise_avg is None and linear_binning:
                     #this is roughly the same range as eBOSS analyses for z=2.2
                     selection = (k > 0) & (k < 1.5)
                 elif args.kmin_noise_avg is None:
