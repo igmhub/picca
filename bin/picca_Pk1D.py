@@ -447,7 +447,7 @@ def main(cmdargs):
     parser.add_argument(
         '--noise-estimate',
         type=str,
-        default='mean_rebin_diff',
+        default='mean_diff',
         required=False,
         help=('Estimate of Pk_noise '
               'pipeline/mean_pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff'))
