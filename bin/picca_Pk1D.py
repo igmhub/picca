@@ -30,7 +30,7 @@ def check_linear_binning(delta):
 
     Returns:
         linear_binning (bool): boolean telling the binning_type
-        delta_lam (float): size of a wavelength bin in the right unit
+        pixel_step (float): size of a wavelength bin in the right unit
     """
 
     diff_lambda = np.diff(10**delta.log_lambda)
@@ -40,11 +40,11 @@ def check_linear_binning(delta):
     if (q25_lambda - q5_lambda) < 1e-6:
         #we can assume linear binning for this case
         linear_binning = True
-        delta_lam = np.min(diff_lambda)
+        pixel_step = np.min(diff_lambda)
     elif (q25_log_lambda - q5_log_lambda) < 1e-6 and q5_log_lambda < 0.01:
         #we can assume log_linear binning for this case
         linear_binning = False
-        delta_lam = np.min(diff_log_lambda)
+        pixel_step = np.min(diff_log_lambda)
     elif (q5_log_lambda >= 0.01):
         raise ValueError(
             "Could not figure out if linear or log wavelength binning was used, probably submitted lambda as log_lambda"
@@ -54,12 +54,13 @@ def check_linear_binning(delta):
             "Could not figure out if linear or log wavelength binning was used"
         )
 
-    return linear_binning, delta_lam
+    return linear_binning, pixel_step
 
 
 # loop over input files
 num_data=0
 def process_all_files(index_file_args):
+    global num_data
     file_index, file, args = index_file_args
     if file_index % 5 == 0:
         userprint("\rread {} of {} {}".format(file_index, args.len_files,
@@ -76,10 +77,9 @@ def process_all_files(index_file_args):
 
     #add the check for linear binning on first spectrum only (assuming homogeneity within the file)
     delta = deltas[0]
-    linear_binning, delta_lam = check_linear_binning(delta)
+    linear_binning, pixel_step = check_linear_binning(delta)
     if linear_binning:
         userprint("\n\nUsing linear binning, results will have units of AA")
-        delta_lambda = delta_lam
         if (args.disable_reso_matrix or not hasattr(delta, 'resolution_matrix')
                 or delta.resolution_matrix is None):
             userprint(
@@ -91,7 +91,6 @@ def process_all_files(index_file_args):
             reso_correction = "matrix"
     else:
         userprint("\n\nUsing log binning, results will have units of km/s")
-        delta_log_lambda = delta_lam
         reso_correction = "Gaussian"
         userprint("Using Gaussian resolution correction\n")
 
@@ -136,7 +135,7 @@ def process_all_files(index_file_args):
         if linear_binning:
             split_array = split_forest(
                 num_parts,
-                delta_lambda,
+                pixel_step,
                 10**delta.log_lambda,
                 delta.delta,
                 delta.exposures_diff,
@@ -153,7 +152,7 @@ def process_all_files(index_file_args):
                  ivar_array) = split_array
         else:
             (mean_z_array, log_lambda_array, delta_array, exposures_diff_array,
-             ivar_array) = split_forest(num_parts, delta_log_lambda,
+             ivar_array) = split_forest(num_parts, pixel_step,
                                         delta.log_lambda, delta.delta,
                                         delta.exposures_diff, delta.ivar,
                                         first_pixel_index)
@@ -165,11 +164,11 @@ def process_all_files(index_file_args):
                     or args.noise_estimate == 'mean_rebin_diff'):
                 if linear_binning:
                     exposures_diff_array[part_index] = rebin_diff_noise(
-                        delta_lambda, lambda_array[part_index],
+                        pixel_step, lambda_array[part_index],
                         exposures_diff_array[part_index])
                 else:
                     exposures_diff_array[part_index] = rebin_diff_noise(
-                        delta_log_lambda, log_lambda_array[part_index],
+                        pixel_step, log_lambda_array[part_index],
                         exposures_diff_array[part_index])
 
             # Fill masked pixels with 0.
@@ -178,13 +177,13 @@ def process_all_files(index_file_args):
                 #the resolution matrix does not need to have pixels filled in any way...
                 (lambda_new, delta_new, exposures_diff_new, ivar_new,
                  num_masked_pixels) = fill_masked_pixels(
-                     delta_lambda, lambda_array[part_index],
+                     pixel_step, lambda_array[part_index],
                      delta_array[part_index], exposures_diff_array[part_index],
                      ivar_array[part_index], args.no_apply_filling)
             else:
                 (log_lambda_new, delta_new, exposures_diff_new, ivar_new,
                  num_masked_pixels) = fill_masked_pixels(
-                     delta_log_lambda, log_lambda_array[part_index],
+                     pixel_step, log_lambda_array[part_index],
                      delta_array[part_index], exposures_diff_array[part_index],
                      ivar_array[part_index], args.no_apply_filling)
             if num_masked_pixels > args.nb_pixel_masked_max:
@@ -192,11 +191,11 @@ def process_all_files(index_file_args):
 
             # Compute pk_raw, needs uniform binning
             if linear_binning:
-                k, pk_raw = compute_pk_raw(delta_lambda,
+                k, pk_raw = compute_pk_raw(pixel_step,
                                            delta_new,
                                            linear_binning=True)
             else:
-                k, pk_raw = compute_pk_raw(delta_log_lambda,
+                k, pk_raw = compute_pk_raw(pixel_step,
                                            delta_new,
                                            linear_binning=False)
 
@@ -205,14 +204,14 @@ def process_all_files(index_file_args):
             if args.noise_estimate == 'pipeline':
                 run_noise = True
             if linear_binning:
-                pk_noise, pk_diff = compute_pk_noise(delta_lambda,
+                pk_noise, pk_diff = compute_pk_noise(pixel_step,
                                                      ivar_new,
                                                      exposures_diff_new,
                                                      run_noise,
                                                      linear_binning=True,
                                                      num_noise_exposures=args.num_noise_exp)
             else:
-                pk_noise, pk_diff = compute_pk_noise(delta_log_lambda,
+                pk_noise, pk_diff = compute_pk_noise(pixel_step,
                                                      ivar_new,
                                                      exposures_diff_new,
                                                      run_noise,
@@ -227,17 +226,17 @@ def process_all_files(index_file_args):
                         reso_matrix=np.mean(reso_matrix_array[part_index],
                                             axis=1),
                         k=k,
-                        delta_pixel=delta_lambda,
+                        delta_pixel=pixel_step,
                         num_pixel=len(lambda_new))
                 elif reso_correction == 'Gaussian':
                     #this is roughly converting the mean resolution estimate back to pixels
                     #and then multiplying with pixel size
-                    mean_reso_AA = delta_lambda * delta.mean_reso_pix
+                    mean_reso_AA = pixel_step * delta.mean_reso_pix
                     correction_reso = compute_correction_reso(
-                        delta_pixel=delta_lambda, mean_reso=mean_reso_AA, k=k)
+                        delta_pixel=pixel_step, mean_reso=mean_reso_AA, k=k)
             else:
                 #in this case all is in velocity space
-                delta_pixel = (delta_log_lambda * np.log(10.) *
+                delta_pixel = (pixel_step * np.log(10.) *
                                constants.speed_light / 1000.)
                 correction_reso = compute_correction_reso(
                     delta_pixel=delta_pixel, mean_reso=delta.mean_reso, k=k)
