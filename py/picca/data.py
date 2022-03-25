@@ -95,7 +95,7 @@ class QSO(object):
         self.los_id = los_id
         #this is for legacy purposes only
         self.thingid = los_id
-        warnings.warn("currently a thingid entry is created in QSO.__init__, this feature will be removed", warnings.DeprecationWarning)
+        warnings.warn("currently a thingid entry is created in QSO.__init__, this feature will be removed", DeprecationWarning)
 
         # variables computed in function io.read_objects
         self.weight = None
