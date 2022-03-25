@@ -37,8 +37,9 @@ def setup_forest(wave_solution, rebin=1):
         pixel_step = 1e-4 * rebin
     elif wave_solution == "lin":
         pixel_step = 1.0
+    pixel_step_rf = pixel_step
 
-    Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step,
+    Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step, pixel_step_rf,
                                wave_solution)
 
 setup_forest("log", rebin=3)

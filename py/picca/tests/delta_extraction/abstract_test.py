@@ -5,6 +5,9 @@ import os
 import numpy as np
 import astropy.io.fits as fits
 
+from picca.tests.delta_extraction.test_utils import (reset_forest, setup_forest,
+                                                     setup_pk1d_forest)
+
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class AbstractTest(unittest.TestCase):
@@ -17,12 +20,22 @@ class AbstractTest(unittest.TestCase):
     setUp
     """
     def setUp(self):
-        """ Check that the results folder exists and create it
-            if it does not."""
+        """ Actions done at test startup
+        Check that the results folder exists and create it
+        if it does not.
+        Also make sure that Forest and Pk1dForest class variables are reset
+        """
         if not os.path.exists("{}/results/".format(THIS_DIR)):
             os.makedirs("{}/results/".format(THIS_DIR))
         if not os.path.exists("{}/results/Log/".format(THIS_DIR)):
             os.makedirs("{}/results/Log/".format(THIS_DIR))
+        reset_forest()
+
+    def tearDown(self):
+        """ Actions done at test end
+        Make sure that Forest and Pk1dForest class variables are reset
+        """
+        reset_forest()
 
     def compare_ascii(self, orig_file, new_file):
         """Compare two ascii files to check that they are equal

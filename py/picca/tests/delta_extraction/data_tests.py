@@ -94,6 +94,7 @@ class DataTest(AbstractTest):
                             "rejection log file": "rejection_log.fits.gz",
                             "wave solution": "log",
                             "delta log lambda": 3e-4,
+                            "delta log lambda rest frame": 3e-4,
                             "input directory": f"{THIS_DIR}/data/",
                         }})
         for key, value in defaults_data.items():
@@ -116,6 +117,7 @@ class DataTest(AbstractTest):
                                    "rejection log file": "rejection_log.fits.gz",
                                    "wave solution": "log",
                                    "delta log lambda": 3e-4,
+                                   "delta log lambda rest frame": 3e-4,
                                    "input directory": f"{THIS_DIR}/data/",
                          }})
         for key, value in defaults_data.items():

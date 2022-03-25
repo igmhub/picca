@@ -66,7 +66,7 @@ class ConfigTest(AbstractTest):
 
         for section in orig_config.sections():
             if not section in new_config.sections():
-                print(f"Section {section} missing on {new_file}")
+                print(f"Section [{section}] missing on {new_file}")
             self.assertTrue(section in new_config.sections())
             orig_section = orig_config[section]
             new_section = new_config[section]
@@ -76,9 +76,9 @@ class ConfigTest(AbstractTest):
             else:
                 for key, orig_value in orig_section.items():
                     if key not in new_section.keys():
-                        print(f"key {key} in section {new_section} missing in "
+                        print(f"key '{key}' in section [{new_section}] missing in "
                               "new file")
-                        self.assertTrue(key in new_section.keys())
+                    self.assertTrue(key in new_section.keys())
                     new_value = new_section.get(key)
                     # this is necessary to remove the system dependent bits of
                     # the paths
@@ -88,19 +88,21 @@ class ConfigTest(AbstractTest):
                         orig_value = orig_value.split(base_path)[-1]
 
                     if not orig_value == new_value:
-                        print(f"In section [{section}], for key {key} found "
-                              "orig value = {orig_value} but new value = "
+                        print(f"In section [{section}], for key '{key}'' found "
+                              f"orig value = {orig_value} but new value = "
                               f"{new_value}")
                     self.assertTrue(orig_value == new_value)
             for key in new_section.keys():
                 if key not in orig_section.keys():
-                    print(f"key {key} in section {section} missing in original "
+                    print(f"key '{key}' in section [{section}] missing in original "
                           "file")
-                    self.assertTrue(key in orig_section.keys())
+                    for key2, value in new_section.items():
+                        print(key2, value)
+                self.assertTrue(key in orig_section.keys())
 
         for section in new_config.sections():
             if not section in orig_config.sections():
-                print(f"Section {section} missing on {orig_file}")
+                print(f"Section [{section}] missing on '{orig_file}'")
 
             self.assertTrue(section in orig_config.sections())
 

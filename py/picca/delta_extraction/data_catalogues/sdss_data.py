@@ -19,6 +19,7 @@ from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
 accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_catalogue +[
     "rebin", "mode"])))
 
+defaults = defaults.copy()
 defaults.update({
     "mode": "spplate",
     "rebin": 3,
@@ -180,7 +181,8 @@ class SdssData(Data):
                         "mjd": mjd,
                         "fiberid": fiberid,
                         "exposures_diff": exposures_diff,
-                        "reso": reso
+                        "reso": reso,
+                        "reso_pix": wdisp
                     })
             else:
                 raise DataError(f"analysis_type = {self.analysis_type}")

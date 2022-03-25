@@ -41,13 +41,6 @@ class ExpectedFluxTest(AbstractTest):
     test_dr16_expected_flux_populate_los_ids
     test_dr16_expected_flux_save_iteration_step
     """
-    def setUp(self):
-        reset_forest()
-        super().setUp()
-
-    def tearDown(self):
-        reset_forest()
-
     def test_dr16_expected_flux(self):
         """Test constructor for class Dr16ExpectedFlux
 

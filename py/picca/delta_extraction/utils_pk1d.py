@@ -16,6 +16,7 @@ from picca.delta_extraction.utils import SPEED_LIGHT
 # create logger
 module_logger = logging.getLogger(__name__)
 
+
 def exp_diff(hdul, log_lambda):
     """Compute the difference between exposures.
 
@@ -59,7 +60,8 @@ def exp_diff(hdul, log_lambda):
 
             # exclude masks 25 (COMBINEREJ), 23 (BRIGHTSKY)?
             rebin_ivar_exp = np.bincount(log_lambda_bins,
-                                         weights=ivar_exp * (mask & 2**25 == 0))
+                                         weights=ivar_exp *
+                                         (mask & 2**25 == 0))
             rebin_flux_exp = np.bincount(log_lambda_bins,
                                          weights=(ivar_exp * flux_exp *
                                                   (mask & 2**25 == 0)))
@@ -68,8 +70,10 @@ def exp_diff(hdul, log_lambda):
                 flux_total_odd[:len(rebin_ivar_exp) - 1] += rebin_flux_exp[:-1]
                 ivar_total_odd[:len(rebin_ivar_exp) - 1] += rebin_ivar_exp[:-1]
             else:
-                flux_total_even[:len(rebin_ivar_exp) - 1] += rebin_flux_exp[:-1]
-                ivar_total_even[:len(rebin_ivar_exp) - 1] += rebin_ivar_exp[:-1]
+                flux_total_even[:len(rebin_ivar_exp) -
+                                1] += rebin_flux_exp[:-1]
+                ivar_total_even[:len(rebin_ivar_exp) -
+                                1] += rebin_ivar_exp[:-1]
 
     w = ivar_total_odd > 0
     flux_total_odd[w] /= ivar_total_odd[w]
@@ -85,6 +89,77 @@ def exp_diff(hdul, log_lambda):
     exposures_diff = 0.5 * (flux_total_even - flux_total_odd) * alpha
 
     return exposures_diff
+
+
+def exp_diff_desi(spec_dict, mask_targetid):
+    """Computes the difference between exposures.
+
+    More precisely computes de semidifference between two customized coadded
+    spectra obtained from weighted averages of the even-number exposures, for
+    the first spectrum, and of the odd-number exposures, for the second one
+    (see section 3.2 of Chabanier et al. 2019).
+
+    Args:
+        spec_dict: dict
+            spec dictionary from desi_healpix/tile
+        mask targetid: array of ints
+            Targetids to select for calculating the exp differences
+
+    Returns:
+        The difference between exposures
+    """
+    teff_lya = np.atleast_1d(spec_dict["TEFF_LYA"][mask_targetid])
+    argsort = np.flip(np.argsort(teff_lya))
+    flux = np.atleast_2d(spec_dict["FLUX"][mask_targetid])[argsort, :]
+    ivar = np.atleast_2d(spec_dict["IVAR"][mask_targetid])[argsort, :]
+    teff_lya = teff_lya[argsort]
+
+    num_exp = len(flux)
+    if (num_exp < 2):
+        module_logger.debug("Not enough exposures for diff, Spectra rejected")
+        return None
+    elif (num_exp > 100):
+        module_logger.debug("More than 100 exposures, potentially wrong file type and using wavelength axis here, skipping?")
+        return None
+    flux_total_odd = np.zeros(flux.shape[1])
+    ivar_total_odd = np.zeros(flux.shape[1])
+    flux_total_even = np.zeros(flux.shape[1])
+    ivar_total_even = np.zeros(flux.shape[1])
+    teff_even = 0
+    teff_odd = 0
+    teff_total = np.sum(teff_lya)
+    teff_last = teff_lya[-1]
+    for index_exp in range(2 * (num_exp // 2)):
+        flexp = flux[index_exp]
+        ivexp = ivar[index_exp]
+        teff_lya_exp = teff_lya[index_exp]
+        if index_exp % 2 == 1:
+            flux_total_odd += flexp * ivexp
+            ivar_total_odd += ivexp
+            teff_odd += teff_lya_exp
+        else:
+            flux_total_even += flexp * ivexp
+            ivar_total_even += ivexp
+            teff_even += teff_lya_exp
+
+    w = ivar_total_odd > 0
+    flux_total_odd[w] /= ivar_total_odd[w]
+    w = ivar_total_even > 0
+    flux_total_even[w] /= ivar_total_even[w]
+
+    alpha = 1
+    if (num_exp % 2 == 1):
+        n_even = (num_exp - 1) // 2
+        alpha_N_old = np.sqrt(4. * n_even * (num_exp - n_even)) / num_exp
+        # alpha_N = np.sqrt(4.*t_even*(t_exp-t_even))/t_exp
+        alpha_C_new = np.sqrt((teff_total - teff_last) / teff_total)
+        alpha_N_new = np.sqrt(
+            (teff_total - teff_last) * (teff_total + teff_last)) / teff_total
+        alpha = alpha_N_new
+    diff = 0.5 * (flux_total_even - flux_total_odd) * alpha
+
+    return diff
+
 
 
 def spectral_resolution(wdisp,
@@ -126,11 +201,11 @@ def spectral_resolution(wdisp,
         # fiberids greater than 500 corresponds to the second spectrograph
         fiberid = fiberid % 500
         if fiberid < 100:
-            correction = (1. + (correction - 1) * .25 + (correction - 1) * .75 *
-                          (fiberid) / 100.)
+            correction = (1. + (correction - 1) * .25 +
+                          (correction - 1) * .75 * (fiberid) / 100.)
         elif fiberid > 400:
-            correction = (1. + (correction - 1) * .25 + (correction - 1) * .75 *
-                          (500 - fiberid) / 100.)
+            correction = (1. + (correction - 1) * .25 +
+                          (correction - 1) * .75 * (500 - fiberid) / 100.)
 
         # apply the correction
         reso *= correction
@@ -154,14 +229,29 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     reso_in_km_per_s: array
     The spectral resolution
     """
-    delta_lambda = ((lambda_[-1] - lambda_[0]) /
-                    float(len(lambda_) - 1))
+    delta_log_lambda = np.diff(np.log10(lambda_))
+    #note that this would be the same result as before (except for the missing bug) in
+    #case of log-uniform binning, but for linear binning pixel size chenges wrt lambda
+    delta_log_lambda = np.append(
+        delta_log_lambda,
+        [delta_log_lambda[-1] + (delta_log_lambda[-1] - delta_log_lambda[-2])])
     reso = np.clip(reso_matrix, 1.0e-6, 1.0e6)
-    rms_in_pixel = (np.sqrt(1.0 / 2.0 / np.log(
-        reso[len(reso) // 2][:] / reso[len(reso) // 2 - 1][:])) + np.sqrt(
-            4.0 / 2.0 / np.log(
-                reso[len(reso) // 2][:] / reso[len(reso) // 2 - 2][:]))) / 2.0
+    #assume reso = A*exp(-(x-central_pixel_pos)**2 / 2 / sigma**2)
+    #=> sigma = sqrt((x-central_pixel_pos)/2)**2 / log(A/reso)
+    #   A = reso(central_pixel_pos)  
+    # the following averages over estimates for four symmetric values of x
+    rms_in_pixel = (
+        (np.sqrt(1.0 / 2.0 / np.log(
+            reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 1, :])) +
+         np.sqrt(4.0 / 2.0 / np.log(
+             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 - 2, :])) +
+         np.sqrt(1.0 / 2.0 / np.log(
+             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 1, :])) +
+         np.sqrt(4.0 / 2.0 / np.log(
+             reso[reso.shape[0] // 2, :] / reso[reso.shape[0] // 2 + 2, :])))
+        / 4.0) #this is rms
 
-    reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_lambda)
+    reso_in_km_per_s = (rms_in_pixel * SPEED_LIGHT * delta_log_lambda *
+                        np.log(10.0))   #this is FWHM
 
-    return reso_in_km_per_s
+    return rms_in_pixel, reso_in_km_per_s

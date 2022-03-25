@@ -22,6 +22,7 @@ from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_catalogue + [
     "blinding", "wave solution"])))
 
+defaults = defaults.copy()
 defaults.update({
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,

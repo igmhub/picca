@@ -181,7 +181,8 @@ class TrueContinuum(ExpectedFlux):
                 continue
             bins = find_bins(
                 forest.log_lambda -  np.log10(1 + forest.z),
-                Forest.log_lambda_rest_frame_grid
+                Forest.log_lambda_rest_frame_grid,
+                Forest.wave_solution
             )
 
             var_lss = self.get_var_lss(forest.log_lambda)

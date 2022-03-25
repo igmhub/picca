@@ -36,12 +36,11 @@ class MaskTest(AbstractTest):
     test_mask
     """
     def setUp(self):
-        reset_forest()
-        setup_forest("log")
+        """ Actions done at test startup
+        Initialize Forest class variables
+        """
         super().setUp()
-
-    def tearDown(self):
-        reset_forest()
+        setup_forest("log")
 
     def test_absorber_mask(self):
         """Test correct initialisation and inheritance for class
