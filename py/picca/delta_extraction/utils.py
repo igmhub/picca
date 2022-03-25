@@ -127,7 +127,7 @@ def class_from_string(class_name, module_name):
         accepted_options = []
     return class_object, default_args, accepted_options
 
-def find_bins(original_array, grid_array):
+def find_bins(original_array, grid_array, wave_solution):
     """For each element in original_array, find the corresponding bin in grid_array
 
     Arguments
@@ -138,13 +138,24 @@ def find_bins(original_array, grid_array):
     grid_array: array of float
     Common array, e.g. Forest.log_lambda_grid
 
+    wave_solution: "log" or "lin"
+    Specifies whether we want to construct a wavelength grid that is evenly
+    spaced on wavelength (lin) or on the logarithm of the wavelength (log)
+
     Return
     ------
     found_bin: array of int
     An array of size original_array.size filled with values smaller than
     grid_array.size with the bins correspondance
     """
-    found_bin = (np.abs(grid_array - original_array[:,np.newaxis])).argmin(axis=1)
+    # TODO: check the effect of finding the nearest bin in log_lambda space
+    # versus lambda space. Once we understand this we can possibly remove
+    # the dependence from Forest from here
+    if wave_solution == "log":
+        found_bin = (np.abs(grid_array - original_array[:,np.newaxis])).argmin(axis=1)
+    elif wave_solution == "lin":
+        found_bin = (np.abs(10**grid_array - 10**original_array[:,np.newaxis])).argmin(axis=1)
+
     return found_bin
 
 PROGRESS_LEVEL_NUM = 15

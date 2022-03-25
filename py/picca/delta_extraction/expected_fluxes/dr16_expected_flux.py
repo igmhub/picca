@@ -350,7 +350,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.use_ivar_as_weight is None:
             raise ExpectedFluxError(
                 "Missing argument 'use ivar as weight' required by Dr16ExpectedFlux")
-        
+
 
     def compute_continuum(self, forest):
         """Compute the forest continuum.
@@ -466,7 +466,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 variance = eta * var + var_lss + fudge / var
                 weights = 1. / variance
 
-            bins = find_bins(forest.log_lambda, Forest.log_lambda_grid)
+            bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
+                             Forest.wave_solution)
             rebin = np.bincount(bins, weights=delta * weights)
             stack_delta[:len(rebin)] += rebin
             rebin = np.bincount(bins, weights=weights)
@@ -507,7 +508,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 continue
             bins = find_bins(
                 forest.log_lambda - np.log10(1 + forest.z),
-                Forest.log_lambda_rest_frame_grid
+                Forest.log_lambda_rest_frame_grid,
+                Forest.wave_solution
             )
 
             var_lss = self.get_var_lss(forest.log_lambda)
@@ -652,7 +654,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             # select the wavelength bins
             log_lambda_bins = find_bins(
                 forest.log_lambda,
-                self.log_lambda_var_func_grid
+                self.log_lambda_var_func_grid,
+                Forest.wave_solution
                 )
             # filter the values with a pipeline variance out of range
             log_lambda_bins = log_lambda_bins[w]

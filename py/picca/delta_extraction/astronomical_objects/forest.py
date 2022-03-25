@@ -424,7 +424,8 @@ class Forest(AstronomicalObject):
         self.ivar = self.ivar[w1]
         self.transmission_correction = self.transmission_correction[w1]
 
-        bins = find_bins(self.log_lambda, Forest.log_lambda_grid)
+        bins = find_bins(self.log_lambda, Forest.log_lambda_grid,
+                         Forest.wave_solution)
         self.log_lambda = Forest.log_lambda_grid[0] + bins * pixel_step
 
         # rebin flux, ivar and transmission_correction
