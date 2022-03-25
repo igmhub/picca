@@ -13,6 +13,7 @@ from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import ABSORBER_IGM
 
 accepted_options = ["analysis type", "delta lambda", "delta log lambda",
+                    "delta lambda rest frame",
                     "input directory",
                     "lambda abs IGM",
                     "lambda max", "lambda max rest frame",
@@ -126,11 +127,22 @@ class Data:
             if pixel_step is None:
                 raise DataError("Missing argument 'delta log lambda' required by "
                                 "Data when 'wave solution' is set to 'log'")
+            pixel_step_rest_frame = config.getfloat("delta log lambda rest frame")
+            if pixel_step_rest_frame is None:
+                pixel_step_rest_frame = pixel_step
+                self.logger.info("'delta log lambda rest frame' not set, using "
+                                 f"the same value as for 'delta log lambda' ({pixel_step_rest_frame})")
+            
         elif wave_solution == "lin":
             pixel_step = config.getfloat("delta lambda")
             if pixel_step is None:
                 raise DataError("Missing argument 'delta lambda' required by "
                                 "Data when 'wave solution' is set to 'lin'")
+            pixel_step_rest_frame = config.getfloat("delta lambda rest frame")
+            if pixel_step_rest_frame is None:
+                pixel_step_rest_frame = pixel_step
+                self.logger.info("'delta lambda rest frame' not set, using"
+                                 f"the same value as for 'delta lambda' ({pixel_step_rest_frame})")
         else:
             raise DataError("Forest.wave_solution must be either "
                             "'log' or 'lin'")
@@ -151,7 +163,8 @@ class Data:
         Forest.set_class_variables(lambda_min, lambda_max,
                                    lambda_min_rest_frame,
                                    lambda_max_rest_frame,
-                                   pixel_step, wave_solution)
+                                   pixel_step, pixel_step_rest_frame,
+                                   wave_solution)
 
         # instance variables
         self.analysis_type = config.get("analysis type")
@@ -287,6 +300,13 @@ class Data:
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to finding nan")
+            elif self.analysis_type=='PK 1D' and forest.mean_snr<1:
+                #TODO: add variable for the SNR cut, actually only required for constant weights...
+                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
+                                          f"low SNR ({forest.mean_snr})")
+                self.logger.progress(
+                    f"Rejected forest with los_id {forest.los_id} "
+                    "due to low SNR")
             else:
                 continue
 

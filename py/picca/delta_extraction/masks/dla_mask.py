@@ -22,6 +22,7 @@ np.random.seed(0)
 num_points = 10000
 gaussian_dist = np.random.normal(size=num_points) * np.sqrt(2)
 
+
 class DlaMask(Mask):
     """Class to mask DLAs
 
@@ -73,7 +74,8 @@ class DlaMask(Mask):
 
         los_id_name = config.get("los_id name")
         if los_id_name is None:
-            raise MaskError("Missing argument 'los_id name' required by DlaMask")
+            raise MaskError(
+                "Missing argument 'los_id name' required by DlaMask")
 
         self.logger.progress(f"Reading DLA catalog from: {filename}")
         columns_list = [los_id_name, "Z", "NHI"]
@@ -98,7 +100,8 @@ class DlaMask(Mask):
         num_dlas = np.sum([len(los_id) for los_id in self.los_ids.values()])
 
         self.logger.progress('In catalog: {} DLAs'.format(num_dlas))
-        self.logger.progress('In catalog: {} forests have a DLA\n'.format(len(self.los_ids)))
+        self.logger.progress('In catalog: {} forests have a DLA\n'.format(
+            len(self.los_ids)))
 
         # setup transmission limit
         # transmissions below this number are masked
@@ -112,7 +115,8 @@ class DlaMask(Mask):
         if mask_file is not None:
             try:
                 self.mask = Table.read(mask_file,
-                                       names=('type', 'wave_min', 'wave_max', 'frame'),
+                                       names=('type', 'wave_min', 'wave_max',
+                                              'frame'),
                                        format='ascii')
                 self.mask = self.mask['frame'] == 'RF_DLA'
             except (OSError, ValueError):
@@ -140,22 +144,25 @@ class DlaMask(Mask):
         if self.los_ids.get(forest.los_id) is not None:
             dla_transmission = np.ones(len(lambda_))
             for (z_abs, nhi) in self.los_ids.get(forest.los_id):
-                dla_transmission *= DlaProfile(lambda_, z_abs, nhi).transmission
+                dla_transmission *= DlaProfile(lambda_, z_abs,
+                                               nhi).transmission
 
             # find out which pixels to mask
             w = dla_transmission > self.dla_mask_limit
             if len(self.mask) > 0:
                 for mask_range in self.mask:
                     for (z_abs, nhi) in self.los_ids.get(forest.los_id):
-                        w &= ((lambda_ / (1. + z_abs) <
-                               mask_range['wave_min']) |
-                              (lambda_ / (1. + z_abs) >
-                               mask_range['wave_max']))
+                        w &= ((lambda_ / (1. + z_abs) < mask_range['wave_min'])
+                              | (lambda_ /
+                                 (1. + z_abs) > mask_range['wave_max']))
 
             # do the actual masking
             forest.transmission_correction *= dla_transmission
             for param in Forest.mask_fields:
-                setattr(forest, param, getattr(forest, param)[w])
+                if param in ['resolution_matrix']:
+                    setattr(forest, param, getattr(forest, param)[:, w])
+                else:
+                    setattr(forest, param, getattr(forest, param)[w])
 
 
 class DlaProfile:
@@ -201,10 +208,8 @@ class DlaProfile:
         self.z_abs = z_abs
         self.nhi = nhi
 
-        self.transmission = self.profile_lya_absorption(lambda_,
-                                                        z_abs, nhi)
-        self.transmission *= self.profile_lyb_absorption(
-            lambda_, z_abs, nhi)
+        self.transmission = self.profile_lya_absorption(lambda_, z_abs, nhi)
+        self.transmission *= self.profile_lyb_absorption(lambda_, z_abs, nhi)
 
     @staticmethod
     def profile_lya_absorption(lambda_, z_abs, nhi):

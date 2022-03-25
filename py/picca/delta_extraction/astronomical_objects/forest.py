@@ -1,6 +1,7 @@
 """This module defines the abstract class Forest from which all
 objects representing a forest must inherit from
 """
+import logging
 import numpy as np
 
 from picca.delta_extraction.astronomical_object import AstronomicalObject
@@ -98,6 +99,8 @@ class Forest(AstronomicalObject):
         -----
         AstronomicalObjectError if there are missing variables
         """
+        self.logger = logging.getLogger(__name__)
+
         Forest.class_variable_check()
 
         self.log_lambda = kwargs.get("log_lambda")
@@ -474,7 +477,7 @@ class Forest(AstronomicalObject):
     def set_class_variables(cls, lambda_min, lambda_max,
                             lambda_min_rest_frame,
                             lambda_max_rest_frame,
-                            pixel_step, wave_solution):
+                            pixel_step, pixel_step_rest_frame, wave_solution):
         """Set class variables
 
         Arguments
@@ -506,18 +509,19 @@ class Forest(AstronomicalObject):
                 np.log10(lambda_max) + pixel_step/2,
                 pixel_step)
             cls.log_lambda_rest_frame_grid = np.arange(
-                np.log10(lambda_min_rest_frame) + pixel_step/2,
+                np.log10(lambda_min_rest_frame) + pixel_step_rest_frame/2,
                 np.log10(lambda_max_rest_frame),
-                pixel_step)
+                pixel_step_rest_frame)
+            cls.mask_fields = defaults.get("mask fields log").copy()
         elif wave_solution == "lin":
             cls.log_lambda_grid = np.log10(np.arange(
                 lambda_min,
                 lambda_max + pixel_step/2,
                 pixel_step))
             cls.log_lambda_rest_frame_grid = np.log10(np.arange(
-                lambda_min_rest_frame + pixel_step/2,
+                lambda_min_rest_frame + pixel_step_rest_frame/2,
                 lambda_max_rest_frame,
-                pixel_step))
+                pixel_step_rest_frame))
         else:
             raise AstronomicalObjectError("Error in setting Forest class "
                                           "variables. 'wave_solution' "

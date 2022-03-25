@@ -181,7 +181,8 @@ class SdssData(Data):
                         "mjd": mjd,
                         "fiberid": fiberid,
                         "exposures_diff": exposures_diff,
-                        "reso": reso
+                        "reso": reso,
+                        "reso_pix": wdisp
                     })
             else:
                 raise DataError(f"analysis_type = {self.analysis_type}")

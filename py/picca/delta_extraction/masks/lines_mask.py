@@ -12,6 +12,7 @@ defaults = {
 
 accepted_options = ["filename"]
 
+
 class LinesMask(Mask):
     """Class to mask (sky) lines
 
@@ -44,7 +45,8 @@ class LinesMask(Mask):
 
         mask_file = config.get("filename")
         if mask_file is None:
-            raise MaskError("Missing argument 'filename' required by LinesMask")
+            raise MaskError(
+                "Missing argument 'filename' required by LinesMask")
         try:
             mask = Table.read(mask_file,
                               names=('type', 'wave_min', 'wave_max', 'frame'),
@@ -86,4 +88,7 @@ class LinesMask(Mask):
 
         # do the actual masking
         for param in Forest.mask_fields:
-            setattr(forest, param, getattr(forest, param)[w])
+            if param in ['resolution_matrix']:
+                setattr(forest, param, getattr(forest, param)[:, w])
+            else:
+                setattr(forest, param, getattr(forest, param)[w])

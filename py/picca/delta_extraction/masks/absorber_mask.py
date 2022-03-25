@@ -15,6 +15,7 @@ defaults = {
 
 accepted_options = ["absorber mask width", "filename"]
 
+
 class AbsorberMask(Mask):
     """Class to mask Absorbers
 
@@ -58,7 +59,8 @@ class AbsorberMask(Mask):
 
         los_id_name = config.get("los_id name")
         if los_id_name is None:
-            raise MaskError("Missing argument 'los_id name' required by AbsorberMask")
+            raise MaskError(
+                "Missing argument 'los_id name' required by AbsorberMask")
 
         columns_list = [los_id_name, "LAMBDA_ABS"]
         try:
@@ -81,17 +83,20 @@ class AbsorberMask(Mask):
         for los_id in np.unique(cat[los_id_name]):
             w = (los_id == cat[los_id_name])
             self.los_ids[los_id] = list(cat[los_id_name][w])
-        num_absorbers = np.sum([len(los_id) for los_id in self.los_ids.values()])
+        num_absorbers = np.sum(
+            [len(los_id) for los_id in self.los_ids.values()])
 
         self.logger.progress(" In catalog: {} absorbers".format(num_absorbers))
-        self.logger.progress(" In catalog: {} forests have absorbers\n".format(len(self.los_ids)))
+        self.logger.progress(" In catalog: {} forests have absorbers\n".format(
+            len(self.los_ids)))
 
         # setup transmission limit
         # transmissions below this number are masked
         self.absorber_mask_width = config.getfloat("absorber mask width")
         if self.absorber_mask_width is None:
-            raise MaskError("Missing argument 'absorber mask width' required by "
-                            "AbsorbersMask")
+            raise MaskError(
+                "Missing argument 'absorber mask width' required by "
+                "AbsorbersMask")
 
     def apply_mask(self, forest):
         """Applies the mask. The mask is done by removing the affected
@@ -116,4 +121,7 @@ class AbsorberMask(Mask):
 
             # do the actual masking
             for param in Forest.mask_fields:
-                setattr(forest, param, getattr(forest, param)[w])
+                if param in ['resolution_matrix']:
+                    setattr(forest, param, getattr(forest, param)[:, w])
+                else:
+                    setattr(forest, param, getattr(forest, param)[w])
