@@ -34,6 +34,7 @@ lines = {
     "lOI": 1039
 }
 
+
 class BalMask(Mask):
     """Class to mask BALs
 
@@ -86,36 +87,35 @@ class BalMask(Mask):
 
         los_id_name = config.get("los_id name")
         if los_id_name is None:
-            raise MaskError("Missing argument 'los_id name' required by BalMask")
+            raise MaskError(
+                "Missing argument 'los_id name' required by BalMask")
         elif los_id_name == "THING_ID":
             ext_name = 'BALCAT'
         elif los_id_name == "TARGETID":
             ext_name = 'ZCATALOG'
         else:
-            raise MaskError("Unrecognized los_id name. Expected one of 'THING_ID' "
-                            f" or 'TARGETID'. Found {los_id_name}")
+            raise MaskError(
+                "Unrecognized los_id name. Expected one of 'THING_ID' "
+                f" or 'TARGETID'. Found {los_id_name}")
 
         # setup bal index limit
         self.bal_index_type = config.getfloat("bal index type")
         if self.bal_index_type is None:
-            self.bal_index_type = MaskError("Missing argument 'bal index type' "
-                                            "required by BalMask")
+            self.bal_index_type = MaskError(
+                "Missing argument 'bal index type' "
+                "required by BalMask")
         if self.bal_index_type == "ai":
-            columns_list = [
-                los_id_name, 'VMIN_CIV_450', 'VMAX_CIV_450'
-            ]
+            columns_list = [los_id_name, 'VMIN_CIV_450', 'VMAX_CIV_450']
         elif self.bal_index_type == "bi":
-            columns_list = [
-                los_id_name, 'VMIN_CIV_2000', 'VMAX_CIV_2000'
-            ]
+            columns_list = [los_id_name, 'VMIN_CIV_2000', 'VMAX_CIV_2000']
         else:
-            self.bal_index_type = MaskError("In BalMask, unrecognized value "
-                                            "for 'bal_index_type'. Expected one "
-                                            "of 'ai' or 'bi'. Found "
-                                            f"{self.bal_index_type}")
+            self.bal_index_type = MaskError(
+                "In BalMask, unrecognized value "
+                "for 'bal_index_type'. Expected one "
+                "of 'ai' or 'bi'. Found "
+                f"{self.bal_index_type}")
 
         self.logger.progress(f"Reading BAL catalog from: {filename}")
-
 
         try:
             hdul = fitsio.FITS(filename)
@@ -154,8 +154,9 @@ class BalMask(Mask):
         else:  # AI, the default
             velocity_list = ['VMIN_CIV_450', 'VMAX_CIV_450']
 
-        mask_rest_frame_bal = Table(names=['log_lambda_min', 'log_lambda_max',
-                                           'lambda_min', 'lambda_max'],
+        mask_rest_frame_bal = Table(names=[
+            'log_lambda_min', 'log_lambda_max', 'lambda_min', 'lambda_max'
+        ],
                                     dtype=['f4', 'f4', 'f4', 'f4'])
         min_velocities = []  # list of minimum velocities
         max_velocities = []  # list of maximum velocities
@@ -181,9 +182,12 @@ class BalMask(Mask):
             for line in lines.values():
                 log_lambda_min = np.log10(line * (1 - min_vel / SPEED_LIGHT))
                 log_lambda_max = np.log10(line * (1 - max_vel / SPEED_LIGHT))
-                mask_rest_frame_bal.add_row([log_lambda_min, log_lambda_max,
-                                             10**log_lambda_min, 10**log_lambda_max,
-                                             ])
+                mask_rest_frame_bal.add_row([
+                    log_lambda_min,
+                    log_lambda_max,
+                    10**log_lambda_min,
+                    10**log_lambda_max,
+                ])
 
         return mask_rest_frame_bal
 
@@ -207,18 +211,25 @@ class BalMask(Mask):
             if Forest.wave_solution == "log":
                 w = np.ones(forest.log_lambda.size, dtype=bool)
                 for mask_range in mask_table:
-                    rest_frame_log_lambda = forest.log_lambda - np.log10(1. + forest.z)
-                    w &= ((rest_frame_log_lambda < mask_range['log_lambda_min']) |
-                          (rest_frame_log_lambda > mask_range['log_lambda_max']))
+                    rest_frame_log_lambda = forest.log_lambda - np.log10(
+                        1. + forest.z)
+                    w &= (
+                        (rest_frame_log_lambda < mask_range['log_lambda_min'])
+                        |
+                        (rest_frame_log_lambda > mask_range['log_lambda_max']))
             elif Forest.wave_solution == "lin":
                 w = np.ones(forest.lambda_.size, dtype=bool)
                 for mask_range in mask_table:
-                    rest_frame_lambda = forest.lambda_/(1. + forest.z)
+                    rest_frame_lambda = forest.lambda_ / (1. + forest.z)
                     w &= ((rest_frame_lambda < mask_range['lambda_min']) |
                           (rest_frame_lambda > mask_range['lambda_max']))
             else:
-                raise MaskError("Forest.wave_solution must be either 'log' or 'lin'")
+                raise MaskError(
+                    "Forest.wave_solution must be either 'log' or 'lin'")
 
             # do the actual masking
             for param in Forest.mask_fields:
-                setattr(forest, param, getattr(forest, param)[w])
+                if param in ['resolution_matrix']:
+                    setattr(forest, param, getattr(forest, param)[:, w])
+                else:
+                    setattr(forest, param, getattr(forest, param)[w])

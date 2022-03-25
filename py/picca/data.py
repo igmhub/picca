@@ -7,6 +7,7 @@ See the respective docstrings for more details
 import numpy as np
 import iminuit
 import fitsio
+import warnings
 
 from . import constants
 from .utils import userprint, unred
@@ -58,7 +59,7 @@ class QSO(object):
         get_angle_between: Computes the angular separation between two quasars.
     """
 
-    def __init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid):
+    def __init__(self, los_id, ra, dec, z_qso, plate, mjd, fiberid):
         """Initializes class instance.
 
         Args:
@@ -91,7 +92,10 @@ class QSO(object):
         self.cos_dec = np.cos(dec)
 
         self.z_qso = z_qso
-        self.thingid = thingid
+        self.los_id = los_id
+        #this is for legacy purposes only
+        self.thingid = los_id
+        warnings.warn("currently a thingid entry is created in QSO.__init__, this feature will be removed", DeprecationWarning)
 
         # variables computed in function io.read_objects
         self.weight = None
@@ -931,9 +935,15 @@ class Delta(QSO):
         mean_snr: float
             Mean signal-to-noise ratio in the forest
         mean_reso: float
-            Mean resolution of the forest
+            Mean resolution of the forest in units of velocity (FWHM)
         mean_z: float
             Mean redshift of the forest
+        mean_reso_pix: float
+            Mean resolution of the forest in units of pixels (FWHM)
+        mean_resolution_matrix: array of floats or None
+            Mean (over wavelength) resolution matrix for that forest
+        resolution_matrix: 2d array of floats or None
+            Wavelength dependent resolution matrix for that forest
         delta_log_lambda: float
             Variation of the logarithm of the wavelength between two pixels
         z: array of floats or None
@@ -957,14 +967,15 @@ class Delta(QSO):
 
     """
 
-    def __init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
+    def __init__(self, los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                  weights, cont, delta, order, ivar, exposures_diff, mean_snr,
-                 mean_reso, mean_z, delta_log_lambda):
+                 mean_reso, mean_z, resolution_matrix=None,
+                 mean_resolution_matrix=None, mean_reso_pix=None):
         """Initializes class instances.
 
         Args:
-            thingid: integer
-                Thingid of the observation.
+            los_id: integer
+                Thingid or Targetid of the observation.
             ra: float
                 Right-ascension of the quasar (in radians).
             dec: float
@@ -997,10 +1008,16 @@ class Delta(QSO):
                 Mean resolution of the forest
             mean_z: float
                 Mean redshift of the forest
+            mean_reso_pix: float
+                Mean resolution of the forest in units of pixels (FWHM)
+            mean_resolution_matrix: array of floats or None
+                Mean (over wavelength) resolution matrix for that forest
+            resolution_matrix: 2d array of floats or None
+                Wavelength dependent resolution matrix for that forest
             delta_log_lambda: float
                 Variation of the logarithm of the wavelength between two pixels
         """
-        QSO.__init__(self, thingid, ra, dec, z_qso, plate, mjd, fiberid)
+        QSO.__init__(self, los_id, ra, dec, z_qso, plate, mjd, fiberid)
         self.log_lambda = log_lambda
         self.weights = weights
         self.cont = cont
@@ -1011,7 +1028,9 @@ class Delta(QSO):
         self.mean_snr = mean_snr
         self.mean_reso = mean_reso
         self.mean_z = mean_z
-        self.delta_log_lambda = delta_log_lambda
+        self.resolution_matrix = resolution_matrix
+        self.mean_resolution_matrix = mean_resolution_matrix
+        self.mean_reso_pix = mean_reso_pix
 
         # variables computed in function io.read_deltas
         self.z = None
@@ -1057,7 +1076,6 @@ class Delta(QSO):
         if 'LOGLAM' in hdu.get_colnames():
             log_lambda = hdu['LOGLAM'][:].astype(float)
         elif 'LAMBDA' in hdu.get_colnames():
-            userprint("no LOGLAM found, trying to read linear_binned_lambda")
             log_lambda = np.log10(hdu['LAMBDA'][:].astype(float))
         else:
             raise KeyError("Did not find LOGLAM or LAMBDA in delta file")
@@ -1067,8 +1085,22 @@ class Delta(QSO):
             exposures_diff = hdu['DIFF'][:].astype(float)
             mean_snr = header['MEANSNR']
             mean_reso = header['MEANRESO']
+            try:
+                mean_reso_pix = header['MEANRESO_PIX']
+            except (KeyError, ValueError):
+                mean_reso_pix = None
+
             mean_z = header['MEANZ']
-            delta_log_lambda = header['DLL']
+            try:
+                #transposing here gives back the actual reso matrix which has been stored transposed
+                resolution_matrix = hdu['RESOMAT'][:].T.astype(float)
+                if resolution_matrix is not None:
+                    mean_resolution_matrix = np.mean(resolution_matrix, axis=1)
+                else:
+                    mean_resolution_matrix = None
+            except (KeyError, ValueError):
+                resolution_matrix = None
+                mean_resolution_matrix = None
             weights = None
             cont = None
         else:
@@ -1076,8 +1108,10 @@ class Delta(QSO):
             exposures_diff = None
             mean_snr = None
             mean_reso = None
-            delta_log_lambda = None
             mean_z = None
+            resolution_matrix = None
+            mean_resolution_matrix = None
+            mean_reso_pix = None
             weights = hdu['WEIGHT'][:].astype(float)
             cont = hdu['CONT'][:].astype(float)
 
@@ -1104,7 +1138,8 @@ class Delta(QSO):
 
         return cls(los_id, ra, dec, z_qso, plate, mjd, fiberid, log_lambda,
                    weights, cont, delta, order, ivar, exposures_diff, mean_snr,
-                   mean_reso, mean_z, delta_log_lambda)
+                   mean_reso, mean_z, resolution_matrix,
+                   mean_resolution_matrix, mean_reso_pix)
 
     @classmethod
     def from_ascii(cls, line):

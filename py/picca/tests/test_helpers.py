@@ -66,14 +66,14 @@ class AbstractTest(unittest.TestCase):
             for el in r_m:
                 name = el['name']
                 if len(name) > 5 and name[:5] == "TTYPE":
-                    ld_m += [el['value'].replace(" ", "")]
+                    ld_m += [el['value'].replace(" ", "").upper()]
             ###
             r_b = b[i].read_header().records()
             ld_b = []
             for el in r_b:
                 name = el['name']
                 if len(name) > 5 and name[:5] == "TTYPE":
-                    ld_b += [el['value'].replace(" ", "")]
+                    ld_b += [el['value'].replace(" ", "").upper()]
 
             self.assertListEqual(ld_m, ld_b, "{}".format(nameRun))
 

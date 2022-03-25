@@ -1,6 +1,7 @@
 """This module defines the class DesiData to load DESI data
 """
 import logging
+import os
 
 import fitsio
 import healpy
@@ -11,7 +12,15 @@ from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
-from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
+from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
+
+accepted_options = sorted(
+    list(set(accepted_options + ["use non-coadded spectra"])))
+
+defaults.update({
+    "use non-coadded spectra": False,
+})
+
 
 class DesiHealpix(DesiData):
     """Reads the spectra from DESI using healpix mode and formats its data as a
@@ -62,7 +71,31 @@ class DesiHealpix(DesiData):
         """
         self.logger = logging.getLogger(__name__)
 
+        self.use_non_coadded_spectra = None
+        self.__parse_config(config)
+        #init of DesiData needs to come last, as it contains the actual data reading and thus needs all config
         super().__init__(config)
+
+
+
+    def __parse_config(self, config):
+        """Parse the configuration options
+
+        Arguments
+        ---------
+        config: configparser.SectionProxy
+        Parsed options to initialize class
+
+        Raise
+        -----
+        DataError upon missing required variables
+        """
+        self.use_non_coadded_spectra = config.getboolean(
+            "use non-coadded spectra")
+        if self.use_non_coadded_spectra is None:
+            raise DataError(
+                "Missing argument 'use non-coadded spectra' required by DesiHealpix"
+            )
 
     def read_data(self):
         """Read the data.
@@ -83,9 +116,11 @@ class DesiHealpix(DesiData):
         """
         in_nside = 64
 
-
         healpix = [
-            healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"], nest=True)
+            healpy.ang2pix(in_nside,
+                           np.pi / 2 - row["DEC"],
+                           row["RA"],
+                           nest=True)
             for row in self.catalogue
         ]
         self.catalogue["HEALPIX"] = healpix
@@ -95,16 +130,20 @@ class DesiHealpix(DesiData):
         forests_by_targetid = {}
         is_sv = True
         for (index,
-             (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                    grouped_catalogue.groups):
+             (healpix,
+              survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
+                                     grouped_catalogue.groups):
 
             if survey not in ["sv", "sv1", "sv2", "sv3"]:
                 is_sv = False
 
             input_directory = f'{self.input_directory}/{survey}/dark'
+            coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
             filename = (
-                f"{input_directory}/{healpix//100}/{healpix}/coadd-{survey}-"
+                f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
                 f"dark-{healpix}.fits")
+
+            #TODO: not sure if we want the dark survey to be hard coded in here, probably won't run on anything else, but still
 
             self.logger.progress(
                 f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
@@ -152,6 +191,9 @@ class DesiHealpix(DesiData):
         colors = ["B", "R"]
         if "Z_FLUX" in hdul:
             colors.append("Z")
+
+        reso_from_truth = False
+        no_scores_available = False
         for color in colors:
             spec = {}
             try:
@@ -163,14 +205,33 @@ class DesiHealpix(DesiData):
                 for key in ["FLUX", "IVAR"]:
                     spec[key][w] = 0.
                 if self.analysis_type == "PK 1D":
+                    if self.use_non_coadded_spectra and "SCORES" in hdul:
+                        # Calibration factor given in https://desi.lbl.gov/trac/browser/code/desimodel/trunk/data/tsnr/
+                        spec['TEFF_LYA'] = 11.80090901380597 * hdul['SCORES'][f'TSNR2_LYA_{color}'].read()
+                    else:
+                        spec['TEFF_LYA'] = np.ones(spec["FLUX"].shape[0])
+                        if self.use_non_coadded_spectra and not no_scores_available:
+                            self.logger.warning("SCORES are missing, Teff information (and thus DIFF) will be garbage")
+                        no_scores_available=True
+
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                     else:
-                        raise DataError(
-                            "Error while reading {color} band from "
-                            "{filename}. Analysis type is  'PK 1D', "
-                            "but file does not contain HDU "
-                            f"'{color}_RESOLUTION' ")
+                        basename_truth=os.path.basename(filename).replace('spectra-','truth-')
+                        pathname_truth=os.path.dirname(filename)
+                        filename_truth=f"{pathname_truth}/{basename_truth}"
+                        if os.path.exists(filename_truth):
+                            with fitsio.FITS(filename_truth) as hdul_truth:
+                                spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
+                            if not reso_from_truth:
+                                self.logger.debug("no resolution in files, reading from truth files")
+                            reso_from_truth=True
+                        else:
+                            raise DataError(
+                                "Error while reading {color} band from "
+                                "{filename}. Analysis type is  'PK 1D', "
+                                "but file does not contain HDU "
+                                f"'{color}_RESOLUTION' ")
                 spectrographs_data[color] = spec
             except OSError:
                 self.logger.warning(
@@ -196,10 +257,16 @@ class DesiHealpix(DesiData):
                 w_t = w_t[0]
             # Construct DesiForest instance
             # Fluxes from the different spectrographs will be coadded
-            for spec_name, spec in spectrographs_data.items():
-                ivar = spec['IVAR'][w_t].copy()
-                flux = spec['FLUX'][w_t].copy()
-
+            for spec in spectrographs_data.values():
+                if self.use_non_coadded_spectra:
+                    ivar = np.atleast_2d(spec['IVAR'][w_t])
+                    ivar_coadded_flux = np.atleast_2d(ivar*spec['FLUX'][w_t]).sum(axis=0)
+                    ivar = ivar.sum(axis=0)
+                    flux = (ivar_coadded_flux / ivar)
+                else:
+                    flux = spec['FLUX'][w_t].copy()
+                    ivar = spec['IVAR'][w_t].copy()
+                
                 args = {
                     "flux": flux,
                     "ivar": ivar,
@@ -219,17 +286,29 @@ class DesiHealpix(DesiData):
                 if self.analysis_type == "BAO 3D":
                     forest = DesiForest(**args)
                 elif self.analysis_type == "PK 1D":
-                    reso_sum = spec['RESO'][w_t].copy()
-                    reso_in_km_per_s = spectral_resolution_desi(
+                    if self.use_non_coadded_spectra and not no_scores_available:
+                        exposures_diff = exp_diff_desi(spec, w_t)
+                    else:
+                        exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
+                    if not reso_from_truth:
+                        if len(spec['RESO'][w_t].shape)<3:
+                            reso_sum = spec['RESO'][w_t].copy()
+                        else:
+                            reso_sum = spec['RESO'][w_t].sum(axis=0)
+                    else:
+                        reso_sum = spec['RESO'][:, :]
+                    reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
                         reso_sum, spec['WAVELENGTH'])
-                    exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
-
                     args["exposures_diff"] = exposures_diff
                     args["reso"] = reso_in_km_per_s
+                    args["resolution_matrix"] = reso_sum
+                    args["reso_pix"] = reso_in_pix
+
                     forest = DesiPk1dForest(**args)
                 else:
-                    raise DataError("Unkown analysis type. Expected 'BAO 3D'"
-                                    f"or 'PK 1D'. Found '{self.analysis_type}'")
+                    raise DataError(
+                        "Unkown analysis type. Expected 'BAO 3D'"
+                        f"or 'PK 1D'. Found '{self.analysis_type}'")
 
                 # rebin arrays
                 # this needs to happen after all arrays are initialized by

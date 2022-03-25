@@ -137,11 +137,18 @@ class Pk1dForest(Forest):
                                           "Missing variable 'reso'")
         del kwargs["reso"]
 
+        self.reso_pix = kwargs.get("reso_pix")
+        if self.reso_pix is None:
+            raise AstronomicalObjectError("Error constructing Pk1dForest. "
+                                          "Missing variable 'reso_pix'")
+        del kwargs["reso_pix"]
+
         # call parent constructor
         super().__init__(**kwargs)
 
         # compute mean quality variables
         self.mean_reso = self.reso.mean()
+        self.mean_reso_pix = self.reso_pix.mean()
         if Forest.wave_solution == "log":
             self.mean_z = (
                 (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
@@ -180,6 +187,9 @@ class Pk1dForest(Forest):
             Forest.mask_fields += ["exposures_diff"]
         if "reso" not in Forest.mask_fields:
             Forest.mask_fields += ["reso"]
+        if "reso_pix" not in Forest.mask_fields:
+            Forest.mask_fields += ["reso_pix"]
+        
 
     def coadd(self, other):
         """Coadd the information of another forest.
@@ -204,7 +214,7 @@ class Pk1dForest(Forest):
         self.exposures_diff = np.append(self.exposures_diff,
                                         other.exposures_diff)
         self.reso = np.append(self.reso, other.reso)
-
+        self.reso_pix = np.append(self.reso_pix, other.reso_pix)
         # coadd the deltas by rebinning
         super().coadd(other)
 
@@ -230,13 +240,15 @@ class Pk1dForest(Forest):
         """
         cols, names, units, comments = super().get_data()
 
-        cols += [self.ivar, self.exposures_diff]
-        names += ["IVAR", "DIFF"]
+        cols += [self.ivar, self.exposures_diff, self.reso, self.reso_pix]
+        names += ["IVAR", "DIFF", "RESO", "RESO_PIX"]
         comments += [
             "Inverse variance. Check input spectra for units",
-            "Difference. Check input spectra for units"
+            "Difference. Check input spectra for units",
+            "Resolution estimate (FWHM) for each pixel in units of km/s"
+            "Resolution estimate (sigma) for each pixel in units of pixel size"
         ]
-        units += ["Flux units", "Flux units"]
+        units += ["Flux units", "Flux units", "", ""]
 
         return cols, names, units, comments
 
@@ -261,7 +273,12 @@ class Pk1dForest(Forest):
             {
                 'name': 'MEANRESO',
                 'value': self.mean_reso,
-                'comment': 'Mean resolution'
+                'comment': 'Mean resolution (km/s)'
+            },
+            {
+                'name': 'MEANRESO_PIX',
+                'value': self.mean_reso_pix,
+                'comment': 'Mean resolution (pixels)'
             },
         ]
 
@@ -302,29 +319,37 @@ class Pk1dForest(Forest):
         if len(rebin_ivar) == 0:
             self.exposures_diff = np.array([])
             self.reso = np.array([])
+            self.reso_pix = np.array([])
             return [], [], [], [], []
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
         self.reso = self.reso[w1]
+        self.reso_pix = self.reso_pix[w1]
 
         # rebin exposures_diff and reso
         rebin_exposures_diff = np.zeros(bins.max() + 1)
         rebin_reso = np.zeros(bins.max() + 1)
+        rebin_reso_pix = np.zeros(bins.max() + 1)
         rebin_exposures_diff_aux = np.bincount(bins,
                                                weights=orig_ivar[w1] *
                                                self.exposures_diff)
         rebin_reso_aux = np.bincount(bins, weights=orig_ivar[w1] * self.reso)
+        rebin_reso_pix_aux = np.bincount(bins, weights=orig_ivar[w1] * self.reso_pix)
         rebin_exposures_diff[:len(rebin_exposures_diff_aux
                                  )] += rebin_exposures_diff_aux
         rebin_reso[:len(rebin_reso_aux)] += rebin_reso_aux
+        rebin_reso_pix[:len(rebin_reso_pix_aux)] += rebin_reso_pix_aux
+
 
         # apply mask due to rebinned inverse vairane
         self.exposures_diff = rebin_exposures_diff[w2] / rebin_ivar[w2]
         self.reso = rebin_reso[w2] / rebin_ivar[w2]
+        self.reso_pix = rebin_reso_pix[w2] / rebin_ivar[w2]
 
         # finally update control variables
         self.mean_reso = self.reso.mean()
+        self.mean_reso_pix = self.reso_pix.mean()
         if Forest.wave_solution == "log":
             self.mean_z = (
                 (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +

@@ -428,6 +428,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.use_ivar_as_weight is None:
             raise ExpectedFluxError(
                 "Missing argument 'use ivar as weight' required by Dr16ExpectedFlux")
+        
 
     def compute_continuum(self, forest):
         """Compute the forest continuum.
