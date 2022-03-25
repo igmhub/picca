@@ -58,8 +58,8 @@ def check_linear_binning(delta):
 
 
 # loop over input files
+num_data=0
 def process_all_files(index_file_args):
-    global num_data  #this only stores the number of spectra for progress viewing purposes
     file_index, file, args = index_file_args
     if file_index % 5 == 0:
         userprint("\rread {} of {} {}".format(file_index, args.len_files,
@@ -245,32 +245,43 @@ def process_all_files(index_file_args):
             # Compute 1D Pk
             if args.noise_estimate == 'pipeline':
                 pk = (pk_raw - pk_noise) / correction_reso
-            elif (args.noise_estimate == 'diff'
-                  or args.noise_estimate == 'rebin_diff'):
-                pk = (pk_raw - pk_diff) / correction_reso
-            elif (args.noise_estimate == 'mean_diff'
-                  or args.noise_estimate == 'mean_rebin_diff'):
-                if linear_binning:
+            elif args.noise_estimate == 'mean_pipeline':
+                if args.kmin_noise_avg is None and and linear_binning:
                     #this is roughly the same range as eBOSS analyses for z=2.2
                     selection = (k > 0) & (k < 1.5)
-                else:
+                elif args.kmin_noise_avg is None:
                     selection = (k > 0) & (k < 0.02)
+                else:
+                    selection = (((k > args.kmin_noise_avg) if args.kmax_noise_avg is not None else 1) & 
+                                 ((k < args.kmax_noise_avg) if args.kmax_noise_avg is not None else 1))
+                mean_pk_noise = np.mean(pk_noise[selection])
+                pk = (pk_raw - pk_noise) / correction_reso
 
-                if args.noise_estimate == 'mean_rebin_diff':
-                    if linear_binning:
-                        #this is roughly the DESI resolution limit
-                        selection = (k > 0) & (k < 2.3)
-                    else:
-                        selection = (k > 0.003) & (k < 0.02)
+
+                
+            elif (args.noise_estimate == 'diff' or args.noise_estimate == 'rebin_diff'):
+                pk = (pk_raw - pk_diff) / correction_reso
+            elif (args.noise_estimate == 'mean_diff' or 'mean_rebin_diff'):
+                if args.kmin_noise_avg is None and and linear_binning:
+                    #this is roughly the same range as eBOSS analyses for z=2.2
+                    selection = (k > 0) & (k < 1.5)
+                elif args.kmin_noise_avg is None:
+                    selection = (k > 0) & (k < 0.02)
+                else:
+                    selection = (((k > args.kmin_noise_avg) if args.kmax_noise_avg is not None else 1) & 
+                                 ((k < args.kmax_noise_avg) if args.kmax_noise_avg is not None else 1))
                 mean_pk_diff = np.mean(pk_diff[selection])
                 pk = (pk_raw - mean_pk_diff) / correction_reso
 
             if args.force_output_in_velocity and linear_binning:
-                pk *= constants.speed_light / 1000 / np.mean(lambda_new)
-                pk_raw *= constants.speed_light / 1000 / np.mean(lambda_new)
-                pk_noise *= constants.speed_light / 1000 / np.mean(lambda_new)
-                pk_diff *= constants.speed_light / 1000 / np.mean(lambda_new)
-                k /= constants.speed_light / 1000 / np.mean(lambda_new)
+                #division by 1000 to convert speed_light from m/s to km/s
+                c_kms=constants.speed_light / 1000
+                lambda_mean=np.mean(lambda_new)
+                pk *= c_kms / lambda_mean
+                pk_raw *= c_kms / lambda_mean
+                pk_noise *= c_kms / lambda_mean
+                pk_diff *= c_kms / 1000 / lambda_mean
+                k /= c_kms / lambda_mean
             
             # save in fits format
             if args.out_format == 'fits':
@@ -437,10 +448,10 @@ def main(cmdargs):
     parser.add_argument(
         '--noise-estimate',
         type=str,
-        default='mean_diff',
+        default='mean_rebin_diff',
         required=False,
         help=('Estimate of Pk_noise '
-              'pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff'))
+              'pipeline/mean_pipeline/diff/mean_diff/rebin_diff/mean_rebin_diff'))
 
     parser.add_argument('--forest-type',
                         type=str,
@@ -486,19 +497,47 @@ def main(cmdargs):
         ('store outputs in units of velocity even for linear binning computations'
          ))
 
+    parser.add_argument(
+        '--seed',
+        default=4,
+        required=False,
+        type=int,
+        help=
+        ('seed for random number generator, default 4, let system determine seed if set to 0'
+         ))
+
+
+    parser.add_argument(
+        '--kmin_noise_avg',
+        default=None,
+        required=False,
+        type=float,
+        help=
+        ('minimal mode to take into account when computing noise/diff power average'
+         ))
+    parser.add_argument(
+        '--kmax_noise_avg',
+        default=None,
+        required=False,
+        type=float,
+        help=
+        ('maximal mode to take into account when computing noise/diff power average'
+         ))
+
     args = parser.parse_args(cmdargs)
 
+    if args.seed==0:
+        seed=None
+    else:
+        seed=args.seed
     # Read deltas
     if args.in_format == 'fits':
         files = sorted(glob.glob(args.in_dir + "/*.fits.gz"))
     elif args.in_format == 'ascii':
         files = sorted(glob.glob(args.in_dir + "/*.txt"))
 
-    global num_data
-    num_data = 0
-
     # initialize randoms
-    np.random.seed(4)
+    np.random.seed(seed)
     userprint(f"Computing Pk1d for {args.in_dir}")
     args.len_files = len(files)
     #create output dir if it does not exist

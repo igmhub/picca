@@ -11,16 +11,14 @@ This module provides with one clas (Pk1D) and several functions:
 See the respective docstrings for more details
 """
 import numpy as np
-from scipy.fftpack import fft
-import scipy.interpolate as spint
-from numpy.fft import fft, fftfreq, rfft, rfftfreq
+from numpy.fft import rfft, rfftfreq
 
 from . import constants
 from .utils import userprint
 
 
 def split_forest(num_parts,
-                 delta_lambda_or_log_lambda,
+                 pixel_step,
                  lambda_or_log_lambda,
                  delta,
                  exposures_diff,
@@ -34,7 +32,7 @@ def split_forest(num_parts,
     Args:
         num_parts: int
             Number of parts
-        delta_lambda_or_log_lambda: float
+        pixel_step: float
             Variation of the wavelength (or log(wavelength)) between two pixels
         lambda_or_log_lambda: array of float
             Wavelength (in Angs) (or its log, but needs to be consistent with delta_lambda_or_log_lambda)
@@ -83,7 +81,7 @@ def split_forest(num_parts,
 
     lambda_or_log_lambda_limit.append(
         lambda_or_log_lambda[len(lambda_or_log_lambda) - 1] +
-        0.1 * delta_lambda_or_log_lambda)
+        0.1 * pixel_step)
 
     for index in range(num_parts):
         selection = (
@@ -119,19 +117,19 @@ def split_forest(num_parts,
     return out
 
 
-def rebin_diff_noise(delta_lambda_or_log_lambda, lambda_or_log_lambda,
+def rebin_diff_noise(pixel_step, lambda_or_log_lambda,
                      exposures_diff):
     """Rebin the semidifference between two customized coadded spectra to
     construct the noise array
 
     Note that inputs can be either linear or log-lambda spaced units (but 
-    delta_lambda_or_log_lambda and lambda_or_log_lambda need the same unit)
+    pixel_step and lambda_or_log_lambda need the same unit)
 
     The rebinning is done by combining 3 of the original pixels into analysis
     pixels.
 
     Args:
-        delta_lambda_or_log_lambda: float
+        pixel_step: float
             Variation of the logarithm of the wavelength between two pixels 
             for linear binnings this would need to be the wavelength difference
         lambda_or_log_lambda: array of floats
@@ -149,7 +147,7 @@ def rebin_diff_noise(delta_lambda_or_log_lambda, lambda_or_log_lambda,
     if exposures_diff.size < rebin:
         userprint("Warning: exposures_diff.size too small for rebin")
         return exposures_diff
-    rebin_delta_lambda_or_log_lambda = rebin * delta_lambda_or_log_lambda
+    rebin_delta_lambda_or_log_lambda = rebin * pixel_step
 
     # rebin not mixing pixels separated by masks
     bins = np.floor((lambda_or_log_lambda - lambda_or_log_lambda.min()) /
