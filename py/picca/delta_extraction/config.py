@@ -175,10 +175,10 @@ class Config:
 
         self.num_corrections = section.getint("num corrections")
         if self.num_corrections is None:
-            raise ConfigError("In section 'corrections', variable 'num corrections' "
+            raise ConfigError("In section [corrections], variable 'num corrections' "
                               "is required")
         if self.num_corrections < 0:
-            raise ConfigError("In section 'corrections', variable 'num corrections' "
+            raise ConfigError("In section [corrections], variable 'num corrections' "
                               "must be a non-negative integer")
 
         # check that arguments are valid
@@ -262,6 +262,9 @@ class Config:
 
         # first load the data class
         data_name = section.get("type")
+        if data_name is None:
+            raise ConfigError("In section [data], variable 'type' "
+                              "is required")
         module_name = section.get("module name")
         if module_name is None:
             module_name = re.sub('(?<!^)(?=[A-Z])', '_', data_name).lower()
@@ -310,6 +313,9 @@ class Config:
 
         # first load the data class
         expected_flux_name = section.get("type")
+        if expected_flux_name is None:
+            raise ConfigError("In section [expected flux], variable 'type' "
+                              "is required")
         module_name = section.get("module name")
         if module_name is None:
             module_name = re.sub('(?<!^)(?=[A-Z])', '_', expected_flux_name).lower()
@@ -408,10 +414,10 @@ class Config:
 
         self.num_masks = section.getint("num masks")
         if self.num_masks is None:
-            raise ConfigError("In section 'masks', variable 'num masks' "
+            raise ConfigError("In section [masks], variable 'num masks' "
                               "is required")
         if self.num_masks < 0:
-            raise ConfigError("In section 'masks', variable 'num masks' "
+            raise ConfigError("In section [masks], variable 'num masks' "
                               "must be a non-negative integer")
 
         # check that arguments are valid

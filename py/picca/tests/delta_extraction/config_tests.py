@@ -171,14 +171,14 @@ class ConfigTest(AbstractTest):
         # check case num_corrections is missing
         in_file = f"{prefix}_corrections_no_num_corrections.ini"
         expected_message = (
-            "In section 'corrections', variable 'num corrections' is required"
+            "In section [corrections], variable 'num corrections' is required"
         )
         self.check_error(in_file, expected_message)
 
         # check case num_corrections is not positive
         in_file = f"{prefix}_corrections_num_corrections.ini"
         expected_message = (
-            "In section 'corrections', variable 'num corrections' "
+            "In section [corrections], variable 'num corrections' "
             "must be a non-negative integer"
         )
         self.check_error(in_file, expected_message)
@@ -271,6 +271,11 @@ class ConfigTest(AbstractTest):
         expected_message = "Missing section [data]"
         self.check_error(in_file, expected_message)
 
+        # missing type
+        in_file = f"{prefix}_data_no_type.ini"
+        expected_message = "In section [data], variable 'type' is required"
+        self.check_error(in_file, expected_message)
+
         # check case module does not exist
         in_file = f"{prefix}_data_no_module.ini"
         expected_message = (
@@ -315,6 +320,11 @@ class ConfigTest(AbstractTest):
         # missing section
         in_file = f"{prefix}_no_expected_flux.ini"
         expected_message = "Missing section [expected flux]"
+        self.check_error(in_file, expected_message)
+
+        # missing type
+        in_file = f"{prefix}_expected_flux_no_type.ini"
+        expected_message = "In section [expected flux], variable 'type' is required"
         self.check_error(in_file, expected_message)
 
         # check case module does not exist
@@ -375,14 +385,14 @@ class ConfigTest(AbstractTest):
         # check case num_masks is missing
         in_file = f"{prefix}_masks_no_num_masks.ini"
         expected_message = (
-            "In section 'masks', variable 'num masks' is required"
+            "In section [masks], variable 'num masks' is required"
         )
         self.check_error(in_file, expected_message)
 
         # check case num_masks is not positive
         in_file = f"{prefix}_masks_num_masks.ini"
         expected_message = (
-            "In section 'masks', variable 'num masks' "
+            "In section [masks], variable 'num masks' "
             "must be a non-negative integer"
         )
         self.check_error(in_file, expected_message)
