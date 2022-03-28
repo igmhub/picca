@@ -343,7 +343,6 @@ class TrueContinuum(ExpectedFlux):
                 continue
             # get the variance functions
             if self.use_constant_weight:
-                var_lss = np.ones_like(forest.log_lambda)
                 weights = np.ones_like(forest.log_lambda)
             else:
                 var_lss = self.get_var_lss(forest.log_lambda)
