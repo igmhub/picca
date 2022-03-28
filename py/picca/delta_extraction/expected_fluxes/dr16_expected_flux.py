@@ -1,4 +1,5 @@
 """This module defines the class Dr16ExpectedFlux"""
+from cmath import log
 import logging
 import multiprocessing
 
@@ -863,30 +864,20 @@ class Dr16ExpectedFlux(ExpectedFlux):
             raise ExpectedFluxError("Function get_cont_model requires "
                                     f"'mean_cont' in the **kwargs dictionary")
         mean_cont = kwargs.get("mean_cont")
-        if Forest.wave_solution == "log":
-            for key in ["log_lambda_max", "log_lambda_min"]:
-                if key not in kwargs:
-                    raise ExpectedFluxError("Function get_cont_model requires "
-                                            f"'{key}' in the **kwargs dictionary")
-            log_lambda_max = kwargs.get("log_lambda_max")
-            log_lambda_min = kwargs.get("log_lambda_min")
-        elif Forest.wave_solution == "lin":
-            for key in ["lambda_max", "lambda_min"]:
-                if key not in kwargs:
-                    raise ExpectedFluxError("Function get_cont_model requires "
-                                            f"'{key}' in the **kwargs dictionary")
-            lambda_max = kwargs.get("lambda_max")
-            lambda_min = kwargs.get("lambda_min")
-        else:
-            raise ExpectedFluxError("Forest.wave_solution must be either "
-                                    "'log' or 'lin'")
-
+        for key in ["log_lambda_max", "log_lambda_min"]:
+            if key not in kwargs:
+                raise ExpectedFluxError("Function get_cont_model requires "
+                                        f"'{key}' in the **kwargs dictionary")
+        log_lambda_max = kwargs.get("log_lambda_max")
+        log_lambda_min = kwargs.get("log_lambda_min")
+        lambda_max = 10**log_lambda_max
+        lambda_min = 10**log_lambda_min
         # compute continuum
         if Forest.wave_solution == "log":
             line = (bq * (forest.log_lambda - log_lambda_min) /
                     (log_lambda_max - log_lambda_min) + aq)
         elif Forest.wave_solution == "lin":
-            line = (bq * (forest.lambda_ - lambda_min) /
+            line = (bq * (10**forest.log_lambda - lambda_min) /
                     (lambda_max - lambda_min) + aq)
         else:
             raise ExpectedFluxError("Forest.wave_solution must be either "
@@ -925,12 +916,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 fudge = self.get_fudge(forest.log_lambda)
             elif Forest.wave_solution == "lin":
                 # pixel variance due to the Large Scale Strucure
-                var_lss = self.get_var_lss(forest.lambda_)
+                var_lss = self.get_var_lss(10**forest.log_lambda)
                 # correction factor to the contribution of the pipeline
                 # estimate of the instrumental noise to the variance.
-                eta = self.get_eta(forest.lambda_)
+                eta = self.get_eta(10**forest.log_lambda)
                 # fudge contribution to the variance
-                fudge = self.get_fudge(forest.lambda_)
+                fudge = self.get_fudge(10**forest.log_lambda)
             else:
                 raise ExpectedFluxError("Forest.wave_solution must be either "
                                         "'log' or 'lin'")
