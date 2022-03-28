@@ -344,6 +344,7 @@ class TrueContinuum(ExpectedFlux):
             # get the variance functions
             if self.use_constant_weight:
                 weights = np.ones_like(forest.log_lambda)
+                mean_expected_flux = forest.continuum
             else:
                 var_lss = self.get_var_lss(forest.log_lambda)
 
