@@ -18,7 +18,7 @@ from picca.delta_extraction.utils import find_bins
 
 accepted_options = ["input directory", "iter out prefix",
                     "num processors", "out dir",
-                    "raw statistics file"]
+                    "raw statistics file","use constant weight"]
 
 defaults = {
     "iter out prefix": "delta_attributes",
