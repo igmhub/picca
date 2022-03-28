@@ -175,8 +175,8 @@ class TrueContinuum(ExpectedFlux):
         forests: List of Forest
         A list of Forest from which to compute the deltas.
         """
-        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid.size)
-        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid.size)
+        mean_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid)
+        mean_cont_weight = np.zeros_like(Forest.log_lambda_rest_frame_grid)
 
         for forest in forests:
             if forest.bad_continuum_reason is not None:
