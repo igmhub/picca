@@ -91,13 +91,14 @@ def exp_diff(hdul, log_lambda):
     return exposures_diff
 
 
+
+
 def exp_diff_desi(spec_dict, mask_targetid):
     """Computes the difference between exposures.
 
     More precisely computes de semidifference between two customized coadded
     spectra obtained from weighted averages of the even-number exposures, for
-    the first spectrum, and of the odd-number exposures, for the second one
-    (see section 3.2 of Chabanier et al. 2019).
+    the first spectrum, and of the odd-number exposures, for the second one.
 
     Args:
         spec_dict: dict
@@ -108,56 +109,53 @@ def exp_diff_desi(spec_dict, mask_targetid):
     Returns:
         The difference between exposures
     """
-    teff_lya = np.atleast_1d(spec_dict["TEFF_LYA"][mask_targetid])
-    argsort = np.flip(np.argsort(teff_lya))
-    flux = np.atleast_2d(spec_dict["FLUX"][mask_targetid])[argsort, :]
-    ivar = np.atleast_2d(spec_dict["IVAR"][mask_targetid])[argsort, :]
-    teff_lya = teff_lya[argsort]
+    ivar_unsorted = np.atleast_2d(spec_dict["IV"][mask_targetid])
+    num_exp = ivar_unsorted.shape[0]
 
-    num_exp = len(flux)
+    # Putting the lowest ivar exposure at the end if the number of exposures is odd
+    argsort = np.arange(num_exp)
+    if(num_exp % 2 == 1):
+        argmin_ivar = np.argmin(np.mean(ivar_unsorted,axis=1))
+        argsort[-1],argsort[argmin_ivar] = argsort[argmin_ivar],argsort[-1]
+
+    flux = np.atleast_2d(spec_dict["IV"][mask_targetid])[argsort,:]
+    ivar = ivar_unsorted[argsort,:]
     if (num_exp < 2):
         module_logger.debug("Not enough exposures for diff, Spectra rejected")
         return None
     elif (num_exp > 100):
         module_logger.debug("More than 100 exposures, potentially wrong file type and using wavelength axis here, skipping?")
         return None
+
+    # Computing ivar and flux for odd and even exposures
+    ivar_total  = np.zeros(flux.shape[1])
     flux_total_odd = np.zeros(flux.shape[1])
     ivar_total_odd = np.zeros(flux.shape[1])
     flux_total_even = np.zeros(flux.shape[1])
     ivar_total_even = np.zeros(flux.shape[1])
-    teff_even = 0
-    teff_odd = 0
-    teff_total = np.sum(teff_lya)
-    teff_last = teff_lya[-1]
     for index_exp in range(2 * (num_exp // 2)):
         flexp = flux[index_exp]
         ivexp = ivar[index_exp]
-        teff_lya_exp = teff_lya[index_exp]
         if index_exp % 2 == 1:
             flux_total_odd += flexp * ivexp
             ivar_total_odd += ivexp
-            teff_odd += teff_lya_exp
         else:
             flux_total_even += flexp * ivexp
             ivar_total_even += ivexp
-            teff_even += teff_lya_exp
+    for index_exp in range(num_exp):
+        ivar_total += ivar[index_exp]
 
-    w = ivar_total_odd > 0
-    flux_total_odd[w] /= ivar_total_odd[w]
-    w = ivar_total_even > 0
-    flux_total_even[w] /= ivar_total_even[w]
+    # Masking and dividing flux by ivar
+    w_odd = ivar_total_odd > 0
+    flux_total_odd[w_odd] /= ivar_total_odd[w_odd]
+    w_even = ivar_total_even > 0
+    flux_total_even[w_even] /= ivar_total_even[w_even]
 
-    alpha = 1
-    if (num_exp % 2 == 1):
-        n_even = (num_exp - 1) // 2
-        alpha_N_old = np.sqrt(4. * n_even * (num_exp - n_even)) / num_exp
-        # alpha_N = np.sqrt(4.*t_even*(t_exp-t_even))/t_exp
-        alpha_C_new = np.sqrt((teff_total - teff_last) / teff_total)
-        alpha_N_new = np.sqrt(
-            (teff_total - teff_last) * (teff_total + teff_last)) / teff_total
-        alpha = alpha_N_new
-    diff = 0.5 * (flux_total_even - flux_total_odd) * alpha
-
+    # Computing alpha correction
+    w=w_odd&w_even&(ivar_total>0)
+    alpha_array  = np.ones(flux.shape[1])
+    alpha_array[w] = (1/np.sqrt(ivar_total[w]))/(0.5 * np.sqrt((1/ivar_total_even[w]) + (1/ivar_total_odd[w])))
+    diff = 0.5 * (flux_total_even - flux_total_odd) * alpha_array
     return diff
 
 
@@ -238,7 +236,7 @@ def spectral_resolution_desi(reso_matrix, lambda_):
     reso = np.clip(reso_matrix, 1.0e-6, 1.0e6)
     #assume reso = A*exp(-(x-central_pixel_pos)**2 / 2 / sigma**2)
     #=> sigma = sqrt((x-central_pixel_pos)/2)**2 / log(A/reso)
-    #   A = reso(central_pixel_pos)  
+    #   A = reso(central_pixel_pos)
     # the following averages over estimates for four symmetric values of x
     rms_in_pixel = (
         (np.sqrt(1.0 / 2.0 / np.log(
