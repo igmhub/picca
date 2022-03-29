@@ -141,7 +141,7 @@ class Data:
             pixel_step_rest_frame = config.getfloat("delta lambda rest frame")
             if pixel_step_rest_frame is None:
                 pixel_step_rest_frame = pixel_step
-                self.logger.info("'delta lambda rest frame' not set, using"
+                self.logger.info("'delta lambda rest frame' not set, using "
                                  f"the same value as for 'delta lambda' ({pixel_step_rest_frame})")
         else:
             raise DataError("Forest.wave_solution must be either "
