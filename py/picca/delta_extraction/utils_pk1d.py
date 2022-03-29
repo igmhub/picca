@@ -3,6 +3,7 @@ when computing the deltas.
 
 This module provides three functions:
     - exp_diff
+    - exp_diff_desi
     - spectral_resolution
     - spectral_resolution_desi
 See the respective documentation for details
