@@ -32,6 +32,8 @@ defaults = {
     "minimum number pixels in forest": 50,
     "rejection log file": "rejection_log.fits.gz",
     "minimal snr": None,
+    "minimal snr bao": 0,
+    "minimal snr p1d": 1,
 }
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
@@ -102,6 +104,7 @@ class Data:
         self.rejection_log_cols = []
         self.rejection_log_names = []
         self.rejection_log_comments = []
+        self.min_snr = None
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -209,9 +212,9 @@ class Data:
         self.min_snr = config.getfloat("minimal snr")
         if self.min_snr is None:
             if self.analysis_type == "BAO 3D":
-                self.min_snr = 0.
+                self.min_snr = defaults["minimal snr bao"]
             elif self.analysis_type == "PK 1D":
-                self.min_snr = 1.
+                self.min_snr = defaults["minimal snr p1d"]
                 
                 
     def add_to_rejection_log(self, header, size, rejection_status):
