@@ -110,7 +110,7 @@ def exp_diff_desi(spec_dict, mask_targetid):
     Returns:
         The difference between exposures
     """
-    ivar_unsorted = np.atleast_2d(spec_dict["IV"][mask_targetid])
+    ivar_unsorted = np.atleast_2d(spec_dict["IVAR"][mask_targetid])
     num_exp = ivar_unsorted.shape[0]
 
     # Putting the lowest ivar exposure at the end if the number of exposures is odd
@@ -119,7 +119,7 @@ def exp_diff_desi(spec_dict, mask_targetid):
         argmin_ivar = np.argmin(np.mean(ivar_unsorted,axis=1))
         argsort[-1],argsort[argmin_ivar] = argsort[argmin_ivar],argsort[-1]
 
-    flux = np.atleast_2d(spec_dict["IV"][mask_targetid])[argsort,:]
+    flux = np.atleast_2d(spec_dict["FLUX"][mask_targetid])[argsort,:]
     ivar = ivar_unsorted[argsort,:]
     if (num_exp < 2):
         module_logger.debug("Not enough exposures for diff, Spectra rejected")
