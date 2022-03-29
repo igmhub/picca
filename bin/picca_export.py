@@ -4,6 +4,7 @@ import sys
 import argparse
 import fitsio
 import numpy as np
+import scipy.interpolate
 import scipy.linalg
 import h5py
 import os.path
@@ -267,15 +268,43 @@ def main(cmdargs):
             raise ValueError("Blinding strategy 'corr_yshift' requires"
                              " argument --blind_corr_type.")
 
-        # Read the blinding file and get the right template
-        blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
-                             'blinding/y1_blinding_v1_standard_04_10_2021.h5')
-        if not os.path.isfile(blinding_filename):
-            raise RuntimeError("Missing blinding file. Make sure you are running at"
-                               " NERSC or contact picca developers")
-        blinding_file = h5py.File(blinding_filename, 'r')
-        hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
-        diff = np.array([float.fromhex(x) for x in hex_diff])
+        if args.blind_corr_type in ['lyaxlya', 'lyaxlyb']:
+            corr_size = 2500
+            rp_interp_grid = np.arange(2., 202., 4.)
+            rt_interp_grid = np.arange(2., 202., 4.)
+        elif args.blind_corr_type in ['qsoxlya', 'qsoxlyb']:
+            corr_size = 5000
+            rp_interp_grid = np.arange(-197.99, 202.01, 4.)
+            rt_interp_grid = np.arange(2., 202, 4.)
+        else:
+            raise ValueError("Unknown correlation type: {}".format(args.blind_corr_type))
+
+        if corr_size == len(xi):
+            # Read the blinding file and get the right template
+            blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
+                                 'blinding/y1_blinding_v1.2_standard_29_03_2022.h5')
+            if not os.path.isfile(blinding_filename):
+                raise RuntimeError("Missing blinding file. Make sure you are running at"
+                                   " NERSC or contact picca developers")
+            blinding_file = h5py.File(blinding_filename, 'r')
+            hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
+            diff = np.array([float.fromhex(x) for x in hex_diff])
+        else:
+            # Read the regular grid blinding file and get the right template
+            blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
+                                 'blinding/y1_blinding_v1.2_regular_grid_29_03_2022.h5')
+            if not os.path.isfile(blinding_filename):
+                raise RuntimeError("Missing blinding file. Make sure you are running at"
+                                   " NERSC or contact picca developers")
+            blinding_file = h5py.File(blinding_filename, 'r')
+            hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
+            diff_grid = np.array([float.fromhex(x) for x in hex_diff])
+
+            rt_grid, rp_grid = np.meshgrid(rt_interp_grid, rp_interp_grid)
+            interp = scipy.interpolate.RectBivariateSpline(
+                    rp_grid, rt_grid,
+                    diff_grid.reshape(num_bins_r_par, num_bins_r_trans), kx=3, ky=3)
+            diff = interp.ev(r_par, r_trans)
 
         # Check that the shapes match
         if np.shape(xi) != np.shape(diff):
