@@ -268,14 +268,15 @@ def main(cmdargs):
             raise ValueError("Blinding strategy 'corr_yshift' requires"
                              " argument --blind_corr_type.")
 
+        # Check type of correlation and get size and regular binning
         if args.blind_corr_type in ['lyaxlya', 'lyaxlyb']:
             corr_size = 2500
-            rp_interp_grid = np.arange(2., 202., 4.)
-            rt_interp_grid = np.arange(2., 202., 4.)
+            rp_interp_grid = np.arange(2., 202., 4)
+            rt_interp_grid = np.arange(2., 202., 4)
         elif args.blind_corr_type in ['qsoxlya', 'qsoxlyb']:
             corr_size = 5000
-            rp_interp_grid = np.arange(-197.99, 202.01, 4.)
-            rt_interp_grid = np.arange(2., 202, 4.)
+            rp_interp_grid = np.arange(-197.99, 202.01, 4)
+            rt_interp_grid = np.arange(2., 202, 4)
         else:
             raise ValueError("Unknown correlation type: {}".format(args.blind_corr_type))
 
@@ -300,6 +301,7 @@ def main(cmdargs):
             hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
             diff_grid = np.array([float.fromhex(x) for x in hex_diff])
 
+            # Interpolate the blinding template on the regular grid
             rt_grid, rp_grid = np.meshgrid(rt_interp_grid, rp_interp_grid)
             interp = scipy.interpolate.RectBivariateSpline(
                     rp_grid, rt_grid,
