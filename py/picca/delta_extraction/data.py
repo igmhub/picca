@@ -31,9 +31,8 @@ defaults = {
     "lambda min rest frame": 1040.0,
     "minimum number pixels in forest": 50,
     "rejection log file": "rejection_log.fits.gz",
-    "minimal snr": None,
-    "minimal snr bao": 0,
-    "minimal snr p1d": 1,
+    "minimal snr pk1d": 1,
+    "minimal snr bao3d": 0,
 }
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
@@ -209,13 +208,14 @@ class Data:
                             "should en with '.fits' or '.fits.gz'. Found "
                             f"'{self.rejection_log_file}'")
 
-        self.min_snr = config.getfloat("minimal snr")
+        if self.analysis_type == "BAO 3D":
+            self.min_snr = config.getfloat("minimal snr bao3d")
+        elif self.analysis_type == "PK 1D":
+            self.min_snr = config.getfloat("minimal snr pk1d")
         if self.min_snr is None:
-            if self.analysis_type == "BAO 3D":
-                self.min_snr = defaults["minimal snr bao"]
-            elif self.analysis_type == "PK 1D":
-                self.min_snr = defaults["minimal snr p1d"]
-                
+            raise  DataError(
+                "Missing arguments 'minimal snr bao3d' (if 'analysis type' = 'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') required by Data")
+
                 
     def add_to_rejection_log(self, header, size, rejection_status):
         """Adds to the rejection log arrays.
