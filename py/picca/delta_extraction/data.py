@@ -19,7 +19,8 @@ accepted_options = ["analysis type", "delta lambda", "delta log lambda",
                     "lambda max", "lambda max rest frame",
                     "lambda min", "lambda min rest frame",
                     "minimum number pixels in forest",
-                    "out dir", "rejection log file"]
+                    "out dir", "rejection log file",
+                    "minimal snr"]
 
 defaults = {
     "analysis type": "BAO 3D",
@@ -30,6 +31,7 @@ defaults = {
     "lambda min rest frame": 1040.0,
     "minimum number pixels in forest": 50,
     "rejection log file": "rejection_log.fits.gz",
+    "minimal snr": None,
 }
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
@@ -204,6 +206,15 @@ class Data:
                             "should en with '.fits' or '.fits.gz'. Found "
                             f"'{self.rejection_log_file}'")
 
+        self.min_snr = config.getfloat("minimal snr")
+        if self.min_snr is None:
+            if self.analysis_type == "BAO 3D":
+                self.min_snr = 0.
+            elif self.analysis_type == "PK 1D":
+                self.min_snr = 1.
+                
+        
+
     def add_to_rejection_log(self, header, size, rejection_status):
         """Adds to the rejection log arrays.
         In the log forest headers will be saved along with the forest size and
@@ -300,13 +311,12 @@ class Data:
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to finding nan")
-            elif self.analysis_type=='PK 1D' and forest.mean_snr<1:
-                #TODO: add variable for the SNR cut, actually only required for constant weights...
+            elif forest.mean_snr<self.min_snr:
                 self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          f"low SNR ({forest.mean_snr})")
+                                          f"low SNR ({forest.mean_snr} < {self.min_snr})")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
-                    "due to low SNR")
+                    f"due to low SNR ({forest.mean_snr} < {self.min_snr})")
             else:
                 continue
 
