@@ -16,9 +16,8 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        python-version: ["3.8", "3.9"]
-        #, "3.10"]
-#    env:
+        python-version: ["3.8", "3.9", "3.10"]
+#    env:   
 #      OMP_NUM_THREADS: 1
 #      MKL_NUM_THREADS: 1
 #      OPENBLAS_NUM_THREADS: 1
