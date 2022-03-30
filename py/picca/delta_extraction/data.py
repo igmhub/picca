@@ -21,7 +21,7 @@ accepted_options = ["analysis type", "delta lambda", "delta log lambda",
                     "minimum number pixels in forest",
                     "out dir", "rejection log file",
                     "minimal snr",
-                    "minimal snr pk1d","minimal snr pk1d", #these options are allowed but will be overwritten by minimal snr (only needed to allow running on a .config with default options)
+                    "minimal snr pk1d","minimal snr bao3d", #these options are allowed but will be overwritten by minimal snr (only needed to allow running on a .config with default options)
                     ]
 
 defaults = {
