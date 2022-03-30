@@ -96,6 +96,8 @@ class Data:
         self.min_num_pix = None
         self.out_dir = None
         self.rejection_log_file = None
+        self.min_snr = None
+
         self.__parse_config(config)
 
         # rejection log arays
@@ -103,7 +105,6 @@ class Data:
         self.rejection_log_cols = []
         self.rejection_log_names = []
         self.rejection_log_comments = []
-        self.min_snr = None
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -313,9 +314,9 @@ class Data:
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to finding nan")
-            elif forest.mean_snr<self.min_snr:
+            elif forest.mean_snr < self.min_snr:
                 self.add_to_rejection_log(forest.get_header(), forest.flux.size,
-                                          f"low SNR ({forest.mean_snr} < {self.min_snr})")
+                                          f"low SNR ({forest.mean_snr})")
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     f"due to low SNR ({forest.mean_snr} < {self.min_snr})")
