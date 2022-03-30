@@ -1,0 +1,5 @@
+[PROGRESS]: Reading catalogue from /Users/iperez/Documents/GitHub/picca/py/picca/tests/delta_extraction/data/dummy_desi_quasar_catalogue.fits
+[PROGRESS]: 
+[PROGRESS]: start                 : nb object in cat = 3
+[PROGRESS]: and z >= 2.15        : nb object in cat = 3
+[PROGRESS]: and z < 3.2         : nb object in cat = 3

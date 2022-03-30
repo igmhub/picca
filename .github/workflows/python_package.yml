@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10"]
 #    env:   
 #      OMP_NUM_THREADS: 1
 #      MKL_NUM_THREADS: 1
@@ -32,8 +32,8 @@ jobs:
       run: |
         sudo apt-get -y install libbz2-dev
         python -m pip install --upgrade pip
-        pip install wheel pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi 
+        pip install wheel pytest pytest-cov coveralls
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     # TODO: the section below can be removed if the compile step is fixed otherwise
     - name: Reinstall fitsio to ensure the numpy version during compilation matches the one at runtime
       run: |
@@ -41,19 +41,19 @@ jobs:
         pip cache purge
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Install picca
-      run: pip install -e . 
+      run: pip install -e .
     - name: Test with pytest
       timeout-minutes: 30
       run: |
-          pytest --capture=tee-sys . 
-          
+          pytest --capture=tee-sys --cov --cov-report xml --cov-config=.coveragerc .
+
     # allow connecting to the github action run via ssh if [ci debug] has been in the commit msg
     - name: Debug with tmate
       if: "contains(github.event.head_commit.message, '[ci debug]')"
-      uses: mxschmitt/action-tmate@v3 
+      uses: mxschmitt/action-tmate@v3
       with:
         limit-access-to-actor: true
-        
+
     # the following bit will save results tests as an artifact if [ci save] has been in the commit msg
     - name: Archive test results
       if: "contains(github.event.head_commit.message, '[ci save]')"
@@ -61,8 +61,13 @@ jobs:
       with:
         name: test-results_v${{ matrix.python-version }}
         path: /tmp/last_run_picca_test
-    
-    
+        
+    - name: Coveralls
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+      run: coveralls
+        
   # flake8:
   #   runs-on: ubuntu-latest
   #   if: "!contains(github.event.head_commit.message, '[ci skip]')"

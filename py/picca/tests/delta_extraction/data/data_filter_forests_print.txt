@@ -1,0 +1,7 @@
+[PROGRESS]: Input sample has 1 forests
+[PROGRESS]: Removed forest that are too short
+[PROGRESS]: Remaining sample has 1 forests
+[PROGRESS]: Input sample has 1 forests
+[PROGRESS]: Rejected forest with los_id 10000 due to forest being too short (195)
+[PROGRESS]: Removed forest that are too short
+[PROGRESS]: Remaining sample has 0 forests
