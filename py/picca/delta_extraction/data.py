@@ -20,7 +20,9 @@ accepted_options = ["analysis type", "delta lambda", "delta log lambda",
                     "lambda min", "lambda min rest frame",
                     "minimum number pixels in forest",
                     "out dir", "rejection log file",
-                    "minimal snr"]
+                    "minimal snr",
+                    "minimal snr pk1d","minimal snr pk1d", #these options are allowed but will be overwritten by minimal snr (only needed to allow running on a .config with default options)
+                    ]
 
 defaults = {
     "analysis type": "BAO 3D",
@@ -209,10 +211,13 @@ class Data:
                             "should en with '.fits' or '.fits.gz'. Found "
                             f"'{self.rejection_log_file}'")
 
-        if self.analysis_type == "BAO 3D":
-            self.min_snr = config.getfloat("minimal snr bao3d")
-        elif self.analysis_type == "PK 1D":
-            self.min_snr = config.getfloat("minimal snr pk1d")
+        self.min_snr = config.getfloat("minimal snr")
+
+        if self.min_snr is None:
+            if self.analysis_type == "BAO 3D":
+                self.min_snr = config.getfloat("minimal snr bao3d")
+            elif self.analysis_type == "PK 1D":
+                self.min_snr = config.getfloat("minimal snr pk1d")
         if self.min_snr is None:
             raise  DataError(
                 "Missing arguments 'minimal snr bao3d' (if 'analysis type' = 'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') required by Data")
