@@ -317,6 +317,8 @@ class DesiHealpix(DesiData):
 
                 # keep the forest
                 if targetid in forests_by_targetid:
-                    forests_by_targetid[targetid].coadd(forest)
+                    existing_forest = forests_by_targetid[targetid]
+                    existing_forest.coadd(forest)
+                    forests_by_targetid[targetid] = existing_forest
                 else:
                     forests_by_targetid[targetid] = forest
