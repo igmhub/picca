@@ -98,7 +98,7 @@ class DesiHealpix(DesiData):
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiHealpix"
             )
-        self.num_processors = config.get("num processors")
+        self.num_processors = int(config.get("num processors"))
         if self.num_processors is None:
             raise DataError(
                 "Missing argument 'num processors' required by DesiHealpix")
@@ -141,7 +141,7 @@ class DesiHealpix(DesiData):
             pool = context.Pool(processes=self.num_processors)
             manager =  multiprocessing.Manager()
             forests_by_targetid = manager.dict()
-
+            arguments = []
             for (index,
                 (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
                                         grouped_catalogue.groups):
