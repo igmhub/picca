@@ -2,6 +2,8 @@
 """
 import logging
 import os
+import multiprocessing
+
 
 import fitsio
 import healpy
