@@ -251,13 +251,13 @@ def process_all_files(index_file_args):
                 elif args.kmin_noise_avg is None:
                     selection = (k > 0) & (k < 0.02)
                 else:
-                    selection = (((k > args.kmin_noise_avg) if args.kmax_noise_avg is not None else 1) & 
+                    selection = (((k > args.kmin_noise_avg) if args.kmax_noise_avg is not None else 1) &
                                  ((k < args.kmax_noise_avg) if args.kmax_noise_avg is not None else 1))
                 mean_pk_noise = np.mean(pk_noise[selection])
                 pk = (pk_raw - pk_noise) / correction_reso
 
 
-                
+
             elif (args.noise_estimate == 'diff' or args.noise_estimate == 'rebin_diff'):
                 pk = (pk_raw - pk_diff) / correction_reso
             elif (args.noise_estimate == 'mean_diff' or 'mean_rebin_diff'):
@@ -267,7 +267,7 @@ def process_all_files(index_file_args):
                 elif args.kmin_noise_avg is None:
                     selection = (k > 0) & (k < 0.02)
                 else:
-                    selection = (((k > args.kmin_noise_avg) if args.kmax_noise_avg is not None else 1) & 
+                    selection = (((k > args.kmin_noise_avg) if args.kmax_noise_avg is not None else 1) &
                                  ((k < args.kmax_noise_avg) if args.kmax_noise_avg is not None else 1))
                 mean_pk_diff = np.mean(pk_diff[selection])
                 pk = (pk_raw - mean_pk_diff) / correction_reso
@@ -281,7 +281,7 @@ def process_all_files(index_file_args):
                 pk_noise *= c_kms / lambda_mean
                 pk_diff *= c_kms / 1000 / lambda_mean
                 k /= c_kms / lambda_mean
-            
+
             # save in fits format
             if args.out_format == 'fits':
                 header = [{
