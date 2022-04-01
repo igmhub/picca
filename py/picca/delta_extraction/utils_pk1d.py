@@ -143,8 +143,7 @@ def exp_diff_desi(spec_dict, mask_targetid):
         else:
             flux_total_even += flexp * ivexp
             ivar_total_even += ivexp
-    for index_exp in range(num_exp):
-        ivar_total += ivar[index_exp]
+    ivar_total = ivar.sum(axis=0)
 
     # Masking and dividing flux by ivar
     w_odd = ivar_total_odd > 0

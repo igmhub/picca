@@ -200,9 +200,9 @@ def process_all_files(index_file_args):
                                            linear_binning=False)
 
             # Compute pk_noise
-            run_noise = True
-            # if args.noise_estimate == 'pipeline':
-            #     run_noise = True
+            run_noise = False
+            if args.noise_estimate == 'pipeline':
+                run_noise = True
             if linear_binning:
                 pk_noise, pk_diff = compute_pk_noise(pixel_step,
                                                      ivar_new,
