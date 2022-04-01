@@ -60,6 +60,7 @@ class DesisimMocks(DesiHealpix):
 
         self.logger = logging.getLogger(__name__)
         super().__init__(config)
+
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
 
@@ -93,10 +94,9 @@ class DesisimMocks(DesiHealpix):
 
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
         arguments=[]
-
-        self.num_processors = multiprocessing.cpu_count() // 2
+       
         context = multiprocessing.get_context('fork')
-        pool = context.Pool(processes=self.num_processors)
+        pool = context.Pool(processes=num_processors)
         manager =  multiprocessing.Manager()
         forests_by_targetid = manager.dict()
 
@@ -110,7 +110,9 @@ class DesisimMocks(DesiHealpix):
             arguments.append((filename,group,forests_by_targetid))
 
         self.logger.info(f"reading data from {len(arguments)} files")
-        pool.starmap(self.read_file,arguments)
+        if num_processors>1:
+            pool.starmap(self.read_file,arguments)
+        else:
 
         pool.close()
         if len(forests_by_targetid) == 0:

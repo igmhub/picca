@@ -15,7 +15,7 @@ from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
 accepted_options = sorted(
-    list(set(accepted_options + ["use non-coadded spectra"])))
+    list(set(accepted_options + ["use non-coadded spectra","num processors"])))
 
 defaults.update({
     "use non-coadded spectra": False,
@@ -96,6 +96,12 @@ class DesiHealpix(DesiData):
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiHealpix"
             )
+        self.num_processors = config.getint("num processors")
+        if self.num_processors is None:
+            raise DataError(
+                "Missing argument 'num processors' required by DesiHealpix")
+        if self.num_processors == 0:
+            self.num_processors = (multiprocessing.cpu_count() // 2
 
     def read_data(self):
         """Read the data.

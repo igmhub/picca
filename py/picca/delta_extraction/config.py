@@ -24,7 +24,7 @@ accepted_corrections_options = ["num corrections", "type {int}", "module name {i
 accepted_data_options = ["type", "module name"]
 accepted_expected_flux_options = ["type", "module name"]
 accepted_general_options = ["overwrite", "logging level console",
-                            "logging level file", "log", "out dir"]
+                            "logging level file", "log", "out dir", "num processors"]
 accepted_masks_options = ["num masks", "type {int}", "module name {int}"]
 
 default_config = {
@@ -35,6 +35,7 @@ default_config = {
         "log": "run.log",
         "logging level console": "PROGRESS",
         "logging level file": "PROGRESS",
+        "num processors": 1,
     },
     "run specs": {
         "git hash": git_hash,
@@ -150,6 +151,7 @@ class Config:
         self.__format_data_section()
         self.expected_flux = None
         self.__format_expected_flux_section()
+        self.num_processors = None
 
         # initialize folders where data will be saved
         self.initialize_folders()
@@ -291,6 +293,8 @@ class Config:
 
         # add output directory
         section["out dir"] = self.out_dir
+        if "num processors" in accepted_options:
+            section["num processors"] = self.out_dir
 
         # finally add the information to self.data
         self.data = (DataType, section)
@@ -340,7 +344,8 @@ class Config:
         # add output directory if necesssary
         if "out dir" in accepted_options:
             section["out dir"] = self.out_dir
-
+        if "num processors" in accepted_options:
+            section["num processors"] = self.out_dir
         # finally add the information to self.continua
         self.expected_flux = (ExpectedFluxType, section)
 

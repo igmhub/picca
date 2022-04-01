@@ -24,7 +24,6 @@ defaults = {
     "limit var lss": (0., 0.3),
     "num bins variance": 20,
     "num iterations": 5,
-    "num processors": 1,
     "order": 1,
     "use constant weight": False,
     "use ivar as weight": False,
@@ -413,6 +412,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.num_processors is None:
             raise ExpectedFluxError(
                 "Missing argument 'num processors' required by Dr16ExpectedFlux")
+        if self.num_processors == 0:
+            self.num_processors = (multiprocessing.cpu_count() // 2
 
         self.order = config.getint("order")
         if self.order is None:
