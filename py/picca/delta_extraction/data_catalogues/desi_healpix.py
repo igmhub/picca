@@ -98,7 +98,7 @@ class DesiHealpix(DesiData):
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiHealpix"
             )
-        self.num_processors = int(config.get("num processors"))
+        self.num_processors = config.getint("num processors")
         if self.num_processors is None:
             raise DataError(
                 "Missing argument 'num processors' required by DesiHealpix")
