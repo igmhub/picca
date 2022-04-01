@@ -36,7 +36,7 @@ default_config = {
         "log": "run.log",
         "logging level console": "PROGRESS",
         "logging level file": "PROGRESS",
-        "num processors": 1,
+        "num processors": 0,
     },
     "run specs": {
         "git hash": git_hash,
@@ -395,7 +395,7 @@ class Config:
             raise ConfigError("In section 'logging level file' in section [general]")
         self.logging_level_file = self.logging_level_file.upper()
     
-        self.num_processors = section.getint("num processors")
+        self.num_processors = section.get("num processors")
         if self.num_processors is None:
             raise ConfigError("Missing variable 'num processors' in section [general]")
 

@@ -2,6 +2,7 @@
 classes computing the mean expected flux must inherit. The mean expected flux
 is the product of the unabsorbed quasar continuum and the mean transmission
 """
+import multiprocessing
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError
 
@@ -35,6 +36,7 @@ class ExpectedFlux:
     def __init__(self, config):
         """Initialize class instance"""
         self.los_ids = {}
+        self.num_processors = None
 
         self.out_dir = config.get("out dir")
         if self.out_dir is None:
@@ -42,6 +44,13 @@ class ExpectedFlux:
                 "Missing argument 'out dir' required by Dr16ExpectedFlux")
         else:
             self.out_dir += "Log/"
+        
+        self.num_processors = config.getint("num processors")
+        if self.num_processors is None:
+            raise ExpectedFluxError(
+                "Missing argument 'num processors' required by Dr16ExpectedFlux")
+        if self.num_processors == 0:
+            self.num_processors = (multiprocessing.cpu_count() // 2)
 
 
     # pylint: disable=no-self-use

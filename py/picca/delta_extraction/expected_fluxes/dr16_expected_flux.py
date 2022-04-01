@@ -124,10 +124,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     num_iterations: int
     Number of iterations to determine the mean continuum shape, LSS variances, etc.
 
-    num_processors: int
-    Number of processors to be used to compute the mean continua. None for no
-    specified number (subprocess will take its default value).
-
     order: int
     Order of the polynomial for the continuum fit.
 
@@ -161,7 +157,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.order = None
         self.num_bins_variance = None
         self.num_iterations = None
-        self.num_processors = None
         self.use_constant_weight = None
         self.use_ivar_as_weight = None
         self.__parse_config(config)
@@ -407,9 +402,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.num_iterations is None:
             raise ExpectedFluxError(
                 "Missing argument 'num iterations' required by Dr16ExpectedFlux")
-
-        if self.num_processors == 0:
-            self.num_processors = (multiprocessing.cpu_count() // 2)
 
         self.order = config.getint("order")
         if self.order is None:
