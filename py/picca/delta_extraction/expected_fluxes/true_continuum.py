@@ -130,8 +130,9 @@ class TrueContinuum(ExpectedFlux):
                 "'iter out prefix' should not incude folders. "
                 f"Found: {self.iter_out_prefix}")
 
-        self.num_processors = config.getint("num processors")
-
+        if self.num_processors == 0:
+            self.num_processors = (multiprocessing.cpu_count() // 2)
+            
         self.raw_statistics_filename = config.get("raw statistics file")
 
 
