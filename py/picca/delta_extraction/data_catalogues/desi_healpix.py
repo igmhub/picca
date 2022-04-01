@@ -98,12 +98,9 @@ class DesiHealpix(DesiData):
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiHealpix"
             )
-        self.num_processors = config.getint("num processors")
-        if self.num_processors is None:
-            raise DataError(
-                "Missing argument 'num processors' required by DesiHealpix")
+
         if self.num_processors == 0:
-            self.num_processors = (multiprocessing.cpu_count() // 2
+            self.num_processors = (multiprocessing.cpu_count() // 2)
 
     def read_data(self):
         """Read the data.

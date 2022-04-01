@@ -408,12 +408,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             raise ExpectedFluxError(
                 "Missing argument 'num iterations' required by Dr16ExpectedFlux")
 
-        self.num_processors = config.getint("num processors")
-        if self.num_processors is None:
-            raise ExpectedFluxError(
-                "Missing argument 'num processors' required by Dr16ExpectedFlux")
         if self.num_processors == 0:
-            self.num_processors = (multiprocessing.cpu_count() // 2
+            self.num_processors = (multiprocessing.cpu_count() // 2)
 
         self.order = config.getint("order")
         if self.order is None:

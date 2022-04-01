@@ -10,6 +10,7 @@ import re
 from datetime import datetime
 import git
 
+
 from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.utils import class_from_string, setup_logger
 
@@ -294,7 +295,7 @@ class Config:
         # add output directory
         section["out dir"] = self.out_dir
         if "num processors" in accepted_options:
-            section["num processors"] = self.out_dir
+            section["num processors"] = self.num_processors
 
         # finally add the information to self.data
         self.data = (DataType, section)
@@ -345,7 +346,7 @@ class Config:
         if "out dir" in accepted_options:
             section["out dir"] = self.out_dir
         if "num processors" in accepted_options:
-            section["num processors"] = self.out_dir
+            section["num processors"] = self.num_processors
         # finally add the information to self.continua
         self.expected_flux = (ExpectedFluxType, section)
 
@@ -374,11 +375,11 @@ class Config:
             self.out_dir += "/"
 
         self.overwrite = section.getboolean("overwrite")
-        if self.out_dir is None:
+        if self.overwrite is None:
             raise ConfigError("Missing variable 'overwrite' in section [general]")
 
         self.log = section.get("log")
-        if self.out_dir is None:
+        if self.log is None:
             raise ConfigError("Missing variable 'log' in section [general]")
         elif not (self.log.startswith(".") or self.log.startswith("/")):
             self.log = self.out_dir + "Log/" + self.log
@@ -393,6 +394,11 @@ class Config:
         if self.logging_level_file is None:
             raise ConfigError("In section 'logging level file' in section [general]")
         self.logging_level_file = self.logging_level_file.upper()
+    
+        self.num_processors = section.getint("num processors")
+        if self.num_processors is None:
+            raise ConfigError("Missing variable 'num processors' in section [general]")
+
 
     def __format_masks_section(self):
         """Format the masks section of the parser into usable data
