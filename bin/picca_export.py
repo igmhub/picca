@@ -284,23 +284,21 @@ def main(cmdargs):
             # Read the blinding file and get the right template
             blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
                                  'blinding/y1_blinding_v1.2_standard_29_03_2022.h5')
-            if not os.path.isfile(blinding_filename):
-                raise RuntimeError("Missing blinding file. Make sure you are running at"
-                                   " NERSC or contact picca developers")
-            blinding_file = h5py.File(blinding_filename, 'r')
-            hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
-            diff = np.array([float.fromhex(x) for x in hex_diff])
         else:
             # Read the regular grid blinding file and get the right template
             blinding_filename = ('/global/cfs/projectdirs/desi/science/lya/y1-kp6/'
                                  'blinding/y1_blinding_v1.2_regular_grid_29_03_2022.h5')
-            if not os.path.isfile(blinding_filename):
-                raise RuntimeError("Missing blinding file. Make sure you are running at"
-                                   " NERSC or contact picca developers")
-            blinding_file = h5py.File(blinding_filename, 'r')
-            hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
-            diff_grid = np.array([float.fromhex(x) for x in hex_diff])
 
+        if not os.path.isfile(blinding_filename):
+            raise RuntimeError("Missing blinding file. Make sure you are running at"
+                               " NERSC or contact picca developers")
+        blinding_file = h5py.File(blinding_filename, 'r')
+        hex_diff = np.array(blinding_file['blinding'][args.blind_corr_type]).astype(str)
+        diff_grid = np.array([float.fromhex(x) for x in hex_diff])
+
+        if corr_size == len(xi):
+            diff = diff_grid
+        else:
             # Interpolate the blinding template on the regular grid
             rt_grid, rp_grid = np.meshgrid(rt_interp_grid, rp_interp_grid)
             interp = scipy.interpolate.RectBivariateSpline(
