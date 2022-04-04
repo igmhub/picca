@@ -146,10 +146,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ---------
         config: configparser.SectionProxy
         Parsed options to initialize class
-
-        Raise
-        -----
-        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         self.logger = logging.getLogger(__name__)
         super().__init__(config)
@@ -192,8 +188,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
         - self.get_valid_fit
         - self.get_var_lss
         - self.log_lambda_var_func_grid
+
+        Raise
+        -----
+        ExpectedFluxError if Forest class variables are not set
         """
-        # check that Forest variables are set
+        # check that Forest class variables are set
         try:
             Forest.class_variable_check()
         except AstronomicalObjectError:
@@ -369,10 +369,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ------
         forest: Forest
         The modified forest instance
-
-        Raise
-        -----
-        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         self.continuum_fit_parameters = {}
 
@@ -441,10 +437,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         stack_from_deltas: bool - default: False
         Flag to determine whether to stack from deltas or compute them
-
-        Raise
-        -----
-        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         # TODO: move this to _initialize_variables_lin and
         # _initialize_variables_log (after tests are done)
@@ -551,10 +543,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ---------
         forests: List of Forest
         A list of Forest from which to compute the deltas.
-
-        Raise
-        -----
-        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         context = multiprocessing.get_context('fork')
         for iteration in range(self.num_iterations):
@@ -838,21 +826,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
         mean_cont: array of floats
         Mean continuum. Required.
 
-        lambda_max: float
-        Maximum lambda_ for this forest. Required only if Forest.wave_solution
-        is lin.
-
-        lambda_min: float
-        Minimum lambda_ for this forest. Required only if Forest.wave_solution
-        is lin.
-
         log_lambda_max: float
-        Maximum log_lambda for this forest. Required only if Forest.wave_solution
-        is log.
+        Maximum log_lambda for this forest.
 
         log_lambda_min: float
-        Minimum log_lambda for this forest. Required only if Forest.wave_solution
-        is log.
+        Minimum log_lambda for this forest.
 
         Return
         ------
@@ -870,18 +848,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                         f"'{key}' in the **kwargs dictionary")
         log_lambda_max = kwargs.get("log_lambda_max")
         log_lambda_min = kwargs.get("log_lambda_min")
-        lambda_max = 10**log_lambda_max
-        lambda_min = 10**log_lambda_min
         # compute continuum
-        if Forest.wave_solution == "log":
-            line = (bq * (forest.log_lambda - log_lambda_min) /
-                    (log_lambda_max - log_lambda_min) + aq)
-        elif Forest.wave_solution == "lin":
-            line = (bq * (10**forest.log_lambda - lambda_min) /
-                    (lambda_max - lambda_min) + aq)
-        else:
-            raise ExpectedFluxError("Forest.wave_solution must be either "
-                                    "'log' or 'lin'")
+        line = (bq * (forest.log_lambda - log_lambda_min) /
+                (log_lambda_max - log_lambda_min) + aq)
 
         return line * mean_cont
 
@@ -906,25 +875,13 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.use_constant_weight:
             weights = np.ones_like(forest.flux)
         else:
-            if Forest.wave_solution == "log":
-                # pixel variance due to the Large Scale Strucure
-                var_lss = self.get_var_lss(forest.log_lambda)
-                # correction factor to the contribution of the pipeline
-                # estimate of the instrumental noise to the variance.
-                eta = self.get_eta(forest.log_lambda)
-                # fudge contribution to the variance
-                fudge = self.get_fudge(forest.log_lambda)
-            elif Forest.wave_solution == "lin":
-                # pixel variance due to the Large Scale Strucure
-                var_lss = self.get_var_lss(10**forest.log_lambda)
-                # correction factor to the contribution of the pipeline
-                # estimate of the instrumental noise to the variance.
-                eta = self.get_eta(10**forest.log_lambda)
-                # fudge contribution to the variance
-                fudge = self.get_fudge(10**forest.log_lambda)
-            else:
-                raise ExpectedFluxError("Forest.wave_solution must be either "
-                                        "'log' or 'lin'")
+            # pixel variance due to the Large Scale Strucure
+            var_lss = self.get_var_lss(forest.log_lambda)
+            # correction factor to the contribution of the pipeline
+            # estimate of the instrumental noise to the variance.
+            eta = self.get_eta(forest.log_lambda)
+            # fudge contribution to the variance
+            fudge = self.get_fudge(forest.log_lambda)
 
             var_pipe = 1. / forest.ivar / cont_model**2
             ## prep_del.variance is the variance of delta
@@ -982,10 +939,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ---------
         iteration: int
         Iteration number. -1 for final iteration
-
-        Raise
-        -----
-        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         if iteration == -1:
             iter_out_file = self.iter_out_prefix + ".fits.gz"
