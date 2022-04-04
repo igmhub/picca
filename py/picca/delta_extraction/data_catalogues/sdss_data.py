@@ -279,7 +279,9 @@ class SdssData(Data):
 
                 # keep the forest
                 if thingid in forests_by_thingid:
-                    forests_by_thingid[thingid].coadd(forest)
+                    existing_forest = forests_by_thingid[thingid]
+                    existing_forest.coadd(forest)
+                    forests_by_thingid[thingid] = existing_forest
                 else:
                     forests_by_thingid[thingid] = forest
                 self.logger.debug(

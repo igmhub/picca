@@ -322,6 +322,8 @@ class DesiTile(DesiData):
                     elif self.analysis_type == "PK 1D":
                         if self.use_non_coadded_spectra and not no_scores_available:
                             exposures_diff = exp_diff_desi(spec, w_t)
+                            if exposures_diff is None:
+                                continue
                         else:
                             exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
                         if len(spec['RESO'][w_t].shape) < 3:
@@ -350,7 +352,9 @@ class DesiTile(DesiData):
 
                     # add the forest to list
                     if targetid in forests_by_targetid:
-                        forests_by_targetid[targetid].coadd(forest)
+                        existing_forest = forests_by_targetid[targetid]
+                        existing_forest.coadd(forest)
+                        forests_by_targetid[targetid] = existing_forest
                     else:
                         forests_by_targetid[targetid] = forest
 
