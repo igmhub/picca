@@ -61,7 +61,7 @@ class DesisimMocks(DesiHealpix):
         self.logger = logging.getLogger(__name__)
         super().__init__(config)
         if self.use_non_coadded_spectra:
-            self.logger.Warning('the "use_non_coadded_spectra" option was set, '
+            self.logger.warning('the "use_non_coadded_spectra" option was set, '
                                 'but has no effect on Mocks, will proceed as normal')
 
     def read_data(self):
