@@ -30,6 +30,10 @@ class ExpectedFlux:
     Arrays must have the same size as the flux array for the corresponding line
     of sight forest instance.
     
+    num_processors: int
+    Number of processors to use for multiprocessing-enabled tasks (will be passed
+    downstream to e.g. ExpectedFlux and Data classes)
+    
     out_dir: str (from ExpectedFlux)
     Directory where logs will be saved.
     """
