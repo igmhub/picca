@@ -138,7 +138,6 @@ class DesiHealpix(DesiData):
         is_sv = True
         if self.num_processors>1:
             context = multiprocessing.get_context('fork')
-            pool = context.Pool(processes=self.num_processors)
             manager =  multiprocessing.Manager()
             forests_by_targetid = manager.dict()
             arguments = []
@@ -157,9 +156,10 @@ class DesiHealpix(DesiData):
 
                 arguments.append((filename,group,forests_by_targetid))
 
-            self.logger.info(f"reading data from {len(arguments)} files")
-            pool.starmap(self.read_file, arguments)
-            pool.close()
+                self.logger.info(f"reading data from {len(arguments)} files")
+            with context.Pool(processes=self.num_processors) as pool:
+
+                pool.starmap(self.read_file, arguments)
         else:
             forests_by_targetid = {}
             for (index,

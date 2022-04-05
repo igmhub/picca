@@ -732,9 +732,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
             )
             if self.num_processors > 1:
-                pool = context.Pool(processes=self.num_processors)
-                forests = pool.map(self.compute_continuum, forests)
-                pool.close()
+                with context.Pool(processes=self.num_processors) as pool:
+                    forests = pool.map(self.compute_continuum, forests)
             else:
                 forests = [self.compute_continuum(f) for f in forests]
 
