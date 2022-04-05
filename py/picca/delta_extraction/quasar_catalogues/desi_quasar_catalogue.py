@@ -130,7 +130,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         Table with the catalogue
         """
         self.logger.progress(f'Reading catalogue from {self.filename}')
-        catalogue = Table(fitsio.read(self.filename, ext=1))
+        catalogue = Table(fitsio.read(self.filename, ext="QSO_CAT"))
 
         if 'TARGET_RA' in catalogue.colnames:
             catalogue.rename_column('TARGET_RA', 'RA')
