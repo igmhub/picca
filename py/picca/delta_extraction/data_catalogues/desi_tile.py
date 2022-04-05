@@ -183,10 +183,10 @@ class DesiTile(DesiData):
         petal_tile_night_unique = np.unique(petal_tile_night)
 
         filenames = []
-        for f_in in files_in:
-            for ptn in petal_tile_night_unique:
-                if ptn in os.path.basename(f_in):
-                    filenames.append(f_in)
+        for file_in in files_in:
+            for petal_tile_night in petal_tile_night_unique:
+                if petal_tile_night in os.path.basename(file_in):
+                    filenames.append(file_in)
         filenames = np.unique(filenames)
 
         for index, filename in enumerate(filenames):
