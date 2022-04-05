@@ -18,12 +18,10 @@ from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff
 accepted_options = sorted(
     list(
         set(accepted_options +
-            ["use all", "use single nights", "use non-coadded spectra"])))
+            ["use non-coadded spectra"])))
 
 defaults = defaults.copy()
 defaults.update({
-    "use all": False,
-    "use single nights": False,
     "use non-coadded spectra": False,
 })
 
@@ -102,15 +100,6 @@ class DesiTile(DesiData):
         -----
         DataError upon missing required variables
         """
-        self.use_all = config.getboolean("use all")
-        if self.use_all is None:
-            raise DataError("Missing argument 'use all' required by DesiTile")
-
-        self.use_single_nights = config.getboolean("use single nights")
-        if self.use_single_nights is None:
-            raise DataError(
-                "Missing argument 'use single nights' required by DesiTile")
-
         self.use_non_coadded_spectra = config.getboolean(
             "use non-coadded spectra")
         if self.use_non_coadded_spectra is None:
@@ -145,36 +134,19 @@ class DesiTile(DesiData):
 
         coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
 
-        if self.use_single_nights or "cumulative" in self.input_directory:
-            files_in = sorted(
-                glob.glob(os.path.join(self.input_directory,
-                                       f"**/{coadd_name}-*.fits"),
-                          recursive=True))
+        files_in = sorted(
+            glob.glob(os.path.join(self.input_directory,
+                                   f"**/{coadd_name}-*.fits"),
+                      recursive=True))
 
-            if "cumulative" in self.input_directory:
-                petal_tile_night = [
-                    f"{entry['PETAL_LOC']}-{entry['TILEID']}-thru{entry['LAST_NIGHT']}"
-                    for entry in self.catalogue
-                ]
-            else:
-                petal_tile_night = [
-                    f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
-                    for entry in self.catalogue
-                ]
+        if "cumulative" in self.input_directory:
+            petal_tile_night = [
+                f"{entry['PETAL_LOC']}-{entry['TILEID']}-thru{entry['LASTNIGHT']}"
+                for entry in self.catalogue
+            ]
         else:
-            if self.use_all:
-                files_in = sorted(
-                    glob.glob(os.path.join(self.input_directory,
-                                           f"**/all/**/{coadd_name}-*.fits"),
-                              recursive=True))
-            else:
-                files_in = sorted(
-                    glob.glob(os.path.join(self.input_directory,
-                                           f"**/deep/**/{coadd_name}-*.fits"),
-                              recursive=True))
-
-            petal_tile = [
-                f"{entry['PETAL_LOC']}-{entry['TILEID']}"
+            petal_tile_night = [
+                f"{entry['PETAL_LOC']}-{entry['TILEID']}-{entry['NIGHT']}"
                 for entry in self.catalogue
             ]
 
@@ -201,28 +173,16 @@ class DesiTile(DesiData):
 
             fibermap = hdul['FIBERMAP'].read()
             fibermap_colnames = hdul["FIBERMAP"].get_colnames()
-            # pre-Andes
-            if 'TARGET_RA' in fibermap_colnames:
-                ra = fibermap['TARGET_RA']
-                dec = fibermap['TARGET_DEC']
-                tile_spec = fibermap['TILEID'][0]
-                night_spec = fibermap['NIGHT'][0]
-                colors = ['BRZ']
-                if index == 0:
-                    self.logger.warning(
-                        "Reading all-band coadd as in minisv pre-Andes "
-                        "dataset")
-            # Andes
-            elif 'RA_TARGET' in fibermap_colnames:
-                ra = fibermap['RA_TARGET']
-                dec = fibermap['DEC_TARGET']
-                tile_spec = filename.split('-')[-2]
+
+            ra = fibermap['TARGET_RA']
+            dec = fibermap['TARGET_DEC']
+            tile_spec = fibermap['TILEID'][0]
+            if "cumulative" in self.input_directory:
+                night_spec = int(filename.split('thru')[-1].split('.')[0])
+            else:
                 night_spec = int(filename.split('-')[-1].split('.')[0])
-                colors = ['B', 'R', 'Z']
-                if index == 0:
-                    self.logger.warning(
-                        "Couldn't read the all band-coadd, trying "
-                        "single band as introduced in Andes reduction")
+
+            colors = ['B', 'R', 'Z']
             ra = np.radians(ra)
             dec = np.radians(dec)
 

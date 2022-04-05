@@ -138,7 +138,11 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
         keep_columns = ['RA', 'DEC', 'Z', 'TARGETID']
         if 'TILEID' in catalogue.colnames:
-            keep_columns += ['TILEID', 'PETAL_LOC', 'FIBER']
+            keep_columns += ['TILEID', 'PETAL_LOC']
+        if 'NIGHT' in catalogue.colnames:
+            keep_columns += ['NIGHT']
+        if 'LASTNIGHT' in catalogue.colnames:
+            keep_columns += ['LASTNIGHT']
         if 'SURVEY' in catalogue.colnames:
             keep_columns += ['SURVEY']
         if 'DESI_TARGET' in catalogue.colnames:

@@ -10,6 +10,8 @@ from picca.delta_extraction.data_catalogues.desi_data import DesiData
 from picca.delta_extraction.data_catalogues.desi_data import defaults as defaults_desi_data
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
 from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
+from picca.delta_extraction.data_catalogues.desi_tile import DesiTile
+from picca.delta_extraction.data_catalogues.desi_tile import defaults as defaults_desi_tile
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
 from picca.delta_extraction.data_catalogues.sdss_data import defaults as defaults_sdss_data
 from picca.delta_extraction.errors import DataError
@@ -172,7 +174,7 @@ class DataTest(AbstractTest):
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
         config.read_dict({"data": {
-            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_sv1_dark_healpix.fits",
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits",
             "keep surveys": "all special",
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
@@ -225,8 +227,8 @@ class DataTest(AbstractTest):
 
         config = ConfigParser()
         config.read_dict({"data": {
-            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_sv1_dark_healpix.fits",
-            "keep surveys": "all special",
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+            "keep surveys": "all",
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
         }})
@@ -236,11 +238,43 @@ class DataTest(AbstractTest):
 
         data = DesiHealpix(config["data"])
 
-        self.assertTrue(len(data.forests) == 62)
+        self.assertTrue(len(data.forests) == 63)
 
     def test_desi_tile(self):
         """Test DesiTile"""
-        # TODO: add test
+        # setup printing
+        setup_logger()
+
+        # load DesiTile using coadds
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 10)
+
+        # load DesiTile using spectra
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
+            "input directory": f"{THIS_DIR}/data/tile/cumulative",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": "False",
+        }})
+        for key, value in defaults_desi_tile.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiTile(config["data"])
+
+        self.assertTrue(len(data.forests) == 10)
 
     def test_desisim_mocks(self):
         """Test DesisimMocks"""
