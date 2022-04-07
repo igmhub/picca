@@ -1,4 +1,6 @@
 """This module defines the abstract class IvarCorrection"""
+import logging
+
 import fitsio
 from scipy.interpolate import interp1d
 
@@ -36,6 +38,8 @@ class IvarCorrection(Correction):
         CorrectionError if input file does not have fields loglam and/or eta
         in extension VAR_FUNC
         """
+        self.logger = logging.getLogger(__name__)
+
         filename = config.get("filename")
         if filename is None:
             raise CorrectionError("Missing argument 'filename' required by SdssIvarCorrection")
@@ -43,10 +47,11 @@ class IvarCorrection(Correction):
             hdu = fitsio.read(filename, ext="VAR_FUNC")
             if "loglam" in hdu.dtype.names:
                 log_lambda = hdu['loglam']
-                self.wave_solution = "log"
             elif "lambda" in hdu.dtype.names:
-                lambda_ = hdu['lambda']
-                self.wave_solution = "lin"
+                self.logger.warning("DeprecationWarning: Reading correction using 'lambda'. "
+                                    "Newer versions of picca always save 'log_lambda' and "
+                                    "so this option will be removed in the future.")
+                log_lambda = np.log10(hdu['lambda'])
             else:
                 raise CorrectionError("Error loading IvarCorrection. In "
                                       "extension 'VAR_FUNC' in file "
@@ -63,20 +68,11 @@ class IvarCorrection(Correction):
             raise CorrectionError("Error loading IvarCorrection. "
                                   f"File {filename} does not have fields "
                                   "'loglam' and/or 'eta' in HDU 'VAR_FUNC'")
-        if self.wave_solution == "log":
-            self.correct_ivar = interp1d(log_lambda,
-                                         eta,
-                                         fill_value="extrapolate",
-                                         kind="nearest")
-        elif self.wave_solution == "lin":
-            self.correct_ivar = interp1d(lambda_,
-                                         eta,
-                                         fill_value="extrapolate",
-                                         kind="nearest")
-        else:
-            raise CorrectionError("Forest.wave_solution must be either "
-                                  "'log' or 'lin'")
 
+        self.correct_ivar = interp1d(log_lambda,
+                                     eta,
+                                     fill_value="extrapolate",
+                                     kind="nearest")
 
     def apply_correction(self, forest):
         """Apply the correction. Correction is applied by dividing the
@@ -92,20 +88,5 @@ class IvarCorrection(Correction):
         CorrectionError if forest instance does not have the attribute
         'log_lambda'
         """
-        if self.wave_solution == "log":
-            if not hasattr(forest, "log_lambda"):
-                raise CorrectionError("Forest instance is missing "
-                                      "attribute 'log_lambda' required by "
-                                      "IvarCorrection")
-            correction = self.correct_ivar(forest.log_lambda)
-        elif self.wave_solution == "lin":
-            if not hasattr(forest, "lambda_"):
-                raise CorrectionError("Forest instance is missing "
-                                      "attribute 'lambda_' required by "
-                                      "IvarCorrection")
-            correction = self.correct_ivar(forest.lambda_)
-        else:
-            raise CorrectionError("In IvarCorrection wave_solution must "
-                                  "be either 'log' or 'lin'")
-
+        correction = self.correct_ivar(forest.log_lambda)
         forest.ivar /= correction

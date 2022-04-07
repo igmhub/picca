@@ -60,6 +60,7 @@ class DesisimMocks(DesiHealpix):
 
         self.logger = logging.getLogger(__name__)
         super().__init__(config)
+        
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
 

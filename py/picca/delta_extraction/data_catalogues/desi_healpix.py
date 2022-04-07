@@ -275,14 +275,8 @@ class DesiHealpix(DesiData):
                     "dec": row['DEC'],
                     "z": row['Z'],
                 }
-                if Forest.wave_solution == "log":
-                    args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-                elif Forest.wave_solution == "lin":
-                    args["lambda"] = spec['WAVELENGTH']
-                else:
-                    raise DataError("Forest.wave_solution must be either "
-                                    "'log' or 'lin'")
-
+                args["log_lambda"] = np.log10(spec['WAVELENGTH'])
+                
                 if self.analysis_type == "BAO 3D":
                     forest = DesiForest(**args)
                 elif self.analysis_type == "PK 1D":
