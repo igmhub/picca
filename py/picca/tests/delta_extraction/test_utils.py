@@ -139,19 +139,32 @@ assert np.allclose(forest3.transmission_correction,
                    np.ones_like(forest3_log_lambda))
 
 
-# Dictionary to load SdssData
+
+# Dictionary to load data
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-sdss_data_kwargs = {
+kwargs_data = {
     "input directory":
         f"{THIS_DIR}/data",
     "out dir":
         f"{THIS_DIR}/results",
     "rejection log file": "rejection_log.fits.gz",
-    "drq catalogue":
-        f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
     "z max": 3.5,
     "z min": 2.1,
 }
+
+# Dictionary to load DesiHealpix
+desi_healpix_kwargs = kwargs_data.copy()
+desi_healpix_kwargs.update({
+    "catalogue":
+        f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+})
+
+# Dictionary to load SdssData
+sdss_data_kwargs = kwargs_data.copy()
+sdss_data_kwargs.update({
+    "drq catalogue":
+        f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+})
 sdss_data_kwargs_filter_forest = {
     "input directory":
         f"{THIS_DIR}/data",

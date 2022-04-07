@@ -8,6 +8,8 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from picca.delta_extraction.errors import ExpectedFluxError
+from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
+from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
 from picca.delta_extraction.data_catalogues.sdss_data import defaults as defaults_sdss_data
 from picca.delta_extraction.expected_flux import ExpectedFlux
@@ -17,6 +19,7 @@ from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
 from picca.tests.delta_extraction.abstract_test import AbstractTest
 from picca.tests.delta_extraction.test_utils import forest1
 from picca.tests.delta_extraction.test_utils import setup_forest, reset_forest
+from picca.tests.delta_extraction.test_utils import desi_healpix_kwargs
 from picca.tests.delta_extraction.test_utils import sdss_data_kwargs
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -133,6 +136,8 @@ class ExpectedFluxTest(AbstractTest):
             f.write("\n")
         f.close()
 
+        #self.compare_ascii(test_file, out_file)
+
         # load expected forest continua
         continua = {}
         f = open(test_file)
@@ -156,6 +161,88 @@ class ExpectedFluxTest(AbstractTest):
                     print(i1, i2, np.isclose(i1, i2), i1-i2)
             self.assertTrue(
                 np.allclose(forest.continuum, continua.get(forest.los_id)))
+            correct_forests += 1
+
+        # check that we loaded all quasars
+        self.assertTrue(correct_forests == len(continua))
+
+        # setup Forest variables; case: linear wavelength solution
+        reset_forest()
+        setup_forest("lin")
+
+        out_file = f"{THIS_DIR}/results/continua_lin.txt"
+        test_file = f"{THIS_DIR}/data/continua_lin.txt"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesiHealpix(config["data"])
+        expected_flux = Dr16ExpectedFlux(config["expected flux"])
+
+        # compute the forest continua
+        for forest in data.forests:
+            expected_flux.compute_continuum(forest)
+
+        # save the results
+        f = open(out_file, "w")
+        f.write("# thingid cont[0] ... cont[N]\n")
+        for forest in data.forests:
+            f.write(f"{forest.los_id} ")
+            if forest.continuum is not None:
+                for item in forest.continuum:
+                    f.write(f"{item} ")
+            f.write("\n")
+        f.close()
+
+        #self.compare_ascii(test_file, out_file)
+
+        # load expected forest continua
+        continua = {}
+        f = open(test_file)
+        for line in f.readlines():
+            if line.startswith("#"):
+                continue
+            cols = line.split()
+            los_id = int(cols[0])
+            if len(cols) == 1:
+                continuum = None
+            else:
+                continuum = np.array([float(item) for item in cols[1:]])
+            continua[los_id] = continuum
+        f.close()
+
+        # compare the results
+        correct_forests = 0
+        for forest in data.forests:
+            if forest.continuum is None:
+                if continua.get(forest.los_id) is not None:
+                    print(f"For forest with los_id {forest.los_id}, new continuum "
+                          "is None. Expected continua:")
+                    print(continua.get(forest.los_id))
+                self.assertTrue(continua.get(forest.los_id) is None)
+            elif continua.get(forest.los_id) is None:
+                self.assertTrue(forest.continuum is None)
+            else:
+                if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                    print("Difference found in forest.continuum")
+                    print(f"forest.los_id: {forest.los_id}")
+                    print(f"result test are_close result-test")
+                    for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
+                        print(i1, i2, np.isclose(i1, i2), i1-i2)
+                self.assertTrue(
+                    np.allclose(forest.continuum, continua.get(forest.los_id)))
             correct_forests += 1
 
         # check that we loaded all quasars
@@ -185,6 +272,59 @@ class ExpectedFluxTest(AbstractTest):
             if key not in config["data"]:
                 config["data"][key] = str(value)
         data = SdssData(config["data"])
+        expected_flux = Dr16ExpectedFlux(config["expected flux"])
+
+        # compute the forest continua
+        for forest in data.forests:
+            expected_flux.compute_continuum(forest)
+
+        # compute variance functions and statistics
+        expected_flux.compute_delta_stack(data.forests)
+
+        # save results
+        f = open(out_file, "w")
+        f.write("# log_lambda delta\n")
+        for log_lambda in np.arange(3.5563025, 3.7123025 + 3e-4, 3e-4):
+            f.write(f"{log_lambda} {expected_flux.get_stack_delta(log_lambda)}\n")
+        f.close()
+
+        # load expected delta stack
+        expectations = np.genfromtxt(test_file, names=True)
+
+        # compare with obtained results
+        stack_delta = expected_flux.get_stack_delta(expectations["log_lambda"])
+        if not np.allclose(stack_delta, expectations["delta"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
+            print("Difference found in delta stack")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(stack_delta, expectations["delta"]):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+        self.assertTrue(np.allclose(stack_delta, expectations["delta"]))
+
+        # setup Forest variables; case: linear wavelength solution
+        reset_forest()
+        setup_forest("lin")
+
+        out_file = f"{THIS_DIR}/results/delta_stack_lin.txt"
+        test_file = f"{THIS_DIR}/data/delta_stack_lin.txt"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesiHealpix(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
         # compute the forest continua
@@ -249,7 +389,94 @@ class ExpectedFluxTest(AbstractTest):
             self.compare_fits(
                 test_file.replace(".fits", f"_iteration{iteration}.fits"),
                 out_file.replace(".fits", f"_iteration{iteration}.fits"))
+        self.compare_fits(test_file, out_file)        # setup Forest variables; case: linear wavelength solution
+        reset_forest()
+        setup_forest("lin")
+
+        out_file = f"{THIS_DIR}/results/Log/iter_out_prefix_compute_expected_flux_lin.fits.gz"
+        test_file = f"{THIS_DIR}/data/iter_out_prefix_compute_expected_flux_lin.fits.gz"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix_compute_expected_flux_lin",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesiHealpix(config["data"])
+        expected_flux = Dr16ExpectedFlux(config["expected flux"])
+
+        # compute the expected flux
+        expected_flux.compute_expected_flux(data.forests)
+
+        # check the results
+        for iteration in range(1, 5):
+            self.compare_fits(
+                test_file.replace(".fits", f"_iteration{iteration}.fits"),
+                out_file.replace(".fits", f"_iteration{iteration}.fits"))
         self.compare_fits(test_file, out_file)
+
+    def test_dr16_expected_flux_compute_mean_cont_lin(self):
+        """Test method compute_mean_cont_lin for class Dr16ExpectedFlux"""
+        # setup Forest variables; case: logarithmic wavelength solution
+        setup_forest("lin")
+
+        out_file = f"{THIS_DIR}/results/mean_cont_lin.txt"
+        test_file = f"{THIS_DIR}/data/mean_cont_lin.txt"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesiHealpix(config["data"])
+        expected_flux = Dr16ExpectedFlux(config["expected flux"])
+
+        # compute the forest continua
+        for forest in data.forests:
+            expected_flux.compute_continuum(forest)
+
+        # compute mean quasar continuum
+        expected_flux.compute_mean_cont(data.forests)
+
+        # save results
+        f = open(out_file, "w")
+        f.write("# log_lambda mean_cont\n")
+        for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
+            f.write(f"{log_lambda} {expected_flux.get_mean_cont(log_lambda)}\n")
+        f.close()
+
+        # load the expected results
+        expectations = np.genfromtxt(test_file, names=True)
+
+        # compare with obtained results
+        mean_cont = expected_flux.get_mean_cont(expectations["log_lambda"])
+        if not np.allclose(mean_cont, expectations["mean_cont"]):
+            print(f"\nOriginal file: {test_file}")
+            print(f"New file: {out_file}")
+            print("Difference found in mean_cont")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont, expectations["mean_cont"]):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+        self.assertTrue(np.allclose(mean_cont, expectations["mean_cont"]))
 
     def test_dr16_expected_flux_compute_mean_cont_log(self):
         """Test method compute_mean_cont_log for class Dr16ExpectedFlux"""
@@ -286,18 +513,13 @@ class ExpectedFluxTest(AbstractTest):
 
         # save results
         f = open(out_file, "w")
-        f.write("# log_lambda delta\n")
+        f.write("# log_lambda mean_cont\n")
         for log_lambda in np.arange(3.0171, 3.079 + 3e-4, 3e-4):
             f.write(f"{log_lambda} {expected_flux.get_mean_cont(log_lambda)}\n")
         f.close()
 
         # load the expected results
         expectations = np.genfromtxt(test_file, names=True)
-        f = open(f"{THIS_DIR}/results/mean_cont_log.txt", "w")
-        f.write("# log_lambda mean_cont\n")
-        for item in expectations["log_lambda"]:
-            f.write(f"{item} {expected_flux.get_mean_cont(item)}\n")
-        f.close()
 
         # compare with obtained results
         mean_cont = expected_flux.get_mean_cont(expectations["log_lambda"])
@@ -315,7 +537,8 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
-        test_file = f"{THIS_DIR}/data/eta_var_lss_fudge.txt"
+        out_file = f"{THIS_DIR}/results/var_stats_log.txt"
+        test_file = f"{THIS_DIR}/data/var_stats_log.txt"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -342,6 +565,19 @@ class ExpectedFluxTest(AbstractTest):
         # compute variance functions and statistics
         expected_flux.compute_var_stats(data.forests)
 
+        # save results
+        f = open(out_file, "w")
+        f.write("#log_lambda eta var_lss fudge num_pixels valid_fit\n")
+        for log_lambda in expected_flux.log_lambda_var_func_grid:
+            f.write(f"{log_lambda} ")
+            f.write(f"{expected_flux.get_eta(log_lambda)} ")
+            f.write(f"{expected_flux.get_var_lss(log_lambda)} ")
+            f.write(f"{expected_flux.get_fudge(log_lambda)} ")
+            f.write(f"{expected_flux.get_num_pixels(log_lambda)} ")
+            f.write(f"{expected_flux.get_valid_fit(log_lambda)} ")
+            f.write("\n")
+        f.close()
+
         # load the expected results
         expectations = np.genfromtxt(test_file, names=True)
 
@@ -349,9 +585,72 @@ class ExpectedFluxTest(AbstractTest):
         eta = expected_flux.get_eta(expectations["log_lambda"])
         var_lss = expected_flux.get_var_lss(expectations["log_lambda"])
         fudge = expected_flux.get_fudge(expectations["log_lambda"])
+        num_pixels = expected_flux.get_num_pixels(expectations["log_lambda"])
+        valid_fit = expected_flux.get_valid_fit(expectations["log_lambda"])
         self.assertTrue(np.allclose(eta, expectations["eta"]))
         self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
         self.assertTrue(np.allclose(fudge, expectations["fudge"]))
+        self.assertTrue(np.allclose(num_pixels, expectations["num_pixels"]))
+        self.assertTrue(np.allclose(valid_fit, expectations["valid_fit"]))
+        # setup Forest variables; case: linear wavelength solution
+        reset_forest()
+        setup_forest("lin")
+
+        out_file = f"{THIS_DIR}/results/var_stats_lin.txt"
+        test_file = f"{THIS_DIR}/data/var_stats_lin.txt"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesiHealpix(config["data"])
+        expected_flux = Dr16ExpectedFlux(config["expected flux"])
+
+        # compute the forest continua
+        for forest in data.forests:
+            expected_flux.compute_continuum(forest)
+
+        # compute variance functions and statistics
+        expected_flux.compute_var_stats(data.forests)
+
+        # save results
+        f = open(out_file, "w")
+        f.write("#log_lambda eta var_lss fudge num_pixels valid_fit\n")
+        for log_lambda in expected_flux.log_lambda_var_func_grid:
+            f.write(f"{log_lambda} ")
+            f.write(f"{expected_flux.get_eta(log_lambda)} ")
+            f.write(f"{expected_flux.get_var_lss(log_lambda)} ")
+            f.write(f"{expected_flux.get_fudge(log_lambda)} ")
+            f.write(f"{expected_flux.get_num_pixels(log_lambda)} ")
+            f.write(f"{expected_flux.get_valid_fit(log_lambda)} ")
+            f.write("\n")
+        f.close()
+
+        # load the expected results
+        expectations = np.genfromtxt(test_file, names=True)
+
+        # compare with obtained results
+        eta = expected_flux.get_eta(expectations["log_lambda"])
+        var_lss = expected_flux.get_var_lss(expectations["log_lambda"])
+        fudge = expected_flux.get_fudge(expectations["log_lambda"])
+        num_pixels = expected_flux.get_num_pixels(expectations["log_lambda"])
+        valid_fit = expected_flux.get_valid_fit(expectations["log_lambda"])
+        self.assertTrue(np.allclose(eta, expectations["eta"]))
+        self.assertTrue(np.allclose(var_lss, expectations["var_lss"]))
+        self.assertTrue(np.allclose(fudge, expectations["fudge"]))
+        self.assertTrue(np.allclose(num_pixels, expectations["num_pixels"]))
+        self.assertTrue(np.allclose(valid_fit, expectations["valid_fit"]))
 
     def test_dr16_expected_flux_populate_los_ids(self):
         """Test method populate_los_ids for class Dr16ExpectedFlux"""
@@ -412,6 +711,48 @@ class ExpectedFluxTest(AbstractTest):
             if key not in config["data"]:
                 config["data"][key] = str(value)
         data = SdssData(config["data"])
+        expected_flux = Dr16ExpectedFlux(config["expected flux"])
+
+        # compute the forest continua
+        for forest in data.forests:
+            expected_flux.compute_continuum(forest)
+
+        # compute variance functions and statistics
+        expected_flux.compute_delta_stack(data.forests)
+
+        # save iter_out_prefix for iteration 0
+        expected_flux.save_iteration_step(0)
+        self.compare_fits(test_file, out_file)
+
+        # save iter_out_prefix for final iteration
+        expected_flux.save_iteration_step(-1)
+        self.compare_fits(test_file2, out_file2)
+
+        # setup Forest variables; case: linear wavelength solution
+        reset_forest()
+        setup_forest("lin")
+
+        out_file = f"{THIS_DIR}/results/Log/iter_out_prefix_lin_iteration1.fits.gz"
+        out_file2 = f"{THIS_DIR}/results/Log/iter_out_prefix_lin.fits.gz"
+        test_file = f"{THIS_DIR}/data/iter_out_prefix_lin_iteration1.fits.gz"
+        test_file2 = f"{THIS_DIR}/data/iter_out_prefix_lin.fits.gz"
+
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_healpix_kwargs,
+            "expected flux": {
+                "iter out prefix": "iter_out_prefix_lin",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesiHealpix(config["data"])
         expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
         # compute the forest continua
