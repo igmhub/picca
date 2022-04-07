@@ -1,5 +1,4 @@
 """This module defines the class Dr16ExpectedFlux"""
-from cmath import log
 import logging
 import multiprocessing
 
@@ -40,29 +39,22 @@ class Dr16ExpectedFlux(ExpectedFlux):
     -------
     extract_deltas (from ExpectedFlux)
     __init__
-    _initialize_arrays
+    _initialize_variables
     __parse_config
     compute_continuum
-        get_cont_model
-        chi2
     compute_delta_stack
     compute_mean_cont
     compute_expected_flux
     compute_var_stats
         chi2
+    get_continuum_model
+    get_continuum_weights
+    populate_los_ids
+    save_iteration_step
 
     Attributes
     ----------
-    los_ids: dict (from ExpectedFlux)
-    A dictionary to store the mean expected flux fraction, the weights, and
-    the inverse variance for each line of sight. Keys are the identifier for the
-    line of sight and values are dictionaries with the keys "mean expected flux",
-    and "weights" pointing to the respective arrays. If the given Forests are
-    also Pk1dForests, then the key "ivar" must be available. Arrays have the same
-    size as the flux array for the corresponding line of sight forest instance.
-
-    out_dir: str (from ExpectedFlux)
-    Directory where logs will be saved.
+    (see ExpectedFlux in py/picca/delta_extraction/expected_flux.py)
 
     continuum_fit_parameters: dict
     A dictionary containing the continuum fit parameters for each line of sight.
@@ -214,10 +206,29 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
-        self.log_lambda_var_func_grid = (
-            Forest.log_lambda_grid[0] + (np.arange(self.num_bins_variance) + .5) *
-            (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
-            self.num_bins_variance)
+        if Forest.wave_solution == "log":
+            self.log_lambda_var_func_grid = (
+                Forest.log_lambda_grid[0] + (np.arange(self.num_bins_variance) + .5) *
+                (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
+                self.num_bins_variance)
+        # TODO: this is related with the todo in check the effect of finding
+        # the nearest bin in log_lambda space versus lambda space infunction
+        # find_bins in utils.py. Once we understand that we can remove
+        # the dependence from Forest from here too.
+        elif Forest.wave_solution == "lin":
+            self.log_lambda_var_func_grid = np.log10(
+                10**Forest.log_lambda_grid[0] + (np.arange(self.num_bins_variance) + .5) *
+                (10**Forest.log_lambda_grid[-1] - 10**Forest.log_lambda_grid[0]) /
+                self.num_bins_variance)
+
+        # TODO: Replace the if/else block above by something like the commented
+        # block below. We need to check the impact of doing this on the final
+        # deltas first (eta, var_lss and fudge will be differently sampled).
+        #start of commented block
+        #resize = len(Forest.log_lambda_grid)/self.num_bins_variance
+        #print(resize)
+        #self.log_lambda_var_func_grid = Forest.log_lambda_grid[::int(resize)]
+        #end of commented block
 
         # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
         # print a message to inform the user
@@ -265,7 +276,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                        fill_value="extrapolate",
                                        kind='nearest')
         self.get_valid_fit = interp1d(self.log_lambda_var_func_grid,
-                                      num_pixels,
+                                      valid_fit,
                                       fill_value="extrapolate",
                                       kind='nearest')
 
@@ -381,6 +392,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         mean_cont *= forest.transmission_correction
 
         mean_cont_kwargs = {"mean_cont": mean_cont}
+        # TODO: This can probably be replaced by forest.log_lambda[-1] and
+        # forest.log_lambda[0]
         mean_cont_kwargs["log_lambda_max"] = (
             Forest.log_lambda_rest_frame_grid[-1] + np.log10(1 + forest.z))
         mean_cont_kwargs["log_lambda_min"] = (
@@ -404,6 +417,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         minimizer.print_level = 0
         minimizer.fixed["bq"] = self.order == 0
         minimizer.migrad()
+
 
         forest.bad_continuum_reason = None
         temp_cont_model = self.get_continuum_model(forest,
@@ -438,8 +452,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         stack_from_deltas: bool - default: False
         Flag to determine whether to stack from deltas or compute them
         """
-        # TODO: move this to _initialize_variables_lin and
-        # _initialize_variables_log (after tests are done)
+        # TODO: move this to _initialize_variables (after tests are done)
         stack_delta = np.zeros_like(Forest.log_lambda_grid)
         stack_weight = np.zeros_like(Forest.log_lambda_grid)
 
@@ -635,19 +648,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             # select the pipeline variance bins
             var_pipe_bins = np.floor(
-                (np.log10(var_pipe) - var_pipe_min) /
+                (np.log10(var_pipe[w]) - var_pipe_min) /
                 (var_pipe_max - var_pipe_min) * num_var_bins).astype(int)
-            # filter the values with a pipeline variance out of range
-            var_pipe_bins = var_pipe_bins[w]
 
             # select the wavelength bins
             log_lambda_bins = find_bins(
-                forest.log_lambda,
+                forest.log_lambda[w],
                 self.log_lambda_var_func_grid,
                 Forest.wave_solution
                 )
-            # filter the values with a pipeline variance out of range
-            log_lambda_bins = log_lambda_bins[w]
+
             # compute overall bin
             bins = var_pipe_bins + num_var_bins * log_lambda_bins
 
@@ -684,7 +694,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         self.logger.progress(" Mean quantities in observer-frame")
         self.logger.progress(
-            " loglam    eta      var_lss  fudge    chi2     num_pix ")
+            " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit")
         for index in range(self.num_bins_variance):
             # pylint: disable-msg=cell-var-from-loop
             # this function is defined differntly at each step of the loop
@@ -780,7 +790,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             self.logger.progress(
                 f" {self.log_lambda_var_func_grid[index]:.3e} "
                 f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
-                + f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} ")
+                + f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} {valid_fit[index]}")
 
         w = num_pixels > 0
 
