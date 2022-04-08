@@ -60,7 +60,10 @@ class DesisimMocks(DesiHealpix):
 
         self.logger = logging.getLogger(__name__)
         super().__init__(config)
-        
+        if self.use_non_coadded_spectra:
+            self.logger.warning('the "use_non_coadded_spectra" option was set, '
+                                'but has no effect on Mocks, will proceed as normal')
+
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
 
@@ -94,26 +97,39 @@ class DesisimMocks(DesiHealpix):
 
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
         arguments=[]
+        if self.num_processors>1:
+            context = multiprocessing.get_context('fork')
+            manager =  multiprocessing.Manager()
+            forests_by_targetid = manager.dict()
 
-        self.num_processors = multiprocessing.cpu_count() // 2
-        context = multiprocessing.get_context('fork')
-        pool = context.Pool(processes=self.num_processors)
-        manager =  multiprocessing.Manager()
-        forests_by_targetid = manager.dict()
+            for (index,
+                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
+                                        grouped_catalogue.groups):
 
-        for (index,
-             (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                    grouped_catalogue.groups):
+                filename = (
+                    f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
+                    f"{in_nside}-{healpix}.fits")
+                arguments.append((filename,group,forests_by_targetid))
 
-            filename = (
-                f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
-                f"{in_nside}-{healpix}.fits")
-            arguments.append((filename,group,forests_by_targetid))
+            self.logger.info(f"reading data from {len(arguments)} files")
+            with context.Pool(processes=self.num_processors) as pool:
 
-        self.logger.info(f"reading data from {len(arguments)} files")
-        pool.starmap(self.read_file,arguments)
+                pool.starmap(self.read_file, arguments)
+        else:
+            forests_by_targetid = {}
+            for (index,
+                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
+                                        grouped_catalogue.groups):
 
-        pool.close()
+                filename = (
+                    f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
+                    f"{in_nside}-{healpix}.fits")
+                self.logger.progress(
+                    f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
+                    f"num_data: {len(forests_by_targetid)}"
+                    )
+                self.read_file(filename, group, forests_by_targetid)
+
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")
         self.forests = list(forests_by_targetid.values())
