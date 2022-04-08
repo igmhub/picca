@@ -157,13 +157,11 @@ class DataTest(AbstractTest):
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
-        with self.assertRaises(DataError):
-            try:
-                DesiData(config["data"])
-            except DataError as error:
-                self.assertTrue(str(error) ==
-                    "Function 'read_data' was not overloaded by child class")
-                raise error
+        expected_message = ("Function 'read_data' was not overloaded by "
+                            "child class")
+        with self.assertRaises(DataError) as context_manager:
+            DesiData(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
     def test_desi_data_parse_config(self):
         """Test method __parse_config from DesiData
@@ -192,13 +190,10 @@ class DataTest(AbstractTest):
                         }})
 
         # run __parse_config with missing 'blinding'
-        with self.assertRaises(DataError):
-            try:
-                data._DesiData__parse_config(config["data"])
-            except DataError as error:
-                self.assertTrue(str(error) ==
-                    "Missing argument 'blinding' required by DesiData")
-                raise error
+        expected_message = "Missing argument 'blinding' required by DesiData"
+        with self.assertRaises(DataError) as context_manager:
+            data._DesiData__parse_config(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
         # check the defaults loading
         config = ConfigParser()
@@ -211,15 +206,12 @@ class DataTest(AbstractTest):
 
         # check loading with the wrong blinding
         config["data"]["blinding"] = "invalid"
-        with self.assertRaises(DataError):
-            try:
-                data._DesiData__parse_config(config["data"])
-            except DataError as error:
-                print(error)
-                self.assertTrue(str(error) == (
-                    "Unrecognized blinding strategy. Accepted strategies "
-                    f"are {ACCEPTED_BLINDING_STRATEGIES}. Found 'invalid'"))
-                raise error
+        expected_message = (
+            "Unrecognized blinding strategy. Accepted strategies "
+            f"are {ACCEPTED_BLINDING_STRATEGIES}. Found 'invalid'")
+        with self.assertRaises(DataError) as context_manager:
+            data._DesiData__parse_config(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
     def test_desi_healpix(self):
         """Test DesiHealpix"""
@@ -327,23 +319,17 @@ class DataTest(AbstractTest):
                         }})
 
         # run __parse_config with missing 'mode'
-        with self.assertRaises(DataError):
-            try:
-                data._SdssData__parse_config(config["data"])
-            except DataError as error:
-                self.assertTrue(str(error) ==
-                    "Missing argument 'mode' required by SdssData")
-                raise error
+        expected_message = "Missing argument 'mode' required by SdssData"
+        with self.assertRaises(DataError) as context_manager:
+            data._SdssData__parse_config(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
         # run __parse_config with missing 'mode'
         config["data"]["mode"] = "spec"
-        with self.assertRaises(DataError):
-            try:
-                data._SdssData__parse_config(config["data"])
-            except DataError as error:
-                self.assertTrue(str(error) ==
-                    "Missing argument 'rebin' required by SdssData")
-                raise error
+        expected_message = "Missing argument 'rebin' required by SdssData"
+        with self.assertRaises(DataError) as context_manager:
+            data._SdssData__parse_config(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
         # check the defaults loading
         config = ConfigParser()

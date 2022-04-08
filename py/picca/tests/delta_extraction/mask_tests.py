@@ -169,9 +169,11 @@ class MaskTest(AbstractTest):
             # create LinesMask instance with missing options
             config = ConfigParser()
             config.read_dict({"masks": {}})
+            expected_message = (
+                "Missing argument 'filename' required by LinesMask")
             with self.assertRaises(MaskError) as context_manager:
                 correction = LinesMask(config["masks"])
-            self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
+            self.compare_error_message(context_manager, expected_message)
 
     def test_mask(self):
         """Test Abstract class Mask
@@ -179,9 +181,11 @@ class MaskTest(AbstractTest):
         Load a Mask instace and check that method apply_mask is not initialized.
         """
         mask = Mask()
-        with self.assertRaises(MaskError):
-            # run apply_correction, this should raise MaskError
+        expected_message = (
+            "Function 'apply_mask' was not overloaded by child class")
+        with self.assertRaises(MaskError) as context_manager:
             mask.apply_mask(forest1)
+        self.compare_error_message(context_manager, expected_message)
 
 if __name__ == '__main__':
     unittest.main()

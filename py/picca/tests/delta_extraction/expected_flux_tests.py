@@ -60,8 +60,12 @@ class ExpectedFluxTest(AbstractTest):
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
         # this should raise an error as iter out prefix should not have a folder
-        with self.assertRaises(ExpectedFluxError):
+        expected_message = (
+            "Error constructing Dr16ExpectedFlux. 'iter out prefix' should not "
+            f"incude folders. Found: {THIS_DIR}/results/iter_out_prefix")
+        with self.assertRaises(ExpectedFluxError) as context_manager:
             expected_flux = Dr16ExpectedFlux(config["expected flux"])
+        self.compare_error_message(context_manager, expected_message)
 
         config = ConfigParser()
         config.read_dict(
@@ -74,8 +78,12 @@ class ExpectedFluxTest(AbstractTest):
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
         # this should also raise an error as Forest variables are not defined
-        with self.assertRaises(ExpectedFluxError):
+        expected_message = (
+            "Forest class variables need to be set before initializing "
+            "variables here.")
+        with self.assertRaises(ExpectedFluxError) as context_manager:
             expected_flux = Dr16ExpectedFlux(config["expected flux"])
+        self.compare_error_message(context_manager, expected_message)
 
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
@@ -801,8 +809,11 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux = ExpectedFlux(config["expected flux"])
 
         # compute_expected_flux should not be defined
-        with self.assertRaises(ExpectedFluxError):
+        expected_message = ("Function 'compute_expected_flux' was not "
+                            "overloaded by child class")
+        with self.assertRaises(ExpectedFluxError) as context_manager:
             expected_flux.compute_expected_flux([], "")
+        self.compare_error_message(context_manager, expected_message)
 
         forest = copy.deepcopy(forest1)
         self.assertTrue(forest.deltas is None)

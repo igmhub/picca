@@ -50,8 +50,11 @@ class QuasarCatalogueTest(AbstractTest):
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
-        with self.assertRaises(QuasarCatalogueError):
+        expected_message = (
+            "Missing argument 'z min' required by QuasarCatalogue")
+        with self.assertRaises(QuasarCatalogueError) as context_manager:
             quasar_catalogue = DrqCatalogue(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
         # Case 1: missing spAll file
         config = ConfigParser()
@@ -66,8 +69,11 @@ class QuasarCatalogueTest(AbstractTest):
         for key, value in defaults_drq.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
-        with self.assertRaises(QuasarCatalogueError):
+        expected_message = (
+            "Missing argument 'spAll' required by DrqCatalogue")
+        with self.assertRaises(QuasarCatalogueError) as context_manager:
             quasar_catalogue = DrqCatalogue(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
         # case 2: finding spAll file
         config = ConfigParser()
@@ -120,8 +126,11 @@ class QuasarCatalogueTest(AbstractTest):
         """
         config = ConfigParser()
         config.read_dict({"data": {}})
-        with self.assertRaises(QuasarCatalogueError):
+        expected_message = (
+            "Missing argument 'z min' required by QuasarCatalogue")
+        with self.assertRaises(QuasarCatalogueError) as context_manager:
             quasar_catalogue = QuasarCatalogue(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
         config = ConfigParser()
         config.read_dict(

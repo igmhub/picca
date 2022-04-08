@@ -141,7 +141,7 @@ class DrqCatalogue(QuasarCatalogue):
                                       "pass the option 'best obs = True'. "
                                       "Quiting...")
                     raise QuasarCatalogueError("Missing argument 'spAll' "
-                                               "required by DrqCatalogue.")
+                                               "required by DrqCatalogue")
                 folder = config.get("input directory")
                 folder = folder.replace("spectra",
                                         "").replace("lite",
@@ -152,17 +152,17 @@ class DrqCatalogue(QuasarCatalogue):
                     for filename in filenames:
                         self.logger.error(f"found: {filename}")
                     raise QuasarCatalogueError("Missing argument 'spAll' "
-                                               "required by DrqCatalogue.")
+                                               "required by DrqCatalogue")
                 if len(filenames) == 0:
                     self.logger.error("'spAll' file not found. If you didn't "
                                       "want to load the spAll file you should "
                                       "pass the option 'best obs = True'. "
                                       "Quiting...")
                     raise QuasarCatalogueError("Missing argument 'spAll' "
-                                               "required by DrqCatalogue.")
+                                               "required by DrqCatalogue")
                 self.spall = filenames[0]
                 self.logger.ok_warning("'spAll' file found. Contining with "
-                                       "normal execution.")
+                                       "normal execution")
 
     def read_drq(self):
         """Read the DRQ Catalogue
