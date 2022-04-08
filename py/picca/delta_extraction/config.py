@@ -10,6 +10,7 @@ import re
 from datetime import datetime
 import git
 
+
 from picca.delta_extraction.errors import ConfigError
 from picca.delta_extraction.utils import class_from_string, setup_logger
 
@@ -24,7 +25,7 @@ accepted_corrections_options = ["num corrections", "type {int}", "module name {i
 accepted_data_options = ["type", "module name"]
 accepted_expected_flux_options = ["type", "module name"]
 accepted_general_options = ["overwrite", "logging level console",
-                            "logging level file", "log", "out dir"]
+                            "logging level file", "log", "out dir", "num processors"]
 accepted_masks_options = ["num masks", "type {int}", "module name {int}"]
 
 default_config = {
@@ -35,6 +36,7 @@ default_config = {
         "log": "run.log",
         "logging level console": "PROGRESS",
         "logging level file": "PROGRESS",
+        "num processors": 0,
     },
     "run specs": {
         "git hash": git_hash,
@@ -150,6 +152,7 @@ class Config:
         self.__format_data_section()
         self.expected_flux = None
         self.__format_expected_flux_section()
+        self.num_processors = None
 
         # initialize folders where data will be saved
         self.initialize_folders()
@@ -291,6 +294,8 @@ class Config:
 
         # add output directory
         section["out dir"] = self.out_dir
+        if "num processors" in accepted_options:
+            section["num processors"] = self.num_processors
 
         # finally add the information to self.data
         self.data = (DataType, section)
@@ -340,7 +345,8 @@ class Config:
         # add output directory if necesssary
         if "out dir" in accepted_options:
             section["out dir"] = self.out_dir
-
+        if "num processors" in accepted_options:
+            section["num processors"] = self.num_processors
         # finally add the information to self.continua
         self.expected_flux = (ExpectedFluxType, section)
 
@@ -369,11 +375,11 @@ class Config:
             self.out_dir += "/"
 
         self.overwrite = section.getboolean("overwrite")
-        if self.out_dir is None:
+        if self.overwrite is None:
             raise ConfigError("Missing variable 'overwrite' in section [general]")
 
         self.log = section.get("log")
-        if self.out_dir is None:
+        if self.log is None:
             raise ConfigError("Missing variable 'log' in section [general]")
         elif not (self.log.startswith(".") or self.log.startswith("/")):
             self.log = self.out_dir + "Log/" + self.log
@@ -388,6 +394,11 @@ class Config:
         if self.logging_level_file is None:
             raise ConfigError("In section 'logging level file' in section [general]")
         self.logging_level_file = self.logging_level_file.upper()
+    
+        self.num_processors = section.get("num processors")
+        if self.num_processors is None:
+            raise ConfigError("Missing variable 'num processors' in section [general]")
+
 
     def __format_masks_section(self):
         """Format the masks section of the parser into usable data

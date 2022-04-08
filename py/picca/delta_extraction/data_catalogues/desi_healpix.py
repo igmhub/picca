@@ -2,6 +2,8 @@
 """
 import logging
 import os
+import multiprocessing
+
 
 import fitsio
 import healpy
@@ -15,7 +17,7 @@ from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
 accepted_options = sorted(
-    list(set(accepted_options + ["use non-coadded spectra"])))
+    list(set(accepted_options + ["use non-coadded spectra","num processors"])))
 
 defaults.update({
     "use non-coadded spectra": False,
@@ -96,6 +98,12 @@ class DesiHealpix(DesiData):
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiHealpix"
             )
+        self.num_processors = config.getint("num processors")
+        if self.num_processors is None:
+            raise DataError(
+                "Missing argument 'num processors' required by DesiHealpix")
+        if self.num_processors == 0:
+            self.num_processors = (multiprocessing.cpu_count() // 2)
 
     def read_data(self):
         """Read the data.
@@ -127,29 +135,54 @@ class DesiHealpix(DesiData):
         self.catalogue.sort("HEALPIX")
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
 
-        forests_by_targetid = {}
         is_sv = True
-        for (index,
-             (healpix,
-              survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                     grouped_catalogue.groups):
+        if self.num_processors>1:
+            context = multiprocessing.get_context('fork')
+            manager =  multiprocessing.Manager()
+            forests_by_targetid = manager.dict()
+            arguments = []
+            for (index,
+                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
+                                        grouped_catalogue.groups):
 
-            if survey not in ["sv", "sv1", "sv2", "sv3"]:
-                is_sv = False
+                if survey not in ["sv", "sv1", "sv2", "sv3"]:
+                    is_sv = False
 
-            input_directory = f'{self.input_directory}/{survey}/dark'
-            coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
-            filename = (
-                f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
-                f"dark-{healpix}.fits")
+                input_directory = f'{self.input_directory}/{survey}/dark'
+                coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
+                filename = (
+                    f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
+                    f"dark-{healpix}.fits")
 
-            #TODO: not sure if we want the dark survey to be hard coded in here, probably won't run on anything else, but still
+                arguments.append((filename,group,forests_by_targetid))
 
-            self.logger.progress(
-                f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
-                f"num_data: {len(forests_by_targetid)}")
+                self.logger.info(f"reading data from {len(arguments)} files")
+            with context.Pool(processes=self.num_processors) as pool:
 
-            self.read_file(filename, group, forests_by_targetid)
+                pool.starmap(self.read_file, arguments)
+        else:
+            forests_by_targetid = {}
+            for (index,
+                (healpix,
+                survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
+                                        grouped_catalogue.groups):
+
+                if survey not in ["sv", "sv1", "sv2", "sv3"]:
+                    is_sv = False
+
+                input_directory = f'{self.input_directory}/{survey}/dark'
+                coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
+                filename = (
+                    f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
+                    f"dark-{healpix}.fits")
+
+                #TODO: not sure if we want the dark survey to be hard coded in here, probably won't run on anything else, but still
+
+                self.logger.progress(
+                    f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
+                    f"num_data: {len(forests_by_targetid)}")
+
+                self.read_file(filename, group, forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")
