@@ -54,7 +54,7 @@ class ExpectedFluxTest(AbstractTest):
             {"expected flux": {
                 "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results",
-                "num processors": 1
+                "num processors": 1,
             }})
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
@@ -113,7 +113,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
-                "num processors": 1
+                "num processors": 1,
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -183,6 +183,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -320,6 +321,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -408,6 +410,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "iter out prefix": "iter_out_prefix_compute_expected_flux_lin",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -444,6 +447,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -613,6 +617,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
         for key, value in defaults_dr16_expected_flux.items():
@@ -753,6 +758,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "iter out prefix": "iter_out_prefix_lin",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
         for key, value in defaults_dr16_expected_flux.items():

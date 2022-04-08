@@ -157,6 +157,7 @@ desi_healpix_kwargs = kwargs_data.copy()
 desi_healpix_kwargs.update({
     "catalogue":
         f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+    "num processors": 1,
 })
 
 # Dictionary to load SdssData
@@ -164,6 +165,7 @@ sdss_data_kwargs = kwargs_data.copy()
 sdss_data_kwargs.update({
     "drq catalogue":
         f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+    "num processors": 1,
 })
 sdss_data_kwargs_filter_forest = {
     "input directory":
