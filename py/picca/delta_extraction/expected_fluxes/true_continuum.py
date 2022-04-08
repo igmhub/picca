@@ -260,9 +260,9 @@ class TrueContinuum(ExpectedFlux):
             filename = resource_filename('picca', 'delta_extraction') + '/expected_fluxes/raw_stats/'
             if Forest.wave_solution == "log":
                 filename += 'colore_v9_lya_log.fits.gz'
-            elif Forest.wave_solution == "lin" and round(10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0],1) == 2.4:
+            elif Forest.wave_solution == "lin" and np.isclose(10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0], 2.4, rtol=0.1):
                 filename += 'colore_v9_lya_lin_2.4.fits.gz'
-            elif Forest.wave_solution == "lin" and round(10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0], 1) == 3.2:
+            elif Forest.wave_solution == "lin" and np.isclose(10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0], 3.2, rtol=0.1):
                 filename += 'colore_v9_lya_lin_3.2.fits.gz'
             else:
                 raise ExpectedFluxError("Couldn't find compatible raw satistics file. Provide a custom one using 'raw statistics file' field.")
