@@ -7,20 +7,27 @@ import unittest
 import numpy as np
 from scipy.interpolate import interp1d
 
+from pathlib import Path
+from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
 from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
 from picca.delta_extraction.data_catalogues.sdss_data import defaults as defaults_sdss_data
+from picca.delta_extraction.data_catalogues.desisim_mocks import DesisimMocks
+from picca.delta_extraction.data_catalogues.desisim_mocks import defaults as defaults_desisim_data
 from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
     defaults as defaults_dr16_expected_flux)
+from picca.delta_extraction.expected_fluxes.true_continuum import (
+    TrueContinuum, defaults as defaults_true_continuum)
 from picca.tests.delta_extraction.abstract_test import AbstractTest
 from picca.tests.delta_extraction.test_utils import forest1
 from picca.tests.delta_extraction.test_utils import setup_forest, reset_forest
 from picca.tests.delta_extraction.test_utils import desi_healpix_kwargs
 from picca.tests.delta_extraction.test_utils import sdss_data_kwargs
+from picca.tests.delta_extraction.test_utils import desi_mock_data_kwargs
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -805,6 +812,442 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.extract_deltas(forest)
         self.assertTrue(all(forest.deltas == np.zeros_like(forest1.flux)))
 
+    def test_true_continuum(self):
+        """Test constructor for class TrueContinuum
+        
+        Load a TrueContinuum instance.
+        """
+        config = ConfigParser()
+        config.read_dict({
+                "expected flux": {
+                     "input directory": f"{THIS_DIR}/data",
+                     "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
+                     "out dir": f"{THIS_DIR}/results"
+                }})
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        # this should raise an error as iter out prefix should not have a folder
+        with self.assertRaises(ExpectedFluxError):
+            expected_flux = TrueContinuum(config["expected flux"])
+
+        config = ConfigParser()
+        config.read_dict(
+            {"expected flux": {
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            }})
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        # this should also raise an error as Forest variables are not defined
+        with self.assertRaises(ExpectedFluxError):
+            expected_flux = TrueContinuum(config["expected flux"])
+
+        # setup Forest variables; case: logarithmic wavelength solution
+        setup_forest("log", rebin=3)
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
+
+        # setup Forest variables; case: linear wavelength solution
+        reset_forest()
+        setup_forest("lin", pixel_step=2.4)
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
+
+        # Assert invalid binning raises ExpectedFluxError
+        with self.assertRaises(ExpectedFluxError):
+            setup_forest("lin", pixel_step=0.4)
+            expected_flux = TrueContinuum(config["expected flux"])
+
+    def test_true_continuum_read_raw_statistics(self):
+        """Test reading raw statistics files"""
+        # setup Forest variables; case: linear wavelength solution
+        setup_forest("lin", pixel_step=2.4)
+
+        data_dir = Path(__file__).parent / "data"        
+        
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_mock_data_kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        var_lss = expected_flux.get_var_lss(10**Forest.log_lambda_grid)[:-1]
+        mean_flux = expected_flux.get_mean_flux(10**Forest.log_lambda_grid)[:-1]
+
+        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+            np.savetxt(data_dir / "true_var_lss.txt", var_lss)
+            np.savetxt(data_dir / "true_mean_flux.txt", mean_flux)
+
+        var_lss_target =   np.loadtxt(data_dir / "true_var_lss.txt")
+        mean_flux_target = np.loadtxt(data_dir / "true_mean_flux.txt")
+        np.testing.assert_equal(var_lss, var_lss_target)
+        np.testing.assert_equal(mean_flux, mean_flux_target)
+
+        # setup Forest variables; case: log wavelength solution
+        reset_forest()
+        setup_forest("log", rebin=3)   
+        
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        log_lambda_ = np.arange(3.5563025007672873, 3.7403626894942437, 0.0003)
+        var_lss = expected_flux.get_var_lss(log_lambda_)
+        mean_flux = expected_flux.get_mean_flux(log_lambda_)
+
+        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+            np.savetxt(data_dir / "true_var_lss_log.txt", var_lss)
+            np.savetxt(data_dir / "true_mean_flux_log.txt", mean_flux)
+
+        var_lss_target =   np.loadtxt(data_dir / "true_var_lss_log.txt")
+        mean_flux_target = np.loadtxt(data_dir / "true_mean_flux_log.txt")
+        np.testing.assert_equal(var_lss, var_lss_target)
+        np.testing.assert_equal(mean_flux, mean_flux_target)        
+
+
+    def test_true_continuum_read_true_continuum(self):
+        """Test reading true continuum from mocks"""
+        # setup Forest variables; case: linear wavelength solution
+        setup_forest("lin", pixel_step=2.4)
+
+        data_dir = Path(__file__).parent / "data"        
+        
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_mock_data_kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        for forest in data.forests:
+            if forest.los_id == 59152:
+                expected_flux.read_true_continuum(forest)
+                if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+                    np.savetxt(data_dir / "true_true_cont.txt", forest.continuum)
+                np.testing.assert_almost_equal(
+                    forest.continuum,
+                    np.loadtxt(data_dir / "true_true_cont.txt")
+                )
+
+        # setup Forest variables; case: log wavelength solution
+        setup_forest("log", rebin=3)
+
+        data_dir = Path(__file__).parent / "data"        
+        
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        for forest in data.forests:
+            if forest.los_id == 59152:
+                expected_flux.read_true_continuum(forest)
+                if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+                    np.savetxt(data_dir / "true_true_cont_log.txt", forest.continuum)
+                np.testing.assert_almost_equal(
+                    forest.continuum,
+                    np.loadtxt(data_dir / "true_true_cont_log.txt")
+                )
+
+    def test_true_continuum_expected_flux(self):
+        """Test method compute expected flux for class TrueContinuum"""
+        # setup Forest variables; case: logarithmic wavelength solution
+        setup_forest("log", rebin=3)
+
+        data_dir = Path(__file__).parent / "data"
+
+        out_file = Path(__file__).parent / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
+        test_file = data_dir / "true_iter_out_prefix_compute_expected_flux_log.fits.gz"
+        
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        # compute the expected flux
+        expected_flux.compute_expected_flux(data.forests)
+
+        # check the results
+        for iteration in range(1,5):
+            if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+                import shutil
+                shutil.copyfile(
+                    str(out_file).replace(".fits", f"_iteration{iteration}.fits"),
+                    str(test_file).replace(".fits", f"_iteration{iteration}.fits"))
+                
+            self.compare_fits(
+                str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
+                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
+        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+            shutil.copyfile(out_file, test_file)
+        self.compare_fits(test_file, out_file)
+            
+        # setup Forest variables; case: linear wavelength solution
+        setup_forest("lin", pixel_step=2.4)
+
+        data_dir = Path(__file__).parent / "data"        
+    
+        out_file = Path(__file__).parent / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
+        test_file = data_dir / "true_iter_out_prefix_compute_expected_flux_log_lin.fits.gz"
+        
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_mock_data_kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])   
+
+        expected_flux.compute_expected_flux(data.forests)
+
+        # check the results
+        for iteration in range(1,5):   
+            if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+                import shutil
+                shutil.copyfile(
+                    str(out_file).replace(".fits", f"_iteration{iteration}.fits"),
+                    str(test_file).replace(".fits", f"_iteration{iteration}.fits"))
+                
+            self.compare_fits(
+                str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
+                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))        
+        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+            shutil.copyfile(out_file, test_file)
+        self.compare_fits(test_file, out_file)
+
+    def test_true_cont_compute_mean_cont_lin(self):
+        """Test method compute_mean_cont_lin for class TrueContinuum"""           
+        # setup Forest variables; case: linear wavelength solution
+        setup_forest("lin", pixel_step=2.4)
+
+        data_dir = Path(__file__).parent / "data"        
+            
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": desi_mock_data_kwargs,
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])   
+
+        expected_flux.compute_expected_flux(data.forests)
+    
+        mean_cont = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
+        mean_cont_weight = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
+
+        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+            np.savetxt(data_dir / "true_mean_cont_lin.txt", mean_cont)
+            np.savetxt(data_dir / "true_mean_cont_weight_lin.txt", mean_cont_weight)
+        
+        np.testing.assert_equal(
+            mean_cont,
+            np.loadtxt(data_dir / "true_mean_cont_lin.txt")
+        )
+        np.testing.assert_equal(
+            mean_cont_weight,
+            np.loadtxt(data_dir / "true_mean_cont_weight_lin.txt")
+        )
+
+    def test_true_cont_compute_mean_cont_log(self):
+        """Test method compute_mean_cont_log for class TrueContinuum"""           
+        # setup Forest variables; case: logarithmic wavelength solution
+        setup_forest("log", rebin=3)
+
+        data_dir = Path(__file__).parent / "data"
+
+        out_file = Path(__file__).parent / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
+        test_file = data_dir / "iter_out_prefix_compute_expected_flux_log.fits.gz"
+        
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        # compute the expected flux
+        expected_flux.compute_expected_flux(data.forests)
+
+        mean_cont = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
+        mean_cont_weight = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
+
+        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+            np.savetxt(data_dir / "true_mean_cont_log.txt", mean_cont)
+            np.savetxt(data_dir / "true_mean_cont_weight_log.txt", mean_cont_weight)
+        
+        np.testing.assert_equal(
+            mean_cont,
+            np.loadtxt(data_dir / "true_mean_cont_log.txt")
+        )
+        np.testing.assert_equal(    
+            mean_cont_weight,
+            np.loadtxt(data_dir / "true_mean_cont_weight_log.txt")
+        )
+        
+    def test_true_continuum_populate_los_ids(self):
+        """Test method populate_los_ids for class TrueContinuum"""
+        # setup Forest variables; case: logarithmic wavelength solution
+        setup_forest("log", rebin=3)
+
+        data_dir = Path(__file__).parent / "data"
+       
+        # initialize Data and Dr16ExpectedFlux instances
+        config = ConfigParser()
+        config.read_dict({
+            "data": {**desi_mock_data_kwargs, **{"wave solution": "log"}},
+            "expected flux": {
+                "type": "TrueContinuum",
+                "input directory": f"{THIS_DIR}/data",
+                "iter out prefix": "iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+            },
+        })
+
+        for key, value in defaults_true_continuum.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        for key, value in defaults_desisim_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = DesisimMocks(config["data"])
+        expected_flux = TrueContinuum(config["expected flux"])
+
+        # compute the forest continua
+        for forest in data.forests:
+            expected_flux.read_true_continuum(forest)
+
+        # save iter_out_prefix for iteration 0
+        expected_flux.populate_los_ids(data.forests)
+
+        for i, key in enumerate(("mean expected flux", "weights", "continuum")):
+            if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
+                np.savetxt( data_dir / f"los_ids_{i}.txt", expected_flux.los_ids[59152][key])
+
+            np.testing.assert_equal(
+                expected_flux.los_ids[59152][key],
+                np.loadtxt( data_dir / f"los_ids_{i}.txt")
+            )
 
 if __name__ == '__main__':
     unittest.main()

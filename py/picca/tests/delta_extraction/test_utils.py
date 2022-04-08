@@ -181,6 +181,21 @@ sdss_data_kwargs_filter_forest = {
     "lambda max rest frame": 3120.0,
 }
 
+desi_mock_data_kwargs = {
+    "input directory":
+        f"{THIS_DIR}/data",
+    "out dir":
+        f"{THIS_DIR}/results",
+    "rejection log file": "rejection_log.fits.gz",
+    "catalogue":
+        f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+    "z max": 3.5,
+    "z min": 2.1,
+    "wave solution": "lin",
+    "delta lambda": 2.4,
+    "type": "DesisimMocks"
+}
+
 reset_forest()
 
 def reset_logger():
