@@ -70,10 +70,6 @@ class TrueContinuum(ExpectedFlux):
     of deltas at a given iteration step. Intermediate files will add
     '_iteration{num}.fits.gz' to the prefix for intermediate steps and '.fits.gz'
     for the final results.
-
-    num_processors: int or None
-    Number of processors to be used to compute the mean continua. None for no
-    specified number (subprocess will take its default value).
     """
 
     def __init__(self, config):
@@ -94,7 +90,6 @@ class TrueContinuum(ExpectedFlux):
         # load variables from config
         self.input_directory = None
         self.iter_out_prefix = None
-        self.num_processors = None
         self.__parse_config(config)
 
         # read large scale structure variance and mean flux
@@ -132,7 +127,6 @@ class TrueContinuum(ExpectedFlux):
                 "'iter out prefix' should not incude folders. "
                 f"Found: {self.iter_out_prefix}")
 
-        self.num_processors = config.getint("num processors")
         self.use_constant_weight = config.getboolean("use constant weight")
         self.raw_statistics_filename = config.get("raw statistics file")
 

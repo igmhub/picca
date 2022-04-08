@@ -100,9 +100,9 @@ class ScriptsTest(AbstractTest):
     def test_delta_lin_pk1d(self):
         """End-to-end test using 'LYA' setup with a linear wavelenth solution and Pk1D Forests.
         """
-        config_file = "{}/data/delta_lin.ini".format(THIS_DIR)
-        out_dir = "{}/results/delta_extraction_lin".format(THIS_DIR)
-        test_dir = "{}/data/delta_extraction_lin".format(THIS_DIR)
+        config_file = "{}/data/delta_lin_pk1d.ini".format(THIS_DIR)
+        out_dir = "{}/results/delta_extraction_lin_pk1d".format(THIS_DIR)
+        test_dir = "{}/data/delta_extraction_lin_pk1d".format(THIS_DIR)
 
         self.run_delta_extraction(config_file, out_dir, test_dir)
 

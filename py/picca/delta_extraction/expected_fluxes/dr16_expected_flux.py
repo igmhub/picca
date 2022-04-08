@@ -24,7 +24,6 @@ defaults = {
     "limit var lss": (0., 0.3),
     "num bins variance": 20,
     "num iterations": 5,
-    "num processors": 1,
     "order": 1,
     "use constant weight": False,
     "use ivar as weight": False,
@@ -116,10 +115,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     num_iterations: int
     Number of iterations to determine the mean continuum shape, LSS variances, etc.
 
-    num_processors: int
-    Number of processors to be used to compute the mean continua. None for no
-    specified number (subprocess will take its default value).
-
     order: int
     Order of the polynomial for the continuum fit.
 
@@ -149,7 +144,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.order = None
         self.num_bins_variance = None
         self.num_iterations = None
-        self.num_processors = None
         self.use_constant_weight = None
         self.use_ivar_as_weight = None
         self.__parse_config(config)
@@ -342,11 +336,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.num_iterations is None:
             raise ExpectedFluxError(
                 "Missing argument 'num iterations' required by Dr16ExpectedFlux")
-
-        self.num_processors = config.getint("num processors")
-        if self.num_processors is None:
-            raise ExpectedFluxError(
-                "Missing argument 'num processors' required by Dr16ExpectedFlux")
 
         self.order = config.getint("order")
         if self.order is None:
@@ -563,9 +552,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 f"Continuum fitting: starting iteration {iteration} of {self.num_iterations}"
             )
             if self.num_processors > 1:
-                pool = context.Pool(processes=self.num_processors)
-                forests = pool.map(self.compute_continuum, forests)
-                pool.close()
+                with context.Pool(processes=self.num_processors) as pool:
+                    forests = pool.map(self.compute_continuum, forests)
             else:
                 forests = [self.compute_continuum(f) for f in forests]
 
