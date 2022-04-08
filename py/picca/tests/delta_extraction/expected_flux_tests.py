@@ -924,9 +924,6 @@ class ExpectedFluxTest(AbstractTest):
         var_lss = expected_flux.get_var_lss(10**Forest.log_lambda_grid)[:-1]
         mean_flux = expected_flux.get_mean_flux(10**Forest.log_lambda_grid)[:-1]
 
-        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-            np.savetxt(data_dir / "true_var_lss.txt", var_lss)
-            np.savetxt(data_dir / "true_mean_flux.txt", mean_flux)
 
         var_lss_target =   np.loadtxt(data_dir / "true_var_lss.txt")
         mean_flux_target = np.loadtxt(data_dir / "true_mean_flux.txt")
@@ -960,10 +957,6 @@ class ExpectedFluxTest(AbstractTest):
         log_lambda_ = np.arange(3.5563025007672873, 3.7403626894942437, 0.0003)
         var_lss = expected_flux.get_var_lss(log_lambda_)
         mean_flux = expected_flux.get_mean_flux(log_lambda_)
-
-        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-            np.savetxt(data_dir / "true_var_lss_log.txt", var_lss)
-            np.savetxt(data_dir / "true_mean_flux_log.txt", mean_flux)
 
         var_lss_target =   np.loadtxt(data_dir / "true_var_lss_log.txt")
         mean_flux_target = np.loadtxt(data_dir / "true_mean_flux_log.txt")
@@ -1002,8 +995,6 @@ class ExpectedFluxTest(AbstractTest):
         for forest in data.forests:
             if forest.los_id == 59152:
                 expected_flux.read_true_continuum(forest)
-                if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-                    np.savetxt(data_dir / "true_true_cont.txt", forest.continuum)
                 np.testing.assert_almost_equal(
                     forest.continuum,
                     np.loadtxt(data_dir / "true_true_cont.txt")
@@ -1038,8 +1029,6 @@ class ExpectedFluxTest(AbstractTest):
         for forest in data.forests:
             if forest.los_id == 59152:
                 expected_flux.read_true_continuum(forest)
-                if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-                    np.savetxt(data_dir / "true_true_cont_log.txt", forest.continuum)
                 np.testing.assert_almost_equal(
                     forest.continuum,
                     np.loadtxt(data_dir / "true_true_cont_log.txt")
@@ -1081,17 +1070,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # check the results
         for iteration in range(1,5):
-            if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-                import shutil
-                shutil.copyfile(
-                    str(out_file).replace(".fits", f"_iteration{iteration}.fits"),
-                    str(test_file).replace(".fits", f"_iteration{iteration}.fits"))
-                
             self.compare_fits(
                 str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
                 str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
-        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-            shutil.copyfile(out_file, test_file)
         self.compare_fits(test_file, out_file)
             
         # setup Forest variables; case: linear wavelength solution
@@ -1127,17 +1108,9 @@ class ExpectedFluxTest(AbstractTest):
 
         # check the results
         for iteration in range(1,5):   
-            if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-                import shutil
-                shutil.copyfile(
-                    str(out_file).replace(".fits", f"_iteration{iteration}.fits"),
-                    str(test_file).replace(".fits", f"_iteration{iteration}.fits"))
-                
             self.compare_fits(
                 str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
                 str(out_file).replace(".fits", f"_iteration{iteration}.fits"))        
-        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-            shutil.copyfile(out_file, test_file)
         self.compare_fits(test_file, out_file)
 
     def test_true_cont_compute_mean_cont_lin(self):
@@ -1173,9 +1146,6 @@ class ExpectedFluxTest(AbstractTest):
         mean_cont = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
         mean_cont_weight = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
 
-        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-            np.savetxt(data_dir / "true_mean_cont_lin.txt", mean_cont)
-            np.savetxt(data_dir / "true_mean_cont_weight_lin.txt", mean_cont_weight)
         
         np.testing.assert_equal(
             mean_cont,
@@ -1223,9 +1193,6 @@ class ExpectedFluxTest(AbstractTest):
         mean_cont = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
         mean_cont_weight = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
 
-        if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-            np.savetxt(data_dir / "true_mean_cont_log.txt", mean_cont)
-            np.savetxt(data_dir / "true_mean_cont_weight_log.txt", mean_cont_weight)
         
         np.testing.assert_equal(
             mean_cont,
@@ -1272,9 +1239,6 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.populate_los_ids(data.forests)
 
         for i, key in enumerate(("mean expected flux", "weights", "continuum")):
-            if "REPLACE_TEST_VALUES" in os.environ and os.environ["REPLACE_TEST_VALUES"] == "Y":
-                np.savetxt( data_dir / f"los_ids_{i}.txt", expected_flux.los_ids[59152][key])
-
             np.testing.assert_equal(
                 expected_flux.los_ids[59152][key],
                 np.loadtxt( data_dir / f"los_ids_{i}.txt")
