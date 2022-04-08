@@ -1166,8 +1166,8 @@ class ExpectedFluxTest(AbstractTest):
             np.loadtxt(data_dir / "true_mean_cont_weight_lin.txt")
         )
 
-    def test_true_cont_compute_mean_cont_log(self):
-        """Test method compute_mean_cont_log for class TrueContinuum"""           
+    def test_true_cont_compute_mean_cont_log_wave_solution(self):
+        """Test method compute_mean_cont for class TrueContinuum using logarithmic wave solution"""           
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
