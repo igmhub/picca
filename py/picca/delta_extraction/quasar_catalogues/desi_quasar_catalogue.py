@@ -130,7 +130,15 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         Table with the catalogue
         """
         self.logger.progress(f'Reading catalogue from {self.filename}')
-        catalogue = Table(fitsio.read(self.filename, ext="QSO_CAT"))
+        extnames = [ext.get_extname() for ext in fitsio.FITS(self.filename)]
+        if "QSO_CAT" in extnames:
+            extension = "QSO_CAT"            
+        elif "ZCATALOG" in extnames:
+            extension = "ZCATALOG"
+        else:
+            raise QuasarCatalogueError(
+                f"Could not find valid quasar catalog extension in fits file: {self.filename}")
+        catalogue = Table(fitsio.read(self.filename, ext=extension))
 
         if 'TARGET_RA' in catalogue.colnames:
             catalogue.rename_column('TARGET_RA', 'RA')
