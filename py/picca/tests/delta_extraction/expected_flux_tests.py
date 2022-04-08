@@ -1121,8 +1121,8 @@ class ExpectedFluxTest(AbstractTest):
                 str(out_file).replace(".fits", f"_iteration{iteration}.fits"))        
         self.compare_fits(test_file, out_file)
 
-    def test_true_cont_compute_mean_cont_lin(self):
-        """Test method compute_mean_cont_lin for class TrueContinuum"""           
+    def test_true_cont_compute_mean_cont_linear_wave_solution(self):
+        """Test method compute_mean_cont for class TrueContinuum using linear wave solution"""           
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
