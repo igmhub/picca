@@ -195,7 +195,8 @@ desi_mock_data_kwargs = {
     "z min": 2.1,
     "wave solution": "lin",
     "delta lambda": 2.4,
-    "type": "DesisimMocks"
+    "type": "DesisimMocks",
+    "num processors": 1,
 }
 
 reset_forest()
