@@ -294,7 +294,7 @@ class TrueContinuum(ExpectedFlux):
                 raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
                 input\t{log_lambda_min}\t{log_lambda_max}\t{log_lambda_rest_min}\t{log_lambda_rest_max}
                 provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
-            log_lambda_ = hdul[1].data['LAMBDA']
+            log_lambda = hdul[1].data['LAMBDA']
         elif Forest.wave_solution == "lin":
             pixel_step = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
             lambda_min = 10**Forest.log_lambda_grid[0]
@@ -314,7 +314,7 @@ class TrueContinuum(ExpectedFlux):
                 raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_L']}
                 input\t{lambda_min}\t{lambda_max}\t{lambda_rest_min}\t{lambda_rest_max}
                 provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
-            log_lambda_ = np.log10(hdul[1].data['LAMBDA'])
+            log_lambda = np.log10(hdul[1].data['LAMBDA'])
 
         flux_variance = hdul[1].data['VAR']
         mean_flux = hdul[1].data['MEANFLUX']
@@ -322,12 +322,12 @@ class TrueContinuum(ExpectedFlux):
 
         var_lss = flux_variance/mean_flux**2
 
-        self.get_var_lss = interp1d(log_lambda_,
+        self.get_var_lss = interp1d(log_lambda,
                                     var_lss,
                                     fill_value='extrapolate',
                                     kind='nearest')
 
-        self.get_mean_flux = interp1d(log_lambda_,
+        self.get_mean_flux = interp1d(log_lambda,
                                       mean_flux,
                                       fill_value='extrapolate',
                                       kind='nearest')
