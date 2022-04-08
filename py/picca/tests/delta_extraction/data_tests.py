@@ -178,6 +178,7 @@ class DataTest(AbstractTest):
             "keep surveys": "all special",
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
         }})
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
@@ -231,6 +232,7 @@ class DataTest(AbstractTest):
             "keep surveys": "all",
             "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
         }})
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
@@ -251,6 +253,7 @@ class DataTest(AbstractTest):
             "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_tile.fits.gz",
             "input directory": f"{THIS_DIR}/data/tile/cumulative",
             "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
         }})
         for key, value in defaults_desi_tile.items():
             if key not in config["data"]:
