@@ -924,9 +924,9 @@ class ExpectedFluxTest(AbstractTest):
                 config["data"][key] = str(value)
         expected_flux = TrueContinuum(config["expected flux"])
 
-        var_lss = expected_flux.get_var_lss(10**Forest.log_lambda_grid)[:-1]
-        mean_flux = expected_flux.get_mean_flux(10**Forest.log_lambda_grid)[:-1]
-
+        log_lambda_grid = np.loadtxt(data_dir / "true_log_lambda_grid.txt")
+        var_lss = expected_flux.get_var_lss(log_lambda_grid)
+        mean_flux = expected_flux.get_mean_flux(log_lambda_grid)
 
         var_lss_target =   np.loadtxt(data_dir / "true_var_lss.txt")
         mean_flux_target = np.loadtxt(data_dir / "true_mean_flux.txt")
@@ -1152,8 +1152,9 @@ class ExpectedFluxTest(AbstractTest):
 
         expected_flux.compute_expected_flux(data.forests)
     
-        mean_cont = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
-        mean_cont_weight = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
+        log_lambda_grid = np.loadtxt(data_dir / "true_log_lambda_rest_grid.txt")
+        mean_cont = expected_flux.get_mean_cont(log_lambda_grid)
+        mean_cont_weight = expected_flux.get_mean_cont(log_lambda_grid)
 
         
         np.testing.assert_equal(
@@ -1200,10 +1201,10 @@ class ExpectedFluxTest(AbstractTest):
         # compute the expected flux
         expected_flux.compute_expected_flux(data.forests)
 
-        mean_cont = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
-        mean_cont_weight = expected_flux.get_mean_cont(Forest.log_lambda_rest_frame_grid)
+        log_lambda_grid = np.loadtxt(data_dir / "true_log_lambda_rest_grid_log.txt")
+        mean_cont = expected_flux.get_mean_cont(log_lambda_grid)
+        mean_cont_weight = expected_flux.get_mean_cont(log_lambda_grid)
 
-        
         np.testing.assert_equal(
             mean_cont,
             np.loadtxt(data_dir / "true_mean_cont_log.txt")
