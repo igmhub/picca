@@ -12,7 +12,7 @@ from pkg_resources import resource_filename
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
-from picca.delta_extraction.errors import ExpectedFluxError
+from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
 from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.utils import find_bins
 
@@ -91,6 +91,13 @@ class TrueContinuum(ExpectedFlux):
         self.input_directory = None
         self.iter_out_prefix = None
         self.__parse_config(config)
+
+        # check that Forest class variables are set
+        try:
+            Forest.class_variable_check()
+        except AstronomicalObjectError:
+            raise ExpectedFluxError("Forest class variables need to be set "
+                                    "before initializing variables here." )
 
         # read large scale structure variance and mean flux
         self.get_var_lss = None

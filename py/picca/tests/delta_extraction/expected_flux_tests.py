@@ -844,8 +844,13 @@ class ExpectedFluxTest(AbstractTest):
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
         # this should raise an error as iter out prefix should not have a folder
-        with self.assertRaises(ExpectedFluxError):
+        with self.assertRaises(ExpectedFluxError) as context_manager:
             expected_flux = TrueContinuum(config["expected flux"])
+        expected_message = (
+            "Error constructing TrueContinuum. 'iter out prefix' should not incude folders. Found: "
+            )
+        self.compare_error_message(context_manager, expected_message, startswith=True)
+        
 
         config = ConfigParser()
         config.read_dict(
@@ -858,8 +863,12 @@ class ExpectedFluxTest(AbstractTest):
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
         # this should also raise an error as Forest variables are not defined
-        with self.assertRaises(ExpectedFluxError):
+        with self.assertRaises(ExpectedFluxError) as context_manager:
             expected_flux = TrueContinuum(config["expected flux"])
+        expected_message = (
+            "Forest class variables need to be set before initializing variables here."
+        )
+        self.compare_error_message(context_manager, expected_message)
 
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
@@ -875,9 +884,15 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(isinstance(expected_flux.get_var_lss, interp1d))
 
         # Assert invalid binning raises ExpectedFluxError
-        with self.assertRaises(ExpectedFluxError):
-            setup_forest("lin", pixel_step=0.4)
+        reset_forest()
+        setup_forest("lin", pixel_step=0.4)
+        with self.assertRaises(ExpectedFluxError) as context_manager:
             expected_flux = TrueContinuum(config["expected flux"])
+        expected_message = (
+            "Couldn't find compatible raw satistics file. Provide a custom one using"
+            " 'raw statistics file' field."
+            )
+        self.compare_error_message(context_manager, expected_message)
 
     def test_true_continuum_read_raw_statistics(self):
         """Test reading raw statistics files"""
