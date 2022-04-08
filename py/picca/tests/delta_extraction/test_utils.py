@@ -19,7 +19,7 @@ def reset_forest():
     Pk1dForest.lambda_abs_igm = None
 
 # setup Forest class variables
-def setup_forest(wave_solution, rebin=1):
+def setup_forest(wave_solution, rebin=1, pixel_step=1e-4):
     """Set Forest class variables
 
     Arguments
@@ -29,14 +29,15 @@ def setup_forest(wave_solution, rebin=1):
     logarithmic spacing ("log").
 
     rebin: int
-    If wave_solution is "log", number of pixels that will be rebinned
+    Number of pixels that will be rebinned
+
+    pixel_step: float
+    Pixel size to be used
+    
     """
     assert wave_solution in ["log", "lin"]
 
-    if wave_solution == "log":
-        pixel_step = 1e-4 * rebin
-    elif wave_solution == "lin":
-        pixel_step = 1.0
+    pixel_step *= rebin
     pixel_step_rf = pixel_step
 
     Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step, pixel_step_rf,
