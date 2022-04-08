@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2022-03-30T10:00:08.532Z" agent="5.0 (X11)" etag="ZxQMu9UQknNjdmgtxlQK" version="17.2.6" type="github" pages="7">
+<mxfile host="app.diagrams.net" modified="2022-03-30T16:34:56.373Z" agent="5.0 (X11)" etag="s_WS4omrb5KVoFcUA0wD" version="17.2.6" type="github" pages="7">
   <diagram id="nPyiXVHnBq5R0qJwF2HZ" name="Main">
-    <mxGraphModel dx="4543" dy="1163" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="3903" dy="923" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -91,7 +91,7 @@
         <mxCell id="4YIj42Dbc83F9fyeYHnL-46" value="Forest" style="swimlane;fontStyle=3;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#ffcd28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;rounded=0;shadow=0;glass=0;comic=0;strokeColor=#000000;gradientColor=#ffa500;swimlaneLine=1;gradientDirection=north;" parent="1" vertex="1">
           <mxGeometry x="-660" y="870" width="270" height="501" as="geometry" />
         </mxCell>
-        <mxCell id="4YIj42Dbc83F9fyeYHnL-47" value="+ bad_continuum_reason[0..1]: str&#xa;&gt; blinding: str&#xa;+ continuum[0..1]: array of float&#xa;+ deltas[0..1]: array of float&#xa;+ flux: array of float&#xa;+ ivar: array of float&#xa;+ lambda_[0..1]: array of float&#xa;&gt; lambda_grid[0..1]: array of float&#xa;&gt; lambda_rest_frame_grid[0..1]: array of float&#xa;+ log_lambda[0..1]: array of float&#xa;&gt; log_lambda_grid[0..1]: array of float&#xa;&gt; log_lambda_rest_frame_grid[0..1]: array of float&#xa;&gt; mask_fields: list of str&#xa;+ mean_snr: float&#xa;+ transmission_correction: array of float&#xa;&gt; wave_solution: &quot;lin&quot; or &quot;log&quot;&#xa;+ weights[0..1]: array of float" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="4YIj42Dbc83F9fyeYHnL-46" vertex="1">
+        <mxCell id="4YIj42Dbc83F9fyeYHnL-47" value="+ bad_continuum_reason[0..1]: str&#xa;&gt; blinding: str&#xa;+ continuum[0..1]: array of float&#xa;+ deltas[0..1]: array of float&#xa;+ flux: array of float&#xa;+ ivar: array of float&#xa;+ log_lambda: array of float&#xa;&gt; log_lambda_grid: array of float&#xa;&gt; log_lambda_rest_frame_grid: array of float&#xa;&gt; mask_fields: list of str&#xa;+ mean_snr: float&#xa;+ transmission_correction: array of float&#xa;&gt; wave_solution: &quot;lin&quot; or &quot;log&quot;&#xa;+ weights[0..1]: array of float" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="4YIj42Dbc83F9fyeYHnL-46" vertex="1">
           <mxGeometry y="26" width="270" height="244" as="geometry" />
         </mxCell>
         <mxCell id="4YIj42Dbc83F9fyeYHnL-48" value="" style="text;strokeColor=none;fillColor=#ffcd28;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;gradientColor=none;" parent="4YIj42Dbc83F9fyeYHnL-46" vertex="1">
@@ -409,7 +409,7 @@
         <mxCell id="4YIj42Dbc83F9fyeYHnL-184" value="Data" style="swimlane;fontStyle=3;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#ffcd28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;rounded=0;shadow=0;glass=0;comic=0;strokeColor=#000000;gradientColor=#ffa500;swimlaneLine=1;gradientDirection=north;" parent="1" vertex="1">
           <mxGeometry x="-570" y="492" width="390" height="340" as="geometry" />
         </mxCell>
-        <mxCell id="4YIj42Dbc83F9fyeYHnL-185" value=" + analysis_type: str&#xa; + forests: list of Forest&#xa; + logger: logging.Logger&#xa; + min_num_pix: int&#xa; + min_snr: float&#xa; + out_dir: str &#xa; + rejection_log_file: str&#xa; + rejection_log_initialized: bool&#xa; + rejection_log_cols: list of list&#xa; + rejection_log_comments: list of list&#xa; + rejection_log_names: list of list" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="4YIj42Dbc83F9fyeYHnL-184" vertex="1">
+        <mxCell id="4YIj42Dbc83F9fyeYHnL-185" value=" + analysis_type: str&#xa; + forests: list of Forest&#xa; + logger: logging.Logger&#xa; + min_num_pix: int&#xa; + min_snr: float&#xa; + out_dir: str&#xa; + rejection_log_file: str&#xa; + rejection_log_initialized: bool&#xa; + rejection_log_cols: list of list&#xa; + rejection_log_comments: list of list&#xa; + rejection_log_names: list of list" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="4YIj42Dbc83F9fyeYHnL-184" vertex="1">
           <mxGeometry y="26" width="390" height="154" as="geometry" />
         </mxCell>
         <mxCell id="4YIj42Dbc83F9fyeYHnL-186" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;" parent="4YIj42Dbc83F9fyeYHnL-184" vertex="1">
@@ -808,7 +808,7 @@
     </mxGraphModel>
   </diagram>
   <diagram name="Simplified Main" id="joHP-pMOU07-pkZl2VE5">
-    <mxGraphModel dx="3716" dy="1163" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2672" dy="741" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="75n_6tslTMfhbzDpBMPq-0" />
         <mxCell id="75n_6tslTMfhbzDpBMPq-1" parent="75n_6tslTMfhbzDpBMPq-0" />
@@ -1432,23 +1432,23 @@
             <mxPoint x="10" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="B4_5931JTfAuX9vA9zEw-0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=2;exitDx=0;exitDy=0;endArrow=none;endFill=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitPerimeter=0;" parent="75n_6tslTMfhbzDpBMPq-1" source="B4_5931JTfAuX9vA9zEw-2" target="75n_6tslTMfhbzDpBMPq-23" edge="1">
+        <mxCell id="B4_5931JTfAuX9vA9zEw-0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=2;exitDx=0;exitDy=0;endArrow=none;endFill=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitPerimeter=0;" edge="1" parent="75n_6tslTMfhbzDpBMPq-1" source="B4_5931JTfAuX9vA9zEw-2" target="75n_6tslTMfhbzDpBMPq-23">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="-529.6" y="423.5160000000001" as="targetPoint" />
             <Array as="points" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="B4_5931JTfAuX9vA9zEw-1" value="find_bins" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;rounded=0;shadow=0;glass=0;comic=0;strokeColor=#9673a6;swimlaneLine=1;gradientDirection=north;fillColor=#e1d5e7;gradientColor=#CC99FF;" parent="75n_6tslTMfhbzDpBMPq-1" vertex="1">
+        <mxCell id="B4_5931JTfAuX9vA9zEw-1" value="find_bins" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;rounded=0;shadow=0;glass=0;comic=0;strokeColor=#9673a6;swimlaneLine=1;gradientDirection=north;fillColor=#e1d5e7;gradientColor=#CC99FF;" vertex="1" parent="75n_6tslTMfhbzDpBMPq-1">
           <mxGeometry x="-730" y="410" width="120" height="27" as="geometry" />
         </mxCell>
-        <mxCell id="B4_5931JTfAuX9vA9zEw-2" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;" parent="B4_5931JTfAuX9vA9zEw-1" vertex="1">
+        <mxCell id="B4_5931JTfAuX9vA9zEw-2" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;" vertex="1" parent="B4_5931JTfAuX9vA9zEw-1">
           <mxGeometry y="26" width="120" height="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
   <diagram id="_gUzTnbLqX_FSo8O-JG7" name="Correction">
-    <mxGraphModel dx="2889" dy="2332" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1845" dy="1910" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="c4hXGpoebVqtJSqK0afD-0" />
         <mxCell id="c4hXGpoebVqtJSqK0afD-1" parent="c4hXGpoebVqtJSqK0afD-0" />
@@ -1860,7 +1860,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="RSB3thF5JrANvTTKpqBh" name="Mask">
-    <mxGraphModel dx="2889" dy="1163" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1845" dy="741" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="Cd3ZDb_xAI04ongL0umg-0" />
         <mxCell id="Cd3ZDb_xAI04ongL0umg-1" parent="Cd3ZDb_xAI04ongL0umg-0" />
@@ -2139,7 +2139,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="2t2efU7mqRpUEueg9p6R" name="Data">
-    <mxGraphModel dx="2889" dy="1163" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2249" dy="923" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="RnRJP-5kd4kx1agwHSpP-0" />
         <mxCell id="RnRJP-5kd4kx1agwHSpP-1" parent="RnRJP-5kd4kx1agwHSpP-0" />
@@ -2192,7 +2192,7 @@
         <mxCell id="RnRJP-5kd4kx1agwHSpP-102" value="Forest" style="swimlane;fontStyle=3;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#ffcd28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;rounded=0;shadow=0;glass=0;comic=0;strokeColor=#000000;gradientColor=#ffa500;swimlaneLine=1;gradientDirection=north;" parent="RnRJP-5kd4kx1agwHSpP-1" vertex="1">
           <mxGeometry x="1360" y="641" width="250" height="510" as="geometry" />
         </mxCell>
-        <mxCell id="RnRJP-5kd4kx1agwHSpP-103" value="+ bad_continuum_reason[0..1]: str&#xa;&gt; blinding: str&#xa;+ continuum[0..1]: array of float&#xa;+ deltas[0..1]: array of float&#xa;+ flux: array of float&#xa;+ ivar: array of float&#xa;+ lambda_[0..1]: array of float&#xa;&gt; lambda_grid[0..1]: array of float&#xa;&gt; lambda_rest_frame_grid[0..1]: array of float&#xa;+ log_lambda[0..1]: array of float&#xa;&gt; log_lambda_grid[0..1]: array of float&#xa;&gt; log_lambda_rest_frame_grid[0..1]: array of float&#xa;&gt; mask_fields: list of str&#xa;+ mean_snr: float&#xa;+ transmission_correction: array of float&#xa;&gt; wave_solution: &quot;lin&quot; or &quot;log&quot;&#xa;+ weights[0..1]: array of float" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="RnRJP-5kd4kx1agwHSpP-102" vertex="1">
+        <mxCell id="RnRJP-5kd4kx1agwHSpP-103" value="+ bad_continuum_reason[0..1]: str&#xa;&gt; blinding: str&#xa;+ continuum[0..1]: array of float&#xa;+ deltas[0..1]: array of float&#xa;+ flux: array of float&#xa;+ ivar: array of float&#xa;+ log_lambda: array of float&#xa;&gt; log_lambda_grid: array of float&#xa;&gt; log_lambda_rest_frame_grid: array of float&#xa;&gt; mask_fields: list of str&#xa;+ mean_snr: float&#xa;+ transmission_correction: array of float&#xa;&gt; wave_solution: &quot;lin&quot; or &quot;log&quot;&#xa;+ weights[0..1]: array of float" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="RnRJP-5kd4kx1agwHSpP-102" vertex="1">
           <mxGeometry y="26" width="250" height="244" as="geometry" />
         </mxCell>
         <mxCell id="RnRJP-5kd4kx1agwHSpP-104" value="" style="text;strokeColor=none;fillColor=#ffcd28;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;gradientColor=none;" parent="RnRJP-5kd4kx1agwHSpP-102" vertex="1">
@@ -3173,7 +3173,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="je2KSbhj7LrZFA1j369E" name="ExpectedFlux">
-    <mxGraphModel dx="4543" dy="1163" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="3499" dy="741" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="tOnHf5iAFq_aPN0IRysd-0" />
         <mxCell id="tOnHf5iAFq_aPN0IRysd-1" parent="tOnHf5iAFq_aPN0IRysd-0" />
@@ -3282,41 +3282,41 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="-0v5vkKTASBL-IAy4xzU-7" value="DR16ExpectedFlux" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#ffcd28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;rounded=0;shadow=0;glass=0;comic=0;strokeColor=#000000;gradientColor=#ffa500;swimlaneLine=1;gradientDirection=north;" parent="tOnHf5iAFq_aPN0IRysd-1" vertex="1">
-          <mxGeometry x="-1160" y="840" width="390" height="580" as="geometry" />
+          <mxGeometry x="-1160" y="840" width="390" height="490" as="geometry" />
         </mxCell>
-        <mxCell id="-0v5vkKTASBL-IAy4xzU-8" value="+ continuum_fit_parameters: dict&#xa;+ delta_lambda[0..1]: float&#xa;+ delta_log_lambda[0..1]: float&#xa;+ get_eta: scipy.interpolate.interp1d&#xa;+ get_fudge: scipy.interpolate.interp1d&#xa;+ get_mean_cont: scipy.interpolate.interp1d&#xa;+ get_stack_delta[0..1]: scipy.interpolate.interp1d &#xa;+ get_var_lss: scipy.interpolate.interp1d&#xa;+ iter_out_prefix: str&#xa;+ lambda_[0..1]: array of float&#xa;+ limit_eta: tuple of floats&#xa;+ limit_var_lss: tuple of floats&#xa;+ log_lambda[0..1]: array of float&#xa;+ logger: logging.Logger&#xa;+ order: int&#xa;+ out_dir: str&#xa;+ num_bins_variance: int&#xa;+ num_iterations: int&#xa;+ num_processors: int&#xa;+ use_constant_weight: boolean&#xa;+ use_ivar_as_weight: boolean&#xa;" style="text;strokeColor=none;fillColor=#ffcd28;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;gradientColor=none;" parent="-0v5vkKTASBL-IAy4xzU-7" vertex="1">
-          <mxGeometry y="26" width="390" height="354" as="geometry" />
+        <mxCell id="-0v5vkKTASBL-IAy4xzU-8" value="+ continuum_fit_parameters: dict&#xa;+ delta_lambda[0..1]: float&#xa;+ delta_log_lambda[0..1]: float&#xa;+ get_eta: scipy.interpolate.interp1d&#xa;+ get_fudge: scipy.interpolate.interp1d&#xa;+ get_mean_cont: scipy.interpolate.interp1d&#xa;+ get_stack_delta[0..1]: scipy.interpolate.interp1d &#xa;+ get_var_lss: scipy.interpolate.interp1d&#xa;+ iter_out_prefix: str&#xa;+ lambda_[0..1]: array of float&#xa;+ limit_eta: tuple of floats&#xa;+ limit_var_lss: tuple of floats&#xa;+ log_lambda_var_func_grid[0..1]: array of float&#xa;+ logger: logging.Logger&#xa;+ order: int&#xa;+ out_dir: str&#xa;+ num_bins_variance: int&#xa;+ num_iterations: int&#xa;+ num_processors: int&#xa;+ use_constant_weight: boolean&#xa;+ use_ivar_as_weight: boolean&#xa;" style="text;strokeColor=none;fillColor=#ffcd28;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;gradientColor=none;" parent="-0v5vkKTASBL-IAy4xzU-7" vertex="1">
+          <mxGeometry y="26" width="390" height="304" as="geometry" />
         </mxCell>
         <mxCell id="-0v5vkKTASBL-IAy4xzU-9" value="" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="-0v5vkKTASBL-IAy4xzU-7" vertex="1">
-          <mxGeometry y="380" width="390" height="26" as="geometry" />
+          <mxGeometry y="330" width="390" height="26" as="geometry" />
         </mxCell>
         <mxCell id="-0v5vkKTASBL-IAy4xzU-10" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;" parent="-0v5vkKTASBL-IAy4xzU-7" vertex="1">
-          <mxGeometry y="406" width="390" height="1" as="geometry" />
+          <mxGeometry y="356" width="390" height="1" as="geometry" />
         </mxCell>
-        <mxCell id="-0v5vkKTASBL-IAy4xzU-11" value=" + __init__(config: configparser.SectionProxy)&#xa; + _initialize_arrays_lin()&#xa; + _initialize_arrays_log()&#xa; + _parse_config(config: configparser.SectionProxy)&#xa; + compute_continuum(forests: list of Forest)&#xa; + compute_delta_stack(forests: list of Forest, stack_from_deltas: bool)&#xa; + compute_mean_cont_lin(forests: list of Forest)&#xa; + compute_mean_cont_log(forests: list of Forest)&#xa; + compute_expected_flux(forests: list of Forest)&#xa; + compute_var_stats(forests: list of Forest)&#xa;" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="-0v5vkKTASBL-IAy4xzU-7" vertex="1">
-          <mxGeometry y="407" width="390" height="173" as="geometry" />
+        <mxCell id="-0v5vkKTASBL-IAy4xzU-11" value=" + __init__(config: configparser.SectionProxy)&#xa; + _initialize_arrays()&#xa; + _parse_config(config: configparser.SectionProxy)&#xa; + compute_continuum(forests: list of Forest)&#xa; + compute_delta_stack(forests: list of Forest, stack_from_deltas: bool)&#xa; + compute_mean_cont(forests: list of Forest)&#xa; + compute_expected_flux(forests: list of Forest)&#xa; + compute_var_stats(forests: list of Forest)&#xa;" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="-0v5vkKTASBL-IAy4xzU-7" vertex="1">
+          <mxGeometry y="357" width="390" height="133" as="geometry" />
         </mxCell>
         <mxCell id="bhYFi5XTDl4pGI8U_RH3-0" value="TrueMockContinuum" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#ffcd28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;rounded=0;shadow=0;glass=0;comic=0;strokeColor=#000000;gradientColor=#ffa500;swimlaneLine=1;gradientDirection=north;" parent="tOnHf5iAFq_aPN0IRysd-1" vertex="1">
-          <mxGeometry x="-1480" y="840" width="260" height="258" as="geometry" />
+          <mxGeometry x="-1480" y="840" width="280" height="258" as="geometry" />
         </mxCell>
         <mxCell id="bhYFi5XTDl4pGI8U_RH3-1" value="+ get_mean_flux: scipy.interpolate.interp1d&#xa;+ get_var_lss: scipy.interpolate.interp1d&#xa;+ input_directory: str&#xa;+ iter_out_prefix: str&#xa;+ num_processors: int" style="text;strokeColor=none;fillColor=#ffcd28;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;gradientColor=none;" parent="bhYFi5XTDl4pGI8U_RH3-0" vertex="1">
-          <mxGeometry y="26" width="260" height="84" as="geometry" />
+          <mxGeometry y="26" width="280" height="84" as="geometry" />
         </mxCell>
         <mxCell id="bhYFi5XTDl4pGI8U_RH3-2" value="" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="bhYFi5XTDl4pGI8U_RH3-0" vertex="1">
-          <mxGeometry y="110" width="260" height="26" as="geometry" />
+          <mxGeometry y="110" width="280" height="26" as="geometry" />
         </mxCell>
         <mxCell id="bhYFi5XTDl4pGI8U_RH3-3" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;" parent="bhYFi5XTDl4pGI8U_RH3-0" vertex="1">
-          <mxGeometry y="136" width="260" height="1" as="geometry" />
+          <mxGeometry y="136" width="280" height="1" as="geometry" />
         </mxCell>
-        <mxCell id="bhYFi5XTDl4pGI8U_RH3-4" value="+ __init__(config: configpaser.SectionProxy)&#xa;+ _parse_config(config: configparser.SectionProxy)&#xa;+ compute_expected_flux(forests: list of Forest)&#xa;+ compute_mean_cont_lin(forests: list of Forest)&#xa;+ compute_mean_cont_log(forests: list of Forest)&#xa;+ read_true_continuum(forest: Forest)&#xa;+ read_var_lss()&#xa;+ save_delta_attributes()" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="bhYFi5XTDl4pGI8U_RH3-0" vertex="1">
-          <mxGeometry y="137" width="260" height="121" as="geometry" />
+        <mxCell id="bhYFi5XTDl4pGI8U_RH3-4" value="+ __init__(config: configpaser.SectionProxy)&#xa;+ _parse_config(config: configparser.SectionProxy)&#xa;+ compute_expected_flux(forests: list of Forest)&#xa;+ compute_mean_cont(forests: list of Forest)&#xa;+ read_true_continuum(forest: Forest)&#xa;+ read_var_lss()&#xa;+ save_delta_attributes()" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="bhYFi5XTDl4pGI8U_RH3-0" vertex="1">
+          <mxGeometry y="137" width="280" height="121" as="geometry" />
         </mxCell>
         <mxCell id="bhYFi5XTDl4pGI8U_RH3-5" value="" style="endArrow=block;endSize=16;endFill=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.483;entryY=1.037;entryDx=0;entryDy=0;entryPerimeter=0;" parent="tOnHf5iAFq_aPN0IRysd-1" source="bhYFi5XTDl4pGI8U_RH3-0" target="u-n-N70yIythKyl8P2P_-12" edge="1">
           <mxGeometry width="160" relative="1" as="geometry">
             <mxPoint x="-990" y="812" as="sourcePoint" />
             <mxPoint x="-1270" y="760" as="targetPoint" />
             <Array as="points">
-              <mxPoint x="-1350" y="780" />
+              <mxPoint x="-1340" y="780" />
               <mxPoint x="-1190" y="780" />
             </Array>
           </mxGeometry>
@@ -3370,12 +3370,13 @@
             <mxPoint x="-1450.24" y="540" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="wSkfboFQg1evl7dp9Hlh-0" value="&lt;font color=&quot;#0000ff&quot;&gt;&amp;nbsp;Tested by&amp;nbsp;&lt;/font&gt;" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#0000FF;entryX=0.38;entryY=0.998;entryDx=0;entryDy=0;entryPerimeter=0;" parent="tOnHf5iAFq_aPN0IRysd-1" source="-0v5vkKTASBL-IAy4xzU-8" target="u-n-N70yIythKyl8P2P_-17" edge="1">
+        <mxCell id="wSkfboFQg1evl7dp9Hlh-0" value="&lt;font color=&quot;#0000ff&quot;&gt;&amp;nbsp;Tested by&amp;nbsp;&lt;/font&gt;" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#0000FF;entryX=0.38;entryY=0.998;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.003;exitY=-1;exitDx=0;exitDy=0;exitPerimeter=0;" parent="tOnHf5iAFq_aPN0IRysd-1" source="-0v5vkKTASBL-IAy4xzU-10" target="u-n-N70yIythKyl8P2P_-17" edge="1">
           <mxGeometry x="-0.8508" relative="1" as="geometry">
-            <mxPoint x="-1160" y="1193" as="sourcePoint" />
+            <mxPoint x="-1190" y="1193" as="sourcePoint" />
             <mxPoint x="-1400" y="673.7180000000001" as="targetPoint" />
             <mxPoint as="offset" />
             <Array as="points">
+              <mxPoint x="-1159" y="1193" />
               <mxPoint x="-1596" y="1193" />
             </Array>
           </mxGeometry>
@@ -3454,7 +3455,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="iPTn10C6GmmupZz-RSug" name="FullDataModel">
-    <mxGraphModel dx="3716" dy="2332" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="3076" dy="2092" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="A5sfwNRnfNnv_qPRvbdW-0" />
         <mxCell id="A5sfwNRnfNnv_qPRvbdW-1" parent="A5sfwNRnfNnv_qPRvbdW-0" />
@@ -3734,7 +3735,7 @@
         <mxCell id="A5sfwNRnfNnv_qPRvbdW-44" value="Forest" style="swimlane;fontStyle=3;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#ffcd28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;rounded=0;shadow=0;glass=0;comic=0;strokeColor=#000000;gradientColor=#ffa500;swimlaneLine=1;gradientDirection=north;" parent="A5sfwNRnfNnv_qPRvbdW-1" vertex="1">
           <mxGeometry x="1280" y="560" width="250" height="517" as="geometry" />
         </mxCell>
-        <mxCell id="A5sfwNRnfNnv_qPRvbdW-45" value="+ bad_continuum_reason[0..1]: str&#xa;&gt; blinding: str&#xa;+ continuum[0..1]: array of float&#xa;+ deltas[0..1]: array of float&#xa;+ flux: array of float&#xa;+ ivar: array of float&#xa;+ lambda_[0..1]: array of float&#xa;&gt; lambda_grid[0..1]: array of float&#xa;&gt; lambda_rest_frame_grid[0..1]: array of float&#xa;+ log_lambda[0..1]: array of float&#xa;&gt; log_lambda_grid[0..1]: array of float&#xa;&gt; log_lambda_rest_frame_grid[0..1]: array of float&#xa;&gt; mask_fields: list of str&#xa;+ mean_snr: float&#xa;+ transmission_correction: array of float&#xa;&gt; wave_solution: &quot;lin&quot; or &quot;log&quot;&#xa;+ weights[0..1]: array of float" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="A5sfwNRnfNnv_qPRvbdW-44" vertex="1">
+        <mxCell id="A5sfwNRnfNnv_qPRvbdW-45" value="+ bad_continuum_reason[0..1]: str&#xa;&gt; blinding: str&#xa;+ continuum[0..1]: array of float&#xa;+ deltas[0..1]: array of float&#xa;+ flux: array of float&#xa;+ ivar: array of float&#xa;+ log_lambda: array of float&#xa;&gt; log_lambda_grid: array of float&#xa;&gt; log_lambda_rest_frame_grid: array of float&#xa;&gt; mask_fields: list of str&#xa;+ mean_snr: float&#xa;+ transmission_correction: array of float&#xa;&gt; wave_solution: &quot;lin&quot; or &quot;log&quot;&#xa;+ weights[0..1]: array of float" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="A5sfwNRnfNnv_qPRvbdW-44" vertex="1">
           <mxGeometry y="26" width="250" height="254" as="geometry" />
         </mxCell>
         <mxCell id="A5sfwNRnfNnv_qPRvbdW-46" value="" style="text;strokeColor=none;fillColor=#ffcd28;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;gradientColor=none;" parent="A5sfwNRnfNnv_qPRvbdW-44" vertex="1">
@@ -3848,7 +3849,7 @@
         <mxCell id="A5sfwNRnfNnv_qPRvbdW-82" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;" parent="A5sfwNRnfNnv_qPRvbdW-79" vertex="1">
           <mxGeometry y="376" width="390" height="1" as="geometry" />
         </mxCell>
-        <mxCell id="A5sfwNRnfNnv_qPRvbdW-83" value=" + __init__(config: configparser.SectionProxy)&#xa; + _initialize_arrays_lin()&#xa; + _initialize_arrays_log()&#xa; + _parse_config(config: configparser.SectionProxy)&#xa; + compute_continuum(forests: list of Forest)&#xa; + compute_delta_stack(forests: list of Forest, stack_from_deltas: bool)&#xa; + compute_mean_cont_lin(forests: list of Forest)&#xa; + compute_mean_cont_log(forests: list of Forest)&#xa; + compute_expected_flux(forests: list of Forest)&#xa; + compute_var_stats(forests: list of Forest)&#xa;" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="A5sfwNRnfNnv_qPRvbdW-79" vertex="1">
+        <mxCell id="A5sfwNRnfNnv_qPRvbdW-83" value=" + __init__(config: configparser.SectionProxy)&#xa; + _initialize_arrays()&#xa; + _parse_config(config: configparser.SectionProxy)&#xa; + compute_continuum(forests: list of Forest)&#xa; + compute_delta_stack(forests: list of Forest, stack_from_deltas: bool)&#xa; + compute_mean_cont(forests: list of Forest)&#xa; + compute_expected_flux(forests: list of Forest)&#xa; + compute_var_stats(forests: list of Forest)&#xa;" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="A5sfwNRnfNnv_qPRvbdW-79" vertex="1">
           <mxGeometry y="377" width="390" height="173" as="geometry" />
         </mxCell>
         <mxCell id="A5sfwNRnfNnv_qPRvbdW-84" value="TrueMockContinuum" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#ffcd28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;rounded=0;shadow=0;glass=0;comic=0;strokeColor=#000000;gradientColor=#ffa500;swimlaneLine=1;gradientDirection=north;" parent="A5sfwNRnfNnv_qPRvbdW-1" vertex="1">
@@ -3863,7 +3864,7 @@
         <mxCell id="A5sfwNRnfNnv_qPRvbdW-87" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;" parent="A5sfwNRnfNnv_qPRvbdW-84" vertex="1">
           <mxGeometry y="136" width="280" height="1" as="geometry" />
         </mxCell>
-        <mxCell id="A5sfwNRnfNnv_qPRvbdW-88" value="+ __init__(config: configpaser.SectionProxy) &#xa;+ _parse_config(config: configparser.SectionProxy)&#xa;+ compute_expected_flux(forests: list of Forest)&#xa;+ compute_mean_cont_lin(forests: list of Forest)&#xa;+ compute_mean_cont_log(forests: list of Forest)&#xa;+ read_true_continuum(forest: Forest)&#xa;+ read_var_lss()&#xa;+ save_delta_attributes()" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="A5sfwNRnfNnv_qPRvbdW-84" vertex="1">
+        <mxCell id="A5sfwNRnfNnv_qPRvbdW-88" value="+ __init__(config: configpaser.SectionProxy) &#xa;+ _parse_config(config: configparser.SectionProxy)&#xa;+ compute_expected_flux(forests: list of Forest)&#xa;+ compute_mean_cont(forests: list of Forest)&#xa;+ read_true_continuum(forest: Forest)&#xa;+ read_var_lss()&#xa;+ save_delta_attributes()" style="text;strokeColor=#000000;fillColor=#ffcd28;align=left;verticalAlign=middle;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;glass=0;comic=0;fontStyle=0;gradientColor=none;swimlaneFillColor=#ffffff;gradientDirection=north;startSize=26;" parent="A5sfwNRnfNnv_qPRvbdW-84" vertex="1">
           <mxGeometry y="137" width="280" height="133" as="geometry" />
         </mxCell>
         <mxCell id="A5sfwNRnfNnv_qPRvbdW-89" value="" style="endArrow=block;endSize=16;endFill=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" parent="A5sfwNRnfNnv_qPRvbdW-1" source="A5sfwNRnfNnv_qPRvbdW-84" target="A5sfwNRnfNnv_qPRvbdW-94" edge="1">
