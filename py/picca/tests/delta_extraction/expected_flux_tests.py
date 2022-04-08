@@ -838,7 +838,8 @@ class ExpectedFluxTest(AbstractTest):
                 "expected flux": {
                      "input directory": f"{THIS_DIR}/data",
                      "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
-                     "out dir": f"{THIS_DIR}/results"
+                     "out dir": f"{THIS_DIR}/results",
+                     "num processors": 1,
                 }})
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -858,6 +859,7 @@ class ExpectedFluxTest(AbstractTest):
                 "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             }})
         for key, value in defaults_true_continuum.items():
             if key not in config["expected flux"]:
@@ -910,6 +912,7 @@ class ExpectedFluxTest(AbstractTest):
                 "input directory": f"{THIS_DIR}/data/data",
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
 
@@ -942,6 +945,7 @@ class ExpectedFluxTest(AbstractTest):
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data/data",
                 "iter out prefix": "iter_out_prefix",
+                "num processors": 1,
                 "out dir": f"{THIS_DIR}/results/",
             },
         })
@@ -980,6 +984,7 @@ class ExpectedFluxTest(AbstractTest):
                 "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
 
@@ -1014,6 +1019,7 @@ class ExpectedFluxTest(AbstractTest):
                 "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
 
@@ -1053,6 +1059,7 @@ class ExpectedFluxTest(AbstractTest):
                 "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
 
@@ -1091,6 +1098,7 @@ class ExpectedFluxTest(AbstractTest):
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
+                "num processors": 1,
                 "out dir": f"{THIS_DIR}/results/",
             },
         })
@@ -1128,6 +1136,7 @@ class ExpectedFluxTest(AbstractTest):
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
+                "num processors": 1,
                 "out dir": f"{THIS_DIR}/results/",
             },
         })
@@ -1175,6 +1184,7 @@ class ExpectedFluxTest(AbstractTest):
                 "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
 
@@ -1219,6 +1229,7 @@ class ExpectedFluxTest(AbstractTest):
                 "input directory": f"{THIS_DIR}/data",
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1,
             },
         })
 
