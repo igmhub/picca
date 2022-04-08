@@ -8,7 +8,6 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from pathlib import Path
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
 from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
@@ -81,7 +80,7 @@ class ExpectedFluxTest(AbstractTest):
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
         # this should also raise an error as Forest variables are not defined
-        with self.assertRaises(ExpectedFluxError):
+        with self.assertRaises(ExpectedFluxError) as context_manager:
             expected_flux = Dr16ExpectedFlux(config["expected flux"])
 
         # setup Forest variables; case: logarithmic wavelength solution
@@ -901,7 +900,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        data_dir = Path(__file__).parent / "data"        
+        data_dir = Path(THIS_DIR) / "data"        
         
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -973,7 +972,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        data_dir = Path(__file__).parent / "data"        
+        data_dir = Path(THIS_DIR) / "data"        
         
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1008,7 +1007,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: log wavelength solution
         setup_forest("log", rebin=3)
 
-        data_dir = Path(__file__).parent / "data"        
+        data_dir = Path(THIS_DIR) / "data"        
         
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1045,9 +1044,9 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
-        data_dir = Path(__file__).parent / "data"
+        data_dir = Path(THIS_DIR) / "data"
 
-        out_file = Path(__file__).parent / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
+        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
         test_file = data_dir / "true_iter_out_prefix_compute_expected_flux_log.fits.gz"
         
         # initialize Data and Dr16ExpectedFlux instances
@@ -1085,9 +1084,9 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        data_dir = Path(__file__).parent / "data"        
+        data_dir = Path(THIS_DIR) / "data"        
     
-        out_file = Path(__file__).parent / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
+        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
         test_file = data_dir / "true_iter_out_prefix_compute_expected_flux_log_lin.fits.gz"
         
         # initialize Data and Dr16ExpectedFlux instances
@@ -1126,7 +1125,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        data_dir = Path(__file__).parent / "data"        
+        data_dir = Path(THIS_DIR) / "data"        
             
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1171,9 +1170,9 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
-        data_dir = Path(__file__).parent / "data"
+        data_dir = Path(THIS_DIR) / "data"
 
-        out_file = Path(__file__).parent / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
+        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
         test_file = data_dir / "iter_out_prefix_compute_expected_flux_log.fits.gz"
         
         # initialize Data and Dr16ExpectedFlux instances
@@ -1219,7 +1218,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
-        data_dir = Path(__file__).parent / "data"
+        data_dir = Path(THIS_DIR) / "data"
        
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
