@@ -1749,7 +1749,7 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj.rebin()
         self.assert_forest_object(test_obj, kwargs_sdss_forest_rebin)
 
-        # create a SdssForest with missing SdssForest variables
+        # create a SdssForest with missing fiberid
         kwargs = {
             "ra": 0.15,
             "dec": 0.0,
@@ -1759,6 +1759,57 @@ class AstronomicalObjectTest(AbstractTest):
         }
         expected_message = (
             "Error constructing SdssForest. Missing variable 'fiberid'"
+        )
+        with self.assertRaises(AstronomicalObjectError) as context_manager:
+            SdssForest(**kwargs)
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a SdssForest with missing mjd
+        kwargs = {
+            "ra": 0.15,
+            "dec": 0.0,
+            "z": 2.1,
+            "flux": np.ones(15),
+            "ivar": np.ones(15) * 4,
+            "fiberid": 0,
+        }
+        expected_message = (
+            "Error constructing SdssForest. Missing variable 'mjd'"
+        )
+        with self.assertRaises(AstronomicalObjectError) as context_manager:
+            SdssForest(**kwargs)
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a SdssForest with missing plate
+        kwargs = {
+            "ra": 0.15,
+            "dec": 0.0,
+            "z": 2.1,
+            "flux": np.ones(15),
+            "ivar": np.ones(15) * 4,
+            "fiberid": 0,
+            "mjd": 0,
+        }
+        expected_message = (
+            "Error constructing SdssForest. Missing variable 'plate'"
+        )
+        with self.assertRaises(AstronomicalObjectError) as context_manager:
+            SdssForest(**kwargs)
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a SdssForest with missing thingid
+        kwargs = {
+            "ra": 0.15,
+            "dec": 0.0,
+            "z": 2.1,
+            "flux": np.ones(15),
+            "ivar": np.ones(15) * 4,
+            "fiberid": 0,
+            "mjd": 0,
+            "plate": 0,
+        }
+        expected_message = (
+            "Error constructing SdssForest. Missing variable 'thingid'"
         )
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             SdssForest(**kwargs)
@@ -1812,6 +1863,21 @@ class AstronomicalObjectTest(AbstractTest):
             "with different los_id. This should "
             f"not happen. this.los_id={test_obj.los_id}, "
             f"other.los_id={test_obj_other.los_id}."
+        )
+        with self.assertRaises(AstronomicalObjectError) as context_manager:
+            test_obj.coadd(test_obj_other)
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Forest object
+        kwargs = kwargs_desi_forest2.copy()
+        kwargs["los_id"] = 999
+        test_obj_other = Forest(**kwargs)
+        test_obj_other.rebin()
+
+        # coadding them should raise an error
+        expected_message = (
+            "Error coadding SdssForest. Expected SdssForest instance in other. "
+            "Found: Forest"
         )
         with self.assertRaises(AstronomicalObjectError) as context_manager:
             test_obj.coadd(test_obj_other)
