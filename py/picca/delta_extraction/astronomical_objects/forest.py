@@ -453,17 +453,10 @@ class Forest(AstronomicalObject):
                                          )] += rebin_transmission_correction_aux
         rebin_ivar[:len(rebin_ivar_aux)] += rebin_ivar_aux
 
-        # this condition should always be true as pixels with 0 ivar have been
-        # filtered out before
-        # TODO: simplify this function by removing w2.
-        # This means we do not need pass this value to the child functions
-        # and so they also need to be fixed
+        # this condition should always be non-zero for at least one pixel
+        # this does not mean that all rebin_ivar pixels will be non-zero,
+        # as we could have a masked region of the spectra
         w2 = (rebin_ivar > 0.)
-        if w2.sum() == 0:
-            raise AstronomicalObjectError(
-                "Attempting to rebin arrays flux and "
-                "ivar in class Forest, but ivar seems "
-                "to contain only zeros")
         self.flux = rebin_flux[w2] / rebin_ivar[w2]
         self.transmission_correction = rebin_transmission_correction[
             w2] / rebin_ivar[w2]
@@ -474,11 +467,11 @@ class Forest(AstronomicalObject):
             rebin_log_lambda = (Forest.log_lambda_grid[0] +
                             np.arange(bins.max() + 1) * pixel_step)
             self.log_lambda = rebin_log_lambda[w2]
-        elif self.wave_solution == "lin":
+        else: # we have already checked that it will always be "lin" at this point
             rebin_lambda = (10**Forest.log_lambda_grid[0] +
                             np.arange(bins.max() + 1) * pixel_step)
             self.log_lambda = np.log10(rebin_lambda[w2])
-        
+
         # finally update control variables
         snr = self.flux * np.sqrt(self.ivar)
         self.mean_snr = sum(snr) / float(len(snr))
