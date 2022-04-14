@@ -99,7 +99,7 @@ class BalMask(Mask):
                 f" or 'TARGETID'. Found {los_id_name}")
 
         # setup bal index limit
-        self.bal_index_type = config.getfloat("bal index type")
+        self.bal_index_type = config.get("bal index type")
         if self.bal_index_type is None:
             self.bal_index_type = MaskError(
                 "Missing argument 'bal index type' "
@@ -133,7 +133,7 @@ class BalMask(Mask):
         # compute info for each line of sight
         self.los_ids = {}
         for los_id in np.unique(self.cat[los_id_name]):
-            self.los_ids[los_id] = self.add_bal_rest_frame(los_id)
+            self.los_ids[los_id] = self.add_bal_rest_frame(los_id, los_id_name)
 
         num_bals = np.sum([len(los_id) for los_id in self.los_ids.values()])
         self.logger.progress('In catalog: {} BAL quasars'.format(num_bals))
@@ -180,8 +180,8 @@ class BalMask(Mask):
         # Calculate mask width for each velocity pair, for each emission line
         for min_vel, max_vel in zip(min_velocities, max_velocities):
             for line in lines.values():
-                log_lambda_min = np.log10(line * (1 - min_vel / SPEED_LIGHT))
-                log_lambda_max = np.log10(line * (1 - max_vel / SPEED_LIGHT))
+                log_lambda_max = np.log10(line * (1 - min_vel / SPEED_LIGHT))
+                log_lambda_min = np.log10(line * (1 - max_vel / SPEED_LIGHT))
                 mask_rest_frame_bal.add_row([
                     log_lambda_min,
                     log_lambda_max,
