@@ -160,6 +160,8 @@ class DesiHealpix(DesiData):
             with context.Pool(processes=self.num_processors) as pool:
 
                 pool.starmap(self.read_file, arguments)
+            for key,forest in forests_by_targetid.items():
+                forest.consistency_check()
         else:
             forests_by_targetid = {}
             for (index,
@@ -309,7 +311,7 @@ class DesiHealpix(DesiData):
                     "z": row['Z'],
                 }
                 args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-                
+
                 if self.analysis_type == "BAO 3D":
                     forest = DesiForest(**args)
                 elif self.analysis_type == "PK 1D":
