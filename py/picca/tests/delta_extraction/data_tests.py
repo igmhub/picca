@@ -252,7 +252,6 @@ class DataTest(AbstractTest):
 
         self.assertTrue(len(data.forests) == 63)
 
-        """
         # run with one processor; case: only sv data, select sv2 (no quasars)
         config = ConfigParser()
         config.read_dict({"data": {
@@ -270,7 +269,6 @@ class DataTest(AbstractTest):
         with self.assertRaises(QuasarCatalogueError) as context_manager:
             data = DesiHealpix(config["data"])
         self.compare_error_message(context_manager, expected_message)
-        """
 
         # run with one processor; case: only sv data, select sv1
         config = ConfigParser()

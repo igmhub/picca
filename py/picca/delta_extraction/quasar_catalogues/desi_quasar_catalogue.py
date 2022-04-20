@@ -71,9 +71,6 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         # read quasar catalogue
         self.read_catalogue()
 
-        # if not all surveys are specified, then filter the catalogue
-        self.filter_surveys()
-
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
         if self.max_num_spec is not None:
@@ -111,15 +108,6 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         if self.filename is None:
             raise QuasarCatalogueError("Missing argument 'catalogue' required "
                                        "by DesiQuasarCatalogue")
-
-    def filter_surveys(self):
-        """Filter all the objects in the catalogue not belonging to the specified
-        surveys.
-        """
-        if 'SURVEY' in self.catalogue.colnames:
-            mask = np.isin(self.catalogue["SURVEY"], self.keep_surveys)
-            self.catalogue = self.catalogue[mask]
-            self.logger.progress(f"and in selected surveys {self.keep_surveys}         : nb object in cat = {len(self.catalogue)}")
 
     def read_catalogue(self):
         """Read the z_truth catalogue
@@ -162,6 +150,18 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self.logger.progress(f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
         w &= catalogue['Z'] < self.z_max
         self.logger.progress(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
+
+        # Filter all the objects in the catalogue not belonging to the specified
+        # surveys.
+        if 'SURVEY' in keep_columns:
+            w &= np.isin(catalogue["SURVEY"], self.keep_surveys)
+            self.logger.progress(f"and in selected surveys {self.keep_surveys}  "
+                                 f"       : nb object in cat = {np.sum(w)}")
+
+        # make sure we do not have an empty catalogue
+        if np.sum(w) == 0:
+            raise QuasarCatalogueError("Empty quasar catalogue. Revise filtering "
+                                       "choices")
 
         # Convert angles to radians
         np.radians(catalogue['RA'], out=catalogue['RA'])
