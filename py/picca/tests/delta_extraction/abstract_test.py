@@ -131,15 +131,18 @@ class AbstractTest(unittest.TestCase):
         # open fits files
         orig_hdul = fits.open(orig_file)
         new_hdul = fits.open(new_file)
-
         try:
             # compare them
             self.assertTrue(len(orig_hdul), len(new_hdul))
             # loop over HDUs
             for hdu_index, _ in enumerate(orig_hdul):
+                if "EXTNAME" in orig_hdul[hdu_index].header:
+                    hdu_name = orig_hdul[hdu_index].header["EXTNAME"]
+                else:
+                    hdu_name = hdu_index
                 # check header
-                orig_header = orig_hdul[hdu_index].header
-                new_header = new_hdul[hdu_index].header
+                orig_header = orig_hdul[hdu_name].header
+                new_header = new_hdul[hdu_name].header
                 for key in orig_header:
                     self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:
@@ -160,8 +163,8 @@ class AbstractTest(unittest.TestCase):
                             continue
                     self.assertTrue(key in orig_header)
                 # check data
-                orig_data = orig_hdul[hdu_index].data
-                new_data = new_hdul[hdu_index].data
+                orig_data = orig_hdul[hdu_name].data
+                new_data = new_hdul[hdu_name].data
                 if orig_data is None:
                     self.assertTrue(new_data is None)
                 else:
