@@ -180,7 +180,7 @@ class AbstractTest(unittest.TestCase):
                                      equal_nan=True):
                             print(f"\nOriginal file: {orig_file}")
                             print(f"New file: {new_file}")
-                            print(f"Different values found for column {col} in"
+                            print(f"Different values found for column {col} in "
                                   f"HDU {orig_header['EXTNAME']}")
                             print("original new isclose original-new\n")
                             for new, orig in zip(new_data[col], orig_data[col]):
