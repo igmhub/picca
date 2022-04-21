@@ -1753,6 +1753,21 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj.coadd(test_obj_other)
         self.assert_forest_object(test_obj, kwargs_pk1d_forest_lin_coadd)
 
+        # create a Forest object
+        kwargs = kwargs_pk1d_forest_log2.copy()
+        kwargs["los_id"] = 999
+        test_obj_other = Forest(**kwargs)
+        test_obj_other.rebin()
+
+        # coadding them should raise an error
+        expected_message = (
+            "Error coadding Pk1dForest. Expected Pk1dForest instance in other. "
+            "Found: Forest"
+        )
+        with self.assertRaises(AstronomicalObjectError) as context_manager:
+            test_obj.coadd(test_obj_other)
+        self.compare_error_message(context_manager, expected_message)
+
     def test_pk1d_forest_consistency_check(self):
         """Test method consistency_check from Pk1dForest"""
         setup_forest("log")

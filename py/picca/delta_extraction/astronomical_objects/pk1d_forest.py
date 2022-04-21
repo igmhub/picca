@@ -130,7 +130,7 @@ class Pk1dForest(Forest):
             raise AstronomicalObjectError(
                 "Error coadding Pk1dForest. Expected "
                 "Pk1dForest instance in other. Found: "
-                f"{type(other)}")
+                f"{type(other).__name__}")
         self.exposures_diff = np.append(self.exposures_diff,
                                         other.exposures_diff)
         self.reso = np.append(self.reso, other.reso)
