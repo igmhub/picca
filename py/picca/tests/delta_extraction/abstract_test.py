@@ -91,23 +91,31 @@ class AbstractTest(unittest.TestCase):
         If True, check that expected_message is the beginning of the actual error
         message. Otherwise check that expected_message is the entire message
         """
+        if "py/picca/tests/delta_extraction" in expected_message:
+            expected_message = re.sub(r"\/[^ ]*\/py\/picca\/tests\/delta_extraction\/",
+                                      "", expected_message)
+        received_message = str(context_manager.exception)
+        if "py/picca/tests/delta_extraction" in received_message:
+            received_message = re.sub(r"\/[^ ]*\/py\/picca\/tests\/delta_extraction\/",
+                                      "", received_message)
+
         if startswith:
-            if not str(context_manager.exception).startswith(expected_message):
+            if not received_message.startswith(expected_message):
                 print("\nReceived incorrect error message")
                 print("Expected message to start with:")
                 print(expected_message)
                 print("Received:")
-                print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception).startswith(
+                print(received_message)
+            self.assertTrue(received_message.startswith(
                 expected_message))
         else:
-            if not str(context_manager.exception) == expected_message:
+            if not received_message == expected_message:
                 print("\nReceived incorrect error message")
                 print("Expected:")
                 print(expected_message)
                 print("Received:")
-                print(context_manager.exception)
-            self.assertTrue(str(context_manager.exception) == expected_message)
+                print(received_message)
+            self.assertTrue(received_message == expected_message)
 
     def compare_fits(self, orig_file, new_file):
         """Compare two fits files to check that they are equal

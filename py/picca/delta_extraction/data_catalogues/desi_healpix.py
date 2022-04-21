@@ -75,6 +75,7 @@ class DesiHealpix(DesiData):
         self.logger = logging.getLogger(__name__)
 
         self.use_non_coadded_spectra = None
+        self.num_processors = None
         self.__parse_config(config)
         #init of DesiData needs to come last, as it contains the actual data reading and thus needs all config
         super().__init__(config)
@@ -186,7 +187,7 @@ class DesiHealpix(DesiData):
                 self.read_file(filename, group, forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
-            raise DataError("No Quasars found, stopping here")
+            raise DataError("No quasars found, stopping here")
 
         self.forests = list(forests_by_targetid.values())
 
@@ -262,10 +263,10 @@ class DesiHealpix(DesiData):
                             reso_from_truth=True
                         else:
                             raise DataError(
-                                "Error while reading {color} band from "
-                                "{filename}. Analysis type is  'PK 1D', "
+                                f"Error while reading {color} band from "
+                                f"{filename}. Analysis type is 'PK 1D', "
                                 "but file does not contain HDU "
-                                f"'{color}_RESOLUTION' ")
+                                f"'{color}_RESOLUTION'")
                 spectrographs_data[color] = spec
             except OSError:
                 self.logger.warning(
