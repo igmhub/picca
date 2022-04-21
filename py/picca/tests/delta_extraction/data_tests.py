@@ -1,8 +1,11 @@
 """This file contains tests related to Data and its childs"""
 from configparser import ConfigParser
+import logging
 import os
 import unittest
 
+from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
+from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.data import defaults as defaults_data
@@ -87,7 +90,7 @@ class DataTest(AbstractTest):
         test_file = f"{THIS_DIR}/data/data_filter_forests_print.txt"
 
         # setup printing
-        setup_logger(log_file=out_file)
+        setup_logger(logging_level_console=logging.ERROR, log_file=out_file)
 
         # create Data instance
         config = ConfigParser()
@@ -145,7 +148,6 @@ class DataTest(AbstractTest):
         It should not be possible to create a DesiData class
         since it is an abstract class.
         """
-
         config = ConfigParser()
         config.read_dict({"data": {
             "catalogue": f"{THIS_DIR}/data/dummy_desi_quasar_catalogue.fits",
@@ -214,9 +216,7 @@ class DataTest(AbstractTest):
         self.compare_error_message(context_manager, expected_message)
 
     def test_desi_data_set_blinding(self):
-        """Test method set_blinding of DesiData
-
-        """
+        """Test method set_blinding of DesiData"""
         # create a DesiData instance with sv data only and blinding = none
         # since DesiData is an abstract class, we create a DesiHealpix instance
         config = ConfigParser()
@@ -293,9 +293,130 @@ class DataTest(AbstractTest):
 
     def test_desi_healpix(self):
         """Test DesiHealpix"""
-        # setup printing
-        setup_logger()
+        # case: BAO 3D
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "analysis type": "BAO 3D"
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
 
+        data = DesiHealpix(config["data"])
+
+        self.assertTrue(len(data.forests) == 63)
+        self.assertTrue(data.min_num_pix == 50)
+        self.assertTrue(data.analysis_type == "BAO 3D")
+        self.assertTrue(
+            all(isinstance(forest, DesiForest) for forest in data.forests))
+
+        # case: Pk 1D
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "analysis type": "PK 1D"
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiHealpix(config["data"])
+
+        self.assertTrue(len(data.forests) == 63)
+        self.assertTrue(data.min_num_pix == 50)
+        self.assertTrue(data.analysis_type == "PK 1D")
+        self.assertTrue(
+            all(isinstance(forest, DesiPk1dForest) for forest in data.forests))
+
+    def test_desi_healpix_parse_config(self):
+        """Test method __parse_config from DesiHealpix"""
+        # create a DesiHealpix with missing use_non_coadded_spectra
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+        }})
+        expected_message = (
+            "Missing argument 'use non-coadded spectra' required by DesiHealpix"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            DesiHealpix(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a DesiHealpix with missing num_processors
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": False,
+        }})
+        expected_message = (
+            "Missing argument 'num processors' required by DesiHealpix"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            DesiHealpix(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a DesiHealpix with missing Data options
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": False,
+            "num processors": 1,
+        }})
+        expected_message = (
+            "Missing argument 'wave solution' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            DesiHealpix(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a DesiHealpix with missing DesiData options
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": False,
+            "num processors": 1,
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "minimum number pixels in forest": 50,
+            "rejection log file": "rejection.fits",
+            "minimal snr bao3d": 0.0,
+        }})
+        expected_message = (
+            "Missing argument 'blinding' required by DesiData"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            DesiHealpix(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+    def test_desi_healpix_read_data(self):
+        """Test method read_data from DesiHealpix"""
         # run with one processor; case: only sv data
         config = ConfigParser()
         config.read_dict({"data": {
@@ -434,6 +555,8 @@ class DataTest(AbstractTest):
             data = DesiHealpix(config["data"])
         self.compare_error_message(context_manager, expected_message)
 
+    def test_desi_healpix_read_file(self):
+        """Test method read_file from DesiHealpix"""
         # case: data without color Z and missing R_RESOLUTION
         config = ConfigParser()
         config.read_dict({"data": {
@@ -450,10 +573,10 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
 
         expected_message = (
-            "Error while reading B band from /Users/iperez/Documents/GitHub/"
+            "Error while reading R band from /Users/iperez/Documents/GitHub/"
             "picca/py/picca/tests/delta_extraction/data/bad_format//main/"
             "dark/91/9144/spectra-main-dark-9144.fits. Analysis type is "
-            "'PK 1D', but file does not contain HDU 'B_RESOLUTION'"
+            "'PK 1D', but file does not contain HDU 'R_RESOLUTION'"
         )
         with self.assertRaises(DataError) as context_manager:
             data = DesiHealpix(config["data"])
@@ -461,90 +584,8 @@ class DataTest(AbstractTest):
 
         # TODO: test Pk1d and mocks (R_RESOLUTION is looked for in truth file)
 
-
-        reset_logger()
-
-        # create a DesiHealpix with missing use_non_coadded_spectra
-        config = ConfigParser()
-        config.read_dict({"data": {
-            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-            "keep surveys": "all",
-            "input directory": f"{THIS_DIR}/data/",
-            "out dir": f"{THIS_DIR}/results/",
-            "num processors": 1,
-        }})
-        expected_message = (
-            "Missing argument 'use non-coadded spectra' required by DesiHealpix"
-        )
-        with self.assertRaises(DataError) as context_manager:
-            DesiHealpix(config["data"])
-        self.compare_error_message(context_manager, expected_message)
-
-        # create a DesiHealpix with missing num_processors
-        config = ConfigParser()
-        config.read_dict({"data": {
-            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-            "keep surveys": "all",
-            "input directory": f"{THIS_DIR}/data/",
-            "out dir": f"{THIS_DIR}/results/",
-            "use non-coadded spectra": False,
-        }})
-        expected_message = (
-            "Missing argument 'num processors' required by DesiHealpix"
-        )
-        with self.assertRaises(DataError) as context_manager:
-            DesiHealpix(config["data"])
-        self.compare_error_message(context_manager, expected_message)
-
-        # create a DesiHealpix with missing Data options
-        config = ConfigParser()
-        config.read_dict({"data": {
-            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-            "keep surveys": "all",
-            "input directory": f"{THIS_DIR}/data/",
-            "out dir": f"{THIS_DIR}/results/",
-            "use non-coadded spectra": False,
-            "num processors": 1,
-        }})
-        expected_message = (
-            "Missing argument 'wave solution' required by Data"
-        )
-        with self.assertRaises(DataError) as context_manager:
-            DesiHealpix(config["data"])
-        self.compare_error_message(context_manager, expected_message)
-
-        # create a DesiHealpix with missing DesiData options
-        config = ConfigParser()
-        config.read_dict({"data": {
-            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-            "keep surveys": "all",
-            "input directory": f"{THIS_DIR}/data/",
-            "out dir": f"{THIS_DIR}/results/",
-            "use non-coadded spectra": False,
-            "num processors": 1,
-            "wave solution": "lin",
-            "delta lambda": 0.8,
-            "lambda max": 5500.0,
-            "lambda max rest frame": 1200.0,
-            "lambda min": 3600.0,
-            "lambda min rest frame": 1040.0,
-            "analysis type": "BAO 3D",
-            "minimum number pixels in forest": 50,
-            "rejection log file": "rejection.fits",
-            "minimal snr bao3d": 0.0,
-        }})
-        expected_message = (
-            "Missing argument 'blinding' required by DesiData"
-        )
-        with self.assertRaises(DataError) as context_manager:
-            DesiHealpix(config["data"])
-        self.compare_error_message(context_manager, expected_message)
-
     def test_desi_tile(self):
         """Test DesiTile"""
-        # setup printing
-        setup_logger()
-
         # load DesiTile using coadds
         config = ConfigParser()
         config.read_dict({"data": {
