@@ -313,7 +313,7 @@ class DataTest(AbstractTest):
 
         self.assertTrue(len(data.forests) == 63)
 
-        # run with multiple processors; case: only sv data
+        # run with 0 processors; case: only sv data
         config = ConfigParser()
         config.read_dict({"data": {
             "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
@@ -382,7 +382,7 @@ class DataTest(AbstractTest):
 
         self.assertTrue(len(data.forests) == 63)
 
-        # run with multiple processors; case: main data present
+        # run with 0 processors; case: main data present
         config = ConfigParser()
         config.read_dict({"data": {
             "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
@@ -398,6 +398,41 @@ class DataTest(AbstractTest):
         data = DesiHealpix(config["data"])
 
         self.assertTrue(len(data.forests) == 63)
+
+        # run with 2 processors; case: main data present
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 2,
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiHealpix(config["data"])
+
+        self.assertTrue(len(data.forests) == 63)
+
+        # run with 2 processors; case: data missing
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/fake/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 2,
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        expected_message = "No quasars found, stopping here"
+        with self.assertRaises(DataError) as context_manager:
+            data = DesiHealpix(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
         reset_logger()
 
