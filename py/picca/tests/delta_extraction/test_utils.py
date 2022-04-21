@@ -19,7 +19,7 @@ def reset_forest():
     Pk1dForest.lambda_abs_igm = None
 
 # setup Forest class variables
-def setup_forest(wave_solution, rebin=1, pixel_step=1e-4):
+def setup_forest(wave_solution, rebin=1, pixel_step=None):
     """Set Forest class variables
 
     Arguments
@@ -36,6 +36,12 @@ def setup_forest(wave_solution, rebin=1, pixel_step=1e-4):
     
     """
     assert wave_solution in ["log", "lin"]
+
+    if pixel_step is None:
+        if wave_solution == "log":
+            pixel_step = 1e-4
+        elif wave_solution == "lin":
+            pixel_step = 1
 
     pixel_step *= rebin
     pixel_step_rf = pixel_step
