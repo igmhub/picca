@@ -263,10 +263,10 @@ class DesiHealpix(DesiData):
                             reso_from_truth=True
                         else:
                             raise DataError(
-                                "Error while reading {color} band from "
-                                "{filename}. Analysis type is  'PK 1D', "
+                                f"Error while reading {color} band from "
+                                f"{filename}. Analysis type is 'PK 1D', "
                                 "but file does not contain HDU "
-                                f"'{color}_RESOLUTION' ")
+                                f"'{color}_RESOLUTION'")
                 spectrographs_data[color] = spec
             except OSError:
                 self.logger.warning(

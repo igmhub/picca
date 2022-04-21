@@ -416,14 +416,14 @@ class DataTest(AbstractTest):
 
         self.assertTrue(len(data.forests) == 63)
 
-        # run with 2 processors; case: data missing
+        # case: data missing
         config = ConfigParser()
         config.read_dict({"data": {
             "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
             "keep surveys": "all",
             "input directory": f"{THIS_DIR}/data/fake/",
             "out dir": f"{THIS_DIR}/results/",
-            "num processors": 2,
+            "num processors": 1,
         }})
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
@@ -433,6 +433,34 @@ class DataTest(AbstractTest):
         with self.assertRaises(DataError) as context_manager:
             data = DesiHealpix(config["data"])
         self.compare_error_message(context_manager, expected_message)
+
+        # case: data without color Z and missing R_RESOLUTION
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/bad_format/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 2,
+            "analysis type": "PK 1D",
+            "use non-coadded spectra": True,
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        expected_message = (
+            "Error while reading B band from /Users/iperez/Documents/GitHub/"
+            "picca/py/picca/tests/delta_extraction/data/bad_format//main/"
+            "dark/91/9144/spectra-main-dark-9144.fits. Analysis type is "
+            "'PK 1D', but file does not contain HDU 'B_RESOLUTION'"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            data = DesiHealpix(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # TODO: test Pk1d and mocks (R_RESOLUTION is looked for in truth file)
+
 
         reset_logger()
 
