@@ -143,7 +143,7 @@ class DataTest(AbstractTest):
         """Test DesiData
 
         It should not be possible to create a DesiData class
-        # since it is an abstract class.
+        since it is an abstract class.
         """
 
         config = ConfigParser()
@@ -212,6 +212,84 @@ class DataTest(AbstractTest):
         with self.assertRaises(DataError) as context_manager:
             data._DesiData__parse_config(config["data"])
         self.compare_error_message(context_manager, expected_message)
+
+    def test_desi_data_set_blinding(self):
+        """Test method set_blinding of DesiData
+
+        """
+        # create a DesiData instance with sv data only and blinding = none
+        # since DesiData is an abstract class, we create a DesiHealpix instance
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits",
+            "keep surveys": "all special",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "blinding": "none",
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiHealpix(config["data"])
+        self.assertTrue(data.blinding == "none")
+
+        # create a DesiData instance with sv data only and blinding = corr_yshift
+        # since DesiData is an abstract class, we create a DesiHealpix instance
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits",
+            "keep surveys": "all special",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "blinding": "corr_yshift",
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiHealpix(config["data"])
+        self.assertTrue(data.blinding == "none")
+
+        # create a DesiData instance with main data and blinding = none
+        # since DesiData is an abstract class, we create a DesiHealpix instance
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits",
+            "keep surveys": "all special",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "blinding": "none",
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiHealpix(config["data"])
+        self.assertTrue(data.blinding == "corr_yshift")
+
+        # create a DesiData instance with main data and blinding = corr_yshift
+        # since DesiData is an abstract class, we create a DesiHealpix instance
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits",
+            "keep surveys": "all special",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "blinding": "corr_yshift",
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiHealpix(config["data"])
+        self.assertTrue(data.blinding == "corr_yshift")
+
+        # TODO: add tests when loading mocks
 
     def test_desi_healpix(self):
         """Test DesiHealpix"""
