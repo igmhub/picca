@@ -248,7 +248,7 @@ class TrueContinuum(ExpectedFlux):
         true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
 
         forest.continuum = true_continuum(10**forest.log_lambda)[0]
-        forest.continuum *= self.get_mean_flux(10**forest.log_lambda)
+        forest.continuum *= self.get_mean_flux(forest.log_lambda)
 
         return forest
 
