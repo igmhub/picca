@@ -1753,6 +1753,33 @@ class AstronomicalObjectTest(AbstractTest):
         test_obj.coadd(test_obj_other)
         self.assert_forest_object(test_obj, kwargs_pk1d_forest_lin_coadd)
 
+    def test_pk1d_forest_consistency_check(self):
+        """Test method consistency_check from Pk1dForest"""
+        setup_forest("log")
+        setup_pk1d_forest("LYA")
+
+        # create a Pk1dForest with flux and ivar of different sizes
+        kwargs = kwargs_pk1d_forest_log.copy()
+        kwargs["ivar"] = kwargs["ivar"][::2]
+        expected_message = (
+            "Error constructing Forest. 'flux' and 'ivar' don't have the "
+            "same size"
+        )
+        with self.assertRaises(AstronomicalObjectError) as context_manager:
+            Pk1dForest(**kwargs)
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Pk1dForest with flux and exposures_diff of different sizes
+        kwargs = kwargs_pk1d_forest_log.copy()
+        kwargs["exposures_diff"] = kwargs["exposures_diff"][::2]
+        expected_message = (
+            "Error constructing Pk1dForest. 'flux' and 'exposures_diff' don't "
+            "have the same size"
+        )
+        with self.assertRaises(AstronomicalObjectError) as context_manager:
+            Pk1dForest(**kwargs)
+        self.compare_error_message(context_manager, expected_message)
+
     def test_pk1d_forest_get_data(self):
         """Test method get_data for Pk1dForest."""
         # set class variables; case: logarithmic wavelength solution

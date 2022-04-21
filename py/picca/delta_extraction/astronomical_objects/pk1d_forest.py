@@ -100,7 +100,7 @@ class Pk1dForest(Forest):
         super().consistency_check()
         if self.flux.size != self.exposures_diff.size:
             raise AstronomicalObjectError(
-                "Error constructing Pk1dForest. 'flux', "
+                "Error constructing Pk1dForest. 'flux' "
                 "and 'exposures_diff' don't have the "
                 "same size")
         if "exposures_diff" not in Forest.mask_fields:
@@ -109,7 +109,7 @@ class Pk1dForest(Forest):
             Forest.mask_fields += ["reso"]
         if "reso_pix" not in Forest.mask_fields:
             Forest.mask_fields += ["reso_pix"]
-        
+
 
     def coadd(self, other):
         """Coadd the information of another forest.
