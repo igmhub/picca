@@ -911,6 +911,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
+        results_dir = Path(THIS_DIR) / "results"
         data_dir = Path(THIS_DIR) / "data"        
         
         # initialize Data and Dr16ExpectedFlux instances
@@ -938,10 +939,29 @@ class ExpectedFluxTest(AbstractTest):
         var_lss = expected_flux.get_var_lss(log_lambda_grid)
         mean_flux = expected_flux.get_mean_flux(log_lambda_grid)
 
+        np.savetxt(results_dir / "true_var_lss.txt", var_lss)
+        np.savetxt(results_dir / "true_mean_flux.txt", mean_flux)
         var_lss_target =   np.loadtxt(data_dir / "true_var_lss.txt")
         mean_flux_target = np.loadtxt(data_dir / "true_mean_flux.txt")
-        np.testing.assert_equal(var_lss, var_lss_target)
-        np.testing.assert_equal(mean_flux, mean_flux_target)
+        if not np.allclose(var_lss, var_lss_target):
+            filename = "true_var_lss.txt"
+            print(f"\nOriginal file: {data_dir / filename}")
+            print(f"New file: {results_dir / filename}")
+            print("Difference found in var_lss")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(var_lss, var_lss_target):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+            self.assertTrue(np.allclose(var_lss, var_lss_target))
+
+        if not np.allclose(mean_flux, mean_flux_target):
+            filename = "true_mean_flux.txt"
+            print(f"\nOriginal file: {data_dir / filename}")
+            print(f"New file: {results_dir / filename}")
+            print("Difference found in mean_flux")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_flux, mean_flux_target):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+            self.assertTrue(np.allclose(mean_flux, mean_flux_target))
 
         # setup Forest variables; case: log wavelength solution
         reset_forest()
@@ -972,10 +992,29 @@ class ExpectedFluxTest(AbstractTest):
         var_lss = expected_flux.get_var_lss(log_lambda_)
         mean_flux = expected_flux.get_mean_flux(log_lambda_)
 
+        np.savetxt(results_dir / "true_var_lss_log.txt", var_lss)
+        np.savetxt(results_dir / "true_mean_flux_log.txt", mean_flux)
         var_lss_target =   np.loadtxt(data_dir / "true_var_lss_log.txt")
         mean_flux_target = np.loadtxt(data_dir / "true_mean_flux_log.txt")
-        np.testing.assert_equal(var_lss, var_lss_target)
-        np.testing.assert_equal(mean_flux, mean_flux_target)        
+        if not np.allclose(var_lss, var_lss_target):
+            filename = "true_var_lss_log.txt"
+            print(f"\nOriginal file: {data_dir / filename}")
+            print(f"New file: {results_dir / filename}")
+            print("Difference found in var_lss")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(var_lss, var_lss_target):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+            self.assertTrue(np.allclose(var_lss, var_lss_target))
+            
+        if not np.allclose(mean_flux, mean_flux_target):
+            filename = "true_mean_flux.txt"
+            print(f"\nOriginal file: {data_dir / filename}")
+            print(f"New file: {results_dir / filename}")
+            print("Difference found in mean_flux")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_flux, mean_flux_target):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+            self.assertTrue(np.allclose(mean_flux, mean_flux_target))
 
 
     def test_true_continuum_read_true_continuum(self):
@@ -983,6 +1022,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
+        results_dir = Path(THIS_DIR) / "results"
         data_dir = Path(THIS_DIR) / "data"        
         
         # initialize Data and Dr16ExpectedFlux instances
@@ -1007,13 +1047,58 @@ class ExpectedFluxTest(AbstractTest):
         data = DesisimMocks(config["data"])
         expected_flux = TrueContinuum(config["expected flux"])
 
+        out_file = results_dir / "continua_true_lin.txt"
+        # save the results
+        f = open(out_file, "w")
+        f.write("# thingid cont[0] ... cont[N]\n")
         for forest in data.forests:
-            if forest.los_id == 59152:
-                expected_flux.read_true_continuum(forest)
-                np.testing.assert_almost_equal(
-                    forest.continuum,
-                    np.loadtxt(data_dir / "true_true_cont.txt")
-                )
+            expected_flux.read_true_continuum(forest)
+            f.write(f"{forest.los_id} ")
+            if forest.continuum is not None:
+                for item in forest.continuum:
+                    f.write(f"{item} ")
+            f.write("\n")
+        f.close()
+
+        test_file = data_dir / "continua_true_lin.txt"
+        continua = {}
+        f = open(test_file)
+        for line in f.readlines():
+            if line.startswith("#"):
+                continue
+            cols = line.split()
+            los_id = int(cols[0])
+            if len(cols) == 1:
+                continuum = None
+            else:
+                continuum = np.array([float(item) for item in cols[1:]])
+            continua[los_id] = continuum
+        f.close()
+
+        # compare the results
+        correct_forests = 0
+        for forest in data.forests:
+            if forest.continuum is None:
+                if continua.get(forest.los_id) is not None:
+                    print(f"For forest with los_id {forest.los_id}, new continuum "
+                          "is None. Expected continua:")
+                    print(continua.get(forest.los_id))
+                self.assertTrue(continua.get(forest.los_id) is None)
+            elif continua.get(forest.los_id) is None:
+                self.assertTrue(forest.continuum is None)
+            else:
+                if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                    print("Difference found in forest.continuum")
+                    print(f"forest.los_id: {forest.los_id}")
+                    print(f"result test are_close result-test")
+                    for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
+                        print(i1, i2, np.isclose(i1, i2), i1-i2)
+                self.assertTrue(
+                    np.allclose(forest.continuum, continua.get(forest.los_id)))
+            correct_forests += 1
+
+        # check that we loaded all quasars
+        self.assertTrue(correct_forests == len(continua))
 
         # setup Forest variables; case: log wavelength solution
         setup_forest("log", rebin=3)
@@ -1042,19 +1127,65 @@ class ExpectedFluxTest(AbstractTest):
         data = DesisimMocks(config["data"])
         expected_flux = TrueContinuum(config["expected flux"])
 
+        out_file = results_dir / "continua_true_log.txt"
+        # save the results
+        f = open(out_file, "w")
+        f.write("# thingid cont[0] ... cont[N]\n")
         for forest in data.forests:
-            if forest.los_id == 59152:
-                expected_flux.read_true_continuum(forest)
-                np.testing.assert_almost_equal(
-                    forest.continuum,
-                    np.loadtxt(data_dir / "true_true_cont_log.txt")
-                )
+            expected_flux.read_true_continuum(forest)
+            f.write(f"{forest.los_id} ")
+            if forest.continuum is not None:
+                for item in forest.continuum:
+                    f.write(f"{item} ")
+            f.write("\n")
+        f.close()
+
+        test_file = data_dir / "continua_true_log.txt"
+        continua = {}
+        f = open(test_file)
+        for line in f.readlines():
+            if line.startswith("#"):
+                continue
+            cols = line.split()
+            los_id = int(cols[0])
+            if len(cols) == 1:
+                continuum = None
+            else:
+                continuum = np.array([float(item) for item in cols[1:]])
+            continua[los_id] = continuum
+        f.close()
+
+        # compare the results
+        correct_forests = 0
+        for forest in data.forests:
+            if forest.continuum is None:
+                if continua.get(forest.los_id) is not None:
+                    print(f"For forest with los_id {forest.los_id}, new continuum "
+                          "is None. Expected continua:")
+                    print(continua.get(forest.los_id))
+                self.assertTrue(continua.get(forest.los_id) is None)
+            elif continua.get(forest.los_id) is None:
+                self.assertTrue(forest.continuum is None)
+            else:
+                if not np.allclose(forest.continuum, continua.get(forest.los_id)):
+                    print("Difference found in forest.continuum")
+                    print(f"forest.los_id: {forest.los_id}")
+                    print(f"result test are_close result-test")
+                    for i1, i2 in zip(forest.continuum, continua.get(forest.los_id)):
+                        print(i1, i2, np.isclose(i1, i2), i1-i2)
+                self.assertTrue(
+                    np.allclose(forest.continuum, continua.get(forest.los_id)))
+            correct_forests += 1
+
+        # check that we loaded all quasars
+        self.assertTrue(correct_forests == len(continua))
 
     def test_true_continuum_expected_flux(self):
         """Test method compute expected flux for class TrueContinuum"""
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
+        results_dir = Path(THIS_DIR) / "results"
         data_dir = Path(THIS_DIR) / "data"
 
         out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
@@ -1136,6 +1267,7 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
+        results_dir = Path(THIS_DIR) / "results"
         data_dir = Path(THIS_DIR) / "data"        
             
         # initialize Data and Dr16ExpectedFlux instances
@@ -1166,25 +1298,38 @@ class ExpectedFluxTest(AbstractTest):
         mean_cont = expected_flux.get_mean_cont(log_lambda_grid)
         mean_cont_weight = expected_flux.get_mean_cont(log_lambda_grid)
 
+        np.savetxt(results_dir / "true_mean_cont_lin.txt", mean_cont)
+        np.savetxt(results_dir / "true_mean_cont_weight_lin.txt", mean_cont_weight)
+        mean_cont_target =   np.loadtxt(data_dir / "true_mean_cont_lin.txt")
+        mean_cont_weight_target = np.loadtxt(data_dir / "true_mean_cont_weight_lin.txt")
+        if not np.allclose(mean_cont, mean_cont_target):
+            filename = "true_mean_cont_lin.txt"
+            print(f"\nOriginal file: {data_dir / filename}")
+            print(f"New file: {results_dir / filename}")
+            print("Difference found in mean cont")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont, mean_cont_target):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+            self.assertTrue(np.allclose(mean_cont_target, mean_cont_target))
         
-        np.testing.assert_equal(
-            mean_cont,
-            np.loadtxt(data_dir / "true_mean_cont_lin.txt")
-        )
-        np.testing.assert_equal(
-            mean_cont_weight,
-            np.loadtxt(data_dir / "true_mean_cont_weight_lin.txt")
-        )
+        if not np.allclose(mean_cont_weight, mean_cont_weight_target):
+            filename = "true_mean_cont_weight_lin.txt"
+            print(f"\nOriginal file: {data_dir / filename}")
+            print(f"New file: {results_dir / filename}")
+            print("Difference found in mean cont weight")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont_weight, mean_cont_weight_target):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+            self.assertTrue(np.allclose(mean_cont_weight_target, mean_cont_weight_target))
+
 
     def test_true_cont_compute_mean_cont_log_wave_solution(self):
         """Test method compute_mean_cont for class TrueContinuum using logarithmic wave solution"""           
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
+        results_dir = Path(THIS_DIR) / "results"
         data_dir = Path(THIS_DIR) / "data"
-
-        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
-        test_file = data_dir / "iter_out_prefix_compute_expected_flux_log.fits.gz"
         
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1215,14 +1360,30 @@ class ExpectedFluxTest(AbstractTest):
         mean_cont = expected_flux.get_mean_cont(log_lambda_grid)
         mean_cont_weight = expected_flux.get_mean_cont(log_lambda_grid)
 
-        np.testing.assert_equal(
-            mean_cont,
-            np.loadtxt(data_dir / "true_mean_cont_log.txt")
-        )
-        np.testing.assert_equal(    
-            mean_cont_weight,
-            np.loadtxt(data_dir / "true_mean_cont_weight_log.txt")
-        )
+        np.savetxt(results_dir / "true_mean_cont_log.txt", mean_cont)
+        np.savetxt(results_dir / "true_mean_cont_weight_log.txt", mean_cont_weight)
+        mean_cont_target =   np.loadtxt(data_dir / "true_mean_cont_log.txt")
+        mean_cont_weight_target = np.loadtxt(data_dir / "true_mean_cont_weight_log.txt")
+        if not np.allclose(mean_cont, mean_cont_target):
+            filename = "true_mean_cont_log.txt"
+            print(f"\nOriginal file: {data_dir / filename}")
+            print(f"New file: {results_dir / filename}")
+            print("Difference found in mean cont")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont, mean_cont_target):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+            self.assertTrue(np.allclose(mean_cont_target, mean_cont_target))
+        
+        if not np.allclose(mean_cont_weight, mean_cont_weight_target):
+            filename = "true_mean_cont_weight_log.txt"
+            print(f"\nOriginal file: {data_dir / filename}")
+            print(f"New file: {results_dir / filename}")
+            print("Difference found in mean cont weight")
+            print(f"result test are_close result-test")
+            for i1, i2 in zip(mean_cont_weight, mean_cont_weight_target):
+                print(i1, i2, np.isclose(i1, i2), i1-i2)
+            self.assertTrue(np.allclose(mean_cont_weight_target, mean_cont_weight_target))
+
         
     def test_true_continuum_populate_los_ids(self):
         """Test method populate_los_ids for class TrueContinuum"""
@@ -1261,10 +1422,10 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.populate_los_ids(data.forests)
 
         for i, key in enumerate(("mean expected flux", "weights", "continuum")):
-            np.testing.assert_equal(
+            self.assertTrue(np.allclose(
                 expected_flux.los_ids[59152][key],
                 np.loadtxt( data_dir / f"los_ids_{i}.txt")
-            )
+            ))
 
 if __name__ == '__main__':
     unittest.main()
