@@ -11,13 +11,18 @@ from datetime import datetime
 import git
 
 
+from picca.delta_extraction.correction import Correction
+from picca.delta_extraction.data import Data
 from picca.delta_extraction.errors import ConfigError
+from picca.delta_extraction.expected_flux import ExpectedFlux
+from picca.delta_extraction.mask import Mask
 from picca.delta_extraction.utils import class_from_string, setup_logger
 
 try:
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     PICCA_BASE = THIS_DIR.split("py/picca")[0]
     git_hash = git.Repo(PICCA_BASE).head.object.hexsha
+# coverage:ignore-line
 except git.exc.InvalidGitRepositoryError:
     git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
 
@@ -227,6 +232,11 @@ class Config:
                 raise ConfigError(f"Error loading class {correction_name}, "
                                   f"module {module_name} did not contain "
                                   "requested class")
+            if not issubclass(CorrectionType, Correction):
+                raise ConfigError(f"Error loading class {CorrectionType.__name__}. "
+                                  "This class should inherit from Correction but "
+                                  "it does not. Please check for correct inheritance "
+                                  "pattern.")
 
             # now load the arguments with which to initialize this class
             if f"correction arguments {correction_index}" not in self.config:
@@ -284,6 +294,12 @@ class Config:
                               f"module {module_name} did not contain requested "
                               "class")
 
+        if not issubclass(DataType, Data):
+            raise ConfigError(f"Error loading class {DataType.__name__}. "
+                              "This class should inherit from Data but "
+                              "it does not. Please check for correct inheritance "
+                              "pattern.")
+
         # check that arguments are valid)
         accepted_options += accepted_data_options
         for key in section:
@@ -337,6 +353,12 @@ class Config:
             raise ConfigError(f"Error loading class {expected_flux_name}, "
                               f"module {module_name} did not contain requested "
                               "class")
+
+        if not issubclass(ExpectedFluxType, ExpectedFlux):
+            raise ConfigError(f"Error loading class {ExpectedFluxType.__name__}. "
+                              "This class should inherit from ExpectedFlux but "
+                              "it does not. Please check for correct inheritance "
+                              "pattern.")
 
         # check that arguments are valid)
         accepted_options += accepted_expected_flux_options
@@ -403,7 +425,7 @@ class Config:
         if self.logging_level_file is None:
             raise ConfigError("In section 'logging level file' in section [general]")
         self.logging_level_file = self.logging_level_file.upper()
-    
+
         self.num_processors = section.get("num processors")
         if self.num_processors is None:
             raise ConfigError("Missing variable 'num processors' in section [general]")
@@ -472,6 +494,12 @@ class Config:
                 raise ConfigError(f"Error loading class {mask_name}, "
                                   f"module {module_name} did not contain "
                                   "requested class")
+
+            if not issubclass(MaskType, Mask):
+                raise ConfigError(f"Error loading class {MaskType.__name__}. "
+                                  "This class should inherit from Mask but "
+                                  "it does not. Please check for correct inheritance "
+                                  "pattern.")
 
             # now load the arguments with which to initialize this class
             if f"mask arguments {mask_index}" not in self.config:
