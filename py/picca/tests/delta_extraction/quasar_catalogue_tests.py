@@ -146,6 +146,56 @@ class QuasarCatalogueTest(AbstractTest):
         self.assertTrue(quasar_catalogue.z_max == 3.2)
         self.assertTrue(quasar_catalogue.max_num_spec == 2)
 
+    def test_quasar_catalogue_missing_options(self):
+        """Test Abstract class QuasarCatalogue
+
+        Load a QuasarCatalogue instace with missing options
+        """
+        # case: no zmin, but we can compute it
+        config = ConfigParser()
+        config.read_dict(
+            {"data": {
+                "z max": 3.2,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "max num spec": 2,
+            }})
+        quasar_catalogue = QuasarCatalogue(config["data"])
+
+        self.assertTrue(quasar_catalogue.catalogue is None)
+        self.assertTrue(quasar_catalogue.z_min == 2.0)
+        self.assertTrue(quasar_catalogue.z_max == 3.2)
+        self.assertTrue(quasar_catalogue.max_num_spec == 2)
+
+        # case: no zmin, cannot compute it
+        config = ConfigParser()
+        config.read_dict({"data": {}})
+        expected_message = (
+            "Missing argument 'z min' required by QuasarCatalogue")
+        with self.assertRaises(QuasarCatalogueError) as context_manager:
+            quasar_catalogue = QuasarCatalogue(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # case: no zmax, but we can compute it
+        config = ConfigParser()
+        config.read_dict(
+            {"data": {
+                "z min": 2.0,
+                "lambda min": 3600.0,
+                "lambda min rest frame": 1040.0,
+                "lambda max": 5500.0,
+                "lambda max rest frame": 1200.0,
+                "max num spec": 2,
+            }})
+        quasar_catalogue = QuasarCatalogue(config["data"])
+
+        self.assertTrue(quasar_catalogue.catalogue is None)
+        self.assertTrue(quasar_catalogue.z_min == 2.0)
+        self.assertTrue(quasar_catalogue.z_max == 4.288461538461538)
+        self.assertTrue(quasar_catalogue.max_num_spec == 2)
+
     def test_quasar_catalogue_trim_catalogue(self):
         """Test method trim_catalogue from Abstract Class QuasarCatalogue"""
         ra = [0.15, 0.0]
