@@ -138,13 +138,7 @@ class DlaMask(Mask):
         -----
         MaskError if Forest.wave_solution is not 'log'
         """
-        if Forest.wave_solution == "log":
-            lambda_ = 10**forest.log_lambda
-        elif Forest.wave_solution == "lin":
-            lambda_ = forest.lambda_
-        else:
-            raise MaskError(
-                "Forest.wave_solution must be either 'log' or 'lin'")
+        lambda_ = 10**forest.log_lambda
 
         # load DLAs
         if self.los_ids.get(forest.los_id) is not None:

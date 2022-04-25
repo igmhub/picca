@@ -55,8 +55,8 @@ class AbstractTest(unittest.TestCase):
 
                 if not orig_line == new_line:
                     print("Lines not equal")
-                    print("Original line" + orig_line)
-                    print("New line" + new_line)
+                    print("Original line " + orig_line)
+                    print("New line " + new_line)
                     self.assertTrue(orig_line == new_line)
         finally:
             orig.close()
@@ -91,12 +91,15 @@ class AbstractTest(unittest.TestCase):
                         if orig_header[key] != new_header[key]:
                             print(f"\nOriginal file: {orig_file}")
                             print(f"New file: {new_file}")
+                            print(f"\n For header {orig_header['EXTNAME']}")
                             print(f"Different values found for key {key}: "
                                   f"orig: {orig_header[key]}, new: {new_header[key]}")
                         self.assertTrue((orig_header[key] == new_header[key]) or
                                         (np.isclose(orig_header[key], new_header[key])))
                 for key in new_header:
                     if key not in orig_header:
+                        print(f"\nOriginal file: {orig_file}")
+                        print(f"New file: {new_file}")
                         print(f"key {key} missing in orig header")
                         if key in ["MEANSNR", "BLINDING"]:
                             continue
