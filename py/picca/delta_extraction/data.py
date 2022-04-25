@@ -99,7 +99,6 @@ class Data:
         self.out_dir = None
         self.rejection_log_file = None
         self.min_snr = None
-
         self.__parse_config(config)
 
         # rejection log arays
@@ -127,7 +126,7 @@ class Data:
             raise DataError("Missing argument 'wave solution' required by Data")
         if wave_solution not in ["lin", "log"]:
             raise DataError("Unrecognised value for 'wave solution'. Expected either "
-                            f"'lin' or 'log'. Found {wave_solution}")
+                            f"'lin' or 'log'. Found '{wave_solution}'.")
 
         if wave_solution == "log":
             pixel_step = config.getfloat("delta log lambda")
@@ -150,9 +149,6 @@ class Data:
                 pixel_step_rest_frame = pixel_step
                 self.logger.info("'delta lambda rest frame' not set, using "
                                  f"the same value as for 'delta lambda' ({pixel_step_rest_frame})")
-        else:
-            raise DataError("Forest.wave_solution must be either "
-                            "'log' or 'lin'")
 
         lambda_max = config.getfloat("lambda max")
         if lambda_max is None:
@@ -179,14 +175,20 @@ class Data:
             raise DataError("Missing argument 'analysis type' required by Data")
         if self.analysis_type not in accepted_analysis_type:
             raise DataError("Invalid argument 'analysis type' required by "
-                            "DesiData. Accepted values: " +
-                            ",".join(accepted_analysis_type))
+                            f"Data. Found: '{self.analysis_type}'. Accepted "
+                            "values: " + ",".join(accepted_analysis_type))
 
         if self.analysis_type == "PK 1D":
-            Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(config.get("lambda abs IGM"))
-            if Pk1dForest.lambda_abs_igm is None:
+            lambda_abs_igm_name = config.get("lambda abs IGM")
+            if lambda_abs_igm_name is None:
                 raise DataError("Missing argument 'lambda abs IGM' required by Data "
-                                "when 'analysys type' is 'BAO 3D'")
+                                "when 'analysys type' is 'PK 1D'")
+            Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(lambda_abs_igm_name)
+            if Pk1dForest.lambda_abs_igm is None:
+                keys = [key for key in ABSORBER_IGM.keys()]
+                raise DataError("Invalid argument 'lambda abs IGM' required by "
+                                f"Data. Found: '{lambda_abs_igm_name}'. Accepted "
+                                "values: " + ", ".join(keys))
 
         self.input_directory = config.get("input directory")
         if self.input_directory is None:
@@ -205,24 +207,29 @@ class Data:
         self.rejection_log_file = config.get("rejection log file")
         if self.rejection_log_file is None:
             raise DataError("Missing argument 'rejection log file' required by Data")
+        elif "/" in self.rejection_log_file:
+            raise DataError(
+                "Error constructing Data. "
+                "'rejection log file' should not incude folders. "
+                f"Found: {self.rejection_log_file}")
         elif not (self.rejection_log_file.endswith(".fits") or
               self.rejection_log_file.endswith(".fits.gz")):
-            raise DataError("Invalid extension for 'rejection log file'. Filename "
+            raise DataError("Error constructing Data. Invalid extension for "
+                            "'rejection log file'. Filename "
                             "should en with '.fits' or '.fits.gz'. Found "
                             f"'{self.rejection_log_file}'")
 
-        self.min_snr = config.getfloat("minimal snr")
-
-        if self.min_snr is None:
-            if self.analysis_type == "BAO 3D":
-                self.min_snr = config.getfloat("minimal snr bao3d")
-            elif self.analysis_type == "PK 1D":
-                self.min_snr = config.getfloat("minimal snr pk1d")
+        if self.analysis_type == "BAO 3D":
+            self.min_snr = config.getfloat("minimal snr bao3d")
+        elif self.analysis_type == "PK 1D":
+            self.min_snr = config.getfloat("minimal snr pk1d")
         if self.min_snr is None:
             raise  DataError(
-                "Missing arguments 'minimal snr bao3d' (if 'analysis type' = 'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') required by Data")
+                "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
+                "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
+                "required by Data")
 
-                
+
     def add_to_rejection_log(self, header, size, rejection_status):
         """Adds to the rejection log arrays.
         In the log forest headers will be saved along with the forest size and

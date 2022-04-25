@@ -9,6 +9,7 @@ from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.data import Data
 from picca.delta_extraction.data import defaults as defaults_data
+from picca.delta_extraction.data import accepted_analysis_type
 from picca.delta_extraction.data_catalogues.desi_data import DesiData
 from picca.delta_extraction.data_catalogues.desi_data import defaults as defaults_desi_data
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
@@ -20,6 +21,7 @@ from picca.delta_extraction.data_catalogues.desisim_mocks import defaults as def
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
 from picca.delta_extraction.data_catalogues.sdss_data import defaults as defaults_sdss_data
 from picca.delta_extraction.errors import DataError, QuasarCatalogueError
+from picca.delta_extraction.utils import ABSORBER_IGM
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils import setup_logger
 from picca.tests.delta_extraction.abstract_test import AbstractTest
@@ -85,6 +87,368 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.forests) == 0)
         self.assertTrue(data.min_num_pix == 40)
         self.assertTrue(data.analysis_type == "BAO 3D")
+
+    def test_data_parse_config(self):
+        """Test method __parse_config from Data"""
+        # create a Data instance with missing wave_solution
+        config = ConfigParser()
+        config.read_dict({"data": {
+        }})
+        expected_message = (
+            "Missing argument 'wave solution' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with invalid wave_solution
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "wrong",
+        }})
+        expected_message = (
+            "Unrecognised value for 'wave solution'. Expected either 'lin' or "
+            "'log'. Found 'wrong'."
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing delta_log_lambda
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "log",
+        }})
+        expected_message = (
+            "Missing argument 'delta log lambda' required by Data when "
+            "'wave solution' is set to 'log'"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing delta_lambda
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+        }})
+        expected_message = (
+            "Missing argument 'delta lambda' required by Data when "
+            "'wave solution' is set to 'lin'"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing lambda_max
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+        }})
+        expected_message = (
+            "Missing argument 'lambda max' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing lambda_max_rest_frame
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+        }})
+        expected_message = (
+            "Missing argument 'lambda max rest frame' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing lambda_min
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+        }})
+        expected_message = (
+            "Missing argument 'lambda min' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing lambda_min_rest_frame
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+        }})
+        expected_message = (
+            "Missing argument 'lambda min rest frame' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing analysis_type
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+        }})
+        expected_message = (
+            "Missing argument 'analysis type' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with wrong analysis_type
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "INVALID"
+        }})
+        expected_message = (
+            "Invalid argument 'analysis type' required by Data. "
+            "Found: 'INVALID'. Accepted "
+            "values: " + ",".join(accepted_analysis_type)
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing lambda_abs_igm
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "PK 1D",
+        }})
+        expected_message = (
+            "Missing argument 'lambda abs IGM' required by Data when "
+            "'analysys type' is 'PK 1D'"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with invallid lambda_abs_igm
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "PK 1D",
+            "lambda abs IGM": "wrong",
+        }})
+        keys = [key for key in ABSORBER_IGM.keys()]
+        expected_message = (
+            "Invalid argument 'lambda abs IGM' required by Data. Found: "
+            "'wrong'. Accepted values: " + ", ".join(keys)
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing input_directory
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+        }})
+        expected_message = (
+            "Missing argument 'input directory' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing min_num_pix
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+        }})
+        expected_message = (
+            "Missing argument 'minimum number pixels in forest' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing out_dir
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+        }})
+        expected_message = (
+            "Missing argument 'out dir' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing rejection_log_file
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+            "out dir": f"{THIS_DIR}/results",
+        }})
+        expected_message = (
+            "Missing argument 'rejection log file' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with invalid rejection_log_file (including folders)
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+            "out dir": f"{THIS_DIR}/results",
+            "rejection log file": "results/rejection_log.fits.gz",
+        }})
+        expected_message = (
+            "Error constructing Data. 'rejection log file' should not "
+            f"incude folders. Found: {THIS_DIR}/results/rejection_log.fits.gz"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with invalid rejection_log_file (wrong extension)
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+            "out dir": f"{THIS_DIR}/results",
+            "rejection log file": "rejection_log.txt",
+        }})
+        expected_message = (
+            "Error constructing Data. Invalid extension for "
+            "'rejection log file'. Filename "
+            "should en with '.fits' or '.fits.gz'. Found "
+            "'rejection_log.txt'"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing minimal snr bao3d
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "BAO 3D",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+            "out dir": f"{THIS_DIR}/results",
+            "rejection log file": "rejection_log.fits.gz",
+        }})
+        expected_message = (
+            "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
+            "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
+            "required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Data instance with missing minimal snr bao3d
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "wave solution": "lin",
+            "delta lambda": 0.8,
+            "lambda max": 5500.0,
+            "lambda max rest frame": 1200.0,
+            "lambda min": 3600.0,
+            "lambda min rest frame": 1040.0,
+            "analysis type": "PK 1D",
+            "lambda abs IGM": "LYA",
+            "input directory": f"{THIS_DIR}/data",
+            "minimum number pixels in forest": 50,
+            "out dir": f"{THIS_DIR}/results",
+            "rejection log file": "rejection_log.fits.gz",
+        }})
+        expected_message = (
+            "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
+            "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
+            "required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            Data(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
     def test_data_filter_forests(self):
         """Test method filter_forests from Abstract Class Data"""
@@ -649,6 +1013,41 @@ class DataTest(AbstractTest):
         data = DesiTile(config["data"])
 
         self.assertTrue(len(data.forests) == 10)
+
+    def test_desi_tile_parse_config(self):
+        """Test method __parse_config from DesiTile"""
+        # create a DesiTile with missing use_non_coadded_spectra
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+        }})
+        expected_message = (
+            "Missing argument 'use non-coadded spectra' required by DesiTile"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            DesiTile(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a DesiTile with missing Data options
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "use non-coadded spectra": False,
+            "num processors": 1,
+        }})
+        expected_message = (
+            "Missing argument 'wave solution' required by Data"
+        )
+        with self.assertRaises(DataError) as context_manager:
+            DesiTile(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
     def test_desisim_mocks(self):
         """Test DesisimMocks"""
