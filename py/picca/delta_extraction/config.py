@@ -232,6 +232,7 @@ class Config:
                 raise ConfigError(f"Error loading class {correction_name}, "
                                   f"module {module_name} did not contain "
                                   "requested class")
+
             if not issubclass(CorrectionType, Correction):
                 raise ConfigError(f"Error loading class {CorrectionType.__name__}. "
                                   "This class should inherit from Correction but "
@@ -388,6 +389,9 @@ class Config:
         -----
         ConfigError if the config file is not correct
         """
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        # coverage:ignore-line
         if "general" not in self.config:
             raise ConfigError("Missing section [general]")
         section = self.config["general"]
@@ -406,27 +410,45 @@ class Config:
             self.out_dir += "/"
 
         self.overwrite = section.getboolean("overwrite")
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        # coverage:ignore-line
         if self.overwrite is None:
             raise ConfigError("Missing variable 'overwrite' in section [general]")
 
         self.log = section.get("log")
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        # coverage:ignore-line
         if self.log is None:
             raise ConfigError("Missing variable 'log' in section [general]")
-        elif not (self.log.startswith(".") or self.log.startswith("/")):
-            self.log = self.out_dir + "Log/" + self.log
-            section["log"] = self.log
+        if "/" in self.log:
+            raise ConfigError(
+                "Variable 'log' in section [general] should not incude folders. "
+                f"Found: {self.log}")
+        self.log = self.out_dir + "Log/" + self.log
+        section["log"] = self.log
 
         self.logging_level_console = section.get("logging level console")
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        # coverage:ignore-line
         if self.logging_level_console is None:
             raise ConfigError("Missing variable 'logging level console' in section [general]")
         self.logging_level_console = self.logging_level_console.upper()
 
         self.logging_level_file = section.get("logging level file")
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        # coverage:ignore-line
         if self.logging_level_file is None:
             raise ConfigError("In section 'logging level file' in section [general]")
         self.logging_level_file = self.logging_level_file.upper()
 
         self.num_processors = section.get("num processors")
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        # coverage:ignore-line
         if self.num_processors is None:
             raise ConfigError("Missing variable 'num processors' in section [general]")
 

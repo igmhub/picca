@@ -170,6 +170,16 @@ class ConfigTest(AbstractTest):
         )
         self.check_error(in_file, expected_message)
 
+        # check bad correction
+        in_file = f"{prefix}_corrections_bad_inheritance.ini"
+        expected_message = (
+            "Error loading class Mask. "
+            "This class should inherit from Correction but "
+            "it does not. Please check for correct inheritance "
+            "pattern."
+        )
+        self.check_error(in_file, expected_message)
+
         # check case num_corrections is missing
         in_file = f"{prefix}_corrections_no_num_corrections.ini"
         expected_message = (
@@ -273,6 +283,16 @@ class ConfigTest(AbstractTest):
         expected_message = "Missing section [data]"
         self.check_error(in_file, expected_message)
 
+        # check bad data
+        in_file = f"{prefix}_data_bad_inheritance.ini"
+        expected_message = (
+            "Error loading class Mask. "
+            "This class should inherit from Data but "
+            "it does not. Please check for correct inheritance "
+            "pattern."
+        )
+        self.check_error(in_file, expected_message)
+
         # missing type
         in_file = f"{prefix}_data_no_type.ini"
         expected_message = "In section [data], variable 'type' is required"
@@ -324,6 +344,16 @@ class ConfigTest(AbstractTest):
         expected_message = "Missing section [expected flux]"
         self.check_error(in_file, expected_message)
 
+        # check bad expected_flux
+        in_file = f"{prefix}_expected_flux_bad_inheritance.ini"
+        expected_message = (
+            "Error loading class Mask. "
+            "This class should inherit from ExpectedFlux but "
+            "it does not. Please check for correct inheritance "
+            "pattern."
+        )
+        self.check_error(in_file, expected_message)
+
         # missing type
         in_file = f"{prefix}_expected_flux_no_type.ini"
         expected_message = "In section [expected flux], variable 'type' is required"
@@ -366,6 +396,14 @@ class ConfigTest(AbstractTest):
         expected_message = "Missing variable 'out dir' in section [general]"
         self.check_error(in_file, expected_message)
 
+        # invalid log
+        in_file = f"{prefix}_general_invalid_log.ini"
+        expected_message = (
+            "Variable 'log' in section [general] should not incude folders. "
+            "Found: log/my_log.log"
+        )
+        self.check_error(in_file, expected_message)
+
         # now check arguments of the general section
         expected_message = "Unrecognised option in section [general]"
 
@@ -381,6 +419,16 @@ class ConfigTest(AbstractTest):
         expected_message = (
             "Unrecognised option in section [masks]. Found: 'name 0'. Accepted "
             "options are ['num masks', 'type {int}', 'module name {int}']"
+        )
+        self.check_error(in_file, expected_message)
+
+        # check bad mask
+        in_file = f"{prefix}_mask_bad_inheritance.ini"
+        expected_message = (
+            "Error loading class Correction. "
+            "This class should inherit from Mask but "
+            "it does not. Please check for correct inheritance "
+            "pattern."
         )
         self.check_error(in_file, expected_message)
 
