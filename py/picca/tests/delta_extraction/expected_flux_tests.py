@@ -58,24 +58,6 @@ class ExpectedFluxTest(AbstractTest):
         config = ConfigParser()
         config.read_dict(
             {"expected flux": {
-                "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
-                "out dir": f"{THIS_DIR}/results",
-                "num processors": 1,
-            }})
-        for key, value in defaults_dr16_expected_flux.items():
-            if key not in config["expected flux"]:
-                config["expected flux"][key] = str(value)
-        # this should raise an error as iter out prefix should not have a folder
-        expected_message = (
-            "Error constructing Dr16ExpectedFlux. 'iter out prefix' should not "
-            f"incude folders. Found: {THIS_DIR}/results/iter_out_prefix")
-        with self.assertRaises(ExpectedFluxError) as context_manager:
-            expected_flux = Dr16ExpectedFlux(config["expected flux"])
-        self.compare_error_message(context_manager, expected_message)
-
-        config = ConfigParser()
-        config.read_dict(
-            {"expected flux": {
                 "iter out prefix": "iter_out_prefix",
                 "out dir": f"{THIS_DIR}/results/",
                 "num processors": 1
@@ -83,7 +65,7 @@ class ExpectedFluxTest(AbstractTest):
         for key, value in defaults_dr16_expected_flux.items():
             if key not in config["expected flux"]:
                 config["expected flux"][key] = str(value)
-        # this should also raise an error as Forest variables are not defined
+        # this should raise an error as Forest variables are not defined
         expected_message = (
             "Forest class variables need to be set before initializing "
             "variables here.")
@@ -678,6 +660,228 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(np.allclose(num_pixels, expectations["num_pixels"]))
         self.assertTrue(np.allclose(valid_fit, expectations["valid_fit"]))
 
+    def test_dr16_expected_flux_parse_config(self):
+        """Test method __parse_config for class Dr16ExpectedFlux"""
+        # create a Dr16ExpectedFlux with missing ExpectedFlux Options
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+        }})
+        expected_message = (
+            "Missing argument 'out dir' required by ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Dr16ExpectedFlux with missing iter_out_prefix
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1
+        }})
+        expected_message = (
+            "Missing argument 'iter out prefix' required by Dr16ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Dr16ExpectedFlux with invalid iter_out_prefix
+        config = ConfigParser()
+        config.read_dict(
+            {"expected flux": {
+                "iter out prefix": f"{THIS_DIR}/results/iter_out_prefix",
+                "out dir": f"{THIS_DIR}/results/",
+                "num processors": 1
+            }})
+        for key, value in defaults_dr16_expected_flux.items():
+            if key not in config["expected flux"]:
+                config["expected flux"][key] = str(value)
+        expected_message = (
+            "Error constructing Dr16ExpectedFlux. 'iter out prefix' should not "
+            f"incude folders. Found: {THIS_DIR}/results/iter_out_prefix")
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Dr16ExpectedFlux with missing 'limit eta'
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1
+        }})
+        expected_message = (
+            "Missing argument 'limit eta' required by Dr16ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Dr16ExpectedFlux with missing 'limit var lss'
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "limit eta": "0.0, 1.90",
+        }})
+        expected_message = (
+            "Missing argument 'limit var lss' required by Dr16ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Dr16ExpectedFlux with missing num_bins_vairance
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "limit eta": "0.0, 1.90",
+            "limit var lss": "0.0, 1.90",
+        }})
+        expected_message = (
+            "Missing argument 'num bins variance' required by Dr16ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Dr16ExpectedFlux with missing num_iterations
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "limit eta": "0.0, 1.90",
+            "limit var lss": "0.0, 1.90",
+            "num bins variance": 20,
+        }})
+        expected_message = (
+            "Missing argument 'num iterations' required by Dr16ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Dr16ExpectedFlux with missing order
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "limit eta": "0.0, 1.90",
+            "limit var lss": "0.0, 1.90",
+            "num bins variance": 20,
+            "num iterations": 5,
+        }})
+        expected_message = (
+            "Missing argument 'order' required by Dr16ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Dr16ExpectedFlux with missing use_constant_weight
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "limit eta": "0.0, 1.90",
+            "limit var lss": "0.0, 1.90",
+            "num bins variance": 20,
+            "num iterations": 5,
+            "order": 1,
+        }})
+        expected_message = (
+            "Missing argument 'use constant weight' required by Dr16ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a Dr16ExpectedFlux with missing use_ivar_as_weight
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "limit eta": "0.0, 1.90",
+            "limit var lss": "0.0, 1.90",
+            "num bins variance": 20,
+            "num iterations": 5,
+            "order": 1,
+            "use constant weight": False,
+        }})
+        expected_message = (
+            "Missing argument 'use ivar as weight' required by Dr16ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            Dr16ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+
+        setup_forest("log", rebin=3)
+        # create a Dr16ExpectedFlux instance; case: limit eta and limit var_lss with ()
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "limit eta": "(0.0, 1.90)",
+            "limit var lss": "(0.5, 1.40)",
+            "num bins variance": 20,
+            "num iterations": 5,
+            "order": 1,
+            "use constant weight": False,
+            "use ivar as weight": False,
+        }})
+        expected_flux = Dr16ExpectedFlux(config["expected_flux"])
+        self.assertTrue(np.allclose(expected_flux.limit_eta, (0.0, 1.9)))
+        self.assertTrue(np.allclose(expected_flux.limit_var_lss, (0.5, 1.4)))
+
+        # create a Dr16ExpectedFlux instance; case: limit eta and limit var_lss with []
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "limit eta": "[0.0, 1.90]",
+            "limit var lss": "[0.5, 1.40]",
+            "num bins variance": 20,
+            "num iterations": 5,
+            "order": 1,
+            "use constant weight": False,
+            "use ivar as weight": False,
+        }})
+        expected_flux = Dr16ExpectedFlux(config["expected_flux"])
+        self.assertTrue(np.allclose(expected_flux.limit_eta, (0.0, 1.9)))
+        self.assertTrue(np.allclose(expected_flux.limit_var_lss, (0.5, 1.4)))
+
+        # create a Dr16ExpectedFlux instance; case: limit eta and limit var_lss
+        # without parenthesis
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "iter out prefix": f"iter_out_prefix",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "limit eta": "0.0, 1.90",
+            "limit var lss": "0.5, 1.40",
+            "num bins variance": 20,
+            "num iterations": 5,
+            "order": 1,
+            "use constant weight": False,
+            "use ivar as weight": False,
+        }})
+        expected_flux = Dr16ExpectedFlux(config["expected_flux"])
+        self.assertTrue(np.allclose(expected_flux.limit_eta, (0.0, 1.9)))
+        self.assertTrue(np.allclose(expected_flux.limit_var_lss, (0.5, 1.4)))
+
+        # TODO: add different cases for limit eta and limit var_lss
+
     def test_dr16_expected_flux_populate_los_ids(self):
         """Test method populate_los_ids for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
@@ -840,7 +1044,7 @@ class ExpectedFluxTest(AbstractTest):
 
     def test_true_continuum(self):
         """Test constructor for class TrueContinuum
-        
+
         Load a TrueContinuum instance.
         """
         config = ConfigParser()
@@ -861,7 +1065,7 @@ class ExpectedFluxTest(AbstractTest):
             "Error constructing TrueContinuum. 'iter out prefix' should not incude folders. Found: "
             )
         self.compare_error_message(context_manager, expected_message, startswith=True)
-        
+
 
         config = ConfigParser()
         config.read_dict(
@@ -912,8 +1116,8 @@ class ExpectedFluxTest(AbstractTest):
         setup_forest("lin", pixel_step=2.4)
 
         results_dir = Path(THIS_DIR) / "results"
-        data_dir = Path(THIS_DIR) / "data"        
-        
+        data_dir = Path(THIS_DIR) / "data"
+
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
@@ -965,8 +1169,8 @@ class ExpectedFluxTest(AbstractTest):
 
         # setup Forest variables; case: log wavelength solution
         reset_forest()
-        setup_forest("log", rebin=3)   
-        
+        setup_forest("log", rebin=3)
+
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
@@ -1005,7 +1209,7 @@ class ExpectedFluxTest(AbstractTest):
             for i1, i2 in zip(var_lss, var_lss_target):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
             self.assertTrue(np.allclose(var_lss, var_lss_target))
-            
+
         if not np.allclose(mean_flux, mean_flux_target):
             filename = "true_mean_flux.txt"
             print(f"\nOriginal file: {data_dir / filename}")
@@ -1023,8 +1227,8 @@ class ExpectedFluxTest(AbstractTest):
         setup_forest("lin", pixel_step=2.4)
 
         results_dir = Path(THIS_DIR) / "results"
-        data_dir = Path(THIS_DIR) / "data"        
-        
+        data_dir = Path(THIS_DIR) / "data"
+
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
@@ -1103,8 +1307,8 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: log wavelength solution
         setup_forest("log", rebin=3)
 
-        data_dir = Path(THIS_DIR) / "data"        
-        
+        data_dir = Path(THIS_DIR) / "data"
+
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
@@ -1188,9 +1392,9 @@ class ExpectedFluxTest(AbstractTest):
         results_dir = Path(THIS_DIR) / "results"
         data_dir = Path(THIS_DIR) / "data"
 
-        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
+        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"
         test_file = data_dir / "true_iter_out_prefix_compute_expected_flux_log.fits.gz"
-        
+
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
@@ -1222,15 +1426,15 @@ class ExpectedFluxTest(AbstractTest):
                 str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
                 str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
         self.compare_fits(test_file, out_file)
-            
+
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        data_dir = Path(THIS_DIR) / "data"        
-    
-        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"  
+        data_dir = Path(THIS_DIR) / "data"
+
+        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"
         test_file = data_dir / "true_iter_out_prefix_compute_expected_flux_log_lin.fits.gz"
-        
+
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
@@ -1251,25 +1455,25 @@ class ExpectedFluxTest(AbstractTest):
             if key not in config["data"]:
                 config["data"][key] = str(value)
         data = DesisimMocks(config["data"])
-        expected_flux = TrueContinuum(config["expected flux"])   
+        expected_flux = TrueContinuum(config["expected flux"])
 
         expected_flux.compute_expected_flux(data.forests)
 
         # check the results
-        for iteration in range(1,5):   
+        for iteration in range(1,5):
             self.compare_fits(
                 str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
-                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))        
+                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
         self.compare_fits(test_file, out_file)
 
     def test_true_cont_compute_mean_cont_linear_wave_solution(self):
-        """Test method compute_mean_cont for class TrueContinuum using linear wave solution"""           
+        """Test method compute_mean_cont for class TrueContinuum using linear wave solution"""
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
         results_dir = Path(THIS_DIR) / "results"
-        data_dir = Path(THIS_DIR) / "data"        
-            
+        data_dir = Path(THIS_DIR) / "data"
+
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
@@ -1290,10 +1494,10 @@ class ExpectedFluxTest(AbstractTest):
             if key not in config["data"]:
                 config["data"][key] = str(value)
         data = DesisimMocks(config["data"])
-        expected_flux = TrueContinuum(config["expected flux"])   
+        expected_flux = TrueContinuum(config["expected flux"])
 
         expected_flux.compute_expected_flux(data.forests)
-    
+
         log_lambda_grid = np.loadtxt(data_dir / "true_log_lambda_rest_grid.txt")
         mean_cont = expected_flux.get_mean_cont(log_lambda_grid)
         mean_cont_weight = expected_flux.get_mean_cont(log_lambda_grid)
@@ -1311,7 +1515,7 @@ class ExpectedFluxTest(AbstractTest):
             for i1, i2 in zip(mean_cont, mean_cont_target):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
             self.assertTrue(np.allclose(mean_cont_target, mean_cont_target))
-        
+
         if not np.allclose(mean_cont_weight, mean_cont_weight_target):
             filename = "true_mean_cont_weight_lin.txt"
             print(f"\nOriginal file: {data_dir / filename}")
@@ -1324,13 +1528,13 @@ class ExpectedFluxTest(AbstractTest):
 
 
     def test_true_cont_compute_mean_cont_log_wave_solution(self):
-        """Test method compute_mean_cont for class TrueContinuum using logarithmic wave solution"""           
+        """Test method compute_mean_cont for class TrueContinuum using logarithmic wave solution"""
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
         results_dir = Path(THIS_DIR) / "results"
         data_dir = Path(THIS_DIR) / "data"
-        
+
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
@@ -1373,7 +1577,7 @@ class ExpectedFluxTest(AbstractTest):
             for i1, i2 in zip(mean_cont, mean_cont_target):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
             self.assertTrue(np.allclose(mean_cont_target, mean_cont_target))
-        
+
         if not np.allclose(mean_cont_weight, mean_cont_weight_target):
             filename = "true_mean_cont_weight_log.txt"
             print(f"\nOriginal file: {data_dir / filename}")
@@ -1384,14 +1588,14 @@ class ExpectedFluxTest(AbstractTest):
                 print(i1, i2, np.isclose(i1, i2), i1-i2)
             self.assertTrue(np.allclose(mean_cont_weight_target, mean_cont_weight_target))
 
-        
+
     def test_true_continuum_populate_los_ids(self):
         """Test method populate_los_ids for class TrueContinuum"""
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
         data_dir = Path(THIS_DIR) / "data"
-       
+
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
         config.read_dict({
