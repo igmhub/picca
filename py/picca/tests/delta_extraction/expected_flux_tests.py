@@ -1042,6 +1042,31 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.extract_deltas(forest)
         self.assertTrue(all(forest.deltas == np.zeros_like(forest1.flux)))
 
+    def test_dr16_expected_flux_parse_config(self):
+        """Test method __parse_config for class Dr16ExpectedFlux"""
+        # create a ExpectedFlux with missing out_dir
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+        }})
+        expected_message = (
+            "Missing argument 'out dir' required by ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # create a ExpectedFlux with missing num_processors
+        config = ConfigParser()
+        config.read_dict({"expected_flux": {
+            "out dir": f"{THIS_DIR}/results/",
+        }})
+        expected_message = (
+            "Missing argument 'num processors' required by ExpectedFlux"
+        )
+        with self.assertRaises(ExpectedFluxError) as context_manager:
+            ExpectedFlux(config["expected_flux"])
+        self.compare_error_message(context_manager, expected_message)
+
     def test_true_continuum(self):
         """Test constructor for class TrueContinuum
 
