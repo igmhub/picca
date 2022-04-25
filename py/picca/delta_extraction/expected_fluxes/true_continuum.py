@@ -12,7 +12,7 @@ from pkg_resources import resource_filename
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
-from picca.delta_extraction.errors import ExpectedFluxError
+from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
 from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.utils import find_bins
 
@@ -92,6 +92,13 @@ class TrueContinuum(ExpectedFlux):
         self.iter_out_prefix = None
         self.__parse_config(config)
 
+        # check that Forest class variables are set
+        try:
+            Forest.class_variable_check()
+        except AstronomicalObjectError:
+            raise ExpectedFluxError("Forest class variables need to be set "
+                                    "before initializing variables here." )
+
         # read large scale structure variance and mean flux
         self.get_var_lss = None
         self.get_mean_flux = None
@@ -127,7 +134,7 @@ class TrueContinuum(ExpectedFlux):
                 "'iter out prefix' should not incude folders. "
                 f"Found: {self.iter_out_prefix}")
 
-        self.use_constant_weight = config.get("use constant weight")
+        self.use_constant_weight = config.getboolean("use constant weight")
         self.raw_statistics_filename = config.get("raw statistics file")
 
 
@@ -241,10 +248,7 @@ class TrueContinuum(ExpectedFlux):
         true_continuum = interp1d(lambda_, true_cont["TRUE_CONT"][indx])
 
         forest.continuum = true_continuum(10**forest.log_lambda)[0]
-        mean_optical_depth = np.ones(forest.log_lambda.size)
-        tau, gamma, lambda_rest_frame = 0.0023, 3.64, 1215.67
-        w = 10.**forest.log_lambda / (1. + forest.z) <= lambda_rest_frame
-        z = 10.**forest.log_lambda / lambda_rest_frame - 1.
+        forest.continuum *= self.get_mean_flux(forest.log_lambda)
 
         return forest
 
@@ -263,9 +267,9 @@ class TrueContinuum(ExpectedFlux):
             filename = resource_filename('picca', 'delta_extraction') + '/expected_fluxes/raw_stats/'
             if Forest.wave_solution == "log":
                 filename += 'colore_v9_lya_log.fits.gz'
-            elif Forest.wave_solution == "lin" and (10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0]) == 2.4:
+            elif Forest.wave_solution == "lin" and np.isclose(10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0], 2.4, rtol=0.1):
                 filename += 'colore_v9_lya_lin_2.4.fits.gz'
-            elif Forest.wave_solution == "lin" and (10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0]) == 3.2:
+            elif Forest.wave_solution == "lin" and np.isclose(10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0], 3.2, rtol=0.1):
                 filename += 'colore_v9_lya_lin_3.2.fits.gz'
             else:
                 raise ExpectedFluxError("Couldn't find compatible raw satistics file. Provide a custom one using 'raw statistics file' field.")
@@ -275,50 +279,62 @@ class TrueContinuum(ExpectedFlux):
             hdul = fits.open(filename)
         except:
             raise ExpectedFluxError(f"raw statistics file {filename} couldn't be loaded")
+            
 
         header = hdul[1].header
         if Forest.wave_solution == "log":
+            pixel_step = Forest.log_lambda_grid[1] - Forest.log_lambda_grid[0]
+            log_lambda_min = Forest.log_lambda_grid[0]
+            log_lambda_max = Forest.log_lambda_grid[-1] - pixel_step/2
+            log_lambda_rest_min = Forest.log_lambda_rest_frame_grid[0] - pixel_step/2
+            log_lambda_rest_max = Forest.log_lambda_rest_frame_grid[-1]
             if (
                 header['LINEAR']
-                or not np.isclose(header['L_MIN'], 10**Forest.log_lambda_grid[0], rtol=1e-3)
-                or not np.isclose(header['L_MAX'], 10**Forest.log_lambda_grid[-1], rtol=1e-3)
-                or not np.isclose(header['LR_MIN'], 10**Forest.log_lambda_rest_frame_grid[0], rtol=1e-3)
-                or not np.isclose(header['LR_MAX'], 10**Forest.log_lambda_rest_frame_grid[-1], rtol=1e-3)
-                or not np.isclose(header['DEL_LL'], Forest.log_lambda_grid[1]-Forest.log_lambda_grid[0], rtol=1e-3)
+                or not np.isclose(header['L_MIN'], 10**log_lambda_min, rtol=1e-3)
+                or not np.isclose(header['L_MAX'], 10**log_lambda_max, rtol=1e-3)
+                or not np.isclose(header['LR_MIN'], 10**log_lambda_rest_min, rtol=1e-3)
+                or not np.isclose(header['LR_MAX'], 10**log_lambda_rest_max, rtol=1e-3)
+                or not np.isclose(header['DEL_LL'], pixel_step, rtol=1e-3)
             ):
                 raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme.
                 \t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
                 raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
-                input\t{10**Forest.log_lambda_grid[0]}\t{10**Forest.log_lambda_grid[-1]}\t{10**Forest.log_lambda_rest_frame_grid[0]}\t{10**Forest.log_lambda_rest_frame_grid[-1]}\t{Forest.delta_log_lambda}
+                input\t{log_lambda_min}\t{log_lambda_max}\t{log_lambda_rest_min}\t{log_lambda_rest_max}
                 provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
+            log_lambda = hdul[1].data['LAMBDA']
         elif Forest.wave_solution == "lin":
+            pixel_step = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
+            lambda_min = 10**Forest.log_lambda_grid[0]
+            lambda_max = 10**Forest.log_lambda_grid[-1] - pixel_step/2
+            lambda_rest_min = 10**Forest.log_lambda_rest_frame_grid[0] - pixel_step/2
+            lambda_rest_max = 10**Forest.log_lambda_rest_frame_grid[-1]
             if (
                 not header['LINEAR']
-                or not np.isclose(header['L_MIN'], 10**Forest.log_lambda_grid[0] , rtol=1e-3)
-                or not np.isclose(header['L_MAX'], 10**Forest.log_lambda_grid[-1] , rtol=1e-3)
-                or not np.isclose(header['LR_MIN'], 10**Forest.log_lambda_rest_frame_grid[0], rtol=1e-3)
-                or not np.isclose(header['LR_MAX'], 10**Forest.log_lambda_rest_frame_grid[-1], rtol=1e-3)
-                or not np.isclose(header['DEL_LL'], 10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0], rtol=1e-3)
+                or not np.isclose(header['L_MIN'], lambda_min , rtol=1e-3)
+                or not np.isclose(header['L_MAX'], lambda_max , rtol=1e-3)
+                or not np.isclose(header['LR_MIN'], lambda_rest_min, rtol=1e-3)
+                or not np.isclose(header['LR_MAX'], lambda_rest_max, rtol=1e-3)
+                or not np.isclose(header['DEL_L'], 10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0], rtol=1e-3)
             ):
                 raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme.
                 \t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_L
-                raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
-                input\t{10**Forest.log_lambda_grid[0]}\t{10**Forest.log_lambda_grid[-1]}\t{ 10**Forest.log_lambda_rest_frame_grid[0]}\t{ 10**Forest.log_lambda_rest_frame_grid[-1]}\t{10**Forest.log_lambda_grid[1]-10**Forest.log_lambda_grid[0]}
+                raw\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_L']}
+                input\t{lambda_min}\t{lambda_max}\t{lambda_rest_min}\t{lambda_rest_max}
                 provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
+            log_lambda = np.log10(hdul[1].data['LAMBDA'])
 
-        lambda_ = hdul[1].data['LAMBDA']
         flux_variance = hdul[1].data['VAR']
         mean_flux = hdul[1].data['MEANFLUX']
         hdul.close()
 
         var_lss = flux_variance/mean_flux**2
 
-        self.get_var_lss = interp1d(lambda_,
+        self.get_var_lss = interp1d(log_lambda,
                                     var_lss,
                                     fill_value='extrapolate',
                                     kind='nearest')
 
-        self.get_mean_flux = interp1d(lambda_,
+        self.get_mean_flux = interp1d(log_lambda,
                                       mean_flux,
                                       fill_value='extrapolate',
                                       kind='nearest')

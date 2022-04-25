@@ -19,7 +19,7 @@ def reset_forest():
     Pk1dForest.lambda_abs_igm = None
 
 # setup Forest class variables
-def setup_forest(wave_solution, rebin=1):
+def setup_forest(wave_solution, rebin=1, pixel_step=None):
     """Set Forest class variables
 
     Arguments
@@ -29,14 +29,21 @@ def setup_forest(wave_solution, rebin=1):
     logarithmic spacing ("log").
 
     rebin: int
-    If wave_solution is "log", number of pixels that will be rebinned
+    Number of pixels that will be rebinned
+
+    pixel_step: float
+    Pixel size to be used
+    
     """
     assert wave_solution in ["log", "lin"]
 
-    if wave_solution == "log":
-        pixel_step = 1e-4 * rebin
-    elif wave_solution == "lin":
-        pixel_step = 1.0
+    if pixel_step is None:
+        if wave_solution == "log":
+            pixel_step = 1e-4
+        elif wave_solution == "lin":
+            pixel_step = 1
+
+    pixel_step *= rebin
     pixel_step_rf = pixel_step
 
     Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step, pixel_step_rf,
@@ -180,6 +187,22 @@ sdss_data_kwargs_filter_forest = {
     "lambda max": 7235.0,
     "lambda min rest frame": 2900.0,
     "lambda max rest frame": 3120.0,
+}
+
+desi_mock_data_kwargs = {
+    "input directory":
+        f"{THIS_DIR}/data",
+    "out dir":
+        f"{THIS_DIR}/results",
+    "rejection log file": "rejection_log.fits.gz",
+    "catalogue":
+        f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+    "z max": 3.5,
+    "z min": 2.1,
+    "wave solution": "lin",
+    "delta lambda": 2.4,
+    "type": "DesisimMocks",
+    "num processors": 1,
 }
 
 reset_forest()
