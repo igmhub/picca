@@ -880,8 +880,6 @@ class ExpectedFluxTest(AbstractTest):
         self.assertTrue(np.allclose(expected_flux.limit_eta, (0.0, 1.9)))
         self.assertTrue(np.allclose(expected_flux.limit_var_lss, (0.5, 1.4)))
 
-        # TODO: add different cases for limit eta and limit var_lss
-
     def test_dr16_expected_flux_populate_los_ids(self):
         """Test method populate_los_ids for class Dr16ExpectedFlux"""
         # setup Forest variables; case: logarithmic wavelength solution
