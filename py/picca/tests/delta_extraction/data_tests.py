@@ -15,6 +15,8 @@ from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
 from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
 from picca.delta_extraction.data_catalogues.desi_tile import DesiTile
 from picca.delta_extraction.data_catalogues.desi_tile import defaults as defaults_desi_tile
+from picca.delta_extraction.data_catalogues.desisim_mocks import DesisimMocks
+from picca.delta_extraction.data_catalogues.desisim_mocks import defaults as defaults_desisim_mocks
 from picca.delta_extraction.data_catalogues.sdss_data import SdssData
 from picca.delta_extraction.data_catalogues.sdss_data import defaults as defaults_sdss_data
 from picca.delta_extraction.errors import DataError, QuasarCatalogueError
@@ -289,7 +291,37 @@ class DataTest(AbstractTest):
         data = DesiHealpix(config["data"])
         self.assertTrue(data.blinding == "corr_yshift")
 
-        # TODO: add tests when loading mocks
+        # create a DesiData instance with mock data and blinding = corr_yshift
+        # since DesiData is an abstract class, we create a DesisimMocks instance
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+        }})
+        for key, value in defaults_desisim_mocks.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesisimMocks(config["data"])
+        self.assertTrue(data.blinding == "none")
+
+        # create a DesiData instance with main data and blinding = none
+        # since DesiData is an abstract class, we create a DesiHealpix instance
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+        }})
+        for key, value in defaults_desisim_mocks.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesisimMocks(config["data"])
+        self.assertTrue(data.blinding == "none")
 
     def test_desi_healpix(self):
         """Test DesiHealpix"""
@@ -620,7 +652,123 @@ class DataTest(AbstractTest):
 
     def test_desisim_mocks(self):
         """Test DesisimMocks"""
-        # TODO: add test
+        # case: BAO 3D
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "analysis type": "BAO 3D"
+        }})
+        for key, value in defaults_desisim_mocks.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesisimMocks(config["data"])
+
+        self.assertTrue(len(data.forests) == 194)
+        self.assertTrue(data.min_num_pix == 50)
+        self.assertTrue(data.analysis_type == "BAO 3D")
+        self.assertTrue(
+            all(isinstance(forest, DesiForest) for forest in data.forests))
+
+        # case: Pk 1D
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "analysis type": "PK 1D"
+        }})
+        for key, value in defaults_desisim_mocks.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesisimMocks(config["data"])
+
+        self.assertTrue(len(data.forests) == 194)
+        self.assertTrue(data.min_num_pix == 50)
+        self.assertTrue(data.analysis_type == "PK 1D")
+        self.assertTrue(
+            all(isinstance(forest, DesiPk1dForest) for forest in data.forests))
+
+    def test_desisim_mocks_read_data(self):
+        """Test method read_data from DesisimMocks"""
+        # run with one processor
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+            "analysis type": "BAO 3D"
+        }})
+        for key, value in defaults_desisim_mocks.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesisimMocks(config["data"])
+
+        self.assertTrue(len(data.forests) == 194)
+
+        # run with 0 processors
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 0,
+            "analysis type": "BAO 3D"
+        }})
+        for key, value in defaults_desisim_mocks.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesisimMocks(config["data"])
+
+        self.assertTrue(len(data.forests) == 194)
+
+        # run with 2 processors
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 2,
+            "analysis type": "BAO 3D"
+        }})
+        for key, value in defaults_desisim_mocks.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesisimMocks(config["data"])
+
+        self.assertTrue(len(data.forests) == 194)
+
+        # case: data missing
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/fake/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 1,
+        }})
+        for key, value in defaults_desisim_mocks.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        expected_message = "No quasars found, stopping here"
+        with self.assertRaises(DataError) as context_manager:
+            data = DesisimMocks(config["data"])
+        self.compare_error_message(context_manager, expected_message)
 
     def test_sdss_data_filter_forest(self):
         """Test SdssData when run in spec mode"""
