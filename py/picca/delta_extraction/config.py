@@ -373,10 +373,12 @@ class Config:
             if key not in section:
                 section[key] = str(value)
 
-        # add output directory if necesssary
-        if "out dir" in accepted_options:
+        # add "out dir" and "num processors" if necesssary
+        # currently all the expected fluxes accept both "out dir" and
+        # "num processors" but that might not always be the case
+        if "out dir" in accepted_options: # pragma: no branch
             section["out dir"] = self.out_dir
-        if "num processors" in accepted_options:
+        if "num processors" in accepted_options: # pragma: no branch
             section["num processors"] = self.num_processors
         # finally add the information to self.continua
         self.expected_flux = (ExpectedFluxType, section)

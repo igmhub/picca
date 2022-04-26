@@ -178,7 +178,9 @@ class Survey:
 
         DataType, data_arguments = self.config.data
         self.data = DataType(data_arguments)
-        if not all([isinstance(forest, Forest) for forest in self.data.forests]):
+        # we should never enter this block unless DataType is not correctly
+        # writen
+        if not all([isinstance(forest, Forest) for forest in self.data.forests]): # pragma: no cover
             raise DeltaExtractionError("Error reading data.\n At least one of "
                                        "the elements in variable 'forest' is "
                                        "not of class Forest. This can happen if "

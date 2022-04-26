@@ -138,7 +138,6 @@ class Data:
                 pixel_step_rest_frame = pixel_step
                 self.logger.info("'delta log lambda rest frame' not set, using "
                                  f"the same value as for 'delta log lambda' ({pixel_step_rest_frame})")
-
         elif wave_solution == "lin":
             pixel_step = config.getfloat("delta lambda")
             if pixel_step is None:
@@ -149,6 +148,11 @@ class Data:
                 pixel_step_rest_frame = pixel_step
                 self.logger.info("'delta lambda rest frame' not set, using "
                                  f"the same value as for 'delta lambda' ({pixel_step_rest_frame})")
+        # this should not be reached as wave_solution is either "lin" or "log"
+        # added here only in case we add another wave_solution in the future
+        else: # pragma: no cover
+            raise DataError("Unrecognised value for 'wave solution'. Expected either "
+                            f"'lin' or 'log'. Found '{wave_solution}'.")
 
         lambda_max = config.getfloat("lambda max")
         if lambda_max is None:
@@ -223,6 +227,13 @@ class Data:
             self.min_snr = config.getfloat("minimal snr bao3d")
         elif self.analysis_type == "PK 1D":
             self.min_snr = config.getfloat("minimal snr pk1d")
+        # this should not be reached as analysis_type is either "BAO 3D" or
+        # "PK 1D" added here only in case we add another analysis_type in the
+        # future
+        else: # pragma: no cover
+            raise DataError("Invalid argument 'analysis type' required by "
+                            f"Data. Found: '{self.analysis_type}'. Accepted "
+                            "values: " + ",".join(accepted_analysis_type))
         if self.min_snr is None:
             raise  DataError(
                 "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
@@ -246,13 +257,19 @@ class Data:
         rejection_status: str
         Rejection status
         """
+        # if necessary initialize arrays to save rejected quasars in the log
+        if not self.rejection_log_initialized:
+            self.initialize_rejection_log(self.forests[0].get_header())
+
         for col, name in zip(self.rejection_log_cols, self.rejection_log_names):
             if name == "FOREST_SIZE":
                 col.append(size)
             elif name == "REJECTION_STATUS":
                 col.append(rejection_status)
             else:
-                for item in header:
+                # this loop will always end with the break
+                # the break is introduced to avoid useless checks
+                for item in header: # pragma: no branch
                     if item.get("name") == name:
                         col.append(item.get("value"))
                         break
@@ -280,10 +297,6 @@ class Data:
 
     def filter_bad_cont_forests(self):
         """Remove forests where continuum could not be computed"""
-        # if necessary initialize arrays to save rejected quasars in the log
-        if len(self.forests) > 0 and not self.rejection_log_initialized:
-            self.initialize_rejection_log(self.forests[0].get_header())
-
         remove_indexs = []
         for index, forest in enumerate(self.forests):
             if forest.bad_continuum_reason is not None:
@@ -306,10 +319,6 @@ class Data:
     def filter_forests(self):
         """Remove forests that do not meet quality standards"""
         self.logger.progress(f"Input sample has {len(self.forests)} forests")
-
-        # if necessary initialize arrays to save rejected quasars in the log
-        if len(self.forests) > 0 and not self.rejection_log_initialized:
-            self.initialize_rejection_log(self.forests[0].get_header())
 
         remove_indexs = []
         for index, forest in enumerate(self.forests):
@@ -369,10 +378,6 @@ class Data:
 
     def save_deltas(self):
         """Save the deltas."""
-        # if necessary initialize arrays to save rejected quasars in the log
-        if len(self.forests) > 0 and not self.rejection_log_initialized:
-            self.initialize_rejection_log(self.forests[0].get_header())
-
         healpixs = np.array([forest.healpix for forest in self.forests])
         unique_healpixs = np.unique(healpixs)
         healpixs_indexs = {healpix: np.where(healpixs == healpix)[0]
@@ -401,7 +406,7 @@ class Data:
         self.save_rejection_log()
 
     def save_rejection_log(self):
-        """Initializes the rejection log arrays.
+        """Saves the rejection log arrays.
         In the log forest headers will be saved along with the forest size and
         the rejection status.
         """
