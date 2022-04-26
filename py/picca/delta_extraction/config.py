@@ -22,7 +22,7 @@ try:
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     PICCA_BASE = THIS_DIR.split("py/picca")[0]
     git_hash = git.Repo(PICCA_BASE).head.object.hexsha
-except git.exc.InvalidGitRepositoryError:
+except git.exc.InvalidGitRepositoryError: # pragma: no cover
     git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
 
 accepted_corrections_options = ["num corrections", "type {int}", "module name {int}"]
@@ -390,7 +390,7 @@ class Config:
         """
         # this should never be true as the general section is loaded in the
         # default dictionary
-        if "general" not in self.config:
+        if "general" not in self.config: # pragma: no cover
             raise ConfigError("Missing section [general]")
         section = self.config["general"]
 
@@ -410,13 +410,13 @@ class Config:
         self.overwrite = section.getboolean("overwrite")
         # this should never be true as the general section is loaded in the
         # default dictionary
-        if self.overwrite is None:
+        if self.overwrite is None: # pragma: no cover
             raise ConfigError("Missing variable 'overwrite' in section [general]")
 
         self.log = section.get("log")
         # this should never be true as the general section is loaded in the
         # default dictionary
-        if self.log is None:
+        if self.log is None: # pragma: no cover
             raise ConfigError("Missing variable 'log' in section [general]")
         if "/" in self.log:
             raise ConfigError(
@@ -428,21 +428,21 @@ class Config:
         self.logging_level_console = section.get("logging level console")
         # this should never be true as the general section is loaded in the
         # default dictionary
-        if self.logging_level_console is None:
+        if self.logging_level_console is None: # pragma: no cover
             raise ConfigError("Missing variable 'logging level console' in section [general]")
         self.logging_level_console = self.logging_level_console.upper()
 
         self.logging_level_file = section.get("logging level file")
         # this should never be true as the general section is loaded in the
         # default dictionary
-        if self.logging_level_file is None:
+        if self.logging_level_file is None: # pragma: no cover
             raise ConfigError("In section 'logging level file' in section [general]")
         self.logging_level_file = self.logging_level_file.upper()
 
         self.num_processors = section.get("num processors")
         # this should never be true as the general section is loaded in the
         # default dictionary
-        if self.num_processors is None:
+        if self.num_processors is None: # pragma: no cover
             raise ConfigError("Missing variable 'num processors' in section [general]")
 
 
