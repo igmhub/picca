@@ -493,7 +493,7 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.rejection_log_cols[1]) == 1)
         self.assertTrue(data.rejection_log_cols[1][0] == "nan_forest")
 
-        # create Data instance with insane forest requirements
+        # create Data instance with insane forest length requirements
         config = ConfigParser()
         config.read_dict({"data": {"minimum number pixels in forest": 10000,
                                    "out dir": f"{THIS_DIR}/results/",
@@ -518,6 +518,32 @@ class DataTest(AbstractTest):
         self.assertTrue(len(data.rejection_log_cols[0]) == 1)
         self.assertTrue(len(data.rejection_log_cols[1]) == 1)
         self.assertTrue(data.rejection_log_cols[1][0] == "short_forest")
+
+        # create Data instance with insane forest s/n requirements
+        config = ConfigParser()
+        config.read_dict({"data": {"out dir": f"{THIS_DIR}/results/",
+                                   "rejection log file": "rejection_log.fits.gz",
+                                   "wave solution": "log",
+                                   "delta log lambda": 3e-4,
+                                   "delta log lambda rest frame": 3e-4,
+                                   "input directory": f"{THIS_DIR}/data/",
+                                   "minimal snr bao3d": 100000000,
+                         }})
+        for key, value in defaults_data.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+        data = Data(config["data"])
+
+        # add dummy forest
+        data.forests.append(forest1)
+        self.assertTrue(len(data.forests) == 1)
+
+        # filter forests
+        data.filter_forests()
+        self.assertTrue(len(data.forests) == 0)
+        self.assertTrue(len(data.rejection_log_cols[0]) == 1)
+        self.assertTrue(len(data.rejection_log_cols[1]) == 1)
+        self.assertTrue(data.rejection_log_cols[1][0] == f"low SNR ({forest1.mean_snr})")
 
     def test_desi_data(self):
         """Test DesiData
