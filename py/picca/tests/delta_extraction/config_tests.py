@@ -8,10 +8,11 @@ import numpy as np
 from picca.delta_extraction.config import Config
 from picca.delta_extraction.config import accepted_corrections_options
 from picca.delta_extraction.config import accepted_masks_options
+from picca.delta_extraction.corrections.dust_correction import defaults as defaults_dust_correction
 from picca.delta_extraction.errors import ConfigError
+from picca.delta_extraction.masks.dla_mask import defaults as defaults_dla_mask
 from picca.tests.delta_extraction.abstract_test import AbstractTest
 from picca.tests.delta_extraction.test_utils import reset_logger
-from picca.delta_extraction.utils import setup_logger
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 os.environ["THIS_DIR"] = THIS_DIR
@@ -155,6 +156,33 @@ class ConfigTest(AbstractTest):
 
         # check that out dir has an ending /
         self.assertTrue(config.out_dir.endswith("/"))
+
+    def test_config_missing_arguments_section(self):
+        """ Test that not passing sections [arguments correction 0] and
+        [arguments mask 0] behaves as expected"""
+        folder = f"{THIS_DIR}/data/config_extra/"
+        # check that default values do not overwrite chosen options
+        # corrections section
+        in_file = f"{folder}/config_missing_arguments_section.ini"
+        config = Config(in_file)
+
+        # check corrections dictionary
+        correction_args0 = config.corrections[0][1]
+        self.assertTrue(len(correction_args0) == 0)
+        correction_args1 = config.corrections[1][1]
+        self.assertTrue(len(correction_args1) == 1)
+        self.assertTrue(np.isclose(
+            correction_args1.getfloat("extinction_conversion_r"),
+            defaults_dust_correction.get("extinction_conversion_r")
+        ))
+
+        # check masks dictionary
+        mask_args0 = config.masks[0][1]
+        self.assertTrue(len(mask_args0) == 2)
+        self.assertTrue(np.isclose(
+            mask_args0.getfloat("dla mask limit"),
+            defaults_dla_mask.get("dla mask limit")
+        ))
 
     def test_config_invalid_correction_options(self):
         """ Test that passing invalid options to the correction classes
