@@ -154,6 +154,13 @@ class ConfigTest(AbstractTest):
             2.0
         ))
 
+        # check the mask section
+        mask_args = config.masks[0][1]
+        self.assertTrue(np.isclose(
+            mask_args.getfloat("dla mask limit"),
+            1.0
+        ))
+
         # check that out dir has an ending /
         self.assertTrue(config.out_dir.endswith("/"))
 
