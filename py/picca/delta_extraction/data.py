@@ -103,9 +103,9 @@ class Data:
 
         # rejection log arays
         self.rejection_log_initialized = False
-        self.rejection_log_cols = []
-        self.rejection_log_names = []
-        self.rejection_log_comments = []
+        self.rejection_log_cols = None
+        self.rejection_log_names = None
+        self.rejection_log_comments = None
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -350,7 +350,7 @@ class Data:
         for index in sorted(remove_indexs, reverse=True):
             del self.forests[index]
 
-        self.logger.progress("Removed forest that are too short")
+        self.logger.progress("Removed forests that are too short")
         self.logger.progress(f"Remaining sample has {len(self.forests)} forests")
 
     def find_nside(self):

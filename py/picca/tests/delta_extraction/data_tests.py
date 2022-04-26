@@ -3,6 +3,8 @@ from configparser import ConfigParser
 import logging
 import os
 import unittest
+import copy
+import numpy as np
 
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
@@ -452,12 +454,6 @@ class DataTest(AbstractTest):
 
     def test_data_filter_forests(self):
         """Test method filter_forests from Abstract Class Data"""
-        out_file = f"{THIS_DIR}/results/data_filter_forests_print.txt"
-        test_file = f"{THIS_DIR}/data/data_filter_forests_print.txt"
-
-        # setup printing
-        setup_logger(logging_level_console=logging.ERROR, log_file=out_file)
-
         # create Data instance
         config = ConfigParser()
         config.read_dict({"data": {
@@ -473,13 +469,29 @@ class DataTest(AbstractTest):
                 config["data"][key] = str(value)
         data = Data(config["data"])
 
-        # add dummy forest
+        # add dummy forests
         data.forests.append(forest1)
         self.assertTrue(len(data.forests) == 1)
 
         # filter forests
         data.filter_forests()
         self.assertTrue(len(data.forests) == 1)
+
+        # reset data
+        data = Data(config["data"])
+
+        # add nan forest
+        forest_nan = copy.copy(forest1)
+        forest_nan.flux *= np.nan
+        data.forests.append(forest1)
+        self.assertTrue(len(data.forests) == 1)
+
+        # filter forests
+        data.filter_forests()
+        self.assertTrue(len(data.forests) == 0)
+        self.assertTrue(len(data.rejection_log_cols[0]) == 1)
+        self.assertTrue(len(data.rejection_log_cols[1]) == 1)
+        self.assertTrue(data.rejection_log_cols[1][0] == "nan_forest")
 
         # create Data instance with insane forest requirements
         config = ConfigParser()
@@ -503,10 +515,9 @@ class DataTest(AbstractTest):
         # filter forests
         data.filter_forests()
         self.assertTrue(len(data.forests) == 0)
-
-        # reset printing
-        reset_logger()
-        self.compare_ascii(test_file, out_file)
+        self.assertTrue(len(data.rejection_log_cols[0]) == 1)
+        self.assertTrue(len(data.rejection_log_cols[1]) == 1)
+        self.assertTrue(data.rejection_log_cols[1][0] == "short_forest")
 
     def test_desi_data(self):
         """Test DesiData
