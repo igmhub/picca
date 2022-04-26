@@ -481,7 +481,7 @@ class DataTest(AbstractTest):
         data = Data(config["data"])
 
         # add nan forest
-        forest_nan = copy.copy(forest1)
+        forest_nan = copy.deepcopy(forest1)
         forest_nan.flux *= np.nan
         data.forests.append(forest1)
         self.assertTrue(len(data.forests) == 1)
