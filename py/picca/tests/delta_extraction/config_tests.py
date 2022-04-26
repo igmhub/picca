@@ -567,5 +567,15 @@ class ConfigTest(AbstractTest):
         expected_message = f"Config file not found: {in_file}"
         self.check_error(in_file, expected_message)
 
+    def test_config_undefined_environment_variable(self):
+        """Check the behaviour for undefined environment variables"""
+        prefix = f"{THIS_DIR}/data/config_wrong_options/config_wrong_options"
+        in_file = f"{prefix}_undefined_environment.ini"
+        expected_message = (
+            "In section [general], undefined environment variable UNDEFINED "
+            "was found"
+        )
+        self.check_error(in_file, expected_message)
+
 if __name__ == '__main__':
     unittest.main()

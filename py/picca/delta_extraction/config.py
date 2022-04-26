@@ -557,7 +557,7 @@ class Config:
                     pos = value.find("/")
                     if os.getenv(value[1:pos]) is None:
                         raise ConfigError(f"In section [{section}], undefined "
-                                          f"environment variable {value[:pos]} "
+                                          f"environment variable {value[1:pos]} "
                                           "was found")
                     self.config[section][key] = value.replace(value[:pos],
                                                               os.getenv(value[1:pos]))
