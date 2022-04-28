@@ -341,55 +341,39 @@ class DesiHealpix(DesiData):
             for tid in new_targetids:
                 forests_by_targetid[tid] = forests_by_pe[tid]
 
+        arguments = []
+        for (index,
+            (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
+                                    grouped_catalogue.groups):
+
+            if survey not in ["sv", "sv1", "sv2", "sv3"]:
+                is_sv = False
+
+            #TODO: not sure if we want the dark survey to be hard coded in here, probably won't run on anything else, but still
+            input_directory = f'{self.input_directory}/{survey}/dark'
+            coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
+            filename = (
+                f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
+                f"dark-{healpix}.fits")
+
+            arguments.append((filename,group))
+
+            self.logger.info(f"reading data from {len(arguments)} files")
+
         if self.num_processors>1:
-            # Set up arguments to pass to each PE
-            arguments = []
-            for (index,
-                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                        grouped_catalogue.groups):
-
-                if survey not in ["sv", "sv1", "sv2", "sv3"]:
-                    is_sv = False
-
-                input_directory = f'{self.input_directory}/{survey}/dark'
-                coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
-                filename = (
-                    f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
-                    f"dark-{healpix}.fits")
-
-                arguments.append((filename,group))
-
-                self.logger.info(f"reading data from {len(arguments)} files")
-
             with multiprocessing.Pool(processes=self.num_processors) as pool:
                 imap_it = pool.imap(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
                 for forests_by_pe in imap_it:
                     # Merge each dict to master forests_by_targetid
                     _merge_new_forest(forests_by_pe)
-                    
         else:
             reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
-            for (index,
-                (healpix,
-                survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                        grouped_catalogue.groups):
-
-                if survey not in ["sv", "sv1", "sv2", "sv3"]:
-                    is_sv = False
-
-                input_directory = f'{self.input_directory}/{survey}/dark'
-                coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
-                filename = (
-                    f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
-                    f"dark-{healpix}.fits")
-
-                #TODO: not sure if we want the dark survey to be hard coded in here, probably won't run on anything else, but still
-
+            for this_arg in arguments:
                 self.logger.progress(
                     f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
                     f"num_data: {len(forests_by_targetid)}")
 
-                _merge_new_forest(reader(filename, group))
+                _merge_new_forest(reader(this_arg))
 
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")
