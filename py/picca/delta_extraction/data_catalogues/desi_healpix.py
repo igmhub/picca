@@ -179,16 +179,17 @@ class DesiHealpix(DesiData):
                 if survey not in ["sv", "sv1", "sv2", "sv3"]:
                     is_sv = False
                     
-                if survey in ["sv1","sv2","sv3"]:
-                    input_directory = f'/global/cfs/cdirs/desi/spectro/redux/fuji/healpix/{survey}/dark'
-                #if main point to guadalupe
-                if survey in ["main"]:
-                    input_directory = f'/global/cfs/cdirs/desi/spectro/redux/guadalupe/healpix/{survey}/dark'
-                #else, assume release is specified
-                else:
-                    input_directory = f'{self.input_directory}/{survey}/dark'          
-                       
-                    
+                #if a release is specified.
+                if ("everest" in self.input_directory)|("fuji" in self.input_directory)|("guadalupe" in self.input_directory):
+                    input_directory = f'{self.input_directory}/{survey}/dark'
+                #else if pointing to spectro/redux, select release by survey
+                else: 
+                    if survey in ["sv1","sv2","sv3"]:
+                        input_directory = f'{self.input_directory}/fuji/healpix/{survey}/dark'
+                    elif survey in ["main"]:
+                        input_directory = f'{self.input_directory}/guadalupe/healpix/{survey}/dark   
+
+
                 coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
                 filename = (
                     f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
