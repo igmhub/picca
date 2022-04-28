@@ -27,7 +27,7 @@ from picca.delta_extraction.utils import ABSORBER_IGM
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
 from picca.delta_extraction.utils import setup_logger
 from picca.tests.delta_extraction.abstract_test import AbstractTest
-from picca.tests.delta_extraction.test_utils import reset_logger
+from picca.tests.delta_extraction.test_utils import reset_logger, setup_test_logger
 from picca.tests.delta_extraction.test_utils import forest1
 from picca.tests.delta_extraction.test_utils import sdss_data_kwargs
 from picca.tests.delta_extraction.test_utils import sdss_data_kwargs_filter_forest
@@ -50,6 +50,36 @@ class DataTest(AbstractTest):
     test_sdss_data_spec
     test_sdss_data_spplate
     """
+
+    def check_read_file_error(self, data, catalogue, filename, expected_message,
+                              warnings=False):
+        """Check the warning/error message when running data.read_file()
+
+        Arguments
+        ---------
+        data: DesiData
+        Data instance
+
+        catalogue: astropy.table.Table
+        Expected error message
+
+        filename: str
+        Filename to load
+
+        expected_message: str
+        Expected error message
+
+        warnings: bool - Default: False
+        If True, treat warnings as errors
+        """
+        if warnings:
+            setup_test_logger("picca.delta_extraction.data.Data", DataError)
+        with self.assertRaises(DataError) as context_manager:
+            data.read_file(filename, catalogue, {})
+        self.compare_error_message(context_manager, expected_message)
+        if warnings:
+            setup_test_logger("picca.delta_extraction.data.Data", DataError,
+                              reset=True)
 
     def test_data(self):
         """Test Abstract class Data
@@ -990,33 +1020,61 @@ class DataTest(AbstractTest):
 
     def test_desi_healpix_read_file(self):
         """Test method read_file from DesiHealpix"""
-        # case: data without color Z and missing R_RESOLUTION
+        # first load create a data instance
         config = ConfigParser()
         config.read_dict({"data": {
-            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix_with_main.fits.gz",
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
             "keep surveys": "all",
-            "input directory": f"{THIS_DIR}/data/bad_format/",
+            "input directory": f"{THIS_DIR}/data/",
             "out dir": f"{THIS_DIR}/results/",
-            "num processors": 2,
+            "num processors": 1,
             "analysis type": "PK 1D",
-            "use non-coadded spectra": True,
         }})
         for key, value in defaults_desi_healpix.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
+        data = DesiHealpix(config["data"])
+        catalogue = data.catalogue
+        pos = catalogue["TARGETID"] == "39632936152072660"
+
+        # case: data without color Z and missing R_RESOLUTION
+        filename = f"{THIS_DIR}/data/bad_format/spectra-main-dark-9144.fits"
         expected_message = (
             "Error while reading R band from /Users/iperez/Documents/GitHub/"
-            "picca/py/picca/tests/delta_extraction/data/bad_format//main/"
-            "dark/91/9144/spectra-main-dark-9144.fits. Analysis type is "
-            "'PK 1D', but file does not contain HDU 'R_RESOLUTION'"
+            "picca/py/picca/tests/delta_extraction/data/bad_format/spectra-main-"
+            "dark-9144.fits. Analysis type is 'PK 1D', but file does not "
+            "contain HDU 'R_RESOLUTION'"
         )
-        with self.assertRaises(DataError) as context_manager:
-            data = DesiHealpix(config["data"])
-        self.compare_error_message(context_manager, expected_message)
+        self.check_read_file_error(data, catalogue[pos], filename,
+                                   expected_message)
 
-        # TODO: test Pk1d and mocks (R_RESOLUTION is looked for in truth file)
+        # case: missing Z color
+        filename = f"{THIS_DIR}/data/bad_format/missing_z_color.fits"
+        expected_message = (
+            "Missing Z band from /Users/iperez/Documents/GitHub/"
+            "picca/py/picca/tests/delta_extraction/data/bad_format/"
+            "missing_z_color.fits. Ignoring color."
+        )
+        self.check_read_file_error(data, catalogue[pos], filename,
+                                   expected_message, warnings=True)
 
+        # case: error reading B color
+        filename = f"{THIS_DIR}/data/bad_format/missing_b_color.fits"
+        expected_message = (
+            "Error while reading B band from /Users/iperez/Documents/GitHub/"
+            "picca/py/picca/tests/delta_extraction/data/bad_format/"
+            "missing_b_color.fits. Ignoring color."
+        )
+        self.check_read_file_error(data, catalogue[pos], filename,
+                                   expected_message, warnings=True)
+
+        # case: missing file
+        filename = "missing.fits"
+        expected_message = "Error reading 'missing.fits'. Ignoring file"
+        self.check_read_file_error(data, catalogue[pos], filename,
+                                   expected_message, warnings=True)
+        
     def test_desi_tile(self):
         """Test DesiTile"""
         # load DesiTile using coadds

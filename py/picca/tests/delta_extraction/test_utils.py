@@ -33,7 +33,7 @@ def setup_forest(wave_solution, rebin=1, pixel_step=None):
 
     pixel_step: float
     Pixel size to be used
-    
+
     """
     assert wave_solution in ["log", "lin"]
 
@@ -217,6 +217,65 @@ def reset_logger():
         handler.close()
         logger.removeHandler(handler)
     logger.addHandler(logging.NullHandler())
+
+class WarningsHandler(logging.Handler):
+    """Handler to raise Errors when logging warnings"""
+    def __init__(self, ErrorType):
+        """Initialize instance
+
+        Arguments
+        ---------
+        ErrorType: Exception or child of Exception
+        Error type
+        """
+        super().__init__()
+        self.ErrorType = ErrorType
+
+    def handle(self, record):
+        """Raise error instead of logging a warning
+
+        Arguments
+        ---------
+        record: logging.LogRecord
+        The logger record
+
+        Raise
+        -----
+        ErrorType if the record has warning level or higher
+        """
+        if record.levelno >= logging.WARN:
+            raise self.ErrorType(record.getMessage())
+        return record
+
+def setup_test_logger(logger_name, ErrorType, reset=False):
+    """This function set up the logger for the package
+    picca.delta_extraction so that warnings raise errors
+    of type ErrorType instead
+
+    Arguments
+    ---------
+    logger_name: str
+    Name of the logger
+
+    ErrorType: Exception or child of Exception
+    Error type
+
+    reset: bool - Default: False
+    If True, reset the logger
+    """
+    logger = logging.getLogger(logger_name)
+
+    if reset:
+        handlers = logger.handlers
+        for handler in handlers:
+            handler.close()
+            logger.removeHandler(handler)
+        logger.addHandler(logging.NullHandler())
+    else:
+        # add handler
+        warnings_handler = WarningsHandler(ErrorType)
+        warnings_handler.setLevel(logging.WARN)
+        logger.addHandler(warnings_handler)
 
 
 if __name__ == '__main__':

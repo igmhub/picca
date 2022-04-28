@@ -149,7 +149,7 @@ class DesiData(Data):
         """
         # blinding checks
         if is_mock:
-            if self.blinding != "none":
+            if self.blinding != "none": # pragma: no branch
                 self.logger.warning(f"Selected blinding, {self.blinding} is "
                                     "being ignored as mocks should not be "
                                     "blinded. 'none' blinding engaged")

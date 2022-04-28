@@ -189,7 +189,6 @@ class DesiTile(DesiData):
             petal_spec = fibermap['PETAL_LOC'][0]
 
             targetid_spec = fibermap['TARGETID']
-            no_scores_available = False
 
             spectrographs_data = {}
             for color in colors:
@@ -200,17 +199,6 @@ class DesiTile(DesiData):
                     spec['IVAR'] = (hdul[f'{color}_IVAR'].read() *
                                     (hdul[f'{color}_MASK'].read() == 0))
                     if self.analysis_type == "PK 1D":
-                        if self.use_non_coadded_spectra and "SCORES" in hdul:
-                            spec['TEFF_LYA'] = 11.80090901380597 * hdul[
-                                'SCORES'][f'TSNR2_LYA_{color}'].read()
-                        else:
-                            spec['TEFF_LYA'] = np.ones(spec["FLUX"].shape[0])
-                            if self.use_non_coadded_spectra:
-                                self.logger.warning(
-                                    "SCORES are missing, Teff information (and thus DIFF) will be garbage"
-                                )
-                            no_scores_available = True
-
                         if f"{color}_RESOLUTION" in hdul:
                             spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                         else:
@@ -280,7 +268,7 @@ class DesiTile(DesiData):
                     if self.analysis_type == "BAO 3D":
                         forest = DesiForest(**args)
                     elif self.analysis_type == "PK 1D":
-                        if self.use_non_coadded_spectra and not no_scores_available:
+                        if self.use_non_coadded_spectra:
                             exposures_diff = exp_diff_desi(spec, w_t)
                             if exposures_diff is None:
                                 continue
