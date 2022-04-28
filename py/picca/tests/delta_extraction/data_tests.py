@@ -1074,7 +1074,9 @@ class DataTest(AbstractTest):
         expected_message = "Error reading 'missing.fits'. Ignoring file"
         self.check_read_file_error(data, catalogue[pos], filename,
                                    expected_message, warnings=True)
-        
+
+        # TODO: Add tests for use_non_coadded_spectra=True
+
     def test_desi_tile(self):
         """Test DesiTile"""
         # load DesiTile using coadds
