@@ -147,8 +147,23 @@ class DesiHealpix(DesiData):
 
                 if survey not in ["sv", "sv1", "sv2", "sv3"]:
                     is_sv = False
-
-                input_directory = f'{self.input_directory}/{survey}/dark'
+                    
+                #allow input dir to point to .../spectro/redux 
+                #and survey to point to most stable release by default
+                #if sv1,sv2,sv3, point to fuji
+                if survey in ["sv1","sv2","sv3"]:
+                    input_directory = f'/global/cfs/cdirs/desi/spectro/redux/fuji/healpix/{survey}/dark'
+                #if main point to guadalupe
+                if survey in ["main"]:
+                    input_directory = f'/global/cfs/cdirs/desi/spectro/redux/guadalupe/healpix/{survey}/dark'
+                #else, assume release is specified
+                else:
+                    input_directory = f'{self.input_directory}/{survey}/dark'
+                    
+                    #this doesn't work if you have survey cmx etc in gua or fuji. 
+                    #NOTE also that the error reading message in the log 
+                    #shows the wrong path because it is coded elsewhere
+                    
                 coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
                 filename = (
                     f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
@@ -169,8 +184,17 @@ class DesiHealpix(DesiData):
 
                 if survey not in ["sv", "sv1", "sv2", "sv3"]:
                     is_sv = False
-
-                input_directory = f'{self.input_directory}/{survey}/dark'
+                    
+                if survey in ["sv1","sv2","sv3"]:
+                    input_directory = f'/global/cfs/cdirs/desi/spectro/redux/fuji/healpix/{survey}/dark'
+                #if main point to guadalupe
+                if survey in ["main"]:
+                    input_directory = f'/global/cfs/cdirs/desi/spectro/redux/guadalupe/healpix/{survey}/dark'
+                #else, assume release is specified
+                else:
+                    input_directory = f'{self.input_directory}/{survey}/dark'          
+                       
+                    
                 coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
                 filename = (
                     f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"

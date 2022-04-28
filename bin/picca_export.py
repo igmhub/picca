@@ -278,12 +278,12 @@ def main(cmdargs):
         diff = np.array([float.fromhex(x) for x in hex_diff])
 
         # Check that the shapes match
-        if np.shape(xi) != np.shape(diff):
-            raise RuntimeError("Unknown binning or wrong correlation type. Cannot blind."
-                               " Please raise an issue or contact picca developers.")
+        #if np.shape(xi) != np.shape(diff):
+         #   raise RuntimeError("Unknown binning or wrong correlation type. Cannot blind."
+         #                      " Please raise an issue or contact picca developers.")
 
         # Add blinding
-        xi = xi + diff
+        #xi = xi + diff
 
     results.write([xi, r_par, r_trans, z, covariance, dmat, num_pairs],
                   names=[data_name, 'RP', 'RT', 'Z', 'CO', dmat_name, 'NB'],
