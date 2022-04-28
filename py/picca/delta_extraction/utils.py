@@ -162,7 +162,7 @@ PROGRESS_LEVEL_NUM = 15
 logging.addLevelName(PROGRESS_LEVEL_NUM, "PROGRESS")
 def progress(self, message, *args, **kws):
     """Function to log with level PROGRESS"""
-    if self.isEnabledFor(PROGRESS_LEVEL_NUM):
+    if self.isEnabledFor(PROGRESS_LEVEL_NUM): # pragma: no branch
         # pylint: disable-msg=protected-access
         # this method will be attached to logging.Logger
         self._log(PROGRESS_LEVEL_NUM, message, args, **kws)
@@ -172,7 +172,7 @@ OK_WARNING_LEVEL_NUM = 31
 logging.addLevelName(OK_WARNING_LEVEL_NUM, "WARNING OK")
 def ok_warning(self, message, *args, **kws):
     """Function to log with level WARNING OK"""
-    if self.isEnabledFor(OK_WARNING_LEVEL_NUM):
+    if self.isEnabledFor(OK_WARNING_LEVEL_NUM): # pragma: no branch
         # pylint: disable-msg=protected-access
         # this method will be attached to logging.Logger
         self._log(OK_WARNING_LEVEL_NUM, message, args, **kws)
