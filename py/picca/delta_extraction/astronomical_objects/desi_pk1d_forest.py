@@ -98,6 +98,17 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
                 f"{type(other).__name__}")
 
         if other.resolution_matrix.size > 0 and self.resolution_matrix.size > 0:
+            if self.resolution_matrix.shape[0]!=other.resolution_matrix.shape[0]:
+                largershape = np.max([self.resolution_matrix.shape[0],other.resolution_matrix.shape[0]])
+                smallershape = np.min([self.resolution_matrix.shape[0],other.resolution_matrix.shape[0]])
+                shapediff = largershape - smallershape
+                if self.resolution_matrix.shape[0]==smallershape:
+                    self.resolution_matrix = np.append(np.zeros([shapediff//2,self.resolution_matrix.shape[1]]),self.resolution_matrix,axis=0)
+                    self.resolution_matrix = np.append(self.resolution_matrix,np.zeros([shapediff//2,self.resolution_matrix.shape[1]]),axis=0)
+                if other.resolution_matrix.shape[0]==smallershape:
+                    other.resolution_matrix = np.append(np.zeros([shapediff//2,other.resolution_matrix.shape[1]]),other.resolution_matrix,axis=0)
+                    other.resolution_matrix = np.append(other.resolution_matrix,np.zeros([shapediff//2,other.resolution_matrix.shape[1]]),axis=0)
+
             self.resolution_matrix = np.append(self.resolution_matrix,
                                                other.resolution_matrix,
                                                axis=1)
