@@ -127,7 +127,7 @@ class DesisimMocks(DesiHealpix):
                 ParallelReader._merge_new_forest(forests_by_targetid, reader(this_arg))
 
         if len(forests_by_targetid) == 0:
-            raise DataError("No Quasars found, stopping here")
+            raise DataError("No quasars found, stopping here")
         self.forests = list(forests_by_targetid.values())
 
         return True, False

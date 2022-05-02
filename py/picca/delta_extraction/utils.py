@@ -7,6 +7,8 @@ import os
 import numpy as np
 from scipy.constants import speed_of_light as speed_light
 
+from picca.delta_extraction.errors import DeltaExtractionError
+
 module_logger = logging.getLogger(__name__)
 
 SPEED_LIGHT = speed_light/1000. # [km/s]
@@ -155,14 +157,20 @@ def find_bins(original_array, grid_array, wave_solution):
         found_bin = (np.abs(grid_array - original_array[:,np.newaxis])).argmin(axis=1)
     elif wave_solution == "lin":
         found_bin = (np.abs(10**grid_array - 10**original_array[:,np.newaxis])).argmin(axis=1)
-
+    # this should never be entered but adding it anyways in case at some point
+    # we decide to add a new wavelength solution
+    else: # pragma: no cover
+        raise DeltaExtractionError(
+            "Error in function find_bins from py/picca/delta_extraction/utils.py"
+            "expected wavelength solution to be either 'log' or 'lin'. Found: "
+            f"{wave_solution}")
     return found_bin
 
 PROGRESS_LEVEL_NUM = 15
 logging.addLevelName(PROGRESS_LEVEL_NUM, "PROGRESS")
 def progress(self, message, *args, **kws):
     """Function to log with level PROGRESS"""
-    if self.isEnabledFor(PROGRESS_LEVEL_NUM):
+    if self.isEnabledFor(PROGRESS_LEVEL_NUM): # pragma: no branch
         # pylint: disable-msg=protected-access
         # this method will be attached to logging.Logger
         self._log(PROGRESS_LEVEL_NUM, message, args, **kws)
@@ -172,7 +180,7 @@ OK_WARNING_LEVEL_NUM = 31
 logging.addLevelName(OK_WARNING_LEVEL_NUM, "WARNING OK")
 def ok_warning(self, message, *args, **kws):
     """Function to log with level WARNING OK"""
-    if self.isEnabledFor(OK_WARNING_LEVEL_NUM):
+    if self.isEnabledFor(OK_WARNING_LEVEL_NUM): # pragma: no branch
         # pylint: disable-msg=protected-access
         # this method will be attached to logging.Logger
         self._log(OK_WARNING_LEVEL_NUM, message, args, **kws)

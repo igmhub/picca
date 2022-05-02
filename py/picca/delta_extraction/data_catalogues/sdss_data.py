@@ -19,6 +19,7 @@ from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
 accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_catalogue +[
     "rebin", "mode"])))
 
+defaults = defaults.copy()
 defaults.update({
     "mode": "spplate",
     "rebin": 3,
@@ -109,8 +110,7 @@ class SdssData(Data):
 
         rebin = config.getint("rebin")
         if rebin is None:
-            raise DataError("Missing argument 'delta log lambda' required by "
-                            "Data when 'wave solution' is set to 'log'")
+            raise DataError("Missing argument 'rebin' required by SdssData")
         config["delta log lambda"] = str(rebin*1e-4)
         del config["rebin"]
 
