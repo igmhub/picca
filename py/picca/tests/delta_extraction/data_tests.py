@@ -75,7 +75,7 @@ class DataTest(AbstractTest):
         if warnings:
             setup_test_logger("picca.delta_extraction.data.Data", DataError)
         with self.assertRaises(DataError) as context_manager:
-            data.read_file(filename, catalogue, {})
+            data.read_file(filename, catalogue)
         self.compare_error_message(context_manager, expected_message)
         if warnings:
             setup_test_logger("picca.delta_extraction.data.Data", DataError,

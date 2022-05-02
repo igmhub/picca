@@ -131,3 +131,8 @@ class DesisimMocks(DesiHealpix):
         self.forests = list(forests_by_targetid.values())
 
         return True, False
+    
+    def read_file(self, filename, catalogue):
+        reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
+
+        return reader((filename, catalogue))

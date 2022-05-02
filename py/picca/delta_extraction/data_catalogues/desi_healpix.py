@@ -380,3 +380,8 @@ class DesiHealpix(DesiData):
         self.forests = list(forests_by_targetid.values())
 
         return False, is_sv
+    
+    def read_file(self, filename, catalogue):
+        reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
+
+        return reader((filename, catalogue))
