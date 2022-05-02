@@ -13,16 +13,13 @@ from picca.delta_extraction.utils import ABSORBER_IGM
 def reset_forest():
     """Reset the class variables of Forest and Pk1dForest"""
     Forest.wave_solution = None
-    Forest.lambda_grid = None
-    Forest.lambda_rest_frame_grid = None
     Forest.log_lambda_grid = None
     Forest.log_lambda_rest_frame_grid = None
-    Forest.mask_fields = []
+    Forest.mask_fields = None
     Pk1dForest.lambda_abs_igm = None
 
-
 # setup Forest class variables
-def setup_forest(wave_solution, rebin=1):
+def setup_forest(wave_solution, rebin=1, pixel_step=None):
     """Set Forest class variables
 
     Arguments
@@ -32,16 +29,24 @@ def setup_forest(wave_solution, rebin=1):
     logarithmic spacing ("log").
 
     rebin: int
-    If wave_solution is "log", number of pixels that will be rebinned
+    Number of pixels that will be rebinned
+
+    pixel_step: float
+    Pixel size to be used
+
     """
     assert wave_solution in ["log", "lin"]
 
-    if wave_solution == "log":
-        pixel_step = 1e-4 * rebin
-    elif wave_solution == "lin":
-        pixel_step = 1.
+    if pixel_step is None:
+        if wave_solution == "log":
+            pixel_step = 1e-4
+        elif wave_solution == "lin":
+            pixel_step = 1
 
-    Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step,
+    pixel_step *= rebin
+    pixel_step_rf = pixel_step
+
+    Forest.set_class_variables(3600.0, 5500.0, 1040.0, 1200.0, pixel_step, pixel_step_rf,
                                wave_solution)
 
 setup_forest("log", rebin=3)
@@ -141,19 +146,34 @@ assert np.allclose(forest3.transmission_correction,
                    np.ones_like(forest3_log_lambda))
 
 
-# Dictionary to load SdssData
+
+# Dictionary to load data
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-sdss_data_kwargs = {
+kwargs_data = {
     "input directory":
         f"{THIS_DIR}/data",
     "out dir":
         f"{THIS_DIR}/results",
     "rejection log file": "rejection_log.fits.gz",
-    "drq catalogue":
-        f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
     "z max": 3.5,
     "z min": 2.1,
 }
+
+# Dictionary to load DesiHealpix
+desi_healpix_kwargs = kwargs_data.copy()
+desi_healpix_kwargs.update({
+    "catalogue":
+        f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+    "num processors": 1,
+})
+
+# Dictionary to load SdssData
+sdss_data_kwargs = kwargs_data.copy()
+sdss_data_kwargs.update({
+    "drq catalogue":
+        f"{THIS_DIR}/data/cat_for_clustering_plate3655.fits.gz",
+    "num processors": 1,
+})
 sdss_data_kwargs_filter_forest = {
     "input directory":
         f"{THIS_DIR}/data",
@@ -169,7 +189,23 @@ sdss_data_kwargs_filter_forest = {
     "lambda max rest frame": 3120.0,
 }
 
+desi_mock_data_kwargs = {
+    "input directory":
+        f"{THIS_DIR}/data",
+    "out dir":
+        f"{THIS_DIR}/results",
+    "rejection log file": "rejection_log.fits.gz",
+    "catalogue":
+        f"{THIS_DIR}/data/desi_mock_test_catalogue.fits",
+    "z max": 3.5,
+    "z min": 2.1,
+    "wave solution": "lin",
+    "delta lambda": 2.4,
+    "type": "DesisimMocks",
+    "num processors": 1,
+}
 
+reset_forest()
 
 def reset_logger():
     """This function reset the logger picca.delta_extraction by closing
@@ -181,6 +217,65 @@ def reset_logger():
         handler.close()
         logger.removeHandler(handler)
     logger.addHandler(logging.NullHandler())
+
+class WarningsHandler(logging.Handler):
+    """Handler to raise Errors when logging warnings"""
+    def __init__(self, ErrorType):
+        """Initialize instance
+
+        Arguments
+        ---------
+        ErrorType: Exception or child of Exception
+        Error type
+        """
+        super().__init__()
+        self.ErrorType = ErrorType
+
+    def handle(self, record):
+        """Raise error instead of logging a warning
+
+        Arguments
+        ---------
+        record: logging.LogRecord
+        The logger record
+
+        Raise
+        -----
+        ErrorType if the record has warning level or higher
+        """
+        if record.levelno >= logging.WARN:
+            raise self.ErrorType(record.getMessage())
+        return record
+
+def setup_test_logger(logger_name, ErrorType, reset=False):
+    """This function set up the logger for the package
+    picca.delta_extraction so that warnings raise errors
+    of type ErrorType instead
+
+    Arguments
+    ---------
+    logger_name: str
+    Name of the logger
+
+    ErrorType: Exception or child of Exception
+    Error type
+
+    reset: bool - Default: False
+    If True, reset the logger
+    """
+    logger = logging.getLogger(logger_name)
+
+    if reset:
+        handlers = logger.handlers
+        for handler in handlers:
+            handler.close()
+            logger.removeHandler(handler)
+        logger.addHandler(logging.NullHandler())
+    else:
+        # add handler
+        warnings_handler = WarningsHandler(ErrorType)
+        warnings_handler.setLevel(logging.WARN)
+        logger.addHandler(warnings_handler)
 
 
 if __name__ == '__main__':

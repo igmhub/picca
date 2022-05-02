@@ -10,21 +10,26 @@ import re
 from datetime import datetime
 import git
 
+
+from picca.delta_extraction.correction import Correction
+from picca.delta_extraction.data import Data
 from picca.delta_extraction.errors import ConfigError
+from picca.delta_extraction.expected_flux import ExpectedFlux
+from picca.delta_extraction.mask import Mask
 from picca.delta_extraction.utils import class_from_string, setup_logger
 
 try:
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     PICCA_BASE = THIS_DIR.split("py/picca")[0]
     git_hash = git.Repo(PICCA_BASE).head.object.hexsha
-except git.exc.InvalidGitRepositoryError:
+except git.exc.InvalidGitRepositoryError: # pragma: no cover
     git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
 
 accepted_corrections_options = ["num corrections", "type {int}", "module name {int}"]
 accepted_data_options = ["type", "module name"]
 accepted_expected_flux_options = ["type", "module name"]
 accepted_general_options = ["overwrite", "logging level console",
-                            "logging level file", "log", "out dir"]
+                            "logging level file", "log", "out dir", "num processors"]
 accepted_masks_options = ["num masks", "type {int}", "module name {int}"]
 
 default_config = {
@@ -35,6 +40,7 @@ default_config = {
         "log": "run.log",
         "logging level console": "PROGRESS",
         "logging level file": "PROGRESS",
+        "num processors": 0,
     },
     "run specs": {
         "git hash": git_hash,
@@ -150,6 +156,7 @@ class Config:
         self.__format_data_section()
         self.expected_flux = None
         self.__format_expected_flux_section()
+        self.num_processors = None
 
         # initialize folders where data will be saved
         self.initialize_folders()
@@ -175,10 +182,10 @@ class Config:
 
         self.num_corrections = section.getint("num corrections")
         if self.num_corrections is None:
-            raise ConfigError("In section 'corrections', variable 'num corrections' "
+            raise ConfigError("In section [corrections], variable 'num corrections' "
                               "is required")
         if self.num_corrections < 0:
-            raise ConfigError("In section 'corrections', variable 'num corrections' "
+            raise ConfigError("In section [corrections], variable 'num corrections' "
                               "must be a non-negative integer")
 
         # check that arguments are valid
@@ -193,7 +200,7 @@ class Config:
                         pass
                     except AssertionError as e:
                         raise ConfigError("In section [corrections] found option "
-                                          f"{key}, but 'num corrections' is "
+                                          f"'{key}', but 'num corrections' is "
                                           f"'{self.num_corrections}' (keep in mind "
                                           "python zero indexing)")
 
@@ -222,7 +229,14 @@ class Config:
                                   f"module {module_name} could not be loaded")
             except AttributeError:
                 raise ConfigError(f"Error loading class {correction_name}, "
-                                  f"module {module_name} did not contain class")
+                                  f"module {module_name} did not contain "
+                                  "requested class")
+
+            if not issubclass(CorrectionType, Correction):
+                raise ConfigError(f"Error loading class {CorrectionType.__name__}. "
+                                  "This class should inherit from Correction but "
+                                  "it does not. Please check for correct inheritance "
+                                  "pattern.")
 
             # now load the arguments with which to initialize this class
             if f"correction arguments {correction_index}" not in self.config:
@@ -232,7 +246,7 @@ class Config:
                 self.config.read_dict({f"correction arguments {correction_index}":{}})
             correction_args = self.config[f"correction arguments {correction_index}"]
 
-            # check that arguments are valid
+            # check that all arguments are valid
             for key in correction_args:
                 if key not in accepted_options:
                     raise ConfigError("Unrecognised option in section [correction "
@@ -261,6 +275,9 @@ class Config:
 
         # first load the data class
         data_name = section.get("type")
+        if data_name is None:
+            raise ConfigError("In section [data], variable 'type' "
+                              "is required")
         module_name = section.get("module name")
         if module_name is None:
             module_name = re.sub('(?<!^)(?=[A-Z])', '_', data_name).lower()
@@ -274,7 +291,14 @@ class Config:
                               f"module {module_name} could not be loaded")
         except AttributeError:
             raise ConfigError(f"Error loading class {data_name}, "
-                              f"module {module_name} did not contain class")
+                              f"module {module_name} did not contain requested "
+                              "class")
+
+        if not issubclass(DataType, Data):
+            raise ConfigError(f"Error loading class {DataType.__name__}. "
+                              "This class should inherit from Data but "
+                              "it does not. Please check for correct inheritance "
+                              "pattern.")
 
         # check that arguments are valid)
         accepted_options += accepted_data_options
@@ -291,6 +315,8 @@ class Config:
 
         # add output directory
         section["out dir"] = self.out_dir
+        if "num processors" in accepted_options:
+            section["num processors"] = self.num_processors
 
         # finally add the information to self.data
         self.data = (DataType, section)
@@ -308,6 +334,9 @@ class Config:
 
         # first load the data class
         expected_flux_name = section.get("type")
+        if expected_flux_name is None:
+            raise ConfigError("In section [expected flux], variable 'type' "
+                              "is required")
         module_name = section.get("module name")
         if module_name is None:
             module_name = re.sub('(?<!^)(?=[A-Z])', '_', expected_flux_name).lower()
@@ -322,7 +351,14 @@ class Config:
                               f"module {module_name} could not be loaded")
         except AttributeError:
             raise ConfigError(f"Error loading class {expected_flux_name}, "
-                              f"module {module_name} did not contain class")
+                              f"module {module_name} did not contain requested "
+                              "class")
+
+        if not issubclass(ExpectedFluxType, ExpectedFlux):
+            raise ConfigError(f"Error loading class {ExpectedFluxType.__name__}. "
+                              "This class should inherit from ExpectedFlux but "
+                              "it does not. Please check for correct inheritance "
+                              "pattern.")
 
         # check that arguments are valid)
         accepted_options += accepted_expected_flux_options
@@ -337,10 +373,13 @@ class Config:
             if key not in section:
                 section[key] = str(value)
 
-        # add output directory if necesssary
-        if "out dir" in accepted_options:
+        # add "out dir" and "num processors" if necesssary
+        # currently all the expected fluxes accept both "out dir" and
+        # "num processors" but that might not always be the case
+        if "out dir" in accepted_options: # pragma: no branch
             section["out dir"] = self.out_dir
-
+        if "num processors" in accepted_options: # pragma: no branch
+            section["num processors"] = self.num_processors
         # finally add the information to self.continua
         self.expected_flux = (ExpectedFluxType, section)
 
@@ -351,7 +390,9 @@ class Config:
         -----
         ConfigError if the config file is not correct
         """
-        if "general" not in self.config:
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        if "general" not in self.config: # pragma: no cover
             raise ConfigError("Missing section [general]")
         section = self.config["general"]
 
@@ -369,25 +410,43 @@ class Config:
             self.out_dir += "/"
 
         self.overwrite = section.getboolean("overwrite")
-        if self.out_dir is None:
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        if self.overwrite is None: # pragma: no cover
             raise ConfigError("Missing variable 'overwrite' in section [general]")
 
         self.log = section.get("log")
-        if self.out_dir is None:
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        if self.log is None: # pragma: no cover
             raise ConfigError("Missing variable 'log' in section [general]")
-        elif not (self.log.startswith(".") or self.log.startswith("/")):
-            self.log = self.out_dir + "Log/" + self.log
-            section["log"] = self.log
+        if "/" in self.log:
+            raise ConfigError(
+                "Variable 'log' in section [general] should not incude folders. "
+                f"Found: {self.log}")
+        self.log = self.out_dir + "Log/" + self.log
+        section["log"] = self.log
 
         self.logging_level_console = section.get("logging level console")
-        if self.logging_level_console is None:
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        if self.logging_level_console is None: # pragma: no cover
             raise ConfigError("Missing variable 'logging level console' in section [general]")
         self.logging_level_console = self.logging_level_console.upper()
 
         self.logging_level_file = section.get("logging level file")
-        if self.logging_level_file is None:
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        if self.logging_level_file is None: # pragma: no cover
             raise ConfigError("In section 'logging level file' in section [general]")
         self.logging_level_file = self.logging_level_file.upper()
+
+        self.num_processors = section.get("num processors")
+        # this should never be true as the general section is loaded in the
+        # default dictionary
+        if self.num_processors is None: # pragma: no cover
+            raise ConfigError("Missing variable 'num processors' in section [general]")
+
 
     def __format_masks_section(self):
         """Format the masks section of the parser into usable data
@@ -405,10 +464,10 @@ class Config:
 
         self.num_masks = section.getint("num masks")
         if self.num_masks is None:
-            raise ConfigError("In section 'masks', variable 'num masks' "
+            raise ConfigError("In section [masks], variable 'num masks' "
                               "is required")
         if self.num_masks < 0:
-            raise ConfigError("In section 'masks', variable 'num masks' "
+            raise ConfigError("In section [masks], variable 'num masks' "
                               "must be a non-negative integer")
 
         # check that arguments are valid
@@ -423,7 +482,7 @@ class Config:
                         pass
                     except AssertionError as e:
                         raise ConfigError("In section [masks] found option "
-                                          f"{key}, but 'num masks' is "
+                                          f"'{key}', but 'num masks' is "
                                           f"'{self.num_masks}' (keep in mind "
                                           "python zero indexing)")
 
@@ -450,7 +509,14 @@ class Config:
                                   f"module {module_name} could not be loaded")
             except AttributeError:
                 raise ConfigError(f"Error loading class {mask_name}, "
-                                  f"module {module_name} did not contain class")
+                                  f"module {module_name} did not contain "
+                                  "requested class")
+
+            if not issubclass(MaskType, Mask):
+                raise ConfigError(f"Error loading class {MaskType.__name__}. "
+                                  "This class should inherit from Mask but "
+                                  "it does not. Please check for correct inheritance "
+                                  "pattern.")
 
             # now load the arguments with which to initialize this class
             if f"mask arguments {mask_index}" not in self.config:
@@ -491,7 +557,7 @@ class Config:
                     pos = value.find("/")
                     if os.getenv(value[1:pos]) is None:
                         raise ConfigError(f"In section [{section}], undefined "
-                                          f"environment variable {value[:pos]} "
+                                          f"environment variable {value[1:pos]} "
                                           "was found")
                     self.config[section][key] = value.replace(value[:pos],
                                                               os.getenv(value[1:pos]))
@@ -514,9 +580,9 @@ class Config:
             os.makedirs(self.out_dir+"Log/", exist_ok=True)
             self.write_config()
         else:
-            raise ConfigError("Specified folder contains a previous run."
-                              "Pass overwrite option in configuration file"
-                              "in order to ignore the previous run or"
+            raise ConfigError("Specified folder contains a previous run. "
+                              "Pass overwrite option in configuration file "
+                              "in order to ignore the previous run or "
                               "change the output path variable to point "
                               f"elsewhere. Folder: {self.out_dir}")
 

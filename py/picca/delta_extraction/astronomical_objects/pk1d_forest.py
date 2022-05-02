@@ -21,83 +21,14 @@ class Pk1dForest(Forest):
 
     Class Attributes
     ----------------
-    blinding: str (from Forest)
-    Name of the blinding strategy used
-    
-    lambda_grid: array of float or None (from Forest)
-    Common grid in lambda_ based on the specified minimum and maximum
-    wavelengths, and delta_lambda.
-
-    lambda_rest_frame_grid: array of float or None (from Forest)
-    Same as lambda_grid but for rest-frame wavelengths
-
-    log_lambda_grid: array of float or None (from Forest)
-    Common grid in log_lambda based on the specified minimum and maximum
-    wavelengths, and delta_log_lambda.
-
-    log_lambda_rest_frame_grid: array of float or None (from Forest)
-    Same as log_lambda_grid but for rest-frame wavelengths.
-
-    mask_fields: list of str (from Forest)
-    Names of the fields that are affected by masking. In general it will
-    be "flux", "ivar", "transmission_correction", "exposures_diff", "reso" and
-    either "log_lambda" if Forest.wave_solution is "log" or "lambda_" if
-    Forests.wave_solution is "lin", but some child classes might add more.
-
-    wave_solution: "lin" or "log" (from Forest)
-    Determines whether the wavelength solution has linear spacing ("lin") or
-    logarithmic spacing ("log").
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
 
     lambda_abs_igm: float
     Wavelength of the IGM absorber
 
     Attributes
     ----------
-    dec: float (from AstronomicalObject)
-    Declination (in rad)
-
-    healpix: int (from AstronomicalObject)
-    Healpix number associated with (ra, dec)
-
-    los_id: longint (from AstronomicalObject)
-    Line-of-sight id. Same as thingid
-
-    ra: float (from AstronomicalObject)
-    Right ascention (in rad)
-
-    z: float (from AstronomicalObject)
-    Redshift
-
-    bad_continuum_reason: str or None (from Forest)
-    Reason as to why the continuum fit is not acceptable. None for acceptable
-    contiuum.
-
-    continuum: array of float or None (from Forest)
-    Quasar continuum. None for no information
-
-    deltas: array of float or None (from Forest)
-    Flux-transmission field (delta field). None for no information
-
-    flux: array of float (from Forest)
-    Flux
-
-    ivar: array of float (from Forest)
-    Inverse variance
-
-    lambda_: array of float (from Forest)
-    Wavelength (in Angstroms)
-
-    log_lambda: array of float or None
-    Logarithm of the wavelength (in Angstroms)
-
-    mean_snr: float (from Forest)
-    Mean signal-to-noise of the forest
-
-    transmission_correction: array of float (from Forest)
-    Transmission correction.
-
-    weights: array of float or None (from Forest)
-    Weights associated to the delta field. None for no information
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
 
     exposures_diff: array of floats
     Difference between exposures
@@ -137,25 +68,22 @@ class Pk1dForest(Forest):
                                           "Missing variable 'reso'")
         del kwargs["reso"]
 
+        self.reso_pix = kwargs.get("reso_pix")
+        if self.reso_pix is None:
+            raise AstronomicalObjectError("Error constructing Pk1dForest. "
+                                          "Missing variable 'reso_pix'")
+        del kwargs["reso_pix"]
+
         # call parent constructor
         super().__init__(**kwargs)
 
         # compute mean quality variables
         self.mean_reso = self.reso.mean()
-        if Forest.wave_solution == "log":
-            self.mean_z = (
-                (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-                 np.power(10., self.log_lambda[0])) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        elif Forest.wave_solution == "lin":
-            self.mean_z = (
-                (self.lambda_[len(self.lambda_) - 1] + self.lambda_[0]) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        else:
-            raise AstronomicalObjectError("Error in constructing Pk1dForest. "
-                                          "Class variable 'wave_solution' "
-                                          "must be either 'lin' or 'log'. "
-                                          f"Found: '{Forest.wave_solution}'")
+        self.mean_z = (
+            (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
+             np.power(10., self.log_lambda[0])) / 2. /
+            Pk1dForest.lambda_abs_igm - 1.0)
+        self.mean_reso_pix = self.reso_pix.mean()
 
         self.consistency_check()
 
@@ -163,23 +91,25 @@ class Pk1dForest(Forest):
     def class_variable_check(cls):
         """Check that class variables have been correctly initialized"""
         if cls.lambda_abs_igm is None:
-            raise AstronomicalObjectError("Error constructing Pk1DForest. "
-                                          "Class variable 'lambda_abs_igm' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
+            raise AstronomicalObjectError(
+                "Error constructing Pk1dForest. Class variable 'lambda_abs_igm' "
+                "must be set prior to initialize instances of this type")
 
     def consistency_check(self):
         """Consistency checks after __init__"""
         super().consistency_check()
         if self.flux.size != self.exposures_diff.size:
             raise AstronomicalObjectError(
-                "Error constructing Pk1dForest. 'flux', "
+                "Error constructing Pk1dForest. 'flux' "
                 "and 'exposures_diff' don't have the "
                 "same size")
         if "exposures_diff" not in Forest.mask_fields:
             Forest.mask_fields += ["exposures_diff"]
         if "reso" not in Forest.mask_fields:
             Forest.mask_fields += ["reso"]
+        if "reso_pix" not in Forest.mask_fields:
+            Forest.mask_fields += ["reso_pix"]
+
 
     def coadd(self, other):
         """Coadd the information of another forest.
@@ -200,11 +130,11 @@ class Pk1dForest(Forest):
             raise AstronomicalObjectError(
                 "Error coadding Pk1dForest. Expected "
                 "Pk1dForest instance in other. Found: "
-                f"{type(other)}")
+                f"{type(other).__name__}")
         self.exposures_diff = np.append(self.exposures_diff,
                                         other.exposures_diff)
         self.reso = np.append(self.reso, other.reso)
-
+        self.reso_pix = np.append(self.reso_pix, other.reso_pix)
         # coadd the deltas by rebinning
         super().coadd(other)
 
@@ -230,13 +160,15 @@ class Pk1dForest(Forest):
         """
         cols, names, units, comments = super().get_data()
 
-        cols += [self.ivar, self.exposures_diff]
-        names += ["IVAR", "DIFF"]
+        cols += [self.ivar, self.exposures_diff, self.reso, self.reso_pix]
+        names += ["IVAR", "DIFF", "RESO", "RESO_PIX"]
         comments += [
             "Inverse variance. Check input spectra for units",
-            "Difference. Check input spectra for units"
+            "Difference. Check input spectra for units",
+            "Resolution estimate (FWHM) for each pixel in units of km/s"
+            "Resolution estimate (sigma) for each pixel in units of pixel size"
         ]
-        units += ["Flux units", "Flux units"]
+        units += ["Flux units", "Flux units", "", ""]
 
         return cols, names, units, comments
 
@@ -261,7 +193,12 @@ class Pk1dForest(Forest):
             {
                 'name': 'MEANRESO',
                 'value': self.mean_reso,
-                'comment': 'Mean resolution'
+                'comment': 'Mean resolution (km/s)'
+            },
+            {
+                'name': 'MEANRESO_PIX',
+                'value': self.mean_reso_pix,
+                'comment': 'Mean resolution (pixels)'
             },
         ]
 
@@ -302,43 +239,41 @@ class Pk1dForest(Forest):
         if len(rebin_ivar) == 0:
             self.exposures_diff = np.array([])
             self.reso = np.array([])
+            self.reso_pix = np.array([])
             return [], [], [], [], []
 
         # apply mask due to cuts in bin
         self.exposures_diff = self.exposures_diff[w1]
         self.reso = self.reso[w1]
+        self.reso_pix = self.reso_pix[w1]
 
         # rebin exposures_diff and reso
         rebin_exposures_diff = np.zeros(bins.max() + 1)
         rebin_reso = np.zeros(bins.max() + 1)
+        rebin_reso_pix = np.zeros(bins.max() + 1)
         rebin_exposures_diff_aux = np.bincount(bins,
                                                weights=orig_ivar[w1] *
                                                self.exposures_diff)
         rebin_reso_aux = np.bincount(bins, weights=orig_ivar[w1] * self.reso)
+        rebin_reso_pix_aux = np.bincount(bins, weights=orig_ivar[w1] * self.reso_pix)
         rebin_exposures_diff[:len(rebin_exposures_diff_aux
                                  )] += rebin_exposures_diff_aux
         rebin_reso[:len(rebin_reso_aux)] += rebin_reso_aux
+        rebin_reso_pix[:len(rebin_reso_pix_aux)] += rebin_reso_pix_aux
+
 
         # apply mask due to rebinned inverse vairane
         self.exposures_diff = rebin_exposures_diff[w2] / rebin_ivar[w2]
         self.reso = rebin_reso[w2] / rebin_ivar[w2]
+        self.reso_pix = rebin_reso_pix[w2] / rebin_ivar[w2]
 
         # finally update control variables
         self.mean_reso = self.reso.mean()
-        if Forest.wave_solution == "log":
-            self.mean_z = (
-                (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
-                 np.power(10., self.log_lambda[0])) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        elif Forest.wave_solution == "lin":
-            self.mean_z = (
-                (self.lambda_[len(self.lambda_) - 1] + self.lambda_[0]) / 2. /
-                Pk1dForest.lambda_abs_igm - 1.0)
-        else:
-            raise AstronomicalObjectError("Error in rebinning Pk1dForest. "
-                                          "Class variable 'wave_solution' "
-                                          "must be either 'lin' or 'log'. "
-                                          f"Found: {Forest.wave_solution}")
+        self.mean_z = (
+            (np.power(10., self.log_lambda[len(self.log_lambda) - 1]) +
+             np.power(10., self.log_lambda[0])) / 2. /
+            Pk1dForest.lambda_abs_igm - 1.0)
+        self.mean_reso_pix = self.reso_pix.mean()
 
         # return weights and binning solution to be used by child classes if
         # required

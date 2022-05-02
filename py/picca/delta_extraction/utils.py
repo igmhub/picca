@@ -7,6 +7,8 @@ import os
 import numpy as np
 from scipy.constants import speed_of_light as speed_light
 
+from picca.delta_extraction.errors import DeltaExtractionError
+
 module_logger = logging.getLogger(__name__)
 
 SPEED_LIGHT = speed_light/1000. # [km/s]
@@ -127,7 +129,7 @@ def class_from_string(class_name, module_name):
         accepted_options = []
     return class_object, default_args, accepted_options
 
-def find_bins(original_array, grid_array):
+def find_bins(original_array, grid_array, wave_solution):
     """For each element in original_array, find the corresponding bin in grid_array
 
     Arguments
@@ -138,20 +140,37 @@ def find_bins(original_array, grid_array):
     grid_array: array of float
     Common array, e.g. Forest.log_lambda_grid
 
+    wave_solution: "log" or "lin"
+    Specifies whether we want to construct a wavelength grid that is evenly
+    spaced on wavelength (lin) or on the logarithm of the wavelength (log)
+
     Return
     ------
     found_bin: array of int
     An array of size original_array.size filled with values smaller than
     grid_array.size with the bins correspondance
     """
-    found_bin = (np.abs(grid_array - original_array[:,np.newaxis])).argmin(axis=1)
+    # TODO: check the effect of finding the nearest bin in log_lambda space
+    # versus lambda space. Once we understand this we can possibly remove
+    # the dependence from Forest from here
+    if wave_solution == "log":
+        found_bin = (np.abs(grid_array - original_array[:,np.newaxis])).argmin(axis=1)
+    elif wave_solution == "lin":
+        found_bin = (np.abs(10**grid_array - 10**original_array[:,np.newaxis])).argmin(axis=1)
+    # this should never be entered but adding it anyways in case at some point
+    # we decide to add a new wavelength solution
+    else: # pragma: no cover
+        raise DeltaExtractionError(
+            "Error in function find_bins from py/picca/delta_extraction/utils.py"
+            "expected wavelength solution to be either 'log' or 'lin'. Found: "
+            f"{wave_solution}")
     return found_bin
 
 PROGRESS_LEVEL_NUM = 15
 logging.addLevelName(PROGRESS_LEVEL_NUM, "PROGRESS")
 def progress(self, message, *args, **kws):
     """Function to log with level PROGRESS"""
-    if self.isEnabledFor(PROGRESS_LEVEL_NUM):
+    if self.isEnabledFor(PROGRESS_LEVEL_NUM): # pragma: no branch
         # pylint: disable-msg=protected-access
         # this method will be attached to logging.Logger
         self._log(PROGRESS_LEVEL_NUM, message, args, **kws)
@@ -161,7 +180,7 @@ OK_WARNING_LEVEL_NUM = 31
 logging.addLevelName(OK_WARNING_LEVEL_NUM, "WARNING OK")
 def ok_warning(self, message, *args, **kws):
     """Function to log with level WARNING OK"""
-    if self.isEnabledFor(OK_WARNING_LEVEL_NUM):
+    if self.isEnabledFor(OK_WARNING_LEVEL_NUM): # pragma: no branch
         # pylint: disable-msg=protected-access
         # this method will be attached to logging.Logger
         self._log(OK_WARNING_LEVEL_NUM, message, args, **kws)

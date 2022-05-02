@@ -13,12 +13,16 @@ from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import ABSORBER_IGM
 
 accepted_options = ["analysis type", "delta lambda", "delta log lambda",
+                    "delta lambda rest frame",
                     "input directory",
                     "lambda abs IGM",
                     "lambda max", "lambda max rest frame",
                     "lambda min", "lambda min rest frame",
                     "minimum number pixels in forest",
-                    "out dir", "rejection log file"]
+                    "out dir", "rejection log file",
+                    "minimal snr",
+                    "minimal snr pk1d","minimal snr bao3d", #these options are allowed but will be overwritten by minimal snr (only needed to allow running on a .config with default options)
+                    ]
 
 defaults = {
     "analysis type": "BAO 3D",
@@ -29,6 +33,8 @@ defaults = {
     "lambda min rest frame": 1040.0,
     "minimum number pixels in forest": 50,
     "rejection log file": "rejection_log.fits.gz",
+    "minimal snr pk1d": 1,
+    "minimal snr bao3d": 0,
 }
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
@@ -92,13 +98,14 @@ class Data:
         self.min_num_pix = None
         self.out_dir = None
         self.rejection_log_file = None
+        self.min_snr = None
         self.__parse_config(config)
 
         # rejection log arays
         self.rejection_log_initialized = False
-        self.rejection_log_cols = []
-        self.rejection_log_names = []
-        self.rejection_log_comments = []
+        self.rejection_log_cols = None
+        self.rejection_log_names = None
+        self.rejection_log_comments = None
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -112,28 +119,40 @@ class Data:
         -----
         DataError upon missing required variables
         """
-        # setup SdssForest class variables
+        # setup Forest class variables
         wave_solution = config.get("wave solution")
 
         if wave_solution is None:
             raise DataError("Missing argument 'wave solution' required by Data")
         if wave_solution not in ["lin", "log"]:
             raise DataError("Unrecognised value for 'wave solution'. Expected either "
-                            f"'lin' or 'lof'. Found {wave_solution}")
+                            f"'lin' or 'log'. Found '{wave_solution}'.")
 
         if wave_solution == "log":
             pixel_step = config.getfloat("delta log lambda")
             if pixel_step is None:
                 raise DataError("Missing argument 'delta log lambda' required by "
                                 "Data when 'wave solution' is set to 'log'")
+            pixel_step_rest_frame = config.getfloat("delta log lambda rest frame")
+            if pixel_step_rest_frame is None:
+                pixel_step_rest_frame = pixel_step
+                self.logger.info("'delta log lambda rest frame' not set, using "
+                                 f"the same value as for 'delta log lambda' ({pixel_step_rest_frame})")
         elif wave_solution == "lin":
             pixel_step = config.getfloat("delta lambda")
             if pixel_step is None:
                 raise DataError("Missing argument 'delta lambda' required by "
                                 "Data when 'wave solution' is set to 'lin'")
-        else:
-            raise DataError("Forest.wave_solution must be either "
-                            "'log' or 'lin'")
+            pixel_step_rest_frame = config.getfloat("delta lambda rest frame")
+            if pixel_step_rest_frame is None:
+                pixel_step_rest_frame = pixel_step
+                self.logger.info("'delta lambda rest frame' not set, using "
+                                 f"the same value as for 'delta lambda' ({pixel_step_rest_frame})")
+        # this should not be reached as wave_solution is either "lin" or "log"
+        # added here only in case we add another wave_solution in the future
+        else: # pragma: no cover
+            raise DataError("Unrecognised value for 'wave solution'. Expected either "
+                            f"'lin' or 'log'. Found '{wave_solution}'.")
 
         lambda_max = config.getfloat("lambda max")
         if lambda_max is None:
@@ -151,7 +170,8 @@ class Data:
         Forest.set_class_variables(lambda_min, lambda_max,
                                    lambda_min_rest_frame,
                                    lambda_max_rest_frame,
-                                   pixel_step, wave_solution)
+                                   pixel_step, pixel_step_rest_frame,
+                                   wave_solution)
 
         # instance variables
         self.analysis_type = config.get("analysis type")
@@ -159,14 +179,20 @@ class Data:
             raise DataError("Missing argument 'analysis type' required by Data")
         if self.analysis_type not in accepted_analysis_type:
             raise DataError("Invalid argument 'analysis type' required by "
-                            "DesiData. Accepted values: " +
-                            ",".join(accepted_analysis_type))
+                            f"Data. Found: '{self.analysis_type}'. Accepted "
+                            "values: " + ",".join(accepted_analysis_type))
 
         if self.analysis_type == "PK 1D":
-            Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(config.get("lambda abs IGM"))
-            if Pk1dForest.lambda_abs_igm is None:
+            lambda_abs_igm_name = config.get("lambda abs IGM")
+            if lambda_abs_igm_name is None:
                 raise DataError("Missing argument 'lambda abs IGM' required by Data "
-                                "when 'analysys type' is 'BAO 3D'")
+                                "when 'analysys type' is 'PK 1D'")
+            Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(lambda_abs_igm_name)
+            if Pk1dForest.lambda_abs_igm is None:
+                keys = [key for key in ABSORBER_IGM.keys()]
+                raise DataError("Invalid argument 'lambda abs IGM' required by "
+                                f"Data. Found: '{lambda_abs_igm_name}'. Accepted "
+                                "values: " + ", ".join(keys))
 
         self.input_directory = config.get("input directory")
         if self.input_directory is None:
@@ -185,11 +211,35 @@ class Data:
         self.rejection_log_file = config.get("rejection log file")
         if self.rejection_log_file is None:
             raise DataError("Missing argument 'rejection log file' required by Data")
+        elif "/" in self.rejection_log_file:
+            raise DataError(
+                "Error constructing Data. "
+                "'rejection log file' should not incude folders. "
+                f"Found: {self.rejection_log_file}")
         elif not (self.rejection_log_file.endswith(".fits") or
               self.rejection_log_file.endswith(".fits.gz")):
-            raise DataError("Invalid extension for 'rejection log file'. Filename "
+            raise DataError("Error constructing Data. Invalid extension for "
+                            "'rejection log file'. Filename "
                             "should en with '.fits' or '.fits.gz'. Found "
                             f"'{self.rejection_log_file}'")
+
+        if self.analysis_type == "BAO 3D":
+            self.min_snr = config.getfloat("minimal snr bao3d")
+        elif self.analysis_type == "PK 1D":
+            self.min_snr = config.getfloat("minimal snr pk1d")
+        # this should not be reached as analysis_type is either "BAO 3D" or
+        # "PK 1D" added here only in case we add another analysis_type in the
+        # future
+        else: # pragma: no cover
+            raise DataError("Invalid argument 'analysis type' required by "
+                            f"Data. Found: '{self.analysis_type}'. Accepted "
+                            "values: " + ",".join(accepted_analysis_type))
+        if self.min_snr is None:
+            raise  DataError(
+                "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
+                "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
+                "required by Data")
+
 
     def add_to_rejection_log(self, header, size, rejection_status):
         """Adds to the rejection log arrays.
@@ -207,13 +257,19 @@ class Data:
         rejection_status: str
         Rejection status
         """
+        # if necessary initialize arrays to save rejected quasars in the log
+        if not self.rejection_log_initialized:
+            self.initialize_rejection_log(self.forests[0].get_header())
+
         for col, name in zip(self.rejection_log_cols, self.rejection_log_names):
             if name == "FOREST_SIZE":
                 col.append(size)
             elif name == "REJECTION_STATUS":
                 col.append(rejection_status)
             else:
-                for item in header:
+                # this loop will always end with the break
+                # the break is introduced to avoid useless checks
+                for item in header: # pragma: no branch
                     if item.get("name") == name:
                         col.append(item.get("value"))
                         break
@@ -241,10 +297,6 @@ class Data:
 
     def filter_bad_cont_forests(self):
         """Remove forests where continuum could not be computed"""
-        # if necessary initialize arrays to save rejected quasars in the log
-        if len(self.forests) > 0 and not self.rejection_log_initialized:
-            self.initialize_rejection_log(self.forests[0].get_header())
-
         remove_indexs = []
         for index, forest in enumerate(self.forests):
             if forest.bad_continuum_reason is not None:
@@ -268,10 +320,6 @@ class Data:
         """Remove forests that do not meet quality standards"""
         self.logger.progress(f"Input sample has {len(self.forests)} forests")
 
-        # if necessary initialize arrays to save rejected quasars in the log
-        if len(self.forests) > 0 and not self.rejection_log_initialized:
-            self.initialize_rejection_log(self.forests[0].get_header())
-
         remove_indexs = []
         for index, forest in enumerate(self.forests):
             if forest.flux.size < self.min_num_pix:
@@ -287,6 +335,12 @@ class Data:
                 self.logger.progress(
                     f"Rejected forest with los_id {forest.los_id} "
                     "due to finding nan")
+            elif forest.mean_snr < self.min_snr:
+                self.add_to_rejection_log(forest.get_header(), forest.flux.size,
+                                          f"low SNR ({forest.mean_snr})")
+                self.logger.progress(
+                    f"Rejected forest with los_id {forest.los_id} "
+                    f"due to low SNR ({forest.mean_snr} < {self.min_snr})")
             else:
                 continue
 
@@ -296,7 +350,7 @@ class Data:
         for index in sorted(remove_indexs, reverse=True):
             del self.forests[index]
 
-        self.logger.progress("Removed forest that are too short")
+        self.logger.progress("Removed forests that are too short")
         self.logger.progress(f"Remaining sample has {len(self.forests)} forests")
 
     def find_nside(self):
@@ -324,10 +378,6 @@ class Data:
 
     def save_deltas(self):
         """Save the deltas."""
-        # if necessary initialize arrays to save rejected quasars in the log
-        if len(self.forests) > 0 and not self.rejection_log_initialized:
-            self.initialize_rejection_log(self.forests[0].get_header())
-
         healpixs = np.array([forest.healpix for forest in self.forests])
         unique_healpixs = np.unique(healpixs)
         healpixs_indexs = {healpix: np.where(healpixs == healpix)[0]
@@ -356,7 +406,7 @@ class Data:
         self.save_rejection_log()
 
     def save_rejection_log(self):
-        """Initializes the rejection log arrays.
+        """Saves the rejection log arrays.
         In the log forest headers will be saved along with the forest size and
         the rejection status.
         """
