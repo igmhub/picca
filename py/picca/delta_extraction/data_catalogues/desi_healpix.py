@@ -80,7 +80,7 @@ class ParallelReader(object):
             hdul = fitsio.FITS(filename)
         except IOError:
             self.logger.warning(f"Error reading '{filename}'. Ignoring file")
-            return
+            return {}
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
         targetid_spec = fibermap["TARGETID"]
@@ -375,7 +375,7 @@ class DesiHealpix(DesiData):
                 ParallelReader._merge_new_forest(forests_by_targetid, reader(this_arg))
 
         if len(forests_by_targetid) == 0:
-            raise DataError("No Quasars found, stopping here")
+            raise DataError("No quasars found, stopping here")
 
         self.forests = list(forests_by_targetid.values())
 

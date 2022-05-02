@@ -116,7 +116,7 @@ class DesisimMocks(DesiHealpix):
                 imap_it = pool.imap(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
                 for forests_by_pe in imap_it:
                     # Merge each dict to master forests_by_targetid
-                    _ParallelReader._merge_new_forest(forests_by_targetid, forests_by_pe)
+                    ParallelReader._merge_new_forest(forests_by_targetid, forests_by_pe)
         else:
             reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
             for index, this_arg in enumerate(arguments):
