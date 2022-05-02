@@ -23,7 +23,6 @@ defaults.update({
     "use non-coadded spectra": False,
 })
 
-
 # Class to read in parallel
 # Seems lightweight to copy all these 3 arguments
 class ParallelReader(object):
@@ -153,7 +152,7 @@ class ParallelReader(object):
                     "z": row['Z'],
                 }
                 args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-                
+
                 if self.analysis_type == "BAO 3D":
                     forest = DesiForest(**args)
                 elif self.analysis_type == "PK 1D":
