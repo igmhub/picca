@@ -914,6 +914,23 @@ class DataTest(AbstractTest):
 
         self.assertTrue(len(data.forests) == 63)
 
+        # run with 2 processors; case: only sv data
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
+            "keep surveys": "all",
+            "input directory": f"{THIS_DIR}/data/",
+            "out dir": f"{THIS_DIR}/results/",
+            "num processors": 2,
+        }})
+        for key, value in defaults_desi_healpix.items():
+            if key not in config["data"]:
+                config["data"][key] = str(value)
+
+        data = DesiHealpix(config["data"])
+
+        self.assertTrue(len(data.forests) == 63)
+
         # run with one processor; case: only sv data, select sv2 (no quasars)
         config = ConfigParser()
         config.read_dict({"data": {
