@@ -32,6 +32,29 @@ class ParallelReader(object):
         self.analysis_type = analysis_type
         self.use_non_coadded_spectra = use_non_coadded_spectra
 
+    def _merge_new_forest(forests_by_targetid, forests_by_pe):
+        """Merge forests_by_pe and forests_by_targetid as Forest instances.
+
+        Arguments
+        ---------
+        forests_by_targetid: dict
+        Dictionary were forests are stored. Its content is modified by this
+        function with the new forests.
+
+        forests_by_pe: str
+        Name of the file to read
+
+        """
+        parent_targetids = set(forests_by_targetid.keys())
+        existing_targetids = parent_targetids.intersection(forests_by_pe.keys())
+        new_targetids = forests_by_pe.keys()-existing_targetids
+
+        # Does not fail if existing_targetids is empty
+        for tid in existing_targetids:
+            forests_by_targetid[tid].coadd(forests_by_pe[tid])
+        for tid in new_targetids:
+            forests_by_targetid[tid] = forests_by_pe[tid]
+
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
 
@@ -46,8 +69,7 @@ class ParallelReader(object):
         Returns:
         ---------
         forests_by_targetid: dict
-        Dictionary were forests are stored. Its content is modified by this
-        function with the new forests.
+        Dictionary were forests are stored.
 
         Raise
         -----
@@ -190,9 +212,7 @@ class ParallelReader(object):
 
                 # keep the forest
                 if targetid in forests_by_targetid:
-                    existing_forest = forests_by_targetid[targetid]
-                    existing_forest.coadd(forest)
-                    forests_by_targetid[targetid] = existing_forest
+                    forests_by_targetid[targetid].coadd(forest)
                 else:
                     forests_by_targetid[targetid] = forest
 
@@ -258,7 +278,15 @@ class DesiHealpix(DesiData):
         #init of DesiData needs to come last, as it contains the actual data reading and thus needs all config
         super().__init__(config)
 
-
+        if self.analysis_type == "PK 1D":
+            if "exposures_diff" not in Forest.mask_fields:
+                Forest.mask_fields += ["exposures_diff"]
+            if "reso" not in Forest.mask_fields:
+                Forest.mask_fields += ["reso"]
+            if "reso_pix" not in Forest.mask_fields:
+                Forest.mask_fields += ["reso_pix"]
+            if "resolution_matrix" not in Forest.mask_fields:
+                Forest.mask_fields += ["resolution_matrix"]
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -315,36 +343,12 @@ class DesiHealpix(DesiData):
         self.catalogue.sort("HEALPIX")
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
 
-        if self.analysis_type == "PK 1D":
-            if "exposures_diff" not in Forest.mask_fields:
-                Forest.mask_fields += ["exposures_diff"]
-            if "reso" not in Forest.mask_fields:
-                Forest.mask_fields += ["reso"]
-            if "reso_pix" not in Forest.mask_fields:
-                Forest.mask_fields += ["reso_pix"]
-            if "resolution_matrix" not in Forest.mask_fields:
-                Forest.mask_fields += ["resolution_matrix"]
-
         is_sv = True
         forests_by_targetid = {}
-        
-        def _merge_new_forest(forests_by_pe):
-            parent_targetids = set(forests_by_targetid.keys())
-            existing_targetids = parent_targetids.intersection(forests_by_pe.keys())
-            new_targetids = forests_by_pe.keys()-existing_targetids
-
-            # Does not fail if existing_targetids is empty
-            for tid in existing_targetids:
-                existing_forest = forests_by_targetid[tid]
-                existing_forest.coadd(forests_by_pe[tid])
-                forests_by_targetid[tid] = existing_forest
-            for tid in new_targetids:
-                forests_by_targetid[tid] = forests_by_pe[tid]
 
         arguments = []
-        for (index,
-            (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                    grouped_catalogue.groups):
+        for group in grouped_catalogue.groups:
+            healpix, survey = group["HEALPIX", "SURVEY"][0]
 
             if survey not in ["sv", "sv1", "sv2", "sv3"]:
                 is_sv = False
@@ -358,22 +362,22 @@ class DesiHealpix(DesiData):
 
             arguments.append((filename,group))
 
-            self.logger.info(f"reading data from {len(arguments)} files")
+        self.logger.info(f"reading data from {len(arguments)} files")
 
         if self.num_processors>1:
             with multiprocessing.Pool(processes=self.num_processors) as pool:
                 imap_it = pool.imap(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
                 for forests_by_pe in imap_it:
                     # Merge each dict to master forests_by_targetid
-                    _merge_new_forest(forests_by_pe)
+                    ParallelReader._merge_new_forest(forests_by_targetid, forests_by_pe)
         else:
             reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
-            for this_arg in arguments:
+            for index, this_arg in enumerate(arguments):
                 self.logger.progress(
-                    f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
+                    f"Read {index} of {len(arguments)}. "
                     f"num_data: {len(forests_by_targetid)}")
 
-                _merge_new_forest(reader(this_arg))
+                ParallelReader._merge_new_forest(forests_by_targetid, reader(this_arg))
 
         if len(forests_by_targetid) == 0:
             raise DataError("No Quasars found, stopping here")
