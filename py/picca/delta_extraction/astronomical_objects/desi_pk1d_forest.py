@@ -33,7 +33,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
     ----------
     (see DesiForest in py/picca/delta_extraction/astronomical_objects/desi_forest.py)
     (see Pk1dForest in py/picca/delta_extraction/astronomical_objects/pk1d_forest.py)
-    
+
     resolution_matrix: 2d-array of floats or None
     Resolution matrix of the forests
     """
@@ -57,7 +57,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
             raise AstronomicalObjectError(
                 "Error constructing DesiPk1dForest. "
                 "Missing variable 'resolution_matrix'")
-        if "resolution_matrix" in kwargs:
+        else:
             del kwargs["resolution_matrix"]
 
         # call parent constructors
@@ -70,7 +70,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         super().consistency_check()
         if self.resolution_matrix.shape[1] != self.flux.shape[0]:
             raise AstronomicalObjectError(
-                "Error constructing DesiPk1dForest. 'resolution_matrix', "
+                "Error constructing DesiPk1dForest. 'resolution_matrix' "
                 "and 'flux' don't have the "
                 "same size")
         if "resolution_matrix" not in Forest.mask_fields:
@@ -95,7 +95,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
             raise AstronomicalObjectError(
                 "Error coadding DesiPk1dForest. Expected "
                 "DesiPk1dForest instance in other. Found: "
-                f"{type(other)}")
+                f"{type(other).__name__}")
 
         if other.resolution_matrix.size > 0 and self.resolution_matrix.size > 0:
             if self.resolution_matrix.shape[0]!=other.resolution_matrix.shape[0]:

@@ -116,6 +116,7 @@ class DesisimMocks(DesiHealpix):
 
                 pool.starmap(self.read_file, arguments)
             for key,forest in forests_by_targetid.items():
+                #TODO: the following just does the consistency checking again, to avoid mask_fields not being populated. In the long run an alternative way of running the multiprocessing is envisioned which would be more stable, see discussion in PRs 879 and 883
                 forest.consistency_check()
         else:
             forests_by_targetid = {}
@@ -133,7 +134,7 @@ class DesisimMocks(DesiHealpix):
                 self.read_file(filename, group, forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
-            raise DataError("No Quasars found, stopping here")
+            raise DataError("No quasars found, stopping here")
         self.forests = list(forests_by_targetid.values())
 
         return True, False

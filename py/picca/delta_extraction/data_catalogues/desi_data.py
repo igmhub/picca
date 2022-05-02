@@ -22,6 +22,7 @@ from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_catalogue + [
     "blinding", "wave solution"])))
 
+defaults = defaults.copy()
 defaults.update({
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
@@ -109,7 +110,8 @@ class DesiData(Data):
             raise DataError("Missing argument 'blinding' required by DesiData")
         if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
             raise DataError("Unrecognized blinding strategy. Accepted strategies "
-                            f"are {ACCEPTED_BLINDING_STRATEGIES}. Found {self.blinding}")
+                            f"are {ACCEPTED_BLINDING_STRATEGIES}. "
+                            f"Found '{self.blinding}'")
 
     # pylint: disable=no-self-use
     # this method should use self in child classes
@@ -147,7 +149,7 @@ class DesiData(Data):
         """
         # blinding checks
         if is_mock:
-            if self.blinding != "none":
+            if self.blinding != "none": # pragma: no branch
                 self.logger.warning(f"Selected blinding, {self.blinding} is "
                                     "being ignored as mocks should not be "
                                     "blinded. 'none' blinding engaged")

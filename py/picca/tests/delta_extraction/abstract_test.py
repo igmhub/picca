@@ -5,6 +5,9 @@ import os
 import numpy as np
 import astropy.io.fits as fits
 
+from picca.tests.delta_extraction.test_utils import (reset_forest, setup_forest,
+                                                     setup_pk1d_forest)
+
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class AbstractTest(unittest.TestCase):
@@ -17,12 +20,22 @@ class AbstractTest(unittest.TestCase):
     setUp
     """
     def setUp(self):
-        """ Check that the results folder exists and create it
-            if it does not."""
+        """ Actions done at test startup
+        Check that the results folder exists and create it
+        if it does not.
+        Also make sure that Forest and Pk1dForest class variables are reset
+        """
         if not os.path.exists("{}/results/".format(THIS_DIR)):
             os.makedirs("{}/results/".format(THIS_DIR))
         if not os.path.exists("{}/results/Log/".format(THIS_DIR)):
             os.makedirs("{}/results/Log/".format(THIS_DIR))
+        reset_forest()
+
+    def tearDown(self):
+        """ Actions done at test end
+        Make sure that Forest and Pk1dForest class variables are reset
+        """
+        reset_forest()
 
     def compare_ascii(self, orig_file, new_file):
         """Compare two ascii files to check that they are equal
@@ -62,6 +75,48 @@ class AbstractTest(unittest.TestCase):
             orig.close()
             new.close()
 
+    def compare_error_message(self, context_manager, expected_message,
+                              startswith=False):
+        """Check the received error message is the same as the expected
+
+        Arguments
+        ---------
+        context_manager: unittest.case._AssertRaisesContext
+        Context manager when errors are expected to be raised.
+
+        expected_message: str
+        Expected error message
+
+        startswith: bool - Default: False
+        If True, check that expected_message is the beginning of the actual error
+        message. Otherwise check that expected_message is the entire message
+        """
+        if "py/picca/tests/delta_extraction" in expected_message:
+            expected_message = re.sub(r"\/[^ ]*\/py\/picca\/tests\/delta_extraction\/",
+                                      "", expected_message)
+        received_message = str(context_manager.exception)
+        if "py/picca/tests/delta_extraction" in received_message:
+            received_message = re.sub(r"\/[^ ]*\/py\/picca\/tests\/delta_extraction\/",
+                                      "", received_message)
+
+        if startswith:
+            if not received_message.startswith(expected_message):
+                print("\nReceived incorrect error message")
+                print("Expected message to start with:")
+                print(expected_message)
+                print("Received:")
+                print(received_message)
+            self.assertTrue(received_message.startswith(
+                expected_message))
+        else:
+            if not received_message == expected_message:
+                print("\nReceived incorrect error message")
+                print("Expected:")
+                print(expected_message)
+                print("Received:")
+                print(received_message)
+            self.assertTrue(received_message == expected_message)
+
     def compare_fits(self, orig_file, new_file):
         """Compare two fits files to check that they are equal
 
@@ -76,19 +131,22 @@ class AbstractTest(unittest.TestCase):
         # open fits files
         orig_hdul = fits.open(orig_file)
         new_hdul = fits.open(new_file)
-
         try:
             # compare them
             self.assertTrue(len(orig_hdul), len(new_hdul))
             # loop over HDUs
             for hdu_index, _ in enumerate(orig_hdul):
+                if "EXTNAME" in orig_hdul[hdu_index].header:
+                    hdu_name = orig_hdul[hdu_index].header["EXTNAME"]
+                else:
+                    hdu_name = hdu_index
                 # check header
-                orig_header = orig_hdul[hdu_index].header
-                new_header = new_hdul[hdu_index].header
+                orig_header = orig_hdul[hdu_name].header
+                new_header = new_hdul[hdu_name].header
                 for key in orig_header:
                     self.assertTrue(key in new_header)
                     if not key in ["CHECKSUM", "DATASUM"]:
-                        if orig_header[key] != new_header[key]:
+                        if (orig_header[key] != new_header[key] and not np.isclose(orig_header[key], new_header[key])):
                             print(f"\nOriginal file: {orig_file}")
                             print(f"New file: {new_file}")
                             print(f"\n For header {orig_header['EXTNAME']}")
@@ -105,8 +163,8 @@ class AbstractTest(unittest.TestCase):
                             continue
                     self.assertTrue(key in orig_header)
                 # check data
-                orig_data = orig_hdul[hdu_index].data
-                new_data = new_hdul[hdu_index].data
+                orig_data = orig_hdul[hdu_name].data
+                new_data = new_hdul[hdu_name].data
                 if orig_data is None:
                     self.assertTrue(new_data is None)
                 else:
@@ -122,7 +180,7 @@ class AbstractTest(unittest.TestCase):
                                      equal_nan=True):
                             print(f"\nOriginal file: {orig_file}")
                             print(f"New file: {new_file}")
-                            print(f"Different values found for column {col} in"
+                            print(f"Different values found for column {col} in "
                                   f"HDU {orig_header['EXTNAME']}")
                             print("original new isclose original-new\n")
                             for new, orig in zip(new_data[col], orig_data[col]):
