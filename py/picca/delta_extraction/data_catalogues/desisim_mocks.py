@@ -116,6 +116,7 @@ class DesisimMocks(DesiHealpix):
 
                 pool.starmap(self.read_file, arguments)
             for key,forest in forests_by_targetid.items():
+                #TODO: the following just does the consistency checking again, to avoid mask_fields not being populated. In the long run an alternative way of running the multiprocessing is envisioned which would be more stable, see discussion in PRs 879 and 883
                 forest.consistency_check()
         else:
             forests_by_targetid = {}
