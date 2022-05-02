@@ -143,7 +143,7 @@ class Forest(AstronomicalObject):
 
         # compute mean quality variables
         snr = self.flux * np.sqrt(self.ivar)
-        self.mean_snr = sum(snr) / float(len(snr))
+        self.mean_snr = np.mean(snr)
 
     @classmethod
     def class_variable_check(cls):
