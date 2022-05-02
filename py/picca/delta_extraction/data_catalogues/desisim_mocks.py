@@ -131,7 +131,7 @@ class DesisimMocks(DesiHealpix):
                 self.read_file(filename, group, forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
-            raise DataError("No Quasars found, stopping here")
+            raise DataError("No quasars found, stopping here")
         self.forests = list(forests_by_targetid.values())
 
         return True, False

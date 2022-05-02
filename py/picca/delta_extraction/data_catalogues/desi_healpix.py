@@ -19,6 +19,7 @@ from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff
 accepted_options = sorted(
     list(set(accepted_options + ["use non-coadded spectra","num processors"])))
 
+defaults = defaults.copy()
 defaults.update({
     "use non-coadded spectra": False,
 })
@@ -74,6 +75,7 @@ class DesiHealpix(DesiData):
         self.logger = logging.getLogger(__name__)
 
         self.use_non_coadded_spectra = None
+        self.num_processors = None
         self.__parse_config(config)
         #init of DesiData needs to come last, as it contains the actual data reading and thus needs all config
         super().__init__(config)
@@ -185,7 +187,7 @@ class DesiHealpix(DesiData):
                 self.read_file(filename, group, forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
-            raise DataError("No Quasars found, stopping here")
+            raise DataError("No quasars found, stopping here")
 
         self.forests = list(forests_by_targetid.values())
 
@@ -210,10 +212,11 @@ class DesiHealpix(DesiData):
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         """
+        print(type(catalogue))
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
-            self.logger.warning(f"Error reading  {filename}. Ignoring file")
+            self.logger.warning(f"Error reading '{filename}'. Ignoring file")
             return
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
@@ -224,9 +227,10 @@ class DesiHealpix(DesiData):
         colors = ["B", "R"]
         if "Z_FLUX" in hdul:
             colors.append("Z")
+        else:
+            self.logger.warning(f"Missing Z band from {filename}. Ignoring color.")
 
         reso_from_truth = False
-        no_scores_available = False
         for color in colors:
             spec = {}
             try:
@@ -238,15 +242,6 @@ class DesiHealpix(DesiData):
                 for key in ["FLUX", "IVAR"]:
                     spec[key][w] = 0.
                 if self.analysis_type == "PK 1D":
-                    if self.use_non_coadded_spectra and "SCORES" in hdul:
-                        # Calibration factor given in https://desi.lbl.gov/trac/browser/code/desimodel/trunk/data/tsnr/
-                        spec['TEFF_LYA'] = 11.80090901380597 * hdul['SCORES'][f'TSNR2_LYA_{color}'].read()
-                    else:
-                        spec['TEFF_LYA'] = np.ones(spec["FLUX"].shape[0])
-                        if self.use_non_coadded_spectra and not no_scores_available:
-                            self.logger.warning("SCORES are missing, Teff information (and thus DIFF) will be garbage")
-                        no_scores_available=True
-
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                     else:
@@ -254,21 +249,21 @@ class DesiHealpix(DesiData):
                         pathname_truth=os.path.dirname(filename)
                         filename_truth=f"{pathname_truth}/{basename_truth}"
                         if os.path.exists(filename_truth):
-                            with fitsio.FITS(filename_truth) as hdul_truth:
-                                spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
                             if not reso_from_truth:
                                 self.logger.debug("no resolution in files, reading from truth files")
                             reso_from_truth=True
+                            with fitsio.FITS(filename_truth) as hdul_truth:
+                                spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
                         else:
                             raise DataError(
-                                "Error while reading {color} band from "
-                                "{filename}. Analysis type is  'PK 1D', "
+                                f"Error while reading {color} band from "
+                                f"{filename}. Analysis type is 'PK 1D', "
                                 "but file does not contain HDU "
-                                f"'{color}_RESOLUTION' ")
+                                f"'{color}_RESOLUTION'")
                 spectrographs_data[color] = spec
             except OSError:
                 self.logger.warning(
-                    f"Error while reading {color} band from {filename}."
+                    f"Error while reading {color} band from {filename}. "
                     "Ignoring color.")
         hdul.close()
 
@@ -309,11 +304,11 @@ class DesiHealpix(DesiData):
                     "z": row['Z'],
                 }
                 args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-                
+
                 if self.analysis_type == "BAO 3D":
                     forest = DesiForest(**args)
                 elif self.analysis_type == "PK 1D":
-                    if self.use_non_coadded_spectra and not no_scores_available:
+                    if self.use_non_coadded_spectra:
                         exposures_diff = exp_diff_desi(spec, w_t)
                         if exposures_diff is None:
                             continue
@@ -334,7 +329,9 @@ class DesiHealpix(DesiData):
                     args["reso_pix"] = reso_in_pix
 
                     forest = DesiPk1dForest(**args)
-                else:
+                # this should never be entered added here in case at some point
+                # we add another analysis type
+                else: # pragma: no cover
                     raise DataError(
                         "Unkown analysis type. Expected 'BAO 3D'"
                         f"or 'PK 1D'. Found '{self.analysis_type}'")

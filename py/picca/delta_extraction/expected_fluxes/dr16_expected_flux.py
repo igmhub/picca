@@ -306,7 +306,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta_min = float(limit_eta[0][1:])
         else:
             eta_min = float(limit_eta[0])
-        if limit_eta[1].endswith(")") or limit_eta[0].endswith("]"):
+        if limit_eta[1].endswith(")") or limit_eta[1].endswith("]"):
             eta_max = float(limit_eta[1][:-1])
         else:
             eta_max = float(limit_eta[1])
@@ -321,7 +321,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             var_lss_min = float(limit_var_lss[0][1:])
         else:
             var_lss_min = float(limit_var_lss[0])
-        if limit_var_lss[1].endswith(")") or limit_var_lss[0].endswith("]"):
+        if limit_var_lss[1].endswith(")") or limit_var_lss[1].endswith("]"):
             var_lss_max = float(limit_var_lss[1][:-1])
         else:
             var_lss_max = float(limit_var_lss[1])

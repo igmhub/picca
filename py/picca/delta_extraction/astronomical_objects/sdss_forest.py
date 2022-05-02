@@ -95,7 +95,7 @@ class SdssForest(Forest):
         if not isinstance(other, SdssForest):
             raise AstronomicalObjectError("Error coadding SdssForest. Expected "
                                           "SdssForest instance in other. Found: "
-                                          f"{type(other)}")
+                                          f"{type(other).__name__}")
 
         self.fiberid += other.fiberid
         self.mjd += other.mjd
