@@ -512,12 +512,13 @@ class Dr16ExpectedFlux(ExpectedFlux):
                              Forest.log_lambda_rest_frame_grid,
                              Forest.wave_solution)
 
-            var_lss = self.get_var_lss(forest.log_lambda)
-            eta = self.get_eta(forest.log_lambda)
-            fudge = self.get_fudge(forest.log_lambda)
-            var_pipe = 1. / forest.ivar / forest.continuum**2
-            variance = eta * var_pipe + var_lss + fudge / var_pipe
-            weights = 1 / variance
+            weights = self.get_continuum_weights(forest, forest.continuum)
+            # this is needed as the weights from get_continuum_weights are
+            # divided by the continuum model squared, in this case forest.continuum
+            # TODO: check that we indeed need this or if the weights without it
+            # are better
+            if not self.use_constant_weight:
+                weights *= forest.continuum**2
             cont = np.bincount(bins,
                                weights=forest.flux / forest.continuum * weights)
             mean_cont[:len(cont)] += cont
