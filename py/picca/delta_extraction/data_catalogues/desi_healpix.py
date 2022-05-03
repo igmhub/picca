@@ -8,19 +8,13 @@ import fitsio
 import healpy
 import numpy as np
 
-from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
-from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
-from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults, accepted_options
+from picca.delta_extraction.data_catalogues.desi_data import DesiData
+from picca.delta_extraction.data_catalogues.desi_data import (# pylint: disable=unused-import
+    defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
-from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
 accepted_options = sorted(
-    list(set(accepted_options + ["use non-coadded spectra", "num processors"])))
-
-defaults = defaults.copy()
-defaults.update({
-    "use non-coadded spectra": False,
-})
+    list(set(accepted_options + ["num processors"])))
 
 
 class DesiHealpix(DesiData):
@@ -73,9 +67,9 @@ class DesiHealpix(DesiData):
         """
         self.logger = logging.getLogger(__name__)
 
-        self.use_non_coadded_spectra = None
         self.num_processors = None
         self.__parse_config(config)
+
         # init of DesiData needs to come last, as it contains the actual data
         # reading and thus needs all config
         super().__init__(config)
@@ -92,12 +86,6 @@ class DesiHealpix(DesiData):
         -----
         DataError upon missing required variables
         """
-        self.use_non_coadded_spectra = config.getboolean(
-            "use non-coadded spectra")
-        if self.use_non_coadded_spectra is None:
-            raise DataError(
-                "Missing argument 'use non-coadded spectra' required by DesiHealpix"
-            )
         self.num_processors = config.getint("num processors")
         if self.num_processors is None:
             raise DataError(
@@ -221,7 +209,6 @@ class DesiHealpix(DesiData):
             return
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
-        targetid_spec = fibermap["TARGETID"]
         # First read all wavelength, flux, ivar, mask, and resolution
         # from this file
         spectrographs_data = {}
@@ -273,84 +260,5 @@ class DesiHealpix(DesiData):
                     "Ignoring color.")
         hdul.close()
 
-        # Loop over quasars in catalogue inside this healpixel
-        for row in catalogue:
-            # Find which row in tile contains this quasar
-            # It should be there by construction
-            targetid = row["TARGETID"]
-            w_t = np.where(targetid_spec == targetid)[0]
-            if len(w_t) == 0:
-                self.logger.warning(
-                    f"Error reading {targetid}. Ignoring object")
-                continue
-            if len(w_t) > 1:
-                self.logger.warning(
-                    "Warning: more than one spectrum in this file "
-                    f"for {targetid}")
-            else:
-                w_t = w_t[0]
-            # Construct DesiForest instance
-            # Fluxes from the different spectrographs will be coadded
-            for spec in spectrographs_data.values():
-                if self.use_non_coadded_spectra:
-                    ivar = np.atleast_2d(spec['IVAR'][w_t])
-                    ivar_coadded_flux = np.atleast_2d(
-                        ivar * spec['FLUX'][w_t]).sum(axis=0)
-                    ivar = ivar.sum(axis=0)
-                    flux = (ivar_coadded_flux / ivar)
-                else:
-                    flux = spec['FLUX'][w_t].copy()
-                    ivar = spec['IVAR'][w_t].copy()
-
-                args = {
-                    "flux": flux,
-                    "ivar": ivar,
-                    "targetid": targetid,
-                    "ra": row['RA'],
-                    "dec": row['DEC'],
-                    "z": row['Z'],
-                }
-                args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-
-                if self.analysis_type == "BAO 3D":
-                    forest = DesiForest(**args)
-                elif self.analysis_type == "PK 1D":
-                    if self.use_non_coadded_spectra:
-                        exposures_diff = exp_diff_desi(spec, w_t)
-                        if exposures_diff is None:
-                            continue
-                    else:
-                        exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
-                    if not reso_from_truth:
-                        if len(spec['RESO'][w_t].shape) < 3:
-                            reso_sum = spec['RESO'][w_t].copy()
-                        else:
-                            reso_sum = spec['RESO'][w_t].sum(axis=0)
-                    else:
-                        reso_sum = spec['RESO'][:, :]
-                    reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
-                        reso_sum, spec['WAVELENGTH'])
-                    args["exposures_diff"] = exposures_diff
-                    args["reso"] = reso_in_km_per_s
-                    args["resolution_matrix"] = reso_sum
-                    args["reso_pix"] = reso_in_pix
-
-                    forest = DesiPk1dForest(**args)
-                # this should never be entered added here in case at some point
-                # we add another analysis type
-                else:  # pragma: no cover
-                    raise DataError("Unkown analysis type. Expected 'BAO 3D'"
-                                    f"or 'PK 1D'. Found '{self.analysis_type}'")
-
-                # rebin arrays
-                # this needs to happen after all arrays are initialized by
-                # Forest constructor
-                forest.rebin()
-
-                # keep the forest
-                if targetid in forests_by_targetid:
-                    existing_forest = forests_by_targetid[targetid]
-                    existing_forest.coadd(forest)
-                    forests_by_targetid[targetid] = existing_forest
-                else:
-                    forests_by_targetid[targetid] = forest
+        self.format_data(catalogue, spectrographs_data, fibermap["TARGETID"],
+                         forests_by_targetid, reso_from_truth=reso_from_truth)

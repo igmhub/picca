@@ -1,7 +1,10 @@
 """This module defines the class DesiData to load DESI data
 """
 import logging
+import numpy as np
 
+from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
+from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data import Data, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
@@ -11,17 +14,19 @@ from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
     defaults as defaults_quasar_catalogue)
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
+from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
 accepted_options = sorted(
     list(
         set(accepted_options + accepted_options_quasar_catalogue +
-            ["blinding", "wave solution"])))
+            ["blinding", "use non-coadded spectra", "wave solution"])))
 
 defaults = defaults.copy()
 defaults.update({
     "delta lambda": 0.8,
     "delta log lambda": 3e-4,
     "blinding": "corr_yshift",
+    "use non-coadded spectra": False,
     "wave solution": "lin",
 })
 defaults.update(defaults_quasar_catalogue)
@@ -78,6 +83,7 @@ class DesiData(Data):
 
         # load variables from config
         self.blinding = None
+        self.use_non_coadded_spectra = None
         self.__parse_config(config)
 
         # load z_truth catalogue
@@ -110,6 +116,130 @@ class DesiData(Data):
                 "Unrecognized blinding strategy. Accepted strategies "
                 f"are {ACCEPTED_BLINDING_STRATEGIES}. "
                 f"Found '{self.blinding}'")
+
+        self.use_non_coadded_spectra = config.getboolean(
+            "use non-coadded spectra")
+        if self.use_non_coadded_spectra is None:
+            raise DataError(
+                "Missing argument 'use non-coadded spectra' required by DesiData"
+            )
+
+    def format_data(self, catalogue, spectrographs_data, targetid_spec,
+                    forests_by_targetid, reso_from_truth=False):
+        """After data has been read, format it into DesiForest instances
+
+        Instances will be DesiForest or DesiPk1dForest depending on analysis_type
+
+        Arguments
+        ---------
+        catalogue: astropy.table.Table
+        The quasar catalogue fragment associated with this data
+
+        spectrographs_data: dict
+        The read data
+
+        targetid_spec: int
+        Targetid of the objects to format
+
+        forests_by_targetid: dict
+        Dictionary were forests are stored. Its content is modified by this
+        function with the new forests.
+
+        reso_from_truth: bool - Default: False
+        Specifies whether resolution matrixes are read from truth files (True)
+        or directly from data (False)
+
+        Return
+        ------
+        num_data: int
+        The number of instances loaded
+        """
+        num_data = 0
+
+        # Loop over quasars in catalogue fragment
+        for row in catalogue:
+            # Find which row in tile contains this quasar
+            # It should be there by construction
+            targetid = row["TARGETID"]
+            w_t = np.where(targetid_spec == targetid)[0]
+            if len(w_t) == 0:
+                self.logger.warning(
+                    f"Error reading {targetid}. Ignoring object")
+                continue
+            if len(w_t) > 1:
+                self.logger.warning(
+                    "Warning: more than one spectrum in this file "
+                    f"for {targetid}")
+            else:
+                w_t = w_t[0]
+            # Construct DesiForest instance
+            # Fluxes from the different spectrographs will be coadded
+            for spec in spectrographs_data.values():
+                if self.use_non_coadded_spectra:
+                    ivar = np.atleast_2d(spec['IVAR'][w_t])
+                    ivar_coadded_flux = np.atleast_2d(
+                        ivar * spec['FLUX'][w_t]).sum(axis=0)
+                    ivar = ivar.sum(axis=0)
+                    flux = (ivar_coadded_flux / ivar)
+                else:
+                    flux = spec['FLUX'][w_t].copy()
+                    ivar = spec['IVAR'][w_t].copy()
+
+                args = {
+                    "flux": flux,
+                    "ivar": ivar,
+                    "targetid": targetid,
+                    "ra": row['RA'],
+                    "dec": row['DEC'],
+                    "z": row['Z'],
+                }
+                args["log_lambda"] = np.log10(spec['WAVELENGTH'])
+
+                if self.analysis_type == "BAO 3D":
+                    forest = DesiForest(**args)
+                elif self.analysis_type == "PK 1D":
+                    if self.use_non_coadded_spectra:
+                        exposures_diff = exp_diff_desi(spec, w_t)
+                        if exposures_diff is None:
+                            continue
+                    else:
+                        exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
+                    if reso_from_truth:
+                        reso_sum = spec['RESO'][:, :]
+                    else:
+                        if len(spec['RESO'][w_t].shape) < 3:
+                            reso_sum = spec['RESO'][w_t].copy()
+                        else:
+                            reso_sum = spec['RESO'][w_t].sum(axis=0)
+                    reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
+                        reso_sum, spec['WAVELENGTH'])
+                    args["exposures_diff"] = exposures_diff
+                    args["reso"] = reso_in_km_per_s
+                    args["resolution_matrix"] = reso_sum
+                    args["reso_pix"] = reso_in_pix
+
+                    forest = DesiPk1dForest(**args)
+                # this should never be entered added here in case at some point
+                # we add another analysis type
+                else:  # pragma: no cover
+                    raise DataError("Unkown analysis type. Expected 'BAO 3D'"
+                                    f"or 'PK 1D'. Found '{self.analysis_type}'")
+
+                # rebin arrays
+                # this needs to happen after all arrays are initialized by
+                # Forest constructor
+                forest.rebin()
+
+                # keep the forest
+                if targetid in forests_by_targetid:
+                    existing_forest = forests_by_targetid[targetid]
+                    existing_forest.coadd(forest)
+                    forests_by_targetid[targetid] = existing_forest
+                else:
+                    forests_by_targetid[targetid] = forest
+
+                num_data += 1
+        return num_data
 
     # pylint: disable=no-self-use
     # this method should use self in child classes
