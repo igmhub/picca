@@ -80,8 +80,8 @@ class DlaMask(Mask):
         self.logger.progress(f"Reading DLA catalog from: {filename}")
         columns_list = [los_id_name, "Z", "NHI"]
         try:
-            hdul = fitsio.FITS(filename)
-            cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
+            with fitsio.FITS(filename) as hdul:
+                cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
         except OSError as error:
             raise MaskError(
                 f"Error loading DlaMask. File {filename} does "
@@ -93,8 +93,6 @@ class DlaMask(Mask):
                 f"Error loading DlaMask. File {filename} does "
                 f"not have fields '{aux}' in HDU 'DLACAT'"
             ) from error
-        finally:
-            hdul.close()
 
         # group DLAs on the same line of sight together
         self.los_ids = {}

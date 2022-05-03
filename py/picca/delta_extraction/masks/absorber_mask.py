@@ -64,8 +64,8 @@ class AbsorberMask(Mask):
 
         columns_list = [los_id_name, "LAMBDA_ABS"]
         try:
-            hdul = fitsio.FITS(filename)
-            cat = {col: hdul["ABSORBERCAT"][col][:] for col in columns_list}
+            with fitsio.FITS(filename) as hdul:
+                cat = {col: hdul["ABSORBERCAT"][col][:] for col in columns_list}
         except OSError as error:
             raise MaskError(
                 "Error loading AbsorberMask. File "
@@ -77,8 +77,6 @@ class AbsorberMask(Mask):
                 f"Error loading AbsorberMask. File {filename} does not have "
                 f"fields '{aux}' in HDU 'ABSORBERCAT'"
             ) from error
-        finally:
-            hdul.close()
 
         # group absorbers on the same line of sight together
         self.los_ids = {}
