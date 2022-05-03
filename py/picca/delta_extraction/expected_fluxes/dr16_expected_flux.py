@@ -489,6 +489,20 @@ class Dr16ExpectedFlux(ExpectedFlux):
             fill_value=0.0,
             bounds_error=False)
 
+    # TODO: We should check if we can directly compute the mean continuum
+    # in particular this means:
+    # 0. check the inner todo
+    # 1. check that we can use forest.continuum instead of
+    #    forest.flux/forest.continuum right before `mean_cont[:len(cont)] += cont`
+    # 2. check that in that case we don't need to use the new_cont
+    # 3. check that this is not propagated elsewhere through self.get_mean_cont
+    # If this works then:
+    # 1. update this function to be essentially the same as in TrueContinuum
+    #    (except for the weights)
+    # 2. overload `compute_continuum_weights` in TrueContinuum to compute the
+    #    correct weights
+    # 3. remove method compute_mean_cont from TrueContinuum
+    # 4. restore min-similarity-lines in .pylintrc back to 5
     def compute_mean_cont(self, forests):
         """Compute the mean quasar continuum over the whole sample.
         Then updates the value of self.get_mean_cont to contain it
