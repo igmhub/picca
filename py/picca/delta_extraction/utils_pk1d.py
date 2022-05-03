@@ -115,17 +115,19 @@ def exp_diff_desi(spec_dict, mask_targetid):
 
     # Putting the lowest ivar exposure at the end if the number of exposures is odd
     argsort = np.arange(num_exp)
-    if(num_exp % 2 == 1):
+    if num_exp % 2 == 1:
         argmin_ivar = np.argmin(np.mean(ivar_unsorted,axis=1))
         argsort[-1],argsort[argmin_ivar] = argsort[argmin_ivar],argsort[-1]
 
     flux = np.atleast_2d(spec_dict["FLUX"][mask_targetid])[argsort,:]
     ivar = ivar_unsorted[argsort,:]
-    if (num_exp < 2):
+    if num_exp < 2:
         module_logger.debug("Not enough exposures for diff, Spectra rejected")
         return None
-    elif (num_exp > 100):
-        module_logger.debug("More than 100 exposures, potentially wrong file type and using wavelength axis here, skipping?")
+    if num_exp > 100:
+        module_logger.debug(
+            "More than 100 exposures, potentially wrong file "
+            "type and using wavelength axis here, skipping?")
         return None
 
     # Computing ivar and flux for odd and even exposures
@@ -154,7 +156,8 @@ def exp_diff_desi(spec_dict, mask_targetid):
     # Computing alpha correction
     w=w_odd&w_even&(ivar_total>0)
     alpha_array  = np.ones(flux.shape[1])
-    alpha_array[w] = (1/np.sqrt(ivar_total[w]))/(0.5 * np.sqrt((1/ivar_total_even[w]) + (1/ivar_total_odd[w])))
+    alpha_array[w] = (1/np.sqrt(ivar_total[w]))/(0.5 *
+        np.sqrt((1/ivar_total_even[w]) + (1/ivar_total_odd[w])))
     diff = 0.5 * (flux_total_even - flux_total_odd) * alpha_array
     return diff
 

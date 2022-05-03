@@ -21,7 +21,10 @@ accepted_options = ["analysis type", "delta lambda", "delta log lambda",
                     "minimum number pixels in forest",
                     "out dir", "rejection log file",
                     "minimal snr",
-                    "minimal snr pk1d","minimal snr bao3d", #these options are allowed but will be overwritten by minimal snr (only needed to allow running on a .config with default options)
+                    # these options are allowed but will be overwritten by
+                    # minimal snr (only needed to allow running on a .config
+                    # with default options)
+                    "minimal snr pk1d","minimal snr bao3d",
                     ]
 
 defaults = {
@@ -137,7 +140,8 @@ class Data:
             if pixel_step_rest_frame is None:
                 pixel_step_rest_frame = pixel_step
                 self.logger.info("'delta log lambda rest frame' not set, using "
-                                 f"the same value as for 'delta log lambda' ({pixel_step_rest_frame})")
+                                 "the same value as for 'delta log lambda' "
+                                 f"({pixel_step_rest_frame})")
         elif wave_solution == "lin":
             pixel_step = config.getfloat("delta lambda")
             if pixel_step is None:
@@ -189,10 +193,9 @@ class Data:
                                 "when 'analysys type' is 'PK 1D'")
             Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(lambda_abs_igm_name)
             if Pk1dForest.lambda_abs_igm is None:
-                keys = [key for key in ABSORBER_IGM.keys()]
                 raise DataError("Invalid argument 'lambda abs IGM' required by "
                                 f"Data. Found: '{lambda_abs_igm_name}'. Accepted "
-                                "values: " + ", ".join(keys))
+                                "values: " + ", ".join(ABSORBER_IGM))
 
         self.input_directory = config.get("input directory")
         if self.input_directory is None:
@@ -211,12 +214,12 @@ class Data:
         self.rejection_log_file = config.get("rejection log file")
         if self.rejection_log_file is None:
             raise DataError("Missing argument 'rejection log file' required by Data")
-        elif "/" in self.rejection_log_file:
+        if "/" in self.rejection_log_file:
             raise DataError(
                 "Error constructing Data. "
                 "'rejection log file' should not incude folders. "
                 f"Found: {self.rejection_log_file}")
-        elif not (self.rejection_log_file.endswith(".fits") or
+        if not (self.rejection_log_file.endswith(".fits") or
               self.rejection_log_file.endswith(".fits.gz")):
             raise DataError("Error constructing Data. Invalid extension for "
                             "'rejection log file'. Filename "
@@ -259,7 +262,7 @@ class Data:
         """
         # if necessary initialize arrays to save rejected quasars in the log
         if not self.rejection_log_initialized:
-            self.initialize_rejection_log(self.forests[0].get_header())
+            self.initialize_rejection_log()
 
         for col, name in zip(self.rejection_log_cols, self.rejection_log_names):
             if name == "FOREST_SIZE":
@@ -274,15 +277,10 @@ class Data:
                         col.append(item.get("value"))
                         break
 
-    def initialize_rejection_log(self, header):
+    def initialize_rejection_log(self):
         """Initializes the rejection log arrays.
         In the log forest headers will be saved along with the forest size and
         the rejection status.
-
-        Arguments
-        ---------
-        header: list of dict
-        Output of forest.get_header()
         """
         self.rejection_log_cols = [[], []]
         self.rejection_log_names = ["FOREST_SIZE", "REJECTION_STATUS"]
@@ -370,8 +368,8 @@ class Data:
             healpixs = healpy.ang2pix(nside, np.pi / 2 - dec, ra)
             mean_num_obj = len(healpixs) / len(np.unique(healpixs))
 
-        self.logger.progress("nside = {} -- mean #obj per pixel = {}".format(
-            nside, mean_num_obj))
+        self.logger.progress(f"nside = {nside} -- mean #obj per pixel = "
+                             f"{mean_num_obj}")
 
         for forest, healpix in zip(self.forests, healpixs):
             forest.healpix = healpix
@@ -384,7 +382,7 @@ class Data:
                            for healpix in unique_healpixs}
 
         for healpix, indexs in sorted(healpixs_indexs.items()):
-            results = fitsio.FITS(self.out_dir+"Delta/" + "/delta-{}".format(healpix) + ".fits.gz",
+            results = fitsio.FITS(f"{self.out_dir}/Delta/delta-{healpix}.fits.gz",
                                   'rw',
                                   clobber=True)
             for index in indexs:

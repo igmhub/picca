@@ -57,8 +57,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
             raise AstronomicalObjectError(
                 "Error constructing DesiPk1dForest. "
                 "Missing variable 'resolution_matrix'")
-        else:
-            del kwargs["resolution_matrix"]
+        del kwargs["resolution_matrix"]
 
         # call parent constructors
         super().__init__(**kwargs)

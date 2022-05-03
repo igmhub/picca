@@ -5,20 +5,16 @@ import logging
 import glob
 
 import fitsio
-import healpy
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
 accepted_options = sorted(
-    list(
-        set(accepted_options +
-            ["use non-coadded spectra"])))
+    list(set(accepted_options + ["use non-coadded spectra"])))
 
 defaults = defaults.copy()
 defaults.update({
@@ -68,6 +64,7 @@ class DesiTile(DesiData):
     logger: logging.Logger
     Logger object
     """
+
     def __init__(self, config):
         """Initialize class instance
 
@@ -84,9 +81,9 @@ class DesiTile(DesiData):
         self.use_non_coadded_spectra = None
 
         self.__parse_config(config)
-        #init of DesiData needs to come last, as it contains the actual data reading and thus needs all config
+        # init of DesiData needs to come last, as it contains the actual data
+        # reading and thus needs all config
         super().__init__(config)
-
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -123,8 +120,8 @@ class DesiTile(DesiData):
         DataError if the analysis type is PK 1D and resolution data is not present
         DataError if no quasars were found
         """
-        if np.any((self.catalogue['TILEID'] < 60000)
-                  & (self.catalogue['TILEID'] >= 1000)):
+        if np.any((self.catalogue['TILEID'] < 60000) &
+                  (self.catalogue['TILEID'] >= 1000)):
             is_sv = False
         else:
             is_sv = True
@@ -162,8 +159,8 @@ class DesiTile(DesiData):
         filenames = np.unique(filenames)
 
         for index, filename in enumerate(filenames):
-            self.logger.progress("read tile {} of {}. ndata: {}".format(
-                index, len(filenames), num_data))
+            self.logger.progress(
+                f"read tile {index} of {len(filename)}. ndata: {num_data}")
             try:
                 hdul = fitsio.FITS(filename)
             except IOError:
@@ -172,7 +169,6 @@ class DesiTile(DesiData):
                 continue
 
             fibermap = hdul['FIBERMAP'].read()
-            fibermap_colnames = hdul["FIBERMAP"].get_colnames()
 
             ra = fibermap['TARGET_RA']
             dec = fibermap['TARGET_DEC']
@@ -307,8 +303,7 @@ class DesiTile(DesiData):
                         forests_by_targetid[targetid] = forest
 
                 num_data += 1
-        self.logger.progress(
-            "Found {} quasars in input files".format(num_data))
+        self.logger.progress(f"Found {num_data} quasars in input files")
 
         if num_data == 0:
             raise DataError("No Quasars found, stopping here")

@@ -89,7 +89,7 @@ class BalMask(Mask):
         if los_id_name is None:
             raise MaskError(
                 "Missing argument 'los_id name' required by BalMask")
-        elif los_id_name == "THING_ID":
+        if los_id_name == "THING_ID":
             ext_name = 'BALCAT'
         elif los_id_name == "TARGETID":
             ext_name = 'ZCATALOG'
@@ -120,13 +120,17 @@ class BalMask(Mask):
         try:
             hdul = fitsio.FITS(filename)
             self.cat = {col: hdul[ext_name][col][:] for col in columns_list}
-        except OSError:
-            raise MaskError(f"Error loading BalMask. File {filename} does "
-                            f"not have extension '{ext_name}'")
-        except ValueError:
+        except OSError as error:
+            raise MaskError(
+                f"Error loading BalMask. File {filename} does "
+                f"not have extension '{ext_name}'"
+            ) from error
+        except ValueError as error:
             aux = "', '".join(columns_list)
-            raise MaskError(f"Error loading BalMask. File {filename} does "
-                            f"not have fields '{aux}' in HDU '{ext_name}'")
+            raise MaskError(
+                f"Error loading BalMask. File {filename} does "
+                f"not have fields '{aux}' in HDU '{ext_name}'"
+            ) from error
         finally:
             hdul.close()
 
@@ -136,7 +140,7 @@ class BalMask(Mask):
             self.los_ids[los_id] = self.add_bal_rest_frame(los_id, los_id_name)
 
         num_bals = np.sum([len(los_id) for los_id in self.los_ids.values()])
-        self.logger.progress('In catalog: {} BAL quasars'.format(num_bals))
+        self.logger.progress(f'In catalog: {num_bals} BAL quasars')
 
     def add_bal_rest_frame(self, los_id, los_id_name):
         """Creates a list of wavelengths to be masked out by forest.mask

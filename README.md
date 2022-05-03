@@ -118,3 +118,13 @@ picca_export.py
 
 The tags name follow the names of the king of France:<br/>
 https://fr.wikipedia.org/wiki/Liste_des_monarques_de_France#Liste_des_monarques_de_France
+
+### For Developers
+Before submitting a PR please make sure to:
+1. Check the tutorials. Update them if necessary (typically the tutorial `picca_delta_extraction_configuration_tutorial` will need to be updated.
+2. Update the data model
+3. For every file you have modified run
+```yapf --style google file.py > aux
+mv aux file.py
+```
+to ensure the coding styles are maintained.

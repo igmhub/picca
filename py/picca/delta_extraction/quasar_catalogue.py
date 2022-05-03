@@ -43,7 +43,7 @@ class QuasarCatalogue:
         """
         # load variables from config
         self.max_num_spec = config.getint("max num spec")
-        
+
         self.z_min = config.getfloat("z min")
         if self.z_min is None:
             if (config.getfloat("lambda min") is None or

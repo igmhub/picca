@@ -3,11 +3,12 @@
 import multiprocessing
 import logging
 
-import fitsio
 import healpy
 import numpy as np
 
-from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix, defaults, accepted_options
+from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
+from picca.delta_extraction.data_catalogues.desi_healpix import (# pylint: disable=unused-import
+    defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
 
 class DesisimMocks(DesiHealpix):
@@ -49,6 +50,7 @@ class DesisimMocks(DesiHealpix):
     logger: logging.Logger
     Logger object
     """
+
     def __init__(self, config):
         """Initialize class instance
 
@@ -61,8 +63,9 @@ class DesisimMocks(DesiHealpix):
         self.logger = logging.getLogger(__name__)
         super().__init__(config)
         if self.use_non_coadded_spectra:
-            self.logger.warning('the "use_non_coadded_spectra" option was set, '
-                                'but has no effect on Mocks, will proceed as normal')
+            self.logger.warning(
+                'the "use_non_coadded_spectra" option was set, '
+                'but has no effect on Mocks, will proceed as normal')
 
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
@@ -84,8 +87,10 @@ class DesisimMocks(DesiHealpix):
         in_nside = 16
 
         healpix = [
-            healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"], nest=True)
-            for row in self.catalogue
+            healpy.ang2pix(in_nside,
+                           np.pi / 2 - row["DEC"],
+                           row["RA"],
+                           nest=True) for row in self.catalogue
         ]
         self.catalogue["HEALPIX"] = healpix
         self.catalogue.sort("HEALPIX")
@@ -93,23 +98,23 @@ class DesisimMocks(DesiHealpix):
         #Current mocks don't have this "SURVEY" column in the catalog
         #but its not clear future ones will not have it, so I think is good to leave it for now.
         if not "SURVEY" in self.catalogue.colnames:
-             self.catalogue["SURVEY"]=np.ma.masked
+            self.catalogue["SURVEY"] = np.ma.masked
 
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
-        arguments=[]
-        if self.num_processors>1:
+        arguments = []
+        if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
-            manager =  multiprocessing.Manager()
+            manager = multiprocessing.Manager()
             forests_by_targetid = manager.dict()
 
-            for (index,
-                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                        grouped_catalogue.groups):
+            for (index, (healpix, _)), group in zip(
+                    enumerate(grouped_catalogue.groups.keys),
+                    grouped_catalogue.groups):
 
                 filename = (
                     f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
                     f"{in_nside}-{healpix}.fits")
-                arguments.append((filename,group,forests_by_targetid))
+                arguments.append((filename, group, forests_by_targetid))
 
             self.logger.info(f"reading data from {len(arguments)} files")
             with context.Pool(processes=self.num_processors) as pool:
@@ -117,17 +122,16 @@ class DesisimMocks(DesiHealpix):
                 pool.starmap(self.read_file, arguments)
         else:
             forests_by_targetid = {}
-            for (index,
-                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                        grouped_catalogue.groups):
+            for (index, (healpix, _)), group in zip(
+                    enumerate(grouped_catalogue.groups.keys),
+                    grouped_catalogue.groups):
 
                 filename = (
                     f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
                     f"{in_nside}-{healpix}.fits")
                 self.logger.progress(
                     f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
-                    f"num_data: {len(forests_by_targetid)}"
-                    )
+                    f"num_data: {len(forests_by_targetid)}")
                 self.read_file(filename, group, forests_by_targetid)
 
         if len(forests_by_targetid) == 0:

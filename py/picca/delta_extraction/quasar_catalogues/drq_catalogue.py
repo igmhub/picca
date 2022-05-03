@@ -277,9 +277,11 @@ class DrqCatalogue(QuasarCatalogue):
                                     "FIBERID", "PLATEQUALITY",
                                     "ZWARNING"])
         except IOError as error:
-            raise QuasarCatalogueError("Error in reading DRQ Catalogue. Error "
-                                       f"reading file {self.spall}. IOError "
-                                       f"message: {str(error)}")
+            raise QuasarCatalogueError(
+                "Error in reading DRQ Catalogue. Error "
+                f"reading file {self.spall}. IOError "
+                f"message: {str(error)}"
+            ) from error
 
         w = np.in1d(catalogue["THING_ID"], drq_catalogue["THING_ID"])
         self.logger.progress(f"Found {np.sum(w)} spectra with required THING_ID")

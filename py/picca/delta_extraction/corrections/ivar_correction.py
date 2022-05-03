@@ -2,6 +2,7 @@
 import logging
 
 import fitsio
+import numpy as np
 from scipy.interpolate import interp1d
 
 from picca.delta_extraction.correction import Correction
@@ -60,14 +61,18 @@ class IvarCorrection(Correction):
                                       "find them.")
 
             eta = hdu['eta']
-        except OSError:
-            raise CorrectionError("Error loading IvarCorrection. "
-                                  f"File {filename} does not have extension "
-                                  "'VAR_FUNC'")
-        except ValueError:
-            raise CorrectionError("Error loading IvarCorrection. "
-                                  f"File {filename} does not have fields "
-                                  "'loglam' and/or 'eta' in HDU 'VAR_FUNC'")
+        except OSError as error:
+            raise CorrectionError(
+                "Error loading IvarCorrection. "
+                f"File {filename} does not have extension "
+                "'VAR_FUNC'"
+            ) from error
+        except ValueError as error:
+            raise CorrectionError(
+                "Error loading IvarCorrection. "
+                f"File {filename} does not have fields "
+                "'loglam' and/or 'eta' in HDU 'VAR_FUNC'"
+            ) from error
 
         self.correct_ivar = interp1d(log_lambda,
                                      eta,

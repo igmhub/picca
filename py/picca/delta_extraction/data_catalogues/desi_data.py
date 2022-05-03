@@ -1,26 +1,21 @@
 """This module defines the class DesiData to load DESI data
 """
-import os
 import logging
-import glob
 
-import fitsio
-import healpy
-import numpy as np
-
-from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
-from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data import Data, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import DesiQuasarCatalogue
-from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import accepted_options as accepted_options_quasar_catalogue
-from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import defaults as defaults_quasar_catalogue
+from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
+    accepted_options as accepted_options_quasar_catalogue)
+from picca.delta_extraction.quasar_catalogues.desi_quasar_catalogue import (
+    defaults as defaults_quasar_catalogue)
 from picca.delta_extraction.utils import ACCEPTED_BLINDING_STRATEGIES
-from picca.delta_extraction.utils_pk1d import spectral_resolution_desi
 
-accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_catalogue + [
-    "blinding", "wave solution"])))
+accepted_options = sorted(
+    list(
+        set(accepted_options + accepted_options_quasar_catalogue +
+            ["blinding", "wave solution"])))
 
 defaults = defaults.copy()
 defaults.update({
@@ -30,6 +25,7 @@ defaults.update({
     "wave solution": "lin",
 })
 defaults.update(defaults_quasar_catalogue)
+
 
 class DesiData(Data):
     """Abstract class to read DESI data and format it as a list of
@@ -67,6 +63,7 @@ class DesiData(Data):
     logger: logging.Logger
     Logger object
     """
+
     def __init__(self, config):
         """Initialize class instance
 
@@ -109,9 +106,10 @@ class DesiData(Data):
         if self.blinding is None:
             raise DataError("Missing argument 'blinding' required by DesiData")
         if self.blinding not in ACCEPTED_BLINDING_STRATEGIES:
-            raise DataError("Unrecognized blinding strategy. Accepted strategies "
-                            f"are {ACCEPTED_BLINDING_STRATEGIES}. "
-                            f"Found '{self.blinding}'")
+            raise DataError(
+                "Unrecognized blinding strategy. Accepted strategies "
+                f"are {ACCEPTED_BLINDING_STRATEGIES}. "
+                f"Found '{self.blinding}'")
 
     # pylint: disable=no-self-use
     # this method should use self in child classes
@@ -132,7 +130,8 @@ class DesiData(Data):
         -----
         DataError if no quasars were found
         """
-        raise DataError("Function 'read_data' was not overloaded by child class")
+        raise DataError(
+            "Function 'read_data' was not overloaded by child class")
 
     def set_blinding(self, is_mock, is_sv):
         """Set the blinding in Forest.
@@ -149,7 +148,7 @@ class DesiData(Data):
         """
         # blinding checks
         if is_mock:
-            if self.blinding != "none": # pragma: no branch
+            if self.blinding != "none":  # pragma: no branch
                 self.logger.warning(f"Selected blinding, {self.blinding} is "
                                     "being ignored as mocks should not be "
                                     "blinded. 'none' blinding engaged")

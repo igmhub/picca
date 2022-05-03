@@ -9,7 +9,7 @@ import os
 import re
 from datetime import datetime
 import git
-
+from git.exc import InvalidGitRepositoryError
 
 from picca.delta_extraction.correction import Correction
 from picca.delta_extraction.data import Data
@@ -22,7 +22,7 @@ try:
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     PICCA_BASE = THIS_DIR.split("py/picca")[0]
     git_hash = git.Repo(PICCA_BASE).head.object.hexsha
-except git.exc.InvalidGitRepositoryError: # pragma: no cover
+except InvalidGitRepositoryError: # pragma: no cover
     git_hash = metadata.metadata('picca')['Summary'].split(':')[-1]
 
 accepted_corrections_options = ["num corrections", "type {int}", "module name {int}"]
@@ -196,13 +196,15 @@ class Config:
                         aux_str = key.replace("type", "").replace("module name", "")
                         assert int(aux_str) < self.num_corrections
                         continue
-                    except ValueError as e:
+                    except ValueError:
                         pass
-                    except AssertionError as e:
-                        raise ConfigError("In section [corrections] found option "
-                                          f"'{key}', but 'num corrections' is "
-                                          f"'{self.num_corrections}' (keep in mind "
-                                          "python zero indexing)")
+                    except AssertionError as error:
+                        raise ConfigError(
+                            "In section [corrections] found option "
+                            f"'{key}', but 'num corrections' is "
+                            f"'{self.num_corrections}' (keep in mind "
+                            "python zero indexing)"
+                        ) from error
 
                 raise ConfigError("Unrecognised option in section [corrections]. "
                                   f"Found: '{key}'. Accepted options are "
@@ -224,13 +226,17 @@ class Config:
                  default_args,
                  accepted_options) = class_from_string(correction_name,
                                                        module_name)
-            except ImportError:
-                raise ConfigError(f"Error loading class {correction_name}, "
-                                  f"module {module_name} could not be loaded")
-            except AttributeError:
-                raise ConfigError(f"Error loading class {correction_name}, "
-                                  f"module {module_name} did not contain "
-                                  "requested class")
+            except ImportError as error:
+                raise ConfigError(
+                    f"Error loading class {correction_name}, "
+                    f"module {module_name} could not be loaded"
+                ) from error
+            except AttributeError as error:
+                raise ConfigError(
+                    f"Error loading class {correction_name}, "
+                    f"module {module_name} did not contain "
+                    "requested class"
+                ) from error
 
             if not issubclass(CorrectionType, Correction):
                 raise ConfigError(f"Error loading class {CorrectionType.__name__}. "
@@ -286,13 +292,16 @@ class Config:
             (DataType,
              default_args,
              accepted_options) = class_from_string(data_name, module_name)
-        except ImportError:
-            raise ConfigError(f"Error loading class {data_name}, "
-                              f"module {module_name} could not be loaded")
-        except AttributeError:
-            raise ConfigError(f"Error loading class {data_name}, "
-                              f"module {module_name} did not contain requested "
-                              "class")
+        except ImportError as error:
+            raise ConfigError(
+                f"Error loading class {data_name}, "
+                f"module {module_name} could not be loaded"
+            ) from error
+        except AttributeError as error:
+            raise ConfigError(
+                f"Error loading class {data_name}, "
+                f"module {module_name} did not contain requested class"
+            ) from error
 
         if not issubclass(DataType, Data):
             raise ConfigError(f"Error loading class {DataType.__name__}. "
@@ -346,13 +355,16 @@ class Config:
              default_args,
              accepted_options) = class_from_string(expected_flux_name,
                                                    module_name)
-        except ImportError:
-            raise ConfigError(f"Error loading class {expected_flux_name}, "
-                              f"module {module_name} could not be loaded")
-        except AttributeError:
-            raise ConfigError(f"Error loading class {expected_flux_name}, "
-                              f"module {module_name} did not contain requested "
-                              "class")
+        except ImportError as error:
+            raise ConfigError(
+                f"Error loading class {expected_flux_name}, "
+                f"module {module_name} could not be loaded"
+            ) from error
+        except AttributeError as error:
+            raise ConfigError(
+                f"Error loading class {expected_flux_name}, "
+                f"module {module_name} did not contain requested class"
+            ) from error
 
         if not issubclass(ExpectedFluxType, ExpectedFlux):
             raise ConfigError(f"Error loading class {ExpectedFluxType.__name__}. "
@@ -478,13 +490,15 @@ class Config:
                         aux_str = key.replace("type", "").replace("module name", "")
                         assert int(aux_str) < self.num_masks
                         continue
-                    except ValueError as e:
+                    except ValueError:
                         pass
-                    except AssertionError as e:
-                        raise ConfigError("In section [masks] found option "
-                                          f"'{key}', but 'num masks' is "
-                                          f"'{self.num_masks}' (keep in mind "
-                                          "python zero indexing)")
+                    except AssertionError as error:
+                        raise ConfigError(
+                            "In section [masks] found option "
+                            f"'{key}', but 'num masks' is "
+                            f"'{self.num_masks}' (keep in mind "
+                            "python zero indexing)"
+                        ) from error
 
                 raise ConfigError("Unrecognised option in section [masks]. "
                                   f"Found: '{key}'. Accepted options are "
@@ -504,13 +518,17 @@ class Config:
                 (MaskType,
                  default_args,
                  accepted_options) = class_from_string(mask_name, module_name)
-            except ImportError:
-                raise ConfigError(f"Error loading class {mask_name}, "
-                                  f"module {module_name} could not be loaded")
-            except AttributeError:
-                raise ConfigError(f"Error loading class {mask_name}, "
-                                  f"module {module_name} did not contain "
-                                  "requested class")
+            except ImportError as error:
+                raise ConfigError(
+                    f"Error loading class {mask_name}, "
+                    f"module {module_name} could not be loaded"
+                ) from error
+            except AttributeError as error:
+                raise ConfigError(
+                    f"Error loading class {mask_name}, "
+                    f"module {module_name} did not contain "
+                    "requested class"
+                ) from error
 
             if not issubclass(MaskType, Mask):
                 raise ConfigError(f"Error loading class {MaskType.__name__}. "
@@ -595,6 +613,5 @@ class Config:
         if os.path.exists(outname):
             newname=f"{outname}.{os.path.getmtime(outname)}"
             os.rename(outname, newname)
-        config_file = open(outname, 'w')
-        self.config.write(config_file)
-        config_file.close()
+        with open(outname, 'w', encoding="utf-8") as config_file:
+            self.config.write(config_file)

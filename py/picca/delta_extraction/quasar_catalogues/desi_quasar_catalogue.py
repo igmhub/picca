@@ -120,7 +120,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self.logger.progress(f'Reading catalogue from {self.filename}')
         extnames = [ext.get_extname() for ext in fitsio.FITS(self.filename)]
         if "QSO_CAT" in extnames:
-            extension = "QSO_CAT"            
+            extension = "QSO_CAT"
         elif "ZCATALOG" in extnames:
             extension = "ZCATALOG"
         else:

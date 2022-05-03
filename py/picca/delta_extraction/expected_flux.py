@@ -46,8 +46,7 @@ class ExpectedFlux:
         if self.out_dir is None:
             raise ExpectedFluxError(
                 "Missing argument 'out dir' required by ExpectedFlux")
-        else:
-            self.out_dir += "Log/"
+        self.out_dir += "Log/"
 
         self.num_processors = config.getint("num processors")
         if self.num_processors is None:
@@ -59,7 +58,7 @@ class ExpectedFlux:
 
     # pylint: disable=no-self-use
     # this method should use self in child classes
-    def compute_expected_flux(self, forests, out_dir):
+    def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
         This includes the quasar continua and the mean transimission. It is
         computed iteratively following as explained in du Mas des Bourboux et
@@ -69,9 +68,6 @@ class ExpectedFlux:
         ---------
         forests: List of Forest
         A list of Forest from which to compute the deltas.
-
-        out_dir: str
-        Directory where expected flux information will be saved
 
         Raise
         -----

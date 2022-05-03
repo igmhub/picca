@@ -19,8 +19,8 @@ defaults = {
 accepted_options = ["dla mask limit", "los_id name", "mask file", "filename"]
 
 np.random.seed(0)
-num_points = 10000
-gaussian_dist = np.random.normal(size=num_points) * np.sqrt(2)
+NUM_POINTS = 10000
+GAUSSIAN_DIST = np.random.normal(size=NUM_POINTS) * np.sqrt(2)
 
 
 class DlaMask(Mask):
@@ -82,13 +82,17 @@ class DlaMask(Mask):
         try:
             hdul = fitsio.FITS(filename)
             cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
-        except OSError:
-            raise MaskError(f"Error loading DlaMask. File {filename} does "
-                            "not have extension 'DLACAT'")
-        except ValueError:
+        except OSError as error:
+            raise MaskError(
+                f"Error loading DlaMask. File {filename} does "
+                "not have extension 'DLACAT'"
+            ) from error
+        except ValueError as error:
             aux = "', '".join(columns_list)
-            raise MaskError(f"Error loading DlaMask. File {filename} does "
-                            f"not have fields '{aux}' in HDU 'DLACAT'")
+            raise MaskError(
+                f"Error loading DlaMask. File {filename} does "
+                f"not have fields '{aux}' in HDU 'DLACAT'"
+            ) from error
         finally:
             hdul.close()
 
@@ -99,9 +103,8 @@ class DlaMask(Mask):
             self.los_ids[los_id] = list(zip(cat["Z"][w], cat['NHI'][w]))
         num_dlas = np.sum([len(los_id) for los_id in self.los_ids.values()])
 
-        self.logger.progress('In catalog: {} DLAs'.format(num_dlas))
-        self.logger.progress('In catalog: {} forests have a DLA\n'.format(
-            len(self.los_ids)))
+        self.logger.progress(f'In catalog: {num_dlas} DLAs')
+        self.logger.progress(f'In catalog: {len(self.los_ids)} forests have a DLA\n')
 
         # setup transmission limit
         # transmissions below this number are masked
@@ -119,9 +122,10 @@ class DlaMask(Mask):
                                               'frame'),
                                        format='ascii')
                 self.mask = self.mask['frame'] == 'RF_DLA'
-            except (OSError, ValueError):
-                raise MaskError("ERROR: Error while reading mask_file file "
-                                f"{mask_file}")
+            except (OSError, ValueError) as error:
+                raise MaskError(
+                    f"ERROR: Error while reading mask_file file {mask_file}"
+                ) from error
         else:
             self.mask = Table(names=('type', 'wave_min', 'wave_max', 'frame'))
 
@@ -357,5 +361,5 @@ class DlaProfile:
         The Voigt function for each element in a, u
         """
         unnormalized_voigt = np.mean(
-            1 / (a_voight**2 + (gaussian_dist[:, None] - u_voight)**2), axis=0)
+            1 / (a_voight**2 + (GAUSSIAN_DIST[:, None] - u_voight)**2), axis=0)
         return unnormalized_voigt * a_voight / np.sqrt(np.pi)

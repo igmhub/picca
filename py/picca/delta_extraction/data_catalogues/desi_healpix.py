@@ -4,20 +4,18 @@ import logging
 import os
 import multiprocessing
 
-
 import fitsio
 import healpy
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
 
 accepted_options = sorted(
-    list(set(accepted_options + ["use non-coadded spectra","num processors"])))
+    list(set(accepted_options + ["use non-coadded spectra", "num processors"])))
 
 defaults = defaults.copy()
 defaults.update({
@@ -64,6 +62,7 @@ class DesiHealpix(DesiData):
     logger: logging.Logger
     Logger object
     """
+
     def __init__(self, config):
         """Initialize class instance
 
@@ -77,10 +76,9 @@ class DesiHealpix(DesiData):
         self.use_non_coadded_spectra = None
         self.num_processors = None
         self.__parse_config(config)
-        #init of DesiData needs to come last, as it contains the actual data reading and thus needs all config
+        # init of DesiData needs to come last, as it contains the actual data
+        # reading and thus needs all config
         super().__init__(config)
-
-
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -130,22 +128,21 @@ class DesiHealpix(DesiData):
             healpy.ang2pix(in_nside,
                            np.pi / 2 - row["DEC"],
                            row["RA"],
-                           nest=True)
-            for row in self.catalogue
+                           nest=True) for row in self.catalogue
         ]
         self.catalogue["HEALPIX"] = healpix
         self.catalogue.sort("HEALPIX")
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
 
         is_sv = True
-        if self.num_processors>1:
+        if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
-            manager =  multiprocessing.Manager()
+            manager = multiprocessing.Manager()
             forests_by_targetid = manager.dict()
             arguments = []
-            for (index,
-                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                        grouped_catalogue.groups):
+            for (index, (healpix, survey)), group in zip(
+                    enumerate(grouped_catalogue.groups.keys),
+                    grouped_catalogue.groups):
 
                 if survey not in ["sv", "sv1", "sv2", "sv3"]:
                     is_sv = False
@@ -156,7 +153,7 @@ class DesiHealpix(DesiData):
                     f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
                     f"dark-{healpix}.fits")
 
-                arguments.append((filename,group,forests_by_targetid))
+                arguments.append((filename, group, forests_by_targetid))
 
                 self.logger.info(f"reading data from {len(arguments)} files")
             with context.Pool(processes=self.num_processors) as pool:
@@ -164,10 +161,9 @@ class DesiHealpix(DesiData):
                 pool.starmap(self.read_file, arguments)
         else:
             forests_by_targetid = {}
-            for (index,
-                (healpix,
-                survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                        grouped_catalogue.groups):
+            for (index, (healpix, survey)), group in zip(
+                    enumerate(grouped_catalogue.groups.keys),
+                    grouped_catalogue.groups):
 
                 if survey not in ["sv", "sv1", "sv2", "sv3"]:
                     is_sv = False
@@ -177,8 +173,8 @@ class DesiHealpix(DesiData):
                 filename = (
                     f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
                     f"dark-{healpix}.fits")
-
-                #TODO: not sure if we want the dark survey to be hard coded in here, probably won't run on anything else, but still
+                # TODO: not sure if we want the dark survey to be hard coded
+                # in here, probably won't run on anything else, but still
 
                 self.logger.progress(
                     f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
@@ -212,7 +208,6 @@ class DesiHealpix(DesiData):
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         """
-        print(type(catalogue))
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
@@ -228,7 +223,8 @@ class DesiHealpix(DesiData):
         if "Z_FLUX" in hdul:
             colors.append("Z")
         else:
-            self.logger.warning(f"Missing Z band from {filename}. Ignoring color.")
+            self.logger.warning(
+                f"Missing Z band from {filename}. Ignoring color.")
 
         reso_from_truth = False
         for color in colors:
@@ -245,15 +241,19 @@ class DesiHealpix(DesiData):
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                     else:
-                        basename_truth=os.path.basename(filename).replace('spectra-','truth-')
-                        pathname_truth=os.path.dirname(filename)
-                        filename_truth=f"{pathname_truth}/{basename_truth}"
+                        if not reso_from_truth:
+                            self.logger.debug(
+                                "no resolution in files, reading from truth files"
+                            )
+                        reso_from_truth = True
+                        basename_truth = os.path.basename(filename).replace(
+                            'spectra-', 'truth-')
+                        pathname_truth = os.path.dirname(filename)
+                        filename_truth = f"{pathname_truth}/{basename_truth}"
                         if os.path.exists(filename_truth):
-                            if not reso_from_truth:
-                                self.logger.debug("no resolution in files, reading from truth files")
-                            reso_from_truth=True
                             with fitsio.FITS(filename_truth) as hdul_truth:
-                                spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
+                                spec["RESO"] = hdul_truth[
+                                    f"{color}_RESOLUTION"].read()
                         else:
                             raise DataError(
                                 f"Error while reading {color} band from "
@@ -288,7 +288,8 @@ class DesiHealpix(DesiData):
             for spec in spectrographs_data.values():
                 if self.use_non_coadded_spectra:
                     ivar = np.atleast_2d(spec['IVAR'][w_t])
-                    ivar_coadded_flux = np.atleast_2d(ivar*spec['FLUX'][w_t]).sum(axis=0)
+                    ivar_coadded_flux = np.atleast_2d(
+                        ivar * spec['FLUX'][w_t]).sum(axis=0)
                     ivar = ivar.sum(axis=0)
                     flux = (ivar_coadded_flux / ivar)
                 else:
@@ -315,7 +316,7 @@ class DesiHealpix(DesiData):
                     else:
                         exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
                     if not reso_from_truth:
-                        if len(spec['RESO'][w_t].shape)<3:
+                        if len(spec['RESO'][w_t].shape) < 3:
                             reso_sum = spec['RESO'][w_t].copy()
                         else:
                             reso_sum = spec['RESO'][w_t].sum(axis=0)
@@ -331,10 +332,9 @@ class DesiHealpix(DesiData):
                     forest = DesiPk1dForest(**args)
                 # this should never be entered added here in case at some point
                 # we add another analysis type
-                else: # pragma: no cover
-                    raise DataError(
-                        "Unkown analysis type. Expected 'BAO 3D'"
-                        f"or 'PK 1D'. Found '{self.analysis_type}'")
+                else:  # pragma: no cover
+                    raise DataError("Unkown analysis type. Expected 'BAO 3D'"
+                                    f"or 'PK 1D'. Found '{self.analysis_type}'")
 
                 # rebin arrays
                 # this needs to happen after all arrays are initialized by

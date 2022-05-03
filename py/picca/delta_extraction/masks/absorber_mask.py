@@ -66,15 +66,17 @@ class AbsorberMask(Mask):
         try:
             hdul = fitsio.FITS(filename)
             cat = {col: hdul["ABSORBERCAT"][col][:] for col in columns_list}
-        except OSError:
-            raise MaskError("Error loading AbsorberMask. File "
-                            f"{filename} does not have extension "
-                            "'ABSORBERCAT'")
-        except ValueError:
+        except OSError as error:
+            raise MaskError(
+                "Error loading AbsorberMask. File "
+                f"{filename} does not have extension 'ABSORBERCAT'"
+            ) from error
+        except ValueError as error:
             aux = "', '".join(columns_list)
-            raise MaskError("Error loading AbsorberMask. File "
-                            f"{filename} does not have fields '{aux}' "
-                            "in HDU 'ABSORBERCAT'")
+            raise MaskError(
+                f"Error loading AbsorberMask. File {filename} does not have "
+                f"fields '{aux}' in HDU 'ABSORBERCAT'"
+            ) from error
         finally:
             hdul.close()
 
@@ -86,9 +88,9 @@ class AbsorberMask(Mask):
         num_absorbers = np.sum(
             [len(los_id) for los_id in self.los_ids.values()])
 
-        self.logger.progress(" In catalog: {} absorbers".format(num_absorbers))
-        self.logger.progress(" In catalog: {} forests have absorbers\n".format(
-            len(self.los_ids)))
+        self.logger.progress(f" In catalog: {num_absorbers} absorbers")
+        self.logger.progress(f" In catalog: {len(self.los_ids)} forests have "
+                             "absorbers\n")
 
         # setup transmission limit
         # transmissions below this number are masked
