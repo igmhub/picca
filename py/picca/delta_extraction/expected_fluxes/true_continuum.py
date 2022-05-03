@@ -211,7 +211,7 @@ class TrueContinuum(ExpectedFlux):
                                       mean_cont,
                                       fill_value="extrapolate")
         self.get_mean_cont_weight = interp1d(log_lambda_cont,
-                                             mean_cont_weight,
+                                             mean_cont_weight[w],
                                              fill_value=0.0,
                                              bounds_error=False)
 
