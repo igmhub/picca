@@ -128,3 +128,5 @@ Before submitting a PR please make sure to:
 mv aux file.py
 ```
 to ensure the coding styles are maintained.
+4. Consider using pylint to help in the debug process. From the repo folder run
+```pylint py/picca/delta_extraction/**/*py```
