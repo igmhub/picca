@@ -919,22 +919,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
             variance = eta * var_pipe + var_lss + fudge / var_pipe
             weights = 1. / variance
 
+            forest_info = {
+                "mean expected flux": mean_expected_flux,
+                "weights": weights,
+                "continuum": forest.continuum,}
             if isinstance(forest, Pk1dForest):
                 ivar = forest.ivar / (eta +
                                       (eta == 0)) * (mean_expected_flux**2)
 
-                self.los_ids[forest.los_id] = {
-                    "mean expected flux": mean_expected_flux,
-                    "weights": weights,
-                    "ivar": ivar,
-                    "continuum": forest.continuum,
-                }
-            else:
-                self.los_ids[forest.los_id] = {
-                    "mean expected flux": mean_expected_flux,
-                    "weights": weights,
-                    "continuum": forest.continuum,
-                }
+                forest_info["ivar"] = ivar
+            self.los_ids[forest.los_id] = forest_info
 
     def save_iteration_step(self, iteration):
         """Save the statistical properties of deltas at a given iteration
