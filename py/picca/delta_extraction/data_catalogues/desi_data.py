@@ -122,7 +122,7 @@ class DesiData(Data):
         if self.use_non_coadded_spectra is None:
             raise DataError(
                 "Missing argument 'use non-coadded spectra' required by DesiData"
-            )    
+            )
 
     def format_data(self, catalogue, spectrographs_data, targetid_spec,
                     forests_by_targetid, reso_from_truth=False):

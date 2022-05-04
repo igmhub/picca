@@ -5,7 +5,6 @@ import os
 import multiprocessing
 
 import fitsio
-import healpy
 import numpy as np
 
 from picca.delta_extraction.data_catalogues.desi_data import DesiData

@@ -3,9 +3,6 @@
 import multiprocessing
 import logging
 
-import healpy
-import numpy as np
-
 from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
 from picca.delta_extraction.data_catalogues.desi_healpix import (# pylint: disable=unused-import
     defaults, accepted_options)
@@ -64,7 +61,7 @@ class DesisimMocks(DesiHealpix):
         # overwrite value for mocks
         self.in_nside = 16
         config["in_nside"] = str(self.in_nside)
-        
+
         super().__init__(config)
         if self.use_non_coadded_spectra:
             self.logger.warning(
