@@ -92,6 +92,34 @@ class DesiHealpix(DesiData):
         if self.num_processors == 0:
             self.num_processors = (multiprocessing.cpu_count() // 2)
 
+    def get_filename(self, survey, healpix):
+        """Get the name of the file to read
+
+        Arguments
+        ---------
+        survey: str
+        Name of the survey (sv, sv1, sv2, sv3, main, special)
+
+        healpix: int
+        Healpix of observations
+
+        Return
+        ------
+        filename: str
+        The name of the file to read
+
+        is_mock: bool
+        False, as we are reading DESI data
+        """
+        input_directory = f'{self.input_directory}/{survey}/dark'
+        coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
+        filename = (
+            f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
+            f"dark-{healpix}.fits")
+        # TODO: not sure if we want the dark survey to be hard coded
+        # in here, probably won't run on anything else, but still
+        return filename, False
+
     def read_data(self):
         """Read the data.
 
@@ -100,7 +128,7 @@ class DesiHealpix(DesiData):
         Return
         ------
         is_mock: bool
-        False as DESI data are not mocks
+        False for DESI data and True for mocks
 
         is_sv: bool
         True if all the read data belong to SV. False otherwise
@@ -112,6 +140,7 @@ class DesiHealpix(DesiData):
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
 
         is_sv = True
+        is_mock = False
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
             manager = multiprocessing.Manager()
@@ -124,11 +153,14 @@ class DesiHealpix(DesiData):
                 if survey not in ["sv", "sv1", "sv2", "sv3"]:
                     is_sv = False
 
-                input_directory = f'{self.input_directory}/{survey}/dark'
-                coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
-                filename = (
-                    f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
-                    f"dark-{healpix}.fits")
+                filename, is_mock_aux = self.get_filename(survey, healpix)
+                if is_mock_aux:
+                    is_mock = True
+                #input_directory = f'{self.input_directory}/{survey}/dark'
+                #coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
+                #filename = (
+                #    f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
+                #    f"dark-{healpix}.fits")
 
                 arguments.append((filename, group, forests_by_targetid))
 
@@ -151,26 +183,27 @@ class DesiHealpix(DesiData):
                 if survey not in ["sv", "sv1", "sv2", "sv3"]:
                     is_sv = False
 
-                input_directory = f'{self.input_directory}/{survey}/dark'
-                coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
-                filename = (
-                    f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
-                    f"dark-{healpix}.fits")
+                filename = self.get_filename(survey, healpix)
+                filename, is_mock_aux = self.get_filename(survey, healpix)
+                if is_mock_aux:
+                    is_mock = True
+                #input_directory = f'{self.input_directory}/{survey}/dark'
+                #coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
+                #filename = (
+                #    f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
+                #    f"dark-{healpix}.fits")
                 # TODO: not sure if we want the dark survey to be hard coded
                 # in here, probably won't run on anything else, but still
-
+                self.read_file(filename, group, forests_by_targetid)
                 self.logger.progress(
                     f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
                     f"num_data: {len(forests_by_targetid)}")
 
-                self.read_file(filename, group, forests_by_targetid)
-
         if len(forests_by_targetid) == 0:
             raise DataError("No quasars found, stopping here")
-
         self.forests = list(forests_by_targetid.values())
 
-        return False, is_sv
+        return is_mock, is_sv
 
     def read_file(self, filename, catalogue, forests_by_targetid):
         """Read the spectra and formats its data as Forest instances.
