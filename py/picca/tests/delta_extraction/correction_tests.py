@@ -45,13 +45,18 @@ class CorrectionTest(AbstractTest):
         Load a Correction instace and check that method apply_correction is
         not initialized.
         """
-        with self.assertRaises(CorrectionError):
-            # create Correction instance
-            correction = Correction()
+        # create Correction instance
+        correction = Correction()
 
-            # run apply_correction, this should raise CorrectionError
-            forest = copy.deepcopy(forest1)
+        # run apply_correction, this should raise CorrectionError
+        forest = copy.deepcopy(forest1)
+
+        expected_message = ("Function 'apply_correction' was not overloaded by "
+                            "child class")
+        with self.assertRaises(CorrectionError) as context_manager:
+
             correction.apply_correction(forest)
+        self.compare_error_message(context_manager, expected_message)
 
     def test_calibration_correction(self):
         """Test correct initialisation and inheritance for class
@@ -90,9 +95,12 @@ class CorrectionTest(AbstractTest):
         # create CalibrationCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
+
+        expected_message = ("Missing argument 'filename' required by "
+                            "SdssCalibrationCorrection")
         with self.assertRaises(CorrectionError) as context_manager:
             correction = CalibrationCorrection(config["corrections"])
-        self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
+        self.compare_error_message(context_manager, expected_message)
 
     def test_dust_correction(self):
         """Test correct initialisation and inheritance for class
@@ -146,9 +154,11 @@ class CorrectionTest(AbstractTest):
         # create DustCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
+        expected_message = ("Missing argument 'extinction_conversion_r' required "
+                            "by DustCorrection")
         with self.assertRaises(CorrectionError) as context_manager:
             correction = DustCorrection(config["corrections"])
-        self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
+        self.compare_error_message(context_manager, expected_message)
 
     def test_ivar_correction(self):
         """Test correct initialisation and inheritance for class
@@ -186,9 +196,11 @@ class CorrectionTest(AbstractTest):
         # create IvarCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
+        expected_message = ("Missing argument 'filename' required "
+                            "by SdssIvarCorrection")
         with self.assertRaises(CorrectionError) as context_manager:
             correction = IvarCorrection(config["corrections"])
-        self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
+        self.compare_error_message(context_manager, expected_message)
 
     def test_optical_depth_correction(self):
         """Test correct initialisation and inheritance for class
@@ -241,10 +253,11 @@ class CorrectionTest(AbstractTest):
         # create OpticalDepthCorrection instance with missing options
         config = ConfigParser()
         config.read_dict({"corrections": {}})
+        expected_message = ("Missing argument 'optical depth tau' required "
+                            "by SdssOpticalDepthCorrection")
         with self.assertRaises(CorrectionError) as context_manager:
             correction = OpticalDepthCorrection(config["corrections"])
-        self.assertTrue(str(context_manager.exception).startswith("Missing argument"))
-
+        self.compare_error_message(context_manager, expected_message)
 
 if __name__ == '__main__':
     unittest.main()

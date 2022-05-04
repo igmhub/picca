@@ -71,9 +71,6 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         # read quasar catalogue
         self.read_catalogue()
 
-        # if not all surveys are specified, then filter the catalogue
-        self.filter_surveys()
-
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
         if self.max_num_spec is not None:
@@ -112,15 +109,6 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             raise QuasarCatalogueError("Missing argument 'catalogue' required "
                                        "by DesiQuasarCatalogue")
 
-    def filter_surveys(self):
-        """Filter all the objects in the catalogue not belonging to the specified
-        surveys.
-        """
-        if 'SURVEY' in self.catalogue.colnames:
-            mask = np.isin(self.catalogue["SURVEY"], self.keep_surveys)
-            self.catalogue = self.catalogue[mask]
-            self.logger.progress(f"and in selected surveys {self.keep_surveys}         : nb object in cat = {len(self.catalogue)}")
-
     def read_catalogue(self):
         """Read the z_truth catalogue
 
@@ -130,7 +118,15 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         Table with the catalogue
         """
         self.logger.progress(f'Reading catalogue from {self.filename}')
-        catalogue = Table(fitsio.read(self.filename, ext=1))
+        extnames = [ext.get_extname() for ext in fitsio.FITS(self.filename)]
+        if "QSO_CAT" in extnames:
+            extension = "QSO_CAT"            
+        elif "ZCATALOG" in extnames:
+            extension = "ZCATALOG"
+        else:
+            raise QuasarCatalogueError(
+                f"Could not find valid quasar catalog extension in fits file: {self.filename}")
+        catalogue = Table(fitsio.read(self.filename, ext=extension))
 
         if 'TARGET_RA' in catalogue.colnames:
             catalogue.rename_column('TARGET_RA', 'RA')
@@ -138,7 +134,11 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
         keep_columns = ['RA', 'DEC', 'Z', 'TARGETID']
         if 'TILEID' in catalogue.colnames:
-            keep_columns += ['TILEID', 'PETAL_LOC', 'FIBER']
+            keep_columns += ['TILEID', 'PETAL_LOC']
+        if 'NIGHT' in catalogue.colnames:
+            keep_columns += ['NIGHT']
+        if 'LASTNIGHT' in catalogue.colnames:
+            keep_columns += ['LASTNIGHT']
         if 'SURVEY' in catalogue.colnames:
             keep_columns += ['SURVEY']
         if 'DESI_TARGET' in catalogue.colnames:
@@ -158,6 +158,18 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         self.logger.progress(f"and z >= {self.z_min}        : nb object in cat = {np.sum(w)}")
         w &= catalogue['Z'] < self.z_max
         self.logger.progress(f"and z < {self.z_max}         : nb object in cat = {np.sum(w)}")
+
+        # Filter all the objects in the catalogue not belonging to the specified
+        # surveys.
+        if 'SURVEY' in keep_columns:
+            w &= np.isin(catalogue["SURVEY"], self.keep_surveys)
+            self.logger.progress(f"and in selected surveys {self.keep_surveys}  "
+                                 f"       : nb object in cat = {np.sum(w)}")
+
+        # make sure we do not have an empty catalogue
+        if np.sum(w) == 0:
+            raise QuasarCatalogueError("Empty quasar catalogue. Revise filtering "
+                                       "choices")
 
         # Convert angles to radians
         np.radians(catalogue['RA'], out=catalogue['RA'])

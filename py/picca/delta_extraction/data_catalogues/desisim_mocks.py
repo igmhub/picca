@@ -7,7 +7,7 @@ import fitsio
 import healpy
 import numpy as np
 
-from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix, defaults, accepted_options
+from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix, ParallelReader, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 
 class DesisimMocks(DesiHealpix):
@@ -96,44 +96,43 @@ class DesisimMocks(DesiHealpix):
              self.catalogue["SURVEY"]=np.ma.masked
 
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
-        arguments=[]
+        
+        forests_by_targetid = {}
+
+        arguments = []
+        for group in grouped_catalogue.groups:
+            # healpix, survey = group["HEALPIX", "SURVEY"][0]#
+            healpix = group["HEALPIX"][0]
+
+            filename = (f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
+                    f"{in_nside}-{healpix}.fits")
+
+            arguments.append((filename,group))
+
+        self.logger.info(f"reading data from {len(arguments)} files")
+
         if self.num_processors>1:
-            context = multiprocessing.get_context('fork')
-            manager =  multiprocessing.Manager()
-            forests_by_targetid = manager.dict()
-
-            for (index,
-                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                        grouped_catalogue.groups):
-
-                filename = (
-                    f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
-                    f"{in_nside}-{healpix}.fits")
-                arguments.append((filename,group,forests_by_targetid))
-
-            self.logger.info(f"reading data from {len(arguments)} files")
-            with context.Pool(processes=self.num_processors) as pool:
-
-                pool.starmap(self.read_file, arguments)
-            for key,forest in forests_by_targetid.items():
-                forest.consistency_check()
+            with multiprocessing.Pool(processes=self.num_processors) as pool:
+                imap_it = pool.imap(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
+                for forests_by_pe in imap_it:
+                    # Merge each dict to master forests_by_targetid
+                    ParallelReader._merge_new_forest(forests_by_targetid, forests_by_pe)
         else:
-            forests_by_targetid = {}
-            for (index,
-                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                        grouped_catalogue.groups):
-
-                filename = (
-                    f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
-                    f"{in_nside}-{healpix}.fits")
+            reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
+            for index, this_arg in enumerate(arguments):
                 self.logger.progress(
-                    f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
+                    f"Read {index} of {len(arguments)}. "
                     f"num_data: {len(forests_by_targetid)}"
                     )
-                self.read_file(filename, group, forests_by_targetid)
+                ParallelReader._merge_new_forest(forests_by_targetid, reader(this_arg))
 
         if len(forests_by_targetid) == 0:
-            raise DataError("No Quasars found, stopping here")
+            raise DataError("No quasars found, stopping here")
         self.forests = list(forests_by_targetid.values())
 
         return True, False
+    
+    def read_file(self, filename, catalogue):
+        reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
+
+        return reader((filename, catalogue))

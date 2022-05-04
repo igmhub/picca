@@ -29,11 +29,11 @@ class ExpectedFlux:
 
     Arrays must have the same size as the flux array for the corresponding line
     of sight forest instance.
-    
+
     num_processors: int
     Number of processors to use for multiprocessing-enabled tasks (will be passed
     downstream to e.g. ExpectedFlux and Data classes)
-    
+
     out_dir: str (from ExpectedFlux)
     Directory where logs will be saved.
     """
@@ -45,14 +45,14 @@ class ExpectedFlux:
         self.out_dir = config.get("out dir")
         if self.out_dir is None:
             raise ExpectedFluxError(
-                "Missing argument 'out dir' required by Dr16ExpectedFlux")
+                "Missing argument 'out dir' required by ExpectedFlux")
         else:
             self.out_dir += "Log/"
-        
+
         self.num_processors = config.getint("num processors")
         if self.num_processors is None:
             raise ExpectedFluxError(
-                "Missing argument 'num processors' required by Dr16ExpectedFlux")
+                "Missing argument 'num processors' required by ExpectedFlux")
         if self.num_processors == 0:
             self.num_processors = (multiprocessing.cpu_count() // 2)
 
