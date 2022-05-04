@@ -55,7 +55,7 @@ class TrueContinuum(ExpectedFlux):
     get_mean_cont_weight: scipy.interpolate.interp1d
     Interpolation function to compute the weights associated with the unabsorbed
     mean quasar continua.
-    
+
     get_var_lss: scipy.interpolate.interp1d
     Interpolation function to compute mapping functions var_lss. See equation 4 of
     du Mas des Bourboux et al. 2020 for details. Data for interpolation is read from a file.
