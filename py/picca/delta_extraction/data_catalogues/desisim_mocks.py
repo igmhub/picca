@@ -86,12 +86,12 @@ class DesisimMocks(DesiHealpix):
         DataError if no quasars were found
         """
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
-        arguments = []
+
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
             manager = multiprocessing.Manager()
             forests_by_targetid = manager.dict()
-
+            arguments = []
             for (index, (healpix, _)), group in zip(
                     enumerate(grouped_catalogue.groups.keys),
                     grouped_catalogue.groups):
