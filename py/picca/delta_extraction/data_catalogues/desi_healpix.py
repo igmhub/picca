@@ -140,12 +140,6 @@ class DesiHealpix(DesiData):
                 filename, is_mock_aux = self.get_filename(survey, healpix)
                 if is_mock_aux:
                     is_mock = True
-                #input_directory = f'{self.input_directory}/{survey}/dark'
-                #coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
-                #filename = (
-                #    f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
-                #    f"dark-{healpix}.fits")
-
                 arguments.append((filename, group, forests_by_targetid))
 
                 self.logger.info(f"reading data from {len(arguments)} files")
@@ -171,13 +165,6 @@ class DesiHealpix(DesiData):
                 filename, is_mock_aux = self.get_filename(survey, healpix)
                 if is_mock_aux:
                     is_mock = True
-                #input_directory = f'{self.input_directory}/{survey}/dark'
-                #coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
-                #filename = (
-                #    f"{input_directory}/{healpix//100}/{healpix}/{coadd_name}-{survey}-"
-                #    f"dark-{healpix}.fits")
-                # TODO: not sure if we want the dark survey to be hard coded
-                # in here, probably won't run on anything else, but still
                 self.read_file(filename, group, forests_by_targetid)
                 self.logger.progress(
                     f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
