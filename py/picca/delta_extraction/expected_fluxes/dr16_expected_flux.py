@@ -925,14 +925,16 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 continue
             # get the variance functions and statistics
             stack_delta = self.get_stack_delta(forest.log_lambda)
-            var_lss = self.get_var_lss(forest.log_lambda)
             eta = self.get_eta(forest.log_lambda)
-            fudge = self.get_fudge(forest.log_lambda)
 
             mean_expected_flux = forest.continuum * stack_delta
-            var_pipe = 1. / forest.ivar / mean_expected_flux**2
-            variance = eta * var_pipe + var_lss + fudge / var_pipe
-            weights = 1. / variance
+            weights = self.get_continuum_weights(forest, mean_expected_flux)
+            # this is needed as the weights from get_continuum_weights are
+            # divided by the continuum model squared, in this case mean_expected_flux
+            # TODO: check that we indeed need this or if the weights without it
+            # are better
+            if not self.use_constant_weight:
+                weights *= mean_expected_flux**2
 
             forest_info = {
                 "mean expected flux": mean_expected_flux,
