@@ -110,16 +110,6 @@ class DesiHealpix(DesiData):
         -----
         DataError if no quasars were found
         """
-        in_nside = 64
-
-        healpix = [
-            healpy.ang2pix(in_nside,
-                           np.pi / 2 - row["DEC"],
-                           row["RA"],
-                           nest=True) for row in self.catalogue
-        ]
-        self.catalogue["HEALPIX"] = healpix
-        self.catalogue.sort("HEALPIX")
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
 
         is_sv = True

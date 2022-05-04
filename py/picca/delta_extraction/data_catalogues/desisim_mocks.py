@@ -59,8 +59,12 @@ class DesisimMocks(DesiHealpix):
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
-
         self.logger = logging.getLogger(__name__)
+
+        # overwrite value for mocks
+        self.in_nside = 16
+        config["in_nside"] = str(self.in_nside)
+        
         super().__init__(config)
         if self.use_non_coadded_spectra:
             self.logger.warning(
@@ -84,22 +88,6 @@ class DesisimMocks(DesiHealpix):
         -----
         DataError if no quasars were found
         """
-        in_nside = 16
-
-        healpix = [
-            healpy.ang2pix(in_nside,
-                           np.pi / 2 - row["DEC"],
-                           row["RA"],
-                           nest=True) for row in self.catalogue
-        ]
-        self.catalogue["HEALPIX"] = healpix
-        self.catalogue.sort("HEALPIX")
-
-        #Current mocks don't have this "SURVEY" column in the catalog
-        #but its not clear future ones will not have it, so I think is good to leave it for now.
-        if not "SURVEY" in self.catalogue.colnames:
-            self.catalogue["SURVEY"] = np.ma.masked
-
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
         arguments = []
         if self.num_processors > 1:
@@ -113,7 +101,7 @@ class DesisimMocks(DesiHealpix):
 
                 filename = (
                     f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
-                    f"{in_nside}-{healpix}.fits")
+                    f"{self.in_nside}-{healpix}.fits")
                 arguments.append((filename, group, forests_by_targetid))
 
             self.logger.info(f"reading data from {len(arguments)} files")
@@ -134,7 +122,7 @@ class DesisimMocks(DesiHealpix):
 
                 filename = (
                     f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
-                    f"{in_nside}-{healpix}.fits")
+                    f"{self.in_nside}-{healpix}.fits")
                 self.logger.progress(
                     f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
                     f"num_data: {len(forests_by_targetid)}")
