@@ -23,8 +23,7 @@ class LinesMask(Mask):
 
     Attributes
     ----------
-    los_ids: dict (from Mask)
-    Empty dictionary
+    (see Mask in py/picca/delta_extraction/mask.py)
 
     mask_rest_frame: astropy.Table
     Table with the rest-frame wavelength of the lines to mask

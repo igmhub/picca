@@ -60,6 +60,7 @@ class Config:
     __format_general_section
     __format_masks_section
     __parse_environ_variables
+    initialize_folders
     write_config
 
     Attributes
@@ -107,6 +108,10 @@ class Config:
     num_masks: int
     Number of elements in self.masks
 
+    num_processors: int
+    Number of processors to use for multiprocessing-enabled tasks (will be passed
+    downstream to relevant classes like e.g. ExpectedFlux or Data)
+
     out_dir: str
     Name of the directory where the deltas will be saved
 
@@ -144,6 +149,7 @@ class Config:
         self.log = None
         self.logging_level_console = None
         self.logging_level_file = None
+        self.num_processors = None
         self.out_dir = None
         self.__format_general_section()
         self.corrections = None
@@ -156,7 +162,6 @@ class Config:
         self.__format_data_section()
         self.expected_flux = None
         self.__format_expected_flux_section()
-        self.num_processors = None
 
         # initialize folders where data will be saved
         self.initialize_folders()

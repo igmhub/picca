@@ -30,6 +30,9 @@ class OpticalDepthCorrection(Correction):
     lambda_rest_frame_list: list of float
     List of rest frame wavelengths for each of the optical depth absorbers
 
+    logger: logging.Logger
+    Logger object
+
     tau_list: list of float
     List of tau factors for each of the optical depth absorbers
     """

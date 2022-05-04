@@ -24,6 +24,9 @@ class IvarCorrection(Correction):
     correct_ivar: scipy.interpolate.interp1d
     Interpolation function to adapt the correction to slightly different
     grids of wavelength
+
+    logger: logging.Logger
+    Logger object
     """
     def __init__(self, config):
         """Initialize class instance.

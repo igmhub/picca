@@ -26,7 +26,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
     Methods
     -------
-    trim_catalogue (from QuasarCatalogue)
+    (see QuasarCatalogue in py/picca/delta_extraction/quasar_catalogue.py)
     __init__
     __parse_config
     filter_surveys
@@ -34,22 +34,13 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
     Attributes
     ----------
-    catalogue: astropy.table.Table (from QuasarCatalogue)
-    The quasar catalogue
-
-    max_num_spec: int or None (from QuasarCatalogue)
-    Maximum number of spectra to read. None for no maximum
-
-    z_max: float (from QuasarCatalogue)
-    Maximum redshift. Quasars with redshifts higher than or equal to
-    z_max will be discarded
-
-    z_min: float (from QuasarCatalogue)
-    Minimum redshift. Quasars with redshifts lower than z_min will be
-    discarded
+    (see QuasarCatalogue in py/picca/delta_extraction/quasar_catalogue.py)
 
     filename: str
     Filename of the z_truth catalogue
+
+    in_nside: int
+    Parameter in_nside to compute the healpix indexes
 
     keep surveys: list
     Only keep the entries in the catalogue that have a "SURVEY" specified in
@@ -69,6 +60,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         # load variables from config
         self.filename = None
         self.in_nside = None
+        self.keep_surveys = None
         self.__parse_config(config)
 
         # read quasar catalogue

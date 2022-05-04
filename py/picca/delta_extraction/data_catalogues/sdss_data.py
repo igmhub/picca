@@ -35,7 +35,7 @@ class SdssData(Data):
 
     Methods
     -------
-    filter_forests (from Data)
+    (see Data in py/picca/delta_extraction/data.py)
     __init__
     __parse_config
     read_from_spec
@@ -43,17 +43,7 @@ class SdssData(Data):
 
     Attributes
     ----------
-    analysis_type: str (from Data)
-    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
-
-    forests: list of Forest (from Data)
-    A list of Forest from which to compute the deltas.
-
-    min_num_pix: int (from Data)
-    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
-
-    in_dir: str
-    Directory to spectra files.
+    (see Data in py/picca/delta_extraction/data.py)
 
     logger: logging.Logger
     Logger object

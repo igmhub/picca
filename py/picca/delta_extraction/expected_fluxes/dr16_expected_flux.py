@@ -38,7 +38,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
     Methods
     -------
-    extract_deltas (from ExpectedFlux)
+    (see ExpectedFlux in py/picca/delta_extraction/expected_flux.py)
     __init__
     _initialize_variables
     __parse_config
@@ -73,12 +73,19 @@ class Dr16ExpectedFlux(ExpectedFlux):
     get_mean_cont: scipy.interpolate.interp1d
     Interpolation function to compute the unabsorbed mean quasar continua.
 
+    get_mean_cont_weight: scipy.interpolate.interp1d
+    Interpolation function to compute the weights associated with the unabsorbed
+    mean quasar continua.
+
     get_num_pixels: scipy.interpolate.interp1d
     Number of pixels used to fit for eta, var_lss and fudge.
 
     get_stack_delta: scipy.interpolate.interp1d
     Interpolation function to compute the mean delta (from stacking all lines of
     sight).
+
+    get_stack_delta_weights: scipy.interpolate.interp1d
+    Weights associated with get_stack_delta
 
     get_valid_fit: scipy.interpolate.interp1d
     True if the fit for eta, var_lss and fudge is converged, false otherwise.
@@ -95,10 +102,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
     '_iteration{num}.fits.gz' to the prefix for intermediate steps and '.fits.gz'
     for the final results.
 
-    lambda_: array of float or None
-    Wavelengths where the variance functions and statistics are
-    computed. None (and unused) for a logarithmic wavelength solution.
-
     limit_eta: tuple of floats
     Limits on the correction factor to the contribution of the pipeline estimate
     of the instrumental noise to the variance.
@@ -109,6 +112,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
     log_lambda_var_func_grid: array of float
     Logarithm of the wavelengths where the variance functions and
     statistics are computed.
+
+    logger: logging.Logger
+    Logger object
 
     num_bins_variance: int
     Number of bins to be used to compute variance functions and statistics as
@@ -143,9 +149,9 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.iter_out_prefix = None
         self.limit_eta = None
         self.limit_var_lss = None
-        self.order = None
         self.num_bins_variance = None
         self.num_iterations = None
+        self.order = None
         self.use_constant_weight = None
         self.use_ivar_as_weight = None
         self.__parse_config(config)
@@ -172,6 +178,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         - self.get_eta
         - self.get_fudge
         - self.get_mean_cont
+        - self.get_mean_cont_weight
         - self.get_num_pixels
         - self.get_valid_fit
         - self.get_var_lss
@@ -1004,8 +1011,26 @@ class LeastsSquaresContModel:
 
     It is passed to iminuit and when called it will return the chi2 for a given
     set of parameters
-    """
 
+    Methods
+    -------
+    __init__
+    __call__
+
+    Attributes
+    ----------
+    forest: Forest
+    Forest instance where the model is fit
+
+    expected_flux: Dr16ExpectedFlux
+    Dr16ExpectedFlux instance running the fit
+
+    mean_cont_kwargs: dict
+    kwargs passed to expected_flux.get_continuum_model
+
+    weights_kwargs: dict
+    kwargs passed to expected_flux.get_continuum_weights
+    """
     def __init__(self,
                  forest,
                  expected_flux,

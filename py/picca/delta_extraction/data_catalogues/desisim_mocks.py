@@ -15,32 +15,16 @@ class DesisimMocks(DesiHealpix):
 
     Methods
     -------
-    filter_forests (from Data)
-    set_blinding (from Data)
-    read_file (from DesiHealpix)
+    (see DesiHealpix in py/picca/delta_extraction/data_catalogues/desi_healpix.py)
     __init__
-    read_data
+    get_filename
 
     Attributes
     ----------
-    analysis_type: str (from Data)
-    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
+    (see DesiHealpix in py/picca/delta_extraction/data_catalogues/desi_healpix.py)
 
-    forests: list of Forest (from Data)
-    A list of Forest from which to compute the deltas.
-
-    min_num_pix: int (from Data)
-    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
-
-    blinding: str (from DesiData)
-    A string specifying the chosen blinding strategies. Must be one of the
-    accepted values in ACCEPTED_BLINDING_STRATEGIES
-
-    catalogue: astropy.table.Table (from DesiData)
-    The quasar catalogue
-
-    input_directory: str (from DesiData)
-    Directory to spectra files.
+    in_nside: 16
+    Parameter in_nside to compute the healpix indexes
 
     logger: logging.Logger
     Logger object

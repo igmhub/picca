@@ -38,22 +38,16 @@ class DesiData(Data):
 
     Methods
     -------
-    filter_forests (from Data)
+    (see Data in py/picca/delta_extraction/data.py)
     __init__
     __parse_config
+    format_data
     read_data
     set_blinding
 
     Attributes
     ----------
-    analysis_type: str (from Data)
-    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
-
-    forests: list of Forest (from Data)
-    A list of Forest from which to compute the deltas.
-
-    min_num_pix: int (from Data)
-    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
+    (see Data in py/picca/delta_extraction/data.py)
 
     blinding: str
     A string specifying the chosen blinding strategies. Must be one of the
@@ -67,6 +61,10 @@ class DesiData(Data):
 
     logger: logging.Logger
     Logger object
+
+    use_non_coadded_spectra: bool
+    If True, load data from non-coadded spectra and coadd them here. Otherwise,
+    load coadded data
     """
 
     def __init__(self, config):

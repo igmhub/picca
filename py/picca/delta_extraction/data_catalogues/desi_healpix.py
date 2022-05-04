@@ -22,38 +22,22 @@ class DesiHealpix(DesiData):
 
     Methods
     -------
-    filter_forests (from Data)
-    set_blinding (from Data)
+    (see DesiData in py/picca/delta_extraction/data_catalogues/desi_data.py)
     __init__
+    __parse_config
+    get_filename
     read_data
     read_file
 
     Attributes
     ----------
-    analysis_type: str (from Data)
-    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
-
-    forests: list of Forest (from Data)
-    A list of Forest from which to compute the deltas.
-
-    min_num_pix: int (from Data)
-    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
-
-    blinding: str (from DesiData)
-    A string specifying the chosen blinding strategies. Must be one of the
-    accepted values in ACCEPTED_BLINDING_STRATEGIES
-
-    catalogue: astropy.table.Table (from DesiData)
-    The quasar catalogue
-
-    input_directory: str (from DesiData)
-    Directory to spectra files.
-
-    in_nside: 64 or 16
-    Nside used in the folder structure (64 for data and 16 for mocks)
+    (see DesiData in py/picca/delta_extraction/data_catalogues/desi_data.py)
 
     logger: logging.Logger
     Logger object
+
+    num_processors: int
+    Number of processors to be used for parallel reading
     """
 
     def __init__(self, config):

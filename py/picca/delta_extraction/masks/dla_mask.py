@@ -33,9 +33,7 @@ class DlaMask(Mask):
 
     Attributes
     ----------
-    los_ids: dict (from Mask)
-    A dictionary with the DLAs contained in each line of sight. Keys are the
-    identifier for the line of sight and values are lists of (z_abs, nhi)
+    (see Mask in py/picca/delta_extraction/mask.py)
 
     dla_mask_limit: float
     Lower limit on the DLA transmission. Transmissions below this number are

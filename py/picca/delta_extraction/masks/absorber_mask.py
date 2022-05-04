@@ -26,9 +26,7 @@ class AbsorberMask(Mask):
 
     Attributes
     ----------
-    los_ids: dict (from Mask)
-    A dictionary with the absorbers contained in each line of sight. Keys are the
-    identifier for the line of sight and values are lists of z_abs
+    (see Mask in py/picca/delta_extraction/mask.py)
 
     absorber_mask_width: float
     Mask width on each side of the absorber central observed wavelength in

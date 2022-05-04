@@ -9,14 +9,8 @@ class SdssPk1dForest(SdssForest, Pk1dForest):
 
     Methods
     -------
-    __gt__ (from AstronomicalObject)
-    __eq__ (from AstronomicalObject)
-    class_variable_check (from Forest, Pk1dForest)
-    consistency_check (from Forest, Pk1dForest)
-    get_data (from Forest, Pk1dForest)
-    rebin (from Forest)
-    coadd (from SdssForest, Pk1dForest)
-    get_header (from SdssForest, Pk1dForest)
+    (see SdssForest in py/picca/delta_extraction/astronomical_objects/sdss_forest.py)
+    (see Pk1dForest in py/picca/delta_extraction/astronomical_objects/pk1d_forest.py)
     __init__
 
     Class Attributes

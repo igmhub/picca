@@ -14,15 +14,13 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
 
     Methods
     -------
-    __gt__ (from AstronomicalObject)
-    __eq__ (from AstronomicalObject)
-    class_variable_check (from Forest, Pk1dForest)
-    consistency_check (from Forest, Pk1dForest)
-    get_data (from Forest, Pk1dForest)
-    rebin (from Forest)
-    coadd (from DesiForest, Pk1dForest)
-    get_header (from DesiForest, Pk1dForest)
+    (see DesiForest in py/picca/delta_extraction/astronomical_objects/desi_forest.py)
+    (see Pk1dForest in py/picca/delta_extraction/astronomical_objects/pk1d_forest.py)
     __init__
+    consistency_check
+    coadd
+    get_data
+    rebin
 
     Class Attributes
     ----------------

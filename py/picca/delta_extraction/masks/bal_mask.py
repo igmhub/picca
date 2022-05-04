@@ -41,13 +41,12 @@ class BalMask(Mask):
     Methods
     -------
     __init__
+    add_bal_rest_frame
     apply_mask
 
     Attributes
     ----------
-    los_ids: dict (from Mask)
-    A dictionary with the BALs contained in each line of sight. Keys are the
-    identifier for the line of sight and values are lists of (z_abs, nhi)
+    (see Mask in py/picca/delta_extraction/mask.py)
 
     bal_index_type: str
     BAL index type, choose either 'ai' or 'bi'. This will set which velocity
@@ -58,9 +57,6 @@ class BalMask(Mask):
 
     logger: logging.Logger
     Logger object
-
-    mask: astropy.Table
-    Table containing specific intervals of wavelength to be masked for BALs
     """
     def __init__(self, config):
         """Initializes class instance.

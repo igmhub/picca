@@ -49,7 +49,7 @@ class Data:
 
     Methods
     -------
-    _parse_config
+    __parse_config
     add_to_rejection_log
     initialize_rejection_log
     filter_bad_cont_forests
@@ -66,11 +66,17 @@ class Data:
     forests: list of Forest
     A list of Forest from which to compute the deltas.
 
+    input_directory: str
+    Directory where input data is stored.
+
     logger: logging.Logger
     Logger object
 
     min_num_pix: int
     Minimum number of pixels in a forest. Forests with less pixels will be dropped.
+
+    min_snr: float
+    Minimum signal-to-noise ratio to accept a Forest instance.
 
     out_dir: str
     Directory where data will be saved. Log info will be saved in out_dir+"Log/"

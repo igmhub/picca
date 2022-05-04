@@ -18,8 +18,7 @@ class Forest(AstronomicalObject):
 
     Methods
     -------
-    __gt__ (from AstronomicalObject)
-    __eq__ (from AstronomicalObject)
+    (see AstronomicalObject in py/picca/delta_extraction/astronomical_object.py)
     __init__
     class_variable_check
     consistency_check
@@ -52,6 +51,8 @@ class Forest(AstronomicalObject):
 
     Attributes
     ----------
+    (see AstronomicalObject in py/picca/delta_extraction/astronomical_object.py)
+
     bad_continuum_reason: str or None
     Reason as to why the continuum fit is not acceptable. None for acceptable
     contiuum.
@@ -72,6 +73,9 @@ class Forest(AstronomicalObject):
     Logarithm of the wavelength (in Angstroms). Differs from log_lambda_grid
     as the particular instance might not have full wavelength coverage or
     might have some missing pixels (because they are masked)
+
+    logger: logging.Logger
+    Logger object
 
     mean_snr: float
     Mean signal-to-noise of the forest

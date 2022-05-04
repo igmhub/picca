@@ -12,8 +12,7 @@ class Pk1dForest(Forest):
 
     Methods
     -------
-    __gt__ (from AstronomicalObject)
-    __eq__ (from AstronomicalObject)
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
     __init__
     class_variable_check
     consistency_check
@@ -38,6 +37,9 @@ class Pk1dForest(Forest):
 
     reso: array of floats
     Resolution of the forest
+
+    reso_pix: array of floats
+    Resolution of the forest in pixels
     """
 
     lambda_abs_igm = None

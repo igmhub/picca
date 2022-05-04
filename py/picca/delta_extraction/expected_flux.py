@@ -26,13 +26,12 @@ class ExpectedFlux:
     1+delta), "weights", and "continuum" pointing to the respective arrays. If
     the given Forests are also Pk1dForests, then the key "ivar" (inverse noise
     variance from the pipeline) must be available.
-
     Arrays must have the same size as the flux array for the corresponding line
     of sight forest instance.
 
     num_processors: int
     Number of processors to use for multiprocessing-enabled tasks (will be passed
-    downstream to e.g. ExpectedFlux and Data classes)
+    downstream to child classes)
 
     out_dir: str (from ExpectedFlux)
     Directory where logs will be saved.
@@ -40,7 +39,6 @@ class ExpectedFlux:
     def __init__(self, config):
         """Initialize class instance"""
         self.los_ids = {}
-        self.num_processors = None
 
         self.out_dir = config.get("out dir")
         if self.out_dir is None:

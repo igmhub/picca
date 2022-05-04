@@ -19,32 +19,13 @@ class DesiTile(DesiData):
 
     Methods
     -------
-    filter_forests (from Data)
-    set_blinding (from Data)
+    (see DesiData in py/picca/delta_extraction/data_catalogues/desi_data.py)
     __init__
-    __parse_config
     read_data
 
     Attributes
     ----------
-    analysis_type: str (from Data)
-    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
-
-    forests: list of Forest (from Data)
-    A list of Forest from which to compute the deltas.
-
-    min_num_pix: int (from Data)
-    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
-
-    blinding: str (from DesiData)
-    A string specifying the chosen blinding strategies. Must be one of the
-    accepted values in ACCEPTED_BLINDING_STRATEGIES
-
-    catalogue: astropy.table.Table (from DesiData)
-    The quasar catalogue
-
-    input_directory: str (from DesiData)
-    Directory to spectra files.
+    (see DesiData in py/picca/delta_extraction/data_catalogues/desi_data.py)
 
     logger: logging.Logger
     Logger object

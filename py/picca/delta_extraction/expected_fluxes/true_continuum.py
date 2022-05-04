@@ -35,30 +35,27 @@ class TrueContinuum(ExpectedFlux):
 
     Methods
     -------
-    extract_deltas (from ExpectedFlux)
+    (see ExpectedFlux in py/picca/delta_extraction/expected_flux.py)
     __init__
     __parse_config
     compute_expected_flux
-    compute_mean_cont_lin
-    compute_mean_cont_log
+    compute_mean_cont
+    populate_los_ids
     read_true_continuum
     read_raw_statistics
-    populate_los_ids
     save_delta_attributes
 
     Attributes
     ----------
-    los_ids: dict (from ExpectedFlux)
-    A dictionary to store the mean expected flux, the weights, and
-    the inverse variance for each line of sight. Keys are the identifier for the
-    line of sight and values are dictionaries with the keys "mean expected flux",
-    and "weights" pointing to the respective arrays. If the given Forests are
-    also Pk1dForests, then the key "ivar" must be available. Arrays have the same
-    size as the flux array for the corresponding line of sight forest instance.
+    (see ExpectedFlux in py/picca/delta_extraction/expected_flux.py)
 
-    out_dir: str (from ExpectedFlux)
-    Directory where logs will be saved.
+    get_mean_cont: scipy.interpolate.interp1d
+    Interpolation function to compute the unabsorbed mean quasar continua.
 
+    get_mean_cont_weight: scipy.interpolate.interp1d
+    Interpolation function to compute the weights associated with the unabsorbed
+    mean quasar continua.
+    
     get_var_lss: scipy.interpolate.interp1d
     Interpolation function to compute mapping functions var_lss. See equation 4 of
     du Mas des Bourboux et al. 2020 for details. Data for interpolation is read from a file.
@@ -214,6 +211,40 @@ class TrueContinuum(ExpectedFlux):
                                              mean_cont_weight[w],
                                              fill_value=0.0,
                                              bounds_error=False)
+
+    def populate_los_ids(self, forests):
+        """Populate the dictionary los_ids with the mean expected flux, weights,
+        and inverse variance arrays for each line-of-sight.
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas.
+        """
+        for forest in forests:
+            if forest.bad_continuum_reason is not None:
+                continue
+            # get the variance functions
+            if self.use_constant_weight:
+                weights = np.ones_like(forest.log_lambda)
+                mean_expected_flux = forest.continuum
+            else:
+                var_lss = self.get_var_lss(forest.log_lambda)
+
+                mean_expected_flux = forest.continuum
+                var_pipe = 1. / forest.ivar / forest.continuum**2
+                variance = var_lss + var_pipe
+                weights = 1. / variance
+
+            forest_info = {
+                "mean expected flux": mean_expected_flux,
+                "weights": weights,
+                "continuum": forest.continuum,}
+            if isinstance(forest, Pk1dForest):
+                ivar = forest.ivar / mean_expected_flux**2
+
+                forest_info["ivar"] = ivar
+            self.los_ids[forest.los_id] = forest_info
 
     def read_true_continuum(self, forest):
         """Read the forest continuum and insert it into
@@ -376,40 +407,6 @@ class TrueContinuum(ExpectedFlux):
                                       mean_flux,
                                       fill_value='extrapolate',
                                       kind='nearest')
-
-    def populate_los_ids(self, forests):
-        """Populate the dictionary los_ids with the mean expected flux, weights,
-        and inverse variance arrays for each line-of-sight.
-
-        Arguments
-        ---------
-        forests: List of Forest
-        A list of Forest from which to compute the deltas.
-        """
-        for forest in forests:
-            if forest.bad_continuum_reason is not None:
-                continue
-            # get the variance functions
-            if self.use_constant_weight:
-                weights = np.ones_like(forest.log_lambda)
-                mean_expected_flux = forest.continuum
-            else:
-                var_lss = self.get_var_lss(forest.log_lambda)
-
-                mean_expected_flux = forest.continuum
-                var_pipe = 1. / forest.ivar / forest.continuum**2
-                variance = var_lss + var_pipe
-                weights = 1. / variance
-
-            forest_info = {
-                "mean expected flux": mean_expected_flux,
-                "weights": weights,
-                "continuum": forest.continuum,}
-            if isinstance(forest, Pk1dForest):
-                ivar = forest.ivar / mean_expected_flux**2
-
-                forest_info["ivar"] = ivar
-            self.los_ids[forest.los_id] = forest_info
 
     def save_delta_attributes(self):
         """Save mean continuum in the delta attributes file.
