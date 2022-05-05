@@ -417,7 +417,8 @@ class DesiHealpix(DesiData):
         self.logger.info(f"reading data from {len(arguments)} files")
 
         if self.num_processors>1:
-            with multiprocessing.Pool(processes=self.num_processors) as pool:
+            context = multiprocessing.get_context('fork')
+            with context.Pool(processes=self.num_processors) as pool:
                 imap_it = pool.imap_unordered(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
                 for forests_by_pe in imap_it:
                     # Merge each dict to master forests_by_targetid
