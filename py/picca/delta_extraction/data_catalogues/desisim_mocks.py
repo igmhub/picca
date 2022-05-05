@@ -96,7 +96,7 @@ class DesisimMocks(DesiHealpix):
              self.catalogue["SURVEY"]=np.ma.masked
 
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
-        
+
         forests_by_targetid = {}
 
         arguments = []
@@ -112,11 +112,12 @@ class DesisimMocks(DesiHealpix):
         self.logger.info(f"reading data from {len(arguments)} files")
 
         if self.num_processors>1:
-            with multiprocessing.Pool(processes=self.num_processors) as pool:
-                imap_it = pool.imap(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
-                for forests_by_pe in imap_it:
-                    # Merge each dict to master forests_by_targetid
-                    ParallelReader._merge_new_forest(forests_by_targetid, forests_by_pe)
+            context = multiprocessing.get_context('fork')
+            pool = context.Pool(processes=self.num_processors)
+            imap_it = pool.imap(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)    
+            for forests_by_pe in imap_it:
+                # Merge each dict to master forests_by_targetid
+                ParallelReader._merge_new_forest(forests_by_targetid, forests_by_pe)
         else:
             reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
             for index, this_arg in enumerate(arguments):
@@ -131,7 +132,7 @@ class DesisimMocks(DesiHealpix):
         self.forests = list(forests_by_targetid.values())
 
         return True, False
-    
+
     def read_file(self, filename, catalogue):
         reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
 

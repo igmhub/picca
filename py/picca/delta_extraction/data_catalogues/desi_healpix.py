@@ -75,7 +75,6 @@ class ParallelReader(object):
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         """
-        print(type(catalogue))
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
@@ -360,11 +359,12 @@ class DesiHealpix(DesiData):
         self.logger.info(f"reading data from {len(arguments)} files")
 
         if self.num_processors>1:
-            with multiprocessing.Pool(processes=self.num_processors) as pool:
-                imap_it = pool.imap(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
-                for forests_by_pe in imap_it:
-                    # Merge each dict to master forests_by_targetid
-                    ParallelReader._merge_new_forest(forests_by_targetid, forests_by_pe)
+            context = multiprocessing.get_context('fork')
+            pool = context.Pool(processes=self.num_processors)
+            imap_it = pool.imap(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
+            for forests_by_pe in imap_it:
+                # Merge each dict to master forests_by_targetid
+                ParallelReader._merge_new_forest(forests_by_targetid, forests_by_pe)
         else:
             reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
             for index, this_arg in enumerate(arguments):
@@ -380,7 +380,7 @@ class DesiHealpix(DesiData):
         self.forests = list(forests_by_targetid.values())
 
         return False, is_sv
-    
+
     def read_file(self, filename, catalogue):
         reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
 
