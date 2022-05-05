@@ -6,18 +6,20 @@ import time
 import numpy as np
 import fitsio
 
-from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.sdss_forest import SdssForest
 from picca.delta_extraction.astronomical_objects.sdss_pk1d_forest import SdssPk1dForest
 from picca.delta_extraction.data import Data, defaults, accepted_options
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import DrqCatalogue
 from picca.delta_extraction.quasar_catalogues.drq_catalogue import defaults as defaults_drq
-from picca.delta_extraction.quasar_catalogues.drq_catalogue import accepted_options as accepted_options_quasar_catalogue
+from picca.delta_extraction.quasar_catalogues.drq_catalogue import (
+    accepted_options as accepted_options_quasar_catalogue)
 from picca.delta_extraction.utils_pk1d import exp_diff, spectral_resolution
 
-accepted_options = sorted(list(set(accepted_options + accepted_options_quasar_catalogue +[
-    "rebin", "mode"])))
+accepted_options = sorted(
+    list(
+        set(accepted_options + accepted_options_quasar_catalogue +
+            ["rebin", "mode"])))
 
 defaults = defaults.copy()
 defaults.update({
@@ -26,13 +28,14 @@ defaults.update({
 })
 defaults.update(defaults_drq)
 
+
 class SdssData(Data):
     """Reads the spectra from SDSS and formats its data as a list of
     Forest instances.
 
     Methods
     -------
-    filter_forests (from Data)
+    (see Data in py/picca/delta_extraction/data.py)
     __init__
     __parse_config
     read_from_spec
@@ -40,17 +43,7 @@ class SdssData(Data):
 
     Attributes
     ----------
-    analysis_type: str (from Data)
-    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
-
-    forests: list of Forest (from Data)
-    A list of Forest from which to compute the deltas.
-
-    min_num_pix: int (from Data)
-    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
-
-    in_dir: str
-    Directory to spectra files.
+    (see Data in py/picca/delta_extraction/data.py)
 
     logger: logging.Logger
     Logger object
@@ -111,7 +104,7 @@ class SdssData(Data):
         rebin = config.getint("rebin")
         if rebin is None:
             raise DataError("Missing argument 'rebin' required by SdssData")
-        config["delta log lambda"] = str(rebin*1e-4)
+        config["delta log lambda"] = str(rebin * 1e-4)
         del config["rebin"]
 
         config["wave solution"] = "log"
@@ -141,7 +134,7 @@ class SdssData(Data):
             except IOError:
                 self.logger.warning(f"Error reading {filename}. Ignoring file")
                 continue
-            self.logger.progress("Read {}".format(filename))
+            self.logger.progress(f"Read {filename}")
 
             log_lambda = hdul[1]["loglam"][:]
             flux = hdul[1]["flux"][:]
@@ -205,8 +198,7 @@ class SdssData(Data):
         """
         grouped_catalogue = catalogue.group_by(["PLATE", "MJD"])
         num_objects = catalogue["THING_ID"].size
-        self.logger.progress("reading {} plates".format(
-            len(grouped_catalogue.groups)))
+        self.logger.progress(f"reading {len(grouped_catalogue.groups)} plates")
 
         forests_by_thingid = {}
         num_read_total = 0
@@ -285,8 +277,7 @@ class SdssData(Data):
                 else:
                     forests_by_thingid[thingid] = forest
                 self.logger.debug(
-                    f"{thingid} read from file {spplate} and fiberid {fiberid}"
-                )
+                    f"{thingid} read from file {spplate} and fiberid {fiberid}")
 
             num_read = len(group)
             num_read_total += num_read

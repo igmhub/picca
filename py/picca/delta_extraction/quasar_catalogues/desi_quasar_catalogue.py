@@ -5,16 +5,18 @@ import logging
 
 from astropy.table import Table
 import fitsio
+import healpy
 import numpy as np
 
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue, accepted_options
 
 accepted_options = sorted(list(set(accepted_options + [
-    "catalogue", "keep surveys"])))
+    "catalogue", "in_nside", "keep surveys"])))
 
 defaults = {
-    "keep surveys": "all"
+    "keep surveys": "all",
+    "in_nside": "64",
 }
 
 accepted_surveys = ["sv1", "sv2", "sv3", "main", "special", "all"]
@@ -24,7 +26,7 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
     Methods
     -------
-    trim_catalogue (from QuasarCatalogue)
+    (see QuasarCatalogue in py/picca/delta_extraction/quasar_catalogue.py)
     __init__
     __parse_config
     filter_surveys
@@ -32,22 +34,13 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
     Attributes
     ----------
-    catalogue: astropy.table.Table (from QuasarCatalogue)
-    The quasar catalogue
-
-    max_num_spec: int or None (from QuasarCatalogue)
-    Maximum number of spectra to read. None for no maximum
-
-    z_max: float (from QuasarCatalogue)
-    Maximum redshift. Quasars with redshifts higher than or equal to
-    z_max will be discarded
-
-    z_min: float (from QuasarCatalogue)
-    Minimum redshift. Quasars with redshifts lower than z_min will be
-    discarded
+    (see QuasarCatalogue in py/picca/delta_extraction/quasar_catalogue.py)
 
     filename: str
     Filename of the z_truth catalogue
+
+    in_nside: int
+    Parameter in_nside to compute the healpix indexes
 
     keep surveys: list
     Only keep the entries in the catalogue that have a "SURVEY" specified in
@@ -66,10 +59,15 @@ class DesiQuasarCatalogue(QuasarCatalogue):
 
         # load variables from config
         self.filename = None
+        self.in_nside = None
+        self.keep_surveys = None
         self.__parse_config(config)
 
         # read quasar catalogue
         self.read_catalogue()
+
+        # add healpix info
+        self.add_healpix()
 
         # if there is a maximum number of spectra, make sure they are selected
         # in a contiguous regions
@@ -109,18 +107,28 @@ class DesiQuasarCatalogue(QuasarCatalogue):
             raise QuasarCatalogueError("Missing argument 'catalogue' required "
                                        "by DesiQuasarCatalogue")
 
-    def read_catalogue(self):
-        """Read the z_truth catalogue
+        self.in_nside = config.getint("in_nside")
+        if self.in_nside is None:
+            raise QuasarCatalogueError("Missing argument 'in_nside' required "
+                                       "by DesiQuasarCatalogue")
 
-        Return
-        ------
-        catalogue: Astropy.table.Table
-        Table with the catalogue
-        """
+    def add_healpix(self):
+        """Add healpix information to the catalogue"""
+        healpix = [
+            healpy.ang2pix(self.in_nside,
+                           np.pi / 2 - row["DEC"],
+                           row["RA"],
+                           nest=True) for row in self.catalogue
+        ]
+        self.catalogue["HEALPIX"] = healpix
+        self.catalogue.sort("HEALPIX")
+
+    def read_catalogue(self):
+        """Read the DESI quasar catalogue"""
         self.logger.progress(f'Reading catalogue from {self.filename}')
         extnames = [ext.get_extname() for ext in fitsio.FITS(self.filename)]
         if "QSO_CAT" in extnames:
-            extension = "QSO_CAT"            
+            extension = "QSO_CAT"
         elif "ZCATALOG" in extnames:
             extension = "ZCATALOG"
         else:
@@ -178,3 +186,8 @@ class DesiQuasarCatalogue(QuasarCatalogue):
         catalogue.keep_columns(keep_columns)
         w = np.where(w)[0]
         self.catalogue = catalogue[w]
+
+        # add column SURVEY if not present
+        # necessary for current mock catalogues
+        if not "SURVEY" in self.catalogue.colnames:
+            self.catalogue["SURVEY"] = np.ma.masked

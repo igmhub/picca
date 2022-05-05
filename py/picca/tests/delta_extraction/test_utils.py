@@ -13,9 +13,9 @@ from picca.delta_extraction.utils import ABSORBER_IGM
 def reset_forest():
     """Reset the class variables of Forest and Pk1dForest"""
     Forest.wave_solution = None
-    Forest.log_lambda_grid = None
-    Forest.log_lambda_rest_frame_grid = None
-    Forest.mask_fields = None
+    Forest.log_lambda_grid = np.array([])
+    Forest.log_lambda_rest_frame_grid = np.array([])
+    Forest.mask_fields = []
     Pk1dForest.lambda_abs_igm = None
 
 # setup Forest class variables

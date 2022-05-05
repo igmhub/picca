@@ -5,25 +5,12 @@ import logging
 import glob
 
 import fitsio
-import healpy
 import numpy as np
 
-from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
-from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
-from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.data_catalogues.desi_data import DesiData, defaults, accepted_options
+from picca.delta_extraction.data_catalogues.desi_data import DesiData
+from picca.delta_extraction.data_catalogues.desi_data import(# pylint: disable=unused-import
+    defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
-from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
-
-accepted_options = sorted(
-    list(
-        set(accepted_options +
-            ["use non-coadded spectra"])))
-
-defaults = defaults.copy()
-defaults.update({
-    "use non-coadded spectra": False,
-})
 
 
 class DesiTile(DesiData):
@@ -32,42 +19,18 @@ class DesiTile(DesiData):
 
     Methods
     -------
-    filter_forests (from Data)
-    set_blinding (from Data)
+    (see DesiData in py/picca/delta_extraction/data_catalogues/desi_data.py)
     __init__
-    __parse_config
     read_data
 
     Attributes
     ----------
-    analysis_type: str (from Data)
-    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
-
-    forests: list of Forest (from Data)
-    A list of Forest from which to compute the deltas.
-
-    min_num_pix: int (from Data)
-    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
-
-    blinding: str (from DesiData)
-    A string specifying the chosen blinding strategies. Must be one of the
-    accepted values in ACCEPTED_BLINDING_STRATEGIES
-
-    catalogue: astropy.table.Table (from DesiData)
-    The quasar catalogue
-
-    input_directory: str (from DesiData)
-    Directory to spectra files.
-
-    use_all: bool
-    If True, read using the all directory.
-
-    use_single_nights: bool
-    If True,  read using only nights specified within the cat
+    (see DesiData in py/picca/delta_extraction/data_catalogues/desi_data.py)
 
     logger: logging.Logger
     Logger object
     """
+
     def __init__(self, config):
         """Initialize class instance
 
@@ -77,35 +40,7 @@ class DesiTile(DesiData):
         Parsed options to initialize class
         """
         self.logger = logging.getLogger(__name__)
-
-        # load variables from config
-        self.use_all = None
-        self.use_single_nights = None
-        self.use_non_coadded_spectra = None
-
-        self.__parse_config(config)
-        #init of DesiData needs to come last, as it contains the actual data reading and thus needs all config
         super().__init__(config)
-
-
-    def __parse_config(self, config):
-        """Parse the configuration options
-
-        Arguments
-        ---------
-        config: configparser.SectionProxy
-        Parsed options to initialize class
-
-        Raise
-        -----
-        DataError upon missing required variables
-        """
-        self.use_non_coadded_spectra = config.getboolean(
-            "use non-coadded spectra")
-        if self.use_non_coadded_spectra is None:
-            raise DataError(
-                "Missing argument 'use non-coadded spectra' required by DesiTile"
-            )
 
     def read_data(self):
         """Read the spectra and formats its data as Forest instances.
@@ -123,15 +58,13 @@ class DesiTile(DesiData):
         DataError if the analysis type is PK 1D and resolution data is not present
         DataError if no quasars were found
         """
-        if np.any((self.catalogue['TILEID'] < 60000)
-                  & (self.catalogue['TILEID'] >= 1000)):
+        if np.any((self.catalogue['TILEID'] < 60000) &
+                  (self.catalogue['TILEID'] >= 1000)):
             is_sv = False
         else:
             is_sv = True
 
         forests_by_targetid = {}
-        num_data = 0
-
         coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
 
         files_in = sorted(
@@ -161,9 +94,10 @@ class DesiTile(DesiData):
                     filenames.append(file_in)
         filenames = np.unique(filenames)
 
+        num_data = 0
         for index, filename in enumerate(filenames):
-            self.logger.progress("read tile {} of {}. ndata: {}".format(
-                index, len(filenames), num_data))
+            self.logger.progress(
+                f"read tile {index} of {len(filename)}. ndata: {num_data}")
             try:
                 hdul = fitsio.FITS(filename)
             except IOError:
@@ -172,7 +106,6 @@ class DesiTile(DesiData):
                 continue
 
             fibermap = hdul['FIBERMAP'].read()
-            fibermap_colnames = hdul["FIBERMAP"].get_colnames()
 
             ra = fibermap['TARGET_RA']
             dec = fibermap['TARGET_DEC']
@@ -187,8 +120,6 @@ class DesiTile(DesiData):
             dec = np.radians(dec)
 
             petal_spec = fibermap['PETAL_LOC'][0]
-
-            targetid_spec = fibermap['TARGETID']
 
             spectrographs_data = {}
             for color in colors:
@@ -225,90 +156,11 @@ class DesiTile(DesiData):
                 f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}'
             )
 
-            # Loop over quasars in catalog inside this tile-petal
-            for entry in self.catalogue[select]:
-
-                # Find which row in tile contains this quasar
-                targetid = entry['TARGETID']
-                w_t = np.where(targetid_spec == targetid)[0]
-                if len(w_t) == 0:
-                    self.logger.warning(
-                        f"Error reading {targetid}. Ignoring object")
-                    continue
-                if len(w_t) > 1:
-                    self.logger.warning(
-                        "Warning: more than one spectrum in this file "
-                        f"for {targetid}")
-                else:
-                    w_t = w_t[0]
-
-                for spec in spectrographs_data.values():
-                    if self.use_non_coadded_spectra:
-                        ivar = np.atleast_2d(spec['IVAR'][w_t])
-                        ivar_coadded_flux = np.atleast_2d(
-                            ivar * spec['FLUX'][w_t]).sum(axis=0)
-                        ivar = ivar.sum(axis=0)
-                        flux = (ivar_coadded_flux / ivar)
-                    else:
-                        flux = spec['FLUX'][w_t].copy()
-                        ivar = spec['IVAR'][w_t].copy()
-                    args = {
-                        "flux": flux,
-                        "ivar": ivar,
-                        "targetid": targetid,
-                        "ra": entry['RA'],
-                        "dec": entry['DEC'],
-                        "z": entry['Z'],
-                        "petal": entry["PETAL_LOC"],
-                        "tile": entry["TILEID"],
-                        "night": entry["NIGHT"],
-                    }
-                    args["log_lambda"] = np.log10(spec['WAVELENGTH'])
-
-                    if self.analysis_type == "BAO 3D":
-                        forest = DesiForest(**args)
-                    elif self.analysis_type == "PK 1D":
-                        if self.use_non_coadded_spectra:
-                            exposures_diff = exp_diff_desi(spec, w_t)
-                            if exposures_diff is None:
-                                continue
-                        else:
-                            exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
-                        if len(spec['RESO'][w_t].shape) < 3:
-                            reso_sum = spec['RESO'][w_t].copy()
-                        else:
-                            reso_sum = spec['RESO'][w_t].sum(axis=0)
-                        reso_in_pix, reso_in_km_per_s = np.real(
-                            spectral_resolution_desi(reso_sum,
-                                                     spec['WAVELENGTH']))
-
-                        args["exposures_diff"] = exposures_diff
-                        args["reso"] = reso_in_km_per_s
-                        args["resolution_matrix"] = reso_sum
-                        args["reso_pix"] = reso_in_pix
-
-                        forest = DesiPk1dForest(**args)
-                    else:
-                        raise DataError(
-                            "Unkown analysis type. Expected 'BAO 3D'"
-                            f"or 'PK 1D'. Found '{self.analysis_type}'")
-
-                    # rebin arrays
-                    # this needs to happen after all arrays are initialized by
-                    # Forest constructor
-                    forest.rebin()
-
-                    # add the forest to list
-                    if targetid in forests_by_targetid:
-                        existing_forest = forests_by_targetid[targetid]
-                        existing_forest.coadd(forest)
-                        forests_by_targetid[targetid] = existing_forest
-                    else:
-                        forests_by_targetid[targetid] = forest
-
-                num_data += 1
-        self.logger.progress(
-            "Found {} quasars in input files".format(num_data))
+            num_data += self.format_data(self.catalogue[select],
+                                        spectrographs_data,
+                                        fibermap["TARGETID"],
+                                        forests_by_targetid)
+        self.logger.progress(f"Found {num_data} quasars in input files")
 
         if num_data == 0:
             raise DataError("No Quasars found, stopping here")

@@ -11,7 +11,7 @@ ignore=CVS
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.
-ignore-patterns=
+ignore-patterns=bin/picca*.py
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
@@ -140,7 +140,8 @@ disable=print-statement,
         exception-escape,
         comprehension-escape,
         useless-object-inheritance,
-        logging-fstring-interpolation
+        logging-fstring-interpolation,
+        fixme
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -359,7 +360,8 @@ ignore-docstrings=yes
 ignore-imports=yes
 
 # Minimum lines number of a similarity.
-min-similarity-lines=5
+#min-similarity-lines=5
+min-similarity-lines=9
 
 
 [BASIC]

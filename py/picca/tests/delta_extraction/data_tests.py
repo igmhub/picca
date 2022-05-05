@@ -619,13 +619,23 @@ class DataTest(AbstractTest):
 
         data = DesiHealpix(config["data"])
 
-        # create a config file with missing options
+        # run __parse_config with missing 'blinding'
         config = ConfigParser()
         config.read_dict({"data": {
                         }})
-
-        # run __parse_config with missing 'blinding'
         expected_message = "Missing argument 'blinding' required by DesiData"
+        with self.assertRaises(DataError) as context_manager:
+            data._DesiData__parse_config(config["data"])
+        self.compare_error_message(context_manager, expected_message)
+
+        # run __parse_config with missing 'use_non_coadded_spectra'
+        config = ConfigParser()
+        config.read_dict({"data": {
+            "blinding": "none",
+                        }})
+        expected_message = (
+            "Missing argument 'use non-coadded spectra' required by DesiData"
+        )
         with self.assertRaises(DataError) as context_manager:
             data._DesiData__parse_config(config["data"])
         self.compare_error_message(context_manager, expected_message)
@@ -802,22 +812,6 @@ class DataTest(AbstractTest):
 
     def test_desi_healpix_parse_config(self):
         """Test method __parse_config from DesiHealpix"""
-        # create a DesiHealpix with missing use_non_coadded_spectra
-        config = ConfigParser()
-        config.read_dict({"data": {
-            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-            "keep surveys": "all",
-            "input directory": f"{THIS_DIR}/data/",
-            "out dir": f"{THIS_DIR}/results/",
-            "num processors": 1,
-        }})
-        expected_message = (
-            "Missing argument 'use non-coadded spectra' required by DesiHealpix"
-        )
-        with self.assertRaises(DataError) as context_manager:
-            DesiHealpix(config["data"])
-        self.compare_error_message(context_manager, expected_message)
-
         # create a DesiHealpix with missing num_processors
         config = ConfigParser()
         config.read_dict({"data": {
@@ -1130,22 +1124,6 @@ class DataTest(AbstractTest):
 
     def test_desi_tile_parse_config(self):
         """Test method __parse_config from DesiTile"""
-        # create a DesiTile with missing use_non_coadded_spectra
-        config = ConfigParser()
-        config.read_dict({"data": {
-            "catalogue": f"{THIS_DIR}/data/QSO_cat_fuji_dark_healpix.fits.gz",
-            "keep surveys": "all",
-            "input directory": f"{THIS_DIR}/data/",
-            "out dir": f"{THIS_DIR}/results/",
-            "num processors": 1,
-        }})
-        expected_message = (
-            "Missing argument 'use non-coadded spectra' required by DesiTile"
-        )
-        with self.assertRaises(DataError) as context_manager:
-            DesiTile(config["data"])
-        self.compare_error_message(context_manager, expected_message)
-
         # create a DesiTile with missing Data options
         config = ConfigParser()
         config.read_dict({"data": {

@@ -1,14 +1,10 @@
 """This module defines the class DesiData to load DESI data
 """
-import multiprocessing
 import logging
 
-import fitsio
-import healpy
-import numpy as np
-
-from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix, defaults, accepted_options
-from picca.delta_extraction.errors import DataError
+from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
+from picca.delta_extraction.data_catalogues.desi_healpix import (# pylint: disable=unused-import
+    defaults, accepted_options)
 
 class DesisimMocks(DesiHealpix):
     """Reads the spectra from DESI using healpix mode and formats its data as a
@@ -19,36 +15,21 @@ class DesisimMocks(DesiHealpix):
 
     Methods
     -------
-    filter_forests (from Data)
-    set_blinding (from Data)
-    read_file (from DesiHealpix)
+    (see DesiHealpix in py/picca/delta_extraction/data_catalogues/desi_healpix.py)
     __init__
-    read_data
+    get_filename
 
     Attributes
     ----------
-    analysis_type: str (from Data)
-    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
+    (see DesiHealpix in py/picca/delta_extraction/data_catalogues/desi_healpix.py)
 
-    forests: list of Forest (from Data)
-    A list of Forest from which to compute the deltas.
-
-    min_num_pix: int (from Data)
-    Minimum number of pixels in a forest. Forests with less pixels will be dropped.
-
-    blinding: str (from DesiData)
-    A string specifying the chosen blinding strategies. Must be one of the
-    accepted values in ACCEPTED_BLINDING_STRATEGIES
-
-    catalogue: astropy.table.Table (from DesiData)
-    The quasar catalogue
-
-    input_directory: str (from DesiData)
-    Directory to spectra files.
+    in_nside: 16
+    Parameter in_nside to compute the healpix indexes
 
     logger: logging.Logger
     Logger object
     """
+
     def __init__(self, config):
         """Initialize class instance
 
@@ -57,84 +38,38 @@ class DesisimMocks(DesiHealpix):
         config: configparser.SectionProxy
         Parsed options to initialize class
         """
-
         self.logger = logging.getLogger(__name__)
+
+        # overwrite value for mocks
+        self.in_nside = 16
+        config["in_nside"] = str(self.in_nside)
+
         super().__init__(config)
         if self.use_non_coadded_spectra:
-            self.logger.warning('the "use_non_coadded_spectra" option was set, '
-                                'but has no effect on Mocks, will proceed as normal')
+            self.logger.warning(
+                'the "use_non_coadded_spectra" option was set, '
+                'but has no effect on Mocks, will proceed as normal')
 
-    def read_data(self):
-        """Read the spectra and formats its data as Forest instances.
+    def get_filename(self, survey, healpix):
+        """Get the name of the file to read
 
-        Method used to read healpix-based survey data.
+        Arguments
+        ---------
+        survey: str
+        Name of the survey (sv, sv1, sv2, sv3, main, special)
+
+        healpix: int
+        Healpix of observations
 
         Return
         ------
+        filename: str
+        The name of the file to read
+
         is_mock: bool
-        True as we are loading mocks
-
-        is_sv: bool
-        False as mocks data is not part of DESI SV data
-
-        Raise
-        -----
-        DataError if no quasars were found
+        True, as we are reading mocks
         """
-        in_nside = 16
-
-        healpix = [
-            healpy.ang2pix(in_nside, np.pi / 2 - row["DEC"], row["RA"], nest=True)
-            for row in self.catalogue
-        ]
-        self.catalogue["HEALPIX"] = healpix
-        self.catalogue.sort("HEALPIX")
-
-        #Current mocks don't have this "SURVEY" column in the catalog
-        #but its not clear future ones will not have it, so I think is good to leave it for now.
-        if not "SURVEY" in self.catalogue.colnames:
-             self.catalogue["SURVEY"]=np.ma.masked
-
-        grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
-        arguments=[]
-        if self.num_processors>1:
-            context = multiprocessing.get_context('fork')
-            manager =  multiprocessing.Manager()
-            forests_by_targetid = manager.dict()
-
-            for (index,
-                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                        grouped_catalogue.groups):
-
-                filename = (
-                    f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
-                    f"{in_nside}-{healpix}.fits")
-                arguments.append((filename,group,forests_by_targetid))
-
-            self.logger.info(f"reading data from {len(arguments)} files")
-            with context.Pool(processes=self.num_processors) as pool:
-
-                pool.starmap(self.read_file, arguments)
-            for key,forest in forests_by_targetid.items():
-                #TODO: the following just does the consistency checking again, to avoid mask_fields not being populated. In the long run an alternative way of running the multiprocessing is envisioned which would be more stable, see discussion in PRs 879 and 883
-                forest.consistency_check()
-        else:
-            forests_by_targetid = {}
-            for (index,
-                (healpix, survey)), group in zip(enumerate(grouped_catalogue.groups.keys),
-                                        grouped_catalogue.groups):
-
-                filename = (
-                    f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
-                    f"{in_nside}-{healpix}.fits")
-                self.logger.progress(
-                    f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
-                    f"num_data: {len(forests_by_targetid)}"
-                    )
-                self.read_file(filename, group, forests_by_targetid)
-
-        if len(forests_by_targetid) == 0:
-            raise DataError("No quasars found, stopping here")
-        self.forests = list(forests_by_targetid.values())
-
-        return True, False
+        filename = (
+            f"{self.input_directory}/{healpix//100}/{healpix}/spectra-"
+            f"{self.in_nside}-{healpix}.fits")
+        return filename, True

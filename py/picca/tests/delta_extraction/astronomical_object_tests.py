@@ -1308,7 +1308,7 @@ class AstronomicalObjectTest(AbstractTest):
         self.compare_error_message(context_manager, expected_message)
 
         # create a Forest with missing Forest.wave_solution
-        Forest.mask_fields = []
+        Forest.mask_fields = ["flux"]
         expected_message = (
             "Error constructing Forest. Class variable "
             "'wave_solution' must be set prior to initialize "

@@ -7,6 +7,7 @@ from picca.delta_extraction.errors import CorrectionError
 
 accepted_options = ["filename"]
 
+
 class CalibrationCorrection(Correction):
     """Class to correct calibration errors measured from other spectral regions.
 
@@ -25,6 +26,7 @@ class CalibrationCorrection(Correction):
     Determines whether the wavelength solution has linear spacing ("lin") or
     logarithmic spacing ("log").
     """
+
     def __init__(self, config):
         """Initialize class instance.
 
@@ -41,7 +43,9 @@ class CalibrationCorrection(Correction):
         """
         filename = config.get("filename")
         if filename is None:
-            raise CorrectionError("Missing argument 'filename' required by SdssCalibrationCorrection")
+            raise CorrectionError(
+                "Missing argument 'filename' required by SdssCalibrationCorrection"
+            )
         try:
             hdu = fitsio.read(filename, ext="STACK_DELTAS")
             if "loglam" in hdu.dtype.names:
@@ -57,14 +61,18 @@ class CalibrationCorrection(Correction):
                                       "or 'lambda' should be present. I did not"
                                       "find them.")
             stack_delta = hdu['stack']
-        except OSError:
-            raise CorrectionError("Error loading CalibrationCorrection. "
-                                  f"File {filename} does not have extension "
-                                  "'STACK_DELTAS'")
-        except ValueError:
-            raise CorrectionError("Error loading CalibrationCorrection. "
-                                  f"File {filename} does not have fields "
-                                  "'loglam' and/or 'stack' in HDU 'STACK_DELTAS'")
+        except OSError as error:
+            raise CorrectionError(
+                "Error loading CalibrationCorrection. "
+                f"File {filename} does not have extension "
+                "'STACK_DELTAS'"
+            ) from error
+        except ValueError as error:
+            raise CorrectionError(
+                "Error loading CalibrationCorrection. "
+                f"File {filename} does not have fields "
+                "'loglam' and/or 'stack' in HDU 'STACK_DELTAS'"
+            ) from error
         w = (stack_delta != 0.)
         if self.wave_solution == "log":
             self.correct_flux = interp1d(stack_log_lambda[w],

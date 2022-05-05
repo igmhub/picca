@@ -276,7 +276,7 @@ class QuasarCatalogueTest(AbstractTest):
                 "keep surveys": "all special"
             }})
 
-        for key, value in defaults_drq.items():
+        for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
@@ -308,7 +308,7 @@ class QuasarCatalogueTest(AbstractTest):
                 "keep surveys": "sv3"
             }})
 
-        for key, value in defaults_drq.items():
+        for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
@@ -333,7 +333,7 @@ class QuasarCatalogueTest(AbstractTest):
                 "keep surveys": "main sv3"
             }})
 
-        for key, value in defaults_drq.items():
+        for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
@@ -359,7 +359,7 @@ class QuasarCatalogueTest(AbstractTest):
                 "keep surveys": "all"
             }})
 
-        for key, value in defaults_drq.items():
+        for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
@@ -391,7 +391,7 @@ class QuasarCatalogueTest(AbstractTest):
                 "keep surveys": "sv1 all"
             }})
 
-        for key, value in defaults_drq.items():
+        for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
@@ -423,7 +423,7 @@ class QuasarCatalogueTest(AbstractTest):
                 "keep surveys": "all special"
             }})
 
-        for key, value in defaults_drq.items():
+        for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 
@@ -462,7 +462,7 @@ class QuasarCatalogueTest(AbstractTest):
                 "keep surveys": "all"
             }})
 
-        for key, value in defaults_drq.items():
+        for key, value in defaults_desi_quasar_cat.items():
             if key not in config["data"]:
                 config["data"][key] = str(value)
 

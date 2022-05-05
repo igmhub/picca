@@ -23,7 +23,7 @@ class DrqCatalogue(QuasarCatalogue):
 
     Methods
     -------
-    trim_catalogue (from QuasarCatalogue)
+    (see QuasarCatalogue in py/picca/delta_extraction/quasar_catalogue.py)
     __init__
     __parse_config
     read_drq
@@ -31,19 +31,7 @@ class DrqCatalogue(QuasarCatalogue):
 
     Attributes
     ----------
-    catalogue: astropy.table.Table (from QuasarCatalogue)
-    The quasar catalogue
-
-    max_num_spec: int or None (from QuasarCatalogue)
-    Maximum number of spectra to read. None for no maximum
-
-    z_max: float (from QuasarCatalogue)
-    Maximum redshift. Quasars with redshifts higher than or equal to
-    z_max will be discarded
-
-    z_min: float (from QuasarCatalogue)
-    Minimum redshift. Quasars with redshifts lower than z_min will be
-    discarded
+    (see QuasarCatalogue in py/picca/delta_extraction/quasar_catalogue.py)
 
     best_obs: bool
     If True, reads only the best observation for objects with repeated
@@ -277,9 +265,11 @@ class DrqCatalogue(QuasarCatalogue):
                                     "FIBERID", "PLATEQUALITY",
                                     "ZWARNING"])
         except IOError as error:
-            raise QuasarCatalogueError("Error in reading DRQ Catalogue. Error "
-                                       f"reading file {self.spall}. IOError "
-                                       f"message: {str(error)}")
+            raise QuasarCatalogueError(
+                "Error in reading DRQ Catalogue. Error "
+                f"reading file {self.spall}. IOError "
+                f"message: {str(error)}"
+            ) from error
 
         w = np.in1d(catalogue["THING_ID"], drq_catalogue["THING_ID"])
         self.logger.progress(f"Found {np.sum(w)} spectra with required THING_ID")

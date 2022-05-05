@@ -9,11 +9,7 @@ from numba import prange#, jit
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.config import Config
-from picca.delta_extraction.correction import Correction
-from picca.delta_extraction.data import Data
 from picca.delta_extraction.errors import DeltaExtractionError
-from picca.delta_extraction.mask import Mask
-from picca.delta_extraction.expected_flux import ExpectedFlux
 
 # create logger
 module_logger = logging.getLogger(__name__)
@@ -68,33 +64,25 @@ class Survey:
         self.data = None
         self.expected_flux = None
 
-    #@jit(nopython=True, parallel=True)
     def apply_corrections(self):
         """Apply the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
         self.logger.info("Applying corrections")
 
-        # pylint: disable=not-an-iterable
-        # prange is used to signal jit of parallelisation but is otherwise
-        # equivalent to range
-        for forest_index in prange(len(self.data.forests)):
-            for correction_index in range(len(self.corrections)):
+        for forest_index, _ in enumerate(self.data.forests):
+            for correction_index, _ in enumerate(self.corrections):
                 self.corrections[correction_index].apply_correction(self.data.forests[forest_index])
 
         t1 = time.time()
         self.logger.info(f"Time spent applying corrections: {t1-t0}")
 
-    #@jit(nopython=True, parallel=True)
     def apply_masks(self):
         """Apply the corrections. To be run after self.read_corrections()"""
         t0 = time.time()
         self.logger.info("Applying masks")
 
-        # pylint: disable=not-an-iterable
-        # prange is used to signal jit of parallelisation but is otherwise
-        # equivalent to range
-        for forest_index in prange(len(self.data.forests)):
-            for mask_index in range(len(self.masks)):
+        for forest_index, _ in enumerate(self.data.forests):
+            for mask_index, _ in enumerate(self.masks):
                 self.masks[mask_index].apply_mask(self.data.forests[forest_index])
 
         t1 = time.time()
@@ -180,7 +168,7 @@ class Survey:
         self.data = DataType(data_arguments)
         # we should never enter this block unless DataType is not correctly
         # writen
-        if not all([isinstance(forest, Forest) for forest in self.data.forests]): # pragma: no cover
+        if not all((isinstance(forest, Forest) for forest in self.data.forests)): # pragma: no cover
             raise DeltaExtractionError("Error reading data.\n At least one of "
                                        "the elements in variable 'forest' is "
                                        "not of class Forest. This can happen if "

@@ -1020,7 +1020,7 @@ class ExpectedFluxTest(AbstractTest):
         expected_message = ("Function 'compute_expected_flux' was not "
                             "overloaded by child class")
         with self.assertRaises(ExpectedFluxError) as context_manager:
-            expected_flux.compute_expected_flux([], "")
+            expected_flux.compute_expected_flux([])
         self.compare_error_message(context_manager, expected_message)
 
         forest = copy.deepcopy(forest1)
