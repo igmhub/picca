@@ -113,10 +113,10 @@ class DesisimMocks(DesiHealpix):
 
         if self.num_processors>1:
             with multiprocessing.Pool(processes=self.num_processors) as pool:
-                imap_it = pool.imap(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
+                imap_it = pool.imap_unordered(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
                 for forests_by_pe in imap_it:
                     # Merge each dict to master forests_by_targetid
-                    ParallelReader._merge_new_forest(forests_by_targetid, forests_by_pe)
+                    ParallelReader.merge_new_forest(forests_by_pe, forests_by_targetid)
         else:
             reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
             for index, this_arg in enumerate(arguments):
@@ -124,15 +124,10 @@ class DesisimMocks(DesiHealpix):
                     f"Read {index} of {len(arguments)}. "
                     f"num_data: {len(forests_by_targetid)}"
                     )
-                ParallelReader._merge_new_forest(forests_by_targetid, reader(this_arg))
+                ParallelReader.merge_new_forest(reader(this_arg), forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
             raise DataError("No quasars found, stopping here")
         self.forests = list(forests_by_targetid.values())
 
         return True, False
-    
-    def read_file(self, filename, catalogue):
-        reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
-
-        return reader((filename, catalogue))

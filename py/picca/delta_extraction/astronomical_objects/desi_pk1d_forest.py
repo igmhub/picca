@@ -23,6 +23,7 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
     coadd (from DesiForest, Pk1dForest)
     get_header (from DesiForest, Pk1dForest)
     __init__
+    update_class_variables
 
     Class Attributes
     ----------------
@@ -64,6 +65,16 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         super().__init__(**kwargs)
         self.consistency_check()
 
+    def update_class_variables():
+        """Static function to update Forest class attributes."""
+        if "exposures_diff" not in Forest.mask_fields:
+            Forest.mask_fields += ["exposures_diff"]
+        if "reso" not in Forest.mask_fields:
+            Forest.mask_fields += ["reso"]
+        if "reso_pix" not in Forest.mask_fields:
+            Forest.mask_fields += ["reso_pix"]
+        if "resolution_matrix" not in Forest.mask_fields:
+            Forest.mask_fields += ["resolution_matrix"]
 
     def consistency_check(self):
         """Consistency checks after __init__"""

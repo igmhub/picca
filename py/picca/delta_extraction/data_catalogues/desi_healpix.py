@@ -24,25 +24,67 @@ defaults.update({
     "use non-coadded spectra": False,
 })
 
-# Class to read in parallel
-# Seems lightweight to copy all these 3 arguments
 class ParallelReader(object):
+    """Class to read DESI spectrum files in parallel. This implementation is
+    based on the understanding that imap in multiprocessing cannot be applied
+    to class methods due to `pickle`ing limitations. Each child process
+    creates an instance of this class, then imap calls each instance with
+    an argument in parallel. imap is limited to single-argument functions,
+    but it can be overcome by making that argument a tuple.
+
+    Methods
+    -------
+    __init__
+    merge_new_forest
+    read_file
+    __call__
+    
+    Attributes
+    ----------
+    analysis_type: str (from Data)
+    Selected analysis type. Current options are "BAO 3D" or "PK 1D"
+
+    use_non_coadded_spectra: bool (from Data)
+    Not in config files yet. To be implemented
+
+    logger: logging.Logger
+    Logger object
+
+    """
     def __init__(self, analysis_type, use_non_coadded_spectra, logger):
+        """Initialize ParallelReader
+
+        Arguments
+        ---------
+        analysis_type: str
+        Selected analysis type. Current options are "BAO 3D" or "PK 1D"
+        
+        use_non_coadded_spectra: bool
+        Not in config files yet. To be implemented
+        
+        logger: logger
+        logging from parent class. Trying to initialize it here
+        without copying failed data_tests.py
+        """
+        # The next line gives failed tests
+        # self.logger = logging.getLogger(__name__)
         self.logger = logger
         self.analysis_type = analysis_type
         self.use_non_coadded_spectra = use_non_coadded_spectra
 
-    def _merge_new_forest(forests_by_targetid, forests_by_pe):
-        """Merge forests_by_pe and forests_by_targetid as Forest instances.
+    def merge_new_forest(forests_by_pe, forests_by_targetid):
+        """A static function to merge forests read by a processing element 
+        (forests_by_pe) into all forests (forests_by_targetid).
 
         Arguments
         ---------
+        forests_by_pe: dict
+        Forests read by a processing element (PE). The keys are still
+        targetids.
+        
         forests_by_targetid: dict
-        Dictionary were forests are stored. Its content is modified by this
-        function with the new forests.
-
-        forests_by_pe: str
-        Name of the file to read
+        Dictionary were all forests are stored. Its content is modified by 
+        this function with the new forests in forests_by_pe.
 
         """
         parent_targetids = set(forests_by_targetid.keys())
@@ -50,10 +92,12 @@ class ParallelReader(object):
         new_targetids = forests_by_pe.keys()-existing_targetids
 
         # Does not fail if existing_targetids is empty
-        for tid in existing_targetids:
-            forests_by_targetid[tid].coadd(forests_by_pe[tid])
-        for tid in new_targetids:
-            forests_by_targetid[tid] = forests_by_pe[tid]
+        for targetid in existing_targetids:
+            existing_forest = forests_by_targetid[targetid]
+            existing_forest.coadd(forests_by_pe[targetid])
+            forests_by_targetid[targetid] = existing_forest
+        for targetid in new_targetids:
+            forests_by_targetid[targetid] = forests_by_pe[targetid]
 
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
@@ -207,14 +251,34 @@ class ParallelReader(object):
 
                 # keep the forest
                 if targetid in forests_by_targetid:
-                    forests_by_targetid[targetid].coadd(forest)
+                    existing_forest = forests_by_targetid[targetid]
+                    existing_forest.coadd(forest)
+                    forests_by_targetid[targetid] = existing_forest
                 else:
                     forests_by_targetid[targetid] = forest
 
         return forests_by_targetid
 
-    def __call__(self, X):
-        filename, catalogue = X
+    def __call__(self, fname_cat_tuple):
+        """Call wrapper frunction for read_file to call in imap.
+        Note imap can be called with only one argument, hence a tuple.
+
+        Arguments
+        ---------
+        fname_cat_tuple: tuple of (filename, catalogue)
+        filename is str. catalogue is astropy.table.Table. see read_file.
+
+        Returns:
+        ---------
+        forests_by_targetid: dict
+        Dictionary were forests are stored. Two forest dict can be merged
+        using merge_new_forest.
+
+        Raise
+        -----
+        DataError if the analysis type is PK 1D and resolution data is not present
+        """
+        filename, catalogue = fname_cat_tuple
 
         return self.read_file(filename, catalogue)
 
@@ -274,14 +338,7 @@ class DesiHealpix(DesiData):
         super().__init__(config)
 
         if self.analysis_type == "PK 1D":
-            if "exposures_diff" not in Forest.mask_fields:
-                Forest.mask_fields += ["exposures_diff"]
-            if "reso" not in Forest.mask_fields:
-                Forest.mask_fields += ["reso"]
-            if "reso_pix" not in Forest.mask_fields:
-                Forest.mask_fields += ["reso_pix"]
-            if "resolution_matrix" not in Forest.mask_fields:
-                Forest.mask_fields += ["resolution_matrix"]
+            DesiPk1dForest.update_class_variables()
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -361,10 +418,10 @@ class DesiHealpix(DesiData):
 
         if self.num_processors>1:
             with multiprocessing.Pool(processes=self.num_processors) as pool:
-                imap_it = pool.imap(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
+                imap_it = pool.imap_unordered(ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
                 for forests_by_pe in imap_it:
                     # Merge each dict to master forests_by_targetid
-                    ParallelReader._merge_new_forest(forests_by_targetid, forests_by_pe)
+                    ParallelReader.merge_new_forest(forests_by_pe, forests_by_targetid)
         else:
             reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
             for index, this_arg in enumerate(arguments):
@@ -372,7 +429,7 @@ class DesiHealpix(DesiData):
                     f"Read {index} of {len(arguments)}. "
                     f"num_data: {len(forests_by_targetid)}")
 
-                ParallelReader._merge_new_forest(forests_by_targetid, reader(this_arg))
+                ParallelReader.merge_new_forest(reader(this_arg), forests_by_targetid)
 
         if len(forests_by_targetid) == 0:
             raise DataError("No quasars found, stopping here")
@@ -382,6 +439,27 @@ class DesiHealpix(DesiData):
         return False, is_sv
     
     def read_file(self, filename, catalogue):
+        """Read the spectra and formats its data as Forest instances.
+        This simply calls ParallelReader and is kept for testing purposes.
+
+        Arguments
+        ---------
+        filename: str
+        Name of the file to read
+
+        catalogue: astropy.table.Table
+        The quasar catalogue fragment associated with this file
+
+        Returns:
+        ---------
+        forests_by_targetid: dict
+        Dictionary were forests are stored.
+
+        Raise
+        -----
+        DataError if the analysis type is PK 1D and resolution data is not present
+        """
         reader = ParallelReader(self.analysis_type, self.use_non_coadded_spectra, self.logger)
 
         return reader((filename, catalogue))
+
