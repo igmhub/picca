@@ -119,7 +119,6 @@ class ParallelReader(object):
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         """
-        print(type(catalogue))
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
@@ -438,7 +437,7 @@ class DesiHealpix(DesiData):
         self.forests = list(forests_by_targetid.values())
 
         return False, is_sv
-    
+
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
         This simply calls ParallelReader and is kept for testing purposes.

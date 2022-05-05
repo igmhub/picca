@@ -96,7 +96,7 @@ class DesisimMocks(DesiHealpix):
              self.catalogue["SURVEY"]=np.ma.masked
 
         grouped_catalogue = self.catalogue.group_by(["HEALPIX", "SURVEY"])
-        
+
         forests_by_targetid = {}
 
         arguments = []
@@ -132,3 +132,4 @@ class DesisimMocks(DesiHealpix):
         self.forests = list(forests_by_targetid.values())
 
         return True, False
+
