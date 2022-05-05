@@ -12,8 +12,7 @@ class Pk1dForest(Forest):
 
     Methods
     -------
-    __gt__ (from AstronomicalObject)
-    __eq__ (from AstronomicalObject)
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
     __init__
     class_variable_check
     consistency_check
@@ -38,6 +37,9 @@ class Pk1dForest(Forest):
 
     reso: array of floats
     Resolution of the forest
+
+    reso_pix: array of floats
+    Resolution of the forest in pixels
     """
 
     lambda_abs_igm = None
@@ -91,17 +93,16 @@ class Pk1dForest(Forest):
     def class_variable_check(cls):
         """Check that class variables have been correctly initialized"""
         if cls.lambda_abs_igm is None:
-            raise AstronomicalObjectError("Error constructing Pk1DForest. "
-                                          "Class variable 'lambda_abs_igm' "
-                                          "must be set prior to initialize "
-                                          "instances of this type")
+            raise AstronomicalObjectError(
+                "Error constructing Pk1dForest. Class variable 'lambda_abs_igm' "
+                "must be set prior to initialize instances of this type")
 
     def consistency_check(self):
         """Consistency checks after __init__"""
         super().consistency_check()
         if self.flux.size != self.exposures_diff.size:
             raise AstronomicalObjectError(
-                "Error constructing Pk1dForest. 'flux', "
+                "Error constructing Pk1dForest. 'flux' "
                 "and 'exposures_diff' don't have the "
                 "same size")
         if "exposures_diff" not in Forest.mask_fields:
@@ -110,7 +111,7 @@ class Pk1dForest(Forest):
             Forest.mask_fields += ["reso"]
         if "reso_pix" not in Forest.mask_fields:
             Forest.mask_fields += ["reso_pix"]
-        
+
 
     def coadd(self, other):
         """Coadd the information of another forest.
@@ -131,7 +132,7 @@ class Pk1dForest(Forest):
             raise AstronomicalObjectError(
                 "Error coadding Pk1dForest. Expected "
                 "Pk1dForest instance in other. Found: "
-                f"{type(other)}")
+                f"{type(other).__name__}")
         self.exposures_diff = np.append(self.exposures_diff,
                                         other.exposures_diff)
         self.reso = np.append(self.reso, other.reso)

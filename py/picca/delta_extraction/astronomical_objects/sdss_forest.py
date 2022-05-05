@@ -7,12 +7,7 @@ class SdssForest(Forest):
 
     Methods
     -------
-    __gt__ (from AstronomicalObject)
-    __eq__ (from AstronomicalObject)
-    class_variable_check (from Forest)
-    consistency_check (from Forest)
-    get_data (from Forest)
-    rebin (from Forest)
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
     __init__
     coadd
     get_header
@@ -95,7 +90,7 @@ class SdssForest(Forest):
         if not isinstance(other, SdssForest):
             raise AstronomicalObjectError("Error coadding SdssForest. Expected "
                                           "SdssForest instance in other. Found: "
-                                          f"{type(other)}")
+                                          f"{type(other).__name__}")
 
         self.fiberid += other.fiberid
         self.mjd += other.mjd

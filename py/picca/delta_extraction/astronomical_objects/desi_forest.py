@@ -7,12 +7,7 @@ class DesiForest(Forest):
 
     Methods
     -------
-    __gt__ (from AstronomicalObject)
-    __eq__ (from AstronomicalObject)
-    class_variable_check (from Forest)
-    consistency_check (from Forest)
-    get_data (from Forest)
-    rebin (from Forest)
+    (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
     __init__
     coadd
     get_header
@@ -20,7 +15,7 @@ class DesiForest(Forest):
     Class Attributes
     ----------------
     (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
-    
+
     Attributes
     ----------
     (see Forest in py/picca/delta_extraction/astronomical_objects/forest.py)
@@ -92,7 +87,7 @@ class DesiForest(Forest):
         if not isinstance(other, DesiForest):
             raise AstronomicalObjectError("Error coadding DesiForest. Expected "
                                           "DesiForest instance in other. Found: "
-                                          f"{type(other)}")
+                                          f"{type(other).__name__}")
         self.night += other.night
         self.petal += other.petal
         self.tile += other.tile

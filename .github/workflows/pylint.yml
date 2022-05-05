@@ -1,0 +1,30 @@
+name: Pylint
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        sudo apt-get -y install libbz2-dev
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install pylint
+    - name: This path
+      run: |
+        ls
+        realpath .
+    - name: Install picca
+      run: pip install -e .
+    - name: Analysing the code with pylint
+      run: |
+        pylint py/picca/delta_extraction/**/*py

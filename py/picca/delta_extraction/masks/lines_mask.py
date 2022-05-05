@@ -23,8 +23,7 @@ class LinesMask(Mask):
 
     Attributes
     ----------
-    los_ids: dict (from Mask)
-    Empty dictionary
+    (see Mask in py/picca/delta_extraction/mask.py)
 
     mask_rest_frame: astropy.Table
     Table with the rest-frame wavelength of the lines to mask
@@ -59,9 +58,11 @@ class LinesMask(Mask):
 
             self.mask_rest_frame = mask[select_rest_frame_mask]
             self.mask_obs_frame = mask[select_obs_mask]
-        except (OSError, ValueError):
-            raise MaskError("Error loading SkyMask. Unable to read mask file. "
-                            f"File {mask_file}")
+        except (OSError, ValueError) as error:
+            raise MaskError(
+                "Error loading SkyMask. Unable to read mask file. "
+                f"File {mask_file}"
+            ) from error
 
     def apply_mask(self, forest):
         """Apply the mask. The mask is done by removing the affected

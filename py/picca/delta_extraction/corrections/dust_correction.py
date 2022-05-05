@@ -54,15 +54,19 @@ class DustCorrection(Correction):
             hdu = fitsio.read(filename, ext="CATALOG")
             thingid = hdu['THING_ID']
             ext = hdu['EXTINCTION'][:, 1] / extinction_conversion_r
-        except OSError:
-            raise CorrectionError("Error loading DustCorrection. "
-                                  f"File {filename} does not have extension "
-                                  "'CATALOG'")
-        except ValueError:
-            raise CorrectionError("Error loading DustCorrection. "
-                                  f"File {filename} does not have fields "
-                                  "'THING_ID' and/or 'EXTINCTION' in HDU "
-                                  "'CATALOG'")
+        except OSError as error:
+            raise CorrectionError(
+                "Error loading DustCorrection. "
+                f"File {filename} does not have extension "
+                "'CATALOG'"
+            ) from error
+        except ValueError as error:
+            raise CorrectionError(
+                "Error loading DustCorrection. "
+                f"File {filename} does not have fields "
+                "'THING_ID' and/or 'EXTINCTION' in HDU "
+                "'CATALOG'"
+            ) from error
         self.extinction_bv_map = dict(zip(thingid, ext))
 
     def apply_correction(self, forest):

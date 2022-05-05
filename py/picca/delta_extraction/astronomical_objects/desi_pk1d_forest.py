@@ -14,15 +14,13 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
 
     Methods
     -------
-    __gt__ (from AstronomicalObject)
-    __eq__ (from AstronomicalObject)
-    class_variable_check (from Forest, Pk1dForest)
-    consistency_check (from Forest, Pk1dForest)
-    get_data (from Forest, Pk1dForest)
-    rebin (from Forest)
-    coadd (from DesiForest, Pk1dForest)
-    get_header (from DesiForest, Pk1dForest)
+    (see DesiForest in py/picca/delta_extraction/astronomical_objects/desi_forest.py)
+    (see Pk1dForest in py/picca/delta_extraction/astronomical_objects/pk1d_forest.py)
     __init__
+    consistency_check
+    coadd
+    get_data
+    rebin
 
     Class Attributes
     ----------------
@@ -33,10 +31,11 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
     ----------
     (see DesiForest in py/picca/delta_extraction/astronomical_objects/desi_forest.py)
     (see Pk1dForest in py/picca/delta_extraction/astronomical_objects/pk1d_forest.py)
-    
+
     resolution_matrix: 2d-array of floats or None
     Resolution matrix of the forests
     """
+
     def __init__(self, **kwargs):
         """Initialize instance
 
@@ -57,20 +56,18 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
             raise AstronomicalObjectError(
                 "Error constructing DesiPk1dForest. "
                 "Missing variable 'resolution_matrix'")
-        if "resolution_matrix" in kwargs:
-            del kwargs["resolution_matrix"]
+        del kwargs["resolution_matrix"]
 
         # call parent constructors
         super().__init__(**kwargs)
         self.consistency_check()
-
 
     def consistency_check(self):
         """Consistency checks after __init__"""
         super().consistency_check()
         if self.resolution_matrix.shape[1] != self.flux.shape[0]:
             raise AstronomicalObjectError(
-                "Error constructing DesiPk1dForest. 'resolution_matrix', "
+                "Error constructing DesiPk1dForest. 'resolution_matrix' "
                 "and 'flux' don't have the "
                 "same size")
         if "resolution_matrix" not in Forest.mask_fields:
@@ -95,9 +92,41 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
             raise AstronomicalObjectError(
                 "Error coadding DesiPk1dForest. Expected "
                 "DesiPk1dForest instance in other. Found: "
-                f"{type(other)}")
+                f"{type(other).__name__}")
 
         if other.resolution_matrix.size > 0 and self.resolution_matrix.size > 0:
+            if self.resolution_matrix.shape[0] != other.resolution_matrix.shape[
+                    0]:
+                largershape = np.max([
+                    self.resolution_matrix.shape[0],
+                    other.resolution_matrix.shape[0]
+                ])
+                smallershape = np.min([
+                    self.resolution_matrix.shape[0],
+                    other.resolution_matrix.shape[0]
+                ])
+                shapediff = largershape - smallershape
+                if self.resolution_matrix.shape[0] == smallershape:
+                    self.resolution_matrix = np.append(np.zeros(
+                        [shapediff // 2, self.resolution_matrix.shape[1]]),
+                                                       self.resolution_matrix,
+                                                       axis=0)
+                    self.resolution_matrix = np.append(
+                        self.resolution_matrix,
+                        np.zeros(
+                            [shapediff // 2, self.resolution_matrix.shape[1]]),
+                        axis=0)
+                if other.resolution_matrix.shape[0] == smallershape:
+                    other.resolution_matrix = np.append(np.zeros(
+                        [shapediff // 2, other.resolution_matrix.shape[1]]),
+                                                        other.resolution_matrix,
+                                                        axis=0)
+                    other.resolution_matrix = np.append(
+                        other.resolution_matrix,
+                        np.zeros(
+                            [shapediff // 2, other.resolution_matrix.shape[1]]),
+                        axis=0)
+
             self.resolution_matrix = np.append(self.resolution_matrix,
                                                other.resolution_matrix,
                                                axis=1)

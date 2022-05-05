@@ -26,9 +26,7 @@ class AbsorberMask(Mask):
 
     Attributes
     ----------
-    los_ids: dict (from Mask)
-    A dictionary with the absorbers contained in each line of sight. Keys are the
-    identifier for the line of sight and values are lists of z_abs
+    (see Mask in py/picca/delta_extraction/mask.py)
 
     absorber_mask_width: float
     Mask width on each side of the absorber central observed wavelength in
@@ -64,19 +62,19 @@ class AbsorberMask(Mask):
 
         columns_list = [los_id_name, "LAMBDA_ABS"]
         try:
-            hdul = fitsio.FITS(filename)
-            cat = {col: hdul["ABSORBERCAT"][col][:] for col in columns_list}
-        except OSError:
-            raise MaskError("Error loading AbsorberMask. File "
-                            f"{filename} does not have extension "
-                            "'ABSORBERCAT'")
-        except ValueError:
+            with fitsio.FITS(filename) as hdul:
+                cat = {col: hdul["ABSORBERCAT"][col][:] for col in columns_list}
+        except OSError as error:
+            raise MaskError(
+                "Error loading AbsorberMask. File "
+                f"{filename} does not have extension 'ABSORBERCAT'"
+            ) from error
+        except ValueError as error:
             aux = "', '".join(columns_list)
-            raise MaskError("Error loading AbsorberMask. File "
-                            f"{filename} does not have fields '{aux}' "
-                            "in HDU 'ABSORBERCAT'")
-        finally:
-            hdul.close()
+            raise MaskError(
+                f"Error loading AbsorberMask. File {filename} does not have "
+                f"fields '{aux}' in HDU 'ABSORBERCAT'"
+            ) from error
 
         # group absorbers on the same line of sight together
         self.los_ids = {}
@@ -86,9 +84,9 @@ class AbsorberMask(Mask):
         num_absorbers = np.sum(
             [len(los_id) for los_id in self.los_ids.values()])
 
-        self.logger.progress(" In catalog: {} absorbers".format(num_absorbers))
-        self.logger.progress(" In catalog: {} forests have absorbers\n".format(
-            len(self.los_ids)))
+        self.logger.progress(f" In catalog: {num_absorbers} absorbers")
+        self.logger.progress(f" In catalog: {len(self.los_ids)} forests have "
+                             "absorbers\n")
 
         # setup transmission limit
         # transmissions below this number are masked
