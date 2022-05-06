@@ -154,18 +154,20 @@ class DesiHealpix(DesiData):
             context = multiprocessing.get_context('fork')
             pool = context.Pool(processes=self.num_processors)
             imap_it = pool.imap(DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
-            for forests_by_pe in imap_it:
+            for forests_by_targetid_aux, _ in imap_it:
                 # Merge each dict to master forests_by_targetid
-                merge_new_forest(forests_by_targetid, forests_by_pe)
+                merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
 
         else:
             reader = DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger)
+            num_data = 0
             for index, this_arg in enumerate(arguments):
+                forests_by_targetid_aux, num_data_aux = reader(this_arg)
+                merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
+                num_data += num_data_aux
                 self.logger.progress(
                     f"Read {index} of {len(arguments)}. "
-                    f"num_data: {len(forests_by_targetid)}")
-
-                merge_new_forest(forests_by_targetid, reader(this_arg))
+                    f"num_data: {num_data}")
 
         if len(forests_by_targetid) == 0:
             raise DataError("No quasars found, stopping here")
@@ -186,7 +188,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
 
     Attributes
     ----------
-    (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)    
+    (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
     """
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
@@ -204,6 +206,9 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
         forests_by_targetid: dict
         Dictionary were forests are stored.
 
+        num_data: int
+        The number of instances loaded
+
         Raise
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
@@ -212,7 +217,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             hdul = fitsio.FITS(filename)
         except IOError:
             self.logger.warning(f"Error reading '{filename}'. Ignoring file")
-            return {}
+            return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
         targetid_spec = fibermap["TARGETID"]
@@ -268,4 +273,4 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             fibermap["TARGETID"],
             reso_from_truth=reso_from_truth)
 
-        return forests_by_targetid
+        return forests_by_targetid, num_data

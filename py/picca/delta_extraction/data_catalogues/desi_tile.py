@@ -7,7 +7,8 @@ import glob
 import fitsio
 import numpy as np
 
-from picca.delta_extraction.data_catalogues.desi_data import DesiData
+from picca.delta_extraction.data_catalogues.desi_data import (
+    DesiData, DesiDataFileHandler, merge_new_forest)
 from picca.delta_extraction.data_catalogues.desi_data import(# pylint: disable=unused-import
     defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
@@ -64,7 +65,6 @@ class DesiTile(DesiData):
         else:
             is_sv = True
 
-        forests_by_targetid = {}
         coadd_name = "spectra" if self.use_non_coadded_spectra else "coadd"
 
         files_in = sorted(
@@ -88,6 +88,7 @@ class DesiTile(DesiData):
         petal_tile_night_unique = np.unique(petal_tile_night)
 
         filenames = []
+        forests_by_targetid = {}
         for file_in in files_in:
             for petal_tile_night in petal_tile_night_unique:
                 if petal_tile_night in os.path.basename(file_in):
@@ -95,71 +96,17 @@ class DesiTile(DesiData):
         filenames = np.unique(filenames)
 
         num_data = 0
+        reader = DesiTileFileHandler(self.analysis_type,
+                                     self.use_non_coadded_spectra,
+                                     self.logger,
+                                     self.input_directory)
         for index, filename in enumerate(filenames):
+            forests_by_targetid_aux, num_data_aux = reader((filename, self.catalogue))
+            merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
+            num_data += num_data_aux
             self.logger.progress(
                 f"read tile {index} of {len(filename)}. ndata: {num_data}")
-            try:
-                hdul = fitsio.FITS(filename)
-            except IOError:
-                self.logger.warning(
-                    f"Error reading file {filename}. Ignoring file")
-                continue
 
-            fibermap = hdul['FIBERMAP'].read()
-
-            ra = fibermap['TARGET_RA']
-            dec = fibermap['TARGET_DEC']
-            tile_spec = fibermap['TILEID'][0]
-            if "cumulative" in self.input_directory:
-                night_spec = int(filename.split('thru')[-1].split('.')[0])
-            else:
-                night_spec = int(filename.split('-')[-1].split('.')[0])
-
-            colors = ['B', 'R', 'Z']
-            ra = np.radians(ra)
-            dec = np.radians(dec)
-
-            petal_spec = fibermap['PETAL_LOC'][0]
-
-            spectrographs_data = {}
-            for color in colors:
-                try:
-                    spec = {}
-                    spec['WAVELENGTH'] = hdul[f'{color}_WAVELENGTH'].read()
-                    spec['FLUX'] = hdul[f'{color}_FLUX'].read()
-                    spec['IVAR'] = (hdul[f'{color}_IVAR'].read() *
-                                    (hdul[f'{color}_MASK'].read() == 0))
-                    if self.analysis_type == "PK 1D":
-                        if f"{color}_RESOLUTION" in hdul:
-                            spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
-                        else:
-                            raise DataError(
-                                "Error while reading {color} band from "
-                                "{filename}. Analysis type is  'PK 1D', "
-                                "but file does not contain HDU "
-                                f"'{color}_RESOLUTION' ")
-                    w = np.isnan(spec['FLUX']) | np.isnan(spec['IVAR'])
-                    for key in ['FLUX', 'IVAR']:
-                        spec[key][w] = 0.
-                    spectrographs_data[color] = spec
-                except OSError:
-                    self.logger.warning(
-                        f"Error while reading {color} band from {filename}."
-                        "Ignoring color.")
-
-            hdul.close()
-
-            select = ((self.catalogue['TILEID'] == tile_spec) &
-                      (self.catalogue['PETAL_LOC'] == petal_spec) &
-                      (self.catalogue['NIGHT'] == night_spec))
-            self.logger.progress(
-                f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}'
-            )
-
-            num_data += self.format_data(self.catalogue[select],
-                                        spectrographs_data,
-                                        fibermap["TARGETID"],
-                                        forests_by_targetid)
         self.logger.progress(f"Found {num_data} quasars in input files")
 
         if num_data == 0:
@@ -168,3 +115,109 @@ class DesiTile(DesiData):
         self.forests = list(forests_by_targetid.values())
 
         return False, is_sv
+
+# Class to read in parallel
+# Seems lightweight to copy all these 3 arguments
+class DesiTileFileHandler(DesiDataFileHandler):
+    """File handler for class DesiTile
+
+    Methods
+    -------
+    (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
+    read_file
+
+    Attributes
+    ----------
+    (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
+    """
+    def __init__(self, analysis_type, use_non_coadded_spectra, logger, input_directory):
+        self.input_directory = input_directory
+        super().__init__(analysis_type, use_non_coadded_spectra, logger)
+
+    def read_file(self, filename, catalogue):
+        """Read the spectra and formats its data as Forest instances.
+
+        Arguments
+        ---------
+        filename: str
+        Name of the file to read
+
+        catalogue: astropy.table.Table
+        The quasar catalogue fragment associated with this file
+
+        Returns:
+        ---------
+        forests_by_targetid: dict
+        Dictionary were forests are stored.
+
+        num_data: int
+        The number of instances loaded
+
+        Raise
+        -----
+        DataError if the analysis type is PK 1D and resolution data is not present
+        """
+        try:
+            hdul = fitsio.FITS(filename)
+        except IOError:
+            self.logger.warning(
+                f"Error reading file {filename}. Ignoring file")
+            return {}, 0
+
+        fibermap = hdul['FIBERMAP'].read()
+
+        ra = fibermap['TARGET_RA']
+        dec = fibermap['TARGET_DEC']
+        tile_spec = fibermap['TILEID'][0]
+        if "cumulative" in self.input_directory:
+            night_spec = int(filename.split('thru')[-1].split('.')[0])
+        else:
+            night_spec = int(filename.split('-')[-1].split('.')[0])
+
+        colors = ['B', 'R', 'Z']
+        ra = np.radians(ra)
+        dec = np.radians(dec)
+
+        petal_spec = fibermap['PETAL_LOC'][0]
+
+        spectrographs_data = {}
+        for color in colors:
+            try:
+                spec = {}
+                spec['WAVELENGTH'] = hdul[f'{color}_WAVELENGTH'].read()
+                spec['FLUX'] = hdul[f'{color}_FLUX'].read()
+                spec['IVAR'] = (hdul[f'{color}_IVAR'].read() *
+                                (hdul[f'{color}_MASK'].read() == 0))
+                if self.analysis_type == "PK 1D":
+                    if f"{color}_RESOLUTION" in hdul:
+                        spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
+                    else:
+                        raise DataError(
+                            "Error while reading {color} band from "
+                            "{filename}. Analysis type is  'PK 1D', "
+                            "but file does not contain HDU "
+                            f"'{color}_RESOLUTION' ")
+                w = np.isnan(spec['FLUX']) | np.isnan(spec['IVAR'])
+                for key in ['FLUX', 'IVAR']:
+                    spec[key][w] = 0.
+                spectrographs_data[color] = spec
+            except OSError:
+                self.logger.warning(
+                    f"Error while reading {color} band from {filename}."
+                    "Ignoring color.")
+
+        hdul.close()
+
+        select = ((catalogue['TILEID'] == tile_spec) &
+                  (catalogue['PETAL_LOC'] == petal_spec) &
+                  (catalogue['NIGHT'] == night_spec))
+        self.logger.progress(
+            f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}'
+        )
+
+        forests_by_targetid, num_data = self.format_data(
+            catalogue,
+            spectrographs_data,
+            fibermap["TARGETID"],)
+
+        return forests_by_targetid, num_data

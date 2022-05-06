@@ -349,10 +349,8 @@ class DesiDataFileHandler():
         self.analysis_type = analysis_type
         self.use_non_coadded_spectra = use_non_coadded_spectra
 
-    def __call__(self, X):
-        filename, catalogue = X
-
-        return self.read_file(filename, catalogue)
+    def __call__(self, args):
+        return self.read_file(*args)
 
     def format_data(self, catalogue, spectrographs_data, targetid_spec,
                     reso_from_truth=False):
@@ -489,6 +487,9 @@ class DesiDataFileHandler():
         ---------
         forests_by_targetid: dict
         Dictionary were forests are stored.
+
+        num_data: int
+        The number of instances loaded
 
         Raise
         -----
