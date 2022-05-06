@@ -31,6 +31,29 @@ defaults.update({
 })
 defaults.update(defaults_quasar_catalogue)
 
+def merge_new_forest(forests_by_targetid, forests_by_pe):
+    """Merge forests_by_pe and forests_by_targetid as Forest instances.
+
+    Arguments
+    ---------
+    forests_by_targetid: dict
+    Dictionary were forests are stored. Its content is modified by this
+    function with the new forests.
+
+    forests_by_pe: str
+    Name of the file to read
+
+    """
+    parent_targetids = set(forests_by_targetid.keys())
+    existing_targetids = parent_targetids.intersection(forests_by_pe.keys())
+    new_targetids = forests_by_pe.keys()-existing_targetids
+
+    # Does not fail if existing_targetids is empty
+    for tid in existing_targetids:
+        forests_by_targetid[tid].coadd(forests_by_pe[tid])
+    for tid in new_targetids:
+        forests_by_targetid[tid] = forests_by_pe[tid]
+
 
 class DesiData(Data):
     """Abstract class to read DESI data and format it as a list of
@@ -297,3 +320,127 @@ class DesiData(Data):
 
         # set blinding strategy
         Forest.blinding = self.blinding
+
+class DesiDataFileHandler():
+    def __init__(self, analysis_type, use_non_coadded_spectra, logger):
+        self.logger = logger
+        self.analysis_type = analysis_type
+        self.use_non_coadded_spectra = use_non_coadded_spectra
+
+    def format_data(self, catalogue, spectrographs_data, targetid_spec,
+                    reso_from_truth=False):
+        """After data has been read, format it into DesiForest instances
+
+        Instances will be DesiForest or DesiPk1dForest depending on analysis_type
+
+        Arguments
+        ---------
+        catalogue: astropy.table.Table
+        The quasar catalogue fragment associated with this data
+
+        spectrographs_data: dict
+        The read data
+
+        targetid_spec: int
+        Targetid of the objects to format
+
+        reso_from_truth: bool - Default: False
+        Specifies whether resolution matrixes are read from truth files (True)
+        or directly from data (False)
+
+        Return
+        ------
+        forests_by_targetid: dict
+        Dictionary were forests are stored. Its content is modified by this
+        function with the new forests.
+
+        num_data: int
+        The number of instances loaded
+        """
+        num_data = 0
+        forests_by_targetid = {}
+
+        # Loop over quasars in catalogue fragment
+        for row in catalogue:
+            # Find which row in tile contains this quasar
+            # It should be there by construction
+            targetid = row["TARGETID"]
+            w_t = np.where(targetid_spec == targetid)[0]
+            if len(w_t) == 0:
+                self.logger.warning(
+                    f"Error reading {targetid}. Ignoring object")
+                continue
+            if len(w_t) > 1:
+                self.logger.warning(
+                    "Warning: more than one spectrum in this file "
+                    f"for {targetid}")
+            else:
+                w_t = w_t[0]
+            # Construct DesiForest instance
+            # Fluxes from the different spectrographs will be coadded
+            for spec in spectrographs_data.values():
+                if self.use_non_coadded_spectra:
+                    ivar = np.atleast_2d(spec['IVAR'][w_t])
+                    ivar_coadded_flux = np.atleast_2d(
+                        ivar * spec['FLUX'][w_t]).sum(axis=0)
+                    ivar = ivar.sum(axis=0)
+                    flux = (ivar_coadded_flux / ivar)
+                else:
+                    flux = spec['FLUX'][w_t].copy()
+                    ivar = spec['IVAR'][w_t].copy()
+
+                args = {
+                    "flux": flux,
+                    "ivar": ivar,
+                    "targetid": targetid,
+                    "ra": row['RA'],
+                    "dec": row['DEC'],
+                    "z": row['Z'],
+                }
+                args["log_lambda"] = np.log10(spec['WAVELENGTH'])
+
+                if self.analysis_type == "BAO 3D":
+                    forest = DesiForest(**args)
+                elif self.analysis_type == "PK 1D":
+                    if self.use_non_coadded_spectra:
+                        exposures_diff = exp_diff_desi(spec, w_t)
+                        if exposures_diff is None:
+                            continue
+                    else:
+                        exposures_diff = np.zeros(spec['WAVELENGTH'].shape)
+                    if reso_from_truth:
+                        reso_sum = spec['RESO'][:, :]
+                    else:
+                        if len(spec['RESO'][w_t].shape) < 3:
+                            reso_sum = spec['RESO'][w_t].copy()
+                        else:
+                            reso_sum = spec['RESO'][w_t].sum(axis=0)
+                    reso_in_pix, reso_in_km_per_s = spectral_resolution_desi(
+                        reso_sum, spec['WAVELENGTH'])
+                    args["exposures_diff"] = exposures_diff
+                    args["reso"] = reso_in_km_per_s
+                    args["resolution_matrix"] = reso_sum
+                    args["reso_pix"] = reso_in_pix
+
+                    forest = DesiPk1dForest(**args)
+                # this should never be entered added here in case at some point
+                # we add another analysis type
+                else:  # pragma: no cover
+                    raise DataError("Unkown analysis type. Expected 'BAO 3D'"
+                                    f"or 'PK 1D'. Found '{self.analysis_type}'")
+
+                # rebin arrays
+                # this needs to happen after all arrays are initialized by
+                # Forest constructor
+                forest.rebin()
+
+                # keep the forest
+                if targetid in forests_by_targetid:
+                    existing_forest = forests_by_targetid[targetid]
+                    existing_forest.coadd(forest)
+                    forests_by_targetid[targetid] = existing_forest
+                else:
+                    forests_by_targetid[targetid] = forest
+
+                num_data += 1
+        return forests_by_targetid, num_data

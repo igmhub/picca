@@ -7,7 +7,13 @@ import multiprocessing
 import fitsio
 import numpy as np
 
-from picca.delta_extraction.data_catalogues.desi_data import DesiData
+from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
+from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
+from picca.delta_extraction.astronomical_objects.forest import Forest
+from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
+
+from picca.delta_extraction.data_catalogues.desi_data import (
+    DesiData, DesiDataFileHandler, merge_new_forest)
 from picca.delta_extraction.data_catalogues.desi_data import (# pylint: disable=unused-import
     defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
@@ -56,6 +62,16 @@ class DesiHealpix(DesiData):
         # init of DesiData needs to come last, as it contains the actual data
         # reading and thus needs all config
         super().__init__(config)
+
+        if self.analysis_type == "PK 1D":
+            if "exposures_diff" not in Forest.mask_fields:
+                Forest.mask_fields += ["exposures_diff"]
+            if "reso" not in Forest.mask_fields:
+                Forest.mask_fields += ["reso"]
+            if "reso_pix" not in Forest.mask_fields:
+                Forest.mask_fields += ["reso_pix"]
+            if "resolution_matrix" not in Forest.mask_fields:
+                Forest.mask_fields += ["resolution_matrix"]
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -125,50 +141,38 @@ class DesiHealpix(DesiData):
 
         is_sv = True
         is_mock = False
+        forests_by_targetid = {}
+
+        arguments = []
+        for (healpix, survey), group in zip(grouped_catalogue.groups.keys,
+                                            grouped_catalogue.groups):
+            if survey not in ["sv", "sv1", "sv2", "sv3"]:
+                is_sv = False
+
+            filename, is_mock_aux = self.get_filename(survey, healpix)
+            if is_mock_aux:
+                is_mock = True
+
+            arguments.append((filename, group))
+
+        self.logger.info(f"reading data from {len(arguments)} files")
+
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
-            manager = multiprocessing.Manager()
-            forests_by_targetid = manager.dict()
-            arguments = []
-            for (index, (healpix, survey)), group in zip(
-                    enumerate(grouped_catalogue.groups.keys),
-                    grouped_catalogue.groups):
+            pool = context.Pool(processes=self.num_processors)
+            imap_it = pool.imap(DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
+            for forests_by_pe in imap_it:
+                # Merge each dict to master forests_by_targetid
+                merge_new_forest(forests_by_targetid, forests_by_pe)
 
-                if survey not in ["sv", "sv1", "sv2", "sv3"]:
-                    is_sv = False
-
-                filename, is_mock_aux = self.get_filename(survey, healpix)
-                if is_mock_aux:
-                    is_mock = True
-                arguments.append((filename, group, forests_by_targetid))
-
-                self.logger.info(f"reading data from {len(arguments)} files")
-            with context.Pool(processes=self.num_processors) as pool:
-
-                pool.starmap(self.read_file, arguments)
-            for forest in forests_by_targetid.values():
-                # TODO: the following just does the consistency checking again,
-                # to avoid mask_fields not being populated. In the long run an
-                # alternative way of running the multiprocessing is envisioned
-                # which would be more stable, see discussion in PRs 879 and 883
-                forest.consistency_check()
         else:
-            forests_by_targetid = {}
-            for (index, (healpix, survey)), group in zip(
-                    enumerate(grouped_catalogue.groups.keys),
-                    grouped_catalogue.groups):
-
-                if survey not in ["sv", "sv1", "sv2", "sv3"]:
-                    is_sv = False
-
-                filename = self.get_filename(survey, healpix)
-                filename, is_mock_aux = self.get_filename(survey, healpix)
-                if is_mock_aux:
-                    is_mock = True
-                self.read_file(filename, group, forests_by_targetid)
+            reader = DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger)
+            for index, this_arg in enumerate(arguments):
                 self.logger.progress(
-                    f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
+                    f"Read {index} of {len(arguments)}. "
                     f"num_data: {len(forests_by_targetid)}")
+
+                merge_new_forest(forests_by_targetid, reader(this_arg))
 
         if len(forests_by_targetid) == 0:
             raise DataError("No quasars found, stopping here")
@@ -195,13 +199,41 @@ class DesiHealpix(DesiData):
         -----
         DataError if the analysis type is PK 1D and resolution data is not present
         """
+        reader = DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger)
+
+        return reader((filename, catalogue))
+
+# Class to read in parallel
+# Seems lightweight to copy all these 3 arguments
+class DesiHealpixFileHandler(DesiDataFileHandler):
+    def read_file(self, filename, catalogue):
+        """Read the spectra and formats its data as Forest instances.
+
+        Arguments
+        ---------
+        filename: str
+        Name of the file to read
+
+        catalogue: astropy.table.Table
+        The quasar catalogue fragment associated with this file
+
+        Returns:
+        ---------
+        forests_by_targetid: dict
+        Dictionary were forests are stored.
+
+        Raise
+        -----
+        DataError if the analysis type is PK 1D and resolution data is not present
+        """
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
             self.logger.warning(f"Error reading '{filename}'. Ignoring file")
-            return
+            return {}
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
+        targetid_spec = fibermap["TARGETID"]
         # First read all wavelength, flux, ivar, mask, and resolution
         # from this file
         spectrographs_data = {}
@@ -209,8 +241,7 @@ class DesiHealpix(DesiData):
         if "Z_FLUX" in hdul:
             colors.append("Z")
         else:
-            self.logger.warning(
-                f"Missing Z band from {filename}. Ignoring color.")
+            self.logger.warning(f"Missing Z band from {filename}. Ignoring color.")
 
         reso_from_truth = False
         for color in colors:
@@ -227,19 +258,15 @@ class DesiHealpix(DesiData):
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                     else:
-                        if not reso_from_truth:
-                            self.logger.debug(
-                                "no resolution in files, reading from truth files"
-                            )
-                        reso_from_truth = True
-                        basename_truth = os.path.basename(filename).replace(
-                            'spectra-', 'truth-')
-                        pathname_truth = os.path.dirname(filename)
-                        filename_truth = f"{pathname_truth}/{basename_truth}"
+                        basename_truth=os.path.basename(filename).replace('spectra-','truth-')
+                        pathname_truth=os.path.dirname(filename)
+                        filename_truth=f"{pathname_truth}/{basename_truth}"
                         if os.path.exists(filename_truth):
+                            if not reso_from_truth:
+                                self.logger.debug("no resolution in files, reading from truth files")
+                            reso_from_truth=True
                             with fitsio.FITS(filename_truth) as hdul_truth:
-                                spec["RESO"] = hdul_truth[
-                                    f"{color}_RESOLUTION"].read()
+                                spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
                         else:
                             raise DataError(
                                 f"Error while reading {color} band from "
@@ -253,5 +280,15 @@ class DesiHealpix(DesiData):
                     "Ignoring color.")
         hdul.close()
 
-        self.format_data(catalogue, spectrographs_data, fibermap["TARGETID"],
-                         forests_by_targetid, reso_from_truth=reso_from_truth)
+        forests_by_targetid, num_data = self.format_data(
+            catalogue,
+            spectrographs_data,
+            fibermap["TARGETID"],
+            reso_from_truth=reso_from_truth)
+
+        return forests_by_targetid
+
+    def __call__(self, X):
+        filename, catalogue = X
+
+        return self.read_file(filename, catalogue)
