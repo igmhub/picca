@@ -32,8 +32,8 @@ defaults.update({
 defaults.update(defaults_quasar_catalogue)
 
 
-def merge_new_forest(forests_by_targetid, forests_by_pe):
-    """Merge forests_by_pe and forests_by_targetid as Forest instances.
+def merge_new_forest(forests_by_targetid, new_forests_by_targetid):
+    """Merge new_forests_by_targetid and forests_by_targetid as Forest instances.
 
     Arguments
     ---------
@@ -41,19 +41,19 @@ def merge_new_forest(forests_by_targetid, forests_by_pe):
     Dictionary were forests are stored. Its content is modified by this
     function with the new forests.
 
-    forests_by_pe: str
-    Name of the file to read
-
+    new_forests_by_targetid: dict
+    Dictionary were new forests are stored. Its content will be merged with
+    forests_by_targetid
     """
     parent_targetids = set(forests_by_targetid.keys())
-    existing_targetids = parent_targetids.intersection(forests_by_pe.keys())
-    new_targetids = forests_by_pe.keys() - existing_targetids
+    existing_targetids = parent_targetids.intersection(new_forests_by_targetid.keys())
+    new_targetids = new_forests_by_targetid.keys() - existing_targetids
 
     # Does not fail if existing_targetids is empty
     for tid in existing_targetids:
-        forests_by_targetid[tid].coadd(forests_by_pe[tid])
+        forests_by_targetid[tid].coadd(new_forests_by_targetid[tid])
     for tid in new_targetids:
-        forests_by_targetid[tid] = forests_by_pe[tid]
+        forests_by_targetid[tid] = new_forests_by_targetid[tid]
 
 
 class DesiData(Data):
