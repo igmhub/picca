@@ -7,11 +7,7 @@ import multiprocessing
 import fitsio
 import numpy as np
 
-from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
 from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
-from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff_desi
-
 from picca.delta_extraction.data_catalogues.desi_data import (
     DesiData, DesiDataFileHandler, merge_new_forest)
 from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
@@ -225,7 +221,6 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
-        targetid_spec = fibermap["TARGETID"]
         # First read all wavelength, flux, ivar, mask, and resolution
         # from this file
         spectrographs_data = {}
@@ -251,16 +246,16 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                     else:
+                        if not reso_from_truth:
+                            self.logger.debug(
+                                "no resolution in files, reading from truth files"
+                            )
+                        reso_from_truth = True
                         basename_truth = os.path.basename(filename).replace(
                             'spectra-', 'truth-')
                         pathname_truth = os.path.dirname(filename)
                         filename_truth = f"{pathname_truth}/{basename_truth}"
                         if os.path.exists(filename_truth):
-                            if not reso_from_truth:
-                                self.logger.debug(
-                                    "no resolution in files, reading from truth files"
-                                )
-                            reso_from_truth = True
                             with fitsio.FITS(filename_truth) as hdul_truth:
                                 spec["RESO"] = hdul_truth[
                                     f"{color}_RESOLUTION"].read()

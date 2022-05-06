@@ -233,7 +233,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
             f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}')
 
         forests_by_targetid, num_data = self.format_data(
-            catalogue,
+            catalogue[select],
             spectrographs_data,
             fibermap["TARGETID"],
         )
