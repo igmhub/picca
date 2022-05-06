@@ -149,6 +149,9 @@ class DesiTileFileHandler(DesiDataFileHandler):
 
         logger: logging.Logger
         Logger object
+
+        input_directory: str
+        Directory where input data is stored.
         """
         self.input_directory = input_directory
         super().__init__(analysis_type, use_non_coadded_spectra, logger)

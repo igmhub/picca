@@ -80,9 +80,6 @@ class DesiData(Data):
     catalogue: astropy.table.Table
     The quasar catalogue
 
-    input_directory: str
-    Directory to spectra files.
-
     logger: logging.Logger
     Logger object
 
@@ -218,12 +215,12 @@ class DesiDataFileHandler():
 
     Attributes
     ----------
-    logger: logging.Logger
-    Logger object
-
     analysis_type: str
     Selected analysis type. See class Data from py/picca/delta_extraction/data.py
     for details
+
+    logger: logging.Logger
+    Logger object
 
     use_non_coadded_spectra: bool
     If True, load data from non-coadded spectra and coadd them here. Otherwise,
