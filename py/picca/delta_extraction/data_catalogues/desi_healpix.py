@@ -152,11 +152,11 @@ class DesiHealpix(DesiData):
 
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
-            pool = context.Pool(processes=self.num_processors)
-            imap_it = pool.imap(DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
-            for forests_by_targetid_aux, _ in imap_it:
-                # Merge each dict to master forests_by_targetid
-                merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
+            with context.Pool(processes=self.num_processors) as pool:
+                imap_it = pool.imap(DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
+                for forests_by_targetid_aux, _ in imap_it:
+                    # Merge each dict to master forests_by_targetid
+                    merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
 
         else:
             reader = DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger)
