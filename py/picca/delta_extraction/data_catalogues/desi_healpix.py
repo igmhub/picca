@@ -173,28 +173,6 @@ class DesiHealpix(DesiData):
 
         return is_mock, is_sv
 
-    def read_file(self, filename, catalogue, forests_by_targetid):
-        """Read the spectra and formats its data as Forest instances.
-
-        Arguments
-        ---------
-        filename: str
-        Name of the file to read
-
-        catalogue: astropy.table.Table
-        The quasar catalogue fragment associated with this file
-
-        forests_by_targetid: dict
-        Dictionary were forests are stored. Its content is modified by this
-        function with the new forests.
-
-        Raise
-        -----
-        DataError if the analysis type is PK 1D and resolution data is not present
-        """
-        reader = DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger)
-
-        return reader((filename, catalogue))
 
 # Class to read in parallel
 # Seems lightweight to copy all these 3 arguments
