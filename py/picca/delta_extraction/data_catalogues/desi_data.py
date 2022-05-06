@@ -205,6 +205,11 @@ class DesiData(Data):
 
 class DesiDataFileHandler():
     """File handler for class DesiHealpix
+    This implementation is based on the understanding that imap in multiprocessing 
+    cannot be applied to class methods due to `pickle`ing limitations. Each child 
+    process creates an instance of this class, then imap calls each instance with
+    an argument in parallel. imap is limited to single-argument functions, but it 
+    can be overcome by making that argument a tuple.
 
     Methods
     -------
@@ -241,14 +246,18 @@ class DesiDataFileHandler():
         load coadded data
 
         logger: logging.Logger
-        Logger object
+        Logger object from parent class. Trying to initialize it here
+        without copying failed data_tests.py
         """
+        # The next line gives failed tests
+        # self.logger = logging.getLogger(__name__)
         self.logger = logger
         self.analysis_type = analysis_type
         self.use_non_coadded_spectra = use_non_coadded_spectra
 
     def __call__(self, args):
-        """Call method read_file
+        """Call method read_file. Note imap can be called with 
+        only one argument, hence tuple as argument.
 
         Arguments
         ---------
