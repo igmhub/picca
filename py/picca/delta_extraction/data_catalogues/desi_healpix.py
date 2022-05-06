@@ -132,8 +132,8 @@ class DesiHealpix(DesiData):
         forests_by_targetid = {}
 
         arguments = []
-        for (healpix, survey), group in zip(grouped_catalogue.groups.keys,
-                                            grouped_catalogue.groups):
+        for group in grouped_catalogue.groups:
+            healpix, survey = group["HEALPIX", "SURVEY"][0]
             if survey not in ["sv", "sv1", "sv2", "sv3"]:
                 is_sv = False
 
