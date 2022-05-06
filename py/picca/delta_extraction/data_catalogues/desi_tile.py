@@ -95,6 +95,7 @@ class DesiTile(DesiData):
                     filenames.append(file_in)
         filenames = np.unique(filenames)
 
+        # TODO: add parallelisation here
         num_data = 0
         reader = DesiTileFileHandler(self.analysis_type,
                                      self.use_non_coadded_spectra,
@@ -131,6 +132,21 @@ class DesiTileFileHandler(DesiDataFileHandler):
     (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
     """
     def __init__(self, analysis_type, use_non_coadded_spectra, logger, input_directory):
+        """Initialize file handler
+
+        Arguments
+        ---------
+        analysis_type: str
+        Selected analysis type. See class Data from py/picca/delta_extraction/data.py
+        for details
+
+        use_non_coadded_spectra: bool
+        If True, load data from non-coadded spectra and coadd them here. Otherwise,
+        load coadded data
+
+        logger: logging.Logger
+        Logger object
+        """
         self.input_directory = input_directory
         super().__init__(analysis_type, use_non_coadded_spectra, logger)
 
