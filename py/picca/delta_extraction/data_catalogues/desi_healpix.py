@@ -64,14 +64,7 @@ class DesiHealpix(DesiData):
         super().__init__(config)
 
         if self.analysis_type == "PK 1D":
-            if "exposures_diff" not in Forest.mask_fields:
-                Forest.mask_fields += ["exposures_diff"]
-            if "reso" not in Forest.mask_fields:
-                Forest.mask_fields += ["reso"]
-            if "reso_pix" not in Forest.mask_fields:
-                Forest.mask_fields += ["reso_pix"]
-            if "resolution_matrix" not in Forest.mask_fields:
-                Forest.mask_fields += ["resolution_matrix"]
+            DesiPk1dForest.update_class_variables()
 
     def __parse_config(self, config):
         """Parse the configuration options
