@@ -9,7 +9,7 @@ import numpy as np
 
 from picca.delta_extraction.data_catalogues.desi_data import (
     DesiData, DesiDataFileHandler, merge_new_forest)
-from picca.delta_extraction.data_catalogues.desi_data import(# pylint: disable=unused-import
+from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
     defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
 
@@ -98,11 +98,11 @@ class DesiTile(DesiData):
         # TODO: add parallelisation here
         num_data = 0
         reader = DesiTileFileHandler(self.analysis_type,
-                                     self.use_non_coadded_spectra,
-                                     self.logger,
+                                     self.use_non_coadded_spectra, self.logger,
                                      self.input_directory)
         for index, filename in enumerate(filenames):
-            forests_by_targetid_aux, num_data_aux = reader((filename, self.catalogue))
+            forests_by_targetid_aux, num_data_aux = reader(
+                (filename, self.catalogue))
             merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
             num_data += num_data_aux
             self.logger.progress(
@@ -116,6 +116,7 @@ class DesiTile(DesiData):
         self.forests = list(forests_by_targetid.values())
 
         return False, is_sv
+
 
 # Class to read in parallel
 # Seems lightweight to copy all these 3 arguments
@@ -131,7 +132,9 @@ class DesiTileFileHandler(DesiDataFileHandler):
     ----------
     (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
     """
-    def __init__(self, analysis_type, use_non_coadded_spectra, logger, input_directory):
+
+    def __init__(self, analysis_type, use_non_coadded_spectra, logger,
+                 input_directory):
         """Initialize file handler
 
         Arguments
@@ -176,8 +179,7 @@ class DesiTileFileHandler(DesiDataFileHandler):
         try:
             hdul = fitsio.FITS(filename)
         except IOError:
-            self.logger.warning(
-                f"Error reading file {filename}. Ignoring file")
+            self.logger.warning(f"Error reading file {filename}. Ignoring file")
             return {}, 0
 
         fibermap = hdul['FIBERMAP'].read()
@@ -228,12 +230,12 @@ class DesiTileFileHandler(DesiDataFileHandler):
                   (catalogue['PETAL_LOC'] == petal_spec) &
                   (catalogue['NIGHT'] == night_spec))
         self.logger.progress(
-            f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}'
-        )
+            f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}')
 
         forests_by_targetid, num_data = self.format_data(
             catalogue,
             spectrographs_data,
-            fibermap["TARGETID"],)
+            fibermap["TARGETID"],
+        )
 
         return forests_by_targetid, num_data

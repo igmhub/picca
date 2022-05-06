@@ -14,12 +14,11 @@ from picca.delta_extraction.utils_pk1d import spectral_resolution_desi, exp_diff
 
 from picca.delta_extraction.data_catalogues.desi_data import (
     DesiData, DesiDataFileHandler, merge_new_forest)
-from picca.delta_extraction.data_catalogues.desi_data import (# pylint: disable=unused-import
+from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
     defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
 
-accepted_options = sorted(
-    list(set(accepted_options + ["num processors"])))
+accepted_options = sorted(list(set(accepted_options + ["num processors"])))
 
 
 class DesiHealpix(DesiData):
@@ -153,21 +152,26 @@ class DesiHealpix(DesiData):
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
             with context.Pool(processes=self.num_processors) as pool:
-                imap_it = pool.imap(DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger), arguments)
+                imap_it = pool.imap(
+                    DesiHealpixFileHandler(self.analysis_type,
+                                           self.use_non_coadded_spectra,
+                                           self.logger), arguments)
                 for forests_by_targetid_aux, _ in imap_it:
                     # Merge each dict to master forests_by_targetid
-                    merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
+                    merge_new_forest(forests_by_targetid,
+                                     forests_by_targetid_aux)
 
         else:
-            reader = DesiHealpixFileHandler(self.analysis_type, self.use_non_coadded_spectra, self.logger)
+            reader = DesiHealpixFileHandler(self.analysis_type,
+                                            self.use_non_coadded_spectra,
+                                            self.logger)
             num_data = 0
             for index, this_arg in enumerate(arguments):
                 forests_by_targetid_aux, num_data_aux = reader(this_arg)
                 merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
                 num_data += num_data_aux
-                self.logger.progress(
-                    f"Read {index} of {len(arguments)}. "
-                    f"num_data: {num_data}")
+                self.logger.progress(f"Read {index} of {len(arguments)}. "
+                                     f"num_data: {num_data}")
 
         if len(forests_by_targetid) == 0:
             raise DataError("No quasars found, stopping here")
@@ -190,6 +194,7 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
     ----------
     (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
     """
+
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
 
@@ -228,7 +233,8 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
         if "Z_FLUX" in hdul:
             colors.append("Z")
         else:
-            self.logger.warning(f"Missing Z band from {filename}. Ignoring color.")
+            self.logger.warning(
+                f"Missing Z band from {filename}. Ignoring color.")
 
         reso_from_truth = False
         for color in colors:
@@ -245,15 +251,19 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
                     if f"{color}_RESOLUTION" in hdul:
                         spec["RESO"] = hdul[f"{color}_RESOLUTION"].read()
                     else:
-                        basename_truth=os.path.basename(filename).replace('spectra-','truth-')
-                        pathname_truth=os.path.dirname(filename)
-                        filename_truth=f"{pathname_truth}/{basename_truth}"
+                        basename_truth = os.path.basename(filename).replace(
+                            'spectra-', 'truth-')
+                        pathname_truth = os.path.dirname(filename)
+                        filename_truth = f"{pathname_truth}/{basename_truth}"
                         if os.path.exists(filename_truth):
                             if not reso_from_truth:
-                                self.logger.debug("no resolution in files, reading from truth files")
-                            reso_from_truth=True
+                                self.logger.debug(
+                                    "no resolution in files, reading from truth files"
+                                )
+                            reso_from_truth = True
                             with fitsio.FITS(filename_truth) as hdul_truth:
-                                spec["RESO"] = hdul_truth[f"{color}_RESOLUTION"].read()
+                                spec["RESO"] = hdul_truth[
+                                    f"{color}_RESOLUTION"].read()
                         else:
                             raise DataError(
                                 f"Error while reading {color} band from "

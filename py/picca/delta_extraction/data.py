@@ -12,20 +12,27 @@ from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import DataError
 from picca.delta_extraction.utils import ABSORBER_IGM
 
-accepted_options = ["analysis type", "delta lambda", "delta log lambda",
-                    "delta lambda rest frame",
-                    "input directory",
-                    "lambda abs IGM",
-                    "lambda max", "lambda max rest frame",
-                    "lambda min", "lambda min rest frame",
-                    "minimum number pixels in forest",
-                    "out dir", "rejection log file",
-                    "minimal snr",
-                    # these options are allowed but will be overwritten by
-                    # minimal snr (only needed to allow running on a .config
-                    # with default options)
-                    "minimal snr pk1d","minimal snr bao3d",
-                    ]
+accepted_options = [
+    "analysis type",
+    "delta lambda",
+    "delta log lambda",
+    "delta lambda rest frame",
+    "input directory",
+    "lambda abs IGM",
+    "lambda max",
+    "lambda max rest frame",
+    "lambda min",
+    "lambda min rest frame",
+    "minimum number pixels in forest",
+    "out dir",
+    "rejection log file",
+    "minimal snr",
+    # these options are allowed but will be overwritten by
+    # minimal snr (only needed to allow running on a .config
+    # with default options)
+    "minimal snr pk1d",
+    "minimal snr bao3d",
+]
 
 defaults = {
     "analysis type": "BAO 3D",
@@ -41,6 +48,7 @@ defaults = {
 }
 
 accepted_analysis_type = ["BAO 3D", "PK 1D"]
+
 
 class Data:
     """Abstract class from which all classes loading data must inherit.
@@ -97,6 +105,7 @@ class Data:
     rejection_log_names: list of list
     Name of each of the fields saved in the rejection log
     """
+
     def __init__(self, config):
         """Initialize class instance"""
         self.logger = logging.getLogger('picca.delta_extraction.data.Data')
@@ -134,15 +143,18 @@ class Data:
         if wave_solution is None:
             raise DataError("Missing argument 'wave solution' required by Data")
         if wave_solution not in ["lin", "log"]:
-            raise DataError("Unrecognised value for 'wave solution'. Expected either "
-                            f"'lin' or 'log'. Found '{wave_solution}'.")
+            raise DataError(
+                "Unrecognised value for 'wave solution'. Expected either "
+                f"'lin' or 'log'. Found '{wave_solution}'.")
 
         if wave_solution == "log":
             pixel_step = config.getfloat("delta log lambda")
             if pixel_step is None:
-                raise DataError("Missing argument 'delta log lambda' required by "
-                                "Data when 'wave solution' is set to 'log'")
-            pixel_step_rest_frame = config.getfloat("delta log lambda rest frame")
+                raise DataError(
+                    "Missing argument 'delta log lambda' required by "
+                    "Data when 'wave solution' is set to 'log'")
+            pixel_step_rest_frame = config.getfloat(
+                "delta log lambda rest frame")
             if pixel_step_rest_frame is None:
                 pixel_step_rest_frame = pixel_step
                 self.logger.info("'delta log lambda rest frame' not set, using "
@@ -156,30 +168,34 @@ class Data:
             pixel_step_rest_frame = config.getfloat("delta lambda rest frame")
             if pixel_step_rest_frame is None:
                 pixel_step_rest_frame = pixel_step
-                self.logger.info("'delta lambda rest frame' not set, using "
-                                 f"the same value as for 'delta lambda' ({pixel_step_rest_frame})")
+                self.logger.info(
+                    "'delta lambda rest frame' not set, using "
+                    f"the same value as for 'delta lambda' ({pixel_step_rest_frame})"
+                )
         # this should not be reached as wave_solution is either "lin" or "log"
         # added here only in case we add another wave_solution in the future
-        else: # pragma: no cover
-            raise DataError("Unrecognised value for 'wave solution'. Expected either "
-                            f"'lin' or 'log'. Found '{wave_solution}'.")
+        else:  # pragma: no cover
+            raise DataError(
+                "Unrecognised value for 'wave solution'. Expected either "
+                f"'lin' or 'log'. Found '{wave_solution}'.")
 
         lambda_max = config.getfloat("lambda max")
         if lambda_max is None:
             raise DataError("Missing argument 'lambda max' required by Data")
         lambda_max_rest_frame = config.getfloat("lambda max rest frame")
         if lambda_max_rest_frame is None:
-            raise DataError("Missing argument 'lambda max rest frame' required by Data")
+            raise DataError(
+                "Missing argument 'lambda max rest frame' required by Data")
         lambda_min = config.getfloat("lambda min")
         if lambda_min is None:
             raise DataError("Missing argument 'lambda min' required by Data")
         lambda_min_rest_frame = config.getfloat("lambda min rest frame")
         if lambda_min_rest_frame is None:
-            raise DataError("Missing argument 'lambda min rest frame' required by Data")
+            raise DataError(
+                "Missing argument 'lambda min rest frame' required by Data")
 
         Forest.set_class_variables(lambda_min, lambda_max,
-                                   lambda_min_rest_frame,
-                                   lambda_max_rest_frame,
+                                   lambda_min_rest_frame, lambda_max_rest_frame,
                                    pixel_step, pixel_step_rest_frame,
                                    wave_solution)
 
@@ -195,13 +211,15 @@ class Data:
         if self.analysis_type == "PK 1D":
             lambda_abs_igm_name = config.get("lambda abs IGM")
             if lambda_abs_igm_name is None:
-                raise DataError("Missing argument 'lambda abs IGM' required by Data "
-                                "when 'analysys type' is 'PK 1D'")
+                raise DataError(
+                    "Missing argument 'lambda abs IGM' required by Data "
+                    "when 'analysys type' is 'PK 1D'")
             Pk1dForest.lambda_abs_igm = ABSORBER_IGM.get(lambda_abs_igm_name)
             if Pk1dForest.lambda_abs_igm is None:
-                raise DataError("Invalid argument 'lambda abs IGM' required by "
-                                f"Data. Found: '{lambda_abs_igm_name}'. Accepted "
-                                "values: " + ", ".join(ABSORBER_IGM))
+                raise DataError(
+                    "Invalid argument 'lambda abs IGM' required by "
+                    f"Data. Found: '{lambda_abs_igm_name}'. Accepted "
+                    "values: " + ", ".join(ABSORBER_IGM))
 
         self.input_directory = config.get("input directory")
         if self.input_directory is None:
@@ -210,8 +228,9 @@ class Data:
 
         self.min_num_pix = config.getint("minimum number pixels in forest")
         if self.min_num_pix is None:
-            raise DataError("Missing argument 'minimum number pixels in forest' "
-                            "required by Data")
+            raise DataError(
+                "Missing argument 'minimum number pixels in forest' "
+                "required by Data")
 
         self.out_dir = config.get("out dir")
         if self.out_dir is None:
@@ -219,14 +238,14 @@ class Data:
 
         self.rejection_log_file = config.get("rejection log file")
         if self.rejection_log_file is None:
-            raise DataError("Missing argument 'rejection log file' required by Data")
-        if "/" in self.rejection_log_file:
             raise DataError(
-                "Error constructing Data. "
-                "'rejection log file' should not incude folders. "
-                f"Found: {self.rejection_log_file}")
+                "Missing argument 'rejection log file' required by Data")
+        if "/" in self.rejection_log_file:
+            raise DataError("Error constructing Data. "
+                            "'rejection log file' should not incude folders. "
+                            f"Found: {self.rejection_log_file}")
         if not (self.rejection_log_file.endswith(".fits") or
-              self.rejection_log_file.endswith(".fits.gz")):
+                self.rejection_log_file.endswith(".fits.gz")):
             raise DataError("Error constructing Data. Invalid extension for "
                             "'rejection log file'. Filename "
                             "should en with '.fits' or '.fits.gz'. Found "
@@ -239,16 +258,15 @@ class Data:
         # this should not be reached as analysis_type is either "BAO 3D" or
         # "PK 1D" added here only in case we add another analysis_type in the
         # future
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise DataError("Invalid argument 'analysis type' required by "
                             f"Data. Found: '{self.analysis_type}'. Accepted "
                             "values: " + ",".join(accepted_analysis_type))
         if self.min_snr is None:
-            raise  DataError(
+            raise DataError(
                 "Missing argument 'minimal snr bao3d' (if 'analysis type' = "
                 "'BAO 3D') or ' minimal snr pk1d' (if 'analysis type' = 'Pk1d') "
                 "required by Data")
-
 
     def add_to_rejection_log(self, header, size, rejection_status):
         """Adds to the rejection log arrays.
@@ -278,7 +296,7 @@ class Data:
             else:
                 # this loop will always end with the break
                 # the break is introduced to avoid useless checks
-                for item in header: # pragma: no branch
+                for item in header:  # pragma: no branch
                     if item.get("name") == name:
                         col.append(item.get("value"))
                         break
@@ -290,8 +308,9 @@ class Data:
         """
         self.rejection_log_cols = [[], []]
         self.rejection_log_names = ["FOREST_SIZE", "REJECTION_STATUS"]
-        self.rejection_log_comments = ["num pixels in forest",
-                                      "rejection status"]
+        self.rejection_log_comments = [
+            "num pixels in forest", "rejection status"
+        ]
 
         for item in self.forests[0].get_header():
             self.rejection_log_cols.append([])
@@ -308,9 +327,10 @@ class Data:
                 self.add_to_rejection_log(forest.get_header(), forest.flux.size,
                                           forest.bad_continuum_reason)
 
-                self.logger.progress(f"Rejected forest with los_id {forest.los_id} "
-                                     "due to continuum fitting problems. Reason: "
-                                     f"{forest.bad_continuum_reason}")
+                self.logger.progress(
+                    f"Rejected forest with los_id {forest.los_id} "
+                    "due to continuum fitting problems. Reason: "
+                    f"{forest.bad_continuum_reason}")
 
                 remove_indexs.append(index)
 
@@ -318,7 +338,6 @@ class Data:
             del self.forests[index]
 
         self.logger.progress(f"Accepted sample has {len(self.forests)} forests")
-
 
     def filter_forests(self):
         """Remove forests that do not meet quality standards"""
@@ -355,7 +374,8 @@ class Data:
             del self.forests[index]
 
         self.logger.progress("Removed forests that are too short")
-        self.logger.progress(f"Remaining sample has {len(self.forests)} forests")
+        self.logger.progress(
+            f"Remaining sample has {len(self.forests)} forests")
 
     def find_nside(self):
         """Determines nside such that there are 500 objs per pixel on average."""
@@ -384,13 +404,16 @@ class Data:
         """Save the deltas."""
         healpixs = np.array([forest.healpix for forest in self.forests])
         unique_healpixs = np.unique(healpixs)
-        healpixs_indexs = {healpix: np.where(healpixs == healpix)[0]
-                           for healpix in unique_healpixs}
+        healpixs_indexs = {
+            healpix: np.where(healpixs == healpix)[0]
+            for healpix in unique_healpixs
+        }
 
         for healpix, indexs in sorted(healpixs_indexs.items()):
-            results = fitsio.FITS(f"{self.out_dir}/Delta/delta-{healpix}.fits.gz",
-                                  'rw',
-                                  clobber=True)
+            results = fitsio.FITS(
+                f"{self.out_dir}/Delta/delta-{healpix}.fits.gz",
+                'rw',
+                clobber=True)
             for index in indexs:
                 forest = self.forests[index]
                 header = forest.get_header()
@@ -403,8 +426,7 @@ class Data:
                               extname=str(forest.los_id))
 
                 # store information for logs
-                self.add_to_rejection_log(header, forest.flux.size,
-                                          "accepted")
+                self.add_to_rejection_log(header, forest.flux.size, "accepted")
             results.close()
 
         self.save_rejection_log()
@@ -414,14 +436,15 @@ class Data:
         In the log forest headers will be saved along with the forest size and
         the rejection status.
         """
-        rejection_log = fitsio.FITS(self.out_dir+"Log/"+self.rejection_log_file,
+        rejection_log = fitsio.FITS(self.out_dir + "Log/" +
+                                    self.rejection_log_file,
                                     'rw',
                                     clobber=True)
 
-        rejection_log.write([np.array(item)
-                                   for item in self.rejection_log_cols],
-                            names=self.rejection_log_names,
-                            comment=self.rejection_log_comments,
-                            extname="rejection_log")
+        rejection_log.write(
+            [np.array(item) for item in self.rejection_log_cols],
+            names=self.rejection_log_names,
+            comment=self.rejection_log_comments,
+            extname="rejection_log")
 
         rejection_log.close()

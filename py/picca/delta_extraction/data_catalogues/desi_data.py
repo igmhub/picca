@@ -31,6 +31,7 @@ defaults.update({
 })
 defaults.update(defaults_quasar_catalogue)
 
+
 def merge_new_forest(forests_by_targetid, forests_by_pe):
     """Merge forests_by_pe and forests_by_targetid as Forest instances.
 
@@ -46,7 +47,7 @@ def merge_new_forest(forests_by_targetid, forests_by_pe):
     """
     parent_targetids = set(forests_by_targetid.keys())
     existing_targetids = parent_targetids.intersection(forests_by_pe.keys())
-    new_targetids = forests_by_pe.keys()-existing_targetids
+    new_targetids = forests_by_pe.keys() - existing_targetids
 
     # Does not fail if existing_targetids is empty
     for tid in existing_targetids:
@@ -204,6 +205,7 @@ class DesiData(Data):
         # set blinding strategy
         Forest.blinding = self.blinding
 
+
 class DesiDataFileHandler():
     """File handler for class DesiHealpix
 
@@ -227,6 +229,7 @@ class DesiDataFileHandler():
     If True, load data from non-coadded spectra and coadd them here. Otherwise,
     load coadded data
     """
+
     def __init__(self, analysis_type, use_non_coadded_spectra, logger):
         """Initialize file handler
 
@@ -258,7 +261,10 @@ class DesiDataFileHandler():
         """
         return self.read_file(*args)
 
-    def format_data(self, catalogue, spectrographs_data, targetid_spec,
+    def format_data(self,
+                    catalogue,
+                    spectrographs_data,
+                    targetid_spec,
                     reso_from_truth=False):
         """After data has been read, format it into DesiForest instances
 
