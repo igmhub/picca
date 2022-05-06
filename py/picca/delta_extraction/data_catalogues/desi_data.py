@@ -285,8 +285,7 @@ class DesiDataFileHandler():
         Return
         ------
         forests_by_targetid: dict
-        Dictionary were forests are stored. Its content is modified by this
-        function with the new forests.
+        Dictionary were forests are stored.
 
         num_data: int
         The number of instances loaded
