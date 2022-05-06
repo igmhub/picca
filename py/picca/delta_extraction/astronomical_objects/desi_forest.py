@@ -128,13 +128,3 @@ class DesiForest(Forest):
         ]
 
         return header
-
-    @classmethod
-    def update_class_variables(cls):
-        """Update class variable mask_fields (from Forest) to also contain the
-        necessary fields for this class to work properly.
-        """
-        cls.class_variable_check()
-        for field in ["exposures_diff", "reso", "reso_pix", "resolution_matrix"]:
-            if field not in Forest.mask_fields:
-                cls.mask_fields.append(field)
