@@ -322,10 +322,37 @@ class DesiData(Data):
         Forest.blinding = self.blinding
 
 class DesiDataFileHandler():
+    """File handler for class DesiHealpix
+
+    Methods
+    -------
+    __init__
+    __call__
+    format_data
+    read_file
+
+    Attributes
+    ----------
+    logger: logging.Logger
+    Logger object
+
+    analysis_type: str
+    Selected analysis type. See class Data from py/picca/delta_extraction/data.py
+    for details
+
+    use_non_coadded_spectra: bool
+    If True, load data from non-coadded spectra and coadd them here. Otherwise,
+    load coadded data
+    """
     def __init__(self, analysis_type, use_non_coadded_spectra, logger):
         self.logger = logger
         self.analysis_type = analysis_type
         self.use_non_coadded_spectra = use_non_coadded_spectra
+
+    def __call__(self, X):
+        filename, catalogue = X
+
+        return self.read_file(filename, catalogue)
 
     def format_data(self, catalogue, spectrographs_data, targetid_spec,
                     reso_from_truth=False):
@@ -444,3 +471,28 @@ class DesiDataFileHandler():
 
                 num_data += 1
         return forests_by_targetid, num_data
+
+    # pylint: disable=no-self-use
+    # this method should use self in child classes
+    def read_file(self, filename, catalogue):
+        """Read the spectra and formats its data as Forest instances.
+
+        Arguments
+        ---------
+        filename: str
+        Name of the file to read
+
+        catalogue: astropy.table.Table
+        The quasar catalogue fragment associated with this file
+
+        Returns:
+        ---------
+        forests_by_targetid: dict
+        Dictionary were forests are stored.
+
+        Raise
+        -----
+        DataError if the analysis type is PK 1D and resolution data is not present
+        """
+        raise DataError(
+            "Function 'read_data' was not overloaded by child class")

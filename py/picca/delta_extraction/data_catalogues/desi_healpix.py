@@ -177,6 +177,17 @@ class DesiHealpix(DesiData):
 # Class to read in parallel
 # Seems lightweight to copy all these 3 arguments
 class DesiHealpixFileHandler(DesiDataFileHandler):
+    """File handler for class DesiHealpix
+
+    Methods
+    -------
+    (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
+    read_file
+
+    Attributes
+    ----------
+    (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)    
+    """
     def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
 
@@ -258,8 +269,3 @@ class DesiHealpixFileHandler(DesiDataFileHandler):
             reso_from_truth=reso_from_truth)
 
         return forests_by_targetid
-
-    def __call__(self, X):
-        filename, catalogue = X
-
-        return self.read_file(filename, catalogue)
