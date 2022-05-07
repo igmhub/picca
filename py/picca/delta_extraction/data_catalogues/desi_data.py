@@ -32,6 +32,30 @@ defaults.update({
 defaults.update(defaults_quasar_catalogue)
 
 
+def merge_new_forest(forests_by_targetid, new_forests_by_targetid):
+    """Merge new_forests_by_targetid and forests_by_targetid as Forest instances.
+
+    Arguments
+    ---------
+    forests_by_targetid: dict
+    Dictionary were forests are stored. Its content is modified by this
+    function with the new forests.
+
+    new_forests_by_targetid: dict
+    Dictionary were new forests are stored. Its content will be merged with
+    forests_by_targetid
+    """
+    parent_targetids = set(forests_by_targetid.keys())
+    existing_targetids = parent_targetids.intersection(new_forests_by_targetid.keys())
+    new_targetids = new_forests_by_targetid.keys() - existing_targetids
+
+    # Does not fail if existing_targetids is empty
+    for tid in existing_targetids:
+        forests_by_targetid[tid].coadd(new_forests_by_targetid[tid])
+    for tid in new_targetids:
+        forests_by_targetid[tid] = new_forests_by_targetid[tid]
+
+
 class DesiData(Data):
     """Abstract class to read DESI data and format it as a list of
     Forest instances.
@@ -55,9 +79,6 @@ class DesiData(Data):
 
     catalogue: astropy.table.Table
     The quasar catalogue
-
-    input_directory: str
-    Directory to spectra files.
 
     logger: logging.Logger
     Logger object
@@ -122,8 +143,135 @@ class DesiData(Data):
                 "Missing argument 'use non-coadded spectra' required by DesiData"
             )
 
-    def format_data(self, catalogue, spectrographs_data, targetid_spec,
-                    forests_by_targetid, reso_from_truth=False):
+    # pylint: disable=no-self-use
+    # this method should use self in child classes
+    def read_data(self):
+        """Read the spectra and formats its data as Forest instances.
+
+        Method to be implemented by child classes.
+
+        Return
+        ------
+        is_mock: bool
+        True if mocks are read, False otherwise
+
+        is_sv: bool
+        True if all the read data belong to SV. False otherwise
+
+        Raise
+        -----
+        DataError if no quasars were found
+        """
+        raise DataError(
+            "Function 'read_data' was not overloaded by child class")
+
+    def set_blinding(self, is_mock, is_sv):
+        """Set the blinding in Forest.
+
+        Update the stored value if necessary.
+
+        Attributes
+        ----------
+        is_mock: boolean
+        True if reading mocks, False otherwise
+
+        is_sv: boolean
+        True if reading SV data only, False otherwise
+        """
+        # blinding checks
+        if is_mock:
+            if self.blinding != "none":  # pragma: no branch
+                self.logger.warning(f"Selected blinding, {self.blinding} is "
+                                    "being ignored as mocks should not be "
+                                    "blinded. 'none' blinding engaged")
+                self.blinding = "none"
+        elif is_sv:
+            if self.blinding != "none":
+                self.logger.warning(f"Selected blinding, {self.blinding} is "
+                                    "being ignored as SV data should not be "
+                                    "blinded. 'none' blinding engaged")
+                self.blinding = "none"
+        # TODO: remove this when we are ready to unblind
+        else:
+            if self.blinding != "corr_yshift":
+                self.logger.warning(f"Selected blinding, {self.blinding} is "
+                                    "being ignored as data should be blinded. "
+                                    "'corr_yshift' blinding engaged")
+                self.blinding = "corr_yshift"
+
+        # set blinding strategy
+        Forest.blinding = self.blinding
+
+
+class DesiDataFileHandler():
+    """File handler for class DesiHealpix
+    This implementation is based on the understanding that imap in multiprocessing
+    cannot be applied to class methods due to `pickle`ing limitations. Each child
+    process creates an instance of this class, then imap calls each instance with
+    an argument in parallel. imap is limited to single-argument functions, but it
+    can be overcome by making that argument a tuple.
+
+    Methods
+    -------
+    __init__
+    __call__
+    format_data
+    read_file
+
+    Attributes
+    ----------
+    analysis_type: str
+    Selected analysis type. See class Data from py/picca/delta_extraction/data.py
+    for details
+
+    logger: logging.Logger
+    Logger object
+
+    use_non_coadded_spectra: bool
+    If True, load data from non-coadded spectra and coadd them here. Otherwise,
+    load coadded data
+    """
+
+    def __init__(self, analysis_type, use_non_coadded_spectra, logger):
+        """Initialize file handler
+
+        Arguments
+        ---------
+        analysis_type: str
+        Selected analysis type. See class Data from py/picca/delta_extraction/data.py
+        for details
+
+        use_non_coadded_spectra: bool
+        If True, load data from non-coadded spectra and coadd them here. Otherwise,
+        load coadded data
+
+        logger: logging.Logger
+        Logger object from parent class. Trying to initialize it here
+        without copying failed data_tests.py
+        """
+        # The next line gives failed tests
+        # self.logger = logging.getLogger(__name__)
+        self.logger = logger
+        self.analysis_type = analysis_type
+        self.use_non_coadded_spectra = use_non_coadded_spectra
+
+    def __call__(self, args):
+        """Call method read_file. Note imap can be called with
+        only one argument, hence tuple as argument.
+
+        Arguments
+        ---------
+        args: tuple
+        Arguments to be passed to read_file. Should contain a string with the
+        filename and a astropy.table.Table with the quasar catalogue
+        """
+        return self.read_file(*args)
+
+    def format_data(self,
+                    catalogue,
+                    spectrographs_data,
+                    targetid_spec,
+                    reso_from_truth=False):
         """After data has been read, format it into DesiForest instances
 
         Instances will be DesiForest or DesiPk1dForest depending on analysis_type
@@ -139,20 +287,20 @@ class DesiData(Data):
         targetid_spec: int
         Targetid of the objects to format
 
-        forests_by_targetid: dict
-        Dictionary were forests are stored. Its content is modified by this
-        function with the new forests.
-
         reso_from_truth: bool - Default: False
         Specifies whether resolution matrixes are read from truth files (True)
         or directly from data (False)
 
         Return
         ------
+        forests_by_targetid: dict
+        Dictionary were forests are stored.
+
         num_data: int
         The number of instances loaded
         """
         num_data = 0
+        forests_by_targetid = {}
 
         # Loop over quasars in catalogue fragment
         for row in catalogue:
@@ -237,63 +385,32 @@ class DesiData(Data):
                     forests_by_targetid[targetid] = forest
 
                 num_data += 1
-        return num_data
+        return forests_by_targetid, num_data
 
     # pylint: disable=no-self-use
     # this method should use self in child classes
-    def read_data(self):
+    def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
 
-        Method to be implemented by child classes.
+        Arguments
+        ---------
+        filename: str
+        Name of the file to read
 
-        Return
-        ------
-        is_mock: bool
-        True if mocks are read, False otherwise
+        catalogue: astropy.table.Table
+        The quasar catalogue fragment associated with this file
 
-        is_sv: bool
-        True if all the read data belong to SV. False otherwise
+        Returns:
+        ---------
+        forests_by_targetid: dict
+        Dictionary were forests are stored.
+
+        num_data: int
+        The number of instances loaded
 
         Raise
         -----
-        DataError if no quasars were found
+        DataError if the analysis type is PK 1D and resolution data is not present
         """
         raise DataError(
             "Function 'read_data' was not overloaded by child class")
-
-    def set_blinding(self, is_mock, is_sv):
-        """Set the blinding in Forest.
-
-        Update the stored value if necessary.
-
-        Attributes
-        ----------
-        is_mock: boolean
-        True if reading mocks, False otherwise
-
-        is_sv: boolean
-        True if reading SV data only, False otherwise
-        """
-        # blinding checks
-        if is_mock:
-            if self.blinding != "none":  # pragma: no branch
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as mocks should not be "
-                                    "blinded. 'none' blinding engaged")
-                self.blinding = "none"
-        elif is_sv:
-            if self.blinding != "none":
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as SV data should not be "
-                                    "blinded. 'none' blinding engaged")
-                self.blinding = "none"
-        # TODO: remove this when we are ready to unblind
-        else:
-            if self.blinding != "corr_yshift":
-                self.logger.warning(f"Selected blinding, {self.blinding} is "
-                                    "being ignored as data should be blinded. "
-                                    "'corr_yshift' blinding engaged")
-                self.blinding = "corr_yshift"
-
-        # set blinding strategy
-        Forest.blinding = self.blinding

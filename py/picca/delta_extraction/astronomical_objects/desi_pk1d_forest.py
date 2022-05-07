@@ -217,3 +217,13 @@ class DesiPk1dForest(DesiForest, Pk1dForest):
         # return weights and binning solution to be used by child classes if
         # required
         return bins, rebin_ivar, orig_ivar, w1, w2
+
+    @classmethod
+    def update_class_variables(cls):
+        """Update class variable mask_fields (from Forest) to also contain the
+        necessary fields for this class to work properly.
+        """
+        cls.class_variable_check()
+        for field in ["exposures_diff", "reso", "reso_pix", "resolution_matrix"]:
+            if field not in Forest.mask_fields:
+                cls.mask_fields.append(field)

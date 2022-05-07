@@ -7,13 +7,14 @@ import multiprocessing
 import fitsio
 import numpy as np
 
-from picca.delta_extraction.data_catalogues.desi_data import DesiData
-from picca.delta_extraction.data_catalogues.desi_data import (# pylint: disable=unused-import
+from picca.delta_extraction.astronomical_objects.desi_pk1d_forest import DesiPk1dForest
+from picca.delta_extraction.data_catalogues.desi_data import (
+    DesiData, DesiDataFileHandler, merge_new_forest)
+from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
     defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
 
-accepted_options = sorted(
-    list(set(accepted_options + ["num processors"])))
+accepted_options = sorted(list(set(accepted_options + ["num processors"])))
 
 
 class DesiHealpix(DesiData):
@@ -56,6 +57,9 @@ class DesiHealpix(DesiData):
         # init of DesiData needs to come last, as it contains the actual data
         # reading and thus needs all config
         super().__init__(config)
+
+        if self.analysis_type == "PK 1D":
+            DesiPk1dForest.update_class_variables()
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -125,50 +129,45 @@ class DesiHealpix(DesiData):
 
         is_sv = True
         is_mock = False
+        forests_by_targetid = {}
+
+        arguments = []
+        for group in grouped_catalogue.groups:
+            healpix, survey = group["HEALPIX", "SURVEY"][0]
+            if survey not in ["sv", "sv1", "sv2", "sv3"]:
+                is_sv = False
+
+            filename, is_mock_aux = self.get_filename(survey, healpix)
+            if is_mock_aux:
+                is_mock = True
+
+            arguments.append((filename, group))
+
+        self.logger.info(f"reading data from {len(arguments)} files")
+
         if self.num_processors > 1:
             context = multiprocessing.get_context('fork')
-            manager = multiprocessing.Manager()
-            forests_by_targetid = manager.dict()
-            arguments = []
-            for (index, (healpix, survey)), group in zip(
-                    enumerate(grouped_catalogue.groups.keys),
-                    grouped_catalogue.groups):
-
-                if survey not in ["sv", "sv1", "sv2", "sv3"]:
-                    is_sv = False
-
-                filename, is_mock_aux = self.get_filename(survey, healpix)
-                if is_mock_aux:
-                    is_mock = True
-                arguments.append((filename, group, forests_by_targetid))
-
-                self.logger.info(f"reading data from {len(arguments)} files")
             with context.Pool(processes=self.num_processors) as pool:
+                imap_it = pool.imap(
+                    DesiHealpixFileHandler(self.analysis_type,
+                                           self.use_non_coadded_spectra,
+                                           self.logger), arguments)
+                for forests_by_targetid_aux, _ in imap_it:
+                    # Merge each dict to master forests_by_targetid
+                    merge_new_forest(forests_by_targetid,
+                                     forests_by_targetid_aux)
 
-                pool.starmap(self.read_file, arguments)
-            for forest in forests_by_targetid.values():
-                # TODO: the following just does the consistency checking again,
-                # to avoid mask_fields not being populated. In the long run an
-                # alternative way of running the multiprocessing is envisioned
-                # which would be more stable, see discussion in PRs 879 and 883
-                forest.consistency_check()
         else:
-            forests_by_targetid = {}
-            for (index, (healpix, survey)), group in zip(
-                    enumerate(grouped_catalogue.groups.keys),
-                    grouped_catalogue.groups):
-
-                if survey not in ["sv", "sv1", "sv2", "sv3"]:
-                    is_sv = False
-
-                filename = self.get_filename(survey, healpix)
-                filename, is_mock_aux = self.get_filename(survey, healpix)
-                if is_mock_aux:
-                    is_mock = True
-                self.read_file(filename, group, forests_by_targetid)
-                self.logger.progress(
-                    f"Read {index} of {len(grouped_catalogue.groups.keys)}. "
-                    f"num_data: {len(forests_by_targetid)}")
+            reader = DesiHealpixFileHandler(self.analysis_type,
+                                            self.use_non_coadded_spectra,
+                                            self.logger)
+            num_data = 0
+            for index, this_arg in enumerate(arguments):
+                forests_by_targetid_aux, num_data_aux = reader(this_arg)
+                merge_new_forest(forests_by_targetid, forests_by_targetid_aux)
+                num_data += num_data_aux
+                self.logger.progress(f"Read {index} of {len(arguments)}. "
+                                     f"num_data: {num_data}")
 
         if len(forests_by_targetid) == 0:
             raise DataError("No quasars found, stopping here")
@@ -176,7 +175,23 @@ class DesiHealpix(DesiData):
 
         return is_mock, is_sv
 
-    def read_file(self, filename, catalogue, forests_by_targetid):
+
+# Class to read in parallel
+# Seems lightweight to copy all these 3 arguments
+class DesiHealpixFileHandler(DesiDataFileHandler):
+    """File handler for class DesiHealpix
+
+    Methods
+    -------
+    (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
+    read_file
+
+    Attributes
+    ----------
+    (see DesiDataFileHandler in py/picca/delta_extraction/data_catalogues/desi_data.py)
+    """
+
+    def read_file(self, filename, catalogue):
         """Read the spectra and formats its data as Forest instances.
 
         Arguments
@@ -187,9 +202,13 @@ class DesiHealpix(DesiData):
         catalogue: astropy.table.Table
         The quasar catalogue fragment associated with this file
 
+        Returns:
+        ---------
         forests_by_targetid: dict
-        Dictionary were forests are stored. Its content is modified by this
-        function with the new forests.
+        Dictionary were forests are stored.
+
+        num_data: int
+        The number of instances loaded
 
         Raise
         -----
@@ -199,7 +218,7 @@ class DesiHealpix(DesiData):
             hdul = fitsio.FITS(filename)
         except IOError:
             self.logger.warning(f"Error reading '{filename}'. Ignoring file")
-            return
+            return {}, 0
         # Read targetid from fibermap to match to catalogue later
         fibermap = hdul['FIBERMAP'].read()
         # First read all wavelength, flux, ivar, mask, and resolution
@@ -253,5 +272,10 @@ class DesiHealpix(DesiData):
                     "Ignoring color.")
         hdul.close()
 
-        self.format_data(catalogue, spectrographs_data, fibermap["TARGETID"],
-                         forests_by_targetid, reso_from_truth=reso_from_truth)
+        forests_by_targetid, num_data = self.format_data(
+            catalogue,
+            spectrographs_data,
+            fibermap["TARGETID"],
+            reso_from_truth=reso_from_truth)
+
+        return forests_by_targetid, num_data
