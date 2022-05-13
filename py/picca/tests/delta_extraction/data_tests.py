@@ -14,7 +14,7 @@ from picca.delta_extraction.data import defaults as defaults_data
 from picca.delta_extraction.data import accepted_analysis_type
 from picca.delta_extraction.data_catalogues.desi_data import DesiData
 from picca.delta_extraction.data_catalogues.desi_data import defaults as defaults_desi_data
-from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix
+from picca.delta_extraction.data_catalogues.desi_healpix import DesiHealpix, DesiHealpixFileHandler
 from picca.delta_extraction.data_catalogues.desi_healpix import defaults as defaults_desi_healpix
 from picca.delta_extraction.data_catalogues.desi_tile import DesiTile
 from picca.delta_extraction.data_catalogues.desi_tile import defaults as defaults_desi_tile
@@ -75,7 +75,11 @@ class DataTest(AbstractTest):
         if warnings:
             setup_test_logger("picca.delta_extraction.data.Data", DataError)
         with self.assertRaises(DataError) as context_manager:
-            data.read_file(filename, catalogue, {})
+            reader = DesiHealpixFileHandler(data.analysis_type,
+                                            data.use_non_coadded_spectra,
+                                            data.logger)
+
+            reader((filename, catalogue))
         self.compare_error_message(context_manager, expected_message)
         if warnings:
             setup_test_logger("picca.delta_extraction.data.Data", DataError,
