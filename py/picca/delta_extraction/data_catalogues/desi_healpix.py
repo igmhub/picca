@@ -14,8 +14,6 @@ from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disabl
     defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
 
-accepted_options = sorted(list(set(accepted_options + ["num processors"])))
-
 
 class DesiHealpix(DesiData):
     """Reads the spectra from DESI using healpix mode and formats its data as a
@@ -51,34 +49,10 @@ class DesiHealpix(DesiData):
         """
         self.logger = logging.getLogger(__name__)
 
-        self.num_processors = None
-        self.__parse_config(config)
-
-        # init of DesiData needs to come last, as it contains the actual data
-        # reading and thus needs all config
         super().__init__(config)
 
         if self.analysis_type == "PK 1D":
             DesiPk1dForest.update_class_variables()
-
-    def __parse_config(self, config):
-        """Parse the configuration options
-
-        Arguments
-        ---------
-        config: configparser.SectionProxy
-        Parsed options to initialize class
-
-        Raise
-        -----
-        DataError upon missing required variables
-        """
-        self.num_processors = config.getint("num processors")
-        if self.num_processors is None:
-            raise DataError(
-                "Missing argument 'num processors' required by DesiHealpix")
-        if self.num_processors == 0:
-            self.num_processors = (multiprocessing.cpu_count() // 2)
 
     def get_filename(self, survey, healpix):
         """Get the name of the file to read
