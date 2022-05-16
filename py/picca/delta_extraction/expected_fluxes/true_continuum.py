@@ -241,7 +241,7 @@ class TrueContinuum(ExpectedFlux):
                 "weights": weights,
                 "continuum": forest.continuum,}
             if isinstance(forest, Pk1dForest):
-                ivar = forest.ivar / mean_expected_flux**2
+                ivar = forest.ivar * mean_expected_flux**2
 
                 forest_info["ivar"] = ivar
             self.los_ids[forest.los_id] = forest_info
