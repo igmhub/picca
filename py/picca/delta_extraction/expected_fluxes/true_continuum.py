@@ -293,11 +293,6 @@ class TrueContinuum(ExpectedFlux):
         # files are only for lya so far, this will need to be updated so that
         # regions other than Lya are available
 
-        if self.use_constant_weight:
-            logger.info(
-                "using constant weights, skipping raw statistics as not needed")
-            return
-
         if self.raw_statistics_filename != "":
             filename = self.raw_statistics_filename
         else:
