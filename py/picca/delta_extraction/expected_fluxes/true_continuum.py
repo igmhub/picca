@@ -1,5 +1,4 @@
 """This module defines the class TrueContinuum"""
-from asyncio.log import logger
 import logging
 import multiprocessing
 
