@@ -1,5 +1,4 @@
 """This module defines the class TrueContinuum"""
-from asyncio.log import logger
 import logging
 import multiprocessing
 
@@ -241,7 +240,7 @@ class TrueContinuum(ExpectedFlux):
                 "weights": weights,
                 "continuum": forest.continuum,}
             if isinstance(forest, Pk1dForest):
-                ivar = forest.ivar / mean_expected_flux**2
+                ivar = forest.ivar * mean_expected_flux**2
 
                 forest_info["ivar"] = ivar
             self.los_ids[forest.los_id] = forest_info
@@ -292,11 +291,6 @@ class TrueContinuum(ExpectedFlux):
         """
         # files are only for lya so far, this will need to be updated so that
         # regions other than Lya are available
-
-        if self.use_constant_weight:
-            logger.info(
-                "using constant weights, skipping raw statistics as not needed")
-            return
 
         if self.raw_statistics_filename != "":
             filename = self.raw_statistics_filename
