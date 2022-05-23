@@ -11,6 +11,9 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
 from picca.delta_extraction.expected_flux import ExpectedFlux
+from picca.delta_extraction.least_squares.least_squares_cont_model import LeastsSquaresContModel
+from picca.delta_extraction.least_squares.least_squares_var_stats import (
+    LeastsSquaresVarStats, FUDGE_REF)
 from picca.delta_extraction.utils import find_bins
 
 accepted_options = [
@@ -482,7 +485,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 if forest.continuum is None:
                     continue
                 delta = forest.flux / forest.continuum
-                variance = self.compute_forest_variance(forest, forest.continuum)
+                variance = self.compute_forest_variance(forest,
+                                                        forest.continuum)
                 weights = 1. / variance
 
             bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
@@ -522,7 +526,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         var_lss = self.get_var_lss(forest.log_lambda)
         eta = self.get_eta(forest.log_lambda)
         fudge = self.get_fudge(forest.log_lambda)
-        return eta*var_pipe + var_lss + fudge / var_pipe
+        return eta * var_pipe + var_lss + fudge / var_pipe
 
     # TODO: We should check if we can directly compute the mean continuum
     # in particular this means:
@@ -560,7 +564,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                              Forest.log_lambda_rest_frame_grid,
                              Forest.wave_solution)
 
-            weights = 1.0/self.compute_forest_variance(forest, forest.continuum)
+            weights = 1.0 / self.compute_forest_variance(
+                forest, forest.continuum)
             cont = np.bincount(bins,
                                weights=forest.flux / forest.continuum * weights)
             mean_cont[:len(cont)] += cont
@@ -649,143 +654,24 @@ class Dr16ExpectedFlux(ExpectedFlux):
         eta = np.zeros(self.num_bins_variance)
         var_lss = np.zeros(self.num_bins_variance)
         fudge = np.zeros(self.num_bins_variance)
-        error_eta = np.zeros(self.num_bins_variance)
-        error_var_lss = np.zeros(self.num_bins_variance)
-        error_fudge = np.zeros(self.num_bins_variance)
         num_pixels = np.zeros(self.num_bins_variance)
         valid_fit = np.zeros(self.num_bins_variance)
-
-        # define an array to contain the possible values of pipeline variances
-        # the measured pipeline variance of the deltas will be averaged using the
-        # same binning, and the two arrays will be compared to fit the functions
-        # eta, var_lss, and fudge
-        num_var_bins = 100  # TODO: update this to self.num_bins_variance
-        var_pipe_min = np.log10(1e-5)
-        var_pipe_max = np.log10(2.)
-        var_pipe_values = 10**(var_pipe_min +
-                               ((np.arange(num_var_bins) + .5) *
-                                (var_pipe_max - var_pipe_min) / num_var_bins))
-
-        # initialize arrays to compute the statistics of deltas
-        var_delta = np.zeros(self.num_bins_variance * num_var_bins)
-        mean_delta = np.zeros(self.num_bins_variance * num_var_bins)
-        var2_delta = np.zeros(self.num_bins_variance * num_var_bins)
-        count = np.zeros(self.num_bins_variance * num_var_bins)
-        num_qso = np.zeros(self.num_bins_variance * num_var_bins)
-
-        # compute delta statistics, binning the variance according to 'ivar'
-        for forest in forests:
-            # ignore forest if continuum could not be computed
-            if forest.continuum is None:
-                continue
-            var_pipe = 1 / forest.ivar / forest.continuum**2
-            w = ((np.log10(var_pipe) > var_pipe_min) &
-                 (np.log10(var_pipe) < var_pipe_max))
-
-            # select the pipeline variance bins
-            var_pipe_bins = np.floor(
-                (np.log10(var_pipe[w]) - var_pipe_min) /
-                (var_pipe_max - var_pipe_min) * num_var_bins).astype(int)
-
-            # select the wavelength bins
-            log_lambda_bins = find_bins(forest.log_lambda[w],
-                                        self.log_lambda_var_func_grid,
-                                        Forest.wave_solution)
-
-            # compute overall bin
-            bins = var_pipe_bins + num_var_bins * log_lambda_bins
-
-            # compute deltas
-            delta = (forest.flux / forest.continuum - 1)
-            delta = delta[w]
-
-            # add contributions to delta statistics
-            rebin = np.bincount(bins, weights=delta)
-            mean_delta[:len(rebin)] += rebin
-
-            rebin = np.bincount(bins, weights=delta**2)
-            var_delta[:len(rebin)] += rebin
-
-            rebin = np.bincount(bins, weights=delta**4)
-            var2_delta[:len(rebin)] += rebin
-
-            rebin = np.bincount(bins)
-            count[:len(rebin)] += rebin
-            num_qso[np.unique(bins)] += 1
-
-        # normalise and finish the computation of delta statistics
-        w = count > 0
-        var_delta[w] /= count[w]
-        mean_delta[w] /= count[w]
-        var_delta -= mean_delta**2
-        var2_delta[w] /= count[w]
-        var2_delta -= var_delta**2
-        var2_delta[w] /= count[w]
-
-        # fit the functions eta, var_lss, and fudge
         chi2_in_bin = np.zeros(self.num_bins_variance)
-        fudge_ref = 1e-7
+
+        # initialize the fitter class
+        leasts_squares = LeastsSquaresVarStats(
+            self.num_bins_variance,
+            forests,
+            self.log_lambda_var_func_grid,
+        )
 
         self.logger.progress(" Mean quantities in observer-frame")
         self.logger.progress(
             " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit")
         for index in range(self.num_bins_variance):
-            # pylint: disable-msg=cell-var-from-loop
-            # this function is defined differntly at each step of the loop
-            def chi2(eta, var_lss, fudge):
-                """Compute the chi2 of the fit of eta, var_lss, and fudge for a
-                wavelength bin
+            leasts_squares.set_fit_bins(index)
 
-                Arguments
-                ---------
-                eta: float
-                Correction factor to the contribution of the pipeline
-                estimate of the instrumental noise to the variance.
-
-                var_lss: float
-                Pixel variance due to the Large Scale Strucure
-
-                fudge: float
-                Fudge contribution to the pixel variance
-
-                Global arguments
-                ----------------
-                (defined only in the scope of function compute_var_stats):
-
-                var_delta: array of floats
-                Variance of the delta field
-
-                var2_delta: array of floats
-                Square of the variance of the delta field
-
-                index: int
-                Index with the selected wavelength bin
-
-                num_var_bins: int
-                Number of bins in which the pipeline variance values are split
-
-                var_pipe_values: array of floats
-                Value of the pipeline variance in pipeline variance bins
-
-                num_qso: array of ints
-                Number of quasars in each pipeline variance bin
-
-                Return
-                ------
-                chi2: float
-                The obtained chi2
-                """
-                variance = eta * var_pipe_values + var_lss + fudge * fudge_ref / var_pipe_values
-                chi2_contribution = (
-                    var_delta[index * num_var_bins:(index + 1) * num_var_bins] -
-                    variance)
-                weights = var2_delta[index * num_var_bins:(index + 1) *
-                                     num_var_bins]
-                w = num_qso[index * num_var_bins:(index + 1) *
-                            num_var_bins] > 100
-                return np.sum(chi2_contribution[w]**2 / weights[w])
-
-            minimizer = iminuit.Minuit(chi2,
+            minimizer = iminuit.Minuit(leasts_squares,
                                        name=("eta", "var_lss", "fudge"),
                                        eta=1.,
                                        var_lss=0.1,
@@ -804,26 +690,19 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 minimizer.hesse()
                 eta[index] = minimizer.values["eta"]
                 var_lss[index] = minimizer.values["var_lss"]
-                fudge[index] = minimizer.values["fudge"] * fudge_ref
-                error_eta[index] = minimizer.errors["eta"]
-                error_var_lss[index] = minimizer.errors["var_lss"]
-                error_fudge[index] = minimizer.errors["fudge"] * fudge_ref
+                fudge[index] = minimizer.values["fudge"] * FUDGE_REF
                 valid_fit[index] = True
             else:
                 eta[index] = 1.
                 var_lss[index] = 0.1
-                fudge[index] = 1. * fudge_ref
-                error_eta[index] = 0.
-                error_var_lss[index] = 0.
-                error_fudge[index] = 0.
+                fudge[index] = 1. * FUDGE_REF
                 valid_fit[index] = False
-            num_pixels[index] = count[index * num_var_bins:(index + 1) *
-                                      num_var_bins].sum()
+            num_pixels[index] = leasts_squares.get_num_pixels()
             chi2_in_bin[index] = minimizer.fval
 
             self.logger.progress(
                 f" {self.log_lambda_var_func_grid[index]:.3e} "
-                f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
+                f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} "
                 f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} {valid_fit[index]}"
             )
 
@@ -944,12 +823,14 @@ class Dr16ExpectedFlux(ExpectedFlux):
             stack_delta = self.get_stack_delta(forest.log_lambda)
 
             mean_expected_flux = forest.continuum * stack_delta
-            weights = 1.0/self.compute_forest_variance(forest, mean_expected_flux)
-            
+            weights = 1.0 / self.compute_forest_variance(
+                forest, mean_expected_flux)
+
             forest_info = {
                 "mean expected flux": mean_expected_flux,
                 "weights": weights,
-                "continuum": forest.continuum,}
+                "continuum": forest.continuum,
+            }
             if isinstance(forest, Pk1dForest):
                 eta = self.get_eta(forest.log_lambda)
                 ivar = forest.ivar / (eta +
@@ -977,7 +858,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
             header = {}
             header["FITORDER"] = self.order
 
-            # TODO: update this once the TODO in compute continua is fixed
             results.write([
                 Forest.log_lambda_grid,
                 self.get_stack_delta(Forest.log_lambda_grid),
@@ -1008,91 +888,3 @@ class Dr16ExpectedFlux(ExpectedFlux):
             ],
                           names=['loglam_rest', 'mean_cont', 'weight'],
                           extname='CONT')
-
-
-class LeastsSquaresContModel:
-    """This class deals with the continuum fitting.
-
-    It is passed to iminuit and when called it will return the chi2 for a given
-    set of parameters
-
-    Methods
-    -------
-    __init__
-    __call__
-
-    Attributes
-    ----------
-    forest: Forest
-    Forest instance where the model is fit
-
-    expected_flux: Dr16ExpectedFlux
-    Dr16ExpectedFlux instance running the fit
-
-    mean_cont_kwargs: dict
-    kwargs passed to expected_flux.get_continuum_model
-
-    weights_kwargs: dict
-    kwargs passed to expected_flux.get_continuum_weights
-    """
-    def __init__(self,
-                 forest,
-                 expected_flux,
-                 mean_cont_kwargs=None,
-                 weights_kwargs=None):
-        """Initialize class instances
-
-        Arguments
-        ---------
-        forest: Forest
-        The forest to fit
-
-        expected_flux: Dr16ExpectedFlux
-        The expected flux instance
-
-        mean_cont_kwargs: dict or None - default = None
-        kwargs needed by method get_continuum_model of expected_flux. If None
-        then it will be assigned an empty dictionary
-
-        weights_kwargs: dict or None - default = None
-        kwargs needed by method get_continuum_weights of expected_flux. If None
-        then it will be assigned an empty dictionary
-        """
-        self.forest = forest
-        self.expected_flux = expected_flux
-        if mean_cont_kwargs is None:
-            self.mean_cont_kwargs = {}
-        else:
-            self.mean_cont_kwargs = mean_cont_kwargs
-        if weights_kwargs is None:
-            self.weights_kwargs = {}
-        else:
-            self.weights_kwargs = weights_kwargs
-
-    def __call__(self, zero_point, slope):
-        """
-        Compute chi2 for a given set of parameters
-
-        Arguments
-        ---------
-        zero_point: float
-        Zero point of the linear function (flux mean). Referred to as $a_q$ in
-        du Mas des Bourboux et al. 2020
-
-        slope: float
-        Slope of the linear function (evolution of the flux). Referred to as
-        $b_q$ in du Mas des Bourboux et al. 2020
-
-        Returns
-        -------
-        chi2: float
-        The chi2 for this run
-        """
-        cont_model = self.expected_flux.get_continuum_model(
-            self.forest, zero_point, slope, **self.mean_cont_kwargs)
-
-        weights = self.expected_flux.get_continuum_weights(
-            self.forest, cont_model, **self.weights_kwargs)
-
-        chi2_contribution = (self.forest.flux - cont_model)**2 * weights
-        return chi2_contribution.sum() - np.log(weights).sum()
