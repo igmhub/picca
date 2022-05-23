@@ -190,7 +190,7 @@ class XExpectedFlux(Dr16ExpectedFlux):
         self.get_stack_delta = None
         self.get_stack_delta_weights = None
         self.var_lss_filename = None
-    
+
     def __parse_config(self, config):
         """Parse the configuration options
 
@@ -238,7 +238,7 @@ class XExpectedFlux(Dr16ExpectedFlux):
 
     def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
-        
+
         Arguments
         ---------
         forests: List of Forest
@@ -256,7 +256,7 @@ class XExpectedFlux(Dr16ExpectedFlux):
         # Compute observer-frame mean quantities (var_lss, eta, fudge)
         if not (self.use_ivar_as_weight or self.use_constant_weight):
             self.compute_var_stats(forests)
-        
+
         # compute the mean deltas
         self.compute_delta_stack(forests)
 
@@ -336,7 +336,7 @@ class XExpectedFlux(Dr16ExpectedFlux):
         log_lambda, var_lss = np.loadtxt("/global/project/projectdirs/desi/users/cramirez/Continuum_fitting/compute_var_lss/sigma_lss_val.txt")
 
         def var_lss_fitting_curve(lambda_, a, b, c, d):
-            """Polynomical fitting curve for var_lss 
+            """Polynomical fitting curve for var_lss
             comming from raw files
 
             Arguments
@@ -349,7 +349,7 @@ class XExpectedFlux(Dr16ExpectedFlux):
 
             """
             return a + b*lambda_ + c*lambda_**2 + d*lambda_**3
-        
+
         msk = ~np.isnan(var_lss) & ~np.isnan(log_lambda)
         popt, pcov = curve_fit(
             var_lss_fitting_curve,
@@ -357,7 +357,7 @@ class XExpectedFlux(Dr16ExpectedFlux):
             var_lss[msk]
         )
 
-        self.get_var_lss = interp1d(log_lambda, 
+        self.get_var_lss = interp1d(log_lambda,
                                     var_lss_fitting_curve(10**log_lambda, *popt),
                                     fill_value='extrapolate',
                                     kind='nearest')
@@ -388,13 +388,13 @@ class XExpectedFlux(Dr16ExpectedFlux):
         #     (header['LINEAR'] and Forest.wave_solution != "linear" )
         #     or (header['LINEAR'] and (not np.isclose(header['DEL_LL'], 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0])))
         #     or not header['LINEAR'] and Forest.wave_solution != "log"
-        #     or not np.isclose(header['L_MIN'], 10**Forest.log_lambda_grid[0], rtol=1e-3) 
-        #     or not np.isclose(header['L_MAX'], 10**Forest.log_lambda_grid[-1], rtol=1e-3)  
+        #     or not np.isclose(header['L_MIN'], 10**Forest.log_lambda_grid[0], rtol=1e-3)
+        #     or not np.isclose(header['L_MAX'], 10**Forest.log_lambda_grid[-1], rtol=1e-3)
         #     or not np.isclose(header['LR_MIN'], 10**Forest.log_lambda_rest_frame_grid[0], rtol=1e-3)
         #     or not np.isclose(header['LR_MAX'], 10**Forest.log_lambda_rest_frame_grid[-1], rtol=1e-3)
         # ):
         #     pixelization = "lin" if header['LINEAR'] else "log"
-        #     raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme. 
+        #     raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme.
         #         \t\tPIX\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
         #         raw\t\t{pixelization}\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
         #         input\t{Forest.wave_solution}\t{10**Forest.log_lambda_grid[0]}\t{10**Forest.log_lambda_grid[-1]}\t{10**Forest.log_lambda_rest_frame_grid[0]}\t{10**Forest.log_lambda_rest_frame_grid[-1]}\t{10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]}
@@ -408,7 +408,7 @@ class XExpectedFlux(Dr16ExpectedFlux):
         var_lss = flux_variance/mean_flux**2
 
         def var_lss_fitting_curve(lambda_, a, b, c, d):
-            """Polynomical fitting curve for var_lss 
+            """Polynomical fitting curve for var_lss
             comming from raw files
 
             Arguments
@@ -421,7 +421,7 @@ class XExpectedFlux(Dr16ExpectedFlux):
 
             """
             return a + b*lambda_ + c*lambda_**2 + d*lambda_**3
-        
+
         msk = ~np.isnan(var_lss) & ~np.isnan(lambda_)
         popt, pcov = curve_fit(
             var_lss_fitting_curve,
@@ -429,16 +429,16 @@ class XExpectedFlux(Dr16ExpectedFlux):
             var_lss[msk]
         )
 
-        self.get_var_lss = interp1d(np.log10(lambda_), 
+        self.get_var_lss = interp1d(np.log10(lambda_),
                                     var_lss_fitting_curve(lambda_, *popt),
                                     fill_value='extrapolate',
                                     kind='nearest')
-        
+
     def compute_var_stats(self, forests):
         """Compute variance functions and statistics
-        
+
         ## @ add description.
-        
+
         Arguments
         ---------
         forests: List of Forest
@@ -475,7 +475,7 @@ class XExpectedFlux(Dr16ExpectedFlux):
             # select the wavelength bins
             log_lambda_bins = find_bins(
                 forest.log_lambda,
-                self.log_lambda_var_func_grid, 
+                self.log_lambda_var_func_grid,
                 "lin",
                 )[w]
 
@@ -500,7 +500,7 @@ class XExpectedFlux(Dr16ExpectedFlux):
             eta = self.get_eta(forest.log_lambda[w])
             var_lss = self.get_var_lss(forest.log_lambda[w])
             tq = delta**2 - var_lss - eta * var_pipe[w]
-            
+
             rebin = np.bincount(log_lambda_rest_bins, weights=tq)
             tq_list[:len(rebin)] += rebin
 
@@ -522,10 +522,10 @@ class XExpectedFlux(Dr16ExpectedFlux):
         var2_delta[w] /= count[w]
         var2_delta -= var_delta**2
         var2_delta[w] /= count[w]
-        
+
         tq_w = tq_count > 0
         tq_list[tq_w] /= tq_count[tq_w]
-        
+
         self.get_tq_list = interp1d(Forest.log_lambda_rest_frame_grid[tq_w],
                                     tq_list[tq_w],
                                     fill_value='extrapolate',

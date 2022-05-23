@@ -172,11 +172,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # initialize mean continuum
         self.get_mean_cont = None
         self.get_mean_cont_weight = None
-        self.__initialize_mean_continuum_arrays(self)
+        self.__initialize_mean_continuum_arrays()
 
         # initialize wavelength array for variance functions
         self.log_lambda_var_func_grid = None
-        self.__initialize_variance_wavelength_array(self)
+        self.__initialize_variance_wavelength_array()
 
         # initialize variance functions
         self.get_eta = None
