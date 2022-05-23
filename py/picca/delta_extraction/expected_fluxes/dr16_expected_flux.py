@@ -141,6 +141,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ---------
         config: configparser.SectionProxy
         Parsed options to initialize class
+
+        Raise
+        -----
+        ExpectedFluxError if Forest class variables are not set
         """
         self.logger = logging.getLogger(__name__)
         super().__init__(config)
@@ -156,39 +160,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.use_ivar_as_weight = None
         self.__parse_config(config)
 
-        # initialize variables
-        self.get_eta = None
-        self.get_fudge = None
-        self.get_mean_cont = None
-        self.get_mean_cont_weight = None
-        self.get_num_pixels = None
-        self.get_valid_fit = None
-        self.get_var_lss = None
-        self.log_lambda_var_func_grid = None
-        self._initialize_variables()
-
-        self.continuum_fit_parameters = None
-
-        self.get_stack_delta = None
-        self.get_stack_delta_weights = None
-
-    def _initialize_variables(self):
-        """Initialize useful variables
-        The initialized arrays are:
-        - self.get_eta
-        - self.get_fudge
-        - self.get_mean_cont
-        - self.get_mean_cont_weight
-        - self.get_num_pixels
-        - self.get_valid_fit
-        - self.get_var_lss
-        - self.log_lambda_var_func_grid
-
-        Raise
-        -----
-        ExpectedFluxError if Forest class variables are not set
-        """
         # check that Forest class variables are set
+        # these are required in order to initialize the arrays
         try:
             Forest.class_variable_check()
         except AstronomicalObjectError as error:
@@ -196,6 +169,34 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 "Forest class variables need to be set "
                 "before initializing variables here.") from error
 
+        # initialize mean continuum
+        self.get_mean_cont = None
+        self.get_mean_cont_weight = None
+        self.__initialize_mean_continuum_arrays(self)
+
+        # initialize wavelength array for variance functions
+        self.log_lambda_var_func_grid = None
+        self.__initialize_variance_wavelength_array(self)
+
+        # initialize variance functions
+        self.get_eta = None
+        self.get_fudge = None
+        self.get_num_pixels = None
+        self.get_valid_fit = None
+        self.get_var_lss = None
+        self.__initialize_variance_functions()
+
+        self.continuum_fit_parameters = None
+
+        self.get_stack_delta = None
+        self.get_stack_delta_weights = None
+
+    def __initialize_mean_continuum_arrays(self):
+        """Initialize mean continuum arrays
+        The initialized arrays are:
+        - self.get_mean_cont
+        - self.get_mean_cont_weight
+        """
         # initialize the mean quasar continuum
         # TODO: maybe we can drop this and compute first the mean quasar
         # continuum on compute_expected_flux
@@ -208,6 +209,12 @@ class Dr16ExpectedFlux(ExpectedFlux):
             np.zeros_like(Forest.log_lambda_rest_frame_grid),
             fill_value="extrapolate")
 
+    def __initialize_variance_wavelength_array(self):
+        """Initialize the wavelength array where variance functions will be
+        computed
+        The initialized arrays are:
+        - self.log_lambda_var_func_grid
+        """
         # initialize the variance-related variables (see equation 4 of
         # du Mas des Bourboux et al. 2020 for details on these variables)
         if Forest.wave_solution == "log":
@@ -236,6 +243,15 @@ class Dr16ExpectedFlux(ExpectedFlux):
         #self.log_lambda_var_func_grid = Forest.log_lambda_grid[::int(resize)]
         #end of commented block
 
+    def __initialize_variance_functions(self):
+        """Initialize variance functions
+        The initialized arrays are:
+        - self.get_eta
+        - self.get_fudge
+        - self.get_num_pixels
+        - self.get_valid_fit
+        - self.get_var_lss
+        """
         # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
         # print a message to inform the user
         if self.use_ivar_as_weight:

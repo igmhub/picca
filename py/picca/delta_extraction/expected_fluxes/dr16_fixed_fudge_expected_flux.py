@@ -14,118 +14,64 @@ from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
 from picca.delta_extraction.utils import find_bins
 
-fudge_fixed_value = 1e-6
-
 accepted_options = [
-    "iter out prefix", "limit eta", "limit var lss", "num bins variance",
-    "num iterations", "num processors", "order", "out dir",
-    "use constant weight", "use ivar as weight"
+    "fudge_value",
 ]
 
 defaults = {
-    "iter out prefix": "delta_attributes",
-    "limit eta": (0.5, 1.5),
-    "limit var lss": (0., 0.3),
-    "num bins variance": 20,
-    "num iterations": 5,
-    "order": 1,
-    "use constant weight": False,
-    "use ivar as weight": False,
+    "fudge_value": 0.0,
 }
 
 class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
-    def _initialize_variables(self):
-        """Initialize useful variables
-        The initialized arrays are:
-        - self.get_eta
-        - self.get_fudge
-        - self.get_mean_cont
-        - self.get_mean_cont_weight
-        - self.get_num_pixels
-        - self.get_valid_fit
-        - self.get_var_lss
-        - self.log_lambda_var_func_grid
+    """Class to the expected flux similar to Dr16ExpectedFlux but fixing the
+    fudge factor
+
+    Methods
+    -------
+    (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
+    __init__
+    __initialize_variance_functions
+    __parse_config
+    compute_var_stats
+        chi2
+
+    Attributes
+    ----------
+    (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
+
+    fudge_value: float
+    The applied fudge value
+    """
+    def __init__(self, config):
+        """Initialize class instance.
+
+        Arguments
+        ---------
+        config: configparser.SectionProxy
+        Parsed options to initialize class
 
         Raise
         -----
         ExpectedFluxError if Forest class variables are not set
         """
-        # check that Forest class variables are set
-        try:
-            Forest.class_variable_check()
-        except AstronomicalObjectError as error:
-            raise ExpectedFluxError(
-                "Forest class variables need to be set "
-                "before initializing variables here.") from error
+        # load variables from config
+        self.fudge_value = None
+        self.__parse_config(config)
 
-        # initialize the mean quasar continuum
-        # TODO: maybe we can drop this and compute first the mean quasar
-        # continuum on compute_expected_flux
-        self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
-                                      np.ones_like(
-                                          Forest.log_lambda_rest_frame_grid),
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(
-            Forest.log_lambda_rest_frame_grid,
-            np.zeros_like(Forest.log_lambda_rest_frame_grid),
-            fill_value="extrapolate")
+        super().__init__(config)
 
-        # initialize the variance-related variables (see equation 4 of
-        # du Mas des Bourboux et al. 2020 for details on these variables)
-        if Forest.wave_solution == "log":
-            self.log_lambda_var_func_grid = (
-                Forest.log_lambda_grid[0] +
-                (np.arange(self.num_bins_variance) + .5) *
-                (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
-                self.num_bins_variance)
-        # TODO: this is related with the todo in check the effect of finding
-        # the nearest bin in log_lambda space versus lambda space infunction
-        # find_bins in utils.py. Once we understand that we can remove
-        # the dependence from Forest from here too.
-        elif Forest.wave_solution == "lin":
-            self.log_lambda_var_func_grid = np.log10(
-                10**Forest.log_lambda_grid[0] +
-                (np.arange(self.num_bins_variance) + .5) *
-                (10**Forest.log_lambda_grid[-1] -
-                 10**Forest.log_lambda_grid[0]) / self.num_bins_variance)
-
-        # TODO: Replace the if/else block above by something like the commented
-        # block below. We need to check the impact of doing this on the final
-        # deltas first (eta, var_lss and fudge will be differently sampled).
-        #start of commented block
-        #resize = len(Forest.log_lambda_grid)/self.num_bins_variance
-        #print(resize)
-        #self.log_lambda_var_func_grid = Forest.log_lambda_grid[::int(resize)]
-        #end of commented block
-
-        # if use_ivar_as_weight is set, eta, var_lss and fudge will be ignored
-        # print a message to inform the user
-        if self.use_ivar_as_weight:
-            self.logger.info(("using ivar as weights, ignoring eta, "
-                              "var_lss, fudge fits"))
-            eta = np.ones(self.num_bins_variance)
-            var_lss = np.zeros(self.num_bins_variance)
-            fudge = np.ones(self.num_bins_variance)*fudge_fixed_value
-            num_pixels = np.zeros(self.num_bins_variance)
-            valid_fit = np.ones(self.num_bins_variance)
-        # if use_constant_weight is set then initialize eta, var_lss, and fudge
-        # with values to have constant weights
-        elif self.use_constant_weight:
-            self.logger.info(("using constant weights, ignoring eta, "
-                              "var_lss, fudge fits"))
-            eta = np.zeros(self.num_bins_variance)
-            var_lss = np.ones(self.num_bins_variance)
-            fudge = np.ones(self.num_bins_variance)*fudge_fixed_value
-            num_pixels = np.zeros(self.num_bins_variance)
-            valid_fit = np.ones(self.num_bins_variance, dtype=bool)
-        # normal initialization: eta, var_lss, and fudge are ignored in the
-        # first iteration
-        else:
-            eta = np.ones(self.num_bins_variance)
-            var_lss = np.zeros(self.num_bins_variance) + 0.2
-            fudge = np.ones(self.num_bins_variance)*fudge_fixed_value
-            num_pixels = np.zeros(self.num_bins_variance)
-            valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
+    def __initialize_variance_functions(self):
+        """Initialize variance functions
+        The initialized arrays are:
+        - self.get_eta
+        - self.get_num_pixels
+        - self.get_valid_fit
+        - self.get_var_lss
+        """
+        eta = np.ones(self.num_bins_variance)
+        var_lss = np.zeros(self.num_bins_variance) + 0.2
+        num_pixels = np.zeros(self.num_bins_variance)
+        valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
 
         self.get_eta = interp1d(self.log_lambda_var_func_grid,
                                 eta,
@@ -135,10 +81,6 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
                                     var_lss,
                                     fill_value='extrapolate',
                                     kind='nearest')
-        self.get_fudge = interp1d(self.log_lambda_var_func_grid,
-                                  fudge,
-                                  fill_value='extrapolate',
-                                  kind='nearest')
         self.get_num_pixels = interp1d(self.log_lambda_var_func_grid,
                                        num_pixels,
                                        fill_value="extrapolate",
@@ -147,6 +89,24 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
                                       valid_fit,
                                       fill_value="extrapolate",
                                       kind='nearest')
+
+    def __parse_config(self, config):
+        """Parse the configuration options
+
+        Arguments
+        ---------
+        config: configparser.SectionProxy
+        Parsed options to initialize class
+
+        Raises
+        ------
+        ExpectedFluxError if iter out prefix is not valid
+        """
+        self.fudge_value = config.get("fudge value")
+        if self.fudge_value is None:
+            raise ExpectedFluxError(
+                "Missing argument 'fudge value' required "
+                "by Dr16FixFudgeExpectedFlux")
 
     def compute_var_stats(self, forests):
         """Compute variance functions and statistics
@@ -167,7 +127,6 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
         # initialize arrays
         eta = np.zeros(self.num_bins_variance)
         var_lss = np.zeros(self.num_bins_variance)
-        fudge = np.zeros(self.num_bins_variance)
         error_eta = np.zeros(self.num_bins_variance)
         error_var_lss = np.zeros(self.num_bins_variance)
         num_pixels = np.zeros(self.num_bins_variance)
@@ -245,7 +204,7 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
 
         self.logger.progress(" Mean quantities in observer-frame")
         self.logger.progress(
-            " loglam    eta      var_lss  fudge    chi2     num_pix valid_fit")
+            " loglam    eta      var_lss    chi2     num_pix valid_fit")
         for index in range(self.num_bins_variance):
             # pylint: disable-msg=cell-var-from-loop
             # this function is defined differntly at each step of the loop
@@ -289,7 +248,7 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
                 chi2: float
                 The obtained chi2
                 """
-                variance = eta * var_pipe_values + var_lss + fudge_fixed_value / var_pipe_values
+                variance = eta * var_pipe_values + var_lss + self.fudge_value / var_pipe_values
                 chi2_contribution = (
                     var_delta[index * num_var_bins:(index + 1) * num_var_bins] -
                     variance)
@@ -315,14 +274,12 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
                 minimizer.hesse()
                 eta[index] = minimizer.values["eta"]
                 var_lss[index] = minimizer.values["var_lss"]
-                fudge[index] = fudge_fixed_value
                 error_eta[index] = minimizer.errors["eta"]
                 error_var_lss[index] = minimizer.errors["var_lss"]
                 valid_fit[index] = True
             else:
                 eta[index] = 1.
                 var_lss[index] = 0.1
-                fudge[index] = fudge_fixed_value
                 error_eta[index] = 0.
                 error_var_lss[index] = 0.
                 valid_fit[index] = False
@@ -332,7 +289,7 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
 
             self.logger.progress(
                 f" {self.log_lambda_var_func_grid[index]:.3e} "
-                f"{eta[index]:.2e} {var_lss[index]:.2e} {fudge[index]:.2e} " +
+                f"{eta[index]:.2e} {var_lss[index]:.2e} " +
                 f"{chi2_in_bin[index]:.2e} {num_pixels[index]:.2e} {valid_fit[index]}"
             )
 
@@ -346,10 +303,6 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
                                     var_lss[w],
                                     fill_value="extrapolate",
                                     kind="nearest")
-        self.get_fudge = interp1d(self.log_lambda_var_func_grid[w],
-                                  fudge[w],
-                                  fill_value="extrapolate",
-                                  kind="nearest")
         self.get_num_pixels = interp1d(self.log_lambda_var_func_grid[w],
                                        num_pixels[w],
                                        fill_value="extrapolate",
