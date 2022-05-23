@@ -33,7 +33,7 @@ defaults = {
     "var lss file": None,
 }
 
-class XExpectedFlux(Dr16ExpectedFlux):
+class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
     """Class to the expected flux with a variance term dependent
     on the rest frame wavelength.
 
@@ -207,32 +207,32 @@ class XExpectedFlux(Dr16ExpectedFlux):
         if self.iter_out_prefix is None:
             raise ExpectedFluxError(
                 "Missing argument 'iter out prefix' required "
-                "by XExpectedFlux")
+                "by ContinuumVarianceExpectedFlux")
         if "/" in self.iter_out_prefix:
             raise ExpectedFluxError(
-                "Error constructing XExpectedFlux. "
+                "Error constructing ContinuumVarianceExpectedFlux. "
                 "'iter out prefix' should not incude folders. "
                 f"Found: {self.iter_out_prefix}")
 
         self.num_bins_variance = config.getint("num bins variance")
         if self.num_bins_variance is None:
             raise ExpectedFluxError(
-                "Missing argument 'num bins variance' required by XExpectedFlux")
+                "Missing argument 'num bins variance' required by ContinuumVarianceExpectedFlux")
 
         self.num_iterations = config.getint("num iterations")
         if self.num_iterations is None:
             raise ExpectedFluxError(
-                "Missing argument 'num iterations' required by XExpectedFlux")
+                "Missing argument 'num iterations' required by ContinuumVarianceExpectedFlux")
 
         self.num_processors = config.getint("num processors")
         if self.num_processors is None:
             raise ExpectedFluxError(
-                "Missing argument 'num processors' required by XExpectedFlux")
+                "Missing argument 'num processors' required by ContinuumVarianceExpectedFlux")
 
         self.order = config.getint("order")
         if self.order is None:
             raise ExpectedFluxError(
-                "Missing argument 'order' required by XExpectedFlux")
+                "Missing argument 'order' required by ContinuumVarianceExpectedFlux")
 
         self.var_lss_filename = config.get("var lss file")
 

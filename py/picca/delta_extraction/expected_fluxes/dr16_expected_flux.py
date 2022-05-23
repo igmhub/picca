@@ -483,11 +483,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 if forest.continuum is None:
                     continue
                 delta = forest.flux / forest.continuum
-                var_lss = self.get_var_lss(forest.log_lambda)
-                eta = self.get_eta(forest.log_lambda)
-                fudge = self.get_fudge(forest.log_lambda)
                 var = 1. / forest.ivar / forest.continuum**2
-                variance = eta * var + var_lss + fudge / var
+                variance = self.compute_forest_variance(forest, var)
                 weights = 1. / variance
 
             bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
@@ -918,21 +915,27 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.use_constant_weight:
             weights = np.ones_like(forest.flux)
         else:
-            # pixel variance due to the Large Scale Strucure
-            var_lss = self.get_var_lss(forest.log_lambda)
-            # correction factor to the contribution of the pipeline
-            # estimate of the instrumental noise to the variance.
-            eta = self.get_eta(forest.log_lambda)
-            # fudge contribution to the variance
-            fudge = self.get_fudge(forest.log_lambda)
-
             var_pipe = 1. / forest.ivar / cont_model**2
-            ## prep_del.variance is the variance of delta
-            ## we want here the weights = ivar(flux)
-            variance = eta * var_pipe + var_lss + fudge / var_pipe
+            variance = self.compute_forest_variance(forest, var_pipe)
             weights = 1.0 / cont_model**2 / variance
 
         return weights
+
+    def compute_forest_variance(self, forest, var_pipe):
+        """Compute the forest variance following Du Mas 2020
+        
+        Arguments
+        ---------
+        forest: Forest
+        A forest instance where the variance will be computed
+
+        var_pipe: float
+        Pipeline variances that will be used to compute the full variance
+        """
+        var_lss = self.get_var_lss(forest.log_lambda)
+        eta = self.get_eta(forest.log_lambda)
+        fudge = self.get_fudge(forest.log_lambda)
+        return eta*var_pipe + var_lss + fudge / var_pipe
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
@@ -948,7 +951,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 continue
             # get the variance functions and statistics
             stack_delta = self.get_stack_delta(forest.log_lambda)
-            eta = self.get_eta(forest.log_lambda)
 
             mean_expected_flux = forest.continuum * stack_delta
             weights = self.get_continuum_weights(forest, mean_expected_flux)
@@ -964,6 +966,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 "weights": weights,
                 "continuum": forest.continuum,}
             if isinstance(forest, Pk1dForest):
+                eta = self.get_eta(forest.log_lambda)
                 ivar = forest.ivar / (eta +
                                       (eta == 0)) * (mean_expected_flux**2)
 
