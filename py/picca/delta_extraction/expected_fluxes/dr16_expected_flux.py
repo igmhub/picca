@@ -470,7 +470,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         stack_from_deltas: bool - default: False
         Flag to determine whether to stack from deltas or compute them
         """
-        # TODO: move this to _initialize_variables (after tests are done)
         stack_delta = np.zeros_like(Forest.log_lambda_grid)
         stack_weight = np.zeros_like(Forest.log_lambda_grid)
 
@@ -483,8 +482,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 if forest.continuum is None:
                     continue
                 delta = forest.flux / forest.continuum
-                var = 1. / forest.ivar / forest.continuum**2
-                variance = self.compute_forest_variance(forest, var)
+                variance = self.compute_forest_variance(forest, forest.continuum)
                 weights = 1. / variance
 
             bins = find_bins(forest.log_lambda, Forest.log_lambda_grid,
@@ -509,9 +507,25 @@ class Dr16ExpectedFlux(ExpectedFlux):
             fill_value=0.0,
             bounds_error=False)
 
+    def compute_forest_variance(self, forest, continuum):
+        """Compute the forest variance following Du Mas 2020
+
+        Arguments
+        ---------
+        forest: Forest
+        A forest instance where the variance will be computed
+
+        var_pipe: float
+        Pipeline variances that will be used to compute the full variance
+        """
+        var_pipe = 1. / forest.ivar / continuum**2
+        var_lss = self.get_var_lss(forest.log_lambda)
+        eta = self.get_eta(forest.log_lambda)
+        fudge = self.get_fudge(forest.log_lambda)
+        return eta*var_pipe + var_lss + fudge / var_pipe
+
     # TODO: We should check if we can directly compute the mean continuum
     # in particular this means:
-    # 0. check the inner todo
     # 1. check that we can use forest.continuum instead of
     #    forest.flux/forest.continuum right before `mean_cont[:len(cont)] += cont`
     # 2. check that in that case we don't need to use the new_cont
@@ -546,13 +560,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                              Forest.log_lambda_rest_frame_grid,
                              Forest.wave_solution)
 
-            weights = self.get_continuum_weights(forest, forest.continuum)
-            # this is needed as the weights from get_continuum_weights are
-            # divided by the continuum model squared, in this case forest.continuum
-            # TODO: check that we indeed need this or if the weights without it
-            # are better
-            if not self.use_constant_weight:
-                weights *= forest.continuum**2
+            weights = 1.0/self.compute_forest_variance(forest, forest.continuum)
             cont = np.bincount(bins,
                                weights=forest.flux / forest.continuum * weights)
             mean_cont[:len(cont)] += cont
@@ -915,27 +923,10 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.use_constant_weight:
             weights = np.ones_like(forest.flux)
         else:
-            var_pipe = 1. / forest.ivar / cont_model**2
-            variance = self.compute_forest_variance(forest, var_pipe)
+            variance = self.compute_forest_variance(forest, cont_model)
             weights = 1.0 / cont_model**2 / variance
 
         return weights
-
-    def compute_forest_variance(self, forest, var_pipe):
-        """Compute the forest variance following Du Mas 2020
-        
-        Arguments
-        ---------
-        forest: Forest
-        A forest instance where the variance will be computed
-
-        var_pipe: float
-        Pipeline variances that will be used to compute the full variance
-        """
-        var_lss = self.get_var_lss(forest.log_lambda)
-        eta = self.get_eta(forest.log_lambda)
-        fudge = self.get_fudge(forest.log_lambda)
-        return eta*var_pipe + var_lss + fudge / var_pipe
 
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
@@ -953,14 +944,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             stack_delta = self.get_stack_delta(forest.log_lambda)
 
             mean_expected_flux = forest.continuum * stack_delta
-            weights = self.get_continuum_weights(forest, mean_expected_flux)
-            # this is needed as the weights from get_continuum_weights are
-            # divided by the continuum model squared, in this case mean_expected_flux
-            # TODO: check that we indeed need this or if the weights without it
-            # are better
-            if not self.use_constant_weight:
-                weights *= mean_expected_flux**2
-
+            weights = 1.0/self.compute_forest_variance(forest, mean_expected_flux)
+            
             forest_info = {
                 "mean expected flux": mean_expected_flux,
                 "weights": weights,

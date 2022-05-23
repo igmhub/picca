@@ -15,23 +15,30 @@ from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
 from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
+from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (# pylint: disable=unused-import
+    accepted_options, defaults)
 from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.utils import find_bins
 
-accepted_options = ["iter out prefix", "var lss file",
-                    "num bins variance", "num iterations", "num processors",
-                    "order", "out dir"]
+accepted_options = sorted(
+    list(
+        set(accepted_options + accepted_options_quasar_catalogue +
+            ["var lss file"])))
 
-defaults = {
-    "iter out prefix": "delta_attributes",
-    "num bins variance": 20,
-    "num iterations": 5,
-    "num processors": 1,
-    "order": 1,
-    "use constant weight": False,
-    "use ivar as weight": False,
-    "var lss file": None,
-}
+def var_lss_fitting_curve(lambda_, a, b, c, d):
+    """Polynomical fitting curve for var_lss
+    comming from raw files
+
+    Arguments
+    ---------
+    lambda_: float
+    Wavelength for the fitting curve
+
+    a,b,c,d: float
+    Parameters for the polynomical curve
+
+    """
+    return a + b*lambda_ + c*lambda_**2 + d*lambda_**3
 
 class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
     """Class to the expected flux with a variance term dependent
@@ -39,109 +46,26 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
 
     Methods
     -------
-    extract_deltas (from ExpectedFlux)
-    __init__
-    _initialize_arrays
-    __parse_config
-    compute_continuum
-        get_cont_model
-        chi2
-    compute_delta_stack
-    compute_mean_cont
-    compute_expected_flux
-    compute_var_stats
-        chi2
+    (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
 
     Attributes
     ----------
-    los_ids: dict (from ExpectedFlux)
-    A dictionary to store the mean expected flux fraction, the weights, and
-    the inverse variance for each line of sight. Keys are the identifier for the
-    line of sight and values are dictionaries with the keys "mean expected flux",
-    and "weights" pointing to the respective arrays. If the given Forests are
-    also Pk1dForests, then the key "ivar" must be available. Arrays have the same
-    size as the flux array for the corresponding line of sight forest instance.
+    (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
 
-    out_dir: str (from ExpectedFlux)
-    Directory where logs will be saved.
+    self.get_tq_list: scipy.interpolate.interp1d
+    ??????
 
-    continuum_fit_parameters: dict
-    A dictionary containing the continuum fit parameters for each line of sight.
-    Keys are the identifier for the line of sight and values are tuples with
-    the best-fit zero point and slope of the linear part of the fit.
+    var_lss_filename: string or None
+    File containing the LSS variance contribution. If not passed to the constructor
+    it is set to None. In this case,
 
-    get_eta: scipy.interpolate.interp1d
-    Interpolation function to compute mapping function eta. See equation 4 of
-    du Mas des Bourboux et al. 2020 for details.
-
-    get_fudge: scipy.interpolate.interp1d
-    Interpolation function to compute mapping function fudge. See equation 4 of
-    du Mas des Bourboux et al. 2020 for details.
-
-    get_tq_list: scipy.interpolate.interp1d
-    Interpolaton function to compute mapping function tq_list. This is a term
-    in the variance of the quasar continua dependent on the rest-frame wavelength.
-
-    get_mean_cont: scipy.interpolate.interp1d
-    Interpolation function to compute the unabsorbed mean quasar continua.
-
-    get_num_pixels: scipy.interpolate.interp1d
-    Number of pixels used to fit for eta, var_lss and fudge.
-
-    get_stack_delta: scipy.interpolate.interp1d
-    Interpolation function to compute the mean delta (from stacking all lines of
-    sight).
-
-    get_valid_fit: scipy.interpolate.interp1d
-    True if the fit for eta, var_lss and fudge is converged, false otherwise.
-    Since the fit is performed independently for eah observed wavelength,
-    this is also given as a function of the observed wavelength.
-
-    get_var_lss: scipy.interpolate.interp1d
-    Interpolation function to compute mapping functions var_lss. See equation 4 of
-    du Mas des Bourboux et al. 2020 for details.
-
-    iter_out_prefix: str
-    Prefix of the iteration files. These files contain the statistical properties
-    of deltas at a given iteration step. Intermediate files will add
-    '_iteration{num}.fits.gz' to the prefix for intermediate steps and '.fits.gz'
-    for the final results.
-
-    lambda_: array of float or None
-    Wavelengths where the variance functions and statistics are
-    computed. None (and unused) for a logarithmic wavelength solution.
-
-    limit_eta: tuple of floats
-    Limits on the correction factor to the contribution of the pipeline estimate
-    of the instrumental noise to the variance.
-
-    limit_var_lss: tuple of floats
-    Limits on the pixel variance due to Large Scale Structure
-
-    log_lambda_var_func_grid: array of float
-    Logarithm of the wavelengths where the variance functions and
-    statistics are computed.
-
-    num_bins_variance: int
-    Number of bins to be used to compute variance functions and statistics as
-    a function of wavelength.
-
-    num_iterations: int
-    Number of iterations to determine the mean continuum shape, LSS variances, etc.
-
-    num_processors: int
-    Number of processors to be used to compute the mean continua. None for no
-    specified number (subprocess will take its default value).
-
-    order: int
-    Order of the polynomial for the continuum fit.
-
-    use_constant_weight: boolean
-    If "True", set all the delta weights to one (implemented as eta = 0,
-    sigma_lss = 1, fudge = 0).
-
-    use_ivar_as_weight: boolean
-    If "True", use ivar as weights (implemented as eta = 1, sigma_lss = fudge = 0).
+    Unused attributes from parent
+    -----------------------------
+    get_fudge
+    limit_eta
+    limit_var_lss
+    use_constant_weight
+    use_ivar_as_weight
     """
 
     def __init__(self, config):
@@ -157,39 +81,44 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
         ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
         """
         self.logger = logging.getLogger(__name__)
-        ExpectedFlux.__init__(self, config) # Fer servir Dr16 instead.
-        # Només declarar les variables noves
-        # esborrar el config i deixar nomes el get var lss
 
-        # load variables from config
-        self.iter_out_prefix = None
-        self.limit_eta = None
-        self.limit_var_lss = None
-        self.order = None
-        self.num_bins_variance = None
-        self.num_iterations = None
-        self.num_processors = None
-        self.use_constant_weight = False
-        self.use_ivar_as_weight = False
+        self.var_lss_filename = None
         self.__parse_config(config)
 
-        # initialize variables
-        self.get_eta = None
-        self.get_fudge = None
-        self.get_mean_cont = None
-        self.get_mean_cont_weight = None
-        self.get_num_pixels = None
-        self.get_valid_fit = None
-        self.get_var_lss = None
         self.get_tq_list = None
-        self.log_lambda_var_func_grid = None
-        self._initialize_variables()
+        super().__init__(self, config)
 
-        self.continuum_fit_parameters = None
+    def __initialize_variance_functions(self):
+        """Initialize variance functions
+        The initialized arrays are:
+        - self.get_eta
+        - self.get_tq_list
+        - self.get_num_pixels
+        - self.get_valid_fit
+        - self.get_var_lss
+        """
+        eta = np.ones(self.num_bins_variance)
+        tq_list = np.zeros_like(Forest.log_lambda_rest_frame_grid)
+        num_pixels = np.zeros(self.num_bins_variance)
+        valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
 
-        self.get_stack_delta = None
-        self.get_stack_delta_weights = None
-        self.var_lss_filename = None
+        self.get_eta = interp1d(self.log_lambda_var_func_grid,
+                                eta,
+                                fill_value='extrapolate',
+                                kind='nearest')
+        self.read_var_lss()
+        self.get_tq_list = interp1d(Forest.log_lambda_rest_frame_grid,
+                                       tq_list,
+                                       fill_value='extrapolate',
+                                       kind='nearest')
+        self.get_num_pixels = interp1d(self.log_lambda_var_func_grid,
+                                       num_pixels,
+                                       fill_value="extrapolate",
+                                       kind='nearest')
+        self.get_valid_fit = interp1d(self.log_lambda_var_func_grid,
+                                      num_pixels,
+                                      fill_value="extrapolate",
+                                      kind='nearest')
 
     def __parse_config(self, config):
         """Parse the configuration options
@@ -203,37 +132,6 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
         ------
         ExpectedFluxError if iter out prefix is not valid
         """
-        self.iter_out_prefix = config.get("iter out prefix")
-        if self.iter_out_prefix is None:
-            raise ExpectedFluxError(
-                "Missing argument 'iter out prefix' required "
-                "by ContinuumVarianceExpectedFlux")
-        if "/" in self.iter_out_prefix:
-            raise ExpectedFluxError(
-                "Error constructing ContinuumVarianceExpectedFlux. "
-                "'iter out prefix' should not incude folders. "
-                f"Found: {self.iter_out_prefix}")
-
-        self.num_bins_variance = config.getint("num bins variance")
-        if self.num_bins_variance is None:
-            raise ExpectedFluxError(
-                "Missing argument 'num bins variance' required by ContinuumVarianceExpectedFlux")
-
-        self.num_iterations = config.getint("num iterations")
-        if self.num_iterations is None:
-            raise ExpectedFluxError(
-                "Missing argument 'num iterations' required by ContinuumVarianceExpectedFlux")
-
-        self.num_processors = config.getint("num processors")
-        if self.num_processors is None:
-            raise ExpectedFluxError(
-                "Missing argument 'num processors' required by ContinuumVarianceExpectedFlux")
-
-        self.order = config.getint("order")
-        if self.order is None:
-            raise ExpectedFluxError(
-                "Missing argument 'order' required by ContinuumVarianceExpectedFlux")
-
         self.var_lss_filename = config.get("var lss file")
 
     def compute_expected_flux(self, forests):
@@ -266,95 +164,15 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
 
-    def _initialize_variables(self):
-        """Initialize useful variables
-        The initialized arrays are:
-        - self.get_eta
-        - self.get_fudge
-        - self.get_mean_cont
-        - self.get_num_pixels
-        - self.get_valid_fit
-        - self.get_var_lss
-        - self.log_lambda_var_func_grid
-        """
-        # check that Forest variables are set
-        try:
-            Forest.class_variable_check()
-        except AstronomicalObjectError:
-            raise ExpectedFluxError("Forest class variables need to be set "
-                                    "before initializing variables here." )
-
-        # initialize the mean quasar continuum
-        # TODO: maybe we can drop this and compute first the mean quasar
-        # continuum on compute_expected_flux
-        self.get_mean_cont = interp1d(Forest.log_lambda_rest_frame_grid,
-                                      np.ones_like(Forest.log_lambda_rest_frame_grid),
-                                      fill_value="extrapolate")
-        self.get_mean_cont_weight = interp1d(Forest.log_lambda_rest_frame_grid,
-                                             np.zeros_like(
-                                                 Forest.log_lambda_rest_frame_grid),
-                                             fill_value="extrapolate")
-
-
-        # initialize the variance-related variables (see equation 4 of
-        # du Mas des Bourboux et al. 2020 for details on these variables)
-        self.log_lambda_var_func_grid = (
-            Forest.log_lambda_grid[0] + (np.arange(self.num_bins_variance) + .5) *
-            (Forest.log_lambda_grid[-1] - Forest.log_lambda_grid[0]) /
-            self.num_bins_variance)
-
-        eta = np.ones(self.num_bins_variance)
-        fudge = np.zeros(self.num_bins_variance)
-        tq_list = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-        num_pixels = np.zeros(self.num_bins_variance)
-        valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
-
-        self.get_eta = interp1d(self.log_lambda_var_func_grid,
-                                eta,
-                                fill_value='extrapolate',
-                                kind='nearest')
-        self.read_var_lss()
-        self.get_tq_list = interp1d(Forest.log_lambda_rest_frame_grid,
-                                       tq_list,
-                                       fill_value='extrapolate',
-                                       kind='nearest')
-        self.get_fudge = interp1d(self.log_lambda_var_func_grid,
-                                  fudge,
-                                  fill_value='extrapolate',
-                                  kind='nearest')
-        self.get_num_pixels = interp1d(self.log_lambda_var_func_grid,
-                                       num_pixels,
-                                       fill_value="extrapolate",
-                                       kind='nearest')
-        self.get_valid_fit = interp1d(self.log_lambda_var_func_grid,
-                                      num_pixels,
-                                      fill_value="extrapolate",
-                                      kind='nearest')
-
     def read_var_lss(self):
         """Read var lss from mocks. We should upgrade this into computing var_lss from Pk1d."""
         log_lambda, var_lss = np.loadtxt("/global/project/projectdirs/desi/users/cramirez/Continuum_fitting/compute_var_lss/sigma_lss_val.txt")
 
-        def var_lss_fitting_curve(lambda_, a, b, c, d):
-            """Polynomical fitting curve for var_lss
-            comming from raw files
-
-            Arguments
-            ---------
-            lambda_: float
-            Wavelength for the fitting curve
-
-            a,b,c,d: float
-            Parameters for the polynomical curve
-
-            """
-            return a + b*lambda_ + c*lambda_**2 + d*lambda_**3
-
-        msk = ~np.isnan(var_lss) & ~np.isnan(log_lambda)
+        mask = ~np.isnan(var_lss) & ~np.isnan(log_lambda)
         popt, pcov = curve_fit(
             var_lss_fitting_curve,
-            10**log_lambda[msk],
-            var_lss[msk]
+            10**log_lambda[mask],
+            var_lss[mask]
         )
 
         self.get_var_lss = interp1d(log_lambda,
@@ -364,7 +182,7 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
 
         return
 
-        if self.var_lss_filename != "":
+        if self.var_lss_filename is not None:
             filename = self.var_lss_filename
         else:
             filename = resource_filename('picca', 'delta_extraction') + '/expected_fluxes/raw_stats/'
@@ -407,26 +225,11 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
 
         var_lss = flux_variance/mean_flux**2
 
-        def var_lss_fitting_curve(lambda_, a, b, c, d):
-            """Polynomical fitting curve for var_lss
-            comming from raw files
-
-            Arguments
-            ---------
-            lambda_: float
-            Wavelength for the fitting curve
-
-            a,b,c,d: float
-            Parameters for the polynomical curve
-
-            """
-            return a + b*lambda_ + c*lambda_**2 + d*lambda_**3
-
-        msk = ~np.isnan(var_lss) & ~np.isnan(lambda_)
+        mask = ~np.isnan(var_lss) & ~np.isnan(lambda_)
         popt, pcov = curve_fit(
             var_lss_fitting_curve,
-            lambda_[msk],
-            var_lss[msk]
+            lambda_[mask],
+            var_lss[mask]
         )
 
         self.get_var_lss = interp1d(np.log10(lambda_),
@@ -531,7 +334,18 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
                                     fill_value='extrapolate',
                                     kind='nearest')
 
-    def compute_forest_variance(self, forest, var_pipe):
+    def compute_forest_variance(self, forest, continuum):
+        """Compute the forest variance following Du Mas 2020
+
+        Arguments
+        ---------
+        forest: Forest
+        A forest instance where the variance will be computed
+
+        var_pipe: float
+        Pipeline variances that will be used to compute the full variance
+        """
+        var_pipe = 1. / forest.ivar / continuum**2
         var_lss = self.get_var_lss(forest.log_lambda)
         eta = self.get_eta(forest.log_lambda)
         sigma_c = self.get_tq_list(forest.log_lambda - np.log10( 1 + forest.z ))
@@ -575,13 +389,12 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
                 self.log_lambda_var_func_grid,
                 self.get_eta(self.log_lambda_var_func_grid),
                 self.get_var_lss(self.log_lambda_var_func_grid),
-                self.get_fudge(self.log_lambda_var_func_grid),
                 self.get_num_pixels(self.log_lambda_var_func_grid),
                 self.get_valid_fit(self.log_lambda_var_func_grid)
             ],
-                          names=['loglam', 'eta', 'var_lss', 'fudge',
+                          names=['loglam', 'eta', 'var_lss',
                                  'num_pixels', 'valid_fit'],
-                          extname='VAR_FUNC')
+                          extname='VAR_FUNC_OBS_FRAME')
 
             results.write([
                 Forest.log_lambda_rest_frame_grid,
@@ -590,4 +403,4 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
                 self.get_tq_list(Forest.log_lambda_rest_frame_grid),
             ],
                           names=['loglam_rest', 'mean_cont', 'weight', 'cont_var'],
-                          extname='CONT')
+                          extname='VAR_FUNC_REST_FRAME')
