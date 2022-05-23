@@ -278,8 +278,16 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
         objs_thingid = hdul[1]['TARGETID'][:]
     elif 'THING_ID' in key_val:
         objs_thingid = hdul[1]['THING_ID'][:]
-    w = hdul[1]['Z'][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
-    w &= hdul[1]['Z'][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
+    elif 'MOCKID' in key_val:
+        objs_thingid = hdul[1]['MOCKID'][:]
+    try:
+        w = hdul[1]['Z'][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
+        w &= hdul[1]['Z'][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
+    except ValueError:
+        w = hdul[1]['Z_QSO_RSD'][:] > max(0., lambda_min / lambda_max_rest_frame - 1.)
+        w &= hdul[1]['Z_QSO_RSD'][:] < max(0., lambda_max / lambda_min_rest_frame - 1.)
+
+
     objs_ra = hdul[1]['RA'][:][w].astype('float64') * np.pi / 180.
     objs_dec = hdul[1]['DEC'][:][w].astype('float64') * np.pi / 180.
     objs_thingid = objs_thingid[w]
