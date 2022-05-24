@@ -17,6 +17,7 @@ defaults.update({
     "eta value": 1.0,
 })
 
+
 class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
     """Class to the expected flux similar to Dr16ExpectedFlux but fixing eta
 
@@ -35,6 +36,7 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
     If a string, name of the file containing the eta values as a function of
     wavelength. If a float the eta value will be applied to all wavelengths
     """
+
     def __init__(self, config):
         """Initialize class instance.
 
@@ -54,12 +56,13 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
     def _initialize_get_eta(self):
         """Initialiaze function get_fudge"""
         # initialize fudge factor
-        if self.eta_value.endswith(".fits") or self.eta_value.endswith(".fits.gz"):
+        if self.eta_value.endswith(".fits") or self.eta_value.endswith(
+                ".fits.gz"):
             hdu = fitsio.read(self.eta_value, ext="VAR_FUNC")
             self.get_eta = interp1d(hdu["loglam"],
-                                      hdu["eta"],
-                                      fill_value='extrapolate',
-                                      kind='nearest')
+                                    hdu["eta"],
+                                    fill_value='extrapolate',
+                                    kind='nearest')
         else:
             eta = np.ones(self.num_bins_variance) * float(self.eta_value)
             self.get_eta = interp1d(self.log_lambda_var_func_grid,

@@ -17,6 +17,7 @@ defaults.update({
     "fudge value": 0.0,
 })
 
+
 class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
     """Class to the expected flux similar to Dr16ExpectedFlux but fixing the
     fudge factor
@@ -56,7 +57,8 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
     def _initialize_get_fudge(self):
         """Initialiaze function get_fudge"""
         # initialize fudge factor
-        if self.fudge_value.endswith(".fits") or self.fudge_value.endswith(".fits.gz"):
+        if self.fudge_value.endswith(".fits") or self.fudge_value.endswith(
+                ".fits.gz"):
             hdu = fitsio.read(self.fudge_value, ext="VAR_FUNC")
             self.get_fudge = interp1d(hdu["loglam"],
                                       hdu["fudge"],

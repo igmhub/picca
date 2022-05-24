@@ -2,7 +2,6 @@
 import logging
 import multiprocessing
 
-import fitsio
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -13,7 +12,6 @@ from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (  # pylin
 from picca.delta_extraction.utils import find_bins
 
 accepted_options = sorted(list(set(accepted_options + ["var lss file"])))
-
 
 VAR_PIPE_MIN = np.log10(1e-5)
 VAR_PIPE_MAX = np.log10(2.)
@@ -150,10 +148,8 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
 
         mask = ~np.isnan(var_lss) & ~np.isnan(log_lambda)
 
-        var_lss_poly3 = np.poly1d(np.polyfit(
-            10**log_lambda[mask],
-            var_lss[mask],
-            3))
+        var_lss_poly3 = np.poly1d(
+            np.polyfit(10**log_lambda[mask], var_lss[mask], 3))
         self.get_var_lss = interp1d(log_lambda,
                                     var_lss_poly3(10**log_lambda),
                                     fill_value='extrapolate',
@@ -269,57 +265,38 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
 
         return eta * var_pipe + var_lss + sigma_c
 
-    def save_iteration_step(self, iteration):
-        """Save the statistical properties of deltas at a given iteration
-        step
+    def hdu_cont(self, results):
+        """Add to the results file an HDU with the continuum information
 
         Arguments
         ---------
-        iteration: int
-        Iteration number. -1 for final iteration
-
-        Raise
-        -----
-        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
+        results: fitsio.FITS
+        The open fits file
         """
-        if iteration == -1:
-            iter_out_file = self.iter_out_prefix + ".fits.gz"
-        else:
-            iter_out_file = self.iter_out_prefix + f"_iteration{iteration+1}.fits.gz"
+        results.write([
+            Forest.log_lambda_rest_frame_grid,
+            self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
+            self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
+            self.get_tq_list(Forest.log_lambda_rest_frame_grid),
+        ],
+                      names=['loglam_rest', 'mean_cont', 'weight', 'cont_var'],
+                      extname='CONT')
 
-        with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
-                         clobber=True) as results:
-            header = {}
-            header["FITORDER"] = self.order
+    def hdu_var_func(self, results):
+        """Add to the results file an HDU with the variance functions
 
-            # TODO: update this once the TODO in compute continua is fixed
-            results.write([
-                Forest.log_lambda_grid,
-                self.get_stack_delta(Forest.log_lambda_grid),
-                self.get_stack_delta_weights(Forest.log_lambda_grid)
+        Arguments
+        ---------
+        results: fitsio.FITS
+        The open fits file
+        """
+        results.write(
+            [
+                self.log_lambda_var_func_grid,
+                self.get_eta(self.log_lambda_var_func_grid),
+                self.get_var_lss(self.log_lambda_var_func_grid),
+                self.get_num_pixels(self.log_lambda_var_func_grid),
+                self.get_valid_fit(self.log_lambda_var_func_grid)
             ],
-                          names=['loglam', 'stack', 'weight'],
-                          header=header,
-                          extname='STACK_DELTAS')
-
-            results.write(
-                [
-                    self.log_lambda_var_func_grid,
-                    self.get_eta(self.log_lambda_var_func_grid),
-                    self.get_var_lss(self.log_lambda_var_func_grid),
-                    self.get_num_pixels(self.log_lambda_var_func_grid),
-                    self.get_valid_fit(self.log_lambda_var_func_grid)
-                ],
-                names=['loglam', 'eta', 'var_lss', 'num_pixels', 'valid_fit'],
-                extname='VAR_FUNC_OBS_FRAME')
-
-            results.write([
-                Forest.log_lambda_rest_frame_grid,
-                self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
-                self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
-                self.get_tq_list(Forest.log_lambda_rest_frame_grid),
-            ],
-                          names=[
-                              'loglam_rest', 'mean_cont', 'weight', 'cont_var'
-                          ],
-                          extname='VAR_FUNC_REST_FRAME')
+            names=['loglam', 'eta', 'var_lss', 'num_pixels', 'valid_fit'],
+            extname='VAR_FUNC')

@@ -33,6 +33,7 @@ defaults = {
     "use ivar as weight": False,
 }
 
+
 class Dr16ExpectedFlux(ExpectedFlux):
     """Class to the expected flux as done in the DR16 SDSS analysys
     The mean expected flux is calculated iteratively as explained in
@@ -712,7 +713,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                        name=("eta", "var_lss", "fudge"),
                                        eta=eta[index],
                                        var_lss=var_lss[index],
-                                       fudge=fudge[index]/FUDGE_REF)
+                                       fudge=fudge[index] / FUDGE_REF)
             minimizer.errors["eta"] = 0.05
             minimizer.limits["eta"] = self.limit_eta
             minimizer.errors["var_lss"] = 0.05
@@ -722,10 +723,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
             minimizer.errordef = 1.
             minimizer.print_level = 0
             minimizer.fixed["eta"] = "eta" not in self.fit_variance_functions
-            minimizer.fixed["var_lss"] = "var_lss" not in self.fit_variance_functions
-            minimizer.fixed["fudge"] = "fudge" not in self.fit_variance_functions
+            minimizer.fixed[
+                "var_lss"] = "var_lss" not in self.fit_variance_functions
+            minimizer.fixed[
+                "fudge"] = "fudge" not in self.fit_variance_functions
             minimizer.migrad()
-
 
             if minimizer.valid:
                 minimizer.hesse()
@@ -848,6 +850,64 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         return weights
 
+    def hdu_cont(self, results):
+        """Add to the results file an HDU with the continuum information
+
+        Arguments
+        ---------
+        results: fitsio.FITS
+        The open fits file
+        """
+        results.write([
+            Forest.log_lambda_rest_frame_grid,
+            self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
+            self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
+        ],
+                      names=['loglam_rest', 'mean_cont', 'weight'],
+                      extname='CONT')
+
+    def hdu_stack_deltas(self, results):
+        """Add to the results file an HDU with the delta stack
+
+        Arguments
+        ---------
+        results: fitsio.FITS
+        The open fits file
+        """
+        header = {}
+        header["FITORDER"] = self.order
+
+        results.write([
+            Forest.log_lambda_grid,
+            self.get_stack_delta(Forest.log_lambda_grid),
+            self.get_stack_delta_weights(Forest.log_lambda_grid)
+        ],
+                      names=['loglam', 'stack', 'weight'],
+                      header=header,
+                      extname='STACK_DELTAS')
+
+    def hdu_var_func(self, results):
+        """Add to the results file an HDU with the variance functions
+
+        Arguments
+        ---------
+        results: fitsio.FITS
+        The open fits file
+        """
+        results.write([
+            self.log_lambda_var_func_grid,
+            self.get_eta(self.log_lambda_var_func_grid),
+            self.get_var_lss(self.log_lambda_var_func_grid),
+            self.get_fudge(self.log_lambda_var_func_grid),
+            self.get_num_pixels(self.log_lambda_var_func_grid),
+            self.get_valid_fit(self.log_lambda_var_func_grid)
+        ],
+                      names=[
+                          'loglam', 'eta', 'var_lss', 'fudge', 'num_pixels',
+                          'valid_fit'
+                      ],
+                      extname='VAR_FUNC')
+
     def populate_los_ids(self, forests):
         """Populate the dictionary los_ids with the mean expected flux, weights,
         and inverse variance arrays for each line-of-sight.
@@ -896,36 +956,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
         with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
                          clobber=True) as results:
-            header = {}
-            header["FITORDER"] = self.order
-
-            results.write([
-                Forest.log_lambda_grid,
-                self.get_stack_delta(Forest.log_lambda_grid),
-                self.get_stack_delta_weights(Forest.log_lambda_grid)
-            ],
-                          names=['loglam', 'stack', 'weight'],
-                          header=header,
-                          extname='STACK_DELTAS')
-
-            results.write([
-                self.log_lambda_var_func_grid,
-                self.get_eta(self.log_lambda_var_func_grid),
-                self.get_var_lss(self.log_lambda_var_func_grid),
-                self.get_fudge(self.log_lambda_var_func_grid),
-                self.get_num_pixels(self.log_lambda_var_func_grid),
-                self.get_valid_fit(self.log_lambda_var_func_grid)
-            ],
-                          names=[
-                              'loglam', 'eta', 'var_lss', 'fudge', 'num_pixels',
-                              'valid_fit'
-                          ],
-                          extname='VAR_FUNC')
-
-            results.write([
-                Forest.log_lambda_rest_frame_grid,
-                self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
-                self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
-            ],
-                          names=['loglam_rest', 'mean_cont', 'weight'],
-                          extname='CONT')
+            self.hdu_stack_deltas(results)
+            self.hdu_var_func(results)
+            self.hdu_cont(results)
