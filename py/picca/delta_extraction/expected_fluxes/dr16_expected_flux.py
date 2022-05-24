@@ -33,8 +33,6 @@ defaults = {
     "use ivar as weight": False,
 }
 
-FIT_VARIANCE_FUNCTIONS = ["eta", "var_lss", "fudge"]
-
 class Dr16ExpectedFlux(ExpectedFlux):
     """Class to the expected flux as done in the DR16 SDSS analysys
     The mean expected flux is calculated iteratively as explained in
@@ -188,13 +186,60 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_num_pixels = None
         self.get_valid_fit = None
         self.get_var_lss = None
-        self.fit_variance_functions = None
+        self.fit_variance_functions = []
         self._initialize_variance_functions()
 
         self.continuum_fit_parameters = None
 
         self.get_stack_delta = None
         self.get_stack_delta_weights = None
+
+    def _initialize_get_eta(self):
+        """Initialiaze function get_eta"""
+        # if use_ivar_as_weight is set, we fix eta=1, var_lss=0 and fudge=0
+        if self.use_ivar_as_weight:
+            eta = np.ones(self.num_bins_variance)
+        # if use_constant_weight is set, we fix eta=0, var_lss=1, and fudge=0
+        elif self.use_constant_weight:
+            eta = np.zeros(self.num_bins_variance)
+        # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
+        else:
+            eta = np.ones(self.num_bins_variance)
+            self.fit_variance_functions.append("eta")
+        self.get_eta = interp1d(self.log_lambda_var_func_grid,
+                                eta,
+                                fill_value='extrapolate',
+                                kind='nearest')
+
+    def _initialize_get_var_lss(self):
+        """Initialiaze function get_var_lss"""
+        # if use_ivar_as_weight is set, we fix eta=1, var_lss=0 and fudge=0
+        if self.use_ivar_as_weight:
+            var_lss = np.zeros(self.num_bins_variance)
+        # if use_constant_weight is set, we fix eta=0, var_lss=1, and fudge=0
+        elif self.use_constant_weight:
+            var_lss = np.ones(self.num_bins_variance)
+        # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
+        else:
+            var_lss = np.zeros(self.num_bins_variance) + 0.2
+            self.fit_variance_functions.append("var_lss")
+        self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
+                                    var_lss,
+                                    fill_value='extrapolate',
+                                    kind='nearest')
+
+    def _initialize_get_fudge(self):
+        """Initialiaze function get_fudge"""
+        # if use_ivar_as_weight is set, we fix eta=1, var_lss=0 and fudge=0
+        # if use_constant_weight is set, we fix eta=0, var_lss=1, and fudge=0
+        # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
+        if not self.use_ivar_as_weight and not self.use_constant_weight:
+            self.fit_variance_functions.append("fudge")
+        fudge = np.zeros(self.num_bins_variance)
+        self.get_fudge = interp1d(self.log_lambda_var_func_grid,
+                                  fudge,
+                                  fill_value='extrapolate',
+                                  kind='nearest')
 
     def _initialize_mean_continuum_arrays(self):
         """Initialize mean continuum arrays
@@ -262,45 +307,23 @@ class Dr16ExpectedFlux(ExpectedFlux):
         if self.use_ivar_as_weight:
             self.logger.info(("using ivar as weights, ignoring eta, "
                               "var_lss, fudge fits"))
-            eta = np.ones(self.num_bins_variance)
-            var_lss = np.zeros(self.num_bins_variance)
-            fudge = np.zeros(self.num_bins_variance)
-            num_pixels = np.zeros(self.num_bins_variance)
-            valid_fit = np.ones(self.num_bins_variance)
-            self.fit_variance_functions = []
+            valid_fit = np.ones(self.num_bins_variance, dtype=bool)
         # if use_constant_weight is set then initialize eta, var_lss, and fudge
         # with values to have constant weights
         elif self.use_constant_weight:
             self.logger.info(("using constant weights, ignoring eta, "
                               "var_lss, fudge fits"))
-            eta = np.zeros(self.num_bins_variance)
-            var_lss = np.ones(self.num_bins_variance)
-            fudge = np.zeros(self.num_bins_variance)
-            num_pixels = np.zeros(self.num_bins_variance)
             valid_fit = np.ones(self.num_bins_variance, dtype=bool)
-            self.fit_variance_functions = []
         # normal initialization: eta, var_lss, and fudge are ignored in the
         # first iteration
         else:
-            eta = np.ones(self.num_bins_variance)
-            var_lss = np.zeros(self.num_bins_variance) + 0.2
-            fudge = np.zeros(self.num_bins_variance)
-            num_pixels = np.zeros(self.num_bins_variance)
             valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
-            self.fit_variance_functions = FIT_VARIANCE_FUNCTIONS
+            self.fit_variance_functions = ["var_lss"]
+        num_pixels = np.zeros(self.num_bins_variance)
 
-        self.get_eta = interp1d(self.log_lambda_var_func_grid,
-                                eta,
-                                fill_value='extrapolate',
-                                kind='nearest')
-        self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
-                                    var_lss,
-                                    fill_value='extrapolate',
-                                    kind='nearest')
-        self.get_fudge = interp1d(self.log_lambda_var_func_grid,
-                                  fudge,
-                                  fill_value='extrapolate',
-                                  kind='nearest')
+        self._initialize_get_eta()
+        self._initialize_get_var_lss()
+        self._initialize_get_fudge()
         self.get_num_pixels = interp1d(self.log_lambda_var_func_grid,
                                        num_pixels,
                                        fill_value="extrapolate",

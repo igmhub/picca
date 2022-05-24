@@ -7,16 +7,15 @@ from scipy.interpolate import interp1d
 
 from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
+from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
+    defaults, accepted_options)
 
-accepted_options = [
-    "fudge_value",
-]
+accepted_options = sorted(list(set(accepted_options + ["fudge value"])))
 
-defaults = {
-    "fudge_value": 0.0,
-}
-
-FIT_VARIANCE_FUNCTIONS = ["eta", "var_lss"]
+defaults = defaults.copy()
+defaults.update({
+    "fudge value": 0.0,
+})
 
 class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
     """Class to the expected flux similar to Dr16ExpectedFlux but fixing the
@@ -26,25 +25,16 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
     -------
     (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
     __init__
-    __initialize_variance_functions
+    _initialize_get_fudge
     __parse_config
-    compute_var_stats
-        chi2
 
     Attributes
     ----------
     (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
 
-    fudge_value: float
-    The applied fudge value
-
-    Unused attributes from parent
-    -----------------------------
-    get_fudge
-    limit_eta
-    limit_var_lss
-    use_constant_weight
-    use_ivar_as_weight
+    fudge_value: float or string
+    If a string, name of the file containing the fudge values as a function of
+    wavelength. If a float the fudge value will be applied to all wavelengths
     """
 
     def __init__(self, config):
@@ -63,38 +53,8 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
 
         super().__init__(config)
 
-    def _initialize_variance_functions(self):
-        """Initialize variance functions
-        The initialized arrays are:
-        - self.get_eta
-        - self.get_fudge
-        - self.get_num_pixels
-        - self.get_valid_fit
-        - self.get_var_lss
-        """
-        eta = np.ones(self.num_bins_variance)
-        var_lss = np.zeros(self.num_bins_variance) + 0.2
-        num_pixels = np.zeros(self.num_bins_variance)
-        valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
-        self.fit_variance_functions = FIT_VARIANCE_FUNCTIONS
-
-        self.get_eta = interp1d(self.log_lambda_var_func_grid,
-                                eta,
-                                fill_value='extrapolate',
-                                kind='nearest')
-        self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
-                                    var_lss,
-                                    fill_value='extrapolate',
-                                    kind='nearest')
-        self.get_num_pixels = interp1d(self.log_lambda_var_func_grid,
-                                       num_pixels,
-                                       fill_value="extrapolate",
-                                       kind='nearest')
-        self.get_valid_fit = interp1d(self.log_lambda_var_func_grid,
-                                      valid_fit,
-                                      fill_value="extrapolate",
-                                      kind='nearest')
-
+    def _initialize_get_fudge(self):
+        """Initialiaze function get_fudge"""
         # initialize fudge factor
         if self.fudge_value.endswith(".fits") or self.fudge_value.endswith(".fits.gz"):
             hdu = fitsio.read(self.fudge_value, ext="VAR_FUNC")
@@ -132,4 +92,4 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
             except ValueError as error:
                 raise ExpectedFluxError(
                     "Wrong argument 'fudge value'. Expected a fits file or "
-                    "a float. Found {self.fudge}") from error
+                    f"a float. Found {self.fudge_value}") from error
