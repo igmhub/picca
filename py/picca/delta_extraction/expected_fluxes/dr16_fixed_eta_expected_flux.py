@@ -34,7 +34,7 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
 
     eta_value: float or string
     If a string, name of the file containing the eta values as a function of
-    wavelength. If a float the eta value will be applied to all wavelengths
+    wavelength. If a float, the eta value will be applied to all wavelengths
     """
 
     def __init__(self, config):

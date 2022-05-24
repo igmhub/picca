@@ -35,7 +35,7 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
 
     fudge_value: float or string
     If a string, name of the file containing the fudge values as a function of
-    wavelength. If a float the fudge value will be applied to all wavelengths
+    wavelength. If a float, the fudge value will be applied to all wavelengths
     """
 
     def __init__(self, config):
