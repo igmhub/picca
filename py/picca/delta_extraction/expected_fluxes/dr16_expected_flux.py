@@ -43,16 +43,24 @@ class Dr16ExpectedFlux(ExpectedFlux):
     -------
     (see ExpectedFlux in py/picca/delta_extraction/expected_flux.py)
     __init__
-    _initialize_variables
+    _initialize_get_eta
+    _initialize_get_fudge
+    _initialize_get_var_lss
+    _initialize_mean_continuum_arrays
+    _initialize_variance_wavelength_array
+    _initialize_variance_functions
     __parse_config
     compute_continuum
     compute_delta_stack
+    compute_forest_variance
     compute_mean_cont
     compute_expected_flux
     compute_var_stats
-        chi2
     get_continuum_model
     get_continuum_weights
+    hdu_cont
+    hdu_stack_deltas
+    hdu_var_func
     populate_los_ids
     save_iteration_step
 
@@ -212,6 +220,19 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                 fill_value='extrapolate',
                                 kind='nearest')
 
+    def _initialize_get_fudge(self):
+        """Initialiaze function get_fudge"""
+        # if use_ivar_as_weight is set, we fix eta=1, var_lss=0 and fudge=0
+        # if use_constant_weight is set, we fix eta=0, var_lss=1, and fudge=0
+        # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
+        if not self.use_ivar_as_weight and not self.use_constant_weight:
+            self.fit_variance_functions.append("fudge")
+        fudge = np.zeros(self.num_bins_variance)
+        self.get_fudge = interp1d(self.log_lambda_var_func_grid,
+                                  fudge,
+                                  fill_value='extrapolate',
+                                  kind='nearest')
+
     def _initialize_get_var_lss(self):
         """Initialiaze function get_var_lss"""
         # if use_ivar_as_weight is set, we fix eta=1, var_lss=0 and fudge=0
@@ -228,19 +249,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
                                     var_lss,
                                     fill_value='extrapolate',
                                     kind='nearest')
-
-    def _initialize_get_fudge(self):
-        """Initialiaze function get_fudge"""
-        # if use_ivar_as_weight is set, we fix eta=1, var_lss=0 and fudge=0
-        # if use_constant_weight is set, we fix eta=0, var_lss=1, and fudge=0
-        # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
-        if not self.use_ivar_as_weight and not self.use_constant_weight:
-            self.fit_variance_functions.append("fudge")
-        fudge = np.zeros(self.num_bins_variance)
-        self.get_fudge = interp1d(self.log_lambda_var_func_grid,
-                                  fudge,
-                                  fill_value='extrapolate',
-                                  kind='nearest')
 
     def _initialize_mean_continuum_arrays(self):
         """Initialize mean continuum arrays

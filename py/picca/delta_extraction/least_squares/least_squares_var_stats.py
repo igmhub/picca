@@ -27,10 +27,6 @@ class LeastsSquaresVarStats:
 
     Attributes
     ----------
-    fudge_ref: float
-    Auxiliar reference factor so that fits for the fudge values in the fit are
-    larger.
-
     log_lambda_var_func_grid: array of float
     Wavelength array where variance functions will be computed.
 

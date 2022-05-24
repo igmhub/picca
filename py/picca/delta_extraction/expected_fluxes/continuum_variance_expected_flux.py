@@ -24,6 +24,15 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
     Methods
     -------
     (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
+    __init__
+    _initialize_variance_functions
+    __parse_config
+    compute_expected_flux
+    compute_forest_variance
+    compute_var_stats
+    hdu_cont
+    hdu_var_func
+    read_var_lss
 
     Attributes
     ----------
@@ -32,17 +41,8 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
     self.get_tq_list: scipy.interpolate.interp1d
     ??????
 
-    var_lss_filename: string or None
-    File containing the LSS variance contribution. If not passed to the constructor
-    it is set to None. In this case,
-
-    Unused attributes from parent
-    -----------------------------
-    get_fudge
-    limit_eta
-    limit_var_lss
-    use_constant_weight
-    use_ivar_as_weight
+    var_lss_filename: string
+    Name of the file containing the LSS variance contribution.
     """
 
     def __init__(self, config):
@@ -141,19 +141,23 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
 
-    def read_var_lss(self):
-        """Read var lss from mocks. We should upgrade this into computing
-        var_lss from Pk1d."""
-        log_lambda, var_lss = np.loadtxt(self.var_lss_filename)
+    def compute_forest_variance(self, forest, continuum):
+        """Compute the forest variance following Du Mas 2020
 
-        mask = ~np.isnan(var_lss) & ~np.isnan(log_lambda)
+        Arguments
+        ---------
+        forest: Forest
+        A forest instance where the variance will be computed
 
-        var_lss_poly3 = np.poly1d(
-            np.polyfit(10**log_lambda[mask], var_lss[mask], 3))
-        self.get_var_lss = interp1d(log_lambda,
-                                    var_lss_poly3(10**log_lambda),
-                                    fill_value='extrapolate',
-                                    kind='nearest')
+        var_pipe: float
+        Pipeline variances that will be used to compute the full variance
+        """
+        var_pipe = 1. / forest.ivar / continuum**2
+        var_lss = self.get_var_lss(forest.log_lambda)
+        eta = self.get_eta(forest.log_lambda)
+        sigma_c = self.get_tq_list(forest.log_lambda - np.log10(1 + forest.z))
+
+        return eta * var_pipe + var_lss + sigma_c
 
     def compute_var_stats(self, forests):
         """Compute variance functions and statistics
@@ -247,24 +251,6 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
                                     fill_value='extrapolate',
                                     kind='nearest')
 
-    def compute_forest_variance(self, forest, continuum):
-        """Compute the forest variance following Du Mas 2020
-
-        Arguments
-        ---------
-        forest: Forest
-        A forest instance where the variance will be computed
-
-        var_pipe: float
-        Pipeline variances that will be used to compute the full variance
-        """
-        var_pipe = 1. / forest.ivar / continuum**2
-        var_lss = self.get_var_lss(forest.log_lambda)
-        eta = self.get_eta(forest.log_lambda)
-        sigma_c = self.get_tq_list(forest.log_lambda - np.log10(1 + forest.z))
-
-        return eta * var_pipe + var_lss + sigma_c
-
     def hdu_cont(self, results):
         """Add to the results file an HDU with the continuum information
 
@@ -300,3 +286,17 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
             ],
             names=['loglam', 'eta', 'var_lss', 'num_pixels', 'valid_fit'],
             extname='VAR_FUNC')
+
+    def read_var_lss(self):
+        """Read var lss from mocks. We should upgrade this into computing
+        var_lss from Pk1d."""
+        log_lambda, var_lss = np.loadtxt(self.var_lss_filename)
+
+        mask = ~np.isnan(var_lss) & ~np.isnan(log_lambda)
+
+        var_lss_poly3 = np.poly1d(
+            np.polyfit(10**log_lambda[mask], var_lss[mask], 3))
+        self.get_var_lss = interp1d(log_lambda,
+                                    var_lss_poly3(10**log_lambda),
+                                    fill_value='extrapolate',
+                                    kind='nearest')
