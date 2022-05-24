@@ -4,11 +4,12 @@ import numpy as np
 from picca.delta_extraction.astronomical_objects.forest import Forest
 from picca.delta_extraction.utils import find_bins
 
-VAR_PIPE_MIN  = np.log10(1e-5)
+VAR_PIPE_MIN = np.log10(1e-5)
 VAR_PIPE_MAX = np.log10(2.)
 NUM_VAR_BINS = 100
 
 FUDGE_REF = 1e-7
+
 
 class LeastsSquaresVarStats:
     """This class deals with the continuum fitting.
@@ -58,11 +59,13 @@ class LeastsSquaresVarStats:
     var_pipe_values: array of float
     Array where the variance functions will be computed
     """
-    def __init__(self,
-                 num_bins_variance,
-                 forests,
-                 log_lambda_var_func_grid,
-                 ):
+
+    def __init__(
+        self,
+        num_bins_variance,
+        forests,
+        log_lambda_var_func_grid,
+    ):
         """Initialize class instances
 
         Arguments
@@ -84,9 +87,9 @@ class LeastsSquaresVarStats:
         # the measured pipeline variance of the deltas will be averaged using the
         # same binning, and the two arrays will be compared to fit the functions
         # eta, var_lss, and fudge
-        self.var_pipe_values = 10**(VAR_PIPE_MIN +
-                               ((np.arange(NUM_VAR_BINS) + .5) *
-                                (VAR_PIPE_MAX - VAR_PIPE_MIN) / NUM_VAR_BINS))
+        self.var_pipe_values = 10**(
+            VAR_PIPE_MIN + ((np.arange(NUM_VAR_BINS) + .5) *
+                            (VAR_PIPE_MAX - VAR_PIPE_MIN) / NUM_VAR_BINS))
 
         # initialize arrays to compute the statistics of deltas
         self.var_delta = None
@@ -194,19 +197,10 @@ class LeastsSquaresVarStats:
         self.num_qso = num_qso
         self.num_pixels = num_pixels
 
-    def initialize_variance_arrays():
-        """Initialize the arrays to store the fits results"""
-        # initialize arrays
-        eta = np.zeros(self.num_bins_variance)
-        var_lss = np.zeros(self.num_bins_variance)
-        fudge = np.zeros(self.num_bins_variance)
-        num_pixels = np.zeros(self.num_bins_variance)
-        valid_fit = np.zeros(self.num_bins_variance)
-        chi2_in_bin = np.zeros(self.num_bins_variance)
-
     def get_num_pixels(self):
         """Return the number of pixels participating in the fit"""
-        return self.num_pixels[self.running_indexs[0]:self.running_indexs[1]].sum()
+        return self.num_pixels[self.running_indexs[0]:self.
+                               running_indexs[1]].sum()
 
     def set_fit_bins(self, index):
         """Set the  selected bins for the fits
@@ -217,5 +211,4 @@ class LeastsSquaresVarStats:
         index: int
         Index of the wavelength grid activated to fit
         """
-        self.running_indexs = (index * NUM_VAR_BINS,
-                               (index + 1) * NUM_VAR_BINS)
+        self.running_indexs = (index * NUM_VAR_BINS, (index + 1) * NUM_VAR_BINS)

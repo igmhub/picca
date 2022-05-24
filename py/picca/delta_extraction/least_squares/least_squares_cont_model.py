@@ -1,6 +1,7 @@
 """This module defines the class LeastsSquaresContModel"""
 import numpy as np
 
+
 class LeastsSquaresContModel:
     """This class deals with the continuum fitting.
 
@@ -26,6 +27,7 @@ class LeastsSquaresContModel:
     weights_kwargs: dict
     kwargs passed to expected_flux.get_continuum_weights
     """
+
     def __init__(self,
                  forest,
                  expected_flux,

@@ -3,42 +3,21 @@ import logging
 import multiprocessing
 
 import fitsio
-from astropy.io import fits
-import iminuit
 import numpy as np
-from pkg_resources import resource_filename
 from scipy.interpolate import interp1d
-from scipy.optimize import curve_fit
 
-from pkg_resources import resource_filename
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.astronomical_objects.pk1d_forest import Pk1dForest
-from picca.delta_extraction.errors import ExpectedFluxError, AstronomicalObjectError
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
-from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (# pylint: disable=unused-import
+from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (  # pylint: disable=unused-import
     accepted_options, defaults)
-from picca.delta_extraction.expected_flux import ExpectedFlux
 from picca.delta_extraction.utils import find_bins
 
-accepted_options = sorted(
-    list(
-        set(accepted_options + accepted_options_quasar_catalogue +
-            ["var lss file"])))
+accepted_options = sorted(list(set(accepted_options + ["var lss file"])))
 
-def var_lss_fitting_curve(lambda_, a, b, c, d):
-    """Polynomical fitting curve for var_lss
-    comming from raw files
 
-    Arguments
-    ---------
-    lambda_: float
-    Wavelength for the fitting curve
+VAR_PIPE_MIN = np.log10(1e-5)
+VAR_PIPE_MAX = np.log10(2.)
 
-    a,b,c,d: float
-    Parameters for the polynomical curve
-
-    """
-    return a + b*lambda_ + c*lambda_**2 + d*lambda_**3
 
 class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
     """Class to the expected flux with a variance term dependent
@@ -86,9 +65,9 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
         self.__parse_config(config)
 
         self.get_tq_list = None
-        super().__init__(self, config)
+        super().__init__(config)
 
-    def __initialize_variance_functions(self):
+    def _initialize_variance_functions(self):
         """Initialize variance functions
         The initialized arrays are:
         - self.get_eta
@@ -108,15 +87,15 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
                                 kind='nearest')
         self.read_var_lss()
         self.get_tq_list = interp1d(Forest.log_lambda_rest_frame_grid,
-                                       tq_list,
-                                       fill_value='extrapolate',
-                                       kind='nearest')
+                                    tq_list,
+                                    fill_value='extrapolate',
+                                    kind='nearest')
         self.get_num_pixels = interp1d(self.log_lambda_var_func_grid,
                                        num_pixels,
                                        fill_value="extrapolate",
                                        kind='nearest')
         self.get_valid_fit = interp1d(self.log_lambda_var_func_grid,
-                                      num_pixels,
+                                      valid_fit,
                                       fill_value="extrapolate",
                                       kind='nearest')
 
@@ -165,75 +144,18 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
         self.populate_los_ids(forests)
 
     def read_var_lss(self):
-        """Read var lss from mocks. We should upgrade this into computing var_lss from Pk1d."""
-        log_lambda, var_lss = np.loadtxt("/global/project/projectdirs/desi/users/cramirez/Continuum_fitting/compute_var_lss/sigma_lss_val.txt")
+        """Read var lss from mocks. We should upgrade this into computing
+        var_lss from Pk1d."""
+        log_lambda, var_lss = np.loadtxt(self.var_lss_filename)
 
         mask = ~np.isnan(var_lss) & ~np.isnan(log_lambda)
-        popt, pcov = curve_fit(
-            var_lss_fitting_curve,
+
+        var_lss_poly3 = np.poly1d(np.polyfit(
             10**log_lambda[mask],
-            var_lss[mask]
-        )
-
+            var_lss[mask],
+            3))
         self.get_var_lss = interp1d(log_lambda,
-                                    var_lss_fitting_curve(10**log_lambda, *popt),
-                                    fill_value='extrapolate',
-                                    kind='nearest')
-
-        return
-
-        if self.var_lss_filename is not None:
-            filename = self.var_lss_filename
-        else:
-            filename = resource_filename('picca', 'delta_extraction') + '/expected_fluxes/raw_stats/'
-            if Forest.wave_solution == "log":
-                filename += 'colore_v9_lya_log.fits.gz'
-            elif Forest.wave_solution == "lin" and Forest.delta_lambda == 2.4:
-                filename += 'colore_v9_lya_lin_2.4.fits.gz'
-            elif Forest.wave_solution == "lin" and Forest.delta_lambda == 3.2:
-                filename += 'colore_v9_lya_lin_3.2.fits.gz'
-            else:
-                raise ExpectedFluxError("Couldn't find compatible raw satistics file. Provide a custom one using 'raw statistics file' field.")
-        self.logger.info(f'Reading raw statistics var_lss and mean_flux from file: {filename}')
-
-        try:
-            hdul = fits.open(filename)
-        except:
-            raise ExpectedFluxError(f"raw statistics file {filename} couldn't be loaded")
-
-        header = hdul[1].header
-        # if (
-        #     (header['LINEAR'] and Forest.wave_solution != "linear" )
-        #     or (header['LINEAR'] and (not np.isclose(header['DEL_LL'], 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0])))
-        #     or not header['LINEAR'] and Forest.wave_solution != "log"
-        #     or not np.isclose(header['L_MIN'], 10**Forest.log_lambda_grid[0], rtol=1e-3)
-        #     or not np.isclose(header['L_MAX'], 10**Forest.log_lambda_grid[-1], rtol=1e-3)
-        #     or not np.isclose(header['LR_MIN'], 10**Forest.log_lambda_rest_frame_grid[0], rtol=1e-3)
-        #     or not np.isclose(header['LR_MAX'], 10**Forest.log_lambda_rest_frame_grid[-1], rtol=1e-3)
-        # ):
-        #     pixelization = "lin" if header['LINEAR'] else "log"
-        #     raise ExpectedFluxError(f'''raw statistics file pixelization scheme does not match input pixelization scheme.
-        #         \t\tPIX\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL
-        #         raw\t\t{pixelization}\t{header['L_MIN']}\t{header['L_MAX']}\t{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}
-        #         input\t{Forest.wave_solution}\t{10**Forest.log_lambda_grid[0]}\t{10**Forest.log_lambda_grid[-1]}\t{10**Forest.log_lambda_rest_frame_grid[0]}\t{10**Forest.log_lambda_rest_frame_grid[-1]}\t{10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]}
-        #         provide a custom file in 'raw statistics file' field matching input pixelization scheme''')
-
-        lambda_ = hdul[1].data['LAMBDA']
-        flux_variance = hdul[1].data['VAR']
-        mean_flux = hdul[1].data['MEANFLUX']
-        hdul.close()
-
-        var_lss = flux_variance/mean_flux**2
-
-        mask = ~np.isnan(var_lss) & ~np.isnan(lambda_)
-        popt, pcov = curve_fit(
-            var_lss_fitting_curve,
-            lambda_[mask],
-            var_lss[mask]
-        )
-
-        self.get_var_lss = interp1d(np.log10(lambda_),
-                                    var_lss_fitting_curve(lambda_, *popt),
+                                    var_lss_poly3(10**log_lambda),
                                     fill_value='extrapolate',
                                     kind='nearest')
 
@@ -251,11 +173,6 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
         -----
         ExpectedFluxError if wavelength solution is not valid
         """
-        # initialize arrays
-        num_var_bins = 1
-        var_pipe_min = np.log10(1e-5)
-        var_pipe_max = np.log10(2.)
-
         # initialize arrays to compute the statistics of deltas
         var_delta = np.zeros_like(self.log_lambda_var_func_grid)
         mean_delta = np.zeros_like(self.log_lambda_var_func_grid)
@@ -272,21 +189,21 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
             if forest.continuum is None:
                 continue
             var_pipe = 1 / forest.ivar / forest.continuum**2
-            w = ((np.log10(var_pipe) > var_pipe_min) &
-                 (np.log10(var_pipe) < var_pipe_max))
+            w = ((np.log10(var_pipe) > VAR_PIPE_MIN) &
+                 (np.log10(var_pipe) < VAR_PIPE_MAX))
 
             # select the wavelength bins
             log_lambda_bins = find_bins(
                 forest.log_lambda,
                 self.log_lambda_var_func_grid,
                 "lin",
-                )[w]
+            )[w]
 
             log_lambda_rest_bins = find_bins(
                 forest.log_lambda - np.log10(1 + forest.z),
                 Forest.log_lambda_rest_frame_grid,
                 "lin",
-                )[w]
+            )[w]
 
             # compute deltas
             delta = (forest.flux / forest.continuum - 1)
@@ -348,9 +265,9 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
         var_pipe = 1. / forest.ivar / continuum**2
         var_lss = self.get_var_lss(forest.log_lambda)
         eta = self.get_eta(forest.log_lambda)
-        sigma_c = self.get_tq_list(forest.log_lambda - np.log10( 1 + forest.z ))
+        sigma_c = self.get_tq_list(forest.log_lambda - np.log10(1 + forest.z))
 
-        return eta*var_pipe + var_lss + sigma_c
+        return eta * var_pipe + var_lss + sigma_c
 
     def save_iteration_step(self, iteration):
         """Save the statistical properties of deltas at a given iteration
@@ -385,16 +302,16 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
                           header=header,
                           extname='STACK_DELTAS')
 
-            results.write([
-                self.log_lambda_var_func_grid,
-                self.get_eta(self.log_lambda_var_func_grid),
-                self.get_var_lss(self.log_lambda_var_func_grid),
-                self.get_num_pixels(self.log_lambda_var_func_grid),
-                self.get_valid_fit(self.log_lambda_var_func_grid)
-            ],
-                          names=['loglam', 'eta', 'var_lss',
-                                 'num_pixels', 'valid_fit'],
-                          extname='VAR_FUNC_OBS_FRAME')
+            results.write(
+                [
+                    self.log_lambda_var_func_grid,
+                    self.get_eta(self.log_lambda_var_func_grid),
+                    self.get_var_lss(self.log_lambda_var_func_grid),
+                    self.get_num_pixels(self.log_lambda_var_func_grid),
+                    self.get_valid_fit(self.log_lambda_var_func_grid)
+                ],
+                names=['loglam', 'eta', 'var_lss', 'num_pixels', 'valid_fit'],
+                extname='VAR_FUNC_OBS_FRAME')
 
             results.write([
                 Forest.log_lambda_rest_frame_grid,
@@ -402,5 +319,7 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
                 self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
                 self.get_tq_list(Forest.log_lambda_rest_frame_grid),
             ],
-                          names=['loglam_rest', 'mean_cont', 'weight', 'cont_var'],
+                          names=[
+                              'loglam_rest', 'mean_cont', 'weight', 'cont_var'
+                          ],
                           extname='VAR_FUNC_REST_FRAME')

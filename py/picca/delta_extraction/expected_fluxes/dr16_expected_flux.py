@@ -33,6 +33,7 @@ defaults = {
     "use ivar as weight": False,
 }
 
+FIT_VARIANCE_FUNCTIONS = ["eta", "var_lss", "fudge"]
 
 class Dr16ExpectedFlux(ExpectedFlux):
     """Class to the expected flux as done in the DR16 SDSS analysys
@@ -175,11 +176,11 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # initialize mean continuum
         self.get_mean_cont = None
         self.get_mean_cont_weight = None
-        self.__initialize_mean_continuum_arrays()
+        self._initialize_mean_continuum_arrays()
 
         # initialize wavelength array for variance functions
         self.log_lambda_var_func_grid = None
-        self.__initialize_variance_wavelength_array()
+        self._initialize_variance_wavelength_array()
 
         # initialize variance functions
         self.get_eta = None
@@ -187,14 +188,15 @@ class Dr16ExpectedFlux(ExpectedFlux):
         self.get_num_pixels = None
         self.get_valid_fit = None
         self.get_var_lss = None
-        self.__initialize_variance_functions()
+        self.fit_variance_functions = None
+        self._initialize_variance_functions()
 
         self.continuum_fit_parameters = None
 
         self.get_stack_delta = None
         self.get_stack_delta_weights = None
 
-    def __initialize_mean_continuum_arrays(self):
+    def _initialize_mean_continuum_arrays(self):
         """Initialize mean continuum arrays
         The initialized arrays are:
         - self.get_mean_cont
@@ -212,7 +214,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             np.zeros_like(Forest.log_lambda_rest_frame_grid),
             fill_value="extrapolate")
 
-    def __initialize_variance_wavelength_array(self):
+    def _initialize_variance_wavelength_array(self):
         """Initialize the wavelength array where variance functions will be
         computed
         The initialized arrays are:
@@ -246,7 +248,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         #self.log_lambda_var_func_grid = Forest.log_lambda_grid[::int(resize)]
         #end of commented block
 
-    def __initialize_variance_functions(self):
+    def _initialize_variance_functions(self):
         """Initialize variance functions
         The initialized arrays are:
         - self.get_eta
@@ -265,6 +267,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             fudge = np.zeros(self.num_bins_variance)
             num_pixels = np.zeros(self.num_bins_variance)
             valid_fit = np.ones(self.num_bins_variance)
+            self.fit_variance_functions = []
         # if use_constant_weight is set then initialize eta, var_lss, and fudge
         # with values to have constant weights
         elif self.use_constant_weight:
@@ -275,6 +278,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             fudge = np.zeros(self.num_bins_variance)
             num_pixels = np.zeros(self.num_bins_variance)
             valid_fit = np.ones(self.num_bins_variance, dtype=bool)
+            self.fit_variance_functions = []
         # normal initialization: eta, var_lss, and fudge are ignored in the
         # first iteration
         else:
@@ -283,6 +287,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             fudge = np.zeros(self.num_bins_variance)
             num_pixels = np.zeros(self.num_bins_variance)
             valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
+            self.fit_variance_functions = FIT_VARIANCE_FUNCTIONS
 
         self.get_eta = interp1d(self.log_lambda_var_func_grid,
                                 eta,
@@ -651,9 +656,18 @@ class Dr16ExpectedFlux(ExpectedFlux):
         ExpectedFluxError if wavelength solution is not valid
         """
         # initialize arrays
-        eta = np.zeros(self.num_bins_variance)
-        var_lss = np.zeros(self.num_bins_variance)
-        fudge = np.zeros(self.num_bins_variance)
+        if "eta" in self.fit_variance_functions:
+            eta = np.zeros(self.num_bins_variance) + 1.
+        else:
+            eta = self.get_eta(self.log_lambda_var_func_grid)
+        if "var_lss" in self.fit_variance_functions:
+            var_lss = np.zeros(self.num_bins_variance) + 0.1
+        else:
+            var_lss = self.get_var_lss(self.log_lambda_var_func_grid)
+        if "fudge" in self.fit_variance_functions:
+            fudge = np.zeros(self.num_bins_variance) + FUDGE_REF
+        else:
+            fudge = self.get_fudge(self.log_lambda_var_func_grid)
         num_pixels = np.zeros(self.num_bins_variance)
         valid_fit = np.zeros(self.num_bins_variance)
         chi2_in_bin = np.zeros(self.num_bins_variance)
@@ -673,18 +687,22 @@ class Dr16ExpectedFlux(ExpectedFlux):
 
             minimizer = iminuit.Minuit(leasts_squares,
                                        name=("eta", "var_lss", "fudge"),
-                                       eta=1.,
-                                       var_lss=0.1,
-                                       fudge=1.)
+                                       eta=eta[index],
+                                       var_lss=var_lss[index],
+                                       fudge=fudge[index]/FUDGE_REF)
             minimizer.errors["eta"] = 0.05
+            minimizer.limits["eta"] = self.limit_eta
             minimizer.errors["var_lss"] = 0.05
+            minimizer.limits["var_lss"] = self.limit_var_lss
             minimizer.errors["fudge"] = 0.05
+            minimizer.limits["fudge"] = (0, None)
             minimizer.errordef = 1.
             minimizer.print_level = 0
-            minimizer.limits["eta"] = self.limit_eta
-            minimizer.limits["var_lss"] = self.limit_var_lss
-            minimizer.limits["fudge"] = (0, None)
+            minimizer.fixed["eta"] = "eta" not in self.fit_variance_functions
+            minimizer.fixed["var_lss"] = "var_lss" not in self.fit_variance_functions
+            minimizer.fixed["fudge"] = "fudge" not in self.fit_variance_functions
             minimizer.migrad()
+
 
             if minimizer.valid:
                 minimizer.hesse()
