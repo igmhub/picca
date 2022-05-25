@@ -176,7 +176,7 @@ class TrueContinuum(ExpectedFlux):
                 self.save_iteration_step(-1)
             else:
                 self.save_iteration_step(iteration)
-            
+
             self.logger.progress(
                 f"Continuum fitting: ending iteration {iteration} of "
                 f"{self.num_iterations}")
@@ -425,7 +425,7 @@ class TrueContinuum(ExpectedFlux):
                                       kind='nearest')
 
     def compute_var_lss(self, forests):
-        """Compute var lss from delta variance by substracting 
+        """Compute var lss from delta variance by substracting
         the pipeline variance from it
 
         Arguments
@@ -444,7 +444,7 @@ class TrueContinuum(ExpectedFlux):
             deltas = forest.flux/forest.continuum - 1
             var_lss[log_lambda_bins] += deltas**2 - var_pipe
             counts[log_lambda_bins] += 1
-        
+
         w = counts > 0
         var_lss[w] /= counts[w]
         self.get_var_lss = interp1d(Forest.log_lambda_grid[w],
@@ -468,10 +468,10 @@ class TrueContinuum(ExpectedFlux):
         ],
                       names=['loglam_rest', 'mean_cont', 'weight'],
                       extname='CONT')
-    
+
     def hdu_var_func(self, results):
         """Add to the results file an HDU with the variance functions
-        
+
         Arguments
         ---------
         results: fitsio.FITS
@@ -489,7 +489,7 @@ class TrueContinuum(ExpectedFlux):
     def save_iteration_step(self, iteration):
         """Save the staatistical properties of deltas at a given iteration
         step
-        
+
         Arguments
         ---------
         iteration: int
@@ -499,7 +499,7 @@ class TrueContinuum(ExpectedFlux):
             iter_out_file = self.iter_out_prefix + ".fits.gz"
         else:
             iter_out_file = self.iter_out_prefix + f"_iteration{iteration+1}.fits.gz"
-        
+
         with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
                          clobber=True) as results:
             self.hdu_var_func(results)
