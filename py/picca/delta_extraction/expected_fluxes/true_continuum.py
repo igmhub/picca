@@ -44,7 +44,7 @@ class TrueContinuum(ExpectedFlux):
     populate_los_ids
     read_true_continuum
     read_raw_statistics
-    save_delta_attributes
+    save_iteration_step
 
     Attributes
     ----------
@@ -171,10 +171,18 @@ class TrueContinuum(ExpectedFlux):
             self.compute_mean_cont(forests)
             self.compute_var_lss(forests)
 
+            if iteration == self.num_iterations - 1:
+                # Final iteration has a different saving procedure
+                self.save_iteration_step(-1)
+            else:
+                self.save_iteration_step(iteration)
+            
+            self.logger.progress(
+                f"Continuum fitting: ending iteration {iteration} of "
+                f"{self.num_iterations}")
+
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
-        # Save delta atributes
-        self.save_delta_attributes()
 
     def compute_mean_cont(self, forests):
         """Compute the mean quasar continuum over the whole sample.
@@ -444,33 +452,55 @@ class TrueContinuum(ExpectedFlux):
                                     fill_value='extrapolate',
                                     kind='nearest')
 
-    def save_delta_attributes(self):
-        """Save mean continuum in the delta attributes file.
 
-        Raise
-        -----
-        ExpectedFluxError if Forest.wave_solution is not 'lin' or 'log'
+    def hdu_cont(self, results):
+        """Add to the results file an HDU with the continuum information
+
+        Arguments
+        ---------
+        results: fitsio.FITS
+        The open fits file
         """
-        iter_out_file = self.iter_out_prefix + ".fits.gz"
+        results.write([
+            Forest.log_lambda_rest_frame_grid,
+            self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
+            self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
+        ],
+                      names=['loglam_rest', 'mean_cont', 'weight'],
+                      extname='CONT')
+    
+    def hdu_var_func(self, results):
+        """Add to the results file an HDU with the variance functions
+        
+        Arguments
+        ---------
+        results: fitsio.FITS
+        The open fits file
+        """
+        results.write([
+            Forest.log_lambda_grid,
+            self.get_var_lss(Forest.log_lambda_grid),
+        ],
+                      names=[
+                          'loglam', 'var_lss',
+                      ],
+                      extname='VAR_FUNC')
 
+    def save_iteration_step(self, iteration):
+        """Save the staatistical properties of deltas at a given iteration
+        step
+        
+        Arguments
+        ---------
+        iteration: int
+        Iteration number. -1 for final iteration
+        """
+        if iteration == -1:
+            iter_out_file = self.iter_out_prefix + ".fits.gz"
+        else:
+            iter_out_file = self.iter_out_prefix + f"_iteration{iteration+1}.fits.gz"
+        
         with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
                          clobber=True) as results:
-            results.write([
-                Forest.log_lambda_grid,
-                self.get_var_lss(Forest.log_lambda_grid),
-            ],
-                          names=[
-                              'loglam', 'var_lss',
-                          ],
-                          extname='VAR_FUNC')
-
-            header = {}
-            header["FITORDER"] = -1
-            results.write([
-                Forest.log_lambda_rest_frame_grid,
-                self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
-                self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
-            ],
-                          names=['loglam_rest', 'mean_cont', 'weight'],
-                          extname='CONT',
-                          header=header)
+            self.hdu_var_func(results)
+            self.hdu_cont(results)
