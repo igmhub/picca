@@ -346,19 +346,18 @@ class TrueContinuum(ExpectedFlux):
                     not np.isclose(header['DEL_LL'], pixel_step, rtol=1e-3)):
                 raise ExpectedFluxError(
                     "raw statistics file pixelization scheme does not match "
-                    "input pixelization scheme. "
-                    "\t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LL"
-                    f"raw\t{header['L_MIN']}\t{header['L_MAX']}\t"
-                    f"{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}"
-                    f"input\t{log_lambda_min}\t{log_lambda_max}\t"
-                    f"{log_lambda_rest_min}\t{log_lambda_rest_max}"
+                    "input pixelization scheme.\n"
+                    "L_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_LLraw\n"
+                    f"{header['L_MIN']}\t{header['L_MAX']}\t"
+                    f"{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_LL']}\n"
+                    f"input\n{log_lambda_min}\t{log_lambda_max}\t"
+                    f"{log_lambda_rest_min}\t{log_lambda_rest_max}\t{pixel_step}\n"
                     "provide a custom file in 'raw statistics file' field "
-                    "matching input pixelization scheme"
+                    "matching input pixelization scheme\n"
                 )
             log_lambda = hdul[1]['LAMBDA'][:]
         elif Forest.wave_solution == "lin":
-            pixel_step = 10**Forest.log_lambda_grid[
-                1] - 10**Forest.log_lambda_grid[0]
+            pixel_step = 10**Forest.log_lambda_grid[1] - 10**Forest.log_lambda_grid[0]
             lambda_min = 10**Forest.log_lambda_grid[0]
             lambda_max = 10**Forest.log_lambda_grid[-1] - pixel_step / 2
             lambda_rest_min = 10**Forest.log_lambda_rest_frame_grid[
@@ -368,20 +367,16 @@ class TrueContinuum(ExpectedFlux):
                     not np.isclose(header['L_MIN'], lambda_min, rtol=1e-3) or
                     not np.isclose(header['L_MAX'], lambda_max, rtol=1e-3) or
                     not np.isclose(header['LR_MIN'], lambda_rest_min, rtol=1e-3)
-                    or
-                    not np.isclose(header['LR_MAX'], lambda_rest_max, rtol=1e-3)
-                    or not np.isclose(header['DEL_L'],
-                                      10**Forest.log_lambda_grid[1] -
-                                      10**Forest.log_lambda_grid[0],
-                                      rtol=1e-3)):
+                    or not np.isclose(header['LR_MAX'], lambda_rest_max, rtol=1e-3)
+                    or not np.isclose(header['DEL_L'], pixel_step, rtol=1e-3)):
                 raise ExpectedFluxError(
                     "raw statistics file pixelization scheme does not match "
-                    "input pixelization scheme. "
-                    "\t\tL_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_L"
-                    f"raw\t{header['L_MIN']}\t{header['L_MAX']}\t"
-                    f"{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_L']}"
-                    f"input\t{lambda_min}\t{lambda_max}\t{lambda_rest_min}\t"
-                    f"{lambda_rest_max} provide a custom file in 'raw "
+                    "input pixelization scheme.\n"
+                    "L_MIN\tL_MAX\tLR_MIN\tLR_MAX\tDEL_Lraw\n"
+                    f"{header['L_MIN']}\t{header['L_MAX']}\t"
+                    f"{header['LR_MIN']}\t{header['LR_MAX']}\t{header['DEL_L']}\n"
+                    f"input\n{lambda_min}\t{lambda_max}\t{lambda_rest_min}\t"
+                    f"{lambda_rest_max}\t{pixel_step}\n provide a custom file in 'raw "
                     "statistics file' field matching input pixelization scheme"
                 )
             log_lambda = np.log10(hdul[1]['LAMBDA'][:])
