@@ -12,8 +12,6 @@ from picca.delta_extraction.expected_fluxes.dr16_fixed_eta_varlss_expected_flux 
     accepted_options, defaults)
 from picca.delta_extraction.utils import find_bins
 
-accepted_options = sorted(list(set(accepted_options + ["var lss file"])))
-
 VAR_PIPE_MIN = np.log10(1e-5)
 VAR_PIPE_MAX = np.log10(2.)
 
@@ -24,7 +22,8 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
 
     Methods
     -------
-    (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
+    (see Dr16FixedEtaVarlssExpectedFlux in
+        py/picca/delta_extraction/expected_fluxes/dr16_fixed_eta_varlss_expected_flux.py)
     __init__
     _initialize_variance_functions
     __parse_config
@@ -33,11 +32,11 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
     compute_var_stats
     hdu_cont
     hdu_var_func
-    read_var_lss
 
     Attributes
     ----------
-    (see Dr16ExpectedFlux in py/picca/delta_extraction/expected_fluxes/dr16_expected_flux.py)
+    (see Dr16FixedEtaVarlssExpectedFlux in
+        py/picca/delta_extraction/expected_fluxes/dr16_fixed_eta_varlss_expected_flux.py)
 
     self.get_tq_list: scipy.interpolate.interp1d
     ??????

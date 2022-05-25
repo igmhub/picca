@@ -10,8 +10,11 @@ import numpy as np
 from picca.delta_extraction.errors import QuasarCatalogueError
 from picca.delta_extraction.quasar_catalogue import QuasarCatalogue, accepted_options
 
-accepted_options = sorted(list(set(accepted_options + [
-    "best obs", "BI max", "drq catalogue", "input directory", "keep BAL", "spAll"])))
+from picca.delta_extraction.utils import update_accepted_options
+
+accepted_options = update_accepted_options(
+    accepted_options,
+    ["best obs", "BI max", "drq catalogue", "input directory", "keep BAL", "spAll"])
 
 defaults = {
     "best obs": False,

@@ -13,8 +13,9 @@ from picca.delta_extraction.data_catalogues.desi_data import (
 from picca.delta_extraction.data_catalogues.desi_data import (  # pylint: disable=unused-import
     defaults, accepted_options)
 from picca.delta_extraction.errors import DataError
+from picca.delta_extraction.utils import update_accepted_options
 
-accepted_options = sorted(list(set(accepted_options + ["num processors"])))
+accepted_options = update_accepted_options(accepted_options, ["num processors"])
 
 
 class DesiHealpix(DesiData):

@@ -245,3 +245,33 @@ def setup_logger(logging_level_console=logging.DEBUG, log_file=None,
 
     # sets up numba logger
     #logging.getLogger('numba').setLevel(logging.WARNING)
+
+def update_accepted_options(accepted_options, new_options, remove=False):
+    """Update the content of the list of accepted options
+
+    Arguments
+    ---------
+    accepted_options: list of string
+    The current accepted options
+
+    new_options: list of string
+    The new options
+
+    remove: bool - Default: False
+    If True, then remove the elements of new_options from accepted_options.
+    If False, then add new_options to accepted_options
+
+    Return
+    ------
+    accepted_options: list of string
+    The updated accepted options
+    """
+    if remove:
+        accepted_options = accepted_options.copy()
+        for item in new_options:
+            if item in accepted_options:
+                accepted_options.remove(item)
+    else:
+        accepted_options = sorted(list(set(accepted_options + new_options)))
+
+    return accepted_options
