@@ -17,13 +17,14 @@ from picca.delta_extraction.utils import find_bins
 
 accepted_options = [
     "input directory", "iter out prefix", "num processors", "out dir",
-    "raw statistics file", "use constant weight"
+    "num iterations", "raw statistics file", "use constant weight"
 ]
 
 defaults = {
     "iter out prefix": "delta_attributes",
     "raw statistics file": "",
     "use constant weight": False,
+    "num iterations": 1,
 }
 
 
@@ -138,6 +139,7 @@ class TrueContinuum(ExpectedFlux):
                 "'iter out prefix' should not incude folders. "
                 f"Found: {self.iter_out_prefix}")
 
+        self.num_iterations = config.getint("num iterations")
         self.use_constant_weight = config.getboolean("use constant weight")
         self.raw_statistics_filename = config.get("raw statistics file")
 
@@ -161,9 +163,13 @@ class TrueContinuum(ExpectedFlux):
         forests = pool.map(self.read_true_continuum, forests)
         pool.close()
 
-        # TODO: add iterations
-        self.compute_mean_cont(forests)
-        # update var_lss here, then fo back to the loop
+        for iteration in range(self.num_iterations):
+            self.logger.progress(
+                f"True continuum: starting iteration {iteration} of "
+                f"{self.num_iterations}"
+            )
+            self.compute_mean_cont(forests)
+            self.compute_var_lss(forests)
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
@@ -409,6 +415,34 @@ class TrueContinuum(ExpectedFlux):
                                       mean_flux,
                                       fill_value='extrapolate',
                                       kind='nearest')
+
+    def compute_var_lss(self, forests):
+        """Compute var lss from delta variance by substracting 
+        the pipeline variance from it
+
+        Arguments
+        ---------
+        forests: List of Forest
+        A list of Forest from which to compute the deltas."""
+        var_lss = np.zeros_like(Forest.log_lambda_grid)
+        counts = np.zeros_like(Forest.log_lambda_grid)
+
+        for forest in forests:
+            log_lambda_bins = find_bins(
+                forest.log_lambda,
+                Forest.log_lambda_grid,
+                Forest.wave_solution)
+            var_pipe = 1. / forest.ivar / forest.continuum**2
+            deltas = forest.flux/forest.continuum - 1
+            var_lss[log_lambda_bins] += deltas**2 - var_pipe
+            counts[log_lambda_bins] += 1
+        
+        w = counts > 0
+        var_lss[w] /= counts[w]
+        self.get_var_lss = interp1d(Forest.log_lambda_grid[w],
+                                    var_lss[w],
+                                    fill_value='extrapolate',
+                                    kind='nearest')
 
     def save_delta_attributes(self):
         """Save mean continuum in the delta attributes file.
