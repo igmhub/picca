@@ -433,7 +433,8 @@ class TrueContinuum(ExpectedFlux):
                 Forest.log_lambda_grid,
                 Forest.wave_solution)
             var_pipe = 1. / forest.ivar / forest.continuum**2
-            var_lss[log_lambda_bins] += forest.deltas**2 - var_pipe
+            deltas = forest.flux/forest.continuum - 1
+            var_lss[log_lambda_bins] += deltas**2 - var_pipe
             counts[log_lambda_bins] += 1
         
         w = counts > 0
