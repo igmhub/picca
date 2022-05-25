@@ -82,7 +82,7 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
         ------
         ExpectedFluxError if iter out prefix is not valid
         """
-        self.eta_value = config.get("fudge value")
+        self.eta_value = config.get("eta value")
         if self.eta_value is None:
             raise ExpectedFluxError("Missing argument 'eta value' required "
                                     "by Dr16FixEtaExpectedFlux")
