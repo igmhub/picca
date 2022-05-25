@@ -270,7 +270,7 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     """
     # read catalog of objects
     hdul = fitsio.FITS(obj_path)
-    hdu = hdul['METADATA']
+    hdu = hdul[1]
     key_val = set(hdu.get_colnames())
 
     # Get object id in HDU
@@ -285,9 +285,10 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
 
     # moved hpx values here to read from master catalog header
     # rather than transmission files for ohio-p1d mocks
-    if 'HPXNSIDE' in key_val and 'HPXNEST' in key_val:
-        in_nside  = hdu.read_header()['HPXNSIDE']
-        is_nested = hdu.read_header()['HPXNEST'] # true or false
+    hdr = hdu.read_header()
+    if 'HPXNSIDE' in hdr and 'HPXNEST' in hdr:
+        in_nside  = hdr['HPXNSIDE']
+        is_nested = hdr['HPXNEST'] # true or false
     else:
         in_nside = None
         is_nested = None
@@ -392,7 +393,7 @@ def convert_transmission_to_deltas(obj_path, out_dir, in_dir=None, in_filenames=
     out_healpix_method = lambda in_nside, healpix: healpix
 
     # The first case doesn't make sense.
-    # Why even converted from nested to ring at all?
+    # Why even convert from nested to ring at all?
     if is_nested is None and out_healpix_order is not None:
         raise ValueError('Input HEALPix scheme not known, cannot'
                 'convert to scheme {}'.format(out_healpix_order))
