@@ -38,8 +38,8 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
     (see Dr16FixedEtaVarlssExpectedFlux in
         py/picca/delta_extraction/expected_fluxes/dr16_fixed_eta_varlss_expected_flux.py)
 
-    self.get_tq_list: scipy.interpolate.interp1d
-    ??????
+    self.get_var_cont: scipy.interpolate.interp1d
+    Variance contribution due to continuum (as a function of rest-frame wavelength)
 
     var_lss_filename: string
     Name of the file containing the LSS variance contribution.
@@ -59,26 +59,26 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
         """
         self.logger = logging.getLogger(__name__)
 
-        self.get_tq_list = None
+        self.get_var_cont = None
         super().__init__(config)
 
     def _initialize_variance_functions(self):
         """Initialize variance functions
         The initialized arrays are:
         - self.get_eta
-        - self.get_tq_list
+        - self.get_var_cont
         - self.get_num_pixels
         - self.get_valid_fit
         - self.get_var_lss
         """
-        tq_list = np.zeros_like(Forest.log_lambda_rest_frame_grid)
+        var_cont = np.zeros_like(Forest.log_lambda_rest_frame_grid)
         num_pixels = np.zeros(self.num_bins_variance)
         valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
 
         self._initialize_get_eta()
         self._initialize_get_var_lss()
-        self.get_tq_list = interp1d(Forest.log_lambda_rest_frame_grid,
-                                    tq_list,
+        self.get_var_cont = interp1d(Forest.log_lambda_rest_frame_grid,
+                                    var_cont,
                                     fill_value='extrapolate',
                                     kind='nearest')
         self.get_num_pixels = interp1d(self.log_lambda_var_func_grid,
@@ -134,7 +134,7 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
         var_pipe = 1. / forest.ivar / continuum**2
         var_lss = self.get_var_lss(forest.log_lambda)
         eta = self.get_eta(forest.log_lambda)
-        sigma_c = self.get_tq_list(forest.log_lambda - np.log10(1 + forest.z))
+        sigma_c = self.get_var_cont(forest.log_lambda - np.log10(1 + forest.z))
 
         return eta * var_pipe + var_lss + sigma_c
 
@@ -156,8 +156,8 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
         var_delta = np.zeros_like(self.log_lambda_var_func_grid)
         mean_delta = np.zeros_like(self.log_lambda_var_func_grid)
         var2_delta = np.zeros_like(self.log_lambda_var_func_grid)
-        tq_list = np.zeros_like(Forest.log_lambda_rest_frame_grid)
-        tq_count = np.zeros_like(Forest.log_lambda_rest_frame_grid)
+        var_cont_mean = np.zeros_like(Forest.log_lambda_rest_frame_grid)
+        var_cont_count = np.zeros_like(Forest.log_lambda_rest_frame_grid)
         count = np.zeros_like(self.log_lambda_var_func_grid)
         num_qso = np.zeros_like(self.log_lambda_var_func_grid)
 
@@ -198,13 +198,13 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
             # compute continuum dependent variance factor
             eta = self.get_eta(forest.log_lambda[w])
             var_lss = self.get_var_lss(forest.log_lambda[w])
-            tq = delta**2 - var_lss - eta * var_pipe[w]
+            var_cont = delta**2 - var_lss - eta * var_pipe[w]
 
-            rebin = np.bincount(log_lambda_rest_bins, weights=tq)
-            tq_list[:len(rebin)] += rebin
+            rebin = np.bincount(log_lambda_rest_bins, weights=var_cont)
+            var_cont_mean[:len(rebin)] += rebin
 
             rebin = np.bincount(log_lambda_rest_bins)
-            tq_count[:len(rebin)] += rebin
+            var_cont_count[:len(rebin)] += rebin
 
             rebin = np.bincount(log_lambda_bins, weights=delta**4)
             var2_delta[:len(rebin)] += rebin
@@ -222,11 +222,11 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
         var2_delta -= var_delta**2
         var2_delta[w] /= count[w]
 
-        tq_w = tq_count > 0
-        tq_list[tq_w] /= tq_count[tq_w]
+        w = var_cont_count > 0
+        var_cont_mean[w] /= var_cont_count[w]
 
-        self.get_tq_list = interp1d(Forest.log_lambda_rest_frame_grid[tq_w],
-                                    tq_list[tq_w],
+        self.get_var_cont = interp1d(Forest.log_lambda_rest_frame_grid[w],
+                                    var_cont_mean[w],
                                     fill_value='extrapolate',
                                     kind='nearest')
 
@@ -242,7 +242,7 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
             Forest.log_lambda_rest_frame_grid,
             self.get_mean_cont(Forest.log_lambda_rest_frame_grid),
             self.get_mean_cont_weight(Forest.log_lambda_rest_frame_grid),
-            self.get_tq_list(Forest.log_lambda_rest_frame_grid),
+            self.get_var_cont(Forest.log_lambda_rest_frame_grid),
         ],
                       names=['loglam_rest', 'mean_cont', 'weight', 'cont_var'],
                       extname='CONT')
