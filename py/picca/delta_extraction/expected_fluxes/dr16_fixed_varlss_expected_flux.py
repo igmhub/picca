@@ -9,8 +9,13 @@ from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
     defaults, accepted_options)
+from picca.delta_extraction.utils import update_accepted_options
 
-accepted_options = sorted(list(set(accepted_options + ["var_lss value"])))
+accepted_options = update_accepted_options(accepted_options, ["var lss value"])
+accepted_options = update_accepted_options(
+    accepted_options,
+    ["limit var lss", "use constant weight", "use ivar as weight"],
+    remove=True)
 
 defaults = defaults.copy()
 defaults.update({

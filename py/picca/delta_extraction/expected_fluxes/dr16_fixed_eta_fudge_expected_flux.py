@@ -7,11 +7,13 @@ from picca.delta_extraction.expected_fluxes.dr16_fixed_fudge_expected_flux impor
     Dr16FixedFudgeExpectedFlux)
 from picca.delta_extraction.expected_fluxes.dr16_fixed_fudge_expected_flux import (
     defaults as defaults2, accepted_options as accepted_options2)
+from picca.delta_extraction.utils import update_accepted_options
 
-accepted_options = sorted(
-    list(
-        set(accepted_options +
-            [item for item in accepted_options2 if item not in accepted_options])))
+accepted_options = update_accepted_options(accepted_options, accepted_options2)
+accepted_options = update_accepted_options(
+    accepted_options,
+    ["limit eta", "use constant weight", "use ivar as weight"],
+    remove=True)
 
 defaults = defaults.copy()
 defaults.update(defaults2)

@@ -11,19 +11,22 @@ from picca.delta_extraction.expected_fluxes.dr16_fixed_varlss_expected_flux impo
     Dr16FixedVarlssExpectedFlux)
 from picca.delta_extraction.expected_fluxes.dr16_fixed_varlss_expected_flux import (
     defaults as defaults3, accepted_options as accepted_options3)
+from picca.delta_extraction.utils import update_accepted_options
 
-accepted_options = sorted(
-    list(
-        set(accepted_options +
-            [item for item in accepted_options2 if item not in accepted_options])))
-accepted_options = sorted(
-    list(
-        set(accepted_options +
-            [item for item in accepted_options3 if item not in accepted_options])))
+accepted_options = update_accepted_options(accepted_options, accepted_options2)
+accepted_options = update_accepted_options(accepted_options, accepted_options3)
+accepted_options = update_accepted_options(
+    accepted_options,
+    ["limit var lss", "num iterations", "use constant weight",
+     "use ivar as weight"],
+    remove=True)
 
 defaults = defaults.copy()
 defaults.update(defaults2)
 defaults.update(defaults3)
+defaults.update({
+    "num iterations": 1,
+})
 
 
 class Dr16FixedEtaVarlssFudgeExpectedFlux(Dr16FixedEtaExpectedFlux,
