@@ -1,4 +1,4 @@
-"""This module defines the class Dr16FixedFudgeExpectedFlux"""
+"""This module defines the class Dr16FixedEtaExpectedFlux"""
 import logging
 
 import fitsio
@@ -54,7 +54,7 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
         super().__init__(config)
 
     def _initialize_get_eta(self):
-        """Initialiaze function get_fudge"""
+        """Initialiaze function get_eta"""
         # initialize fudge factor
         if self.eta_value.endswith(".fits") or self.eta_value.endswith(
                 ".fits.gz"):
@@ -92,5 +92,6 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
                 _ = float(self.eta_value)
             except ValueError as error:
                 raise ExpectedFluxError(
-                    "Wrong argument 'eta value'. Expected a fits file or "
+                    "Wrong argument 'eta value' passed to "
+                    "Dr16FixEtaExpectedFlux. Expected a fits file or "
                     f"a float. Found {self.eta_value}") from error

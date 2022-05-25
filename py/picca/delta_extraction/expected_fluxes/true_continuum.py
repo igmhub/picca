@@ -161,7 +161,9 @@ class TrueContinuum(ExpectedFlux):
         forests = pool.map(self.read_true_continuum, forests)
         pool.close()
 
+        # TODO: add iterations
         self.compute_mean_cont(forests)
+        # update var_lss here, then fo back to the loop
 
         # now loop over forests to populate los_ids
         self.populate_los_ids(forests)
@@ -419,6 +421,15 @@ class TrueContinuum(ExpectedFlux):
 
         with fitsio.FITS(self.out_dir + iter_out_file, 'rw',
                          clobber=True) as results:
+            results.write([
+                Forest.log_lambda_grid,
+                self.get_var_lss(Forest.log_lambda_grid),
+            ],
+                          names=[
+                              'loglam', 'var_lss',
+                          ],
+                          extname='VAR_FUNC')
+
             header = {}
             header["FITORDER"] = -1
             results.write([

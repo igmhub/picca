@@ -6,8 +6,9 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from picca.delta_extraction.astronomical_objects.forest import Forest
-from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
-from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (  # pylint: disable=unused-import
+from picca.delta_extraction.expected_fluxes.dr16_fixed_eta_varlss_expected_flux import (
+    Dr16FixedEtaVarlssExpectedFlux)
+from picca.delta_extraction.expected_fluxes.dr16_fixed_eta_varlss_expected_flux import (  # pylint: disable=unused-import
     accepted_options, defaults)
 from picca.delta_extraction.utils import find_bins
 
@@ -17,7 +18,7 @@ VAR_PIPE_MIN = np.log10(1e-5)
 VAR_PIPE_MAX = np.log10(2.)
 
 
-class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
+class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
     """Class to the expected flux with a variance term dependent
     on the rest frame wavelength.
 
@@ -59,9 +60,6 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
         """
         self.logger = logging.getLogger(__name__)
 
-        self.var_lss_filename = None
-        self.__parse_config(config)
-
         self.get_tq_list = None
         super().__init__(config)
 
@@ -74,16 +72,12 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
         - self.get_valid_fit
         - self.get_var_lss
         """
-        eta = np.ones(self.num_bins_variance)
         tq_list = np.zeros_like(Forest.log_lambda_rest_frame_grid)
         num_pixels = np.zeros(self.num_bins_variance)
         valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
 
-        self.get_eta = interp1d(self.log_lambda_var_func_grid,
-                                eta,
-                                fill_value='extrapolate',
-                                kind='nearest')
-        self.read_var_lss()
+        self._initialize_get_eta()
+        self._initialize_get_var_lss()
         self.get_tq_list = interp1d(Forest.log_lambda_rest_frame_grid,
                                     tq_list,
                                     fill_value='extrapolate',
@@ -96,20 +90,6 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
                                       valid_fit,
                                       fill_value="extrapolate",
                                       kind='nearest')
-
-    def __parse_config(self, config):
-        """Parse the configuration options
-
-        Arguments
-        ---------
-        config: configparser.SectionProxy
-        Parsed options to initialize class
-
-        Raises
-        ------
-        ExpectedFluxError if iter out prefix is not valid
-        """
-        self.var_lss_filename = config.get("var lss file")
 
     def compute_expected_flux(self, forests):
         """Compute the mean expected flux of the forests.
@@ -286,17 +266,3 @@ class ContinuumVarianceExpectedFlux(Dr16ExpectedFlux):
             ],
             names=['loglam', 'eta', 'var_lss', 'num_pixels', 'valid_fit'],
             extname='VAR_FUNC')
-
-    def read_var_lss(self):
-        """Read var lss from mocks. We should upgrade this into computing
-        var_lss from Pk1d."""
-        log_lambda, var_lss = np.loadtxt(self.var_lss_filename)
-
-        mask = ~np.isnan(var_lss) & ~np.isnan(log_lambda)
-
-        var_lss_poly3 = np.poly1d(
-            np.polyfit(10**log_lambda[mask], var_lss[mask], 3))
-        self.get_var_lss = interp1d(log_lambda,
-                                    var_lss_poly3(10**log_lambda),
-                                    fill_value='extrapolate',
-                                    kind='nearest')

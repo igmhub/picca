@@ -93,5 +93,6 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
                 _ = float(self.fudge_value)
             except ValueError as error:
                 raise ExpectedFluxError(
-                    "Wrong argument 'fudge value'. Expected a fits file or "
+                    "Wrong argument 'fudge value' passed to "
+                    "Dr16FixFudgeExpectedFlux. Expected a fits file or "
                     f"a float. Found {self.fudge_value}") from error
