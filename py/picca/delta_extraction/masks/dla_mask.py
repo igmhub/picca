@@ -78,8 +78,8 @@ class DlaMask(Mask):
         self.logger.progress(f"Reading DLA catalog from: {filename}")
         try:
             with fitsio.FITS(filename) as hdul:
-                zname = "Z_DLA" if "Z_DLA" in hdul["DLACAT"]._colnames else "Z"
-                columns_list = [los_id_name, zname, "NHI"]
+                z_name = "Z_DLA" if "Z_DLA" in hdul["DLACAT"]._colnames else "Z"
+                columns_list = [los_id_name, z_name, "NHI"]
                 cat = {col: hdul["DLACAT"][col][:] for col in columns_list}
         except OSError as error:
             raise MaskError(
