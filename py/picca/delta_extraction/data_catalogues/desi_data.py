@@ -2,6 +2,7 @@
 """
 import logging
 import multiprocessing
+import time
 import numpy as np
 
 from picca.delta_extraction.astronomical_objects.desi_forest import DesiForest
@@ -111,10 +112,18 @@ class DesiData(Data):
         self.__parse_config(config)
 
         # load z_truth catalogue
+        t0 = time.time()
+        self.logger.progress("Reading quasar catalogue")
         self.catalogue = DesiQuasarCatalogue(config).catalogue
+        t1 = time.time()
+        self.logger.progress(f"Time spent reading quasar: {t1-t0}")
 
         # read data
+        t0 = time.time()
+        self.logger.progress("Reading data")
         is_mock, is_sv = self.read_data()
+        t1 = time.time()
+        self.logger.progress(f"Time spent reading data: {t1-t0}")
 
         # set blinding
         self.set_blinding(is_mock, is_sv)
