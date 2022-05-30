@@ -245,9 +245,14 @@ class DesiTileFileHandler(DesiDataFileHandler):
 
         hdul.close()
 
-        select = ((catalogue['TILEID'] == tile_spec) &
-                  (catalogue['PETAL_LOC'] == petal_spec) &
-                  (catalogue['NIGHT'] == night_spec))
+        if "cumulative" in self.input_directory:
+            select = ((catalogue['TILEID'] == tile_spec) &
+                      (catalogue['PETAL_LOC'] == petal_spec) &
+                      (catalogue['LASTNIGHT'] == night_spec))
+        else:
+            select = ((catalogue['TILEID'] == tile_spec) &
+                      (catalogue['PETAL_LOC'] == petal_spec) &
+                      (catalogue['NIGHT'] == night_spec))
         self.logger.progress(
             f'This is tile {tile_spec}, petal {petal_spec}, night {night_spec}')
 
