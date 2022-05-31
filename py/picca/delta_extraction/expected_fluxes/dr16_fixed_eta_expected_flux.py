@@ -73,7 +73,7 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
                                     eta,
                                     fill_value='extrapolate',
                                     kind='nearest')
-        # note that for eta to be fitted, we need to include it to 
+        # note that for eta to be fitted, we need to include it to
         # self.fit_variance_functions:
         # self.fit_variance_functions.append("eta")
         # since we do not do it here, eta is fixed
