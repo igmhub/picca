@@ -217,7 +217,8 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta = np.zeros(self.num_bins_variance)
         # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
         else:
-            eta = np.ones(self.num_bins_variance)
+            eta = np.zeros(self.num_bins_variance)
+            # this bit is what is actually freeing eta for the fit
             self.fit_variance_functions.append("eta")
         self.get_eta = interp1d(self.log_lambda_var_func_grid,
                                 eta,
@@ -230,6 +231,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # if use_constant_weight is set, we fix eta=0, var_lss=1, and fudge=0
         # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
         if not self.use_ivar_as_weight and not self.use_constant_weight:
+            # this bit is what is actually freeing fudge for the fit
             self.fit_variance_functions.append("fudge")
         fudge = np.zeros(self.num_bins_variance)
         self.get_fudge = interp1d(self.log_lambda_var_func_grid,
@@ -248,6 +250,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
         else:
             var_lss = np.zeros(self.num_bins_variance) + 0.2
+            # this bit is what is actually freeing var_lss for the fit
             self.fit_variance_functions.append("var_lss")
         self.get_var_lss = interp1d(self.log_lambda_var_func_grid,
                                     var_lss,
@@ -420,12 +423,26 @@ class Dr16ExpectedFlux(ExpectedFlux):
             raise ExpectedFluxError(
                 "Missing argument 'use constant weight' required by Dr16ExpectedFlux"
             )
+        if self.use_constant_weight:
+            self.logger.warning(
+                "Deprecation Warning: option 'use constant weight' is now deprecated "
+                "and will be removed in future versions. Consider using class "
+                "Dr16FixedEtaVarlssFudgeExpectedFlux with options 'eta = 0', "
+                "'var lss = 1' and 'fudge = 0'")
+            # if use_ivar_as_weight is set, we fix eta=1, var_lss=0 and fudge=0
+            # if use_constant_weight is set, we fix eta=0, var_lss=1, and fudge=0
 
         self.use_ivar_as_weight = config.getboolean("use ivar as weight")
         if self.use_ivar_as_weight is None:
             raise ExpectedFluxError(
                 "Missing argument 'use ivar as weight' required by Dr16ExpectedFlux"
             )
+        if self.use_ivar_as_weight:
+            self.logger.warning(
+                "Deprecation Warning: option 'use ivar as weight' is now deprecated "
+                "and will be removed in future versions. Consider using class "
+                "Dr16FixedEtaVarlssFudgeExpectedFlux with options 'eta = 1', "
+                "'var lss = 0' and 'fudge = 0'"
 
     def compute_continuum(self, forest):
         """Compute the forest continuum.

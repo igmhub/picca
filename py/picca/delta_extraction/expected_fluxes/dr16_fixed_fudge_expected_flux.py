@@ -74,6 +74,10 @@ class Dr16FixedFudgeExpectedFlux(Dr16ExpectedFlux):
                                       fudge,
                                       fill_value='extrapolate',
                                       kind='nearest')
+        # note that for fudge to be fitted, we need to include it to
+        # self.fit_variance_functions:
+        # self.fit_variance_functions.append("fudge")
+        # since we do not do it here, fudge is fixed
 
     def __parse_config(self, config):
         """Parse the configuration options

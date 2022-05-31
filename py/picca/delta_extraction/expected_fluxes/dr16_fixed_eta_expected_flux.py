@@ -59,7 +59,7 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
 
     def _initialize_get_eta(self):
         """Initialiaze function get_eta"""
-        # initialize fudge factor
+        # initialize eta factor
         if self.eta_value.endswith(".fits") or self.eta_value.endswith(
                 ".fits.gz"):
             hdu = fitsio.read(self.eta_value, ext="VAR_FUNC")
@@ -73,6 +73,10 @@ class Dr16FixedEtaExpectedFlux(Dr16ExpectedFlux):
                                     eta,
                                     fill_value='extrapolate',
                                     kind='nearest')
+        # note that for eta to be fitted, we need to include it to 
+        # self.fit_variance_functions:
+        # self.fit_variance_functions.append("eta")
+        # since we do not do it here, eta is fixed
 
     def __parse_config(self, config):
         """Parse the configuration options

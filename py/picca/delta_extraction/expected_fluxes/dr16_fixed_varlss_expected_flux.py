@@ -73,6 +73,10 @@ class Dr16FixedVarlssExpectedFlux(Dr16ExpectedFlux):
                                         var_lss,
                                         fill_value='extrapolate',
                                         kind='nearest')
+        # note that for var_lss to be fitted, we need to include it to
+        # self.fit_variance_functions:
+        # self.fit_variance_functions.append("var_lss")
+        # since we do not do it here, var_lss is fixed
 
     def __parse_config(self, config):
         """Parse the configuration options
