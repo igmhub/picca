@@ -19,7 +19,7 @@ accepted_options = update_accepted_options(
 
 defaults = defaults.copy()
 defaults.update({
-    "var_lss value": 0.15,
+    "var lss value": 0.15,
 })
 
 
@@ -64,7 +64,7 @@ class Dr16FixedVarlssExpectedFlux(Dr16ExpectedFlux):
         if self.var_lss_value.endswith(".fits") or self.var_lss_value.endswith(
                 ".fits.gz"):
             hdu = fitsio.read(self.var_lss_value, ext="VAR_FUNC")
-            self.get_eta = interp1d(hdu["loglam"],
+            self.get_var_lss = interp1d(hdu["loglam"],
                                     hdu["var_lss"],
                                     fill_value='extrapolate',
                                     kind='nearest')
@@ -87,9 +87,9 @@ class Dr16FixedVarlssExpectedFlux(Dr16ExpectedFlux):
         ------
         ExpectedFluxError if iter out prefix is not valid
         """
-        self.var_lss_value = config.get("eta value")
+        self.var_lss_value = config.get("var lss value")
         if self.var_lss_value is None:
-            raise ExpectedFluxError("Missing argument 'var_lss value' required "
+            raise ExpectedFluxError("Missing argument 'var lss value' required "
                                     "by Dr16FixedVarlssExpectedFlux")
         if not (self.var_lss_value.endswith(".fits") or
                 self.var_lss_value.endswith(".fits.gz")):
