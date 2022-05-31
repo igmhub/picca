@@ -9,7 +9,7 @@ from picca.delta_extraction.errors import ExpectedFluxError
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import Dr16ExpectedFlux
 from picca.delta_extraction.expected_fluxes.dr16_expected_flux import (
     defaults, accepted_options)
-from picca.delta_extraction.utils import update_accepted_options
+from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
 accepted_options = update_accepted_options(accepted_options, ["fudge value"])
 accepted_options = update_accepted_options(
@@ -17,8 +17,7 @@ accepted_options = update_accepted_options(
     ["use constant weight", "use ivar as weight"],
     remove=True)
 
-defaults = defaults.copy()
-defaults.update({
+defaults = update_default_options(defaults, {
     "fudge value": 0.0,
 })
 

@@ -11,7 +11,7 @@ from picca.delta_extraction.expected_fluxes.dr16_fixed_varlss_expected_flux impo
     Dr16FixedVarlssExpectedFlux)
 from picca.delta_extraction.expected_fluxes.dr16_fixed_varlss_expected_flux import (
     defaults as defaults3, accepted_options as accepted_options3)
-from picca.delta_extraction.utils import update_accepted_options
+from picca.delta_extraction.utils import update_accepted_options, update_default_options
 
 accepted_options = update_accepted_options(accepted_options, accepted_options2)
 accepted_options = update_accepted_options(accepted_options, accepted_options3)
@@ -21,10 +21,9 @@ accepted_options = update_accepted_options(
      "use ivar as weight"],
     remove=True)
 
-defaults = defaults.copy()
-defaults.update(defaults2)
-defaults.update(defaults3)
-defaults.update({
+defaults = update_default_options(defaults, defaults2)
+defaults = update_default_options(defaults, defaults3)
+defaults = update_default_options(defaults, {
     "num iterations": 1,
 })
 

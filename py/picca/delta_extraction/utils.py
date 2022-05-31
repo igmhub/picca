@@ -275,3 +275,33 @@ def update_accepted_options(accepted_options, new_options, remove=False):
         accepted_options = sorted(list(set(accepted_options + new_options)))
 
     return accepted_options
+
+def update_default_options(default_options, new_options):
+    """Update the content of the list of accepted options
+
+    Arguments
+    ---------
+    default_options: dict
+    The current default options
+
+    new_options: dict
+    The new options
+
+    Return
+    ------
+    default_options: dict
+    The updated default options
+    """
+    default_options = default_options.copy()
+    for key, value in new_options.items():
+        if key in default_options:
+            default_value = default_options.get(key)
+            if type(default_value) != type(value) or default_value != value:
+                raise DeltaExtractionError(
+                    f"Incompatible defaults are being added. Key {key}"
+                    f"found to have two default values: {value} and {default_value}"
+                    "Revise your recent changes or contact picca developpers.")
+        else:
+            default_options[key] = value
+
+    return default_options
