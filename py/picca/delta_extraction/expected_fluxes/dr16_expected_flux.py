@@ -327,7 +327,6 @@ class Dr16ExpectedFlux(ExpectedFlux):
         # first iteration
         else:
             valid_fit = np.zeros(self.num_bins_variance, dtype=bool)
-            self.fit_variance_functions = ["var_lss"]
         num_pixels = np.zeros(self.num_bins_variance)
 
         self._initialize_get_eta()
