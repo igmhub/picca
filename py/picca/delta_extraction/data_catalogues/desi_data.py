@@ -116,7 +116,7 @@ class DesiData(Data):
         self.logger.progress("Reading quasar catalogue")
         self.catalogue = DesiQuasarCatalogue(config).catalogue
         t1 = time.time()
-        self.logger.progress(f"Time spent reading quasar: {t1-t0}")
+        self.logger.progress(f"Time spent reading quasar catalogue: {t1-t0}")
 
         # read data
         t0 = time.time()
