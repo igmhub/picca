@@ -296,7 +296,7 @@ def update_default_options(default_options, new_options):
     for key, value in new_options.items():
         if key in default_options:
             default_value = default_options.get(key)
-            if type(default_value) != type(value) or default_value != value:
+            if type(default_value) is type(value) or default_value != value:
                 raise DeltaExtractionError(
                     f"Incompatible defaults are being added. Key {key}"
                     f"found to have two default values: {value} and {default_value}"
