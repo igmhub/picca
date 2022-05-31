@@ -33,6 +33,10 @@ defaults = {
     "use ivar as weight": False,
 }
 
+FUDGE_FIT_START = FUDGE_REF
+ETA_FIT_START = 1.
+VAR_LSS_FIT_START = 0.1
+
 
 class Dr16ExpectedFlux(ExpectedFlux):
     """Class to the expected flux as done in the DR16 SDSS analysys
@@ -688,15 +692,15 @@ class Dr16ExpectedFlux(ExpectedFlux):
         """
         # initialize arrays
         if "eta" in self.fit_variance_functions:
-            eta = np.zeros(self.num_bins_variance) + 1.
+            eta = np.zeros(self.num_bins_variance) + ETA_FIT_START
         else:
             eta = self.get_eta(self.log_lambda_var_func_grid)
         if "var_lss" in self.fit_variance_functions:
-            var_lss = np.zeros(self.num_bins_variance) + 0.1
+            var_lss = np.zeros(self.num_bins_variance) + VAR_LSS_FIT_START
         else:
             var_lss = self.get_var_lss(self.log_lambda_var_func_grid)
         if "fudge" in self.fit_variance_functions:
-            fudge = np.zeros(self.num_bins_variance) + FUDGE_REF
+            fudge = np.zeros(self.num_bins_variance) + FUDGE_FIT_START
         else:
             fudge = self.get_fudge(self.log_lambda_var_func_grid)
         num_pixels = np.zeros(self.num_bins_variance)
