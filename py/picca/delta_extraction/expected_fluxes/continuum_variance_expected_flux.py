@@ -40,9 +40,6 @@ class ContinuumVarianceExpectedFlux(Dr16FixedEtaVarlssExpectedFlux):
 
     self.get_var_cont: scipy.interpolate.interp1d
     Variance contribution due to continuum (as a function of rest-frame wavelength)
-
-    var_lss_filename: string
-    Name of the file containing the LSS variance contribution.
     """
 
     def __init__(self, config):
