@@ -442,7 +442,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
                 "Deprecation Warning: option 'use ivar as weight' is now deprecated "
                 "and will be removed in future versions. Consider using class "
                 "Dr16FixedEtaVarlssFudgeExpectedFlux with options 'eta = 1', "
-                "'var lss = 0' and 'fudge = 0'"
+                "'var lss = 0' and 'fudge = 0'")
 
     def compute_continuum(self, forest):
         """Compute the forest continuum.
