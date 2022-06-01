@@ -392,7 +392,9 @@ class ExpectedFluxTest(AbstractTest):
             self.compare_fits(
                 test_file.replace(".fits", f"_iteration{iteration}.fits"),
                 out_file.replace(".fits", f"_iteration{iteration}.fits"))
-        self.compare_fits(test_file, out_file)        # setup Forest variables; case: linear wavelength solution
+        self.compare_fits(test_file, out_file)
+
+        # setup Forest variables; case: linear wavelength solution
         reset_forest()
         setup_forest("lin")
 
@@ -1040,8 +1042,8 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.extract_deltas(forest)
         self.assertTrue(all(forest.deltas == np.zeros_like(forest1.flux)))
 
-    def test_dr16_expected_flux_parse_config(self):
-        """Test method __parse_config for class Dr16ExpectedFlux"""
+    def test_expected_flux_parse_config(self):
+        """Test method __parse_config for class ExpectedFlux"""
         # create a ExpectedFlux with missing out_dir
         config = ConfigParser()
         config.read_dict({"expected_flux": {
@@ -1412,11 +1414,8 @@ class ExpectedFluxTest(AbstractTest):
         # setup Forest variables; case: logarithmic wavelength solution
         setup_forest("log", rebin=3)
 
-        results_dir = Path(THIS_DIR) / "results"
-        data_dir = Path(THIS_DIR) / "data"
-
-        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"
-        test_file = data_dir / "true_iter_out_prefix_compute_expected_flux_log.fits.gz"
+        out_file = f"{THIS_DIR}/results/Log/true_iter_out_prefix_compute_expected_flux_log.fits.gz"
+        test_file = f"{THIS_DIR}/data/true_iter_out_prefix_compute_expected_flux_log.fits.gz"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1425,7 +1424,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "iter_out_prefix",
+                "iter out prefix": "true_iter_out_prefix_compute_expected_flux_log",
                 "out dir": f"{THIS_DIR}/results/",
                 "num processors": 1,
             },
@@ -1444,19 +1443,13 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.compute_expected_flux(data.forests)
 
         # check the results
-        for iteration in range(1,5):
-            self.compare_fits(
-                str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
-                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
         self.compare_fits(test_file, out_file)
 
         # setup Forest variables; case: linear wavelength solution
         setup_forest("lin", pixel_step=2.4)
 
-        data_dir = Path(THIS_DIR) / "data"
-
-        out_file = Path(THIS_DIR) / "results" / "Log" / "iter_out_prefix_compute_expected_flux_log.fits.gz"
-        test_file = data_dir / "true_iter_out_prefix_compute_expected_flux_log_lin.fits.gz"
+        out_file = f"{THIS_DIR}/results/Log/true_iter_out_prefix_compute_expected_flux_lin.fits.gz"
+        test_file =  f"{THIS_DIR}/data/true_iter_out_prefix_compute_expected_flux_lin.fits.gz"
 
         # initialize Data and Dr16ExpectedFlux instances
         config = ConfigParser()
@@ -1465,7 +1458,7 @@ class ExpectedFluxTest(AbstractTest):
             "expected flux": {
                 "type": "TrueContinuum",
                 "input directory": f"{THIS_DIR}/data",
-                "iter out prefix": "iter_out_prefix",
+                "iter out prefix": "true_iter_out_prefix_compute_expected_flux_lin",
                 "num processors": 1,
                 "out dir": f"{THIS_DIR}/results/",
             },
@@ -1483,10 +1476,6 @@ class ExpectedFluxTest(AbstractTest):
         expected_flux.compute_expected_flux(data.forests)
 
         # check the results
-        for iteration in range(1,5):
-            self.compare_fits(
-                str(test_file).replace(".fits", f"_iteration{iteration}.fits"),
-                str(out_file).replace(".fits", f"_iteration{iteration}.fits"))
         self.compare_fits(test_file, out_file)
 
     def test_true_cont_compute_mean_cont_linear_wave_solution(self):
