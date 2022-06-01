@@ -217,7 +217,7 @@ class Dr16ExpectedFlux(ExpectedFlux):
             eta = np.zeros(self.num_bins_variance)
         # normal initialization, starting values eta=1, var_lss=0.2 , and fudge=0
         else:
-            eta = np.zeros(self.num_bins_variance)
+            eta = np.ones(self.num_bins_variance)
             # this bit is what is actually freeing eta for the fit
             self.fit_variance_functions.append("eta")
         self.get_eta = interp1d(self.log_lambda_var_func_grid,
